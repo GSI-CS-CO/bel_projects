@@ -5,7 +5,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 
-#define STANDARD 0  
+#define STANDARD 0
 #define DEFAULT 1
 #define SYNC    2
 
@@ -46,7 +46,7 @@ namespace det = DotStr::Edge::TypeVal;
   };
 
   template <class MetaMap>
-  inline non_meta<MetaMap> 
+  inline non_meta<MetaMap>
   make_non_meta(MetaMap meta) {
     return non_meta<MetaMap>(meta);
   }
@@ -74,7 +74,7 @@ namespace det = DotStr::Edge::TypeVal;
   };
 
   template <class objMap>
-  inline vertex_writer<objMap> 
+  inline vertex_writer<objMap>
   make_vertex_writer(objMap om) {
     return vertex_writer<objMap>(om);
   }
@@ -98,14 +98,14 @@ template <class Name>
     id_writer(objMap om) : om(om) {}
     template <class VertexOrEdge>
     void operator()(std::ostream& out, const VertexOrEdge& v) const {
-      out << dnp::Base::sName << "=\"" << om[v] << "\""; 
+      out << dnp::Base::sName << "=\"" << om[v] << "\"";
     }
   private:
     objMap om;
   };
 
   template <class objMap>
-  inline id_writer<objMap> 
+  inline id_writer<objMap>
   make_id_writer(objMap om) {
     return id_writer<objMap>(om);
   }
@@ -126,7 +126,10 @@ template <class Name>
       else if (type[v] == det::sDefDst)      out << ec::Edge::sLookDefDst;
       else if (type[v] == det::sAltDst)      out << ec::Edge::sLookAltDst;
       else if (type[v] == det::sCmdTarget)   out << ec::Edge::sLookTarget;
+      else if (type[v] == det::sSwitchTarget)   out << ec::Edge::sLookTarget;
       else if (type[v] == det::sCmdFlowDst)  out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sSwitchDst)   out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sCmdFlushOvr) out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynId)       out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar0)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;
@@ -136,14 +139,14 @@ template <class Name>
       else if (type[v] == det::sResFlowDst)  out << ec::Edge::sLookDebug1;
       else if (type[v] == det::sDomFlowDst)  out << ec::Edge::sLookDebug2;
       else                                   out << ec::Edge::sLookMeta;
-      out <<  "]";   
+      out <<  "]";
     }
   private:
     typeMap type;
   };
 
   template <class typeMap>
-  inline edge_writer<typeMap> 
+  inline edge_writer<typeMap>
   make_edge_writer(typeMap type) {
     return edge_writer<typeMap>(type);
   }
@@ -155,9 +158,9 @@ template <class Name>
     static_eq(typeMap type) : type(type) {}
     template <class Edge>
     bool operator()(const Edge& e) const {
-      auto allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst};
+      auto allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst, det::sCmdTarget, det::sCmdFlowDst, det::sCmdFlushOvr, det::sSwitchTarget, det::sSwitchDst};
       for(auto& it : allowedTypes ) { if (type[e] == it) return true; } //true if edge is of allowed types
-      return false;  
+      return false;
     }
     private:
       typeMap type;
@@ -165,7 +168,7 @@ template <class Name>
 
 
   template <class typeMap>
-  inline static_eq<typeMap> 
+  inline static_eq<typeMap>
   make_static_eq(typeMap type) {
     return static_eq<typeMap>(type);
   }

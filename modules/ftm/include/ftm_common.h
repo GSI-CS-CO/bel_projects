@@ -3,151 +3,205 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-/// Debugging Macros
-#define VALUE_TO_STRING(x) #x
-#define VALUE(x) VALUE_TO_STRING(x)
-#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
-///
-#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 
-#define PREPTIME_DEFAULT 1000000ULL // standard preptime offset, sets lead to 1 ms
-
-//basic definitions
-#define _8b_SIZE_               1
-#define _16b_SIZE_              2
-#define _32b_SIZE_              4
-#define _64b_SIZE_              8
-#define _PTR_SIZE_              _32b_SIZE_
-#define _OFFS_SIZE_             _32b_SIZE_
-#define _TS_SIZE_               _64b_SIZE_
-
-#define PRIO_IL 2
-#define PRIO_HI 1
-#define PRIO_LO 0
-
-#define WR_PPS_GEN_STATE_MSK 
-#define WR_PPS_GEN_STATE_MSK 
-#define WR_PPS_GEN_STATE_MSK     
+/** \file ftm_common.h
+ *
+ * \brief Portable defines for cross platform communication between carpeDM lib and DM firmware
+ * ftm_common contains 99% of defines used for communication between carpeDM lib and DM firmware.
+ * Most entries define the memory layout of various data node types.
+ * There are also the control register definitions, bit field definitions for flag fields of data nodes and registers
+ * various type enums and some hardcoded settings such as initial preptime, etc.
+ */
 
 
-
-//////////////////////////////////////////////////////////////////////
-//  Defines for dynamic Memory Allocation System                    //
-//////////////////////////////////////////////////////////////////////
-// Memory Block Size
-
-// allow unaligned blocks ... I'd say yes, but not right now
-#define ALLLOW_UNALIGNED        0
-
-//Memory Block (Node) Size in Bytes
-#define _MEM_BLOCK_SIZE         52
-#define WORLD_BASE_ADR          0x80000000
+/** @name Debugging Macros
+ * Provides several macros to inspect the value of a define. Output is the full calculation, not the result.
+ * Format is Python compatible, so you can just paste the output into a python interpreter and get the sum
+ */
+//@{ 
+#define VALUE_TO_STRING(x) #x							///< Convert integer to string
+#define VALUE(x) VALUE_TO_STRING(x)						///< Shorthand to convert to string
+#define VAR_NAME_VALUE(var) #var "="  VALUE(var)		///< Output the Name of the define value and a '='
+#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))  ///< Round up N to the nearest multiple of S 
+//@}
 
 
-#define LM32_NULL_PTR           0x0
+/** @name Word size definitions, defaults for node size, null ptr definition, etc
+ * Provides word width in bytes for standard and DM specific structs as well as the null ptr value (must be cross platform compatible)
+ */
+//@{ 
+#define _8b_SIZE_               1	///< Bytesize of an 8 bit word
+#define _16b_SIZE_              2	///< Bytesize of a 16 bit word
+#define _32b_SIZE_              4	///< Bytesize of a 32 bit word
+#define _64b_SIZE_              8	///< Bytesize of a 64 bit word
+#define _PTR_SIZE_              _32b_SIZE_	///< Bytesize of a Pointer on LM32 platform
+#define _OFFS_SIZE_             _32b_SIZE_	///< Bytesize of an address offset on LM32 platform
+#define _TS_SIZE_               _64b_SIZE_	///< Bytesize of a WR timestamp
 
-#define _THR_QTY_               8
-#define _HEAP_SIZE_             (_THR_QTY_)
+#define LM32_NULL_PTR           0x0 ///< Cross platform compatible null pointer value
+#define _MEM_BLOCK_SIZE         52 ///< Bytesize of a standard data node (DM file system)
+//@}
 
-#define _T_GRID_OFFS_           0ULL      //Origin of time grid for align blocks in ns
-#define _T_GRID_SIZE_           10000ULL  //grid size for align blocks ns
-#define _T_TVALID_OFFS_         50000ULL  //Min offset from 'now' for validTime when generating a command
+/** @name Command queue priorities
+ * Literals for the 3 priorities of command queues: Low, medium, high (former low, high, interlock)
+ */
+//@{ 
+#define PRIO_IL 2 ///< High priority (former interlock priority)
+#define PRIO_HI 1 ///< Medium priority (former high priority)
+#define PRIO_LO 0 ///< Low priority
+//@}
 
 
-//////////////////////////////////////////////////////////////////////
-//"struct" types                                                    //
-//////////////////////////////////////////////////////////////////////
-
-//Thread Control bits
-#define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_CEASE              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
-#define T_TC_ABORT              (T_TC_CEASE     + _32b_SIZE_) //WR Host, RW LM32
-#define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) //RD Host, WR LM32
-#define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
-
-//Thread Data
-#define T_TD_FLAGS              (0)                           //RD Host, RW LM32
-#define T_TD_MSG_CNT            (T_TD_FLAGS     + _32b_SIZE_) //RD Host, RW LM32
-#define T_TD_NODE_PTR           (T_TD_MSG_CNT   + _64b_SIZE_) //RD Host, RW LM32
-#define T_TD_DEADLINE           (T_TD_NODE_PTR  + _PTR_SIZE_) //RD Host, RW LM32
-#define T_TD_DEADLINE_HI        (T_TD_DEADLINE  + 0) //RD Host, RW LM32
-#define T_TD_DEADLINE_LO        (T_TD_DEADLINE_HI + _32b_SIZE_) //RD Host, RW LM32
-#define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
-#define _T_TD_SIZE_             (T_TD_CURRTIME  + _TS_SIZE_)
-
-//Thread Starter Stage
-#define T_TS_FLAGS              (0)                           //RW Host, RW LM32
-#define T_TS_NODE_PTR           (T_TS_FLAGS     + _32b_SIZE_) //WR Host, RD LM32
-#define T_TS_STARTTIME          (T_TS_NODE_PTR  + _PTR_SIZE_) //WR Host, RD LM32
-#define T_TS_PREPTIME           (T_TS_STARTTIME + _TS_SIZE_)  //WR Host, RD LM32
-#define _T_TS_SIZE_             (T_TS_PREPTIME  + _TS_SIZE_)
+/** @name Global hardcoded parameters. Bus access and scheduler parameters
+ */
+//@{ 
+#define PREPTIME_DEFAULT 		1000000ULL // standard preptime offset, sets lead to 1 ms
+#define WORLD_BASE_ADR          0x80000000 ///< Base address leading from the CPU cluster to top crossbar ('world')
+#define _THR_QTY_               8 ///< Maximum number of threads
+#define _HEAP_SIZE_             (_THR_QTY_) ///< Scheduler heap size (power of 2)
+#define _T_GRID_OFFS_           0ULL      ///< Origin of time grid for align blocks in ns
+#define _T_GRID_SIZE_           10000ULL  ///< Grid size for align blocks ns
+#define _T_TVALID_OFFS_         50000ULL  ///< Min offset from 'now' for validTime when generating a command
+#define ALLLOW_UNALIGNED        0		  ///< allow unaligned blocks ... I'd say yes, but not right now		
+//@}
 
 
 
-//Sync node entry
-#define T_SYNC_SRC              (0)                       
-#define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)  
-#define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)  
+/** @name Thread control layout definitions
+ * Register definitions for thread control (start, abort, running, cease is not yet implemented).
+ * Start - Will commence a new or idle thread from the node found in its origin register.
+ * Cease - Not yet implemented. Will idle at the end of sequence
+ * Abort - Will immediately abort a running thread, patterns are not completed. This is the hard variant. The soft variant, stop, .
+ * Stop - Has no dedicated register and is implemented by executing a flow command to idle at a specific block. This means a pattern will be executed to the end, then the thread will idle.
+ * Running - Status bits, show which threads are currently executed and not idle.
+ */
+//@{ 
+#define T_TC_START              (0)                     	  ///< Start register, 1 bit per thread. WR Host, RW LM32
+#define T_TC_CEASE              (T_TC_START     + _32b_SIZE_) ///< Cease register, 1 bit per thread. WR Host, RW LM32
+#define T_TC_ABORT              (T_TC_CEASE     + _32b_SIZE_) ///< Abort register, 1 bit per thread. WR Host, RW LM32
+#define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) ///< Running register, 1 bit per thread. RD Host, WR LM32
+#define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) ///< Size of thread control register area
+//@}
+
+/** @name Thread runtime meta data layout definitions
+ * Register definitions for thread meta data. Contrary to thread control, this register area is repeated N times,
+ * where N is the number of total threads. It contains thread specific flags, count timing messages generated by this thread,
+ * its node pointer or cursor, its due deadline and the current time sum (sum of all processed block periods).
+ */
+//@{ 
+#define T_TD_FLAGS              (0)                           	///< Flags. RD Host, RW LM32
+#define T_TD_MSG_CNT            (T_TD_FLAGS     + _32b_SIZE_) 	///< Timing message counter. RD Host, RW LM32
+#define T_TD_NODE_PTR           (T_TD_MSG_CNT   + _64b_SIZE_) 	///< Current node pointer aka cursor. RD Host, RW LM32
+#define T_TD_DEADLINE           (T_TD_NODE_PTR  + _PTR_SIZE_) 	///< Deadline timestamp. RD Host, RW LM32
+#define T_TD_DEADLINE_HI        (T_TD_DEADLINE  + 0) 			///< Deadline timestamp high word. RD Host, RW LM32
+#define T_TD_DEADLINE_LO        (T_TD_DEADLINE_HI + _32b_SIZE_) ///< Deadline timestamp low word. RD Host, RW LM32
+#define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  	///< Current time sum. RD Host, RW LM32
+#define _T_TD_SIZE_             (T_TD_CURRTIME  + _TS_SIZE_)	///< Size of per thread meta data register area
+//@}
+
+/** @name Thread staging data layout definitions
+ * Register definitions for thread staging data. Contrary to thread control, this register area is repeated N times,
+ * where N is the number of total threads. It contains the data necessary to start a thread, such as the start time and the
+ * point (node) of origin. It also contains the preparation time, which specificies the internal time lead for dispatch.
+ */
+//@{ 
+#define T_TS_FLAGS              (0)                           ///< Flags. RW Host, RW LM32
+#define T_TS_NODE_PTR           (T_TS_FLAGS     + _32b_SIZE_) ///< Origin node. WR Host, RD LM32
+#define T_TS_STARTTIME          (T_TS_NODE_PTR  + _PTR_SIZE_) ///< Time when to start this thread. Used for sync start of multiple threads. WR Host, RD LM32
+#define T_TS_PREPTIME           (T_TS_STARTTIME + _TS_SIZE_)  ///< Preparation time, internal lead. WR Host, RD LM32
+#define _T_TS_SIZE_             (T_TS_PREPTIME  + _TS_SIZE_)  ///< Size of per thread staging data register area
+//@}
+
+
+
+/** @name Synchonisation node layout definitions. NOT YET IMPLEMENTED
+ * Not yet implemented
+ */
+//@{ 
+#define T_SYNC_SRC              (0)
+#define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)
+#define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)
 #define _T_SYNC_SIZE_           (T_SYNC_TIME  + _TS_SIZE_)
+//@}
 
-//Command (the received format)
-#define T_CMD_TIME              (0)                     // time this command becomes valid
-#define T_CMD_ACT               (T_CMD_TIME + _TS_SIZE_)  // action describing the command
+/** @name Command action layout definitions
+ */
+//@{ 
+#define T_CMD_TIME              (0)                     		///<  generic, timestamp this command becomes valid in ns. can be absolute or relative
+#define T_CMD_ACT               (T_CMD_TIME + _TS_SIZE_)  		///<  action describing the command
 //either ...
-#define T_CMD_WAIT_TIME         (T_CMD_ACT  + _32b_SIZE_)  // if it's a wait command, this is the new block tPeriod to add/new absolute thread time to use
+#define T_CMD_WAIT_TIME         (T_CMD_ACT  + _32b_SIZE_)  		///<  wait command, new block tPeriod to add/new absolute thread time to use
 // ... or
-#define T_CMD_FLOW_DEST         (T_CMD_ACT  + _32b_SIZE_) // if it's a flow command, this is the alternative destination to use
-#define T_CMD_RES               (T_CMD_FLOW_DEST + _32b_SIZE_)
+#define T_CMD_FLOW_DEST         (T_CMD_ACT  + _32b_SIZE_) 		///<  flow command, alternative destination to use
+#define T_CMD_RES               (T_CMD_FLOW_DEST + _32b_SIZE_)	///<  flow command, reserved field
 // ... or
-#define T_CMD_FLUSH_RNG_HILO    (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
-#define T_CMD_FLUSH_RNG_IL      (T_CMD_FLUSH_RNG_HILO + _32b_SIZE_)
-//
-#define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
+#define T_CMD_FLUSH_OVR         (T_CMD_ACT  + _32b_SIZE_) 		///<  flush command, with non null successor override
+#define T_CMD_FLUSH_RNG_HILO    (T_CMD_FLUSH_OVR  + _32b_SIZE_) ///<  flush command, and mode bits are set, this defines the q from/to idx to flush per qbuf
 
+#define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_) ///< Size of command element
+//@}
 
-#define T_MOD_INFO_TS      (0)                             //Timestamp of last modification
-#define T_MOD_INFO_IID     (T_MOD_INFO_TS   + _TS_SIZE_  ) //Issuer ID of last modification
-#define T_MOD_INFO_MID     (T_MOD_INFO_IID  + _64b_SIZE_ ) //Machine ID of last modification
-#define T_MOD_INFO_TYPE    (T_MOD_INFO_MID  + _64b_SIZE_ ) //Type of last modification
-#define T_MOD_INFO_CNT     (T_MOD_INFO_TYPE + _32b_SIZE_ ) //Modification counter
-#define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) //Struct size
+/** @name Diagnostic Logging layout definitions
+ */
+//@{ 
+#define T_MOD_INFO_TS      (0)                             ///< Timestamp of last modification
+#define T_MOD_INFO_IID     (T_MOD_INFO_TS   + _TS_SIZE_  ) ///< Issuer ID of last modification
+#define T_MOD_INFO_MID     (T_MOD_INFO_IID  + _64b_SIZE_ ) ///< Machine ID of last modification
+#define T_MOD_INFO_TYPE    (T_MOD_INFO_MID  + _64b_SIZE_ ) ///< Type of last modification
+#define T_MOD_INFO_CNT     (T_MOD_INFO_TYPE + _32b_SIZE_ ) ///< Modification counter
+#define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) ///< Struct size
 
-#define T_DIAG_MSG_CNT      (0)                              //CPU wide timing message counter
-#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT   + _64b_SIZE_ ) //Timestamp of Uptime beginning
-#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS   + _TS_SIZE_  ) //Schedule modification info
-#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD   + _T_MOD_INFO_SIZE ) //Cmd modification info
-#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD   + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN   + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
-#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
-#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
+#define T_DIAG_MSG_CNT      (0)                              			///< CPU wide timing message counter
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT       + _64b_SIZE_ ) 		///< Timestamp of Uptime beginning
+#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS       + _TS_SIZE_  ) 		///< Schedule modification info
+#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD       + _T_MOD_INFO_SIZE ) 	///< Cmd modification info
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD       + _T_MOD_INFO_SIZE ) 	///< All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN       + _TS_SIZE_  ) 		///< All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX       + _TS_SIZE_  ) 		///< Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM       + _64b_SIZE_ ) 		///< Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH       + _TS_SIZE_  ) 		///< Diff warning counter
+#define T_DIAG_WAR_1ST_HASH (T_DIAG_WAR_CNT       + _32b_SIZE_ ) 		///< Hash of node at first diff warning
+#define T_DIAG_WAR_1ST_TS   (T_DIAG_WAR_1ST_HASH  + _32b_SIZE_ ) 		///< TS at first diff warning
+#define T_DIAG_BCKLOG_STRK  (T_DIAG_WAR_1ST_TS    + _TS_SIZE_  ) 		///< Maximum Backlog streak size
+#define T_DIAG_BAD_WAIT_CNT (T_DIAG_BCKLOG_STRK   + _32b_SIZE_ ) 		///< Maximum Backlog streak size
+#define _T_DIAG_SIZE_       (256)
 
+#if _T_DIAG_SIZE_ < (T_DIAG_BAD_WAIT_CNT + _32b_SIZE_)
+  #error Actual diagnostics area size exceeds fixed _T_DIAG_SIZE_
+#endif
 
-#define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
-#define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) //container size in byte ( is groupsTable + covenantTable size)
-#define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) //groupsTable size in byte
-#define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) //covenantTable size in byte
-#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) //
-#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_)   
+//@}
 
+/** @name Name/Group table meta data
+ * Top layout of all control register areas. Sections are Scheduler, Status, Meta Data, Diagnostics, Thread Control, Thread Staging, Thread Metadata
+ */
+//@{ 
+#define T_META_START_PTR    (0)                               ///< Prt to start of linked list containing compressed tables. External view, read/write for host only. Must lie within bitmap range
+#define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) ///< table container size in byte ( is groupsTable + covenantTable size)
+#define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) ///< groupsTable size in byte
+#define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) ///< covenantTable size in byte
+#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) ///< flags field
+#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_) ///< Size of Name/Group table meta data
+//@}
 
-//////////////////////////////////////////////////////////////////////
-// Control Interface                                                //
-//////////////////////////////////////////////////////////////////////
-
+/** @name Top control register sections
+ * Top layout of all control register areas. Sections are Scheduler, Status, Meta Data, Diagnostics, Thread Control, Thread Staging, Thread Metadata
+ */
+//@{ 
 #define _SHCTL_START_    0
-#define SHCTL_HEAP       (_SHCTL_START_)                              //Scheduler Heap  
-#define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     //Status Registers
-#define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                //Group/Node Name Meta Information
-#define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             //Diagnostic Registers
-#define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             //Command Register
-#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                //Gather Time (HW Priority Queue Config) Register 
-#define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                //Thread Control Registers (Start Stop Status) 
-#define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
-#define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
-#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
-#define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
+#define SHCTL_HEAP       (_SHCTL_START_)                              ///< Scheduler Heap
+#define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Status Registers
+#define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                ///< Group/Node Lookup Table Overhead
+#define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             ///< Diagnostic Registers
+#define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
+#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                ///< Gather Time (HW Priority Queue Config) Register
+#define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                ///< Thread Control Registers (1 bit per Thread )
+#define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              ///< Thread Staging Areas (1 area per Thread )
+#define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  ///< Thread Runtime Meta Data Areas(1 area per Thread )
+#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
+#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)	  ///< Size of all control register sections	
+//@}
+
 /*
 #pragma message(VAR_NAME_VALUE(_SHCTL_START_))
 #pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
@@ -163,400 +217,554 @@
 #pragma message(VAR_NAME_VALUE(_SHCTL_END_  ))
 */
 
-//////////////////////////////////////////////////////////////////////
-
-// Global Status field bits
-#define SHCTL_STATUS_UART_INIT_MSK    0x1
-#define SHCTL_STATUS_UART_INIT_POS    0
-#define SHCTL_STATUS_UART_INIT_SMSK   (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
-
-#define SHCTL_STATUS_EBM_INIT_MSK     0x1
-#define SHCTL_STATUS_EBM_INIT_POS     1
-#define SHCTL_STATUS_EBM_INIT_SMSK    (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
-
-#define SHCTL_STATUS_PQ_INIT_MSK      0x1
-#define SHCTL_STATUS_PQ_INIT_POS      2
-#define SHCTL_STATUS_PQ_INIT_SMSK     (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
-
-#define SHCTL_STATUS_DM_INIT_MSK      0x1
-#define SHCTL_STATUS_DM_INIT_POS      3
-#define SHCTL_STATUS_DM_INIT_SMSK     (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
-
-#define SHCTL_STATUS_DM_ERROR_MSK      0x1
-#define SHCTL_STATUS_DM_ERROR_POS      8
-#define SHCTL_STATUS_DM_ERROR_SMSK     (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
-
-//####################################################################
-// #########################  Nodes  #################################
-//####################################################################
-
-                                                                
-//////////////////////////////////////////////////////////////////////
-// Generic Node Attributes ///////////////////////////////////////////
-#define NODE_BEGIN              (0)
-
-// This pack all generic data to the end! Makes ptr arithmetic easier for array types   
-#define NODE_HASH               (0x28)                                
-#define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_)             
-#define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_)             
 
 
-//////////////////////////////////////////////////////////////////////
-//// Meta Nodes - Specific Attributes ////////////////////////////////
+/** @name Global status register - UART status bit */
+//@{
+#define SHCTL_STATUS_UART_INIT_MSK      0x1 ///< Mask
+#define SHCTL_STATUS_UART_INIT_POS      0	///< Position
+#define SHCTL_STATUS_UART_INIT_SMSK     (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS) ///< Shifted Mask (Mask << Position)
+//@}
 
-////// Block
-//
-#define BLOCK_BEGIN             (NODE_BEGIN)      // a bit unusual layout, see above
-#define BLOCK_PERIOD            (BLOCK_BEGIN)
-#define BLOCK_PERIOD_HI         (BLOCK_BEGIN + 0)
-#define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI    + _32b_SIZE_)
-#define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
-#define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
-#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)
-#define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
-#define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
+/** @name Global status register - EBM status bit */
+//@{
+#define SHCTL_STATUS_EBM_INIT_MSK       0x1
+#define SHCTL_STATUS_EBM_INIT_POS       1
+#define SHCTL_STATUS_EBM_INIT_SMSK      (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
+//@}
 
-#define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)
-#define BLOCK_CMDQ_IDX_HI    (3 - PRIO_HI)
-#define BLOCK_CMDQ_IDX_LO    (3 - PRIO_LO)
+/** @name Global status register - PQ status bit */
+//@{
+#define SHCTL_STATUS_PQ_INIT_MSK        0x1
+#define SHCTL_STATUS_PQ_INIT_POS        2
+#define SHCTL_STATUS_PQ_INIT_SMSK       (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
+//@}
+
+/** @name Global status register - DM status bit */
+//@{
+#define SHCTL_STATUS_DM_INIT_MSK        0x1
+#define SHCTL_STATUS_DM_INIT_POS        3
+#define SHCTL_STATUS_DM_INIT_SMSK       (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
+//@}
+
+/** @name Global status register - Error status bit */
+//@{
+#define SHCTL_STATUS_DM_ERROR_MSK       0x1
+#define SHCTL_STATUS_DM_ERROR_POS       8
+#define SHCTL_STATUS_DM_ERROR_SMSK      (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
+//@}
+
+/** @name Global status register - bad node status bit */
+//@{
+#define SHCTL_STATUS_BAD_NODE_TYPE_MSK  0x1
+#define SHCTL_STATUS_BAD_NODE_TYPE_POS  12
+#define SHCTL_STATUS_BAD_NODE_TYPE_SMSK (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+//@}
+
+/** @name Global status register - bad act status bit */
+//@{
+#define SHCTL_STATUS_BAD_ACT_TYPE_MSK   0x1
+#define SHCTL_STATUS_BAD_ACT_TYPE_POS   13
+#define SHCTL_STATUS_BAD_ACT_TYPE_SMSK  (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+//@}
 
 
-#define Q_IDX_MAX_OVF          3
-#define Q_IDX_MAX              2
-#define Q_IDX_MAX_OVF_MSK      ~(-(1 << Q_IDX_MAX_OVF))
-#define Q_IDX_MAX_MSK          ~(-(1 << Q_IDX_MAX))
-
-///// CMDQ Meta Node 
-//
-// Array of pointers to cmd buffer nodes
-#define CMDQ_BUF_ARRAY          (NODE_BEGIN)
-#define CMDQ_BUF_ARRAY_END      (CMDQ_BUF_ARRAY + 10 * _PTR_SIZE_)  
-
-///// CMD Buffer Meta Node
-//
-// Elements of size _CMD_SIZE
-#define CMDB_CMD_ARRAY          (NODE_BEGIN)
 
 
-///// Alternative Destinations Meta Node
-//
-// Host only, array of pointers to nodes
-#define DST_ARRAY               (NODE_BEGIN)
-#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_)
 
-///// Sync Meta Node
-//
-// Host only, Element format: Src Ptr 32b, Dst Ptr 32b, Time Offset 64b
+/** @name Generic node layout definitions. Goes for all nodes */
+//@{
+#define NODE_BEGIN              (0)		///< First word
+#define NODE_HASH               (0x28)	///< 32b hash of the node name string
+#define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_) ///< Flag field
+#define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_) ///< Default destination (successor) pointer
+//@}
+
+/** @name Block node layout definitions */
+//@{
+#define BLOCK_BEGIN             (NODE_BEGIN)      					///< First word
+#define BLOCK_PERIOD            (BLOCK_BEGIN)						///< 64b Period (duration) in ns
+#define BLOCK_PERIOD_HI         (BLOCK_BEGIN + 0)					///< High word Period (duration) in ns
+#define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI    + _32b_SIZE_) 	///< Low word Period (duration) in ns
+#define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_) 	///< Alternative destination list pointer
+#define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_) 	///< Pointer to low priority command queue buffer list
+#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)	///< Pointer to medium priority command queue buffer list
+#define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)	///< Pointer to high priority command queue buffer list
+#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)	///< Write indices of command queues
+#define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)	///< Read indices of command queues
+#define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR					///< Command queue pointer array. synonym for pointer to low priority command queue
+#define BLOCK_CMDQ_FLAGS        (BLOCK_CMDQ_RD_IDXS + _32b_SIZE_)	///< Command queue flag field
+//@}
+
+/** @name Command queue buffer list node layout definitions*/
+//@{
+#define CMDQ_BUF_ARRAY          (NODE_BEGIN) ///< Array of pointers to cmd buffer nodes
+#define CMDQ_BUF_ARRAY_END      (CMDQ_BUF_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
+//@}
+
+/** @name Command queue buffer node layout definition*/
+//@{
+#define CMDB_CMD_ARRAY          (NODE_BEGIN) ///< Array of command Elements
+//@}
+
+/** @name Alternative destination list node layout definition*/
+//@{
+#define DST_ARRAY               (NODE_BEGIN) ///< Array of pointers to all nodes which are alternative definitions
+#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
+//@}
+
+/** @name Sync node layout definition NOT IMPLEMENTED*/
+//@{
 #define SYNC_ARRAY              (NODE_BEGIN)
+//@}
+
+
+
+/** @name Generic Event node layout definitions */
+//@{
+#define EVT_BEGIN               (NODE_BEGIN) ///< First word
+#define EVT_OFFS_TIME           (EVT_BEGIN) ///< 64b Time offset in ns
+#define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_) ///< End of event subtype specific layout
+//@}
+
+/** @name Timing Message node layout definitions */
+//@{
+#define TMSG_BEGIN              (EVT_HDR_END)				///< First word
+#define TMSG_ID                 (TMSG_BEGIN)				///< 64b Timing ID. Consists of Format ID, Group ID, Sequence ID, Beam process ID, Event Number and some flags I can't remember right now.
+#define TMSG_ID_HI              (TMSG_ID      + 0)			///< 32b Timing ID high word
+#define TMSG_ID_LO              (TMSG_ID_HI   + _32b_SIZE_)	///< 32b Timing ID low word
+#define TMSG_PAR                (TMSG_ID      + _64b_SIZE_) ///< 64b Parameter, transparently passed through to ECA
+#define TMSG_PAR_HI             (TMSG_PAR     + 0)			///< 32b Parameter high word
+#define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)	///< 32b Parameter low word
+#define TMSG_RES                (TMSG_PAR     + _64b_SIZE_)	///< 32b Reserved
+#define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)	///< 32b Time fracture field. Future use for picoseconds. CURRENTLY NOT IMPLEMENTED
+//@}
+
+/** @name Switch node layout definitions*/
+//@{
+#define SWITCH_TARGET           (EVT_HDR_END)	///< target block
+#define SWITCH_DEST				(SWITCH_TARGET + _PTR_SIZE_ + _TS_SIZE_ + _32b_SIZE_) //switch destination. offset is equal to command destination layout
+//@}
+
+	
+/** @name Generic Command node layout definitions*/
+//@{
+#define CMD_BEGIN               (EVT_HDR_END)						///< Begin of command node
+#define CMD_TARGET              (CMD_BEGIN)							///< Target block of command
+#define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)	///< 64b Valid time in ns, can be absolute or relative depending on action flags
+#define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)			///< 32b Valid time high word
+#define CMD_VALID_TIME_LO       (CMD_VALID_TIME_HI  + _32b_SIZE_)	///< 32b Valid time low word
+#define CMD_ACT                 (CMD_VALID_TIME     + _TS_SIZE_)	///< Action word. Contains action type and several flags
+#define CMD_HDR_END             (CMD_ACT            + _32b_SIZE_)	///< End of command node
+//@}
+
+/** @name Flow Command node layout definitions*/
+//@{
+#define CMD_FLOW_DEST           (CMD_HDR_END) ///< Flow destination. Null means idle. if destination is not in alternative destination of block, warnings are issued
+//@}
+
+/** @name Flush Command node layout definitions*/
+//@{
+#define CMD_FLUSH_DEST_OVR      (CMD_HDR_END)						///< Flush override destination. Null means none, so override to idle is not possible!
+#define CMD_FLUSHRNG_IL         (CMD_FLUSH_DEST_OVR   + _32b_SIZE_)	///< Flush range mid lo  ... NOT IMPLEMENTED
+
+#define CMD_FLUSHRNG_IL_FRM     (CMD_FLUSHRNG_IL)					///< Flush high from  ... NOT IMPLEMENTED
+#define CMD_FLUSHRNG_IL_TO      (CMD_FLUSHRNG_IL_FRM  + _8b_SIZE_)	///< Flush high to  ... NOT IMPLEMENTED
+
+#define CMD_FLUSHRNG_HILO       (CMD_FLUSHRNG_IL      + _32b_SIZE_)	///< Flush range mid lo  ... NOT IMPLEMENTED
+
+#define CMD_FLUSHRNG_HI_FRM     (CMD_FLUSHRNG_HILO    + _8b_SIZE_)	///< Flush mid from ... NOT IMPLEMENTED
+#define CMD_FLUSHRNG_HI_TO      (CMD_FLUSHRNG_HI_FRM  + _8b_SIZE_)	///< Flush mid to ... NOT IMPLEMENTED
+#define CMD_FLUSHRNG_LO_FRM     (CMD_FLUSHRNG_HI_TO   + _8b_SIZE_)	///< Flush lo from ... NOT IMPLEMENTED
+#define CMD_FLUSHRNG_LO_TO      (CMD_FLUSHRNG_LO_FRM  + _8b_SIZE_)	///< Flush lo to ... NOT IMPLEMENTED
+//@}
+
+/** @name Nop Command node layout definitions*/
+//@{
+#define CMD_NOOP_RES            (CMD_HDR_END)	///< Reserved
+//@}
+
+/** @name Wait Command node layout definitions*/
+//@{
+#define CMD_WAIT_TIME           (CMD_HDR_END)						///< 64b Wait time in ns, can be absolute or relative depending on action flags
+#define CMD_WAIT_TIME_HI        (CMD_WAIT_TIME     + 0)				///< 32b Wait time high word
+#define CMD_WAIT_TIME_LO        (CMD_WAIT_TIME_HI  + _32b_SIZE_)	///< 32b Wait time low word
+//@}
+	
+
+/** @name Block bit field defs - queue index byte positions */
+//@{
+#define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)	///< byte position of high priority index
+#define BLOCK_CMDQ_IDX_HI    (3 - PRIO_HI)	///< byte position of mid priority index
+#define BLOCK_CMDQ_IDX_LO    (3 - PRIO_LO)	///< byte position of low priority index
+//@}
+
+//
+/** @name Block bit field defs - Lock Flags. Signals DM to not change this queue's content */
+//@{
+#define BLOCK_CMDQ_FLGS_MSK   0x7
+#define BLOCK_CMDQ_FLGS_POS   0
+#define BLOCK_CMDQ_FLGS_SMSK  (BLOCK_CMDQ_FLGS_MSK << BLOCK_CMDQ_FLGS_POS)
+//@}
+
+
+/** @name Block bit field defs - DNW - signal Do not Write to DM */
+//@{
+#define BLOCK_CMDQ_DNW_MSK   0x1
+#define BLOCK_CMDQ_DNW_POS   0
+#define BLOCK_CMDQ_DNW_SMSK  (BLOCK_CMDQ_DNW_MSK << BLOCK_CMDQ_DNW_POS)
+//@}
+
+
+/** @name Block bit field defs - DNR - signal Do Not Read to DM */
+//@{
+#define BLOCK_CMDQ_DNR_MSK   0x1
+#define BLOCK_CMDQ_DNR_POS   1
+#define BLOCK_CMDQ_DNR_SMSK  (BLOCK_CMDQ_DNR_MSK << BLOCK_CMDQ_DNR_POS)
+//@}
+
+/** @name Block bit field defs - RWL - signal Retry Write when Locked to DM - NOT IMPLEMENTED */
+//@{
+#define BLOCK_CMDQ_RWL_MSK   0x1
+#define BLOCK_CMDQ_RWL_POS   2
+#define BLOCK_CMDQ_RWL_SMSK  (BLOCK_CMDQ_DNR_MSK << BLOCK_CMDQ_DNR_POS)
+//@}
+
+/** @name Block bit field defs - Write indices */
+//@{
+#define BLOCK_CMDQ_WR_IDXS_MSK  0x00ffffff				
+#define BLOCK_CMDQ_WR_IDXS_POS  0
+#define BLOCK_CMDQ_WR_IDXS_SMSK BLOCK_CMDQ_WR_IDXS_MSK
+//@}
+
+/** @name Block bit field defs - Read indices */
+//@{
+#define BLOCK_CMDQ_RD_IDXS_MSK  BLOCK_CMDQ_WR_IDXS_SMSK
+#define BLOCK_CMDQ_RD_IDXS_POS  BLOCK_CMDQ_WR_IDXS_POS
+#define BLOCK_CMDQ_RD_IDXS_SMSK BLOCK_CMDQ_WR_IDXS_MSK
+//@}
+
+/** @name Block bit field defs - Queue index truncation masks */
+//@{
+#define Q_IDX_MAX_OVF          3						///< bit width of queue index with overflow
+#define Q_IDX_MAX              2						///< bit width of queue index without overflow
+#define Q_IDX_MAX_OVF_MSK      ~(-(1 << Q_IDX_MAX_OVF)) ///< mask for queue index with overflow
+#define Q_IDX_MAX_MSK          ~(-(1 << Q_IDX_MAX)) 	///< mask for queue index without overflow
+//@}
+
+
+
+
+
+
+
+
+
 
 //////////////////////////////////////////////////////////////////////
-//// Generic Event Attributes ////////////////////////////////////////
-#define EVT_BEGIN               (NODE_BEGIN) 
-#define EVT_OFFS_TIME           (EVT_BEGIN)                     
-#define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_)       
 
-//// Timing Msg
-//
-#define TMSG_BEGIN              (EVT_HDR_END)
-#define TMSG_ID                 (TMSG_BEGIN)
-#define TMSG_ID_HI              (TMSG_ID      + 0)   
-#define TMSG_ID_LO              (TMSG_ID_HI   + _32b_SIZE_)
-#define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)
-#define TMSG_PAR_HI             (TMSG_PAR     + 0)   
-#define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)          
-#define TMSG_TEF                (TMSG_PAR     + _64b_SIZE_)          
-#define TMSG_RES                (TMSG_TEF     + _32b_SIZE_)          
-                                                               
-   
-//////////////////////////////////////////////////////////////////////
-//// Generic Command Attributes //////////////////////////////////////
-#define CMD_BEGIN               (EVT_HDR_END)
-#define CMD_TARGET              (CMD_BEGIN) 
-#define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)
-#define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)
-#define CMD_VALID_TIME_LO       (CMD_VALID_TIME_HI  + _32b_SIZE_)
-#define CMD_ACT                 (CMD_VALID_TIME     + _TS_SIZE_)           
-#define CMD_HDR_END             (CMD_ACT            + _32b_SIZE_)           
-                                                             
+/** @name Address vector for host node serialiser. Tables on how to interprete address vector elements depending on node type. */
+//@{
+#define ADR_DEF_DST            0	///< Generic - Address of default destination
+#define ADR_ALT_DST_ARRAY      1 	///< Generic - Address of alt destination array, only used if there are multiple destinations
 
-//// Cmd Flow ////////////////////////////////////////////////////////
-//
+#define ADR_BLOCK_DST_LST  1 ///< Block - Address of alt destination alist, only used if there are multiple destinations
 
-#define CMD_FLOW_DEST           (CMD_HDR_END)                       
-                                                              
-//// Cmd Flush - Specific Attributes /////////////////////////////////
-//
-#define CMD_FLUSHRNG_IL         (CMD_HDR_END)                       
+#define ADR_BLOCK_Q_LO     (ADR_BLOCK_DST_LST + 1 + PRIO_LO) ///< Block - Address of low priority queue buffer list, only used if there are multiple destinations
+#define ADR_BLOCK_Q_HI     (ADR_BLOCK_DST_LST + 1 + PRIO_HI) ///< Block - Address of mid priority queue buffer list, only used if there are multiple destinations
+#define ADR_BLOCK_Q_IL     (ADR_BLOCK_DST_LST + 1 + PRIO_IL) ///< Block - Address of high priority queue buffer list, only used if there are multiple destinations
 
-#define CMD_FLUSHRNG_IL_FRM     (CMD_FLUSHRNG_IL)
-#define CMD_FLUSHRNG_IL_TO      (CMD_FLUSHRNG_IL_FRM  + _8b_SIZE_)
-
-#define CMD_FLUSHRNG_HILO       (CMD_FLUSHRNG_IL      + _32b_SIZE_)
-
-#define CMD_FLUSHRNG_HI_FRM     (CMD_FLUSHRNG_HILO    + _8b_SIZE_)
-#define CMD_FLUSHRNG_HI_TO      (CMD_FLUSHRNG_HI_FRM  + _8b_SIZE_)
-#define CMD_FLUSHRNG_LO_FRM     (CMD_FLUSHRNG_HI_TO   + _8b_SIZE_)
-#define CMD_FLUSHRNG_LO_TO      (CMD_FLUSHRNG_LO_FRM  + _8b_SIZE_)
-
-
-
-                                                             
-//// Cmd Nop - Specific Attributes ///////////////////////////////////
-//
-#define CMD_NOOP_RES            (CMD_HDR_END)                       
-                                                              
-//// Cmd Wait - Specific Attributes //////////////////////////////////
-//
-#define CMD_WAIT_TIME           (CMD_HDR_END)
-#define CMD_WAIT_TIME_HI        (CMD_WAIT_TIME     + 0)
-#define CMD_WAIT_TIME_LO        (CMD_WAIT_TIME_HI  + _32b_SIZE_)                       
-                                                              
-//////////////////////////////////////////////////////////////////////
-
-// Address Vector Order
-//
-// Destination
-#define ADR_DEF_DST            0  
-#define ADR_ALT_DST_ARRAY      1 // only if multiple destinations    
-
-//
-// Block
-#define ADR_BLOCK_DST_LST  1 // only if multiple destinations
-
-
-#define ADR_BLOCK_Q_LO     (ADR_BLOCK_DST_LST + 1 + PRIO_LO) // only if multiple destinations
-#define ADR_BLOCK_Q_HI     (ADR_BLOCK_DST_LST + 1 + PRIO_HI)  // only if multiple destinations
-#define ADR_BLOCK_Q_IL     (ADR_BLOCK_DST_LST + 1 + PRIO_IL)  // only if multiple destinations
-//
 // Timing Message
-#define ADR_DYN_ID         1
-#define ADR_DYN_PAR0       2
-#define ADR_DYN_PAR1       3
-#define ADR_DYN_TEF        4
-#define ADR_DYN_RES        5
+#define ADR_DYN_ID         1	///< Tmsg - Address of dynamic ID source
+#define ADR_DYN_PAR1       2	///< Tmsg - Address of dynamic PAR high word source (node)	
+#define ADR_DYN_PAR0       3	///< Tmsg - Address of dynamic PAR high word source (node)
+#define ADR_DYN_TEF        4	///< Tmsg - Address of dynamic TEF source
+#define ADR_DYN_RES        5	///< Tmsg - Address of dynamic RES source
 
 //
+#define ADR_SWITCH_TARGET  		1 ///< Switch - Address of target block
+#define ADR_SWITCH_DEST  		2 ///< Switch - Address of destination node
+
 // Command
-#define ADR_CMD_TARGET     1
-#define ADR_CMD_FLOW_DEST  2 // only if command is Flow change
+#define ADR_CMD_TARGET     		1 ///< Command - Address of target block
+#define ADR_CMD_FLOW_DEST  		2 ///< Command - Address of destination node
+#define ADR_CMD_FLUSH_DEST_OVR 	2 ///< Command - Address of flush destination override
 
 // Command Queue
-#define ADR_CMDQ_BUF_ARRAY 1
+#define ADR_CMDQ_BUF_ARRAY 1	///< Command Queue - Address of buffers
+//@}
 
 
 
-
-//////////////////////////////////////////////////////////////////////
-// Action Flags Bitfield /////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-// Action Flags - Type field Enums
+/** @name Command Action type field enums */
+//@{
 #define ACT_TYPE_UNKNOWN        0 // tUndefined
-#define ACT_TYPE_NOOP           (ACT_TYPE_UNKNOWN +1)  // noop command
-#define ACT_TYPE_FLOW           (ACT_TYPE_NOOP +1)  // flow change command
-#define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  // flush command 
-#define ACT_TYPE_WAIT           (ACT_TYPE_FLUSH +1)  // wait command
-#define _ACT_TYPE_END_          (ACT_TYPE_WAIT +1)  // Number of Action types
+#define ACT_TYPE_NOOP           (ACT_TYPE_UNKNOWN +1)  ///< noop command
+#define ACT_TYPE_FLOW           (ACT_TYPE_NOOP +1)  ///< flow change command
+#define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  ///< flush command
+#define ACT_TYPE_WAIT           (ACT_TYPE_FLUSH +1) ///< wait command
+#define _ACT_TYPE_END_          (ACT_TYPE_WAIT +1)  ///< Size of Action types
+#define TYPE_CSWITCH 			(ACT_TYPE_WAIT +1)  ///< There is no action element of type cswitch, but we need the type for diagnostic logging
+//@}
 
-//Action Quantity
+/** @name Command Action field bit defs - Quantity */
+//@{
 #define ACT_QTY_MSK             0xfffff
 #define ACT_QTY_POS             0
 #define ACT_QTY_SMSK            (ACT_QTY_MSK << ACT_QTY_POS)
+//@}
 
-//Action Type
+/** @name Command Action field bit defs - Type */
+//@{
 #define ACT_TYPE_MSK            0xf
 #define ACT_TYPE_POS            20
 #define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
+//@}
 
-//Action Prirority (which Q at target it is going to)
-#define ACT_PRIO_MSK            0x2
+/** @name Command Action field bit defs - Action Priority (which Q at target it is going to) */
+//@{
+#define ACT_PRIO_MSK            0x3
 #define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
+//@}
 
-//Valid time is absolute (0) or relative (1) 
+/** @name Command Action field bit defs - Valid time is absolute (0) or relative (1) */
+//@{
 #define ACT_VABS_MSK             0x1
 #define ACT_VABS_POS             26
 #define ACT_VABS_SMSK            (ACT_VABS_MSK << ACT_VABS_POS)
+//@}
 
-//Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
+/** @name Command Action field bit defs - Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!)) */
+//@{
 #define ACT_CHP_MSK             0x1
 #define ACT_CHP_POS             27
 #define ACT_CHP_SMSK            (ACT_CHP_MSK << ACT_CHP_POS)
+//@}
 
-//Cmd Action Flags - type specific bit definitions
-
+/** @name Command Action field bit defs - Position of type specific flags */
+//@{
 #define ACT_BITS_SPECIFIC_POS   28
-  
-//Command Flush Buffer Priority
+//@}
+
+/** @name Command Action field bit defs - Command Flush Buffer Priorities */
+//@{
 #define ACT_FLUSH_PRIO_MSK      0x7
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_FLUSH_PRIO_SMSK     (ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS)
+//@}
 
-//Command Flush Mode
+/** @name Command Action field bit defs - Flush Mode */
+//@{
 #define ACT_FLUSH_MODE_MSK      0x7
 #define ACT_FLUSH_MODE_POS      (ACT_BITS_SPECIFIC_POS + 3)
 #define ACT_FLUSH_MODE_SMSK     (ACT_FLUSH_MODE_MSK << ACT_FLUSH_MODE_POS)
+//@}
 
-//Command Wait Time absolute/relative (tPeriod)
+/** @name Command Action field bit defs -  Wait Time absolute/relative (tPeriod) */
+//@{
 #define ACT_WAIT_ABS_MSK        0x1
 #define ACT_WAIT_ABS_POS        (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_WAIT_ABS_SMSK       (ACT_WAIT_ABS_MSK << ACT_WAIT_ABS_POS)
+//@}
 
-
-//////////////////////////////////////////////////////////////////////
-// Node Flags Bitfield ///////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-//Node Flags - bit definitions
-
-// Node Flags - Type field Enums. Sparsity allows using array of handler function in LM32
-//Unknown/Undef Node Enum
+/** @name Enums for Node Type field.
+ * Type field Enums. Sparsity allows using array of handler function in LM32
+ */
+//@{
 #define NODE_TYPE_UNKNOWN       0  // unknown content, ERROR
 // Defined but unspecified data
-#define NODE_TYPE_RAW           (NODE_TYPE_UNKNOWN      +1)  // raw data, do not interprete DEV ONLY!
+#define NODE_TYPE_RAW           (NODE_TYPE_UNKNOWN      +1) ///< raw data, do not interprete DEV ONLY!
 //Timing Message Enums
-#define NODE_TYPE_TMSG          (NODE_TYPE_RAW          +1)  // dispatches a timing message
+#define NODE_TYPE_TMSG          (NODE_TYPE_RAW          +1)	///< dispatches a timing message
 //Command Type Enums
-#define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG         +1)   // sends a noop command to designated block
-#define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP        +1)   // sends a flow change command to designated block
-#define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW        +1)   // sends a flush command to designated block
-#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH       +1)   // sends a wait command to designated block 
+#define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG         +1)	///< sends a noop command to designated block
+#define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP        +1)	///< sends a flow change command to designated block
+#define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW        +1)	///< sends a flush command to designated block
+#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH       +1)	///< sends a wait command to designated block
 //Shared Meta Type Enums
-#define NODE_TYPE_BLOCK_FIXED   (NODE_TYPE_CWAIT        +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_BLOCK_ALIGN   (NODE_TYPE_BLOCK_FIXED  +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_QUEUE         (NODE_TYPE_BLOCK_ALIGN  +1)   // a command queue meta node (array of pointers to buffer nodes)
-#define NODE_TYPE_QBUF          (NODE_TYPE_QUEUE        +1)   // a buffer for a command queue
-#define NODE_TYPE_SHARE         (NODE_TYPE_QBUF         +1)   // share a value via MSI to multiple memory destinations
+#define NODE_TYPE_BLOCK_FIXED   (NODE_TYPE_CWAIT        +1)	///< shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_BLOCK_ALIGN   (NODE_TYPE_BLOCK_FIXED  +1)	///< shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_QUEUE         (NODE_TYPE_BLOCK_ALIGN  +1)	///< a command queue meta node (array of pointers to buffer nodes)
+#define NODE_TYPE_QBUF          (NODE_TYPE_QUEUE        +1)	///< a buffer for a command queue
+#define NODE_TYPE_SHARE         (NODE_TYPE_QBUF         +1)	///< share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
-#define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)   // lists all alternative destinations of a decision block
-#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
-#define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
-#define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
-#define _NODE_TYPE_END_         (NODE_TYPE_COVENANT     +1)   // Node type Quantity
-//Node type
-#define NFLG_TYPE_MSK           0xff
+#define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)	///< lists all alternative destinations of a decision block
+#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)	///< used to denote the time offset for pattern rows
+#define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)	///< contain the part of the groups and node name table in compressed form
+#define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)	///< contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
+#define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)	///< type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
+#define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)	///< instantaneously switch defdest of a block. Like permanent flow with no queue
+#define _NODE_TYPE_END_         (NODE_TYPE_CSWITCH      +1)	///< Node type Quantity
+//@}
+
+/** @name Node flag field bit defs - Type field. Contains node type enum. Sparsity allows using array of handler function in LM32 */
+//@{
+#define NFLG_TYPE_MSK           0xff 
 #define NFLG_TYPE_POS           0
 #define NFLG_TYPE_SMSK          (NFLG_TYPE_MSK << NFLG_TYPE_POS)
+//@}
 
-// paint bit - the lm32 has visited this node
+/** @name Node flag field bit defs - Paint bit - the lm32 has visited this node */
+//@{
 #define NFLG_PAINT_LM32_MSK     0x1
 #define NFLG_PAINT_LM32_POS     8
 #define NFLG_PAINT_LM32_SMSK    (NFLG_PAINT_LM32_MSK << NFLG_PAINT_LM32_POS)
+//@}
 
-//paint bit - the host has visited this node
+/** @name Node flag field bit defs - paint bit - the host has visited this node - NOT IMPLEMENTED */
+//@{
 #define NFLG_PAINT_HOST_MSK     0x1
 #define NFLG_PAINT_HOST_POS     9
 #define NFLG_PAINT_HOST_SMSK    (NFLG_PAINT_HOST_MSK << NFLG_PAINT_HOST_POS)
+//@}
 
-// sync bit - this node should only be started synchronous to another
+/** @name Node flag field bit defs - sync bit - this node should only be started synchronous to another - NOT IMPLEMENTED */
+//@{
 #define NFLG_SYNC_MSK           0x1
 #define NFLG_SYNC_POS           10
 #define NFLG_SYNC_SMSK          (NFLG_SYNC_MSK << NFLG_SYNC_POS)
+//@}
 
-// Entry point bits - entry into beam processes and patterns
+/** @name Node flag field bit defs - Beam Process Entry Point - marks node as entry point (ie. alt destination)*/
+//@{
 #define NFLG_BP_ENTRY_LM32_MSK    0x1
 #define NFLG_BP_ENTRY_LM32_POS    12
 #define NFLG_BP_ENTRY_LM32_SMSK   (NFLG_BP_ENTRY_LM32_MSK << NFLG_BP_ENTRY_LM32_POS)
+//@}
 
+/** @name Node flag field bit defs - Pattern  Entry Point - marks node as entry point (ie. alt destination)*/
+//@{
 #define NFLG_PAT_ENTRY_LM32_MSK   0x1
 #define NFLG_PAT_ENTRY_LM32_POS   13
 #define NFLG_PAT_ENTRY_LM32_SMSK  (NFLG_PAT_ENTRY_LM32_MSK << NFLG_PAT_ENTRY_LM32_POS)
+//@}
 
-// Exit point bits - exit from beam processes and patterns
+/** @name Node flag field bit defs - Beam process exit point - marks node as entry point (ie. alt destination)*/
+//@{
 #define NFLG_BP_EXIT_LM32_MSK     0x1
 #define NFLG_BP_EXIT_LM32_POS     14
 #define NFLG_BP_EXIT_LM32_SMSK    (NFLG_BP_EXIT_LM32_MSK << NFLG_BP_EXIT_LM32_POS)
+//@}
 
+/** @name Node flag field bit defs - Pattern exit point - marks node as entry point (ie. alt destination)*/
+//@{
 #define NFLG_PAT_EXIT_LM32_MSK    0x1
 #define NFLG_PAT_EXIT_LM32_POS    15
 #define NFLG_PAT_EXIT_LM32_SMSK   (NFLG_PAT_EXIT_LM32_MSK << NFLG_PAT_EXIT_LM32_POS)
+//@}
 
-// Debug 0 Flag - for arbitrary use during debugging
+/** @name Node flag field bit defs - Debug0 - for arbitrary use during debugging */
+//@{
 #define NFLG_DEBUG0_MSK     0x1
 #define NFLG_DEBUG0_POS     16
 #define NFLG_DEBUG0_SMSK    (NFLG_DEBUG0_MSK << NFLG_DEBUG0_POS)
+//@}
 
-// Debug 10 Flag - for arbitrary use during debugging
+/** @name Node flag field bit defs - Debug1 - for arbitrary use during debugging */
+//@{
 #define NFLG_DEBUG1_MSK     0x1
 #define NFLG_DEBUG1_POS     17
 #define NFLG_DEBUG1_SMSK    (NFLG_DEBUG1_MSK << NFLG_DEBUG1_POS)
+//@}
 
-// Type dependent Flags ////////////////////////////////////////////////////////////
+/** @name Node flag field bit defs - Position of type specific flags */
+//@{
 #define NFLG_BITS_SPECIFIC_POS  20
+//@}
 
-// Timing Message //////////////////////////////////////////////////////////////////
-
-//FIXME selling my soul here by allowing dynamic changes to timing msg content. 
-// Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
-// Evil stuff and likely to explode in our faces at some point
-
-//The command is targeting a peer, i.e., target and dest address are inside a peers memory, not inside own
+/** @name Node flag field bit defs - The command is targeting a peer, i.e., target and dest address are inside a peers memory, not inside own - NOT IMPLEMENTED */
+//@{
 #define NFLG_CMD_PEER_MSK    0x1
 #define NFLG_CMD_PEER_POS    (NFLG_BITS_SPECIFIC_POS + 0)
 #define NFLG_CMD_PEER_SMSK   (NFLG_CMD_PEER_MSK << NFLG_CMD_PEER_POS)
+//@}
 
 
-//interprete ID low word as 64b ptr
+//FIXME selling my soul here by allowing dynamic changes to timing msg content.
+// Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
+// Evil stuff and likely to explode in our faces at some point
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
 #define NFLG_TMSG_DYN_ID_MSK    0x1
 #define NFLG_TMSG_DYN_ID_POS    (NFLG_BITS_SPECIFIC_POS + 0)
 #define NFLG_TMSG_DYN_ID_SMSK   (NFLG_TMSG_DYN_ID_MSK << NFLG_TMSG_DYN_ID_POS)
+//@}
 
-//interprete PAR low word as 64b ptr
+/** @name Node flag field bit defs - interprete PAR as 64b word  */
+//@{
 #define NFLG_TMSG_DYN_PAR_MSK   0x1
 #define NFLG_TMSG_DYN_PAR_POS   (NFLG_BITS_SPECIFIC_POS + 1)
 #define NFLG_TMSG_DYN_PAR_SMSK  (NFLG_TMSG_DYN_PAR_MSK << NFLG_TMSG_DYN_PAR_POS)
+//@}
 
-//interprete PAR low word as 32b ptr
+/** @name Node flag field bit defs - interprete PAR low word as 32b ptr */
+//@{
 #define NFLG_TMSG_DYN_PAR0_MSK  0x1
 #define NFLG_TMSG_DYN_PAR0_POS  (NFLG_BITS_SPECIFIC_POS + 2)
 #define NFLG_TMSG_DYN_PAR0_SMSK (NFLG_TMSG_DYN_PAR0_MSK << NFLG_TMSG_DYN_PAR0_POS)
+//@}
 
-//interprete PAR high word as 32b ptr
+/** @name Node flag field bit defs - interprete PAR high word as 32b ptr */
+//@{
 #define NFLG_TMSG_DYN_PAR1_MSK  0x1
 #define NFLG_TMSG_DYN_PAR1_POS  (NFLG_BITS_SPECIFIC_POS + 3)
 #define NFLG_TMSG_DYN_PAR1_SMSK (NFLG_TMSG_DYN_PAR1_MSK << NFLG_TMSG_DYN_PAR1_POS)
+//@}
 
-//interprete TEF low word as 32b ptr
+/** @name Node flag field bit defs - interprete TEF low word as 32b ptr */
+//@{
 #define NFLG_TMSG_DYN_TEF_MSK   0x1
 #define NFLG_TMSG_DYN_TEF_POS   (NFLG_BITS_SPECIFIC_POS + 4)
 #define NFLG_TMSG_DYN_TEF_SMSK  (NFLG_TMSG_DYN_TEF_MSK << NFLG_TMSG_DYN_TEF_POS)
+//@}
 
-//interprete RES low word as 32b ptr
+/** @name Node flag field bit defs - interprete RES low word as 32b ptr */
+//@{
 #define NFLG_TMSG_DYN_RES_MSK   0x1
 #define NFLG_TMSG_DYN_RES_POS   (NFLG_BITS_SPECIFIC_POS + 5)
 #define NFLG_TMSG_DYN_RES_SMSK  (NFLG_TMSG_DYN_RES_MSK << NFLG_TMSG_DYN_RES_POS)
+//@}
 
-//resolve all ptr fields when executing
+
+/** @name Node flag field bit defs - resolve all ptr fields when executing - NOT IMPLEMENTED */
+//@{
 #define NFLG_TMSG_RES_PTR_MSK   0x1
 #define NFLG_TMSG_RES_PTR_POS   (NFLG_BITS_SPECIFIC_POS + 6)
 #define NFLG_TMSG_RES_PTR_SMSK  (NFLG_TMSG_RES_PTR_MSK << NFLG_TMSG_RES_PTR_POS)
+//@}
 
-
-//Block has the following Queues
+/** @name Node flag field bit defs - Block has the following Queues */
+//@{
 #define NFLG_BLOCK_QS_MSK   0x7
 #define NFLG_BLOCK_QS_POS   (NFLG_BITS_SPECIFIC_POS + 0)
 #define NFLG_BLOCK_QS_SMSK  (NFLG_BLOCK_QS_MSK << NFLG_BLOCK_QS_POS)
+//@}
 
 
-#define OP_TYPE_SCH_BASE            0x10
-#define OP_TYPE_SCH_CLEAR           0x11
-#define OP_TYPE_SCH_ADD             0x12
-#define OP_TYPE_SCH_OVERWRITE       0x13
-#define OP_TYPE_SCH_REMOVE          0x14
-#define OP_TYPE_SCH_KEEP            0x15
+/** @name Operation types for diagnostic logging. This covers commands, switch and global changes such as add, start, stop etc */
+//@{
+#define OP_TYPE_SCH_BASE            0x10	///< Schedule - base offset for all schedule op types
+#define OP_TYPE_SCH_CLEAR           0x11	///< Schedule - clear all nodes
+#define OP_TYPE_SCH_ADD             0x12	///< Schedule - add graph
+#define OP_TYPE_SCH_OVERWRITE       0x13	///< Schedule - overwrite all nodes with graph
+#define OP_TYPE_SCH_REMOVE          0x14	///< Schedule - remove graph
+#define OP_TYPE_SCH_KEEP            0x15	///< Schedule - keep graph
 
-#define OP_TYPE_CMD_BASE            0x20
-#define OP_TYPE_CMD_FLOW            (OP_TYPE_CMD_BASE + ACT_TYPE_FLOW)
-#define OP_TYPE_CMD_NOP             (OP_TYPE_CMD_BASE + ACT_TYPE_NOOP)
-#define OP_TYPE_CMD_WAIT            (OP_TYPE_CMD_BASE + ACT_TYPE_WAIT)
-#define OP_TYPE_CMD_FLUSH           (OP_TYPE_CMD_BASE + ACT_TYPE_FLUSH)
-#define OP_TYPE_CMD_START           (OP_TYPE_CMD_BASE + 0x10)
-#define OP_TYPE_CMD_STOP            (OP_TYPE_CMD_BASE + 0x11)
-#define OP_TYPE_CMD_CEASE           (OP_TYPE_CMD_BASE + 0x12)
-#define OP_TYPE_CMD_ABORT           (OP_TYPE_CMD_BASE + 0x13)
-#define OP_TYPE_CMD_HALT            (OP_TYPE_CMD_BASE + 0x14)
+#define OP_TYPE_CMD_BASE            0x20	///< Command - base offset for all command op types
+#define OP_TYPE_CMD_FLOW            (OP_TYPE_CMD_BASE + ACT_TYPE_FLOW)	///< Command - flow
+#define OP_TYPE_CMD_NOP             (OP_TYPE_CMD_BASE + ACT_TYPE_NOOP)	///< Command - no operation
+#define OP_TYPE_CMD_WAIT            (OP_TYPE_CMD_BASE + ACT_TYPE_WAIT)	///< Command - wait
+#define OP_TYPE_CMD_FLUSH           (OP_TYPE_CMD_BASE + ACT_TYPE_FLUSH) ///< Command - flush
+#define OP_TYPE_CMD_SWITCH          (OP_TYPE_CMD_BASE + TYPE_CSWITCH) 	///< Command - switch immediately
+#define OP_TYPE_CMD_START           (OP_TYPE_CMD_BASE + 0x10)			///< Command - start pattern/node
+#define OP_TYPE_CMD_STOP            (OP_TYPE_CMD_BASE + 0x11)			///< Command - stop after pattern/block
+#define OP_TYPE_CMD_CEASE           (OP_TYPE_CMD_BASE + 0x12)			///< Command - cease NOT IMPLEMENTED
+#define OP_TYPE_CMD_ABORT           (OP_TYPE_CMD_BASE + 0x13)			///< Command - abort pattern/thread
+#define OP_TYPE_CMD_HALT            (OP_TYPE_CMD_BASE + 0x14)			///< Command - abort all threads
+//@}
 
 #endif
 

@@ -1,0 +1,11 @@
+digraph g {
+name="Locking!CMD!";
+
+graph []
+
+  
+  CMD_CLEAR   [type="asyncclear",   pattern="B" ];
+  
+
+
+}

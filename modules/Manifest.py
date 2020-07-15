@@ -13,6 +13,7 @@ modules = {
     "trans_pll",
     "modulbus",
     "chopper",
+    "cpri_phy_reconf",
     "cfi_flash",
     "ddr3",
     "lpc_uart",
@@ -25,6 +26,7 @@ modules = {
     "mil",
     "wb_mil_scu",
     "wb_arria_reset",
+    "dm_diag",
     "ftm",
     "lvds",
     "monster",
@@ -43,6 +45,12 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "stub_pll",
     "temp_sens",
+    "eca_tap",	
+    "beam_dump",
+    "daq",
+    "diob",
+    "wb_timer",
   ]
 }

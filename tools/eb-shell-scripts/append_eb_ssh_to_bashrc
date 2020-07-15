@@ -1,0 +1,7 @@
+
+# eb for ssh use
+if [ -f ~/eb-ssh-func.sh ]; then
+    . ~/eb-ssh-func.sh
+    _add_eb_aliases
+    _add_dm_aliases
+fi

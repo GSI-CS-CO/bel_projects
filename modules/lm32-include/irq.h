@@ -45,7 +45,7 @@
 
 #include <inttypes.h>
 #include <stdint.h>
-#include "mprintf.h"
+#include "pp-printf.h"
 
 #ifndef __GNUC_STDC_INLINE__
 #error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!

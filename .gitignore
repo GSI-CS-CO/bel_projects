@@ -1,4 +1,5 @@
 gcc-4.5.3-lm32.tar.xz
+lm32-elf-gcc.tar.xz
 toolchain/
 bin/
 lib/
@@ -26,4 +27,9 @@ syn
 *.swo
 *.swp
 *.orig
+*.qicache
+*~
 greybox_tmp
+*_shared_mmap.h
+buildid.c
+ram.ld

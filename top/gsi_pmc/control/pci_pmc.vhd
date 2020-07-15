@@ -8,7 +8,7 @@ use work.altera_lvds_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_pmc is
-  generic( 
+  generic(
     g_LOAD_SHIFT_REG_EN : boolean := false
   );
   port(
@@ -28,18 +28,18 @@ entity pci_pmc is
     -----------------------------------------------------------------------
     fpga_res_i        : in std_logic;
     nres_i            : in std_logic;
-    
+
     -----------------------------------------------------------------------
-    -- SFP 
+    -- SFP
     -----------------------------------------------------------------------
-   
+
     sfp_tx_dis_o     : out std_logic := '0';
     sfp_tx_fault_i   : in  std_logic;
     sfp_los_i        : in  std_logic;
-    
+
     sfp_txp_o        : out std_logic;
     sfp_rxp_i        : in  std_logic;
-    
+
     sfp_mod0_i       : in    std_logic;  -- grounded by module
     sfp_mod1_io      : inout std_logic;  -- SCL
     sfp_mod2_io      : inout std_logic;  -- SDA
@@ -50,12 +50,12 @@ entity pci_pmc is
     wr_dac_sclk_o  : out std_logic;
     wr_dac_din_o   : out std_logic;
     wr_ndac_cs_o   : out std_logic_vector(2 downto 1);
-    
+
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
     rom_data_io        : inout std_logic;
-    
+
     -----------------------------------------------------------------------
     -- lcd display
     -----------------------------------------------------------------------
@@ -64,12 +64,12 @@ entity pci_pmc is
     dis_do_i        : in  std_logic;
     dis_wr_o        : out std_logic := '0';
     dis_rst_o       : out std_logic := '1';
-    
+
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
     con             : in std_logic_vector(5 downto 1);
-    
+
     -----------------------------------------------------------------------
     -- logic analyzer
     -----------------------------------------------------------------------
@@ -80,7 +80,7 @@ entity pci_pmc is
     -- hex switch
     -----------------------------------------------------------------------
     hswf_i          : in std_logic_vector(4 downto 1);
-    
+
     -----------------------------------------------------------------------
     -- push buttons
     -----------------------------------------------------------------------
@@ -98,12 +98,12 @@ entity pci_pmc is
     ures              : out   std_logic;
     ifclk             : inout std_logic := 'Z';
     wakeup            : inout std_logic := 'Z';
-    
+
     -----------------------------------------------------------------------
     -- leds on board - user
     -----------------------------------------------------------------------
     led_user_o      : out std_logic_vector(8 downto 1) := (others => '0');
-    
+
     -----------------------------------------------------------------------
     -- leds on front panel - status
     -----------------------------------------------------------------------
@@ -156,7 +156,7 @@ entity pci_pmc is
     pmc_intd_o        : out   std_logic;
     pmc_req_o         : out   std_logic;
     pmc_gnt_i         : in    std_logic
-    
+
     );
 end pci_pmc;
 
@@ -166,31 +166,31 @@ architecture rtl of pci_pmc is
 
   signal clk_sys       : std_logic;
   signal clk_200m      : std_logic;
-  
+
   signal s_led_status_monster : std_logic_vector(6 downto 1);
   signal s_led_user_monster   : std_logic_vector(8 downto 1);
 
   signal s_led_status         : std_logic_vector(6 downto 1);
   signal s_led_user           : std_logic_vector(8 downto 1);
- 
+
   signal s_gpio_out           : std_logic_vector(8 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
-  
-  signal s_test_sel     : std_logic_vector(4 downto 0);  
-  
+
+  signal s_test_sel     : std_logic_vector(4 downto 0);
+
   -- white rabbit status leds
   signal s_led_link_up  : std_logic;
   signal s_led_link_act : std_logic;
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
-  
+
   -- front panel io leds
   signal s_led_frnt_red  : std_logic;
   signal s_led_frnt_blue : std_logic;
-  
+
   -- user leds (on board)
   signal s_leds_user    : std_logic_vector(3 downto 0);
-  
+
   -- io differential and control signals
   signal s_lvds_p_i     : std_logic_vector(4 downto 0);
   signal s_lvds_n_i     : std_logic_vector(4 downto 0);
@@ -205,7 +205,7 @@ architecture rtl of pci_pmc is
   signal s_lvds_led     : std_logic_vector(4 downto 0);
 
   signal s_wr_ext_in    : std_logic;
-  
+
   -- logic analyzer
   signal s_log_oe   : std_logic_vector(16 downto 0);
   signal s_log_out  : std_logic_vector(16 downto 0);
@@ -213,7 +213,7 @@ architecture rtl of pci_pmc is
 
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 23) := 
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 23) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1       ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL  ), -- user LEDs
@@ -242,15 +242,15 @@ architecture rtl of pci_pmc is
     ("IO5        ", IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL)
   );
 
-  
-  constant c_family     : string := "Arria V"; 
+
+  constant c_family     : string := "Arria V";
   constant c_project    : string := "pci_pmc";
   constant c_cores      : natural:= 1;
   constant c_initf_name : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
 
-  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
-  -- multiple init files for n processors are to be seperated by semicolon ';' 
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
+  -- multiple init files for n processors are to be seperated by semicolon ';'
 
 
   constant c_LOAD_SHIFT_REG_WIDTH : positive := 16;
@@ -275,33 +275,36 @@ architecture rtl of pci_pmc is
 
   signal core_debug_out       : std_logic_vector(15 downto 0);
 
-  
-  
+
+
 begin
 
   main : monster
     generic map(
-      g_family          => c_family,
-      g_project         => c_project,
-      g_flash_bits      => 25,
-      g_lvds_inout      => 5,  -- 5 LEMOs at front panel
-      g_lvds_in         => 0,
-      g_lvds_out        => 0,
-      g_gpio_out        => 9,  -- 8 on-boards LEDs, internal HW test enable
-      g_gpio_in         => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
-      g_fixed           => 0,
-      g_lvds_invert     => false,
-      g_en_usb          => true,
-      g_en_lcd          => true,
-      g_en_user_ow      => false,
-      g_en_tempsens     => true,
-      g_en_pmc          => true,
-      g_io_table        => io_mapping_table,
-      g_lm32_cores      => c_cores,
-      g_lm32_ramsizes   => c_lm32_ramsizes/4,
-      g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
-    )  
+      g_family            => c_family,
+      g_project           => c_project,
+      g_flash_bits        => 25,
+      g_lvds_inout        => 5,  -- 5 LEMOs at front panel
+      g_lvds_in           => 0,
+      g_lvds_out          => 0,
+      g_gpio_out          => 9,  -- 8 on-boards LEDs, internal HW test enable
+      g_gpio_in           => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
+      g_fixed             => 0,
+      g_lvds_invert       => false,
+      g_en_usb            => true,
+      g_en_lcd            => true,
+      g_en_user_ow        => false,
+      g_en_tempsens       => true,
+      g_en_pmc            => true,
+      g_delay_diagnostics => true,
+      g_en_timer          => true,
+      g_en_eca_tap        => true,
+      g_io_table          => io_mapping_table,
+      g_lm32_cores        => c_cores,
+      g_lm32_ramsizes     => c_lm32_ramsizes/4,
+      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
@@ -390,7 +393,7 @@ begin
 
   -- pci bus switch enable (active low)
   -- enable pci bus switches when FPGA is initialized and enters user mode (internal pull-ups disabled)
-  pmc_bsw_en_n_o <= '0'; 
+  pmc_bsw_en_n_o <= '0';
 
   -- irq lines b,c,d not used
   pmc_intb_o <= 'Z';
@@ -425,16 +428,16 @@ begin
   dis_wr_o    <= '0';
   dis_rst_o   <= '1';
 
-  -- WR status LEDs 
+  -- WR status LEDs
   s_dis_led_green <= s_gpio_out(4) when s_gpio_out(8)='1' else (    s_led_link_up and     s_led_track); -- green
   s_dis_led_red   <= s_gpio_out(5) when s_gpio_out(8)='1' else (not s_led_link_up                    ); -- red
   s_dis_led_blue  <= s_gpio_out(6) when s_gpio_out(8)='1' else (    s_led_link_up and not s_led_track); -- blue
-  
+
   -- display backlight color - pullups
   dis_di_o(4) <= '0' when s_dis_led_green = '1' else 'Z'; -- green
   dis_di_o(5) <= '0' when s_dis_led_red   = '1' else 'Z'; -- red
   dis_di_o(6) <= '0' when s_dis_led_blue  = '1' else 'Z'; -- blue
-  
+
   -- WR Link status LEDs
   s_led_status_monster(4) <= s_led_link_act and s_led_link_up;   -- red   = traffic/no-link
   s_led_status_monster(1) <= s_led_link_up;                      -- blue  = link
@@ -449,42 +452,42 @@ begin
   -- status LED output according to FPGA hex switch position and fpga button
   -- F position - simple led test
   with s_test_sel select
-    s_led_status <= "000000"                        	when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test - leds off
+    s_led_status <= "000000"                          when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test - leds off
                     "111111"                          when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test - leds on
-	                  s_shift_reg_to_leds(15 downto 10) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
+                    s_shift_reg_to_leds(15 downto 10) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
                     s_led_status_monster              when others;         -- driven by monster
 
   -- Status LED index position on the front panel according to schematic and signal names
   --   ================================
-  --   | [   ] 4  1  
+  --   | [   ] 4  1
   --   | |SFP| 5  2  Lemos
   --   | [   ] 6  3
   --   --------------------------------
 
-  led_status_o <= not s_led_status;                  
+  led_status_o <= not s_led_status;
 
-  -- USER LED output according to fpga hex switch position and fpga button                  
+  -- USER LED output according to fpga hex switch position and fpga button
   -- F position - simple led test
   -- D position - show state of CPLD hex switch and button
   with s_test_sel select
     s_led_user <= x"00"                       when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test - leds off
                   x"FF"                       when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test - leds on
-                  ("000" &     con)           when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
-                  ("000" & not con)           when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                  core_debug_out( 7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
-                  core_debug_out(15 downto 8) when ('1' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
+                  ("000" &     con)           when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test
+                  ("000" & not con)           when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test
+                  core_debug_out( 7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position C, button not pressed, xwb control signals for pmc master output
+                  core_debug_out(15 downto 8) when ('1' & x"C"),   -- FPGA hex sw in position C, button     pressed, xwb control signals for pmc master output
                   s_gpio_out(7 downto 0)      when others;         -- driven by monster
 
   led_user_o <= not s_led_user;
 
- 
+
 
   -- enable LEMO output buffers (active LO)
   lvtio_oe_n_o <= not s_lvds_oe(4 downto 0);
 
   -- LEMO activity LEDs (active HI)
   s_lvds_led(4 downto 0) <= s_lvds_i_led(4 downto 0) or s_lvds_o_led(4 downto 0);
-  
+
   -- LVDS termination pins (active hi)
   with s_test_sel select
     lvtio_term_en_o <= (others => '0')                 when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
@@ -517,7 +520,7 @@ begin
 
 
   -- External white rabbit clock input enable (active low)
-  lvt_in_clk_en_n_o <= not(s_wr_ext_in); 
+  lvt_in_clk_en_n_o <= not(s_wr_ext_in);
 
 
 
@@ -539,12 +542,12 @@ begin
 		   return x(30 downto 0) & (x(0) xnor x(1) xnor x(21) xnor x(31));
 	    end function;
     begin
-      if rising_edge(clk_200m) then 
+      if rising_edge(clk_200m) then
 
         s_pseudo_rand_reg <= lfsr32(s_pseudo_rand_reg);
-          
+
         for i in 0 to (c_LOAD_SHIFT_REG_WIDTH- 1) loop
-          if s_load_shift_en = '1' then 
+          if s_load_shift_en = '1' then
             s_load_shift_reg_arr(i) <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-2 downto 0) & s_pseudo_rand_reg(i);
           else
             s_load_shift_reg_arr(i) <= s_load_shift_reg_arr(i);
@@ -552,8 +555,8 @@ begin
 
           -- assign shift register output to logic analyzer port
           s_shift_reg_out(i)     <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-1);
-			   
-				  if s_led_reg_en = '1' then 
+
+				  if s_led_reg_en = '1' then
             s_shift_reg_to_leds(i) <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-1) ;
 				  else
             s_shift_reg_to_leds(i) <= s_shift_reg_to_leds(i);
@@ -572,18 +575,18 @@ begin
           s_reg_blink_counter <= s_reg_blink_counter + 1;
         end if;
       end if;
-    end process;    
+    end process;
 
     -- show shift reg output on front panel leds, set refresh rate with CPLD hex switch)
     s_led_reg_en <= '1' when ((to_integer(s_reg_blink_counter) >=  25_000_000 and con(4 downto 1) = x"0") or
                               (to_integer(s_reg_blink_counter) >=  50_000_000 and con(4 downto 1) = x"1") or
                               (to_integer(s_reg_blink_counter) >= 100_000_000 and con(4 downto 1) = x"2")
-                             ) 
+                             )
                      else '0';
-    
+
     -- assign shift register output to logic analyzer port
     hpw <= s_shift_reg_out(hpw'range);
-    
+
     s_log_in(15 downto 0) <= (others => '0');
     s_log_in(16)          <= '0';
 
@@ -602,7 +605,7 @@ begin
     hpwck                 <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
     hpw_out : for i in 0 to 15 generate
       hpw(i)               <= s_log_out(i) when s_log_oe(i) = '1' else 'Z';
-    end generate;  
+    end generate;
   end generate; -- gen_load_shift_reg_false
-  
+
 end rtl;

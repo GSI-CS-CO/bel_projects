@@ -205,7 +205,7 @@ typedef struct
   unsigned indexPreSize;
 
   CXzStreamFlags streamFlags;
-  
+
   UInt32 blockHeaderSize;
   UInt64 packSize;
   UInt64 unpackSize;

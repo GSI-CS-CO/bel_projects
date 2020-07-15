@@ -35,7 +35,7 @@ namespace DotStr {
       namespace Base {
         extern const std::string sType;
       }
-    }  
+    }
 
     namespace TypeVal {
       // edge type tags
@@ -45,7 +45,10 @@ namespace DotStr {
       extern const std::string sAltDst;
       extern const std::string sBadDefDst;
       extern const std::string sCmdTarget;
+      extern const std::string sSwitchTarget;     // Links to Switch's Target 
+      extern const std::string sSwitchDst;     // Links to Switch's Target Block
       extern const std::string sCmdFlowDst;
+      extern const std::string sCmdFlushOvr;
       extern const std::string sDynId;
       extern const std::string sDynPar0;
       extern const std::string sDynPar1;
@@ -62,7 +65,7 @@ namespace DotStr {
   namespace Node {
     namespace Special {
       extern const std::string sIdle;
-    }  
+    }
     // node properties
     namespace Prop {
       namespace Base {
@@ -71,22 +74,22 @@ namespace DotStr {
         extern const std::string sCpu;
         extern const std::string sThread;
         extern const std::string sFlags;
-        extern const std::string sPatEntry; 
+        extern const std::string sPatEntry;
         extern const std::string sPatExit;
         extern const std::string sPatName;
-        extern const std::string sBpEntry; 
+        extern const std::string sBpEntry;
         extern const std::string sBpExit;
         extern const std::string sBpName;
       }
 
       namespace Block {
- 
+
         extern const std::string sTimePeriod;
         extern const std::string sGenQPrioHi;
         extern const std::string sGenQPrioMd;
         extern const std::string sGenQPrioLo;
         extern const std::string sGenQPrio[];
-      }  
+      }
 
       namespace TMsg {
 
@@ -102,13 +105,13 @@ namespace DotStr {
           extern const std::string sReqNoB;
           extern const std::string sVacc;
           extern const std::string sRes;
-        } 
+        }
         extern const std::string sPar;
         extern const std::string sTef;
       }
 
       namespace Cmd {
-     
+
         extern const std::string sTimeValid;
         extern const std::string sVabs;
         extern const std::string sPrio;
@@ -119,9 +122,10 @@ namespace DotStr {
         extern const std::string sDstPattern;
         extern const std::string sDstBeamproc;
         extern const std::string sPermanent;
-        
-        
-      }  
+
+
+
+      }
     }
 
 
@@ -142,12 +146,16 @@ namespace DotStr {
       extern const std::string sTMsg;
       extern const std::string sCmdNoop;
       extern const std::string sCmdFlow;
+      extern const std::string sSwitch;
       extern const std::string sCmdFlush;
       extern const std::string sCmdWait;
       extern const std::string sCmdStart;
       extern const std::string sCmdStop;
       extern const std::string sCmdAbort;
       extern const std::string sCmdOrigin;
+      extern const std::string sCmdLock;
+      extern const std::string sCmdUnlock;
+      extern const std::string sCmdAsyncClear;
       extern const std::string sBlock;
       extern const std::string sBlockFixed;
       extern const std::string sBlockAlign;
@@ -158,8 +166,9 @@ namespace DotStr {
       extern const bool bMetaNode;
       extern const bool bRealNode;
 
-    }  
-  }  
+
+    }
+  }
 
   namespace Graph {
     namespace Special {
@@ -169,10 +178,10 @@ namespace DotStr {
     namespace Prop {
       extern const std::string sName;
       extern const std::string sRoot;
-    }  
+    }
     extern const std::string sDefName;
   }
-  
+
   //Configures how a dot will be rendered
   namespace EyeCandy {
 
@@ -180,7 +189,7 @@ namespace DotStr {
       extern const std::string sLookVert;
       extern const std::string sLookHor;
     }
-    
+
     namespace Node {
       namespace Base {
         extern const std::string sLookDef;
@@ -192,7 +201,7 @@ namespace DotStr {
         extern const std::string sLookDebug2;
         extern const std::string sLookPatEntry;
         extern const std::string sLookPatExit;
-      }  
+      }
       namespace Block {
         extern const std::string sLookDef;
         extern const std::string sLookFix;
@@ -201,18 +210,23 @@ namespace DotStr {
       }
       namespace TMsg {
         extern const std::string sLookDef;
-      }  
+      }
       namespace Cmd {
         extern const std::string sLookDef;
 
       }
+      namespace Switch {
+        extern const std::string sLookDef;
+
+      }
+
       namespace Meta {
         extern const std::string sLookDef;
       }
-    } 
+    }
 
     namespace Edge {
-   
+
       extern const std::string sLookDefDst;
       extern const std::string sLookAltDst;
       extern const std::string sLookMeta;
@@ -222,8 +236,8 @@ namespace DotStr {
       extern const std::string sLookDebug1;
       extern const std::string sLookDebug2;
       extern const std::string sLookbad;
-      
-    }   
+
+    }
   }
 
 

@@ -1,0 +1,18 @@
+# system info sys_pll10 on 2018.07.25.10:59:58
+system_info:
+name,value
+DEVICE,10AS066N3F40E2SG
+DEVICE_FAMILY,Arria 10
+GENERATION_ID,1532509197
+#
+#
+# Files generated for sys_pll10 on 2018.07.25.10:59:58
+files:
+filepath,kind,attributes,module,is_top
+sim/sys_pll10.vhd,VHDL,CONTAINS_INLINE_CONFIGURATION,sys_pll10,true
+altera_iopll_160/sim/sys_pll10_altera_iopll_160_pcex3oq.vo,VERILOG,,sys_pll10_altera_iopll_160_pcex3oq,false
+#
+# Map from instance-path to kind of module
+instances:
+instancePath,module
+sys_pll10.iopll_0,sys_pll10_altera_iopll_160_pcex3oq

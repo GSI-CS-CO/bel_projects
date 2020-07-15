@@ -56,7 +56,7 @@ begin
     ena_deb: debounce_ifa
     generic map (cnt => 4)
     port map (  sig => sig_i(I),
-                sel => '0',
+                sel => '1',
                 cnt_en => cnt_ena,
                 clk => clk,
                 res => sclr,

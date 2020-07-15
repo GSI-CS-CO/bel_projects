@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 01-May-2018
+//  version : 16-Jan-2020
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 // etherbone
 #include <etherbone.h>
@@ -63,6 +64,8 @@ eb_address_t wb4_1wire      = EB_NULL;
 eb_address_t user_1wire     = EB_NULL;
 eb_address_t reset_addr     = EB_NULL;
 eb_address_t brom_addr      = EB_NULL;
+eb_address_t dm_diag_addr   = EB_NULL;
+eb_address_t eca_tap_addr   = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -129,6 +132,10 @@ uint8_t wire1_crc8(uint8_t *addr, uint8_t len, uint8_t family )
 eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
 {
   eb_status_t status;
+  char        udpLProto[] = "udp/";
+  char        udpHProto[] = "UDP/";
+  short       isUdp;
+  
 
 #ifdef WB_SIMULATE
   *device = EB_NULL;
@@ -139,9 +146,21 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
 
   *device = EB_NULL;
   *socket = EB_NULL;
-  
+
+  // check, if protocol is UDP
+  isUdp = 0;
+  if (strstr(dev, udpLProto)) isUdp = 1;
+  if (strstr(dev, udpHProto)) isUdp = 1;
+
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, socket)) != EB_OK) return status;
   if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 2, device)) != EB_OK) return status;
+
+  // if protocol is UDP, then wait for 100ms.
+  // eb_device_open will (most of the time) cause an ARP request
+  // the answer from the node flies through the WRS, but the WRS need many milliseconds to learn the nodes MAC address
+  // sleeping intends to give the WRS enough time for MAC address learning before we start EB communication to the node
+  // this is a hack!
+  if (isUdp) usleep(200000);
 
   known_sock = *socket;
 
@@ -387,10 +406,301 @@ eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
 } // wb_wr_get_uptime
 
 
+eb_status_t wb_wr_stats_get_lock(eb_device_t device, int devIndex, uint64_t *lockLossTS, uint64_t *lockAcqTS, uint32_t *lockNAcq)
+{
+  eb_cycle_t   cycle;
+  eb_data_t    data0, data1, data2, data3, data4;
+  eb_status_t  status;
+
+  int          syncState;
+
+#ifdef WB_SIMULATE
+  *lockLossTS = 0xffffffffffffffff;
+  *lockAcqTS  = 4711;
+  *lockNAcq   = 17
+
+  return EB_OK;
+#endif
+
+  *lockLossTS = 0xffffffffffffffff;
+  *lockAcqTS  = 0xffffffffffffffff;
+  *lockNAcq   = 0xffffffff;
+
+  if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data0);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data1);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data2);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data3);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_CNT_GET_0,          EB_BIG_ENDIAN|EB_DATA32, &data4);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  *lockLossTS = (uint64_t)data1 << 32;
+  *lockLossTS = *lockLossTS + (uint64_t)data0;
+  *lockAcqTS  = (uint64_t)data3 << 32;
+  *lockAcqTS  = *lockAcqTS  + (uint64_t)data2;
+  *lockNAcq   = data4;
+
+  // mark nsecs in case no lock has been acquired so far
+  if (*lockNAcq == 0) {
+    *lockLossTS = 0xffffffffffffffff;
+    *lockAcqTS  = 0xffffffffffffffff;
+  }
+
+  // mark nsecsAcq in case TR is not in TRACK_PHASE
+  wb_wr_get_sync_state(device, 0, &syncState);
+  if (syncState != WR_PPS_GEN_ESCR_MASK) {
+    *lockAcqTS  = 0xffffffffffffffff;
+  }
+
+  return status;
+} // wb_wr_get_lock_stats  
+
+
+eb_status_t wb_wr_stats_get_continuity(eb_device_t device, int devIndex, uint64_t *contObsT, int64_t  *contMaxPosDT, uint64_t *contMaxPosTS, int64_t  *contMaxNegDT, uint64_t *contMaxNegTS)
+{ 
+  eb_cycle_t   cycle;
+  eb_data_t    data0, data1, data2, data3, data4, data5, data6, data7, data8, data9;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  *contObsT     = 0x64
+  *contMaxPosDT = 0x32;
+  *contMaxPosTS = 0x4711;
+  *contMaxNetDT = 0x7fffffffffff4711;
+  *contMaxNegTS = 0x4712;
+
+  return EB_OK;
+#endif
+
+  *contObsT     = 0xffffffffffffffff;
+  *contMaxPosDT = 0xffffffffffffffff;
+  *contMaxPosTS = 0xffffffffffffffff;
+  *contMaxNegDT = 0xffffffffffffffff;
+  *contMaxNegTS = 0xffffffffffffffff;
+
+  if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_0, EB_BIG_ENDIAN|EB_DATA32, &data0);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1, EB_BIG_ENDIAN|EB_DATA32, &data1);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_POS_GET_0,             EB_BIG_ENDIAN|EB_DATA32, &data2);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_POS_GET_1,             EB_BIG_ENDIAN|EB_DATA32, &data3);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_POS_TS_GET_0,          EB_BIG_ENDIAN|EB_DATA32, &data4);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_POS_TS_GET_1,          EB_BIG_ENDIAN|EB_DATA32, &data5);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_NEG_GET_0,             EB_BIG_ENDIAN|EB_DATA32, &data6);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_NEG_GET_1,             EB_BIG_ENDIAN|EB_DATA32, &data7);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_NEG_TS_GET_0,          EB_BIG_ENDIAN|EB_DATA32, &data8);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_TIME_DIF_NEG_TS_GET_1,          EB_BIG_ENDIAN|EB_DATA32, &data9);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  *contObsT     = (uint64_t)data1 << 32;
+  *contObsT     = *contObsT + (uint64_t)data0;
+  *contMaxPosDT = (uint64_t)data3 << 32;
+  *contMaxPosDT = *contMaxPosDT + (uint64_t)data2;
+  *contMaxPosTS = (uint64_t)data5 << 32;
+  *contMaxPosTS = *contMaxPosTS + (uint64_t)data4;
+  *contMaxNegDT = (uint64_t)data7 << 32;
+  *contMaxNegDT = *contMaxNegDT + (uint64_t)data6;
+  *contMaxNegTS = (uint64_t)data9 << 32;
+  *contMaxNegTS = *contMaxNegTS + (uint64_t)data8;
+
+  return status;
+} // wb_wr_stats_get_continuity
+
+
+eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t stallObsCPU, uint64_t *stallObsT, uint32_t *stallMax, uint32_t *stallAct, uint64_t *stallTS)
+{
+  eb_cycle_t   cycle;
+  eb_data_t    data0, data1, data2, data3, data4;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  *stallObsT      = 0x64;
+  *stallMax       = 0x17;
+  *stallAct       = 0x42;
+  *stallTS        = 0x4711;
+
+  return EB_OK;
+#endif
+
+  *stallObsT      = 0xffffffffffffffff;
+  *stallMax       = 0xffffffff; 
+  *stallAct       = 0xffffffff;
+  *stallTS        = 0xffffffffffffffff;
+
+  if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
+
+  // select CPU
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_STALL_STAT_SELECT_RW,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)stallObsCPU);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  // read data
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_read(cycle , dm_diag_addr + DM_DIAG_STALL_OBSERVATION_INTERVAL_RW, EB_BIG_ENDIAN|EB_DATA32, &data0);
+  eb_cycle_read(cycle , dm_diag_addr + DM_DIAG_STALL_STREAK_MAX_GET,          EB_BIG_ENDIAN|EB_DATA32, &data1);
+  eb_cycle_read(cycle , dm_diag_addr + DM_DIAG_STALL_CNT_GET,                 EB_BIG_ENDIAN|EB_DATA32, &data2);
+  eb_cycle_read(cycle , dm_diag_addr + DM_DIAG_STALL_MAX_TS_GET_0,            EB_BIG_ENDIAN|EB_DATA32, &data3);
+  eb_cycle_read(cycle , dm_diag_addr + DM_DIAG_STALL_MAX_TS_GET_1,            EB_BIG_ENDIAN|EB_DATA32, &data4);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  *stallObsT      = 0;
+  *stallObsT      = *stallObsT + (uint64_t)data0;
+  *stallMax       = (uint32_t)data1;
+  *stallAct       = (uint32_t)data2;
+  *stallTS        = (uint64_t)data4 << 32;
+  *stallTS        = *stallTS + (uint64_t)data3;
+  
+  return status;
+} // wb_wr_stats_get_stall
+
+
+eb_status_t wb_wr_stats_reset(eb_device_t device, int devIndex, uint64_t contObsT, uint32_t stallObsT)
+{
+  eb_cycle_t  cycle;
+  uint32_t    contObsTHi, contObsTLo;
+  eb_status_t status;
+
+  contObsTHi = (uint32_t)(contObsT >> 32);
+  contObsTLo = (uint32_t)(contObsT & 0xffffffff);
+
+  if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
+  
+  // set intervals
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)contObsTHi);
+  eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_0, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)contObsTLo);
+  eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_STALL_OBSERVATION_INTERVAL_RW,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)stallObsT);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  // reset
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_RESET_OWR,                      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  
+  return status;
+} // wb_wr_stats_reset
+
+
+eb_status_t wb_eca_stats_reset(eb_device_t device, int devIndex, int32_t lateOffset)
+{
+  eb_cycle_t  cycle;
+  eb_status_t status;
+
+  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
+
+  // reset 
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_RESET_OWR, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  // clear counters and set late offset
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_OFFSET_LATE_RW, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)lateOffset);
+  eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CLEAR_OWR,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  
+  return status;  
+} // wb_eca_stats_reset
+
+
+eb_status_t wb_eca_stats_clear(eb_device_t device, int devIndex, uint32_t clearFlag)
+{
+  eb_cycle_t  cycle;
+  eb_status_t status;
+
+  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CLEAR_OWR, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)clearFlag);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  
+  return status;  
+} // wb_wr_stats_clear
+
+
+eb_status_t wb_eca_stats_enable(eb_device_t device, int devIndex, uint32_t enableFlag)
+{
+  eb_cycle_t  cycle;
+  eb_status_t status;
+
+  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CAPTURE_RW, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)enableFlag);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  
+  return status;  
+} // wb_eca_stats_enable
+
+
+eb_status_t wb_eca_stats_get(eb_device_t device, int devIndex, uint64_t *nMessage, int64_t *dtSum, int64_t *dtMin, int64_t *dtMax, uint32_t *nLate, int32_t *lateOffset)
+{
+  eb_cycle_t   cycle;
+  eb_data_t    data0, data1, data2, data3, data4, data5, data6, data7, data8, data9;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  *nMessage     = 17;
+  *dtSum        = 0x47114711;
+  *dtMin        = 444;
+  *dtMax        = 888;
+
+  return EB_OK;
+#endif
+
+  *nMessage     = 0xffffffffffffffff;
+  *dtSum        = 0xffffffffffffffff;
+  *dtMin        = 0xffffffffffffffff;
+  *dtMax        = 0xffffffffffffffff;
+
+  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) {
+    *nMessage   = 0;
+    *dtSum      = 0;
+    *dtMin      = 0;
+    *dtMax      = 0;
+    *nLate      = 0;
+    *lateOffset = 0;
+
+    return status;
+  } // wb_check_device
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_CNT_MSG_GET_0,  EB_BIG_ENDIAN|EB_DATA32, &data0);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_CNT_MSG_GET_1,  EB_BIG_ENDIAN|EB_DATA32, &data1);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_ACC_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data2);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_ACC_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data3);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_MIN_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data4);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_MIN_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data5);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_MAX_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data6);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_DIFF_MAX_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data7);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_CNT_LATE_GET,   EB_BIG_ENDIAN|EB_DATA32, &data8);
+  eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_OFFSET_LATE_RW, EB_BIG_ENDIAN|EB_DATA32, &data9);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  *nMessage     = (uint64_t)data1 << 32;
+  *nMessage     = *nMessage + (uint64_t)data0;
+  *dtSum        = (uint64_t)data3 << 32;
+  *dtSum        = *dtSum + (uint64_t)data2;
+  *dtMin        = (uint64_t)data5 << 32;
+  *dtMin        = *dtMin + (uint64_t)data4;
+  *dtMax        = (uint64_t)data7 << 32;
+  *dtMax        = *dtMax + (uint64_t)data6;
+  *nLate        = (uint32_t)data8;
+  *lateOffset   = (int32_t)data9;
+  
+  return status;
+} // wb_eca_stats_get
+
+
 eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, uint64_t *id)
 {
   eb_status_t  status;
-  uint64_t     oneWireID;
   uint8_t      len4CRC;
   uint16_t     CRC;
 
@@ -425,10 +735,7 @@ eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIn
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
     if ((d->rom & 0xff) == family) {
-      oneWireID = (int)(d->rom >> 32);
-      oneWireID = (oneWireID << 32);
-      oneWireID = oneWireID + (int)(d->rom);
-      *id = oneWireID;
+      *id = d->rom;
       CRC = wire1_crc8((uint8_t*)id, len4CRC, family);
       if (!CRC)                     return EB_ADDRESS; // CRC == 0 is illegal
       if (CRC == ((uint8_t*)id)[7]) return status;     // CRC ok
@@ -503,7 +810,29 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
 
   return status;
-} // wb_wr_reset 
+} // wb_wr_reset
+
+
+eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_WATCHDOG_DISABLE;
+  data    = (eb_data_t)0xcafebabe;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_watchdog
 
 
 eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)

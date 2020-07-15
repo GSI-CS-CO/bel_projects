@@ -1,0 +1,22 @@
+digraph g {
+name="Loop";
+edge  [type="defdst"]
+node  [cpu="0"];
+  
+  INIT_A0 		[type="block", pattern="IN_A", patentry="true", patexit="true", tperiod=1000];  
+  INIT_B0 		[type="flow", pattern="IN_B", patentry="true", toffs=0, prio="0", qty=10, tvalid=0, vabs="true"];
+  INIT_B1 		[type="block", pattern="IN_B", patexit="true", tperiod=1000];
+  MSG_A  		[type="tmsg", pattern="A",  patentry="true", toffs=0, par="0x0", id="0x1000000000000000"];
+  BLOCK_A  		[type="block", pattern="A", patexit="true", tperiod=1000];
+  BLOCK_LOOP	[type="block", pattern="LOOP", patentry="true", patexit="true", qlo="1", tperiod=1000];
+  BLOCK_EXIT	[type="block", pattern="EXIT", patentry="true", patexit="true", tperiod=10];
+
+  INIT_A0 -> BLOCK_LOOP -> BLOCK_EXIT;
+  INIT_B0 -> INIT_B1 -> BLOCK_LOOP;
+  
+  MSG_A -> BLOCK_A -> BLOCK_LOOP;
+  BLOCK_LOOP->MSG_A [type="altdst"];
+
+  INIT_B0 -> BLOCK_LOOP [type="target"];
+  INIT_B0 -> MSG_A 		[type="flowdst"];
+}

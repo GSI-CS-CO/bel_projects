@@ -1,0 +1,34 @@
+digraph g {
+name="QueuePrioAndTypeTest!CMD!";
+
+graph []
+
+  CMD_P_LO0   [type="noop",   pattern="IN0", vabs="true",                              prio="0"];
+  CMD_P_LO1   [type="flow",   pattern="IN0", vabs="true", tvalid="0",                  prio="0", destpattern="B"];
+  CMD_P_LO2   [type="flush",  pattern="IN0", vabs="true", tvalid="0100",               prio="0", qil="1", qhi="1", qlo="1"];
+  CMD_P_LO3   [type="wait",   pattern="IN0", vabs="true", tvalid="0x7fffffffffffffff", prio="0", twait="50000"];
+  CMD_P_HI0   [type="noop",   pattern="IN0", vabs="true",                              prio="1"];
+  CMD_P_HI1   [type="flow",   pattern="IN0", vabs="true", tvalid="0",                  destpattern="B",   prio="1"];
+  CMD_P_HI2   [type="flush",  pattern="IN0", vabs="true", tvalid="0100" ,              prio="1", qil="1", qhi="1", qlo="1"];
+  CMD_P_HI3   [type="wait",   pattern="IN0", vabs="true", tvalid="0x7fffffffffffffff", prio="1", twait="50000"];
+  CMD_P_IL0   [type="noop",   pattern="IN0", vabs="true",                              prio="2"];
+  CMD_P_IL1   [type="flow",   pattern="IN0", vabs="true", tvalid="0",                  destpattern="A", prio="2"];
+  CMD_P_IL2   [type="flush",  pattern="IN0", vabs="true", tvalid="0100",               prio="2", qil="1", qhi="1", qlo="1"];
+  CMD_P_IL3   [type="wait",   pattern="IN0", vabs="true", tvalid="0x7fffffffffffffff", prio="2", twait="50000"];
+
+
+  CMD_T_LO0   [type="noop",   target="BLOCK_IN1", vabs="true",                              prio="0"];
+  CMD_T_LO1   [type="flow",   target="BLOCK_IN1", vabs="true", tvalid="0",                  dest="BLOCK_B", prio="0"];
+  CMD_T_LO2   [type="flush",  target="BLOCK_IN1", vabs="true", tvalid="0100",               prio="0", qil="1", qhi="1", qlo="1"];
+  CMD_T_LO3   [type="wait",   target="BLOCK_IN1", vabs="true", tvalid="0x7fffffffffffffff", prio="0", twait="50000"];
+  CMD_T_HI0   [type="noop",   target="BLOCK_IN1", vabs="true",                              prio="1"];
+  CMD_T_HI1   [type="flow",   target="BLOCK_IN1", vabs="true", tvalid="0",                  dest="BLOCK_B", prio="1"];
+  CMD_T_HI2   [type="flush",  target="BLOCK_IN1", vabs="true", tvalid="0100" ,              prio="1", qil="1", qhi="1", qlo="1"];
+  CMD_T_HI3   [type="wait",   target="BLOCK_IN1", vabs="true", tvalid="0x7fffffffffffffff", prio="1", twait="50000"];
+  CMD_T_IL0   [type="noop",   target="BLOCK_IN1", vabs="true",                              prio="2"];
+  CMD_T_IL1   [type="flow",   target="BLOCK_IN1", vabs="true", tvalid="0",                  dest="BLOCK_B", prio="2"];
+  CMD_T_IL2   [type="flush",  target="BLOCK_IN1", vabs="true", tvalid="0100",               prio="2", qil="0", qhi="1", qlo="1" ];
+  CMD_T_IL3   [type="wait",   target="BLOCK_IN1", vabs="true", tvalid="0x7fffffffffffffff", prio="2", twait="50000"];
+
+
+}

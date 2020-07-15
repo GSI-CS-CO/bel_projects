@@ -62,7 +62,7 @@ void AesGenTables(void)
   unsigned i;
   for (i = 0; i < 256; i++)
     InvS[Sbox[i]] = (Byte)i;
-  
+
   for (i = 0; i < 256; i++)
   {
     {
@@ -89,11 +89,11 @@ void AesGenTables(void)
       DD(3)[i] = Ui32(a9, aD, aB, aE);
     }
   }
-  
+
   g_AesCbc_Encode = AesCbc_Encode;
   g_AesCbc_Decode = AesCbc_Decode;
   g_AesCtr_Code = AesCtr_Code;
-  
+
   #ifdef MY_CPU_X86_OR_AMD64
   if (CPU_Is_Aes_Supported())
   {
@@ -243,9 +243,9 @@ void MY_FAST_CALL AesCbc_Encode(UInt32 *p, Byte *data, size_t numBlocks)
     p[1] ^= GetUi32(data + 4);
     p[2] ^= GetUi32(data + 8);
     p[3] ^= GetUi32(data + 12);
-    
+
     Aes_Encode(p + 4, p, p);
-    
+
     SetUi32(data,      p[0]);
     SetUi32(data + 4,  p[1]);
     SetUi32(data + 8,  p[2]);
@@ -269,7 +269,7 @@ void MY_FAST_CALL AesCbc_Decode(UInt32 *p, Byte *data, size_t numBlocks)
     SetUi32(data + 4,  p[1] ^ out[1]);
     SetUi32(data + 8,  p[2] ^ out[2]);
     SetUi32(data + 12, p[3] ^ out[3]);
-    
+
     p[0] = in[0];
     p[1] = in[1];
     p[2] = in[2];
@@ -286,9 +286,9 @@ void MY_FAST_CALL AesCtr_Code(UInt32 *p, Byte *data, size_t numBlocks)
 
     if (++p[0] == 0)
       p[1]++;
-    
+
     Aes_Encode(p + 4, temp, p);
-    
+
     for (i = 0; i < 4; i++, data += 4)
     {
       UInt32 t = temp[i];

@@ -2,14 +2,18 @@
 #include "display.h"
 #include "w1.h"
 #include "inttypes.h"
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "dow_crc.h"
 
 #define DEBUG
 
 
-/*  for every found slave the slotnumber is added to the slave array
-    e.g. [2,3] means slaves in slot 2 and 3
+/** @brief for every found slave the slotnumber is added to the slave array
+*   e.g. [2,3] means slaves in slot 2 and 3
+*   @param bus_addr wishbone address of the scu bus
+*   @param system_addr CID system address
+*   @param group_addr CID group address
+*   @param slaves list with found devices
 */
 void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr, unsigned short group_addr, int* slaves) {
   int slot;
@@ -23,6 +27,11 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
   *slaves = 0; // end of device list 
 }
 
+/** @brief read temperature from all temp sensors on the bus
+ *  @param bus the 1Wire controller can have multiple busses, starts at 0
+ *  @param id the 1Wire id of the device
+ *  @param temp the temperatur value of the 1Wire device
+ */
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
   struct w1_dev *d;
   int i;
@@ -35,24 +44,24 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
           if ((calc_crc((int)(d->rom >> 32), (int)d->rom)) != 0)
             continue;
           #ifdef DEBUG
-          mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
+          pp_printf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
           #endif
           if ((char)d->rom == 0x42) {
             *id = d->rom;
             tvalue = w1_read_temp(d, 0);
             *temp = (tvalue >> 12); //full precision with 1/16 degree C
             #ifdef DEBUG
-            mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
+            pp_printf("temp: %dC", tvalue >> 16); //show only integer part for debug
             #endif
           }
           #ifdef DEBUG
-          mprintf("\n");
+          pp_printf("\n");
           #endif
         }
     }
   } else {
     #ifdef DEBUG
-    mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail);
+    pp_printf("no devices found on bus %d\n", wrpc_w1_bus.detail);
     #endif
   }
 } 

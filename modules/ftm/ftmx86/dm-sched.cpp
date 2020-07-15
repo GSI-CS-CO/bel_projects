@@ -13,11 +13,12 @@
 
 
 static void help(const char *program) {
-  fprintf(stderr, "\ndm-sched v%s\nCreates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n", TOOL_VER);
+  fprintf(stderr, "\ndm-sched v%s, build date %s\nCreates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n", TOOL_VER, BUILD_DATE);
   fprintf(stderr, "\nUsage: %s <etherbone-device> <Command> <.dot file> \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nCommands:\n");
   fprintf(stderr, "  status                    Gets current DM schedule state (default) \n");
+  fprintf(stderr, "  dump                      Gets current DM schedule\n");
   fprintf(stderr, "  clear                     Clear DM, existing nodes will be erased. \n");
   fprintf(stderr, "  add        <.dot file>    Add a Schedule from input file to DM, nodes with identical hashes (names) on the DM will be ignored.\n");
   fprintf(stderr, "  overwrite  <.dot file>    Overwrites all Schedules on DM with the one in the input file, already existing nodes on the DM will be erased. \n");
@@ -26,7 +27,7 @@ static void help(const char *program) {
   fprintf(stderr, "  chkrem     <.dot file>    Checks if all patterns in given dot can be removed safely\n");
   fprintf(stderr, "  -n                        No verify, status will not be read after operation\n");
   fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", outfile);
-  fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
+  fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
   fprintf(stderr, "  -f                        Force, overrides the safety check for clear, remove, overwrite and keep\n");
@@ -36,22 +37,22 @@ static void help(const char *program) {
 
 int main(int argc, char* argv[]) {
 
-  Graph g;
   char dirnameBuff[80];
 
   bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
+  bool reqStatus = false;
 
   int opt;
   const char *program = argv[0];
   const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = outfile;
-  const char *dirname = (const char *)getcwd(dirnameBuff, 80); 
+  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
   int32_t error=0;
 
 
-// start getopt 
+// start getopt
    while ((opt = getopt(argc, argv, "fnshvo:d")) != -1) {
       switch (opt) {
- 
+
          case 'o':
             outputFilename  = optarg;
             if (outputFilename == NULL) {
@@ -61,14 +62,14 @@ int main(int argc, char* argv[]) {
             break;
          case 'd':
             debug = true;
-            break;   
+            break;
 
          case 'n':
             update = false;
             break;
          case 'f':
             force = true;
-            break;   
+            break;
 
          case 'v':
             verbose = true;
@@ -76,20 +77,20 @@ int main(int argc, char* argv[]) {
 
          case 's':
             strip = false;
-            break;   
+            break;
 
          case 'h':
             help(program);
             return 0;
-         
+
          case ':':
-         
+
          case '?':
             error = -2;
             break;
-            
+
          default:
-            std::cerr << std::endl << program << ": bad getopt result" << std::endl; 
+            std::cerr << std::endl << program << ": bad getopt result" << std::endl;
             error = -3;
       }
    }
@@ -102,18 +103,18 @@ int main(int argc, char* argv[]) {
    //help();
    return -4;
    }
-   
+
    // process command arguments
-  //std::cerr << program << ": " << argc << " " << optind << " " << argv[optind] << " " << argv[optind+1] << " " << argv[optind+2] << " " << std::endl;   
+  //std::cerr << program << ": " << argc << " " << optind << " " << argv[optind] << " " << argv[optind+1] << " " << argv[optind+2] << " " << std::endl;
 
    netaddress = argv[optind];
-   
+
    if (optind+1 < argc) cmdName        = argv[optind+1];
    if (optind+2 < argc) inputFilename  = argv[optind+2];
 
-   
 
-  CarpeDM cdm = CarpeDM();
+
+  CarpeDM cdm;
 
 
   if(verbose) cdm.verboseOn();
@@ -134,23 +135,30 @@ int main(int argc, char* argv[]) {
     std::string cmd(cmdName);
 
     if ((cmd == "add" || cmd == "overwrite" || cmd == "remove" || cmd == "keep") && inputFilename == NULL) { std::cerr << std::endl << program << "Command <" << cmd << "> requires a .dot file" << std::endl; return -8; }
-    
+
     try {
       if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
-      if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
+      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
+      if (cmd == "dump")      { cdm.download(); std::cout << cdm.downloadDot(strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
+      if (cmd == "rawvisited"){ cdm.download(); cdm.showPaint(); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
+        /*
         cdm.download();
 
         std::string report;
         Graph gTmp0, gTmp1;
-        bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
-        
-        cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
 
+        bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
+
+        cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
+        */
+
+        //FIXME no more use of type graph !!! find a wrapped solution without conflicting signatures for isSafeToRemove
+        bool isSafe = false;
         std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
         cmdValid = true;
       }
@@ -161,15 +169,15 @@ int main(int argc, char* argv[]) {
       return -6;
     }
   }
-  
-  if (cmdName == NULL ) cmdValid = true;
+
+  if (cmdName == NULL ) { cmdValid = true;reqStatus = true; }
 
   if ( ! cmdValid ) { std::cerr << std::endl << program << ": Unknown command <" << std::string(cmdName) << ">" << std::endl; return -8; }
 
   if ( update ) {
-    try { 
+    try {
       cdm.downloadDotFile(outputFilename, strip);
-      if(verbose) cdm.showDown(false);
+      if(verbose || reqStatus) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to execute <status>. Cause: " << err.what() << std::endl;
@@ -180,7 +188,7 @@ int main(int argc, char* argv[]) {
   std::string report;
   bool tabOk = cdm.tableCheck(report);
 
-  if (verbose or !tabOk) std::cout << report << std::endl;
+  if (debug or !tabOk) std::cout << report << std::endl;
 
 
   cdm.disconnect();

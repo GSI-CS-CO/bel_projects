@@ -1,0 +1,16 @@
+digraph g {
+name="QueuePrioAndTypeTest";
+edge  [type="defdst"]
+node  [cpu="0"];
+  BLOCK_A   [type="block", pattern="A", patentry="true", patexit="true",  tperiod=100000000];
+  BLOCK_B   [type="block", pattern="B", patentry="true", patexit="true",  tperiod=100000000];
+      
+  BLOCK_IN0  [type="block", pattern="IN0", patentry="true",  patexit="true", qil="1", qhi="1", qlo="1", tperiod=100000000];
+  BLOCK_IN1  [type="block", pattern="IN1", patentry="true",  patexit="true", qil="1", qhi="1", qlo="1", tperiod=100000000];
+
+  BLOCK_IN0 -> BLOCK_A;
+  BLOCK_IN1 -> BLOCK_A;
+  BLOCK_IN0  -> BLOCK_B [type="altdst"];
+  BLOCK_IN1  -> BLOCK_B [type="altdst"];
+
+}

@@ -10,23 +10,44 @@
 #   make TARGET=example
 #   ... will compile the more complex example program
 TARGET		?= miniExample
-.DEFAULT_GOAL := fwbin
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 49152 
-SHARED_SIZE     = 8K
-USRCPUCLK       = 125000
-VERSION         = 0.0.1
+#PLATFPATH       = ../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../syn/gsi_scu/control3
+#PLATFPATH	= ../../syn/gsi_pexarria5/control
+PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
-PATHFW 	= .
-PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
-PREFIX 	?= /usr/local
-CFLAGS 	= -I$(PATHFW) 
+PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 DEVICE    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 SPI_LANES | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+
+SHARED_SIZE    	?= 8K
+USRCPUCLK      	?= 125000
+VERSION  	= 00.00.01
+
+.DEFAULT_GOAL	:= fwbin
+
+PATHFW 	        = .
+DEBUGLVL    	= 1
+EXTRA_FLAGS	?=
+CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+
+$(info    >>>>)
+$(info    building is done by importing the following data from $(PLATFMAKEFILE):)
+$(info    PLATFORM    is $(PLATFORM))
+$(info    DEVICE      is $(DEVICE))
+$(info    FLASH       is $(FLASH))
+$(info    SPI_LANES   is $(SPI_LANES))
+$(info    RAM_SIZE    is $(RAM_SIZE))
+$(info    ----)
+$(info    building firmware using)
+$(info    SHARED_SIZE is $(SHARED_SIZE))
+$(info    USRCPUCLK   is $(USRCPUCLK))
+$(info    VERSION     is $(VERSION))
+$(info    <<<<)
 
 
 include ../../syn/build.mk
-
 
 fwbin: $(TARGET).bin
 

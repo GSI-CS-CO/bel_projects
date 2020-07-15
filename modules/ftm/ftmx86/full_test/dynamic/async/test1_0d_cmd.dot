@@ -1,0 +1,10 @@
+digraph g {
+name="Locking!CMD!";
+
+graph []
+
+  CMD_UNLOCK    [type="unlock",   pattern="B" ];
+
+
+
+}

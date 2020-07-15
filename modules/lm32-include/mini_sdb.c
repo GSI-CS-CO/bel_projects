@@ -31,7 +31,7 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
   }
   if( msi_cnt > 1) {
   //This is an error, the CB layout is messed up
-    DBPRINT1("Found more than 1 MSI at 0x%08x par 0x%08x\n", base, (uint32_t)(unsigned char*)parent_sdb);
+    DBPRINT1("Found more than 1 MSI at 0x%08x par 0x%08x\n", (unsigned int)base, (unsigned int)(unsigned char*)parent_sdb);
     *idx = 0;      
     return found_sdb;
   }
@@ -214,6 +214,7 @@ void discoverPeriphery(void)
   pCpuAtomic      = find_device_adr(GSI, CPU_ATOM_ACC);
   pCpuSysTime     = find_device_adr(GSI, CPU_SYSTEM_TIME);
   pCpuIrqSlave    = find_device_adr(GSI, CPU_MSI_CTRL_IF);
+  pCpuWbTimer     = find_device_adr(GSI, CPU_WB_TIMER);
 
   idx = 0;
 
@@ -247,8 +248,8 @@ void discoverPeriphery(void)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
-  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON);
-  pPps            = (char *)find_device_adr(CERN, WR_PPS_GEN);
+  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
+  pPps            = (uint32_t *)find_device_adr(CERN, WR_PPS_GEN);
 
 }
 

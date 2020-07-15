@@ -1,0 +1,10 @@
+digraph g {
+name="Switch!CMD!";
+
+graph []
+
+  CMD_A   [type="switch",   pattern="IN0", destpattern="B" ];
+  CMD_B   [type="start",   pattern="D" ];
+  CMD_C   [type="start",   pattern="IN2"];
+  CMD_D   [type="start",   pattern="IN0" ];
+}

@@ -1,0 +1,43 @@
+#!/bin/ash
+# Get arguments
+device=$1
+gateware=$2
+
+# Plausibility check
+#if (( $# != 2 )); then
+#  echo "Error: Illegal number of parameters ($# given, 2 expected)"
+#  echo "Example usage: $0 dev/wbmX gateware.rpd"
+#  exit 1
+#fi
+
+#device_check='/'$device
+#echo $device_check
+#if [ ! -e "$device_check" ]; then
+#  echo "Error: Device ($device) not found!"
+#  exit 1
+#fi
+
+#if [ ! -f $gateware ]; then
+#  echo "Error: Gateware ($gateware) not found!"
+#  exit 1
+#fi
+
+# Disable watchdog timer
+eb-reset $device wddisable
+#if [ $? -eq 0 ]; then
+#  echo "Error: Failed to disable the watchdog timer!
+#fi
+
+# Stop all embedded CPUs
+eb-reset $device cpuhalt 0xff
+#if [ $? -eq 0 ]; then
+#  echo "Error: Failed to halt all CPUs!"
+#  exit 1
+#fi
+
+# Flash device
+eb-flash $device $gateware
+#if [ $? -eq 0 ]; then
+#  echo "Error: Failed to flash the device!"
+#  exit 1
+#fi

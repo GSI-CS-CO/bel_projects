@@ -1,8 +1,0 @@
-digraph g {
-name="UNIPZ!CMD!";
-
-graph []
-
-CMD_START  [type="start", pattern="UNIPZ_GATEWAY"];
-
-}

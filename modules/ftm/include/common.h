@@ -4,90 +4,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/container/vector.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/optional.hpp>
+#include <algorithm>
+#include <vector>
+#include <stdexcept>
 #include "ftm_common.h"
 #include "dotstr.h"
 
-#if BOOST_VERSION >= 106200 //endian conversian was included in boost 1.62
-  #include <boost/endian/conversion.hpp>
-  using namespace boost::endian;
-#else
-   // avoiding boost 1.62+, stolen from boost/endian/conversion.hpp to  //////////
-  inline uint16_t endian_reverse(uint16_t x)
-  {
-    return (x << 8)
-      | (x >> 8);
-  }
-
-  inline uint32_t endian_reverse(uint32_t x)                          
-  {
-    uint32_t step16;
-    step16 = x << 16 | x >> 16;
-    return
-        ((step16 << 8) & 0xff00ff00)
-      | ((step16 >> 8) & 0x00ff00ff);
-  }
-
-  inline uint64_t endian_reverse(uint64_t x)
-  {
-    uint64_t step32, step16;
-    step32 = x << 32 | x >> 32;
-    step16 = (step32 & 0x0000FFFF0000FFFFULL) << 16
-           | (step32 & 0xFFFF0000FFFF0000ULL) >> 16;
-    return   (step16 & 0x00FF00FF00FF00FFULL) << 8
-           | (step16 & 0xFF00FF00FF00FF00ULL) >> 8;
-  }
-
- inline int16_t endian_reverse(int16_t x) BOOST_NOEXCEPT
-  {
-    return (static_cast<uint16_t>(x) << 8)
-      | (static_cast<uint16_t>(x) >> 8);
-  }
-
-  inline int32_t endian_reverse(int32_t x) BOOST_NOEXCEPT
-  {
-    uint32_t step16;
-    step16 = static_cast<uint32_t>(x) << 16 | static_cast<uint32_t>(x) >> 16;
-    return
-        ((static_cast<uint32_t>(step16) << 8) & 0xff00ff00)
-      | ((static_cast<uint32_t>(step16) >> 8) & 0x00ff00ff);
-  }
-
-  inline int64_t endian_reverse(int64_t x) BOOST_NOEXCEPT
-  {
-    uint64_t step32, step16;
-    step32 = static_cast<uint64_t>(x) << 32 | static_cast<uint64_t>(x) >> 32;
-    step16 = (step32 & 0x0000FFFF0000FFFFULL) << 16
-           | (step32 & 0xFFFF0000FFFF0000ULL) >> 16;
-    return static_cast<int64_t>((step16 & 0x00FF00FF00FF00FFULL) << 8
-           | (step16 & 0xFF00FF00FF00FF00ULL) >> 8);
-  }
-
-#endif
+/** @name Enums for communication with DM
+ * Provides enums for the handling of firmware meta information, WB bus adress type conversion and upload/download buffers
+ */
+//@{ 
+enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN}; ///< WB Address types for perspectives of different WB bus masters
+enum class TransferDir {UPLOAD, DOWNLOAD}; ///< DM communication transfer direction. Upload (DM to host) or download (host to DM)
 
 
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  (byte & 0x80 ? '1' : '0'), \
-  (byte & 0x40 ? '1' : '0'), \
-  (byte & 0x20 ? '1' : '0'), \
-  (byte & 0x10 ? '1' : '0'), \
-  (byte & 0x08 ? '1' : '0'), \
-  (byte & 0x04 ? '1' : '0'), \
-  (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
-
-
-enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN};
-enum class TransferDir {UPLOAD, DOWNLOAD};
-enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
+enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   FWID_BAD_MAGIC          = -2,
                   FWID_BAD_PROJECT_NAME   = -3,
                   FWID_NOT_FOUND          = -4,
@@ -97,21 +28,122 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_REVISION        = 2,
                   VERSION_MAJOR_MUL       = 10000,
                   VERSION_MINOR_MUL       = 100,
-                  VERSION_REVISION_MUL    = 1};  
+                  VERSION_REVISION_MUL    = 1}; ///< Firmware ID tags for status and version info
+//@}
 
 
-namespace ECA {
-  //TODO import values from eca_regs.h
-  const uint32_t timeHiW = 0x18;
-  const uint32_t timeLoW = 0x1c;
-  const uint64_t vendID  = 0x00000651;
-  const uint32_t devID   = 0xb2afc251;
+/** @name Definitions for accessing Cluster Time Hardware Module
+ * Provides necessary SDB and register definitions for Cluster Time Hardware Module
+ */
+//@{ 
+namespace CluTime {
+  const uint32_t timeHiW = 0x0; ///< Time high word. Reading high word freezes low word until it's read
+  const uint32_t timeLoW = 0x4; ///< Time low word
+  const uint64_t vendID  = 0x00000651; ///< SDB Vendor ID
+  const uint32_t devID   = 0x10041233; ///< SDB Device ID
+}
+//@}
+
+
+
+const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when testmode is on to speed coverage test
+
+
+/** @name Operator overload collcetion for std::vector
+ * Templated helper functions for easy concatenation std::vector
+ */
+//@{ 
+
+/// Template to Overload + operator for std::vectors
+/** This allows concatenation of two std::vectors A and B of type T into one new vector AB
+  * @param A constant vector of type T
+  * @param B constant vector of type T
+  * @return new joint vector of type T
+  */
+template <typename T>
+inline std::vector<T> operator+(const std::vector<T> &A, const std::vector<T> &B)
+{
+    std::vector<T> AB;
+    AB.reserve( A.size() + B.size() );                // preallocate memory
+    AB.insert( AB.end(), A.begin(), A.end() );        // add A;
+    AB.insert( AB.end(), B.begin(), B.end() );        // add B;
+    return AB;
 }
 
-const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
+/// Template to Overload + operator for std::vector and a constant
+/** This allows appending a constant B to std::vectors A of type T into one new vector AB
+  * @param A constant vector of type T
+  * @param B literal of type T
+  * @return new joint vector of type T
+  */
+template <typename T>
+inline std::vector<T> operator+(const std::vector<T> &A, const T &B)
+{
+    std::vector<T> AB = A;
+    AB.reserve( A.size() + 1 );                // preallocate memory
+    AB.insert( AB.end(), A.begin(), A.end() );
+    AB.push_back(B);
+    return AB;
+}
 
+/// Template to Overload += operator for std::vectors
+/** This allows appending a vector B of type T to vector A of type T
+  * @param A vector of type T
+  * @param B constant vector of type T
+  * @return modified vector A of type T
+  */
+template <typename T>
+inline std::vector<T> &operator+=(std::vector<T> &A, const std::vector<T> &B)
+{
+    A.reserve( A.size() + B.size() );                // preallocate memory without erase original data
+    A.insert( A.end(), B.begin(), B.end() );         // add B;
+    return A;                                        // here A could be named AB
+}
+
+/// Template to Overload += operator for std::vector and a constant
+/** This allows appending a constant B of type T to std::vector A of type T
+  * @param A vector of type T
+  * @param B literal constant of type T
+  * @return modified vector A of type T
+  */
+template <typename T>
+inline std::vector<T> &operator+=(std::vector<T> &A, const T &B)
+{
+    A.push_back(B);
+    return A;
+}
+//@}
+
+
+/** @name Debug output functions
+ * Binary and Hexdump utilitites
+ */
+//@{
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c" ///< Format string to place 1/0 for binary ascii representation of a byte
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') ///< Convert byte to ascii sequence of 1/0
+
+/** @name Diagnostic data structures
+ * Report structures for diagnostics and queue report
+ */
+//@{ 
+
+/// Global report on DM health
+/** Contains all the usual suspects of diagnostic values from DM gateware, such as global msg count, the CPU boot timestamp, 
+ *  last schedule/command updates with user and timestamp, remainingd lead delta T on msg dispatch (min, max, avg), 
+ *  warning count for late dispatch and maximum observer message backlog count
+ * 
+ */
 typedef struct {
-  uint8_t   cpu; 
+  uint8_t   cpu;
   uint64_t  msgCnt;
   uint64_t  bootTime;
   uint64_t  smodTime;
@@ -129,13 +161,49 @@ typedef struct {
   int64_t   avgTimeDiff;
   int64_t   warningThreshold;
   uint32_t  warningCnt;
+  std::string warningNode;
+  uint64_t  warningTime;
+  uint32_t  maxBacklog;
+  uint32_t  badWaitCnt;
   uint32_t  stat;
 } HealthReport;
 
-
+/// Report on DM's WB bus stall behaviour
+/** Report contains DM's diagnostic values for the maximum wait time (stall) CPUs have experienced when trying to access the WB system bus.
+ * 
+ */
 typedef struct {
+  uint32_t  stallStreakMax;
+  uint32_t  stallStreakCurrent;
+  uint64_t  stallStreakMaxUDts;
+} StallDelayReport;
+
+/// Report on DM's WR time behaviour
+/** Report contains DM's diagnostic values for the linearity of WR timestamps vs system clock and when the last jump of WR time was detected
+ *  Also contains the StallDelayReport as a subfield
+ * 
+ */
+typedef struct {
+  bool      enabled;
+  uint64_t  timeObservIntvl;
+  int64_t   timeMaxPosDif;
+  uint64_t  timeMaxPosUDts;
+  int64_t   timeMinNegDif;
+  uint64_t  timeMinNegUDts;
+  uint32_t  stallObservIntvl;
+  std::vector<StallDelayReport> sdr;
+} HwDelayReport;
+
+/// Report on a queued command
+/** Report contains the command content (type, timestamp, parameters, etc) in a format easily convertible to human readable
+ * 
+ */
+typedef struct {
+  uint32_t     extAdr = LM32_NULL_PTR;
+  bool       orphaned = false;
   bool        pending = false;
   uint64_t  validTime = 0;
+  bool       validAbs = false;
   uint8_t        type = 0;
   std::string   sType = DotStr::Misc::sUndefined;
   uint32_t        qty = 0;
@@ -147,95 +215,138 @@ typedef struct {
   bool flushIl = false;
   bool flushHi = false;
   bool flushLo = false;
+  std::string flushOvr = DotStr::Node::Special::sIdle;
   //wait Properties
   uint64_t waitTime = 0;
   bool      waitAbs = false;
 } QueueElement;
 
-
+/// Report on a command queue
+/** Report contains the queue state and meta infos as well as its content. Uses QueueElement structs to map the command content.
+ * 
+ * 
+ */
 typedef struct {
   uint8_t wrIdx, rdIdx, pendingCnt;
   QueueElement aQe[4];
 } QueueBuffer;
 
+/// Report on a block node's command queues
+/** Report contains the content and meta information of all of a block node's command queues. This lists the content of each queue
+ * (pending & processed commands) as well as the meta information. uses QueueBuffer struct to map the queue state and meta infos
+ * and QueueElement structs to map the content of each queue
+ * 
+ * 
+ */
 typedef struct {
+  std::string name;
   bool hasQ[3] = {false, false, false};
   QueueBuffer aQ[3];
 } QueueReport;
+//@}
 
 
-class Node;
-class MiniCommand;
 
-typedef boost::shared_ptr<Node> node_ptr;
-typedef boost::shared_ptr<MiniCommand> mc_ptr;
-
-
-typedef std::vector<node_ptr> npBuf;
-typedef std::vector<uint8_t> vBuf;
-typedef std::vector<uint32_t> vAdr;
-typedef std::vector<uint32_t> ebBuf;
-typedef std::vector<std::string> vStrC;
-typedef std::vector<bool> vBl;
-
+/** @name Etherbone external cycle staging
+ * Etherbone lib does not allow cancellation of prepared cycles and icompleted cycles cannot be stored for later sending.
+ * So these structs are a workaround to allow a more flexible staging of transmissions from carpeDM to DM
+ */
+//@{
+typedef std::vector<uint8_t> vBuf; ///< buffer for WB payload data
+typedef std::vector<uint32_t> vAdr; ///< buffer for WB addresses
+typedef std::vector<uint32_t> ebBuf; ///< total number of cpus on the DM
+typedef std::vector<bool> vBl; ///< buffer for cycle line control. 1 - close the ongoing cycle and start a new one, 0 - continue with current cycle
+typedef std::vector<std::string> vStrC; ///< vector of strings
+/// Struct for staging EB write operations
+/** Staging EB write ops requires a buffer of WB addresses, a buffer of WB payload data and a buffer of cycle line control bits
+ * 
+ */
 typedef struct {
   vAdr va;
   vBuf vb;
   vBl  vcs;
 } vEbwrs;
 
+/// Struct for staging EB read operations
+/** Staging EB write ops requires a buffer of WB addresses, and a buffer of cycle line control bits
+ * 
+ */
 typedef struct {
   vAdr va;
   vBl  vcs;
 } vEbrds;
 
-
-vBl leadingOne(size_t length);
-
-template <typename T>
-std::vector<T> operator+(const std::vector<T> &A, const std::vector<T> &B)
+/// Template to Overload + operator for structs of EB Write Operations
+/** This allows concatenation of two structs A and B of type EB Write Operations into one new struct AB
+  * @param A constant EB Write Struct
+  * @param B constant EB Write Struct
+  * @return new EB Write Struct A
+  */
+inline vEbwrs operator+(const vEbwrs &A, const vEbwrs &B)
 {
-    std::vector<T> AB;
-    AB.reserve( A.size() + B.size() );                // preallocate memory
-    AB.insert( AB.end(), A.begin(), A.end() );        // add A;
-    AB.insert( AB.end(), B.begin(), B.end() );        // add B;
+    vEbwrs AB;
+    AB.va = A.va + B.va;
+    AB.vb = A.vb + B.vb;
+    AB.vcs = A.vcs + B.vcs;
     return AB;
 }
 
-template <typename T>
-std::vector<T> &operator+=(std::vector<T> &A, const std::vector<T> &B)
+/// Template to Overload + operator for structs of EB Write Operations
+/** This allows appending a struct B of type EB Write Operations to struct A of type EB Write Operations
+  * @param A constant EB Write Struct
+  * @param B constant EB Write Struct
+  * @return modified EB Write Struct A
+  */
+inline vEbwrs& operator+=(vEbwrs &A, const vEbwrs &B)
 {
-    A.reserve( A.size() + B.size() );                // preallocate memory without erase original data
-    A.insert( A.end(), B.begin(), B.end() );         // add B;
-    return A;                                        // here A could be named AB
+
+    A.va = A.va + B.va;
+    A.vb = A.vb + B.vb;
+    A.vcs = A.vcs + B.vcs;
+    return A;
 }
 
-template<typename T>
-inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
-  T x = endian_reverse(val);
-  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
-            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
-            pB);
+/// Template to Overload + operator for struct of EB Read Operations
+/** This allows concatenation of two structs A and B of type EB Read Operations into one new struct AB
+  * @param A constant EB Read Struct
+  * @param B constant EB Read Struct
+  * @return new EB Read Struct
+  */
+inline vEbrds operator+(const vEbrds& A, const vEbrds &B)
+{
+    vEbrds AB;
+    AB.va = A.va + B.va;
+    AB.vcs = A.vcs + B.vcs;
+    return AB;
 }
 
-template<typename T>
-inline T writeBeBytesToLeNumber(uint8_t* pB) {
-  return endian_reverse(*((T*)pB));
+/// Template to Overload + operator for structs of EB Read Operations
+/** This allows appending a struct B of type EB Read Operations to struct A of type EB Read Operations
+  * @param A constant EB Read Struct
+  * @param B constant EB Read Struct
+  * @return modified EB Read Struct A
+  */
+inline vEbrds& operator+=(vEbrds& A, const vEbrds &B)
+{
+
+    A.va = A.va + B.va;
+    A.vcs = A.vcs + B.vcs;
+    return A;
 }
 
-template<typename T>
-inline void writeBeNumberToLeBytes(uint8_t* pB, T val) {
-  T x = endian_reverse(val);
-  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
-            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
-            pB);
-}
 
-template<typename T>
-inline T writeLeBytesToBeNumber(uint8_t* pB) {
-  return endian_reverse(*((T*)pB));
-}
+/// Helper function to create a cycle line control sqequence
+/** The function accepts a cycle length and outputs a matching bit sequence of a leading 1 (start new cycle) followed by 0s (continue current cycle)
+ * 
+ */
+vBl leadingOne(size_t length);
+//@}
 
+
+
+/// Helper function to convert a string to a number or bool
+/** Convert a string to a number or bool. Helper to convert values found in dot files 
+  */
 template<typename T>
 inline T s2u(const std::string& s) {
   using namespace DotStr::Misc;
@@ -247,10 +358,34 @@ inline T s2u(const std::string& s) {
   return ret;
 
 }
+//@}
 
+
+
+
+
+
+/// Hexdump to std::out
+/** Creates a formatted hexadecimal version of a char array and puts it on std::cout
+ * @param desc Char array containig dump title
+ * @param addr Char array containig bytes to be hex dumped
+ * @param len Number of bytes to be hex dumped
+ */
 void hexDump (const char *desc, const char* addr, int len);
 
+/// Hexdump to std::out
+/** Creates a formatted hexadecimal version of a vector of bytes and puts it on std::cout
+ * @param desc Char array containig dump title
+ * @param vb Vector of bytes to be hex dumped
+ */
 void hexDump (const char *desc, vBuf vb);
+//@}
+
+/// Helper function to convert a nanosecond timestamp into a human readable string
+/** Convert a 64 bit nano second timestamp as can be obtained from getWrTime into a human readable string. If noSpaces is set, underscores will be used (useful for filename generation)
+  */
+std::string nsTimeToDate(uint64_t t, bool noSpaces=false);
+
 
 
 #endif

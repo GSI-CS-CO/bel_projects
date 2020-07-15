@@ -427,7 +427,7 @@ SRes MixCoder_Code(CMixCoder *p, Byte *dest, SizeT *destLen,
       const Byte *srcCur;
       int srcFinishedCur;
       int encodingWasFinished;
-      
+
       if (i == 0)
       {
         srcCur = src;
@@ -441,7 +441,7 @@ SRes MixCoder_Code(CMixCoder *p, Byte *dest, SizeT *destLen,
         srcLenCur = p->size[k] - p->pos[k];
         srcFinishedCur = p->finished[k];
       }
-      
+
       if (i == p->numCoders - 1)
       {
         destCur = dest;
@@ -454,7 +454,7 @@ SRes MixCoder_Code(CMixCoder *p, Byte *dest, SizeT *destLen,
         destCur = p->buf + (CODER_BUF_SIZE * i);
         destLenCur = CODER_BUF_SIZE;
       }
-      
+
       res = coder->Code(coder->p, destCur, &destLenCur, srcCur, &srcLenCur, srcFinishedCur, finishMode, &encodingWasFinished);
 
       if (!encodingWasFinished)
@@ -481,14 +481,14 @@ SRes MixCoder_Code(CMixCoder *p, Byte *dest, SizeT *destLen,
         p->pos[i] = 0;
         p->finished[i] = encodingWasFinished;
       }
-      
+
       if (res != SZ_OK)
         return res;
 
       if (destLenCur != 0 || srcLenCur != 0)
         processed = True;
     }
-    
+
     if (!processed)
     {
       if (allFinished)
@@ -585,7 +585,7 @@ SRes XzDec_Init(CMixCoder *p, const CXzBlock *block)
   unsigned i;
   Bool needReInit = True;
   unsigned numFilters = XzBlock_GetNumFilters(block);
-  
+
   if (numFilters == p->numCoders)
   {
     for (i = 0; i < numFilters; i++)
@@ -593,7 +593,7 @@ SRes XzDec_Init(CMixCoder *p, const CXzBlock *block)
         break;
     needReInit = (i != numFilters);
   }
-  
+
   if (needReInit)
   {
     MixCoder_Free(p);
@@ -604,14 +604,14 @@ SRes XzDec_Init(CMixCoder *p, const CXzBlock *block)
       RINOK(MixCoder_SetFromMethod(p, i, f->id));
     }
   }
-  
+
   for (i = 0; i < numFilters; i++)
   {
     const CXzFilter *f = &block->filters[numFilters - 1 - i];
     IStateCoder *sc = &p->coders[i];
     RINOK(sc->SetProps(sc->p, f->props, f->propsSize, p->alloc));
   }
-  
+
   MixCoder_Init(p);
   return SZ_OK;
 }
@@ -696,14 +696,14 @@ SRes XzUnpacker_Code(CXzUnpacker *p, Byte *dest, SizeT *destLen,
         return SZ_OK;
       }
       */
-      
+
       res = MixCoder_Code(&p->decoder, dest, &destLen2, src, &srcLen2, False, finishMode2, status);
       XzCheck_Update(&p->check, dest, destLen2);
-      
+
       (*srcLen) += srcLen2;
       src += srcLen2;
       p->packSize += srcLen2;
-      
+
       (*destLen) += destLen2;
       dest += destLen2;
       p->unpackSize += destLen2;
@@ -718,7 +718,7 @@ SRes XzUnpacker_Code(CXzUnpacker *p, Byte *dest, SizeT *destLen,
           *status = CODER_STATUS_NOT_SPECIFIED;
           return SZ_ERROR_DATA;
         }
-        
+
         // if (srcLen2 == 0 && destLen2 == 0)
         return SZ_OK;
       }
@@ -732,7 +732,7 @@ SRes XzUnpacker_Code(CXzUnpacker *p, Byte *dest, SizeT *destLen,
         p->state = XZ_STATE_BLOCK_FOOTER;
         p->pos = 0;
         p->alignPos = 0;
-        
+
         if (p->block.unpackSize != (UInt64)(Int64)-1)
           if (p->block.unpackSize != p->unpackSize)
             return SZ_ERROR_DATA;
@@ -795,7 +795,7 @@ SRes XzUnpacker_Code(CXzUnpacker *p, Byte *dest, SizeT *destLen,
           p->blockHeaderSize = ((UInt32)p->buf[0] << 2) + 4;
           break;
         }
-        
+
         if (p->pos != p->blockHeaderSize)
         {
           UInt32 cur = p->blockHeaderSize - p->pos;
@@ -968,7 +968,7 @@ SRes XzUnpacker_Code(CXzUnpacker *p, Byte *dest, SizeT *destLen,
         }
         break;
       }
-      
+
       case XZ_STATE_BLOCK: break; /* to disable GCC warning */
     }
   }

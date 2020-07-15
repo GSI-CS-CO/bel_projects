@@ -1,0 +1,7 @@
+./mentor/twentynm_xcvr_avmm.sv
+./mentor/alt_xcvr_resync.sv
+./mentor/altera_xcvr_fpll_a10.sv
+./a10_avmm_h.sv
+./alt_xcvr_native_avmm_nf.sv
+./mentor/alt_xcvr_pll_embedded_debug.sv
+./mentor/alt_xcvr_pll_avmm_csr.sv

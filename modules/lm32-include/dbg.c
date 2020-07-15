@@ -41,7 +41,7 @@ void hexDump (char *desc, void *addr, int len) {
 
     // Output description if given.
     if (desc != NULL)
-       mprintf ("%s:\n", desc);
+       pp_printf ("%s:\n", desc);
 
     // Process every byte in the data.
     for (i = 0; i < len; i++) {
@@ -50,14 +50,14 @@ void hexDump (char *desc, void *addr, int len) {
         if ((i % 16) == 0) {
             // Just don't print ASCII for the zeroth line.
             if (i != 0)
-               mprintf ("  %s\n", buff);
+               pp_printf ("  %s\n", buff);
 
             // Output the offset.
-           mprintf ("  %04x ", i);
+           pp_printf ("  %04x ", i);
         }
 
         // Now the hex code for the specific character.
-       mprintf (" %02x", pc[i]);
+       pp_printf (" %02x", pc[i]);
 
         // And store a printable ASCII character for later.
         if ((pc[i] < 0x20) || (pc[i] > 0x7e))

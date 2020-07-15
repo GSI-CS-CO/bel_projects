@@ -10,7 +10,8 @@
 #include "common.h"
 
 
- 
+
+
 
 typedef std::set<uint32_t> aPool; // contains all available addresses in LM32 memory area
 
@@ -18,9 +19,9 @@ typedef std::set<uint32_t> aPool; // contains all available addresses in LM32 me
 class MemPool {
   friend class AllocTable;
   friend class CarpeDM;
+  //friend class CarpeDM;
 
 
-  
   const uint8_t cpu;
   const uint32_t extBaseAdr;  //where to find the B-Port of this CPU RAM from the Host's perspective
   const uint32_t intBaseAdr;  //where to find the A-Port of this CPU RAM from this CPU's perspective
@@ -32,14 +33,14 @@ class MemPool {
   const uint32_t bmpSize;
   const uint32_t bmpOffs;
   const uint32_t startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
-  const uint32_t endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
+  const uint32_t endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks
   vBuf  bmp;
   aPool pool;
 
 protected:
-  
 
-public:  
+
+public:
   // actually not used by this class, but best place to keep the info
 
 
@@ -50,15 +51,15 @@ public:
           peerBaseAdr(peerBaseAdr),
           sharedOffs(sharedOffs),
           rawSize(rawSize),
-          nodeQty(space / _MEM_BLOCK_SIZE), 
+          nodeQty(space / _MEM_BLOCK_SIZE),
           bmpBits(nodeQty),
-          bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE), 
-          bmpOffs(sharedOffs + _SHCTL_END_), 
-          startOffs(bmpOffs + bmpSize), 
+          bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
+          bmpOffs(sharedOffs + _SHCTL_END_),
+          startOffs(bmpOffs + bmpSize),
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
           bmp(bmpSize)
           { init();  }
-          
+
   ~MemPool() { };
   MemPool& operator=(const MemPool& other);
 
@@ -69,11 +70,13 @@ public:
   bool syncBmpToPool();
 
   bool getBmpBit(unsigned int bitIdx) {return bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8));}
+  void setBmpBit(unsigned int bitIdx) {bmp[bitIdx / 8] |=  (1 << (7 - bitIdx % 8));}
+  void clrBmpBit(unsigned int bitIdx) {bmp[bitIdx / 8] &= ~(1 << (7 - bitIdx % 8));}
 
 
   void setBmp(const vBuf& aBmp) { bmp = aBmp;}
   const vBuf& getBmp()           const { return bmp; }
-  
+
   uint32_t getFreeChunkQty()  const { return pool.size(); }
   uint32_t getTotalSpace()    const { return nodeQty * _MEM_BLOCK_SIZE; }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }
@@ -83,7 +86,7 @@ public:
   bool freeChunk(uint32_t adr);
   void occupyChunk(uint32_t adr) { pool.erase(adr); }
 
-  
+
 
 };
 

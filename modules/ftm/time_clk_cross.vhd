@@ -33,15 +33,15 @@ entity time_clk_cross is
 generic (g_delay_comp      : natural := 16);
 port    (clk_ref_i            : in std_logic;
          rst_ref_n_i          : in std_logic;
-         clk_sys_i            : in std_logic;           
-         rst_sys_n_i          : in std_logic;             
-           
+         clk_sys_i            : in std_logic;
+         rst_sys_n_i          : in std_logic;
+
          tm_time_valid_i      : in  std_logic;                       -- timestamp valid flag
          tm_tai_i             : in  std_logic_vector(39 downto 0);   -- TAI Timestamp
          tm_cycles_i          : in  std_logic_vector(27 downto 0);   -- refclock cycle count
-      
+
          tm_ref_tai_cycles_o  : out std_logic_vector(63 downto 0);
-         tm_sys_tai_cycles_o  : out std_logic_vector(63 downto 0)        
+         tm_sys_tai_cycles_o  : out std_logic_vector(63 downto 0)
   );
 end entity;
 
@@ -55,10 +55,10 @@ signal   s_time_ref,
          s_time_sys_gray,
          s_time_sys_bin    : std_logic_vector(63 downto 0);
 
---debug         
-signal delta : integer; 
+--debug
+signal delta : integer;
 
- 
+
 begin
 
    --debug
@@ -71,7 +71,7 @@ begin
       tai_i    => tm_tai_i,
       cycles_i => tm_cycles_i,
       time_o   => s_time_ref);
-    
+
   tm_ref_tai_cycles_o <= s_time_ref;
 
 
@@ -87,12 +87,12 @@ begin
       x2_o  => s_time_ref_cor,
       c2_o  => open);
 
- 
-        
+
+
    gray_en : process(clk_ref_i)
    begin
       if rising_edge(clk_ref_i) then
-        s_time_ref_gray <= f_gray_encode(s_time_ref_cor); 
+        s_time_ref_gray <= f_gray_encode(s_time_ref_cor);
       end if;
    end process gray_en;
 
@@ -108,15 +108,15 @@ begin
         npulse_o => open,
         ppulse_o => open);
    end generate;
-    
+
    gray_de : process(clk_sys_i)
    begin
       if rising_edge(clk_sys_i) then
         s_time_sys_bin <= f_gray_decode(s_time_sys_gray, 1);
         end if;
-   end process gray_de;    
+   end process gray_de;
 
-  tm_sys_tai_cycles_o <= s_time_sys_bin; 
-  
+  tm_sys_tai_cycles_o <= s_time_sys_bin;
+
 
 end architecture behavioral;

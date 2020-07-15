@@ -1,12 +1,13 @@
-TARGET		= ftm
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 131072 
+TARGET			= ftm
+DEVICE			= 5AGXMA3D4
+FLASH			= EPCQ256
+SPI_LANES		= ASx4
+RAM_SIZE		= 131072 
 SHARED_SIZE     = 98304 
 USRCPUCLK       = 125000
-VERSION         = 3.0.0
-DEBUGLVL  	= 0 
+VERSION         = 6.2.1
+RELEASE         = Enigma
+DEBUGLVL  		= 0 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH  = ../../../modules/prioq2
@@ -14,7 +15,7 @@ PATHFTM   = ../../../modules/ftm
 PATHFW    = $(PATHFTM)/ftmfw
 PATHTOOL  = $(PATHFTM)/ftmx86
 PREFIX    ?= /usr/local
-CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS -DDM_VERSION="\"$(VERSION)\""
+CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS -DDM_VERSION="\"$(VERSION)\"" -DDM_RELEASE="\"$(RELEASE)\""
 
 include ../../build.mk
 

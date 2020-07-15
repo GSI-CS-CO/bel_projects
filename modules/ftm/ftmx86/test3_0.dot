@@ -13,11 +13,11 @@ subgraph cpu0 {
   Evt_0   [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
   B_0     [type="block",  tperiod=1000000000, qlo="1"];
 
-  
+
 
   Evt_0 -> B_0 -> Evt_B;
 
- 
+
 
   Evt_B   [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
   B_B     [type="block",  tperiod=1000000000];

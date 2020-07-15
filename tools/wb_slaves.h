@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Apr-2018
+//  version : 26-Sep-2019
 //
-#define WB_SLAVES_VERSION "0.06.0"
+#define WB_SLAVES_VERSION "0.07.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -158,10 +158,11 @@
 #define FPGA_RESET_VMINOR            1                   // minor revision
 
 // register offsets
-#define FPGA_RESET_RESET             0x0000              // reset register of FPGA
-#define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0
-#define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0
-#define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0
+#define FPGA_RESET_RESET             0x0000              // reset register of FPGA (write)
+#define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0 (read)
+#define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write), write 'cafebabe' to prevent auto-restart
 
 // masks
 
@@ -178,7 +179,52 @@
 // masks
 
 
-//-- TLU --
+
+//-- Data Master (and slave) diagnosis  --
+#include "../modules/dm_diag/dm_diag_regs.h"
+// device ID
+#define DM_DIAG_VENDOR               DM_DIAG_SDB_VENDOR_ID   // vendor ID
+#define DM_DIAG_PRODUCT              DM_DIAG_SDB_DEVICE_ID   // product ID
+#define DM_DIAG_VMAJOR               1                       // major revision
+#define DM_DIAG_VMINOR               0                       // minor revision
+
+// register offsets
+// see dm_diag_regs.h
+// masks
+// see dm_diag_regs.h
+
+
+//-- ECA TAP diagnosis  --
+#include "../modules/eca_tap/eca_tap_regs.h"  /* chk: sept-2019: missing ECA_TAP_CAPTURE: manually patched */
+// device ID
+#define ECA_TAP_VENDOR               ECA_TAP_SDB_VENDOR_ID   // vendor ID
+#define ECA_TAP_PRODUCT              ECA_TAP_SDB_DEVICE_ID   // product ID
+#define ECA_TAP_VMAJOR               1                       // major revision
+#define ECA_TAP_VMINOR               0                       // minor revision
+
+// register offsets
+// see eca_tap_regs.h
+// masks
+// see eca_tap_regs.h
+
+
+//-- IO CONTROL  --
+// device ID
+#define IO_CTRL_VENDOR               WB_GSI            // vendor ID
+#define IO_CTRL_PRODUCT              0x10c05791        // product ID
+#define IO_CTRL_VMAJOR               0                 // major revision
+#define IO_CTRL_VMINOR               0                 // minor revision
+
+// register offsets
+#define IO_CTRL_LVDSINGATESETLOW     0x2000            // LVDS input gate set low, one bit per input   /* chk, subject to change */
+#define IO_CTRL_LVDSINGATERESETLOW   0x2008            // LVDS input gate reset low, one bit per input /* chk, subject to change */
+
+// masks
+ 
+
+
+
+//-- TLU -- 
 //device ID
 #define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
 #define GSI_TM_LATCH_PRODUCT         0x10051981  //product ID
@@ -195,7 +241,7 @@
 #define GSI_TM_LATCH_TRIG_ARMSTAT    0x00C       //n..0 channel(n) trigger armed status     (ro)
 #define GSI_TM_LATCH_TRIG_ARMSET     0x010       //n..0 channel(n) trigger set armed        (wo)
 #define GSI_TM_LATCH_TRIG_ARMCLR     0x014       //n..0 channel(n) trigger clr armed        (wo)
-#define GSI_TM_LATCH_TRIG_EDGESTAT   0x018           //n..0 channel(n) trigger edge status  (ro)
+#define GSI_TM_LATCH_TRIG_EDGESTAT   0x018       //n..0 channel(n) trigger edge status      (ro)
 #define GSI_TM_LATCH_TRIG_EDGEPOS    0x01C       //n..0 channel(n) trigger edge set pos     (wo)
 #define GSI_TM_LATCH_TRIG_EDGENEG    0x020       //n..0 channel(n) trigger edge set neg     (wo)
 

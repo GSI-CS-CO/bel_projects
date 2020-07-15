@@ -9,26 +9,21 @@
 class Meta : public Node {
 
 protected:
-  
+
 
 public:
-  Meta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Node(name, pattern, beamproc, hash,  cpu, b, flags) {}
-  ~Meta()  {};
+  Meta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Node(name, pattern, beamproc, hash,  cpu, flags) {}
+  Meta(const Meta& src) : Node(src) {}
+  virtual ~Meta() = default;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual void accept(const VisitorValidation& v)       const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
-  virtual void serialise(const vAdr &va) const;
-  void deserialise() {};
+  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b) {};
   bool isMeta(void) const {return true;}
-/*
-  const std::string&  getName() const {return Node::getName();}
-  const uint32_t&     getHash() const {return this->hash;}
-  const uint32_t&     getFlags() const {return this->flags;}
-  const bool isPainted() const {return Node::isPainted();}
-  */
 
 };
 
@@ -40,10 +35,11 @@ class CmdQMeta : public Meta {
 
 
 public:
-  CmdQMeta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
-  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
+  CmdQMeta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
+  : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
+  CmdQMeta(const CmdQMeta& src) : Meta(src) {}
   ~CmdQMeta()  {};
-  node_ptr clone() const { return boost::make_shared<CmdQMeta>(*this); }
+  node_ptr clone() const { return boost::make_shared<CmdQMeta>(CmdQMeta(*this)); }
 
 
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
@@ -53,8 +49,8 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va) const;
-  
+  void serialise(const vAdr &va, uint8_t* b) const;
+
 };
 
 
@@ -62,10 +58,11 @@ public:
 class CmdQBuffer : public Meta {
 
 public:
-  CmdQBuffer(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
-  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
+  CmdQBuffer(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
+  : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
+  CmdQBuffer(const CmdQBuffer& src) : Meta(src) {}
   ~CmdQBuffer()  {};
-  node_ptr clone() const { return boost::make_shared<CmdQBuffer>(*this); }
+  node_ptr clone() const { return boost::make_shared<CmdQBuffer>(CmdQBuffer(*this)); }
 
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -74,7 +71,7 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  void serialise(const vAdr &va) const;
+  void serialise(const vAdr &va, uint8_t* b) const;
 
 };
 
@@ -82,10 +79,11 @@ public:
 class DestList : public Meta {
 
 public:
-  DestList(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
-  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
+  DestList(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
+  : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
   ~DestList()  {};
-  node_ptr clone() const { return boost::make_shared<DestList>(*this); }
+  DestList(const DestList& src) : Meta(src) {}
+  node_ptr clone() const { return boost::make_shared<DestList>(DestList(*this)); }
 
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -94,7 +92,7 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  void serialise(const vAdr &va) const;
+  void serialise(const vAdr &va, uint8_t* b) const;
 
 };
 

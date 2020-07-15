@@ -1,0 +1,10 @@
+#ifndef CONFIG_TARGET_SHARED_MMAP_H
+#define CONFIG_TARGET_SHARED_MMAP_H
+//Location of Buildid and Shared Section in LM32 Memory, to be used by host
+
+#define INT_BASE_ADR		CONFIG_RAMADDR
+#define RAM_SIZE		CONFIG_RAMSIZE
+#define SHARED_SIZE		CONFIG_SHAREDSIZE
+#define BUILDID_OFFS		CONFIG_BOOTSIZE
+#define SHARED_OFFS		(CONFIG_BOOTSIZE + CONFIG_BUILDIDSIZE)
+#endif

@@ -42,6 +42,7 @@
 #define FC_IRQ_ACT_WR 0x21 << 8
 #define FC_IFAMODE_WR 0x60 << 8
 #define FC_BLK_WR     0x6b << 8
+#define FC_ACT_RD     0x81 << 8
 
 struct param_set {
   signed short coeff_a;

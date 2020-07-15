@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 28-May-2018
+//  version : 16-Oct-2019
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -27,14 +27,14 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  Lesser General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU Lesser General Public
 //  License along with this library. If not, see <http://www.gnu.org/licenses/>.
 //
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.0.3"
+#define EBMASSMON_VERSION "0.2.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -80,15 +80,18 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-protocol> <file with node names> <domain>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -a               include FPGA build version\n");
+  fprintf(stderr, "  -b               include info on WR time continuity [ns] (expected value is '16'('8') for a 62.5(125) MHz eCPU)\n");
   fprintf(stderr, "  -c               check if IP and MAC are correct (requires options '-f1', '-i', 'm')\n");
   fprintf(stderr, "  -d               include WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -f<format>       file format\n");
   fprintf(stderr, "                   0: one node per line (default)\n");
   fprintf(stderr, "                   1: ATD format\n");
+  fprintf(stderr, "  -g               include # of acquired WR locks\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
-  fprintf(stderr, "  -j               display additional info (requires option '-f1'\n");
+  fprintf(stderr, "  -j               display additional info (requires option '-f1')\n");
+  fprintf(stderr, "  -k<cpu>          include max rate of m eCPU stalls [%%] for selected eCPU (default 'k0')\n");
   fprintf(stderr, "  -l               include WR link status\n");
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
@@ -97,7 +100,7 @@ static void help(void) {
   fprintf(stderr, "  -t               display table with all nodes\n");
   fprintf(stderr, "  -u               display statistics for all nodes\n");
   fprintf(stderr, "  -w<timeout>      timeout [ms] for probing each device (default 1000); might be useful for WRS\n");
-  fprintf(stderr, "  -x<network>      network type (requires option '-f1'\n");
+  fprintf(stderr, "  -x<network>      network type (requires option '-f1')\n");
   fprintf(stderr, "                   0: all\n");
   fprintf(stderr, "                   1: production (default)\n");
   fprintf(stderr, "                   2: user\n");
@@ -118,10 +121,10 @@ static void help(void) {
   fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x0 -y0 -t -u -q'\n", program);
   fprintf(stderr, "          don't query (option '-q') but only display all nodes of all networks\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z'\n", program);
+  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
   fprintf(stderr, "          display info on all SCUs of the production network queried via the White Rabbit network\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s tcp allTimingDevices.txt acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z'\n", program);
+  fprintf(stderr, "Example: '%s tcp allTimingDevices.txt acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
   fprintf(stderr, "          display info on all SCUs of the production network queried via the ACC network\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -351,14 +354,14 @@ static int networkOk(char* network, int networkType)
 static void printDate(uint64_t nsecs)
 {
   if (nsecs == ~0) fprintf(stdout, ", %10s", "---");
-  else             fprintf(stdout, ", %10lu", (nsecs / 1000000000));
+  else             fprintf(stdout, ", %10llu", (nsecs / 1000000000));
 } // printDate
 
 
 static void printOffset(uint64_t offset)
 {
   if (offset == ~0) fprintf(stdout, ", %13s", "---");
-  else              fprintf(stdout, ", %13lu", (offset));
+  else              fprintf(stdout, ", %13llu", (offset));
 } // printOffset
 
 
@@ -411,12 +414,32 @@ static void printMac(uint64_t mac)
   else           fprintf(stdout, ", %012llx", (long long unsigned)mac);
 } // printMac
 
+static void printNLock(uint32_t nLock)
+{
+  if (nLock == ~0) fprintf(stdout, ", %5s", "---");
+  else             fprintf(stdout, ", %05d", nLock);
+} // printNLock
+
 
 static void printIp(uint32_t ip)
 {
   if (ip == ~0) fprintf(stdout, ", %15s", "---");
   else          fprintf(stdout, ", %03d.%03d.%03d.%03d", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
 } // printIp
+
+
+static void printTCont(uint32_t tCont)
+{
+  if (tCont == ~0) fprintf(stdout, ", %5s", "---");
+  else             fprintf(stdout, ", %5d", tCont);
+} // printTCont
+
+
+static void printCPUStalls(double cpuStalls)
+{
+  if (cpuStalls == ~0) fprintf(stdout, ", %8s", "---");
+  else                 fprintf(stdout, ", %8.1f", cpuStalls);
+} // printCPUStalls
 
 
 static void printUp(uint32_t exist)
@@ -488,7 +511,7 @@ static void printEbStat(eb_status_t status)
 } // print eb state
 
 
-static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac)
+static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLock, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac, int tCont, int cpuStalls)
 {
   // always print header
   fprintf(stdout,   "%15s",   "node");
@@ -500,10 +523,13 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
   if (wrDate)     fprintf(stdout, ", %10s", "time [s]");
   if (wrOffset)   fprintf(stdout, ", %13s", "offset[ms]");
   if (wrSync)     fprintf(stdout, ", %8s",  "sync");
+  if (tCont)      fprintf(stdout, ", %4s",  "dtMax");
   if (wrLink)     fprintf(stdout, ", %4s",  "link");
   if (wrUptime)   fprintf(stdout, ", %9s",  "uptime[h]");
+  if (cpuStalls)  fprintf(stdout, ", %6s",  "stallMax");
   if (buildVer)   fprintf(stdout, ", %8s",  "gwBuild");
   if (wrMac)      fprintf(stdout, ", %12s", "MAC");
+  if (wrLock)     fprintf(stdout, ", %5s",  "#lock");
   if (wrIp)       fprintf(stdout, ", %15s", "IP");
   if (checkIpMac) fprintf(stdout, ", %8s",  "?MAC ?IP");
   if (info)       fprintf(stdout, ", %s",   "info");  // this is the last option
@@ -516,7 +542,7 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
 int main(int argc, char** argv) {
   eb_status_t  status;                 // EB status
   eb_socket_t  socket;                 // EB socket
-  char         devName[MAXLEN+1];      // full EB device name
+  char         devName[MAXLEN+3];      // full EB device name
   char*        ebProto;                // EB protocol 'udp' ...
   int          devIndex=0;             // always grab 1st device on the WB bus
 
@@ -533,11 +559,14 @@ int main(int argc, char** argv) {
   int          getEBVersion = 0;       // option '-e'
   int          getWRDate    = 0;       // option '-d'
   int          getWROffset  = 0;       // option '-o'
+  int          getWRLock    = 0;       // option '-g'
   int          getWRSync    = 0;       // option '-s'
   int          getWRMac     = 0;       // option '-m'
   int          getWRLink    = 0;       // option '-l'
   int          getWRIP      = 0;       // option '-i'
   int          getWRUptime  = 0;       // option '-z'
+  int          getWRTCont   = 0;       // option '-b'
+  int          getCPUStalls = 0;       // option '-k'
   int          getBuildVer  = 0;       // option '-a'
   int          timeout      = 1000000; // option '-w'; internal representation is [us]
   int          fileFormat   = 0;       // option '-f'
@@ -556,6 +585,7 @@ int main(int argc, char** argv) {
   uint64_t     nodeMac[MAXNODES];
   uint64_t     atdMac[MAXNODES];
   uint32_t     nodeLink[MAXNODES];
+  uint32_t     nodeNLock[MAXNODES];
   uint32_t     nodeUptime[MAXNODES];
   uint32_t     nodeSyncState[MAXNODES];
   uint32_t     nodeIp[MAXNODES];
@@ -564,10 +594,22 @@ int main(int argc, char** argv) {
   char         nodeNetwork[MAXNODES][MAXLEN+1];
   char         nodeInfo[MAXNODES][MAXLEN+1];
   eb_status_t  nodeEbStat[MAXNODES];
+  uint32_t     nodeWRContDT[MAXNODES];
+  double       nodeCPUStalls[MAXNODES];
+
+  uint64_t     contObsT;
+  int64_t      contMaxPosDT;
+  int64_t      contMaxNegDT;
+
+  uint64_t     stallObsCPU=0;
+  uint64_t     stallObsT;
+  uint32_t     stallMax;
+
 
   int          i,j,k,l,m,n,o,nReachable;
   uint64_t     tmp64, temp64, atdTmp64=0;
   uint32_t     tmp32, atdTmp32=0;
+ 
   int          tmp;
   char         tmpStr[MAXLEN+1], atdTmpStr[MAXLEN+1];
   
@@ -578,120 +620,138 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "f:w:x:y:acdehijlmoqstuz")) != -1) {
+  while ((opt = getopt(argc, argv, "f:k:w:x:y:abcdeghijlmoqstuz")) != -1) {
     switch (opt) {
-    case 'a':
-      getBuildVer=1;
-      break;
-    case 'd':
-      getWRDate=1;
-      break;
-    case 'o':
-      getWROffset=1;
-      break;
-    case 'f':
-      fileFormat = strtol(optarg, &tail, 0);
-      if ((fileFormat < 0) || (fileFormat > MAXFILEFORMATS - 1)) {
-        fprintf(stderr, "option file format: '%s' is out of range !\n", optarg);
-        exit(1);
-      }
-      if (*tail != 0) {
-        fprintf(stderr, "option file format: specify a proper number, not '%s'!\n", optarg);
-        exit(1);
-      } // if *tail
-      break;
-    case 'j':
-      dispInfo=1;
-      break;
-    case 'm':
-      getWRMac=1;
-      break;
-    case 'l':
-      getWRLink=1;
-      break;
-    case 'i':
-      getWRIP=1;
-      break;
-    case 'c':
-      if (fileFormat != 1) {
-        fprintf(stderr, "option IP/MAC check type requires option '-f1'!\n");
-        exit(1);
-      } // option only valid when using ATD file
-      if (!getWRIP) {
-        fprintf(stderr, "option IP/MAC check type requires option '-i'!\n");
-        exit(1);
-      } 
-      if (!getWRMac) {
-        fprintf(stderr, "option IP/MAC check type requires option '-m'!\n");
-        exit(1);
-      } 
-      checkIpMac=1;
-      break;
-    case 's':
-      getWRSync=1;
-      break;
-    case 'z':
-      getWRUptime=1;
-      break;
-    case 'e':
-      getEBVersion=1;
-      break;
-    case 't':
-      printTable=1;
-      break;
-    case 'q':
-      quietMode=1;
-      break;
-    case 'u':
-      printStats=1;
-      break;
-    case 'w':
-      timeout = strtol(optarg, &tail, 0);
-      timeout = timeout * 1000; // ms -> us
-      if (*tail != 0) {
-        fprintf(stderr, "option timeout: specify a proper timeout value, not '%s'!\n", optarg);
-        exit(1);
-      } // if *tail
-      break;
-    case 'x' :
-      if (fileFormat != 1) {
-        fprintf(stderr, "option network type requires option '-f1'!\n");
-        exit(1);
-      } // option only valid when using ATD file
-      networkType = strtol(optarg, &tail, 0);
-      if ((networkType < 0) || (networkType > MAXNETWORKTYPES - 1)) {
-        fprintf(stderr, "option network type: '%s' is out of range !\n", optarg);
-        exit(1);
-      }
-      if (*tail != 0) {
-        fprintf(stderr, "option network type: specify a proper number, not '%s'!\n", optarg);
-        exit(1);
-      } // if *tail
-      break;
-    case 'y' :
-      nodeType = strtol(optarg, &tail, 0);
-      if ((nodeType < 0) || (nodeType > MAXNODETYPES - 1)) {
-        fprintf(stderr, "option node type: '%s' is out of range !\n", optarg);
-        exit(1);
-      }
-      if (*tail != 0) {
-        fprintf(stderr, "option node type: specify a proper number, not '%s'!\n", optarg);
-        exit(1);
-      } // if *tail
-      break;
-    case 'h':
-      help();
-      return 0;
+      case 'a':
+        getBuildVer=1;
+        break;
+      case 'b':
+        getWRTCont=1;
+        break;
+      case 'd':
+        getWRDate=1;
+        break;
+      case 'o':
+        getWROffset=1;
+        break;
+      case 'f':
+        fileFormat = strtol(optarg, &tail, 0);
+        if ((fileFormat < 0) || (fileFormat > MAXFILEFORMATS - 1)) {
+          fprintf(stderr, "option file format: '%s' is out of range !\n", optarg);
+          exit(1);
+        }
+        if (*tail != 0) {
+          fprintf(stderr, "option file format: specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'g':
+        getWRLock=1;
+        break;
+      case 'j':
+        dispInfo=1;
+        break;
+      case 'k':
+        getCPUStalls = 1;
+        stallObsCPU = strtol(optarg, &tail, 0);
+        if ((stallObsCPU < 0) || (stallObsCPU > 0xf)) {
+          fprintf(stderr, "option eCPU stall: '%s' is out of range !\n", optarg);
+          exit(1);
+        }
+        if (*tail != 0) {
+          fprintf(stderr, "option eCPU stall: specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'm':
+        getWRMac=1;
+        break;
+      case 'l':
+        getWRLink=1;
+        break;
+      case 'i':
+        getWRIP=1;
+        break;
+      case 'c':
+        if (fileFormat != 1) {
+          fprintf(stderr, "option IP/MAC check type requires option '-f1'!\n");
+          exit(1);
+        } // option only valid when using ATD file
+        if (!getWRIP) {
+          fprintf(stderr, "option IP/MAC check type requires option '-i'!\n");
+          exit(1);
+        } 
+        if (!getWRMac) {
+          fprintf(stderr, "option IP/MAC check type requires option '-m'!\n");
+          exit(1);
+        } 
+        checkIpMac=1;
+        break;
+      case 's':
+        getWRSync=1;
+        break;
+      case 'z':
+        getWRUptime=1;
+        break;
+      case 'e':
+        getEBVersion=1;
+        break;
+      case 't':
+        printTable=1;
+        break;
+      case 'q':
+        quietMode=1;
+        break;
+      case 'u':
+        printStats=1;
+        break;
+      case 'w':
+        timeout = strtol(optarg, &tail, 0);
+        timeout = timeout * 1000; // ms -> us
+        if (*tail != 0) {
+          fprintf(stderr, "option timeout: specify a proper timeout value, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'x' :
+        if (fileFormat != 1) {
+          fprintf(stderr, "option network type requires option '-f1'!\n");
+          exit(1);
+        } // option only valid when using ATD file
+        networkType = strtol(optarg, &tail, 0);
+        if ((networkType < 0) || (networkType > MAXNETWORKTYPES - 1)) {
+          fprintf(stderr, "option network type: '%s' is out of range !\n", optarg);
+          exit(1);
+        }
+        if (*tail != 0) {
+          fprintf(stderr, "option network type: specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'y' :
+        nodeType = strtol(optarg, &tail, 0);
+        if ((nodeType < 0) || (nodeType > MAXNODETYPES - 1)) {
+          fprintf(stderr, "option node type: '%s' is out of range !\n", optarg);
+          exit(1);
+        }
+        if (*tail != 0) {
+          fprintf(stderr, "option node type: specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'h':
+        help();
+        return 0;
       case ':':
       case '?':
         error = 1;
-      break;
-    default:
-      fprintf(stderr, "%s: bad getopt result\n", program);
-      return 1;
+        break;
+      default:
+        fprintf(stderr, "%s: bad getopt result\n", program);
+        return 1;
     } // switch opt
   } // while opt
-
+  
   if (error) {
     help();
     return 1;
@@ -730,16 +790,19 @@ int main(int argc, char** argv) {
     sprintf(buildType[i]  , "N/A");
     sprintf(nodeNetwork[i], "N/A");
     sprintf(nodeInfo[i],    "N/A");
-    nodeNsecs64[i]   = ~0;
-    nodeOffset[i]    = ~0;
-    nodeMac[i]       = ~0;
-    atdMac[i]        = ~0;
-    nodeLink[i]      = ~0;
-    nodeUptime[i]    = ~0;
-    nodeSyncState[i] = ~0;
-    nodeIp[i]        = ~0;
-    nodeUp[i]        = ~0;
-    nodeEbStat[i]    = ~0;
+    nodeNsecs64[i]    = ~0;
+    nodeOffset[i]     = ~0;
+    nodeMac[i]        = ~0;
+    nodeNLock[i]      = ~0;
+    atdMac[i]         = ~0;
+    nodeLink[i]       = ~0;
+    nodeUptime[i]     = ~0;
+    nodeSyncState[i]  = ~0;
+    nodeIp[i]         = ~0;
+    nodeUp[i]         = ~0;
+    nodeEbStat[i]     = ~0;
+    nodeWRContDT[i]   = ~0;
+    nodeCPUStalls[i]  = ~0;
   } // for i
 
   if ((file = fopen(fileName, "r")) == NULL) die("can't open file", EB_OOM);
@@ -780,12 +843,26 @@ int main(int argc, char** argv) {
               nodeNsecs64[nNodes] = tmp64;
               nodeOffset[nNodes]  = temp64;
               nodeUp[nNodes]      = 1;
-              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK) nodeSyncState[nNodes] = tmp;}
-              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)      nodeMac[nNodes]       = tmp64;}
-              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)       nodeLink[nNodes]      = tmp;}
-              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)         nodeIp[nNodes]        = tmp;}
-              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)   nodeUptime[nNodes]    = tmp32;}
-              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr)) == EB_OK)    sprintf(buildType[nNodes], "%s", tmpStr);}
+              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK)                    nodeSyncState[nNodes] = tmp;}
+              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)                         nodeMac[nNodes]       = tmp64;}
+              if (getWRLock)   {if ((status = wb_wr_stats_get_lock(device, devIndex, &tmp64, &temp64, &tmp32)) == EB_OK) nodeNLock[nNodes]     = tmp32;}
+              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)                          nodeLink[nNodes]      = tmp;}
+              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)                            nodeIp[nNodes]        = tmp;}
+              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)                      nodeUptime[nNodes]    = tmp32;}
+              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr)) == EB_OK)                       sprintf(buildType[nNodes], "%s", tmpStr);}
+              if (getWRTCont)  {
+                if ((status = wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &tmp64, &contMaxNegDT, &temp64)) == EB_OK) {
+                  if (contObsT == 8) {/* chk */ // just take the max jump; should be '16' for 62.5 MHz or '8' for 125 MHz eCPU
+                    contMaxPosDT    = abs(contMaxPosDT);                       
+                    contMaxNegDT    = abs(contMaxNegDT);
+                    if (contMaxPosDT > contMaxNegDT) nodeWRContDT[nNodes] = contMaxPosDT;
+                    else                             nodeWRContDT[nNodes] = contMaxNegDT;
+                  } // if contObsT
+                } // if status
+              } // if getWRTCont
+              if (getCPUStalls) 
+                if ((status = wb_wr_stats_get_stall(device, devIndex, stallObsCPU, &stallObsT, &stallMax, &tmp32, &tmp64)) == EB_OK)
+                  if (stallObsT > 5000) nodeCPUStalls[nNodes] = (double)stallMax/(double)(stallObsT) * 100.0;  // stall rate [%]
             } // check device
             wb_close(device, socket);
           } // wb_open is ok
@@ -800,22 +877,25 @@ int main(int argc, char** argv) {
   if (printTable) {
     fprintf(stdout, "\nqueried data from %d nodes in network '%s'\n", nNodes, networkTypeNames[networkType]);
     
-    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac);
+    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLock, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac, getWRTCont, getCPUStalls);
     for (i=0; i<nNodes; i++) {
       fprintf(stdout, "%15s", nodeName[i]);
       fprintf(stdout, ", %10s", nodeNetwork[i]);
       printEbStat(nodeEbStat[i]);
       printUp(nodeUp[i]);
-      if (getWRDate)   printDate(nodeNsecs64[i]);
-      if (getWROffset) printOffset(nodeOffset[i]);
-      if (getWRSync)   printSyncState(nodeSyncState[i]);
-      if (getWRLink)   printLink(nodeLink[i]);
-      if (getWRUptime) printUptime(nodeUptime[i]);
-      if (getBuildVer) printBuildVer(buildType[i]);
-      if (getWRMac)    printMac(nodeMac[i]);
-      if (getWRIP)     printIp(nodeIp[i]);
-      if (checkIpMac)  printCheckIpMac(nodeMac[i], atdMac[i], nodeIp[i], atdIp[i]);
-      if (dispInfo)    printInfo(nodeInfo[i]);
+      if (getWRDate)    printDate(nodeNsecs64[i]);
+      if (getWROffset)  printOffset(nodeOffset[i]);
+      if (getWRSync)    printSyncState(nodeSyncState[i]);
+      if (getWRTCont)   printTCont(nodeWRContDT[i]);
+      if (getWRLink)    printLink(nodeLink[i]);
+      if (getWRUptime)  printUptime(nodeUptime[i]);
+      if (getCPUStalls) printCPUStalls(nodeCPUStalls[i]);
+      if (getBuildVer)  printBuildVer(buildType[i]);
+      if (getWRMac)     printMac(nodeMac[i]);
+      if (getWRLock)    printNLock(nodeNLock[i]);
+      if (getWRIP)      printIp(nodeIp[i]);
+      if (checkIpMac)   printCheckIpMac(nodeMac[i], atdMac[i], nodeIp[i], atdIp[i]);
+      if (dispInfo)     printInfo(nodeInfo[i]);
       printf("\n");
     } // for all nodes
   } // if print table

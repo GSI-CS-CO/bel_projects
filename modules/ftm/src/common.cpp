@@ -1,5 +1,9 @@
 #include "common.h"
 
+
+
+
+
 void hexDump (const char *desc, const char* addr, int len) {
     int i;
     unsigned char buff[17];
@@ -32,9 +36,24 @@ void hexDump (const char *desc, const char* addr, int len) {
             buff[i % 16] = pc[i];
         buff[(i % 16) + 1] = '\0';
     }
-  printf ("\n");  
+  printf ("\n");
 }
 
 void hexDump (const char *desc, vBuf vb) { hexDump(desc, (const char*)&vb[0], vb.size()); }
 
 vBl leadingOne(size_t length) {vBl ret(length, false); *ret.begin() = true; return ret;}
+
+std::string nsTimeToDate(uint64_t t, bool noSpaces) {
+  char date[40];
+  uint64_t tAux = t / 1000000000ULL;
+  uint64_t tMod = t % 1000000000ULL;
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
+  std::string ret = std::string(date);
+  ret += " ";
+  ret += std::to_string(tMod);
+  ret += "ns\n";
+  if (noSpaces) std::replace( ret.begin(), ret.end(), ' ', '_');
+  return ret;
+}
+
+

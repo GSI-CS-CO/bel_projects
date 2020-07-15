@@ -1,476 +1,476 @@
-# Copyright (C) 1991-2005 Altera Corporation
-# Your use of Altera Corporation's design tools, logic functions
-# and other software and tools, and its AMPP partner logic
-# functions, and any output files any of the foregoing
-# (including device programming or simulation files), and any
-# associated documentation or information are expressly subject
-# to the terms and conditions of the Altera Program License
-# Subscription Agreement, Altera MegaCore Function License
-# Agreement, or other applicable license agreement, including,
-# without limitation, that your use is for the sole purpose of
-# programming logic devices manufactured by Altera and sold by
-# Altera or its authorized distributors.  Please refer to the
-# applicable agreement for further details.
-
-
-# The default values for assignments are stored in the file
-#		chopper_m2_v3_assignment_defaults.qdf
-# If this file doesn't exist, and for assignments not listed, see file
-#		assignment_defaults.qdf
-
-# Altera recommends that you do not modify this file. This
-# file is updated automatically by the Quartus II software
-# and any changes you make may be lost or overwritten.
-
-
-# Project-Wide Assignments
-# ========================
-set_global_assignment -name ORIGINAL_QUARTUS_VERSION 8.0
-set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:27:05  DECEMBER 08, 2008"
-set_global_assignment -name LAST_QUARTUS_VERSION "9.1 SP2"
-
-# Pin & Location Assignments
-# ==========================
-set_location_assignment PIN_H16 -to A_A[0]
-set_location_assignment PIN_G17 -to A_A[1]
-set_location_assignment PIN_G18 -to A_A[2]
-set_location_assignment PIN_H15 -to A_A[3]
-set_location_assignment PIN_G14 -to A_A[4]
-set_location_assignment PIN_U3 -to A_AUX_A[0]
-set_location_assignment PIN_U2 -to A_AUX_A[1]
-set_location_assignment PIN_U4 -to A_AUX_A[2]
-set_location_assignment PIN_U1 -to A_AUX_A[3]
-set_location_assignment PIN_T3 -to A_AUX_A[4]
-set_location_assignment PIN_T2 -to A_AUX_A[5]
-set_location_assignment PIN_T4 -to A_AUX_A[6]
-set_location_assignment PIN_R4 -to A_AUX_A[7]
-set_location_assignment PIN_R3 -to A_AUX_A[8]
-set_location_assignment PIN_R5 -to A_AUX_A[9]
-set_location_assignment PIN_R6 -to A_AUX_A[10]
-set_location_assignment PIN_R2 -to A_AUX_A[11]
-set_location_assignment PIN_C3 -to A_AUX_B[0]
-set_location_assignment PIN_C2 -to A_AUX_B[1]
-set_location_assignment PIN_D3 -to A_AUX_B[2]
-set_location_assignment PIN_D2 -to A_AUX_B[3]
-set_location_assignment PIN_D4 -to A_AUX_B[4]
-set_location_assignment PIN_D1 -to A_AUX_B[5]
-set_location_assignment PIN_E4 -to A_AUX_B[6]
-set_location_assignment PIN_E5 -to A_AUX_B[7]
-set_location_assignment PIN_F3 -to A_AUX_B[8]
-set_location_assignment PIN_E3 -to A_AUX_B[9]
-set_location_assignment PIN_E2 -to A_AUX_B[10]
-set_location_assignment PIN_F4 -to A_AUX_B[11]
-set_location_assignment PIN_F5 -to A_AUX_C[0]
-set_location_assignment PIN_F2 -to A_AUX_C[1]
-set_location_assignment PIN_F1 -to A_AUX_C[2]
-set_location_assignment PIN_F6 -to A_AUX_C[3]
-set_location_assignment PIN_G5 -to A_AUX_C[4]
-set_location_assignment PIN_G1 -to A_AUX_C[5]
-set_location_assignment PIN_G2 -to A_AUX_C[6]
-set_location_assignment PIN_G6 -to A_AUX_C[7]
-set_location_assignment PIN_G7 -to A_AUX_C[8]
-set_location_assignment PIN_G3 -to A_AUX_C[9]
-set_location_assignment PIN_G4 -to A_AUX_C[10]
-set_location_assignment PIN_H7 -to A_AUX_C[11]
-set_location_assignment PIN_D16 -to A_Bus_IO[1]
-set_location_assignment PIN_E16 -to A_Bus_IO[2]
-set_location_assignment PIN_C15 -to A_Bus_IO[3]
-set_location_assignment PIN_D15 -to A_Bus_IO[4]
-set_location_assignment PIN_B15 -to A_Bus_IO[5]
-set_location_assignment PIN_T16 -to A_GR1_APK_ID
-set_location_assignment PIN_P16 -to A_GR0_APK_ID
-set_location_assignment PIN_D14 -to A_GR1_16BIT
-set_location_assignment PIN_A8 -to A_GR0_16BIT
-set_location_assignment PIN_E15 -to A_I2C_SCL
-set_location_assignment PIN_A15 -to A_I2C_SDA
-set_location_assignment PIN_B13 -to A_K3D_SPG
-set_location_assignment PIN_E8 -to A_K1D_SPG
-set_location_assignment PIN_C4 -to A_K1_D[0]
-set_location_assignment PIN_A9 -to A_K3_D[0]
-set_location_assignment PIN_P19 -to A_K0D_SPG
-set_location_assignment PIN_R15 -to A_K2_D[0]
-set_location_assignment PIN_J14 -to A_K0_D[0]
-set_location_assignment PIN_V16 -to A_K2D_SPG
-set_location_assignment PIN_W16 -to A_K2C_SPG
-set_location_assignment PIN_A13 -to A_K3C_SPG
-set_location_assignment PIN_P15 -to A_K0C_SPG
-set_location_assignment PIN_B8 -to A_K1C_SPG
-set_location_assignment PIN_B3 -to A_K1_D[1]
-set_location_assignment PIN_R18 -to A_K2_D[1]
-set_location_assignment PIN_D9 -to A_K3_D[1]
-set_location_assignment PIN_J17 -to A_K0_D[1]
-set_location_assignment PIN_C9 -to A_K3_D[2]
-set_location_assignment PIN_R17 -to A_K2_D[2]
-set_location_assignment PIN_B4 -to A_K1_D[2]
-set_location_assignment PIN_J18 -to A_K0_D[2]
-set_location_assignment PIN_R20 -to A_K2_D[3]
-set_location_assignment PIN_K15 -to A_K0_D[3]
-set_location_assignment PIN_E9 -to A_K3_D[3]
-set_location_assignment PIN_A4 -to A_K1_D[3]
-set_location_assignment PIN_D5 -to A_K1_D[4]
-set_location_assignment PIN_R19 -to A_K2_D[4]
-set_location_assignment PIN_E10 -to A_K3_D[4]
-set_location_assignment PIN_K16 -to A_K0_D[4]
-set_location_assignment PIN_B10 -to A_K3_D[5]
-set_location_assignment PIN_R16 -to A_K2_D[5]
-set_location_assignment PIN_D6 -to A_K1_D[5]
-set_location_assignment PIN_M20 -to A_K0_D[5]
-set_location_assignment PIN_A10 -to A_K3_D[6]
-set_location_assignment PIN_C5 -to A_K1_D[6]
-set_location_assignment PIN_T17 -to A_K2_D[6]
-set_location_assignment PIN_M16 -to A_K0_D[6]
-set_location_assignment PIN_F10 -to A_K3_D[7]
-set_location_assignment PIN_T19 -to A_K2_D[7]
-set_location_assignment PIN_B5 -to A_K1_D[7]
-set_location_assignment PIN_M15 -to A_K0_D[7]
-set_location_assignment PIN_M17 -to A_K0_D[8]
-set_location_assignment PIN_C6 -to A_K1_D[8]
-set_location_assignment PIN_C10 -to A_K3_D[8]
-set_location_assignment PIN_T18 -to A_K2_D[8]
-set_location_assignment PIN_E6 -to A_K1_D[9]
-set_location_assignment PIN_U17 -to A_K2_D[9]
-set_location_assignment PIN_M18 -to A_K0_D[9]
-set_location_assignment PIN_D10 -to A_K3_D[9]
-set_location_assignment PIN_B6 -to A_K1_D[10]
-set_location_assignment PIN_U19 -to A_K2_D[10]
-set_location_assignment PIN_N15 -to A_K0_D[10]
-set_location_assignment PIN_C11 -to A_K3_D[10]
-set_location_assignment PIN_U18 -to A_K2_D[11]
-set_location_assignment PIN_D11 -to A_K3_D[11]
-set_location_assignment PIN_A6 -to A_K1_D[11]
-set_location_assignment PIN_N16 -to A_K0_D[11]
-set_location_assignment PIN_B11 -to A_K3_D[12]
-set_location_assignment PIN_F7 -to A_K1_D[12]
-set_location_assignment PIN_N20 -to A_K0_D[12]
-set_location_assignment PIN_U20 -to A_K2_D[12]
-set_location_assignment PIN_A11 -to A_K3_D[13]
-set_location_assignment PIN_N19 -to A_K0_D[13]
-set_location_assignment PIN_V19 -to A_K2_D[13]
-set_location_assignment PIN_E7 -to A_K1_D[13]
-set_location_assignment PIN_N17 -to A_K0_D[14]
-set_location_assignment PIN_V18 -to A_K2_D[14]
-set_location_assignment PIN_E11 -to A_K3_D[14]
-set_location_assignment PIN_B7 -to A_K1_D[14]
-set_location_assignment PIN_N18 -to A_K0_D[15]
-set_location_assignment PIN_A7 -to A_K1_D[15]
-set_location_assignment PIN_C12 -to A_K3_D[15]
-set_location_assignment PIN_W18 -to A_K2_D[15]
-set_location_assignment PIN_U10 -to A_LA_CLK
-set_location_assignment PIN_D7 -to A_Master_Clk_Out
-set_location_assignment PIN_V13 -to A_Mod_Data[0]
-set_location_assignment PIN_R14 -to A_Mod_Data[1]
-set_location_assignment PIN_T14 -to A_Mod_Data[2]
-set_location_assignment PIN_W14 -to A_Mod_Data[3]
-set_location_assignment PIN_Y14 -to A_Mod_Data[4]
-set_location_assignment PIN_U14 -to A_Mod_Data[5]
-set_location_assignment PIN_V14 -to A_Mod_Data[6]
-set_location_assignment PIN_V15 -to A_Mod_Data[7]
-set_location_assignment PIN_W4 -to A_nDRQA
-set_location_assignment PIN_V4 -to A_nDRQB
-set_location_assignment PIN_G19 -to A_nDS
-set_location_assignment PIN_G16 -to A_nDTACKA
-set_location_assignment PIN_F20 -to A_nDTACKB
-set_location_assignment PIN_W6 -to A_nGR0_ID_SEL
-set_location_assignment PIN_Y6 -to A_nGR1_ID_SEL
-set_location_assignment PIN_U5 -to A_nINTERLOCKA
-set_location_assignment PIN_T5 -to A_nINTERLOCKB
-set_location_assignment PIN_T7 -to A_nK3_ID_EN
-set_location_assignment PIN_V5 -to A_nK0_ID_EN
-set_location_assignment PIN_T6 -to A_nK2_ID_EN
-set_location_assignment PIN_W5 -to A_nK1_ID_EN
-set_location_assignment PIN_C13 -to A_nK3_CTRL[1]
-set_location_assignment PIN_P20 -to A_nK0_CTRL[1]
-set_location_assignment PIN_F8 -to A_nK1_CTRL[1]
-set_location_assignment PIN_V17 -to A_nK2_CTRL[1]
-set_location_assignment PIN_N14 -to A_nK0_CTRL[2]
-set_location_assignment PIN_C7 -to A_nK1_CTRL[2]
-set_location_assignment PIN_D13 -to A_nK3_CTRL[2]
-set_location_assignment PIN_U16 -to A_nK2_CTRL[2]
-set_location_assignment PIN_W7 -to A_nMANUAL_RES
-set_location_assignment PIN_G15 -to A_nMB_Reset
-set_location_assignment PIN_Y4 -to A_nSRQA
-set_location_assignment PIN_W3 -to A_nSRQB
-set_location_assignment PIN_G20 -to A_RDnWR
-set_location_assignment PIN_J20 -to A_Sub_Adr[0]
-set_location_assignment PIN_J19 -to A_Sub_Adr[1]
-set_location_assignment PIN_J15 -to A_Sub_Adr[2]
-set_location_assignment PIN_J16 -to A_Sub_Adr[3]
-set_location_assignment PIN_H20 -to A_Sub_Adr[4]
-set_location_assignment PIN_H19 -to A_Sub_Adr[5]
-set_location_assignment PIN_H17 -to A_Sub_Adr[6]
-set_location_assignment PIN_H18 -to A_Sub_Adr[7]
-set_location_assignment PIN_T10 -to A_Test[0]
-set_location_assignment PIN_W9 -to A_Test[1]
-set_location_assignment PIN_Y9 -to A_Test[2]
-set_location_assignment PIN_R9 -to A_Test[3]
-set_location_assignment PIN_T9 -to A_Test[4]
-set_location_assignment PIN_V9 -to A_Test[5]
-set_location_assignment PIN_U9 -to A_Test[6]
-set_location_assignment PIN_Y8 -to A_Test[7]
-set_location_assignment PIN_W8 -to A_Test[8]
-set_location_assignment PIN_U8 -to A_Test[9]
-set_location_assignment PIN_V8 -to A_Test[10]
-set_location_assignment PIN_U7 -to A_Test[11]
-set_location_assignment PIN_V7 -to A_Test[12]
-set_location_assignment PIN_T8 -to A_Test[13]
-set_location_assignment PIN_R7 -to A_Test[14]
-set_location_assignment PIN_Y7 -to A_Test[15]
-set_location_assignment PIN_F19 -to A_VG_A[0]
-set_location_assignment PIN_F15 -to A_VG_A[1]
-set_location_assignment PIN_F16 -to A_VG_A[2]
-set_location_assignment PIN_E19 -to A_VG_A[3]
-set_location_assignment PIN_E18 -to A_VG_A[4]
-set_location_assignment PIN_F17 -to A_VG_ID[0]
-set_location_assignment PIN_E17 -to A_VG_ID[1]
-set_location_assignment PIN_D20 -to A_VG_ID[2]
-set_location_assignment PIN_D17 -to A_VG_ID[3]
-set_location_assignment PIN_D19 -to A_VG_ID[4]
-set_location_assignment PIN_D18 -to A_VG_ID[5]
-set_location_assignment PIN_C19 -to A_VG_ID[6]
-set_location_assignment PIN_C18 -to A_VG_ID[7]
-set_location_assignment PIN_F14 -to A_VG_IO_Res[0]
-set_location_assignment PIN_A14 -to A_VG_IO_Res[1]
-set_location_assignment PIN_T15 -to A_VG_K2_INP
-set_location_assignment PIN_C14 -to A_VG_K3_INP
-set_location_assignment PIN_B9 -to A_VG_K1_MOD[0]
-set_location_assignment PIN_P17 -to A_VG_K0_INP
-set_location_assignment PIN_P14 -to A_VG_K0_MOD[0]
-set_location_assignment PIN_E14 -to A_VG_K3_MOD[0]
-set_location_assignment PIN_Y15 -to A_VG_K2_MOD[0]
-set_location_assignment PIN_D8 -to A_VG_K1_INP
-set_location_assignment PIN_E13 -to A_VG_K3_MOD[1]
-set_location_assignment PIN_P18 -to A_VG_K0_MOD[1]
-set_location_assignment PIN_W15 -to A_VG_K2_MOD[1]
-set_location_assignment PIN_C8 -to A_VG_K1_MOD[1]
-set_location_assignment PIN_C17 -to A_VG_Log_ID[0]
-set_location_assignment PIN_B18 -to A_VG_Log_ID[1]
-set_location_assignment PIN_B17 -to A_VG_Log_ID[2]
-set_location_assignment PIN_A17 -to A_VG_Log_ID[3]
-set_location_assignment PIN_C16 -to A_VG_Log_ID[4]
-set_location_assignment PIN_B16 -to A_VG_Log_ID[5]
-set_location_assignment PIN_Y13 -to CTRL_LOAD
-set_location_assignment PIN_W13 -to CTRL_RES
-set_location_assignment PIN_K6 -to Loader_CLK
-set_location_assignment PIN_Y12 -to Loader_DB[0]
-set_location_assignment PIN_W12 -to Loader_DB[1]
-set_location_assignment PIN_T11 -to Loader_DB[2]
-set_location_assignment PIN_T12 -to Loader_DB[3]
-set_location_assignment PIN_V11 -to Loader_Misc[0]
-set_location_assignment PIN_U11 -to Loader_Misc[1]
-set_location_assignment PIN_W11 -to Loader_Misc[2]
-set_location_assignment PIN_Y11 -to Loader_Misc[3]
-set_location_assignment PIN_R11 -to Loader_WRnRD
-set_location_assignment PIN_T13 -to LOAD_ERROR
-set_location_assignment PIN_V12 -to LOAD_OK
-set_location_assignment PIN_J5 -to nDT_Led
-set_location_assignment PIN_U15 -to nExt_Data_En
-set_location_assignment PIN_J4 -to nID_OK_Led
-set_location_assignment PIN_H1 -to nIndepend_Clk_Ena
-set_location_assignment PIN_F12 -to nK2_SWITCH_ENA
-set_location_assignment PIN_D12 -to nK1_SWITCH_ENA
-set_location_assignment PIN_B12 -to nK3_SWITCH_ENA
-set_location_assignment PIN_A12 -to nK0_SWITCH_ENA
-set_location_assignment PIN_R1 -to nLED[0]
-set_location_assignment PIN_P4 -to nLED[1]
-set_location_assignment PIN_P3 -to nLED[2]
-set_location_assignment PIN_P5 -to nLED[3]
-set_location_assignment PIN_P6 -to nLED[4]
-set_location_assignment PIN_P1 -to nLED[5]
-set_location_assignment PIN_P2 -to nLED[6]
-set_location_assignment PIN_P7 -to nLED[7]
-set_location_assignment PIN_N7 -to nLED[8]
-set_location_assignment PIN_N5 -to nLED[9]
-set_location_assignment PIN_N3 -to nLED[10]
-set_location_assignment PIN_N4 -to nLED[11]
-set_location_assignment PIN_N2 -to nLED[12]
-set_location_assignment PIN_N1 -to nLED[13]
-set_location_assignment PIN_N6 -to nLED[14]
-set_location_assignment PIN_M7 -to nLED[15]
-set_location_assignment PIN_M3 -to nLED_Skal[0]
-set_location_assignment PIN_M4 -to nLED_Skal[1]
-set_location_assignment PIN_M6 -to nLED_Skal[2]
-set_location_assignment PIN_M5 -to nLED_Skal[3]
-set_location_assignment PIN_M1 -to nLED_Skal[4]
-set_location_assignment PIN_M2 -to nLED_Skal[5]
-set_location_assignment PIN_M8 -to nLED_Skal[6]
-set_location_assignment PIN_L8 -to nLED_Skal[7]
-set_location_assignment PIN_H2 -to nMaster_Clk_ENA
-set_location_assignment PIN_J6 -to nPowerup_Led
-set_location_assignment PIN_J7 -to nSEL_LED_GRP[0]
-set_location_assignment PIN_J8 -to nSEL_LED_GRP[1]
-set_location_assignment PIN_J3 -to nSkal_OK_Led
-set_location_assignment PIN_H3 -to nSlave_Clk_ENA
-set_location_assignment PIN_R13 -to RELOAD
-set_location_assignment PIN_J1 -to SEL_B[0]
-set_location_assignment PIN_J2 -to SEL_B[1]
-set_location_assignment PIN_H5 -to SEL_B[2]
-set_location_assignment PIN_H6 -to SEL_B[3]
-set_location_assignment PIN_V2 -to TP[1]
-set_location_assignment PIN_V3 -to TP[2]
-set_location_assignment PIN_V10 -to TP[3]
-set_location_assignment PIN_W10 -to TP[4]
-set_location_assignment PIN_Y10 -to TP[5]
-set_location_assignment PIN_Y17 -to TP[6]
-set_location_assignment PIN_W17 -to TP[7]
-set_location_assignment PIN_H14 -to TP[8]
-set_location_assignment PIN_J13 -to TP[9]
-set_location_assignment PIN_K19 -to TP[10]
-set_location_assignment PIN_H4 -to TP[11]
-set_location_assignment PIN_E12 -to TP[12]
-
-# Timing Assignments
-# ==================
-set_global_assignment -name DO_MIN_ANALYSIS ON
-set_global_assignment -name FMAX_REQUIREMENT "200 MHz"
-
-# Analysis & Synthesis Assignments
 # ================================
-set_global_assignment -name FAMILY Cyclone
-set_global_assignment -name ADV_NETLIST_OPT_SYNTH_GATE_RETIME ON
-set_global_assignment -name TOP_LEVEL_ENTITY chopper_m2
-set_global_assignment -name USER_LIBRARIES "G:\\q5p0work\\chopper_vhdl\\Modulbus_Loader"
-
-# Fitter Assignments
+# ==============================
+# ==============================
+# ===========================
+# ==========================
+# ========================
+# =====================
 # ==================
+# ==================
+# ==================
+# ==================
+# ==================
+# ==================
+# ---------------------------------------
+# -------------------------------------
+# -----------------------------
+# ---------------------------
+# -----------------------
+# ---------------------
+# -------------------
+# -----------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Agreement, or other applicable license agreement, including,
+# Altera or its authorized distributors.  Please refer to the
+# Altera recommends that you do not modify this file. This
+# Analysis & Synthesis Assignments
+# and any changes you make may be lost or overwritten.
+# and other software and tools, and its AMPP partner logic
+# applicable agreement for further details.
+# Assembler Assignments
+#		assignment_defaults.qdf
+# associated documentation or information are expressly subject
+#		chopper_m2_v3_assignment_defaults.qdf
+# Copyright (C) 1991-2005 Altera Corporation
+# EDA Netlist Writer Assignments
+# EDA Netlist Writer Assignments
+# end CLOCK(F_TCXO)
+# end CLOCK(Kicker_Clk)
+# end EDA_TOOL_SETTINGS(eda_simulation)
+# end ENTITY(chopper_vhdl_m2)
+# file is updated automatically by the Quartus II software
+# Fitter Assignments
+# Fitter Assignments
+# functions, and any output files any of the foregoing
+# If this file doesn't exist, and for assignments not listed, see file
+# (including device programming or simulation files), and any
+# Pin & Location Assignments
+# programming logic devices manufactured by Altera and sold by
+# Project-Wide Assignments
+set_global_assignment -name ADV_NETLIST_OPT_SYNTH_GATE_RETIME ON
+set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
+set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
+set_global_assignment -name ANALYZE_LATCHES_AS_SYNCHRONOUS_ELEMENTS OFF
+set_global_assignment -name BDF_FILE ../../../modules/modulbus/Modulbus_Loader.bdf
+set_global_assignment -name BDF_FILE ../../../top/fg45041x/chopper_m2/chopper_m2.bdf
+set_global_assignment -name BDF_FILE ../../../top/fg45041x/chopper_m2/chopper_macro2_vhdl.bdf
+set_global_assignment -name CYCLONE_CONFIGURATION_DEVICE EPCS1
+set_global_assignment -name CYCLONE_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name DEVICE EP1C4F400C7
-set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
-set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
+set_global_assignment -name DO_MIN_ANALYSIS ON
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME tb -section_id gate_tb_51
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH gate_tb_51 -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_FILE simulation/modelsim/chopper_vhdl.vhd -section_id gate_tb_51
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME chopper_vhdl_vhd_tst -section_id gate_tb_51
+set_global_assignment -name EDA_TEST_BENCH_NAME gate_tb_51 -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_RUN_SIM_FOR "500 ns" -section_id gate_tb_51
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name FAMILY Cyclone
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name FMAX_REQUIREMENT "200 MHz"
+set_global_assignment -name FMAX_REQUIREMENT "20 MHz" -section_id F_TCXO
+set_global_assignment -name FMAX_REQUIREMENT "20 MHz" -section_id Kicker_Clk
+set_global_assignment -name GENERATE_RBF_FILE ON
+set_global_assignment -name GENERATE_TTF_FILE ON
+set_global_assignment -name LAST_QUARTUS_VERSION "9.1 SP2"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 8.0
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
-set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD LVTTL
-set_instance_assignment -name IO_STANDARD LVDS -to F_TCXO_In
-
-# Timing Analysis Assignments
-# ===========================
-set_global_assignment -name ANALYZE_LATCHES_AS_SYNCHRONOUS_ELEMENTS OFF
-
-# EDA Netlist Writer Assignments
-# ==============================
-
-# Assembler Assignments
-# =====================
-set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
-set_global_assignment -name CYCLONE_CONFIGURATION_DEVICE EPCS1
-
-# -------------------
-# start CLOCK(F_TCXO)
-
-# Timing Assignments
-# ==================
-set_global_assignment -name FMAX_REQUIREMENT "20 MHz" -section_id F_TCXO
-
-# end CLOCK(F_TCXO)
-# -----------------
-
-# -----------------------
-# start CLOCK(Kicker_Clk)
-
-# Timing Assignments
-# ==================
-set_global_assignment -name FMAX_REQUIREMENT "20 MHz" -section_id Kicker_Clk
-
-# end CLOCK(Kicker_Clk)
-# ---------------------
-
-# ---------------------------------------
-# start EDA_TOOL_SETTINGS(eda_simulation)
-
-# EDA Netlist Writer Assignments
-# ==============================
-set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
-
-# end EDA_TOOL_SETTINGS(eda_simulation)
-# -------------------------------------
-
-# -----------------------------
-# start ENTITY(chopper_vhdl_m2)
-
-# Timing Assignments
-# ==================
-
-# Fitter Assignments
-# ==================
-
-# end ENTITY(chopper_vhdl_m2)
-# ---------------------------
-
-set_global_assignment -name CYCLONE_OPTIMIZATION_TECHNIQUE SPEED
-set_global_assignment -name GENERATE_TTF_FILE ON
-set_instance_assignment -name CLOCK_SETTINGS F_TCXO -to F_TCXO_In
-set_instance_assignment -name CLOCK_SETTINGS Kicker_Clk -to Kicker_Clk
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_ID
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_A
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_Log_ID
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K0_INP
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K1_INP
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K2_INP
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K3_INP
-set_global_assignment -name GENERATE_RBF_FILE ON
-set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
-set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
-set_global_assignment -name EDA_TEST_BENCH_NAME gate_tb_51 -section_id eda_simulation
-set_global_assignment -name EDA_TEST_BENCH_FILE simulation/modelsim/chopper_vhdl.vhd -section_id gate_tb_51
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME chopper_vhdl_vhd_tst -section_id gate_tb_51
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME tb -section_id gate_tb_51
-set_global_assignment -name EDA_TEST_BENCH_RUN_SIM_FOR "500 ns" -section_id gate_tb_51
-set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH gate_tb_51 -section_id eda_simulation
-set_location_assignment PIN_U13 -to RDnWR_Transceiver
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
-set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
-set_location_assignment PIN_K5 -to Chopper_Clk
-set_location_assignment PIN_L14 -to F_TCXO_In
-set_location_assignment PIN_K14 -to "F_TCXO_In(n)"
-set_location_assignment PIN_U12 -to INIT_DONE
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:27:05  DECEMBER 08, 2008"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name SDC_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_v3.sdc
-set_global_assignment -name BDF_FILE ../../../top/fg45041x/chopper_m2/chopper_m2.bdf
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/epld_vers.vhd
-set_global_assignment -name BDF_FILE ../../../modules/modulbus/Modulbus_Loader.bdf
-set_global_assignment -name BDF_FILE ../../../top/fg45041x/chopper_m2/chopper_macro2_vhdl.bdf
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Skal_Test.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_pll.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Debounce_Skal.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/APK_Stecker_ID_Cntrl.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/master.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Rd_Apk_ID.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_v5.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Debounce.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Loader_MB.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/I2C_Cntrl.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Rd_mb_ld.vhd
-set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/led.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_adr_deco.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Kanal.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chop_m2_vers.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_logic.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_glue.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_rd_reg.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/global_stat.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Independent_Clk.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Bus_io.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/f_divider.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modul2spi.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Epcs_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Kicker_Leds.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Rd_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/K12_K23_Logik_Leds.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/rdram.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/test_port.vhd
-set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Signal_Stretch.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD LVTTL
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
+set_global_assignment -name TOP_LEVEL_ENTITY chopper_m2
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name USER_LIBRARIES "G:\\q5p0work\\chopper_vhdl\\Modulbus_Loader"
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Debounce_Skal.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Independent_Clk.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/K12_K23_Logik_Leds.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kanal.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Debounce.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Epcs_spi.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/f_divider.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/I2C_Cntrl.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/led.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Loader_MB.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modul2spi.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_v5.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Rd_mb_ld.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/rdram.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/APK_Stecker_ID_Cntrl.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Bus_io.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chop_m2_vers.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_adr_deco.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_glue.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_logic.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_m2_rd_reg.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/chopper_pll.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Debounce_Skal.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/epld_vers.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/global_stat.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Independent_Clk.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/K12_K23_Logik_Leds.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Kanal.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Kicker_Leds.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/master.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Rd_Apk_ID.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Rd_mux.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Signal_Stretch.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/Skal_Test.vhd
+set_global_assignment -name VHDL_FILE ../../../top/fg45041x/chopper_m2/test_port.vhd
+set_instance_assignment -name CLOCK_SETTINGS F_TCXO -to F_TCXO_In
+set_instance_assignment -name CLOCK_SETTINGS Kicker_Clk -to Kicker_Clk
+set_instance_assignment -name IO_STANDARD LVDS -to F_TCXO_In
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_A
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_ID
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K0_INP
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K1_INP
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K2_INP
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_K3_INP
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_VG_Log_ID
+set_location_assignment PIN_A10 -to A_K3_D[6]
+set_location_assignment PIN_A11 -to A_K3_D[13]
+set_location_assignment PIN_A12 -to nK0_SWITCH_ENA
+set_location_assignment PIN_A13 -to A_K3C_SPG
+set_location_assignment PIN_A14 -to A_VG_IO_Res[1]
+set_location_assignment PIN_A15 -to A_I2C_SDA
+set_location_assignment PIN_A17 -to A_VG_Log_ID[3]
+set_location_assignment PIN_A4 -to A_K1_D[3]
+set_location_assignment PIN_A6 -to A_K1_D[11]
+set_location_assignment PIN_A7 -to A_K1_D[15]
+set_location_assignment PIN_A8 -to A_GR0_16BIT
+set_location_assignment PIN_A9 -to A_K3_D[0]
+set_location_assignment PIN_B10 -to A_K3_D[5]
+set_location_assignment PIN_B11 -to A_K3_D[12]
+set_location_assignment PIN_B12 -to nK3_SWITCH_ENA
+set_location_assignment PIN_B13 -to A_K3D_SPG
+set_location_assignment PIN_B15 -to A_Bus_IO[5]
+set_location_assignment PIN_B16 -to A_VG_Log_ID[5]
+set_location_assignment PIN_B17 -to A_VG_Log_ID[2]
+set_location_assignment PIN_B18 -to A_VG_Log_ID[1]
+set_location_assignment PIN_B3 -to A_K1_D[1]
+set_location_assignment PIN_B4 -to A_K1_D[2]
+set_location_assignment PIN_B5 -to A_K1_D[7]
+set_location_assignment PIN_B6 -to A_K1_D[10]
+set_location_assignment PIN_B7 -to A_K1_D[14]
+set_location_assignment PIN_B8 -to A_K1C_SPG
+set_location_assignment PIN_B9 -to A_VG_K1_MOD[0]
+set_location_assignment PIN_C10 -to A_K3_D[8]
+set_location_assignment PIN_C11 -to A_K3_D[10]
+set_location_assignment PIN_C12 -to A_K3_D[15]
+set_location_assignment PIN_C13 -to A_nK3_CTRL[1]
+set_location_assignment PIN_C14 -to A_VG_K3_INP
+set_location_assignment PIN_C15 -to A_Bus_IO[3]
+set_location_assignment PIN_C16 -to A_VG_Log_ID[4]
+set_location_assignment PIN_C17 -to A_VG_Log_ID[0]
+set_location_assignment PIN_C18 -to A_VG_ID[7]
+set_location_assignment PIN_C19 -to A_VG_ID[6]
+set_location_assignment PIN_C2 -to A_AUX_B[1]
+set_location_assignment PIN_C3 -to A_AUX_B[0]
+set_location_assignment PIN_C4 -to A_K1_D[0]
+set_location_assignment PIN_C5 -to A_K1_D[6]
+set_location_assignment PIN_C6 -to A_K1_D[8]
+set_location_assignment PIN_C7 -to A_nK1_CTRL[2]
+set_location_assignment PIN_C8 -to A_VG_K1_MOD[1]
+set_location_assignment PIN_C9 -to A_K3_D[2]
+set_location_assignment PIN_D10 -to A_K3_D[9]
+set_location_assignment PIN_D11 -to A_K3_D[11]
+set_location_assignment PIN_D12 -to nK1_SWITCH_ENA
+set_location_assignment PIN_D13 -to A_nK3_CTRL[2]
+set_location_assignment PIN_D14 -to A_GR1_16BIT
+set_location_assignment PIN_D15 -to A_Bus_IO[4]
+set_location_assignment PIN_D16 -to A_Bus_IO[1]
+set_location_assignment PIN_D17 -to A_VG_ID[3]
+set_location_assignment PIN_D18 -to A_VG_ID[5]
+set_location_assignment PIN_D19 -to A_VG_ID[4]
+set_location_assignment PIN_D1 -to A_AUX_B[5]
+set_location_assignment PIN_D20 -to A_VG_ID[2]
+set_location_assignment PIN_D2 -to A_AUX_B[3]
+set_location_assignment PIN_D3 -to A_AUX_B[2]
+set_location_assignment PIN_D4 -to A_AUX_B[4]
+set_location_assignment PIN_D5 -to A_K1_D[4]
+set_location_assignment PIN_D6 -to A_K1_D[5]
+set_location_assignment PIN_D7 -to A_Master_Clk_Out
+set_location_assignment PIN_D8 -to A_VG_K1_INP
+set_location_assignment PIN_D9 -to A_K3_D[1]
+set_location_assignment PIN_E10 -to A_K3_D[4]
+set_location_assignment PIN_E11 -to A_K3_D[14]
+set_location_assignment PIN_E12 -to TP[12]
+set_location_assignment PIN_E13 -to A_VG_K3_MOD[1]
+set_location_assignment PIN_E14 -to A_VG_K3_MOD[0]
+set_location_assignment PIN_E15 -to A_I2C_SCL
+set_location_assignment PIN_E16 -to A_Bus_IO[2]
+set_location_assignment PIN_E17 -to A_VG_ID[1]
+set_location_assignment PIN_E18 -to A_VG_A[4]
+set_location_assignment PIN_E19 -to A_VG_A[3]
+set_location_assignment PIN_E2 -to A_AUX_B[10]
+set_location_assignment PIN_E3 -to A_AUX_B[9]
+set_location_assignment PIN_E4 -to A_AUX_B[6]
+set_location_assignment PIN_E5 -to A_AUX_B[7]
+set_location_assignment PIN_E6 -to A_K1_D[9]
+set_location_assignment PIN_E7 -to A_K1_D[13]
+set_location_assignment PIN_E8 -to A_K1D_SPG
+set_location_assignment PIN_E9 -to A_K3_D[3]
+set_location_assignment PIN_F10 -to A_K3_D[7]
+set_location_assignment PIN_F12 -to nK2_SWITCH_ENA
+set_location_assignment PIN_F14 -to A_VG_IO_Res[0]
+set_location_assignment PIN_F15 -to A_VG_A[1]
+set_location_assignment PIN_F16 -to A_VG_A[2]
+set_location_assignment PIN_F17 -to A_VG_ID[0]
+set_location_assignment PIN_F19 -to A_VG_A[0]
+set_location_assignment PIN_F1 -to A_AUX_C[2]
+set_location_assignment PIN_F20 -to A_nDTACKB
+set_location_assignment PIN_F2 -to A_AUX_C[1]
+set_location_assignment PIN_F3 -to A_AUX_B[8]
+set_location_assignment PIN_F4 -to A_AUX_B[11]
+set_location_assignment PIN_F5 -to A_AUX_C[0]
+set_location_assignment PIN_F6 -to A_AUX_C[3]
+set_location_assignment PIN_F7 -to A_K1_D[12]
+set_location_assignment PIN_F8 -to A_nK1_CTRL[1]
+set_location_assignment PIN_G14 -to A_A[4]
+set_location_assignment PIN_G15 -to A_nMB_Reset
+set_location_assignment PIN_G16 -to A_nDTACKA
+set_location_assignment PIN_G17 -to A_A[1]
+set_location_assignment PIN_G18 -to A_A[2]
+set_location_assignment PIN_G19 -to A_nDS
+set_location_assignment PIN_G1 -to A_AUX_C[5]
+set_location_assignment PIN_G20 -to A_RDnWR
+set_location_assignment PIN_G2 -to A_AUX_C[6]
+set_location_assignment PIN_G3 -to A_AUX_C[9]
+set_location_assignment PIN_G4 -to A_AUX_C[10]
+set_location_assignment PIN_G5 -to A_AUX_C[4]
+set_location_assignment PIN_G6 -to A_AUX_C[7]
+set_location_assignment PIN_G7 -to A_AUX_C[8]
+set_location_assignment PIN_H14 -to TP[8]
+set_location_assignment PIN_H15 -to A_A[3]
+set_location_assignment PIN_H16 -to A_A[0]
+set_location_assignment PIN_H17 -to A_Sub_Adr[6]
+set_location_assignment PIN_H18 -to A_Sub_Adr[7]
+set_location_assignment PIN_H19 -to A_Sub_Adr[5]
+set_location_assignment PIN_H1 -to nIndepend_Clk_Ena
+set_location_assignment PIN_H20 -to A_Sub_Adr[4]
+set_location_assignment PIN_H2 -to nMaster_Clk_ENA
+set_location_assignment PIN_H3 -to nSlave_Clk_ENA
+set_location_assignment PIN_H4 -to TP[11]
+set_location_assignment PIN_H5 -to SEL_B[2]
+set_location_assignment PIN_H6 -to SEL_B[3]
+set_location_assignment PIN_H7 -to A_AUX_C[11]
+set_location_assignment PIN_J13 -to TP[9]
+set_location_assignment PIN_J14 -to A_K0_D[0]
+set_location_assignment PIN_J15 -to A_Sub_Adr[2]
+set_location_assignment PIN_J16 -to A_Sub_Adr[3]
+set_location_assignment PIN_J17 -to A_K0_D[1]
+set_location_assignment PIN_J18 -to A_K0_D[2]
+set_location_assignment PIN_J19 -to A_Sub_Adr[1]
+set_location_assignment PIN_J1 -to SEL_B[0]
+set_location_assignment PIN_J20 -to A_Sub_Adr[0]
+set_location_assignment PIN_J2 -to SEL_B[1]
+set_location_assignment PIN_J3 -to nSkal_OK_Led
+set_location_assignment PIN_J4 -to nID_OK_Led
+set_location_assignment PIN_J5 -to nDT_Led
+set_location_assignment PIN_J6 -to nPowerup_Led
+set_location_assignment PIN_J7 -to nSEL_LED_GRP[0]
+set_location_assignment PIN_J8 -to nSEL_LED_GRP[1]
+set_location_assignment PIN_K14 -to "F_TCXO_In(n)"
+set_location_assignment PIN_K15 -to A_K0_D[3]
+set_location_assignment PIN_K16 -to A_K0_D[4]
+set_location_assignment PIN_K19 -to TP[10]
+set_location_assignment PIN_K5 -to Chopper_Clk
+set_location_assignment PIN_K6 -to Loader_CLK
+set_location_assignment PIN_L14 -to F_TCXO_In
+set_location_assignment PIN_L8 -to nLED_Skal[7]
+set_location_assignment PIN_M15 -to A_K0_D[7]
+set_location_assignment PIN_M16 -to A_K0_D[6]
+set_location_assignment PIN_M17 -to A_K0_D[8]
+set_location_assignment PIN_M18 -to A_K0_D[9]
+set_location_assignment PIN_M1 -to nLED_Skal[4]
+set_location_assignment PIN_M20 -to A_K0_D[5]
+set_location_assignment PIN_M2 -to nLED_Skal[5]
+set_location_assignment PIN_M3 -to nLED_Skal[0]
+set_location_assignment PIN_M4 -to nLED_Skal[1]
+set_location_assignment PIN_M5 -to nLED_Skal[3]
+set_location_assignment PIN_M6 -to nLED_Skal[2]
+set_location_assignment PIN_M7 -to nLED[15]
+set_location_assignment PIN_M8 -to nLED_Skal[6]
+set_location_assignment PIN_N14 -to A_nK0_CTRL[2]
+set_location_assignment PIN_N15 -to A_K0_D[10]
+set_location_assignment PIN_N16 -to A_K0_D[11]
+set_location_assignment PIN_N17 -to A_K0_D[14]
+set_location_assignment PIN_N18 -to A_K0_D[15]
+set_location_assignment PIN_N19 -to A_K0_D[13]
+set_location_assignment PIN_N1 -to nLED[13]
+set_location_assignment PIN_N20 -to A_K0_D[12]
+set_location_assignment PIN_N2 -to nLED[12]
+set_location_assignment PIN_N3 -to nLED[10]
+set_location_assignment PIN_N4 -to nLED[11]
+set_location_assignment PIN_N5 -to nLED[9]
+set_location_assignment PIN_N6 -to nLED[14]
+set_location_assignment PIN_N7 -to nLED[8]
+set_location_assignment PIN_P14 -to A_VG_K0_MOD[0]
+set_location_assignment PIN_P15 -to A_K0C_SPG
+set_location_assignment PIN_P16 -to A_GR0_APK_ID
+set_location_assignment PIN_P17 -to A_VG_K0_INP
+set_location_assignment PIN_P18 -to A_VG_K0_MOD[1]
+set_location_assignment PIN_P19 -to A_K0D_SPG
+set_location_assignment PIN_P1 -to nLED[5]
+set_location_assignment PIN_P20 -to A_nK0_CTRL[1]
+set_location_assignment PIN_P2 -to nLED[6]
+set_location_assignment PIN_P3 -to nLED[2]
+set_location_assignment PIN_P4 -to nLED[1]
+set_location_assignment PIN_P5 -to nLED[3]
+set_location_assignment PIN_P6 -to nLED[4]
+set_location_assignment PIN_P7 -to nLED[7]
+set_location_assignment PIN_R11 -to Loader_WRnRD
+set_location_assignment PIN_R13 -to RELOAD
+set_location_assignment PIN_R14 -to A_Mod_Data[1]
+set_location_assignment PIN_R15 -to A_K2_D[0]
+set_location_assignment PIN_R16 -to A_K2_D[5]
+set_location_assignment PIN_R17 -to A_K2_D[2]
+set_location_assignment PIN_R18 -to A_K2_D[1]
+set_location_assignment PIN_R19 -to A_K2_D[4]
+set_location_assignment PIN_R1 -to nLED[0]
+set_location_assignment PIN_R20 -to A_K2_D[3]
+set_location_assignment PIN_R2 -to A_AUX_A[11]
+set_location_assignment PIN_R3 -to A_AUX_A[8]
+set_location_assignment PIN_R4 -to A_AUX_A[7]
+set_location_assignment PIN_R5 -to A_AUX_A[9]
+set_location_assignment PIN_R6 -to A_AUX_A[10]
+set_location_assignment PIN_R7 -to A_Test[14]
+set_location_assignment PIN_R9 -to A_Test[3]
+set_location_assignment PIN_T10 -to A_Test[0]
+set_location_assignment PIN_T11 -to Loader_DB[2]
+set_location_assignment PIN_T12 -to Loader_DB[3]
+set_location_assignment PIN_T13 -to LOAD_ERROR
+set_location_assignment PIN_T14 -to A_Mod_Data[2]
+set_location_assignment PIN_T15 -to A_VG_K2_INP
+set_location_assignment PIN_T16 -to A_GR1_APK_ID
+set_location_assignment PIN_T17 -to A_K2_D[6]
+set_location_assignment PIN_T18 -to A_K2_D[8]
+set_location_assignment PIN_T19 -to A_K2_D[7]
+set_location_assignment PIN_T2 -to A_AUX_A[5]
+set_location_assignment PIN_T3 -to A_AUX_A[4]
+set_location_assignment PIN_T4 -to A_AUX_A[6]
+set_location_assignment PIN_T5 -to A_nINTERLOCKB
+set_location_assignment PIN_T6 -to A_nK2_ID_EN
+set_location_assignment PIN_T7 -to A_nK3_ID_EN
+set_location_assignment PIN_T8 -to A_Test[13]
+set_location_assignment PIN_T9 -to A_Test[4]
+set_location_assignment PIN_U10 -to A_LA_CLK
+set_location_assignment PIN_U11 -to Loader_Misc[1]
+set_location_assignment PIN_U12 -to INIT_DONE
+set_location_assignment PIN_U13 -to RDnWR_Transceiver
+set_location_assignment PIN_U14 -to A_Mod_Data[5]
+set_location_assignment PIN_U15 -to nExt_Data_En
+set_location_assignment PIN_U16 -to A_nK2_CTRL[2]
+set_location_assignment PIN_U17 -to A_K2_D[9]
+set_location_assignment PIN_U18 -to A_K2_D[11]
+set_location_assignment PIN_U19 -to A_K2_D[10]
+set_location_assignment PIN_U1 -to A_AUX_A[3]
+set_location_assignment PIN_U20 -to A_K2_D[12]
+set_location_assignment PIN_U2 -to A_AUX_A[1]
+set_location_assignment PIN_U3 -to A_AUX_A[0]
+set_location_assignment PIN_U4 -to A_AUX_A[2]
+set_location_assignment PIN_U5 -to A_nINTERLOCKA
+set_location_assignment PIN_U7 -to A_Test[11]
+set_location_assignment PIN_U8 -to A_Test[9]
+set_location_assignment PIN_U9 -to A_Test[6]
+set_location_assignment PIN_V10 -to TP[3]
+set_location_assignment PIN_V11 -to Loader_Misc[0]
+set_location_assignment PIN_V12 -to LOAD_OK
+set_location_assignment PIN_V13 -to A_Mod_Data[0]
+set_location_assignment PIN_V14 -to A_Mod_Data[6]
+set_location_assignment PIN_V15 -to A_Mod_Data[7]
+set_location_assignment PIN_V16 -to A_K2D_SPG
+set_location_assignment PIN_V17 -to A_nK2_CTRL[1]
+set_location_assignment PIN_V18 -to A_K2_D[14]
+set_location_assignment PIN_V19 -to A_K2_D[13]
+set_location_assignment PIN_V2 -to TP[1]
+set_location_assignment PIN_V3 -to TP[2]
+set_location_assignment PIN_V4 -to A_nDRQB
+set_location_assignment PIN_V5 -to A_nK0_ID_EN
+set_location_assignment PIN_V7 -to A_Test[12]
+set_location_assignment PIN_V8 -to A_Test[10]
+set_location_assignment PIN_V9 -to A_Test[5]
+set_location_assignment PIN_W10 -to TP[4]
+set_location_assignment PIN_W11 -to Loader_Misc[2]
+set_location_assignment PIN_W12 -to Loader_DB[1]
+set_location_assignment PIN_W13 -to CTRL_RES
+set_location_assignment PIN_W14 -to A_Mod_Data[3]
+set_location_assignment PIN_W15 -to A_VG_K2_MOD[1]
+set_location_assignment PIN_W16 -to A_K2C_SPG
+set_location_assignment PIN_W17 -to TP[7]
+set_location_assignment PIN_W18 -to A_K2_D[15]
+set_location_assignment PIN_W3 -to A_nSRQB
+set_location_assignment PIN_W4 -to A_nDRQA
+set_location_assignment PIN_W5 -to A_nK1_ID_EN
+set_location_assignment PIN_W6 -to A_nGR0_ID_SEL
+set_location_assignment PIN_W7 -to A_nMANUAL_RES
+set_location_assignment PIN_W8 -to A_Test[8]
+set_location_assignment PIN_W9 -to A_Test[1]
+set_location_assignment PIN_Y10 -to TP[5]
+set_location_assignment PIN_Y11 -to Loader_Misc[3]
+set_location_assignment PIN_Y12 -to Loader_DB[0]
+set_location_assignment PIN_Y13 -to CTRL_LOAD
+set_location_assignment PIN_Y14 -to A_Mod_Data[4]
+set_location_assignment PIN_Y15 -to A_VG_K2_MOD[0]
+set_location_assignment PIN_Y17 -to TP[6]
+set_location_assignment PIN_Y4 -to A_nSRQA
+set_location_assignment PIN_Y6 -to A_nGR1_ID_SEL
+set_location_assignment PIN_Y7 -to A_Test[15]
+set_location_assignment PIN_Y8 -to A_Test[7]
+set_location_assignment PIN_Y9 -to A_Test[2]
+# start CLOCK(F_TCXO)
+# start CLOCK(Kicker_Clk)
+# start EDA_TOOL_SETTINGS(eda_simulation)
+# start ENTITY(chopper_vhdl_m2)
+# Subscription Agreement, Altera MegaCore Function License
+# The default values for assignments are stored in the file
+# Timing Analysis Assignments
+# Timing Assignments
+# Timing Assignments
+# Timing Assignments
+# Timing Assignments
+# to the terms and conditions of the Altera Program License
+# without limitation, that your use is for the sole purpose of
+# Your use of Altera Corporation's design tools, logic functions

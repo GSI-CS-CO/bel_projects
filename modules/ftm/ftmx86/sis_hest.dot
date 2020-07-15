@@ -1,5 +1,5 @@
 digraph g {
-  
+
 name="SIS18";
 
 graph [];
@@ -9,7 +9,7 @@ edge  [type="defdst"];
     node  [cpu="1"];
 
     EVT_01 [type="tmsg", fid="0", gid="300", evtno="257", sid="1", bpid="9",  par="0x40000000000", toffs="0"];
-    
+
     EVT_02 [type="tmsg", fid="0", gid="500", evtno="257", sid="1", bpid="3",  par="0x40000000000", toffs="0"];
     EVT_03 [type="tmsg", fid="0", gid="505", evtno="257", sid="1", bpid="12", par="0x40000000000", toffs="0"];
     EVT_04 [type="tmsg", fid="0", gid="506", evtno="257", sid="1", bpid="14", par="0x40000000000", toffs="0"];
@@ -60,7 +60,7 @@ edge  [type="defdst"];
     EVT_14 -> EVT_15 -> EVT_16 -> EVT_17 -> EVT_18 -> EVT_19 -> EVT_20 -> EVT_21 -> EVT_22 -> EVT_23 -> EVT_24 -> EVT_25 -> EVT_26 -> EVT_27;
     EVT_27 -> EVT_28 -> EVT_29 -> EVT_30 -> EVT_31 -> EVT_32 -> EVT_33 -> EVT_34 -> EVT_35 -> EVT_36 -> EVT_37 -> EVT_38 -> EVT_39 -> EVT_40;
     EVT_40 -> EVT_41 -> EVT_42 -> EVT_43 -> EVT_44 -> EVT_45 -> B_00   -> EVT_01;
-  
-  } 
 
-} 
+  }
+
+}

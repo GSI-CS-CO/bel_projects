@@ -21,7 +21,7 @@ Bool Ppmd7z_RangeDec_Init(CPpmd7z_RangeDec *p)
 }
 
 #define GET_Ppmd7z_RangeDec CPpmd7z_RangeDec *p = CONTAINER_FROM_VTBL(pp, CPpmd7z_RangeDec, vt);
- 
+
 static UInt32 Range_GetThreshold(const IPpmd7_RangeDec *pp, UInt32 total)
 {
   GET_Ppmd7z_RangeDec
@@ -164,11 +164,11 @@ int Ppmd7_DecodeSymbol(CPpmd7 *p, const IPpmd7_RangeDec *rc)
       i -= k;
     }
     while (i != num);
-    
+
     see = Ppmd7_MakeEscFreq(p, numMasked, &freqSum);
     freqSum += hiCnt;
     count = rc->GetThreshold(rc, freqSum);
-    
+
     if (count < hiCnt)
     {
       Byte symbol;

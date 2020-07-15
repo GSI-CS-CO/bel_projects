@@ -1,8 +1,8 @@
 TARGET      = scu_control
 DEVICE      = EP2AGX125
 FLASH       = EPCS128
-RAM_SIZE    = 98304
-SHARED_SIZE = 34K
+RAM_SIZE    = 147456
+SHARED_SIZE = 80K
 USRCPUCLK   = 125000
 PATHSCU     = ../../../top/gsi_scu
 CFLAGS      = -I$(PSCU)/include -I$(PATHSCU) -DHISTORY -fno-toplevel-reorder

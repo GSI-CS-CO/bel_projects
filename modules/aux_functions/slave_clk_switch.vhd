@@ -233,10 +233,12 @@ p_err_latch: process (master_clk, nReset)
         if sys_clk_is_bad = '1' then
           s_sys_clk_is_bad_la <= '1';
         elsif clk_switch_cntrl = '1' then
-          if Data_from_SCUB_LA(0) = '1' and s_sys_clk_is_bad_la = '1' then
+          if Data_from_SCUB_LA(0) = '1' then
+            if s_sys_clk_is_bad_la = '1' then
             -- nur wenn "s_sys_clk_is_bad_la" gesetzt ist, soll es zurueckgesetzt werden, da anschliessend
             -- noch getestet wird, ob auf die sys_clk zurueckgeschaltet werden kann.
-            s_sys_clk_is_bad_la <= '0';
+              s_sys_clk_is_bad_la <= '0';
+            end if;
             if s_sys_clk_deviation = '0' and local_clk_is_running = '1' then
               -- nur wenn die sys_clk in der vorgegebenen Toleranz ist und die pll "sys_clk_or_local_clk"
               -- mit der localen Clock getrieben wird, soll das Umschalten auf sys_clk erlaubt sein.

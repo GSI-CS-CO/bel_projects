@@ -18,7 +18,7 @@ subgraph cpu0 {
   B_C     [type="block",  tperiod=1000000000];
 
   Evt_C -> B_C;
- 
+
   B_C -> Evt_0;
   B_0 -> Evt_C [type="altdst"];
 
@@ -27,7 +27,7 @@ subgraph cpu0 {
 
   Evt_A -> B_A -> Evt_0;
   B_0 -> Evt_A [type="altdst"];
-  
+
 }
 
 

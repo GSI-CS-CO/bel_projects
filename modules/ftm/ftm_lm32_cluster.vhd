@@ -6,7 +6,7 @@
 --! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 
---! @brief LM32 Cluster. Instantiates desired number of LM32 CPUs + Periphery 
+--! @brief LM32 Cluster. Instantiates desired number of LM32 CPUs + Periphery
 --!
 --! Cluster Info ROM Registers:
 --! 0x00 Number of Cores
@@ -40,15 +40,18 @@ use work.ftm_pkg.all;
 use work.prio_pkg.all;
 use work.etherbone_pkg.all;
 
+
 entity ftm_lm32_cluster is
 generic(
-  g_is_dm         : boolean := false;
-  g_cores         : natural := 1;
-  g_ram_per_core  : natural := 32768/4;
-  g_profiles      : string  := "medium_icache_debug";
-  g_init_files    : string;   
-  g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
-  g_clu_msi_sdb      : t_sdb_msi    -- superior msi crossbar          
+  g_is_dm             : boolean := false;
+  g_delay_diagnostics : boolean := false;
+  g_cores             : natural := 1;
+  g_ram_per_core      : natural := 32768/4;
+  g_profiles          : string  := "medium_icache_debug";
+  g_init_files        : string;
+  g_en_timer          : boolean := false;
+  g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar
+  g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar
 );
 port(
   clk_ref_i      : in  std_logic;
@@ -56,60 +59,56 @@ port(
 
   clk_sys_i      : in  std_logic;
   rst_sys_n_i    : in  std_logic;
-  rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0); 
+  rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0);
 
   tm_tai8ns_i    : in std_logic_vector(63 downto 0);
+  wr_lock_i      : in std_logic;
 
-  -- lm32 core interfaces       
-  lm32_masters_o    : out t_wishbone_master_out_array(g_cores-1 downto 0); 
+  -- lm32 core interfaces
+  lm32_masters_o    : out t_wishbone_master_out_array(g_cores-1 downto 0);
   lm32_masters_i    : in  t_wishbone_master_in_array(g_cores-1 downto 0);
-  lm32_msi_slaves_o : out t_wishbone_slave_out_array(g_cores-1 downto 0); 
-  lm32_msi_slaves_i : in  t_wishbone_slave_in_array(g_cores-1 downto 0);  
+  lm32_msi_slaves_o : out t_wishbone_slave_out_array(g_cores-1 downto 0);
+  lm32_msi_slaves_i : in  t_wishbone_slave_in_array(g_cores-1 downto 0);
 
   -- cluster crossbar interface
-  clu_slave_o       : out t_wishbone_slave_out; 
+  clu_slave_o       : out t_wishbone_slave_out;
   clu_slave_i       : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
   clu_msi_master_o  : out t_wishbone_master_out;
   clu_msi_master_i  : in t_wishbone_master_in;
 
   -- optional prioq interface
-  dm_prioq_master_o : out t_wishbone_master_out; 
-  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000")
-  -- no msi required 
-  
-   
+  dm_prioq_master_o : out t_wishbone_master_out;
+  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000")
+  -- no msi required
+
+
 );
 end ftm_lm32_cluster;
 
-architecture rtl of ftm_lm32_cluster is 
+architecture rtl of ftm_lm32_cluster is
 
   --LM32 direct connections to/from outside world
 
   signal lm32_masters_in      : t_wishbone_master_in_array   (g_cores-1 downto 0);
   signal lm32_masters_out     : t_wishbone_master_out_array  (g_cores-1 downto 0);
   signal lm32_msi_slaves_in   : t_wishbone_slave_in_array   (g_cores-1 downto 0);
-  signal lm32_msi_slaves_out  : t_wishbone_slave_out_array  (g_cores-1 downto 0); 
+  signal lm32_msi_slaves_out  : t_wishbone_slave_out_array  (g_cores-1 downto 0);
+  signal r_tm_tai8ns_i        : std_logic_vector(63 downto 0);
 
 
   --**************************************************************************--
   -- Cluster CROSSBAR
   ------------------------------------------------------------------------------
-  constant c_clu_slaves     : natural := 2 + g_cores; -- info rom, prioq ctrl, rams
-  constant c_clu_masters    : natural := 1;
+  -- can't be done in package :(
+  constant c_clu_slaves     : natural := c_static_cluster_slaves + g_cores; -- info rom, prioq ctrl, diag, rams
 
-  --sdb
-  constant c_clu_info_rom   : natural := 0;
-  constant c_clu_prioq_ctrl : natural := 1;
-  --RAMs are done in generate
-   
-  --msi  
-  constant c_msi_slave      : natural := 0;
+
 
   --layout
   constant c_clu_layout_req_slaves  : t_sdb_record_array(c_clu_slaves-1 downto 0)  :=
-           f_cluster_sdb(g_cores, g_ram_per_core, g_is_dm);
+           f_cluster_sdb(g_cores, g_ram_per_core, g_is_dm, g_delay_diagnostics);
 
-  constant c_clu_layout_req_masters : t_sdb_record_array(c_clu_masters-1 downto 0) := 
+  constant c_clu_layout_req_masters : t_sdb_record_array(c_clu_masters-1 downto 0) :=
            (c_msi_slave =>  f_sdb_auto_msi(g_clu_msi_sdb, true));
 
   constant c_clu_sdb_address : t_wishbone_address :=
@@ -137,10 +136,22 @@ architecture rtl of ftm_lm32_cluster is
 
   signal s_rst_lm32_n,
          r_rst_lm32_n0,
-         r_rst_lm32_n1    : std_logic_vector(g_cores-1 downto 0);            
+         r_rst_lm32_n1    : std_logic_vector(g_cores-1 downto 0);
   signal s_clu_info       : t_wishbone_master_in;
+  signal s_clu_time       : t_wishbone_master_in;
+  signal stall_diag       : std_logic_vector(g_cores-1 downto 0);
+  signal cycle_diag       : std_logic_vector(g_cores-1 downto 0);
+  signal r_tai_8ns_HI : std_logic_vector(31 downto 0);
+  signal r_tai_8ns_LO, r_time_freeze_LO : std_logic_vector(31 downto 0);
 
 begin
+
+  tai_fanout : process (clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      r_tm_tai8ns_i <= tm_tai8ns_i; -- we need to register TAI to reduce fanout
+    end if;
+  end process;
 
   G1: for I in 0 to g_cores-1 generate
     --instantiate an dm-lm32 (LM32 core with its own DPRAM and 2..n msi queues)
@@ -151,16 +162,19 @@ begin
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => f_substr(g_profiles, I, ';'),
       g_init_file                      => f_substr(g_init_files, I, ';'),
-		g_is_dm                          => g_is_dm
-    ) 
+      g_is_dm                          => g_is_dm,
+      g_en_timer                       => g_en_timer
+    )
     port map(
       clk_sys_i      => clk_ref_i,
       rst_n_i        => rst_ref_n_i,
       rst_lm32_n_i   => s_rst_lm32_n(I),
 
-      tm_tai8ns_i    => tm_tai8ns_i,            
+      tm_tai8ns_i    => r_tm_tai8ns_i,
 
-      --LM32               
+      stall_diag_o   => stall_diag(I),
+      cycle_diag_o   => cycle_diag(I),
+      --LM32
       world_master_o => lm32_masters_out(I),
       world_master_i => lm32_masters_in(I),
       --optional prioq interface for DM
@@ -168,12 +182,12 @@ begin
       prioq_master_i => prioq_slaves_out(I),
       -- MSI
       msi_slave_i    => lm32_msi_slaves_in (I),
-      msi_slave_o    => lm32_msi_slaves_out (I),       
-      --2nd RAM port               
-      ram_slave_o    => clu_cb_masterport_in(2+I),                      
-      ram_slave_i    => clu_cb_masterport_out(2+I)
+      msi_slave_o    => lm32_msi_slaves_out (I),
+      --2nd RAM port
+      ram_slave_o    => clu_cb_masterport_in(c_static_cluster_slaves + I),
+      ram_slave_i    => clu_cb_masterport_out(c_static_cluster_slaves + I)
     );
-   
+
     -- CPUs, RAMs and PrioQ live in Ref domain. Sync CPU bus to Sys domain - wb master & MSI slave.
     master_ref2sys : xwb_clock_crossing
     port map(
@@ -201,9 +215,9 @@ begin
       master_rst_n_i => rst_ref_n_i,
       master_i       => lm32_msi_slaves_out(I),
       master_o       => lm32_msi_slaves_in(I)
-    );  
+    );
 
-  end generate G1;  
+  end generate G1;
 
 
   CLU_CON : xwb_sdb_crossbar
@@ -237,8 +251,8 @@ begin
     -- Master reader port
     master_clk_i   => clk_ref_i,
     master_rst_n_i => rst_ref_n_i,
-    master_i       => clu_cb_slaveport_out(0),
-    master_o       => clu_cb_slaveport_in(0));
+    master_i       => clu_cb_slaveport_out(c_clu_info_rom),
+    master_o       => clu_cb_slaveport_in(c_clu_info_rom));
 
   clu_msi_sys2ref : xwb_clock_crossing
   port map(
@@ -267,10 +281,10 @@ begin
       clk_i         => clk_ref_i,
       rst_n_i       => rst_ref_n_i,
 
-      time_i        => tm_tai8ns_i,
+      time_i        => r_tm_tai8ns_i,
 
-      ctrl_i        => clu_cb_masterport_out(c_clu_prioq_ctrl),
-      ctrl_o        => clu_cb_masterport_in(c_clu_prioq_ctrl),
+      ctrl_i        => clu_cb_masterport_out(c_clu_pq_ctrl),
+      ctrl_o        => clu_cb_masterport_in(c_clu_pq_ctrl),
       slaves_i      => prioq_slaves_in,
       slaves_o      => prioq_slaves_out,
       master_o      => s_prio_data_out,
@@ -294,15 +308,40 @@ begin
       master_o       => dm_prioq_master_o
     );
 
+
+
+
+
   end generate;
- 
+
+  genDiag : if(g_delay_diagnostics) generate
+  -- Diagnostic module lives completely in REF domain, no sync to clu CB, TAI time or LM32 bus lines necessary
+
+    diagnostics :  dm_diag
+    generic map(
+      g_cores => g_cores --CPU cores
+    )
+    port map(
+      clk_ref_i      => clk_ref_i,
+      rst_ref_n_i    => rst_ref_n_i,
+      tm_tai8ns_i    => r_tm_tai8ns_i,
+      cyc_diag_i     => cycle_diag,
+      stall_diag_i   => stall_diag,
+      wr_lock_i      => wr_lock_i,
+
+      ctrl_i         => clu_cb_masterport_out(c_clu_diag),
+      ctrl_o         => clu_cb_masterport_in(c_clu_diag)
+    );
+
+  end generate;
+
   cluster_info_rom : process(clk_ref_i)
   variable vIdx : natural;
   begin
     vIdx := c_clu_info_rom;
     if rising_edge(clk_ref_i) then
       if(rst_ref_n_i = '0') then
-        s_clu_info <= ('0', '0', '0', '0', '0', (others => '0'));
+        s_clu_info <= ('0', '0', '0', '0', (others => '0'));
       else
         -- rom is an easy solution for a device that never stalls:
         s_clu_info.dat <= (others => '0');
@@ -327,7 +366,40 @@ begin
 
   clu_cb_masterport_in(c_clu_info_rom) <= s_clu_info;
 
-  
+  altEcaTime : if(g_is_dm) generate
+
+    sys_time : process(clk_ref_i)
+    variable vIdx : natural;
+    begin
+      vIdx := c_lm32_sys_time;
+      if rising_edge(clk_ref_i) then
+        if(rst_ref_n_i = '0') then
+            s_clu_time <= ('0', '0', '0', '0', (others => '0'));
+        else
+           -- rom is an easy solution for a device that never stalls:
+           s_clu_time.ack <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and not clu_cb_masterport_out(vIdx).we;
+           s_clu_time.err <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and     clu_cb_masterport_out(vIdx).we;
+           s_clu_time.dat <= (others => '0');
+
+           r_tai_8ns_HI <= r_tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out
+           r_tai_8ns_LO <= r_tm_tai8ns_i(31 downto 0);
+
+           if(clu_cb_masterport_out(vIdx).cyc = '1' and clu_cb_masterport_out(vIdx).stb = '1') then
+              if(clu_cb_masterport_out(vIdx).adr(2) = '0') then
+                 s_clu_time.dat   <= r_tai_8ns_HI;
+                 r_time_freeze_LO <= r_tai_8ns_LO;
+              else
+                 s_clu_time.dat   <= r_time_freeze_LO;
+              end if;
+           end if;
+         end if;
+      end if;
+    end process;
+
+    clu_cb_masterport_in(c_clu_time) <= s_clu_time;
+
+  end generate;
+
   sync_individual_resets : process(clk_ref_i)
   begin
     -- no need to sync vector, just individual bits.
@@ -336,9 +408,8 @@ begin
        r_rst_lm32_n0 <= rst_lm32_n_i;
        r_rst_lm32_n1 <= r_rst_lm32_n0;
     end if;
-  end process;  
+  end process;
 
   s_rst_lm32_n <= r_rst_lm32_n1;
-  
 
 end architecture rtl;

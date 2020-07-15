@@ -19,7 +19,7 @@ subgraph cpu0 {
   B_0 -> Evt_D [type="altdst"];
 
 
-  
+
 }
 
 

@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Apr-2018
+ *  version : 28-August-2019
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.0.1"
+#define EBRESET_VERSION "1.1.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -72,6 +72,7 @@ static void help(void) {
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
+  fprintf(stderr, "  wddisable        disables the watchdog (preventing automated restart)\n");
   fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
@@ -82,7 +83,7 @@ static void help(void) {
   fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "The command 'fpgareset' forces a restart of the entire FPGA using the image stored in the \n");
-  fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwiese\n");
+  fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwise\n");
   fprintf(stderr, "your devices becomes bricked).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -191,6 +192,14 @@ int main(int argc, char** argv) {
         if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("Probe FPGA", status);
       } // probe after reset
     } // fpga reset
+
+    // watchdog disable
+    if (!strcasecmp(command, "wddisable")) {
+      cmdExecuted = 1;
+
+      status = wb_wr_watchdog(device, devIndex);
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // watchdog disable
 
     // halt user CPU
     if (!strcasecmp(command, "cpuhalt")) {

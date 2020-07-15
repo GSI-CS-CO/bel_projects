@@ -1,0 +1,17 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A[cpu="0", flags="0x00108007", type="block", tperiod="1000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_B[cpu="0", flags="0x0010a007", type="block", tperiod="500000000", pattern="B", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_LOOP[cpu="0", flags="0x00008007", type="block", tperiod="1000", pattern="LOOP", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+CMD_LOOP[cpu="0", flags="0x00002004", type="flow", tvalid="0", vabs="true", prio="0", toffs="0", pattern="LOOP", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qty="99999", shape     = "hexagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+MSG_A[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="0", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+BLOCK_LOOP->BLOCK_B [type="defdst", color     = "red"];
+MSG_A->BLOCK_A [type="defdst", color     = "red"];
+CMD_LOOP->BLOCK_LOOP [type="defdst", color     = "red"];
+CMD_LOOP->BLOCK_B [type="target", color     = "blue"];
+CMD_LOOP->BLOCK_B [type="flowdst", color     = "pink"];
+BLOCK_A->BLOCK_B [type="defdst", color     = "red"];
+BLOCK_B->BLOCK_B [type="defdst", color     = "red"];
+BLOCK_B->MSG_A [type="altdst", color     = "black"];
+}

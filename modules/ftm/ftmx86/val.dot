@@ -20,7 +20,7 @@ subgraph cpu2 {
   Evt_B8   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
   Evt_B9   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
   //Evt_B10   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
-  
+
 
   //Evt_PPS2   [type="tmsg", pattern="P1", toffs=          0,   fid=1, par="0x123"];
   //Evt_PPS2  [type="tmsg",  pattern="P1", beamproc="B2", toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
@@ -49,7 +49,7 @@ subgraph cpu2 {
   B_PPS -> Dummy21 [type="prioil"];
   Dummy21 -> Dummy22 [type="meta"];
   Dummy21 -> Dummy23 [type="meta"];
-  Evt_B0 -> B_PPS; 
+  Evt_B0 -> B_PPS;
   Evt_B1 -> B_PPS;
   Evt_B2 -> B_PPS;
   Evt_B3 -> B_PPS;
@@ -59,7 +59,7 @@ subgraph cpu2 {
   Evt_B7 -> B_PPS;
   Evt_B8 -> B_PPS;
   Evt_B9 -> B_PPS;
-  
+
 
 }
 

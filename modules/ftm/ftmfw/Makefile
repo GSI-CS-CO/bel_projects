@@ -3,7 +3,7 @@ BUILDPATH = ../../../syn/gsi_pexarria5/ftm
 
 all: $(TARGET).bin
 
-$(TARGET).%: 
+$(TARGET).%:
 	make $@ -C $(BUILDPATH)
 
 clean:
