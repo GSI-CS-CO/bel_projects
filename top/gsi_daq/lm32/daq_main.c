@@ -348,6 +348,8 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 
+   //!!daqBusDoFeedbackTask( &g_scuDaqAdmin.oDaqDevs );
+
    static DAQ_DEVICE_T* s_pDaqDevice = NULL;
 
    if( s_pDaqDevice == NULL )
@@ -362,11 +364,7 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 
    if( s_pDaqDevice != NULL )
    {
-#if 1
       if( daqExeNextChannel( s_pDaqDevice ) )
-#else
-      while( !daqExeNextChannel( s_pDaqDevice ) ) {}
-#endif
          s_pDaqDevice = NULL;
    }
 }

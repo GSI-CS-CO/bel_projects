@@ -34,7 +34,7 @@
 #ifndef _DAQ_H
 #define _DAQ_H
 
-#ifndef __lm32__
+#if !defined(__lm32__) && !defined(__DOCFSM__)
   #error This module is for the target LM32 only!
 #endif
 
@@ -44,11 +44,15 @@
 #include <mprintf.h>
 #endif
 
+#ifndef __DOCFSM__
 #include <stdbool.h>
 #include <scu_bus.h>
 #include <daq_descriptor.h>
 #ifndef CONFIG_DAQ_SINGLE_APP
+// #include  <daq_command_interface.h>
  #include <scu_function_generator.h>
+ #include <daq_ring_admin.h>
+#endif
 #endif
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -180,7 +184,7 @@ typedef enum
  */
 typedef volatile struct
 {
-#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__) || defined(__DOCFSM__)
    /*!
     *  @brief Bit [15:12] slot number, shall be initialized by software,
     *         will used for the DAQ-Descriptor-Word.
@@ -203,7 +207,7 @@ STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(DAQ_REGISTER_T) );
  */
 typedef volatile struct
 {
-#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__) || defined(__DOCFSM__)
    DAQ_REGISTER_T version:     7; //!<@brief Version number of DAQ macro.
    DAQ_REGISTER_T fifoWords:   9; //!<@brief Remaining data words in PmDat Fifo
 #else
@@ -221,7 +225,7 @@ STATIC_ASSERT( sizeof(DAQ_DAQ_FIFO_WORDS_T) == sizeof(DAQ_REGISTER_T) );
  */
 typedef volatile struct
 {
-#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__) || defined(__DOCFSM__)
    DAQ_REGISTER_T maxChannels: 6; //!< @brief Maximum number of used channels
    DAQ_REGISTER_T fifoWords:  10; //!< @brief Remaining data words in PmDat Fifo
 #else
@@ -241,12 +245,6 @@ STATIC_ASSERT( sizeof(DAQ_PM_FIFO_WORDS_T) == sizeof(DAQ_REGISTER_T) );
  */
 #define DAQ_REGISTER_OFFSET 0x4000
 
-#if 0
-struct DAQ_DATA_NAME_T
-{
-   //TODO
-};
-#endif
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Memory mapped IO-space of a DAQ macro
@@ -347,31 +345,6 @@ typedef struct PACKED_SIZE
 #endif
 } DAQ_CANNEL_T;
 
-#if 0
-/*!
- * @brief Pointers to the interrupt pending registers of DAQ SCU-bus slave.
- *
- * This 16 bit content these pointers represents the 16 possible DAQ channels.\n
- *
- * When a interrupt occurs, e.g. from channel 2 will the bit 2
- * of the concerning register becomes set by writing a one by the
- * DAQ hardware.
- * @code
- * 0b0000000000000000 -> 0b0000000000000100
- *                                      ||+-Channel 0
- *                                      |+--Channel 1
- *                                      +---Channel 2
- * @endcode
- * @note Resetting the pending bits will accomplished by
- *       writing a one on the concerning bit position!
- */
-typedef struct
-{
-   uint16_t* volatile pDaq;   //!< @brief Pointer to 16 bit interrupt DAQ pending register
-   uint16_t* volatile pHiRes; //!< @brief Pointer to 16 bit interrupt HiRes pending register
-} DAQ_INT_PENDING_T;
-#endif
-
 #ifndef CONFIG_DAQ_SINGLE_APP
 /*!
  * @ingroup DAQ_DEVICE
@@ -380,10 +353,41 @@ typedef struct
  */
 typedef enum
 {
-   FB_ON, /*!<@brief Switch DAQ channels for FG-feedback on */
-   FB_OFF /*!<@brief Switch DAQ channels for FG-feedback off */
-} DAQ_FEEDBACK_TASK_T;
-#endif
+   FB_OFF = 0, /*!<@brief Switch DAQ channels for FG-feedback on */
+   FB_ON  = 1  /*!<@brief Switch DAQ channels for FG-feedback off */
+} DAQ_FEEDBACK_ACTION_T;
+
+#define FSM_DECLARE_STATE( state, attr... ) state
+
+typedef enum
+{
+   FSM_DECLARE_STATE( FB_READY ),
+   FSM_DECLARE_STATE( FB_FIRST_ON ),
+   FSM_DECLARE_STATE( FB_BOTH_ON )
+} DAQ_FEEDBACK_STATUS_T;
+
+typedef struct PACKED_SIZE
+{
+   uint8_t action;
+   uint8_t fgNumber;
+} DAQ_ACTION_ITEM_T;
+
+typedef struct PACKED_SIZE
+{
+   DAQ_ACTION_ITEM_T  aAction[2];
+   RAM_RING_INDEXES_T index;
+} DAQ_ACTION_BUFFER;
+
+typedef struct
+{
+   uint64_t              waitingTime;
+   unsigned int          fgNumber;
+   DAQ_FEEDBACK_STATUS_T status;
+   DAQ_ACTION_BUFFER     aktionBuffer;
+} DAQ_FEEDBACK_T;
+
+
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
@@ -391,13 +395,33 @@ typedef enum
  */
 typedef struct
 {
+   /*!
+    * @brief Number of DAQ-channels
+    */
    unsigned int maxChannels; //!< @brief Number of DAQ-channels
-   unsigned int n;      //!< @brief Device number becomes valid after
-                        //!         daqBusFindAndInitializeAll
-   DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS]; //!< @brief Array of channel objects
-  // DAQ_INT_PENDING_T volatile intPending;  //!< @brief  DAQ_INT_PENDING_T
-   DAQ_REGISTER_ACCESS_T* volatile pReg; //!< @brief Pointer to DAQ-registers
-                                  //! (start of address space)
+
+   /*!
+    * @brief Device number becomes valid after daqBusFindAndInitializeAll
+    */
+   unsigned int n;
+
+   /*!
+    * @brief Array of channel objects
+    */
+   DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS];
+
+   /*!
+    * @brief Pointer to DAQ-registers (start of address space)
+    */
+   DAQ_REGISTER_ACCESS_T* volatile pReg;
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+   /*!
+    * @brief Administration of feedback channels for
+    * ADDAC- function generators
+    */
+   DAQ_FEEDBACK_T feedback;
+#endif
 } DAQ_DEVICE_T;
 
 /*! ---------------------------------------------------------------------------
@@ -1740,12 +1764,21 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
 
 #ifndef CONFIG_DAQ_SINGLE_APP
 
+#if 0
+//DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+
+STATIC inline
+DAQ_CANNEL_T* daqDeviceGetFeedbackSetChannel( register DAQ_DEVICE_T* pThis,
+                                              const unsigned int fgNumber )
+{
+   return &pThis->aChannel[daqGetSetDaqNumberOfFg(fgNumber)];
+}
+#endif
 void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
-                               const DAQ_FEEDBACK_TASK_T what,
+                               const DAQ_FEEDBACK_ACTION_T what,
                                const unsigned int fgNumber
                              );
 
-void daqDeviceDoFeedbackTask( register DAQ_DEVICE_T* pThis );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -1918,6 +1951,16 @@ void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts );
  */
 void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis,
                                        uint32_t tsTag );
+
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_SCU_BUS
+ * @brief Task function for cooperative multitasking for the main-loop.
+ * @param pThis Pointer to the DAQ bus object.
+ */
+void daqBusDoFeedbackTask( register DAQ_BUS_T* pThis );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @todo All!

@@ -27,15 +27,20 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+#ifndef __DOCFSM__
 #include <string.h>   // necessary for memset()
 #include <mini_sdb.h> // necessary for ERROR_NOT_FOUND
 #include <dbg.h>
-#include <daq.h>
 #include <scu_wr_time.h>
+#ifndef CONFIG_DAQ_SINGLE_APP
+ #include <lm32Interrupts.h>
+ #include <daq_command_interface.h>
+#endif
 #if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_NO_DAQ_INFO_PRINT )
  #include <eb_console_helper.h>
 #endif
-
+#endif
+#include "daq.h"
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 //! @brief For debug purposes only
 const char* g_pYes = ESC_FG_WHITE ESC_BOLD"yes"ESC_NORMAL;
@@ -393,6 +398,25 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
    return tsTag;
 }
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+#define FSM_INIT_FSM( s, attr... ) pFeedback->status = s
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief Resetting of feedback command buffer.
+ * @param pThis Pointer to the DAQ-device object
+ */
+STATIC inline
+void daqDeviceFeedBackReset( register DAQ_DEVICE_T* pThis )
+{
+   DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
+   FSM_INIT_FSM( FB_READY, label='Reset' );
+   ramRingReset( &pFeedback->aktionBuffer.index );
+   pFeedback->aktionBuffer.index.offset = 0;
+   pFeedback->aktionBuffer.index.capacity = ARRAY_SIZE( pFeedback->aktionBuffer.aAction );
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -406,12 +430,108 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis )
 
    //!!daqDeviceSetTimeStampCounter( pThis, 0L );
    daqDeviceSetTimeStampTag( pThis, 0 );
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+   daqDeviceFeedBackReset( pThis );
+#endif
 }
 
 #ifndef CONFIG_DAQ_SINGLE_APP
-void daqDeviceDoFeedbackTask( register DAQ_DEVICE_T* pThis )
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
+                               const DAQ_FEEDBACK_ACTION_T what,
+                               const unsigned int fgNumber
+                             )
 {
-   //TODO
+   DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
+   if( ramRingGetRemainingCapacity( &pFeedback->aktionBuffer.index ) > 0 )
+   {
+      const unsigned int i = ramRingGetWriteIndex( &pFeedback->aktionBuffer.index );
+      ramRingAddToWriteIndex( &pFeedback->aktionBuffer.index, 1 );
+      pFeedback->aktionBuffer.aAction[i].fgNumber = fgNumber;
+      pFeedback->aktionBuffer.aAction[i].action = what;
+   }
+}
+
+#define FSM_TRANSITION( s, attr... ) pFeedback->status = s
+
+/*!
+ * @brief Time distance between two switch-on events of DAQ channels
+ */
+#define DAQ_SWITCH_WAITING_TIME 5000000ULL
+
+/*! ---------------------------------------------------------------------------
+ * @brief Finite state machine which handles the on/off switching of
+ *        feed-back channels for ADDAC- function generators.
+ */
+STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
+{
+   DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
+   switch( pThis->feedback.status )
+   {
+      case FB_READY:
+      {
+         if( ramRingGetSize( &pFeedback->aktionBuffer.index ) == 0 )
+         {
+            FSM_TRANSITION( FB_READY );
+            break;
+         }
+         const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
+         ramRingAddToReadIndex( &pFeedback->aktionBuffer.index, 1 );
+         pFeedback->fgNumber = pFeedback->aktionBuffer.aAction[i].fgNumber;
+         DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber)];
+         if( pFeedback->aktionBuffer.aAction[i].action == FB_OFF )
+         {
+            DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+
+            ATOMIC_SECTION()
+            {
+               daqChannelSample1msOff( pSetChannel );
+               daqChannelTestAndClearDaqIntPending( pSetChannel );
+               daqChannelSample1msOff( pActChannel );
+               daqChannelTestAndClearDaqIntPending( pActChannel );
+            }
+            FSM_TRANSITION( FB_READY );
+            break;
+         }
+         DAQ_ASSERT( pFeedback->aktionBuffer.aAction[i].action == FB_ON );
+         daqChannelSample1msOn( pSetChannel );
+         pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
+         FSM_TRANSITION( FB_FIRST_ON, label='Start message received' );
+         break;
+      }
+
+      case FB_FIRST_ON:
+      {
+         if( getWrSysTime() < pFeedback->waitingTime )
+         {
+            FSM_TRANSITION( FB_FIRST_ON );
+            break;
+         }
+         DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+         daqChannelSample1msOn( pActChannel );
+         pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
+         FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired' );
+         break;
+      }
+
+      case FB_BOTH_ON:
+      {
+         if( getWrSysTime() < pFeedback->waitingTime )
+         {
+            FSM_TRANSITION( FB_BOTH_ON );
+            break;
+         }
+         FSM_TRANSITION( FB_READY, label='Waiting time expired');
+         break;
+      }
+
+      default: DAQ_ASSERT( false );
+   }
+   return true;
 }
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
@@ -753,7 +873,7 @@ void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts )
 void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis, uint32_t tsTag )
 {
    DAQ_ASSERT( pThis != NULL );
-   
+
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceSetTimeStampTag( daqBusGetDeviceObject( pThis, i ), tsTag );
 }
@@ -773,13 +893,29 @@ void daqBusReset( register DAQ_BUS_T* pThis )
       daqDeviceReset( daqBusGetDeviceObject( pThis, i ) );
 }
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqBusDoFeedbackTask( register DAQ_BUS_T* pThis )
+{
+   static unsigned int currentDevNum = 0;
+   if( daqDeviceDoFeedbackSwitchOnOffFSM( daqBusGetDeviceObject( pThis, currentDevNum ) ))
+   {
+      currentDevNum++;
+      currentDevNum %= daqBusGetFoundDevices( pThis );
+   }
+}
+
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
+
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
 void daqBusPrintInfo( register DAQ_BUS_T* pThis )
 {
-   unsigned int maxDevices = daqBusGetFoundDevices( pThis );
+   const unsigned int maxDevices = daqBusGetFoundDevices( pThis );
    for( unsigned int i = 0; i < maxDevices; i++ )
       daqDevicePrintInfo( daqBusGetDeviceObject( pThis, i ) );
 }
