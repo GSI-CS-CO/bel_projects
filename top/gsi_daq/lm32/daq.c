@@ -494,13 +494,15 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
                daqChannelSample1msOff( pActChannel );
                daqChannelTestAndClearDaqIntPending( pActChannel );
             }
-            FSM_TRANSITION( FB_READY );
+            FSM_TRANSITION( FB_READY, label='Switch both channels off\nif stop-message received.' );
             break;
          }
          DAQ_ASSERT( pFeedback->aktionBuffer.aAction[i].action == FB_ON );
          daqChannelSample1msOn( pSetChannel );
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
-         FSM_TRANSITION( FB_FIRST_ON, label='Start message received' );
+         FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
+                                            'Switch DAQ for set value on.' );
+         );
          break;
       }
 
@@ -514,7 +516,9 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
          daqChannelSample1msOn( pActChannel );
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
-         FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired' );
+         FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired.\n'
+                                           'Switch DAQ for actual value on.' );
+         );
          break;
       }
 

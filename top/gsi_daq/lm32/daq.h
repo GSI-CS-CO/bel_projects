@@ -361,9 +361,9 @@ typedef enum
 
 typedef enum
 {
-   FSM_DECLARE_STATE( FB_READY ),
-   FSM_DECLARE_STATE( FB_FIRST_ON ),
-   FSM_DECLARE_STATE( FB_BOTH_ON )
+   FSM_DECLARE_STATE( FB_READY, label='Wait for message.', color='green' ),
+   FSM_DECLARE_STATE( FB_FIRST_ON, label='First DAQ channel is on', color='red' ),
+   FSM_DECLARE_STATE( FB_BOTH_ON, label='Second DAQ channel is on', color='red' )
 } DAQ_FEEDBACK_STATUS_T;
 
 typedef struct PACKED_SIZE
