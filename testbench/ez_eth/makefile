@@ -40,6 +40,7 @@ testbench: 	\
 			../common/inferred_sync_fifo.vhd   \
 			../common/generic_dpram.vhd        \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
