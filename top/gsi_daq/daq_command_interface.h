@@ -271,7 +271,7 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
    }                                                                         \
 }
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) || !defined( CONFIG_DAQ_SINGLE_APP )
 
 #ifndef __DOXYGEN__
 /*

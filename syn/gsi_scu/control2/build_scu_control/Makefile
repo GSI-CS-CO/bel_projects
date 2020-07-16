@@ -74,7 +74,7 @@ endif
 VERSION = $(VERSION_STR)
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
-SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c #_old.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mailbox.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c

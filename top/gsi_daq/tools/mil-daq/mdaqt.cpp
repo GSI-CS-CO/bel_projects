@@ -280,9 +280,9 @@ void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
  */
 void MilDaqAdministration::setSingleShoot( bool enable )
 {
-   for( auto& i: *this )
+   for( const auto& i: *this )
    {
-      for( auto& j : *i )
+      for( const auto& j : *i )
       {
          static_cast<DaqMilCompare*>(j)->setSingleShoot( enable );
       }

@@ -268,6 +268,8 @@ void forEachScuDaqDevice( void )
 
 #ifndef CONFIG_DAQ_SINGLE_APP
 
+//#define _CONFIG_NO_DAQ_FSM
+
 /*! ---------------------------------------------------------------------------
  * @see daq_main.h
  */
@@ -278,7 +280,7 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
 
    DAQ_ASSERT( pDaqDevice != NULL );
-
+#ifdef _CONFIG_NO_DAQ_FSM
    DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
 
@@ -288,12 +290,14 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    daqChannelSample1msOn( pSetChannel );
 
  //  daqChannelSample1msOn( &daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, 8 )->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
-   //TODO find a more elegant solution...
 #if 1
    for( unsigned int i = 0; i < 200000; i++ ) NOP();
    daqChannelSample1msOn( pActChannel );
 
   // daqChannelSample1msOn( &daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, 8 )->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
+#endif
+#else
+   daqDevicePutFeedbackSwitchCommand( pDaqDevice, FB_ON, fgNum );
 #endif
 }
 
@@ -307,7 +311,7 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
 
    DAQ_ASSERT( pDaqDevice != NULL );
-
+#ifdef _CONFIG_NO_DAQ_FSM
    DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
 
@@ -318,6 +322,9 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
       daqChannelSample1msOff( pActChannel );
       daqChannelTestAndClearDaqIntPending( pActChannel );
    }
+#else
+   daqDevicePutFeedbackSwitchCommand( pDaqDevice, FB_OFF, fgNum );
+#endif
 }
 
 /*! --------------------------------------------------------------------------
@@ -347,9 +354,9 @@ STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
 void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
-
-   //!!daqBusDoFeedbackTask( &g_scuDaqAdmin.oDaqDevs );
-
+#ifndef _CONFIG_NO_DAQ_FSM
+   daqBusDoFeedbackTask( &g_scuDaqAdmin.oDaqDevs );
+#endif
    static DAQ_DEVICE_T* s_pDaqDevice = NULL;
 
    if( s_pDaqDevice == NULL )

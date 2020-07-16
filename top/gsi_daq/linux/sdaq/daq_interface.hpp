@@ -295,9 +295,21 @@ public:
                                    const uint channel );
 
 
-   RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 
-   void clearBuffer( bool update = true );
+   /*!
+    * @brief Returns the number of items which are currently in the
+    *        data buffer.
+    * @param update If true the indexes in the LM32 shared memory
+    *               will read before.
+    */
+   RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override;
+
+   /*!
+    * @brief Makes the data buffer empty.
+    * @param update If true the indexes in the LM32 shared memory
+    *               becomes updated.
+    */
+   void clearBuffer( bool update = true ) override;
 
 protected:
    virtual bool onCommandReadyPoll( USEC_T pollCount );

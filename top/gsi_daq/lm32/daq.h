@@ -346,7 +346,7 @@ typedef struct PACKED_SIZE
 } DAQ_CANNEL_T;
 
 #ifndef CONFIG_DAQ_SINGLE_APP
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
  * @brief Task type for the DAQ channels for the ADDAC function generator
  *        feedback of set- and actual values.
@@ -359,6 +359,10 @@ typedef enum
 
 #define FSM_DECLARE_STATE( state, attr... ) state
 
+/*!
+ * @ingroup DAQ_DEVICE
+ * @brief Declaration of the states for the feedback switch FSM.
+ */
 typedef enum
 {
    FSM_DECLARE_STATE( FB_READY, label='Wait for message.', color='green' ),
@@ -366,23 +370,65 @@ typedef enum
    FSM_DECLARE_STATE( FB_BOTH_ON, label='Second DAQ channel is on', color='red' )
 } DAQ_FEEDBACK_STATUS_T;
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief Item type for action buffer.
+ */
 typedef struct PACKED_SIZE
 {
+  /*!
+   * @brief Operation code.
+   * @see DAQ_FEEDBACK_ACTION_T
+   */
    uint8_t action;
+
+  /*!
+   * @brief Number of function generator.
+   */
    uint8_t fgNumber;
 } DAQ_ACTION_ITEM_T;
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief DAQ action ring buffer.
+ */
 typedef struct PACKED_SIZE
-{
+{ /*!
+   * @brief Action data buffer.
+   */
    DAQ_ACTION_ITEM_T  aAction[2];
+
+  /*!
+   * @brief Ring buffer indexes administration.
+   */
    RAM_RING_INDEXES_T index;
 } DAQ_ACTION_BUFFER;
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief Main data type for feedback on/off-switch FSM.
+ */
 typedef struct
-{
+{ /*!
+   * @brief Holds the earliest time point for the next
+   *        switch event.
+   */
    uint64_t              waitingTime;
+
+  /*!
+   * @brief Number of the concerning function generator
+   *        for DAQ feedback.
+   */
    unsigned int          fgNumber;
+
+  /*!
+   * @brief Holds the current status of the FSM.
+   */
    DAQ_FEEDBACK_STATUS_T status;
+
+  /*!
+   * @brief Waiting queue for the next switch actions.
+   */
    DAQ_ACTION_BUFFER     aktionBuffer;
 } DAQ_FEEDBACK_T;
 
@@ -1764,22 +1810,20 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
 
 #ifndef CONFIG_DAQ_SINGLE_APP
 
-#if 0
-//DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief Puts a command for the feedback switch FSM in the waiting queue
+ *        this command will executed ASAP.
+ * @param pThis Pointer to the DAQ-device object
+ * @param what Command: FB_ON or FB_OFF.
+ * @param fgNumber Number of the function generator: 0 or 1.
+ */
+void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
+                                        const DAQ_FEEDBACK_ACTION_T what,
+                                        const unsigned int fgNumber
+                                      );
 
-STATIC inline
-DAQ_CANNEL_T* daqDeviceGetFeedbackSetChannel( register DAQ_DEVICE_T* pThis,
-                                              const unsigned int fgNumber )
-{
-   return &pThis->aChannel[daqGetSetDaqNumberOfFg(fgNumber)];
-}
-#endif
-void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
-                               const DAQ_FEEDBACK_ACTION_T what,
-                               const unsigned int fgNumber
-                             );
-
-#endif
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE

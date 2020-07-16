@@ -36,7 +36,7 @@
  #include <lm32Interrupts.h>
  #include <daq_command_interface.h>
 #endif
-#if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_NO_DAQ_INFO_PRINT )
+#if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_NO_DAQ_INFO_PRINT ) || !defined( CONFIG_DAQ_SINGLE_APP )
  #include <eb_console_helper.h>
 #endif
 #endif
@@ -441,10 +441,10 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
-                               const DAQ_FEEDBACK_ACTION_T what,
-                               const unsigned int fgNumber
-                             )
+void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
+                                        const DAQ_FEEDBACK_ACTION_T what,
+                                        const unsigned int fgNumber
+                                      )
 {
    DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
    if( ramRingGetRemainingCapacity( &pFeedback->aktionBuffer.index ) > 0 )
@@ -454,6 +454,11 @@ void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
       pFeedback->aktionBuffer.aAction[i].fgNumber = fgNumber;
       pFeedback->aktionBuffer.aAction[i].action = what;
    }
+   else
+   {
+      mprintf( ESC_ERROR "Error: DAQ command buffer of slot %u full!\n" ESC_NORMAL,
+               daqDeviceGetSlot( pThis ) );
+   }
 }
 
 #define FSM_TRANSITION( s, attr... ) pFeedback->status = s
@@ -461,7 +466,7 @@ void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
 /*!
  * @brief Time distance between two switch-on events of DAQ channels
  */
-#define DAQ_SWITCH_WAITING_TIME 5000000ULL
+#define DAQ_SWITCH_WAITING_TIME 1000000ULL
 
 /*! ---------------------------------------------------------------------------
  * @brief Finite state machine which handles the on/off switching of
@@ -476,7 +481,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       {
          if( ramRingGetSize( &pFeedback->aktionBuffer.index ) == 0 )
          {
-            FSM_TRANSITION( FB_READY );
+            FSM_TRANSITION( FB_READY, label='No message.' );
             break;
          }
          const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
@@ -502,7 +507,6 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
          FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
                                             'Switch DAQ for set value on.' );
-         );
          break;
       }
 
@@ -518,7 +522,6 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
          FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired.\n'
                                            'Switch DAQ for actual value on.' );
-         );
          break;
       }
 
@@ -529,7 +532,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
             FSM_TRANSITION( FB_BOTH_ON );
             break;
          }
-         FSM_TRANSITION( FB_READY, label='Waiting time expired');
+         FSM_TRANSITION( FB_READY, label='Waiting time expired.');
          break;
       }
 
