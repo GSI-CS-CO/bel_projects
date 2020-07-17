@@ -1,0 +1,43 @@
+Testbench for Etherbone Slave core over virtual network interace
+
+The following vhd files listed in the makefile were duplicated locally and modified for compatibility with ghdl, as their direct interface assignments do not work with GHDL.
+This is less than ideal and should be fixed in the near future. 
+All files except one are only modified in terms of the indirect interface assignment by signal. The exception is generic_dpram.vhd, which has behavioral changes in read during write operations.
+However, tests with enigma showed no difference in behaviour in context of eb SDB bughunt.
+
+      ../common/inferred_sync_fifo.vhd   
+      ../common/generic_dpram.vhd        
+      ../common/eb_commit_fifo.vhd       
+      ../common/eb_commit_len_fifo.vhd   
+
+IMPORTANT: 
+
+For this testbench to work, you must set the path for the compiled altera vendor libraries on your system correctly in the makefile, see GHDL_ALTERA variable
+
+Next, this testbench needs a virtual layer 2 (TAP) interface and looks for one called 'tap2'. It can be created on the fly, but this is very tedious to handle later.
+For now, let's create a persistent TAP interface by that name.
+
+sudo ip tuntap add mode tap tap2
+
+You'll also need to assign it an IP (yeah, seems counterintuitive to assign IPs to layer2 devices), but we need a target
+for eb-tools call. I wouldn't recommend using any subnets assigned to physical interfaces
+as it makes the ip routes hell to sort out. I chose subnet 11.0.0.x for the example
+
+sudo ip add add 11.0.0.1/24 dev tap2
+sudo ip link set tap2 up
+
+next, we need route back to the eb-tools, which means the answering IP address (EB Slave) must be in the same subnet as the TAP interface.
+The easiest way (albeit a bit dirty) to do this is to change the EB-Slaves' default IP in /ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd
+If you followed the example above, change line 128 to
+
+     r_ip   <= x"0B000002";
+
+That's it. Afterwards, call
+
+make compile_testbench 
+
+and test the simulation with:
+
+make simulation.ghw & sleep 0.3; eb-ls -v udp/11.0.0.2 
+
+congratulations, you've got a ghdl sim of etherbone talking to your eb-tools.

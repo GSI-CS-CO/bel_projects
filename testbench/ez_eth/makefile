@@ -1,6 +1,11 @@
+# Testbench for Etherbone Slave core over virtual network interace
+#
+# IMPORTANT: 
+#
+# For this testbench to work, you must set the path for the compiled altera vendor libraries on your system correctly, see GHDL_ALTERA variable below.
+
 REPO = ../..
 
-#GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
 GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
 
 GHDLFLAGS = --ieee=synopsys --std=93c \
@@ -19,7 +24,7 @@ view: simulation.ghw
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=2000000ns --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=200000ns --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 #	gsettings set com.geda.gtkwave reload 0
 	gconftool-2 --type string --set /com.geda.gtkwave/0/reload 0
@@ -35,10 +40,10 @@ testbench: 	\
 			$(REPO)/ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd  \
 			$(REPO)/ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
 			$(REPO)/ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
+			$(REPO)/ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
 			$(REPO)/ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
 			$(REPO)/ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
 			../common/inferred_sync_fifo.vhd   \
-			../common/generic_dpram.vhd        \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
