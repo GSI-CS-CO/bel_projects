@@ -336,6 +336,8 @@ STATIC void initAndScan( void )
    scanFgs();
 }
 
+#define CONFIG_STOP_ON_LM32_EXCEPTION
+
 /*! ---------------------------------------------------------------------------
  * @brief Callback function becomes invoked by LM32 when an exception has
  *        been appeared.
@@ -353,9 +355,14 @@ void _onException( const uint32_t sig )
       default: str = "unknown"; break;
    }
    mprintf( ESC_ERROR "Exception occurred: %d -> %s\n"
-                      "System stopped!\n" ESC_NORMAL, sig, str );
+#ifdef CONFIG_STOP_ON_LM32_EXCEPTION
+                      "System stopped!\n"
+#endif
+                      ESC_NORMAL, sig, str );
+#ifdef CONFIG_STOP_ON_LM32_EXCEPTION
    irqDisable();
    while( true );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

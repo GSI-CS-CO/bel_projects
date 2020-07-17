@@ -29,7 +29,9 @@
 #include <daq_eb_ram_buffer.hpp>
 #include <scu_bus_defines.h>
 #include <scu_function_generator.h>
+
 #include <daq_ring_admin.h>
+
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -99,7 +101,7 @@ public:
    /*!
     * @brief Returns "true" in the case the function generator is a MIL device.
     */
-   bool isMil( void )
+   bool isMil( void ) const
    {
       return isMilFg( m_socket );
    }

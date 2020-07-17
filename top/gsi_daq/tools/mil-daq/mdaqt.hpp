@@ -183,7 +183,7 @@ public:
 
 
 //////////////////////////////////////////////////////////////////////////////
-class MilDaqAdministration: public DaqAdministration
+class MilDaqAdministration: public Scu::MiLdaq::DaqAdministration
 {
    friend class CommandLine;
    CommandLine*   m_poCommandLine;
@@ -202,7 +202,7 @@ public:
       return static_cast<Device*>(DaqAdministration::getDevice( number ));
    }
 
-   void onUnregistered( RingItem* pUnknownItem ) override;
+   void onUnregistered( RingItem* pUnknownItem )  override;
 
    bool showUngegistered( void );
 

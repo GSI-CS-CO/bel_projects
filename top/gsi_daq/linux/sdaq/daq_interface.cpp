@@ -22,8 +22,6 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-
-#define CONFIG_SCU_DAQ_INTEGRATION
 #include <unistd.h>
 #include <scu_shared_mem.h>
 #include <sys/select.h>

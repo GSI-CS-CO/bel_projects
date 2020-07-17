@@ -256,7 +256,7 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class DaqAdministration: public DaqInterface
+class DaqAdministration: public Scu::MiLdaq::DaqInterface
 {
 protected:
 
@@ -267,7 +267,7 @@ protected:
 public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone );
    DaqAdministration( daq::EbRamAccess* poEbAccess );
-   ~DaqAdministration( void ) override;
+   virtual ~DaqAdministration( void );
 
    /*!
     * @brief Returns the iterator to the begin of the pointer list of

@@ -298,7 +298,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
    DAQ_REGISTER_T expectedWords;
-   unsigned int di;
+   unsigned int descriptorIndex;
 
    DAQ_DESCRIPTOR_T    oDescriptor;
    RAM_RING_INDEXES_T  oDescriptorIndexes;
@@ -365,7 +365,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       return;
    }
 #endif
-   di = 0;
+   descriptorIndex = 0;
    dataWordCounter = 0;
    do
    {
@@ -403,9 +403,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          { /*
             * Descriptor becomes received.
             */
-            RAM_ASSERT( di < ARRAY_SIZE(oDescriptor.index) );
+            RAM_ASSERT( descriptorIndex < ARRAY_SIZE(oDescriptor.index) );
          #ifdef CONFIG_DAQ_SW_SEQUENCE
-            if( di == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
+            if( descriptorIndex == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
                                sizeof(DAQ_DATA_T) )
             { /*
                * Setting of the sequence number in the device descriptor.
@@ -417,7 +417,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
          #endif
-            oDescriptor.index[di++] = data;
+            oDescriptor.index[descriptorIndex++] = data;
          }
 
          ramFillItem( &ramItem, payloadIndex, data );
