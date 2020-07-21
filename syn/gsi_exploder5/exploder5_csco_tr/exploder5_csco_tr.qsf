@@ -109,7 +109,7 @@ set_global_assignment -name REPORT_CONNECTIVITY_CHECKS ON
 set_global_assignment -name REPORT_SOURCE_ASSIGNMENTS ON
 set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name SDC_FILE ../../../top/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr.sdc
+set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
 set_global_assignment -name SEED 161
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
@@ -582,6 +582,10 @@ set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -lib
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/flash_loader/flash_loader_v01.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
@@ -736,6 +740,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg
 set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../top/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../top/gsi_exploder5/exploder5_csco_tr/ramsize_pkg.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008

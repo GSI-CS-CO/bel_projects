@@ -117,7 +117,9 @@ entity monster is
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
+    g_en_timer             : boolean;
     g_en_eca_tap           : boolean);
+
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -1270,6 +1272,7 @@ begin
       g_world_bridge_sdb    => c_top_bridge_sdb,
       g_clu_msi_sdb         => c_dev_bridge_msi,
       g_init_files          => g_lm32_init_files,
+      g_en_timer            => g_en_timer,
       g_profiles            => g_lm32_profiles)
     port map(
       clk_ref_i          => clk_ref,
@@ -1615,6 +1618,105 @@ end generate;
 
   wr_a5 : if c_is_arria5 generate
     U_WR_CORE : xwr_core
+
+    generic map (
+      g_simulation                => 0,
+      g_with_external_clock_input => FALSE,
+      g_phys_uart                 => TRUE,
+      g_virtual_uart              => TRUE,
+      g_aux_clks                  => 0,
+      g_ep_rxbuf_size             => 1024,
+      g_tx_runt_padding           => TRUE,
+      g_records_for_phy           => FALSE,
+      g_pcs_16bit                 => FALSE,
+      g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
+      g_dpram_size                => 131072/4,
+      g_interface_mode            => PIPELINED,
+      g_address_granularity       => BYTE,
+      g_aux_sdb                   => c_etherbone_sdb,
+      g_softpll_enable_debugger   => FALSE)
+
+    port map (
+      clk_sys_i            => clk_sys,
+      clk_dmtd_i           => clk_dmtd,
+      clk_ref_i            => clk_ref,
+      clk_aux_i            => (others => '0'),
+      --clk_ext_i            => wr_ext_clk_i,
+      --clk_ext_mul_i        => clk_ext_mul_i,
+      --clk_ext_mul_locked_i => clk_ext_mul_locked_i,
+      --clk_ext_stopped_i    => '0,
+      --clk_ext_rst_o        => open,
+      pps_ext_i            => wr_ext_pps_i,
+      rst_n_i              => rstn_sys,
+      dac_hpll_load_p1_o   => dac_hpll_load_p1,
+      dac_hpll_data_o      => dac_hpll_data,
+      dac_dpll_load_p1_o   => dac_dpll_load_p1,
+      dac_dpll_data_o      => dac_dpll_data,
+      phy_rdy_i            => '1',
+      phy_loopen_vec_o     => open,
+      phy_tx_prbs_sel_o    => open,
+      phy_sfp_tx_fault_i   => '0',
+      phy_sfp_los_i        => '0',
+      phy_sfp_tx_disable_o => open,
+      phy_ref_clk_i        => phy_tx_clk,
+      phy_tx_data_o        => phy_tx_data,
+      phy_tx_k_o           => phy_tx_k,
+      phy_tx_disparity_i   => phy_tx_disparity,
+      phy_tx_enc_err_i     => phy_tx_enc_err,
+      phy_rx_data_i        => phy_rx_data,
+      phy_rx_rbclk_i       => phy_rx_rbclk,
+      phy_rx_k_i           => phy_rx_k,
+      phy_rx_enc_err_i     => phy_rx_enc_err,
+      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rst_o            => phy_rst,
+      phy_loopen_o         => phy_loopen,
+      phy8_o               => phy8_i,
+      phy8_i               => phy8_o,
+      phy16_o              => phy16_i,
+      phy16_i              => phy16_o,
+      led_act_o            => link_act,
+      led_link_o           => link_up,
+      scl_o                => open, -- Our ROM is on onewire, not i2c
+      scl_i                => '0',
+      sda_i                => '0',
+      sda_o                => open,
+      sfp_scl_i            => wr_sfp_scl_io,
+      sfp_sda_i            => wr_sfp_sda_io,
+      sfp_scl_o            => sfp_scl_o,
+      sfp_sda_o            => sfp_sda_o,
+      sfp_det_i            => wr_sfp_det_i,
+      btn1_i               => '0',
+      btn2_i               => '0',
+      uart_rxd_i           => uart_mux,
+      uart_txd_o           => uart_wrc,
+      owr_pwren_o          => owr_pwren,
+      owr_en_o             => owr_en,
+      owr_i(0)             => wr_onewire_io,
+      owr_i(1)             => '0',
+      slave_i              => wrc_slave_i,
+      slave_o              => wrc_slave_o,
+      aux_master_o         => wrc_master_o,
+      aux_master_i         => wrc_master_i,
+      wrf_src_o            => eb_snk_in,
+      wrf_src_i            => eb_snk_out,
+      wrf_snk_o            => eb_src_in,
+      wrf_snk_i            => eb_src_out,
+      tm_link_up_o         => open,
+      tm_dac_value_o       => open,
+      tm_dac_wr_o          => open,
+      tm_clk_aux_lock_en_i => (others => '0'),
+      tm_clk_aux_locked_o  => open,
+      tm_time_valid_o      => tm_valid,
+      tm_tai_o             => tm_tai,
+      tm_cycles_o          => tm_cycles,
+      pps_p_o              => pps,
+      --dio_o                => open,
+      rst_aux_n_o          => open,
+      link_ok_o            => s_link_ok);
+  end generate;
+
+  wr_a10 : if c_is_arria10 generate
+  U_WR_CORE : xwr_core
 
     generic map (
       g_simulation                => 0,

@@ -49,6 +49,7 @@ generic(
   g_ram_per_core      : natural := 32768/4;
   g_profiles          : string  := "medium_icache_debug";
   g_init_files        : string;
+  g_en_timer          : boolean := false;
   g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar
   g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar
 );
@@ -161,7 +162,8 @@ begin
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => f_substr(g_profiles, I, ';'),
       g_init_file                      => f_substr(g_init_files, I, ';'),
-		  g_is_dm                          => g_is_dm
+      g_is_dm                          => g_is_dm,
+      g_en_timer                       => g_en_timer
     )
     port map(
       clk_sys_i      => clk_ref_i,

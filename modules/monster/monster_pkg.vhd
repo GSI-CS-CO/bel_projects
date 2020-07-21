@@ -125,6 +125,7 @@ package monster_pkg is
       g_delay_diagnostics    : boolean := false;
       g_en_eca               : boolean := true;
       g_en_wd_tmr            : boolean := false;
+      g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false
     );
     port(

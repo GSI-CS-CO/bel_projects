@@ -1,7 +1,7 @@
 files = [
    "scu_control.vhd",
-   "scu_control.sdc",
    "ramsize_pkg.vhd",
+   "../../common/arria10.sdc",
 ]
 
 modules = {

@@ -1,5 +1,7 @@
 #include "aux.h"
 #include "irq.h"
+#include "mini_sdb.h"
+#include "../wb_timer/wb_timer_regs.h"
 
 
 /*
@@ -37,6 +39,22 @@ extern inline uint32_t  getCores();
 extern inline  uint32_t  atomic_get(void);
 extern inline void atomic_on();
 extern inline void atomic_off();
+
+int uwait(uint64_t usecs)
+{
+  uint64_t twait;
+  
+  if ((uint32_t)pCpuWbTimer == ERROR_NOT_FOUND) return -1;      // timer not found; is discoverPeriphery() included in your code?
+
+  usecs = usecs - 1;                                            // calling this routine takes 1-2 us --> subtract 1us
+  twait = getCpuTime() + usecs * (uint64_t)1000;
+
+  while(getCpuTime() < twait) {
+    cycSleep(8);                                                // this waits for about 32 CPU cycles
+  } // while
+
+  return 0;
+} // uwait
 
 char progressWheel()
 {

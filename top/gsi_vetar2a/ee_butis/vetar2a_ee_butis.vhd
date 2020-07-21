@@ -336,6 +336,8 @@ begin
       g_en_usb            => true,
       g_en_lcd            => true,
       g_delay_diagnostics => true,
+      g_en_timer          => true,
+      g_en_eca_tap        => true,
       g_io_table          => io_mapping_table,
       g_lm32_cores        => c_cores,
       g_lm32_ramsizes     => c_lm32_ramsizes/4,
