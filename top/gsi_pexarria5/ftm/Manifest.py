@@ -1,6 +1,6 @@
 files = [
    "ftm.vhd",
-   "ftm.sdc",
+   "../../common/arria5.sdc",
    "ramsize_pkg.vhd",	
 ]
 
