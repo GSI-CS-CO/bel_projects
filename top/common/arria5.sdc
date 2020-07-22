@@ -15,8 +15,12 @@ set clk_sys3_10_update_clk             [get_clocks {main|\sys_a5:sys_inst|sys_pl
 set clk_sys3_20_flash_ext_clk          [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[4].gpll~PLL_OUTPUT_COUNTER|divclk}]
 set clk_dmtd_62_5_clk                  [get_clocks {main|\dmtd_a5:dmtd_inst|dmtd_pll5_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}]
 
+#######################################################################################################################
+
 # Phy clocks
 create_clock -name {monster:main|ref_pll5:\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|PLL_RECONFIG~FMAX_CAP_FF} -period 8.000 [get_pins {main|phase|raw_trap|clk}]
+
+#######################################################################################################################
 
 # Special device input clocks
 create_clock -period 10Mhz  -name exploder5_ext_clk_in  [get_ports {lvds_clk_p_i}]
@@ -30,6 +34,8 @@ create_clock -period 10Mhz  -name microtca_ext_clk_n_in [get_ports {clk_lvtio_n_
 create_clock -period 125Mhz -name pmc_sfp_clk_in        [get_ports {clk_sfp_ref_i}]
 create_clock -period 10Mhz  -name pmc_ext_clk_in        [get_ports {clk_lvtio_i}]
 create_clock -period 30Mhz  -name pmc_pci_clk_in        [get_ports {pmc_clk_i}]
+
+#######################################################################################################################
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
@@ -126,4 +132,111 @@ set_clock_groups -asynchronous \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pma|av_tx_pma|tx_pma_insts[0].av_tx_pma_ch_inst|tx_pma_ch.tx_cgb|pclk[2] \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_tx_plls.gen_tx_plls.tx_plls|pll[0].pll.cmu_pll.pll_mux.pll_refclk_select_mux|clkout \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_tx_plls.gen_tx_plls.tx_plls|pll[0].pll.cmu_pll.tx_pll|clkcdr } ]
+                      
+
+#######################################################################################################################
+
+# PCI Clock Settings
+##############################
+create_clock -period 30 -name PCI_CLOCK [get_ports {pmc_clk_i}]
+set_false_path -from [get_ports pmc_rst_i] -to *
+
+# Assigments for node pmc_devsel_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_devsel_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_devsel_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_devsel_io]
+
+# Assigments for node pmc_frame_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_frame_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_frame_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_frame_io]
+
+# Assigments for node pmc_irdy_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_irdy_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_irdy_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_irdy_io]
+
+# Assigments for node pmc_par_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_par_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_par_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_par_io]
+
+# Assigments for node pmc_perr_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_perr_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_perr_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_perr_io]
+
+# Assigments for node pmc_stop_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_stop_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_stop_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_stop_io]
+
+# Assigments for node pmc_trdy_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_trdy_io]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_trdy_io]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_trdy_io]
+
+# Assigments for node pmc_ad_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_ad_io[*]]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_ad_io[*]]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_ad_io[*]]
+
+# Assigments for node pmc_c_be_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_c_be_io[*]]
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_c_be_io[*]]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_c_be_io[*]]
+
+# Assigments for node pmc_idsel_i 
+###############################
+set_input_delay -clock PCI_CLOCK -max 23.0 [get_ports pmc_idsel_i]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_idsel_i]
+
+# Assigments for node pmc_gnt_i 
+###############################
+set_input_delay -clock PCI_CLOCK -max 20.0 [get_ports pmc_gnt_i]
+set_input_delay -clock PCI_CLOCK -min 0.0 [get_ports pmc_gnt_i]
+
+# Assigments for node pmc_intX_o 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_inta_o]
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_intb_o]
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_intc_o]
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_intd_o]
+
+# Assigments for node pmc_serr_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_serr_io]
+
+# Assigments for node pmc_req_o 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_req_o]
+
+# Assigments for node pmc_busmode_io 
+###############################
+set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_busmode_io[*]]
+
+####################################################
+# Assignments to meet PCI "Float to Active" Delay
+####################################################
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*ad_iob*en_out    ] -to [get_ports pmc_ad_io[*]  ]
+
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*par_iob*en_out   ] -to [get_ports pmc_par_io    ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*devsel_iob*en_out] -to [get_ports pmc_devsel_io ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*stop_iob*en_out  ] -to [get_ports pmc_stop_io   ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*trdy_iob*en_out  ] -to [get_ports pmc_trdy_io   ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*perr_iob*en_out  ] -to [get_ports pmc_perr_io   ]
+
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*cbe_iob*en_out   ] -to [get_ports pmc_c_be_io[*]]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*frame_iob*en_out ] -to [get_ports pmc_frame_io  ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*irdy_iob*en_out  ] -to [get_ports pmc_irdy_io   ]
+
 
