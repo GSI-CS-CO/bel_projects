@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;  
 
 -- package with component to test on this testbench
---use work.pcie_tlp.all;
 use work.wishbone_pkg.all;
 
 
@@ -25,6 +24,10 @@ architecture simulation of testbench is
 
   signal classic_mosi     : t_wishbone_master_out;
   signal classic_miso     : t_wishbone_master_in;
+
+
+  signal classic_mosi_stb_d1: std_logic := '0';
+  signal classic_mosi_stb_d2: std_logic := '0';
 
 begin
 
@@ -59,27 +62,56 @@ begin
       );
 
 
-    controller_pipelined: process
+    master_pipelined: process
     begin
-      wait until falling_edge(rst);
                       -- cyc  stb      adr              sel          we       dat
       pipelined_mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
-                  --   ack  err  rty stall     dat
+      wait until falling_edge(rst);
       wait until rising_edge(clk_sys);
       pipelined_mosi <= ('1', '1', (others => '0'), (others => '0'), '0', (others => '0'));
-
+      wait;
     end process;
 
-
-    device_classic: process
+    slave_classic: process
     begin
       wait until rising_edge(clk_sys);
       if rst = '1' then
-        classic_miso <= ('0', '0', '0', '0', (others => '0'));
       else 
-        classic_miso.ack <= classic_mosi.cyc and classic_mosi.stb;
+        -- delayed strobe
+        classic_mosi_stb_d1 <= classic_mosi.stb;
+        classic_mosi_stb_d2 <= classic_mosi_stb_d1;
+
+        -------------- CASE 1 (working) -------------
+        -- ack is exacly one clock cycle long
+        --if classic_mosi_stb_d1 = '0' and classic_mosi.stb = '1' then -- rising edge of stb
+        --  classic_miso.ack <= '1';
+        --else
+        --  classic_miso.ack <= '0';
+        --end if;
+
+        -------------- CASE 2 (working) -------------
+        ----same as CASE1 but slave needs one clock cycle longer to ack
+        --if classic_mosi_stb_d2 = '0' and classic_mosi_stb_d1 = '1' then 
+        --  classic_miso.ack <= '1';
+        --else
+        --  classic_miso.ack <= '0';
+        --end if;
+
+
+
+        -------------- CASE 3 (not working) -------------
+        --classic_miso.ack <= classic_mosi_stb_d1;
+
+
+        ------------ CASE 4 (not working) -------------
+        --like CASE 5 but ack is delayed by 1 clock cycle
+        --classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
+
       end if;
     end process;
+
+    ------------ CASE 5 (working) -------------
+    classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
 
 
 

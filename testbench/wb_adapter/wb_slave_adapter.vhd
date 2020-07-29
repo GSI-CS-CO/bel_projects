@@ -183,7 +183,7 @@ begin  -- rtl
       end if;
     end process p_wb_term_d1;
 
-    master_out.stb  <= slave_in.stb;-- and not master_in.ack;
+    master_out.stb  <= slave_in.stb and not master_in_ack_d1;
     slave_out.stall <= '0' when slave_in.cyc = '0' else not master_in.ack;
     slave_out.ack   <= master_in.ack and not master_in_ack_d1;
     slave_out.err   <= master_in.err and not master_in_err_d1;
