@@ -110,6 +110,11 @@ architecture rtl of wb_slave_adapter is
   signal slave_in   : t_wishbone_slave_in;
   signal slave_out  : t_wishbone_slave_out;
 
+  type t_fsm_state is (IDLE, WAIT4ACK);
+  signal fsm_state : t_fsm_state := IDLE;
+
+  signal stall : std_logic := '1';
+
 begin  -- rtl
 
   gen_slave_use_struct : if (g_slave_use_struct) generate
@@ -174,31 +179,43 @@ begin  -- rtl
   begin
     -- we need delayed versions of of ack/err/rty to detect rising edges and
     -- send a one clock cycle wide ack/err/rty to the pipelined side.
-    p_wb_term_d1: process (clk_sys_i) is
+    state_machine: process (clk_sys_i) is
     begin
       if rising_edge(clk_sys_i) then
-        master_in_ack_d1 <= master_in.ack;
-        master_in_err_d1 <= master_in.err;
-        master_in_rty_d1 <= master_in.rty;
+        if rst_n_i = '0' then
+          fsm_state <= IDLE;
+        else
+          master_in_ack_d1 <= master_in.ack;
+          master_in_err_d1 <= master_in.err;
+          master_in_rty_d1 <= master_in.rty;
+          case fsm_state is
+            when IDLE =>
+              if (slave_in.stb = '1' and slave_in.cyc = '1') then
+                fsm_state <= WAIT4ACK;
+              end if;
+            when WAIT4ACK =>
+              if (slave_in.stb = '0' and slave_in.cyc = '0') or
+                (master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1') or
+                (master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1') then
+                fsm_state <= IDLE;
+              end if;
+          end case;
+        end if;
       end if;
-    end process p_wb_term_d1;
-
-    master_out.stb  <= slave_in.stb and not master_in_ack_d1;
-    slave_out.stall <= '0' when slave_in.cyc = '0' else not master_in.ack;
-    slave_out.ack   <= master_in.ack and not master_in_ack_d1;
-    slave_out.err   <= master_in.err and not master_in_err_d1;
-    slave_out.rty   <= master_in.rty and not master_in_rty_d1;
+    end process state_machine;
+    slave_out.stall <= '1' when fsm_state = WAIT4ACK else '0';
+    master_out.stb  <= '1' when (slave_in.cyc = '1' and slave_in.stb = '1' and fsm_state = IDLE) else '0';
+    slave_out.ack   <= master_in.ack;
+    slave_out.err   <= master_in.err;
+    slave_out.rty   <= master_in.rty;
   end generate P2C;
 
   C2P : if (g_slave_mode = CLASSIC   and g_master_mode = PIPELINED) generate
-    type t_fsm_state is (IDLE, WAIT4ACK);
-    signal fsm_state : t_fsm_state := IDLE;
   begin
     master_out.stb  <= slave_in.stb when fsm_state=IDLE else '0';
     slave_out.ack   <= master_in.ack;
     slave_out.err   <= master_in.err;
     slave_out.rty   <= master_in.rty;
-    slave_out.stall <= '0'; -- classic will ignore this anyway
 
     state_machine : process(clk_sys_i) is
     begin

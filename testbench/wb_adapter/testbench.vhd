@@ -67,8 +67,11 @@ begin
                       -- cyc  stb      adr              sel          we       dat
       pipelined_mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
       wait until falling_edge(rst);
-      wait until rising_edge(clk_sys);
-      pipelined_mosi <= ('1', '1', (others => '0'), (others => '0'), '0', (others => '0'));
+      for i in 0 to 100 loop 
+        wait until rising_edge(clk_sys);
+        pipelined_mosi <= ('1', '1', x"0abcdef0", x"f", '0', std_logic_vector(to_unsigned(i,32)));
+        classic_miso.dat <= std_logic_vector(to_unsigned(i,32));
+      end loop;
       wait;
     end process;
 
@@ -82,7 +85,7 @@ begin
         classic_mosi_stb_d2 <= classic_mosi_stb_d1;
 
         -------------- CASE 1 (working) -------------
-        -- ack is exacly one clock cycle long
+         --ack is exacly one clock cycle long
         --if classic_mosi_stb_d1 = '0' and classic_mosi.stb = '1' then -- rising edge of stb
         --  classic_miso.ack <= '1';
         --else
@@ -100,7 +103,7 @@ begin
 
 
         -------------- CASE 3 (not working) -------------
-        --classic_miso.ack <= classic_mosi_stb_d1;
+        --classic_miso.ack <= classic_mosi_stb_d2;
 
 
         ------------ CASE 4 (not working) -------------
