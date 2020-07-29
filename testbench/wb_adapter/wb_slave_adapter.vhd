@@ -113,7 +113,7 @@ architecture rtl of wb_slave_adapter is
   type t_fsm_state is (IDLE, WAIT4ACK);
   signal fsm_state : t_fsm_state := IDLE;
 
-  signal stall : std_logic := '1';
+  signal slave_in_frozen : t_wishbone_slave_in;
 
 begin  -- rtl
 
@@ -159,32 +159,44 @@ begin  -- rtl
   ma_stb_o <= master_out.stb;
   ma_we_o  <= master_out.we;
 
-  p_gen_address : process(slave_in, master_out)
-  begin
-    if(g_master_granularity = g_slave_granularity) then
-      master_out.adr <= slave_in.adr;
-    elsif(g_master_granularity = BYTE) then  -- byte->word
-      master_out.adr <= slave_in.adr(c_wishbone_address_width-f_num_byte_address_bits-1 downto 0)
-                        & f_zeros(f_num_byte_address_bits);
-    else
-      master_out.adr <= f_zeros(f_num_byte_address_bits)
-                        & slave_in.adr(c_wishbone_address_width-1 downto f_num_byte_address_bits);
-    end if;
-  end process p_gen_address;
+  not_P2C : if not (g_slave_mode = PIPELINED and g_master_mode = CLASSIC)   generate
+    p_gen_address : process(slave_in, master_out)
+    begin
+      if(g_master_granularity = g_slave_granularity) then
+        master_out.adr <= slave_in.adr;
+      elsif(g_master_granularity = BYTE) then  -- byte->word
+        master_out.adr <= slave_in.adr(c_wishbone_address_width-f_num_byte_address_bits-1 downto 0)
+                          & f_zeros(f_num_byte_address_bits);
+      else
+        master_out.adr <= f_zeros(f_num_byte_address_bits)
+                          & slave_in.adr(c_wishbone_address_width-1 downto f_num_byte_address_bits);
+      end if;
+    end process p_gen_address;
+
+    master_out.dat <= slave_in.dat;
+    master_out.sel <= slave_in.sel;
+    master_out.we  <= slave_in.we;
+  end generate not_P2C;
 
   P2C : if (g_slave_mode = PIPELINED and g_master_mode = CLASSIC)   generate
     signal master_in_ack_d1 : std_logic := '0';
     signal master_in_err_d1 : std_logic := '0';
     signal master_in_rty_d1 : std_logic := '0';
   begin
-    -- we need delayed versions of of ack/err/rty to detect rising edges and
-    -- send a one clock cycle wide ack/err/rty to the pipelined side.
+    -- send one clock cycle wide STB to slave and stall master 
+    -- for as long as no ACK arrived from slave
     state_machine: process (clk_sys_i) is
     begin
       if rising_edge(clk_sys_i) then
         if rst_n_i = '0' then
           fsm_state <= IDLE;
         else
+          -- register slave in data to be able to 
+          -- freeze the output if in state WAIT4ACK
+          if fsm_state = IDLE then
+            slave_in_frozen <= slave_in;
+          end if;
+
           master_in_ack_d1 <= master_in.ack;
           master_in_err_d1 <= master_in.err;
           master_in_rty_d1 <= master_in.rty;
@@ -208,6 +220,31 @@ begin  -- rtl
     slave_out.ack   <= master_in.ack;
     slave_out.err   <= master_in.err;
     slave_out.rty   <= master_in.rty;
+
+
+    p_gen_address : process(slave_in, master_out)
+      variable slave_in_select : t_wishbone_slave_in;
+    begin
+      if fsm_state = IDLE then
+        slave_in_select := slave_in;
+      else 
+        slave_in_select := slave_in_frozen;
+      end if;
+
+      if(g_master_granularity = g_slave_granularity) then
+        master_out.adr <= slave_in_select.adr;
+      elsif(g_master_granularity = BYTE) then  -- byte->word
+        master_out.adr <= slave_in_select.adr(c_wishbone_address_width-f_num_byte_address_bits-1 downto 0)
+                          & f_zeros(f_num_byte_address_bits);
+      else
+        master_out.adr <= f_zeros(f_num_byte_address_bits)
+                          & slave_in_select.adr(c_wishbone_address_width-1 downto f_num_byte_address_bits);
+      end if;
+    end process p_gen_address;
+    master_out.dat <= slave_in.dat when fsm_state = IDLE else slave_in_frozen.dat;
+    master_out.sel <= slave_in.sel when fsm_state = IDLE else slave_in_frozen.sel;
+    master_out.we  <= slave_in.we  when fsm_state = IDLE else slave_in_frozen.we;
+
   end generate P2C;
 
   C2P : if (g_slave_mode = CLASSIC   and g_master_mode = PIPELINED) generate
@@ -248,10 +285,8 @@ begin  -- rtl
     slave_out.rty   <= master_in.rty;
   end generate X2X;
 
-  master_out.dat <= slave_in.dat;
-  master_out.cyc <= slave_in.cyc;
-  master_out.sel <= slave_in.sel;
-  master_out.we  <= slave_in.we;
 
+  master_out.cyc <= slave_in.cyc;
   slave_out.dat <= master_in.dat;
+
 end rtl;

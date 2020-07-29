@@ -69,7 +69,7 @@ begin
       wait until falling_edge(rst);
       for i in 0 to 100 loop 
         wait until rising_edge(clk_sys);
-        pipelined_mosi <= ('1', '1', x"0abcdef0", x"f", '0', std_logic_vector(to_unsigned(i,32)));
+        pipelined_mosi <= ('1', '1', std_logic_vector(to_unsigned(10*i,32)), x"f", '0', std_logic_vector(to_unsigned(i,32)));
         classic_miso.dat <= std_logic_vector(to_unsigned(i,32));
       end loop;
       wait;
@@ -108,13 +108,13 @@ begin
 
         ------------ CASE 4 (not working) -------------
         --like CASE 5 but ack is delayed by 1 clock cycle
-        --classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
+        classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
 
       end if;
     end process;
 
     ------------ CASE 5 (working) -------------
-    classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
+    --classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
 
 
 

@@ -1,43 +1,58 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Wed Jul 29 11:01:39 2020
+[*] Wed Jul 29 16:09:23 2020
 [*]
 [dumpfile] "/home/michael/work/bel_brojects_wb_adapter_sim/testbench/wb_adapter/simulation.ghw"
-[dumpfile_mtime] "Wed Jul 29 11:01:08 2020"
-[dumpfile_size] 4307
+[dumpfile_mtime] "Wed Jul 29 16:08:24 2020"
+[dumpfile_size] 5641
 [savefile] "/home/michael/work/bel_brojects_wb_adapter_sim/testbench/wb_adapter/simulation.gtkw"
 [timestart] 0
-[size] 1398 952
+[size] 1123 560
 [pos] -1 -1
-*-25.000000 32000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-25.000000 48000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.testbench.
 [treeopen] top.testbench.adapter.
+[treeopen] top.testbench.adapter.slave_in_frozen.
+[treeopen] top.testbench.classic_miso.
+[treeopen] top.testbench.classic_mosi.
+[treeopen] top.testbench.pipelined_miso.
+[treeopen] top.testbench.pipelined_mosi.
 [sst_width] 211
 [signals_width] 102
 [sst_expanded] 1
-[sst_vpaned_height] 402
+[sst_vpaned_height] 196
+@200
+-testbench
 @28
 top.testbench.rst_n
 top.testbench.rst
 top.testbench.clk_sys
-top.testbench.clk_ext
+@420
+top.testbench.adapter.fsm_state
 @200
--testbench
 -pipelined
 @28
 top.testbench.pipelined_mosi.cyc
 top.testbench.pipelined_mosi.stb
-top.testbench.pipelined_miso.ack
-@29
 top.testbench.pipelined_miso.stall
+top.testbench.pipelined_miso.ack
+@24
+#{top.testbench.pipelined_mosi.dat[31:0]} top.testbench.pipelined_mosi.dat[31] top.testbench.pipelined_mosi.dat[30] top.testbench.pipelined_mosi.dat[29] top.testbench.pipelined_mosi.dat[28] top.testbench.pipelined_mosi.dat[27] top.testbench.pipelined_mosi.dat[26] top.testbench.pipelined_mosi.dat[25] top.testbench.pipelined_mosi.dat[24] top.testbench.pipelined_mosi.dat[23] top.testbench.pipelined_mosi.dat[22] top.testbench.pipelined_mosi.dat[21] top.testbench.pipelined_mosi.dat[20] top.testbench.pipelined_mosi.dat[19] top.testbench.pipelined_mosi.dat[18] top.testbench.pipelined_mosi.dat[17] top.testbench.pipelined_mosi.dat[16] top.testbench.pipelined_mosi.dat[15] top.testbench.pipelined_mosi.dat[14] top.testbench.pipelined_mosi.dat[13] top.testbench.pipelined_mosi.dat[12] top.testbench.pipelined_mosi.dat[11] top.testbench.pipelined_mosi.dat[10] top.testbench.pipelined_mosi.dat[9] top.testbench.pipelined_mosi.dat[8] top.testbench.pipelined_mosi.dat[7] top.testbench.pipelined_mosi.dat[6] top.testbench.pipelined_mosi.dat[5] top.testbench.pipelined_mosi.dat[4] top.testbench.pipelined_mosi.dat[3] top.testbench.pipelined_mosi.dat[2] top.testbench.pipelined_mosi.dat[1] top.testbench.pipelined_mosi.dat[0]
+#{top.testbench.pipelined_mosi.adr[31:0]} top.testbench.pipelined_mosi.adr[31] top.testbench.pipelined_mosi.adr[30] top.testbench.pipelined_mosi.adr[29] top.testbench.pipelined_mosi.adr[28] top.testbench.pipelined_mosi.adr[27] top.testbench.pipelined_mosi.adr[26] top.testbench.pipelined_mosi.adr[25] top.testbench.pipelined_mosi.adr[24] top.testbench.pipelined_mosi.adr[23] top.testbench.pipelined_mosi.adr[22] top.testbench.pipelined_mosi.adr[21] top.testbench.pipelined_mosi.adr[20] top.testbench.pipelined_mosi.adr[19] top.testbench.pipelined_mosi.adr[18] top.testbench.pipelined_mosi.adr[17] top.testbench.pipelined_mosi.adr[16] top.testbench.pipelined_mosi.adr[15] top.testbench.pipelined_mosi.adr[14] top.testbench.pipelined_mosi.adr[13] top.testbench.pipelined_mosi.adr[12] top.testbench.pipelined_mosi.adr[11] top.testbench.pipelined_mosi.adr[10] top.testbench.pipelined_mosi.adr[9] top.testbench.pipelined_mosi.adr[8] top.testbench.pipelined_mosi.adr[7] top.testbench.pipelined_mosi.adr[6] top.testbench.pipelined_mosi.adr[5] top.testbench.pipelined_mosi.adr[4] top.testbench.pipelined_mosi.adr[3] top.testbench.pipelined_mosi.adr[2] top.testbench.pipelined_mosi.adr[1] top.testbench.pipelined_mosi.adr[0]
+#{top.testbench.pipelined_miso.dat[31:0]} top.testbench.pipelined_miso.dat[31] top.testbench.pipelined_miso.dat[30] top.testbench.pipelined_miso.dat[29] top.testbench.pipelined_miso.dat[28] top.testbench.pipelined_miso.dat[27] top.testbench.pipelined_miso.dat[26] top.testbench.pipelined_miso.dat[25] top.testbench.pipelined_miso.dat[24] top.testbench.pipelined_miso.dat[23] top.testbench.pipelined_miso.dat[22] top.testbench.pipelined_miso.dat[21] top.testbench.pipelined_miso.dat[20] top.testbench.pipelined_miso.dat[19] top.testbench.pipelined_miso.dat[18] top.testbench.pipelined_miso.dat[17] top.testbench.pipelined_miso.dat[16] top.testbench.pipelined_miso.dat[15] top.testbench.pipelined_miso.dat[14] top.testbench.pipelined_miso.dat[13] top.testbench.pipelined_miso.dat[12] top.testbench.pipelined_miso.dat[11] top.testbench.pipelined_miso.dat[10] top.testbench.pipelined_miso.dat[9] top.testbench.pipelined_miso.dat[8] top.testbench.pipelined_miso.dat[7] top.testbench.pipelined_miso.dat[6] top.testbench.pipelined_miso.dat[5] top.testbench.pipelined_miso.dat[4] top.testbench.pipelined_miso.dat[3] top.testbench.pipelined_miso.dat[2] top.testbench.pipelined_miso.dat[1] top.testbench.pipelined_miso.dat[0]
 @200
 -classic
 @28
 top.testbench.classic_mosi.cyc
 top.testbench.classic_mosi.stb
 top.testbench.classic_miso.ack
-@200
--adapter
+@24
+#{top.testbench.classic_mosi.dat[31:0]} top.testbench.classic_mosi.dat[31] top.testbench.classic_mosi.dat[30] top.testbench.classic_mosi.dat[29] top.testbench.classic_mosi.dat[28] top.testbench.classic_mosi.dat[27] top.testbench.classic_mosi.dat[26] top.testbench.classic_mosi.dat[25] top.testbench.classic_mosi.dat[24] top.testbench.classic_mosi.dat[23] top.testbench.classic_mosi.dat[22] top.testbench.classic_mosi.dat[21] top.testbench.classic_mosi.dat[20] top.testbench.classic_mosi.dat[19] top.testbench.classic_mosi.dat[18] top.testbench.classic_mosi.dat[17] top.testbench.classic_mosi.dat[16] top.testbench.classic_mosi.dat[15] top.testbench.classic_mosi.dat[14] top.testbench.classic_mosi.dat[13] top.testbench.classic_mosi.dat[12] top.testbench.classic_mosi.dat[11] top.testbench.classic_mosi.dat[10] top.testbench.classic_mosi.dat[9] top.testbench.classic_mosi.dat[8] top.testbench.classic_mosi.dat[7] top.testbench.classic_mosi.dat[6] top.testbench.classic_mosi.dat[5] top.testbench.classic_mosi.dat[4] top.testbench.classic_mosi.dat[3] top.testbench.classic_mosi.dat[2] top.testbench.classic_mosi.dat[1] top.testbench.classic_mosi.dat[0]
+#{top.testbench.classic_mosi.adr[31:0]} top.testbench.classic_mosi.adr[31] top.testbench.classic_mosi.adr[30] top.testbench.classic_mosi.adr[29] top.testbench.classic_mosi.adr[28] top.testbench.classic_mosi.adr[27] top.testbench.classic_mosi.adr[26] top.testbench.classic_mosi.adr[25] top.testbench.classic_mosi.adr[24] top.testbench.classic_mosi.adr[23] top.testbench.classic_mosi.adr[22] top.testbench.classic_mosi.adr[21] top.testbench.classic_mosi.adr[20] top.testbench.classic_mosi.adr[19] top.testbench.classic_mosi.adr[18] top.testbench.classic_mosi.adr[17] top.testbench.classic_mosi.adr[16] top.testbench.classic_mosi.adr[15] top.testbench.classic_mosi.adr[14] top.testbench.classic_mosi.adr[13] top.testbench.classic_mosi.adr[12] top.testbench.classic_mosi.adr[11] top.testbench.classic_mosi.adr[10] top.testbench.classic_mosi.adr[9] top.testbench.classic_mosi.adr[8] top.testbench.classic_mosi.adr[7] top.testbench.classic_mosi.adr[6] top.testbench.classic_mosi.adr[5] top.testbench.classic_mosi.adr[4] top.testbench.classic_mosi.adr[3] top.testbench.classic_mosi.adr[2] top.testbench.classic_mosi.adr[1] top.testbench.classic_mosi.adr[0]
+@25
+#{top.testbench.classic_miso.dat[31:0]} top.testbench.classic_miso.dat[31] top.testbench.classic_miso.dat[30] top.testbench.classic_miso.dat[29] top.testbench.classic_miso.dat[28] top.testbench.classic_miso.dat[27] top.testbench.classic_miso.dat[26] top.testbench.classic_miso.dat[25] top.testbench.classic_miso.dat[24] top.testbench.classic_miso.dat[23] top.testbench.classic_miso.dat[22] top.testbench.classic_miso.dat[21] top.testbench.classic_miso.dat[20] top.testbench.classic_miso.dat[19] top.testbench.classic_miso.dat[18] top.testbench.classic_miso.dat[17] top.testbench.classic_miso.dat[16] top.testbench.classic_miso.dat[15] top.testbench.classic_miso.dat[14] top.testbench.classic_miso.dat[13] top.testbench.classic_miso.dat[12] top.testbench.classic_miso.dat[11] top.testbench.classic_miso.dat[10] top.testbench.classic_miso.dat[9] top.testbench.classic_miso.dat[8] top.testbench.classic_miso.dat[7] top.testbench.classic_miso.dat[6] top.testbench.classic_miso.dat[5] top.testbench.classic_miso.dat[4] top.testbench.classic_miso.dat[3] top.testbench.classic_miso.dat[2] top.testbench.classic_miso.dat[1] top.testbench.classic_miso.dat[0]
+@24
+#{top.testbench.classic_miso.dat[31:0]} top.testbench.classic_miso.dat[31] top.testbench.classic_miso.dat[30] top.testbench.classic_miso.dat[29] top.testbench.classic_miso.dat[28] top.testbench.classic_miso.dat[27] top.testbench.classic_miso.dat[26] top.testbench.classic_miso.dat[25] top.testbench.classic_miso.dat[24] top.testbench.classic_miso.dat[23] top.testbench.classic_miso.dat[22] top.testbench.classic_miso.dat[21] top.testbench.classic_miso.dat[20] top.testbench.classic_miso.dat[19] top.testbench.classic_miso.dat[18] top.testbench.classic_miso.dat[17] top.testbench.classic_miso.dat[16] top.testbench.classic_miso.dat[15] top.testbench.classic_miso.dat[14] top.testbench.classic_miso.dat[13] top.testbench.classic_miso.dat[12] top.testbench.classic_miso.dat[11] top.testbench.classic_miso.dat[10] top.testbench.classic_miso.dat[9] top.testbench.classic_miso.dat[8] top.testbench.classic_miso.dat[7] top.testbench.classic_miso.dat[6] top.testbench.classic_miso.dat[5] top.testbench.classic_miso.dat[4] top.testbench.classic_miso.dat[3] top.testbench.classic_miso.dat[2] top.testbench.classic_miso.dat[1] top.testbench.classic_miso.dat[0]
 [pattern_trace] 1
 [pattern_trace] 0
