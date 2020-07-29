@@ -1,0 +1,44 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Wed Jul 29 08:25:04 2020
+[*]
+[dumpfile] "/home/michael/work/wb_adapter/simulation.ghw"
+[dumpfile_mtime] "Wed Jul 29 08:22:35 2020"
+[dumpfile_size] 32947
+[savefile] "/home/michael/work/wb_adapter/simulation.gtkw"
+[timestart] 91900000
+[size] 1398 952
+[pos] -1 -1
+*-25.000000 176000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.testbench.
+[treeopen] top.testbench.adapter.
+[sst_width] 211
+[signals_width] 102
+[sst_expanded] 1
+[sst_vpaned_height] 402
+@28
+top.testbench.rst_n
+top.testbench.rst
+top.testbench.clk_sys
+top.testbench.clk_ext
+@200
+-testbench
+-pipelined
+@28
+top.testbench.pipelined_mosi.cyc
+top.testbench.pipelined_mosi.stb
+top.testbench.pipelined_miso.ack
+@200
+-classic
+@28
+top.testbench.classic_mosi.cyc
+top.testbench.classic_mosi.stb
+@29
+top.testbench.classic_miso.ack
+@200
+-adapter
+@420
+top.testbench.adapter.c2p.fsm_state
+[pattern_trace] 1
+[pattern_trace] 0
