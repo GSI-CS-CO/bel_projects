@@ -1,17 +1,12 @@
-GHDL_ALTERA=/home/michael/build/ghdl_vendor_scripts/altera
-GHDL_XILINX=/home/michael/build/ghdl_vendor_scripts/xilinx-ise
+VENDOR_LIBS=/home/michael/build/ghdl_vendor_scripts
+GHDL_ALTERA=$(VENDOR_LIBS)/altera
 
 GHDLFLAGS = --ieee=synopsys --std=93c \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
 	-P$(GHDL_ALTERA)/altera/v93       \
 	-P$(GHDL_ALTERA)/altera_lnsim/v93 \
 	-P$(GHDL_ALTERA)/altera_mf/v93    \
-	-P$(GHDL_ALTERA)/arriav/v93       \
-	-P$(GHDL_XILINX)/secureip/v93     \
-	-P$(GHDL_XILINX)/simprim/v93      \
-	-P$(GHDL_XILINX)/unimacro/v93     \
-	-P$(GHDL_XILINX)/unisim/v93       \
-	-P$(GHDL_XILINX)/xilinxcorelib/v93
+	-P$(GHDL_ALTERA)/arriav/v93       
 
 # main target is the wave output file
 all: simulation.ghw
@@ -27,7 +22,7 @@ run:
 notrace:
 	ghdl -r testbench --ieee-asserts=disable
 
-# start simulation (which regenerates wave file), then update viewer
+# start simulation (which regenerates wave file)
 simulation.ghw: testbench run
 
 testbench: 	\
