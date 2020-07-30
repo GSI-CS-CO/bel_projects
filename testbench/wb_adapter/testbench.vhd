@@ -28,6 +28,17 @@ architecture simulation of testbench is
   signal classic_mosi     : t_wishbone_master_out;
   signal classic_miso     : t_wishbone_master_in;
 
+  signal classic_mosi_1   : t_wishbone_master_out;
+  signal classic_miso_1   : t_wishbone_master_in := ('0', '0', '0', '0', (others => '0'));
+
+  signal classic_mosi_2   : t_wishbone_master_out;
+  signal classic_miso_2   : t_wishbone_master_in := ('0', '0', '0', '0', (others => '0'));
+
+  signal classic_mosi_3   : t_wishbone_master_out;
+  signal classic_miso_3   : t_wishbone_master_in := ('0', '0', '0', '0', (others => '0'));
+
+  signal classic_mosi_4   : t_wishbone_master_out;
+  signal classic_miso_4   : t_wishbone_master_in := ('0', '0', '0', '0', (others => '0'));
 
   signal classic_mosi_stb_d1: std_logic := '0';
   signal classic_mosi_stb_d2: std_logic := '0';
@@ -65,40 +76,37 @@ architecture simulation of testbench is
     variable dat : std_logic_vector(31 downto 0);
     variable adr : std_logic_vector(31 downto 0);
     variable sel : std_logic_vector( 3 downto 0);
+    variable valid_stb : integer := 0;
+    variable num_ack   : integer := 0;
+    variable stb : std_logic := '0';
   begin
           -- cyc  stb      adr              sel          we       dat
     mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
     wait until rising_edge(clk);
-    mosi.cyc <= '1';
-    for s in 1 to num_strobes loop
-      cyc_to_stb_delay := rand_integer(0,2);
+    --mosi.cyc <= '1';
+    while valid_stb < num_strobes loop
       dat := rand_std_logic_vector(32);
       adr := rand_std_logic_vector(30) & "00";
       sel := rand_std_logic_vector(4);
-      for i in 0 to cyc_to_stb_delay loop
-        wait until rising_edge(clk);
-      end loop;
-      -- do the strobe 
-      mosi <= (cyc=>'1', stb=>'1', adr=>adr, sel=>sel, we=>'1', dat=>dat);
-      if (miso.stall /= '0') then 
-        wait until rising_edge(clk);
-        mosi <= ('1', '0', (others => '0'), (others => '0'), rand_std_logic, (others => '0'));
-        wait until miso.stall = '0'; 
-      end if;
-      if (miso.ack /= '1') then 
-        wait until rising_edge(clk);
-        mosi <= ('1', '0', (others => '0'), (others => '0'), rand_std_logic, (others => '0'));
-        wait until miso.ack = '1'; 
-      end if;
+      stb := rand_std_logic;
+      mosi <= (cyc=>'1', stb=>stb, adr=>adr, sel=>sel, we=>'1', dat=>dat);
       wait until rising_edge(clk);
-      mosi <= ('1', '0', (others => '0'), (others => '0'), rand_std_logic, (others => '0'));
-      mosi.stb <= '0';
+      if stb = '1' and miso.stall = '0' then valid_stb := valid_stb + 1; end if;
+      if miso.ack = '1' then num_ack := num_ack   + 1; end if;
+    end loop;
+
+    mosi.stb <= '0';
+    while num_ack < num_strobes loop
+      wait until rising_edge(clk);
+      if miso.ack   = '1' then num_ack   := num_ack   + 1; end if;
     end loop;
           -- cyc  stb      adr              sel          we       dat
     mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
     wait until rising_edge(clk);
   end procedure;    
 
+
+  signal stb_d1, stb_d2 : std_logic := '0';
 
 begin
 
@@ -135,59 +143,80 @@ begin
 
     master_pipelined: process
     begin
-      --pipelined_wb_write_cycle(clk_sys, pipelined_mosi, pipelined_miso, 5);
-      --                -- cyc  stb      adr              sel          we       dat
-      pipelined_mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
-      wait until falling_edge(rst);
-      for i in 0 to 100 loop 
+      for i in 1 to 10 loop
+        pipelined_wb_write_cycle(clk_sys, pipelined_mosi, pipelined_miso, rand_integer(1,5));
         wait until rising_edge(clk_sys);
-        pipelined_mosi <= ('1', '1', std_logic_vector(to_unsigned(10*i,32)), x"f", '0', std_logic_vector(to_unsigned(i,32)));
-        classic_miso.dat <= std_logic_vector(to_unsigned(i,32));
       end loop;
       wait;
     end process;
 
-    slave_classic: process
+
+    classic_mosi_1 <= classic_mosi when classic_mosi.adr(31 downto 30) = "00"
+                else ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
+    classic_mosi_2 <= classic_mosi when classic_mosi.adr(31 downto 30) = "01"
+               else ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
+    classic_mosi_3 <= classic_mosi when classic_mosi.adr(31 downto 30) = "10"
+                else ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
+    classic_mosi_4 <= classic_mosi when classic_mosi.adr(31 downto 30) = "11"
+               else ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
+
+    classic_miso <= classic_miso_1 when classic_mosi.adr(31 downto 30) = "00"
+               else classic_miso_2 when classic_mosi.adr(31 downto 30) = "01"
+               else classic_miso_3 when classic_mosi.adr(31 downto 30) = "10"
+               else classic_miso_4;
+
+
+    -- slave 1
+    classic_miso_1.ack <= classic_mosi_1.stb and classic_mosi_1.cyc;
+
+    slave_2: process
     begin
       wait until rising_edge(clk_sys);
-      if rst = '1' then
-      else 
-        -- delayed strobe
-        classic_mosi_stb_d1 <= classic_mosi.stb;
-        classic_mosi_stb_d2 <= classic_mosi_stb_d1;
-
-        -------------- CASE 1 (working) -------------
-         --ack is exacly one clock cycle long
-        --if classic_mosi_stb_d1 = '0' and classic_mosi.stb = '1' then -- rising edge of stb
-        --  classic_miso.ack <= '1';
-        --else
-        --  classic_miso.ack <= '0';
-        --end if;
-
-        -------------- CASE 2 (working) -------------
-        ----same as CASE1 but slave needs one clock cycle longer to ack
-        --if classic_mosi_stb_d2 = '0' and classic_mosi_stb_d1 = '1' then 
-        --  classic_miso.ack <= '1';
-        --else
-        --  classic_miso.ack <= '0';
-        --end if;
-
-
-
-        -------------- CASE 3 (not working) -------------
-        classic_miso.ack <= classic_mosi_stb_d2;
-
-
-        ------------ CASE 4 (not working) -------------
-        --like CASE 5 but ack is delayed by 1 clock cycle
-        --classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
-
+      if classic_mosi_2.cyc = '1' then
+        classic_miso_2.ack <= classic_mosi_2.stb;
       end if;
     end process;
 
-    ------------ CASE 5 (working) -------------
-    --classic_miso.ack <= classic_mosi.stb and classic_mosi.cyc;
+    slave_3: process
+    begin
+      wait until rising_edge(clk_sys);
+      stb_d1 <= classic_mosi_3.stb;
+      stb_d2 <= stb_d1;
+      if classic_mosi_3.cyc = '1' then
+        classic_miso_3.ack <= stb_d2;
+      end if;
+    end process;
 
+    slave_4: process
+    begin
+      wait until rising_edge(clk_sys);
+      if classic_mosi_4.cyc = '1' then
+        classic_miso_4.ack <= classic_mosi_4.stb;
+      end if;
+    end process;
+
+
+    check: process(pipelined_mosi, clk_sys) 
+      variable stb_counter : integer := 0;
+      variable ack_counter : integer := 0;
+    begin
+      if rising_edge(clk_sys) then
+        if pipelined_mosi.cyc = '0' then
+          assert(pipelined_mosi.stb /= '1');
+          assert(pipelined_miso.ack /= '1');
+        end if;
+        if classic_mosi.cyc = '1' then
+          if classic_mosi.stb = '1' then 
+            stb_counter := stb_counter + 1;
+          end if;
+          if classic_miso.ack = '1' then
+            ack_counter := ack_counter + 1;
+          end if;
+          assert (stb_counter-ack_counter = 0 or 
+                  stb_counter-ack_counter = 1);
+        end if;
+      end if;
+    end process;
 
 
 end architecture;

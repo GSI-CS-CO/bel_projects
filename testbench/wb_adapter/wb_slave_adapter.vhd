@@ -205,13 +205,12 @@ begin  -- rtl
                 fsm_state <= WAIT4ACK;
               end if;
             when WAIT4ACK =>
-              if (slave_in.stb = '0' and slave_in.cyc = '0') or
-                (master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1') then
+              if slave_in.stb = '0' and slave_in.cyc = '0' then
                 fsm_state <= IDLE;
-              end if;
-              if (slave_in.stb = '0' and slave_in.cyc = '0') or
-                (master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1') then
-                fsm_state <= DONE;
+              elsif master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1' then
+                fsm_state <= DONE; -- add one more clock cycle before the next STB
+              elsif master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1' then
+                fsm_state <= IDLE;
               end if;
             when DONE =>
               fsm_state <= IDLE;
