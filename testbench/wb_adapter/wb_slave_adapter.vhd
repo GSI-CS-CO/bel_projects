@@ -110,9 +110,6 @@ architecture rtl of wb_slave_adapter is
   signal slave_in   : t_wishbone_slave_in;
   signal slave_out  : t_wishbone_slave_out;
 
-  type t_fsm_state is (IDLE, WAIT4ACK);
-  signal fsm_state : t_fsm_state := IDLE;
-
   signal slave_in_frozen : t_wishbone_slave_in;
 
 begin  -- rtl
@@ -182,6 +179,8 @@ begin  -- rtl
     signal master_in_ack_d1 : std_logic := '0';
     signal master_in_err_d1 : std_logic := '0';
     signal master_in_rty_d1 : std_logic := '0';
+    type t_fsm_state is (IDLE, WAIT4ACK, DONE);
+    signal fsm_state : t_fsm_state := IDLE;
   begin
     -- send one clock cycle wide STB to slave and stall master 
     -- for as long as no ACK arrived from slave
@@ -207,15 +206,20 @@ begin  -- rtl
               end if;
             when WAIT4ACK =>
               if (slave_in.stb = '0' and slave_in.cyc = '0') or
-                (master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1') or
-                (master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1') then
+                (master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1') then
                 fsm_state <= IDLE;
               end if;
+              if (slave_in.stb = '0' and slave_in.cyc = '0') or
+                (master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1') then
+                fsm_state <= DONE;
+              end if;
+            when DONE =>
+              fsm_state <= IDLE;
           end case;
         end if;
       end if;
     end process state_machine;
-    slave_out.stall <= '1' when fsm_state = WAIT4ACK else '0';
+    slave_out.stall <= '1' when fsm_state /= IDLE else '0';
     master_out.stb  <= '1' when (slave_in.cyc = '1' and slave_in.stb = '1' and fsm_state = IDLE) else '0';
     slave_out.ack   <= master_in.ack;
     slave_out.err   <= master_in.err;
@@ -248,6 +252,8 @@ begin  -- rtl
   end generate P2C;
 
   C2P : if (g_slave_mode = CLASSIC   and g_master_mode = PIPELINED) generate
+    type t_fsm_state is (IDLE, WAIT4ACK);
+    signal fsm_state : t_fsm_state := IDLE;
   begin
     master_out.stb  <= slave_in.stb when fsm_state=IDLE else '0';
     slave_out.ack   <= master_in.ack;

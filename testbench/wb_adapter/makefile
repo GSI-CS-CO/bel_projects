@@ -16,7 +16,7 @@ view: simulation.ghw
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
 run:
-	ghdl -r testbench --stop-time=100ns --wave=simulation.ghw --ieee-asserts=disable #--read-wave-opt=simulation_wave.opt
+	ghdl -r testbench --stop-time=1000ns --wave=simulation.ghw --ieee-asserts=disable #--read-wave-opt=simulation_wave.opt
 	gsettings set com.geda.gtkwave reload 0
 
 notrace:
