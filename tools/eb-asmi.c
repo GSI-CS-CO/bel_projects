@@ -64,7 +64,8 @@
 #define EPCS1024ID        0x21
 #define MAX_EPCS128_ADDR  0xffff00
 #define RPD_SIZE          0x2000000
-#define BLANK_CRC         0x24
+#define BLANK_CRC         0xfea8a821
+#define BLANK_SECTOR_CRC  0xdeab7e4e
 
 static const char* devName;
 static const char* program;
@@ -501,30 +502,26 @@ int main(int argc, char * const* argv) {
     needed_sectors = how_many_sectors(size);
 
     //analyse sectors
-    waddr      = 0;
-    j          = 0;
-    blank_page = 0;
     sectors_to_erase = (unsigned char*)calloc(needed_sectors, sizeof(unsigned char));
     if (sectors_to_erase == NULL) {
       printf("calloc failed!\n");
       exit(1);
     }
-    for(i = 0; i < needed_sectors; i++) {
-      if (i % 5 == 0)
-        printf(" ");
-      printf("%d",sectors_to_erase[i]);
-    }
     
+    waddr      = 0;
+    j          = 0;
+    blank_page = 0;
+    fseek(fp, 0, SEEK_SET);
     while( fread(&file_sector, 1,  SECTOR_SIZE, fp) == SECTOR_SIZE) {
       //reverse bits before writing
       for(i = 0; i < SECTOR_SIZE; i++)
         file_sector[i] = reverse(file_sector[i]);
       crc = 0;
-      crc = crc32_byte(crc, &file_sector, SECTOR_SIZE);
+      crc = crc32_word(crc, &file_sector, SECTOR_SIZE);
       printf("epcs addr 0x%x checked\r", waddr);
       //check crc of written data
       read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
-      if (crc != (crc_hw)) {
+      if (BLANK_SECTOR_CRC != (crc_hw)) {
         //sector needs to be erased
         sectors_to_erase[j++] = 1;
         blank_page++;
@@ -532,18 +529,17 @@ int main(int argc, char * const* argv) {
       waddr += SECTOR_SIZE;
     }
     printf("Number of sectors to be erased: %d\n", blank_page);
-    for(i = 0; i < needed_sectors; i++) {
-      if (i % 5 == 0)
-        printf(" ");
-      printf("%d",sectors_to_erase[i]);
-    }
+    //for(i = 0; i < needed_sectors; i++) {
+      //if (i % 5 == 0)
+        //printf(" ");
+      //printf("%d",sectors_to_erase[i]);
+    //}
 
     if (nflag == 0) {
       erase_flash(epcsid, needed_sectors);
     }
 
-
-    //read in data from stdin
+    //read in data from file
     waddr = 0;
     fseek(fp, 0, SEEK_SET);
     while( fread(&file_page, 1,  PAGE_SIZE, fp) == PAGE_SIZE) {
@@ -551,7 +547,7 @@ int main(int argc, char * const* argv) {
       for(i = 0; i < PAGE_SIZE; i++)
         file_page[i] = reverse(file_page[i]);
       crc = 0;
-      crc = crc32_byte(crc, &file_page, PAGE_SIZE);
+      crc = crc32_word(crc, &file_page, PAGE_SIZE);
 
       for(i = 0; i < PAGE_SIZE; i++)
         flash_page[i] = file_page[i];
@@ -570,6 +566,7 @@ int main(int argc, char * const* argv) {
     }
     free(sectors_to_erase);
     fclose(fp);
+    printf("                                             \r");
     printf("New image written to epcs.\n");
   }
 
@@ -609,9 +606,7 @@ int main(int argc, char * const* argv) {
       for(i = 0; i < PAGE_SIZE; i++)
         file_page[i] = reverse(file_page[i]);
       crc = 0;
-      //unsigned char dummy[5] = { 0xff, 0xff, 0xff, 0xff, 0xff};
-      crc = crc32_byte(crc, &file_page, PAGE_SIZE);
-      //crc = crc32_word(crc, &dummy, 5);
+      crc = crc32_word(crc, &file_page, PAGE_SIZE);
 
       for(i = 0; i < PAGE_SIZE; i++)
         flash_page[i] = file_page[i];
@@ -623,9 +618,11 @@ int main(int argc, char * const* argv) {
           exit(1);
       }
         
+      printf("epcs addr 0x%x checked\r", waddr);
       waddr += PAGE_SIZE;
     }
     fclose(fp);
+    printf("                                             \r");
     printf("Verify successful!\n");
   }
 
@@ -637,12 +634,12 @@ int main(int argc, char * const* argv) {
     while( waddr < RPD_SIZE ) {
 
       //check crc of written data
-      read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
-      if (BLANK_CRC != (crc_hw)) {
-          printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_CRC, crc_hw);
+      read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+      if (BLANK_SECTOR_CRC != (crc_hw)) {
+          printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_SECTOR_CRC, crc_hw);
           exit(1);
       }
-      waddr += PAGE_SIZE;
+      waddr += SECTOR_SIZE;
     }
     printf("blank check successful!\n");
   }
