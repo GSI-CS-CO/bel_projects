@@ -8,6 +8,7 @@ use work.remote_update_pkg.all;
 use work.genram_pkg.all;
 use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
+use work.ep_crc32_pkg.all;
 
 library altera_asmi_parallel_181;
 use altera_asmi_parallel_181.asmi10_pkg.all;
@@ -98,7 +99,9 @@ architecture arch of wb_asmi is
   signal read_fifo_empty : std_logic;
   signal read_fifo_full  : std_logic;
   signal fifo_word       : std_logic_vector(31 downto 0);
-  signal crc_out         : std_logic_vector(7 downto 0);
+  signal crc_reg         : std_logic_vector(31 downto 0);
+  signal crc_new         : std_logic_vector(31 downto 0);
+  signal crc_in          : std_logic_vector(31 downto 0);
   signal s_first_word    : std_logic;
   signal s_read_number   : std_logic_vector(31 downto 0) :=  std_logic_vector(to_unsigned(PAGESIZE, 32));
 
@@ -115,6 +118,7 @@ architecture arch of wb_asmi is
   constant READ_NUM     : std_logic_vector(7 downto 0) := x"24";
   constant BULK_ERASE   : std_logic_vector(7 downto 0) := x"28";
   constant TIMEOUT      : integer                      := 70;
+  constant SECTORSIZE   : integer                      := 65536;
 
   component crc8_data8 is
     port (
@@ -128,6 +132,25 @@ architecture arch of wb_asmi is
       crc_valid  : out std_logic
     );
   end component;
+  -- changes the endianess BIG <-> LITTLE
+  function ChangeEndian(vec : std_ulogic_vector) return std_ulogic_vector is
+    variable vRet      : std_ulogic_vector(vec'range);
+    constant cNumBytes : natural := vec'length / 8;
+  begin
+    for i in 0 to cNumBytes-1 loop
+      for j in 7 downto 0 loop
+        vRet(8*i + j) := vec(8*(cNumBytes-1-i) + j);
+      end loop;  -- j
+    end loop;  -- i
+
+    return vRet;
+  end function ChangeEndian;
+
+
+  function ChangeEndian(vec : std_logic_vector) return std_logic_vector is
+  begin
+    return std_logic_vector(ChangeEndian(std_ulogic_vector(vec)));
+  end function ChangeEndian;
 
 begin
   
@@ -248,9 +271,25 @@ begin
       data       => read_fifo_in,
       data_valid => read_fifo_we,
       eoc        => '0',
-      crc        => crc_out,
+      crc        => open,
       crc_valid  => open
     );
+
+  crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and data_valid = '1') else
+            crc_reg;
+  crc_new <= f_update_crc32_d8(crc_in, read_fifo_in);
+
+  crc32: process(clk_flash_i, read_fifo_we, s_first_word, read_fifo_in)
+  begin
+    if rst_n_i = '0' then
+      crc_reg <= (others => '0');
+    elsif rising_edge(clk_flash_i) then
+      if read_fifo_we = '1' then
+        crc_reg <= crc_new;
+      end if;
+    end if;
+  end process;
+
   input_mux: process(clk_flash_i, slave_i.sel(7 downto 0))
   begin
     if rising_edge(clk_flash_i) then
@@ -285,7 +324,7 @@ begin
       when SET_ADDR =>
         slave_o.dat <= s_addr;
       when READ_CRC =>
-        slave_o.dat <= crc_out & x"000000";
+        slave_o.dat <= ChangeEndian(crc_reg);
       when READ_NUM =>
         slave_o.dat <= s_read_number;
       when others =>
@@ -309,7 +348,7 @@ begin
 
   wb_cycle: process (clk_flash_i, rst_n_i, slave_i)
     variable s_byte_count : integer range  0 to PAGESIZE;
-    variable s_word_count : integer range  0 to PAGESIZE;
+    variable s_word_count : integer range  0 to SECTORSIZE;
     variable v_read_tmo   : integer range 0 to TIMEOUT;
   begin
     if rising_edge(clk_flash_i) then
@@ -367,7 +406,7 @@ begin
 
               -- read back the crc value of a page read instruction
               elsif (slave_i.adr(7 downto 0) = READ_CRC) then
-                if slave_i.we = '0' and slave_i.sel = x"8" then
+                if slave_i.we = '0' and slave_i.sel = x"f" then
                   slave_o.ack <= '1';
                 else
                   slave_o.err <= '1';
@@ -469,7 +508,9 @@ begin
               -- access to flash          
               elsif (slave_i.adr(7 downto 0) = FLASH_ACCESS) then
                 if slave_i.we = '0' then
-                  slave_o.stall <= '1';
+                  --slave_o.stall <= '1';
+                  -- do not wait for busy going down
+                  slave_o.ack <= '1';
                   wb_state <= read_addr_ready;
                 -- write to page buffer
                 elsif slave_i.we = '1' then
@@ -492,7 +533,7 @@ begin
           when read_addr_ready =>
             s_rden        <= '1';
             s_read        <= '1';
-            slave_o.stall <= '1';
+            --slave_o.stall <= '1';
             wb_state      <= read_valid;
           
           -- write buffer to flash
@@ -504,10 +545,12 @@ begin
              
           -- multi byte read
           when read_valid =>
-            slave_o.stall <= '1';
+            --slave_o.stall <= '1';
             s_rden        <= '1';
+            if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
+              slave_o.ack <= '1';
             -- check if data valid ever comes
-            if v_read_tmo = TIMEOUT then
+            elsif v_read_tmo = TIMEOUT then
               wb_state <= err;
               v_read_tmo := 0;
             -- valid data on the output
@@ -524,7 +567,7 @@ begin
               v_read_tmo := 0;
               s_byte_count := 0;
               s_word_count := 0;
-              wb_state <= busy_wait;
+              wb_state <= idle;
             else
               v_read_tmo := v_read_tmo + 1;
             end if;
