@@ -262,19 +262,6 @@ begin
     end if;
   end process;
 
-
-  crc: crc8_data8
-    port map (
-      clock      => clk_flash_i,
-      reset      => not rst_n_i,
-      soc        => read_fifo_we and s_first_word,
-      data       => read_fifo_in,
-      data_valid => read_fifo_we,
-      eoc        => '0',
-      crc        => open,
-      crc_valid  => open
-    );
-
   crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and data_valid = '1') else
             crc_reg;
   crc_new <= f_update_crc32_d8(crc_in, read_fifo_in);
