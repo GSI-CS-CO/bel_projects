@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 100
+
+[engines]
+smtbmc z3
+
+[script]
+ghdl --ieee=synopsys --std=08 wishbone_pkg.vhd wb_slave_adapter.vhd test_wb_slave_adapter.vhd -e test_wb_slave_adapter
+prep -top test_wb_slave_adapter
+
+[files]
+wishbone_pkg.vhd
+wb_slave_adapter.vhd 
+test_wb_slave_adapter.vhd

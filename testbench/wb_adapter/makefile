@@ -1,7 +1,7 @@
 VENDOR_LIBS=/home/michael/build/ghdl_vendor_scripts
 GHDL_ALTERA=$(VENDOR_LIBS)/altera
 
-GHDLFLAGS = --ieee=synopsys --std=93c \
+GHDLFLAGS = --ieee=synopsys --std=08 \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
 	-P$(GHDL_ALTERA)/altera/v93       \
 	-P$(GHDL_ALTERA)/altera_lnsim/v93 \
@@ -25,13 +25,18 @@ notrace:
 # start simulation (which regenerates wave file)
 simulation.ghw: testbench run
 
+# 			genram_pkg.vhd \
+
 testbench: 	\
-			genram_pkg.vhd \
 			wishbone_pkg.vhd \
 			wb_slave_adapter.vhd   \
 			testbench.vhd
 	ghdl -a $(GHDLFLAGS) $?
 	ghdl -m $(GHDLFLAGS) testbench 
+
+proof: 
+	sby --yosys "yosys -m ghdl" -f wb_adapter_bmc.sby
+
 
 clean:
 	rm -f *.o testbench work-obj*.cf simulation.ghw 
