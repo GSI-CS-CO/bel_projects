@@ -132,7 +132,7 @@ architecture behavioral of ep_rx_buffer is
     if(din_valid = '1') then
 
       if(din(17 downto 16) = "10") then  -- some fancy encoding is necessary here
-        case cur_addr is
+        case cur_addr(1 downto 0) is
           when c_WRF_DATA =>
             fab.addr <= c_WRF_OOB after 1 ns;
           when c_WRF_STATUS =>

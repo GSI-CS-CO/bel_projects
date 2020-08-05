@@ -161,7 +161,7 @@ entity monster is
     phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
-    --gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
+    gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
     gpio_oen_o             : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => '0');
     gpio_term_o            : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
     gpio_spec_in_o         : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '0');
@@ -2031,40 +2031,40 @@ begin
       lvds_in_gate_o  => s_lvds_in_gate,
       lvds_pps_mux_o  => s_lvds_pps_mux);
 
- -- lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
- --   s_lvds_vec_i <= (others => (others => '0'));
- -- end generate;
+  lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
+    s_lvds_vec_i <= (others => (others => '0'));
+  end generate;
 
- -- lvds_vec_in : if (g_lvds_inout + g_lvds_in > 0) generate
- --   s_lvds_vec_i <= lvds_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0);
- -- end generate;
+  lvds_vec_in : if (g_lvds_inout + g_lvds_in > 0) generate
+    s_lvds_vec_i <= lvds_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0);
+  end generate;
 
- -- gpio_out_selector : for i in 0 to f_sub1(c_eca_gpio) generate
- --   s_gpio_src_butis_t0(i) <= '0' when s_gpio_mux(i)='0' else clk_butis_t0_ts;
- -- end generate;
+  gpio_out_selector : for i in 0 to f_sub1(c_eca_gpio) generate
+    s_gpio_src_butis_t0(i) <= '0' when s_gpio_mux(i)='0' else clk_butis_t0_ts;
+  end generate;
 
- -- gpio_pps_selector : for i in 0 to f_sub1(c_eca_gpio) generate
- --   s_gpio_src_wr_pps(i) <= '0' when s_gpio_pps_mux(i)='0' else ext_pps;
- -- end generate;
+  gpio_pps_selector : for i in 0 to f_sub1(c_eca_gpio) generate
+    s_gpio_src_wr_pps(i) <= '0' when s_gpio_pps_mux(i)='0' else ext_pps;
+  end generate;
 
- -- s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
- -- process(clk_ref, rstn_ref)
- -- begin
- --   if(rstn_ref = '0') then
- --     s_gpio_out_gated <= (others => '0');
- --   elsif rising_edge(clk_ref) then
- --     s_gpio_out_gated <= s_gpio_out and s_gpio_out_gate_sync;
- --   end if;
- -- end process;
- -- gpio_o <= s_gpio_out_gated;
+  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
+  process(clk_ref, rstn_ref)
+  begin
+    if(rstn_ref = '0') then
+      s_gpio_out_gated <= (others => '0');
+    elsif rising_edge(clk_ref) then
+      s_gpio_out_gated <= s_gpio_out and s_gpio_out_gate_sync;
+    end if;
+  end process;
+  gpio_o <= s_gpio_out_gated;
 
- -- lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
- --   lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
- -- end generate;
+  lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
+    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
+  end generate;
 
- -- lvds_pps_selector : for i in 0 to f_sub1(c_eca_lvds) generate
- --   lvds_dat_fr_wr_pps(i) <= (others => ext_pps and s_lvds_pps_mux(i));
- -- end generate;
+  lvds_pps_selector : for i in 0 to f_sub1(c_eca_lvds) generate
+    lvds_dat_fr_wr_pps(i) <= (others => ext_pps and s_lvds_pps_mux(i));
+  end generate;
 
   -- Instantiate SERDES clock generator
   genSerdes : if not g_lm32_are_ftm generate
@@ -2428,12 +2428,12 @@ begin
 
       c2 : eca_queue
         generic map(
-          g_queue_id  => 1)
+          g_queue_id  => 2)
         port map(
           a_clk_i     => clk_ref,
           a_rst_n_i   => rstn_ref,
-          a_stall_o   => s_stall_i(1),
-          a_channel_i => s_channel_o(1),
+          a_stall_o   => s_stall_i(2),
+          a_channel_i => s_channel_o(2),
           q_clk_i     => clk_sys,
           q_rst_n_i   => rstn_sys,
           q_slave_i   => dev_bus_master_o(dev_slaves'pos(devs_emb_cpu)),

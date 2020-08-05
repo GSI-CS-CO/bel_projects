@@ -42,10 +42,10 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd \
 			../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd           \
-			../common/inferred_sync_fifo.vhd   \
-			../common/generic_spram.vhd        \
-			../common/generic_simple_dpram.vhd \
-			../common/generic_dpram.vhd        \
+			../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd    \
+			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd         \
+			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd  \
+			../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
 			../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
@@ -53,7 +53,7 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_register/wb_skidpad.vhd    \
-			../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
+			../common/wb_slave_adapter.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd         \
 			../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd     \
@@ -85,7 +85,7 @@ testbench: 	\
 			../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd            \
 			../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd        \
 			../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd           \
-			../common/wb_irq_slave.vhd       \
+			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd       \
 			../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd        \
 			../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd                \
@@ -172,7 +172,7 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd         \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd        \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd           \
-			../common/eb_commit_len_fifo.vhd     \
+			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd      \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd       \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd\
