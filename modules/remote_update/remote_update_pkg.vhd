@@ -63,6 +63,7 @@ component asmi5 is
                 status_out    : out std_logic_vector(7 downto 0);                     -- status_out
                 read_address  : out std_logic_vector(31 downto 0);                    -- read_address
                 fast_read     : in  std_logic                     := 'X';             -- fast_read
+                read_dummyclk : in  std_logic                     := 'X';             -- read dummyclock
                 write         : in  std_logic                     := 'X';             -- write
                 datain        : in  std_logic_vector(7 downto 0)  := (others => 'X'); -- datain
                 illegal_write : out std_logic;                                        -- illegal_write
@@ -82,6 +83,7 @@ component asmi10 is
 		datain        : in  std_logic_vector(7 downto 0)  := (others => '0'); --        datain.datain
 		dataout       : out std_logic_vector(7 downto 0);                     --       dataout.dataout
 		en4b_addr     : in  std_logic                     := '0';             --     en4b_addr.en4b_addr
+		ex4b_addr     : in  std_logic                     := '0';             --     en4b_addr.en4b_addr
 		fast_read     : in  std_logic                     := '0';             --     fast_read.fast_read
 		illegal_erase : out std_logic;                                        -- illegal_erase.illegal_erase
 		illegal_write : out std_logic;                                        -- illegal_write.illegal_write

@@ -128,7 +128,13 @@
    dir="end">
   <port name="read_address" internal="read_address" />
  </interface>
- <interface name="read_dummyclk" internal="asmi_parallel_0.read_dummyclk" />
+ <interface
+   name="read_dummyclk"
+   internal="asmi_parallel_0.read_dummyclk"
+   type="conduit"
+   dir="end">
+  <port name="read_dummyclk" internal="read_dummyclk" />
+ </interface>
  <interface
    name="read_rdid"
    internal="asmi_parallel_0.read_rdid"
@@ -198,7 +204,7 @@
   <parameter name="gui_fast_read" value="true" />
   <parameter name="gui_page_write" value="true" />
   <parameter name="gui_read_address" value="true" />
-  <parameter name="gui_read_dummyclk" value="false" />
+  <parameter name="gui_read_dummyclk" value="true" />
   <parameter name="gui_read_rdid" value="true" />
   <parameter name="gui_read_sid" value="false" />
   <parameter name="gui_read_status" value="true" />

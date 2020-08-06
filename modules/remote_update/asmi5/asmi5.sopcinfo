@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="asmi5" kind="asmi5" version="1.0" fabric="QSYS">
  <!-- Format version 18.1 625 (Future versions may contain additional information.) -->
- <!-- 2020.07.07.16:36:18 -->
+ <!-- 2020.08.06.13:57:49 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1594132578</value>
+  <value>1596715069</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -186,7 +186,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_read_dummyclk">
    <type>boolean</type>
-   <value>false</value>
+   <value>true</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -362,7 +362,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="PORT_READ_DUMMYCLK">
    <type>java.lang.String</type>
-   <value>PORT_UNUSED</value>
+   <value>PORT_USED</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -1163,6 +1163,51 @@ parameters are a RESULT of the module parameters. -->
     <role>reset</role>
    </port>
   </interface>
+  <interface name="read_dummyclk" kind="conduit_end" version="18.1">
+   <!-- The connection points exposed by a module instance for the
+particular module parameters. Connection points and their
+parameters are a RESULT of the module parameters. -->
+   <parameter name="associatedClock">
+    <type>java.lang.String</type>
+    <value></value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="associatedReset">
+    <type>java.lang.String</type>
+    <value></value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="deviceFamily">
+    <type>java.lang.String</type>
+    <value>UNKNOWN</value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="generateLegacySim">
+    <type>boolean</type>
+    <value>false</value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <type>conduit</type>
+   <isStart>false</isStart>
+   <port>
+    <name>read_dummyclk</name>
+    <direction>Input</direction>
+    <width>1</width>
+    <role>read_dummyclk</role>
+   </port>
+  </interface>
   <interface name="dataout" kind="conduit_end" version="18.1">
    <!-- The connection points exposed by a module instance for the
 particular module parameters. Connection points and their
@@ -1573,7 +1618,7 @@ parameters are a RESULT of the module parameters. -->
   <version>18.1</version>
  </plugin>
  <plugin>
-  <instanceCount>21</instanceCount>
+  <instanceCount>22</instanceCount>
   <name>conduit_end</name>
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IMutableConnectionPoint</subtype>
