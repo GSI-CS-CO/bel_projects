@@ -23,6 +23,7 @@ entity asmi5 is
 		rden          : in  std_logic                     := '0';             --          rden.rden
 		rdid_out      : out std_logic_vector(7 downto 0);                     --      rdid_out.rdid_out
 		read_address  : out std_logic_vector(31 downto 0);                    --  read_address.read_address
+		read_dummyclk : in  std_logic                     := '0';             -- read_dummyclk.read_dummyclk
 		read_rdid     : in  std_logic                     := '0';             --     read_rdid.read_rdid
 		read_status   : in  std_logic                     := '0';             --   read_status.read_status
 		reset         : in  std_logic                     := '0';             --         reset.reset
@@ -52,6 +53,7 @@ architecture rtl of asmi5 is
 			en4b_addr     : in  std_logic                     := 'X';             -- en4b_addr
 			ex4b_addr     : in  std_logic                     := 'X';             -- ex4b_addr
 			reset         : in  std_logic                     := 'X';             -- reset
+			read_dummyclk : in  std_logic                     := 'X';             -- read_dummyclk
 			dataout       : out std_logic_vector(7 downto 0);                     -- dataout
 			busy          : out std_logic;                                        -- busy
 			data_valid    : out std_logic;                                        -- data_valid
@@ -82,6 +84,7 @@ begin
 			en4b_addr     => en4b_addr,     --     en4b_addr.en4b_addr
 			ex4b_addr     => ex4b_addr,     --     ex4b_addr.ex4b_addr
 			reset         => reset,         --         reset.reset
+			read_dummyclk => read_dummyclk, -- read_dummyclk.read_dummyclk
 			dataout       => dataout,       --       dataout.dataout
 			busy          => busy,          --          busy.busy
 			data_valid    => data_valid,    --    data_valid.data_valid

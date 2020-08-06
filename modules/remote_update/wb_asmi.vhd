@@ -104,6 +104,9 @@ architecture arch of wb_asmi is
   signal crc_in          : std_logic_vector(31 downto 0);
   signal s_first_word    : std_logic;
   signal s_read_number   : std_logic_vector(31 downto 0) :=  std_logic_vector(to_unsigned(PAGESIZE, 32));
+  signal s_en4b          : std_logic;
+  signal s_ex4b          : std_logic;
+  signal s_read_dclk     : std_logic;
 
 
   constant FLASH_ACCESS : std_logic_vector(7 downto 0) := x"00";
@@ -117,6 +120,8 @@ architecture arch of wb_asmi is
   constant READ_CRC     : std_logic_vector(7 downto 0) := x"20";
   constant READ_NUM     : std_logic_vector(7 downto 0) := x"24";
   constant BULK_ERASE   : std_logic_vector(7 downto 0) := x"28";
+  constant SET_4BMODE   : std_logic_vector(7 downto 0) := x"2c";
+  constant READ_DCLK    : std_logic_vector(7 downto 0) := x"30";
   constant TIMEOUT      : integer                      := 70;
   constant SECTORSIZE   : integer                      := 65536;
 
@@ -196,7 +201,8 @@ begin
         bulk_erase    => s_bulk_erase,
         wren          => s_wren,
         read_rdid     => s_rdid,
-        en4b_addr     => '0',
+        en4b_addr     => s_en4b,
+        ex4b_addr     => s_ex4b,
         reset         => not rst_n_i,
         dataout       => s_dataout,
         busy          => busy,
@@ -205,7 +211,8 @@ begin
         illegal_write => illegal_write,
         illegal_erase => illegal_erase,
         read_address  => s_read10_addr,
-        rdid_out      => s_rdid_out
+        rdid_out      => s_rdid_out,
+        read_dummyclk => s_read_dclk
       );
   end generate;
 
@@ -357,6 +364,9 @@ begin
         s_wren          <= '0';
         s_first_word    <= '0';
         s_read_number   <= std_logic_vector(to_unsigned(PAGESIZE, 32));
+        s_read_dclk     <= '0';
+        s_en4b          <= '0';
+        s_ex4b          <= '0';
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -374,6 +384,9 @@ begin
         read_fifo_we    <= '0';
         s_wren          <= '0';
         s_first_word    <= '0';
+        s_read_dclk     <= '0';
+        s_en4b          <= '0';
+        s_ex4b          <= '0';
       
         case wb_state is
           when idle =>
@@ -382,6 +395,27 @@ begin
               -- asmi core is still busy
               if (s_busy = '1' and (slave_i.adr(7 downto 0) /= BUSY_CHECK)) then
                 slave_o.err <= '1';
+
+              -- enable 4byte address mode
+              elsif (slave_i.adr(7 downto 0) = SET_4BMODE) then
+                wb_state <= stall;
+                slave_o.stall <= '1';
+                if slave_i.we = '1' and slave_i.sel = x"f" then
+                  if slave_i.dat(0) = '1' then
+                    s_en4b <= '1';
+                  elsif slave_i.dat(0) = '0' then
+                    s_ex4b <= '1';
+                  end if;
+                  s_wren <= '1';
+                end if;
+
+              -- read dummyclock 
+              elsif (slave_i.adr(7 downto 0) = READ_DCLK) then
+                wb_state <= stall;
+                slave_o.stall <= '1';
+                if slave_i.we = '1' and slave_i.sel = x"f" then
+                  s_read_dclk <= '1';
+                end if;
               
               -- read status from epcs
               elsif (slave_i.adr(7 downto 0) = READ_STATUS) then
