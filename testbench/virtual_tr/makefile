@@ -42,7 +42,7 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd \
 			../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd           \
-			../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd    \
+			../common/inferred_sync_fifo.vhd    \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd         \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd  \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
@@ -85,7 +85,7 @@ testbench: 	\
 			../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd            \
 			../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd        \
 			../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd           \
-			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd       \
+			../common/wb_irq_slave.vhd       \
 			../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd        \
 			../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd                \
@@ -172,7 +172,7 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd         \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd        \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd           \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd      \
+			../common/eb_commit_len_fifo.vhd      \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd       \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd\
@@ -187,6 +187,8 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd                \
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd                    \
+			../../modules/wb_timer/wb_timer_pkg.vhd                                     \
+			../../modules/wb_timer/wb_timer.vhd                                         \
 			../../modules/mbox/mbox_pkg.vhd	                                            \
 			../common/mbox.vhd    	                                            \
 			../../modules/dm_diag/dm_diag_auto_pkg.vhd                                  \

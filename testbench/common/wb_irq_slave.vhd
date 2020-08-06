@@ -213,17 +213,9 @@ begin
                end if;       
             else -- queues, one mem page per queue
               if(adr < c_QUEUES + c_N_QUEUE * g_queues and ctrl_slave_i.we = '0') then
-                report "access array with lenght " & 
-                       integer'image(irq_q'length) & 
-                       "  at index  " & 
-                       integer'image(queue_offs) & 
-                       "  derived from adr " & 
-                       integer'image(to_integer(unsigned(ctrl_slave_i.adr)));
-                  if queue_offs < irq_q'length then
-                    v_dat := irq_q(queue_offs)(g_datbits-1 downto 0); 
-                    v_adr := irq_q(queue_offs)(g_adrbits+g_datbits-1 downto g_datbits);
-                    v_sel := irq_q(queue_offs)(g_selbits + g_adrbits + g_datbits-1 downto g_adrbits+g_datbits);
-                  end if;
+                v_dat := irq_q(queue_offs mod irq_q'length)(g_datbits-1 downto 0); 
+                v_adr := irq_q(queue_offs mod irq_q'length)(g_adrbits+g_datbits-1 downto g_datbits);
+                v_sel := irq_q(queue_offs mod irq_q'length)(g_selbits + g_adrbits + g_datbits-1 downto g_adrbits+g_datbits);
                 
                 case word_offs is
                   when c_OFFS_DATA =>  ctrl_slave_o.dat <= std_logic_vector(to_unsigned(0, 32-g_datbits)) & v_dat; 
