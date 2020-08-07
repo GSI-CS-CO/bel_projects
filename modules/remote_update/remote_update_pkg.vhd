@@ -85,6 +85,7 @@ component asmi10 is
 		en4b_addr     : in  std_logic                     := '0';             --     en4b_addr.en4b_addr
 		ex4b_addr     : in  std_logic                     := '0';             --     en4b_addr.en4b_addr
 		fast_read     : in  std_logic                     := '0';             --     fast_read.fast_read
+                read_dummyclk : in  std_logic                     := '0';             -- read dummyclock
 		illegal_erase : out std_logic;                                        -- illegal_erase.illegal_erase
 		illegal_write : out std_logic;                                        -- illegal_write.illegal_write
 		rden          : in  std_logic                     := '0';             --          rden.rden
