@@ -519,6 +519,7 @@ int main(int argc, char * const* argv) {
       crc = 0;
       crc = crc32_word(crc, &file_sector, SECTOR_SIZE);
       printf("epcs addr 0x%x checked\r", waddr);
+      fflush(stdout);
       //check crc of written data
       read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
       if (BLANK_SECTOR_CRC != (crc_hw)) {
@@ -529,11 +530,6 @@ int main(int argc, char * const* argv) {
       waddr += SECTOR_SIZE;
     }
     printf("Number of sectors to be erased: %d\n", blank_page);
-    //for(i = 0; i < needed_sectors; i++) {
-      //if (i % 5 == 0)
-        //printf(" ");
-      //printf("%d",sectors_to_erase[i]);
-    //}
 
     if (nflag == 0) {
       erase_flash(epcsid, needed_sectors);
@@ -553,7 +549,9 @@ int main(int argc, char * const* argv) {
         flash_page[i] = file_page[i];
 
       write_asmi_page(slave_id, &flash_page[0], waddr);
+      printf("                                                      \r");
       printf("epcs addr 0x%x written\r", waddr);
+      fflush(stdout);
 
       //check crc of written data
       read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
@@ -619,6 +617,7 @@ int main(int argc, char * const* argv) {
       }
         
       printf("epcs addr 0x%x checked\r", waddr);
+      fflush(stdout);
       waddr += PAGE_SIZE;
     }
     fclose(fp);
