@@ -17,6 +17,7 @@ entity asmi10 is
 		datain        : in  std_logic_vector(7 downto 0)  := (others => '0'); --        datain.datain
 		dataout       : out std_logic_vector(7 downto 0);                     --       dataout.dataout
 		en4b_addr     : in  std_logic                     := '0';             --     en4b_addr.en4b_addr
+		ex4b_addr     : in  std_logic                     := '0';             --     ex4b_addr.ex4b_addr
 		fast_read     : in  std_logic                     := '0';             --     fast_read.fast_read
 		illegal_erase : out std_logic;                                        -- illegal_erase.illegal_erase
 		illegal_write : out std_logic;                                        -- illegal_write.illegal_write
@@ -39,7 +40,7 @@ end entity asmi10;
 architecture rtl of asmi10 is
 begin
 
-	asmi_parallel_0 : component asmi10_altera_asmi_parallel_181.asmi10_pkg.asmi10_altera_asmi_parallel_181_gdoqleq
+	asmi_parallel_0 : component asmi10_altera_asmi_parallel_181.asmi10_pkg.asmi10_altera_asmi_parallel_181_fmv4jaq
 		port map (
 			clkin         => clkin,         --         clkin.clk
 			fast_read     => fast_read,     --     fast_read.fast_read
@@ -53,6 +54,7 @@ begin
 			wren          => wren,          --          wren.wren
 			read_rdid     => read_rdid,     --     read_rdid.read_rdid
 			en4b_addr     => en4b_addr,     --     en4b_addr.en4b_addr
+			ex4b_addr     => ex4b_addr,     --     ex4b_addr.ex4b_addr
 			reset         => reset,         --         reset.reset
 			read_dummyclk => read_dummyclk, -- read_dummyclk.read_dummyclk
 			sce           => sce,           --           sce.sce

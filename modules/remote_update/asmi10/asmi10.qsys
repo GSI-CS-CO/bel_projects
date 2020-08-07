@@ -76,6 +76,13 @@
   <port name="en4b_addr" internal="en4b_addr" />
  </interface>
  <interface
+   name="ex4b_addr"
+   internal="asmi_parallel_0.ex4b_addr"
+   type="conduit"
+   dir="end">
+  <port name="ex4b_addr" internal="ex4b_addr" />
+ </interface>
+ <interface
    name="fast_read"
    internal="asmi_parallel_0.fast_read"
    type="conduit"
@@ -189,7 +196,7 @@
   <parameter name="WRITE_DUMMY_CLK" value="0" />
   <parameter name="gui_bulk_erase" value="false" />
   <parameter name="gui_die_erase" value="false" />
-  <parameter name="gui_ex4b_addr" value="false" />
+  <parameter name="gui_ex4b_addr" value="true" />
   <parameter name="gui_fast_read" value="true" />
   <parameter name="gui_page_write" value="true" />
   <parameter name="gui_read_address" value="true" />

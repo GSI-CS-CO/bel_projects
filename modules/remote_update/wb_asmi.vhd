@@ -187,7 +187,7 @@ begin
   end generate;
 
   a5: if g_family(1 to 7) = "Arria V" generate
-    asmi_10: asmi5
+    asmi_5: asmi5
       port map (
         clkin         => not clk_flash_i,
         fast_read     => s_read,
@@ -230,7 +230,8 @@ begin
         sector_erase  => s_sector_erase,
         wren          => s_wren,
         read_rdid     => s_rdid,
-        en4b_addr     => '0',
+        en4b_addr     => s_en4b,
+        ex4b_addr     => s_ex4b,
         reset         => not rst_n_i,
         sce           => "000", -- select flash at nCSO[0]
         dataout       => s_dataout,
@@ -240,7 +241,8 @@ begin
         illegal_write => illegal_write,
         illegal_erase => illegal_erase,
         read_address  => s_read10_addr,
-        rdid_out      => s_rdid_out
+        rdid_out      => s_rdid_out,
+        read_dummyclk => s_read_dclk
       );
   end generate;
 
