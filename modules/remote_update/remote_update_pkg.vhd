@@ -22,30 +22,6 @@ component remote_update
 	);
 end component;
 
-component altasmi
-	PORT
-	(
-          addr          : IN STD_LOGIC_VECTOR (23 DOWNTO 0);
-          clkin         : IN STD_LOGIC ;
-          datain        : IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-          fast_read     : IN STD_LOGIC ;
-          rden          : IN STD_LOGIC ;
-          read_rdid     : IN STD_LOGIC ;
-          read_status   : IN STD_LOGIC ;
-          reset         : IN STD_LOGIC ;
-          sector_erase  : IN STD_LOGIC ;
-          shift_bytes   : IN STD_LOGIC ;
-          write         : IN STD_LOGIC ;
-          busy          : OUT STD_LOGIC ;
-          data_valid    : OUT STD_LOGIC ;
-          dataout       : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-          illegal_erase : OUT STD_LOGIC ;
-          illegal_write : OUT STD_LOGIC ;
-          rdid_out      : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-          read_address  : OUT STD_LOGIC_VECTOR (23 DOWNTO 0);
-          status_out    : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
-	);
-end component;
 component asmi5 is
         port (
                 clkin         : in  std_logic                     := 'X';             -- clk
@@ -106,18 +82,17 @@ component asmi_arriaII is
             port (
               clkin         : in  std_logic                     := 'X';             -- clk
               rden          : in  std_logic                     := 'X';             -- rden
-              addr          : in  std_logic_vector(31 downto 0) := (others => 'X'); -- addr
+              addr          : in  std_logic_vector(23 downto 0) := (others => 'X'); -- addr
               reset         : in  std_logic                     := 'X';             -- reset
               dataout       : out std_logic_vector(7 downto 0);                     -- dataout
               busy          : out std_logic;                                        -- busy
               data_valid    : out std_logic;                                        -- data_valid
               wren          : in  std_logic                     := 'X';             -- wren
-              en4b_addr     : in  std_logic                     := 'X';             -- en4b_addr
               read_rdid     : in  std_logic                     := 'X';             -- read_rdid
               rdid_out      : out std_logic_vector(7 downto 0);                     -- rdid_out
               read_status   : in  std_logic                     := 'X';             -- read_status
               status_out    : out std_logic_vector(7 downto 0);                     -- status_out
-              read_address  : out std_logic_vector(31 downto 0);                    -- read_address
+              read_address  : out std_logic_vector(23 downto 0);                    -- read_address
               fast_read     : in  std_logic                     := 'X';             -- fast_read
               write         : in  std_logic                     := 'X';             -- write
               datain        : in  std_logic_vector(7 downto 0)  := (others => 'X'); -- datain

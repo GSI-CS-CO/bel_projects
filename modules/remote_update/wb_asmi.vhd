@@ -123,7 +123,7 @@ architecture arch of wb_asmi is
   constant SET_4BMODE   : std_logic_vector(7 downto 0) := x"2c";
   constant READ_DCLK    : std_logic_vector(7 downto 0) := x"30";
   constant TIMEOUT      : integer                      := 70;
-  constant SECTORSIZE   : integer                      := 65536;
+  constant SECTORSIZE   : integer                      := 16#40000#;
 
   component crc8_data8 is
     port (
@@ -163,13 +163,14 @@ begin
       asmi: asmi_arriaII
         port map (
          clkin         => clk_flash_i,
+         addr          => s_addr(23 downto 0),
          fast_read     => s_read,
          rden          => s_rden,
-         addr          => s_addr,
          read_status   => s_read_status,
          write         => s_write,
          datain        => s_datain,
          shift_bytes   => s_shift_bytes,
+         wren          => s_wren,
          sector_erase  => s_sector_erase,
          wren          => s_wren,
          read_rdid     => s_rdid,
@@ -181,8 +182,8 @@ begin
          status_out    => s_status_out,
          illegal_write => illegal_write,
          illegal_erase => illegal_erase,
-         read_address  => s_read_addr,
-         rdid_out      => s_rdid_out
+         rdid_out      => s_rdid_out,
+         read_address  => s_read_addr(23 downto 0)
        );
   end generate;
 
@@ -271,8 +272,15 @@ begin
     end if;
   end process;
 
-  crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and data_valid = '1') else
-            crc_reg;
+  crc_arriaII: if g_family = "Arria II" generate
+    crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and read_fifo_we = '1') else
+              crc_reg;
+  end generate crc_arriaII;
+  crc_not_arriaII: if g_family /= "Arria II" generate
+    crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and data_valid = '1') else
+              crc_reg;
+  end generate crc_not_arriaII;
+
   crc_new <= f_update_crc32_d8(crc_in, read_fifo_in);
 
   crc32: process(clk_flash_i, read_fifo_we, s_first_word, read_fifo_in)
