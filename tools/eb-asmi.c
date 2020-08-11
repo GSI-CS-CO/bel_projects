@@ -471,7 +471,6 @@ int main(int argc, char * const* argv) {
    
 
   printf("EPCSID: 0x%"EB_DATA_FMT"\n", epcsid);
-  printf("EPCS STATUS: 0x%"EB_DATA_FMT"\n", epcs_status);
   
   FILE *fp;
 
@@ -571,6 +570,11 @@ int main(int argc, char * const* argv) {
         file_page[i] = reverse(file_page[i]);
       crc = 0;
       crc = crc32_word(crc, &file_page, PAGE_SIZE);
+      //skip writing if page is blank
+      if (crc == BLANK_CRC) {
+        waddr += PAGE_SIZE;
+        continue;
+      }
 
       for(i = 0; i < PAGE_SIZE; i++)
         flash_page[i] = file_page[i];
