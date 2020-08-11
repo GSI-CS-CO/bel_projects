@@ -55,17 +55,21 @@
 #define SET_READ_NUMBER   0x24
 #define BULK_ERASE        0x28
 
-#define SDB_DEVICES       3
-#define SLAVENR           3
-#define PAGE_SIZE         256
-#define PAGES_PER_SECTOR  256 
-#define SECTOR_SIZE       PAGE_SIZE * PAGES_PER_SECTOR
-#define EPCS128ID         0x18
-#define EPCS1024ID        0x21
-#define MAX_EPCS128_ADDR  0xffff00
-#define RPD_SIZE          0x2000000
-#define BLANK_CRC         0xfea8a821
-#define BLANK_SECTOR_CRC  0xdeab7e4e
+#define SDB_DEVICES         3
+#define SLAVENR             3
+#define PAGE_SIZE           256
+#define PAGES_PER_SECTOR    256
+#define SECTOR_SIZE         PAGE_SIZE * PAGES_PER_SECTOR
+#define EPCS128ID           0x18
+#define EPCS128_SECTORS     64
+#define EPCS128_SECTOR_SIZE 0x40000
+#define EPCS1024ID          0x21
+#define RPD_SIZE            0x2000000
+#define BLANK_CRC           0xfea8a821
+#define BLANK_CRC_10000     0xdeab7e4e
+#define BLANK_CRC_40000     0xb7094978
+
+
 
 static const char* devName;
 static const char* program;
@@ -77,7 +81,7 @@ static eb_socket_t socket;
 eb_data_t flash_page[PAGE_SIZE];
 eb_data_t flash_page1[PAGE_SIZE];
 unsigned char file_page[PAGE_SIZE];
-unsigned char file_sector[SECTOR_SIZE];
+unsigned char file_sector[EPCS128_SECTOR_SIZE];
 unsigned int waddr;
 unsigned char *sectors_to_erase;
 
@@ -297,12 +301,15 @@ void show_help() {
   printf("-n          no erase before writing; use with -w\n");
 }
 
-unsigned int how_many_sectors(unsigned int size) {
+unsigned int how_many_sectors(int epcsid, unsigned int size) {
     unsigned int pages_in_file;
     unsigned int needed_sectors;
     //how many sectors need to be erased?
     pages_in_file = size / PAGE_SIZE;
-    needed_sectors = pages_in_file / PAGES_PER_SECTOR;
+    if (epcsid == EPCS128ID)
+      needed_sectors = size / EPCS128_SECTOR_SIZE;
+    else
+      needed_sectors = size / 0x10000;
     if (pages_in_file % PAGES_PER_SECTOR)
       needed_sectors += 1;
     return needed_sectors;
@@ -316,7 +323,14 @@ void erase_flash(int epcsid, int needed_sectors) {
     if (sectors_to_erase[i]) {
       printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
       fflush(stdout);
-      erase_asmi_sector(i * 0x10000);
+      if (epcsid == EPCS128ID) {
+        printf("erase epcs addr 0x%x\r", i * EPCS128_SECTOR_SIZE);
+        erase_asmi_sector(i * EPCS128_SECTOR_SIZE);
+      } else {
+        printf("erase epcs addr 0x%x\r", i * 0x10000);
+        erase_asmi_sector(i * 0x10000);
+      }
+      fflush(stdout);
     }
   }
 }
@@ -470,7 +484,7 @@ int main(int argc, char * const* argv) {
       exit(1);
     }
 
-    needed_sectors = how_many_sectors(size);
+    needed_sectors = how_many_sectors(epcsid, size);
     printf("%d sector(s) will be erased.\n", needed_sectors);  
     sectors_to_erase = (unsigned char*)calloc(needed_sectors, sizeof(unsigned char));
     for(i = 0; i<needed_sectors; i++)
@@ -499,7 +513,7 @@ int main(int argc, char * const* argv) {
       exit(1);
     }
     printf("filesize: %d bytes\n", size);
-    needed_sectors = how_many_sectors(size);
+    needed_sectors = how_many_sectors(epcsid, size);
 
     //analyse sectors
     sectors_to_erase = (unsigned char*)calloc(needed_sectors, sizeof(unsigned char));
@@ -512,23 +526,36 @@ int main(int argc, char * const* argv) {
     j          = 0;
     blank_page = 0;
     fseek(fp, 0, SEEK_SET);
-    while( fread(&file_sector, 1,  SECTOR_SIZE, fp) == SECTOR_SIZE) {
-      //reverse bits before writing
-      for(i = 0; i < SECTOR_SIZE; i++)
-        file_sector[i] = reverse(file_sector[i]);
-      crc = 0;
-      crc = crc32_word(crc, &file_sector, SECTOR_SIZE);
-      printf("epcs addr 0x%x checked\r", waddr);
-      fflush(stdout);
-      //check crc of written data
-      read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
-      if (BLANK_SECTOR_CRC != (crc_hw)) {
-        //sector needs to be erased
-        sectors_to_erase[j++] = 1;
-        blank_page++;
+    if (epcsid == EPCS128ID) {
+      while( fread(&file_sector, 1,  EPCS128_SECTOR_SIZE, fp) == EPCS128_SECTOR_SIZE) {
+        printf("epcs addr 0x%x checked\r", waddr);
+        fflush(stdout);
+        //check crc of written data
+        read_asmi_crc(waddr, EPCS128_SECTOR_SIZE, &crc_hw);
+        if (BLANK_CRC_40000 != (crc_hw)) {
+          //sector needs to be erased
+          sectors_to_erase[j++] = 1;
+          blank_page++;
+          //printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_CRC_40000, crc_hw);
+          //exit(1);
+        }
+        waddr += EPCS128_SECTOR_SIZE;
       }
-      waddr += SECTOR_SIZE;
+    } else {
+      while( fread(&file_sector, 1,  SECTOR_SIZE, fp) == SECTOR_SIZE) {
+        printf("epcs addr 0x%x checked\r", waddr);
+        fflush(stdout);
+        //check crc of written data
+        read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+        if (BLANK_CRC_10000 != (crc_hw)) {
+          //sector needs to be erased
+          sectors_to_erase[j++] = 1;
+          blank_page++;
+        }
+        waddr += SECTOR_SIZE;
+      }
     }
+
     printf("Number of sectors to be erased: %d\n", blank_page);
 
     if (nflag == 0) {
@@ -633,12 +660,27 @@ int main(int argc, char * const* argv) {
     while( waddr < RPD_SIZE ) {
 
       //check crc of written data
-      read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
-      if (BLANK_SECTOR_CRC != (crc_hw)) {
-          printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_SECTOR_CRC, crc_hw);
-          exit(1);
+      if (epcsid == EPCS128ID)
+        read_asmi_crc(waddr, EPCS128_SECTOR_SIZE, &crc_hw);
+      else
+        read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+
+      if (epcsid == EPCS128ID) {
+        if (BLANK_CRC_40000 != (crc_hw)) {
+            printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_CRC_40000, crc_hw);
+            exit(1);
+        }
+      } else {
+        if (BLANK_CRC_10000 != (crc_hw)) {
+            printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_CRC_10000, crc_hw);
+            exit(1);
+        }
       }
-      waddr += SECTOR_SIZE;
+
+      if (epcsid == EPCS128ID)
+        waddr += EPCS128_SECTOR_SIZE;
+      else
+        waddr += SECTOR_SIZE;
     }
     printf("blank check successful!\n");
   }
