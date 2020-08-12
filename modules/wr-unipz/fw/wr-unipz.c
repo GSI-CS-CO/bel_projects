@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-May-2020
+ *  version : 14-Aug-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000204                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000205                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
