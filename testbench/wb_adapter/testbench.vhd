@@ -92,18 +92,18 @@ architecture simulation of testbench is
       mosi <= (cyc=>'1', stb=>stb, adr=>adr, sel=>sel, we=>'1', dat=>dat);
       wait until rising_edge(clk);
       if stb = '1' and miso.stall = '0' then valid_stb := valid_stb + 1; end if;
-      if miso.ack = '1' then num_ack := num_ack   + 1; end if;
+      if miso.ack = '1' then num_ack := num_ack + 1; end if;
     end loop;
 
     mosi.stb <= '0';
     while num_ack < num_strobes loop
       wait until rising_edge(clk);
-      if miso.ack   = '1' then num_ack   := num_ack   + 1; end if;
+      if miso.ack = '1' then num_ack := num_ack + 1; end if;
     end loop;
           -- cyc  stb      adr              sel          we       dat
     mosi <= ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));
     wait until rising_edge(clk);
-  end procedure;    
+  end procedure;
 
 
   signal stb_d1, stb_d2 : std_logic := '0';
@@ -143,8 +143,8 @@ begin
 
     master_pipelined: process
     begin
-      for i in 1 to 10 loop
-        pipelined_wb_write_cycle(clk_sys, pipelined_mosi, pipelined_miso, rand_integer(1,5));
+      for i in 1 to 200 loop
+        pipelined_wb_write_cycle(clk_sys, pipelined_mosi, pipelined_miso, rand_integer(1,10));
         wait until rising_edge(clk_sys);
       end loop;
       wait;

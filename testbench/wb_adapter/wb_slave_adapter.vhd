@@ -185,6 +185,8 @@ begin  -- rtl
     -- send one clock cycle wide STB to slave and stall master 
     -- for as long as no ACK arrived from slave
     state_machine: process (clk_sys_i) is
+      variable slave_response : boolean;
+      variable slave_response_d1 : boolean;
     begin
       if rising_edge(clk_sys_i) then
         if rst_n_i = '0' then
@@ -199,18 +201,24 @@ begin  -- rtl
           master_in_ack_d1 <= master_in.ack;
           master_in_err_d1 <= master_in.err;
           master_in_rty_d1 <= master_in.rty;
+          slave_response := master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1';
+          slave_response_d1 := master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1';
           case fsm_state is
             when IDLE =>
               if (slave_in.stb = '1' and slave_in.cyc = '1') then
-                fsm_state <= WAIT4ACK;
+                if master_in.ack = '0' then 
+                  fsm_state <= WAIT4ACK;
+                else 
+                  fsm_state <= DONE;
+                end if;
               end if;
             when WAIT4ACK =>
-              if slave_in.stb = '0' and slave_in.cyc = '0' then
-                fsm_state <= IDLE;
-              elsif master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1' then
+              if slave_in.cyc = '0' then
+                fsm_state <= IDLE; -- unexpected end of cycle
+              elsif slave_response then
                 fsm_state <= DONE; -- add one more clock cycle before the next STB
-              elsif master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1' then
-                fsm_state <= IDLE;
+              --elsif slave_response_d1 then
+              --  fsm_state <= IDLE;
               end if;
             when DONE =>
               fsm_state <= IDLE;
@@ -218,8 +226,9 @@ begin  -- rtl
         end if;
       end if;
     end process state_machine;
-    slave_out.stall <= '1' when fsm_state /= IDLE else '0';
+    slave_out.stall <= '1' when fsm_state /= IDLE and slave_in.cyc = '1' else '0';
     master_out.stb  <= '1' when (slave_in.cyc = '1' and slave_in.stb = '1' and fsm_state = IDLE) else '0';
+    --master_out.stb  <= '1' when fsm_state = WAIT4ACK else master_in.ack;
     slave_out.ack   <= master_in.ack;
     slave_out.err   <= master_in.err;
     slave_out.rty   <= master_in.rty;

@@ -16,7 +16,7 @@ view: simulation.ghw
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
 run:
-	ghdl -r testbench --stop-time=10000ns --wave=simulation.ghw --ieee-asserts=disable #--read-wave-opt=simulation_wave.opt
+	ghdl -r testbench --stop-time=50000ns --wave=simulation.ghw --ieee-asserts=disable #--read-wave-opt=simulation_wave.opt
 	gsettings set com.geda.gtkwave reload 0
 
 notrace:
@@ -36,6 +36,15 @@ testbench: 	\
 
 proof: 
 	sby --yosys "yosys -m ghdl" -f wb_adapter_bmc.sby
+
+proof2: 
+	sby --yosys "yosys -m ghdl" -f wb_adapter_bmc2.sby
+
+cover1: 
+	sby --yosys "yosys -m ghdl" -f wb_adapter_cover1.sby
+
+cover2: 
+	sby --yosys "yosys -m ghdl" -f wb_adapter_cover2.sby
 
 
 clean:

@@ -6,10 +6,11 @@ depth 100
 smtbmc z3
 
 [script]
-ghdl --ieee=synopsys --std=08 wishbone_pkg.vhd wb_slave_adapter.vhd test_wb_slave_adapter.vhd -e test_wb_slave_adapter
+ghdl --ieee=synopsys --std=08 wishbone_pkg.vhd wb_minislave.vhd wb_slave_adapter.vhd test_wb_slave_adapter.vhd -e test_wb_slave_adapter
 prep -top test_wb_slave_adapter
 
 [files]
 wishbone_pkg.vhd
+wb_minislave.vhd
 wb_slave_adapter.vhd 
 test_wb_slave_adapter.vhd
