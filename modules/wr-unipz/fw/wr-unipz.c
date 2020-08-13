@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Aug-2020
+ *  version : 13-Aug-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000205                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000206                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -77,7 +77,7 @@
 #include "ebm.h"                                                        // EB master
 #include "pp-printf.h"                                                  // print statement
 #include "mini_sdb.h"                                                   // sdb stuff
-#include "aux.h"                                                        // cpu and IRQ
+#include "aux.h"                                                        // cpu, IRQ, timer...
 #include "uart.h"                                                       // WR console
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
 
@@ -717,6 +717,10 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
           servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
           writeTM(servEvt, getSysTime(), ipz, virtAcc, 0, 0);                                          // send message
         } // if PREPACCNOW
+        if (evtData == WRUNIPZ_EVTDATA_UNLOCKA4) {
+          servEvt = EVT_UNLOCK_ALVAREZ  | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_A4OFFSET << 16); // send 'now' /* chk A4OFFSET */
+          writeTM(servEvt, getSysTime(), ipz, virtAcc, 0, 0);                                          // send message
+        } // if UNLOCKA4
       } // else SERVICE
       
       break;

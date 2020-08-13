@@ -26,6 +26,7 @@
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
+#define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    20    // # of events per virt acc
@@ -80,12 +81,14 @@
 #define WRUNIPZ_EVTDATA_SHORTCHOP      0x4    // bit 14 (bit 15 not set) - flag: execute virt acc with short chopper;
                                               // informative: not used by UNIPZ. UNIPZ implements 'short chopper' by using a different 'Kanal'
 #define WRUNIPZ_EVTDATA_SERVICE        0x8    // if bit 15 is set, a service event must be sent after all other events have been sent
+#define WRUNIPZ_EVTDATA_UNLOCKA4       0xc    // service event: send unlock command to A4
 #define WRUNIPZ_EVTDATA_PREPACCNOW     0xd    // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
 #define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
 
 // event codes for service events (sent by wr-unipz)
 #define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
+#define EVT_UNLOCK_ALVAREZ            0x15    // unlock A4 for next pulse 
 #define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
 
 
