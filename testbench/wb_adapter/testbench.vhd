@@ -25,6 +25,9 @@ architecture simulation of testbench is
   signal pipelined_mosi   : t_wishbone_slave_in;
   signal pipelined_miso   : t_wishbone_slave_out;
 
+  signal pipelined_mosi_link_out   : t_wishbone_slave_in;
+  signal pipelined_miso_link_out   : t_wishbone_slave_out;
+
   signal classic_mosi     : t_wishbone_master_out;
   signal classic_miso     : t_wishbone_master_in;
 
@@ -117,6 +120,18 @@ begin
   rst_n   <= not rst;
   --------------------------------------------
 
+  test_link : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rst_n,
+      slave_i       => pipelined_mosi,
+      slave_o       => pipelined_miso,
+      master_i      => pipelined_miso_link_out,
+      master_o      => pipelined_mosi_link_out);
+
+
 
   adapter  : entity work.wb_slave_adapter 
     generic map(
@@ -132,8 +147,8 @@ begin
         rst_n_i   => rst_n,
 
     -- slave port (i.e. wb_slave_adapter is slave)
-        slave_i  => pipelined_mosi,
-        slave_o  => pipelined_miso,
+        slave_i  => pipelined_mosi_link_out,
+        slave_o  => pipelined_miso_link_out,
 
     -- master port (i.e. wb_slave_adapter is master)
         master_i => classic_miso,
@@ -141,6 +156,8 @@ begin
       );
 
 
+
+    -- generate master signals
     master_pipelined: process
     begin
       for i in 1 to 200 loop
@@ -150,6 +167,8 @@ begin
       wait;
     end process;
 
+
+    -- multiplex slave signals to 4 different slaves to test different slave response types
 
     classic_mosi_1 <= classic_mosi when classic_mosi.adr(31 downto 30) = "00"
                 else ('0', '0', (others => '0'), (others => '0'), '0', (others => '0'));

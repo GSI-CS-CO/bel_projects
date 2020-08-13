@@ -111,6 +111,7 @@ architecture rtl of wb_slave_adapter is
   signal slave_out  : t_wishbone_slave_out;
 
   signal slave_in_frozen : t_wishbone_slave_in;
+  signal slave_in_select : t_wishbone_slave_in;
 
 begin  -- rtl
 
@@ -157,28 +158,30 @@ begin  -- rtl
   ma_we_o  <= master_out.we;
 
   not_P2C : if not (g_slave_mode = PIPELINED and g_master_mode = CLASSIC)   generate
-    p_gen_address : process(slave_in, master_out)
-    begin
-      if(g_master_granularity = g_slave_granularity) then
-        master_out.adr <= slave_in.adr;
-      elsif(g_master_granularity = BYTE) then  -- byte->word
+
+    equal_granularity: 
+    if g_master_granularity = g_slave_granularity generate 
+      master_out.adr <= slave_in.adr;
+    end generate;
+    different_granularity: 
+    if g_master_granularity /= g_slave_granularity generate 
+      master_BYTE: 
+      if g_master_granularity = BYTE generate 
         master_out.adr <= slave_in.adr(c_wishbone_address_width-f_num_byte_address_bits-1 downto 0)
                           & f_zeros(f_num_byte_address_bits);
-      else
+      end generate;
+      master_WORD: 
+      if g_master_granularity = WORD generate
         master_out.adr <= f_zeros(f_num_byte_address_bits)
                           & slave_in.adr(c_wishbone_address_width-1 downto f_num_byte_address_bits);
-      end if;
-    end process p_gen_address;
-
+      end generate;
+    end generate;
     master_out.dat <= slave_in.dat;
     master_out.sel <= slave_in.sel;
     master_out.we  <= slave_in.we;
   end generate not_P2C;
 
   P2C : if (g_slave_mode = PIPELINED and g_master_mode = CLASSIC)   generate
-    signal master_in_ack_d1 : std_logic := '0';
-    signal master_in_err_d1 : std_logic := '0';
-    signal master_in_rty_d1 : std_logic := '0';
     type t_fsm_state is (IDLE, WAIT4ACK, DONE);
     signal fsm_state : t_fsm_state := IDLE;
   begin
@@ -186,11 +189,11 @@ begin  -- rtl
     -- for as long as no ACK arrived from slave
     state_machine: process (clk_sys_i) is
       variable slave_response : boolean;
-      variable slave_response_d1 : boolean;
     begin
       if rising_edge(clk_sys_i) then
         if rst_n_i = '0' then
           fsm_state <= IDLE;
+          slave_in_frozen <= slave_in;
         else
           -- register slave in data to be able to 
           -- freeze the output if in state WAIT4ACK
@@ -198,11 +201,7 @@ begin  -- rtl
             slave_in_frozen <= slave_in;
           end if;
 
-          master_in_ack_d1 <= master_in.ack;
-          master_in_err_d1 <= master_in.err;
-          master_in_rty_d1 <= master_in.rty;
           slave_response := master_in.ack = '1' or master_in.err = '1' or master_in.rty = '1';
-          slave_response_d1 := master_in_ack_d1 = '1' or master_in_err_d1 = '1' or master_in_rty_d1 = '1';
           case fsm_state is
             when IDLE =>
               if (slave_in.stb = '1' and slave_in.cyc = '1') then
@@ -217,8 +216,6 @@ begin  -- rtl
                 fsm_state <= IDLE; -- unexpected end of cycle
               elsif slave_response then
                 fsm_state <= DONE; -- add one more clock cycle before the next STB
-              --elsif slave_response_d1 then
-              --  fsm_state <= IDLE;
               end if;
             when DONE =>
               fsm_state <= IDLE;
@@ -233,26 +230,24 @@ begin  -- rtl
     slave_out.err   <= master_in.err;
     slave_out.rty   <= master_in.rty;
 
-
-    p_gen_address : process(slave_in, master_out)
-      variable slave_in_select : t_wishbone_slave_in;
-    begin
-      if fsm_state = IDLE then
-        slave_in_select := slave_in;
-      else 
-        slave_in_select := slave_in_frozen;
-      end if;
-
-      if(g_master_granularity = g_slave_granularity) then
-        master_out.adr <= slave_in_select.adr;
-      elsif(g_master_granularity = BYTE) then  -- byte->word
+    slave_in_select <= slave_in when fsm_state = IDLE else slave_in_frozen;
+    equal_granularity: 
+    if g_master_granularity = g_slave_granularity generate 
+      master_out.adr <= slave_in_select.adr;
+    end generate;
+    different_granularity: 
+    if g_master_granularity /= g_slave_granularity generate 
+      master_BYTE: 
+      if g_master_granularity = BYTE generate 
         master_out.adr <= slave_in_select.adr(c_wishbone_address_width-f_num_byte_address_bits-1 downto 0)
                           & f_zeros(f_num_byte_address_bits);
-      else
+      end generate;
+      master_WORD: 
+      if g_master_granularity = WORD generate
         master_out.adr <= f_zeros(f_num_byte_address_bits)
                           & slave_in_select.adr(c_wishbone_address_width-1 downto f_num_byte_address_bits);
-      end if;
-    end process p_gen_address;
+      end generate;
+    end generate;
     master_out.dat <= slave_in.dat when fsm_state = IDLE else slave_in_frozen.dat;
     master_out.sel <= slave_in.sel when fsm_state = IDLE else slave_in_frozen.sel;
     master_out.we  <= slave_in.we  when fsm_state = IDLE else slave_in_frozen.we;
