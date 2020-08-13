@@ -1,12 +1,12 @@
-VENDOR_LIBS=/home/michael/build/ghdl_vendor_scripts
-GHDL_ALTERA=$(VENDOR_LIBS)/altera
+# VENDOR_LIBS=/home/michael/build/ghdl_vendor_scripts
+# GHDL_ALTERA=$(VENDOR_LIBS)/altera
 
 GHDLFLAGS = --ieee=synopsys --std=08 \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
-	-P$(GHDL_ALTERA)/altera/v93       \
-	-P$(GHDL_ALTERA)/altera_lnsim/v93 \
-	-P$(GHDL_ALTERA)/altera_mf/v93    \
-	-P$(GHDL_ALTERA)/arriav/v93       
+# 	-P$(GHDL_ALTERA)/altera/v93       \
+# 	-P$(GHDL_ALTERA)/altera_lnsim/v93 \
+# 	-P$(GHDL_ALTERA)/altera_mf/v93    \
+# 	-P$(GHDL_ALTERA)/arriav/v93       
 
 # main target is the wave output file
 all: simulation.ghw
@@ -29,7 +29,7 @@ simulation.ghw: testbench run
 
 testbench: 	\
 			wishbone_pkg.vhd \
-			wb_slave_adapter_unmodified.vhd   \
+			wb_slave_adapter.vhd   \
 			wb_skidpad.vhd   \
 			xwb_register_link.vhd   \
 			testbench.vhd
