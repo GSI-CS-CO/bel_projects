@@ -29,7 +29,7 @@ simulation.ghw: testbench run
 
 testbench: 	\
 			wishbone_pkg.vhd \
-			wb_slave_adapter.vhd   \
+			wb_slave_adapter_unmodified.vhd   \
 			wb_skidpad.vhd   \
 			xwb_register_link.vhd   \
 			testbench.vhd
