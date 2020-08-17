@@ -538,6 +538,16 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
+ * @brief Macro documenting a FSM transition to the same state. \n
+ *        Helper dummy macro for documenting the FSM by the FSM-visualizer
+ *        DOCFSM.
+ * @see milDeviceHandler
+ * @see https://github.com/UlrichBecker/DocFsm
+ */
+#define FSM_TRANSITION_SELF( attr... )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Initializer for Finite-State-Machines. \n
  *        Helper macro for documenting the FSM by the FSM-visualizer DOCFSM.
  * @see milDeviceHandler
@@ -638,10 +648,8 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             break;
          }
       #endif
-      #ifdef __DOCFSM__
-         FSM_TRANSITION( ST_WAIT, label='No message', color=blue );
-      #endif
-         break;
+          FSM_TRANSITION_SELF( label='No message', color=blue );
+          break;
       } // end case ST_WAIT
 
       case ST_PREPARE:
@@ -649,9 +657,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          // wait for 200 us
          if( getWrSysTime() < pMilData->timestamp1 )
          {
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='200 us not expired', color=blue );
             break;
          }
          /* poll all pending regs on the dev bus; non blocking read operation */
@@ -696,9 +702,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             pMilData->lastChannel = channel; // start next time from channel
             pMilData->task_timeout_cnt++;
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_STATUS, label='Receiving busy', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
          FSM_TRANSITION( ST_HANDLE_IRQS, color=green );
@@ -787,9 +791,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             pMilData->lastChannel = channel; // start next time from channel
             pMilData->task_timeout_cnt++;
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
          FSM_TRANSITION( ST_WAIT, color=green );
