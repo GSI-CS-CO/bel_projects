@@ -467,7 +467,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
              * Store item in RAM.
              */
             ramWriteItem( pThis, ramRingGetWriteIndex(poIndexes), &ramItem );
-            ramRingAddToWriteIndex( poIndexes, 1 );
+            ramRingIncWriteIndex( poIndexes );
 
             /*
              * Is the next data word the first word of the device descriptor?

@@ -678,7 +678,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             printTimeoutMessage( pMilData, isScuBus );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
-            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached',
                                      color=red );
             break;
          #else
@@ -748,7 +748,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             printTimeoutMessage( pMilData, isScuBus );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
-            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached',
                                      color=blue );
             break;
          #else

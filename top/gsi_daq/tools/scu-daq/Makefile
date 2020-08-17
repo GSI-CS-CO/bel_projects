@@ -26,7 +26,8 @@ SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
-SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+# SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
@@ -110,6 +111,7 @@ DEBUG = 1
 
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
 

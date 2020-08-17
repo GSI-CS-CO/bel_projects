@@ -31,7 +31,7 @@ SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
 SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
 SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 
 ifdef ACU
    DEFINES += MAX_SCU_SLAVES=1
@@ -55,6 +55,7 @@ DEFINES += CONFIG_DEBUG_RAM_WRITE_DATA
 
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 
 SHARED_SIZE = 48
 

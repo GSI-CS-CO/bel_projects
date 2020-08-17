@@ -108,7 +108,7 @@ ifdef USE_HISTORY
   SOURCE += $(SCU_DIR)/history.c
 endif
 ifdef USE_SCU_EXTERN_RAM
-  SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
   DEFINES += CONFIG_SCU_USE_DDR3
 endif
 
@@ -119,6 +119,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
+DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 
 CODE_OPTIMIZATION = s
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)

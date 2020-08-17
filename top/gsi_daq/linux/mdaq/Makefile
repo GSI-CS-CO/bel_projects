@@ -31,7 +31,11 @@ DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
 #-----------------------------------------------------------------------------------------
 
-DEFINES += CONFIG_NO_SCU_RAM
+DEFINES += CONFIG_SCU_USE_DDR3
+DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+
+
+# DEFINES += CONFIG_NO_SCU_RAM
 
  # NO_LTO = 1
 
