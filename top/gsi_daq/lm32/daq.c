@@ -462,7 +462,7 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
 }
 
 #define FSM_TRANSITION( s, attr... ) pFeedback->status = s
-
+#define FSM_TRANSITION_SELF( attr... )
 /*!
  * @brief Time distance between two switch-on events of DAQ channels
  */
@@ -481,7 +481,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       {
          if( ramRingGetSize( &pFeedback->aktionBuffer.index ) == 0 )
          {
-            FSM_TRANSITION( FB_READY, label='No message.' );
+            FSM_TRANSITION_SELF( label='No message.' );
             break;
          }
          const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
@@ -499,7 +499,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
                daqChannelSample1msOff( pActChannel );
                daqChannelTestAndClearDaqIntPending( pActChannel );
             }
-            FSM_TRANSITION( FB_READY, label='Switch both channels off\nif stop-message received.' );
+            FSM_TRANSITION_SELF( label='Switch both channels off\nif stop-message received.' );
             break;
          }
          DAQ_ASSERT( pFeedback->aktionBuffer.aAction[i].action == FB_ON );
@@ -514,7 +514,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       {
          if( getWrSysTime() < pFeedback->waitingTime )
          {
-            FSM_TRANSITION( FB_FIRST_ON );
+            FSM_TRANSITION_SELF();
             break;
          }
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
@@ -529,7 +529,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       {
          if( getWrSysTime() < pFeedback->waitingTime )
          {
-            FSM_TRANSITION( FB_BOTH_ON );
+            FSM_TRANSITION_SELF();
             break;
          }
          FSM_TRANSITION( FB_READY, label='Waiting time expired.');
