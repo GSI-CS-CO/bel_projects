@@ -319,7 +319,7 @@ architecture struct of wr_core is
         return "wrc-release.ram";
       end if;
     else
-      report "[WR Core] Using user-provided LM32 firmware." severity note;
+      report "[WR Core] Using user-provided LM32 firmware: " & g_dpram_initf severity note;
       return g_dpram_initf;
     end if;
   end function;
@@ -959,7 +959,8 @@ begin
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_layout,
-      g_sdb_addr    => c_sdb_address
+      g_sdb_addr    => c_sdb_address,
+      g_sdb_wb_mode => PIPELINED
       )
     port map(
       clk_sys_i => clk_sys_i,
@@ -1027,7 +1028,8 @@ begin
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_secbar_layout,
-      g_sdb_addr    => c_secbar_sdb_address
+      g_sdb_addr    => c_secbar_sdb_address,
+      g_sdb_wb_mode => PIPELINED
       )
     port map(
       clk_sys_i  => clk_sys_i,

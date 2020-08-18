@@ -28,7 +28,7 @@ simulation.ghw: compile_testbench
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
-compile_testbench: file_access_c.o interface_lm32_c.o sockit_owm_c.o testbench
+compile_testbench: file_access_c.o lm32_verilator_interface_c.o sockit_owm_c.o testbench
 
 testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
@@ -53,7 +53,7 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_register/wb_skidpad.vhd    \
-			../common/wb_slave_adapter.vhd \
+			../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd         \
 			../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd     \
@@ -362,7 +362,7 @@ testbench: 	\
 			../../modules/eca_tap/eca_tap_auto_pkg.vhd                                  \
 			../common/monster.vhd     \
 			../common/wb_arria_reset.vhd \
-			../common/interface_lm32.vhd \
+			../common/lm32_verilator_interface.vhd \
 			../common/xwb_lm32.vhd \
 			../common/file_access.vhd    \
 			../common/ez_usb_chip.vhd    \
@@ -372,7 +372,7 @@ testbench: 	\
 			testbench.vhd 
 	ghdl -a -g $(GHDLFLAGS) $?
 	ghdl -m \
-	        -Wl,interface_lm32_c.o \
+	        -Wl,lm32_verilator_interface_c.o \
 	        -Wl,sockit_owm_c.o \
 	        -Wl,obj_dir/verilated.o \
 	        -Wl,obj_dir/verilated_vcd_c.o \
@@ -383,8 +383,8 @@ testbench: 	\
 	        $(GHDLFLAGS) testbench 
 
 # this is the C++-implementation (with C-linkage) of the VHDL foreign function interfaces
-interface_lm32_c.o: main ../common/interface_lm32_c.cpp ../common/interface_lm32.vhd
-	g++ -DVM_TRACE -Iobj_dir -I/usr/share/verilator/include -c ../common/interface_lm32_c.cpp
+lm32_verilator_interface_c.o: main ../common/lm32_verilator_interface_c.cpp ../common/lm32_verilator_interface.vhd
+	g++ -DVM_TRACE -Iobj_dir -I/usr/share/verilator/include -c ../common/lm32_verilator_interface_c.cpp
 
 sockit_owm_c.o: ../common/main_sockit_owm.cpp ../common/sockit_owm_c.cpp main_sockit_owm
 	g++ -DVM_TRACE -Iobj_dir -I/usr/share/verilator/include -c ../common/sockit_owm_c.cpp
