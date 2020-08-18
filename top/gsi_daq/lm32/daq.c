@@ -471,6 +471,7 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
 /*! ---------------------------------------------------------------------------
  * @brief Finite state machine which handles the on/off switching of
  *        feed-back channels for ADDAC- function generators.
+ * @dotfile daq.gv
  */
 STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
 {

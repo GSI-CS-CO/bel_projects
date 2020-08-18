@@ -535,7 +535,8 @@ MilDaqAdministration* CommandLine::operator()( void )
    return nullptr;
 }
 
-/*-----------------------------------------------------------------------------
+/*!----------------------------------------------------------------------------
+ * @dotfile mdaqt_command_line.gv
  */
 int CommandLine::onArgument( void )
 {

@@ -27,7 +27,6 @@
 
 #include <scu_shared_mem.h>
 #include <daq_eb_ram_buffer.hpp>
-//#include <scu_function_generator.h>
 #include <vector>
 
 namespace Scu
@@ -36,7 +35,7 @@ using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!
- * @brief Administrating of the list of all found function generators.
+ * @brief Administrator for the list of all found function generators.
  */
 class FgList
 {
@@ -148,7 +147,7 @@ public:
    }
 
    /*!
-    * @brief Returns true when the list istempty.
+    * @brief Returns true when the list is empty.
     */
    const bool empty( void )
    {
@@ -158,7 +157,7 @@ public:
    /*!
     * @brief Returns the number of list items respectively
     *        number of found function-generators including
-    *        MIL and non MIL.
+    *        MIL and ADDAC.
     */
    uint size( void ) const
    {

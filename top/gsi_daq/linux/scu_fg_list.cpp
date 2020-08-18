@@ -93,10 +93,10 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
    }
 
    /*
-    * CAUTION: pMailBox is a foreign pointer and only valid within LM32 scope!
+    * CAUTION: _pMailBox is a foreign pointer and only valid within LM32 scope!
     *          It will use for address offset calculation only.
     */
-   MSI_BOX_T* pMailBox = reinterpret_cast<MSI_BOX_T*>
+   MSI_BOX_T* _pMailBox = reinterpret_cast<MSI_BOX_T*>
                          (
                            pEbAccess->getEbPtr()->findDeviceBaseAddress( DaqEb::gsiId,
                            static_cast<FeSupport::Scu::Etherbone::DeviceId>(MSI_MSG_BOX) )
@@ -116,7 +116,7 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
                          offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
 
    pEbAccess->getEbPtr()->write( reinterpret_cast<etherbone::address_t>
-                                    (&pMailBox->slots[lm32MailboxSlot].signal),
+                                    (&_pMailBox->slots[lm32MailboxSlot].signal),
                                  reinterpret_cast<eb_user_data_t>(&signal),
                                  EB_BIG_ENDIAN | EB_DATA32 );
 

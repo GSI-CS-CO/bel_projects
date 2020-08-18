@@ -51,11 +51,21 @@ using namespace MiLdaq;
 using namespace MiLdaqt;
 
 #define FSM_INIT_FSM( startState, attr... ) m_state = startState
+
 #define FSM_TRANSITION( nextState, attr... ) \
 {                                            \
    m_state = nextState;                      \
    break;                                    \
 }
+
+#define FSM_TRANSITION_NEXT( nextState, attr... ) \
+{                                                 \
+   next = true;                                   \
+   m_state = nextState;                           \
+   break;                                         \
+}
+
+#define FSM_TRANSITION_SELF( attr... ) break
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -158,6 +168,7 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @dotfile mdaqt.gv
  */
 void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                                                           MIL_DAQ_T setValue )
@@ -172,6 +183,9 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
       m_maxTime = std::max( m_maxTime, timeinterval );
    }
 
+   /*!
+    * @brief Repeat-flag becomes set to true in macro FSM_TRANSITION_NEXT
+    */
    bool next;
    do
    {
@@ -196,8 +210,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             if( plotTime > getTimeLimitNanoSec()
                || m_aPlotList.size() >= getItemLimit() )
             {
-               next = true;
-               FSM_TRANSITION( PLOT );
+               FSM_TRANSITION_NEXT( PLOT, color = green );
             }
             addItem( plotTime, actValue, setValue, !isSetValueInvalid() );
             if( getCommandLine()->isContinuePlottingEnabled() &&
@@ -206,22 +219,20 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                m_pPlot->plot();
                m_timeToPlot = m_currentTime + getPlotIntervalTime();
             }
-            FSM_TRANSITION( COLLECT );
+            FSM_TRANSITION_SELF( color = blue );
          }
          case PLOT:
          {
             m_pPlot->plot();
-            next = true;
             if( isSingleShoot() )
-               FSM_TRANSITION( WAIT, label='Single shoot enabled' );
-            FSM_TRANSITION( START );
+               FSM_TRANSITION_NEXT( WAIT, label='Single shoot enabled' );
+            FSM_TRANSITION_NEXT( START );
          }
          case WAIT:
          {
             if( isSingleShoot() )
-               FSM_TRANSITION( WAIT );
-            next = true;
-            FSM_TRANSITION( START, label='Single shoot\ndisabled', color=green );
+               FSM_TRANSITION_SELF();
+            FSM_TRANSITION_NEXT( START, label='Single shoot\ndisabled', color=green );
          }
          default: assert( false ); break;
       }

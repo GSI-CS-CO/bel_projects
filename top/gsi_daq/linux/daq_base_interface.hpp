@@ -43,6 +43,9 @@ namespace Scu
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Administration of the socket number.
+ *
+ * This can be slot-number of ADDAC-DAQs or slot-number and/or socket
+ * of MIL DAQs
  */
 class DaqBaseDevice
 {
@@ -80,10 +83,10 @@ public:
    }
 
    /*!
-   * @brief Returns "true" in the case the function generator belonging to the
-   *        given socket is a MIL function generator connected via SCU-bus
-   *        slave.
-   */
+    * @brief Returns "true" in the case the function generator belonging to the
+    *        given socket is a MIL function generator connected via SCU-bus
+    *        slave.
+    */
    bool isMilScuBus( void ) const
    {
       return isMilScuBusFg( m_socket );
@@ -108,6 +111,10 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!----------------------------------------------------------------------------
+ * @brief Handles the data access of MIL- and ADDAC DAQ's via
+ *        wishbone/etherbone.
+ */
 class DaqBaseInterface
 {
 protected:
@@ -121,25 +128,49 @@ public:
    constexpr static uint c_maxSlots  = MAX_SCU_SLAVES;
    constexpr static uint c_startSlot = SCUBUS_START_SLOT;
 
+   /*!
+    * @brief Constructor variant for object of type DaqEb::EtherboneConnection
+    */
    DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone );
+
+   /*!
+    * @brief Constructor variant for object of type daq::EbRamAccess
+    */
    DaqBaseInterface( daq::EbRamAccess* poEbAccess );
+
+   /*!
+    * @brief Destructor
+    */
    virtual ~DaqBaseInterface( void );
 
+   /*!
+    * @brief returns a pointer of the object of type DaqEb::EtherboneConnection
+    */
    DaqEb::EtherboneConnection* getEbPtr( void ) const
    {
       return m_poEbAccess->getEbPtr();
    }
 
+   /*!
+    * @brief returns a pointer to an object of type daq::EbRamAccess
+    */
    daq::EbRamAccess* getEbAccess( void ) const
    {
       return m_poEbAccess;
    }
 
+   /*!
+    * @brief Returns the wishbone / etherbone device name.
+    */
    const std::string& getWbDevice( void )
    {
       return m_poEbAccess->getNetAddress();
    }
 
+   /*!
+    * @brief Returns the SCU LAN domain name or the name of the wishbone
+    *        device.
+    */
    const std::string getScuDomainName( void )
    {
       return m_poEbAccess->getScuDomainName();
@@ -156,7 +187,7 @@ public:
     * @param update If true the indexes in the LM32 shared memory
     *               will read before.
     */
-   virtual daq::RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) = 0;
+   virtual RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) = 0;
 
    /*!
     * @brief Makes the data buffer empty.
@@ -165,7 +196,11 @@ public:
     */
    virtual void clearBuffer( bool update = true ) = 0;
 
-
+   /*!
+    * @brief Callback function shall be invoked within a polling-loop and looks
+    *        whether enough data are present for forwarding to the higher
+    *        layers.
+    */
    virtual uint distributeData( void ) = 0;
 };
 

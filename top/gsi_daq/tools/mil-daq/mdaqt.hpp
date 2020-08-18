@@ -207,6 +207,17 @@ public:
    bool showUngegistered( void );
 
    void setSingleShoot( bool enable );
+
+   RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
+   {
+      std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
+      return 0;
+   }
+
+   void clearBuffer( bool update = true ) override
+   {
+      std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
+   }
 };
 
 inline

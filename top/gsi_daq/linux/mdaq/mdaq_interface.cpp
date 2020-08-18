@@ -99,7 +99,7 @@ void DaqInterface::updateRingTail( void )
 
 /*! ---------------------------------------------------------------------------
  */
-uint DaqInterface::getBufferSize( void )
+uint DaqInterface::getBufferSize( void ) //TODO Renaming in getCurrentRamSize
 {
 #ifndef CONFIG_MIL_DAQ_USE_RAM
    int size = getHeadRingIndex() - getTailRingIndex();
