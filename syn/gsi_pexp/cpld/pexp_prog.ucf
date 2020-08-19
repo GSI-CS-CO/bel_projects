@@ -1,40 +1,46 @@
-NET CDONE LOC = H1;
-NET CONFIX LOC = G1;
-NET CONFIG1 LOC = C3;
+NET      "pgclk_i" TNM_NET = "CLOCK_50MHZ";
+TIMESPEC "TS_CLOCK_50MHZ" = PERIOD "CLOCK_50MHZ" 20ns HIGH 50%;
+
+NET CONF_DONE_i LOC = H1;
+NET nCONFIG_PROG_io LOC = G1;
+NET CONFIG_SPV_i LOC = C3;
 #
-NET CON<1> LOC = A9;
-NET CON<2> LOC = B10;
-NET CON<3> LOC = A2;
-NET CON<4> LOC = A10;
-NET CON<5> LOC = A5;
+NET fpga_con_io<1> LOC = A9;
+NET fpga_con_io<2> LOC = B10;
+NET fpga_con_io<3> LOC = A2;
+NET fpga_con_io<4> LOC = A10;
+NET fpga_con_io<5> LOC = A5;
 #
-NET PGCLK LOC = J1;
+NET pgclk_i LOC = J1;
 #
-NET SEL_CLK<0> LOC = K2;
-NET SEL_CLK<1> LOC = A7;
+NET sel_clk_o<0> open_drain;
+NET sel_clk_o<1> open_drain; 
+NET sel_clk_o<0> LOC = K2;
+NET sel_clk_o<1> LOC = A7;
+
 #
-NET HSW<1> LOC = K8;
-NET HSW<2> LOC = A3;
-NET HSW<3> LOC = K1;
-NET HSW<4> LOC = K4;
+NET hsw_i<1> LOC = K8;
+NET hsw_i<2> LOC = A3;
+NET hsw_i<3> LOC = K1;
+NET hsw_i<4> LOC = K4;
 #
-NET M<0> LOC = E1;
-NET M<1> LOC = K5;
-NET M<2> LOC = C1;
-NET M<3> LOC = B1;
-NET M<4> LOC = A1;
+NET config_mode_o<0> LOC = E1;
+NET config_mode_o<1> LOC = K5;
+NET config_mode_o<2> LOC = C1;
+NET config_mode_o<3> LOC = B1;
+NET config_mode_o<4> LOC = A1;
 #
-NET PLED<1> LOC = H10;
-NET PLED<2> LOC = G10;
-NET PLED<3> LOC = F10;
-NET PLED<4> LOC = E10;
-NET PLED<5> LOC = K7;
+NET pled_o<1> LOC = H10;
+NET pled_o<2> LOC = G10;
+NET pled_o<3> LOC = F10;
+NET pled_o<4> LOC = E10;
+NET pled_o<5> LOC = K7;
 #
-NET MRES LOC = K3;
-NET MRES1 LOC = F1;
-NET FPGA_RES LOC = D1;
-NET NSTAT LOC = A4;
-NET PBS1 LOC = A8;
+NET mres1_o LOC = F1;
+NET fpga_res_o LOC = D1;
+NET nstatus_i LOC = A4;
+NET pbf1_i LOC = A8;
+
 
 
 

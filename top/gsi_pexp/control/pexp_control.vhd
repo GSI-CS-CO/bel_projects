@@ -567,10 +567,19 @@ begin
     s_log_in(16)          <= hpwck;
 
     -- outputs
-    hpwck                 <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
-    hpw_out : for i in 0 to 15 generate
-      hpw(i)               <= s_log_out(i) when s_log_oe(i) = '1' else 'Z';
-    end generate;
+--    hpwck                 <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
+--    hpw_out : for i in 0 to 15 generate
+--      hpw(i)               <= s_log_out(i) when s_log_oe(i) = '1' else 'Z';
+--    end generate;
+    hpwck  <= clk_20m_vcxo_i;
+    hpw(0) <= clk_125m_pllref_i;
+    hpw(1) <= clk_125m_local_i;
+    hpw(2) <= clk_sfp_ref_i;
+    hpw(7 downto 3) <= con;
+    hpw(12 downto 8) <= s_test_sel;
+    hpw(13) <= con(5);
+    hpw(14) <= s_test_sel(4);
+    hpw(15) <= clk_20m_vcxo_i;
   end generate; -- gen_load_shift_reg_false
 
 end rtl;
