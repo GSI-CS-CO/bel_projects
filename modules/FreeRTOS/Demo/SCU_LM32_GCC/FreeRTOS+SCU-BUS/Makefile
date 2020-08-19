@@ -22,7 +22,7 @@ RTOS_USING_HEAP = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
-CODE_OPTIMIZATION = s
+CODE_OPTIMIZATION = 2
 
 
 # When the following compiler switch is defined, then the assert-macros
