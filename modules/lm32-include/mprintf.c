@@ -158,7 +158,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       }
 
       unsigned char* ptr;
-      unsigned int hexOffset;
+      unsigned int hexOffset = 0;
       unsigned int base;
       bool     signum = false;
       switch( currentChar = *format++ )
