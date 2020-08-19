@@ -160,17 +160,6 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
 
 //#define CONFIG_DAQ_DEBUG
 
-#ifdef CONFIG_DAQ_DEBUG
-/*! ---------------------------------------------------------------------------
- * @brief Prints the values of the members of RAM_RING_INDEXES_T
- */
-
-void ramRingDbgPrintIndexes( const RAM_RING_INDEXES_T* pThis,
-                                                             const char* txt );
-#else
-#define ramRingDbgPrintIndexes( __a, __b ) ((void)0)
-#endif
-
 /*! @} */ // End SCU_RING_BUFFER_INDEXES
 
 #ifdef __cplusplus
