@@ -162,7 +162,9 @@ STATIC inline void saftlibCommandHandler( void )
       }
 
       case FG_OP_RESCAN:
-      { //rescan for fg macros
+      { /*
+         * rescan for fg macros
+         */
          scanFgs();
          break;
       }

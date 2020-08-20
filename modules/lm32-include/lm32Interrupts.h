@@ -230,15 +230,6 @@ STATIC inline ALWAYS_INLINE void irqSetEnableRegister( register const uint32_t i
    asm volatile ( "wcsr ie, %0" ::"r"(ie) );
 }
 
-/*! --------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief
- */
-STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
-{
-   return (irqGetEnableRegister() & IRQ_IE) != 0;
-}
-
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Returns the current value of the LM32 interrupt mask register
@@ -261,6 +252,15 @@ STATIC inline ALWAYS_INLINE
 void irqSetMaskRegister( const uint32_t im )
 {
    asm volatile ( "wcsr im, %0" ::"r"(im) );
+}
+
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief
+ */
+STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
+{
+   return (irqGetEnableRegister() & IRQ_IE) != 0;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -287,8 +287,11 @@ STATIC inline ALWAYS_INLINE void irqEnable( void )
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
 #ifdef CONFIG_RTOS
-   //asm volatile ( "wcsr ie, r0" );
-   irqSetEnableRegister( 0 );
+ //  irqSetEnableRegister( 0 );
+   volatile const uint32_t im = irqGetMaskRegister();
+   irqSetMaskRegister( 0 );
+   irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+   irqSetMaskRegister( im );
 #else
    irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
 #endif
