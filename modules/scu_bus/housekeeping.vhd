@@ -8,6 +8,7 @@ use work.gencores_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.remote_update_pkg.all;
 use work.ftm_pkg.all;
+use work.etherbone_pkg.all;
 
 entity housekeeping is
   generic ( 
@@ -73,18 +74,44 @@ architecture housekeeping_arch of housekeeping is
     version       => x"00000001",
     date          => x"20120603",
     name          => "WR-Periph-UART     ")));
+    component scu_to_wb is
+    generic (
+      Base_addr:      unsigned(15 downto 0);
+      size:           integer;
+      g_init_file:    string
+    );
+    port (
+      clk_sys_i : in std_logic;
+      rst_n_i   : in std_logic;
+
+      -- Wishbone
+      master_i : in  t_wishbone_master_in;
+      master_o : out t_wishbone_master_out;
+
+      -- SCU bus
+      Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+      Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
+      Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
+      Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
+      user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
+      Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
+      Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
+    );
+    end component;
 
   signal lm32_interrupt:   std_logic_vector(31 downto 0);
   signal lm32_rstn:        std_logic;
 
   constant c_lm32_data    : natural := 0;
   constant c_lm32_ins     : natural := 1;
+  constant c_scu_bridge   : natural := 2;
   constant c_lm32_offset  : std_logic_vector(31 downto 0) := x"10000000";
  
   
   -- Top crossbar layout
   constant c_slaves     : natural := 6;
-  constant c_masters    : natural := 2;
+  constant c_masters    : natural := 3;
   constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
   constant c_layout_req_slaves     : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram_userlm32(c_dpram_size), c_lm32_offset),
@@ -96,7 +123,8 @@ architecture housekeeping_arch of housekeeping is
 
   constant c_layout_req_masters : t_sdb_record_array(c_masters-1 downto 0) :=
     (c_lm32_data  => f_sdb_auto_msi(c_msi_lm32_sdb,           true),
-    c_lm32_ins   => f_sdb_auto_msi(c_null_msi,               false));
+     c_lm32_ins   => f_sdb_auto_msi(c_null_msi,               false),
+     c_scu_bridge => f_sdb_auto_msi(c_null_msi,               false));
   constant c_top_layout  : t_sdb_record_array := f_sdb_auto_layout(c_layout_req_masters, c_layout_req_slaves);
   constant c_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_layout_req_masters, c_layout_req_slaves);
 
@@ -129,6 +157,7 @@ architecture housekeeping_arch of housekeeping is
   signal info_rom_dtack:      std_logic;
   signal info_rom_rd_active:  std_logic;
   
+
 
 begin
 
@@ -167,6 +196,10 @@ begin
       iwb_i => cbar_slave_o(c_lm32_ins));
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
+
+  ------------------------------------------------------------------------------------
+  -- eb to wishbone bridge
+  ------------------------------------------------------------------------------------
 
   -- WB Slave 0 is the RAM
   ram : xwb_dpram
@@ -218,7 +251,7 @@ begin
   --------------------------------------
   UART : xwb_simple_uart
     generic map(
-      g_with_virtual_uart   => false,
+      g_with_virtual_uart   => true,
       g_with_physical_uart  => true,
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
@@ -239,7 +272,7 @@ begin
   -------------------------------------
   -- Interface to SCU Bus Slave
   -------------------------------------
-  SCU_WB_Reg: wb_scu_reg
+  SCU_WB_Reg: scu_to_wb
     generic map (
       Base_addr => Base_addr,
       size => 160,
@@ -249,8 +282,8 @@ begin
       rst_n_i => rstn_sys,
 
       -- Wishbone
-      slave_i => cbar_master_o(3),
-      slave_o => cbar_master_i(3),
+      master_i => cbar_slave_o(c_scu_bridge),
+      master_o => cbar_slave_i(c_scu_bridge),
 
       Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
       Data_from_SCUB_LA => Data_from_SCUB_LA,
@@ -338,10 +371,11 @@ begin
   -- wb interface for altera remote update
   -----------------------------------------
   asmi: wb_asmi
-    generic map ( PAGESIZE => 256 )
+    generic map ( PAGESIZE => 256,
+                  g_family => "Arria II")
     port map (
       clk_flash_i => clk_flash,
-      rst_n_i   => rstn_flash,
+      rst_n_i     => rstn_flash,
       
       slave_i      =>  asmi_i,
       slave_o      =>  asmi_o
