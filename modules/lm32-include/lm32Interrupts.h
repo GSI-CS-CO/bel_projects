@@ -287,11 +287,11 @@ STATIC inline ALWAYS_INLINE void irqEnable( void )
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
 #ifdef CONFIG_RTOS
- //  irqSetEnableRegister( 0 );
-   volatile const uint32_t im = irqGetMaskRegister();
-   irqSetMaskRegister( 0 );
-   irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
-   irqSetMaskRegister( im );
+   irqSetEnableRegister( 0 );
+ //  volatile const uint32_t im = irqGetMaskRegister();
+ //  irqSetMaskRegister( 0 );
+ //  irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ //  irqSetMaskRegister( im );
 #else
    irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
 #endif
