@@ -138,6 +138,7 @@ int configure_fg_macro( const unsigned int channel )
    if( isAddacFg( socket ) )
    { /*
       * enable irqs for the slave
+      * Note: In the case of ADDAC FGs the socket-nunber is equal to the slot-number.
       */
      scuBusEnableSlaveInterrupt( (void*)g_pScub_base, socket );
      *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket )  = (FG1_IRQ | FG2_IRQ);

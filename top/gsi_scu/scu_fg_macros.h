@@ -21,7 +21,7 @@ extern "C" {
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/FunctionGeneratorQuadratic#cntrl_reg
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
    /*!
@@ -94,7 +94,7 @@ STATIC_ASSERT( (int)true == 1 );
 /*!
  * @brief Access wrapper avoiding suspicious cast operations.
  */
-typedef union PACKED_SIZE
+typedef union HW_IMAGE
 {
    /*!
     * @brief Segmented access by bit vector.
@@ -116,7 +116,7 @@ STATIC_ASSERT( sizeof(FG_CTRL_RG_T) == sizeof(uint16_t));
  * @brief Image of the function generators hardware registers.
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/FunctionGeneratorQuadratic#cntrl_reg
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    /*!
     * @brief control register [r/w]
@@ -395,7 +395,7 @@ uint16_t getFgFirmwareVersion( const void* pScuBusBase,
 /*!
  * @brief Image of the MIL- function generators hardware registers.
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    /*!
     * @brief control register [r/w]

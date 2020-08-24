@@ -26,30 +26,18 @@ extern volatile unsigned int* g_pScu_mil_base;
   #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
 #endif
 
-//#define CONFIG_DEBUG_SWI
+#define CONFIG_DEBUG_SWI
 
 #ifdef CONFIG_DEBUG_SWI
 #warning Function printSwIrqCode() is activated! In this mode the software will not work!
 /*! ---------------------------------------------------------------------------
  * @brief For debug purposes only!
  */
-STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
+STATIC inline
+void printSwIrqCode( const unsigned int code, const unsigned int value )
 {
-   const char* str;
-   #define _SWI_CASE_ITEM( i ) case i: str = #i; break
-   switch( code )
-   {
-      _SWI_CASE_ITEM( FG_OP_INITIALIZE );
-      _SWI_CASE_ITEM( FG_OP_RFU );
-      _SWI_CASE_ITEM( FG_OP_CONFIGURE );
-      _SWI_CASE_ITEM( FG_OP_DISABLE_CHANNEL );
-      _SWI_CASE_ITEM( FG_OP_RESCAN );
-      _SWI_CASE_ITEM( FG_OP_CLEAR_HANDLER_STATE );
-      _SWI_CASE_ITEM( FG_OP_PRINT_HISTORY );
-      default: str = "unknown"; break;
-   }
-   #undef _SWI_CASE_ITEM
-   mprintf( ESC_DEBUG"SW-IRQ: %s\tValue: %d"ESC_NORMAL"\n", str, value );
+   mprintf( ESC_DEBUG "SW-IRQ: %s\tValue: %2d" ESC_NORMAL "\n",
+            fgCommand2String( code ), value );
 }
 #else
 #define printSwIrqCode( code, value )
@@ -59,7 +47,7 @@ STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
  * @ingroup TASK
  * @brief Handles so called software interrupts (SWI) coming from SAFTLIB.
  */
-STATIC inline void saftlibCommandHandler( void )
+STATIC inline void saftLibCommandHandler( void )
 {
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )
@@ -140,7 +128,12 @@ STATIC inline void saftlibCommandHandler( void )
       }
 
       case FG_OP_CONFIGURE:
-      {
+      { /*
+         * Start of a function generator.
+         */
+       //  ATOMIC_SECTION()
+         mprintf( "Dauert ein bisschen lange lange lange....\n" );
+         //if( value == 3 ) break; //!!!
       #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
          suspendGapReading(); // TEST!!!
       #endif
@@ -153,7 +146,9 @@ STATIC inline void saftlibCommandHandler( void )
       }
 
       case FG_OP_DISABLE_CHANNEL:
-      {
+      { /*
+         * Stop of a function generator.
+         */
          disable_channel( value );
       #ifdef DEBUG_SAFTLIB
          mprintf( "-%d ", value );
@@ -163,7 +158,7 @@ STATIC inline void saftlibCommandHandler( void )
 
       case FG_OP_RESCAN:
       { /*
-         * rescan for fg macros
+         * Rescaning of all function generators.
          */
          scanFgs();
          break;
@@ -192,11 +187,6 @@ STATIC inline void saftlibCommandHandler( void )
          break;
       }
    }
-#ifdef CONFIG_DEBUG_FG
-   #warning When CONFIG_DEBUG_FG defined then the timing will destroy!
-   mprintf( ESC_FG_CYAN ESC_BOLD"FG-command: %s: %d\n"ESC_NORMAL,
-            fgCommand2String( code ), value );
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -212,7 +202,7 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 
-   saftlibCommandHandler();
+   saftLibCommandHandler();
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    /*!
