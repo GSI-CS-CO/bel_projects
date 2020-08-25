@@ -199,40 +199,58 @@ void read_scu2wb_32(int slave_nr, unsigned addr, eb_data_t* data) {
 
 void read_asmi_id(int slave_nr, eb_data_t* epcsid) {
   eb_status_t status;
-
-  if ((status = eb_device_read(device, wb_asmi_base + READ_ID, EB_BIG_ENDIAN|EB_DATA8, epcsid, 0, eb_block)) != EB_OK)
-    die("reading ASMI_ID failed", status);
+  if (slave_nr > 0) {
+    read_scu2wb_byte(slave_nr, SCUB_ASMI_ADR + READ_ID, epcsid);
+  } else {
+    if ((status = eb_device_read(device, wb_asmi_base + READ_ID, EB_BIG_ENDIAN|EB_DATA8, epcsid, 0, eb_block)) != EB_OK)
+      die("reading ASMI_ID failed", status);
+  }
 }
 
 void read_asmi_status(int slave_nr, eb_data_t* epcs_status) {
   eb_status_t status;
-
+  if (slave_nr > 0) {
+    read_scu2wb_byte(slave_nr, SCUB_ASMI_ADR + READ_STATUS, epcs_status);
+  } else {
   if ((status = eb_device_read(device, wb_asmi_base + READ_STATUS, EB_BIG_ENDIAN|EB_DATA8, epcs_status, 0, eb_block)) != EB_OK)
     die("reading ASMI_STAT failed", status);
+  }
 }
 
-void read_asmi_crc(unsigned int asmi_addr, unsigned int bytes_to_read, eb_data_t* crc) {
+void read_asmi_crc(int slave_nr, unsigned int asmi_addr, unsigned int bytes_to_read, eb_data_t* crc) {
   eb_status_t status;
   eb_data_t data;
   eb_data_t cmd = 1;
 
-  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
-    die("EP eb_cycle_open", status);
+  if (slave_nr > 0) {
+    // access over the scu wb bridge
+    write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + SET_READ_NUMBER, bytes_to_read);
+    write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + SET_ADDR, asmi_addr);
+    read_scu2wb_32(slave_nr, SCUB_ASMI_ADR + FLASH_ACCESS, &data);
+    while (cmd != 0) {
+      read_scu2wb_32(slave_nr, SCUB_ASMI_ADR + BUSY_CHECK, &cmd);
+    }
+    read_scu2wb_32(slave_nr, SCUB_ASMI_ADR + READ_CRC, crc);
+  } else {
+    // direct wb access
+    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+      die("EP eb_cycle_open", status);
 
-  eb_cycle_write(cycle, wb_asmi_base + SET_READ_NUMBER, EB_BIG_ENDIAN|EB_DATA32, bytes_to_read);
-  eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
-  eb_cycle_read(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA32, &data);
-    
-  if ((status = eb_cycle_close(cycle)) != EB_OK)
-    die("read data eb_cycle_close", status);
+    eb_cycle_write(cycle, wb_asmi_base + SET_READ_NUMBER, EB_BIG_ENDIAN|EB_DATA32, bytes_to_read);
+    eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
+    eb_cycle_read(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA32, &data);
 
-  while (cmd != 0) {
-    if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
-      die("reading BUSY_CHECK failed", status);
+    if ((status = eb_cycle_close(cycle)) != EB_OK)
+      die("read data eb_cycle_close", status);
+
+    while (cmd != 0) {
+      if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
+        die("reading BUSY_CHECK failed", status);
+    }
+
+    if ((status = eb_device_read(device, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc, 0, eb_block)) != EB_OK)
+      die("read crc failed", status);
   }
-
-  if ((status = eb_device_read(device, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc, 0, eb_block)) != EB_OK)
-    die("read crc failed", status);
 }
 
 void read_asmi_page(eb_data_t* page_buffer, int asmi_addr, eb_data_t* crc) {
@@ -400,9 +418,6 @@ int main(int argc, char * const* argv) {
   int nDevices;  
   int slave_id = 0;
   eb_data_t epcsid;
-  eb_data_t slave_epcsid;
-  eb_data_t epcs_status;
-  eb_data_t readdata;
 
   char *wvalue = NULL;
   int rflag = 0;
@@ -410,6 +425,7 @@ int main(int argc, char * const* argv) {
   int bflag = 0;
   int eflag = 0;
   int nflag = 0;
+  char *svalue = NULL;
   int index;
   int c;
  
@@ -421,7 +437,7 @@ int main(int argc, char * const* argv) {
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "w:rv:bhen")) != -1)
+  while ((c = getopt (argc, argv, "w:rv:bhens:")) != -1)
     switch (c)
       {
         case 'e':
@@ -445,6 +461,9 @@ int main(int argc, char * const* argv) {
         case 'h':
           show_help();
           exit(1);
+        case 's':
+          svalue = optarg;
+          break;
         case '?':
           if (optopt == 'w' || optopt == 'v' || optopt == 's')
             fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -461,12 +480,22 @@ int main(int argc, char * const* argv) {
   // assign non option arguments
   index = optind;
 
-  
-
   if (argc < 2 || argc-optind < 1) {
     printf("program needs at least the device name of the etherbone device\n");
     printf("e.g. %s dev/wbm0 -s1\n", argv[0]);
     exit(0);
+  }
+  if (svalue != NULL) {
+    char *p;
+    errno = 0;
+    long conv = strtol(svalue, &p, 10);
+
+    if (errno != 0 || *p != '\0' || conv <= 0 || conv > 12) {
+      printf("s parameter out of range 1-12\n");
+      exit(1);
+    } else {
+      slave_id = conv;
+    }
   }
 
   if (index < argc) {
@@ -474,9 +503,7 @@ int main(int argc, char * const* argv) {
     index++;
   }
  
- 
   errno = 0;
-
 
   if (index < argc) {
     char *p;
@@ -526,23 +553,10 @@ int main(int argc, char * const* argv) {
   if (nDevices == 1) {
     /* Record the address of the device */
     scubus_base = sdbDevice[0].sdb_component.addr_first;
-    printf("scubus_base: 0x%"EB_DATA_FMT" \n", scubus_base);
   }
 
   read_asmi_id(slave_id, &epcsid);
-  read_asmi_status(slave_id, &epcs_status);
-   
-  read_scu2wb_byte(6, 0x20000008, &slave_epcsid);
-  //write_scu2wb_byte(6, 0x20000000, 0xed);
-  write_scu2wb_32(6, 0x20000010, 0xcafebabe);
-  read_scu2wb_32(6, 0x20000010, &readdata);
-  printf("EPCSID: 0x%"EB_DATA_FMT"\n", readdata);
-  write_scu2wb_32(6, 0x20000010, 0x47110815);
-  read_scu2wb_32(6, 0x20000010, &readdata);
-  printf("EPCSID: 0x%"EB_DATA_FMT"\n", readdata);
-
   printf("EPCSID: 0x%"EB_DATA_FMT"\n", epcsid);
-  printf("EPCSID: 0x%"EB_DATA_FMT"\n", slave_epcsid);
 
   FILE *fp;
 
@@ -602,7 +616,7 @@ int main(int argc, char * const* argv) {
         printf("epcs addr 0x%x checked\r", waddr);
         fflush(stdout);
         //check crc of written data
-        read_asmi_crc(waddr, EPCS128_SECTOR_SIZE, &crc_hw);
+        read_asmi_crc(slave_id, waddr, EPCS128_SECTOR_SIZE, &crc_hw);
         if (BLANK_CRC_40000 != (crc_hw)) {
           //sector needs to be erased
           sectors_to_erase[j++] = 1;
@@ -617,7 +631,7 @@ int main(int argc, char * const* argv) {
         printf("epcs addr 0x%x checked\r", waddr);
         fflush(stdout);
         //check crc of written data
-        read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+        read_asmi_crc(slave_id, waddr, SECTOR_SIZE, &crc_hw);
         if (BLANK_CRC_10000 != (crc_hw)) {
           //sector needs to be erased
           sectors_to_erase[j++] = 1;
@@ -657,7 +671,7 @@ int main(int argc, char * const* argv) {
       fflush(stdout);
 
       //check crc of written data
-      read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
+      read_asmi_crc(slave_id, waddr, PAGE_SIZE, &crc_hw);
       if (crc != (crc_hw)) {
           printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
           exit(1);
@@ -713,7 +727,7 @@ int main(int argc, char * const* argv) {
         flash_page[i] = file_page[i];
 
       //check crc of written data
-      read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
+      read_asmi_crc(slave_id, waddr, PAGE_SIZE, &crc_hw);
       if (crc != (crc_hw)) {
           printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
           exit(1);
@@ -737,9 +751,9 @@ int main(int argc, char * const* argv) {
 
       //check crc of written data
       if (epcsid == EPCS128ID)
-        read_asmi_crc(waddr, EPCS128_SECTOR_SIZE, &crc_hw);
+        read_asmi_crc(slave_id, waddr, EPCS128_SECTOR_SIZE, &crc_hw);
       else
-        read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+        read_asmi_crc(slave_id, waddr, SECTOR_SIZE, &crc_hw);
 
       if (epcsid == EPCS128ID) {
         if (BLANK_CRC_40000 != (crc_hw)) {
