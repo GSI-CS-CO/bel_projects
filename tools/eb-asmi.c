@@ -20,28 +20,12 @@
 #include "crc32.h"
 
 
-#define GSI_ID      0x651
-#define CERN_ID     0xce42
-#define WB_ASMI_ID  0x48526423
-
-
-// all scu bus addresses shifted left by one bit
-#define WB_SCU_REG    0x80
-#define TEMP_REG      0x88
-#define ASMI_PARAM    0xa0  //32-Bit
-#define ASMI_CMD      0xa6  //16-Bit
-#define ASMI_STAT     0xaa  //16-Bit
-#define ASMI_ID       0xae  //16-Bit
-#define ASMI_BUFFER   0xc0  //16-Bit
-#define CID_SYS       0x08
-#define CID_GRP       0x0a
-
-#define ASMI_STATUS_CMD   0x1
-#define ASMI_ID_CMD       0x2
-#define SECTOR_ERASE_CMD  0x3
-#define PAGE_WRITE_CMD    0x4
-#define PAGE_READ_CMD     0x5
-#define RECONFIG_CMD      0x6
+#define GSI_ID              0x651
+#define CERN_ID             0xce42
+#define WB_ASMI_ID          0x48526423
+#define SCUBUS_ID           0x9602eb6f
+#define SCUB_ASMI_ADR       0x20000000
+#define SCU2WB_BASE         0x80
 
 #define FLASH_ACCESS      0x0
 #define READ_STATUS       0x4
@@ -56,7 +40,6 @@
 #define BULK_ERASE        0x28
 
 #define SDB_DEVICES         3
-#define SLAVENR             3
 #define PAGE_SIZE           256
 #define PAGES_PER_SECTOR    256
 #define SECTOR_SIZE         PAGE_SIZE * PAGES_PER_SECTOR
@@ -68,12 +51,20 @@
 #define BLANK_CRC           0xfea8a821
 #define BLANK_CRC_10000     0xdeab7e4e
 #define BLANK_CRC_40000     0xb7094978
+#define SCU2WB_ADRH         0
+#define SCU2WB_ADRL         2
+#define SCU2WB_DATH         4
+#define SCU2WB_DATL         6
+#define SCU2WB_RDWRSEL      8
+#define SLOT(X)             (X << 17)
+
 
 
 
 static const char* devName;
 static const char* program;
 static eb_address_t wb_asmi_base;
+static eb_address_t scubus_base;
 static eb_device_t device;
 static eb_cycle_t  cycle;
 static eb_socket_t socket;
@@ -139,6 +130,72 @@ void die(const char* where,eb_status_t status) {
     program,where, eb_status(status));
   exit(1);
 }
+
+
+void read_scu2wb_byte(int slave_nr, unsigned addr, eb_data_t* data) {
+  eb_status_t status;
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRH, EB_BIG_ENDIAN|EB_DATA16, addr >> 16);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRL, EB_BIG_ENDIAN|EB_DATA16, addr & 0xffff);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x21); // sel: 0x8 wr: 0 rd: 1
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("read_scu2wb_cycle_close", status);
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_read(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, data);
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("read_scu2wb_cycle_close", status);
+  *data = *data >> 8;
+}
+
+void write_scu2wb_byte(int slave_nr, unsigned addr, eb_data_t data) {
+  eb_status_t status;
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRH, EB_BIG_ENDIAN|EB_DATA16, addr >> 16);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRL, EB_BIG_ENDIAN|EB_DATA16, addr & 0xffff);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, data << 8);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATL, EB_BIG_ENDIAN|EB_DATA16, 0);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x22); // sel: 0x8 wr: 1 rd: 0
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("write_scu2wb_byte", status);
+}
+
+void write_scu2wb_32(int slave_nr, unsigned addr, eb_data_t data) {
+  eb_status_t status;
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRH, EB_BIG_ENDIAN|EB_DATA16, addr >> 16);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRL, EB_BIG_ENDIAN|EB_DATA16, addr & 0xffff);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, data >> 16);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATL, EB_BIG_ENDIAN|EB_DATA16, data & 0xffff);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x3e); // sel: 0xf wr: 1 rd: 0
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("write_scu2wb_byte", status);
+}
+
+void read_scu2wb_32(int slave_nr, unsigned addr, eb_data_t* data) {
+  eb_status_t status;
+  eb_data_t data_high, data_low;
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRH, EB_BIG_ENDIAN|EB_DATA16, addr >> 16);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRL, EB_BIG_ENDIAN|EB_DATA16, addr & 0xffff);
+  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x3d); // sel: 0xf wr: 0 rd: 1
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("read_scu2wb_cycle_close", status);
+  
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_read(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, &data_high);
+  eb_cycle_read(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATL, EB_BIG_ENDIAN|EB_DATA16, &data_low);
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("read_scu2wb_cycle_close", status);
+  *data = (data_high << 16) | (data_low & 0xffff);
+}
+
+
 
 void read_asmi_id(int slave_nr, eb_data_t* epcsid) {
   eb_status_t status;
@@ -343,7 +400,9 @@ int main(int argc, char * const* argv) {
   int nDevices;  
   int slave_id = 0;
   eb_data_t epcsid;
+  eb_data_t slave_epcsid;
   eb_data_t epcs_status;
+  eb_data_t readdata;
 
   char *wvalue = NULL;
   int rflag = 0;
@@ -460,18 +519,31 @@ int main(int argc, char * const* argv) {
   /* Record the address of the device */
   wb_asmi_base = sdbDevice[0].sdb_component.addr_first;
   
+  nDevices = 1;
+  if ((status = eb_sdb_find_by_identity(device, GSI_ID, SCUBUS_ID, sdbDevice, &nDevices)) != EB_OK)
+    die("find_by_identiy failed", status);
+
+  if (nDevices == 1) {
+    /* Record the address of the device */
+    scubus_base = sdbDevice[0].sdb_component.addr_first;
+    printf("scubus_base: 0x%"EB_DATA_FMT" \n", scubus_base);
+  }
 
   read_asmi_id(slave_id, &epcsid);
-  /*if ((int)epcsid != EPCS128ID) {
-    printf("No EPCS128 found!\n");
-    exit(1);
-  }*/
-    
   read_asmi_status(slave_id, &epcs_status);
    
+  read_scu2wb_byte(6, 0x20000008, &slave_epcsid);
+  //write_scu2wb_byte(6, 0x20000000, 0xed);
+  write_scu2wb_32(6, 0x20000010, 0xcafebabe);
+  read_scu2wb_32(6, 0x20000010, &readdata);
+  printf("EPCSID: 0x%"EB_DATA_FMT"\n", readdata);
+  write_scu2wb_32(6, 0x20000010, 0x47110815);
+  read_scu2wb_32(6, 0x20000010, &readdata);
+  printf("EPCSID: 0x%"EB_DATA_FMT"\n", readdata);
 
   printf("EPCSID: 0x%"EB_DATA_FMT"\n", epcsid);
-  
+  printf("EPCSID: 0x%"EB_DATA_FMT"\n", slave_epcsid);
+
   FILE *fp;
 
   //erase sectors
