@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>simpleDialog</class>
+ <widget class="QDialog" name="simpleDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>269</width>
+    <height>212</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="pushButtonExit">
+   <property name="geometry">
+    <rect>
+     <x>175</x>
+     <y>175</y>
+     <width>87</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&amp;Exit</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonAktion">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>175</y>
+     <width>71</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&amp;Action</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="labelCounter">
+   <property name="geometry">
+    <rect>
+     <x>15</x>
+     <y>15</y>
+     <width>241</width>
+     <height>141</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>93</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string notr="true">XX</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::RichText</enum>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonReset">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>175</y>
+     <width>87</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Reset</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonExit</sender>
+   <signal>clicked()</signal>
+   <receiver>simpleDialog</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>185</x>
+     <y>181</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonAktion</sender>
+   <signal>clicked()</signal>
+   <receiver>simpleDialog</receiver>
+   <slot>onButtonActionClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>59</x>
+     <y>187</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>132</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonReset</sender>
+   <signal>clicked()</signal>
+   <receiver>simpleDialog</receiver>
+   <slot>onButtonResetClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>181</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>10</x>
+     <y>128</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onButtonActionClicked()</slot>
+  <slot>onButtonResetClicked()</slot>
+ </slots>
+</ui>
