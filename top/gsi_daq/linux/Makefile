@@ -27,7 +27,8 @@ SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
-SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
+#SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
 DEFINES += CONFIG_MIL_FG
 
@@ -45,6 +46,12 @@ DEFINES += DAQ_MAX_CHANNELS=4
 DEFINES += CONFIG_DAQ_TIME_MEASUREMENT
 DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+
+
+DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
+DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
+
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
