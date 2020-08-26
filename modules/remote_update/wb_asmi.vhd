@@ -66,7 +66,7 @@ architecture arch of wb_asmi is
 
 
   type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready, erase_stall);
-  signal  wb_state         : t_wb_cyc;
+  signal  wb_state      : t_wb_cyc;
 
   signal  s_rden_ext    : std_logic;
   signal  s_read_ext    : std_logic;
@@ -84,7 +84,7 @@ architecture arch of wb_asmi is
   signal  s_bulk_erase      : std_logic;
   signal  s_illegal_erase   : std_logic;
   
-  signal  s_read_addr       : std_logic_vector(23 downto 0);
+  signal  s_read_addr       : std_logic_vector(31 downto 0);
   signal  s_read10_addr     : std_logic_vector(31 downto 0);
   
   signal  illegal_erase     : std_logic;
@@ -102,8 +102,8 @@ architecture arch of wb_asmi is
   signal crc_reg         : std_logic_vector(31 downto 0);
   signal crc_new         : std_logic_vector(31 downto 0);
   signal crc_in          : std_logic_vector(31 downto 0);
-  signal s_first_word    : std_logic;
   signal s_read_number   : std_logic_vector(31 downto 0) :=  std_logic_vector(to_unsigned(PAGESIZE, 32));
+  signal s_first_word    : std_logic;
   signal s_en4b          : std_logic;
   signal s_ex4b          : std_logic;
   signal s_read_dclk     : std_logic;
@@ -162,27 +162,25 @@ begin
     a1: if g_family = "Arria II" generate
       asmi: asmi_arriaII
         port map (
-         clkin         => clk_flash_i,
          addr          => s_addr(23 downto 0),
-         fast_read     => s_read,
+         clkin         => not clk_flash_i,
          rden          => s_rden,
+         fast_read     => s_read,
+         read_rdid     => s_rdid,
          read_status   => s_read_status,
-         write         => s_write,
-         datain        => s_datain,
          shift_bytes   => s_shift_bytes,
+         write         => s_write,
          wren          => s_wren,
          sector_erase  => s_sector_erase,
-         wren          => s_wren,
-         read_rdid     => s_rdid,
-         en4b_addr     => '0',
-         reset         => not rst_n_i,
-         dataout       => s_dataout,
-         busy          => busy,
-         data_valid    => data_valid,
-         status_out    => s_status_out,
          illegal_write => illegal_write,
          illegal_erase => illegal_erase,
+         reset         => not rst_n_i,
+         busy          => busy,
+         datain        => s_datain,
+         data_valid    => data_valid,
+         dataout       => s_dataout,
          rdid_out      => s_rdid_out,
+         status_out    => s_status_out,
          read_address  => s_read_addr(23 downto 0)
        );
   end generate;
@@ -220,7 +218,7 @@ begin
   a2: if g_family(1 to 7) = "Arria 1" generate
     asmi_10: asmi10
       port map (
-        clkin         => clk_flash_i,
+        clkin         => not clk_flash_i,
         fast_read     => s_read,
         rden          => s_rden,
         addr          => s_addr,
