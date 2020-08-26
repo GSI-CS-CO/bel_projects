@@ -149,15 +149,18 @@ void read_scu2wb_byte(int slave_nr, unsigned addr, eb_data_t* data) {
   *data = *data >> 8;
 }
 
-void write_scu2wb_byte(int slave_nr, unsigned addr, eb_data_t data) {
+void write_scu2wb_byte(int slave_nr, unsigned addr, eb_data_t* data, int count) {
   eb_status_t status;
+  int i;
   if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
     die("EP eb_cycle_open", status);
   eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRH, EB_BIG_ENDIAN|EB_DATA16, addr >> 16);
   eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_ADRL, EB_BIG_ENDIAN|EB_DATA16, addr & 0xffff);
-  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, data << 8);
   eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATL, EB_BIG_ENDIAN|EB_DATA16, 0);
-  eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x22); // sel: 0x8 wr: 1 rd: 0
+  for (i = 0; i < count; i++) {
+    eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATH, EB_BIG_ENDIAN|EB_DATA16, data[i] << 8);
+    eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x22); // sel: 0x8 wr: 1 rd: 0
+  }
   if ((status = eb_cycle_close(cycle)) != EB_OK)
     die("write_scu2wb_byte", status);
 }
@@ -283,9 +286,7 @@ void write_asmi_page(int slave_nr, eb_data_t* page_buffer, int asmi_addr) {
   eb_data_t cmd = 1;
   int i;
   if (slave_nr > 0) {
-    for(i = 0; i < PAGE_SIZE; i++) {
-      write_scu2wb_byte(slave_nr, SCUB_ASMI_ADR + FLASH_ACCESS, page_buffer[i]);
-    }
+    write_scu2wb_byte(slave_nr, SCUB_ASMI_ADR + FLASH_ACCESS, page_buffer, PAGE_SIZE);
     write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + SET_ADDR, asmi_addr);
     write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + WRITE_BUFFER, asmi_addr);
     while (cmd != 0) {

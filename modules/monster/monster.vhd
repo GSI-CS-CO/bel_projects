@@ -495,7 +495,7 @@ architecture rtl of monster is
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (dev_slaves'pos(devs_build_id)       => f_sdb_auto_device(c_build_id_sdb,                   true),
     dev_slaves'pos(devs_watchdog)       => f_sdb_auto_device(c_watchdog_sdb,                   true),
-    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
+    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), false),
     dev_slaves'pos(devs_reset)          => f_sdb_auto_device(c_arria_reset,                    true),
     dev_slaves'pos(devs_tlu)            => f_sdb_auto_device(c_tlu_sdb,                        c_use_tlu),
     dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
@@ -521,7 +521,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
-    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap)
+    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -2922,7 +2922,7 @@ end generate;
   end generate;
 
   asmi_n : if not g_en_asmi generate
-    dev_bus_master_i(c_devs_asmi) <= cc_dummy_slave_out;
+    dev_bus_master_i(dev_slaves'pos(devs_asmi)) <= cc_dummy_slave_out;
   end generate;
 
   asmi_y : if g_en_asmi generate
@@ -2935,8 +2935,8 @@ end generate;
         -- Slave control port
         slave_clk_i    => clk_sys,
         slave_rst_n_i  => rstn_sys,
-        slave_i        => dev_bus_master_o(devs_asmi),
-        slave_o        => dev_bus_master_i(devs_asmi),
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_asmi)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_asmi)),
         -- Master reader port
         master_clk_i   => clk_flash_ext,
         master_rst_n_i => rstn_update,
