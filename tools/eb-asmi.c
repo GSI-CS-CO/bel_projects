@@ -172,7 +172,7 @@ void write_scu2wb_32(int slave_nr, unsigned addr, eb_data_t data) {
   eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_DATL, EB_BIG_ENDIAN|EB_DATA16, data & 0xffff);
   eb_cycle_write(cycle, scubus_base + SLOT(slave_nr) + SCU2WB_BASE + SCU2WB_RDWRSEL, EB_BIG_ENDIAN|EB_DATA16, 0x3e); // sel: 0xf wr: 1 rd: 0
   if ((status = eb_cycle_close(cycle)) != EB_OK)
-    die("write_scu2wb_byte", status);
+    die("write_scu2wb_32", status);
 }
 
 void read_scu2wb_32(int slave_nr, unsigned addr, eb_data_t* data) {
@@ -277,28 +277,40 @@ void read_asmi_page(eb_data_t* page_buffer, int asmi_addr, eb_data_t* crc) {
     die("read data eb_cycle_close", status);
 
 }
+
 void write_asmi_page(int slave_nr, eb_data_t* page_buffer, int asmi_addr) {
   eb_status_t status;
   eb_data_t cmd = 1;
   int i;
-  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
-	  die("EP eb_cycle_open", status);
-  for(i = 0; i < PAGE_SIZE; i++) {
-    eb_cycle_write(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA8, page_buffer[i]);
-  }
-  if ((status = eb_cycle_close(cycle)) != EB_OK)
-    die("write data eb_cycle_close", status);
-  
-  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
-	  die("EP eb_cycle_open", status);
-  eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
-  eb_cycle_write(cycle, wb_asmi_base + WRITE_BUFFER, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
-  if ((status = eb_cycle_close(cycle)) != EB_OK)
-    die("write page cmd eb_cycle_close", status);
+  if (slave_nr > 0) {
+    for(i = 0; i < PAGE_SIZE; i++) {
+      write_scu2wb_byte(slave_nr, SCUB_ASMI_ADR + FLASH_ACCESS, page_buffer[i]);
+    }
+    write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + SET_ADDR, asmi_addr);
+    write_scu2wb_32(slave_nr, SCUB_ASMI_ADR + WRITE_BUFFER, asmi_addr);
+    while (cmd != 0) {
+      read_scu2wb_32(slave_nr, SCUB_ASMI_ADR + BUSY_CHECK, &cmd);
+    }
+  } else {
+    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+            die("EP eb_cycle_open", status);
+    for(i = 0; i < PAGE_SIZE; i++) {
+      eb_cycle_write(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA8, page_buffer[i]);
+    }
+    if ((status = eb_cycle_close(cycle)) != EB_OK)
+      die("write data eb_cycle_close", status);
 
-  while (cmd != 0) {
-    if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
-      die("reading BUSY_CHECK failed", status);
+    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+            die("EP eb_cycle_open", status);
+    eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
+    eb_cycle_write(cycle, wb_asmi_base + WRITE_BUFFER, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
+    if ((status = eb_cycle_close(cycle)) != EB_OK)
+      die("write page cmd eb_cycle_close", status);
+
+    while (cmd != 0) {
+      if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
+        die("reading BUSY_CHECK failed", status);
+    }
   }
 }
   
