@@ -29,18 +29,23 @@ INCLUDE_DIRS += $(QTDIR)
 
 UIC ?= uic
 MOC ?= moc
+RCC ?= rcc
 
 MOC_MSG := "MOC"
 UIC_MSG := "UIC"
+RCC_MSG := "RCC"
 
 ifeq ($(V), 1)
    UIC_F = $(UIC) 
    MOC_F = $(MOC)
+   RCC_F = $(RCC)
 else
    UIC_F = $(FORMAT) "gen" $(UIC_MSG) $(@); $(UIC)
    MOC_F = $(FORMAT) "gen" $(MOC_MSG) $(@); $(MOC)
+   RCC_F = $(FORMAT) "gen" $(RCC_MSG) $(@); $(RCC)
 endif
 
+ADDITIONAL_TO_CLEAN += $(GENERATED_DIR)/*.*
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 
