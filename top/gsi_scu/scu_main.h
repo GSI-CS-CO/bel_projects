@@ -253,7 +253,7 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
  * @brief Returns the index number of a FG-macro in the FG-list by the
  *        channel number
  */
-STATIC inline
+STATIC inline ALWAYS_INLINE
 int getFgMacroIndexFromFgRegister( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
@@ -263,7 +263,8 @@ int getFgMacroIndexFromFgRegister( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the Function Generator macro of the given channel.
  */
-STATIC inline FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
+STATIC inline ALWAYS_INLINE
+FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
 {
    FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
    FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
@@ -290,7 +291,8 @@ STATIC inline bool isFgPresent( const unsigned int channel )
  * @note The lower 4 bits of the socket number contains the slot-number
  *       of the SCU-bus which can masked out by SCU_BUS_SLOT_MASK.
  */
-STATIC inline uint8_t getSocket( const unsigned int channel )
+STATIC inline ALWAYS_INLINE
+unsigned int getSocket( const unsigned int channel )
 {
    FG_ASSERT( isFgPresent( channel ) );
    return getFgMacroViaFgRegister( channel ).socket;
@@ -299,7 +301,8 @@ STATIC inline uint8_t getSocket( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the device number of the given channel.
  */
-STATIC inline uint8_t getDevice( const unsigned int channel )
+STATIC inline ALWAYS_INLINE
+unsigned int getDevice( const unsigned int channel )
 {
    FG_ASSERT( isFgPresent( channel ) );
    return getFgMacroViaFgRegister( channel ).device;

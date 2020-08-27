@@ -23,7 +23,8 @@
  ******************************************************************************
  */
 
-#include <QApplication>
+//#include <QApplication>
+#include <qapplication.h>
 #include <cstdlib>
 #include "qttest.hpp"
 #include "simpleForm.hpp"

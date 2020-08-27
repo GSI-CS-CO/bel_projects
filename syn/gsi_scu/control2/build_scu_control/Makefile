@@ -12,7 +12,7 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
-DEFINES += CONFIG_FG_PEDANTIC_CHECK
+# DEFINES += CONFIG_FG_PEDANTIC_CHECK
 DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 
@@ -22,7 +22,7 @@ DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
  SCU_MIL := 1
 MIL_GAP := 1
 # MIL_DAQ_USE_DDR3 := 1
-# SCU_DAQ := 1
+# ADDAC_DAQ := 1
 
 BASE_VERSION = 3
 
@@ -41,7 +41,8 @@ MIAN_MODULE    = $(SCU_DIR)/scu_main.c
 
 ifdef MIL_DAQ_USE_DDR3
    DEFINES += CONFIG_MIL_DAQ_USE_RAM
-   USE_SCU_EXTERN_RAM := 1
+   USE_SCU_EXTERN_RAM := 1[ubecker@asl740 ~]$ start
+
 endif
 ifdef USE_HISTORY
    DEFINES += HISTORY
@@ -66,7 +67,7 @@ ifdef SCU_MIL
   VERSION_STR += "+GAP"
  endif
 endif
-ifdef SCU_DAQ
+ifdef ADDAC_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
   DEFINES += DAQ_MAX_CHANNELS=4
@@ -94,7 +95,7 @@ ifdef SCU_MIL
   SOURCE += $(SCU_DIR)/scu_mil.c
   SOURCE += $(SCU_DIR)/scu_mil_fg_handler.c
 endif
-ifdef SCU_DAQ
+ifdef ADDAC_DAQ
   SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
   SOURCE += $(DAQ_LM32_DIR)/daq.c
   SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
@@ -121,13 +122,13 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 
-# CODE_OPTIMIZATION = 2
-CODE_OPTIMIZATION = s
+ CODE_OPTIMIZATION = 2
+# CODE_OPTIMIZATION = s
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 # TOOLCHAIN_DIR = /home/bel/ubecker/lnx/src/extern/gcc-toolchain-builder/TEST93/bin/
 # RAM_SIZE    = 147456
 
-ifdef SCU_DAQ
+ifdef ADDAC_DAQ
    SHARED_SIZE = 81968
    ifdef USE_HISTORY
       STACK_SIZE  =  4096

@@ -26,7 +26,7 @@ extern volatile unsigned int* g_pScu_mil_base;
   #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
 #endif
 
-#define CONFIG_DEBUG_SWI
+//#define CONFIG_DEBUG_SWI
 
 #ifdef CONFIG_DEBUG_SWI
 #warning Function printSwIrqCode() is activated! In this mode the software will not work!
@@ -132,7 +132,7 @@ STATIC inline void saftLibCommandHandler( void )
          * Start of a function generator.
          */
        //  ATOMIC_SECTION()
-         mprintf( "Dauert ein bisschen lange lange lange....\n" );
+         //mprintf( "Dauert ein bisschen lange lange lange....\n" );
          //if( value == 3 ) break; //!!!
       #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
          suspendGapReading(); // TEST!!!
