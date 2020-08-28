@@ -80,3 +80,5 @@ Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib
 ### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
+### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
+Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
