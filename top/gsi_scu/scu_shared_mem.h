@@ -538,9 +538,10 @@ static inline const char* signal2String( const SIGNAL_T sig )
 namespace MiLdaq
 {
 #endif
+
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getSocketByFgMacro( const FG_MACRO_T fgMacro )
 {
    return fgMacro.socket;
@@ -548,7 +549,7 @@ unsigned int getSocketByFgMacro( const FG_MACRO_T fgMacro )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getDeviceByFgMacro( const FG_MACRO_T fgMacro )
 {
    return fgMacro.device;
@@ -556,7 +557,7 @@ unsigned int getDeviceByFgMacro( const FG_MACRO_T fgMacro )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getFgMacroVersion( const FG_MACRO_T fgMacro )
 {
    return fgMacro.version;
@@ -564,7 +565,7 @@ unsigned int getFgMacroVersion( const FG_MACRO_T fgMacro )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
 {
    return fgMacro.outputBits;
@@ -572,7 +573,7 @@ unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getMilDaqDevice( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDeviceByFgMacro( pMilDaq->fgMacro );
@@ -580,7 +581,7 @@ unsigned int getMilDaqDevice( const register MIL_DAQ_OBJ_T* pMilDaq )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getMilDaqSocket( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getSocketByFgMacro( pMilDaq->fgMacro );
@@ -588,23 +589,23 @@ unsigned int getMilDaqSocket( const register MIL_DAQ_OBJ_T* pMilDaq )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
-unsigned int getDaqMilScuBusSlotbySocket( const unsigned int loc )
+STATIC inline ALWAYS_INLINE
+unsigned int getDaqMilScuBusSlotbySocket( const unsigned int socket )
 {
-   return loc & SCU_BUS_SLOT_MASK;
+   return socket & SCU_BUS_SLOT_MASK;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
-unsigned int getDaqMilExtentionBySocket( const unsigned int loc )
+STATIC inline ALWAYS_INLINE
+unsigned int getDaqMilExtentionBySocket( const unsigned int socket )
 {
-   return loc >> 4;
+   return socket >> 4;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getMilDaqScuBusSlot( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDaqMilScuBusSlotbySocket( getMilDaqSocket( pMilDaq ));
@@ -612,12 +613,11 @@ unsigned int getMilDaqScuBusSlot( const register MIL_DAQ_OBJ_T* pMilDaq )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 unsigned int getMilDaqScuMilExtention( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDaqMilExtentionBySocket( getMilDaqSocket( pMilDaq ) );
 }
-
 #ifdef __cplusplus
 } // namespace MiLdaq
 } // namespace Scu
