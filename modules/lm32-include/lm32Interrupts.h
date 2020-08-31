@@ -230,6 +230,30 @@ STATIC inline ALWAYS_INLINE void irqSetEnableRegister( register const uint32_t i
    asm volatile ( "wcsr ie, %0" ::"r"(ie) );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt mask register
+ * @return Current value of the interrupt mask register.
+ */
+STATIC inline ALWAYS_INLINE
+uint32_t irqGetMaskRegister( void )
+{
+   uint32_t im;
+   asm volatile ( "rcsr %0, im" :"=r"(im) );
+   return im;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Sets the interrupt mask register by the given value.
+ * @param im Value to set.
+ */
+STATIC inline ALWAYS_INLINE
+void irqSetMaskRegister( const uint32_t im )
+{
+   asm volatile ( "wcsr im, %0" ::"r"(im) );
+}
+
 /*! --------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief
@@ -262,24 +286,20 @@ STATIC inline ALWAYS_INLINE void irqEnable( void )
  */
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
-#ifdef CONFIG_RTOS
-   asm volatile ( "wcsr ie, r0" );
+#ifndef CONFIG_DISABLE_CRITICAL_SECTION
+ #ifdef CONFIG_RTOS
+   irqSetEnableRegister( 0 );
+ //  volatile const uint32_t im = irqGetMaskRegister();
+ //  irqSetMaskRegister( 0 );
+ //  irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ //  irqSetMaskRegister( im );
+ #else
+    irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ #endif
 #else
-   irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ #warning "CAUTION: Critical sections disabled this could lead to uncontrolled program-behaviour!"
+   NOP();
 #endif
-}
-
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Returns the current value of the LM32 interrupt mask register
- * @return Current value of the interrupt mask register.
- */
-STATIC inline ALWAYS_INLINE
-uint32_t irqGetMaskRegister( void )
-{
-   uint32_t im;
-   asm volatile ( "rcsr %0, im" :"=r"(im) );
-   return im;
 }
 
 /*! ---------------------------------------------------------------------------

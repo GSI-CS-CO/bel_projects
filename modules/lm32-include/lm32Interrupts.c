@@ -85,17 +85,6 @@ OVERRIDE unsigned int _irqReorderPriority( const unsigned int prio )
    return prio;
 }
 
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Sets the interrupt mask register by the given value.
- * @param im Value to set.
- */
-STATIC inline
-void irqSetMaskRegister( const uint32_t im )
-{
-   asm volatile ( "wcsr im, %0" ::"r"(im) );
-}
-
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
    #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
 #endif
