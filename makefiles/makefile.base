@@ -34,6 +34,8 @@ endif
 
 GCC_VERSION := $(shell $(CC) --version | head -n1 | sed 's/^.* //g' | tr -d . | tr - ' ' | awk '{print $$1}' )
 
+GCC_LEGACY := $(shell [ "$(GCC_VERSION)" -le "453" ] && echo "1" )
+
 DEFINES += TARGET_NAME=$(TARGET)
 DEFINES += CONFIG_GSI
 DEFINES += CONFIG_GSI_FE
@@ -104,7 +106,11 @@ else
  endif
 endif
 LD_FLAGS += $(LTO)
-
+ifdef LTO
+   LTO_INFO = "Yes"
+else
+   LTO_INFO = "No"
+endif
 
 RESULT_FILE  ?= $(BIN_FILE)
 SOURCE       += $(MIAN_MODULE)
@@ -145,9 +151,11 @@ ifdef LIB_DIRS
    ARG_LIBS += $(addprefix -L,$(LIB_DIRS))
 endif
 
-DEPLOY_DIR  ?= ./deploy_$(CPU)
-WORK_DIR    ?= $(DEPLOY_DIR)/work
-TARGET_DIR  ?= $(DEPLOY_DIR)/result
+
+GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
+DEPLOY_DIR    ?= ./deploy_$(CPU)
+WORK_DIR      ?= $(DEPLOY_DIR)/work
+TARGET_DIR    ?= $(DEPLOY_DIR)/result
 
 OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
 DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep
@@ -164,6 +172,10 @@ CFLAGS += -Wfatal-errors
 CFLAGS += -Wall
 CFLAGS += -Wno-strict-aliasing
 # CFLAGS += -Wmaybe-uninitialized
+ifdef GCC_LEGACY
+  CFLAGS += -Wno-unused-variable
+  #CFLAGS += -Wmaybe-uninitialized
+endif
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
@@ -193,6 +205,9 @@ check_src:
 	$(QUIET)(for i in $(CHECK_SOURCE); do \
 		[ -f "$$i" ] || echo -e $(ESC_FG_RED)"ERROR: Sourcefile \"$$i\" not found!"$(ESC_NORMAL) 1>&2; \
 	done)
+
+$(GENERATED_DIR):
+	$(QUIET)mkdir -p $(GENERATED_DIR)
 
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)

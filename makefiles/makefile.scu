@@ -26,7 +26,7 @@ BUILD_ID_FILE ?= $(TARGET)_$(BUILDID_NAME).c
 LINKER_SCRIPT ?= $(TARGET).ld
 
 
-GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
+# GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
 
 MAKEFILE_DIR ?= $(REPOSITORY_DIR)/makefiles
 
@@ -295,6 +295,7 @@ CBR += "Embedded OS : $(EMBEDDED_OS) "\"tskKERNEL_VERSION_NUMBER\"'\\n\\'"\n"
 CBR += "Tick-frequ. : "\" TASK_TICK_RATE_STR \"'\\n\\'"\n"
 endif
 CBR += "GCC Version : $(CBR_GCC)"'\\n\\'"\n"
+CBR += "Opt. level  : $(CODE_OPTIMIZATION), LTO: $(LTO_INFO)"'\\n\\'"\n"
 CBR += "IntAdrOffs  : $(INTADR_OFFS)"'\\n\\'"\n"
 CBR += "SharedOffs  : $(SHARED_START)"'\\n\\'"\n"
 CBR += "SharedSize  : $(SHARED_SIZE)"'\\n\\'"\n"
@@ -384,9 +385,6 @@ DOX_INPUT += $(MAKEFILE_DIR)/makefile.scu
 # -------------- End of defines for Doxygen -----------------------------------
 
 include $(MAKEFILE_DIR)/makefile.lm32
-
-$(GENERATED_DIR):
-	$(QUIET)mkdir $(GENERATED_DIR)
 
 $(GENERATED_DIR)/$(SHARED_MAP_HEADDER): $(GENERATED_DIR)
 	$(QUIET)(printf %b $(SMM)) > $@
