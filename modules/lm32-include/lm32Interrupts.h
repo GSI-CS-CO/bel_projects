@@ -286,14 +286,19 @@ STATIC inline ALWAYS_INLINE void irqEnable( void )
  */
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
-#ifdef CONFIG_RTOS
+#ifndef CONFIG_DISABLE_CRITICAL_SECTION
+ #ifdef CONFIG_RTOS
    irqSetEnableRegister( 0 );
  //  volatile const uint32_t im = irqGetMaskRegister();
  //  irqSetMaskRegister( 0 );
  //  irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
  //  irqSetMaskRegister( im );
+ #else
+    irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ #endif
 #else
-   irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
+ #warning "CAUTION: Critical sections disabled this could lead to uncontrolled program-behaviour!"
+   NOP();
 #endif
 }
 

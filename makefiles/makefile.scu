@@ -356,10 +356,17 @@ LD_FLAGS += -nostdlib
 _LD_FLAGS ?= $(LD_FLAGS) -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
 
+GENRAMMIF := $(shell which genrammif 2>/dev/null)
 GENRAMMIF ?= $(WR_DIR)/tools/genrammif
+
+EB_LOAD   := $(shell which eb-fwload 2>/dev/null)
 EB_LOAD   ?= $(REPOSITORY_DIR)/tools/eb-fwload
+
+EB_RESET  := $(shell which eb-reset 2>/dev/null)
 EB_RESET  ?= $(REPOSITORY_DIR)/tools/eb-reset
 EB_HALT   ?= $(EB_RESET)
+
+EB_INFO   := $(shell which eb-info 2>/dev/null)
 EB_INFO   ?= $(REPOSITORY_DIR)/tools/eb-info
 
 ifeq ($(V), 1)
