@@ -3,9 +3,9 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-March-2020
+ *  version : 20-August-2020
  *
- *  common functions used by various irmware projects
+ *  common functions used by various firmware projects
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -47,7 +47,6 @@
 #include "ebm.h"
 #include "pp-printf.h"
 #include "mini_sdb.h"
-#include "syscon.h"
 #include "aux.h"
 #include "uart.h"
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout MIL piggy
@@ -795,17 +794,17 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
   switch (actState) {
     case COMMON_STATE_ERROR :
       DBPRINT3("common-fwlib: attempting autorecovery ERROR -> IDLE\n");
-      usleep(10000000);
+      uwait(10000000);
       *reqState = COMMON_STATE_IDLE; 
       break;
     case COMMON_STATE_IDLE :
       DBPRINT3("common-fwlib: attempting autorecovery IDLE -> CONFIGURED\n");
-      usleep(5000000);
+      uwait(5000000);
       *reqState = COMMON_STATE_CONFIGURED;
       break;
     case COMMON_STATE_CONFIGURED :
       DBPRINT3("common-fwlib: attempting autorecovery CONFIGURED -> OPREADY\n");
-      usleep(5000000);
+      uwait(5000000);
       *reqState = COMMON_STATE_OPREADY;
       flagRecover = 0;
       break;

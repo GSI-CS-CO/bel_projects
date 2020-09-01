@@ -60,7 +60,7 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[MIL_SIO3_TX_REQ];
   while(!(rx_req & 0x4) && (timeout < BLOCK_TIMEOUT)) {
-    usleep(1);
+    uwait(1);
     rx_req = base[MIL_SIO3_TX_REQ];
     timeout++;
   }
@@ -70,7 +70,7 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[MIL_SIO3_D_RCVD];
   while(!(rx_data_avail & 0x4) && (timeout < BLOCK_TIMEOUT)) {
-    usleep(1);
+    uwait(1);
     rx_data_avail = base[MIL_SIO3_D_RCVD];
     timeout++;
   }
@@ -196,7 +196,7 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
   while(!(rx_req & 0x4) && (timeout < BLOCK_TIMEOUT)) {
-    usleep(1);
+    uwait(1);
     rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
     timeout++;
   }
@@ -206,7 +206,7 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
   while(!(rx_data_avail & 0x4) && (timeout < BLOCK_TIMEOUT)) {
-    usleep(1);
+    uwait(1);
     rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
     timeout++;
   }
@@ -231,9 +231,9 @@ int scub_reset_mil(volatile unsigned short *base, int slot) {
   // unsigned short data;
   // int i;
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0x0;
-  usleep(1000);
+  uwait(1000);
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0xff;
-  usleep(100);      // added by db; if not, an subsequent write/read results in an error -3
+  uwait(100);      // added by db; if not, an subsequent write/read results in an error -3
 
   return OKAY; 
   //for (i = TASKMIN; i <= TASKMAX; i++) {
@@ -245,9 +245,9 @@ int reset_mil(volatile unsigned *base) {
   // unsigned short data;
   // int i;
   base[MIL_SIO3_RST] = 0x0;
-  usleep(1000);
+  uwait(1000);
   base[MIL_SIO3_RST] = 0xff;
-  usleep(100);      // added by db; if not, an subsequent write/read results in an error -3
+  uwait(100);      // added by db; if not, an subsequent write/read results in an error -3
 
   return OKAY;
   //for (i = TASKMIN; i <= TASKMAX; i++) {

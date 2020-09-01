@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-April-2020
+ *  version : 20-August-2020
  *
  *  command-line interface for wrunipz
  *
@@ -168,7 +168,8 @@ void readDataFromFile(char *filename, uint32_t pz, uint32_t vAcc, uint32_t chn, 
 
   char     *tmp;       
   int      dataOffset;
-  uint32_t evt, offset, dummy;
+  uint32_t nEvt;
+  uint32_t evtCode, offset;
   
   // init
   for (i=0; i<WRUNIPZ_NEVT; i++) data[i]     = 0x0;
@@ -201,16 +202,14 @@ void readDataFromFile(char *filename, uint32_t pz, uint32_t vAcc, uint32_t chn, 
   // extract data for pz, vacc, chn
   tmp     = charData;
   *nData  = 0;
-  while (sscanf(tmp, "%u%n", &evt, &dataOffset) == 1) {
-    tmp += dataOffset;
-    sscanf(tmp, ", %uL%n", &offset, &dataOffset);
-    tmp += dataOffset;
-    sscanf(tmp, ", %uL, %n", &dummy, &dataOffset);
-    tmp += dataOffset;
-
-    data[*nData] = (offset << 16) | evt;
+  nEvt    = 0;
+  if (sscanf(tmp, "%u%n", &nEvt, &dataOffset) == 1) tmp += dataOffset;
+  for (i=0; i<nEvt; i++) {
+    if (sscanf(tmp, ", %u%n", &evtCode, &dataOffset) == 1) tmp += dataOffset;
+    if (sscanf(tmp, ", %uL%n", &offset, &dataOffset) == 1) tmp += dataOffset;
+    data[*nData] = (offset << 16) | evtCode;
     (*nData)++;
-  } // while
+  } // for i
 } // readDataFromFile
 
 
