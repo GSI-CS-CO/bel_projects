@@ -70,7 +70,7 @@ You need to have installed the following packages before you can configure and b
 * libtool (glibtoolize)
 * build-essential
 * automake
-* libreadline-dev 
+* libreadline-dev
 
 ## Common Errors and Warnings
 ### Error: quartus: error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]
@@ -96,6 +96,9 @@ export QUARTUS=/opt/quartus/
 export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
+
+### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
+Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
 ## JTAG and Programming
 ### Altera/Intel USB Blaster
