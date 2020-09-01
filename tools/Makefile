@@ -1,14 +1,14 @@
 PREFIX  ?= /usr/local
-STAGING ?= 
+STAGING ?=
 EB      ?= ../ip_cores/etherbone-core/api
 ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
-TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump
+TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) 
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all:	$(TARGETS) monitoring
@@ -35,7 +35,7 @@ monitoring-clean:
 	$(MAKE) -C monitoring clean
 
 monitoringg:
-	$(MAKE) -C monitoring EXTRA_FLAGS="$(EXTRA_FLAGS)" all	
+	$(MAKE) -C monitoring EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 ecatools: button-game io-test
 
@@ -53,9 +53,4 @@ io-test: io-test.cpp
 	g++ $(CFLAGS) -I $(ECA) -I $(TLU) -o io-test io-test.cpp -L $(ECA) -L $(TLU) $(LIBS) -leca -ltlu
 
 eb-reset: eb-reset.c
-	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)	
-
-
-
-
-
+	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
