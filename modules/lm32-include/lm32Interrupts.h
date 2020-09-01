@@ -359,10 +359,8 @@ STATIC inline bool __criticalSectionExit( void )
  * @brief Establishes a atomic respectively critical section between the
  *        following enclosing curly braces.
  *
- * @note <b>CAUTION:</b> Do not use the keywords "brake" or "return" within
+ * @note <b>CAUTION:</b> Do not use the keywords "break" or "return" within
  *       the atomic body! Its a for-loop!\n
- * @note <b>CAUTION:</b> Don't use this macro within interrupt routines
- *       because in this case the danger of race condition exist!\n
  * @note Nested atomic sections are possible.\n
  * @note Keep atomic sections as short as possible, otherwise the danger of
  *       jittering grows when using the real time OS FreeRTOS.
@@ -374,6 +372,8 @@ STATIC inline bool __criticalSectionExit( void )
  *    foo();
  *    bar();
  * }
+ * //...
+ * ATOMIC_SECTION() baz();
  * @endcode
  */
 #define ATOMIC_SECTION()                             \
