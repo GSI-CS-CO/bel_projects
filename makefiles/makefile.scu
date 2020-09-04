@@ -25,9 +25,6 @@ TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
 BUILD_ID_FILE ?= $(TARGET)_$(BUILDID_NAME).c
 LINKER_SCRIPT ?= $(TARGET).ld
 
-
-# GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
-
 MAKEFILE_DIR ?= $(REPOSITORY_DIR)/makefiles
 
 INCLUDED_TOOLCHAIN_DIR = $(REPOSITORY_DIR)/toolchain/bin/
@@ -54,14 +51,11 @@ STARTUP_CODE ?= $(REPOSITORY_DIR)/modules/lm32_stub/crt0ScuLm32.S
 SOURCE += $(STARTUP_CODE)
 SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c
 
-
 SOURCE += $(GENERATED_DIR)/$(BUILD_ID_FILE)
 
 SOURCE += $(SCU_LIB_SRC_DIR)/mini_sdb.c
-
-SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
-# SOURCE += $(SCU_LIB_SRC_DIR)/sdb_add.S
 SOURCE += $(SCU_LIB_SRC_DIR)/sdb_add.c
+SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
 
 SOURCE += $(WR_DIR)/dev/w1.c
 SOURCE += $(WR_DIR)/dev/w1-hw.c
@@ -355,32 +349,6 @@ LD_FLAGS += -nostdlib
 
 _LD_FLAGS ?= $(LD_FLAGS) -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
-
-GENRAMMIF := $(shell which genrammif 2>/dev/null)
-GENRAMMIF ?= $(WR_DIR)/tools/genrammif
-
-EB_LOAD   := $(shell which eb-fwload 2>/dev/null)
-EB_LOAD   ?= $(REPOSITORY_DIR)/tools/eb-fwload
-
-EB_RESET  := $(shell which eb-reset 2>/dev/null)
-EB_RESET  ?= $(REPOSITORY_DIR)/tools/eb-reset
-EB_HALT   ?= $(EB_RESET)
-
-EB_INFO   := $(shell which eb-info 2>/dev/null)
-EB_INFO   ?= $(REPOSITORY_DIR)/tools/eb-info
-
-ifeq ($(V), 1)
-   GENRAMMIF_F = $(GENRAMMIF)
-   EB_LOAD_F   = $(EB_LOAD)
-   EB_RESET_F  = $(EB_RESET)
-   EB_HALT_F   = $(EB_HALT)
-else
-   GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
-   EB_LOAD_F   = $(FORMAT_R) $(CPU) "LOAD" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
-   EB_RESET_F  = $(FORMAT_R) $(CPU) "RESET" "$(SCU_URL) $(CPU_ID)"; $(EB_RESET)
-   EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
-endif
-
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_assert.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
@@ -406,6 +374,55 @@ $(RESULT_FILE): $(BIN_FILE)
 	$(GENRAMMIF_F) $(BIN_FILE) $(RAM_SIZE) > $(RESULT_FILE)
 
 
+# ------------------------ Etherbone- Tools -----------------------------------
+ifndef GENRAMMIF
+   GENRAMMIF := $(shell which genrammif 2>/dev/null)
+   ifeq ($(GENRAMMIF),  )
+      GENRAMMIF := $(WR_DIR)/tools/genrammif
+   endif
+endif
+
+ifndef EB_LOAD
+   EB_LOAD := $(shell which eb-fwload 2>/dev/null)
+   ifeq ($(EB_LOAD), )
+      EB_LOAD := $(REPOSITORY_DIR)/tools/eb-fwload
+   endif
+endif
+
+ifndef EB_RESET
+   EB_RESET := $(shell which eb-reset 2>/dev/null)
+   ifeq ($(EB_RESET), )
+      EB_RESET = $(REPOSITORY_DIR)/tools/eb-reset
+   endif
+endif
+EB_HALT ?= $(EB_RESET)
+
+ifndef EB_INFO
+   EB_INFO := $(shell which eb-info 2>/dev/null)
+   ifeq ($(EB_INFO), )
+      EB_INFO := $(REPOSITORY_DIR)/tools/eb-info
+   endif
+endif
+
+ifeq ($(V), 1)
+   GENRAMMIF_F = $(GENRAMMIF)
+   EB_LOAD_F   = $(EB_LOAD)
+   EB_RESET_F  = $(EB_RESET)
+   EB_HALT_F   = $(EB_HALT)
+else
+   GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
+   EB_LOAD_F   = $(FORMAT_R) $(CPU) "LOAD" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
+   EB_RESET_F  = $(FORMAT_R) $(CPU) "RESET" "$(SCU_URL) $(CPU_ID)"; $(EB_RESET)
+   EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
+endif
+
+.PHONY: show-tools
+show-tools:
+	$(QUIET) echo $(GENRAMMIF)
+	$(QUIET) echo $(EB_LOAD)
+	$(QUIET) echo $(EB_RESET)
+	$(QUIET) echo $(EB_INFO)
+
 #-------------------------- upload to target SCU ------------------------------
 # For developing purposes only.
 # SCU_URL can be a Linux environment-variable containing the URL of the
@@ -413,18 +430,35 @@ $(RESULT_FILE): $(BIN_FILE)
 # E.g.:
 # export SCU_URL=scuxlXXXX
 #
-ifdef SCU_URL
-
 PROTOCOL   ?= tcp
 CPU_ID     ?= 0
 CPU_OFFSET ?= 0
 
+.PHONY: show-url
+show-url:
+	$(QUIET) echo "Protocol: $(PROTOCOL), URL: $(SCU_URL), ID: $(CPU_ID), offset: $(CPU_OFFSET)"
+
+.PHONY: check_scu_url
+check_scu_url:
+ifdef SCU_URL
+	$(QUIET)( ping -c1 $(SCU_URL) 2>/dev/null 1>/dev/null; \
+	if [ "$$?" != "0" ]; then \
+	   echo -e $(ESC_ERROR)"ERROR: Target \"$(SCU_URL)\" defined in SCU_URL not found or doesn't response!"$(ESC_NORMAL) 1>&2;\
+	   exit 1; \
+	fi; \
+	exit 0 \
+	)
+else
+	$(QUIET) echo -e $(ESC_ERROR)"ERROR: Environment variable SCU_URL not defined!"$(ESC_NORMAL) 1>&2
+	$(QUIET) exit 1
+endif
+
 .PHONY: reset
-reset:
+reset: check_scu_url
 	$(EB_RESET_F) $(PROTOCOL)/$(SCU_URL) cpureset $(CPU_ID)
 
 .PHONY: halt
-halt:
+halt: check_scu_url
 	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
@@ -432,8 +466,8 @@ load: $(BIN_FILE) halt
 	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $(BIN_FILE)
 
 .PHONY: info
-info:
+info: check_scu_url
 	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
-endif
 
+# ------------ End of Etherbone- Tools ----------------------------------------
 #=================================== EOF ======================================
