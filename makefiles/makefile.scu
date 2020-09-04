@@ -25,9 +25,6 @@ TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
 BUILD_ID_FILE ?= $(TARGET)_$(BUILDID_NAME).c
 LINKER_SCRIPT ?= $(TARGET).ld
 
-
-# GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
-
 MAKEFILE_DIR ?= $(REPOSITORY_DIR)/makefiles
 
 INCLUDED_TOOLCHAIN_DIR = $(REPOSITORY_DIR)/toolchain/bin/
@@ -54,14 +51,11 @@ STARTUP_CODE ?= $(REPOSITORY_DIR)/modules/lm32_stub/crt0ScuLm32.S
 SOURCE += $(STARTUP_CODE)
 SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c
 
-
 SOURCE += $(GENERATED_DIR)/$(BUILD_ID_FILE)
 
 SOURCE += $(SCU_LIB_SRC_DIR)/mini_sdb.c
-
-SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
-# SOURCE += $(SCU_LIB_SRC_DIR)/sdb_add.S
 SOURCE += $(SCU_LIB_SRC_DIR)/sdb_add.c
+SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
 
 SOURCE += $(WR_DIR)/dev/w1.c
 SOURCE += $(WR_DIR)/dev/w1-hw.c
@@ -381,25 +375,33 @@ $(RESULT_FILE): $(BIN_FILE)
 
 
 # ------------------------ Etherbone- Tools -----------------------------------
-GENRAMMIF := $(shell which genrammif 2>/dev/null)
-ifeq ($(GENRAMMIF),  )
-   GENRAMMIF := $(WR_DIR)/tools/genrammif
+ifndef GENRAMMIF
+   GENRAMMIF := $(shell which genrammif 2>/dev/null)
+   ifeq ($(GENRAMMIF),  )
+      GENRAMMIF := $(WR_DIR)/tools/genrammif
+   endif
 endif
 
-EB_LOAD := $(shell which eb-fwload 2>/dev/null)
-ifeq ($(EB_LOAD), )
-   EB_LOAD := $(REPOSITORY_DIR)/tools/eb-fwload
+ifndef EB_LOAD
+   EB_LOAD := $(shell which eb-fwload 2>/dev/null)
+   ifeq ($(EB_LOAD), )
+      EB_LOAD := $(REPOSITORY_DIR)/tools/eb-fwload
+   endif
 endif
 
-EB_RESET := $(shell which eb-reset 2>/dev/null)
-ifeq ($(EB_RESET), )
-   EB_RESET = $(REPOSITORY_DIR)/tools/eb-reset
+ifndef EB_RESET
+   EB_RESET := $(shell which eb-reset 2>/dev/null)
+   ifeq ($(EB_RESET), )
+      EB_RESET = $(REPOSITORY_DIR)/tools/eb-reset
+   endif
 endif
 EB_HALT ?= $(EB_RESET)
 
-EB_INFO := $(shell which eb-info 2>/dev/null)
-ifeq ($(EB_INFO), )
-   EB_INFO := $(REPOSITORY_DIR)/tools/eb-info
+ifndef EB_INFO
+   EB_INFO := $(shell which eb-info 2>/dev/null)
+   ifeq ($(EB_INFO), )
+      EB_INFO := $(REPOSITORY_DIR)/tools/eb-info
+   endif
 endif
 
 ifeq ($(V), 1)
@@ -427,12 +429,33 @@ PROTOCOL   ?= tcp
 CPU_ID     ?= 0
 CPU_OFFSET ?= 0
 
+.PHONY: show-tools
+show-tools:
+	$(QUIET) echo $(GENRAMMIF)
+	$(QUIET) echo $(EB_LOAD)
+	$(QUIET) echo $(EB_RESET)
+	$(QUIET) echo $(EB_INFO)
+
+.PHONY: show-url
+show-url:
+	$(QUIET) echo "Protocol: $(PROTOCOL), URL: $(SCU_URL), ID: $(CPU_ID), offset: $(CPU_OFFSET)"
+
+.PHONY: check_scu_url
+check_scu_url:
+	$(QUIET)( ping -c1 $(SCU_URL) 2>/dev/null 1>/dev/null; \
+	if [ "$$?" != "0" ]; then \
+	   echo -e $(ESC_FG_RED)"ERROR: Target \"$(SCU_URL)\" defined in SCU_URL not found or doesn't response!"$(ESC_NORMAL) 1>&2;\
+	   exit 1; \
+	fi; \
+	exit 0 \
+	)
+
 .PHONY: reset
-reset:
+reset: check_scu_url
 	$(EB_RESET_F) $(PROTOCOL)/$(SCU_URL) cpureset $(CPU_ID)
 
 .PHONY: halt
-halt:
+halt: check_scu_url
 	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
@@ -440,7 +463,7 @@ load: $(BIN_FILE) halt
 	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $(BIN_FILE)
 
 .PHONY: info
-info:
+info: check_scu_url
 	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
 endif
 # ------------ End of Etherbone- Tools ----------------------------------------
