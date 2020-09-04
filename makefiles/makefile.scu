@@ -355,32 +355,6 @@ LD_FLAGS += -nostdlib
 
 _LD_FLAGS ?= $(LD_FLAGS) -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
-
-GENRAMMIF := $(shell which genrammif 2>/dev/null)
-GENRAMMIF ?= $(WR_DIR)/tools/genrammif
-
-EB_LOAD   := $(shell which eb-fwload 2>/dev/null)
-EB_LOAD   ?= $(REPOSITORY_DIR)/tools/eb-fwload
-
-EB_RESET  := $(shell which eb-reset 2>/dev/null)
-EB_RESET  ?= $(REPOSITORY_DIR)/tools/eb-reset
-EB_HALT   ?= $(EB_RESET)
-
-EB_INFO   := $(shell which eb-info 2>/dev/null)
-EB_INFO   ?= $(REPOSITORY_DIR)/tools/eb-info
-
-ifeq ($(V), 1)
-   GENRAMMIF_F = $(GENRAMMIF)
-   EB_LOAD_F   = $(EB_LOAD)
-   EB_RESET_F  = $(EB_RESET)
-   EB_HALT_F   = $(EB_HALT)
-else
-   GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
-   EB_LOAD_F   = $(FORMAT_R) $(CPU) "LOAD" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
-   EB_RESET_F  = $(FORMAT_R) $(CPU) "RESET" "$(SCU_URL) $(CPU_ID)"; $(EB_RESET)
-   EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
-endif
-
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_assert.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
@@ -405,6 +379,40 @@ $(WORK_DIR)/$(LINKER_SCRIPT): # $(WORK_DIR)
 $(RESULT_FILE): $(BIN_FILE)
 	$(GENRAMMIF_F) $(BIN_FILE) $(RAM_SIZE) > $(RESULT_FILE)
 
+
+# ------------------------ Etherbone- Tools -----------------------------------
+GENRAMMIF := $(shell which genrammif 2>/dev/null)
+ifeq ($(GENRAMMIF),  )
+   GENRAMMIF := $(WR_DIR)/tools/genrammif
+endif
+
+EB_LOAD := $(shell which eb-fwload 2>/dev/null)
+ifeq ($(EB_LOAD), )
+   EB_LOAD := $(REPOSITORY_DIR)/tools/eb-fwload
+endif
+
+EB_RESET := $(shell which eb-reset 2>/dev/null)
+ifeq ($(EB_RESET), )
+   EB_RESET = $(REPOSITORY_DIR)/tools/eb-reset
+endif
+EB_HALT ?= $(EB_RESET)
+
+EB_INFO := $(shell which eb-info 2>/dev/null)
+ifeq ($(EB_INFO), )
+   EB_INFO := $(REPOSITORY_DIR)/tools/eb-info
+endif
+
+ifeq ($(V), 1)
+   GENRAMMIF_F = $(GENRAMMIF)
+   EB_LOAD_F   = $(EB_LOAD)
+   EB_RESET_F  = $(EB_RESET)
+   EB_HALT_F   = $(EB_HALT)
+else
+   GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
+   EB_LOAD_F   = $(FORMAT_R) $(CPU) "LOAD" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
+   EB_RESET_F  = $(FORMAT_R) $(CPU) "RESET" "$(SCU_URL) $(CPU_ID)"; $(EB_RESET)
+   EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
+endif
 
 #-------------------------- upload to target SCU ------------------------------
 # For developing purposes only.
@@ -435,5 +443,5 @@ load: $(BIN_FILE) halt
 info:
 	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
 endif
-
+# ------------ End of Etherbone- Tools ----------------------------------------
 #=================================== EOF ======================================
