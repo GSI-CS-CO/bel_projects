@@ -43,7 +43,8 @@ DEFINES += CONFIG_SCU=$(SCU_VERSION)
 
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_OUTPUT_DIRECTORY ?= $(HOME)/Documents/scr_doc/$(TARGET)
-DOX_PROJECT_LOGO     ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
+# DOX_PROJECT_LOGO     ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
+DOX_PROJECT_LOGO     ?= $(MAKEFILE_DIR)/fair_gsi_logo63x55.png
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/scu_assert.h
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
