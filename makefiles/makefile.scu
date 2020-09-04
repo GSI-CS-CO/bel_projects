@@ -416,19 +416,6 @@ else
    EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
 endif
 
-#-------------------------- upload to target SCU ------------------------------
-# For developing purposes only.
-# SCU_URL can be a Linux environment-variable containing the URL of the
-# concerning SCU to develop.
-# E.g.:
-# export SCU_URL=scuxlXXXX
-#
-ifdef SCU_URL
-
-PROTOCOL   ?= tcp
-CPU_ID     ?= 0
-CPU_OFFSET ?= 0
-
 .PHONY: show-tools
 show-tools:
 	$(QUIET) echo $(GENRAMMIF)
@@ -436,19 +423,35 @@ show-tools:
 	$(QUIET) echo $(EB_RESET)
 	$(QUIET) echo $(EB_INFO)
 
+#-------------------------- upload to target SCU ------------------------------
+# For developing purposes only.
+# SCU_URL can be a Linux environment-variable containing the URL of the
+# concerning SCU to develop.
+# E.g.:
+# export SCU_URL=scuxlXXXX
+#
+PROTOCOL   ?= tcp
+CPU_ID     ?= 0
+CPU_OFFSET ?= 0
+
 .PHONY: show-url
 show-url:
 	$(QUIET) echo "Protocol: $(PROTOCOL), URL: $(SCU_URL), ID: $(CPU_ID), offset: $(CPU_OFFSET)"
 
 .PHONY: check_scu_url
 check_scu_url:
+ifdef SCU_URL
 	$(QUIET)( ping -c1 $(SCU_URL) 2>/dev/null 1>/dev/null; \
 	if [ "$$?" != "0" ]; then \
-	   echo -e $(ESC_FG_RED)"ERROR: Target \"$(SCU_URL)\" defined in SCU_URL not found or doesn't response!"$(ESC_NORMAL) 1>&2;\
+	   echo -e $(ESC_ERROR)"ERROR: Target \"$(SCU_URL)\" defined in SCU_URL not found or doesn't response!"$(ESC_NORMAL) 1>&2;\
 	   exit 1; \
 	fi; \
 	exit 0 \
 	)
+else
+	$(QUIET) echo -e $(ESC_ERROR)"ERROR: Environment variable SCU_URL not defined!"$(ESC_NORMAL) 1>&2
+	$(QUIET) exit 1
+endif
 
 .PHONY: reset
 reset: check_scu_url
@@ -465,6 +468,6 @@ load: $(BIN_FILE) halt
 .PHONY: info
 info: check_scu_url
 	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
-endif
+
 # ------------ End of Etherbone- Tools ----------------------------------------
 #=================================== EOF ======================================

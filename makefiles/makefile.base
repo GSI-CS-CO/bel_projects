@@ -47,6 +47,7 @@ ifndef NO_COLORED
    ESC_FG_GREEN   := "\\e[32m"
    ESC_BOLD       := "\\e[1m"
    ESC_NORMAL     := "\\e[0m"
+   ESC_ERROR      := "$(ESC_BOLD)$(ESC_FG_RED)"
 endif
 
 ifeq ($(V), 1)
