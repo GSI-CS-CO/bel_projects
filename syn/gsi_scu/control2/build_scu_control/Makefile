@@ -23,8 +23,8 @@ DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 MIL_GAP := 1
 # MIL_DAQ_USE_DDR3 := 1
 # ADDAC_DAQ := 1
-
-DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
+# USE_LINUX_PRINTF := 1
+# DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
 
 BASE_VERSION = 3
 
@@ -43,8 +43,7 @@ MIAN_MODULE    = $(SCU_DIR)/scu_main.c
 
 ifdef MIL_DAQ_USE_DDR3
    DEFINES += CONFIG_MIL_DAQ_USE_RAM
-   USE_SCU_EXTERN_RAM := 1[ubecker@asl740 ~]$ start
-
+   USE_SCU_EXTERN_RAM := 1
 endif
 ifdef USE_HISTORY
    DEFINES += HISTORY
@@ -83,7 +82,6 @@ SOURCE += $(SCU_LIB_SRC_DIR)/scu_mailbox.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_bus.c
-SOURCE += $(WR_DIR)/pp_printf/div64.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
 SOURCE += $(SCU_DIR)/scu_function_generator.c
 SOURCE += $(SCU_DIR)/scu_circular_buffer.c
@@ -126,7 +124,7 @@ DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 
  CODE_OPTIMIZATION = 2
 # CODE_OPTIMIZATION = s
-  TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+#  TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 # TOOLCHAIN_DIR = /home/bel/ubecker/lnx/src/extern/gcc-toolchain-builder/TEST93/bin/
 # RAM_SIZE    = 147456
 
