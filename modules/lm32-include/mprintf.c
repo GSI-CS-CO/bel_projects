@@ -13,7 +13,9 @@
 #include <stdint.h>
 #include <helper_macros.h>
 #include <mprintf.h>
-
+#ifndef CONFIG_USE_LINUX_PRINTF
+  #include <pp-printf.h>
+#endif
 
 #ifndef __lm32__
   #include <stdio.h>
@@ -158,7 +160,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       }
 
       unsigned char* ptr;
-      unsigned int hexOffset;
+      unsigned int hexOffset = 0;
       unsigned int base;
       bool     signum = false;
       switch( currentChar = *format++ )
@@ -313,6 +315,47 @@ int mprintf( const char* format, ... )
    va_end( ap );
    return rval;
 }
+
+#ifndef CONFIG_USE_LINUX_PRINTF
+/*! ---------------------------------------------------------------------------
+ * @see pp-printf.h
+ */
+int pp_printf( const char* format, ... )
+{
+   va_list ap;
+   va_start( ap, format );
+   const int rval = vprintf( format, ap );
+   va_end( ap );
+   return rval;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see pp-printf.h
+ */
+int pp_sprintf( char* s, char const *format, ... )
+{
+   va_list ap;
+   va_start( ap, format );
+   const int r = vsnprintf( s, DEFAULT_SPRINTF_LIMIT, format, ap );
+   va_end( ap );
+   return r;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see pp-printf.h
+ */
+int pp_vsprintf( char* buf, const char* format, va_list arg )
+{
+   PRINTF_T printfObj =
+   {
+      .pStart   = buf,
+      .pCurrent = buf,
+      .limit    = DEFAULT_SPRINTF_LIMIT,
+      .putch    = addToString
+   };
+   return vprintfBase( &printfObj, format, arg );
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @see mprintf.h
