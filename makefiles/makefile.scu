@@ -63,10 +63,16 @@ SOURCE += $(WR_DIR)/dev/uart.c
 SOURCE += $(WR_DIR)/dev/devicelist.c
 SOURCE += $(WR_DIR)/dev/syscon.c
 SOURCE += $(WR_DIR)/lib/usleep.c
-SOURCE += $(WR_DIR)/pp_printf/printf.c
+ifdef USE_LINUX_PRINTF
+ SOURCE += $(WR_DIR)/pp_printf/printf.c
 # SOURCE += $(WR_DIR)/pp_printf/vsprintf-mini.c #
-SOURCE += $(WR_DIR)/pp_printf/vsprintf-full.c #
+ SOURCE += $(WR_DIR)/pp_printf/vsprintf-full.c #
+ DEFINES += CONFIG_USE_LINUX_PRINTF
+endif
+
 SOURCE += $(WR_DIR)/sdb-lib/glue.c
+
+
 
 DEFINES += CONFIG_WR_NODE
 DEFINES += CONFIG_PRINT_BUFSIZE=$(PRINT_BUFSIZE)
@@ -233,7 +239,7 @@ LDS += "     _ebss = .;\n"
 LDS += "     _end = .;\n"
 LDS += "     PROVIDE(end = .);\n"
 LDS += "   } > ram = 0\n\n"
-ifndef NO_PRINTF_SUBST
+ifdef USE_LINUX_PRINTF
 LDS += "   PROVIDE(mprintf = pp_printf);\n"
 LDS += "   PROVIDE(printf = pp_printf);\n"
 LDS += "   PROVIDE(sprintf = pp_sprintf);\n"

@@ -29,7 +29,7 @@
 #include <dbg.h>
 #include <eb_console_helper.h>
 #include <scu_ramBuffer.h>
-
+#error wrong place!
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
@@ -232,7 +232,7 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Removes the oldest DAQ- block in the ring boffer
  */
-static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
+STATIC int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
 {
    switch( ramRingGetTypeOfOldestBlock( pThis ) )
    {

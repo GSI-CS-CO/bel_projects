@@ -28,7 +28,7 @@
  */
 #ifndef _SCU_RAMBUFFER_H
 #define _SCU_RAMBUFFER_H
-
+#error wrong place
 #ifdef CONFIG_SCU_USE_DDR3
 #include <scu_ddr3.h>
 #else

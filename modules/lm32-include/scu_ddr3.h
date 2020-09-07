@@ -185,7 +185,7 @@ typedef struct
 
 /*! --------------------------------------------------------------------------
  */
-static inline
+STATIC inline
 unsigned int __ddr3GetEndianIndex16( const unsigned int i )
 {
    return (i%2)? (i-1) : (i+1);
@@ -193,7 +193,7 @@ unsigned int __ddr3GetEndianIndex16( const unsigned int i )
 
 /*! --------------------------------------------------------------------------
  */
-static inline
+STATIC inline
 void ddr3SetPayload16( DDR3_PAYLOAD_T* pPl, const uint16_t d,
                        const unsigned int i )
 {
@@ -207,7 +207,7 @@ void ddr3SetPayload16( DDR3_PAYLOAD_T* pPl, const uint16_t d,
 
 /*! --------------------------------------------------------------------------
  */
-static inline
+STATIC inline
 uint16_t ddr3GetPayload16( DDR3_PAYLOAD_T* pPl, const unsigned int i )
 {
    DDR_ASSERT( i <= ARRAY_SIZE( pPl->ad16 ) );
@@ -218,7 +218,7 @@ uint16_t ddr3GetPayload16( DDR3_PAYLOAD_T* pPl, const unsigned int i )
 #endif
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Initializing of DDR3 RAM
  * @param pThis Pointer to the DDR3 object
@@ -234,7 +234,7 @@ int ddr3init( register DDR3_T* pThis );
  * @param index64 64 bit aligned index
  * @param pData Pointer to the 64 bit data to write.
  */
-static inline
+STATIC inline
 void ddr3write64( register const  DDR3_T* pThis,
                            const unsigned int index64,
                            const DDR3_PAYLOAD_T* pData )
@@ -264,7 +264,7 @@ void ddr3write64( register const  DDR3_T* pThis,
  * @param pData Pointer to the 64-bit-target where the function should
  *              copy the data.
  */
-static inline
+STATIC inline
 void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
                           const unsigned int index64 )
 {
@@ -296,7 +296,7 @@ void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
  * @param pThis Pointer to the DDR3 object
  * @return Currently fifo status;
  */
-static inline volatile
+STATIC inline volatile
 uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
 {
    DDR_ASSERT( pThis != NULL );
@@ -315,7 +315,7 @@ uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
  * @see DDR3_FIFO_HIGH_WORD_OFFSET_ADDR
  * @param pThis Pointer to the DDR3 object
  */
-static inline
+STATIC inline
 void ddr3PopFifo( register const DDR3_T* pThis,
                            DDR3_PAYLOAD_T* pData )
 {
@@ -341,7 +341,7 @@ void ddr3PopFifo( register const DDR3_T* pThis,
  *                 has to be between [1..DDR3_XFER_FIFO_SIZE]
  * @see DDR3_XFER_FIFO_SIZE
  */
-static inline
+STATIC inline
 void ddr3StartBurstTransfer( register const DDR3_T* pThis,
                                       const unsigned int burstStartAddr,
                                       const unsigned int burstLen )
