@@ -267,62 +267,60 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
 
       std::string name = gUp[v].name;
-      try{
-      //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
-      hash = gUp[v].hash;
-      cpu  = s2u<uint8_t>(gUp[v].cpu);
-
-      //add flags for beam process and pattern entry and exit points
-      flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS)
-            | ((s2u<bool>(gUp[v].bpExit))   << NFLG_BP_EXIT_LM32_POS)
-            | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
-            | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
-
-      amI it;
-      try {
-        it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
-      } catch (...) {
-        //sLog << "Adding " << name << std::endl;
-        allocState = atUp.allocate(cpu, hash, v, true);
-        if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
-        if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
-        // getting here means alloc went okay
-        it = atUp.lookupHash(hash);
-      }
-
-      //TODO Find something better than stupic cast to ptr
-      //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
-      auto* x = (AllocMeta*)&(*it);
-
-      
-      // add timing node data objects to vertices
-      if(gUp[v].np == nullptr) {
-
-        cmp = gUp[v].type;
-
-            // FIXME most of this shit should be in constructor
-             if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
-                                            gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
-        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
-        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
-        else if (cmp == dnt::sSwitch)      {gUp[v].np = (node_ptr) new     Switch(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs) ); }
-        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
-                                                                              s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
-                                                                              s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait), s2u<bool>(gUp[v].vabs)); }
-        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
-        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
-        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
-        else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
-        //FIXME try to get info from download
-        else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
-      }
-      } catch (std::runtime_error const& err) {
-        throw std::runtime_error( "Failed to create data object for node <" + name + ">. Cause: " + err.what());
-      }  
+      //try{
+        //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
+        hash = gUp[v].hash;
+        cpu  = s2u<uint8_t>(gUp[v].cpu);
+  
+        //add flags for beam process and pattern entry and exit points
+        flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS)
+              | ((s2u<bool>(gUp[v].bpExit))   << NFLG_BP_EXIT_LM32_POS)
+              | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
+              | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
+  
+        amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
+        if (!atUp.isOk(it)) {
+          //sLog << "Adding " << name << std::endl;
+          allocState = atUp.allocate(cpu, hash, v, true);
+          if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
+          if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
+          // getting here means alloc went okay
+          it = atUp.lookupHash(hash);
+        }
+  
+        //TODO Find something better than stupic cast to ptr
+        //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
+        auto* x = (AllocMeta*)&(*it);
+  
+        
+        // add timing node data objects to vertices
+        if(gUp[v].np == nullptr) {
+  
+          cmp = gUp[v].type;
+  
+              // TODO most of this shit should be in constructor
+               if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
+                                              gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
+          else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
+          else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
+          else if (cmp == dnt::sSwitch)      {gUp[v].np = (node_ptr) new     Switch(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs) ); }
+          else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+                                                                                s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
+                                                                                s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
+          else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait), s2u<bool>(gUp[v].vabs)); }
+          else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+          else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+          else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+          else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+          else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+          else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+          else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
+          //FIXME try to get info from download
+          else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
+        }
+      //} catch (std::runtime_error const& err) {
+      //  throw std::runtime_error( "Failed to create data object for node <" + name + ">. Cause: " + err.what());
+      //}  
     }
 
     // Crawl vertices and serialise their data objects for upload
@@ -433,32 +431,28 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
-
+    if(verbose) sLog << "Generate Metadata" << std::endl;
     generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
 
-    //add to hash dict
-    BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
-      hm.add(gTmp[v].name);
-    }
-
-
-    //find and list all duplicates i.e. docking points between trees
-
-    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
-        if (gTmp[w].hash == gUp[v].hash) {
-          //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
-          //Check the type: if it's undefined, node definition was implicit
-          if (gTmp[w].type != sUndefined) throw std::runtime_error( "Node " + gTmp[w].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
-          duplicates[v] = w;
-        }
+    //find and list all duplicates i.e. docking points between trees and Update hash dict
+    if(verbose) sLog << "Find duplicates (docking points) and Update hash dict" << std::endl;
+    BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
+      //add to hash dict
+      hm.add(gTmp[w].name);
+      amI x = atUp.lookupHashNoEx(gTmp[w].hash);
+      
+      if (atUp.isOk(x)) {
+        //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
+        //Check the type: if it's undefined, node definition was implicit
+        if (gTmp[w].type != sUndefined) throw std::runtime_error( "Node " + gTmp[w].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
+        duplicates[x->v] = w;
       }
     }
 
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
     //boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
     //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    if(verbose) sLog << "Merge graphs" << std::endl;
     mycopy_graph<Graph>(gTmp, gUp, vertexMap);
     //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
     //merge duplicate nodes
@@ -466,7 +460,7 @@ using namespace DotStr::Misc;
       //sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl;
       mergeUploadDuplicates(it.first, vertexMap[it.second]);
     }
-
+    if(verbose) sLog << "Remove duplicates" << std::endl;
     //now remove duplicates
     for(auto& itDup : duplicates ) {
       boost::clear_vertex(vertexMap[itDup.second], gUp);
@@ -477,12 +471,13 @@ using namespace DotStr::Misc;
 
     //FIXME this also adds/changes the known nodes based on the download. Do we really want that?
     //add whats left to groups dict
+    if(verbose) sLog << "Update Group dict" << std::endl;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
       gt.setPattern(gUp[v].name, gUp[v].patName, (s2u<bool>(gUp[v].patEntry)), (s2u<bool>(gUp[v].patExit)));
     }
     //writeUpDotFile("inspect.dot", false);
-
+    if(verbose) sLog << "Create binary for upload" << std::endl;
     prepareUpload();
     atUp.syncBmpsToPools();
 
@@ -507,33 +502,34 @@ using namespace DotStr::Misc;
 
     vertex_map_t vertexMap;
     vertex_set_t toDelete;
+    //typedef boost::bimap< uint32_t, vertex_t v > hashVertexMap;
+    //typedef hBiMap::value_type hashVertexTuple;
+//
+    //hashVertexMap hvm;
 
     //TODO probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends
 
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) vertexMap[v] = v;
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      vertexMap[v] = v;
+      //hvm.insert(hashVertexTuple(gUp[v].hash, v))
+    }  
 
-    bool found;
+
+    //TODO Test this approach to remove square complexity by lookup
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
-      //sLog <<  "Looking at " << gTmp[w].name << std::endl;
-      found = false;
       if (verbose) sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl;
-      BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-        if ((gTmp[w].hash == gUp[v].hash)) {
-          found = true;
-          if (gTmp[w].type != DotStr::Misc::sUndefined) {
-            toDelete.insert(v);                   // add the node
-            //sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;
-            pushMetaNeighbours(v, gUp, toDelete); // add all of its meta children as well
-          } else {}
-          break;
-        }
-      }
-      if (!found) {
-        sLog <<  "Skipping unknown Node " << gTmp[w].name << std::hex << " 0x" << gTmp[w].hash << std::endl;
+    
+      if (gTmp[w].type != DotStr::Misc::sUndefined) continue;
+    
+      auto x = atUp.lookupHashNoEx(gTmp[w].hash);
+      if (atUp.isOk(x)) {
+        toDelete.insert(x->v);                   // add the node
+        pushMetaNeighbours(x->v, gUp, toDelete); // add all of its meta children as well
       }
     }
-
+      
+    //FIXME Square complexity, but unsure if inner loop can be replaced
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
       //check out all parents (sources) of this to be deleted node, update their staging
@@ -546,6 +542,8 @@ using namespace DotStr::Misc;
       }
     }
 
+
+    //FIXME Square complexity, but unsure if inner loop can be replaced
     //remove designated vertices
     for(auto& vd : toDelete ) {
       //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;
@@ -610,9 +608,6 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable
       if (!hm.lookup(g[v].name)) {throw std::runtime_error("Node <" + g[v].name + "> was explicitly named for keep/remove, but is unknown to Hashtable!\n");}
-    }
-
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Groupstable
       auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
       if (x.first == x.second)   {throw std::runtime_error("Node <" + g[v].name + "> was explicitly named for keep/remove, but is unknown to Grouptable!\n");}
@@ -624,10 +619,13 @@ using namespace DotStr::Misc;
   int CarpeDM::CarpeDMimpl::add(Graph& g, bool force) {
 
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
+    if(verbose) sLog << "Download binary as base for addition" << std::endl;  
     baseUploadOnDownload();
+    if(verbose) sLog << "Add new subgraph" << std::endl;
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
+    if(verbose) sLog << "Upload" << std::endl;
     return upload(OP_TYPE_SCH_ADD);
   }
 
@@ -665,6 +663,8 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     generateBlockMeta(gTmpKeep);
 
+
+    //FIXME Resource hog with square complexity. Replace inner loop by lookup
     bool found;
     BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
       //sLog <<  "Scanning " << gUp[w].name << std::endl;
