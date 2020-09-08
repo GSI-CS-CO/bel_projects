@@ -125,12 +125,6 @@ bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, const char** ppArgv )
 {
-   //uint64_t T = 0xc698000200000000;
-  // uint64_t T = 0x0002c69800000000;
-   //uint64_t T = 0x2c77e00000000000;
-  // uint64_t T = 0xe0002c7700000000;
-  // cout << "Test: " << wrToTimeDateString( T ) << endl;
-  // return 0;
    if( argc < 2 )
    {
       cerr << "ERROR: No SCU-URL given!" << endl;

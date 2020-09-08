@@ -17,7 +17,7 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 MIAN_MODULE := daqexample.cpp
 
 ifndef USE_SHARED_LIB
-  SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
   SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
   SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
   SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp

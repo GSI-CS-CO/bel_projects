@@ -135,7 +135,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
-      if( scuBusGetSlaveValue16( pSlaveAddr, CID_SYS )   != SCUBUS_INVALID_VALUE ||
+      if( scuBusGetSlaveValue16( pSlaveAddr, CID_SYSTEM )   != SCUBUS_INVALID_VALUE ||
           scuBusGetSlaveValue16( pSlaveAddr, CID_GROUP ) != SCUBUS_INVALID_VALUE )
          slaveFlags |= (1 << (slot-SCUBUS_START_SLOT));
    }

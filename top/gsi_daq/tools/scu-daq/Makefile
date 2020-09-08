@@ -26,7 +26,6 @@ SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
-# SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp

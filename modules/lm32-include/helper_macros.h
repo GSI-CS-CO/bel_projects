@@ -185,6 +185,29 @@
 #define UNUSED __attribute__((unused))
 
 /*!
+ * @brief Can be used for anonymous unions
+ *
+ * This attribute, attached to a union type definition, indicates that any
+ * function parameter having that union type causes calls to that function
+ * to be treated in a special way.\n
+ *
+ * First, the argument corresponding to a transparent union type can be of
+ * any type in the union; no cast is required. Also, if the union contains
+ * a pointer type, the corresponding argument can be a null pointer constant
+ * or a void pointer expression; and if the union contains a void pointer type,
+ * the corresponding argument can be any pointer expression.
+ * If the union member type is a pointer, qualifiers like const on the
+ * referenced type must be respected, just as with normal pointer conversions.\n
+ *
+ * Second, the argument is passed to the function using the calling conventions
+ * of the first member of the transparent union, not the calling conventions
+ * of the union itself.
+ * @note All members of the union must have the same machine representation;
+ *       this is necessary for this argument passing to work properly!
+ */
+#define TRANSPARENT_UNION __attribute__((__transparent_union__))
+
+/*!
  * @brief Generates a deprecated warning during compiling
  *
  * The deprecated modifier- macro enables the declaration of a deprecated

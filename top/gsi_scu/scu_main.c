@@ -209,9 +209,11 @@ void clear_handler_state( const uint8_t socket )
 //#define __MURKS
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
  */
-STATIC inline void onScuBusEvent( MSI_T* pMessage )
+STATIC inline ALWAYS_INLINE
+void onScuBusEvent( MSI_T* pMessage )
 {
 #ifdef __MURKS
 #warning MURKS!

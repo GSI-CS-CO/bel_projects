@@ -57,9 +57,11 @@ namespace FG
 /** @brief check if a channel buffer is empty
  *  @param cr channel register
  *  @param channel number of the channel
+ *  @retval true Buffer is empty.
+ *  @retval false Buffer is not empty.
  */
-static
-inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
+STATIC inline
+bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
 {
    return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
@@ -67,9 +69,10 @@ inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
 /** @brief get the fill level  of a channel buffer
  *  @param cr channel register
  *  @param channel number of the channel
+ *  @return Number of items of type FG_CHANNEL_REG_T
  */
-static
-inline RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel )
+STATIC inline
+RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel )
 {
    if( cr[channel].wr_ptr > cr[channel].rd_ptr )
       return cr[channel].wr_ptr - cr[channel].rd_ptr;
@@ -83,8 +86,11 @@ inline RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int c
 /** @brief check if a channel buffer is full
  *  @param cr channel register
  *  @param channel number of the channel
+ *  @retval true Buffer is full.
+ *  @retval false Buffer is not full.
  */
-static inline bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
+STATIC inline
+bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
 {
    return (cr[channel].wr_ptr + 1) % (BUFFER_SIZE) == cr[channel].rd_ptr;
 }
@@ -94,8 +100,10 @@ static inline bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int ch
  *  @param pCr pointer to the first channel register
  *  @param channel number of the channel
  *  @param pPset the data from the buffer is written to this address
+ *  @retval false Buffer is empty no data read.
+ *  @retval true Date successful read.
  */
-static inline
+STATIC inline
 bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
             const unsigned int channel, FG_PARAM_SET_T* pPset )
 {
@@ -104,6 +112,7 @@ bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
    /* check empty */
    if( pCr[channel].wr_ptr == rptr )
       return false;
+
   /* read element */
 #ifdef __cplusplus
    //TODO Workaround, I don't know why yet!
@@ -145,7 +154,8 @@ MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
  */
-static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue)
+STATIC inline
+bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue)
 {
    return (mb[queue].ring_head != mb[queue].ring_tail);
 }
@@ -153,7 +163,8 @@ static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int 
 /*!
  * @brief Resets the message queue
  */
-static inline void cbReset( volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue )
+STATIC inline
+void cbReset( volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue )
 {
    mb[queue].ring_head = 0;
    mb[queue].ring_tail = 0;
@@ -164,8 +175,11 @@ static inline void cbReset( volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int
  * @param pMessage Target address of message to copy
  * @param pMsgBuffer pointer to the first message buffer
  * @param queue number of the queue
+ * @retval false No message read.
+ * @retval true Message read.
  */
-static inline bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
+STATIC inline
+bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
 {
    if( !has_msg( pMsgBuffer, queue ) )
       return false;
@@ -179,29 +193,42 @@ static inline bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pM
  #define getMessageSave getMessage
 #else
 
-static inline
+/*! ---------------------------------------------------------------------------
+ * @brief Thread save version of has_msg
+ * @see has_msg
+ */
+STATIC inline
 bool hasMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
 {
    criticalSectionEnter();
-   bool ret = has_msg( mb, queue );
+   const bool ret = has_msg( mb, queue );
    criticalSectionExit();
    return ret;
 }
 
-static inline
+/*! ---------------------------------------------------------------------------
+ * @brief Thread save version of remove_msg
+ * @see remove_msg
+ */
+STATIC inline
 MSI_T popMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
 {
    criticalSectionEnter();
-   MSI_T ret = remove_msg( mb, queue );
+   const MSI_T ret = remove_msg( mb, queue );
    criticalSectionExit();
    return ret;
 }
 
-static inline
-bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
+/*! ---------------------------------------------------------------------------
+ * @brief Thread save version of getMessage
+ * @see getMessage
+ */
+STATIC inline
+bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer,
+                     const unsigned int queue )
 {
    criticalSectionEnter();
-   bool ret = getMessage( pMessage, pMsgBuffer, queue );
+   const bool ret = getMessage( pMessage, pMsgBuffer, queue );
    criticalSectionExit();
    return ret;
 }
