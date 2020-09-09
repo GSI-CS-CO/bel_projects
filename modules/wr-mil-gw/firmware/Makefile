@@ -22,7 +22,6 @@ fwbin: $(TARGET).bin
 #	./stop_flash_configure.sh
 
 $(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
-			   $(PATHFW)/wr_mil_eca_ctrl.c           \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
 			   $(PATHFW)/wr_mil_config.c             \
 			   $(PATHFW)/wr_mil_delay.s              \
