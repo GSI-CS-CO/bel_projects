@@ -666,13 +666,18 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
                             #endif
                               )
 {
-   // Paranoia...
+   /*
+    * Paranoia... ;-)
+    */
    DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    DAQ_ASSERT( pThis != NULL );
 
-   // Pre-initializing
+   /*
+    * Pre-initializing
+    */
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
+   //TODO Scan slot 1 for ACU-ADDAC here! Depending on CONFIG_ACU
    /*
     * Find all ADDAC-DAQ- slaves
     */
@@ -705,7 +710,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
         */
          addAddacToFgList( pScuBusBase, slot, pFgList );
       }
-   #endif
+   #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
       DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
       pCurrentDaqDevice->n = pThis->foundDevices;
