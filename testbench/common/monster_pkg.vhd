@@ -98,6 +98,7 @@ package monster_pkg is
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
+      g_en_simbridge         : boolean := false;
       g_en_scubus            : boolean := false;
       g_en_mil               : boolean := false;
       g_en_oled              : boolean := false;

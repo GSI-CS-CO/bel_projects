@@ -51,6 +51,7 @@ use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
 use work.ez_usb_pkg.all;
+use work.simbridge_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
@@ -90,6 +91,7 @@ entity monster is
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
     g_en_usb               : boolean;
+    g_en_simbridge         : boolean;
     g_en_scubus            : boolean;
     g_en_mil               : boolean;
     g_en_oled              : boolean;
@@ -394,6 +396,7 @@ architecture rtl of monster is
       topm_vme,
       topm_pmc,
       topm_usb,
+      topm_simbridge,
       topm_prioq
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
@@ -405,6 +408,7 @@ architecture rtl of monster is
     top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb), 
+    top_my_masters'pos(topm_simbridge)=>f_sdb_auto_msi(c_simbridge_msi,false), 
     top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
@@ -1503,6 +1507,18 @@ end generate;
         fd_o      => s_usb_fd_o,
         fd_oen_o  => s_usb_fd_oen);
   end generate;
+
+  simbridge_y : if g_en_simbridge generate
+    simbridge : entity work.simbridge
+    port map( 
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      master_i  => top_bus_slave_o(top_my_masters'pos(topm_simbridge)),
+      master_o  => top_bus_slave_i(top_my_masters'pos(topm_simbridge))
+      );
+
+  end generate;
+
 
   sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
   sdb_dummy_dev <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");

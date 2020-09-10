@@ -22,13 +22,13 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
+	ghdl -r testbench --stop-time=40us --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
 	#ghdl -r testbench --expect-failure --ieee-asserts=disable --write-wave-opt=all.wave_opt
 	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=new_all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
-compile_testbench: file_access_c.o lm32_verilator_interface_c.o sockit_owm_c.o testbench
+compile_testbench: simbridge_pkg_c.o file_access_c.o lm32_verilator_interface_c.o sockit_owm_c.o testbench
 
 testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
@@ -48,6 +48,7 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
 			../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
+			../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd   \
@@ -150,11 +151,13 @@ testbench: 	\
 			../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd              \
 			../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd                     \
 			../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd                         \
+			../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd             \
 			../common/wr_core.vhd                        \
 			../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd                       \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
 			../common/eb_internals_pkg.vhd        \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd                 \
+			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd          \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
@@ -187,6 +190,8 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd                \
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd                    \
+			../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg.vhd             \
+			../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge.vhd                 \
 			../../modules/wb_timer/wb_timer_pkg.vhd                                     \
 			../../modules/wb_timer/wb_timer.vhd                                         \
 			../../modules/mbox/mbox_pkg.vhd	                                            \
@@ -380,6 +385,7 @@ testbench: 	\
 	        -Wl,obj_dir/Vsockit_owm__ALL.a \
 	        -Wl,-lm -Wl,-lstdc++ \
 	        -Wl,file_access_c.o \
+	        -Wl,simbridge_pkg_c.o \
 	        $(GHDLFLAGS) testbench 
 
 # this is the C++-implementation (with C-linkage) of the VHDL foreign function interfaces
@@ -392,6 +398,9 @@ sockit_owm_c.o: ../common/main_sockit_owm.cpp ../common/sockit_owm_c.cpp main_so
 # file_access_c is for the usb chip simulation 
 file_access_c.o: ../common/file_access_c.c
 	gcc -c ../common/file_access_c.c
+
+simbridge_pkg_c.o: ../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg_c.cpp
+	gcc -c ../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg_c.cpp
 
 # The 'main' target is a stand-alone application to run the "verilated" lm32 code.
 # It is needed to run the auto generated Vlm32_top.mk makefile which generates the 

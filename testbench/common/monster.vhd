@@ -51,6 +51,7 @@ use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
 use work.ez_usb_pkg.all;
+use work.simbridge_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
@@ -90,6 +91,7 @@ entity monster is
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
     g_en_usb               : boolean;
+    g_en_simbridge         : boolean;
     g_en_scubus            : boolean;
     g_en_mil               : boolean;
     g_en_oled              : boolean;
@@ -393,7 +395,8 @@ architecture rtl of monster is
       --topm_pcie,
       --topm_vme,
       --topm_pmc,
-      topm_usb
+      topm_usb,
+      topm_simbridge
       --topm_prioq
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1; --withftm
@@ -407,7 +410,8 @@ architecture rtl of monster is
    -- top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
    -- top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
    -- top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb)
+    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
+    top_my_masters'pos(topm_simbridge) => f_sdb_auto_msi(c_simbridge_msi, false)
     --top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false)
     );
 
@@ -547,6 +551,7 @@ architecture rtl of monster is
     --tops_mil,
     tops_wr_fast_path,
     tops_ebm
+    --tops_wb_minimaster
     --tops_beam_dump
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
@@ -560,6 +565,7 @@ architecture rtl of monster is
     --top_slaves'pos(tops_mil)          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
     top_slaves'pos(tops_wr_fast_path) => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
     top_slaves'pos(tops_ebm)          => f_sdb_auto_device(c_ebm_sdb,                         true)
+    --top_slaves'pos(tops_wb_minimaster)=> f_sdb_auto_device(c_wb_minimaster_sdb,               true)
     --top_slaves'pos(tops_beam_dump)    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump)
     );
 
@@ -1184,9 +1190,9 @@ begin
       g_num_slaves  => c_top_slaves,
       g_registered  => true,
       g_wraparound  => true,
-      g_sdb_wb_mode => PIPELINED,
       g_verbose     => true,
       g_layout      => c_top_layout,
+      g_sdb_name    => "MONSTER_TOP_BAR    ",
       g_sdb_addr    => c_top_sdb_address)
     port map(
       clk_sys_i     => clk_sys,
@@ -1206,9 +1212,9 @@ begin
       g_num_slaves  => c_dev_slaves,
       g_registered  => true,
       g_wraparound  => true,
-      g_sdb_wb_mode => PIPELINED,
       g_verbose     => true,
       g_layout      => c_dev_layout,
+      g_sdb_name    => "MONSTER_DEV_BAR    ",
       g_sdb_addr    => c_dev_sdb_address)
     port map(
       clk_sys_i     => clk_sys,
@@ -1523,6 +1529,20 @@ begin
         fd_i      => usb_fd_io,
         fd_o      => s_usb_fd_o,
         fd_oen_o  => s_usb_fd_oen);
+  end generate;
+
+  simbridge_y : if g_en_simbridge generate
+    simbridge : entity work.simbridge
+    generic map(
+        g_sdb_address => c_top_sdb_address
+      )
+    port map( 
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      master_i  => top_bus_slave_o(top_my_masters'pos(topm_simbridge)),
+      master_o  => top_bus_slave_i(top_my_masters'pos(topm_simbridge))
+      );
+
   end generate;
 --
 --  sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");

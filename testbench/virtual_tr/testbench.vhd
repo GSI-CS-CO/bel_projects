@@ -116,6 +116,8 @@ architecture simulation of testbench is
   signal ndac_cs       : std_logic_vector(2 downto 1) := (others => '0');
   signal sfp4_tx_fault : std_logic := '0';
   signal sfp4_los      : std_logic := '0';
+
+  constant g_en_usb : boolean := false;
 begin
 
 
@@ -128,7 +130,8 @@ begin
   --rstn_sys<= not rst;
   ----------------------------------------------
 
-  ---- instance of EZUSB-chip 
+  ez_usb_chip : if g_en_usb generate 
+  -- instance of EZUSB-chip 
   -- this simulates the physical chip that is connected to the FPGA
   chip : entity work.ez_usb_chip
     port map (
@@ -144,6 +147,7 @@ begin
       pktendn_i => usb_pktendn,
       fd_io     => usb_fd_io
       );
+  end generate;
 
 
   wrex : entity work.wr_timing
@@ -174,7 +178,8 @@ begin
       g_fixed             => 2,
       g_lvds_invert       => true,
       g_en_pcie           => true,
-      g_en_usb            => true,
+      g_en_usb            => g_en_usb,
+      g_en_simbridge      => true,
       g_en_lcd            => true,
       g_en_user_ow        => true,
       g_en_tempsens       => true,

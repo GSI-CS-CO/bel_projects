@@ -959,8 +959,7 @@ begin
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_layout,
-      g_sdb_addr    => c_sdb_address,
-      g_sdb_wb_mode => PIPELINED
+      g_sdb_addr    => c_sdb_address
       )
     port map(
       clk_sys_i => clk_sys_i,
@@ -1028,8 +1027,7 @@ begin
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_secbar_layout,
-      g_sdb_addr    => c_secbar_sdb_address,
-      g_sdb_wb_mode => PIPELINED
+      g_sdb_addr    => c_secbar_sdb_address
       )
     port map(
       clk_sys_i  => clk_sys_i,

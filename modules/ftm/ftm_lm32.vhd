@@ -130,6 +130,7 @@ begin
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_lm32_layout,
+      g_sdb_wb_mode => PIPELINED,
       g_sdb_addr    => c_lm32_sdb_address)
    port map(
       clk_sys_i       => clk_sys_i,
