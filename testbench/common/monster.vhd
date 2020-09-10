@@ -411,7 +411,7 @@ architecture rtl of monster is
    -- top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
    -- top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
-    top_my_masters'pos(topm_simbridge) => f_sdb_auto_msi(c_simbridge_msi, false)
+    top_my_masters'pos(topm_simbridge) => f_sdb_auto_msi(c_simbridge_msi, g_en_simbridge)
     --top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false)
     );
 
@@ -1540,7 +1540,9 @@ begin
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
       master_i  => top_bus_slave_o(top_my_masters'pos(topm_simbridge)),
-      master_o  => top_bus_slave_i(top_my_masters'pos(topm_simbridge))
+      master_o  => top_bus_slave_i(top_my_masters'pos(topm_simbridge)),
+      msi_slave_i => top_msi_master_o(top_my_masters'pos(topm_simbridge)),
+      msi_slave_o => top_msi_master_i(top_my_masters'pos(topm_simbridge))
       );
 
   end generate;
