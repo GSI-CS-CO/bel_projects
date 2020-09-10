@@ -91,7 +91,8 @@ volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 /*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
  */
-STATIC inline void initializeGlobalPointers( void )
+STATIC inline ALWAYS_INLINE
+void initializeGlobalPointers( void )
 {
    initOneWire();
    /* additional periphery needed for scu */
@@ -113,7 +114,8 @@ STATIC inline void initializeGlobalPointers( void )
  * @see FunctionGeneratorFirmware::ScanMasterFg() in
  *      saftlib/drivers/FunctionGeneratorFirmware.cpp
  */
-STATIC inline void tellMailboxSlot( void )
+STATIC inline ALWAYS_INLINE
+void tellMailboxSlot( void )
 {
    const int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
    if( slot == -1 )
@@ -212,8 +214,7 @@ void clear_handler_state( const uint8_t socket )
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
  */
-STATIC inline ALWAYS_INLINE
-void onScuBusEvent( MSI_T* pMessage )
+ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 {
 #ifdef __MURKS
 #warning MURKS!
@@ -291,7 +292,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  *        message buffer.
  * @see onScuMSInterrupt
  */
-STATIC inline void initInterrupt( void )
+ONE_TIME_CALL void initInterrupt( void )
 {
 #ifdef _CONFIG_NO_DISPATCHER
  #ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
@@ -467,7 +468,7 @@ STATIC inline void dispatch( void )
  * @see commandHandler
  * @see scuBusDaqTask
  */
-STATIC inline void schedule( void )
+ONE_TIME_CALL void schedule( void )
 {
    const uint64_t tick = getWrSysTime();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
@@ -508,7 +509,7 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
  * @brief Helper function for printing the CPU-ID and the number of
  *        MSI endpoints.
  */
-STATIC inline void printCpuId( void )
+ONE_TIME_CALL void printCpuId( void )
 {
    unsigned int* cpu_info_base;
    cpu_info_base = (unsigned int*)find_device_adr( GSI, CPU_INFO_ROM );
@@ -539,15 +540,20 @@ void main( void )
    initInterrupt();
    tellMailboxSlot();
 
-
-   msDelayBig(1500); //wait for wr deamon to read sdbfs
+  /*!
+   * Wait for wr deamon to read sdbfs
+   */
+   msDelayBig(1500);
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
       mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );
    else
       mprintf( "SYS_CON found on addr: 0x%p\n", BASE_SYSCON );
 
-   timer_init(1); //needed by usleep_init()
+  /*!
+   * Will need by usleep_init()
+   */
+   timer_init(1);
    usleep_init();
 
    printCpuId();

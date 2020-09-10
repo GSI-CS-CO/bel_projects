@@ -104,7 +104,6 @@ extern "C" {
  * @brief Interrupt functions concerning the DAQ.
  */
 
-
 #ifndef DAQ_CID_SYS
 /*!
  * @ingroup DAQ_DEVICE SCU_BUS
@@ -321,6 +320,16 @@ typedef struct PACKED_SIZE
     * reaches zero.
     */
    uint16_t blockDownCounter;
+
+#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+   /*!
+    * @brief White rabbit time-stamp of the corresponding interrupt of this channel.
+    * @note This is a patch! Because of a perhaps erroneous DAQ-VHDL-macro.
+    *       This shall be removed ASAP.
+    */
+    uint64_t timestamp;
+#endif
+
 #ifdef CONFIG_DAQ_SW_SEQUENCE
    /*!
     * @brief Sequence number respectively modulo 256 block counter for
@@ -437,10 +446,35 @@ typedef struct
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
+ * @brief Info-type holding the DAQ device type ADDAC or ACU
+ */
+typedef enum
+{  /*!
+    * @brief DAQ- slave device is unknown (yet).
+    */
+   UNKNOWN = 0,
+
+   /*!
+    * @brief DAQ- slave device is a ADDAC-DAQ
+    */
+   ADDAC,
+
+   /*!
+    * @brief DAQ- slave device is a ACU-DAQ
+    */
+   ACU
+} DAQ_DEVICE_TYP_T;
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
  * @brief Object represents a single SCU-Bus slave including a DAQ
  */
 typedef struct
-{
+{  /*!
+    * @brief Keeps the information about the type of this device.
+    */
+   DAQ_DEVICE_TYP_T type;
+
    /*!
     * @brief Number of DAQ-channels
     */
@@ -1886,6 +1920,12 @@ int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pAllDAQ );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS
+ * @brief Returns true when a ACU device has been detected in slot 1.
+ */
+bool daqBusIsAcuDeviceOnly( register DAQ_BUS_T* pAllDAQ );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_SCU_BUS
  * @brief Gets the number of found DAQ devices.
  * @param pThis Pointer to the DAQ bus object.
  * @return Number of found DAQ - devices
@@ -1967,7 +2007,6 @@ void daqBusEnableSlaveInterrupts( register DAQ_BUS_T* pThis );
 /*! ---------------------------------------------------------------------------
  */
 void daqBusDisablSlaveInterrupts( register DAQ_BUS_T* pThis );
-
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS

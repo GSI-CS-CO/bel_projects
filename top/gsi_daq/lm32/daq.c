@@ -671,7 +671,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
     */
    DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    DAQ_ASSERT( pThis != NULL );
-
+   DAQ_DEVICE_TYP_T currentType = UNKNOWN;
    /*
     * Pre-initializing
     */
@@ -684,6 +684,9 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
                                                        SYS_CSCO,
                                                        GRP_ADDAC2 );
+   if( pThis->slotDaqUsedFlags != 0 )
+      currentType = ADDAC;
+
    if( pThis->slotDaqUsedFlags == 0 )
    {
       DBPRINT( "DBG: No ADDAC slaves found!\n" );
@@ -713,6 +716,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
       DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
+      pCurrentDaqDevice->type = currentType;
       pCurrentDaqDevice->n = pThis->foundDevices;
      /*
       * Because the register access to the DAQ device is more frequent than
@@ -765,7 +769,19 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    return pThis->foundDevices;
 }
 
-#endif
+#endif /* ifndef CONFIG_DAQ_SIMULATE_CHANNEL */
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+bool daqBusIsAcuDeviceOnly( register DAQ_BUS_T* pThis )
+{
+   for( int i = 0; i < pThis->foundDevices; i++ )
+      if( pThis->aDaq[i].type == ACU )
+         return true;
+
+   return false;
+}
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h

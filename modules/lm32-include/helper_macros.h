@@ -232,6 +232,16 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 /*!
+ * @brief Declares functions which has only one caller on one place.
+ *
+ * @note This function becomes compiled as inline in every cases therefore it's
+ *       not possible to set a pointer on this function!
+ *       It's similar like a macro.
+ * @see ALWAYS_INLINE
+ */
+#define ONE_TIME_CALL static inline ALWAYS_INLINE
+
+/*!
  * @brief This function attribute prevents a function from being considered for
  *        inlining.
  *

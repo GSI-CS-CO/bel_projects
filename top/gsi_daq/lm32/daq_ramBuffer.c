@@ -209,7 +209,7 @@ STATIC inline ALWAYS_INLINE
 void ramWriteItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
                    RAM_DAQ_PAYLOAD_T* pItem )
 {
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
    ddr3write64( &pThis->ram, index, pItem );
 #else
    #error Nothing implemented in function ramWriteItem()!
@@ -224,7 +224,7 @@ STATIC inline ALWAYS_INLINE
 void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
                   const DAQ_DATA_T data )
 {
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
    RAM_ASSERT( i < ARRAY_SIZE( pItem->ad16 ) );
    ramSetPayload16( pItem, data, i );
 #else
@@ -404,6 +404,10 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * Descriptor becomes received.
             */
             RAM_ASSERT( descriptorIndex < ARRAY_SIZE(oDescriptor.index) );
+         #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+            //TODO Copy the interrupt timestamp into the descriptor here! pDaqChannel->timestamp
+         #endif
+
          #ifdef CONFIG_DAQ_SW_SEQUENCE
             if( descriptorIndex == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
                                sizeof(DAQ_DATA_T) )
@@ -416,6 +420,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                */
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
+         #endif
+         #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+            //TODO Copy the interrupt timestamp into the descriptor here! pDaqChannel->timestamp
          #endif
             oDescriptor.index[descriptorIndex++] = data;
          }

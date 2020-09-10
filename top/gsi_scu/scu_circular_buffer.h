@@ -52,7 +52,7 @@ namespace FG
 //#define DAQ_RING_SIZE 512
 //#define DAQ_RING_SIZE  1024
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 
 /** @brief check if a channel buffer is empty
  *  @param cr channel register

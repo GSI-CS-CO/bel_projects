@@ -164,7 +164,7 @@ STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
  * @brief Scans the whole SCU-Bus for functions generators which are
  *        connected via SCU-bus-to-MIL-adapter
  */
-STATIC inline
+ONE_TIME_CALL
 void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    SCUBUS_SLAVE_FLAGS_T slotFlags;
@@ -243,7 +243,7 @@ void addAddacToFgList( const void* pScuBusBase,
  * @param pScuBusBase Base address of SCU bus
  * @param pFGlist Start pointer of function generator list.
  */
-STATIC inline
+ONE_TIME_CALL
 void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 {
    const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase,
@@ -264,7 +264,7 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus for all kinda of function generators.
  */
-STATIC inline
+ONE_TIME_CALL
 void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
@@ -273,6 +273,15 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
    scanScuBusFgsDirect( (void*)scub_adr, fglist );
 #endif
 #ifdef CONFIG_MIL_FG
+ #ifdef CONFIG_SCU_DAQ_INTEGRATION
+   if( daqBusIsAcuDeviceOnly( &g_scuDaqAdmin.oDaqDevs ) )
+   { /*
+      * When a ACU device has been recognized, it's not allow to made
+      * further scans on the SCU bus!
+      */
+      return;
+   }
+ #endif
    scanScuBusFgsViaMil( scub_adr, fglist );
 #endif
 }
@@ -281,14 +290,16 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 /*! ---------------------------------------------------------------------------
  * @brief Scans the MIL extension for function generators
  */
-STATIC inline
+ONE_TIME_CALL
 void scanExtMilFgs( volatile unsigned int *mil_addr,
                     FG_MACRO_T* fglist, uint64_t *ext_id )
 {
-   /* check only for ifks, if there is a macro found and a mil extension attached to the baseboard */
-   /* mil extension is recognized by a valid 1wire id                                              */
-   /* mil extension has a 1wire temp sensor with family if 0x42                                    */
-
+  /*
+   * Check only for "ifks", if there is a macro found and a mil extension
+   * attached to the baseboard.
+   * + mil extension is recognized by a valid 1wire id
+   * + mil extension has a 1wire temp sensor with family if 0x42
+   */
    if( !(((int)mil_addr != ERROR_NOT_FOUND) && (((int)*ext_id & 0xff) == 0x42)) )
       return;
 

@@ -212,7 +212,7 @@ typedef struct
  * @brief Returns the number of RAM items of the data block belonging to this
  *        descriptor.
  */
-static inline
+STATIC inline
 size_t ramGetSizeByDescriptor( register DAQ_DESCRIPTOR_T* pDescriptor )
 {
    return daqDescriptorIsShortBlock( pDescriptor )?
@@ -221,26 +221,26 @@ size_t ramGetSizeByDescriptor( register DAQ_DESCRIPTOR_T* pDescriptor )
 
 /*! --------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 void ramSetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const uint16_t d,
                       const unsigned int i )
 {
 #ifdef CONFIG_SCU_USE_DDR3
    ddr3SetPayload16( pPl, d, i );
 #else
-   //TODO
+   #error Function ramSetPayload16() not implemented yet!
 #endif
 }
 
 /*! --------------------------------------------------------------------------
  */
-static inline
+STATIC inline ALWAYS_INLINE
 uint16_t ramGetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const unsigned int i )
 {
 #ifdef CONFIG_SCU_USE_DDR3
    return ddr3GetPayload16( pPl, i );
 #else
-   //TODO
+   #error Function ramGetPayload16() not implemented yet!
 #endif
 }
 
