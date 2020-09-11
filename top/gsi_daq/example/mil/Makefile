@@ -31,6 +31,11 @@ else
  DOX_INPUT += $(MDAQ_LINUX_DIR)/mdaq_administration.hpp
 endif
 
+DEFINES += CONFIG_SCU_USE_DDR3
+DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+
+
+
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
