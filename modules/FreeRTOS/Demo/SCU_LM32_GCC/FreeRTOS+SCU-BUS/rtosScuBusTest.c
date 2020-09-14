@@ -24,7 +24,7 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
- #define CONFIG_SCU_ATOMIC_SECTION
+// #define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
@@ -63,8 +63,11 @@ NO_INLINE STATIC void vTaskScuBusSlave( void* pvParameters )
 
    while( true )
    {
+      count = 0;
       SCU_ATOMIC_SECTION()
          count = scuBusGetSlaveValue16( pSlave->pAddress, Echo_Register );
+
+      scuBusSetSlaveValue16( pSlave->pAddress, Echo_Register, count ); //!!
 
       if( delay == 1000 )
       {

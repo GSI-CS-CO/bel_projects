@@ -1,0 +1,40 @@
+
+DOWNLOAD OF THE SOURCES
+========================
+git clone https://github.com/GSI-CS-CO/bel_projects.git --recursive -b FreeRTOS4SCU
+
+Wikis:
+=======
+ https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPU
+
+DIRECTORIES
+===========
+1) Directory of the base sources of FreeRTOS:
+
+bel_projects/modules/FreeRTOS/Source/
+
+
+2) Directory of the FreeRTOS-port sources for the LM32 of the SCU that means the backend-adapter for the SCU:
+
+bel_projects/modules/FreeRTOS/Source/portable/GCC/SCU_LM32/
+
+
+3) Base directory of the example applications:
+
+bel_projects/modules/FreeRTOS/Demo/SCU_LM32_GCC/
+
+. /common/usr/cscofe/opt/compiler/lm32/set-gcc-path
+. /common/usr/cscofe/lib/set-lib-path
+export PATH=/common/usr/cscofe/bin:$PATH
+
+The environment variable SCU_URL will used for the Makefiles simplifying the uploading to the target SCU.
+export SCU_URL=scuxl4711.acc.gsi.
+
+
+start-socat $SCU_URL
+or
+start-socat scuxl4711
+
+eb-console tcp/$SCU_URL
+or
+eb-console tcp/scuxl4711
