@@ -185,6 +185,30 @@
 #define UNUSED __attribute__((unused))
 
 /*!
+ * @brief Can be used for anonymous unions
+ *
+ * This attribute, attached to a union type definition, indicates that any
+ * function parameter having that union type causes calls to that function
+ * to be treated in a special way.\n
+ *
+ * First, the argument corresponding to a transparent union type can be of
+ * any type in the union; no cast is required. Also, if the union contains
+ * a pointer type, the corresponding argument can be a null pointer constant
+ * or a void pointer expression; and if the union contains a void pointer type,
+ * the corresponding argument can be any pointer expression.\n
+ * If the union member type is a pointer, qualifiers like const on the
+ * referenced type must be respected, just as with normal pointer conversions.\n
+ *
+ * Second, the argument is passed to the function using the calling conventions
+ * of the first member of the transparent union, not the calling conventions
+ * of the union itself.
+ *
+ * @note All members of the union must have the same machine representation;
+ *       this is necessary for this argument passing to work properly!
+ */
+#define TRANSPARENT_UNION __attribute__((__transparent_union__))
+
+/*!
  * @brief Generates a deprecated warning during compiling
  *
  * The deprecated modifier- macro enables the declaration of a deprecated
@@ -201,12 +225,27 @@
  * Generally, functions are not inlined unless optimization is specified. \n
  * For functions declared inline, this attribute inlines the function independent
  * of any restrictions that otherwise apply to inlining. \n
- * Failure to inline such a function is diagnosed as an error. \n
- * @Note that if such a function is called indirectly the compiler
- * may or may not inline it depending on optimization level and a failure
- * to inline an indirect call may or may not be diagnosed.
+ * Failure to inline such a function is diagnosed as an error.
+ *
+ * @note That if such a function is called indirectly the compiler
+ *       may or may not inline it depending on optimization level and a failure
+ *       to inline an indirect call may or may not be diagnosed.
  */
 #define ALWAYS_INLINE __attribute__((always_inline))
+
+/*!
+ * @brief Declares functions which has only one caller on one place.
+ *
+ * @note This function becomes compiled as inline in every cases therefore it's
+ *       not possible to set a pointer on this function!\n
+ *       These functions are similar like a macro.
+ * @see ALWAYS_INLINE
+ */
+#ifdef __cplusplus
+ #define ONE_TIME_CALL inline ALWAYS_INLINE
+#else
+ #define ONE_TIME_CALL static inline ALWAYS_INLINE
+#endif
 
 /*!
  * @brief This function attribute prevents a function from being considered for

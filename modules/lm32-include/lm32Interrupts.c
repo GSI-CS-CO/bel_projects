@@ -24,12 +24,18 @@
  ******************************************************************************
  */
 #include "lm32Interrupts.h"
-
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+ #include <scu_wr_time.h>
+#endif
 /*!
  * @ingroup INTERRUPT
  * @brief Nesting counter for critical sections.
  */
 volatile uint32_t mg_criticalSectionNestingCount = 0;
+
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+volatile uint64_t mg_interruptTimestamp = 0LL;
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -85,6 +91,19 @@ OVERRIDE unsigned int _irqReorderPriority( const unsigned int prio )
    return prio;
 }
 
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+uint64_t irqGetTimestamp( void )
+{
+   criticalSectionEnter();
+   const uint64_t timestamp = mg_interruptTimestamp;
+   criticalSectionExit();
+   return timestamp;
+}
+#endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
+
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
    #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
 #endif
@@ -102,6 +121,10 @@ OVERRIDE unsigned int _irqReorderPriority( const unsigned int prio )
  */
 void _irq_entry( void )
 {
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+   mg_interruptTimestamp = getWrSysTime();
+#endif
+
    /*
     * Allows using of atomic sections within interrupt context.
     */

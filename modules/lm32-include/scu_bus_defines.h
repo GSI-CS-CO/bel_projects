@@ -191,9 +191,10 @@ typedef enum
 
 #define POWER_UP_IRQ      0x0001
 
+#if 0
 /* Deprecated defines */
-#define CID_SYS           0x4
-#define CID_GROUP         0x5
+//#define CID_SYS           0x4
+//#define CID_GROUP         0x5
 #define SLAVE_VERSION     0x6
 #define SLAVE_INT_ENA     0x21
 #define SLAVE_INT_PEND    0x22
@@ -201,6 +202,7 @@ typedef enum
 #define SLAVE_EXT_CLK     0x30
 
 #define SLAVE_INFO_TEXT   0x01c0 //!< @brief Zero terminated info-string max. 512 byte
+#endif
 
 #define DAC1_BASE         0x200
 #define DAC2_BASE         0x210

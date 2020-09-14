@@ -86,6 +86,14 @@ namespace gsi
  */
 #define IRQ_IE ((uint32_t)0x00000001)
 
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the white rabbit time-stamp of the last occurred interrupt.
+ */
+uint64_t irqGetTimestamp( void );
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Signature of interrupt callback function.

@@ -16,7 +16,8 @@
  * @param slot Mailbox slot number.
  * @param myOffs Offset
  */
-STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int offset )
+STATIC inline ALWAYS_INLINE
+void cfgMsiBox( const unsigned int slot, const unsigned int offset )
 {
    STATIC_ASSERT( sizeof( pMyMsi[0] ) == sizeof( uint32_t ) );
    MSI_BOX_SLOT_ACCESS( slot, address ) = (uint32_t)&pMyMsi[offset / sizeof(uint32_t)];
