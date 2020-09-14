@@ -354,6 +354,12 @@ STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
 void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
+   if( daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs ) == 0 )
+   { /*
+      * Maybe only MIL-DAQs present.
+      */
+      return;
+   }
 #ifndef _CONFIG_NO_DAQ_FSM
    daqBusDoFeedbackTask( &g_scuDaqAdmin.oDaqDevs );
 #endif

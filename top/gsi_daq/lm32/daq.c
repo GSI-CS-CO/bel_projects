@@ -928,6 +928,7 @@ void daqBusReset( register DAQ_BUS_T* pThis )
  */
 void daqBusDoFeedbackTask( register DAQ_BUS_T* pThis )
 {
+   DAQ_ASSERT( daqBusGetFoundDevices( pThis ) != 0 );
    static unsigned int currentDevNum = 0;
    if( daqDeviceDoFeedbackSwitchOnOffFSM( daqBusGetDeviceObject( pThis, currentDevNum ) ))
    {
