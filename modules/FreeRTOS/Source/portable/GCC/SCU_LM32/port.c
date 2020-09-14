@@ -145,7 +145,7 @@ STATIC void onTimerInterrupt( const unsigned int intNum, const void* pContext )
  * @ingroup SCU_LM32_TIMER
  * @brief Setup timer to generate a tick interrupt.
  */
-inline STATIC void prvSetupTimer( void )
+ONE_TIME_CALL void prvSetupTimer( void )
 {
 #ifdef CONFIG_SCU
    SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
@@ -160,7 +160,12 @@ inline STATIC void prvSetupTimer( void )
    #endif
    SCU_LM32_TIMER_T* pTimer = (SCU_LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
 #endif
+
+   /*
+    * CPU frequency has to be divisible by the task tick frequency!
+    */
    STATIC_ASSERT( (configCPU_CLOCK_HZ % configTICK_RATE_HZ) == 0 );
+
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / configTICK_RATE_HZ );
    lm32TimerEnable( pTimer );
    /*
@@ -294,7 +299,7 @@ void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
  * @see FreeRTOSConfig.h
  */
 OVERRIDE
-void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskName )
+void vApplicationStackOverflowHook( TaskHandle_t xTask UNUSED, char* pcTaskName )
 {
    mprintf( ESC_ERROR "Error: Stack overflow in task \"%s\"!\n"
                       "Method: %d\n" ESC_NORMAL,
