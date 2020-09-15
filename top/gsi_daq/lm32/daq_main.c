@@ -72,7 +72,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
    }
 
    if( ret == 0 )
-      mprintf( ESC_WARNING "WARNING: No DAQ devices found!\n" ESC_NORMAL );
+      mprintf( ESC_WARNING "WARNING: No ADDAC devices found!\n" ESC_NORMAL );
 #ifdef DEBUGLEVEL
    else
    {
@@ -368,6 +368,9 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
    if( s_pDaqDevice == NULL )
    {
       MSI_T m;
+      /*
+       * Did the interrupt put a message in the pipe?
+       */
       if( getMessageSave( &m, &g_aMsg_buf[0], DAQ ) )
       {
          s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs,

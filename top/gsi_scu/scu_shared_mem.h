@@ -479,7 +479,7 @@ typedef enum
 /*!
  * @brief Helper function for debug purposes only.
  */
-static inline const char* fgCommand2String( const FG_OP_CODE_T op )
+STATIC inline const char* fgCommand2String( const FG_OP_CODE_T op )
 {
    #define __FG_COMMAND_CASE( cmd ) case cmd: return #cmd
    switch( op )
@@ -498,25 +498,25 @@ static inline const char* fgCommand2String( const FG_OP_CODE_T op )
 
 /*!
  * @ingroup MAILBOX
- * @brief Definition of signals to send from server (LM32) to client
+ * @brief Definition of signals to send from server (LM32) to client (SAFTLIB)
  * @see sendSignal
  * @see saftlib/drivers/fg_regs.h
  * @see FunctionGeneratorImpl::irq_handler in saftlib/drivers/FunctionGeneratorImpl.cpp
  */
 typedef enum
 {
-   IRQ_DAT_REFILL         = 0,
-   IRQ_DAT_START          = 1,
-   IRQ_DAT_STOP_EMPTY     = 2, /*!<@brief normal stop */
-   IRQ_DAT_STOP_NOT_EMPTY = 3, /*!<@brief something went wrong */
-   IRQ_DAT_ARMED          = 4,
-   IRQ_DAT_DISARMED       = 5
+   IRQ_DAT_REFILL         = 0, /*!<@brief Buffer level becomes low -> refill request */
+   IRQ_DAT_START          = 1, /*!<@brief FG started */
+   IRQ_DAT_STOP_EMPTY     = 2, /*!<@brief normal stop or "microControllerUnderflow" */
+   IRQ_DAT_STOP_NOT_EMPTY = 3, /*!<@brief something went wrong "hardwareMacroUnderflow" */
+   IRQ_DAT_ARMED          = 4, /*!<@brief FG ready for data */
+   IRQ_DAT_DISARMED       = 5  /*!<@brief FG not ready */
 } SIGNAL_T;
 
 /*!
  * @brief Helper function for debug purposes only.
  */
-static inline const char* signal2String( const SIGNAL_T sig )
+STATIC inline const char* signal2String( const SIGNAL_T sig )
 {
    #define __SIGNAL_CASE( sig ) case sig: return #sig
    switch( sig )

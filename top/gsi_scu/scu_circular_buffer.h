@@ -83,6 +83,23 @@ RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel 
    return 0;
 }
 
+#ifdef _CONFIG_NO_DISPATCHER
+/*!
+ * @brief Thread save version of cbgetCoun
+ * @see cbgetCount
+ */
+STATIC inline
+RING_POS_T cbgetCountSave( volatile FG_CHANNEL_REG_T* pCr, const unsigned int channel )
+{
+   criticalSectionEnter();
+   const RING_POS_T ret = cbgetCount( pCr, channel );
+   criticalSectionExit();
+   return ret;
+}
+#else
+ #define cbgetCountSave cbgetCount
+#endif
+
 /** @brief check if a channel buffer is full
  *  @param cr channel register
  *  @param channel number of the channel
@@ -124,6 +141,26 @@ bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
    pCr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE);
    return true;
 }
+
+#ifdef _CONFIG_NO_DISPATCHER
+/*!
+ * @brief Thread save version of cbRead
+ * @see cbRead
+ */
+STATIC inline
+bool cbReadSave( volatile FG_CHANNEL_BUFFER_T* pCb,
+                 volatile FG_CHANNEL_REG_T* pCr,
+                 const unsigned int channel, FG_PARAM_SET_T* pPset )
+{
+   criticalSectionEnter();
+   const bool ret = cbRead( pCb, pCr, channel, pPset );
+   criticalSectionExit();
+   return ret;
+}
+
+#else
+ #define cbReadSave cbRead
+#endif
 
 typedef struct PACKED_SIZE
 {

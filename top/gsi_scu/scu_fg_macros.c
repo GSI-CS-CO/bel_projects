@@ -210,7 +210,7 @@ int configure_fg_macro( const unsigned int channel )
    /*
     * Fetch first parameter set from buffer
     */
-   if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
+   if( cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) != 0 )
    {
       const uint16_t cntrl_reg_wr = ((pset.control & 0x3F) << 10) | channel << 4;
       if( isAddacFg( socket ) )
@@ -414,9 +414,9 @@ void disable_slave_irq( const unsigned int channel )
  */
 void sendRefillSignalIfThreshold( const unsigned int channel )
 {
-   if( cbgetCount( &g_shared.fg_regs[0], channel ) == THRESHOLD )
+   if( cbgetCountSave( &g_shared.fg_regs[0], channel ) == THRESHOLD )
    {
-      //mprintf( "*" );
+     // mprintf( "*" ); //!!
       sendSignal( IRQ_DAT_REFILL, channel );
    }
 }

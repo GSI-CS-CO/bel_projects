@@ -32,14 +32,14 @@ extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
  * @retval true Polynom successful sent.
  * @retval false Buffer was empty no data sent.
  */
-STATIC inline bool feedAdacFg( FG_REGISTER_T* pThis )
+ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
 {
    FG_PARAM_SET_T pset;
 
    /*!
     * @todo Move the FG-buffer into the DDR3-RAM!
     */
-   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0],
+   if( !cbReadSave( &g_shared.fg_buffer[0], &g_shared.fg_regs[0],
                 pThis->cntrl_reg.bv.number, &pset ) )
    {
       hist_addx( HISTORY_XYZ_MODULE, "buffer empty, no parameter sent",
@@ -83,6 +83,7 @@ void handleAdacFg( const unsigned int slot,
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
       sendRefillSignalIfThreshold( channel );
+
       if( feedAdacFg( pFgRegs ) )
          g_aFgChannels[channel].param_sent++;
    }

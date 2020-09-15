@@ -735,7 +735,11 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
       }
-      pThis->foundDevices++; // At least one channel was found.
+
+     /*
+      * At least one channel was found.
+      */
+      pThis->foundDevices++;
 
       DAQ_ASSERT( pCurrentDaqDevice->maxChannels ==
                    daqChannelGetMaxCannels( &pCurrentDaqDevice->aChannel[0] ) );

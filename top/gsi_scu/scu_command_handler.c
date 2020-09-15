@@ -47,7 +47,7 @@ void printSwIrqCode( const unsigned int code, const unsigned int value )
  * @ingroup TASK
  * @brief Handles so called software interrupts (SWI) coming from SAFTLIB.
  */
-STATIC inline void saftLibCommandHandler( void )
+ONE_TIME_CALL void saftLibCommandHandler( void )
 {
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )

@@ -519,6 +519,8 @@ STATIC inline void makeStop( const unsigned int channel )
                channel );
    disable_slave_irq( channel );
    g_shared.fg_regs[channel].state = STATE_STOPPED;
+   //TODO Maybe disabling of ADDAC-DAQs here?
+  // mprintf( "fg-%d-%d stopped!\n", getSocket( channel ), getDevice( channel ) );
 }
 
 /*! ---------------------------------------------------------------------------
