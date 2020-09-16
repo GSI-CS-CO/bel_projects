@@ -161,6 +161,9 @@ ONE_TIME_CALL void prvSetupTimer( void )
    SCU_LM32_TIMER_T* pTimer = (SCU_LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
 #endif
 
+   #if configTICK_RATE_HZ == 0
+     #error configTICK_RATE_HZ is defined by zero!
+   #endif
    /*
     * CPU frequency has to be divisible by the task tick frequency!
     */
@@ -174,12 +177,12 @@ ONE_TIME_CALL void prvSetupTimer( void )
    irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
 }
 
-#else
+#else /* ifndef CONFIG_NO_RTOS_TIMER */
  #if configUSE_PREEMPTION == 1
    #error In preemtion mode is the timer essential!
  #endif
  #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
-#endif
+#endif /* else ifndef CONFIG_NO_RTOS_TIMER */
 
 /*! ---------------------------------------------------------------------------
  */
