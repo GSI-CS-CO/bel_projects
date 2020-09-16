@@ -145,8 +145,9 @@ endif
  STACK_SIZE  =  4096
 
 
- SCU_URL = scuxl0107
+# SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
+# SCU_URL = scuxl0212 # ACU-test
 
 DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"

@@ -270,13 +270,13 @@ typedef enum
 #define SYS_CSCO    55
 #define SYS_PBRF    42
 
-#define GRP_ADDAC1  3
-#define GRP_ADDAC2  38
+#define GRP_ADDAC1  3   /*!<@brief Group ID ADDAC 2 */
+#define GRP_ADDAC2  38  /*!<@brief Group ID ADDAC 2 */
 #define GRP_DIOB    26
 #define GRP_FIB_DDS 1
-#define GRP_MFU     2
-#define GRP_SIO3    69
-#define GRP_SIO2    23
+#define GRP_MFU     2   /*!<@brief Group ID: ACU/MFU */
+#define GRP_SIO3    69  /*!<@brief Group ID: SIO 2 */
+#define GRP_SIO2    23  /*!<@brief Group ID: SIO 2 */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS

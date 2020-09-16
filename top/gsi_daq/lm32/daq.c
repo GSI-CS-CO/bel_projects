@@ -450,7 +450,7 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
    if( ramRingGetRemainingCapacity( &pFeedback->aktionBuffer.index ) > 0 )
    {
       const unsigned int i = ramRingGetWriteIndex( &pFeedback->aktionBuffer.index );
-      ramRingAddToWriteIndex( &pFeedback->aktionBuffer.index, 1 );
+      ramRingIncWriteIndex( &pFeedback->aktionBuffer.index );
       pFeedback->aktionBuffer.aAction[i].fgNumber = fgNumber;
       pFeedback->aktionBuffer.aAction[i].action = what;
    }
@@ -486,7 +486,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
             break;
          }
          const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
-         ramRingAddToReadIndex( &pFeedback->aktionBuffer.index, 1 );
+         ramRingIncReadIndex( &pFeedback->aktionBuffer.index );
          pFeedback->fgNumber = pFeedback->aktionBuffer.aAction[i].fgNumber;
          DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber)];
          if( pFeedback->aktionBuffer.aAction[i].action == FB_OFF )
@@ -581,7 +581,7 @@ void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
  * @param slot slot number
  * @return Number of real existing channels
  */
-STATIC inline
+ONE_TIME_CALL
 int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -656,6 +656,34 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
 
 /*============================ DAQ Bus Functions ============================*/
 #ifndef CONFIG_DAQ_SIMULATE_CHANNEL
+
+/*! ---------------------------------------------------------------------------
+ * @brief Find a possible ACU-slave on SCU bus slot 1.
+ */
+ONE_TIME_CALL
+SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
+{ /*
+   * A possible ACU / MFU slave device resides always in slot 1 only.
+   */
+   const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, 1 );
+   switch( scuBusGetSlaveValue16( pSlaveAddr, CID_SYSTEM ) )
+   {
+      case SYS_PBRF: break;
+      case SYS_LOEP: break;
+      case SYS_CSCO: break;
+      default:       return 0x000;
+   }
+
+   if( scuBusGetSlaveValue16( pSlaveAddr, CID_GROUP ) == GRP_MFU )
+   { /*
+      * ACO device on slot 1 found, return by slave flags 1,
+      */
+      return 0x001;
+   }
+
+   return 0x000;
+}
+
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
@@ -671,33 +699,52 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
     */
    DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    DAQ_ASSERT( pThis != NULL );
+
    DAQ_DEVICE_TYP_T currentType = UNKNOWN;
    /*
     * Pre-initializing
     */
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
-   //TODO Scan slot 1 for ACU-ADDAC here! Depending on CONFIG_ACU
    /*
-    * Find all ADDAC-DAQ- slaves
+    * Checking whether in slot 1 is a ACU-device.
     */
-   pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
-                                                       SYS_CSCO,
-                                                       GRP_ADDAC2 );
+   pThis->slotDaqUsedFlags = findAcuMfuDeviceOnSlot1( pScuBusBase );
    if( pThis->slotDaqUsedFlags != 0 )
-      currentType = ADDAC;
-
-   if( pThis->slotDaqUsedFlags == 0 )
-   {
-      DBPRINT( "DBG: No ADDAC slaves found!\n" );
-      return 0;
+   { /*
+      * ACU device on slot 1 found, no further scans will made.
+      */
+      currentType = ACU;
+   }
+   else
+   { /*
+      * No ACU device found, therefore now scanning the whole SCU-bus
+      * for ADDAC-DAQ- slaves.
+      */
+      pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
+                                                          SYS_CSCO,
+                                                          GRP_ADDAC2 );
+      if( pThis->slotDaqUsedFlags != 0 )
+      { /*
+         * One or more ADDAC slaves found.
+         */
+         currentType = ADDAC;
+      }
+      else
+      {
+         DBPRINT( "DBG: No ADDAC or ACU slaves found!\n" );
+         return 0;
+      }
    }
 
+   /*
+    * Initializing all found devices which have a DAQ and its channels.
+    */
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
       { /*
-         * In this slot is not a ADDAC! So go to the next slot...
+         * In this slot is not a ADDAC or ACU! So go to the next slot...
          */
          continue;
       }
