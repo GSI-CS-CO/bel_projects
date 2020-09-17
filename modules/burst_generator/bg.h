@@ -147,12 +147,12 @@ typedef struct {
 /* burst trigger/toggle control */
 typedef struct {
   uint64_t deadline;
-  uint32_t bursts;
+  uint32_t bursts;    /* burst indices, bitwise, bit0: burst idx 1 */
 } Control_t;
 
 typedef struct {
-  uint64_t id;
-  uint32_t bursts;
+  uint64_t id;        /* event ID */
+  uint32_t bursts;    /* burst indices, bitwise, bit0: burst idx 1 */
 } Config_t;
 
 #define N_CONFIGS         64 /* configuration table entries, limited by HW */
