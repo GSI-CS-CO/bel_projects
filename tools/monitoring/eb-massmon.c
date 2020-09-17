@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 16-Oct-2019
+//  version : 17-Sep-2020
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.2.1"
+#define EBMASSMON_VERSION "0.2.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -354,14 +354,14 @@ static int networkOk(char* network, int networkType)
 static void printDate(uint64_t nsecs)
 {
   if (nsecs == ~0) fprintf(stdout, ", %10s", "---");
-  else             fprintf(stdout, ", %10llu", (nsecs / 1000000000));
+  else             fprintf(stdout, ", %10lu", (uint64_t)(nsecs / 1000000000));
 } // printDate
 
 
 static void printOffset(uint64_t offset)
 {
   if (offset == ~0) fprintf(stdout, ", %13s", "---");
-  else              fprintf(stdout, ", %13llu", (offset));
+  else              fprintf(stdout, ", %13lu", (uint64_t)(offset));
 } // printOffset
 
 
