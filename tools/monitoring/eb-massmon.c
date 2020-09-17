@@ -61,8 +61,8 @@ eb_device_t device;           // needs to be global for 1-wire stuff
 #define     MAXLEN    1024    // max length of an array
 #define     UTCOFFSET 37000   // UTC offset @ 2018; hm... configurable as option?
 
-const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing"};
-#define     MAXNETWORKTYPES      4
+const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing", "Integration", "Unilac"};
+#define     MAXNETWORKTYPES      6
 
 const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl", "amc", "pmc"};
 #define     MAXNODETYPES         7
@@ -105,6 +105,8 @@ static void help(void) {
   fprintf(stderr, "                   1: production (default)\n");
   fprintf(stderr, "                   2: user\n");
   fprintf(stderr, "                   3: timing (TTF)\n");
+  fprintf(stderr, "                   4: integration\n");
+  fprintf(stderr, "                   5: unilac\n");
   fprintf(stderr, "  -y<nodes>        node type\n");
   fprintf(stderr, "                   0: all (default)\n");
   fprintf(stderr, "                   1: SCU\n");
