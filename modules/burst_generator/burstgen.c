@@ -319,15 +319,15 @@ int triggerIoActions(int id) {
       else
 	pTask[id].cycle = remaining / pTask[id].period + 1;
     }
+
+    if (pTask[id].cycle == 0)        // production cycle is over, cannot trigger!
+      result = STATUS_NOT_READY;
   }
 
   if (pTask[id].flag & CTL_EN == CTL_DIS)   // burst is disabled, do not trigger!
     result = STATUS_DISABLED;
 
   if (pTask[id].deadline == 0)     // deadline is unset, cannot trigger!
-    result = STATUS_NOT_READY;
-
-  if (pTask[id].cycle == 0)        // production cycle is over, cannot trigger!
     result = STATUS_NOT_READY;
 
   uint64_t deadline = pTask[id].deadline;
@@ -815,27 +815,21 @@ void ecaHandler(uint32_t cnt)
 	}
 
 	if (trigger_idx != N_CONFIGS) {
-	  if (gTrigCtrl.bursts != 0) {
-	    // Busy: pending trigger requests exist TODO: react!
-	  }
-	  else if ((gToggCtrl.bursts & gTrigCtrl.bursts) != 0) {
+
+	  gTrigCtrl.bursts |= (pTrigConfigs + trigger_idx)->bursts;
+	  gTrigCtrl.deadline = d;
+
+	  if ((gToggCtrl.bursts & gTrigCtrl.bursts) != 0) {
 	    // Conflict: toggle and trigger for the same bursts! TODO: react!
-	  }
-	  else {
-	    gTrigCtrl.bursts = (pTrigConfigs + trigger_idx)->bursts;
-	    gTrigCtrl.deadline = d;
 	  }
 	}
 	else if (toggle_idx != N_CONFIGS) {
-	  if (gToggCtrl.bursts != 0) {
-	    // Busy: pending toggle requests exist TODO: react
-	  }
-	  else if ((gTrigCtrl.bursts & gToggCtrl.bursts) != 0) {
+
+	  gToggCtrl.bursts |= (pToggConfigs + toggle_idx)->bursts;
+	  gToggCtrl.deadline = d;
+
+	  if ((gTrigCtrl.bursts & gToggCtrl.bursts) != 0) {
 	    // Conflict: trigger and toggle for the same bursts! TODO: react
-	  }
-	  else {
-	    gToggCtrl.bursts = (pToggConfigs + toggle_idx)->bursts;
-	    gToggCtrl.deadline = d;
 	  }
 	}
       }
