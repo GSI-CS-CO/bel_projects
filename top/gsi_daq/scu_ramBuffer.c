@@ -293,7 +293,7 @@ static inline ALWAYS_INLINE
 void ramWriteItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
                    RAM_DAQ_PAYLOAD_T* pItem )
 {
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
    ddr3write64( &pThis->ram, index, pItem );
 #else
    #error Nothing implemented in function ramWriteItem()!
@@ -308,7 +308,7 @@ static inline ALWAYS_INLINE
 void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
                   const DAQ_DATA_T data )
 {
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
    RAM_ASSERT( i < ARRAY_SIZE( pItem->ad16 ) );
    ramSetPayload16( pItem, data, i );
 #else

@@ -74,6 +74,27 @@ namespace daq
 {
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
+ * @brief Info-type holding the DAQ device type ADDAC or ACU
+ */
+typedef enum
+{  /*!
+    * @brief DAQ- slave device is unknown (yet).
+    */
+   UNKNOWN = 0,
+
+   /*!
+    * @brief DAQ- slave device is a ADDAC-DAQ
+    */
+   ADDAC = 1,
+
+   /*!
+    * @brief DAQ- slave device is a ACU-DAQ
+    */
+   ACU = 2
+} DAQ_DEVICE_TYP_T;
+
 /*!
  * @ingroup DAQ_CHANNEL
  * @brief Data type of DAQ FiFo containment

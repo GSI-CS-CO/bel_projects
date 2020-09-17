@@ -78,6 +78,8 @@ void handleAdacFg( const unsigned int slot,
    g_shared.fg_regs[channel].ramp_count =  pFgRegs->ramp_cnt_low;
    g_shared.fg_regs[channel].ramp_count |= pFgRegs->ramp_cnt_high << BIT_SIZEOF( uint16_t );
 
+   //for( unsigned int i = 0; i < 20000; i++ ) NOP(); //!!Testing how many time we still have...
+
    if( pFgRegs->cntrl_reg.bv.isRunning )
    {
       if( pFgRegs->cntrl_reg.bv.dataRequest )

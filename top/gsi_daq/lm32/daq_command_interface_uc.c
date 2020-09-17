@@ -115,7 +115,7 @@ STATIC DAQ_RETURN_CODE_T
 verifyChannelAccess( DAQ_BUS_T* pDaqBus,
                      volatile DAQ_CHANNEL_LOCATION_T* pLocation )
 {
-   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( pDaqBus, pLocation );
+   const DAQ_RETURN_CODE_T ret = verifyDeviceAccess( pDaqBus, pLocation );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -191,8 +191,8 @@ DAQ_RETURN_CODE_T opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
                                      volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
-                                               &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
+                                                     &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -229,8 +229,8 @@ DAQ_RETURN_CODE_T opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
                                  volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
-                                               &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
+                                                     &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -278,8 +278,8 @@ DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
 
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -305,8 +305,8 @@ STATIC DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
 
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -330,8 +330,8 @@ STATIC DAQ_RETURN_CODE_T opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
 
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -356,8 +356,8 @@ STATIC DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
 
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -407,8 +407,8 @@ STATIC DAQ_RETURN_CODE_T opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
 
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -431,8 +431,8 @@ DAQ_RETURN_CODE_T opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -451,8 +451,8 @@ STATIC DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -471,8 +471,8 @@ STATIC DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -489,8 +489,8 @@ STATIC DAQ_RETURN_CODE_T opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -507,8 +507,8 @@ STATIC DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -537,8 +537,8 @@ STATIC DAQ_RETURN_CODE_T opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
    pData->param1 = daqChannelIsTriggerModeEnabled(
@@ -556,8 +556,8 @@ DAQ_RETURN_CODE_T opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -588,8 +588,8 @@ DAQ_RETURN_CODE_T opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -609,8 +609,8 @@ DAQ_RETURN_CODE_T opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -641,8 +641,8 @@ DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
-                                                &pData->location );
+   const DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                      &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -651,6 +651,28 @@ DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
 
    return DAQ_RET_OK;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Sending the device type of the given channel
+ * @see DAQ_DEVICE_TYP_T
+ * @see executeIfRequested
+ */
+STATIC
+DAQ_RETURN_CODE_T opGetDeviceType( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBG_FUNCTION_INFO();
+   const DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
+                                                     &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = pDaqAdmin->oDaqDevs.aDaq[pData->location.deviceNumber-1].type;
+
+   return DAQ_RET_OK;
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
@@ -700,6 +722,7 @@ STATIC const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_CON, opGetTriggerSourceCon ),
    OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR, opSetTriggerSourceHir ),
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR, opGetTriggerSourceHir ),
+   OPERATION_ITEM( DAQ_OP_GET_DEVICE_TYPE,        opGetDeviceType       ),
 
    OPERATION_ITEM_TERMINATOR
 };

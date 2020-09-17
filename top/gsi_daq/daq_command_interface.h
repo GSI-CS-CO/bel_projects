@@ -143,11 +143,13 @@ typedef enum
    DAQ_OP_SET_TRIGGER_SOURCE_CON  = DAQ_OP_OFFSET + 19,
    DAQ_OP_GET_TRIGGER_SOURCE_CON  = DAQ_OP_OFFSET + 20,
    DAQ_OP_SET_TRIGGER_SOURCE_HIR  = DAQ_OP_OFFSET + 21,
-   DAQ_OP_GET_TRIGGER_SOURCE_HIR  = DAQ_OP_OFFSET + 22
+   DAQ_OP_GET_TRIGGER_SOURCE_HIR  = DAQ_OP_OFFSET + 22,
+   DAQ_OP_GET_DEVICE_TYPE         = DAQ_OP_OFFSET + 23
 } DAQ_OPERATION_CODE_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 #endif
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Sub operation code of the sample rate for the DAQ continuous mode.

@@ -446,27 +446,6 @@ typedef struct
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
- * @brief Info-type holding the DAQ device type ADDAC or ACU
- */
-typedef enum
-{  /*!
-    * @brief DAQ- slave device is unknown (yet).
-    */
-   UNKNOWN = 0,
-
-   /*!
-    * @brief DAQ- slave device is a ADDAC-DAQ
-    */
-   ADDAC,
-
-   /*!
-    * @brief DAQ- slave device is a ACU-DAQ
-    */
-   ACU
-} DAQ_DEVICE_TYP_T;
-
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ_DEVICE
  * @brief Object represents a single SCU-Bus slave including a DAQ
  */
 typedef struct

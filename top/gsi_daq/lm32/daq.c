@@ -644,8 +644,9 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
       pThis->maxChannels++;
     #ifndef CONFIG_NO_DAQ_INFO_PRINT
       mprintf( ESC_FG_CYAN
-               "ADDAC-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
+               "%s-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
                ESC_NORMAL,
+               (pThis->type == ACU)? "ACU" : "ADDAC",
                channel, daqChannelGetSlot( pCurrentChannel ),
                pCurrentChannel
              );
@@ -676,7 +677,7 @@ SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
 
    if( scuBusGetSlaveValue16( pSlaveAddr, CID_GROUP ) == GRP_MFU )
    { /*
-      * ACO device on slot 1 found, return by slave flags 1,
+      * ACO device on slot 1 found, return by slave-flags: 0000 0000 0001
       */
       return 0x001;
    }
@@ -684,7 +685,16 @@ SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
    return 0x000;
 }
 
-/*! ----------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
+ * @brief Finds all ADDAC-devices residing on the SCU bus.
+ */
+ONE_TIME_CALL
+SCUBUS_SLAVE_FLAGS_T findAllAddacDevices( const void* pScuBusBase )
+{
+   return scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC2 );
+}
+
+/*! ---------------------------------------------------------------------------
  * @see daq.h
  */
 int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
@@ -704,7 +714,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    /*
     * Pre-initializing
     */
-   memset( pThis, 0, sizeof( DAQ_BUS_T ));
+   memset( pThis, 0, sizeof( DAQ_BUS_T ) );
 
    /*
     * Checking whether in slot 1 is a ACU-device.
@@ -721,9 +731,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       * No ACU device found, therefore now scanning the whole SCU-bus
       * for ADDAC-DAQ- slaves.
       */
-      pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
-                                                          SYS_CSCO,
-                                                          GRP_ADDAC2 );
+      pThis->slotDaqUsedFlags = findAllAddacDevices( pScuBusBase );
       if( pThis->slotDaqUsedFlags != 0 )
       { /*
          * One or more ADDAC slaves found.
@@ -732,7 +740,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       }
       else
       {
-         DBPRINT( "DBG: No ADDAC or ACU slaves found!\n" );
+         DBPRINT( "DBG: Neither ADDAC nor ACU slaves found!\n" );
          return 0;
       }
    }
@@ -756,7 +764,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    #ifndef CONFIG_DAQ_SINGLE_APP
       if( pFgList != NULL )
       {/*
-        * Making the ADDAC function-generator known for SAFT-LIB.
+        * Making the ADDAC resp. ACU function-generator known for SAFT-LIB.
         */
          addAddacToFgList( pScuBusBase, slot, pFgList );
       }
