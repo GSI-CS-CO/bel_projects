@@ -270,13 +270,21 @@ void forEachScuDaqDevice( void )
 
 //#define _CONFIG_NO_DAQ_FSM
 
+#define CONFIG_DEBUG_FEEDBACK_ON_OFF
+
+#ifdef CONFIG_DEBUG_FEEDBACK_ON_OFF
+ #define DEBUG_FEEDBACK_ON_OFF()  \
+    mprintf( ESC_DEBUG "%s( %d, %d )\n" ESC_NORMAL, __func__, slot, fgNum )
+#else
+ #define DEBUG_FEEDBACK_ON_OFF()
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @see daq_main.h
  */
 void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
-   mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
-
+   DEBUG_FEEDBACK_ON_OFF();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
 
    DAQ_ASSERT( pDaqDevice != NULL );
@@ -306,8 +314,7 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
  */
 void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
-   mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
-
+   DEBUG_FEEDBACK_ON_OFF();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
 
    DAQ_ASSERT( pDaqDevice != NULL );
