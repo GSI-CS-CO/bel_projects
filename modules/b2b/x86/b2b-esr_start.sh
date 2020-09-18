@@ -11,33 +11,33 @@
 ###########################################
 # clean up stuff
 ###########################################
-echo -e b2btest-esr - start: bring possibly resident firmware to idle state
-b2btest-ctl dev/wbm0 stopop
+echo -e b2b-esr - start: bring possibly resident firmware to idle state
+b2b-ctl dev/wbm0 stopop
 sleep 5
 
-b2btest-ctl dev/wbm0 idle
+b2b-ctl dev/wbm0 idle
 sleep 5
 
-echo -e b2btest-esr - start: destroy all unowned conditions for lm32 channel of ECA
+echo -e b2b-esr - start: destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl tr0 -x
 
-echo -e b2btest-esr - start: disable all events from I/O inputs to ECA
+echo -e b2b-esr - start: disable all events from I/O inputs to ECA
 saft-io-ctl tr0 -w
 
 ###########################################
 # load firmware to lm32
 ###########################################
-echo -e b2btest-esr - start: load firmware
+echo -e b2b-esr - start: load firmware
 eb-fwload dev/wbm0 u 0x0 b2bpm.bin
 sleep 5
 
-echo -e b2btest-esr configure firmware
-b2btest-ctl dev/wbm0 configure
+echo -e b2b-esr configure firmware
+b2b-ctl dev/wbm0 configure
 sleep 5
-b2btest-ctl dev/wbm0 startop
+b2b-ctl dev/wbm0 startop
 sleep 5
 
-echo -e b2btest-esr - start: configure tr0 for phase measurement, TLU
+echo -e b2b-esr - start: configure tr0 for phase measurement, TLU
 ################################################
 # configure phase measurement input (SIS18 DDS)
 ################################################

@@ -12,14 +12,14 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.14
+VERSION  	= 00.01.00
 
 .DEFAULT_GOAL	:= fwbin
 
 PATHFW 	        = .
 DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
-CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+CFLAGS 	    	= -I../include -I../../common-libs/include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
 $(info    >>>>)
 $(info    building is done by importing the following data from $(PLATFMAKEFILE):)
@@ -41,8 +41,8 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 # $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
-b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-fwlib.c
-b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-fwlib.c
+b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

@@ -11,40 +11,40 @@
 ###########################################
 # clean up stuff
 ###########################################
-echo -e b2btest-sis18 - start: bring possibly resident firmware to idle state
-b2btest-ctl dev/wbm0 stopop
-b2btest-ctl dev/wbm1 stopop
+echo -e b2b-sis18 - start: bring possibly resident firmware to idle state
+b2b-ctl dev/wbm0 stopop
+b2b-ctl dev/wbm1 stopop
 sleep 5
 
-b2btest-ctl dev/wbm0 idle
-b2btest-ctl dev/wbm1 idle
+b2b-ctl dev/wbm0 idle
+b2b-ctl dev/wbm1 idle
 sleep 5
-echo -e b2btest-sis18 - start: destroy all unowned conditions for lm32 channel of ECA
+echo -e b2b-sis18 - start: destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl tr0 -x
 saft-ecpu-ctl tr1 -x
 
-echo -e b2btest-sis18 - start: disable all events from I/O inputs to ECA
+echo -e b2b-sis18 - start: disable all events from I/O inputs to ECA
 saft-io-ctl tr0 -w
 saft-io-ctl tr1 -w
 
 ###########################################
 # load firmware to lm32
 ###########################################
-echo -e b2btest-sis18 - start: load firmware 
+echo -e b2b-sis18 - start: load firmware 
 eb-fwload dev/wbm0 u 0x0 b2bpm.bin
 eb-fwload dev/wbm1 u 0x0 b2bcbu.bin
 
-echo -e b2btest-sis18 configure firmware
+echo -e b2b-sis18 configure firmware
 sleep 5
-b2btest-ctl dev/wbm0 configure
+b2b-ctl dev/wbm0 configure
 sleep 5
-b2btest-ctl dev/wbm0 startop
+b2b-ctl dev/wbm0 startop
 sleep 5
-b2btest-ctl dev/wbm1 configure
+b2b-ctl dev/wbm1 configure
 sleep 5
-b2btest-ctl dev/wbm1 startop
+b2b-ctl dev/wbm1 startop
 
-echo -e b2btest-sis18 - start: configure tr0 for phase measurement TLU
+echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
 ################################################
 # configure phase measurement input (SIS18 DDS)
 ################################################
@@ -73,7 +73,7 @@ saft-io-ctl tr0 -n IO1 -o 1 -t 0
 saft-io-ctl tr0 -n IO1 -c 0x1fa7807000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO1 -c 0x1fa7807000000000 0xfffffff000000000 10000000 0x0 0 -u
 
-echo -e b2btest-sis18 - start: configure tr1 as cbu
+echo -e b2b-sis18 - start: configure tr1 as cbu
 ################################################
 # configure CBU (SIS18 -> ESR)
 ################################################

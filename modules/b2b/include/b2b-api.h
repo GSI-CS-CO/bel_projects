@@ -1,11 +1,11 @@
 /******************************************************************************
- *  b2btest-api.h
+ *  b2b-api.h
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-November-2019
+ *  version : 18-September-2020
  *
- * API for b2btest
+ * API for b2b
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,13 +34,13 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#ifndef _B2B_TEST_API_H_
-#define _B2B_TEST_API_H_
+#ifndef _B2B_API_H_
+#define _B2B_API_H_
 
-#define B2BTEST_X86_VERSION "0.0.14"                   // version
-#define B2BTEST_F_CLK       200000000                  // clock for DDS, here: BuTiS 200 MHz
+#define B2B_X86_VERSION "00.01.00"                     // version
+#define B2B_F_CLK       200000000                      // clock for DDS, here: BuTiS 200 MHz
 
-#include <b2b-test.h>
+#include <b2b.h>
 #include <etherbone.h>
 
 // small helper function

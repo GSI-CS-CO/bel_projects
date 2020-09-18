@@ -8,19 +8,19 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
-FW          ?=../b2btest-fw
+FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := b2btest-ctl 
+TARGETS     := b2b-ctl 
 
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: $(TARGETS)
 
-b2btest-ctl: b2btest-ctl.c
-	$(CC) $(CFLAGS) b2btest-api.c -o b2btest-ctl b2btest-ctl.c $(LIBS)
+b2b-ctl: b2b-ctl.c
+	$(CC) $(CFLAGS) b2b-api.c -o b2b-ctl b2b-ctl.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)

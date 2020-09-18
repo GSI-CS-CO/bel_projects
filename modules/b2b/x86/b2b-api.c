@@ -1,13 +1,13 @@
 /********************************************************************************************
- *  b2btest-api.c
+ *  b2b-api.c
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 05-November-2019
  *
- *  implementation for b2btest
+ *  implementation for b2b
  * 
- *  see b2btest-api.h for version, license and documentation 
+ *  see b2b-api.h for version, license and documentation 
  *
  ********************************************************************************************/
 // standard includes
@@ -21,29 +21,29 @@
 // etherbone
 #include <etherbone.h>
 
-// API (x86) b2b-test
-#include <b2b-test.h>
-#include <b2b-common.h>
-#include <b2btest-api.h>
+// API (x86) b2b
+#include <b2b.h>                   // b2b defs
+#include <common-defs.h>           // lm32 common defs
+#include <b2b-api.h>               // b2b api defs
 
 // public variables
-eb_address_t b2btest_statusLo;     // status of b2btest, read (low word)
-eb_address_t b2btest_statusHi;     // status of b2btest, read (high word)
-eb_address_t b2btest_state;        // state, read
-eb_address_t b2btest_transfers;    // # of transfers from UNILAC to SIS, read
-eb_address_t b2btest_injections;   // # of injections in ongoing transfer
-eb_address_t b2btest_statTrans;    // status of ongoing or last transfer, read
-eb_address_t b2btest_cmd;          // command, write
-eb_address_t b2btest_version;      // version, read
-eb_address_t b2btest_nBadStatus;   // # of bad status ("ERROR") incidents
-eb_address_t b2btest_nBadState;    // # of bad state ("not in operation") incidents
-eb_address_t b2btest_macHi;        // MAC address, high word
-eb_address_t b2btest_macLo;        // MAC address, low word
-eb_address_t b2btest_Ip;           // IP
-eb_address_t b2btest_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t b2btest_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t b2btest_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t b2btest_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
+eb_address_t b2b_statusLo;         // status of b2b, read (low word)
+eb_address_t b2b_statusHi;         // status of b2b, read (high word)
+eb_address_t b2b_state;            // state, read
+eb_address_t b2b_transfers;        // # of transfers from UNILAC to SIS, read
+eb_address_t b2b_injections;       // # of injections in ongoing transfer
+eb_address_t b2b_statTrans;        // status of ongoing or last transfer, read
+eb_address_t b2b_cmd;              // command, write
+eb_address_t b2b_version;          // version, read
+eb_address_t b2b_nBadStatus;       // # of bad status ("ERROR") incidents
+eb_address_t b2b_nBadState;        // # of bad state ("not in operation") incidents
+eb_address_t b2b_macHi;            // MAC address, high word
+eb_address_t b2b_macLo;            // MAC address, low word
+eb_address_t b2b_Ip;               // IP
+eb_address_t b2b_tDiagHi;          // time when diagnostics was cleared, high bits
+eb_address_t b2b_tDiagLo;          // time when diagnostics was cleared, low bits
+eb_address_t b2b_tS0Hi;            // time when FW was in S0 state (start of FW), high bits
+eb_address_t b2b_tS0Lo;            // time when FW was in S0 state (start of FW), low bits
 
 
 static void die(const char* where, eb_status_t status)
@@ -102,23 +102,23 @@ const char* api_statusText(uint32_t bit)
 // init for communicaiton with shared mem
 void api_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 {
-  b2btest_statusLo     = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
-  b2btest_statusHi     = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
-  b2btest_cmd          = lm32_base + sharedOffset + COMMON_SHARED_CMD;
-  b2btest_state        = lm32_base + sharedOffset + COMMON_SHARED_STATE;
-  b2btest_version      = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
-  b2btest_macHi        = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
-  b2btest_macLo        = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
-  b2btest_Ip           = lm32_base + sharedOffset + COMMON_SHARED_IP;
-  b2btest_nBadStatus   = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
-  b2btest_nBadState    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
-  b2btest_tDiagHi      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
-  b2btest_tDiagLo      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
-  b2btest_tS0Hi        = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
-  b2btest_tS0Lo        = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
-  b2btest_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
-  b2btest_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
-  b2btest_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
+  b2b_statusLo     = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
+  b2b_statusHi     = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
+  b2b_cmd          = lm32_base + sharedOffset + COMMON_SHARED_CMD;
+  b2b_state        = lm32_base + sharedOffset + COMMON_SHARED_STATE;
+  b2b_version      = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
+  b2b_macHi        = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
+  b2b_macLo        = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
+  b2b_Ip           = lm32_base + sharedOffset + COMMON_SHARED_IP;
+  b2b_nBadStatus   = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
+  b2b_nBadState    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
+  b2b_tDiagHi      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
+  b2b_tDiagLo      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
+  b2b_tS0Hi        = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
+  b2b_tS0Lo        = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
+  b2b_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
+  b2b_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
+  b2b_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
 } // api_initShared
 
 
@@ -131,7 +131,7 @@ double api_flsa2fdds(double flsa)
 
   twoep32 = pow(2,  32);
   twoem32 = pow(2, -32);
-  fclk    = (double)B2BTEST_F_CLK;
+  fclk    = (double)B2B_F_CLK;
 
   fdds   = twoem32 * floor(twoep32 * flsa / fclk) * fclk;
 
@@ -183,24 +183,24 @@ int api_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, u
   eb_status_t eb_status;
   eb_data_t   data[30];
   
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2btest-api: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2btest_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2btest_version,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_macHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_macLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_Ip,          EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_tDiagHi,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_tDiagLo,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_tS0Hi,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_tS0Lo,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, b2btest_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
-  eb_cycle_read(cycle, b2btest_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-api: eb_cycle_open", eb_status);
+  eb_cycle_read(cycle, b2b_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, b2b_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, b2b_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, b2b_version,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, b2b_macHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, b2b_macLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, b2b_Ip,          EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, b2b_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, b2b_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2b_tDiagHi,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2b_tDiagLo,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2b_tS0Hi,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2b_tS0Lo,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2b_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, b2b_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
+  eb_cycle_read(cycle, b2b_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-api: eb_cycle_close", eb_status);
 
   *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
   *state         = data[2];

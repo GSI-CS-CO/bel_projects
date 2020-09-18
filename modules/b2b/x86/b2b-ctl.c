@@ -1,11 +1,11 @@
 /*******************************************************************************************
- *  b2btest-ctl.c
+ *  b2b-ctl.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-December-2019
+ *  version : 18-September-2019
  *
- * Command-line interface for b2btest
+ * Command-line interface for b2b
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -47,9 +47,9 @@
 // Etherbone
 #include <etherbone.h>
 
-// b2b-test
-#include <b2btest-api.h>                 // API
-#include <b2b-test.h>                    // FW
+// b2b
+#include <b2b-api.h>                     // API
+#include <b2b.h>                         // FW
 #include <b2bcbu_shared_mmap.h>          // LM32
 
 const char* program;
@@ -63,37 +63,37 @@ eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
 
 // common stuff
-eb_address_t b2btest_status;       // status of b2btest, read
-eb_address_t b2btest_state;        // state, read
-eb_address_t b2btest_cmd;          // command, write
-eb_address_t b2btest_version;      // version, read
-eb_address_t b2btest_macHi;        // ebm src mac, read
-eb_address_t b2btest_macLo;        // ebm src mac, read
-eb_address_t b2btest_ip;           // ebm src ip, read
-eb_address_t b2btest_nBadStatus;   // # of bad status ("ERROR") incidents, read
-eb_address_t b2btest_nBadState;    // # of bad state ("not in operation") incidents, read
-eb_address_t b2btest_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t b2btest_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t b2btest_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t b2btest_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
+eb_address_t b2b_status;       // status of b2b, read
+eb_address_t b2b_state;        // state, read
+eb_address_t b2b_cmd;          // command, write
+eb_address_t b2b_version;      // version, read
+eb_address_t b2b_macHi;        // ebm src mac, read
+eb_address_t b2b_macLo;        // ebm src mac, read
+eb_address_t b2b_ip;           // ebm src ip, read
+eb_address_t b2b_nBadStatus;   // # of bad status ("ERROR") incidents, read
+eb_address_t b2b_nBadState;    // # of bad state ("not in operation") incidents, read
+eb_address_t b2b_tDiagHi;      // time when diagnostics was cleared, high bits
+eb_address_t b2b_tDiagLo;      // time when diagnostics was cleared, low bits
+eb_address_t b2b_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
+eb_address_t b2b_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
 
 // application specific stuff
-eb_address_t b2btest_nTransfer;    // # of transfers
-eb_address_t b2btest_transStat;    // status of transfer
-eb_address_t b2btest_TH1ExtHi;     // period of h=1 extraction, high bits
-eb_address_t b2btest_TH1ExtLo;     // period of h=1 extraction, low bits
-eb_address_t b2btest_nHExt;        // harmonic number of extraction RF
-eb_address_t b2btest_TH1InjHi;     // period of h=1 injection, high bits
-eb_address_t b2btest_TH1InjLo;     // period of h=1 injection, low bits
-eb_address_t b2btest_nHInj;        // harmonic number of injection RF
-eb_address_t b2btest_TBeatHi;      // period of beating, high bits
-eb_address_t b2btest_TBeatLo;      // period of beating, low bits
-eb_address_t b2btest_pcFixExt;     // phase correction, fixed, extraction
-eb_address_t b2btest_pcFixInj;     // phase correction, fixed, injection
-eb_address_t b2btest_pcVarExt;     // phase correction, variable, extraction
-eb_address_t b2btest_pcVarInj;     // phase correction, variable, injection
-eb_address_t b2btest_kcFixExt;     // kicker correction, fixed, extraction
-eb_address_t b2btest_kcFixInj;     // kicker correction, fixed, injection
+eb_address_t b2b_nTransfer;    // # of transfers
+eb_address_t b2b_transStat;    // status of transfer
+eb_address_t b2b_TH1ExtHi;     // period of h=1 extraction, high bits
+eb_address_t b2b_TH1ExtLo;     // period of h=1 extraction, low bits
+eb_address_t b2b_nHExt;        // harmonic number of extraction RF
+eb_address_t b2b_TH1InjHi;     // period of h=1 injection, high bits
+eb_address_t b2b_TH1InjLo;     // period of h=1 injection, low bits
+eb_address_t b2b_nHInj;        // harmonic number of injection RF
+eb_address_t b2b_TBeatHi;      // period of beating, high bits
+eb_address_t b2b_TBeatLo;      // period of beating, low bits
+eb_address_t b2b_pcFixExt;     // phase correction, fixed, extraction
+eb_address_t b2b_pcFixInj;     // phase correction, fixed, injection
+eb_address_t b2b_pcVarExt;     // phase correction, variable, extraction
+eb_address_t b2b_pcVarInj;     // phase correction, variable, injection
+eb_address_t b2b_kcFixExt;     // kicker correction, fixed, extraction
+eb_address_t b2b_kcFixInj;     // kicker correction, fixed, injection
 
 
 eb_data_t   data1;
@@ -109,9 +109,9 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -c                  display configuration of B2B-TEST\n");
+  fprintf(stderr, "  -c                  display configuration of B2B\n");
   fprintf(stderr, "  -e                  display version\n");
-  fprintf(stderr, "  -i                  display information on B2B-TEST\n");
+  fprintf(stderr, "  -i                  display information on B2B\n");
   fprintf(stderr, "  -s<n>               snoop ... for information continuously\n");
   fprintf(stderr, "                      0: print all messages (default)\n");
   fprintf(stderr, "                      1: as 0, once per second\n");
@@ -139,21 +139,21 @@ static void help(void) {
   fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to control B2B-TEST from the command line\n");
+  fprintf(stderr, "Use this tool to control B2B from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "b2b-test:        nTrans |                 INFO\n");
-  fprintf(stderr, "b2b-test: STATUS      n |   state      nchng     stat      nchng\n");
-  fprintf(stderr, "b2b-test:    0000065325 | OpReady    (     1), status 0x00000001 (     0)\n");
-  fprintf(stderr, "                      ' |       '          '                   '       '\n");
-  fprintf(stderr, "                      ' |       '          '                   '       '- # of bad status incidents\n");
-  fprintf(stderr, "                      ' |       '          '                   '- status (bitwise ored)\n");
-  fprintf(stderr, "                      ' |       '          '- # of bad state incidents\n");
-  fprintf(stderr, "                      ' |       '- state\n");
-  fprintf(stderr, "                      '- # of transfers\n");
+  fprintf(stderr, "b2b:        nTrans |                 INFO\n");
+  fprintf(stderr, "b2b: STATUS      n |   state      nchng     stat      nchng\n");
+  fprintf(stderr, "b2b:    0000065325 | OpReady    (     1), status 0x00000001 (     0)\n");
+  fprintf(stderr, "                 ' |       '          '                   '       '\n");
+  fprintf(stderr, "                 ' |       '          '                   '       '- # of bad status incidents\n");
+  fprintf(stderr, "                 ' |       '          '                   '- status (bitwise ored)\n");
+  fprintf(stderr, "                 ' |       '          '- # of bad state incidents\n");
+  fprintf(stderr, "                 ' |       '- state\n");
+  fprintf(stderr, "                 '- # of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", B2BTEST_X86_VERSION);
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", B2B_X86_VERSION);
 } //help
 
 
@@ -161,14 +161,14 @@ const char* statusText(uint32_t bit) {
   static char message[256];
 
   switch (bit) {
-    case B2BTEST_STATUS_PHASEFAILED      : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;
-    case B2BTEST_STATUS_TRANSFER         : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
-    case B2BTEST_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
-    default                              : sprintf(message, "%s",  api_statusText(bit)) ; break;
+    case B2B_STATUS_PHASEFAILED      : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;
+    case B2B_STATUS_TRANSFER         : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
+    case B2B_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
+    default                          : sprintf(message, "%s",  api_statusText(bit)) ; break;
   }
 
   return message;
-} // b2btest_status_text
+} // status_text
 
 
 int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *pcFixExt, int32_t *pcFixInj, int32_t *pcVarExt, int32_t *pcVarInj, int32_t *kcFixExt, int32_t *kcFixInj)
@@ -177,23 +177,23 @@ int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHI
   eb_status_t eb_status;
   eb_data_t   data[30];
 
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-test: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2btest_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_pcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_pcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_pcVarExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_pcVarInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_kcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_kcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b: eb_cycle_open", eb_status);
+  eb_cycle_read(cycle, b2b_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, b2b_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, b2b_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, b2b_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, b2b_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, b2b_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, b2b_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, b2b_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, b2b_pcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2b_pcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2b_pcVarExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2b_pcVarInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2b_kcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2b_kcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
 
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b: eb_cycle_close", eb_status);
 
   *TH1Ext        = (uint64_t)(data[0]) << 32;
   *TH1Ext       += data[1];
@@ -222,13 +222,13 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
   uint32_t macHi, macLo;
 
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-test: eb_cycle_open", eb_status);
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b: eb_cycle_open", eb_status);
 
-  eb_cycle_read(cycle, b2btest_macHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_macLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2btest_ip,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, b2b_macHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, b2b_macLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, b2b_ip,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
 
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b: eb_cycle_close", eb_status);
 
   macHi   = data[0];
   macLo   = data[1];  
@@ -244,15 +244,15 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printTransferHeader()
 {
-  printf("b2b-test:        nTrans |                 INFO                  \n");
-  printf("b2b-test: STATUS      n |   state      nchng     stat      nchng\n");
+  printf("b2b:        nTrans |                 INFO                  \n");
+  printf("b2b: STATUS      n |   state      nchng     stat      nchng\n");
 } // printTransferHeader
 
 
 void printTransfer(uint32_t nTransfer)
 {
   // diag
-  printf("b2b-test:    %010u |", nTransfer);
+  printf("b2b:    %010u |", nTransfer);
 
 } // printTransfer
 
@@ -260,7 +260,7 @@ void printTransfer(uint32_t nTransfer)
 void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t pcFixExt, int32_t pcFixInj, int32_t pcVarExt, int32_t pcVarInj, int32_t kcFixExt, int32_t kcFixInj)
 {
   printf("\n\n");
-  printf("b2b-test: statistics ...\n\n");
+  printf("b2b: statistics ...\n\n");
 
   printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
   printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
@@ -392,30 +392,30 @@ int main(int argc, char** argv) {
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
   api_initShared(lm32_base, SHARED_OFFS);
-  b2btest_TH1ExtHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTHI;
-  b2btest_TH1ExtLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTLO;
-  b2btest_nHExt        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHEXT;
-  b2btest_TH1InjHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJHI;
-  b2btest_TH1InjLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJLO;
-  b2btest_nHInj        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHINJ;
-  b2btest_TBeatHi      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATHI;
-  b2btest_TBeatLo      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATLO;
-  b2btest_pcFixExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCFIXEXT;
-  b2btest_pcFixInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCFIXINJ;
-  b2btest_pcVarExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCVAREXT;
-  b2btest_pcVarInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCVARINJ;
-  b2btest_kcFixExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_KCFIXEXT;
-  b2btest_kcFixInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_KCFIXINJ;
+  b2b_TH1ExtHi     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTHI;
+  b2b_TH1ExtLo     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTLO;
+  b2b_nHExt        = lm32_base + SHARED_OFFS + B2B_SHARED_NHEXT;
+  b2b_TH1InjHi     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1INJHI;
+  b2b_TH1InjLo     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1INJLO;
+  b2b_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_NHINJ;
+  b2b_TBeatHi      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATHI;
+  b2b_TBeatLo      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATLO;
+  b2b_pcFixExt     = lm32_base + SHARED_OFFS + B2B_SHARED_PCFIXEXT;
+  b2b_pcFixInj     = lm32_base + SHARED_OFFS + B2B_SHARED_PCFIXINJ;
+  b2b_pcVarExt     = lm32_base + SHARED_OFFS + B2B_SHARED_PCVAREXT;
+  b2b_pcVarInj     = lm32_base + SHARED_OFFS + B2B_SHARED_PCVARINJ;
+  b2b_kcFixExt     = lm32_base + SHARED_OFFS + B2B_SHARED_KCFIXEXT;
+  b2b_kcFixInj     = lm32_base + SHARED_OFFS + B2B_SHARED_KCFIXINJ;
   
   if (getConfig) {
     readConfig(&mac, &ip);
-    printf("b2b-test: EB Master: mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", mac, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
+    printf("b2b: EB Master: mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", mac, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
   } // if getConfig
 
   if (getVersion) {
-    eb_device_read(device, b2btest_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
+    eb_device_read(device, b2b_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
     version = data;
-    printf("b2b-test: software (firmware) version %s (%06x)\n",  B2BTEST_X86_VERSION, version);     
+    printf("b2b: software (firmware) version %s (%06x)\n",  B2B_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
@@ -430,35 +430,35 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    eb_device_read(device, b2btest_state, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
+    eb_device_read(device, b2b_state, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
     state = data;
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
-      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("b2b: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
-      if (state != COMMON_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
-      if (state != COMMON_STATE_ERROR) printf("b2b-test: WARNING command has no effect (not in state ERROR)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
+      if (state != COMMON_STATE_ERROR) printf("b2b: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
-      if (state != COMMON_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
 
     // diagnostics
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
@@ -467,109 +467,109 @@ int main(int argc, char** argv) {
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
-      if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1inj <freq> <h>\n"); return 1;}
+      if (optind+3  != argc) {printf("b2b: expecting exactly two arguments: seth1inj <freq> <h>\n"); return 1;}
 
       fH1Inj = strtod(argv[optind+1], &tail);
-      if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      printf("b2b-test: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
+      if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
+      printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
       TH1Inj = (double)1000000000000000000.0 / api_flsa2fdds(fH1Inj);  // period in attoseconds
 
       nHInj  = strtoul(argv[optind+2], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
 
       /* chk, consider using one cycle */
-      eb_device_write(device, b2btest_TH1InjHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32)       , 0, eb_block);
-      eb_device_write(device, b2btest_TH1InjLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff), 0, eb_block);
-      eb_device_write(device, b2btest_nHInj,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHInj                , 0, eb_block);
+      eb_device_write(device, b2b_TH1InjHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32)       , 0, eb_block);
+      eb_device_write(device, b2b_TH1InjLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff), 0, eb_block);
+      eb_device_write(device, b2b_nHInj,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHInj                , 0, eb_block);
     } // "seth1inj"
     
     if (!strcasecmp(command, "seth1ext")) {
-      if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1ext <freq> <h> \n"); return 1;}
+      if (optind+3  != argc) {printf("b2b: expecting exactly two arguments: seth1ext <freq> <h> \n"); return 1;}
 
       fH1Ext = strtod(argv[optind+1], &tail);
-      if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      printf("b2b-test: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
+      if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
+      printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
       TH1Ext = (double)1000000000000000000.0 / api_flsa2fdds(fH1Ext);  // period in attoseconds
 
       nHExt  = strtoul(argv[optind+2], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
       
       /* chk, consider using one cycle */      
-      eb_device_write(device, b2btest_TH1ExtHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32)       , 0, eb_block);
-      eb_device_write(device, b2btest_TH1ExtLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff), 0, eb_block);
-      eb_device_write(device, b2btest_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
+      eb_device_write(device, b2b_TH1ExtHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32)       , 0, eb_block);
+      eb_device_write(device, b2b_TH1ExtLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff), 0, eb_block);
+      eb_device_write(device, b2b_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
     } // "seth1ext"
 
    if (!strcasecmp(command, "setpcfixext")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcfixext <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcfixext <value>\n"); return 1;}
 
       pcFixExt = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("pcFixExt %d\n", pcFixExt);
             
-      eb_device_write(device, b2btest_pcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixExt   , 0, eb_block);
+      eb_device_write(device, b2b_pcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixExt   , 0, eb_block);
    } // "setpcfixext"  
 
    if (!strcasecmp(command, "setpcfixinj")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcfixinj <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcfixinj <value>\n"); return 1;}
 
       pcFixInj = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("pcFixInj %d\n", pcFixInj);
             
-      eb_device_write(device, b2btest_pcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixInj   , 0, eb_block);
+      eb_device_write(device, b2b_pcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixInj   , 0, eb_block);
    } // "setpcfixinj"  
 
    if (!strcasecmp(command, "setpcvarext")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcvarext <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcvarext <value>\n"); return 1;}
 
       pcVarExt = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("pcVarExt %d\n", pcVarExt);
             
-      eb_device_write(device, b2btest_pcVarExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarExt   , 0, eb_block);
+      eb_device_write(device, b2b_pcVarExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarExt   , 0, eb_block);
    } // "setpcvarext"  
 
    if (!strcasecmp(command, "setpcvarinj")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcvarinj <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcvarinj <value>\n"); return 1;}
 
       pcVarInj = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("pcVarInj %d\n", pcVarInj);
             
-      eb_device_write(device, b2btest_pcVarInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarInj   , 0, eb_block);
+      eb_device_write(device, b2b_pcVarInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarInj   , 0, eb_block);
    } // "setpcvarinj"  
 
    if (!strcasecmp(command, "setkcfixext")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setkcfixext <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setkcfixext <value>\n"); return 1;}
 
       kcFixExt = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("kcFixExt %d\n", kcFixExt);
             
-      eb_device_write(device, b2btest_kcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixExt   , 0, eb_block);
+      eb_device_write(device, b2b_kcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixExt   , 0, eb_block);
    } // "setkcfixext"  
 
    if (!strcasecmp(command, "setkcfixinj")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setkcfixinj <value>\n"); return 1;}
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setkcfixinj <value>\n"); return 1;}
 
       kcFixInj = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
       printf("kcFixInj %d\n", kcFixInj);
             
-      eb_device_write(device, b2btest_kcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixInj   , 0, eb_block);
+      eb_device_write(device, b2b_kcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixInj   , 0, eb_block);
    } // "setkcfixinj"  
 
   } //if command
 
 if (snoop) {
-    printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
+    printf("b2b: continous monitoring of gateway, loglevel = %d\n", logLevel);
 
     actNTransfer   = 0;
     actState       = COMMON_STATE_UNKNOWN;
