@@ -214,6 +214,7 @@ void discoverPeriphery(void)
   pCpuAtomic      = find_device_adr(GSI, CPU_ATOM_ACC);
   pCpuSysTime     = find_device_adr(GSI, CPU_SYSTEM_TIME);
   pCpuIrqSlave    = find_device_adr(GSI, CPU_MSI_CTRL_IF);
+  pCpuWbTimer     = find_device_adr(GSI, CPU_WB_TIMER);
 
   idx = 0;
 

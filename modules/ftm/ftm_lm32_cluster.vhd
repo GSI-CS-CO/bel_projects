@@ -49,6 +49,7 @@ generic(
   g_ram_per_core      : natural := 32768/4;
   g_profiles          : string  := "medium_icache_debug";
   g_init_files        : string;
+  g_en_timer          : boolean := false;
   g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar
   g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar
 );
@@ -77,7 +78,7 @@ port(
 
   -- optional prioq interface
   dm_prioq_master_o : out t_wishbone_master_out;
-  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000")
+  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000")
   -- no msi required
 
 
@@ -161,7 +162,8 @@ begin
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => f_substr(g_profiles, I, ';'),
       g_init_file                      => f_substr(g_init_files, I, ';'),
-		  g_is_dm                          => g_is_dm
+      g_is_dm                          => g_is_dm,
+      g_en_timer                       => g_en_timer
     )
     port map(
       clk_sys_i      => clk_ref_i,
@@ -339,7 +341,7 @@ begin
     vIdx := c_clu_info_rom;
     if rising_edge(clk_ref_i) then
       if(rst_ref_n_i = '0') then
-        s_clu_info <= ('0', '0', '0', '0', '0', (others => '0'));
+        s_clu_info <= ('0', '0', '0', '0', (others => '0'));
       else
         -- rom is an easy solution for a device that never stalls:
         s_clu_info.dat <= (others => '0');
@@ -372,7 +374,7 @@ begin
       vIdx := c_lm32_sys_time;
       if rising_edge(clk_ref_i) then
         if(rst_ref_n_i = '0') then
-            s_clu_time <= ('0', '0', '0', '0', '0', (others => '0'));
+            s_clu_time <= ('0', '0', '0', '0', (others => '0'));
         else
            -- rom is an easy solution for a device that never stalls:
            s_clu_time.ack <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and not clu_cb_masterport_out(vIdx).we;

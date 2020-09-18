@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.arria2_lvds_pkg.all;
 use work.arria5_lvds_pkg.all;
+use work.arria10_lvds_pkg.all;
 
 entity altera_lvds_obuf is
   generic(
@@ -33,5 +34,13 @@ begin
         dataout(0)       => dataout,
         dataout_b(0)     => dataout_b);
   end generate;
-  
+
+  arria10_scu4 : if g_family = "Arria 10 GX SCU4" generate
+    obuf : arria10_scu4_lvds_obuf
+      port map(
+        din(0)           => datain,
+        pad_out(0)       => dataout,
+        pad_out_b(0)     => dataout_b);
+  end generate;
+
 end rtl;

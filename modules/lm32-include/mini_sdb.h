@@ -35,6 +35,7 @@
 #define CPU_TIMER_CTRL_IF     0x10040088
 #define CPU_MSI_CTRL_IF       0x10040083
 #define CPU_MSI_TGT           0x1f1a4e39
+#define CPU_WB_TIMER          0xd8baaa13
 
 //Cluster periphery
 #define LM32_CB_CLUSTER       0x10041000
@@ -106,6 +107,7 @@ volatile uint32_t* pPps;
 //volatile uint32_t* BASE_UART;
 volatile uint32_t* pCluCB;
 volatile uint32_t* pOneWire;
+volatile uint32_t* pCpuWbTimer;
 
 volatile uint32_t* pCfiPFlash;
 

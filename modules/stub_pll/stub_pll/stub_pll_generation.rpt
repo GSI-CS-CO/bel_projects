@@ -1,0 +1,25 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/stub_pll/stub_pll.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/stub_pll/stub_pll --family="Arria 10" --part=10AX066N3F40E2SG
+Progress: Loading stub_pll/stub_pll.qsys
+Progress: Reading input file
+Progress: Adding iopll_0 [altera_iopll 16.0]
+Progress: Parameterizing module iopll_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: stub_pll.iopll_0: Able to implement PLL with user settings
+Info: stub_pll: "Transforming system: stub_pll"
+Info: stub_pll: Running transform generation_view_transform
+Info: stub_pll: Running transform generation_view_transform took 0.000s
+Info: iopll_0: Running transform generation_view_transform
+Info: iopll_0: Running transform generation_view_transform took 0.000s
+Info: stub_pll: Running transform merlin_avalon_transform
+Info: stub_pll: Running transform merlin_avalon_transform took 0.040s
+Info: stub_pll: "Naming system components in system: stub_pll"
+Info: stub_pll: "Processing generation queue"
+Info: stub_pll: "Generating: stub_pll"
+Info: stub_pll: "Generating: stub_pll_altera_iopll_160_z2kwsvq"
+Info: stub_pll: Done "stub_pll" with 2 modules, 3 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

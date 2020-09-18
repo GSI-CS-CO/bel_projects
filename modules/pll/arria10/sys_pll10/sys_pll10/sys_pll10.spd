@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file
+   path="altera_iopll_160/sim/sys_pll10_altera_iopll_160_pcex3oq.vo"
+   type="VERILOG"
+   library="sys_pll10_altera_iopll_160" />
+ <file path="sim/sys_pll10.vhd" type="VHDL" hasInlineConfiguration="true" />
+ <topLevel name="sys_pll10" />
+ <deviceFamily name="arria10" />
+</simPackage>

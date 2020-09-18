@@ -1,0 +1,5 @@
+config arria10_scu4_lvds_rx_altera_lvds_181_pparsma_cfg;
+		design arria10_scu4_lvds_rx_altera_lvds_181_pparsma;
+		instance arria10_scu4_lvds_rx_altera_lvds_181_pparsma.core use arria10_scu4_lvds_rx_altera_lvds_core20_181.arria10_scu4_lvds_rx_altera_lvds_core20_181_anc57za;
+endconfig
+

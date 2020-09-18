@@ -1,5 +1,7 @@
 --TITLE "'tag_n' Autor: R.Hartmann, Stand: 19.06.2015, Vers: V01 ";
 
+-- KK: added tag_matched pulse for really fast response for ATR use
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -15,23 +17,25 @@ ENTITY tag_n IS
     nReset:                in   std_logic;
     Timing_Pattern_LA:     in   std_logic_vector(31 downto 0);    -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV:    in   std_logic;                        -- timing pattern received
-    Tag_n_hw:              in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_lw:              in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_Maske:           in   std_logic_vector(15 downto 0);    -- 
+    Tag_n_hw:              in   std_logic_vector(15 downto 0);    --
+    Tag_n_lw:              in   std_logic_vector(15 downto 0);    --
+    Tag_n_Maske:           in   std_logic_vector(15 downto 0);    --
     Tag_n_Register:        in   std_logic_vector(15 downto 0);    -- Tag-Output-Register-Nummer
     Tag_n_Level:           in   std_logic_vector(15 downto 0);    -- Tag-Level-Maske, Bit 15..0
-    Tag_n_Delay_Cnt:       in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_Puls_Width:      in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_Prescale:        in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_Trigger:         in   std_logic_vector(15 downto 0);    -- 
+    Tag_n_Delay_Cnt:       in   std_logic_vector(15 downto 0);    --
+    Tag_n_Puls_Width:      in   std_logic_vector(15 downto 0);    --
+    Tag_n_Prescale:        in   std_logic_vector(15 downto 0);    --
+    Tag_n_Trigger:         in   std_logic_vector(15 downto 0);    --
 
     SCU_AW_Input_Reg:      in   t_IO_Reg_1_to_7_Array;          -- Input-Port's wie zum SCU-Bus
 
     Max_AWOut_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:       in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe:         in   std_logic;                        -- 
-    Spare1_Strobe:         in   std_logic;                        -- 
-      
+    Spare0_Strobe:         in   std_logic;                        --
+    Spare1_Strobe:         in   std_logic;                        --
+
+    Tag_matched:           out  std_logic;                       -- Tag_matched is high for one clock pulse on matching Tags
+
     Tag_n_Reg_Nr:          out  integer range 0 to 7;            -- AWOut-Reg-Pointer
     Tag_n_New_AWOut_Data:  out  boolean;                         -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
     Tag_n_Maske_Hi_Bits:   out  std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
@@ -58,7 +62,7 @@ TYPE   t_Boolean_Array  is array (0 to 7) of boolean;
 
 signal  Tag_Maske_Hi_Bits:      std_logic_vector(15 downto 0);  -- Maske für "High-Aktive" Bits im Ausgangs-Register
 signal  Tag_Maske_Lo_Bits:      std_logic_vector(15 downto 0);  -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    
+
 signal  Tag_Delay_Cnt:          integer range 0 to 65535;       -- 0-FFFF -- Counter Delay
 signal  Tag_Puls_Width:         integer range 0 to 65535;       -- 0-FFFF -- Counter Delay
 signal  Tag_Pre_VZ:             integer range 0 to 65535;       -- 0-FFFF -- Prescale Verzögerungszeit
@@ -77,8 +81,8 @@ signal  Tag_Timeout_Cnt:    integer range 0 to 65535;  -- 0-FFFF -- Counter Time
 
 
 signal Tag_Reg_Bit_Out:       std_logic_vector(15 downto 0); -- Zwischenspeicher
-signal Tag_Reg_Bit_Strobe_i:  std_logic;        -- input  
-signal Tag_Reg_Bit_Strobe_o:  std_logic;        -- Output 
+signal Tag_Reg_Bit_Strobe_i:  std_logic;        -- input
+signal Tag_Reg_Bit_Strobe_o:  std_logic;        -- Output
 signal Tag_Reg_Bit_shift:     std_logic_vector(2  downto 0); -- Shift-Reg.
 
 
@@ -125,7 +129,7 @@ p_Tag_Reg_Bit:  PROCESS (clk, nReset)
 
     ELSIF rising_edge(clk) THEN
 
-    Tag_Reg_Bit_shift <= (Tag_Reg_Bit_shift(Tag_Reg_Bit_shift'high-1 downto 0) & (Tag_Reg_Bit_Strobe_i)); -- Tag0_Tag_Reg_Bit_Strobe = Puls, nach der neg. Flanke von Reg_Bit 
+    Tag_Reg_Bit_shift <= (Tag_Reg_Bit_shift(Tag_Reg_Bit_shift'high-1 downto 0) & (Tag_Reg_Bit_Strobe_i)); -- Tag0_Tag_Reg_Bit_Strobe = Puls, nach der neg. Flanke von Reg_Bit
 
       IF Tag_Reg_Bit_shift(Tag_Reg_Bit_shift'high) = '0' AND Tag_Reg_Bit_shift(Tag_Reg_Bit_shift'high-1) = '1' THEN
         Tag_Reg_Bit_Strobe_o <= '1';
@@ -138,7 +142,7 @@ p_Tag_Reg_Bit:  PROCESS (clk, nReset)
 
 
 
-  
+
   ---------------------------------------- Timeout -------------------------------------------
 
 P_To:  process (clk, nReset, Tag_Timeout_Loop_Cnt, To_Start)
@@ -152,7 +156,7 @@ P_To:  process (clk, nReset, Tag_Timeout_Loop_Cnt, To_Start)
       ELSIF rising_edge(clk) then
 
           if (To_Start = '1') then
-              To_Cnt_Pre      <= Tag_Timeout_Loop_Cnt;  -- Timeout_Counter-Prescale          
+              To_Cnt_Pre      <= Tag_Timeout_Loop_Cnt;  -- Timeout_Counter-Prescale
               To_Cnt          <= c_Timeout_10us;        -- "Konstante für 10us"
               To_cnt_akt      <= '1';                   -- Counter aktiv (ungleich 0)
 
@@ -168,8 +172,8 @@ P_To:  process (clk, nReset, Tag_Timeout_Loop_Cnt, To_Start)
       end if;
     end if;
   end process P_To;
-  
-  
+
+
   ---------------------------------------- Verzögerungszeit -------------------------------------------
 
 P_Vz:  process (clk, nReset, Tag_Pre_VZ, Tag_Delay_Cnt, VZ_Start)
@@ -183,7 +187,7 @@ P_Vz:  process (clk, nReset, Tag_Pre_VZ, Tag_Delay_Cnt, VZ_Start)
       ELSIF rising_edge(clk) then
 
           if (Vz_Start = '1') then
-              Vz_Cnt_Pre      <= Tag_Pre_VZ;     -- Verzögerungszeit_Counter-Prescale          
+              Vz_Cnt_Pre      <= Tag_Pre_VZ;     -- Verzögerungszeit_Counter-Prescale
               Vz_Cnt          <= Tag_Delay_Cnt;  -- Verzögerungszeit_Counter
               Vz_cnt_akt      <= '1';            -- Counter aktiv (ungleich 0)
 
@@ -200,8 +204,8 @@ P_Vz:  process (clk, nReset, Tag_Pre_VZ, Tag_Delay_Cnt, VZ_Start)
       end if;
     end if;
   end process P_Vz;
-  
-  
+
+
   ---------------------------------------- Pulsbreite (Monoflop) -------------------------------------------
 
 P_Mf:  process (clk, nReset, Tag_Pre_Mf, Tag_Puls_Width, Mf_Start)
@@ -215,7 +219,7 @@ P_Mf:  process (clk, nReset, Tag_Pre_Mf, Tag_Puls_Width, Mf_Start)
       ELSIF rising_edge(clk) then
 
           if (Mf_Start = '1') then
-              Mf_Cnt_Pre      <= Tag_Pre_Mf;      -- Pulsbreite_Counter-Prescale          
+              Mf_Cnt_Pre      <= Tag_Pre_Mf;      -- Pulsbreite_Counter-Prescale
               Mf_Cnt          <= Tag_Puls_Width;  -- Pulsbreite_Counter
               Mf_cnt_akt      <= '1';             -- Counter aktiv (ungleich 0)
 
@@ -232,10 +236,10 @@ P_Mf:  process (clk, nReset, Tag_Pre_Mf, Tag_Puls_Width, Mf_Start)
       end if;
     end if;
   end process P_Mf;
-  
 
 
-  
+
+
 P_Tag_Deco:  process (clk, nReset,
                       SCU_AW_Input_Reg,
                       Tag_AWOut_Reg_Nr, Tag_FG_Start, Tag_Delay_Cnt, Tag_Puls_Width,
@@ -265,13 +269,15 @@ P_Tag_Deco:  process (clk, nReset,
 
   ELSIF rising_edge(clk) then
 
-     
+
 ---------------------------------------------------------- TAG 'n' ---------------------------------------------------------
       case sm_state is
         when sm_idle  =>      if ((Timing_Pattern_RCV = '1') and (Timing_Pattern_LA(31 downto 0) = (Tag_n_hw & Tag_n_lw))) then
 
-                                  Tag_AWOut_Reg_Nr      <= to_integer(unsigned(Tag_n_Register)(2 downto 0));     -- Output-Reg. Nr. 0..7         
-                                  Tag_FG_Start          <= Tag_n_Register(3);                                     -- Start-Flag für FG         
+                                  Tag_matched           <= '1';
+
+                                  Tag_AWOut_Reg_Nr      <= to_integer(unsigned(Tag_n_Register)(2 downto 0));     -- Output-Reg. Nr. 0..7
+                                  Tag_FG_Start          <= Tag_n_Register(3);                                     -- Start-Flag für FG
                                   Tag_Delay_Cnt         <= to_integer(unsigned(Tag_n_Delay_Cnt)(15 downto 0));   -- Counter Delay
                                   Tag_Puls_Width        <= to_integer(unsigned(Tag_n_Puls_Width)(15 downto 0));  -- Counter Delay
                                   Tag_Pre_VZ            <= to_integer(unsigned(Tag_n_Prescale)(15 downto 8));    -- Prescale Verzögerungszeit
@@ -287,24 +293,26 @@ P_Tag_Deco:  process (clk, nReset,
                                 sm_state <= sm_idle;
                               end if;
 
-        when sm_trigger =>      CASE Tag_Trig_Mux is
+        when sm_trigger =>
+                              Tag_matched                <= '0';
+                              CASE Tag_Trig_Mux is
                                 WHEN "001"   =>  To_Start     <= '1';            -- Start Timeout-Counter
-                                                 sm_state     <= sm_trig_S0;     -- Trigger mit Spare0   
+                                                 sm_state     <= sm_trig_S0;     -- Trigger mit Spare0
                                 WHEN "010"   =>  To_Start     <= '1';            -- Start Timeout-Counter
-                                                 sm_state     <= sm_trig_S1;     -- Trigger mit Spare1     
+                                                 sm_state     <= sm_trig_S1;     -- Trigger mit Spare1
                                 WHEN "100"   =>  IF Tag_Trig_Reg_Nr = 0  THEN    -- Input-Trigger-Reg. nicht definiert
-                                                    sm_state  <= sm_trig_err;    -- Trigger-Error 
+                                                    sm_state  <= sm_trig_err;    -- Trigger-Error
                                                  elsif Tag_Trig_Reg_Nr > Max_AWIn_Reg_Nr  THEN    -- Input-Trigger-Reg. nicht unterstützt
                                                     sm_state  <= sm_trig_max_err;    -- Trigger max Reg. Error
                                                  else
                                                     To_Start     <= '1';         -- Start Timeout-Counter
-                                                    sm_state  <= sm_trig_Reg;    -- Trigger mit Bit vom Input-Register 
+                                                    sm_state  <= sm_trig_Reg;    -- Trigger mit Bit vom Input-Register
                                                  end if;
                                 WHEN OTHERS  =>  sm_state     <= sm_vz_delay;
                               END CASE;
 
 
-                              
+
         when sm_trig_S0  =>    To_Start        <= '0';           ------------ Stop Timeout-Counter
                                sm_state        <= sm_trig_S0_w;
 
@@ -316,8 +324,8 @@ P_Tag_Deco:  process (clk, nReset,
                                 sm_state      <= sm_trig_S0_w;
                                end if;
 
-                               
-  
+
+
         when sm_trig_S1  =>   To_Start        <= '0';            ------------ Stop Timeout-Counter
                               sm_state        <= sm_trig_S1_w;
 
@@ -325,11 +333,11 @@ P_Tag_Deco:  process (clk, nReset,
                                 sm_state      <= sm_vz_delay_t;
                               ELSIF To_cnt_akt = '0' THEN
                                 sm_state      <= sm_to_err;
-                              ELSE   
+                              ELSE
                                 sm_state      <= sm_trig_S1_w;
                               end if;
 
-                              
+
         when sm_trig_Reg =>   To_Start        <= '0';           ------------ Stop Timeout-Counter
                               sm_state        <= sm_trig_Reg_w;
 
@@ -343,14 +351,14 @@ P_Tag_Deco:  process (clk, nReset,
                                 sm_state              <= sm_vz_delay_t;
                               ELSIF To_cnt_akt  = '0' THEN
                                 sm_state       <= sm_to_err;
-                              ELSE   
+                              ELSE
                                 sm_state       <= sm_trig_Reg_w;
                               end if;
-  
-       
+
+
         when sm_vz_delay_t => sm_state       <= sm_vz_delay;     ------------ Laufzeitausgleich für Trigger S0/S1/extern
 
-                      
+
         when sm_vz_delay =>   IF Tag_Delay_Cnt   =  0 THEN
                                 sm_state        <= sm_rd1;
                               else   VZ_Start   <= '1';          ------------ Start VZ-Counter
@@ -379,21 +387,21 @@ P_Tag_Deco:  process (clk, nReset,
                                         sm_state        <= sm_fg_start;
 
                               ELSE
-                                
+
                                 Tag_Maske_Hi_Bits   <=      Tag_n_Level and Tag_n_Maske;  -- Set Maske für "High-Aktive" Bits im Ausgangs-Register
                                 Tag_Maske_Lo_Bits   <=  not Tag_n_Level and Tag_n_Maske;  -- Set Maske für "Low-Aktive"  Bits im Ausgangs-Register
                                 sm_state        <= sm_wr1;
-                              end if; 
-                              
+                              end if;
+
         when sm_wr1   =>      Tag_New_AWOut_Data  <= true;                           -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
- 
+
                               IF Tag_Puls_Width = 0 then
                                 sm_state     <= sm_end;
                               else
                                   sm_state   <= sm_mf_delay;
                               end if;
 
-    
+
         when sm_mf_delay =>   Tag_New_AWOut_Data  <= false;        -- Reset Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
 
                               IF Tag_Puls_Width   =  0 THEN
@@ -407,46 +415,46 @@ P_Tag_Deco:  process (clk, nReset,
 
         when sm_mf_wait1   => IF Mf_cnt_akt    = '1' then           ------------ Wait-Loop
                                 sm_state      <= sm_mf_wait1;
-                              else    
+                              else
                                 sm_state      <= sm_rd2;
                               end if;
-  
-        when sm_rd2     =>    IF Tag_AWOut_Reg_Nr  /= 0 then  -- IF Register-Nr. im Bereich 1-7 
+
+        when sm_rd2     =>    IF Tag_AWOut_Reg_Nr  /= 0 then  -- IF Register-Nr. im Bereich 1-7
 
                               --- zum "Umschalten bei der Monoflop-Funktion, werden aus den "High-Bit" = "Low-Bits" und umgekehrt.
                               Tag_Maske_Hi_Bits   <=  not Tag_n_Level and Tag_n_Maske;  -- Set Maske für "High-Aktive" Bits im Ausgangs-Register
                               Tag_Maske_Lo_Bits   <=      Tag_n_Level and Tag_n_Maske;  -- Set Maske für "Low-Aktive"  Bits im Ausgangs-Register
-        
+
                               sm_state     <= sm_wr2;
                               else
                                 sm_state     <= sm_reg_err;
-                              end if; 
-                              
+                              end if;
+
         when sm_wr2     =>    Tag_New_AWOut_Data  <= true;                        -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
                               sm_state            <= sm_end;
 
 
         when sm_fg_start     =>   Tag_n_FG_Start        <=   '1';        -- Fg-Start
-                                  sm_state <= sm_end; 
-  
+                                  sm_state <= sm_end;
+
         when sm_reg_err      =>   Tag_n_Reg_Err         <=   '1';        -- Config-Error: TAG-Reg-Nr
-                                  sm_state <= sm_end; 
-  
+                                  sm_state <= sm_end;
+
         when sm_reg_max_err  =>   Tag_n_Reg_max_Err     <=   '1';        -- Config-Error: TAG-Reg-Nr-Max
-                                  sm_state <= sm_end; 
-                              
+                                  sm_state <= sm_end;
+
         when sm_trig_err     =>   Tag_n_Trig_Err        <=   '1';        -- Config-Error: Trig-Reg
-                                  sm_state <= sm_end; 
-  
+                                  sm_state <= sm_end;
+
         when sm_trig_max_err =>   Tag_n_Trig_max_Err    <=   '1';        -- Config-Error: Trig-Reg-Max
-                                  sm_state <= sm_end; 
-  
+                                  sm_state <= sm_end;
+
         when sm_to_err       =>   Tag_n_Timeout         <=   '1';        -- Timeout-Error ext. Trigger, Spare0/Spare1
-                                  sm_state <= sm_end; 
-                                  
+                                  sm_state <= sm_end;
+
         when sm_end          =>   Tag_New_AWOut_Data    <= false;        -- Reset Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
                                   sm_state              <= sm_idle;
-          
+
                                   Tag_n_FG_Start        <=   '0';        -- Fg-Start
                                   Tag_n_Reg_Err         <=   '0';        -- Config-Error: TAG-Reg-Nr
                                   Tag_n_Reg_max_Err     <=   '0';        -- Config-Error: TAG-Reg-Nr-Max
@@ -460,9 +468,9 @@ P_Tag_Deco:  process (clk, nReset,
 
     end if;
   end process P_Tag_Deco;
-  
 
-  
+
+
 Tag_n_Maske_Hi_Bits   <=  Tag_Maske_Hi_Bits;      -- Übergabe-Daten: Maske für "High-Aktive" Bits im Ausgangs-Register
 Tag_n_Maske_Lo_Bits   <=  Tag_Maske_Lo_Bits;      -- Übergabe-Daten:  Maske für "Low-Aktive"  Bits im Ausgangs-Register
 Tag_n_Reg_Nr          <=  Tag_AWOut_Reg_Nr;       -- Übergabe-Daten: Nr. des Registers, das überschriebe werden soll

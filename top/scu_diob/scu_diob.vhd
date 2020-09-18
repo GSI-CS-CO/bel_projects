@@ -200,7 +200,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 24;     -- Firmware_release Stand 10.05.2017 ( Error, Umschaltung FG: bipolar/unipolar DAC '710
 --  CONSTANT c_Firmware_Release:    Integer := 25;     -- Firmware_release Stand 28.08.2017 ( + '760 (ATR1) + FG_901.040 AD1) + FG_901.050 8In8Out1) + Tri-State-Steuerung (PIO+UIO) )
 --  CONSTANT c_Firmware_Release:    Integer := 26;     -- Firmware_release Stand 10.10.2017 ( + 'FG_901.010 16Out, OutpReg1 'MF-Funktion' auf die Outputs umschaltbar)
-    CONSTANT c_Firmware_Release:    Integer := 27;     -- Firmware_release Stand 21.11.2017 ( Error, '760 (ATR1): LED-Mux für FG902070_OptoDig_Out1
+--  CONSTANT c_Firmware_Release:    Integer := 27;     -- Firmware_release Stand 21.11.2017 ( Error, '760 (ATR1): LED-Mux für FG902070_OptoDig_Out1
+    CONSTANT c_Firmware_Release:    Integer := 28;     -- Firmware_release Stand 20.06.2018 ( KK: Umbau ATR Trigger auf kanalweises Triggern und Largepulse Option, KL: SPill-Abort,QD-Test Matrix)
 --  CONSTANT c_Firmware_Release:    Integer := 16#FF#; -- Test-Firmware_release
 
 
@@ -220,7 +221,7 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Steuerung
     CONSTANT c_AW_ATR_DAC_Base_Addr:             Integer := 16#0600#;  -- DAC-Daten-Register
     CONSTANT c_AW_atr_comp_ctrl_Base_Addr:       Integer := 16#0610#;  -- Cnt_Reg_Comp_Channel
-    CONSTANT c_AW_atr_puls_ctrl_Base_Addr:       Integer := 16#0618#;  -- 8xAusgangskanäle (Pulsbreite, Verzögerungszeit und Timeout ADR:[618..629]
+    CONSTANT c_AW_atr_puls_ctrl_Base_Addr:       Integer := 16#0618#;  -- 8Ch:Pulsbreite&Triggerverzögerung für Zündpuls, Timeout der Rückmeldung (Adr:x618..x62F)
 --
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Masken-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
@@ -411,6 +412,8 @@ component tag_ctrl
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;             -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;             -- Maximale AWIn-Reg-Nummer der Anwendung
 
+    Tag_matched_7_0:      out  std_logic_vector(7 downto 0);    -- Active on matched Tags for one clock period after matching, one bit for each tag unit
+
     Tag_Maske_Reg:        out  t_IO_Reg_1_to_7_Array;            -- Tag-Output-Maske für Register 1-7
     Tag_Outp_Reg:         out  t_IO_Reg_1_to_7_Array;            -- Tag-Output-Maske für Register 1-7
 
@@ -524,14 +527,21 @@ COMPONENT atr_puls_ctrl
     clk_250mhz:               IN  STD_LOGIC;
     nReset_250mhz:            IN  STD_LOGIC;
 
-    ATR_puls_start:           IN  STD_LOGIC;                      -- Starte Ausgangspuls
+    ATR_puls_start:           IN  STD_LOGIC;                      -- Starte Ausgangspuls (aus ATR Trig In Lemo Buchse, PIO(131),
+    ATR_largepulse_en_7_0 :   IN  STD_LOGIC_VECTOR(7 DOWNTO 0);   -- Enablesignal für Largepulse Option für bestimmte Kanäle
+    ATR_Tag_X_En_8_1:         IN  STD_LOGIC_VECTOR(8 DOWNTO 1);   -- Selektiert Timing Tags 8..1 als Triggerquelle für ATR Pulse
+    ATR_TRIG_IN_Dis :         IN  STD_LOGIC;                      -- Disable TriggerIn Lemo, stattdessen Timing Tags 1..8 oder ATR In 1..8
+    ATR_TimingTags_8_1 :      IN  STD_LOGIC_VECTOR(8 DOWNTO 1);   -- Matching Timing Tags als Triggerquelle
+    Syn_ATR_Comp_in_puls_8_1: IN  STD_LOGIC_VECTOR(8 DOWNTO 1);   -- Trigger Pulse aus ATR In Lemos
+    Tags_Only:                IN  STD_LOGIC;                      -- low mappt Rückmeldung 5..8 auf Timeout Überwachung, high mappt direkt 1:1
+
     ATR_puls_out:             Out STD_LOGIC_VECTOR(7 DOWNTO 0);   -- Ausgangspuls Kanal 1..8
     ATR_puls_config_err:      Out STD_LOGIC_VECTOR(7 DOWNTO 0);
 
     ATR_comp_puls:            In  STD_LOGIC_VECTOR(7 DOWNTO 0);   -- Ausgänge von den Comperatoren der Triggereingänge
-    ATR_to_conf_err:	        out	std_logic;                      -- Time-Out: Configurations-Error
-		ATR_Timeout:  		        out	std_logic;								      -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
-    ATR_Timeout_err_res:      IN  STD_LOGIC;                      -- Reset Error-Flags
+    ATR_to_conf_err_7_0:	    out	std_logic_VECTOR(7 DOWNTO 0);   -- Time-Out: Configurations-Error (Keine Zeitvorgabe im Reg eingetragen)
+		ATR_Timeout_7_0:  		    out	STD_LOGIC_VECTOR(7 DOWNTO 0);	  -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+    ATR_Timeout_err_res:      IN  STD_LOGIC;                      -- Reset Error-Bits für ATR_to_conf_err_7_0 und Timeout Überschreitung
 
     Reg_rd_active:            OUT STD_LOGIC;
     Data_to_SCUB:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -1357,6 +1367,21 @@ END COMPONENT hw_interlock;
   signal  atr_comp_ctrl_data_to_SCUB:   std_logic_vector(15 downto 0);
 --
   signal  atr_puls_start:               std_logic;                     -- Starte Ausgangspuls
+
+  signal  ATR_largepulse_en_7_0:        STD_LOGIC_VECTOR(7 DOWNTO 0);  -- ermöglicht kanalweise 1000 fach längere Pulse an atr_puls_out
+  signal  ATR_Tag_X_En_8_1:             STD_LOGIC_VECTOR(8 DOWNTO 1);  -- ermöglicht Tag 8..1 als Triggerquelle anstelle ATR Input 8..1
+  signal  ATR_TRIG_IN_Dis:              std_logic;                     -- bei High ATR Lemos IN1..8 oder Tags 1..8, bei Low ATR TrigIn Lemo
+  signal  ATR_TimingTags_8_1:           STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Matching Timing Tags als Trigger für ATR Pulse
+  signal  Tag1_stretched:               STD_LOGIC;                     -- For Stretching matched ATR Timing Tag1
+  signal  Tag1_del1:                    STD_LOGIC;
+  signal  Tag1_del2:                    STD_LOGIC;
+  signal  Tag1_del3:                    STD_LOGIC;
+  signal  Tag1_del4:                    STD_LOGIC;
+
+  signal  Tag_matched_7_0:              STD_LOGIC_VECTOR(7 DOWNTO 0);
+  signal  Syn_ATR_Comp_in_puls_8_1:     STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Pulse aus ATR In Lemos (fallende Flanke)
+  signal  Tags_Only:                    STD_LOGIC;                     -- Steuerbit für Triggerkontrolle ausschließlich über Timing Tags
+
   signal  atr_puls_out:                 STD_LOGIC_VECTOR(7 DOWNTO 0);  -- Ausgangspuls Kanal 1..8
   signal  atr_puls_config_err:          std_logic_vector(7 downto 0);  -- Config-Error: Pulsbreite/Pulsverzögerung
 
@@ -1364,8 +1389,8 @@ END COMPONENT hw_interlock;
   signal  ATR_puls_nLED_o:              std_logic_vector(7 downto 0);
 
   --
-	signal	ATR_to_conf_err:  		        std_logic;								     -- Time-Out: Configurations-Error
-	signal	ATR_Timeout:                  std_logic;								     -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+	signal	ATR_to_conf_err_7_0:  		    std_logic_vector(7 downto 0);  -- Time-Out: Configurations-Error
+	signal	ATR_Timeout_7_0:              std_logic_vector(7 downto 0);  -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
   signal  ATR_Timeout_err_res:          std_logic;                     -- Reset Error-Flags
 
 --
@@ -1385,7 +1410,7 @@ END COMPONENT hw_interlock;
   signal  ATR_Trig_In_Puls_o:           std_logic;
 
 
-  signal ATR_Puls_Start_Strobe_i:        std_logic;                       -- input  "Strobe-Signal"
+  --signal ATR_Puls_Start_Strobe_i:        std_logic;                       -- input  "Strobe-Signal"
   signal ATR_Puls_Start_Strobe_o:        std_logic;                       -- Output "Strobe-Signal, 1 CLK breit"
   signal ATR_Puls_Start_shift:           std_logic_vector(2  downto 0);   -- Shift-Reg.
 
@@ -1984,6 +2009,8 @@ port map  (
       SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,          -- die gleichen Input-Port's wie zum SCU-Bus
       Clr_Tag_Config      =>  Clr_Tag_Config,            -- Clear Tag-Konfigurations-Register
 
+      Tag_matched_7_0     =>  Tag_matched_7_0,           -- Active on matched Tags for one clock period, one bit for each tag unit
+
       Max_AWOut_Reg_Nr    =>  Max_AWOut_Reg_Nr,          -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,           -- Maximale AWIn-Reg-Nummer der Anwendung
 
@@ -2342,13 +2369,20 @@ port map  (
       clk_250mhz                =>  clk_sys,
       nReset_250mhz             =>  rstn_sys,
 --
-      ATR_puls_start            =>  ATR_puls_start,            -- Starte Ausgangspuls
+      ATR_puls_start            =>  ATR_Puls_Start_Strobe_o,   -- Starte Ausgangspuls
+      ATR_largepulse_en_7_0     =>  ATR_largepulse_en_7_0,     -- Kanalweises Enablesignal für Largepulse Option
+      ATR_Tag_X_En_8_1          =>  ATR_Tag_X_En_8_1,          -- Selektiert Timing Tags 8..1 als Triggerquelle für ATR Pulse
+      ATR_TRIG_IN_Dis           =>  ATR_TRIG_IN_Dis,           -- Disable TriggerIn Lemo, stattdessen Timing Tags 1..8 oder ATR In 1..8
+      ATR_TimingTags_8_1        =>  ATR_TimingTags_8_1,        -- Triggerpulse aus matching Timing Events
+      Syn_ATR_Comp_in_puls_8_1  =>  Syn_ATR_Comp_in_puls_8_1,  -- Triggerpulse aus fallender Flanke (ATR In Lemos)
+      Tags_Only                 =>  Tags_Only,
+
       ATR_puls_out              =>  ATR_puls_out,              -- Ausgangspuls Kanal 1..8
       ATR_puls_config_err       =>  ATR_puls_config_err,       -- Config-Error: Pulsbreite/Pulsverzögerung
 
       ATR_comp_puls             =>  Syn_ATR_Comp_out,          -- Synchr.-Ausgänge von den Comperatoren der Triggereingänge
-      ATR_to_conf_err	          =>  ATR_to_conf_err,           -- Time-Out: Configurations-Error
-      ATR_Timeout  		          =>  ATR_Timeout,               -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+      ATR_to_conf_err_7_0	      =>  ATR_to_conf_err_7_0,       -- Time-Out: Configurations-Error
+      ATR_Timeout_7_0  		      =>  ATR_Timeout_7_0,           -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
       ATR_Timeout_err_res       =>  ATR_Timeout_err_res,       -- Reset Error-Flags
       --
       Reg_rd_active             =>  ATR_puls_ctrl_rd_active,
@@ -3648,22 +3682,22 @@ ATR_Trigger_Out_Led: led_n
   --------- Puls als Strobe (1 Clock = 8ns breit) --------------------
 
 
-p_ART_Puls_Start_Strobe:  PROCESS (clk_sys, rstn_sys, ATR_Puls_Start_Strobe_i)
-  BEGin
-    IF not rstn_sys  = '1' THEN
-      ATR_Puls_Start_shift  <= (OTHERS => '0');
-      ATR_Puls_Start_Strobe_o    <= '0';
-
-    ELSIF rising_edge(clk_sys) THEN
-      ATR_Puls_Start_shift <= (ATR_Puls_Start_shift(ATR_Puls_Start_shift'high-1 downto 0) & (ATR_Puls_Start_Strobe_i));
-
-      IF ATR_Puls_Start_shift(ATR_Puls_Start_shift'high) = '0' AND ATR_Puls_Start_shift(ATR_Puls_Start_shift'high-1) = '1' THEN
-        ATR_Puls_Start_Strobe_o <= '1';
-      ELSE
-        ATR_Puls_Start_Strobe_o <= '0';
-      END IF;
-    END IF;
-  END PROCESS p_ART_Puls_Start_Strobe;
+--p_ART_Puls_Start_Strobe:  PROCESS (clk_sys, rstn_sys, ATR_Puls_Start_Strobe_i)
+--BEGin
+--    IF not rstn_sys  = '1' THEN
+--      ATR_Puls_Start_shift  <= (OTHERS => '0');
+--      ATR_Puls_Start_Strobe_o    <= '0';
+--
+--    ELSIF rising_edge(clk_sys) THEN
+--      ATR_Puls_Start_shift <= (ATR_Puls_Start_shift(ATR_Puls_Start_shift'high-1 downto 0) & (ATR_Puls_Start_Strobe_i));
+--
+--      IF ATR_Puls_Start_shift(ATR_Puls_Start_shift'high) = '0' AND ATR_Puls_Start_shift(ATR_Puls_Start_shift'high-1) = '1' THEN
+--        ATR_Puls_Start_Strobe_o <= '1';
+--      ELSE
+--        ATR_Puls_Start_Strobe_o <= '0';
+--      END IF;
+--    END IF;
+--  END PROCESS p_ART_Puls_Start_Strobe;
 
 
 
@@ -4264,10 +4298,9 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             ATR_SPI_DO, ATR_SPI_CLK, ATR_nCS_DAC1, ATR_nCS_DAC2, ATR_nLD_DAC, ATR_CLR_Sel_DAC, ATR_nCLR_DAC,
             ATR_DAC_Status, ATR_Comp_LED_i, ATR_Comp_nLED_o, Syn_ATR_Comp_in, Syn_ATR_Comp_out,
             ATR_comp_cnt_err_res, ATR_comp_cnt_error,
-            ATR_Puls_nLED_Bus_o, ATR_Puls_Start_Strobe_o, nLED_ATR_Trig_In_o,
+            ATR_Puls_nLED_Bus_o, nLED_ATR_Trig_In_o,
             ATR_puls_LED_i, ATR_puls_nLED_o, ATR_Puls_LED_Strobe,
-            nLED_ATR_Trig_Out_o, atr_puls_out, atr_puls_config_err, ATR_to_conf_err, ATR_Timeout, ATR_Timeout_err_res,
---          puls_out,
+            nLED_ATR_Trig_Out_o, atr_puls_out, atr_puls_config_err, ATR_to_conf_err_7_0, ATR_Timeout_7_0, ATR_Timeout_err_res,Tag_matched_7_0, Tag1_stretched,
             AD1_Trigger_Mode, AD1_sw_Trigger, AD1_ext_Trigger, AD1_nCS, AD1_Reset, AD1_ByteSwap, AD1_nCNVST, AD1_Busy, AD1_Out, AD1_ext_Trigger_nLED,
             AD2_Trigger_Mode, AD2_sw_Trigger, AD2_ext_Trigger, AD2_nCS, AD2_Reset, AD2_ByteSwap, AD2_nCNVST, AD2_Busy, AD2_Out, AD2_ext_Trigger_nLED,
             In8Out8_In, In8Out8_Input, In8Out8_Deb_out, In8Out8_nLED_Lemo_In_o, In8Out8_Out, In8Out8_nLED_Lemo_Out_o
@@ -4465,12 +4498,20 @@ BEGIN
     ATR_Timeout_err_res         <=  '0';                -- Reset Error-Flags
 
     LED_ATR_Trig_In_i           <=  '0';                -- LED Trigger In
-    ATR_Puls_Start_Strobe_i     <=  '0';                -- pos. Flanke zum starten der Counter (1..8)
+    --ATR_Puls_Start_Strobe_i     <=  '0';                -- pos. Flanke zum starten der Counter (1..8)
     LED_ATR_Trig_Out_i          <=  '0';                -- LED Trigger Out
-    atr_puls_start              <=  '0';                -- Startpuls für die Ausgangskanäle 1-8
+    --atr_puls_start              <=  '0';                -- Startpuls für die Ausgangskanäle 1-8
 
     ATR_puls_LED_i              <=  (OTHERS => '0');    -- LED's für die Ausgangskanäle 1-8
     ATR_Puls_nLED_Out           <=  (OTHERS => '0');    -- Eingang LED-MUX für die Ausgangskanäle 1-8
+    Syn_ATR_Comp_in_puls_8_1    <=  (OTHERS => '0');
+    ATR_Puls_Start_Strobe_o     <=  '0';
+    ATR_largepulse_en_7_0       <=  (OTHERS => '0');
+    ATR_Tag_X_En_8_1            <=  (OTHERS => '0');
+    ATR_TRIG_IN_Dis             <=  '0';
+    Tags_Only                   <=  '0';
+    ATR_TimingTags_8_1          <=  (OTHERS => '0');
+
 
     AD1_Data                    <=  (OTHERS => '0');    -- ADC1: 16 Bit-Output
     AD1_Trigger_Mode            <=  (OTHERS => '0');    -- ADC1: Mode, Int- Ext.-Trigger
@@ -5990,6 +6031,29 @@ BEGIN
 --           |                     1 = Lemo Trig-In und Lemo Trig-Out werden im FPGA direkt verbunden;
 --           |                         Verbindugn wird in InReg 1.Bit 0 abgebildet
 --     ------+----------------------------------------------------------------------------------------------------------
+--           +=======================================================================
+--           |         User-Config-Register 2 (AW_Config2)
+--     ------+=======================================================================
+--     15-11 | frei
+--     ------+-----------------------------------------------------------------------
+--     10    | Tags_Only         low: Rückmelde-Strobes Ch5..8 auf TimeoutÜw 1..4 gemappt, high Rückm-Strobes sind 1:1 gemappt
+--      9    | ATR_TRIG_IN_Dis   Low (default) selektiert ATR TriggerIn als Trigger für alle ATR Pulse,
+--           |                   High selektiert Timing Tags oder ATR Inputs als Trigger für ATR Pulse (--> Bit 8..1)
+--     ------+-----------------------------------------------------------------------
+--      8    | ATR_TAG_X_En(8)   Low: ATR In8(default) triggert ATR Puls Ch8; High:Timing Tag 8 triggert ATR Puls Ch8
+--      7    | ATR_TAG_X_En(7)   Low: ATR In7(default) triggert ATR Puls Ch7; High:Timing Tag 7 triggert ATR Puls Ch7
+--      6    | ATR_TAG_X_En(6)   Low: ATR In6(default) triggert ATR Puls Ch6; High:Timing Tag 6 triggert ATR Puls Ch6
+--      5    | ATR_TAG_X_En(5)   Low: ATR In5(default) triggert ATR Puls Ch5; High:Timing Tag 5 triggert ATR Puls Ch5
+--      4    | ATR_TAG_X_En(4)   Low: ATR In4(default) triggert ATR Puls Ch4; High:Timing Tag 4 triggert ATR Puls Ch4
+--      3    | ATR_TAG_X_En(3)   Low: ATR In3(default) triggert ATR Puls Ch3; High:Timing Tag 3 triggert ATR Puls Ch3
+--      2    | ATR_TAG_X_En(2)   Low: ATR In2(default) triggert ATR Puls Ch2; High:Timing Tag 2 triggert ATR Puls Ch2
+--      1    | ATR_TAG_X_En(1)   Low: ATR In1(default) triggert ATR Puls Ch1; High:Timing Tag 1 triggert ATR Puls Ch1
+--      0    | ATR_LargePulse_En Low: ATR Pulse bis 524µs(default,alle Ch.);  High:ATR Large Pulses max.524ms(bei Ch3/4/7/8)
+--     ------+-----------------------------------------------------------------------
+
+
+
+
 
 
     extension_cid_system <= c_cid_system;     -- extension card: CSCOHW
@@ -6091,6 +6155,20 @@ BEGIN
     ATR_comp_puls               <=  Syn_ATR_Comp_in;  -- Ausgänge der Comperatoren = Input zur Pulsbreitenmessung
     AW_Input_Reg(2)(7 downto 0) <=  Syn_ATR_Comp_out; -- Ausgänge zum Input-Register;
 
+   -- KK  Die ATR LEMO IN 1..8 erzeugen ein Takt lange Pulse (fallende Komparatorflanke) zum optionellen Triggern des ATR_PULS_CTRL.
+   -- KK  Die Sync Stufen sind nach dem Reset low. Das Ruhesignal der Komparatoren ist high.
+   -- KK  Beim Powerup gibt es also eine steigende Flanke. Der Power-up erzeugt also keinen Puls.
+    Syn_ATR_Comp_in_puls_8_1(1) <=  not PIO_SYNC1(55)  and PIO_SYNC(55);      -- A_Comp1_Out -+
+    Syn_ATR_Comp_in_puls_8_1(2) <=  not PIO_SYNC1(53)  and PIO_SYNC(53);      -- A_Comp2_Out  |
+    Syn_ATR_Comp_in_puls_8_1(3) <=  not PIO_SYNC1(77)  and PIO_SYNC(77);      -- A_Comp3_Out  |
+    Syn_ATR_Comp_in_puls_8_1(4) <=  not PIO_SYNC1(75)  and PIO_SYNC(75);      -- A_Comp4_Out  +--> Ausgänge der Komparatoren
+    Syn_ATR_Comp_in_puls_8_1(5) <=  not PIO_SYNC1(97)  and PIO_SYNC(97);      -- A_Comp5_Out  |
+    Syn_ATR_Comp_in_puls_8_1(6) <=  not PIO_SYNC1(95)  and PIO_SYNC(95);      -- A_Comp6_Out  |
+    Syn_ATR_Comp_in_puls_8_1(7) <=  not PIO_SYNC1(115) and PIO_SYNC(115);     -- A_Comp7_Out  |
+    Syn_ATR_Comp_in_puls_8_1(8) <=  not PIO_SYNC1(111) and PIO_SYNC(111);     -- A_Comp8_Out -+
+
+    ATR_Puls_Start_Strobe_o     <=  not PIO_SYNC1(131) and PIO_SYNC(131);     -- Puls von clk Breite
+
     --################################### Led's ########################################
 
     ATR_Comp_LED_i  <=  Syn_ATR_Comp_out(7 downto 0); -- Inputs für die Led "MonoFlops"
@@ -6125,7 +6203,9 @@ BEGIN
     --################################### Trigger IN  ########################################
 
 
-    ATR_Puls_Start_Strobe_i   <=  not PIO_SYNC(131);   -- Input zur pos. Flankenerkennung (1 x clk-Puls breit)
+   --ATR_Puls_Start_Strobe_i   <=  not PIO_SYNC(131);   -- Input zur pos. Flankenerkennung (1 x clk-Puls breit)
+
+
 
     LED_ATR_Trig_In_i         <=  not PIO_SYNC(131);   --+--> "LED" Trigger_IN
     PIO_Out(129)              <=  nLED_ATR_Trig_In_o;  --+
@@ -6139,7 +6219,7 @@ BEGIN
 
     AW_Status1(7 downto 0)    <=  atr_puls_config_err;          -- Config-Error Kanal 1..8 (Delay oder Verz.-Zeit = 0)
 
-    ATR_puls_start            <=  ATR_Puls_Start_Strobe_o;      -- Starte Ausgangspuls Kanal 1-8
+    --ATR_puls_start            <=  ATR_Puls_Start_Strobe_o;      -- Starte Ausgangspuls Kanal 1-8
 
 --  UIO(15)                   <=  ATR_Puls_Start_Strobe_o;      -- User-Pin zur VG-Leiste ---Test ---
 --  UIO(14)                   <=  not PIO_SYNC(131);            -- User-Pin zur VG-Leiste ---Test ---
@@ -6172,12 +6252,33 @@ BEGIN
           -----
 
     END IF;
+     --#########################Option Lange ATR Pulse#######################################
+
+    IF (AW_Config2(0)='0') THEN
+       ATR_largepulse_en_7_0 <= (OTHERS => '0');     -- Kurze ATR Pulse auf allen Kanälen (max 524µs,wie bisher)
+    ELSE
+       ATR_largepulse_en_7_0 <= "11001100";          -- "Large Pulses"  (max 524ms) auf Kanal 8,7,4,3
+    END IF;
+
+    --#########################Option Triggerquellen fuer ATR Pulse#########################
+
+
+
+     ATR_Tag_X_En_8_1   <= AW_Config2(8 downto 1);   -- high nimmt Timing Tag als Trigger, low nimmt ATR IN als Trigger für ATR Pulse
+
+
+     ATR_TRIG_IN_Dis    <= AW_Config2(9);            -- low selektiert Trigger In als gemeinsamen Trigger (wie bisher)
+                                                     -- high selektiert ATR Inputs 1..8 oder Tags 1..8
+     Tags_Only          <= AW_Config2(10) ;          -- low mappt Rückmelde Ch 5..8 auf Überwachung 1..4, high mappt 1:1
+
+     ATR_TimingTags_8_1 <=  Tag_matched_7_0;         -- Tag7 für Ch8, TAG6 für Ch7 ..... Tag0 kontrolliert Ch1
+
 
 
     --##################################### ATR_Timeout #####################################
 
-    AW_Status1(8)             <=  ATR_to_conf_err;              -- Time-Out: Configurations-Error
-		AW_Status1(9)             <=  ATR_Timeout;							    -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+    AW_Status1(15 downto 8) <=  ATR_to_conf_err_7_0; -- Time-Out: Configurations-Error (keine Timeoutvorgabe eingetragen (Bit15 ist Ch8)
+		AW_Status1(7 downto 0)  <=  ATR_Timeout_7_0;	   -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten  (Bit 7 ist Ch8)
 
     --################################### Trigger Out ########################################
     -- §760
@@ -6188,10 +6289,10 @@ BEGIN
 
     IF  (AW_Config1(0) = '0')  THEN
 
-              PIO_OUT(121)  <=  AW_Output_Reg(1)(0);    --  ATR_nTrigger_Out1 -- +
+              PIO_OUT(121)  <=  Tag1_stretched;         -- 32ns Puls of matching Timing TAG 1
               PIO_ENA(121)  <=  '1';                    -- Output Enable
     ELSE
-              PIO_OUT(121)  <=  PIO_SYNC(131);          --  ATR_nTrigger_Out1 -- +
+              PIO_OUT(121)  <=  PIO_SYNC(131);          -- ATR_nTrigger_Out1
               PIO_ENA(121)  <=  '1';                    -- Output Enable
     END IF;
 

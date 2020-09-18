@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 16-Oct-2019
+//  version : 17-Sep-2020
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -27,14 +27,14 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  Lesser General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU Lesser General Public
 //  License along with this library. If not, see <http://www.gnu.org/licenses/>.
 //
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.2.0"
+#define EBMASSMON_VERSION "0.2.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -61,8 +61,8 @@ eb_device_t device;           // needs to be global for 1-wire stuff
 #define     MAXLEN    1024    // max length of an array
 #define     UTCOFFSET 37000   // UTC offset @ 2018; hm... configurable as option?
 
-const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing"};
-#define     MAXNETWORKTYPES      4
+const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing", "Integration", "Unilac"};
+#define     MAXNETWORKTYPES      6
 
 const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl", "amc", "pmc"};
 #define     MAXNODETYPES         7
@@ -105,6 +105,8 @@ static void help(void) {
   fprintf(stderr, "                   1: production (default)\n");
   fprintf(stderr, "                   2: user\n");
   fprintf(stderr, "                   3: timing (TTF)\n");
+  fprintf(stderr, "                   4: integration\n");
+  fprintf(stderr, "                   5: unilac\n");
   fprintf(stderr, "  -y<nodes>        node type\n");
   fprintf(stderr, "                   0: all (default)\n");
   fprintf(stderr, "                   1: SCU\n");
@@ -354,14 +356,14 @@ static int networkOk(char* network, int networkType)
 static void printDate(uint64_t nsecs)
 {
   if (nsecs == ~0) fprintf(stdout, ", %10s", "---");
-  else             fprintf(stdout, ", %10lu", (nsecs / 1000000000));
+  else             fprintf(stdout, ", %10lu", (uint64_t)(nsecs / 1000000000));
 } // printDate
 
 
 static void printOffset(uint64_t offset)
 {
   if (offset == ~0) fprintf(stdout, ", %13s", "---");
-  else              fprintf(stdout, ", %13lu", (offset));
+  else              fprintf(stdout, ", %13lu", (uint64_t)(offset));
 } // printOffset
 
 
@@ -542,7 +544,7 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
 int main(int argc, char** argv) {
   eb_status_t  status;                 // EB status
   eb_socket_t  socket;                 // EB socket
-  char         devName[MAXLEN+1];      // full EB device name
+  char         devName[MAXLEN+3];      // full EB device name
   char*        ebProto;                // EB protocol 'udp' ...
   int          devIndex=0;             // always grab 1st device on the WB bus
 

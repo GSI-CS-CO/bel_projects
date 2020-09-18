@@ -38,12 +38,14 @@ use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
+use work.wb_timer_pkg.all;
 
 entity ftm_lm32 is
 generic(g_cpu_id              : t_wishbone_data := x"CAFEBABE";
         g_size                : natural := 65536;                 -- size of the dpram
         g_world_bridge_sdb    : t_sdb_bridge;                     -- record for superior bridge
         g_is_dm               : boolean := false;
+        g_en_timer            : boolean := false;
         g_profile             : string  := "medium_icache"; -- lm32 profile
         g_init_file           : string);                    -- number of msi queues connected to the lm32
 port(
@@ -56,13 +58,13 @@ port(
 
   -- wb world interface of the lm32
   world_master_o  : out t_wishbone_master_out;
-  world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
   msi_slave_o     : out t_wishbone_slave_out;
   msi_slave_i     : in  t_wishbone_slave_in;
 
   -- optional wb interface to prioq for DM
   prioq_master_o  : out t_wishbone_master_out;
-  prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
 
   -- port B of the LM32s DPRAM
   ram_slave_o    : out t_wishbone_slave_out;
@@ -79,7 +81,7 @@ architecture rtl of ftm_lm32 is
            s_sys_time,
            s_atomic            : t_wishbone_master_in;
 
-  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm);
+  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm, g_en_timer);
   constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) 	:= f_lm32_masters_req;
 
   --FIXME: this is borderline and only works bevause this CB is the first in line. separate mastre and slave layout as done in the monster
@@ -185,6 +187,22 @@ begin
       slave1_o    => lm32_cb_master_in(c_lm32_ram),
       slave2_i    => ram_slave_i,
       slave2_o    => ram_slave_o);
+--******************************************************************************
+-- WB INTERVAL TIMER
+--******************************************************************************
+  timer_n : if not g_en_timer generate
+    lm32_cb_master_in(c_lm32_timer) <= cc_dummy_slave_out;
+  end generate;
+  timer_y : if g_en_timer generate
+     interval_tmr: wb_timer
+     generic map ( freq => 125_000_000)
+     port map (
+      clk_i  => clk_sys_i,
+      rst_n_i => rst_n_i,
+      slave_i => lm32_cb_master_out(c_lm32_timer),
+      slave_o => lm32_cb_master_in(c_lm32_timer),
+      irq_o   => s_irq(1));
+  end generate timer_y;
 
 --******************************************************************************
 -- MSI-IRQ -- reduce to 1 interface for now
@@ -203,7 +221,7 @@ begin
       ctrl_slave_o    => lm32_cb_master_in(c_lm32_msi_ctrl),
       ctrl_slave_i    => lm32_cb_master_out(c_lm32_msi_ctrl));
 
-   s_irq(31 downto 1) <= (others => '0');
+   s_irq(31 downto 2) <= (others => '0');
 
 
 --******************************************************************************
@@ -218,7 +236,7 @@ begin
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
 
-        s_cpu_info <= ('0', '0', '0', '0', '0', (others => '0'));
+        s_cpu_info <= ('0', '0', '0', '0', (others => '0'));
       else
         -- rom is an easy solution for a device that never stalls:
         s_cpu_info.dat <= (others => '0');
@@ -251,7 +269,7 @@ begin
       vIdx := c_lm32_sys_time;
       if rising_edge(clk_sys_i) then
         if(rst_n_i = '0') then
-            s_sys_time <= ('0', '0', '0', '0', '0', (others => '0'));
+            s_sys_time <= ('0', '0', '0', '0', (others => '0'));
         else
            -- rom is an easy solution for a device that never stalls:
            s_sys_time.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
@@ -285,7 +303,7 @@ begin
     if rising_edge(clk_sys_i) then
       if((rst_lm32_n and rst_n_i) = '0') then
          r_cyc_atomic <= '0';
-           s_atomic     <= ('0', '0', '0', '0', '0', (others => '0'));
+           s_atomic     <= ('0', '0', '0', '0', (others => '0'));
       else
          r_cyc <= s_ext_world_cyc or s_ext_clu_cyc; -- Nr. 6 ext if cycle line
          -- rom is an easy solution for a device that never stalls:

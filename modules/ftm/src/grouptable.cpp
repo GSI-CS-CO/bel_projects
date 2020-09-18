@@ -1,4 +1,5 @@
 #include "grouptable.h"
+#include "aux_boost.h"
 
   std::string GroupTable::store() {
     std::stringstream os;

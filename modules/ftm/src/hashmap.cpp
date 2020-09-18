@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include "common.h"
+#include "aux_boost.h"
 
 
 uint32_t HashMap::hash(const std::string& s) {

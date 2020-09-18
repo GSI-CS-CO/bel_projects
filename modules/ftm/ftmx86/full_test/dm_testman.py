@@ -8,7 +8,7 @@ import argparse
 
 
 
-prefix ="/usr/local/bin/dm-"
+prefix =""
 diffHeaderLen = 2
 
 
@@ -129,8 +129,10 @@ class Op:
     execStr = prefix + self.typ
     return execStr
     
-  def getCliArgs(self, dev):
-    execList = [dev]
+  def getCliArgs(self, dev, includeDev):
+    execList = []
+    if includeDev:
+      execList = [dev]
     execList += self.content.split()
     execList.append(self.getOptFileName())
     return execList
@@ -146,6 +148,13 @@ class Op:
     return self.expRes
 
 
+  def isEbCmd(self, cmd):
+    ebCmds = ['dm-cmd', 'dm-sched', 'eb-ls', 'eb-write', 'eb-read', 'eb-put', 'eb-get', 'eb-info', 'eb-reset', 'eb-time', ]
+    if cmd in ebCmds:
+      return True
+    return False
+  
+  #  
 
   def runEb(self, dev):
     res = ""
@@ -153,8 +162,9 @@ class Op:
     if self.optFile is not None:
       optFile = self.path + self.optFile
     try:
-      time.sleep(float(self.execTime))   
-      tmp = subprocess.check_output([self.getCliCmd()] + self.getCliArgs(dev), stderr=subprocess.STDOUT)
+      time.sleep(float(self.execTime)) 
+      #print([self.getCliCmd()] + self.getCliArgs(dev, self.isEbCmd(self.getCliCmd()) ) )
+      tmp = subprocess.check_output([self.getCliCmd()] + self.getCliArgs(dev, self.isEbCmd(self.getCliCmd()) ) , stderr=subprocess.STDOUT)
       if self.expResFile is not None:
         d='\n'
         self.result = tmp.decode("utf-8", "ignore").split(d) # [e+d for e in tmp.decode("utf-8", "ignore").split(d) if e]

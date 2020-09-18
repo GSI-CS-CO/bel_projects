@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.arria2_lvds_pkg.all;
 use work.arria5_lvds_pkg.all;
+use work.arria10_lvds_pkg.all;
 
 entity altera_lvds_rx is
   generic(
@@ -45,5 +46,15 @@ begin
         rx_in(0)   => rx_in,
         rx_out     => raw);
   end generate;
-  
+
+  arria10_scu4 : if g_family = "Arria 10 GX SCU4" generate
+    rx : arria10_scu4_lvds_rx
+      port map(
+        ext_fclk      => rx_inclock,
+        ext_loaden    => rx_enable,
+        ext_coreclock => rx_core,
+        rx_in(0)      => rx_in,
+        rx_out        => raw);
+  end generate;
+
 end rtl;

@@ -44,16 +44,17 @@ uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];
 
 void prioQueueInit()
 {
-
-   pFpqCtrl[PRIO_RESET_OWR>>2]      = 1;
-   pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
-   pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = ECA_GLOBAL_ADR;
-   pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
-   pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 40;
-   pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW((uint64_t)(50000));
-   pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     |
-                                      PRIO_BIT_MSG_LIMIT  |
-                                      PRIO_BIT_TIME_LIMIT;
+  #ifndef USE_SW_TX_CONTROL
+    pFpqCtrl[PRIO_RESET_OWR>>2]      = 1;
+    pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
+    pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = ECA_GLOBAL_ADR;
+    pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
+    pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 40;
+    pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW((uint64_t)(50000));
+    pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     |
+                                       PRIO_BIT_MSG_LIMIT  |
+                                       PRIO_BIT_TIME_LIMIT;
+  #endif                                    
 }
 
 void dmInit() {
@@ -371,14 +372,28 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
 
   //disptach timing message to priority queue
   atomic_on();
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_HI  >> 2];
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
-  *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
-  *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
+  #ifdef USE_SW_TX_CONTROL
+    #pragma message ( "HW Priority Queue deactivated, using software access to EBM!" )
+    ebm_hi(ECA_GLOBAL_ADR);
+    ebm_op(ECA_GLOBAL_ADR, node[TMSG_ID_HI  >> 2],          EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, node[TMSG_ID_LO  >> 2],          EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, hiW(tmpPar),                     EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, loW(tmpPar),                     EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, node[TMSG_RES    >> 2],          EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, node[TMSG_TEF    >> 2],          EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, thrData[T_TD_DEADLINE_HI >> 2],  EBM_WRITE);
+    ebm_op(ECA_GLOBAL_ADR, thrData[T_TD_DEADLINE_LO >> 2],  EBM_WRITE);
+    ebm_flush();
+  #else
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_HI  >> 2];
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
+    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
+    *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
+    *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
+  #endif   
   atomic_off();
 
   ++(*((uint64_t*)&thrData[T_TD_MSG_CNT >> 2])); //increment thread message counter
