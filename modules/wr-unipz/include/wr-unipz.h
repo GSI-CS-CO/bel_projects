@@ -76,6 +76,8 @@
 // event data from Super PZ received via internal bus (bits 12..15)
 #define WRUNIPZ_EVTDATA_CHANNEL        0x1    // bit 12 - channel number: there are only two channels -> channel number coded in one bit
 #define WRUNIPZ_EVTDATA_NOCHOP         0x2    // bit 13 (bit 15 not set) - flag: execute virt acc without chopper
+#define WRUNIPZ_EVTDATA_SHORTCHOP      0x4    // bit 14 (bit 15 not set) - flag: execute virt acc with short chopper;
+                                              // informative: not used by UNIPZ. UNIPZ implements 'short chopper' by using a different 'Kanal'
 #define WRUNIPZ_EVTDATA_SERVICE        0x8    // if bit 15 is set, a service event must be sent after all other events have been sent
 #define WRUNIPZ_EVTDATA_PREPACCNOW     0xd    // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 

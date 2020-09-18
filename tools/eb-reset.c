@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Mar-2019
+ *  version : 28-August-2019
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.1.1"
+#define EBRESET_VERSION "1.1.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -83,7 +83,7 @@ static void help(void) {
   fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "The command 'fpgareset' forces a restart of the entire FPGA using the image stored in the \n");
-  fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwiese\n");
+  fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwise\n");
   fprintf(stderr, "your devices becomes bricked).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");

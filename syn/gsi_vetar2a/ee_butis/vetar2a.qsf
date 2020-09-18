@@ -1,5 +1,3 @@
-
-
 set_global_assignment -fall -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -fall -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_20MHZ
@@ -45,6 +43,7 @@ set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/al
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
 set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/arria2_pll.qip
 set_global_assignment -name SDC_FILE ../../../top/gsi_vetar2a/ee_butis/vetar2a_ee_butis.sdc
+set_global_assignment -name SEED 47
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
@@ -1034,4 +1033,3 @@ set_location_assignment PIN_Y9 -to vme_addr_data_b[3]
 set_location_assignment PLL_2 -to "monster:main|sys_pll:\\sys_a2:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_3 -to "monster:main|dmtd_pll:\\dmtd_a2:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_4 -to "monster:main|ref_pll:\\ref_a2:ref_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
-set_global_assignment -name SEED 197

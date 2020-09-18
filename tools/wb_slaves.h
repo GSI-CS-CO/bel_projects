@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Apr-2018
+//  version : 26-Sep-2019
 //
-#define WB_SLAVES_VERSION "0.06.0"
+#define WB_SLAVES_VERSION "0.07.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -193,6 +193,19 @@
 // masks
 // see dm_diag_regs.h
 
+
+//-- ECA TAP diagnosis  --
+#include "../modules/eca_tap/eca_tap_regs.h"  /* chk: sept-2019: missing ECA_TAP_CAPTURE: manually patched */
+// device ID
+#define ECA_TAP_VENDOR               ECA_TAP_SDB_VENDOR_ID   // vendor ID
+#define ECA_TAP_PRODUCT              ECA_TAP_SDB_DEVICE_ID   // product ID
+#define ECA_TAP_VMAJOR               1                       // major revision
+#define ECA_TAP_VMINOR               0                       // minor revision
+
+// register offsets
+// see eca_tap_regs.h
+// masks
+// see eca_tap_regs.h
 
 
 //-- IO CONTROL  --

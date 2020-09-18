@@ -66,6 +66,7 @@ use work.wb_pmc_host_bridge_pkg.all;
 use work.wb_temp_sense_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
+use work.beam_dump_pkg.all;
 
 entity monster is
   generic(
@@ -96,6 +97,7 @@ entity monster is
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
+    g_en_beam_dump         : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
     g_lm32_cores           : natural;
@@ -495,7 +497,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 7;
+  constant c_top_slaves        : natural := 8;
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
@@ -503,16 +505,17 @@ architecture rtl of monster is
   constant c_tops_mil          : natural := 4;
   constant c_tops_wr_fast_path : natural := 5;
   constant c_tops_ebm          : natural := 6;
-
+  constant c_tops_beam_dump    : natural := 7;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",    g_en_eca), -- must be located at fixed address
-    c_tops_scubus       => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
-    c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                       true),
+   (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
+    c_tops_scubus       => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
+    c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                        true),
     c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb),
-    c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
-    c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
-    c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                        true));
+    c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
+    c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
+    c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                         true),
+    c_tops_beam_dump    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -2448,6 +2451,18 @@ end generate;
       ps_cre    => ps_cre,
       ps_advn   => ps_advn,
       ps_wait   => ps_wait);
+  end generate;
+
+  beam_dump_n : if not g_en_beam_dump generate
+    top_bus_master_i(c_tops_beam_dump) <= cc_dummy_slave_out;
+  end generate;
+  beam_dump_y : if g_en_beam_dump generate
+    beamdump : beam_dump
+      port map(
+      clk_i     => clk_sys,
+      rst_n_i   => rstn_sys,
+      slave_i   => top_bus_master_o(c_tops_beam_dump),
+      slave_o   => top_bus_master_i(c_tops_beam_dump));
   end generate;
 
   tempsens_n : if not g_en_tempsens generate

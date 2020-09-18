@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-July-2019
+ *  version : 20-August-2019
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.5.3"
+#define DMUNIPZ_X86_VERSION "0.5.7"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -52,9 +52,7 @@
 // includes for this project
 #include "../../ftm/include/ftm_common.h"  // defs and regs for data master
 #include <dm-unipz.h>
-extern "C" {                               // b2b is pure C, but due to MAPS THIS code needs to be C++ :-/
-#include <b2btest-api.h>
-}
+#include <b2btest-api.h>                   // this is C code, >> always compile using g++ <<
 #include <dmunipz_shared_mmap.h>
 
 // USE MASP
@@ -605,7 +603,16 @@ int main(int argc, char** argv) {
       eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG     , 0, eb_block);
     } // "cleardiag"
     
-    if (!strcasecmp(command, "diag")) api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+    if (!strcasecmp(command, "diag")) {
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);
+      printf("\ndm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
+      printf("flexOffset            : %"PRIu32" ns\n", flexOffset);
+      printf("uniTimeout            : %"PRIu32" ms\n", uniTimeout);
+      printf("tkTimeout             : %"PRIu32" ms\n", tkTimeout);
+      printf("DM MAC                : 0x%012"PRIx64"\n", dstMac);
+      printf("DM IP                 : %03d.%03d.%03d.%03d\n", (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
+    } // "diag"
     
     if (!strcasecmp(command, "ebmdm")) {
       if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmdm <mac> <ip>\n"); return 1;} 

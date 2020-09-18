@@ -1,173 +1,6 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
+set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT HIGH
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
@@ -256,9 +89,27 @@ set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 
 set_global_assignment -name POWER_USE_DEVICE_CHARACTERISTICS MAXIMUM
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:microtca_control.tcl"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/dual_region.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/global_region.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5_networks.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/single_region.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_hip.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_reconf.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy16.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy8.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy_reconf.qip"
+set_global_assignment -name QIP_FILE ../../../modules/ddr3/arria2/arria2_ddr3.qip
+set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll_ref.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/arria5_pll.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/dmtd_pll5.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/ref_pll5.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
+set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name SEED 34
+set_global_assignment -name SDC_FILE ../../../top/gsi_microtca/control/microtca_control.sdc
+set_global_assignment -name SEED 43
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -268,10 +119,399 @@ set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_include.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/bus_commands.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_async_reset_flop.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_bridge32.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cbe_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_conf_space.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_constants.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cur_out_reg.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_sync.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_write_reg.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_load_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_in_reg.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_load_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_irdy_out_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_load_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ch_state_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm_if.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_out_reg.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_par_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_parity_check.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_decoder.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pcir_fifo_control.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_tpram.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_fifo_control.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_pcir_fifos.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_rst_int.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_en_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_synchronizer_flop.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_sync_module.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_clk_en.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_devs_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_interface.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_sm.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_stop_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_trdy_crit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target_unit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_user_constants.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_addr_mux.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_decoder.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_master.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbr_fifo_control.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave_unit.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbs_wbb3_2_wbb2.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_tpram.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_fifo_control.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_wbr_fifos.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/timescale.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TOP_LEVEL_ENTITY microtca_control
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Access_Decode.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Am_Match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_bus.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CRAM.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CSR_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Funct_Match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Init.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_swapper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/matrix_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/wb_skidpad.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_register_link.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwrc_diags_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_data.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_free.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_msi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_piso_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_rmw.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scan.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scubus_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tag_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_crc_inserter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_header_processor.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_inject_ctrl.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_packet_injection.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_path.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_vlan_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_aligner.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen_regs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/xwb_serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_ibuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_obuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_rx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_tx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/hw6408_vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/generic_iis_master_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/generic_iis_master.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_butis.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_phase.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/pll_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/arbiter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min3.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min9_64.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_irq_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/temp_sensor_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/synthesis/temp_sens.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/gsi_microtca/control/microtca_control.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/gsi_microtca/control/ramsize_pkg.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
@@ -886,412 +1126,3 @@ set_location_assignment PLLOUTPUTCOUNTER_X0_Y67_N1 -to "monster:main|sys_pll5:\\
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y61_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y62_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y63_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
-
-set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie.qip"
-set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll_ref.qip
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5_networks.qip"
-set_global_assignment -name QIP_FILE ../../../modules/ddr3/arria2/arria2_ddr3.qip
-set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/arria5_pll.qip
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_in_reg.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_out_reg.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_user_constants.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_constants.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave_unit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cur_out_reg.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm_if.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_sm.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_decoder.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target_unit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/bus_commands.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_clk_en.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_synchronizer_flop.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_sync.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_fifo_control.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_interface.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_tpram.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_fifo_control.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbs_wbb3_2_wbb2.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_trdy_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_conf_space.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ch_state_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_parity_check.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_load_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_irdy_out_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_stop_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_rst_int.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_load_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_wbr_fifos.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_load_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_async_reset_flop.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cbe_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_bridge32.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_tpram.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_devs_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbr_fifo_control.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_master.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_decoder.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_pcir_fifos.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_par_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_addr_mux.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_write_reg.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_en_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_sync_module.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_crit.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pcir_fifo_control.v" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_bus.vhd" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_header_processor.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_include.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/timescale.v" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/temp_sensor_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_ibuf.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min3.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../top/gsi_microtca/control/microtca_control.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_crc_inserter.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_free.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_pack.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwrc_diags_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen_regs.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/generic_iis_master.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/hw6408_vhdl.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/arbiter.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CSR_pack.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/pll/pll_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_tx.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CRAM.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Init.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_register_link.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_vlan_unit.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/generic_iis_master_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_phase.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_irq_scu_bus.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_aligner.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_fsm.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scubus_channel.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_reset.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/xwb_serdes_clk_gen.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_rx.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_piso_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Am_Match.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_rmw.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/wb_skidpad.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_path.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scan.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_data.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Funct_Match.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Access_Decode.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/synthesis/temp_sens.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_swapper.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_msi.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../top/gsi_microtca/control/ramsize_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min9_64.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_packet_injection.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_butis.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_obuf.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_fsm.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tag_channel.vhd" -library work
-set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/matrix_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd" -library work
-set_global_assignment -name SDC_FILE ../../../top/gsi_microtca/control/microtca_control.sdc
-set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_inject_ctrl.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd" -library work
-set_global_assignment -name TOP_LEVEL_ENTITY microtca_control
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/dual_region.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/single_region.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/global_region.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_hip.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_reconf.qip"
-set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
-set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/ref_pll5.qip
-set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/dmtd_pll5.qip
-set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy8.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy16.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy_reconf.qip"

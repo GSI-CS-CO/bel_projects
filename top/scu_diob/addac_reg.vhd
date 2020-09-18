@@ -121,6 +121,11 @@ signal    S_ADC_In8_Rd:      std_logic;
 
 signal    S_Dtack:        std_logic;
 signal    S_Read_Port:    std_logic_vector(Data_to_SCUB'range);
+signal    S_Read_Port_buf:    std_logic_vector(Data_to_SCUB'range);
+
+signal	 rd_active_pulse:	std_logic;
+signal	 rd_active_ff1:		std_logic;
+signal	 rd_active_ff2:		std_logic;
 
 
 begin
@@ -366,25 +371,40 @@ P_Out_Reg:  process (nReset, clk, Data_from_SCUB_LA,
 
   begin
 
-    if    S_DAC1_Config_Rd  = '1' then  S_Read_port <= S_DAC1_Config;
-    elsif S_DAC1_Rd         = '1' then  S_Read_port <= S_DAC1;
-    elsif S_DAC2_Config_Rd  = '1' then  S_Read_port <= S_DAC2_Config;
-    elsif S_DAC2_Rd         = '1' then  S_Read_port <= S_DAC2;
-    elsif S_ADC_Config_Rd   = '1' then  S_Read_port <= S_ADC_Config;
+    if    S_DAC1_Config_Rd  = '1' then  S_Read_Port <= S_DAC1_Config;
+    elsif S_DAC1_Rd         = '1' then  S_Read_Port <= S_DAC1;
+    elsif S_DAC2_Config_Rd  = '1' then  S_Read_Port <= S_DAC2_Config;
+    elsif S_DAC2_Rd         = '1' then  S_Read_Port <= S_DAC2;
+    elsif S_ADC_Config_Rd   = '1' then  S_Read_Port <= S_ADC_Config;
 
-    elsif S_ADC_In1_Rd = '1' then  S_Read_port <= ADC_In1;    -- read Input-Port1
-    elsif S_ADC_In2_Rd = '1' then  S_Read_port <= ADC_In2;
-    elsif S_ADC_In3_Rd = '1' then  S_Read_port <= ADC_In3;
-    elsif S_ADC_In4_Rd = '1' then  S_Read_port <= ADC_In4;
-    elsif S_ADC_In5_Rd = '1' then  S_Read_port <= ADC_In5;
-    elsif S_ADC_In6_Rd = '1' then  S_Read_port <= ADC_In6;
-    elsif S_ADC_In7_Rd = '1' then  S_Read_port <= ADC_In7;
-    elsif S_ADC_In8_Rd = '1' then  S_Read_port <= ADC_In8;
+    elsif S_ADC_In1_Rd = '1' then  S_Read_Port <= ADC_In1;    -- read Input-Port1
+    elsif S_ADC_In2_Rd = '1' then  S_Read_Port <= ADC_In2;
+    elsif S_ADC_In3_Rd = '1' then  S_Read_Port <= ADC_In3;
+    elsif S_ADC_In4_Rd = '1' then  S_Read_Port <= ADC_In4;
+    elsif S_ADC_In5_Rd = '1' then  S_Read_Port <= ADC_In5;
+    elsif S_ADC_In6_Rd = '1' then  S_Read_Port <= ADC_In6;
+    elsif S_ADC_In7_Rd = '1' then  S_Read_Port <= ADC_In7;
+    elsif S_ADC_In8_Rd = '1' then  S_Read_Port <= ADC_In8;
 
   else
       S_Read_Port <= (others => '-');
     end if;
   end process P_Read_mux;
+  
+  ADC_IN_Reg:  process (nReset, clk) 
+  
+  --Value change, at the beginning of rd_active (adress is valid) for just one clock cycle.
+  --No change is allowed during reading.                      
+  begin
+    if rising_edge(clk) then
+      rd_active_ff1 <= rd_active;
+		  rd_active_ff2 <= rd_active_ff1;
+	    rd_active_pulse <= rd_active and not rd_active_ff1 and not rd_active_ff2;
+      if rd_active_pulse = '1' then 
+		    S_Read_Port_buf <= S_Read_Port;
+      end if;
+    end if;
+  end process ADC_IN_Reg;
 
 
   
@@ -393,7 +413,7 @@ P_Out_Reg:  process (nReset, clk, Data_from_SCUB_LA,
 LA    <=      (x"000" & S_DAC1_Config_wr   & S_DAC2_wr    & S_DAC1_wr  &  S_ADC_Config_wr );   
  
 Dtack_to_SCUB <= S_Dtack;
-Data_to_SCUB <= S_Read_Port;
+Data_to_SCUB <= S_Read_Port_buf;
 
 DAC1_Config     <=  S_DAC1_Config;      -- Daten-Reg. DAC1_Config
 DAC1_Config_wr  <=  S_DAC1_Config_Wr;   -- write Config-Reg. DAC1

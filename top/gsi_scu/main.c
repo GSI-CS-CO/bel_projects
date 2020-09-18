@@ -100,9 +100,10 @@ uint32_t SHARED fg_mb_slot               = -1;
 uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
-struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
+struct channel_regs   SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
-struct daq_buffer SHARED daq_buf = {0};
+struct daq_buffer     SHARED daq_buf = {0};
+uint32_t              SHARED fg_rescan_busy = 0;
 HistItem  histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
@@ -287,7 +288,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
     }
     param_sent[fg_num]++;
   } else {
-    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", slot);
+    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", fg_num);
   }
 }
 
@@ -602,7 +603,6 @@ void disable_channel(unsigned int channel) {
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
-  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
   if ((slot & 0xf0) == 0) {
     /* which macro are we? */
     if (dev == 0) {
@@ -622,13 +622,11 @@ void disable_channel(unsigned int channel) {
     // disarm hardware
     if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0, "disarm hw"); 
     if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0, "disarm hw"); 
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
 
   } else if (slot & DEV_SIO) {
     // disarm hardware
     if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf, "disarm hw"); 
     if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf, "disarm hw"); 
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
   }
 
 
@@ -741,7 +739,11 @@ void sw_irq_handler(int id) {
         break;
         case 4:
           //rescan for fg macros
+          //signal busy to saftlib
+          fg_rescan_busy = 1;
           print_fgs();
+          //signal done to saftlib
+          fg_rescan_busy = 0;
         break;
         case 5:
           clear_handler_state(value);
@@ -859,7 +861,6 @@ void ecaHandler()
           // send broadcast
           scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
         }
-        //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
     
       default:
@@ -1099,9 +1100,6 @@ void dev_sio_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
         }
@@ -1273,9 +1271,6 @@ void dev_bus_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
         };
@@ -1400,7 +1395,7 @@ int main(void) {
 
   while(1) {
     check_stack();
-    tick = getSysTime(); /* FIXME get the current system tick */
+    tick = getSysTime();
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
     for(taskIndex = 0; taskIndex < numTasks; taskIndex++) {

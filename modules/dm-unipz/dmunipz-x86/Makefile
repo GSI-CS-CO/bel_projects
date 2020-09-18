@@ -35,20 +35,23 @@ MASP_INCL     = -I $(MASP_DIR)/include
 MASP_LIBPATH  = -L $(MASP_DIR)/lib/$(ARCH) 
 MASP_LIBS     = -lmasp_emitter -lmasp_status -lmasp_core
 
-CC            = g++
+# CC          = g++
 
-USEMASP        = -D USEMASP
+USEMASP       = -D USEMASP
 
 ifeq ($(PRO), YES)
-PRODUCTIVE     = -D PRODUCTIVE
+PRODUCTIVE    = -D PRODUCTIVE
 endif
 
 endif
 # stuff above required for MASP support
 
-EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) -I $(FW)/../include -I $(FW)/../../b2b-test/include $(BOOST_INCL) $(MASP_INCL) 
-LIBS        ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+EXTRA_FLAGS  ?= $(USEMASP) $(PRODUCTIVE)
+CFLAGS       ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) -I $(FW)/../include -I $(FW)/../../b2b-test/include $(BOOST_INCL) $(MASP_INCL) 
+LIBS         ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+
+# compile everything as C++ (always)
+CC            = g++
 
 all: $(TARGETS)
 
