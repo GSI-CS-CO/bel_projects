@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-August-2019
+ *  version : 21-September-2021
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.5.7"
+#define DMUNIPZ_X86_VERSION "0.6.0"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -52,7 +52,7 @@
 // includes for this project
 #include "../../ftm/include/ftm_common.h"  // defs and regs for data master
 #include <dm-unipz.h>
-#include <b2btest-api.h>                   // this is C code, >> always compile using g++ <<
+#include <common-lib.h>                    // this is C code, >> always compile using g++ <<
 #include <dmunipz_shared_mmap.h>
 
 // USE MASP
@@ -137,7 +137,6 @@ const char* dmunipz_statusText(uint32_t bit) {
   static char message[256];
 
   switch (bit) {
-    printf("bit %d\n", bit);
     case DMUNIPZ_STATUS_REQTKFAILED      : sprintf(message, "error %d, %s",    bit, "UNILAC refuses TK request"); break;
     case DMUNIPZ_STATUS_REQTKTIMEOUT     : sprintf(message, "error %d, %s",    bit, "UNILAC TK request timed out"); break;
     case DMUNIPZ_STATUS_REQBEAMFAILED    : sprintf(message, "error %d, %s",    bit, "UNILAC refuses beam request"); break;
@@ -160,7 +159,7 @@ const char* dmunipz_statusText(uint32_t bit) {
     case DMUNIPZ_STATUS_BADSCHEDULEA     : sprintf(message, "error %d, %s",    bit, "t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms"); break;
     case DMUNIPZ_STATUS_BADSCHEDULEB     : sprintf(message, "error %d, %s",    bit, "unexpected event"); break;
     case DMUNIPZ_STATUS_INVALIDBLKADDR   : sprintf(message, "error %d, %s",    bit, "invalid address of block for Data Master"); break;
-    default                              : return api_statusText(bit); break;
+    default                              : return comlib_statusText(bit); break;
   }
 
   return message;
@@ -443,7 +442,8 @@ int main(int argc, char** argv) {
   uint32_t dtReady2Sis;  
   uint32_t nR2sTransfer;  
   uint32_t nR2sCycle;  
-  uint32_t statTrans; 
+  uint32_t statTrans;
+  uint32_t usedSize;
   uint32_t version;
 
   uint32_t actTransfer;                        // actual # of transfer
@@ -529,7 +529,7 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  api_initShared(lm32_base, SHARED_OFFS);
+  comlib_initShared(lm32_base, SHARED_OFFS);
   dmunipz_iterations   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
   dmunipz_virtAccReq   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
   dmunipz_virtAccRec   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
@@ -555,29 +555,29 @@ int main(int argc, char** argv) {
   if (getConfig) {
     readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);
     printf("dm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
-    printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms, tkTimeout %"PRIu32" ms\n", flexOffset, uniTimeout, tkTimeout);
-    printf("dm-unipz: EB Master (DM   ): mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", dstMac, (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
+    printf( " dm-unipz: flexOffset %" PRIu32 " ns, uniTimeout %" PRIu32 " ms, tkTimeout %" PRIu32 " ms\n " , flexOffset, uniTimeout, tkTimeout);
+    printf("dm-unipz: EB Master (DM   ): mac 0x%012" PRIx64 ", ip %03d.%03d.%03d.%03d\n", dstMac, (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
   } // if getConfig
 
   if (getVersion) {
-    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
     printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
     // status
-    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
     readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle);
     printTransferHeader();
     printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
-    printf(", %s (%6u), ",  api_stateText(state), nBadState);
+    printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
 
     if (!strcasecmp(command, "configure")) {
       eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
@@ -604,13 +604,13 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     
     if (!strcasecmp(command, "diag")) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
       readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);
       printf("\ndm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
-      printf("flexOffset            : %"PRIu32" ns\n", flexOffset);
-      printf("uniTimeout            : %"PRIu32" ms\n", uniTimeout);
-      printf("tkTimeout             : %"PRIu32" ms\n", tkTimeout);
-      printf("DM MAC                : 0x%012"PRIx64"\n", dstMac);
+      printf("flexOffset            : %" PRIu32 " ns\n", flexOffset);
+      printf("uniTimeout            : %" PRIu32 " ms\n", uniTimeout);
+      printf("tkTimeout             : %" PRIu32 " ms\n", tkTimeout);
+      printf("DM MAC                : 0x%012" PRIx64 "\n", dstMac);
       printf("DM IP                 : %03d.%03d.%03d.%03d\n", (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
     } // "diag"
     
@@ -683,7 +683,7 @@ int main(int argc, char** argv) {
     printTransferHeader();
 
     while (1) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
       readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle);
 
       switch(state) {
@@ -720,7 +720,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
-        printf(", %s (%6u), ",  api_stateText(state), nBadState);
+        printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
         // print set status bits (except OK)

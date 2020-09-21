@@ -8,7 +8,7 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
-FW          ?=../dmunipz-fw
+FW          ?=../fw
 TARGETS     := dmunipz-ctl 
 
 # set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
@@ -47,7 +47,7 @@ endif
 # stuff above required for MASP support
 
 EXTRA_FLAGS  ?= $(USEMASP) $(PRODUCTIVE)
-CFLAGS       ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) -I $(FW)/../include -I $(FW)/../../b2b-test/include $(BOOST_INCL) $(MASP_INCL) 
+CFLAGS       ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) -I $(FW)/../include -I $(FW) -I../../common-libs/include $(BOOST_INCL) $(MASP_INCL) 
 LIBS         ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
 # compile everything as C++ (always)
@@ -56,7 +56,7 @@ CC            = g++
 all: $(TARGETS)
 
 dmunipz-ctl: dmunipz-ctl.cpp
-	$(CC) $(CFLAGS) ../../b2b-test/b2btest-x86/b2btest-api.c -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
+	$(CC) $(CFLAGS)  ../../common-libs/x86/common-lib.c -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
