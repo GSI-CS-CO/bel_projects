@@ -208,7 +208,7 @@ void clear_handler_state( const uint8_t socket )
    }
 }
 
-//#define __MURKS
+// #define __MURKS
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -216,16 +216,17 @@ void clear_handler_state( const uint8_t socket )
  */
 ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 {
+   const unsigned int slot = pMessage->msg + 1;
+   const uint16_t pendingIrqs =
+      scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
+
 #ifdef __MURKS
 #warning MURKS!
    static unsigned int X = 0;
    X++;
-   if( (X % 1000) == 0 )
+   if( (X % 10000) == 0 )
       return;
 #endif
-   const unsigned int slot = pMessage->msg + 1;
-   const uint16_t pendingIrqs =
-      scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
 
    if( (pendingIrqs & FG1_IRQ) != 0 )
       handleAdacFg( slot, FG1_BASE );
@@ -439,7 +440,7 @@ STATIC TASK_T g_aTasks[] =
  * @see schedule
  * @todo Remove this function and do this in the interrupt handler direct.
  */
-STATIC inline void dispatch( void )
+ONE_TIME_CALL void dispatch( void )
 {
    criticalSectionEnter();
    const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
@@ -470,6 +471,19 @@ STATIC inline void dispatch( void )
  */
 ONE_TIME_CALL void schedule( void )
 {
+
+#ifdef __DOXYGEN__
+   /*
+    * For Doxygen only, making visible in caller graph.
+    */
+   dev_sio_handler();
+   dev_bus_handler();
+   scu_bus_handler();
+   ecaHandler();
+   commandHandler();
+   addacDaqTask();
+#endif
+
    const uint64_t tick = getWrSysTime();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {

@@ -86,7 +86,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
+ONE_TIME_CALL void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       return;
@@ -128,7 +128,7 @@ STATIC inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
+ONE_TIME_CALL void handleHiresMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearHiResIntPending( pChannel ) )
       return;
@@ -157,7 +157,7 @@ STATIC inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
+ONE_TIME_CALL void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 {
    if( !pChannel->properties.postMortemEvent )
       return;
@@ -212,7 +212,7 @@ STATIC inline void irqPrintDebugPending( void )
 /*! ---------------------------------------------------------------------------
  */
 #ifdef CONFIG_DAQ_SINGLE_APP
-STATIC inline
+ONE_TIME_CALL
 #endif
 void forEachScuDaqDevice( void )
 {
@@ -338,7 +338,7 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
  * @retval false Not all channels of this device handled yet.
  * @retval true  All channels of this device has been handled.
  */
-STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
+ONE_TIME_CALL bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
 {
    static unsigned int s_channelNumber = 0;
    DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, s_channelNumber );
@@ -346,10 +346,19 @@ STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
    handleContinuousMode( pChannel );
  //  handleHiresMode( pChannel );
  //   handlePostMortemMode( pChannel );
+#if 0
    s_channelNumber++;
+   DAQ_ASSERT( daqDeviceGetMaxChannels( pDevice ) > 0 );
    s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
-
    return (s_channelNumber == 0);
+#else
+   s_channelNumber++;
+   if( s_channelNumber < daqDeviceGetMaxChannels( pDevice ) )
+       return false;
+
+   s_channelNumber = 0;
+   return true;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
