@@ -1,7 +1,7 @@
 #ifndef _DM_UNIPZ_H_
 #define _DM_UNIPZ_H_
 
-#include <b2b-common.h>
+#include <common-defs.h>
 #include "../../ftm/include/ftm_common.h"     // defs and regs for data master
 
 
