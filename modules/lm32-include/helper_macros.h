@@ -150,6 +150,7 @@
  *        structure in the smallest possible size of the structure.
  * @see STATIC_ASSERT
  * @note At the moment this macro has been tested for GCC- compiler only!
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #define PACKED_SIZE __attribute__((packed))
 
@@ -178,6 +179,7 @@
  * }
  * @endcode
  * @note At the moment this macro has been tested for GCC- compiler only!
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #ifdef UNUSED
  #undef UNUSED
@@ -205,6 +207,7 @@
  *
  * @note All members of the union must have the same machine representation;
  *       this is necessary for this argument passing to work properly!
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #define TRANSPARENT_UNION __attribute__((__transparent_union__))
 
@@ -216,6 +219,7 @@
  * compiler. \n
  * However, any access to a deprecated variable or function creates a warning
  * but still compiles.
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #define GSI_DEPRECATED __attribute__((deprecated))
 
@@ -250,6 +254,7 @@
 /*!
  * @brief This function attribute prevents a function from being considered for
  *        inlining.
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  *
  * Counterpart to ALWAYS_INLINE.
  */
@@ -258,14 +263,39 @@
 /*!
  * @brief Declares a symbol as weak that means the linker can this overwrite by \n
  *        a strong symbol (is default) with the same name.
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #define OVERRIDE __attribute__((weak))
 
 /*!
  * @brief This function attribute tells the compiler that this function
  *        doesn't left.
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
  */
 #define NO_RETURN __attribute__((noreturn))
+
+/*!
+ * @brief Setting of the optimization level for a function.
+ *
+ * This macro is used to specify that a function is to be compiled with
+ * different optimization options than specified on the command line.
+ * Valid arguments are constant non-negative integers and strings.
+ * Each numeric argument specifies an optimization level.
+ * Each string argument consists of one or more comma-separated substrings.
+ * Each substring that begins with the letter O refers to an optimization
+ * option such as -O0 or -Os.
+ * Other substrings are taken as suffixes to the -f prefix jointly forming
+ * the name of an optimization option.
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
+ *
+ * @param O Comma separated optimization quoted strings.
+ *
+ * Example:\n
+ * @code
+ * OPTIMIZE( "-O2" ) void foo( void ) { ... }
+ * @endcode
+ */
+#define OPTIMIZE( O ... ) __attribute__((optimize( O )))
 
 /*
  * Helper macro for STATIC_ASSERT making this available for old compilers which

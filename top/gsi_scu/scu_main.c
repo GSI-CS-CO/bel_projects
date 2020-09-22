@@ -174,6 +174,7 @@ void enable_scub_msis( const unsigned int channel )
  *  uses the system timer
  *  @param ms delay value in milliseconds
  */
+OPTIMIZE( "-O2"  )
 STATIC void msDelayBig( const uint64_t ms )
 {
    const uint64_t later = getWrSysTime() + ms * 1000000ULL / 8;
