@@ -184,30 +184,6 @@ STATIC void msDelayBig( const uint64_t ms )
    }
 }
 
-/*! ---------------------------------------------------------------------------
- * @see scu_main.h
- */
-void clear_handler_state( const uint8_t socket )
-{
-   MSI_T m;
-
-   if( isMilScuBusFg( socket ) )
-   {
-      // create swi
-      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
-      m.msg = getFgSlotNumber( socket ) - 1;
-      m.adr = 0;
-      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVSIO, m );
-      return;
-   }
-
-   if( isMilExtentionFg( socket ) )
-   {
-      m.msg = 0;
-      m.adr = 0;
-      ATOMIC_SECTION() add_msg(&g_aMsg_buf[0], DEVBUS, m );
-   }
-}
 
 // #define __MURKS
 

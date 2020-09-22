@@ -46,6 +46,12 @@ typedef enum
    FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data\nif IRQ-flag set',color=green )
 } FG_STATE_T;
 
+
+/*! ---------------------------------------------------------------------------
+ * @brief helper function which clears the state of a dev bus after malfunction
+ */
+void clear_handler_state( const unsigned int socket );
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief

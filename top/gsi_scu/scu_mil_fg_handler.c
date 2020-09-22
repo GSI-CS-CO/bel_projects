@@ -82,6 +82,36 @@ STATIC void printMilError( const int status, const int slave_nr )
    }
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+void clear_handler_state( const unsigned int socket )
+{
+   MSI_T m;
+
+   if( isMilScuBusFg( socket ) )
+   {
+      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
+      m.msg = getFgSlotNumber( socket ) - 1;
+      m.adr = 0;
+      /*
+       * Triggering of a software pseudo interrupt.
+       */
+      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVSIO, m );
+      return;
+   }
+
+   if( isMilExtentionFg( socket ) )
+   {
+      m.msg = 0;
+      m.adr = 0;
+     /*
+      * Triggering of a software pseudo interrupt.
+      */
+      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVBUS, m );
+   }
+}
+
 #if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
  * @see scu_mil_fg_handler.h.h

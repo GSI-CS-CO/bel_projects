@@ -166,7 +166,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
 
       case FG_OP_CLEAR_HANDLER_STATE:
       {
-         clear_handler_state(value);
+       #ifdef CONFIG_MIL_FG
+         clear_handler_state( value );
+       #else
+         mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
+       #endif
          break;
       }
 
@@ -175,15 +179,16 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
        #ifdef HISTORY
          hist_print(1);
        #else
-         mprintf( "No history!\n" );
+         mprintf( ESC_ERROR "No history!\n" ESC_NORMAL );
        #endif
          break;
       }
 
       default:
       {
-         mprintf("swi: 0x%x\n", m.adr);
-         mprintf("     0x%x\n", m.msg);
+         mprintf( ESC_ERROR
+                  "Error: Unknown SAFT command! op-code: 0x%X, value: 0x%X\n"
+                  ESC_NORMAL, code, value );
          break;
       }
    }

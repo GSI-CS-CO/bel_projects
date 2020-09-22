@@ -223,10 +223,6 @@ void enable_scub_msis( const unsigned int channel );
  */
 void scanFgs( void );
 
-/*! ---------------------------------------------------------------------------
- * @brief helper function which clears the state of a dev bus after malfunction
- */
-void clear_handler_state( const uint8_t socket );
 
 //#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------

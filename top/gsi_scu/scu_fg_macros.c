@@ -9,7 +9,9 @@
  */
 #include "scu_fg_macros.h"
 #include "scu_fg_handler.h"
-
+#ifdef CONFIG_MIL_FG
+   #include "scu_mil_fg_handler.h"
+#endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
 #endif
