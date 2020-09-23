@@ -122,8 +122,13 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          break;
       }
 
-      case FG_OP_RFU:
+      case FG_OP_MIL_GAP_INTERVAL:
       {
+      #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+         g_gapReadingTime = value;
+      #else
+         mprintf( ESC_ERROR "No variable MIL gap reading support!\n" ESC_NORMAL );
+      #endif
          break;
       }
 

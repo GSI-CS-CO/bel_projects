@@ -16,6 +16,10 @@ extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
 //extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
+#ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+   unsigned int g_gapReadingTime = DEFAULT_GAP_READING_INTERVAL;
+#endif
+
 /*!
  * @brief Slot-value when no slave selected yet.
  */
@@ -671,16 +675,22 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
           * Only a task which has already served a function generator
           * can read a time-gap. That means its slave number has to be valid.
           */
-         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getWrSysTime() >= pMilData->gapReadingTime) )
+         if( 
+           #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+             ( g_gapReadingTime != 0 ) &&
+           #endif
+             ( pMilData->slave_nr != INVALID_SLAVE_NR ) &&
+             ( getWrSysTime() >= pMilData->gapReadingTime )
+           )
          {
             FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
             break;
          }
-      #endif
-          FSM_TRANSITION_SELF( label='No message', color=blue );
-          break;
-      } // end case ST_WAIT
+      #endif /* ifdef CONFIG_READ_MIL_TIME_GAP */
+         FSM_TRANSITION_SELF( label='No message', color=blue );
+         break;
+      } /* end case ST_WAIT */
 
       case ST_PREPARE:
       {
@@ -737,7 +747,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
          FSM_TRANSITION( ST_HANDLE_IRQS, color=green );
          break;
-      } // end case ST_FETCH_STATUS
+      } /* end case ST_FETCH_STATUS*/
 
       case ST_HANDLE_IRQS:
       {  /*
@@ -754,7 +764,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
          FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
-      } // end case ST_HANDLE_IRQS
+      } /* end case ST_HANDLE_IRQS */
 
       case ST_DATA_AQUISITION:
       {  /* data aquisition */
@@ -769,7 +779,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
          FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;
-      } // end case ST_DATA_AQUISITION
+      } /* end case ST_DATA_AQUISITION */
 
       case ST_FETCH_DATA:
       {
@@ -813,9 +823,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                          , pMilData->gapReadingTime != 0
                       #endif
                        );
-            // save the setvalue from the tuple sent for the next drq handling
+            /*
+             * save the setvalue from the tuple sent for the next drq handling
+             */
             g_aFgChannels[channel].last_c_coeff = pMilData->aFgChannels[channel].setvalue;
-         } // end FOR_EACH_FG_CONTINUING
+         } /* end FOR_EACH_FG_CONTINUING */
 
          if( status == RCV_TASK_BSY )
          {
@@ -826,11 +838,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
          FSM_TRANSITION( ST_WAIT, color=green );
          break;
-      } // end case ST_FETCH_DATA
+      } /* end case ST_FETCH_DATA */
 
       default: /* Should never be reached! */
       {
-         mprintf( ESC_ERROR"Unknown FSM-state of %s(): %d !"ESC_NORMAL"\n",
+         mprintf( ESC_ERROR "Unknown FSM-state of %s(): %d !\n" ESC_NORMAL,
                   __func__, pMilData->state );
          FSM_INIT_FSM( ST_WAIT, label='Initializing', color=blue );
          break;
@@ -854,7 +866,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    #ifdef CONFIG_READ_MIL_TIME_GAP
       case ST_WAIT:
       {
+      #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+         pMilData->gapReadingTime = getWrSysTime() + INTERVAL_1MS * g_gapReadingTime;
+      #else
          pMilData->gapReadingTime = getWrSysTime() + INTERVAL_10MS;
+      #endif
          break;
       }
    #endif
@@ -877,7 +893,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
       default: break;
    } /* End of state entry activities */
-} // end function milDeviceHandler
+} /* End function milDeviceHandler */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

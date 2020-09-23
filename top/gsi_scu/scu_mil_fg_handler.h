@@ -22,6 +22,27 @@ extern "C" {
 
 extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
 
+#ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+ #ifndef CONFIG_READ_MIL_TIME_GAP
+  #error CONFIG_READ_MIL_TIME_GAP has to be defined when _CONFIG_VARIABLE_MIL_GAP_READING is defined!
+ #endif
+ /*!
+  * @brief MIL gap-reading time in milliseconds.
+  * 
+  * This variable is valid for all detected MIL function generator channels.
+  * @note The value of zero means that the gap-reading is disabled.
+  */
+ extern unsigned int g_gapReadingTime;
+
+ /*!
+  * @brief Initializing value for global variable g_gapReadingTime
+  * @see g_gapReadingTime
+  */
+ #ifndef DEFAULT_GAP_READING_INTERVAL
+  #define DEFAULT_GAP_READING_INTERVAL 0
+ #endif
+#endif /* ifdef _CONFIG_VARIABLE_MIL_GAP_READING */
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Mecro declares a state of a Finite-State-Machine. \n
