@@ -1367,12 +1367,7 @@ begin
     );
 
     core_debug_o <= s_pmc_debug_out;
-
-
-    s_pmc_debug_in(0)          <= gpio_i(8); -- FPGA push button used to trigger INTx IRQ
-    s_pmc_debug_in(1)          <= gpio_i(9); -- CPLD push button used to trigger MSI IRQ
-
-    s_pmc_debug_in(7 downto 4) <= gpio_i(3 downto 0); -- FPGA HEX switch
+    s_pmc_debug_in(15 downto 0) <= (others => '0');
 
     pci_clk_buf : global_region
       port map(
