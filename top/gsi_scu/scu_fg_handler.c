@@ -85,9 +85,12 @@ void handleAdacFg( const unsigned int slot,
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
       sendRefillSignalIfThreshold( channel );
-
+   #ifdef CONFIG_USE_SENT_COUNTER
       if( feedAdacFg( pFgRegs ) )
          g_aFgChannels[channel].param_sent++;
+   #else
+      feedAdacFg( pFgRegs );
+   #endif
    }
    else
    {

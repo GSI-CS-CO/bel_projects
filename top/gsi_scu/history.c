@@ -1,91 +1,135 @@
-/* history.c */
+/*!
+ *  @file history.c
+ *  @brief Administration of history buffer
+ *
+ *  @date ?
+ *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *
+ *  @author Ulrich Becker <u.becker@gsi.de>
+ *  Origin Stefan Rauch (maybe)
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
+ */
+#ifndef CONFIG_USE_HISTORY
+ #error Macro CONFIG_USE_HISTORY has to be defined in Makefile when this modlle schall be compiled!
+#endif
 
-#ifdef HISTORY
-
-#include <stdio.h>
-#include <inttypes.h>
 #include <history.h>
-#include "mprintf.h"
+#include <scu_wr_time.h>
+#include <lm32Interrupts.h>
+#include <mprintf.h>
 
 
 /* Define PRINTF appropriate for the operating system being used */
-#define PRINTF	mprintf
+#define PRINTF  mprintf
 
-extern uint64_t getTick();
-
-
-/* Allocate space for the circular history buffer */
-HistItem histbuf[HISTSIZE];
+/*!
+ * @ingroup HISTORY
+ * @brief  Allocated space for the circular history buffer
+ */
+HistItem mg_aHistbuf[HISTSIZE];
 
 /* Variables used to maintain the circular history buffer */
-UINT32 histidx; 			/* next empty slot */
-UINT32 histstart;			/* oldest item */
-UINT32 histSubsystemsEnabled;	/* used to mask/unmask module logging */ 
+unsigned int mg_histidx;                 /*!<@brief next empty slot */
+unsigned int mg_histstart;               /*!<@brief oldest item */
+unsigned int mg_histSubsystemsEnabled = 0;   /*!<@brief used to mask/unmask module logging */
 
-void hist_init(UINT32 subsystemsEnabled)
+/*! ---------------------------------------------------------------------------
+ * @see history.h
+ */
+void hist_init( const uint32_t subsystemsEnabled )
 {
-   histstart = 0;
-   histidx = 0;
-   histSubsystemsEnabled = subsystemsEnabled;
-   hist_add(HISTORY_BOOT,"init");
+   ATOMIC_SECTION()
+   {
+      mg_histstart = 0;
+      mg_histidx = 0;
+      mg_histSubsystemsEnabled = subsystemsEnabled;
+      hist_add( HISTORY_BOOT, "init" );
+   }
 }
 
-void hist_enableSubsystem(UINT32 bit)
+/*! ---------------------------------------------------------------------------
+ */
+void hist_enableSubsystem( const uint32_t bit )
 {
-   histSubsystemsEnabled |= bit;
+   mg_histSubsystemsEnabled |= bit;
 }
 
-void hist_disableSubsystem(UINT32 bit)
+/*! ---------------------------------------------------------------------------
+ */
+void hist_disableSubsystem( const uint32_t bit )
 {
-   histSubsystemsEnabled &= ~bit;
+   mg_histSubsystemsEnabled &= ~bit;
 }
 
-void hist_addx(UINT32 subsystem, char *msg, unsigned char data)
+/*! ---------------------------------------------------------------------------
+ * @see history.h
+ */
+void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T data )
 {
-   //UINT32 interruptEnabledState = disableInterrupts();
-   if ( subsystem & histSubsystemsEnabled ) {
-      histbuf[histidx].timeStamp = getTick();  /* whatever is appropriate */
-      histbuf[histidx].message = msg;
-      histbuf[histidx].associatedData = data;
-      if ( ++histidx >= HISTSIZE ) {
-         histidx = 0;
-      }
-      if ( histidx == histstart ) {
-         if ( ++histstart >= HISTSIZE ) 
-           histstart = 0;
+   if( (subsystem & mg_histSubsystemsEnabled) == 0 )
+      return;
+
+   ATOMIC_SECTION()
+   {
+      mg_aHistbuf[mg_histidx].timeStamp = getWrSysTime();
+      mg_aHistbuf[mg_histidx].message = msg;
+      mg_aHistbuf[mg_histidx].associatedData = data;
+      mg_histidx++;
+      mg_histidx %= ARRAY_SIZE( mg_aHistbuf );
+      if( mg_histidx == mg_histstart )
+      { /*
+         * Removing of the oldest item.
+         */
+         mg_histstart++;
+         mg_histstart %= ARRAY_SIZE( mg_aHistbuf );
       }
    }
-   //enableInterrupts(interruptEnabledState);
 }
 
-void hist_add(UINT32 subsystem, char *msg)
+/*! ---------------------------------------------------------------------------
+ * @see history.h
+ */
+void hist_print( const bool doReturn )
 {
-   hist_addx(subsystem, msg, NOVAL);
-}
-
-void hist_print(int doReturn)
-{
-   UINT32 idx = histstart;
+   unsigned int idx = mg_histstart;
 
    PRINTF("*********** history *************\n");
-   while ( idx != histidx )
+   while( idx != mg_histidx )
    {
-      PRINTF("%u :%s",(unsigned int)((histbuf[idx].timeStamp)/1000ULL),histbuf[idx].message);
-      if ( histbuf[idx].associatedData != NOVAL ) {
-         PRINTF(":0x%02x",histbuf[idx].associatedData);
+      PRINTF( "%u :%s",
+              (unsigned int)((mg_aHistbuf[idx].timeStamp)/1000ULL),
+              mg_aHistbuf[idx].message
+            );
+      if( mg_aHistbuf[idx].associatedData != HIST_NOVAL )
+      {
+         PRINTF( ":0x%02X", mg_aHistbuf[idx].associatedData );
       }
-      PRINTF("\n\r");
+      PRINTF("\n");
       idx++;
-      if ( idx >= HISTSIZE ) {
-         idx = 0;
-      }
+      idx %= ARRAY_SIZE( mg_aHistbuf );
    }
+   if( !doReturn )
+      PRINTF( "+++ System stopped! +++\n" );
    PRINTF("*********** end history *************\n\n");
 
-   while ( ! doReturn ) 
+   while( !doReturn )
    {
       ;
    }
 }
 
-#endif /* HISTORY */
+//#endif /* HISTORY */
+/*================================== EOF ====================================*/

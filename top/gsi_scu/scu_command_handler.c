@@ -81,7 +81,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
     */
    switch( code )
    {
-      case FG_OP_INITIALIZE:          /* Go immediately to next case. */
+      // case FG_OP_INITIALIZE:          /* Go immediately to next case. */
       case FG_OP_CONFIGURE:           /* Go immediately to next case. */
       case FG_OP_DISABLE_CHANNEL:     /* Go immediately to next case. */
       case FG_OP_CLEAR_HANDLER_STATE:
@@ -89,7 +89,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          if( value < ARRAY_SIZE( g_aFgChannels ) )
             break;
 
-         mprintf( ESC_ERROR"Value %d out of range!"ESC_NORMAL"\n", value );
+         mprintf( ESC_ERROR "Value %d out of range!\n" ESC_NORMAL, value );
          return;
       }
       default: break;
@@ -103,10 +103,10 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       case FG_OP_INITIALIZE:
       {
          hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
-        #if __GNUC__ >= 9
+      #if __GNUC__ >= 9
          #pragma GCC diagnostic push
          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-        #endif
+      #endif
          init_buffers( &g_shared.fg_regs[0],
                        m.msg,
                        &g_shared.fg_macros[0],
@@ -115,10 +115,14 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
                        , g_pScu_mil_base
                      #endif
                      );
-        #if __GNUC__ >= 9
+      #if __GNUC__ >= 9
          #pragma GCC diagnostic pop
-        #endif
-         g_aFgChannels[value].param_sent = 0;
+      #endif
+      #ifdef CONFIG_USE_SENT_COUNTER
+         //g_aFgChannels[value].param_sent = 0;
+         for( unsigned int i = 0; i < ARRAY_SIZE( g_aFgChannels ); i++ )
+            g_aFgChannels[i].param_sent = 0;
+      #endif
          break;
       }
 
@@ -181,8 +185,8 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
 
       case FG_OP_PRINT_HISTORY:
       {
-       #ifdef HISTORY
-         hist_print(1);
+       #ifdef CONFIG_USE_HISTORY
+         hist_print( true );
        #else
          mprintf( ESC_ERROR "No history!\n" ESC_NORMAL );
        #endif

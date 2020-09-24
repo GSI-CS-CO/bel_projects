@@ -487,7 +487,9 @@ STATIC inline void setMilFgRegs( FG_MIL_REGISTER_T* pFgRegs,
 typedef struct
 {
   // uint64_t timeout;
+#ifdef CONFIG_USE_SENT_COUNTER
    uint32_t param_sent;   /*!<@brief Sent counter */
+#endif
    int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
 } FG_CHANNEL_T;
 

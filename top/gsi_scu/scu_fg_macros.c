@@ -25,7 +25,12 @@ extern volatile unsigned int* g_pScu_mil_base;
  * @brief Memory space of sent function generator data.
  *        Non shared memory part for each function generator channel.
  */
-FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0}};//,0}};
+FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
+#ifdef CONFIG_USE_SENT_COUNTER
+   {{0,0}};//,0}};
+#else
+   {{0}};
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Prints a error message happened in the device-bus respectively
@@ -272,7 +277,9 @@ int configure_fg_macro( const unsigned int channel )
          #endif
       }
    #endif /* CONFIG_MIL_FG */
+   #ifdef CONFIG_USE_SENT_COUNTER
       g_aFgChannels[channel].param_sent++;
+   #endif
    } /* if( cbRead( ... ) != 0 ) */
 
    // reset watchdog

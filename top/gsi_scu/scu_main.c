@@ -298,8 +298,6 @@ ONE_TIME_CALL void initInterrupt( void )
  */
 STATIC void initAndScan( void )
 {
-   hist_init(HISTORY_XYZ_MODULE);
-
    /*
     *  No function generator macros assigned to channels at startup!
     */
@@ -556,6 +554,7 @@ void main( void )
    initEcaQueue();
 #endif
 
+   hist_init(HISTORY_XYZ_MODULE);
    /*!
     * Scanning and initializing all FG's and DAQ's
     */

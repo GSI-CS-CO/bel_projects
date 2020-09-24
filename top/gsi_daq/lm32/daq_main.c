@@ -345,20 +345,14 @@ ONE_TIME_CALL bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
 
    handleContinuousMode( pChannel );
  //  handleHiresMode( pChannel );
- //   handlePostMortemMode( pChannel );
-#if 0
-   s_channelNumber++;
-   DAQ_ASSERT( daqDeviceGetMaxChannels( pDevice ) > 0 );
-   s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
-   return (s_channelNumber == 0);
-#else
+ //  handlePostMortemMode( pChannel );
+
    s_channelNumber++;
    if( s_channelNumber < daqDeviceGetMaxChannels( pDevice ) )
        return false;
 
    s_channelNumber = 0;
    return true;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------

@@ -407,10 +407,10 @@ STATIC inline void feedMilFg( const unsigned int socket,
    setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
                                     (pset.control & 0x3F) << 10) ;
    int status;
-   #if __GNUC__ >= 9
-     #pragma GCC diagnostic push
-     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-   #endif
+ #if __GNUC__ >= 9
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+ #endif
    if( isMilExtentionFg( socket ) )
    {
       status = write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
@@ -423,15 +423,17 @@ STATIC inline void feedMilFg( const unsigned int socket,
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
-   #if __GNUC__ >= 9
-     #pragma GCC diagnostic pop
-   #endif
+#if __GNUC__ >= 9
+   #pragma GCC diagnostic pop
+#endif
    if( status != OKAY )
    {
       printDeviceError( status, getFgSlotNumber( socket ), __func__ );
       return;
    }
+#ifdef CONFIG_USE_SENT_COUNTER
    g_aFgChannels[channel].param_sent++;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
