@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 15-jan-2020
+//  version : 18-sep-2020
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.6"
+#define EBMON_VERSION "2.0.7"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -556,7 +556,7 @@ int main(int argc, char** argv) {
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
       if (verbose) fprintf(stdout, "Current TAI: ");
-      fprintf(stdout, "%s (%llu us)", timestr, usecs64 - secs * 1000000);
+      fprintf(stdout, "%s (%lu us)", timestr, usecs64 - secs * 1000000);
       fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
     }
   } // if getWRDate
