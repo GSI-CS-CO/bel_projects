@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-September-2021
+ *  version : 24-September-2020
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.6.0"
+#define DMUNIPZ_X86_VERSION "0.7.0"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -168,12 +168,14 @@ const char* dmunipz_statusText(uint32_t bit) {
 
 const char* dmunipz_transferStatusText(uint32_t bit) {
   switch (bit) {
-  case DMUNIPZ_TRANS_REQTK     : return "TK requested";
-  case DMUNIPZ_TRANS_REQTKOK   : return "TK request succeeded";
-  case DMUNIPZ_TRANS_RELTK     : return "TK released";
-  case DMUNIPZ_TRANS_REQBEAM   : return "beam requested";
-  case DMUNIPZ_TRANS_REQBEAMOK : return "beam request succeeded";
-  case DMUNIPZ_TRANS_RELBEAM   : return "beam released";
+    case DMUNIPZ_TRANS_REQTK      : return "TK requested";
+    case DMUNIPZ_TRANS_REQTKOK    : return "TK request succeeded";
+    case DMUNIPZ_TRANS_RELTK      : return "TK released";
+    case DMUNIPZ_TRANS_REQBEAM    : return "beam requested";
+    case DMUNIPZ_TRANS_REQBEAMOK  : return "beam request succeeded";
+    case DMUNIPZ_TRANS_RELBEAM    : return "beam released";
+    case DMUNIPZ_TRANS_PREPBEAM   : return "beam preparation requested";
+    case DMUNIPZ_TRANS_UNPREPBEAM : return "beam preparation released";
   default                      : return "undefined transfer status";
   }
 } // dmunipz_transferStatusText
@@ -218,17 +220,19 @@ static void help(void) {
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz:                  TRANSFERS                |                   INJECTION                     | DIAGNOSIS  |                    INFO   \n");
   fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
-  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 06(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' \n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '- status\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          ' - # of '!OpReady' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '- state\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' - beam (request) released\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' - beam request succeeded\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' - beam requested\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' - TK request succeeded\n");
+  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 06(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '       ' \n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '       ' - # of 'bad status' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '- status\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          ' - # of '!OpReady' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '- state\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '- beam preparation released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' '- beam preparation requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '- beam (request) released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' '- beam request succeeded\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' '- beam requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' '- TK (request) released -> transfer completed\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' '- TK request succeeded\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | '- TK requested\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '    - STATUS info ...\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '- remaining budget for data master and network  [ms] (> 1ms)\n");
@@ -331,8 +335,8 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransferHeader()
 {
-  printf("dm-unipz:                  TRANSFERS                |                    INJECTION                    | DIAGNOSIS  |                    INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng   stat   nchng\n");
+  printf("dm-unipz:                  TRANSFERS                |                    INJECTION                    | DIAGNOSIS  |                        INFO                       \n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status             state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 
@@ -393,13 +397,15 @@ void printTransfer(uint32_t transfers,
   printf("DG %sms | ", temp1);
 
   // status
-  printf("%d %d %d %d %d %d", 
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTK)    ) > 0),  
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTKOK)  ) > 0), 
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELTK)    ) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAM)  ) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAMOK)) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)  ) > 0)
+  printf("%d %d %d %d %d %d %d %d", 
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTK)     ) > 0),  
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTKOK)   ) > 0), 
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELTK)     ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAM)   ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAMOK) ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0)
          );
 } // printTransfer
 
