@@ -71,17 +71,20 @@ dmunipz-ctl dev/wbm0 configure
 ###########################################
 echo -e dm-unipz - start: configure ECA for events from DM
 
-# configure ECA for lm32 channel: listen for TK request, tag "0x2"
+# configure ECA for lm32 channel: listen for CMD_UNI_TCREQ, tag "0x2"
 saft-ecpu-ctl tr0 -c 0x112c15e000000000 0xfffffff000000000 0 0x2 -d
 
-# configure ECA for lm32 channel: listen for beam request, tag "0x3"
+# configure ECA for lm32 channel: listen for CMD_UNI_BREQ, tag "0x3"
 saft-ecpu-ctl tr0 -c 0x112c160000000000 0xfffffff000000000 0 0x3 -d
 
-# configure ECA for lm32 channel: listen for TK release, tag "0x4"
+# configure ECA for lm32 channel: listen for CMD_UNI_TCREL, tag "0x4"
 saft-ecpu-ctl tr0 -c 0x112c15f000000000 0xfffffff000000000 0 0x4 -d
 
-# configure ECA for lm32 channel: listen for MB Load (TK 7 Chopper), tag "0x7"
+# configure ECA for lm32 channel: listen for EVT_MB_TRIGGER (TK 7 Chopper), tag "0x7"
 saft-ecpu-ctl tr0 -c 0x112c028000000000 0xfffffff000000000 0 0x7 -d
+
+# configure ECA for lm32 channel: listen for CMD_UNI_BPREP, tag "0x8"
+saft-ecpu-ctl tr0 -c 0x112c161000000000 0xfffffff000000000 0 0x8 -d
 
 
 ###########################################

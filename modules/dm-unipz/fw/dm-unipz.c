@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2020
+ *  version : 24-Sep-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000600                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000700                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -707,6 +707,28 @@ uint32_t releaseBeam(uint32_t msTimeout)
 } // releaseBeam
 
  
+uint32_t prepareBeam()
+{
+  int16_t          status;       // status MIL device bus operation
+
+  // send request to modulbus I/O (UNIPZ)
+  writePZUData.bits.SIS_PrepReq = true;
+  if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
+  else                                                                                        return COMMON_STATUS_OK;
+} // prepareBeam
+
+
+uint32_t unprepareBeam()
+{
+  int16_t          status;       // status MIL device bus operation
+
+  // send request to modulbus I/O (UNIPZ)
+  writePZUData.bits.SIS_PrepReq  = false;
+  if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
+  else                                                                                        return COMMON_STATUS_OK;
+} // unprepareBeam
+
+
 uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via MIL bus
 {
   uint32_t i;
@@ -758,13 +780,15 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
   pp_sprintf(c, "nT %7u\n", (unsigned int)nTransfer);
   fwlib_printOLED(c);
 
-  pp_sprintf(c, "sT  %d%d%d%d%d%d\n",
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTK)    ) > 0),  
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTKOK)  ) > 0), 
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELTK)    ) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)  ) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAMOK)) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)  ) > 0)
+  pp_sprintf(c, "sT  %d%d%d%d%d%d%d%d\n",
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTK)     ) > 0),  
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTKOK)   ) > 0), 
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELTK)     ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)   ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAMOK) ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0)
              );
   fwlib_printOLED(c);
 } // updateOLED
@@ -883,7 +907,9 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer) // h
       break;
     case DMUNIPZ_CMD_RELEASEBEAM :
       releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);   
+      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);
+      unprepareBeam();
+      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);
       DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
       break;
     default:
@@ -945,7 +971,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
   nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);  // 'do action' is driven by actions issued by the ECA
 
   switch (nextAction) {
-    case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQ_TK" from data master
+    case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQTK" from data master
       
       if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never request TK in case of a late event
 
@@ -987,6 +1013,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       if (status == COMMON_STATUS_OK)
         *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQTKOK);        // update status of transfer
+
+      break;
+
+    case DMUNIPZ_ECADO_PREPBEAM :                                                  // received command "PREPBEAM" from data master
+      
+      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never perform PREPBEAM in case of a late event
+
+      //---- prepare beam 
+      status   = prepareBeam();                                                    // prepare beam at UNIPZ
+
+      if (status == COMMON_STATUS_OK)
+        *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_PREPBEAM);       // update status of transfer
 
       break;
 
@@ -1096,11 +1134,13 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       //---- release beam and un-arm MIL piggy
       releaseBeam(uniTimeout);                                                     // release beam request at UNIPZ
+      unprepareBeam();                                                             // release beam preparation at UNIPZ
       checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
       disableFilterEvtMil(pMilPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
 
-      //---- conclude be setting status of transfer and status of gateway
+      //---- conclude the setting status of transfer and status of gateway
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELBEAM);          // diagnostics: update status of transfer
+      *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);       // diagnostics: update status of transfer
       if (status == COMMON_STATUS_OK)
         *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAMOK);
 
@@ -1182,7 +1222,7 @@ int main(void) {
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
   uint64_t dtStart;                             // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
-  uint64_t dtSync;                              // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
+  uint64_t dtSync;                              // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
   uint64_t dtInject;                            // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
   uint64_t dtTransfer;                          // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
   uint64_t dtTkreq;                             // time difference between CMD_UNI_TKREQ and reply from UNIPZ
