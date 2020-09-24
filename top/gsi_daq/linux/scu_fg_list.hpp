@@ -25,8 +25,7 @@
 #ifndef _SCU_FG_LIST_HPP
 #define _SCU_FG_LIST_HPP
 
-#include <scu_shared_mem.h>
-#include <daq_eb_ram_buffer.hpp>
+#include <scu_lm32_mailbox.hpp>
 #include <vector>
 
 namespace Scu

@@ -248,8 +248,12 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
 #endif
    add_daq_msg( &g_shared.daq_buf, d );
 #endif
+#ifdef CONFIG_SMALL_HISTORY_VALUE
    hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
    hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
+#else
+   hist_addx(HISTORY_XYZ_MODULE, "MIL-daq actual value", actValue );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

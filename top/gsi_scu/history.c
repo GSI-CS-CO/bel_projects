@@ -104,6 +104,11 @@ void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T da
  */
 void hist_print( const bool doReturn )
 {
+#ifdef CONFIG_SMALL_HISTORY_VALUE
+  #define _FORMAT_ ":0x%02X"
+#else
+  #define _FORMAT_ ":0x%08X"
+#endif
    unsigned int idx = mg_histstart;
 
    PRINTF("*********** history *************\n");
@@ -115,7 +120,7 @@ void hist_print( const bool doReturn )
             );
       if( mg_aHistbuf[idx].associatedData != HIST_NOVAL )
       {
-         PRINTF( ":0x%02X", mg_aHistbuf[idx].associatedData );
+         PRINTF( _FORMAT_, mg_aHistbuf[idx].associatedData );
       }
       PRINTF("\n");
       idx++;
