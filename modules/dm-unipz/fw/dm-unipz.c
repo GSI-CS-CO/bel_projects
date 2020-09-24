@@ -469,20 +469,14 @@ void init() // typical init for lm32
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console   
   cpuId = getCpuIdx();
-
-  timer_init(1);              // needed by usleep_init() 
-  usleep_init();              // needed by scu_mil.c
-
-  // set MSI IRQ handler
-  isr_table_clr();
-  //irq_set_mask(0x01);
-  irq_disable(); 
 } // init
 
 
 void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 {
   uint32_t idx;
+  uint32_t *pSharedTemp;
+  int      i;  
   const uint32_t c_Max_Rams = 10;
   sdb_location found_sdb[c_Max_Rams];
   sdb_location found_clu;
@@ -490,7 +484,7 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   /* chk: rework */
   
   // get pointer to shared memory
-  pShared           = (uint32_t *)_startshared;
+  pShared             = (uint32_t *)_startshared;
 
   // get address to data
   pSharedNIterMain    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NITERMAIN >> 2));
@@ -532,6 +526,18 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 
   DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
 
+  // clear shared mem
+  i = 0;
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  DBPRINT2("dm-unipz: fw specific shared begin 0x%08x\n", pSharedTemp);
+  while (pSharedTemp < (uint32_t *)(pShared + (DMUNIPZ_SHARED_END >> 2 ))) {
+    *pSharedTemp = 0x0;
+    pSharedTemp++;
+    i++;
+  } // while pSharedTemp
+
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+  
   // set initial values;
   *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
