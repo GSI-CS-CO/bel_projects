@@ -514,6 +514,7 @@ typedef enum
 } SIGNAL_T;
 
 /*!
+ * @ingroup MAILBOX
  * @brief Helper function for debug purposes only.
  */
 STATIC inline const char* signal2String( const SIGNAL_T sig )

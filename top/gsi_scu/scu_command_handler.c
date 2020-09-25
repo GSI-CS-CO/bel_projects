@@ -64,7 +64,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
     */
    if( !getMessageSave( &m, &g_aMsg_buf[0], SWI ) )
    { /*
-      * No!
+      * No, leave this function.
       */
       return;
    }
@@ -74,11 +74,15 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    const unsigned int code  = GET_UPPER_HALF( m.msg );
    const unsigned int value = GET_LOWER_HALF( m.msg );
 
+  /*
+   * When debug mode active only.
+   */
    printSwIrqCode( code, value );
 
-   /*!
-    * Verifying the command parameter for all commands with a parameter.
-    */
+  /*
+   * Verifying the command parameter for all commands with a
+   * array index as parameter.
+   */
    switch( code )
    {
       // case FG_OP_INITIALIZE:          /* Go immediately to next case. */
@@ -89,6 +93,10 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          if( value < ARRAY_SIZE( g_aFgChannels ) )
             break;
 
+        /*
+         * In the case of a detected parameter error this function
+         * becomes terminated.
+         */
          mprintf( ESC_ERROR "Value %d out of range!\n" ESC_NORMAL, value );
          return;
       }

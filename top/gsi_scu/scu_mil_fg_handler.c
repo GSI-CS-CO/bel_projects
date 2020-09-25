@@ -646,9 +646,6 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
-#ifdef CONFIG_READ_MIL_TIME_GAP
-  // static uint64_t gapReadingTime = 0;
-#endif
    unsigned int channel;
    int status = OKAY;
 
@@ -681,7 +678,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
           * Only a task which has already served a function generator
           * can read a time-gap. That means its slave number has to be valid.
           */
-         if( 
+         if(
            #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
              ( g_gapReadingTime != 0 ) &&
            #endif
@@ -699,14 +696,17 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } /* end case ST_WAIT */
 
       case ST_PREPARE:
-      {
-         // wait for 200 us
+      {  /*
+          * wait for 200 us
+          */
          if( getWrSysTime() < pMilData->timestamp1 )
          {
             FSM_TRANSITION_SELF( label='200 us not expired', color=blue );
             break;
          }
-         /* poll all pending regs on the dev bus; non blocking read operation */
+         /*
+          * poll all pending regs on the dev bus; non blocking read operation
+          */
          FOR_EACH_FG( channel )
          {
             status = milReqestStatus( pMilData, isScuBus, channel );
@@ -718,8 +718,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
 
       case ST_FETCH_STATUS:
-      {
-         /* if timeout reached, proceed with next task */
+      {  /*
+          * if timeout reached, proceed with next task
+          */
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
@@ -735,12 +736,14 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->task_timeout_cnt = 0;
          #endif
          }
-         /* fetch status from dev bus controller; */
+         /*
+          * fetch status from dev bus controller;
+          */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
             status = milGetStatus( pMilData, isScuBus, channel );
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG_CONTINUING loop
+               break; /* break from FOR_EACH_FG_CONTINUING loop */
             if( status != OKAY )
                printMilError( status, pMilData->slave_nr );
          }
@@ -756,14 +759,17 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } /* end case ST_FETCH_STATUS*/
 
       case ST_HANDLE_IRQS:
-      {  /*
-          * handle irqs for ifas with active pending regs; non blocking write
-          */
+      { /*
+         * handle irqs for ifas with active pending regs; non blocking write
+         */
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
-
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
             status = milHandleAndWrite( pMilData, isScuBus, channel );
             if( status != OKAY )
                printDeviceError(status, 22, "dev_sio end handle");
@@ -773,11 +779,15 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } /* end case ST_HANDLE_IRQS */
 
       case ST_DATA_AQUISITION:
-      {  /* data aquisition */
+      {
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
             pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime(); // store the sample timestamp of daq
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
@@ -788,8 +798,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } /* end case ST_DATA_AQUISITION */
 
       case ST_FETCH_DATA:
-      {
-         /* if timeout reached, proceed with next task */
+      { /*
+         * if timeout reached, proceed with next task
+         */
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
@@ -805,21 +816,29 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->task_timeout_cnt = 0;
          #endif
          }
-         /* fetch daq data */
+        /*
+         * fetch daq data
+         */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
-
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
             int16_t actAdcValue;
             status = milGetTask( pMilData, isScuBus, channel, &actAdcValue );
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG_CONTINUING loop
+               break; /* break from FOR_EACH_FG_CONTINUING loop */
 
             if( status != OKAY )
             {
                printMilError( status, pMilData->slave_nr );
-               continue; // Handle next channel...
+              /*
+               * Handle next channel...
+               */
+               continue;
             }
             pushDaqData( getFgMacroViaFgRegister( channel ),
                          pMilData->aFgChannels[channel].daq_timestamp,
@@ -836,8 +855,10 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          } /* end FOR_EACH_FG_CONTINUING */
 
          if( status == RCV_TASK_BSY )
-         {
-            pMilData->lastChannel = channel; // start next time from channel
+         { /*
+            * Start next time from channel
+            */
+            pMilData->lastChannel = channel;
             pMilData->task_timeout_cnt++;
             FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
@@ -859,7 +880,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     * Has the FSM-state changed?
     */
    if( lastState == pMilData->state )
-      return; /* No, there is nothing more to do. */
+   { /*
+      * No, there is nothing more to do, leave this function.
+      */
+      return;
+   }
 
    /*
     *    *** The FSM-state has changed! ***
@@ -883,6 +908,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       case ST_PREPARE:
       {
       #ifdef CONFIG_READ_MIL_TIME_GAP
+        /*
+         * Sets the gap reading time to zero this will signal the host that
+         * the next data aren't from gap reading.
+         * Refer state ST_FETCH_DATA at function call pushDaqData().
+         */
          pMilData->gapReadingTime = 0;
       #endif
          const MSI_T m = popMessageSave( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
@@ -892,8 +922,10 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
       case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:
-      {
-         pMilData->lastChannel = 0; // start next time from channel 0
+      { /*
+         * start next time from channel 0
+         */
+         pMilData->lastChannel = 0;
          pMilData->task_timeout_cnt = 0;
          break;
       }
