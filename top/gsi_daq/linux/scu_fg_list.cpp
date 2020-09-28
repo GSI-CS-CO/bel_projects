@@ -71,54 +71,12 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
       throw Exception( errorMessage );
    }
 
-   uint32_t tmpLm32MailboxSlot;
-   pEbAccess->readLM32( &tmpLm32MailboxSlot, sizeof( tmpLm32MailboxSlot ),
-                        offsetof( FG::SCU_SHARED_DATA_T, fg_mb_slot ) );
-
-   /*!
-    * @todo Using of mailbox-slots respectively software interrupts
-    *       for the communication between host and LM32 are to complex
-    *       not synchronous and perhaps not necessary.\n
-    *       A better solution in the future will be the server-client
-    *       command algorithm already implemented for ADAC-DAQs.
-    */
-   const uint lm32MailboxSlot = gsi::convertByteEndian( tmpLm32MailboxSlot );
-   if( lm32MailboxSlot >= ARRAY_SIZE(MSI_BOX_T::slots) )
-   {
-      std::string errorMessage =
-         "Mailbox slot of LM32 is out of range: ";
-      errorMessage += std::to_string( lm32MailboxSlot );
-      errorMessage += "!";
-      throw Exception( errorMessage );
-   }
-
-   /*
-    * CAUTION: _pMailBox is a foreign pointer and only valid within LM32 scope!
-    *          It will use for address offset calculation only.
-    */
-   MSI_BOX_T* _pMailBox = reinterpret_cast<MSI_BOX_T*>
-                         (
-                           pEbAccess->getEbPtr()->findDeviceBaseAddress( DaqEb::gsiId,
-                           static_cast<FeSupport::Scu::Etherbone::DeviceId>(MSI_MSG_BOX) )
-                         );
-
-   using SIGNAL_T = TYPEOF(MSI_SLOT_T::signal);
-   SIGNAL_T signal = FG::FG_OP_RESCAN << (BIT_SIZEOF( SIGNAL_T ) / 2);
-
-   /*!
-    * @todo Flag fg_rescan_busy is a very dirty hack obtaining a
-    *       synchronization!
-    *       Remove this technique for a better solution!
-    *       See comment above.
-    */
    uint32_t scanBusy = 1;
    pEbAccess->writeLM32( &scanBusy, sizeof( uint32_t ),
                          offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
 
-   pEbAccess->getEbPtr()->write( reinterpret_cast<etherbone::address_t>
-                                    (&_pMailBox->slots[lm32MailboxSlot].signal),
-                                 reinterpret_cast<eb_user_data_t>(&signal),
-                                 EB_BIG_ENDIAN | EB_DATA32 );
+   Lm32Swi swi( pEbAccess );
+   swi.send( FG::FG_OP_RESCAN );
 
    /*
     * Timeout of 3 seconds.

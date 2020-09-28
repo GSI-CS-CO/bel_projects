@@ -42,18 +42,28 @@ using namespace std;
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
 /*! ---------------------------------------------------------------------------
- * @brief Helper function for the options "-S" and "-L"
- * @param pCmdLine Pointer to command line object.
- * @param doScan If true so the LM32 performs a re-scan.
  */
-static int listOrScanFGs( CommandLine* pCmdLine, bool doScan )
+STATIC MilDaqAdministration* getDaqAdministration( CommandLine* pCmdLine )
 {
    MilDaqAdministration* pAllDaq = pCmdLine->getDaqAdminPtr();
    if( pAllDaq == nullptr )
    {
       ERROR_MESSAGE( "SCU target has to be specified before!" );
-      return -1;
    }
+   return pAllDaq;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function for the options "-S" and "-L"
+ * @param pCmdLine Pointer to command line object.
+ * @param doScan If true so the LM32 performs a re-scan.
+ */
+STATIC int listOrScanFGs( CommandLine* pCmdLine, bool doScan )
+{
+   MilDaqAdministration* pAllDaq = getDaqAdministration( pCmdLine );
+   if( pAllDaq == nullptr )
+      return -1;
+
    const bool verbose = pCmdLine->isVerbose();
    if( doScan )
    {
@@ -425,6 +435,28 @@ vector<OPTION> CommandLine::c_optList =
                     "NOTE: The verbosity mode (option -v has to be set before) "
                     "will show all function-generators,\notherwise only MIL- "
                     "function-generators will shown.\n"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         MilDaqAdministration* pAllDaq = getDaqAdministration( static_cast<CommandLine*>(poParser) );
+         if( pAllDaq == nullptr )
+            return -1;
+
+         Lm32Swi swi( pAllDaq->getEbAccess() );
+         swi.send( FG::FG_OP_PRINT_HISTORY );
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'H',
+      .m_longOpt  = "history",
+      .m_helpText = "Triggers the LM32-firmware to print the entire history "
+                    "into the etherbone-console.\n"
+                    "NOTE: This option is only meaningful if a etherbone-console via "
+                    "program \"eb-console\" eg: \"eb-console tcp/scuxl4711\" is open "
+                    "before."
    }
 };
 

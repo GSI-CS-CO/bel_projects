@@ -81,6 +81,7 @@ void Lm32Swi::send( FG::FG_OP_CODE_T opCode, uint param )
       errorMessage += FG::fgCommand2String( opCode );
       errorMessage += " value: ";
       errorMessage += std::to_string( param );
+      errorMessage += " is out of range!";
       throw Exception( errorMessage );
    }
 
