@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Sep-2020
+ *  version : 28-Sep-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000700                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000701                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -790,11 +790,11 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTK)     ) > 0),  
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTKOK)   ) > 0), 
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELTK)     ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0),
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)   ) > 0),
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAMOK) ) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
-             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0)
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0)
              );
   fwlib_printOLED(c);
 } // updateOLED

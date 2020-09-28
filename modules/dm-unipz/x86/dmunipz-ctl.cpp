@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-September-2020
+ *  version : 28-September-2020
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.7.0"
+#define DMUNIPZ_X86_VERSION "0.7.1"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -207,6 +207,7 @@ static void help(void) {
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  reltk               command forces release of TK request at UNILAC\n");
+  fprintf(stderr, "  relprep             command forces release of preparation request at UNILAC\n");
   fprintf(stderr, "  relbeam             command forces release of beam request at UNILAC\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "  diag                shows statistics and detailled information\n");
@@ -219,18 +220,18 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz:                  TRANSFERS                |                   INJECTION                     | DIAGNOSIS  |                    INFO   \n");
-  fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
+  fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( init/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
   fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 06(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '       ' \n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '       ' - # of 'bad status' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          '    '- status\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '          ' - # of '!OpReady' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '    '- state\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '- beam preparation released\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' '- beam preparation requested\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '- beam (request) released\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' '- beam request succeeded\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' '- beam requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' \n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '- status\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          ' - # of '!OpReady' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '- state\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '- beam (request) released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' '- beam request succeeded\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '- beam requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' '- beam preparation (request) released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' '- beam preparation requested\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' '- TK (request) released -> transfer completed\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' '- TK request succeeded\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | '- TK requested\n");
@@ -240,7 +241,7 @@ static void help(void) {
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '- offset EVT_READY_TO_SIS -> EVT_MB_TRIGGER [ms] (~10ms) \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '- offset beam request <-> EVT_READY_TO_SIS [ms] (< 2000ms)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '- period required for acknowledgement of beam request at UNILAC [ms] (~20ms)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '- period required preparation of beam request\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '- period required for init of beam request ('DM Schnitzeljagd', ~0.2ms)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '- total period required for injection [ms]\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '- # of received EVT_READY_TO_SIS since last sequence (should equal number of injections; if larger, another virtAcc to TK at UNILAC is present)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '- # of received EVT_READY_TO_SIS during transfer (should equal the number of injections)\n");
@@ -401,11 +402,11 @@ void printTransfer(uint32_t transfers,
          ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTK)     ) > 0),  
          ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTKOK)   ) > 0), 
          ((statTrans & (0x1 << DMUNIPZ_TRANS_RELTK)     ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0),
          ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAM)   ) > 0),
          ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAMOK) ) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_PREPBEAM)  ) > 0),
-         ((statTrans & (0x1 << DMUNIPZ_TRANS_UNPREPBEAM)) > 0)
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)   ) > 0)
          );
 } // printTransfer
 
