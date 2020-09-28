@@ -337,7 +337,7 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 void printTransferHeader()
 {
   printf("dm-unipz:                  TRANSFERS                |                    INJECTION                    | DIAGNOSIS  |                        INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status             state      nchng   stat   nchng\n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( init/bmrq/r2sis->mbtrig)   | DIAG margn | status             state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 
