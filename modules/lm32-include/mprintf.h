@@ -12,12 +12,20 @@
 #ifndef _MPRINTF_H
 #define _MPRINTF_H
 
+/*!
+ * @defgroup PRINTF Code reduced variant of the ANSI printf-family especially
+ *                  for small devices.
+ * @note This variant doesn't support floating point numbers!
+ */
+
 #include <stdarg.h>
 #include <stdlib.h>
 
 #ifdef __lm32__
   #include "uart.h"
 #endif
+
+#include <helper_macros.h>
 
 #ifndef DEFAULT_SPRINTF_LIMIT
  #define DEFAULT_SPRINTF_LIMIT 80
@@ -30,9 +38,10 @@ extern "C" {
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @brief Writes the C string pointed by format to the LM32-UART, replacing any
- *       format specifier in the same way as printf does, but using the
- *       elements in the variable argument list identified by ap instead
+ * @ingroup PRINTF
+ * @brief Writes the C string pointed by format to the LM32-UART, replacing \n
+ *        any format specifier in the same way as printf does, but using the \n
+ *       elements in the variable argument list identified by ap instead \n
  *       of additional function arguments.
  *
  * Internally, the function retrieves arguments from the list identified by
@@ -53,10 +62,11 @@ int vprintf( const char* format, va_list ap );
 //int _p_vsprintf(char const *format,va_list ap, char* dst);
 
 /*! ---------------------------------------------------------------------------
- * @brief Composes a string with the same text that would be printed if
- *        format was used on printf, but using the elements in the
- *        variable argument list identified by arg instead of additional
- *        function arguments and storing the resulting content as a C string
+ * @ingroup PRINTF
+ * @brief Composes a string with the same text that would be printed if \n
+ *        format was used on printf, but using the elements in  \n
+ *        variable argument list identified by arg instead of additional \n
+ *        function arguments and storing the resulting content as a C \n
  *        in the buffer pointed by s (taking n as the maximum buffer capacity
  *        to fill).
  * @param s Pointer to a buffer where the resulting C-string is stored.
@@ -73,6 +83,7 @@ int vprintf( const char* format, va_list ap );
 int vsnprintf( char* s, size_t n, const char* format, va_list arg );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup PRINTF
  * @brief Writes the C string pointed by format to the LM32-UART.
  *
  * If format includes format specifiers (subsequences beginning with %),
@@ -97,8 +108,9 @@ int vsnprintf( char* s, size_t n, const char* format, va_list arg );
 int mprintf( const char* format, ... );
 
 /*! ---------------------------------------------------------------------------
- * @brief Composes a string with the same text that would be printed if format
- *        was used on printf, but instead of being printed, the content is
+ * @ingroup PRINTF
+ * @brief Composes a string with the same text that would be printed if format \n
+ *        was used on printf, but instead of being printed, the content is \n
  *        stored as a C string in the buffer pointed by dst.
  * @note  The assumed length of the buffer is in macro DEFAULT_SPRINTF_LIMIT
  *        defined. If possible prefer the function snprintf instead of this.
@@ -117,9 +129,10 @@ int mprintf( const char* format, ... );
 int sprintf( char* dst, char const* format, ... );
 
 /*! ---------------------------------------------------------------------------
- * @brief Composes a string with the same text that would be printed if format
- *        was used on printf, but instead of being printed, the content is
- *        stored as a C string in the buffer pointed by s
+ * @ingroup PRINTF
+ * @brief Composes a string with the same text that would be printed if format \n
+ *        was used on printf, but instead of being printed, the content is \n
+ *        stored as a C string in the buffer pointed by  \n
  *        (taking n as the maximum buffer capacity to fill).
  * @param s Pointer to a buffer where the resulting C-string is stored.
  *        The buffer should have a size of at least n characters.
@@ -139,9 +152,9 @@ int sprintf( char* dst, char const* format, ... );
  */
 int snprintf( char* s, size_t n, const char* format, ... );
 
-void m_cprintf( int color, const char*fmt, ...);
-void m_pcprintf( int row, int col, int color, const char *fmt, ...);
-void m_term_clear();
+GSI_DEPRECATED void m_cprintf( int color, const char*fmt, ...);
+GSI_DEPRECATED void m_pcprintf( int row, int col, int color, const char *fmt, ...);
+GSI_DEPRECATED void m_term_clear( void );
 
 #ifdef __cplusplus
 }

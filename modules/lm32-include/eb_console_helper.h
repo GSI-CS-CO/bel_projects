@@ -28,7 +28,8 @@
 
 #if defined(__lm32__)
   #include <mprintf.h>
-#elif !defined( mprintf )
+#elif !defined( mprintf ) && !defined(__DOXYGEN__)
+  #include <helper_macros.h>
   #include <stdio.h>
   #define mprintf printf
 #endif
@@ -84,28 +85,31 @@ namespace gsi
 #endif
 
 /*!
+ * @ingroup PRINTF
  * @brief Set cursor position.
  * @param x Column position (horizontal)
  * @param y Line position (vertical)
  */
-static inline void gotoxy( const int x, const int y )
+STATIC inline void gotoxy( const unsigned int x, const unsigned int y )
 {
-   mprintf( ESC_XY( "%d", "%d" ), y, x );
+   mprintf( ESC_XY( "%u", "%u" ), y, x );
 }
 
 /*!
+ * @ingroup PRINTF
  * @brief Clears the entire console screen and moves the cursor to (0,0)
  */
-static inline void clrscr( void )
+STATIC inline void clrscr( void )
 {
    mprintf( ESC_CLR_SCR );
 }
 
 /*!
+ * @ingroup PRINTF
  * @brief Clears all characters from the cursor position to the end of the
  *        line (including the character at the cursor position).
  */
-static inline void clrline( void )
+STATIC inline void clrline( void )
 {
    mprintf( ESC_CLR_LINE );
 }

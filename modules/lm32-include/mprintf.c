@@ -32,12 +32,14 @@
 struct _PRINTF_T;
 
 /*!
+ * @ingroup PRINTF
  * @brief Type declaration of the character output function.
  */
 typedef bool (*PUTCH_F)( struct _PRINTF_T*, const int );
 
 
 /*!
+ * @ingroup PRINTF
  * @brief Helper object for target string.
  */
 typedef struct _PRINTF_T
@@ -49,6 +51,7 @@ typedef struct _PRINTF_T
 } PRINTF_T;
 
 /*! --------------------------------------------------------------------------
+ * @ingroup PRINTF
  * @brief Adds a single character to the target string.
  *        Will used from sprintf and snprintf.
  * @see sprintf
@@ -70,6 +73,7 @@ STATIC bool addToString( PRINTF_T* pPrintfObj, const int c )
 }
 
 /*! --------------------------------------------------------------------------
+ * @ingroup PRINTF
  * @brief Sends a single character to the UART in the case of LM32.
  *        Will used from mprintf
  * @see mprintf
@@ -84,6 +88,7 @@ STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, const int c )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup PRINTF
  * @brief Makes the output of a single character either via UART or string.
  *
  * @note This macro is only within function vprintfBase valid!
@@ -96,6 +101,7 @@ STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, const int c )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup PRINTF
  * @brief Base function for all printf variants.
  * @param pPrintfObj->putch Pointer to the character output function.
  */
@@ -165,14 +171,14 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       bool     signum = false;
       switch( currentChar = *format++ )
       {
-         case 'S':
+         case 'S': /* No break here! */
          case 's':
             ptr = (unsigned char*)va_arg( ap, char* );
             while( *ptr != '\0' )
                __PUT_CHAR( *ptr++ );
             continue;
 
-         case 'i':
+         case 'i': /* No break here! */
          case 'd':
             signum = true;
             base = 10;
@@ -205,7 +211,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
              */
             paddingWidth *= 4;
             break;
-      #endif
+      #endif /* ifndef CONFIG_NO_BINARY_PRINTF_FORMAT */
 
          case 'x':
             base = 16;
@@ -355,7 +361,7 @@ int pp_vsprintf( char* buf, const char* format, va_list arg )
    };
    return vprintfBase( &printfObj, format, arg );
 }
-#endif
+#endif /* ifndef CONFIG_USE_LINUX_PRINTF */
 
 /*! ---------------------------------------------------------------------------
  * @see mprintf.h
@@ -382,6 +388,7 @@ int snprintf( char* s, size_t n, const char* format, ... )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @deprecated Use macros in eb_console_helper.h instead.
  */
 void m_cprintf( int color, const char *fmt, ... )
 {
@@ -393,6 +400,7 @@ void m_cprintf( int color, const char *fmt, ... )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @deprecated Use macros in eb_console_helper.h instead.
  */
 void m_pcprintf( int row, int col, int color, const char *fmt, ... )
 {
@@ -405,6 +413,7 @@ void m_pcprintf( int row, int col, int color, const char *fmt, ... )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @deprecated Use macros in eb_console_helper.h instead.
  */
 void m_term_clear( void )
 {

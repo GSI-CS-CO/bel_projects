@@ -90,7 +90,25 @@
  * @endcode
  */
 #ifndef ARRAY_SIZE
- #define ARRAY_SIZE( a ) ( sizeof(a) / sizeof((a)[0]) )
+ #ifdef __cplusplus
+  /*
+   * Type-safe variant in the case using C++.
+   * In the case of non-arrays e.g.: pointer, the compiler will issue a
+   * compile time error.
+   */
+   template <size_t _n>
+   struct __ARRAY_SIZE_HELPER_T__ { char m_dummy[_n]; };
+
+   template <typename T, size_t _n>
+   __ARRAY_SIZE_HELPER_T__<_n> __ArraySizeHelper__( T(&)[_n] );
+
+   #define ARRAY_SIZE( a )  sizeof(__ArraySizeHelper__( a ))
+ #else
+  /*
+   * Classical variant in the case of C.
+   */
+   #define ARRAY_SIZE( a ) ( sizeof(a) / sizeof((a)[0]) )
+ #endif
 #endif
 
 /*!
