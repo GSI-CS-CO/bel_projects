@@ -28,8 +28,9 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 ###########################################
 echo dm-unipz - start: kill monitoring process
 killall dmunipz-ctl
+
 echo dm-unipz - start: start  monitoring
-dmunipz-ctl -s1 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
+/bin/daemon -NiU --name=dmunipz-daemon --pidfile=/var/run/dmunipz-ctl.pid --stdout=local0.info --stderr=local0.err -- dmunipz-ctl -s1 dev/wbm0
 
 ###########################################
 # configure firmware and make it operational 
@@ -40,7 +41,7 @@ dmunipz-ctl -s1 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 # - 192.168.11.1 ( c0a80b01 ) has ip for DM,  MAC tsl404: 0x00267b000455
 #
 # some data masters
-# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000408 0xc0a88040 (tsl015, user network) 
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000446 0xc0a880bc (tsl015, user network) 
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7 (tsl017, production network)
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, 'Hanno network')
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
@@ -56,7 +57,7 @@ if  [ $(hostname) == $PROSCU ]; then   # production network
     dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
 else                                  # test or development
     echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000446 0xc0a880bc
 fi
 
 echo -e dm-unipz - start: make firmware operational
@@ -70,17 +71,20 @@ dmunipz-ctl dev/wbm0 configure
 ###########################################
 echo -e dm-unipz - start: configure ECA for events from DM
 
-# configure ECA for lm32 channel: listen for TK request, tag "0x2"
+# configure ECA for lm32 channel: listen for CMD_UNI_TCREQ, tag "0x2"
 saft-ecpu-ctl tr0 -c 0x112c15e000000000 0xfffffff000000000 0 0x2 -d
 
-# configure ECA for lm32 channel: listen for beam request, tag "0x3"
+# configure ECA for lm32 channel: listen for CMD_UNI_BREQ, tag "0x3"
 saft-ecpu-ctl tr0 -c 0x112c160000000000 0xfffffff000000000 0 0x3 -d
 
-# configure ECA for lm32 channel: listen for TK release, tag "0x4"
+# configure ECA for lm32 channel: listen for CMD_UNI_TCREL, tag "0x4"
 saft-ecpu-ctl tr0 -c 0x112c15f000000000 0xfffffff000000000 0 0x4 -d
 
-# configure ECA for lm32 channel: listen for MB Load (TK 7 Chopper), tag "0x7"
+# configure ECA for lm32 channel: listen for EVT_MB_TRIGGER (TK 7 Chopper), tag "0x7"
 saft-ecpu-ctl tr0 -c 0x112c028000000000 0xfffffff000000000 0 0x7 -d
+
+# configure ECA for lm32 channel: listen for CMD_UNI_BPREP, tag "0x8"
+saft-ecpu-ctl tr0 -c 0x112c161000000000 0xfffffff000000000 0 0x8 -d
 
 
 ###########################################
