@@ -250,6 +250,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
 MilDaqAdministration::MilDaqAdministration( CommandLine* m_poCommandLine,
                                             std::string ebAddress )
    :DaqAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
+   ,m_oSwi( getEbAccess() )
    ,m_poCommandLine( m_poCommandLine )
 {
 }
@@ -328,6 +329,8 @@ int mdaqtMain( int argc, char** ppArgv )
    DEBUG_MESSAGE( "Entering loop" );
    bool doReceive = true;
    bool singleShoot = false;
+   uint gapReadInterval = 0;
+   constexpr uint gapReadTime = 10;
    while( (key = Terminal::readKey()) != '\e' )
    {
       switch( key )
@@ -355,6 +358,23 @@ int mdaqtMain( int argc, char** ppArgv )
                cout << "Single shoot is: "
                     << (singleShoot? "enabled":"disabled") << endl;
             break;
+         }
+         case HOT_KEY_TOGGLE_GAP_READING:
+         {
+            if( gapReadInterval == 0 )
+               gapReadInterval = gapReadTime;
+            else
+               gapReadInterval = 0;
+            pDaqAdmin->sendSwi( FG::FG_OP_MIL_GAP_INTERVAL, gapReadInterval );
+            if( cmdLine.isVerbose() )
+               cout << "Gap reading " << ((gapReadInterval != 0)? "enabled" : "disabled") << endl;
+            break;
+         }
+         case HOT_KEY_PRINT_HISTORY:
+         {
+            if( cmdLine.isVerbose() )
+               cout << "Printing history..." << endl;
+            pDaqAdmin->sendSwi( FG::FG_OP_PRINT_HISTORY );
          }
       }
       if( doReceive )

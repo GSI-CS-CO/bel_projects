@@ -416,9 +416,9 @@ vector<OPTION> CommandLine::c_optList =
                     "NOTE: The verbosity mode (option -v has to be set before) "
                     "will show all function-generators,\notherwise only MIL- "
                     "function-generators will shown.\n"
-                    "CAUTION: Don't use this option during function-"
+                    ESC_BOLD "CAUTION: Don't use this option during function-"
                     "generators are running! Otherwise the timing becomes disturbed \n"
-                    "and the function-generators will stopped!\n"
+                    "and the function-generators will stopped!\n" ESC_NORMAL
                     "If you will list the found function generators without scanning only,"
                     " so use the option \"-L\" respectively \"--list\"."
    },
@@ -442,9 +442,7 @@ vector<OPTION> CommandLine::c_optList =
          MilDaqAdministration* pAllDaq = getDaqAdministration( static_cast<CommandLine*>(poParser) );
          if( pAllDaq == nullptr )
             return -1;
-
-         Lm32Swi swi( pAllDaq->getEbAccess() );
-         swi.send( FG::FG_OP_PRINT_HISTORY );
+         pAllDaq->sendSwi( FG::FG_OP_PRINT_HISTORY );
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
@@ -456,7 +454,32 @@ vector<OPTION> CommandLine::c_optList =
                     "into the etherbone-console.\n"
                     "NOTE: This option is only meaningful if a etherbone-console via "
                     "program \"eb-console\" eg: \"eb-console tcp/scuxl4711\" is open "
-                    "before."
+                    "before.\n"
+                    ESC_BOLD "CAUTION: Using this option will destroy the timing! "
+                    "Don't use it in the real production environment!" ESC_NORMAL
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         MilDaqAdministration* pAllDaq = getDaqAdministration( static_cast<CommandLine*>(poParser) );
+         if( pAllDaq == nullptr )
+            return -1;
+
+         uint gapInterval;
+         if( readInteger( gapInterval, poParser->getOptArg() ) )
+            return -1;
+
+         pAllDaq->sendSwi( FG::FG_OP_MIL_GAP_INTERVAL, gapInterval );
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'A',
+      .m_longOpt  = "gap",
+      .m_helpText = "Activates or deactivates the gap reading. "
+                    "PARAM is the gap reading interval in milliseconds. "
+                    "A value of zero deactivates the gap reading."
    }
 };
 

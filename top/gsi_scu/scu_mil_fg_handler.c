@@ -248,11 +248,13 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
 #endif
    add_daq_msg( &g_shared.daq_buf, d );
 #endif
+#if 0
 #ifdef CONFIG_SMALL_HISTORY_VALUE
    hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
    hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
 #else
    hist_addx(HISTORY_XYZ_MODULE, "MIL-daq actual value", actValue );
+#endif
 #endif
 }
 
@@ -649,10 +651,10 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    unsigned int channel;
    int status = OKAY;
 
-   /*
-    * Checking integrity of pointer when macro FG_ASSERT is activated, that means
-    * CONFIG_FG_PEDANTIC_CHECK is defined.
-    */
+  /*
+   * Checking integrity of pointer when macro FG_ASSERT is activated, that means
+   * CONFIG_FG_PEDANTIC_CHECK is defined.
+   */
    FG_ASSERT( pThis->pTaskData != NULL );
    FG_ASSERT( (unsigned int)pThis->pTaskData >= (unsigned int)&g_aMilTaskData[0] );
    FG_ASSERT( (unsigned int)pThis->pTaskData <= (unsigned int)&g_aMilTaskData[ARRAY_SIZE(g_aMilTaskData)-1] );
@@ -661,9 +663,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 
    const FG_STATE_T lastState = pMilData->state;
 
-   /*
-    * Performing the FSM state-do activities.
-    */
+  /*
+   * Performing the FSM state-do activities.
+   */
    switch( lastState )
    {
       case ST_WAIT:
@@ -674,10 +676,10 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             break;
          }
       #ifdef CONFIG_READ_MIL_TIME_GAP
-         /*
-          * Only a task which has already served a function generator
-          * can read a time-gap. That means its slave number has to be valid.
-          */
+        /*
+         * Only a task which has already served a function generator
+         * can read a time-gap. That means its slave number has to be valid.
+         */
          if(
            #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
              ( g_gapReadingTime != 0 ) &&
@@ -696,9 +698,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } /* end case ST_WAIT */
 
       case ST_PREPARE:
-      {  /*
-          * wait for 200 us
-          */
+      { /*
+         * wait for 200 us
+         */
          if( getWrSysTime() < pMilData->timestamp1 )
          {
             FSM_TRANSITION_SELF( label='200 us not expired', color=blue );
@@ -718,9 +720,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
 
       case ST_FETCH_STATUS:
-      {  /*
-          * if timeout reached, proceed with next task
-          */
+      { /*
+         * if timeout reached, proceed with next task
+         */
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );

@@ -171,12 +171,19 @@ public:
    /*!
     * @brief Performs a scan respectively rescan by the LM32 for
     *        all function generators including MIL and non MIL.
-    * @note This function is not implemented yet!
-    * @todo Implement this function!
     * @param pEbAccess Pointer to the object of type daq::EbRamAccess
     *        for communicating with LM32.
     */
    void scan( daq::EbRamAccess* pEbAccess );
+
+   /*!
+    * @brief Performs a scan respectively rescan by the LM32 for
+    *        all function generators including MIL and non MIL.
+    * @param poSwi Pointer to the object of type Scu::Lm32Swi
+    *        for communicating with LM32 and performing a
+    *        software interrupt.
+    */
+   void scan( Lm32Swi* poSwi );
 
    /*!
     * @brief Synchronizing by the LM32 found function generators

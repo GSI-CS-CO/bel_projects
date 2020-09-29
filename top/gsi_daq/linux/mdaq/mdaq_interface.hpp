@@ -143,6 +143,11 @@ public:
       m_oFgList.scan( getEbAccess() );
    }
 
+   void scan( Lm32Swi* poSwi )
+   {
+      m_oFgList.scan( poSwi );
+   }
+
    void sync( void )
    {
       m_oFgList.sync( getEbAccess() );

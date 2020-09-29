@@ -45,6 +45,13 @@
 #ifndef HOT_KEY_TOGGLE_SINGLE_SHOOT
   #define HOT_KEY_TOGGLE_SINGLE_SHOOT 's'
 #endif
+#ifndef HOT_KEY_TOGGLE_GAP_READING
+  #define HOT_KEY_TOGGLE_GAP_READING  'g'
+#endif
+#ifndef HOT_KEY_PRINT_HISTORY
+  #define HOT_KEY_PRINT_HISTORY       'h'
+#endif
+
 
 namespace Scu
 {
@@ -186,6 +193,7 @@ public:
 class MilDaqAdministration: public Scu::MiLdaq::DaqAdministration
 {
    friend class CommandLine;
+   Lm32Swi        m_oSwi;
    CommandLine*   m_poCommandLine;
 
 public:
@@ -208,6 +216,11 @@ public:
 
    void setSingleShoot( bool enable );
 
+   void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
+   {
+      m_oSwi.send( opCode, param );
+   }
+
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
    {
       std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
@@ -217,6 +230,11 @@ public:
    void clearBuffer( bool update = true ) override
    {
       std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
+   }
+
+   void scan( void )
+   {
+      DaqAdministration::scan( &m_oSwi );
    }
 };
 

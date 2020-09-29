@@ -77,7 +77,7 @@ void Lm32Swi::send( FG::FG_OP_CODE_T opCode, uint param )
 {
    if( param > 0xFFFF )
    {
-      std::string errorMessage = "Parameter of signel: ";
+      std::string errorMessage = "Parameter of signal: ";
       errorMessage += FG::fgCommand2String( opCode );
       errorMessage += " value: ";
       errorMessage += std::to_string( param );

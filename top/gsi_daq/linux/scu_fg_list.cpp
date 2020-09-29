@@ -50,15 +50,23 @@ FgList::~FgList( void )
  */
 void FgList::scan( daq::EbRamAccess* pEbAccess )
 {
+   Lm32Swi swi( pEbAccess );
+   scan( &swi );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgList::scan( Lm32Swi* poSwi )
+{
    /*
     * Assuming the etherbone-connection has been already established.
     */
-   assert( pEbAccess->isConnected() );
+   assert( poSwi->getEbRamAcess()->isConnected() );
 
    //TODO Implement this function once a good rescan function call has
    //     been implemented in LM32.
    uint32_t tmpLm32SwVersion;
-   pEbAccess->readLM32( &tmpLm32SwVersion, sizeof( tmpLm32SwVersion ),
+   poSwi->getEbRamAcess()->readLM32( &tmpLm32SwVersion, sizeof( tmpLm32SwVersion ),
                            offsetof( FG::SCU_SHARED_DATA_T, fg_version ) );
 
    m_lm32SoftwareVersion = gsi::convertByteEndian( tmpLm32SwVersion );
@@ -72,11 +80,14 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
    }
 
    uint32_t scanBusy = 1;
-   pEbAccess->writeLM32( &scanBusy, sizeof( uint32_t ),
+   poSwi->getEbRamAcess()->writeLM32( &scanBusy, sizeof( uint32_t ),
                          offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
 
-   Lm32Swi swi( pEbAccess );
-   swi.send( FG::FG_OP_RESCAN );
+
+   /*
+    * Trigger of LM32 software interrupt.
+    */
+   poSwi->send( FG::FG_OP_RESCAN );
 
    /*
     * Timeout of 3 seconds.
@@ -84,7 +95,7 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
    const USEC_T timeout = getSysMicrosecs() + MICROSECS_PER_SEC * 3;
    do
    {
-      pEbAccess->readLM32( &scanBusy, sizeof( scanBusy ),
+      poSwi->getEbRamAcess()->readLM32( &scanBusy, sizeof( scanBusy ),
                            offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
       if( getSysMicrosecs() > timeout )
       {
@@ -93,7 +104,7 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
    }
    while( scanBusy != 0 );
 
-   sync( pEbAccess );
+   sync( poSwi->getEbRamAcess() );
 }
 
 /*! ---------------------------------------------------------------------------
