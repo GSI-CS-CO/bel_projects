@@ -56,6 +56,10 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
 
 /*! ---------------------------------------------------------------------------
  */
+#ifdef CONFIG_FW_VERSION_3
+  #define fg_busy fg_rescan_busy
+#endif
+
 void FgList::scan( Lm32Swi* poSwi )
 {
    /*
@@ -81,7 +85,7 @@ void FgList::scan( Lm32Swi* poSwi )
 
    uint32_t scanBusy = 1;
    poSwi->getEbRamAcess()->writeLM32( &scanBusy, sizeof( uint32_t ),
-                         offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
+                         offsetof( FG::SCU_SHARED_DATA_T, fg_busy ) );
 
 
    /*
@@ -96,7 +100,7 @@ void FgList::scan( Lm32Swi* poSwi )
    do
    {
       poSwi->getEbRamAcess()->readLM32( &scanBusy, sizeof( scanBusy ),
-                           offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
+                           offsetof( FG::SCU_SHARED_DATA_T, fg_busy ) );
       if( getSysMicrosecs() > timeout )
       {
          throw Exception( "Timeout while FG scanning!" );

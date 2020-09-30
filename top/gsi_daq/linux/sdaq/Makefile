@@ -11,6 +11,8 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 STATIC_LIBRARY := 1
 
+DEFINES += CONFIG_FW_VERSION_3
+
 TARGET         := sdaq
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone

@@ -76,6 +76,7 @@ const std::string command2String( daq::DAQ_OPERATION_CODE_T op )
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_CON );
       __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR );
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_DEVICE_TYPE );
    }
    return "unknown";
    #undef  __OP_CODE_CASE_ITEM

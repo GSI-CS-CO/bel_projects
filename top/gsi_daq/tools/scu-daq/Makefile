@@ -15,6 +15,8 @@ MIAN_MODULE := daqt.cpp
 BASE_DIR := ..
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
+DEFINES += CONFIG_FW_VERSION_3
+
 DEFINES += CONFIG_AUTODOC_OPTION
 
 SOURCE += daqt_command_line.cpp

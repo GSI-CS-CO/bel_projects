@@ -344,13 +344,20 @@ void _onException( const uint32_t sig )
 #endif
 }
 
+#ifdef CONFIG_FW_VERSION_3
+  #define fg_busy fg_rescan_busy
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Scans for fgs on mil extension and scu bus.
  */
 void scanFgs( void )
 {
 #ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 1; //signal busy to saftlib
+   /*
+    * signal busy to saftlib
+    */
+   g_shared.fg_busy = 1;
 #endif
 #if defined( CONFIG_READ_MIL_TIME_GAP ) && defined( CONFIG_MIL_FG )
    suspendGapReading();
@@ -369,7 +376,10 @@ void scanFgs( void )
   #pragma GCC diagnostic pop
 #endif
 #ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 0; //signal done to saftlib
+   /*
+    * signal done to saftlib
+    */
+   g_shared.fg_busy = 0;
 #endif
    printFgs();
 }

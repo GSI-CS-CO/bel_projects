@@ -241,6 +241,14 @@ typedef struct PACKED_SIZE
     */
    FG_CHANNEL_BUFFER_T fg_buffer[MAX_FG_CHANNELS];
 
+#ifndef CONFIG_FW_VERSION_3
+   /*!
+    * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
+    * @see FunctionGeneratorFirmware::firmware_rescan in
+    *      saftlib/drivers/FunctionGeneratorFirmware.cpp
+    */
+   uint32_t           fg_busy;
+#endif
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    /*!
     * @brief MIL-DAQ ring-buffer administration indexes
@@ -252,7 +260,7 @@ typedef struct PACKED_SIZE
     * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
     */
    _MIL_DAQ_BUFFER_T   daq_buf;
- #ifdef CONFIG_USE_RESCAN_FLAG
+ #if defined( CONFIG_USE_RESCAN_FLAG ) && defined( CONFIG_FW_VERSION_3 )
    /*!
     * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
     * @see FunctionGeneratorFirmware::firmware_rescan in
