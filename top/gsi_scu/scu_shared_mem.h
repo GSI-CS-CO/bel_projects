@@ -279,6 +279,17 @@ typedef struct PACKED_SIZE
 #endif
 } SCU_SHARED_DATA_T;
 
+/*!
+ * @brief All member variables under this offset value are known in SAFTLIB.
+ * @note Don't move any of it!  
+ */
+#ifdef CONFIG_FW_VERSION_3
+   #define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_buffer ) +        \
+                              sizeof( FG_CHANNEL_BUFFER_T ) * MAX_FG_CHANNELS )
+#else
+   #define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_busy ) + sizeof( uint32_t ) )
+#endif
+
 
 #define GET_SCU_SHM_OFFSET( m ) offsetof( SCU_SHARED_DATA_T, m )
 
