@@ -1,7 +1,7 @@
 #ifndef _WR_UNIPZ_H_
 #define _WR_UNIPZ_H_
 
-#include <b2b-common.h>
+#include <common-defs.h>
 
 // !!!!!
 // experimental: let's try the same header and DP RAM layout for ALL B2B firmwares....
@@ -26,9 +26,10 @@
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
+#define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
 
 // numbers for UNIPZ
-#define WRUNIPZ_NEVT                    32    // # of events per virt acc
+#define WRUNIPZ_NEVT                    20    // # of events per virt acc
 #define WRUNIPZ_NVACC                   16    // # vAcc
 #define WRUNIPZ_NCHN                     2    // # of channels (each virtacc may have multiple channels, example: "verkuerzte" operation)
 #define WRUNIPZ_NPZ                      7    // # of Pulszentralen
@@ -47,9 +48,9 @@
 #define WRUNIPZ_STATUS_ORDERTIMESTAMP   25    // TS from TLU->ECA and MIL Events are out of order
                               
 // commands from the outside
-#define WRUNIPZ_CMD_CONFINIT            11    // init transaction of table data
+/*#define WRUNIPZ_CMD_CONFINIT            11    // init transaction of table data*/
 #define WRUNIPZ_CMD_CONFSUBMIT          12    // submit data written to DP RAM
-#define WRUNIPZ_CMD_CONFKILL            13    // this will kill an ongoing transaction
+/*#define WRUNIPZ_CMD_CONFKILL            13    // this will kill an ongoing transaction*/
 #define WRUNIPZ_CMD_CONFCLEAR           14    // this will clear all event tables
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
@@ -57,10 +58,11 @@
 #define WRUNIPZ_ECADO_UNKOWN             1    // unnkown activity requested (unexpected action by ECA)
 #define WRUNIPZ_ECADO_MIL                3    // a MIL event was received
 
-// data transaction
+/*// data transaction
 #define  WRUNIPZ_CONFSTAT_IDLE           0    // no transaction in progress
 #define  WRUNIPZ_CONFSTAT_INIT           1    // transaction of config data has been initialized
 #define  WRUNIPZ_CONFSTAT_SUBMIT         2    // config data for transaction has been submitted, waiting for commit event
+*/
 
 // event codes from Super PZ received via internal bus (bits 0..7)
 #define WRUNIPZ_EVT_PZ1                  1    // next cycle PZ 1
@@ -79,12 +81,14 @@
 #define WRUNIPZ_EVTDATA_SHORTCHOP      0x4    // bit 14 (bit 15 not set) - flag: execute virt acc with short chopper;
                                               // informative: not used by UNIPZ. UNIPZ implements 'short chopper' by using a different 'Kanal'
 #define WRUNIPZ_EVTDATA_SERVICE        0x8    // if bit 15 is set, a service event must be sent after all other events have been sent
+#define WRUNIPZ_EVTDATA_UNLOCKA4       0xc    // service event: send unlock command to A4
 #define WRUNIPZ_EVTDATA_PREPACCNOW     0xd    // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
 #define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
 
 // event codes for service events (sent by wr-unipz)
 #define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
+#define EVT_UNLOCK_ALVAREZ            0x15    // unlock A4 for next pulse 
 #define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
 
 
@@ -102,8 +106,8 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // ****************************************************************************************
 
 // sizes
-#define WRUNIPZ_NCONFDATA             (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NCHN)      // # of config data words for one virt acc
-#define WRUNIPZ_NCONFFLAG             (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NCHN)      // # of config flag words for one virt acc
+#define WRUNIPZ_NEVTDATA              (WRUNIPZ_NEVT  * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config data words
+#define WRUNIPZ_NEVTFLAG              (WRUNIPZ_NFLAG * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config flag words
 
 // offsets
 // simple values
@@ -121,23 +125,20 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
 
 // shared memory for submitting new 'event tables'                                      
-#define WRUNIPZ_SHARED_CONF_VACC      (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_)          // vAcc for config data
-#define WRUNIPZ_SHARED_CONF_STAT      (WRUNIPZ_SHARED_CONF_VACC  + _32b_SIZE_)          // status of config transaction
-// config PZ flag layout: least significant bit is PZ0; '1': PZ has new data uploaded
-#define WRUNIPZ_SHARED_CONF_PZ        (WRUNIPZ_SHARED_CONF_STAT  + _32b_SIZE_)
-// config data layout
+// event data layout
 // ==================
-// note: all config data is valid for the SAME virtual accelerator defined in WRUNIPZ_SHARED_CONF_VACC
-// (there are 32 words per virtual accelerator for each "Kanal"
-// [data0 of PZ0-chn0]..[data31 of PZ0-chan0][data0 of PZ0-chn1]..[data31 of PZ0-chn1][data0 of PZ1-chn0].....[data31 of PZ6-chn1] 
-#define WRUNIPZ_SHARED_CONF_DATA      (WRUNIPZ_SHARED_CONF_PZ    + _32b_SIZE_) 
+// start with 1st channel of PZ0 of vacc0, then 2nd channel of same PZ, then other PZs, then the same for the other vaccs 
+// [[[[data0 of PZ0-chn0-vacc0]..[data20 of PZ0-chan0-vacc0][data0 of PZ0-chn1-vacc0]..[data20] of PZ0-chn1-vacc0]]...PZ6]]]...vacc15]
+// data bits 0..15: event data; 16..31: time offset within cycle [us]
+#define WRUNIPZ_SHARED_EVT_DATA       (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_) 
 // config flag layout
 // ==================
 // (there are 4 words per virtual accelerator for each channel
-// [flag1 of PZ0-chn0]..[flag3 of PZ0-chn0][flag0 of PZ0-chn1]..[flag3 of PZ0-chn1][flag0 of PZ1-chn0].....[flag3 of PZ6-chn1] 
-#define WRUNIPZ_SHARED_CONF_FLAG      (WRUNIPZ_SHARED_CONF_DATA  + (WRUNIPZ_NCONFDATA << 2))  
+// [[[flags of PZ0-chn0-vacc0][flags of PZ0-chn1-vacc0]...PZ6]...vacc15]
+// flags[0] = 0x1: new data available; flags[1]: data is valid if bit is set; flags[2]: data is prep if bit is set; flags[3]: data is evt if bit is set 
+#define WRUNIPZ_SHARED_EVT_FLAGS      (WRUNIPZ_SHARED_EVT_DATA  + (WRUNIPZ_NEVTDATA << 2))  
 
 // diagnosis: end of used shared memory
-#define WRUNIPZ_SHARED_END            (WRUNIPZ_SHARED_CONF_FLAG  + (WRUNIPZ_NCONFFLAG << 2)) //
+#define WRUNIPZ_SHARED_END            (WRUNIPZ_SHARED_EVT_FLAGS  + (WRUNIPZ_NEVTFLAG << 2)) // end of shared memory
 
 #endif

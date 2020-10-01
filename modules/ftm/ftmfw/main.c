@@ -196,7 +196,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is Doomsday DM FW %s \n", cpuId, DM_VERSION);
+  mprintf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
 
   atomic_off();
 
@@ -232,21 +232,29 @@ void main(void) {
       if(*start) {
         for(i=0;i<_THR_QTY_;i++) {
           if (*start & (1<<i)) {
-            uint64_t* startTime = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2];
-            uint64_t* prepTime  = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME ) >> 2];
-            uint64_t* currTime  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_CURRTIME ) >> 2];
-            uint64_t* deadline  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE ) >> 2];
-            uint32_t* origin    = (uint32_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR ) >> 2];
-            uint32_t* cursor    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR ) >> 2];
-            uint32_t* msgcnt    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_MSG_CNT  ) >> 2];
+
+            uint8_t* thrData   = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2];
+            uint8_t* startData = (uint32_t*)&p[( SHCTL_THR_STA + i * _T_TD_SIZE_) >> 2];
+
+            uint64_t* startTime = (uint64_t*)&startData[T_TS_STARTTIME];
+            uint64_t* prepTime  = (uint64_t*)&startData[T_TS_PREPTIME];
+            uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
+            uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
+            uint32_t* origin    = (uint32_t*)&startData[T_TS_NODE_PTR];
+            uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
+            uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
 
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 
             if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
             else                *currTime = *startTime;
-            *deadline = *currTime;
 
             *cursor   = *origin;          // Set cursor to origin node
+            *deadline = *currTime;        // Set the deadline to first blockstart
+            //if first node is an event, correctly increment deadline by its offset
+            *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
+
+
             *running |= *start & (1<<i);  // copy this start bit to running bits
             *start   &= ~(1 << i);        // clear this start bit
             *msgcnt   = 0;                // clear msg counter

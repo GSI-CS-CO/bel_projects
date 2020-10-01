@@ -32,3 +32,16 @@ proc qmegawiz {files} {
   set_global_assignment -name QIP_FILE "$dir/$i.qip"
   }
 }
+
+proc qsys-generate {files} {
+  set dir [file dirname [info script]]
+  foreach i $files {
+    set sf [open "| qsys-generate -syn \"$dir/$i/$i.qsys\" 2>@file1" "r"]
+    while {[gets $sf line] >= 0} { post_message -type info "$line" }
+    if {[catch {close $sf} err]} {
+      post_message -type error "Executing qsys-generate: $err"
+      exit 1
+    }
+    set_global_assignment -name QSYS_FILE "$dir/$i/$i.qsys"
+  }
+}

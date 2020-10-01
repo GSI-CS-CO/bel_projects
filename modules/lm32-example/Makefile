@@ -10,9 +10,9 @@
 #   make TARGET=example
 #   ... will compile the more complex example program
 TARGET		?= miniExample
-#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
-#PLATFPATH       = ../../../syn/gsi_scu/control3
-PLATFPATH	= ../../syn/gsi_pexarria5/control
+#PLATFPATH       = ../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../syn/gsi_scu/control3
+#PLATFPATH	= ../../syn/gsi_pexarria5/control
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')

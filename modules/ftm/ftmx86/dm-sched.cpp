@@ -37,7 +37,6 @@ static void help(const char *program) {
 
 int main(int argc, char* argv[]) {
 
-  Graph g;
   char dirnameBuff[80];
 
   bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
@@ -115,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  CarpeDM cdm = CarpeDM();
+  CarpeDM cdm;
 
 
   if(verbose) cdm.verboseOn();
@@ -144,17 +143,22 @@ int main(int argc, char* argv[]) {
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
-      if (cmd == "dump")      { cdm.download(); std::cout << cdm.createDot(cdm.getDownGraph(), strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
+      if (cmd == "dump")      { cdm.download(); std::cout << cdm.downloadDot(strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "rawvisited"){ cdm.download(); cdm.showPaint(); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
+        /*
         cdm.download();
 
         std::string report;
         Graph gTmp0, gTmp1;
+
         bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
 
         cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
+        */
 
+        //FIXME no more use of type graph !!! find a wrapped solution without conflicting signatures for isSafeToRemove
+        bool isSafe = false;
         std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
         cmdValid = true;
       }

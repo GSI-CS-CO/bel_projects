@@ -1,0 +1,2521 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+  <title>datasheet for ref_fpll10</title>
+  <style type="text/css">
+body { font-family:arial ;}
+a { text-decoration:underline ; color:#003000 ;}
+a:hover { text-decoration:underline ; color:0030f0 ;}
+td { padding : 5px ;}
+table.topTitle { width:100% ;}
+table.topTitle td.l { text-align:left ; font-weight: bold ; font-size:30px ;}
+table.topTitle td.r { text-align:right ; font-weight: bold ; font-size:16px ;}
+table.blueBar { width : 100% ; border-spacing : 0px ;}
+table.blueBar td { background:#0036ff ; font-size:12px ; color : white ; text-align : left ; font-weight : bold ;}
+table.blueBar td.l { text-align : left ;}
+table.blueBar td.r { text-align : right ;}
+table.items { width:100% ; border-collapse:collapse ;}
+table.items td.label { font-weight:bold ; font-size:16px ; vertical-align:top ;}
+table.items td.mono { font-family:courier ; font-size:12px ; white-space:pre ;}
+div.label { font-weight:bold ; font-size:16px ; vertical-align:top ; text-align:center ;}
+table.grid { border-collapse:collapse ;}
+table.grid td { border:1px solid #bbb ; font-size:12px ;}
+body { font-family:arial ;}
+table.x { font-family:courier ; border-collapse:collapse ; padding:2px ;}
+table.x td { border:1px solid #bbb ;}
+td.tableTitle { font-weight:bold ; text-align:center ;}
+table.grid { border-collapse:collapse ;}
+table.grid td { border:1px solid #bbb ;}
+table.grid td.tableTitle { font-weight:bold ; text-align:center ;}
+table.mmap { border-collapse:collapse ; text-size:11px ; border:1px solid #d8d8d8 ;}
+table.mmap td { border-color:#d8d8d8 ; border-width:1px ; border-style:solid ;}
+table.mmap td.empty { border-style:none ; background-color:#f0f0f0 ;}
+table.mmap td.slavemodule { text-align:left ; font-size:11px ; border-style:solid solid none solid ;}
+table.mmap td.slavem { text-align:right ; font-size:9px ; font-style:italic ; border-style:none solid none solid ;}
+table.mmap td.slaveb { text-align:right ; font-size:9px ; font-style:italic ; border-style:none solid solid solid ;}
+table.mmap td.mastermodule { text-align:center ; font-size:11px ; border-style:solid solid none solid ;}
+table.mmap td.masterlr { text-align:center ; font-size:9px ; font-style:italic ; border-style:none solid solid solid ;}
+table.mmap td.masterl { text-align:center ; font-size:9px ; font-style:italic ; border-style:none none solid solid ;}
+table.mmap td.masterm { text-align:center ; font-size:9px ; font-style:italic ; border-style:none none solid none ;}
+table.mmap td.masterr { text-align:center ; font-size:9px ; font-style:italic ; border-style:none solid solid none ;}
+table.mmap td.addr { font-family:courier ; font-size:9px ; text-align:right ;}
+table.connectionboxes { border-collapse:separate ; border-spacing:0px ; font-family:arial ;}
+table.connectionboxes td.from { border-bottom:1px solid black ; font-size:9px ; font-style:italic ; vertical-align:bottom ; text-align:left ;}
+table.connectionboxes td.to { font-size:9px ; font-style:italic ; vertical-align:top ; text-align:right ;}
+table.connectionboxes td.lefthandwire { border-bottom:1px solid black ; font-size:9px ; font-style:italic ; vertical-align:bottom ; text-align:right ;}
+table.connectionboxes td.righthandwire { border-bottom:1px solid black ; font-size:9px ; font-style:italic ; vertical-align:bottom ; text-align:left ;}
+table.connectionboxes td.righthandlabel { font-size:11px ; vertical-align:bottom ; text-align:left ;}
+table.connectionboxes td.neighbor { padding:3px ; border:1px solid black ; font-size: 11px ; background:#e8e8e8 ; vertical-align:center ; text-align:center ;}
+table.connectionboxes td.main { padding:8px ; border:1px solid black ; font-size: 14px ; font-weight:bold ; background:#ffffff ; vertical-align:center ; text-align:center ;}
+.parametersbox { border:1px solid #d0d0d0 ; display:inline-block ; max-height:160px ; overflow:auto ; width:360px ; font-size:10px ;}
+.flowbox { display:inline-block ;}
+.parametersbox table { font-size:10px ;}
+td.parametername { font-style:italic ;}
+td.parametervalue { font-weight:bold ;}
+div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; border-top:1px solid #707070 ; border-bottom:1px solid #707070 ; padding:20px ; margin:20px ; width:auto ;}</style>
+ </head>
+ <body>
+  <table class="topTitle">
+   <tr>
+    <td class="l">ref_fpll10</td>
+    <td class="r">
+     <br/>
+     <br/>
+    </td>
+   </tr>
+  </table>
+  <table class="blueBar">
+   <tr>
+    <td class="l">2019.02.05.08:48:39</td>
+    <td class="r">Datasheet</td>
+   </tr>
+  </table>
+  <div style="width:100% ;  height:10px"> </div>
+  <div class="label">Overview</div>
+  <div class="greydiv">
+   <div style="display:inline-block ; text-align:left">
+    <table class="connectionboxes">
+     <tr style="height:6px">
+      <td></td>
+     </tr>
+    </table>
+   </div><span style="display:inline-block ; width:28px"> </span>
+   <div style="display:inline-block ; text-align:left"><span>
+     <br/></span>
+   </div>
+  </div>
+  <div style="width:100% ;  height:10px"> </div>
+  <div class="label">Memory Map</div>
+  <table class="mmap">
+   <tr>
+    <td class="empty" rowspan="2"></td>
+   </tr>
+  </table>
+  <a name="module_xcvr_fpll_a10_0"> </a>
+  <div>
+   <hr/>
+   <h2>xcvr_fpll_a10_0</h2>altera_xcvr_fpll_a10 v16.0
+   <br/>
+   <br/>
+   <br/>
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Parameters</h2>
+      <table>
+       <tr>
+        <td class="parametername">rcfg_emb_strm_enable_for_atx</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_debug</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_pll_reconfig</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_advanced_avmm_options</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_jtag_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_separate_avmm_busy</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_enable_avmm_busy_port</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">set_capability_reg_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">set_user_identifier</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">set_csr_soft_logic_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">dbg_embedded_debug_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">dbg_capability_reg_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">dbg_user_identifier</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">dbg_stat_soft_logic_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">dbg_ctrl_soft_logic_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_file_prefix</td>
+        <td class="parametervalue">altera_xcvr_fpll_a10</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_sv_file_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_h_file_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_txt_file_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_mif_file_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_multi_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">set_rcfg_emb_strm_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_emb_strm_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_reduced_files_enable</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_cnt</td>
+        <td class="parametervalue">2</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_select</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data0</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data1</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data2</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data3</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data4</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data5</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data6</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_profile_data7</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_params</td>
+        <td class="parametervalue">rcfg_debug,enable_pll_reconfig,rcfg_jtag_enable,rcfg_separate_avmm_busy,rcfg_enable_avmm_busy_port,set_capability_reg_enable,set_user_identifier,set_csr_soft_logic_enable,gui_pll_set_hssi_m_counter,gui_pll_set_hssi_n_counter,gui_pll_set_hssi_l_counter,gui_pll_set_hssi_k_counter,gui_hssi_prot_mode,gui_bw_sel,gui_refclk_cnt,gui_refclk_index,gui_enable_pld_cal_busy_port,gui_enable_hip_cal_done_port,gui_hip_cal_en,gui_pll_m_counter,gui_pll_n_counter,gui_fractional_x,gui_pll_c_counter_0,gui_pll_c_counter_1,gui_pll_c_counter_2,gui_pll_c_counter_3,enable_mcgb,mcgb_div,enable_hfreq_clk,enable_mcgb_pcie_clksw,mcgb_aux_clkin_cnt,enable_bonding_clks,enable_fb_comp_bonding,pma_width,enable_pld_mcgb_cal_busy_port</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_labels</td>
+        <td class="parametervalue">rcfg_debug,Enable dynamic reconfiguration,Enable Altera Debug Master Endpoint,Separate reconfig_waitrequest from the status of AVMM arbitration with PreSICE,Enable avmm_busy port,Enable capability registers,Set user-defined IP identifier,Enable control and status registers,Multiply factor (M-counter),Divide factor (N-counter),Divide factor (L-counter),Divide factor (K-counter),Protocol mode,Bandwidth,Number of PLL reference clocks,Selected reference clock source,enable_pld_fpll_cal_busy_port,Enable calibration status ports for HIP,Enable PCIe hard IP calibration,Multiply factor (M-counter),Divide factor (N-counter),Fractional factor (x),Divide factor (C-counter 0),Divide factor (C-counter 1),Divide factor (C-counter 2),Divide factor (C-counter 3),Include Master Clock Generation Block,Clock division factor,Enable x6/xN non-bonded high-speed clock output port,Enable PCIe clock switch interface,Number of auxiliary MCGB clock input ports.,Enable bonding clock output ports,Enable feedback compensation bonding,PMA interface width,enable_pld_mcgb_cal_busy_port</td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals0</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals1</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals2</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals3</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals4</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals5</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals6</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">rcfg_param_vals7</td>
+        <td class="parametervalue"></td>
+       </tr>
+       <tr>
+        <td class="parametername">system_info_device_family</td>
+        <td class="parametervalue">ARRIA10</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_silicon_rev</td>
+        <td class="parametervalue">20nm4</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_bandwidth_range_high</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_bandwidth_range_low</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_is_otn</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_is_sdi</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_bonding</td>
+        <td class="parametervalue">pll_bonding</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_0</td>
+        <td class="parametervalue">3861860000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_1</td>
+        <td class="parametervalue">4287223000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_2</td>
+        <td class="parametervalue">4688476000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_3</td>
+        <td class="parametervalue">5072700000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_4</td>
+        <td class="parametervalue">5423191000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_5</td>
+        <td class="parametervalue">5762211000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_6</td>
+        <td class="parametervalue">6075045000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_7</td>
+        <td class="parametervalue">6374148000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_8</td>
+        <td class="parametervalue">14025000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_pfd</td>
+        <td class="parametervalue">800000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_vco</td>
+        <td class="parametervalue">12500000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_0</td>
+        <td class="parametervalue">7000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_1</td>
+        <td class="parametervalue">3861860000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_2</td>
+        <td class="parametervalue">4287223000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_3</td>
+        <td class="parametervalue">4688476000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_4</td>
+        <td class="parametervalue">5072700000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_5</td>
+        <td class="parametervalue">5423191000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_6</td>
+        <td class="parametervalue">5762211000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_7</td>
+        <td class="parametervalue">6075045000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_8</td>
+        <td class="parametervalue">6374148000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_pfd</td>
+        <td class="parametervalue">29000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_vco</td>
+        <td class="parametervalue">6000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_feedback</td>
+        <td class="parametervalue">normal</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_fpll_cas_out_enable</td>
+        <td class="parametervalue">fpll_cas_out_disable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_fpll_hclk_out_enable</td>
+        <td class="parametervalue">fpll_hclk_out_disable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_fpll_iqtxrxclk_out_enable</td>
+        <td class="parametervalue">fpll_iqtxrxclk_out_enable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_l_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_m_counter</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_out_freq_hz</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_out_freq</td>
+        <td class="parametervalue">000000000000000000000000000000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_0</td>
+        <td class="parametervalue">pll_freq_band0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_1</td>
+        <td class="parametervalue">pll_freq_band0_1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_primary_use</td>
+        <td class="parametervalue">core</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_prot_mode</td>
+        <td class="parametervalue">basic_tx</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_reference_clock_frequency_scratch</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_side</td>
+        <td class="parametervalue">side_unknown</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_top_or_bottom</td>
+        <td class="parametervalue">tb_unknown</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_vco_freq_hz</td>
+        <td class="parametervalue">8000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_vco_freq</td>
+        <td class="parametervalue">000111011100110101100101000000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_bw_mode</td>
+        <td class="parametervalue">hi_bw</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_datarate</td>
+        <td class="parametervalue">0 Mbps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_device_variant</td>
+        <td class="parametervalue">device1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cal_status</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_calibration</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cmu_rstn_value</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lpf_rstn_value</td>
+        <td class="parametervalue">lpf_normal</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_ppm_clk0_src</td>
+        <td class="parametervalue">ppm_clk0_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_ppm_clk1_src</td>
+        <td class="parametervalue">ppm_clk1_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_rstn_override</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_op_mode</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_optimal</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_is_pa_core</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_power_mode</td>
+        <td class="parametervalue">low_power</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_power_rail_et</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_powerdown_mode</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pm_speed_grade</td>
+        <td class="parametervalue">e2</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_sup_mode</td>
+        <td class="parametervalue">user_mode</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c0_pllcout_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_min_tco_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_0_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c1_pllcout_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_min_tco_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_1_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c2_pllcout_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2</td>
+        <td class="parametervalue">10</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_min_tco_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_2_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c3_pllcout_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3</td>
+        <td class="parametervalue">100</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_min_tco_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_c_counter_3_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_cali_ref_off</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_cali_vco_off</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_vccdreg_fb</td>
+        <td class="parametervalue">vreg_fb5</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_vccdreg_fw</td>
+        <td class="parametervalue">vreg_fw5</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_vreg0_atbsel</td>
+        <td class="parametervalue">atb_disabled</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_core_vreg1_atbsel</td>
+        <td class="parametervalue">atb_disabled1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_atb</td>
+        <td class="parametervalue">atb_selectdisable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cmp_buf_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_fbclk_mux_1</td>
+        <td class="parametervalue">pll_fbclk_mux_1_fbclk_pll</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_fbclk_mux_2</td>
+        <td class="parametervalue">pll_fbclk_mux_2_fb_1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_iqclk_mux_sel</td>
+        <td class="parametervalue">iqtxrxclk0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cp_compensation</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cp_current_setting</td>
+        <td class="parametervalue">cp_current_setting25</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cp_testmode</td>
+        <td class="parametervalue">cp_normal</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cp_lf_3rd_pole_freq</td>
+        <td class="parametervalue">lf_3rd_pole_setting0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lf_cbig</td>
+        <td class="parametervalue">lf_cbig_setting4</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_cp_lf_order</td>
+        <td class="parametervalue">lf_2nd_order</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lf_resistance</td>
+        <td class="parametervalue">lf_res_setting1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lf_ripplecap</td>
+        <td class="parametervalue">lf_no_ripple</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph0_en</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph0_value</td>
+        <td class="parametervalue">pll_vco_ph0_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph1_en</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph1_value</td>
+        <td class="parametervalue">pll_vco_ph1_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph2_en</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph2_value</td>
+        <td class="parametervalue">pll_vco_ph2_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph3_en</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_ph3_value</td>
+        <td class="parametervalue">pll_vco_ph3_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_mode</td>
+        <td class="parametervalue">dsm_mode_integer</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_out_sel</td>
+        <td class="parametervalue">pll_dsm_disable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_ecn_bypass</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_ecn_test_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_fractional_division</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dsm_fractional_value_ready</td>
+        <td class="parametervalue">pll_k_ready</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_l_counter_bypass</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_l_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_l_counter_enable</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lock_fltr_cfg</td>
+        <td class="parametervalue">25</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_lock_fltr_test</td>
+        <td class="parametervalue">pll_lock_fltr_nrm</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_unlock_fltr_cfg</td>
+        <td class="parametervalue">2</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_min_tco_enable</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_m_counter_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_n_counter_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_n_counter_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_ref_buf_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_tclk_mux_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_tclk_sel</td>
+        <td class="parametervalue">pll_tclk_m_src</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_base_addr</td>
+        <td class="parametervalue">256</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_broadcast_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_clk_vreg_boost</td>
+        <td class="parametervalue">clk_fpll_vreg_no_voltage_boost</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_cvp_inter_sel</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_force_inter_sel</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_fpll_vreg_boost</td>
+        <td class="parametervalue">fpll_vreg_boost_1_step</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_fpll_vreg1_boost</td>
+        <td class="parametervalue">fpll_vreg1_boost_1_step</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_power_iso_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_dprio_status_select</td>
+        <td class="parametervalue">dprio_normal_status</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_extra_csr</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_nreset_invert</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_ctrl_override_setting</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_enable</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_self_reset</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_test_enable</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_ctrl_plniotri_override</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vccr_pd_en</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_bw_sel</td>
+        <td class="parametervalue">high</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_compensation_mode</td>
+        <td class="parametervalue">direct</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_duty_cycle_0</td>
+        <td class="parametervalue">50</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_duty_cycle_1</td>
+        <td class="parametervalue">50</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_duty_cycle_2</td>
+        <td class="parametervalue">50</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_duty_cycle_3</td>
+        <td class="parametervalue">50</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_hssi_output_clock_frequency</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_is_cascaded_pll</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_output_clock_frequency_0</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_output_clock_frequency_1</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_output_clock_frequency_2</td>
+        <td class="parametervalue">200.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_output_clock_frequency_3</td>
+        <td class="parametervalue">20.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_phase_shift_0</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_phase_shift_1</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_phase_shift_2</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_phase_shift_3</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_reference_clock_frequency</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_vco_frequency</td>
+        <td class="parametervalue">8000.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_cgb_div</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pma_width</td>
+        <td class="parametervalue">64</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c3_hz</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c1_hz</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c0_hz</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c2_hz</td>
+        <td class="parametervalue">0 hz</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c3</td>
+        <td class="parametervalue">000000000001001100010010110100000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c1</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c0</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_out_c2</td>
+        <td class="parametervalue">000000001011111010111100001000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_output_tolerance</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_min_band_9</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_initial_settings</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_band_9</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_analog_mode</td>
+        <td class="parametervalue">user_custom</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_min_fractional_percentage</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_max_fractional_percentage</td>
+        <td class="parametervalue">99</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_vco_fractional</td>
+        <td class="parametervalue">14025000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_input_tolerance</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_m_counter_c2</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_m_counter_c3</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_m_counter_c0</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_m_counter_c1</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pfd_freq</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_pfd_fractional</td>
+        <td class="parametervalue">800000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_0_fix_high</td>
+        <td class="parametervalue">pll_vco_freq_band_0_fix_high_0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_1_fix_high</td>
+        <td class="parametervalue">pll_vco_freq_band_1_fix_high_0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_cal_vco_count_length</td>
+        <td class="parametervalue">sel_8b_count</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_pfd_pulse_width</td>
+        <td class="parametervalue">pulse_width_setting0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_fpll_vco_div_by_2_sel</td>
+        <td class="parametervalue">bypass_divide_by_2</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_1_dyn_high_bits</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_set_fpll_input_freq_range</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_pfd_integer</td>
+        <td class="parametervalue">800000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_0_fix</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_pfd_bonded</td>
+        <td class="parametervalue">600000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_0_dyn_high_bits</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_1_fix</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_xpm_cpvco_fpll_xpm_chgpmplf_fpll_cp_current_boost</td>
+        <td class="parametervalue">normal_setting</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_fpll_refclk_source</td>
+        <td class="parametervalue">normal_refclk</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_fpll_cal_test_sel</td>
+        <td class="parametervalue">sel_cal_out_7_to_0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_0_dyn_low_bits</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_f_max_div_two_bypass</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_xpm_cmu_fpll_core_pfd_delay_compensation</td>
+        <td class="parametervalue">normal_delay</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_pll_vco_freq_band_1_dyn_low_bits</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_enable_idle_fpll_support</td>
+        <td class="parametervalue">idle_none</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clk_sel_override</td>
+        <td class="parametervalue">normal</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clk_sel_override_value</td>
+        <td class="parametervalue">select_clk0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_scratch0_src</td>
+        <td class="parametervalue">pll_clkin_0_scratch0_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_scratch1_src</td>
+        <td class="parametervalue">pll_clkin_0_scratch1_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_scratch2_src</td>
+        <td class="parametervalue">pll_clkin_0_scratch2_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_scratch3_src</td>
+        <td class="parametervalue">pll_clkin_0_scratch3_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_scratch4_src</td>
+        <td class="parametervalue">pll_clkin_0_scratch4_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_scratch0_src</td>
+        <td class="parametervalue">pll_clkin_1_scratch0_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_scratch1_src</td>
+        <td class="parametervalue">pll_clkin_1_scratch1_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_scratch2_src</td>
+        <td class="parametervalue">pll_clkin_1_scratch2_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_scratch3_src</td>
+        <td class="parametervalue">pll_clkin_1_scratch3_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_scratch4_src</td>
+        <td class="parametervalue">pll_clkin_1_scratch4_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_powerdown_mode</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_sup_mode</td>
+        <td class="parametervalue">user_mode</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_0_src</td>
+        <td class="parametervalue">pll_clkin_0_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clkin_1_src</td>
+        <td class="parametervalue">pll_clkin_1_src_vss</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_auto_clk_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clk_loss_edge</td>
+        <td class="parametervalue">pll_clk_loss_both_edges</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clk_loss_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_clk_sw_dly</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_manu_clk_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_pll_sw_refclk_src</td>
+        <td class="parametervalue">pll_sw_refclk_src_clk_0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_iqclk_sel</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch0_src</td>
+        <td class="parametervalue">scratch0_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch1_src</td>
+        <td class="parametervalue">scratch1_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch2_src</td>
+        <td class="parametervalue">scratch2_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch3_src</td>
+        <td class="parametervalue">scratch3_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch4_src</td>
+        <td class="parametervalue">scratch4_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_iqclk_sel</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch0_src</td>
+        <td class="parametervalue">scratch0_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch1_src</td>
+        <td class="parametervalue">scratch1_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch2_src</td>
+        <td class="parametervalue">scratch2_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch3_src</td>
+        <td class="parametervalue">scratch3_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch4_src</td>
+        <td class="parametervalue">scratch4_power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_silicon_rev</td>
+        <td class="parametervalue">20nm5es</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_refclk_select0</td>
+        <td class="parametervalue">lvpecl</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_refclk_select1</td>
+        <td class="parametervalue">ref_iqclk0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux0_inclk0_logical_to_physical_mapping</td>
+        <td class="parametervalue">lvpecl</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux0_inclk1_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux0_inclk2_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux0_inclk3_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux0_inclk4_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux1_inclk0_logical_to_physical_mapping</td>
+        <td class="parametervalue">lvpecl</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux1_inclk1_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux1_inclk2_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux1_inclk3_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_select_mux_mux1_inclk4_logical_to_physical_mapping</td>
+        <td class="parametervalue">power_down</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_set_hssi_m_counter</td>
+        <td class="parametervalue">8</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_set_hssi_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_set_hssi_l_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_set_hssi_k_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">device_family</td>
+        <td class="parametervalue">Arria 10</td>
+       </tr>
+       <tr>
+        <td class="parametername">device</td>
+        <td class="parametervalue">10AX066H2F34I2SG</td>
+       </tr>
+       <tr>
+        <td class="parametername">base_device</td>
+        <td class="parametervalue">NIGHTFURY4</td>
+       </tr>
+       <tr>
+        <td class="parametername">device_revision</td>
+        <td class="parametervalue">20nm4</td>
+       </tr>
+       <tr>
+        <td class="parametername">device_speed_grade</td>
+        <td class="parametervalue">i2</td>
+       </tr>
+       <tr>
+        <td class="parametername">numeric_speed_grade</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_fpll_mode</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">primary_use</td>
+        <td class="parametervalue">core</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_hssi_prot_mode</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">prot_mode</td>
+        <td class="parametervalue">basic_tx</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_refclk_switch</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_refclk1_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_switchover_mode</td>
+        <td class="parametervalue">Automatic Switchover</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_switchover_delay</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_active_clk</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_clk_bad</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_extswitch</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_advanced_options</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_hip_options</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">generate_docs</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">generate_add_hdl_instance_example</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_bw_sel</td>
+        <td class="parametervalue">high</td>
+       </tr>
+       <tr>
+        <td class="parametername">temp_bw_sel</td>
+        <td class="parametervalue">high</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_cp_lf_3rd_pole_freq</td>
+        <td class="parametervalue">lf_3rd_pole_setting0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_self_reset_enabled</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">silicon_rev</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_silicon_rev</td>
+        <td class="parametervalue">20nm5es</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_reference_clock_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_refclk_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_actual_refclk_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_actual_refclk_frequency</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">reference_clock_frequency</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_operation_mode</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">compensation_mode</td>
+        <td class="parametervalue">direct</td>
+       </tr>
+       <tr>
+        <td class="parametername">feedback</td>
+        <td class="parametervalue">normal</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_iqtxrxclk_mode</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_iqtxrxclk_outclk_index</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_refclk_cnt</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_refclk_index</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_fractional</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_manual_hssi_counters</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_cascade_in</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_analog_resets</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_pld_cal_busy_port</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_hip_cal_done_port</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_hip_cal_en</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hip_cal_en</td>
+        <td class="parametervalue">disable</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_cascade_out</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_cascade_outclk_index</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_dps</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_manual_config</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_hssi_calc_output_clock_frequency</td>
+        <td class="parametervalue">1250.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_hssi_output_clock_frequency</td>
+        <td class="parametervalue">1250.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_output_clock_frequency</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_datarate</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_datarate</td>
+        <td class="parametervalue">0 Mbps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_m_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_fractional_x</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_dsm_fractional_division</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_fractional_f</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_c_counter_0</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_c_counter_1</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_c_counter_2</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pll_c_counter_3</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_number_of_output_clocks</td>
+        <td class="parametervalue">4</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_enable_phase_alignment</td>
+        <td class="parametervalue">true</td>
+       </tr>
+       <tr>
+        <td class="parametername">phase_alignment_check_var</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_pfd_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_vco_frequency_basic</td>
+        <td class="parametervalue">8000.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_vco_frequency_adv</td>
+        <td class="parametervalue">300.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_vco_frequency</td>
+        <td class="parametervalue">300.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_vco_frequency</td>
+        <td class="parametervalue">300.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">vco_frequency</td>
+        <td class="parametervalue">8000.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_pfd_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pfd_frequency</td>
+        <td class="parametervalue">300.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_pfd_frequency</td>
+        <td class="parametervalue">300.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">pfd_frequency</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_outclk0_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_actual_outclk0_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_actual_outclk0_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">output_clock_frequency_0</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk0_phase_shift_unit</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk0_desired_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk0_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk0_actual_phase_shift_deg</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_outclk0_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">phase_shift_0</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_outclk1_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_actual_outclk1_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_actual_outclk1_frequency</td>
+        <td class="parametervalue">125.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">output_clock_frequency_1</td>
+        <td class="parametervalue">125.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk1_phase_shift_unit</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk1_desired_phase_shift</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk1_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk1_actual_phase_shift_deg</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_outclk1_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">phase_shift_1</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_outclk2_frequency</td>
+        <td class="parametervalue">200.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_actual_outclk2_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_actual_outclk2_frequency</td>
+        <td class="parametervalue">200.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">output_clock_frequency_2</td>
+        <td class="parametervalue">200.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk2_phase_shift_unit</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk2_desired_phase_shift</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk2_actual_phase_shift</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk2_actual_phase_shift_deg</td>
+        <td class="parametervalue">0 deg</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_outclk2_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">phase_shift_2</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_outclk3_frequency</td>
+        <td class="parametervalue">20.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_actual_outclk3_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_actual_outclk3_frequency</td>
+        <td class="parametervalue">20.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">output_clock_frequency_3</td>
+        <td class="parametervalue">20.0 MHz</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk3_phase_shift_unit</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk3_desired_phase_shift</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk3_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_outclk3_actual_phase_shift_deg</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">full_outclk3_actual_phase_shift</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">phase_shift_3</td>
+        <td class="parametervalue">0.0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_desired_hssi_cascade_frequency</td>
+        <td class="parametervalue">100.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">refclk_select0</td>
+        <td class="parametervalue">lvpecl</td>
+       </tr>
+       <tr>
+        <td class="parametername">refclk_select1</td>
+        <td class="parametervalue">ref_iqclk0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_0_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_1_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2</td>
+        <td class="parametervalue">10</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_2_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3</td>
+        <td class="parametervalue">100</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_c_counter_3_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_l_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_l_counter_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_l_counter_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_l_counter_bypass</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_l_counter_enable</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pcie_c_counter_0_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_c_counter_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_m_counter_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_0_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1</td>
+        <td class="parametervalue">16</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_1_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2</td>
+        <td class="parametervalue">10</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_2_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3</td>
+        <td class="parametervalue">100</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3_in_src</td>
+        <td class="parametervalue">m_cnt_in_src_ph_mux_clk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3_ph_mux_prst</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3_prst</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3_coarse_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_c_counter_3_fine_dly</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_iqclk_mux_sel</td>
+        <td class="parametervalue">iqtxrxclk0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_l_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_actual_using_fractional</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_actual_using_fractional</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_actual_using_fractional</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_actual_using_fractional</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_dsm_fractional_division</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_dsm_fractional_division</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_dsm_fractional_division</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_dsm_fractional_division</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_dsm_mode</td>
+        <td class="parametervalue">dsm_mode_integer</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_dsm_out_sel</td>
+        <td class="parametervalue">pll_dsm_disable</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_m_counter</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_m_counter</td>
+        <td class="parametervalue">11</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_m_counter</td>
+        <td class="parametervalue">11</td>
+       </tr>
+       <tr>
+        <td class="parametername">core_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_cascade_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_m_counter</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_n_counter</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">refclk_freq_bitvec</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">vco_freq_bitvec</td>
+        <td class="parametervalue">000111011100110101100101000000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">pfd_freq_bitvec</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">output_freq_bitvec</td>
+        <td class="parametervalue">000000000000000000000000000000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">f_out_c0_bitvec</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">f_out_c1_bitvec</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">f_out_c2_bitvec</td>
+        <td class="parametervalue">000000001011111010111100001000000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">f_out_c3_bitvec</td>
+        <td class="parametervalue">000000000001001100010010110100000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">l_counter_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">n_counter_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">m_counter_bitvec</td>
+        <td class="parametervalue">32</td>
+       </tr>
+       <tr>
+        <td class="parametername">c_counter0_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">c_counter1_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">c_counter2_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">c_counter3_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pma_width_bitvec</td>
+        <td class="parametervalue">64</td>
+       </tr>
+       <tr>
+        <td class="parametername">cgb_div_bitvec</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_auto_clk_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_clk_loss_edge</td>
+        <td class="parametervalue">pll_clk_loss_both_edges</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_clk_loss_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_clk_sw_dly</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_manu_clk_sw_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">pll_sw_refclk_src</td>
+        <td class="parametervalue">pll_sw_refclk_src_clk_0</td>
+       </tr>
+       <tr>
+        <td class="parametername">set_altera_xcvr_fpll_a10_calibration_en</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">calibration_en</td>
+        <td class="parametervalue">enable</td>
+       </tr>
+       <tr>
+        <td class="parametername">support_mode</td>
+        <td class="parametervalue">user_mode</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_ext_lockdetect_ports</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_reconfig_en</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_dps_en</td>
+        <td class="parametervalue">false</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_calibration_en</td>
+        <td class="parametervalue">enable</td>
+       </tr>
+       <tr>
+        <td class="parametername">cmu_fpll_refclk_freq</td>
+        <td class="parametervalue">000000000111011100110101100101000000</td>
+       </tr>
+       <tr>
+        <td class="parametername">fpll_refclk_select</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_mcgb</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_div</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_div_fnl</td>
+        <td class="parametervalue">1</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_hfreq_clk</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_mcgb_pcie_clksw</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_aux_clkin_cnt</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_in_clk_freq</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_out_datarate</td>
+        <td class="parametervalue">0.0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_bonding_clks</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_fb_comp_bonding</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mcgb_enable_iqtxrxclk</td>
+        <td class="parametervalue">disable_iqtxrxclk</td>
+       </tr>
+       <tr>
+        <td class="parametername">pma_width</td>
+        <td class="parametervalue">64</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_mcgb_debug_ports_parameters</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">enable_pld_mcgb_cal_busy_port</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">check_output_ports_mcgb</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">is_protocol_PCIe</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">mapped_output_clock_frequency</td>
+        <td class="parametervalue">0 ps</td>
+       </tr>
+       <tr>
+        <td class="parametername">mapped_primary_pll_buffer</td>
+        <td class="parametervalue">N/A</td>
+       </tr>
+       <tr>
+        <td class="parametername">mapped_hip_cal_done_port</td>
+        <td class="parametervalue">0</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_prot_mode</td>
+        <td class="parametervalue">basic_tx</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_silicon_rev</td>
+        <td class="parametervalue">20nm4</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_x1_div_m_sel</td>
+        <td class="parametervalue">divbypass</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_cgb_enable_iqtxrxclk</td>
+        <td class="parametervalue">disable_iqtxrxclk</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_ser_mode</td>
+        <td class="parametervalue">sixty_four_bit</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_datarate</td>
+        <td class="parametervalue">0 bps</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_cgb_power_down</td>
+        <td class="parametervalue">normal_cgb</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_observe_cgb_clocks</td>
+        <td class="parametervalue">observe_nothing</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_op_mode</td>
+        <td class="parametervalue">enabled</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_tx_ucontrol_reset_pcie</td>
+        <td class="parametervalue">pcscorehip_controls_mcgb</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_vccdreg_output</td>
+        <td class="parametervalue">vccdreg_nominal</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_input_select</td>
+        <td class="parametervalue">lcpll_top</td>
+       </tr>
+       <tr>
+        <td class="parametername">hssi_pma_cgb_master_input_select_gen3</td>
+        <td class="parametervalue">unused</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_parameter_list</td>
+        <td class="parametervalue">C-counter-0,C-counter-1,C-counter-2,C-counter-3,L-counter,M-counter,N-counter,VCO Frequency,pll_dsm_fractional_division</td>
+       </tr>
+       <tr>
+        <td class="parametername">gui_parameter_values</td>
+        <td class="parametervalue">16,16,10,100,1,32,1,8000.0 MHz,1</td>
+       </tr>
+       <tr>
+        <td class="parametername">deviceFamily</td>
+        <td class="parametervalue">UNKNOWN</td>
+       </tr>
+       <tr>
+        <td class="parametername">generateLegacySim</td>
+        <td class="parametervalue">false</td>
+       </tr>
+      </table>
+     </td>
+    </tr>
+   </table>&#160;&#160;
+   <table class="flowbox">
+    <tr>
+     <td class="parametersbox">
+      <h2>Software Assignments</h2>(none)</td>
+    </tr>
+   </table>
+  </div>
+  <table class="blueBar">
+   <tr>
+    <td class="l">generation took 0.01 seconds</td>
+    <td class="r">rendering took 0.13 seconds</td>
+   </tr>
+  </table>
+ </body>
+</html>

@@ -9,10 +9,10 @@ ENTITY atr_comp_ctrl IS
 		(
 		Base_addr:	INTEGER := 16#0610#
 		);
-		
+
 	port(
 		Adr_from_SCUB_LA:		in  std_logic_vector(15 downto 0);	-- latched address from SCU_Bus
-		Data_from_SCUB_LA:	in  std_logic_vector(15 downto 0);	-- latched data from SCU_Bus 
+		Data_from_SCUB_LA:	in  std_logic_vector(15 downto 0);	-- latched data from SCU_Bus
 		Ext_Adr_Val:			  in  std_logic;								      -- '1' => "ADR_from_SCUB_LA" is valid
 		Ext_Rd_active:			in  std_logic;								      -- '1' => Rd-Cycle is active
 		Ext_Rd_fin:				  in  std_logic;								      -- marks end of read cycle, active one for one clock period of sys_clk
@@ -30,10 +30,10 @@ ENTITY atr_comp_ctrl IS
 		Reg_rd_active:		  out	std_logic;								      -- read data available at 'Data_to_SCUB'-INL_Out
 		Data_to_SCUB:		    out	std_logic_vector(15 downto 0);	-- connect read sources to SCUB-Macro
 		Dtack_to_SCUB:		  out	std_logic								        -- connect Dtack to SCUB-Macro
-		);	
+		);
 	end atr_comp_ctrl;
 
-	
+
 
 ARCHITECTURE Arch_atr_comp_ctrl OF atr_comp_ctrl IS
 
@@ -87,10 +87,10 @@ signal		S_Read_Port:		      std_logic_vector(Data_to_SCUB'range);
 
 
 TYPE      t_Word_Array          is array (0 to 7) of std_logic_vector(15 downto 0);
-signal		ATR_comp_cnt:         t_Word_Array;   -- Counter für Pulsbreite  
+signal		ATR_comp_cnt:         t_Word_Array;   -- Counter für Pulsbreite
 
-signal		ATR_cnt_puls:         std_logic;  
-signal		ATR_counter:          std_logic_vector(15 downto 0);  
+signal		ATR_cnt_puls:         std_logic;
+signal		ATR_counter:          std_logic_vector(15 downto 0);
 
 
 
@@ -114,7 +114,7 @@ END COMPONENT atr_cnt_n;
 
 begin
 
-  
+
 ATR_Cnt:  for I in 0 to 7 generate
     Cnt_I:  atr_cnt_n
           port map(clk                  => clk,                   -- Sys-Clock
@@ -127,7 +127,7 @@ ATR_Cnt:  for I in 0 to 7 generate
                   ATR_cnt_err           => ATR_comp_cnt_error(i)); -- Counterstand größer 16Bit
           end generate ATR_Cnt;
 
-       
+
 
 P_Adr_Deco:	process (nReset, clk)
 	begin
@@ -143,7 +143,7 @@ P_Adr_Deco:	process (nReset, clk)
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-		
+
 		elsif rising_edge(clk) then
 			S_ATR_comp_cnt_1_Rd <= '0';
 			S_ATR_comp_cnt_2_Rd <= '0';
@@ -156,7 +156,7 @@ P_Adr_Deco:	process (nReset, clk)
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-			
+
 			if Ext_Adr_Val = '1' then
 
 				CASE unsigned(ADR_from_SCUB_LA) IS
@@ -209,15 +209,15 @@ P_Adr_Deco:	process (nReset, clk)
 							S_ATR_comp_cnt_7_Rd <= '1';
 							Reg_rd_active <= '1';
 						end if;
-						
+
 						when C_ATR_comp_cnt_8_Addr =>
 						if Ext_Rd_active = '1' then
 							S_Dtack <= '1';
 							S_ATR_comp_cnt_8_Rd <= '1';
 							Reg_rd_active <= '1';
 						end if;
-						
-					when others => 
+
+					when others =>
 
 						S_ATR_comp_cnt_1_Rd <= '0';
 						S_ATR_comp_cnt_2_Rd <= '0';
@@ -234,11 +234,11 @@ P_Adr_Deco:	process (nReset, clk)
 				end CASE;
 			end if;
 		end if;
-	
+
 	end process P_Adr_Deco;
 
 
-  
+
 
 P_read_mux:	process (	S_ATR_comp_cnt_1_Rd, S_ATR_comp_cnt_2_Rd,
                       S_ATR_comp_cnt_3_Rd, S_ATR_comp_cnt_4_Rd,
@@ -259,7 +259,7 @@ P_read_mux:	process (	S_ATR_comp_cnt_1_Rd, S_ATR_comp_cnt_2_Rd,
 		end if;
 	end process P_Read_mux;
 
-	
+
 Dtack_to_SCUB <= S_Dtack;
 Data_to_SCUB  <= S_Read_Port;
 

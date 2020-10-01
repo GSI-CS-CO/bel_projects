@@ -1,0 +1,13 @@
+digraph g {
+name="StaticCouplingA";
+edge  [type="defdst"]
+node  [cpu="0"];
+  A_FL    [type="flush",  toffs="0",      pattern="A", patentry="true", prio="1", qlo="1", tvalid="0", vabs="true"];
+  A_M     [type="tmsg",   toffs="500",    pattern="A", id="0x112c0ff000500800", par="0x0000140000000000"];
+  A_BLOCK [type="block",  tperiod="5000", pattern="A", patexit="true"];
+
+  A_FL -> A_M -> A_BLOCK -> A_FL [type="defdst"];
+
+
+
+}

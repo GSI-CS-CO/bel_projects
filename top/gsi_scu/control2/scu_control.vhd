@@ -309,7 +309,9 @@ begin
       g_lm32_ramsizes     => c_lm32_ramsizes/4,
       g_lm32_init_files   => c_initf,
       g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_wd_tmr         => true
+      g_en_wd_tmr         => true,
+      g_en_eca_tap        => true,
+      g_en_timer          => true
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -538,7 +540,7 @@ begin
 
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
-  -- hpla_clk <= 'Z';
+  hpla_clk <= '0';
 
   hpla_ch <= (others => 'Z');
 
@@ -569,5 +571,6 @@ begin
   nFPGA_Res_Out <= rstn_ref;
   nPWRBTN    <= '1'; -- never power off atom
   A_nCONFIG  <= '1'; -- altremote_update used instead
+  npci_pme   <= '1'; -- wake up pci system, not used
 
 end rtl;

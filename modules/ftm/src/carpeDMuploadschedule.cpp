@@ -14,7 +14,7 @@
 #include "common.h"
 #include "propwrite.h"
 #include "graph.h"
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "visitoruploadcrawler.h"
 #include "visitordownloadcrawler.h"
 #include "dotstr.h"
@@ -32,7 +32,7 @@ using namespace DotStr::Misc;
 
 
   //TODO CPU Load Balancer
-  vEbwrs CarpeDM::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
+  vEbwrs CarpeDM::CarpeDMimpl::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
     //sLog << "Starting Upload address & data vectors" << std::endl;
     vEbwrs ew;
     uint32_t adr, modAdrBase;
@@ -107,7 +107,7 @@ using namespace DotStr::Misc;
 
 
 
-  void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
+  void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v) {
     const std::string name = g[v].name + dnm::sDstListSuffix;
     hm.add(name);
 
@@ -119,7 +119,7 @@ using namespace DotStr::Misc;
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }
 
-  void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
+  void CarpeDM::CarpeDMimpl::generateQmeta(Graph& g, vertex_t v, int prio) {
     //std::cout << "generating " << g[v].name << ", patname " << g[v].patName << " prio " << (int)prio << std::endl;
 
     const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
@@ -149,7 +149,7 @@ using namespace DotStr::Misc;
 
   }
 
-  void CarpeDM::generateBlockMeta(Graph& g) {
+  void CarpeDM::CarpeDMimpl::generateBlockMeta(Graph& g) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
@@ -186,7 +186,7 @@ using namespace DotStr::Misc;
     }
   }
 
-  void CarpeDM::updateListDstStaging(vertex_t v) {
+  void CarpeDM::CarpeDMimpl::updateListDstStaging(vertex_t v) {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     Graph& g = gUp;
     AllocTable& at = atUp;
@@ -203,7 +203,7 @@ using namespace DotStr::Misc;
     }
   }
 
-  void CarpeDM::updateStaging(vertex_t v, edge_t e)  {
+  void CarpeDM::CarpeDMimpl::updateStaging(vertex_t v, edge_t e)  {
     // staging changes
     Graph& g = gUp;
     AllocTable& at = atUp;
@@ -227,7 +227,7 @@ using namespace DotStr::Misc;
   }
 
 
-  void CarpeDM::mergeUploadDuplicates(vertex_t borg, vertex_t victim) {
+  void CarpeDM::CarpeDMimpl::mergeUploadDuplicates(vertex_t borg, vertex_t victim) {
     Graph& g = gUp;
 
     // add all of nod 'victim's edges to node 'borg'. Resistance is futile.
@@ -254,7 +254,7 @@ using namespace DotStr::Misc;
     for (auto eRm : vEdges2remove) boost::remove_edge(eRm, g);
   }
 
-  void CarpeDM::prepareUpload() {
+  void CarpeDM::CarpeDMimpl::prepareUpload() {
 
     std::string cmp;
     uint32_t hash, flags;
@@ -350,7 +350,7 @@ using namespace DotStr::Misc;
   }
 
 
-  int CarpeDM::upload( uint8_t opType, std::vector<QueueReport>& vQr) {
+  int CarpeDM::CarpeDMimpl::upload( uint8_t opType, std::vector<QueueReport>& vQr) {
     updateModTime();
     //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
     std::set<uint8_t> moddedCpus;
@@ -417,7 +417,7 @@ using namespace DotStr::Misc;
     
   }
 
-  void CarpeDM::baseUploadOnDownload() {
+  void CarpeDM::CarpeDMimpl::baseUploadOnDownload() {
     //init up graph from down
     gUp.clear(); //Necessary?
     atUp.clear();
@@ -430,7 +430,7 @@ using namespace DotStr::Misc;
 
   }
 
-  void CarpeDM::addition(Graph& gTmp) {
+  void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
 
@@ -488,7 +488,7 @@ using namespace DotStr::Misc;
 
   }
 
-  void CarpeDM::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
+  void CarpeDM::CarpeDMimpl::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
 
     //recursively find all adjacent meta type vertices
     BOOST_FOREACH( vertex_t w, adjacent_vertices(v, g)) {
@@ -503,7 +503,7 @@ using namespace DotStr::Misc;
     }
   }
 
-  void CarpeDM::subtraction(Graph& gTmp) {
+  void CarpeDM::CarpeDMimpl::subtraction(Graph& gTmp) {
 
     vertex_map_t vertexMap;
     vertex_set_t toDelete;
@@ -581,7 +581,7 @@ using namespace DotStr::Misc;
   }
 
 
-  void CarpeDM::generateMgmtData() {
+  void CarpeDM::CarpeDMimpl::generateMgmtData() {
     std::string tmpStrBufGrp = gt.store();
     std::string tmpStrBufCov = ct.store();
     atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
@@ -596,7 +596,7 @@ using namespace DotStr::Misc;
     atUp.syncBmpsToPools();
   }
 
-  void CarpeDM::nullify() {
+  void CarpeDM::CarpeDMimpl::nullify() {
     gUp.clear();
     gDown.clear();
     atUp.clear();
@@ -606,7 +606,7 @@ using namespace DotStr::Misc;
     hm.clear();
   }
 
-  void CarpeDM::checkTablesForSubgraph(Graph& g) {
+  void CarpeDM::CarpeDMimpl::checkTablesForSubgraph(Graph& g) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable
       if (!hm.lookup(g[v].name)) {throw std::runtime_error("Node <" + g[v].name + "> was explicitly named for keep/remove, but is unknown to Hashtable!\n");}
@@ -621,7 +621,7 @@ using namespace DotStr::Misc;
   }
 
   //high level functions for external interface
-  int CarpeDM::add(Graph& g, bool force) {
+  int CarpeDM::CarpeDMimpl::add(Graph& g, bool force) {
 
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
@@ -631,7 +631,7 @@ using namespace DotStr::Misc;
     return upload(OP_TYPE_SCH_ADD);
   }
 
-  int CarpeDM::remove(Graph& g, bool force) {
+  int CarpeDM::CarpeDMimpl::remove(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
 
@@ -641,19 +641,20 @@ using namespace DotStr::Misc;
 
     std::string report;
     std::vector<QueueReport> vQr;
-    bool isSafe =  isSafeToRemove(g, report, vQr);
+    CovenantTable ctAdditions;
+    bool isSafe =  isSafeToRemove(g, report, vQr, ctAdditions);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-
+    addCovenants(ctAdditions);
     return upload(OP_TYPE_SCH_REMOVE, vQr);
   }
 
 
-  int CarpeDM::keep(Graph& g, bool force) {
+  int CarpeDM::CarpeDMimpl::keep(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
@@ -681,18 +682,19 @@ using namespace DotStr::Misc;
 
     std::string report;
     std::vector<QueueReport> vQr;
-    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr);
+    CovenantTable ctAdditions;
+    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr, ctAdditions);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-
+    addCovenants(ctAdditions);
     return upload(OP_TYPE_SCH_KEEP, vQr);
   }
 
-  int CarpeDM::clear_raw(bool force) {
+  int CarpeDM::CarpeDMimpl::clear_raw(bool force) {
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     // check if there are any threads still running first
     uint32_t activity = 0;
@@ -708,7 +710,7 @@ using namespace DotStr::Misc;
     return upload(OP_TYPE_SCH_CLEAR);
   }
 
-  int CarpeDM::overwrite(Graph& g, bool force) {
+  int CarpeDM::CarpeDMimpl::overwrite(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     nullify();
     addition(g);

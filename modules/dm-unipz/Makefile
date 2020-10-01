@@ -1,6 +1,7 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
+#   'make clean'                                                                        (!!! this is important !!!)
 #   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
 #   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
@@ -10,9 +11,9 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
-FW          ?= dmunipz-fw
-SW          ?= dmunipz-x86
-ASL         ?= dmunipz-asl
+FW          ?= fw
+SW          ?= x86
+ASL         ?= asl
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=

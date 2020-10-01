@@ -124,5 +124,6 @@ begin
   bus_slave_o.err   <= '0';
   bus_slave_o.stall <= r_cyc;
   bus_slave_o.dat   <= s_target;
+  bus_slave_o.rty   <= '0';
 
 end rtl;

@@ -1,6 +1,6 @@
 files = [
    "pci_control.vhd",
-   "pci_control.sdc",
+   "../../common/arria5.sdc",
    "ramsize_pkg.vhd",
 ]
 

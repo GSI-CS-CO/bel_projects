@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  CarpeDM cdm = CarpeDM();
+  CarpeDM cdm;
   try {
     cdm.connect(netaddress.c_str(), sim, true);
   } catch (std::runtime_error const& err) {

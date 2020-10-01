@@ -163,7 +163,7 @@ use work.dac714_pkg.all;
 --                                                                                                                  --
 --  Aenderung 1)                                                                                                    --
 --    Das Shift_Reg ist zu früh geschoben worden, deshalb ist das höchstwertige und niederwertigste Bit verloren    --
---    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                -- 
+--    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                --
 --                                                                                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ use work.dac714_pkg.all;
 --  Aenderung 1)                                                                                                    --
 --    Die Entity dac714 hat ein weiteres Output-Port (DAC_convert_o) bekommen. Es wird bei jeder DAC-Konversion     --
 --    fuer einen Takt aktiv Eins. Dabei spielt es keine Rolle ob die Konversion durch Software, den Funktions-      --
---    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
+--    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -204,7 +204,7 @@ entity dac714 is
   port
     (
     Adr_from_SCUB_LA:   in      std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
     Ext_Adr_Val:        in      std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in      std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in      std_logic;                      -- '1' => Wr-Cycle is active
@@ -220,6 +220,7 @@ entity dac714 is
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
+    dac_data_o:         out     std_logic_vector(15 downto 0);  -- latched value of the input data word for the dac714 converter
     ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
     DAC_convert_o:      out     std_logic;                      -- '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
@@ -251,27 +252,27 @@ architecture arch_dac714 OF dac714 IS
   signal    Rd_DAC_Cntrl:     std_logic;
 
   signal    FG_Strobe_dly:    std_logic;
-  
+
   signal    S_Dtack:          std_logic;
 
   TYPE      T_SPI_SM  IS (
               Idle,
-              Sel_On,   
-              Clk_Lo, 
+              Sel_On,
+              Clk_Lo,
               Clk_Hi,
               Sel_Off,
               Load,
               load_Wait,
               Load_End
-              );  
+              );
 
   signal    SPI_SM:           T_SPI_SM;
 
   signal    Bit_Cnt:          unsigned(4 DOWNTO 0);
 
-  signal    spi_clk:          std_logic;  
+  signal    spi_clk:          std_logic;
 
-  
+
   signal    build_edge:             std_logic_vector(2 downto 0);   -- shift_reg to detect external tirgger edge
   signal    Trig_DAC_with_old_data: std_logic;
   signal    Trig_DAC_during_shift:  std_logic;
@@ -280,7 +281,7 @@ architecture arch_dac714 OF dac714 IS
   signal    New_trm_during_trm_active: std_logic;
 
   signal    SPI_TRM:          std_logic;
-  
+
 ----------------- bits of control register ------------------------------------
   signal  nCLR_DAC_dly:       std_logic;
   signal  dac_conv_extern:    std_logic;    -- '1' => enable external convert dac strobe, its bit(2) of DAC control register
@@ -293,17 +294,17 @@ architecture arch_dac714 OF dac714 IS
   signal  nReset_sync:      std_logic_vector(1 downto 0); -- design assistant generates error msg, if the input nReset isn't sychronised
 
   signal  Trig_DAC_during_shift_err_cnt:    unsigned (7 downto 0);
-  signal  Trig_DAC_during_shift_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_during_shift_err_cnt 
+  signal  Trig_DAC_during_shift_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_during_shift_err_cnt
   signal  clr_shift_err_cnt:                std_logic;
   signal  rd_shift_err_cnt:                 std_logic;
-  
+
   signal  Trig_DAC_with_old_data_err_cnt:   unsigned (7 downto 0);
   signal  Trig_DAC_with_old_data_err_cnt_b: unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_with_old_data_err_cnt
   signal  clr_old_data_err_cnt:             std_logic;
   signal  rd_old_data_err_cnt:              std_logic;
-  
+
   signal  New_trm_during_trm_active_err_cnt:    unsigned (7 downto 0);
-  signal  New_trm_during_trm_active_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of New_trm_during_trm_active_err_cnt 
+  signal  New_trm_during_trm_active_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of New_trm_during_trm_active_err_cnt
   signal  clr_trm_during_trm_active_err_cnt:    std_logic;
   signal  rd_trm_during_trm_active_err_cnt:     std_logic;
   signal  Ext_Trig_wait:      std_logic;
@@ -321,10 +322,10 @@ spi_clk_gen:  div_n
     diag_on => 0
     )
   port map (
-    res     => clear_spi_clk,   -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
-                                --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
+    res     => clear_spi_clk,   -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the
+                                --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode.
     clk     => clk,             -- clk = clock
-    ena     => '1',             -- in, can be used for a reduction, signal should be generated from the same 
+    ena     => '1',             -- in, can be used for a reduction, signal should be generated from the same
                                 --     clock domain and should be only one clock period active.
     div_o   => spi_clk_ena      -- out, div_o becomes '1' for one clock period, if "div_n" arrive n-1 clocks
                                 --      (if ena is permanent '1').
@@ -349,7 +350,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
       S_Dtack                           <= '0';
 
     elsif rising_edge(clk) then
-    
+
       Wr_DAC_Cntrl                      <= '0';
       Rd_DAC_Cntrl                      <= '0';
       Wr_Shift_Reg                      <= '0';
@@ -362,7 +363,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
       rd_dac_data                       <= '0';
       rd_fw_version                     <= '0';
       S_Dtack                           <= '0';
-      
+
       Wr_Shift_Reg_dly <= Wr_Shift_Reg;
 
       if Ext_Adr_Val = '1' then
@@ -384,7 +385,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
               rd_fw_version <= '1';
               S_Dtack       <= '1';
             end if;
-            
+
           when rw_dac_data_addr =>
             if Ext_Wr_active = '1' and FG_mode = '0' then
               Wr_Shift_Reg  <= '1';
@@ -442,10 +443,10 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
       end if;
     end if;
   end process P_dac714_Adr_Deco;
-  
+
 ---------------------- generate reset ---------------------------------
 P_reset: process (clk)
-  
+
   begin
     if rising_edge(clk) then
 
@@ -473,9 +474,10 @@ begin
   end if;
 end process;
 
+dac_data_o <= std_logic_vector(dac_data);
 
 P_SPI_SM: process (clk, nReset_ff)
-  
+
   begin
     if nReset_ff = '0' then
       SPI_SM <= Idle;
@@ -488,15 +490,15 @@ P_SPI_SM: process (clk, nReset_ff)
       Shift_Reg <= (others => '0');
       New_trm_during_trm_active <= '0';
       ext_trig_valid <= '0';
-  
+
     elsif rising_edge(clk) then
-    
+
       FG_Strobe_dly <= FG_Strobe;
-      
+
       clear_spi_clk <= '0';
       New_trm_during_trm_active <= '0';
       ext_trig_valid <= '0';
-      
+
       if SPI_SM = Load_End then
         DAC_convert <= '1';    -- '1' when DAC convert driven by software, functiongenerator or external trigger
       else
@@ -532,7 +534,7 @@ P_SPI_SM: process (clk, nReset_ff)
       end if;
 
       if spi_clk_ena = '1' then
-      
+
         case SPI_SM IS
 
           when Idle =>
@@ -577,7 +579,7 @@ P_SPI_SM: process (clk, nReset_ff)
           when Load =>
             spi_clk <= '0';
             if dac_conv_extern = '0' then -- software driven so load directly
-              nLD_DAC <= '0';            
+              nLD_DAC <= '0';
               SPI_TRM <= '0';
               SPI_SM <= Load_End;
             else                          -- extenal driven load, so wait on Trig_DAC
@@ -619,17 +621,17 @@ P_Ext_Trig:   process (clk, nReset_ff)
       build_edge <= "000";
       Trig_DAC <= '0';
       wait_for_end_of_shift <= '0';
-    
+
     elsif rising_edge(clk) then
-    
+
       build_edge <= build_edge(build_edge'high-1 downto 0) & (dac_neg_edge_conv xor nExt_Trig_DAC);
-    
+
       Trig_DAC_with_old_data <= '0';
       Trig_DAC_during_shift <= '0';
-      
+
       if dac_conv_extern = '1' then
         -- shift_reg to detect external tirgger
-        if build_edge(build_edge'high) = '0' and build_edge(build_edge'high-1) = '1' then   
+        if build_edge(build_edge'high) = '0' and build_edge(build_edge'high-1) = '1' then
           -- external trigger (edge) detected
           if SPI_SM = Idle then
             -- external trigger during idle state, so no new DAC data available
@@ -648,7 +650,7 @@ P_Ext_Trig:   process (clk, nReset_ff)
             Trig_DAC <= '1';    -- the event from build_edge is only on clock active, so the event must be stored in Trig_DAC,
                                 -- because the state machine SPI_SM is only every spi_clk_ena active.
           elsif (SPI_SM = Load_End) then
-            Trig_DAC <= '0';    -- DAC load is finished, so clear the trigger event storage 
+            Trig_DAC <= '0';    -- DAC load is finished, so clear the trigger event storage
           end if;
         end if;
       else
@@ -675,7 +677,7 @@ P_DAC_Cntrl:  process (clk, nReset_ff)
       FG_mode <= '0';
 
     elsif rising_edge(clk) then
-    
+
       nCLR_DAC_dly <= nCLR_DAC;             -- nCLR_DAC_dly is used to detect the reason off activating nCLR_DAC.
                                             -- In the asynchronous path nCLR_DAC and nCLR_DAC_dly are set to '0'
                                             -- driven by wr_DAC_Cntrl you can detec an edge with both signals.
@@ -690,7 +692,7 @@ P_DAC_Cntrl:  process (clk, nReset_ff)
         FG_mode           <= Data_from_SCUB_LA(4);                  -- '1' => enable fuction generator mode
       else
         if nCLR_DAC = '0' then
-          if spi_clk_ena = '1' then 
+          if spi_clk_ena = '1' then
             if clr_cnt < 3 then
               clr_cnt := clr_cnt + 1;
             else
@@ -710,9 +712,9 @@ P_error_stat: process (clk, nReset_ff)
       Trig_DAC_during_shift_err_cnt <= to_unsigned(0, Trig_DAC_during_shift_err_cnt'length);
       Trig_DAC_with_old_data_err_cnt <= to_unsigned(0, Trig_DAC_with_old_data_err_cnt'length);
       New_trm_during_trm_active_err_cnt <= to_unsigned(0, New_trm_during_trm_active_err_cnt'length);
-    
+
     elsif rising_edge(clk) then
-    
+
       if clr_shift_err_cnt = '1' then
         Trig_DAC_during_shift_err_cnt <= to_unsigned(0, Trig_DAC_during_shift_err_cnt'length);
       elsif Trig_DAC_during_shift = '1' and (Trig_DAC_during_shift_err_cnt < (2**Trig_DAC_during_shift_err_cnt'length)-1) then
@@ -721,7 +723,7 @@ P_error_stat: process (clk, nReset_ff)
       if rd_shift_err_cnt = '0' then                  -- during rd_shift_err_cnt Trig_DAC_during_shift_err_cnt_b can't change
         Trig_DAC_during_shift_err_cnt_b <= Trig_DAC_during_shift_err_cnt;
       end if;
-    
+
       if clr_old_data_err_cnt = '1' then
         Trig_DAC_with_old_data_err_cnt <= to_unsigned(0, Trig_DAC_with_old_data_err_cnt'length);
       elsif Trig_DAC_with_old_data = '1' and (Trig_DAC_with_old_data_err_cnt < (2**Trig_DAC_with_old_data_err_cnt'length)-1) then
@@ -730,7 +732,7 @@ P_error_stat: process (clk, nReset_ff)
       if rd_old_data_err_cnt = '0' then               -- during rd_old_data_err_cnt Trig_DAC_with_old_data_err_cnt_b can't change
         Trig_DAC_with_old_data_err_cnt_b <= Trig_DAC_with_old_data_err_cnt;
       end if;
-      
+
       if clr_trm_during_trm_active_err_cnt = '1' then
         New_trm_during_trm_active_err_cnt <= to_unsigned(0, New_trm_during_trm_active_err_cnt'length);
       elsif New_trm_during_trm_active = '1' and (New_trm_during_trm_active_err_cnt < (2**New_trm_during_trm_active_err_cnt'length)-1) then
@@ -742,7 +744,7 @@ P_error_stat: process (clk, nReset_ff)
     end if;
   end process P_error_stat;
 
-  
+
 DAC_SI  <= Shift_Reg(Shift_Reg'high);
 
 P_Ext_Trig_wait: process (dac_conv_extern, SPI_SM)
@@ -760,7 +762,7 @@ nDAC_CLK <= not spi_clk;
 DAC_convert_o <= DAC_convert; -- '1' when DAC convert driven by software, functiongenerator or external trigger
 
 P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
-                     Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM, 
+                     Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM,
                      Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b,
                      rd_dac_data, dac_data, rd_fw_version)
   variable  sel_mux:  std_logic_vector(5 downto 0);
@@ -776,7 +778,7 @@ P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_s
       when others   => Rd_Port <= (others => '0');
     end case;
   end process P_read_mux;
-  
+
 Dtack <= S_Dtack;
 
 Rd_Activ <= rd_dac_data or rd_trm_during_trm_active_err_cnt or rd_old_data_err_cnt or rd_shift_err_cnt or Rd_DAC_Cntrl or rd_fw_version;

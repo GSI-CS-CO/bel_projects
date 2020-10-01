@@ -12,6 +12,8 @@
 #define WR_MIL_GW_CMD_RESET          0x2   // command to stop the LM32 for 1sec and go into initial state
 #define WR_MIL_GW_CMD_CONFIG_SIS     0x3   // command to configure the gateway for SIS operation
 #define WR_MIL_GW_CMD_CONFIG_ESR     0x4   // command to configure the gateway for ESR operation
+#define WR_MIL_GW_CMD_TEST           0x5   // command that does nothing. it is useful to initiate to see if the firmware cleans the command register (see if the firmware runs at all)
+#define WR_MIL_GW_CMD_UPDATE_OLED    0x6   // redraw content on OLED
 
 
 // Configuration register mapping in shared memory region
@@ -28,6 +30,11 @@
 #define WR_MIL_GW_REG_NUM_EVENTS_HI  0x28  // number of translated events from WR to MIL, high word
 #define WR_MIL_GW_REG_NUM_EVENTS_LO  0x2C  // number of translated events from WR to MIL, low word
 #define WR_MIL_GW_REG_LATE_EVENTS    0x30  // number of translated events that could not be delivered in time
+#define WR_MIL_GW_REG_LATE_HISTOGRAM 0x34  // dummy register to indicate position after the last valid register
+#define WR_MIL_GW_REG_MIL_HISTOGRAM  0x74  // dummy register to indicate position after the last valid register
+#define WR_MIL_GW_REG_MSI_SLOT       0x474 // MSI slot is stored here
+#define WR_MIL_GW_REG_SET_OP_READY   0x478 // Host writes 1 if OP-READY, 0 otherwise
+#define WR_MIL_GW_REG_REQUEST_FILL_EVT 0x47c // if this is written to 1, the gateway will send a fill event as soon as possible
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
@@ -42,5 +49,10 @@
 #define WR_MIL_GW_EVENT_SOURCE_UNKNOWN 0x0
 #define WR_MIL_GW_EVENT_SOURCE_SIS     0x1
 #define WR_MIL_GW_EVENT_SOURCE_ESR     0x2
+
+// Interrupts
+#define WR_MIL_GW_MSI_LATE_EVENT       0x1
+#define WR_MIL_GW_MSI_STATE_CHANGED    0x2
+#define WR_MIL_GW_MSI_EVENT            0x3 // ored with (mil_event_number << 8)
 
 #endif

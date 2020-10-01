@@ -43,15 +43,17 @@ void hexDump (const char *desc, vBuf vb) { hexDump(desc, (const char*)&vb[0], vb
 
 vBl leadingOne(size_t length) {vBl ret(length, false); *ret.begin() = true; return ret;}
 
-std::string fixArchiveVersion(const std::string& s) {
-    //hack to ensure correct boost textarchive version
-    //not nice, but I'm fed up to here with the crappy boost archive documentation
-    const std::string tag = "serialization::archive ";
-    const std::string myVer = "10"; // Boost Version 1.53 Archiver Version is 10
-    std::string sRet = s;
-    size_t pos = sRet.find(tag, 0) + tag.length();
-    sRet.replace(pos, myVer.length(), myVer);
-
-    return sRet;
-
+std::string nsTimeToDate(uint64_t t, bool noSpaces) {
+  char date[40];
+  uint64_t tAux = t / 1000000000ULL;
+  uint64_t tMod = t % 1000000000ULL;
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
+  std::string ret = std::string(date);
+  ret += " ";
+  ret += std::to_string(tMod);
+  ret += "ns\n";
+  if (noSpaces) std::replace( ret.begin(), ret.end(), ' ', '_');
+  return ret;
 }
+
+

@@ -108,7 +108,7 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
       fg_ver        = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
 
       ext_clk_reg = scub_adr[OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
-      if (ext_clk_reg & 0x1)
+      if (ext_clk_reg & 0x8)                                    //test for local clk running
         scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
 
       // if slave is a sio3, scan for ifa cards

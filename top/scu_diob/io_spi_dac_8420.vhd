@@ -27,10 +27,10 @@ ENTITY io_spi_dac_8420 IS
 			SPI_CLK_in_Hz:		INTEGER := 9000000;
 			Clr_Midscale:			INTEGER := 1
 		);
-		
+
 	port(
 		Adr_from_SCUB_LA:		in		std_logic_vector(15 downto 0);	-- latched address from SCU_Bus
-		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus 
+		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus
 		Ext_Adr_Val:			  in		std_logic;								      -- '1' => "ADR_from_SCUB_LA" is valid
 		Ext_Rd_active:		  in		std_logic;								      -- '1' => Rd-Cycle is active
 		Ext_Rd_fin:				  in		std_logic;								      -- marks end of read cycle, active one for one clock period of sys_clk
@@ -52,10 +52,10 @@ ENTITY io_spi_dac_8420 IS
 		Reg_rd_active:		  out	std_logic;								        -- read data available at 'Data_to_SCUB'-INL_Out
 		Data_to_SCUB:		    out	std_logic_vector(15 downto 0);	  -- connect read sources to SCUB-Macro
 		Dtack_to_SCUB:		  out	std_logic								          -- connect Dtack to SCUB-Macro
-		);	
+		);
 	end io_spi_dac_8420;
 
-	
+
 
 ARCHITECTURE Arch_io_spi_dac_8420 OF io_spi_dac_8420 IS
 
@@ -87,7 +87,7 @@ signal		s_DAC_IO:		      t_Dac_Data;                       -- Array für DAC-Sol
 signal		s_DAC_new_Data:		std_logic_vector(7 downto 0);     -- Array für die DAC-Update-Status
 signal		S_DAC_SPI_send:		std_logic_vector(7 downto 0);     -- Array, wenn die DAC-Daten gesendet wurden
 
-TYPE		  T_DAC_Data_SM	IS	(Idle, DAC_Load, DAC_1_4, DAC_5_8, DAC_wait_lo, DAC_wait_hi, DAC_End);	
+TYPE		  T_DAC_Data_SM	IS	(Idle, DAC_Load, DAC_1_4, DAC_5_8, DAC_wait_lo, DAC_wait_hi, DAC_End);
 SIGNAL		DAC_Data_SM			  : T_DAC_Data_SM;
 
 signal		S_ena_nCS_DAC1:	std_logic;
@@ -142,27 +142,27 @@ signal		S_Read_Port:		std_logic_vector(Data_to_SCUB'range);
 	SIGNAL		S_Wr_Shift_Reg		  : STD_LOGIC;
 	SIGNAL		S_Wr_DAC_Cntrl		  : STD_LOGIC;
 	SIGNAL		S_Rd_DAC_Cntrl		  : STD_LOGIC;
-	
-	TYPE		  T_SPI_SM	IS	(Idle, Sel_On, Clk_Lo, Clk_Hi, Sel_Off, Load, Load_End);	
+
+	TYPE		  T_SPI_SM	IS	(Idle, Sel_On, Clk_Lo, Clk_Hi, Sel_Off, Load, Load_End);
 
 	SIGNAL		SPI_SM			    : T_SPI_SM;
-      
+
 	SIGNAL		S_Bit_Cnt		    : STD_LOGIC_VECTOR(4 DOWNTO 0);
-      
+
 	SIGNAL		S_CS_DAC		    : STD_LOGIC;
-	SIGNAL		S_SPI_CLK		    : STD_LOGIC;	
+	SIGNAL		S_SPI_CLK		    : STD_LOGIC;
 	SIGNAL		S_nLD_DAC		    : STD_LOGIC;
 	SIGNAL		S_CLR_Midscale	: STD_LOGIC;
 	SIGNAL		S_nCLR_DAC		  : STD_LOGIC;
 	SIGNAL		S_t_nCLR_DAC	  : STD_LOGIC;
-	
+
 	CONSTANT	C_SPI_CLK_Ena_Cnt		    : INTEGER := CLK_in_Hz / SPI_CLK_in_Hz / 2;
 	CONSTANT	C_SPI_CLK_Ena_Cnt_width : INTEGER := How_many_Bits(C_SPI_CLK_Ena_Cnt);
 --	SIGNAL		S_SPI_CLK_Ena_Cnt		    : STD_LOGIC_VECTOR(C_SPI_CLK_Ena_Cnt_width DOWNTO 0) := unsigned(0, C_SPI_CLK_Ena_Cnt_width + 1); --conv_std_logic_vector
 
 	SIGNAL		S_SPI_CLK_Ena_Cnt		    : STD_LOGIC_VECTOR(C_SPI_CLK_Ena_Cnt_width DOWNTO 0) := STD_LOGIC_VECTOR(to_unsigned(0, C_SPI_CLK_Ena_Cnt_width + 1)); --conv_std_logic_vector
-  
-	SIGNAL		S_SPI_TRM	      : STD_LOGIC; 
+
+	SIGNAL		S_SPI_TRM	      : STD_LOGIC;
 
 
 ------------------------------------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ P_Adr_Deco:	process (nReset, clk)
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-		
+
 		elsif rising_edge(clk) then
 			S_DAC_IO_1_Rd <= '0';
 			S_DAC_IO_1_Wr <= '0';
@@ -217,7 +217,7 @@ P_Adr_Deco:	process (nReset, clk)
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-			
+
 			if Ext_Adr_Val = '1' then
 
 				CASE unsigned(ADR_from_SCUB_LA) IS
@@ -298,7 +298,7 @@ P_Adr_Deco:	process (nReset, clk)
 							S_DAC_IO_7_Rd <= '1';
 							Reg_rd_active <= '1';
 						end if;
-						
+
 						when C_DAC_IO_8_Addr =>
 						if Ext_Wr_active = '1' then
 							S_Dtack <= '1';
@@ -309,8 +309,8 @@ P_Adr_Deco:	process (nReset, clk)
 							S_DAC_IO_8_Rd <= '1';
 							Reg_rd_active <= '1';
 						end if;
-						
-					when others => 
+
+					when others =>
 
 						S_DAC_IO_1_Rd <= '0';
 						S_DAC_IO_1_Wr <= '0';
@@ -335,15 +335,22 @@ P_Adr_Deco:	process (nReset, clk)
 				end CASE;
 			end if;
 		end if;
-	
+
 	end process P_Adr_Deco;
 
-	
+
 P_DAC_IO:	process (nReset, clk)
 	begin
 		if nReset = '0' then
-			S_DAC_IO <= (others => (others => '0'));
-		
+    -- KK Default 2.5V um Fehlfunktion (Trigger auf Null Volt) zu unterdruecken
+		  S_DAC_IO(0) <=  "0000110000000000";
+		  S_DAC_IO(1) <=  "0000110000000000";
+		  S_DAC_IO(2) <=  "0000110000000000";
+		  S_DAC_IO(3) <=  "0000110000000000";
+		  S_DAC_IO(4) <=  "0000110000000000";
+		  S_DAC_IO(5) <=  "0000110000000000";
+		  S_DAC_IO(6) <=  "0000110000000000";
+		  S_DAC_IO(7) <=  "0000110000000000";
 		elsif rising_edge(clk) then
 			if S_DAC_IO_1_Wr = '1' then	S_DAC_IO(0) <= Data_from_SCUB_LA;
 			end if;
@@ -363,7 +370,7 @@ P_DAC_IO:	process (nReset, clk)
 			end if;
 	end if;
 	end process P_DAC_IO;
-	
+
 
 	P_read_mux:	process (S_DAC_IO_1_Rd, S_DAC_IO_2_Rd, S_DAC_IO_3_Rd, S_DAC_IO_4_Rd,
                        S_DAC_IO_5_Rd, S_DAC_IO_6_Rd, S_DAC_IO_7_Rd, S_DAC_IO_8_Rd, S_DAC_IO)
@@ -381,7 +388,7 @@ P_DAC_IO:	process (nReset, clk)
 		end if;
 	end process P_Read_mux;
 
-	
+
 Dtack_to_SCUB <= S_Dtack;
 
 Data_to_SCUB <= S_Read_Port;
@@ -417,9 +424,9 @@ P_DAC_Update_Sts:	PROCESS (clk, nReset, S_DAC_IO_1_Wr, S_DAC_SPI_send)
 		END IF;
 	END PROCESS P_DAC_Update_Sts;
 
-  
-    
-  
+
+
+
 P_Dac_Data_Loop:  process (clk, nReset, DAC_Data_SM)
 
     begin
@@ -430,64 +437,64 @@ P_Dac_Data_Loop:  process (clk, nReset, DAC_Data_SM)
         S_DAC_SPI_send	    <= (OTHERS => '0');   ----- Reset Daten gesendet
         S_ena_nCS_DAC1	    <= '0';
         S_ena_nCS_DAC2	    <= '0';
-  
+
     ELSIF rising_edge(clk) then
       case DAC_Data_SM is
-            
+
         when Idle   =>        S_Wr_Shift_Reg	    <= '0';               ----- Reset Start SPI
                               S_Shift_Data_Input  <= (OTHERS => '0');   ----- Reset SPI Daten
                               S_DAC_SPI_send	    <= (OTHERS => '0');   ----- Reset Daten gesendet
-      
+
                               if  (S_DAC_new_Data /= x"00")  then
                                   DAC_Data_SM   <= DAC_Load;
                               else
                                   DAC_Data_SM          <= Idle;
                               end if;
-                               
 
-        when DAC_Load    =>   if    S_DAC_new_Data(0)    = '1'  then --  
+
+        when DAC_Load    =>   if    S_DAC_new_Data(0)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('0'&'0'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(0)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(0)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_1_4;
-       
-                              elsif S_DAC_new_Data(1)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(1)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('0'&'1'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(1)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(1)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_1_4;
-       
-                              elsif S_DAC_new_Data(2)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(2)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('1'&'0'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(2)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(2)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_1_4;
-  
-                              elsif S_DAC_new_Data(3)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(3)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('1'&'1'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(3)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(3)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_1_4;
 
-                              elsif S_DAC_new_Data(4)    = '1'  then --  
+                              elsif S_DAC_new_Data(4)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('0'&'0'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(4)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(4)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_5_8;
-       
-                              elsif S_DAC_new_Data(5)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(5)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('0'&'1'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(5)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(5)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_5_8;
-       
-                              elsif S_DAC_new_Data(6)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(6)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('1'&'0'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(6)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(6)	  <= '1';                                        -- Reset Daten Send Flag
                                     DAC_Data_SM         <= DAC_5_8;
-       
-                              elsif S_DAC_new_Data(7)    = '1'  then --  
+
+                              elsif S_DAC_new_Data(7)    = '1'  then --
                                     S_Shift_Data_Input(15 downto 12) <= ('1'&'1'&'0'&'0');             -- [15..14]=DAC-Adresse, [13..12]=frei
                                     S_Shift_Data_Input(11 downto 0)  <= S_DAC_IO(7)(11 downto 0);      -- SPI Daten
                                     S_DAC_SPI_send(7)	  <= '1';                                        -- Reset Daten Send Flag
@@ -495,26 +502,26 @@ P_Dac_Data_Loop:  process (clk, nReset, DAC_Data_SM)
                               else
                                  DAC_Data_SM         <= Idle;
                               end if;
-                                    
+
 
         when DAC_1_4     =>   S_Wr_Shift_Reg	    <= '1';            ----- Set Start, S_Wr_Shift_Reg=1
                               S_ena_nCS_DAC1	    <= '1';            ----- Enable CS_DAC1
-                              DAC_Data_SM         <= DAC_wait_lo;   
-   
-   
+                              DAC_Data_SM         <= DAC_wait_lo;
+
+
         when DAC_5_8     =>   S_Wr_Shift_Reg	    <= '1';            ----- Set Start, S_Wr_Shift_Reg=1
                               S_ena_nCS_DAC2	    <= '1';            ----- Enable CS_DAC2
                               DAC_Data_SM         <= DAC_wait_lo;
 
 
         when DAC_wait_lo =>   S_Wr_Shift_Reg	    <= '0';            ----- Set Stop, S_Wr_Shift_Reg=0
-                              if (S_nLD_DAC = '1') then              ----- warte bis Ende der Übertragung, Load=0     
+                              if (S_nLD_DAC = '1') then              ----- warte bis Ende der Übertragung, Load=0
                                 DAC_Data_SM       <= DAC_wait_lo;
                               else
                                 DAC_Data_SM       <= DAC_wait_hi;
                               end if;
 
-        when DAC_wait_hi =>   if (S_nLD_DAC = '0') then              ----- warte bis Ende der Übertragung, Load=1      
+        when DAC_wait_hi =>   if (S_nLD_DAC = '0') then              ----- warte bis Ende der Übertragung, Load=1
                                 DAC_Data_SM       <= DAC_wait_hi;
                               else
                                   S_ena_nCS_DAC1	<= '0';            ----- Disable CS_DAC1
@@ -524,9 +531,9 @@ P_Dac_Data_Loop:  process (clk, nReset, DAC_Data_SM)
 
 
         when DAC_End     =>   DAC_Data_SM         <= Idle;
-                      
-              
-      
+
+
+
         when others =>        DAC_Data_SM         <= Idle;
 
       end case;
@@ -534,7 +541,7 @@ P_Dac_Data_Loop:  process (clk, nReset, DAC_Data_SM)
   end process P_Dac_Data_Loop;
 
 
-  
+
 
 ---------------------------- SPI ----------------------------
 
@@ -554,7 +561,7 @@ P_SPI_CLK_Ena:	PROCESS (clk, nReset)
 	END PROCESS P_SPI_CLK_Ena;
 
 P_SPI_SM:	PROCESS (clk, nReset, S_nCLR_DAC)
-	
+
 	BEGIN
 	    IF  nReset = '0' OR S_nCLR_DAC = '0' THEN
 			SPI_SM <= Idle;
@@ -563,15 +570,15 @@ P_SPI_SM:	PROCESS (clk, nReset, S_nCLR_DAC)
 			S_SPI_CLK <= '1';
 			S_nLD_DAC <= '1';
 			S_SPI_TRM <= '0';
-						
+
 	    ELSIF rising_edge(clk) THEN
-	
+
 			IF S_Wr_Shift_Reg = '1' THEN
 				S_SPI_TRM <= '1';
 			END IF;
-	
+
 			IF S_SPI_CLK_Ena_Cnt(S_SPI_CLK_Ena_Cnt'high) = '1' THEN
-			
+
 			 	CASE SPI_SM IS
 
 				   	WHEN Idle =>
@@ -595,7 +602,7 @@ P_SPI_SM:	PROCESS (clk, nReset, S_nCLR_DAC)
 							S_SPI_CLK <= '1';
 							SPI_SM <= Sel_Off;
 						END IF;
-						
+
 					WHEN CLK_Hi =>
 						S_SPI_CLK <= '1';
 						S_Bit_Cnt <= S_Bit_Cnt + 1;
@@ -613,9 +620,9 @@ P_SPI_SM:	PROCESS (clk, nReset, S_nCLR_DAC)
 						S_SPI_TRM <= '0';
 						S_nLD_DAC <= '0';
 						SPI_SM <= Idle;
-						
+
 			   	END CASE;
-			
+
 			END IF;
 
 	    END IF;
@@ -637,7 +644,7 @@ P_Shift_Reg:	PROCESS (clk, nReset)
 	END PROCESS P_Shift_Reg;
 
 
-  
+
 P_DAC_Cntrl:	PROCESS (clk, nReset)
 	BEGIN
 		IF  nReset          = '0' THEN
@@ -663,20 +670,20 @@ P_DAC_Cntrl:	PROCESS (clk, nReset)
 		END IF;
 	END PROCESS P_DAC_Cntrl;
 
-  
-  
-  
+
+
+
   nCS_DAC1	  <= not (S_CS_DAC and S_ena_nCS_DAC1);
   nCS_DAC2	  <= not (S_CS_DAC and S_ena_nCS_DAC2);
   SPI_DO	    <= S_Shift_Reg(16);
-  SPI_CLK	    <= S_SPI_CLK;	
+  SPI_CLK	    <= S_SPI_CLK;
   nLD_DAC	    <= S_nLD_DAC;
   CLR_Sel_DAC <= '1'; ------------------- DAC-Output = 0V, nach dem Reset (set int. Reg. = 0800Hex)
 --CLR_Sel_DAC <= S_CLR_Midscale;
   nCLR_DAC    <= S_nCLR_DAC;
 
-  
+
 	DAC_Status(7 downto 0)  <= S_DAC_new_Data(7 downto 0);	  -- Busy-Flag's
- 
+
 
 end Arch_io_spi_dac_8420;

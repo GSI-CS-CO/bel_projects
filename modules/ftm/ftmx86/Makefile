@@ -21,7 +21,7 @@ GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
 VERSION_FW     = 6.2.0
-VERSION_TOOL   = 0.32.0
+VERSION_TOOL   = 0.33.4
 
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
@@ -47,12 +47,12 @@ T_CC            = gcc
 T_CFLAGS        = -Wall -g -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST 
 
 LZMA_SRC_FILES  = LzmaEnc.c LzmaDec.c LzFind.c
-CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp
+CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDMimpl.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp
 
 T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FILES))
 T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
-EXECS           = dm-sched dm-cmd dm-test
+EXECS           = dm-sched dm-cmd 
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
@@ -64,7 +64,7 @@ tools: $(TOOLS)
 
 
 carpeDM.o: $(SRCPATH)/carpeDM.cpp
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@
 
 %.o: 	$(SRCPATH)/%.cpp
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
@@ -87,7 +87,7 @@ clean::
 
 .SECONDEXPANSION:
 $(TOOLS): $$@.cpp libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< $(T_LIBS) -L$(LIBPATH) -lcarpedm
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
 

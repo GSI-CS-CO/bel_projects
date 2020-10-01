@@ -14,22 +14,22 @@
 --
 -- Copyright (c) 2016 GSI / Anjan Suresh
 --
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
 --
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
 --
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
 -- from http://www.gnu.org/licenses/lgpl-2.1.html
--- 
+--
 --
 -------------------------------------------------------------------------------
 -- Revisions  :
@@ -119,7 +119,6 @@ begin
     slave_o.stall <= s_wb_stall;
     slave_o.dat	  <= s_wb_dat;
     slave_o.err	  <= '0';
-    slave_o.int	  <= '0';
     slave_o.rty	  <= '0';
     clr_o	  <= s_clr_o;
 
