@@ -12,12 +12,16 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # USE_SHARED_LIB := 1
 
+DEFINES += CONFIG_FW_VERSION_3
+
+
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 MIAN_MODULE := feedback-example.cpp
 
 ifndef USE_SHARED_LIB
  SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
+ SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
  SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
  SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
  SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
@@ -41,7 +45,7 @@ SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
 DEFINES += CONFIG_MIL_FG
-
+DEFINES += CONFIG_SCU_DAQ_INTEGRATION
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
 DEFINES += _DEFAULT_SOURCE
@@ -73,7 +77,8 @@ LIBS += etherbone
 
 
 # CALL_ARGS         = "tcp/scuxl0107"
-CALL_ARGS         = "tcp/scuxl0035"
+ CALL_ARGS         = "tcp/scuxl0212"
+# CALL_ARGS         = "tcp/scuxl0035"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 DEBUG = 1

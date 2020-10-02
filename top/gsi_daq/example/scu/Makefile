@@ -11,6 +11,7 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # USE_SHARED_LIB := 1
+DEFINES += CONFIG_FW_VERSION_3
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 

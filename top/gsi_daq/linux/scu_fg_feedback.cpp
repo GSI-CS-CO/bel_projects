@@ -28,9 +28,9 @@
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone )
-   :m_oAddacDaqAdmin( poEtherbone, false, false )
+   :m_oAddacDaqAdmin( this, poEtherbone )
 #ifdef CONFIG_MIL_FG
-   ,m_oMilDaqAdmin( m_oAddacDaqAdmin.getEbAccess() )
+   ,m_oMilDaqAdmin( this, m_oAddacDaqAdmin.getEbAccess() )
 #endif
 {
 }
@@ -38,9 +38,9 @@ FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* 
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess )
-   :m_oAddacDaqAdmin( poEbAccess, false, false )
+   :m_oAddacDaqAdmin( this, poEbAccess )
 #ifdef CONFIG_MIL_FG
-   ,m_oMilDaqAdmin( poEbAccess )
+  ,m_oMilDaqAdmin( this, poEbAccess )
 #endif
 {
 }

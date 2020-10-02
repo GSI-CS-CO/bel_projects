@@ -58,21 +58,77 @@ class FgFeedbackDevice
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Object type for the feedback administration of all types of
+ *        SCU function generators
+ */
 class FgFeedbackAdministration
 {
    using DAQ_POLL_T = std::vector<DaqBaseInterface*>;
+
    /*!
     * @brief List of function generators found by the LM32 application.
     */
    FgList m_oFoundFgs;
 
    /*!
+    * @brief Object type for ADDAC-DAQ administration
+    */
+   class AddacAdministration: public daq::DaqAdministration
+   {
+      FgFeedbackAdministration* m_pParent;
+   public:
+      AddacAdministration( FgFeedbackAdministration* pParent, DaqEb::EtherboneConnection* poEtherbone )
+        :daq::DaqAdministration( poEtherbone, false, false )
+        ,m_pParent( pParent )
+      {
+      }
+
+      AddacAdministration( FgFeedbackAdministration* pParent, daq::EbRamAccess* poEbAccess )
+        :daq::DaqAdministration( poEbAccess, false, false )
+        ,m_pParent( pParent )
+      {
+      }
+   };
+   /*!
     * @brief Object for ADDAC DAQ administration.
     */
-   daq::DaqAdministration     m_oAddacDaqAdmin;
+   AddacAdministration     m_oAddacDaqAdmin;
 
 #ifdef CONFIG_MIL_FG
-   MiLdaq::DaqAdministration  m_oMilDaqAdmin;
+   /*!
+    * @brief Object type for MIL-DAQ administration
+    */
+   class MilDaqAdministration: public MiLdaq::DaqAdministration
+   {
+      FgFeedbackAdministration* m_pParent;
+   public:
+      MilDaqAdministration( FgFeedbackAdministration* pParent, daq::EbRamAccess* poEbAccess )
+        :MiLdaq::DaqAdministration( poEbAccess )
+        ,m_pParent( pParent )
+      {
+      }
+      virtual ~MilDaqAdministration( void ) {}
+
+      void onUnregistered( RingItem* pUnknownItem )  override
+      {
+      }
+
+      RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
+      {
+         return 0;
+      }
+
+      void clearBuffer( bool update = true ) override
+      {
+
+      }
+   };
+
+   /*!
+    * @brief Object for MIL DAQ administration.
+    */
+   MilDaqAdministration  m_oMilDaqAdmin;
 #endif
 
    DAQ_POLL_T                 m_vPollList;
