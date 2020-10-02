@@ -11,7 +11,7 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += VERSION=0.9
 
-DEFINES += CONFIG_FW_VERSION_3
+ # DEFINES += CONFIG_FW_VERSION_3
 
 MIAN_MODULE := mdaqt.cpp
 

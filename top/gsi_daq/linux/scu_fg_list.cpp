@@ -58,6 +58,9 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
  */
 #ifdef CONFIG_FW_VERSION_3
   #define fg_busy fg_rescan_busy
+  #define _FG_VERSION_ 3
+#else
+  #define _FG_VERSION_ 4
 #endif
 
 void FgList::scan( Lm32Swi* poSwi )
@@ -74,10 +77,11 @@ void FgList::scan( Lm32Swi* poSwi )
                            offsetof( FG::SCU_SHARED_DATA_T, fg_version ) );
 
    m_lm32SoftwareVersion = gsi::convertByteEndian( tmpLm32SwVersion );
-   if( m_lm32SoftwareVersion != 3 )
+   if( m_lm32SoftwareVersion != _FG_VERSION_ )
    {
       std::string errorMessage =
-      "Expecting LM32 software major version 3 for now! But detected version is: ";
+      "Expecting LM32 software major version " TO_STRING(_FG_VERSION_)
+      " for now! But detected version is: ";
       errorMessage += std::to_string( m_lm32SoftwareVersion );
       errorMessage += "! Sorry!";
       throw Exception( errorMessage );
