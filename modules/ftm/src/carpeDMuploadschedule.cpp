@@ -271,13 +271,13 @@ using namespace DotStr::Misc;
         //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
         hash = gUp[v].hash;
         cpu  = s2u<uint8_t>(gUp[v].cpu);
-  
+
         //add flags for beam process and pattern entry and exit points
         flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS)
               | ((s2u<bool>(gUp[v].bpExit))   << NFLG_BP_EXIT_LM32_POS)
               | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
               | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
-  
+
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
           //sLog << "Adding " << name << std::endl;
@@ -287,17 +287,17 @@ using namespace DotStr::Misc;
           // getting here means alloc went okay
           it = atUp.lookupHash(hash);
         }
-  
+
         //TODO Find something better than stupic cast to ptr
         //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
         auto* x = (AllocMeta*)&(*it);
-  
-        
+
+
         // add timing node data objects to vertices
         if(gUp[v].np == nullptr) {
-  
+
           cmp = gUp[v].type;
-  
+
               // TODO most of this shit should be in constructor
                if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
                                               gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
@@ -320,7 +320,7 @@ using namespace DotStr::Misc;
         }
       //} catch (std::runtime_error const& err) {
       //  throw std::runtime_error( "Failed to create data object for node <" + name + ">. Cause: " + err.what());
-      //}  
+      //}
     }
 
     // Crawl vertices and serialise their data objects for upload
@@ -359,7 +359,7 @@ using namespace DotStr::Misc;
     generateMgmtData();
     ewChg = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
     deactivateOrphanedCommands(ewOrphans, vQr);
-  /*  
+  /*
     //Simulate orphan cleanup memory corruption bug
     const  int dummy = 14;
     ewOrphans.va.push_back(ewChg.va[dummy]);
@@ -383,28 +383,28 @@ using namespace DotStr::Misc;
         std::stringstream auxstream;
         uint32_t val = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[0]);
         auto idx = (iHit - ewChg.va.begin()) * 4;
-      
+
         ewChg.vb[idx+0] = 0xca;
         ewChg.vb[idx+1] = 0xfe;
         ewChg.vb[idx+2] = 0xba;
         ewChg.vb[idx+3] = 0xbe;
 
         uint8_t b1[4] = {ewChg.vb[idx+0], ewChg.vb[idx+1], ewChg.vb[idx+2], ewChg.vb[idx+3]};
- 
+
         uint32_t hitval = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b1[0]);
- 
+
         auxstream << " A 0x" << std::setfill('0') << std::setw(8) << std::hex << *adr << " D 0x" << std::setfill('0') << std::setw(8) << std::hex << val << " Destroys: 0x" << std::setfill('0') << std::setw(8) << std::hex << hitval << std::endl;
         sDebug += auxstream.str();
       }
       adri++;
-      dati+=4;  
+      dati+=4;
     }
     if (sDebug.size()  > 0) {
       sErr << "Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" << sDebug << std::endl;
       //throw std::runtime_error("Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" + sDebug);
-    
-    }  
-*/      
+
+    }
+*/
     ew = ewOrphans + ewChg; //order is critical !!!
 
     //Upload
@@ -412,7 +412,7 @@ using namespace DotStr::Misc;
     if(verbose) sLog << "Done." << std::endl;
     freshDownload = false;
     return ew.va.size();
-    
+
   }
 
   void CarpeDM::CarpeDMimpl::baseUploadOnDownload() {
@@ -440,7 +440,7 @@ using namespace DotStr::Misc;
       //add to hash dict
       hm.add(gTmp[w].name);
       amI x = atUp.lookupHashNoEx(gTmp[w].hash);
-      
+
       if (atUp.isOk(x)) {
         //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
         //Check the type: if it's undefined, node definition was implicit
@@ -513,22 +513,22 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       vertexMap[v] = v;
       //hvm.insert(hashVertexTuple(gUp[v].hash, v))
-    }  
+    }
 
 
     //TODO Test this approach to remove square complexity by lookup
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
       if (verbose) sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl;
-    
-      if (gTmp[w].type != DotStr::Misc::sUndefined) continue;
-    
+
+      if (gTmp[w].type == DotStr::Misc::sUndefined) continue;
+
       auto x = atUp.lookupHashNoEx(gTmp[w].hash);
       if (atUp.isOk(x)) {
         toDelete.insert(x->v);                   // add the node
         pushMetaNeighbours(x->v, gUp, toDelete); // add all of its meta children as well
       }
     }
-      
+
     //FIXME Square complexity, but unsure if inner loop can be replaced
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
@@ -619,7 +619,7 @@ using namespace DotStr::Misc;
   int CarpeDM::CarpeDMimpl::add(Graph& g, bool force) {
 
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
-    if(verbose) sLog << "Download binary as base for addition" << std::endl;  
+    if(verbose) sLog << "Download binary as base for addition" << std::endl;
     baseUploadOnDownload();
     if(verbose) sLog << "Add new subgraph" << std::endl;
     addition(g);
@@ -726,5 +726,3 @@ using namespace DotStr::Misc;
     return upload(OP_TYPE_SCH_OVERWRITE);
 
   }
-
-
