@@ -44,6 +44,7 @@ class Lm32Swi
    /*!
     * CAUTION: m__pMailBox is a foreign pointer and only valid within LM32 scope!
     *          It will use for address offset calculation only.
+    * @see scu_mailbox.h
     */
    gsi::MSI_BOX_T* m__pMailBox;
 

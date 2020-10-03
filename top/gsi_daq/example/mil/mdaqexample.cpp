@@ -95,6 +95,18 @@ public:
     * to a already registered data-compare object.
     */
    void onUnregistered( RingItem* pUnknownItem ) override;
+
+  //TODO move this in MiLdaq::DaqAdministration
+   RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
+   {
+      return 0;
+   }
+
+   //TODO move this in MiLdaq::DaqAdministration
+   void clearBuffer( bool update = true ) override
+   {  
+   }
+
 };
 
 /*-----------------------------------------------------------------------------
