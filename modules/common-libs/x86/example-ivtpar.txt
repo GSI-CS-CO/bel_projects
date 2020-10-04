@@ -1,0 +1,25 @@
+                           This is a  Menue
+                           ----------------
+       
+     parameter a      : $           parameter b  : $           
+     parameter b      : $           parameter c  : $  
+
+
+     this is a fantastic menue with parameters and options
+     the number of parameters is arbitrary (max 100)
+     the number of options is arbitrary too
+
+
+     parameter d                          : $              
+     parameter d                          : $              
+     parameter d                          : $              
+     parameter d                          : $              
+     parameter d                          : $              
+
+ [ &Selection A              ]       [ &Selection B               ]
+
+ [ &Selection C              ]       [ &Selection D               ]
+
+ [ &Selection E              ]       [ &Selection F, usually exit ]
+
+   
