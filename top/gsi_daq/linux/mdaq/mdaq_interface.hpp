@@ -130,33 +130,10 @@ private:
 
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
 
-protected:
-   FgList             m_oFgList;
-
 public:
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone );
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
-
-   void scan( void )
-   {
-      m_oFgList.scan( getEbAccess() );
-   }
-
-   void scan( Lm32Swi* poSwi )
-   {
-      m_oFgList.scan( poSwi );
-   }
-
-   void sync( void )
-   {
-      m_oFgList.sync( getEbAccess() );
-   }
-
-   uint getLm32SoftwareVersion( void ) const
-   {
-      return m_oFgList.getLm32SoftwareVersion();
-   }
 
    RING_INDEX_T getHeadRingIndex( void ) const
    {
@@ -174,25 +151,6 @@ public:
    }
 
    uint getBufferSize( void );
-
-   /*!
-    * @brief Returns true if function generator with
-    *        the given socket and given device number present.
-    * @note A scan of function generators before assumed!
-    */
-   bool isPresent( const uint socket, const uint device );
-
-   /*!
-    * @brief Returns true if the given socket number is used by a
-    *        function generator.
-    * @note A scan of function generators before assumed!
-    */
-   bool isSocketUsed( const uint socket );
-
-   FgList& getFgList( void )
-   {
-      return m_oFgList;
-   }
 
 protected:
    bool readRingPosition( void );

@@ -154,15 +154,9 @@ public:
    }
 
    /*!
-    * @brief Returns the number of list items respectively
-    *        number of found function-generators including
-    *        MIL and ADDAC.
+    * @brief Returns the major version number of the
+    *        LM32 firmware after a scan has been made.
     */
-   uint size( void ) const
-   {
-      return m_list.size();
-   }
-
    uint getLm32SoftwareVersion( void ) const
    {
       return m_lm32SoftwareVersion;
@@ -192,6 +186,42 @@ public:
     *        for communicating with LM32.
     */
    void sync( daq::EbRamAccess* pEbAccess );
+
+   /*!
+    * @brief Returns true if function generator with
+    *        the given socket and given device number present.
+    * @note A scan of function generators before assumed!
+    */
+   bool isPresent( const uint socket, const uint device );
+
+   /*!
+    * @brief Returns true if the given socket number is used by a
+    *        function generator.
+    * @note A scan of function generators before assumed!
+    */
+   bool isSocketUsed( const uint socket );
+
+
+   /*!
+    * @brief Returns the number of found MIL function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundMilFg( void );
+
+   /*!
+    * @brief Returns the number of ADDAC and/or ACO function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundNonMilFg( void );
+
+   /*!
+    * @brief Returns the total number of found function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundFg( void ) const
+   {
+      return m_list.size();
+   }
 };
 
 } // nemespace Scu

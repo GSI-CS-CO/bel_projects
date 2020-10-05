@@ -35,12 +35,23 @@
 #include <scu_fg_list.hpp>
 #include <daq_base_interface.hpp>
 
-using namespace Scu;
+namespace Scu
+{
 using namespace gsi;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 class FgFeedbackChannel
 {
+   class AddacFb;
+#ifdef CONFIG_MIL_FG
+   class MilFb;
+#endif
+
+   AddacFb* m_pAddac;
+#ifdef CONFIG_MIL_FG
+   MilFb*   m_pMil;
+#endif
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,8 +63,15 @@ class FgFeedbackBaseDevice: public DaqBaseDevice
 
 class FgFeedbackDevice
 {
+   daq::DaqDevice*    m_pAddacDevice;
+#ifdef CONFIG_MIL_FG
+   MiLdaq::DaqDevice* m_pMilDevice;
+#endif
 
-   ~FgFeedbackDevice( void ) {}
+public:
+   FgFeedbackDevice( const uint socket );
+   ~FgFeedbackDevice( void );
+   void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 };
 
 
@@ -135,6 +153,7 @@ class FgFeedbackAdministration
 
 protected:
    #define DEVICE_LIST_BASE std::list
+  // using DEVICE_LIST_BASE = std::list;
    using DEVICE_LIST_T = DEVICE_LIST_BASE<FgFeedbackDevice*>;
    DEVICE_LIST_T m_devicePtrList;
 
@@ -144,14 +163,37 @@ public:
    virtual ~FgFeedbackAdministration( void );
 
    /*!
+    * @brief Returns the SCU LAN domain name or the name of the wishbone
+    *        device.
+    */
+   const std::string getScuDomainName( void )
+   {
+      return m_oAddacDaqAdmin.getScuDomainName();
+   }
+
+   /*!
+    * @brief returns a pointer to an object of type daq::EbRamAccess
+    */
+   daq::EbRamAccess* getEbAccess( void )
+   {
+      return m_oAddacDaqAdmin.getEbAccess();
+   }
+
+   /*!
+    * @brief Returns the major version number of the
+    *        LM32 firmware after a scan has been made.
+    */
+   uint getLm32SoftwareVersion( void ) const
+   {
+      return m_oFoundFgs.getLm32SoftwareVersion();
+   }
+
+   /*!
     * @brief Scanning and synchronizing of the function-generator list found
     *        by the LM32 application.
     * @note This function performances a re-scan by the LM32!
     */
-   void scan( void )
-   {
-      m_oFoundFgs.scan( m_oAddacDaqAdmin.getEbAccess() );
-   }
+   void scan( void );
 
    /*!
     * @brief Synchronizing of the function-generator list found by the
@@ -162,10 +204,45 @@ public:
       m_oFoundFgs.sync( m_oAddacDaqAdmin.getEbAccess() );
    }
 
+   /*!
+    * @brief Returns a reference to the function generator list.
+    */
+   FgList& getFgList( void )
+   {
+      return m_oFoundFgs;
+   }
+
+   /*!
+    * @brief Returns the number of found MIL function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundMilFg( void )
+   {
+      return m_oFoundFgs.getNumOfFoundMilFg();
+   }
+
+   /*!
+    * @brief Returns the number of ADDAC and/or ACO function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundNonMilFg( void )
+   {
+      return m_oFoundFgs.getNumOfFoundNonMilFg();
+   }
+
+   /*!
+    * @brief Returns the total number of found function generators after
+    *        a scan has been made.
+    */
+   uint getNumOfFoundFg( void )
+   {
+      return m_oFoundFgs.getNumOfFoundFg();
+   }
+
    uint distributeData( void );
 };
 
-
+} // End namespace Scu
 
 #endif // ifndef _SCU_FG_FEEDBACK_HPP
 //================================== EOF ======================================

@@ -264,4 +264,35 @@ uint DaqAdministration::distributeData( void )
    return size;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+DaqAdministrationFgList::DaqAdministrationFgList( DaqEb::EtherboneConnection* poEtherbone )
+   :DaqAdministration( poEtherbone )
+{
+   /*
+    * Synchronizing the FG -lit from lm32 shared memory only no active
+    * scanning!
+    */
+   m_oFgList.sync( getEbAccess() );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqAdministrationFgList::DaqAdministrationFgList( daq::EbRamAccess* poEbAccess )
+   :DaqAdministration( poEbAccess )
+{
+  /*
+   * Synchronizing the FG -lit from lm32 shared memory only no active
+   * scanning!
+   */
+   m_oFgList.sync( getEbAccess() );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqAdministrationFgList::~DaqAdministrationFgList( void )
+{
+}
+
 //================================== EOF ======================================

@@ -158,4 +158,52 @@ void FgList::sync( daq::EbRamAccess* pEbAccess )
    }
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+bool FgList::isPresent( const uint socket, const uint device )
+{
+   for( const auto& fg: m_list )
+   {
+      if( (fg.getSocket() == socket) && (fg.getDevice() == device) )
+         return true;
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+bool FgList::isSocketUsed( const uint socket )
+{
+   for( const auto& fg: m_list )
+      if( fg.getSocket() == socket )
+         return true;
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+uint FgList::getNumOfFoundMilFg( void )
+{
+   uint foundFgs = 0;
+
+   for( const auto& fg: m_list )
+      if( fg.isMIL() )
+         foundFgs++;
+
+   return foundFgs;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+uint FgList::getNumOfFoundNonMilFg( void )
+{
+   uint foundFgs = 0;
+
+   for( const auto& fg: m_list )
+      if( !fg.isMIL() )
+         foundFgs++;
+
+   return foundFgs;
+}
+
 //================================== EOF ======================================

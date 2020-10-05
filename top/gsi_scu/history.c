@@ -105,16 +105,16 @@ void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T da
 void hist_print( const bool doReturn )
 {
 #ifdef CONFIG_SMALL_HISTORY_VALUE
-  #define _FORMAT_ ":0x%02X"
+  #define _FORMAT_ ": 0x%02X"
 #else
-  #define _FORMAT_ ":0x%08X"
+  #define _FORMAT_ ": 0x%08X"
 #endif
    unsigned int idx = mg_histstart;
 
    PRINTF("*********** history *************\n");
    while( idx != mg_histidx )
    {
-      PRINTF( "%u :%s",
+      PRINTF( "%u: %s",
               (unsigned int)((mg_aHistbuf[idx].timeStamp)/1000ULL),
               mg_aHistbuf[idx].message
             );

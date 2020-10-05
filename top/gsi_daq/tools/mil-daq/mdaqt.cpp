@@ -249,7 +249,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
  */
 MilDaqAdministration::MilDaqAdministration( CommandLine* m_poCommandLine,
                                             std::string ebAddress )
-   :DaqAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
+   :DaqAdministrationFgList( new DaqEb::EtherboneConnection( ebAddress ) )
    ,m_oSwi( getEbAccess() )
    ,m_poCommandLine( m_poCommandLine )
 {

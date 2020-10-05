@@ -240,7 +240,7 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
    ATOMIC_SECTION()
       MSI_BOX_SLOT_ACCESS( g_shared.fg_regs[channel].mbx_slot, signal ) = sig;
 
-   hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
+  // hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
 #ifdef CONFIG_DEBUG_FG_SIGNAL
    #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
    mprintf( ESC_DEBUG"Signal: %s, channel: %d sent\n"ESC_NORMAL,

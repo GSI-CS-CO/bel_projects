@@ -83,11 +83,11 @@ void MyCompare::onData( uint64_t wrTimeStampTAI, MiLdaq::MIL_DAQ_T actlValue,
  * which becomes invoked for each receiving of data
  * where no "compare object" still exist.
  */
-class MyMilDaqAdministration: public MiLdaq::DaqAdministration
+class MyMilDaqAdministration: public MiLdaq::DaqAdministrationFgList
 {
 public:
    MyMilDaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
-     :MiLdaq::DaqAdministration( poEtherbone )
+     :MiLdaq::DaqAdministrationFgList( poEtherbone )
      {}
 
    /*

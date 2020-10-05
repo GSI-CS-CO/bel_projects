@@ -59,12 +59,13 @@ void DaqInterface::init( void )
 
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
-
+#if 0
    /*
     * Synchronizing the FG -lit from lm32 shared memory only no active
     * scanning!
     */
    m_oFgList.sync( getEbAccess() );
+#endif
    readRingPosition();
 }
 
@@ -113,28 +114,6 @@ uint DaqInterface::getBufferSize( void ) //TODO Renaming in getCurrentRamSize
 #else
    #error TODO: DDR3-Application requiered!
 #endif
-}
-
-/*! ---------------------------------------------------------------------------
- */
-bool DaqInterface::isPresent( const uint socket, const uint device )
-{
-   for( auto& fg: m_oFgList )
-   {
-      if( (fg.getSocket() == socket) && (fg.getDevice() == device) )
-         return true;
-   }
-   return false;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-bool DaqInterface::isSocketUsed( const uint socket )
-{
-   for( auto& fg: m_oFgList )
-      if( fg.getSocket() == socket )
-         return true;
-   return false;
 }
 
 /*! ---------------------------------------------------------------------------

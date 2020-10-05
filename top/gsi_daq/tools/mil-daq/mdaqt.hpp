@@ -190,7 +190,7 @@ public:
 
 
 //////////////////////////////////////////////////////////////////////////////
-class MilDaqAdministration: public Scu::MiLdaq::DaqAdministration
+class MilDaqAdministration: public Scu::MiLdaq::DaqAdministrationFgList
 {
    friend class CommandLine;
    Lm32Swi        m_oSwi;
@@ -234,7 +234,7 @@ public:
 
    void scan( void )
    {
-      DaqAdministration::scan( &m_oSwi );
+      DaqAdministrationFgList::scan( &m_oSwi );
    }
 };
 

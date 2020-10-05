@@ -43,9 +43,52 @@ int main( int argc, const char** ppArgv )
    {
       DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
       ebConnection.connect();
+
       FgFeedbackAdministration oFbAdmin( &ebConnection );
-      oFbAdmin.scan();
-   }
+
+      cout << "LM32 firmware major version number: " << oFbAdmin.getLm32SoftwareVersion() << endl;
+      cout << "Found function generators in: " << oFbAdmin.getScuDomainName() << endl;
+      cout << oFbAdmin.getNumOfFoundFg() << " Function generators found." << endl;
+      cout << oFbAdmin.getNumOfFoundMilFg() << " MIL function generators found." << endl;
+      cout << oFbAdmin.getNumOfFoundNonMilFg() << " ADDAC/ACU Function generators found." << endl;
+      for( const auto& fg: oFbAdmin.getFgList() )
+      {
+         cout << "Slot " << fg.getSlot() << ": Version: " << fg.getVersion()
+              << ", Bits: " << fg.getOutputBits()
+              << ", fg-" << fg.getSocket() << '-' << fg.getDevice()
+              << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC") << endl;
+      }
+
+      FgFeedbackDevice feedBackDevice( 39 );
+      /*
+       * Function "daq::getSysMicrosecs()" is defined in "daq_calculations.hpp"
+       * The following loop will run for 10 seconds.
+       * This isn't really the best solution, but all other alternatives
+       * will made this example too complex.
+       */
+      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1;
+      do
+      {
+         oFbAdmin.distributeData();
+      }
+      while( daq::getSysMicrosecs() < stopTime );
+
+
+
+      /*
+       * In this example the connection was made outside of the
+       * object oFbAdmin (see above), therefore the disconnect has
+       * to be made outside as well.
+       *
+       * CAUTION: Only when the connect was made outside like in this example
+       *          its allow to made the disconnect outside as well.
+       *          Otherwise a "Segmentation fault" occurs!
+       */
+      ebConnection.disconnect();
+
+      cout << "End..." << endl;
+
+   } // end try()
    catch( exception& e )
    {
       cerr << "ERROR: Something went wrong: \"" << e.what() << '"'

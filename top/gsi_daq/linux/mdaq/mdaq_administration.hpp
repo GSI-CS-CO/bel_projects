@@ -337,6 +337,74 @@ private:
 
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Administration of all MIL-DAQs with additional list
+ *        of function generators.
+ */
+class DaqAdministrationFgList: public DaqAdministration
+{
+protected:
+   /*!
+    * @brief Object contains the list of all found
+    *        function generators.
+    */
+   FgList             m_oFgList;
+
+public:
+   DaqAdministrationFgList( DaqEb::EtherboneConnection* poEtherbone );
+
+   DaqAdministrationFgList( daq::EbRamAccess* poEbAccess );
+
+   virtual ~DaqAdministrationFgList( void );
+
+   void scan( void )
+   {
+      m_oFgList.scan( getEbAccess() );
+   }
+
+   void scan( Lm32Swi* poSwi )
+   {
+      m_oFgList.scan( poSwi );
+   }
+
+   void sync( void )
+   {
+      m_oFgList.sync( getEbAccess() );
+   }
+
+   uint getLm32SoftwareVersion( void ) const
+   {
+      return m_oFgList.getLm32SoftwareVersion();
+   }
+
+   /*!
+    * @brief Returns true if function generator with
+    *        the given socket and given device number present.
+    * @note A scan of function generators before assumed!
+    */
+   bool isPresent( const uint socket, const uint device )
+   {
+      return m_oFgList.isPresent( socket, device );
+   }
+
+   /*!
+    * @brief Returns true if the given socket number is used by a
+    *        function generator.
+    * @note A scan of function generators before assumed!
+    */
+   bool isSocketUsed( const uint socket )
+   {
+      return m_oFgList.isSocketUsed( socket );
+   }
+
+   FgList& getFgList( void )
+   {
+      return m_oFgList;
+   }
+};
+
 } // namespace MiLdaq
 } // namespace Scu
 
