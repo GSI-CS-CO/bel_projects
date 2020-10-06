@@ -39,19 +39,64 @@ namespace Scu
 {
 using namespace gsi;
 
+class FgFeedbackDevice;
 
 ///////////////////////////////////////////////////////////////////////////////
 class FgFeedbackChannel
 {
-   class AddacFb;
+   friend class FgFeedbackDevice;
+   class AddacFb {};
 #ifdef CONFIG_MIL_FG
-   class MilFb;
+   class MilFb {};
 #endif
 
-   AddacFb* m_pAddac;
+   const uint         m_fgNumber;
+   FgFeedbackDevice*  m_pParent;
+   AddacFb*           m_poAddac;
 #ifdef CONFIG_MIL_FG
-   MilFb*   m_pMil;
+   MilFb*             m_poMil;
 #endif
+public:
+   /*!
+    * @brief Constructor of a single function generator feedback channel.
+    * @param fgNumber Number of function generator.
+    */
+   FgFeedbackChannel( const uint fgNumber )
+      :m_fgNumber( fgNumber )
+      ,m_pParent( nullptr )
+      ,m_poAddac( nullptr )
+#ifdef CONFIG_MIL_FG
+      ,m_poMil( nullptr )
+#endif
+   {
+   }
+
+   virtual ~FgFeedbackChannel( void );
+
+   /*!
+    * @brief Returns the function generator number.
+    */
+   uint getFgNumber( void ) const
+   {
+      return m_fgNumber;
+   }
+
+   FgFeedbackDevice* getParent( void )
+   {
+      return m_pParent;
+   }
+
+protected:
+   /*!
+    * @brief Callback function becomes invoked for each incoming data item which
+    *        belongs to this object.
+    * @param wrTimeStampTAI White rabbit time stamp TAI.
+    * @param actlValue Actual value from the DAQ.
+    * @param setValue Set value from function generator
+    */
+   virtual void onData( uint64_t wrTimeStampTAI,
+                        MiLdaq::MIL_DAQ_T actlValue,
+                        MiLdaq::MIL_DAQ_T setValue ) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,17 +106,29 @@ class FgFeedbackBaseDevice: public DaqBaseDevice
    ~FgFeedbackBaseDevice( void ) override {}
 };
 
+class FgFeedbackAdministration;
+
 class FgFeedbackDevice
 {
-   daq::DaqDevice*    m_pAddacDevice;
-#ifdef CONFIG_MIL_FG
-   MiLdaq::DaqDevice* m_pMilDevice;
-#endif
+   friend class FgFeedbackAdministration;
+   DaqBaseDevice* m_poDevice;
+   FgFeedbackAdministration* m_pParent;
 
 public:
    FgFeedbackDevice( const uint socket );
    ~FgFeedbackDevice( void );
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
+
+   void unregisterChannel( FgFeedbackChannel* pFeedbackChannel ) {/*TODO*/}
+   uint getSocket( void ) const
+   {
+      return m_poDevice->getSocket();
+   }
+
+   uint getSlot( void ) const
+   {
+      return m_poDevice->getSlot();
+   }
 };
 
 
@@ -153,7 +210,6 @@ class FgFeedbackAdministration
 
 protected:
    #define DEVICE_LIST_BASE std::list
-  // using DEVICE_LIST_BASE = std::list;
    using DEVICE_LIST_T = DEVICE_LIST_BASE<FgFeedbackDevice*>;
    DEVICE_LIST_T m_devicePtrList;
 
@@ -238,6 +294,35 @@ public:
    {
       return m_oFoundFgs.getNumOfFoundFg();
    }
+
+   /*!
+    * @brief Returns true if function generator with
+    *        the given socket and given device number present.
+    * @note A scan of function generators before assumed!
+    */
+   bool isPresent( const uint socket, const uint device )
+   {
+      return m_oFoundFgs.isPresent( socket, device );
+   }
+
+   /*!
+    * @brief Returns true if the given socket number is used by a
+    *        function generator.
+    * @note A scan of function generators before assumed!
+    */
+   bool isSocketUsed( const uint socket )
+   {
+      return m_oFoundFgs.isSocketUsed( socket );
+   }
+
+   /*!
+    * @brief Registering of a device containing function generators.
+    * @note If the given device or one of its containing function generators
+    *       are not present on the SCU, an exception will throw.
+    */
+   void registerDevice( FgFeedbackDevice* poDevice );
+
+   void unregisterDevice( FgFeedbackDevice* poDevice ) {/*TODO*/}
 
    uint distributeData( void );
 };

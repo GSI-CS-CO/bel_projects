@@ -38,6 +38,7 @@ using namespace std;
  */
 class FgList
 {
+public:
    /*!
     * @brief Descriptor of a SCU function generator.
     */
@@ -115,7 +116,7 @@ class FgList
          return getSocket() == getSlot();
       }
    };
-
+private:
    using FG_LIST_T = vector<FgListItem>;
    FG_LIST_T         m_list;
    uint              m_lm32SoftwareVersion;

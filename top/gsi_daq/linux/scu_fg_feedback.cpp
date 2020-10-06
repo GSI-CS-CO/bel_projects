@@ -25,52 +25,105 @@
  */
 #include <daq_exception.hpp>
 #include <scu_fg_feedback.hpp>
+#include <daqt_messages.hpp>
 
 using namespace Scu;
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackChannel::~FgFeedbackChannel( void )
+{
+   if( m_pParent != nullptr )
+      m_pParent->unregisterChannel( this );
+
+   if( m_poAddac != nullptr )
+      delete m_poAddac;
+#ifdef CONFIG_MIL_FG
+   if( m_poMil != nullptr )
+      delete m_poMil;
+#endif
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackDevice::FgFeedbackDevice( const uint socket )
-   :m_pAddacDevice( nullptr )
-#ifdef CONFIG_MIL_FG
-   ,m_pMilDevice( nullptr )
-#endif
+   :m_poDevice( nullptr )
+   ,m_pParent( nullptr )
 {
    if( ::isAddacFg( socket ) )
-      m_pAddacDevice = new daq::DaqDevice( socket );
-   else if( ::isMilFg( socket ) )
-      m_pMilDevice = new MiLdaq::DaqDevice( socket );
+   {
+      DEBUG_MESSAGE( "Creating ADDAC-device on slot: " << ::getFgSlotNumber( socket ) );
+      m_poDevice = new daq::DaqDevice( socket );
+   }
+#ifdef CONFIG_MIL_FG
+   else if( ::isMilFg( socket ) && (getFgSlotNumber( socket ) <= MAX_SCU_SLAVES))
+   {
+      DEBUG_MESSAGE( "Creating MIL-device on slot: " << ::getFgSlotNumber( socket ) );
+      m_poDevice = new MiLdaq::DaqDevice( socket );
+   }
+#endif
    else
-      throw daq::Exception( "Unknown DAQ device type" );
+   {
+      std::string str = "Unknown DAQ device type with socket: ";
+      str += std::to_string( socket );
+      throw daq::Exception( str );
+   }
+
+   DEBUG_MESSAGE( typeid(m_poDevice).name() << " created" );
 }
 
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackDevice::~FgFeedbackDevice( void )
 {
-   if( m_pAddacDevice != nullptr )
-      delete m_pAddacDevice;
+   if( m_pParent != nullptr )
+       m_pParent->unregisterDevice( this );
 
-#ifdef CONFIG_MIL_FG
-   if( m_pMilDevice != nullptr )
-      delete m_pMilDevice;
-#endif
+   if( m_poDevice != nullptr )
+   {
+      DEBUG_MESSAGE( "Destructor of " << (m_poDevice->isAddac()? "ADDAC" : "MIL")
+                     << "-device on slot: " << m_poDevice->getSlot() );
+
+      delete m_poDevice;
+   }
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
 {
-   assert( pFeedbackChannel != nullptr );
+   assert( pFeedbackChannel->m_pParent == nullptr );
+   pFeedbackChannel->m_pParent = this;
+
 #ifdef CONFIG_MIL_FG
-   if( m_pMilDevice != nullptr )
+   MiLdaq::DaqDevice* pMilDev = dynamic_cast<MiLdaq::DaqDevice*>(m_poDevice);
+   if( pMilDev != nullptr )
    {
+      if( (pFeedbackChannel->getFgNumber() >= MAX_FG_MACROS) || (pFeedbackChannel->getFgNumber() == 0) )
+      {
+         std::string str = "Function generator number for MIL-FG ";
+         str += std::to_string( pFeedbackChannel->getFgNumber() );
+         str += " is out of range from 1 to <" TO_STRING( MAX_FG_MACROS ) " !";
+         throw daq::Exception( str );
+      }
       //TODO
       return;
    }
 #endif
-   assert( m_pAddacDevice != nullptr );
+
+   daq::DaqDevice* pAddacDev = dynamic_cast<daq::DaqDevice*>(m_poDevice);
+   assert( pAddacDev != nullptr );
+   if( pFeedbackChannel->getFgNumber() >= MAX_FG_PER_SLAVE )
+   {
+      std::string str = "Function generator number for ADDAC/ACU-FG ";
+      str += std::to_string( pFeedbackChannel->getFgNumber() );
+      str += " is out of range from 0 to <" TO_STRING( MAX_FG_PER_SLAVE ) " !";
+      throw daq::Exception( str );
+   }
+
+   //TODO
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -117,6 +170,23 @@ void FgFeedbackAdministration::scan( void )
       m_vPollList.push_back( &m_oAddacDaqAdmin );
 
    m_vPollList.shrink_to_fit();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::registerDevice( FgFeedbackDevice* poDevice )
+{
+   assert( poDevice->m_pParent == nullptr );
+
+   if( !isSocketUsed( poDevice->getSocket() ) )
+   {
+      std::string str = "Device on socket ";
+      str += std::to_string( poDevice->getSocket() );
+      str += " not present!";
+      throw daq::Exception( str );
+   }
+//TODO
+   poDevice->m_pParent = this;
 }
 
 /*! ---------------------------------------------------------------------------

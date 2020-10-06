@@ -28,8 +28,37 @@
 using namespace Scu;
 using namespace std;
 
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+class MyFeedbackChannel: public FgFeedbackChannel
+{
+public:
+   MyFeedbackChannel( const uint fgNumber ): FgFeedbackChannel( fgNumber ) {}
 
+   void onData( uint64_t wrTimeStampTAI,
+                MiLdaq::MIL_DAQ_T actlValue,
+                MiLdaq::MIL_DAQ_T setValue ) override;
+};
 
+/*-----------------------------------------------------------------------------
+ * This is the central callback function which becomes invoked by the
+ * loop- function "FgFeedbackAdministration::distributeData()" when
+ * the data of a registered function generator has been received.
+ */
+void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
+                                MiLdaq::MIL_DAQ_T actlValue,
+                                MiLdaq::MIL_DAQ_T setValue )
+{
+   cout << "fg-" << getParent()->getSocket() << '-'
+        << getFgNumber() << "\ttime: " << wrTimeStampTAI << " readable: "
+        << daq::wrToTimeDateString( wrTimeStampTAI )
+        << "\tset value: " << daq::rawToVoltage( setValue )
+        << " Volt\tactual value: " << daq::rawToVoltage( actlValue )
+        << " Volt" << endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 int main( int argc, const char** ppArgv )
 {
    if( argc < 2 )
@@ -59,7 +88,22 @@ int main( int argc, const char** ppArgv )
               << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC") << endl;
       }
 
-      FgFeedbackDevice feedBackDevice( 39 );
+      /*
+       * In this example we use a bit unconventional method obtaining the first found
+       * function generator via the iterator pointing to the list begin.
+       */
+      const auto& pFgItem = oFbAdmin.getFgList().begin();
+      cout << "Using first found FG: \"fg-" << pFgItem->getSocket() << '-'
+           << pFgItem->getDevice() << "\" its a "
+           << (pFgItem->isMIL()? "MIL" : "ADDAC/ACU") << "-device" << endl;
+
+      MyFeedbackChannel feedBack( 1 );
+
+      FgFeedbackDevice feedBackDevice( 1 | DEV_MIL_EXT);
+
+      feedBackDevice.registerChannel( &feedBack );
+
+      oFbAdmin.registerDevice( &feedBackDevice );
       /*
        * Function "daq::getSysMicrosecs()" is defined in "daq_calculations.hpp"
        * The following loop will run for 10 seconds.

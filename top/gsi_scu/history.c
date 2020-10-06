@@ -111,10 +111,10 @@ void hist_print( const bool doReturn )
 #endif
    unsigned int idx = mg_histstart;
 
-   PRINTF("*********** history *************\n");
+   PRINTF("\n*********** history *************\n");
    while( idx != mg_histidx )
    {
-      PRINTF( "%u: %s",
+      PRINTF( "%u: \"%s\"",
               (unsigned int)((mg_aHistbuf[idx].timeStamp)/1000ULL),
               mg_aHistbuf[idx].message
             );

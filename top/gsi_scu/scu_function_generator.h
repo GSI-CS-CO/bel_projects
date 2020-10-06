@@ -374,7 +374,8 @@ ALWAYS_INLINE STATIC inline bool isNonMilFg( const unsigned int socket )
 ALWAYS_INLINE STATIC inline
 bool isAddacFg( const unsigned int socket )
 {
-   return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
+   //return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
+   return (socket > 0) && (socket <= MAX_SCU_SLAVES);
 }
 
 
