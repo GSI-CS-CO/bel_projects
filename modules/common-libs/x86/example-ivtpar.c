@@ -63,9 +63,15 @@ int main(int argc, char** argv) {
   int exitCode   = 0;
 
   // ivtpar
-  int  i, l0, lchange[100];
+  int    i, l0, lchange[IVTMAXPAR];
+  char   parname[256];
+  char   txtname[256];
+  char   par0[32];
+  double par1;
+  FILE   *parfile;
 
   int  j;
+  int  ok;
   
   // local variables
 
@@ -90,14 +96,30 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  i = ivtpar ("example-ivtpar.txt", "example-ivtpar.par", &l0, lchange);
+  // call ivtpar
+  sprintf(parname, "example-ivtpar.par");
+  sprintf(txtname, "example-ivtpar.txt"); 
+  i = ivtpar (txtname, parname, &l0, lchange);
 
+  // demo: quick analysis
   printf("ivtpar returned:\n");
   printf("-- menu item selected   : %d\n", i);
   if (l0) {
     printf("-- changes of parameters:\n");
     for (j=0; j<100; j++) if (lchange[j]) printf("-- parameter %d changed...\n", j);
   } // if l0
+
+  // demo: read parameters
+  if ((parfile = fopen(parname,"r"))) {
+    ok            = fscanf(parfile,"%s",par0);
+    if (ok==1) ok = fscanf(parfile,"%le",&par1);
+    // if (ok==1) .... other parameters
+    fclose(parfile);
+  } // if parfile
+  else ok = 0;
+  if (!ok) {printf("reading parameter file failed\n"); exit(1);}
+
+  printf("parameter 0 has value '%s', parameter 1 has value '%le'\n", par0, par1);
 
   return exitCode;
 }

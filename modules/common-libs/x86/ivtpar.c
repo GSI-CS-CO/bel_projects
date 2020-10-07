@@ -11,20 +11,22 @@
 #define FACE_INVERT   "\033[7m"
 #define FACE_NORMAL   "\033[0m"
 
-#define KEY_UP     274
-#define KEY_DOWN   275
-#define KEY_RIGHT  276
-#define KEY_LEFT   277
-#define ESC_SEQ    500
-#define ESC_1      501
-#define ESC_2      502
-#define ESC_3      503
-#define ESC_4      504
-#define ESC_5      505
-#define ESC_6      506
-#define ESC_7      507
-#define ESC_8      508
-#define ESC_9      509
+#define KEY_UP       274
+#define KEY_DOWN     275
+#define KEY_RIGHT    276
+#define KEY_LEFT     277
+#define KEY_PAGEDOWN 278
+#define KEY_PAGEUP   279
+#define ESC_SEQ      500
+#define ESC_1        501
+#define ESC_2        502
+#define ESC_3        503
+#define ESC_4        504
+#define ESC_5        505
+#define ESC_6        506
+#define ESC_7        507
+#define ESC_8        508
+#define ESC_9        509
 
 
 // helper function: read character or special key combinations
@@ -41,18 +43,18 @@ int readKeyboard()
 
   // set non canonical mode
   newt = oldt;
-  newt.c_lflag &= ~(ICANON);
-  //newt.c_lflag &= ~(ICANON | ECHO); 
+  //newt.c_lflag &= ~(ICANON);
+  newt.c_lflag &= ~(ICANON | ECHO); 
   tcsetattr( STDIN_FILENO, TCSANOW, &newt);
 
   key   = -1;
-  nChar = read(STDIN_FILENO, &key, 1 );
+   nChar = read(STDIN_FILENO, &key, 1 );
 
-  if (key == 27) {      // 'ESC': escape sequence
+  if (key == 27) {        // 'ESC': escape sequence
     key   = -1;
     nChar = read(STDIN_FILENO, &key, 1 );
     switch (key) {
-      case 91 :         // '[' control sequence
+      case 91 :           // '[' control sequence
         key   = -1;
         nChar = read(STDIN_FILENO, &key, 1 );
         switch (key) {
@@ -68,7 +70,19 @@ int readKeyboard()
           case 68 :       // 'arrow left'
             c = KEY_LEFT;
             break;
+          case 53 :       // 'page up'
+            // dummy read, probably '~', ASCII 126
+            nChar = read(STDIN_FILENO, &key, 1 );
+            c = KEY_PAGEUP;
+            break;            
+          case 54 :       // 'page down'
+            // dummy read, probably '~', ASCII 126
+            nChar = read(STDIN_FILENO, &key, 1 );
+            c = KEY_PAGEDOWN;
+            break;
           default :
+            // dummy read, probably '~', ASCII 126
+            nChar = read(STDIN_FILENO, &key, 1 );
             c = -1;
             break;
         } // switch key (in control sequence)
@@ -435,12 +449,23 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   /* set flag for exit */
   fin   = return_ && ((ipar > maxpar) || (npar == maxpar));
 
-  /* exit is also trigger by sequence <ESC> + <1..9> */
+  // exit is also triggered by sequence <ESC> + <1..9> 
   if ((ESC_1 <= k1) && (k1 <= ESC_9)) {
     fin  = 1;
     ipar = maxpar + k1 - ESC_SEQ;
-    //printf("ESC Key, ipar %d\n", ipar);
   } // if ESC_1
+
+  // exit is also triggered by sequence <PAGE UP/DOWN> 
+  if (k1 == KEY_PAGEUP) {
+    fin  = 1;
+    ipar = maxpar + 1;     // convention: <PAGE UP> -> 1st menu entry 
+  } // if KEY_PAGEUP
+
+  // exit is also triggered by sequence <PAGE UP/DOWN> 
+  if (k1 == KEY_PAGEDOWN) {
+    fin  = 1;
+    ipar = maxpar + 2;     // convention: <PAGE DOWN> -> 2nd menu entry 
+  } // if KEY_PAGEDOWN
 
   /* set flag for cursor movement (after cursor key pressed) */
   dir   = up || down || right || left;

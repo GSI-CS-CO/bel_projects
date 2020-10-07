@@ -11,10 +11,10 @@
 
 
      parameter d                          : $              
-     parameter d                          : $              
-     parameter d                          : $              
-     parameter d                          : $              
-     parameter d                          : $              
+     parameter e                          : $              
+     parameter f                          : $              
+     parameter g                          : $              
+     parameter h                          : $              
 
  [ &Selection A              ]       [ &Selection B               ]
 
