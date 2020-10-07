@@ -44,6 +44,21 @@ FgFeedbackChannel::~FgFeedbackChannel( void )
 #endif
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackDevice* FgFeedbackChannel::getParent( void )
+{
+   if( m_pParent == nullptr )
+   {
+      std::string str = "Feedback channel number ";
+      str += std::to_string( m_fgNumber );
+      str += " isn't registered!";
+      throw daq::Exception( str );
+   }
+   return m_pParent;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -87,6 +102,20 @@ FgFeedbackDevice::~FgFeedbackDevice( void )
 
       delete m_poDevice;
    }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackAdministration* FgFeedbackDevice::getParent( void )
+{
+   if( m_pParent == nullptr )
+   {
+      std::string str = "Feedback device socket number ";
+      str += std::to_string( getSocket() );
+      str += " isn't registered!";
+      throw daq::Exception( str );
+   }
+   return m_pParent;
 }
 
 /*! ---------------------------------------------------------------------------

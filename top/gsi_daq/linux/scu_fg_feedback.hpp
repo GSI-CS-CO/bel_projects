@@ -72,6 +72,8 @@ public:
    }
 
    virtual ~FgFeedbackChannel( void );
+   
+   FgFeedbackDevice* getParent( void );
 
    /*!
     * @brief Returns the function generator number.
@@ -81,10 +83,8 @@ public:
       return m_fgNumber;
    }
 
-   FgFeedbackDevice* getParent( void )
-   {
-      return m_pParent;
-   }
+   uint getSocket( void );
+
 
 protected:
    /*!
@@ -117,6 +117,9 @@ class FgFeedbackDevice
 public:
    FgFeedbackDevice( const uint socket );
    ~FgFeedbackDevice( void );
+
+   FgFeedbackAdministration* getParent( void );
+   
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 
    void unregisterChannel( FgFeedbackChannel* pFeedbackChannel ) {/*TODO*/}
@@ -326,6 +329,16 @@ public:
 
    uint distributeData( void );
 };
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+inline uint FgFeedbackChannel::getSocket( void )
+{
+   return getParent()->getSocket();
+}
+
+
 
 } // End namespace Scu
 
