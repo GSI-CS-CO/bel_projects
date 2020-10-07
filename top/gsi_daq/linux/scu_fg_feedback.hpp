@@ -42,20 +42,95 @@ using namespace gsi;
 class FgFeedbackDevice;
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Object type of feedback-channel for all DAQ-types.
+ */
 class FgFeedbackChannel
 {
    friend class FgFeedbackDevice;
-   class AddacFb {};
+
+   /*!
+    * @brief Common object type for ADDAC/ACU- and MIL- feedback channel
+    */
+   class Common
+   {
+   protected:
+      FgFeedbackChannel* m_pParent;
+
+   public:
+      Common( FgFeedbackChannel* pParent );
+      virtual ~Common( void );
+   };
+
+   /*!
+    * @brief Object type handling ADDAC/ACU-DAQ set- and actual- channel.
+    */
+   class AddacFb: public Common
+   {
+      friend class FgFeedbackDevice;
+
+      class Receive: public daq::DaqChannel
+      {
+         AddacFb* m_pParent;
+         uint64_t m_timestamp;
+         uint8_t  m_sequence;
+
+      public:
+         Receive( AddacFb* pParent, const uint n );
+         virtual ~Receive( void );
+         bool onDataBlock( daq::DAQ_DATA_T* pData, std::size_t wordLen ) override;
+
+         uint64_t getTimestamp( void ) const
+         {
+            return m_timestamp;
+         }
+
+         uint8_t getSequence( void ) const
+         {
+            return m_sequence;
+         }
+      };
+
+      Receive m_oReceiveSetValue;
+      Receive m_oReceiveActValue;
+
+   public:
+      AddacFb( FgFeedbackChannel* pParent );
+      virtual ~AddacFb( void );
+      void finalizeBlock( Receive* pReceive );
+   };
+
 #ifdef CONFIG_MIL_FG
-   class MilFb {};
-#endif
+   /*!
+    * @brief Object type handling MIL- channel.
+    */
+   class MilFb: public Common
+   {
+      friend class FgFeedbackDevice;
+      class Receive: public MiLdaq::DaqCompare
+      {
+         MilFb*  m_pParent;
+      public:
+         Receive( MilFb* pParent );
+         virtual ~Receive( void );
+         void onData( uint64_t wrTimeStampTAI,
+                      MiLdaq::MIL_DAQ_T actlValue,
+                      MiLdaq::MIL_DAQ_T setValue ) override;
+         void onInit( void ) override;
+      };
+
+      Receive m_oReceive;
+
+   public:
+      MilFb( FgFeedbackChannel* pParent );
+      virtual ~MilFb( void );
+   };
+#endif // ifdef CONFIG_MIL_FG
 
    const uint         m_fgNumber;
    FgFeedbackDevice*  m_pParent;
-   AddacFb*           m_poAddac;
-#ifdef CONFIG_MIL_FG
-   MilFb*             m_poMil;
-#endif
+   Common*            m_pCommon;
+
 public:
    /*!
     * @brief Constructor of a single function generator feedback channel.
@@ -64,10 +139,7 @@ public:
    FgFeedbackChannel( const uint fgNumber )
       :m_fgNumber( fgNumber )
       ,m_pParent( nullptr )
-      ,m_poAddac( nullptr )
-#ifdef CONFIG_MIL_FG
-      ,m_poMil( nullptr )
-#endif
+      ,m_pCommon( nullptr )
    {
    }
 
