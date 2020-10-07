@@ -50,7 +50,7 @@ void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
                                 MiLdaq::MIL_DAQ_T actlValue,
                                 MiLdaq::MIL_DAQ_T setValue )
 {
-   cout << "fg-" << getParent()->getSocket() << '-'
+   cout << "fg-" << getSocket() << '-'
         << getFgNumber() << "\ttime: " << wrTimeStampTAI << " readable: "
         << daq::wrToTimeDateString( wrTimeStampTAI )
         << "\tset value: " << daq::rawToVoltage( setValue )
