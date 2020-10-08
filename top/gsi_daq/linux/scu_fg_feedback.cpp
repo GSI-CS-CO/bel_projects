@@ -49,6 +49,8 @@ FgFeedbackChannel::AddacFb::Receive::Receive( AddacFb* pParent, const uint n )
    :daq::DaqChannel( n )
    ,m_pParent( pParent )
    ,m_timestamp( 0 )
+   ,m_sampleTime( 0 )
+   ,m_blockLen( 0 )
    ,m_sequence( 0 )
 {
 }
@@ -64,13 +66,25 @@ FgFeedbackChannel::AddacFb::Receive::~Receive( void )
 bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
                                                        std::size_t wordLen )
 {
-   m_sequence = descriptorGetSequence();
-   m_timestamp = descriptorGetTimeStamp();
-   //TODO
-   for( std::size_t i = 0; i < wordLen; i++ )
+   if( !descriptorWasContinuous() )
    {
+      return true;
    }
-   m_pParent->finalizeBlock( this );
+   if( wordLen >= ARRAY_SIZE(m_aBuffer) )
+   {
+      std::string str = "Size of received data out range. Actual: ";
+      str += std::to_string( wordLen );
+      str += ", maximum: ";
+      str += std::to_string( ARRAY_SIZE(m_aBuffer) );
+      throw daq::Exception( str );
+   }
+
+   m_blockLen = wordLen;
+   m_sequence = descriptorGetSequence();
+   m_sampleTime = descriptorGetTimeBase();
+   m_timestamp = descriptorGetTimeStamp() - m_sampleTime * m_blockLen;
+   ::memcpy( m_aBuffer, pData, m_blockLen );
+   m_pParent->finalizeBlock();
    return false;
 }
 
@@ -92,15 +106,47 @@ FgFeedbackChannel::AddacFb::~AddacFb( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void FgFeedbackChannel::AddacFb::finalizeBlock( Receive* pReceive )
-{
-   //TODO
-   if( m_oReceiveSetValue.getTimestamp() == 0 )
+void FgFeedbackChannel::AddacFb::finalizeBlock( void )
+{  /*
+    * At the first time one of both channels hasn't received yet,
+    * in this case it's block length is still zero.
+    */
+   if( m_oReceiveSetValue.getBlockLen() == 0 )
       return;
-   if( m_oReceiveActValue.getTimestamp() == 0 )
+   if( m_oReceiveActValue.getBlockLen() == 0 )
       return;
+
+   /*
+    * One of both channels has received first, in this case it has to be wait
+    * for the second channel.
+    * This will accomplished by comparing the sequence numbers.
+    */
    if( m_oReceiveSetValue.getSequence() != m_oReceiveActValue.getSequence() )
       return;
+
+   // TODO comparing of both time-stamps.
+   /*
+    * Safety check: The data length of both blocks have to be equal!
+    */
+   if( m_oReceiveSetValue.getBlockLen() != m_oReceiveActValue.getBlockLen() )
+   {
+      std::string str = "Different block sizes received: set-data: ";
+      str += std::to_string( m_oReceiveSetValue.getBlockLen() );
+      str += " actual data: ";
+      str += std::to_string( m_oReceiveActValue.getBlockLen() );
+      throw daq::Exception( str );
+   }
+
+   /*
+    * Forwarding of set- and actual- values to the higher software layer.
+    */
+   uint64_t timeStamp = m_oReceiveSetValue.getTimestamp();
+   for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen();
+       i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
+   {
+      m_pParent->onData( timeStamp,
+                         m_oReceiveActValue[i], m_oReceiveSetValue[i] );
+   }
 }
 
 #ifdef CONFIG_MIL_FG
@@ -315,24 +361,26 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone )
+FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone,
+                                                    const bool doRescan )
    :m_oAddacDaqAdmin( this, poEtherbone )
 #ifdef CONFIG_MIL_FG
    ,m_oMilDaqAdmin( this, m_oAddacDaqAdmin.getEbAccess() )
 #endif
 {
-   scan();
+   scan( doRescan );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess )
+FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess,
+                                                    const bool doRescan )
    :m_oAddacDaqAdmin( this, poEbAccess )
 #ifdef CONFIG_MIL_FG
   ,m_oMilDaqAdmin( this, poEbAccess )
 #endif
 {
-   scan();
+   scan( doRescan );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -343,10 +391,14 @@ FgFeedbackAdministration::~FgFeedbackAdministration( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void FgFeedbackAdministration::scan( void )
+void FgFeedbackAdministration::scan( const bool doRescan )
 {
    m_vPollList.clear();
-   m_oFoundFgs.scan( getEbAccess() );
+
+   if( doRescan )
+      m_oFoundFgs.scan( getEbAccess() );
+   else
+      m_oFoundFgs.sync( getEbAccess() );
 
 #ifdef CONFIG_MIL_FG
    if( getNumOfFoundMilFg() != 0 )
@@ -371,7 +423,21 @@ void FgFeedbackAdministration::registerDevice( FgFeedbackDevice* poDevice )
       str += " not present!";
       throw daq::Exception( str );
    }
-//TODO
+
+   if( poDevice->isAddac() )
+   {
+      m_oAddacDaqAdmin.registerDevice( poDevice->getAddac() );
+   }
+#ifdef CONFIG_MIL_FG
+   else if( poDevice->isMil() )
+   {
+      m_oMilDaqAdmin.registerDevice( poDevice->getMil() );
+   }
+#endif
+   else
+   {
+      assert( false );
+   }
    poDevice->m_pParent = this;
 }
 

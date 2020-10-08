@@ -59,7 +59,7 @@ void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-int main( int argc, const char** ppArgv )
+int main( const int argc, const char** ppArgv )
 {
    if( argc < 2 )
    {
@@ -67,43 +67,133 @@ int main( int argc, const char** ppArgv )
       return EXIT_FAILURE;
    }
    cout << "SCU-URL: " << ppArgv[1] << endl;
-#if 1
+
    try
-   {
+   {  /*
+       * Building a object of etherbone-connection for the communication
+       * whith a DAQ via wishbone/etherbone.
+       *
+       * Note: The namespace-name "DaqEb" is defined in the header file
+       *       "daq_eb_ram_buffer.hpp" as:
+       *           "namespace DaqEb = FeSupport::Scu::Etherbone;"
+       *       It's just a shortcut making the source code better readable.
+       *
+       * Assuming the program argument is a SCU-wishbone-address e.g.:
+       * "tcp/scuxl4711" or in the case this example will run directly in
+       * the IPC of a SCU: "dev/wbm0".
+       */
       DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
+
+      /*
+       * If the etherbone connection will not made outside of the class
+       * FgFeedbackAdministration, so this class will accomplished this
+       * in its constructor and the disconnect will made by the destructor.
+       * In this example the connection will made outside, but that is not
+       * really necessary.
+       */
       ebConnection.connect();
 
-      FgFeedbackAdministration oFbAdmin( &ebConnection );
+      /*
+       * We need a object of class FgFeedbackAdministration
+       * which handles the etherbone-connection respectively
+       * the communication from and to the LM32 application.
+       * And as container for at least one or more DAQ-devices.
+       *
+       * If it's impossible to establish a connection so the
+       * constructor will thrown an exception.
+       *
+       * The constructors second parameter determines whether a
+       * re-scan will made or not. If true a re-scan will made.
+       */
+      FgFeedbackAdministration myScu( &ebConnection, false );
 
-      cout << "LM32 firmware major version number: " << oFbAdmin.getLm32SoftwareVersion() << endl;
-      cout << "Found function generators in: " << oFbAdmin.getScuDomainName() << endl;
-      cout << oFbAdmin.getNumOfFoundFg() << " Function generators found." << endl;
-      cout << oFbAdmin.getNumOfFoundMilFg() << " MIL function generators found." << endl;
-      cout << oFbAdmin.getNumOfFoundNonMilFg() << " ADDAC/ACU Function generators found." << endl;
-      for( const auto& fg: oFbAdmin.getFgList() )
+      /*
+       * After the successful generating of the object "myScu" some information
+       * about the concerning SCU are available:
+       */
+      cout << "LM32 firmware major version number: " << myScu.getLm32SoftwareVersion() << endl;
+      cout << "Found function generators in: " << myScu.getScuDomainName() << endl;
+      cout << myScu.getNumOfFoundFg() << " Function generators found." << endl;
+      cout << myScu.getNumOfFoundMilFg() << " MIL function generators found." << endl;
+      cout << myScu.getNumOfFoundNonMilFg() << " ADDAC/ACU Function generators found." << endl;
+      for( const auto& fg: myScu.getFgList() )
       {
-         cout << "Slot " << fg.getSlot() << ": Version: " << fg.getVersion()
+         cout << "Slot " << fg.getSlot()
+              << ", Version: " << fg.getVersion()
               << ", Bits: " << fg.getOutputBits()
               << ", fg-" << fg.getSocket() << '-' << fg.getDevice()
-              << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC") << endl;
+              << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC/ACU") << endl;
       }
 
       /*
        * In this example we use a bit unconventional method obtaining the first found
        * function generator via the iterator pointing to the list begin.
        */
-      const auto& pFgItem = oFbAdmin.getFgList().begin();
-      cout << "Using first found FG: \"fg-" << pFgItem->getSocket() << '-'
-           << pFgItem->getDevice() << "\" its a "
-           << (pFgItem->isMIL()? "MIL" : "ADDAC/ACU") << "-device" << endl;
+      const auto& pMyFirstFg = myScu.getFgList().begin();
+      cout << "Using first found FG: \"fg-" << pMyFirstFg->getSocket() << '-'
+           << pMyFirstFg->getDevice() << "\" its a "
+           << (pMyFirstFg->isMIL()? "MIL" : "ADDAC/ACU") << "-device" << endl;
 
-      MyFeedbackChannel feedBack( 1 );
 
-      FgFeedbackDevice feedBackDevice( 1 | DEV_MIL_EXT);
+      /*
+       * Creating a feedback channel for a specific function generator.
+       * The value of the argument is function generator number of
+       * the concerning device:
+       * Example: fg-39-1
+       *                |
+       *                +- Here it's function generator number 1 of
+       *                   device (socket) 39.
+       *
+       * But in this example the first found function-generator will used.
+       *
+       * NOTE: At this moment the feedback-channel-object doesn't know
+       *       yet whether it's a MIL or ADDAC/ACU object.
+       */
+      MyFeedbackChannel myFeedBackChannel( pMyFirstFg->getDevice() );
 
-      feedBackDevice.registerChannel( &feedBack );
+      /*
+       * Creating a feedback device as container for the feedback channels.
+       * Based on the constructors argument the device object will be a
+       * MIL- or a ADDAC/ACU- device.
+       * The constructors argument is the device-number respectively the
+       * socket number.
+       * Example: fg-39-1
+       *             ||
+       *             ++- Here it's socket number 39 and function generator 1.
+       *
+       * But in this example the first found device will used.
+       *
+       * NOTE: In the case of a invalid socket-number the constructor will
+       *       thrown an exception!
+       * NOTE: If the device number between 1 and 12 then it will be
+       *       a ADDAC/ACU-device. In this case the socket-number is equal
+       *       to the SCU- bus slot number.
+       *
+       * In the case of a invalid socket number the constructor will thrown
+       * an exception!
+       */
+      FgFeedbackDevice myFeedBackDevice( pMyFirstFg->getSocket() );
 
-      oFbAdmin.registerDevice( &feedBackDevice );
+      /*
+       * Registering the function-generator feedback object in the feedback
+       * device.
+       * At this moment the feedback channel object mutates to a MIL- or
+       * to a ADDAC/ACU- feedback-channel depending on the feedback-device
+       * object (see above).
+       *
+       * If the channel-number invalid or already registered then an
+       * exception will thrown!
+       */
+      myFeedBackDevice.registerChannel( &myFeedBackChannel );
+
+      /*
+       * Making the feedback-device known for the feedback administration of
+       * this SCU.
+       * Is the hardware belonging to this device not present or this device
+       * was already registered, then en exception will thrown!
+       */
+      myScu.registerDevice( &myFeedBackDevice );
+
       /*
        * Function "daq::getSysMicrosecs()" is defined in "daq_calculations.hpp"
        * The following loop will run for 10 seconds.
@@ -111,17 +201,25 @@ int main( int argc, const char** ppArgv )
        * will made this example too complex.
        */
       daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1;
+
+      /*
+       * Polling loop. This could be a own thread as well.
+       */
       do
-      {
-         oFbAdmin.distributeData();
+      {  /*
+          * If data form one or more registered function generators present,
+          * then this function will invoke the callback functions "onData"
+          * of the concerning feedback channel objects.
+          * In this example it is the function "MyFeedbackChannel::onData"
+          * only.
+          */
+         myScu.distributeData();
       }
       while( daq::getSysMicrosecs() < stopTime );
 
-
-
       /*
        * In this example the connection was made outside of the
-       * object oFbAdmin (see above), therefore the disconnect has
+       * object myScu (see above), therefore the disconnect has
        * to be made outside as well.
        *
        * CAUTION: Only when the connect was made outside like in this example
@@ -133,12 +231,13 @@ int main( int argc, const char** ppArgv )
       cout << "End..." << endl;
 
    } // end try()
+
    catch( exception& e )
    {
       cerr << "ERROR: Something went wrong: \"" << e.what() << '"'
            << endl;
       return EXIT_FAILURE;
    }
-#endif
+
    return EXIT_SUCCESS;
 }

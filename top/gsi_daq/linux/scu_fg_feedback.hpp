@@ -44,6 +44,10 @@ class FgFeedbackDevice;
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Object type of feedback-channel for all DAQ-types.
+ *
+ * Polymorphic object type, after registration in FgFeedbackDevice it
+ * converts to a MIL- or to a ADDAC/ACU- feedback channel, depending whether
+ * the FgFeedbackDevice is a MIL or ADDAC/ACU device.
  */
 class FgFeedbackChannel
 {
@@ -71,9 +75,12 @@ class FgFeedbackChannel
 
       class Receive: public daq::DaqChannel
       {
-         AddacFb* m_pParent;
-         uint64_t m_timestamp;
-         uint8_t  m_sequence;
+         AddacFb*        m_pParent;
+         uint64_t        m_timestamp;
+         uint            m_sampleTime;
+         std::size_t     m_blockLen;
+         uint8_t         m_sequence;
+         daq::DAQ_DATA_T m_aBuffer[daq::DaqAdministration::c_contineousDataLen];
 
       public:
          Receive( AddacFb* pParent, const uint n );
@@ -85,9 +92,25 @@ class FgFeedbackChannel
             return m_timestamp;
          }
 
+         uint const getSampleTime( void ) const
+         {
+            return m_sampleTime;
+         }
+
          uint8_t getSequence( void ) const
          {
             return m_sequence;
+         }
+
+         std::size_t getBlockLen( void ) const
+         {
+            return m_blockLen;
+         }
+
+         daq::DAQ_DATA_T operator[]( const uint i ) const
+         {
+            assert( i < ARRAY_SIZE(m_aBuffer) );
+            return m_aBuffer[i];
          }
       };
 
@@ -97,7 +120,9 @@ class FgFeedbackChannel
    public:
       AddacFb( FgFeedbackChannel* pParent );
       virtual ~AddacFb( void );
-      void finalizeBlock( Receive* pReceive );
+
+   private:
+      void finalizeBlock( void );
    };
 
 #ifdef CONFIG_MIL_FG
@@ -172,18 +197,20 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class FgFeedbackBaseDevice: public DaqBaseDevice
-{
-
-   ~FgFeedbackBaseDevice( void ) override {}
-};
-
 class FgFeedbackAdministration;
 
+/*!
+ * @brief Object type for MIL-or ADDAC/ACU devices.
+ *
+ * Polymorphic object type, depending on the socket number
+ * - the constructors argument - it converts to a MIL- or to a ADDAC/ACU-
+ * device.
+ */
 class FgFeedbackDevice
 {
    friend class FgFeedbackAdministration;
-   DaqBaseDevice* m_poDevice;
+
+   DaqBaseDevice*            m_poDevice;
    FgFeedbackAdministration* m_pParent;
 
 public:
@@ -191,18 +218,65 @@ public:
    ~FgFeedbackDevice( void );
 
    FgFeedbackAdministration* getParent( void );
-   
+
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 
    void unregisterChannel( FgFeedbackChannel* pFeedbackChannel ) {/*TODO*/}
+
+   /*!
+    * @brief Returns the socket number.
+    *
+    * It is the constructors argument.
+    */
    uint getSocket( void ) const
    {
       return m_poDevice->getSocket();
    }
 
+   /*!
+    * @brief Returns the SCU- bus slot number occupying this device.
+    */
    uint getSlot( void ) const
    {
       return m_poDevice->getSlot();
+   }
+
+#ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Returns the pointer to the MIL device if this object has been
+    *        mutated to a MIL- object, else NULL.
+    */
+   MiLdaq::DaqDevice* getMil( void ) const
+   {
+      return dynamic_cast<MiLdaq::DaqDevice*>(m_poDevice);
+   }
+
+   /*!
+    * @brief Returns "true" if this object has been mutated to a MIL- object,
+    *        else "false".
+    */
+   bool isMil( void ) const
+   {
+      return (getMil() != nullptr);
+   }
+#endif
+
+   /*!
+    * @brief Returns the pointer to the ADDAC/ACU device if this object
+    *        has been mutated to a ADDAC/ACU- object, else NULL.
+    */
+   daq::DaqDevice* getAddac( void ) const
+   {
+      return dynamic_cast<daq::DaqDevice*>(m_poDevice);
+   }
+
+   /*!
+    * @brief Returns "true" if this object has been mutated to a
+    *        ADDAC/ACU- object, else "false".
+    */
+   bool isAddac( void ) const
+   {
+      return (getAddac() != nullptr);
    }
 };
 
@@ -289,8 +363,8 @@ protected:
    DEVICE_LIST_T m_devicePtrList;
 
 public:
-   FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone );
-   FgFeedbackAdministration( daq::EbRamAccess* poEbAccess );
+   FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone, const bool doRescan = false );
+   FgFeedbackAdministration( daq::EbRamAccess* poEbAccess, const bool doRescan = false );
    virtual ~FgFeedbackAdministration( void );
 
    /*!
@@ -324,7 +398,7 @@ public:
     *        by the LM32 application.
     * @note This function performances a re-scan by the LM32!
     */
-   void scan( void );
+   void scan( const bool doRescan = false );
 
    /*!
     * @brief Synchronizing of the function-generator list found by the
