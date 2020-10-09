@@ -466,6 +466,19 @@ protected:
     */
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
 
+   /*!
+    * @brief Optional callback function becomes invoked once this object
+    *        is registered in its container of type DaqDevice and this
+    *        container is again registered in the administrator
+    *        object of type DaqAdministration.
+    */
+   virtual void onInit( void ) {}
+
+   /*!
+    * @brief Optional callback function becomes invoked by a reset event.
+    */
+   virtual void onReset( void ) {}
+
 private:
    void verifySequence( void );
 }; // class DaqChannel
@@ -733,6 +746,13 @@ public:
     *         given number.
     */
    DaqChannel* getChannel( const uint number );
+
+private:
+
+   void init( void );
+
+   void reset( void );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

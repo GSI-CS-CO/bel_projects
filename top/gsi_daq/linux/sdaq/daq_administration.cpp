@@ -126,6 +126,9 @@ bool DaqDevice::registerChannel( DaqChannel* pChannel )
       pChannel->m_number = m_channelPtrList.size() + 1;
    pChannel->m_pParent = this;
    m_channelPtrList.push_back( pChannel );
+   if( m_pParent != nullptr )
+      pChannel->onInit();
+
    return false;
 }
 
@@ -161,6 +164,22 @@ DaqChannel* DaqDevice::getChannel( const uint number )
          return i;
    }
    return nullptr;
+}
+
+/* ----------------------------------------------------------------------------
+ */
+void DaqDevice::init( void )
+{
+   for( const auto& i: m_channelPtrList )
+      i->onInit();
+}
+
+/* ----------------------------------------------------------------------------
+ */
+void DaqDevice::reset( void )
+{
+   for( const auto& i: m_channelPtrList )
+      i->onReset();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -248,6 +267,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    m_maxChannels          += pDevice->m_maxChannels;
    pDevice->m_pParent     = this;
    m_devicePtrList.push_back( pDevice );
+   pDevice->init();
 
    return false;
 }

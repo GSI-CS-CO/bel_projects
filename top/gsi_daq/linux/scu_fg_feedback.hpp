@@ -112,6 +112,10 @@ class FgFeedbackChannel
             assert( i < ARRAY_SIZE(m_aBuffer) );
             return m_aBuffer[i];
          }
+
+      protected:
+         void onInit( void ) override;
+         void onReset( void ) override;
       };
 
       Receive m_oReceiveSetValue;
@@ -169,7 +173,7 @@ public:
    }
 
    virtual ~FgFeedbackChannel( void );
-   
+
    FgFeedbackDevice* getParent( void );
 
    /*!
@@ -182,6 +186,9 @@ public:
 
    uint getSocket( void );
 
+#ifdef CONFIG_MIL_FG
+   bool isMil( void );
+#endif
 
 protected:
    /*!
@@ -194,6 +201,20 @@ protected:
    virtual void onData( uint64_t wrTimeStampTAI,
                         MiLdaq::MIL_DAQ_T actlValue,
                         MiLdaq::MIL_DAQ_T setValue ) = 0;
+
+   /*!
+    * @brief Optional callback function becomes invoked once this object
+    *        is registered in its container of type DaqDevice and this
+    *        container is again registered in the administrator
+    *        object of type DaqAdministration.
+    */
+   virtual void onInit( void ) {}
+
+   /*!
+    * @brief Optional callback function becomes invoked by a reset event.
+    */
+   virtual void onReset( void ) {}
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -210,8 +231,11 @@ class FgFeedbackDevice
 {
    friend class FgFeedbackAdministration;
 
+   using CHANNEL_LIST_T = std::list<FgFeedbackChannel*>;
+
    DaqBaseDevice*            m_poDevice;
    FgFeedbackAdministration* m_pParent;
+   CHANNEL_LIST_T            m_lChannelList;
 
 public:
    FgFeedbackDevice( const uint socket );
@@ -278,7 +302,23 @@ public:
    {
       return (getAddac() != nullptr);
    }
+
+   /*!
+    * @brief Returns the pointer to the channel object tu which belongs
+    *        the given number
+    * @param nunber Channel number
+    * @retval !=nullptr Pointer of channel object
+    * @retval ==nullptr Chnnel not present respectively not registered.
+    */
+   FgFeedbackChannel* getChannel( const uint number );
 };
+
+#ifdef CONFIG_MIL_FG
+inline   bool FgFeedbackChannel::isMil( void )
+{
+  return getParent()->isMil();
+}
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -288,8 +328,8 @@ public:
  */
 class FgFeedbackAdministration
 {
-   using DAQ_POLL_T = std::vector<DaqBaseInterface*>;
-
+   using DAQ_POLL_T     = std::vector<DaqBaseInterface*>;
+   using GEN_DEV_LIST_T = std::list<FgFeedbackDevice*>;
    /*!
     * @brief List of function generators found by the LM32 application.
     */
@@ -356,6 +396,7 @@ class FgFeedbackAdministration
 #endif
 
    DAQ_POLL_T                 m_vPollList;
+   GEN_DEV_LIST_T             m_lDevList;
 
 protected:
    #define DEVICE_LIST_BASE std::list
@@ -463,6 +504,14 @@ public:
    {
       return m_oFoundFgs.isSocketUsed( socket );
    }
+
+   /*!
+    * @brief Returns a pointer to a registered device object.
+    * @param socket Device number
+    * @retval !=nullptr Pointer to the device object
+    * @retval ==nullptr Device not present respectively not registered.
+    */
+   FgFeedbackDevice* getDevice( const uint socket );
 
    /*!
     * @brief Registering of a device containing function generators.

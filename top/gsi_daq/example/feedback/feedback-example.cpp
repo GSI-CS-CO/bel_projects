@@ -29,6 +29,7 @@ using namespace Scu;
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
+
 /*! ---------------------------------------------------------------------------
  */
 class MyFeedbackChannel: public FgFeedbackChannel
@@ -36,10 +37,26 @@ class MyFeedbackChannel: public FgFeedbackChannel
 public:
    MyFeedbackChannel( const uint fgNumber ): FgFeedbackChannel( fgNumber ) {}
 
+   void onInit( void ) override;
+
    void onData( uint64_t wrTimeStampTAI,
                 MiLdaq::MIL_DAQ_T actlValue,
                 MiLdaq::MIL_DAQ_T setValue ) override;
 };
+
+/*-----------------------------------------------------------------------------
+ * This callback function is optional only.
+ *
+ * It becomes invoked once the container object of type FgFeedbackDevice of
+ * this object is registered in the administration object of type
+ * FgFeedbackAdministration.
+ */
+void MyFeedbackChannel::onInit( void )
+{
+   cout << (isMil()? "MIL":"ADDAC/ACU")
+        << "-feedback object: \"fg-" << getSocket() << '-'
+        << getFgNumber() << "\"  final registered!" << endl;
+}
 
 /*-----------------------------------------------------------------------------
  * This is the central callback function which becomes invoked by the

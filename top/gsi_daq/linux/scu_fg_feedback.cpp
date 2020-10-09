@@ -88,6 +88,22 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    return false;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackChannel::AddacFb::Receive::onInit( void )
+{
+   if( this == &m_pParent->m_oReceiveActValue )
+      m_pParent->m_pParent->onInit();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackChannel::AddacFb::Receive::onReset( void )
+{
+   if( this == &m_pParent->m_oReceiveActValue )
+      m_pParent->m_pParent->onReset();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -181,8 +197,16 @@ void FgFeedbackChannel::MilFb::Receive::onData( uint64_t wrTimeStampTAI,
  */
 void FgFeedbackChannel::MilFb::Receive::onInit( void )
 {
+   m_pParent->m_pParent->onInit();
 }
 
+#if 0
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackChannel::MilFb::Receive::onReset( void )
+{
+}
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -324,6 +348,8 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
        */
       pFeedbackChannel->m_pCommon = new FgFeedbackChannel::MilFb( pFeedbackChannel );
       pMilDev->registerDaqCompare( &static_cast<FgFeedbackChannel::MilFb*>(pFeedbackChannel->m_pCommon)->m_oReceive );
+
+      m_lChannelList.push_back( pFeedbackChannel );
       return;
    }
 #endif // ifdef CONFIG_MIL_FG
@@ -355,6 +381,20 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
     * Register receive channel for actual-values
     */
    pAddacDev->registerChannel( &static_cast<FgFeedbackChannel::AddacFb*>( pFeedbackChannel->m_pCommon )->m_oReceiveActValue );
+
+   m_lChannelList.push_back( pFeedbackChannel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackChannel* FgFeedbackDevice::getChannel( const uint number )
+{
+   for( const auto& i: m_lChannelList )
+   {
+      if( i->getFgNumber() == number )
+         return i;
+   }
+   return nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -439,6 +479,19 @@ void FgFeedbackAdministration::registerDevice( FgFeedbackDevice* poDevice )
       assert( false );
    }
    poDevice->m_pParent = this;
+   m_lDevList.push_back( poDevice );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackDevice* FgFeedbackAdministration::getDevice( const uint socket )
+{
+   for( const auto& i: m_lDevList )
+   {
+      if( i->getSocket() == socket )
+         return i;
+   }
+   return nullptr;
 }
 
 /*! ---------------------------------------------------------------------------
