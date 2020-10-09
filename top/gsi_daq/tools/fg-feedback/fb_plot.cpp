@@ -26,7 +26,7 @@
 #include "fb_plot.hpp"
 #include <daq_calculations.hpp>
 
-using namespace Scu::MiLdaq::MiLdaqt;
+using namespace Scu;
 using namespace std;
 
 /*!
@@ -39,7 +39,7 @@ constexpr float Y_PADDING = 0.5;
 
 /*! ----------------------------------------------------------------------------
  */
-Plot::Plot( DaqMilCompare* pParent )
+Plot::Plot( DaqAllFeedbackChannel* pParent )
    :gpstr::PlotStream( "-noraise", pParent->getCommandLine()->getGnuplotBinary() )
    ,m_pParent( pParent )
 {
@@ -71,8 +71,8 @@ void Plot::plot( void )
 {
    constexpr float MILISECS_PER_NANOSEC = 1000000.0;
 
-   *this << "set title \"fg-" << m_pParent->getParent()->getLocation()
-         << '-' << m_pParent->getAddress()
+   *this << "set title \"fg-" << m_pParent->getParent()->getSocket()
+         << '-' << m_pParent->getFgNumber()
          << "  Date: "
          << daq::wrToTimeDateString( m_pParent->getCurrentTime() );
          if( m_pParent->isSingleShoot() )

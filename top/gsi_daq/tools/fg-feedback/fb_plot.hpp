@@ -39,10 +39,10 @@ namespace Scu
 ///////////////////////////////////////////////////////////////////////////////
 class Plot: public gpstr::PlotStream
 {
-   DaqMilCompare*  m_pParent;
+   DaqAllFeedbackChannel*  m_pParent;
 
 public:
-   Plot( DaqMilCompare* pParent );
+   Plot( DaqAllFeedbackChannel* pParent );
 
    void plot( void );
    void operator()( void )

@@ -195,7 +195,7 @@ public:
 class AllDaqAdministration: public FgFeedbackAdministration
 {
    friend class CommandLine;
-   Lm32Swi        m_oSwi;
+  // Lm32Swi        m_oSwi;
    CommandLine*   m_poCommandLine;
 
 public:
@@ -217,12 +217,12 @@ public:
    bool showUngegistered( void );
 
    void setSingleShoot( bool enable );
-
+#if 0
    void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
    {
       m_oSwi.send( opCode, param );
    }
-
+#endif
 #if 0
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
    {

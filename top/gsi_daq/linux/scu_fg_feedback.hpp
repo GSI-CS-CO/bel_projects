@@ -311,6 +311,16 @@ public:
     * @retval ==nullptr Chnnel not present respectively not registered.
     */
    FgFeedbackChannel* getChannel( const uint number );
+
+   const CHANNEL_LIST_T::iterator begin( void )
+   {
+      return m_lChannelList.begin();
+   }
+
+   const CHANNEL_LIST_T::iterator end( void )
+   {
+      return m_lChannelList.end();
+   }
 };
 
 #ifdef CONFIG_MIL_FG
@@ -330,6 +340,7 @@ class FgFeedbackAdministration
 {
    using DAQ_POLL_T     = std::vector<DaqBaseInterface*>;
    using GEN_DEV_LIST_T = std::list<FgFeedbackDevice*>;
+
    /*!
     * @brief List of function generators found by the LM32 application.
     */
@@ -395,6 +406,11 @@ class FgFeedbackAdministration
    MilDaqAdministration  m_oMilDaqAdmin;
 #endif
 
+   /*!
+    * @brief Object triggering software interrupts to LM32-firmware
+    */
+   Lm32Swi                    m_lm32Swi;
+
    DAQ_POLL_T                 m_vPollList;
    GEN_DEV_LIST_T             m_lDevList;
 
@@ -434,6 +450,14 @@ public:
       return m_oFoundFgs.getLm32SoftwareVersion();
    }
 
+   /*!
+    * @brief Triggering a software interrupt in LM32 firmware
+    */
+   void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
+   {
+      m_lm32Swi.send( opCode, param );
+   }
+   
    /*!
     * @brief Scanning and synchronizing of the function-generator list found
     *        by the LM32 application.
@@ -522,6 +546,16 @@ public:
 
    void unregisterDevice( FgFeedbackDevice* poDevice ) {/*TODO*/}
 
+   const GEN_DEV_LIST_T::iterator begin( void )
+   {
+      return m_lDevList.begin();   
+   }
+   
+   const GEN_DEV_LIST_T::iterator end( void )
+   {
+      return m_lDevList.end();
+   }
+   
    uint distributeData( void );
 };
 

@@ -153,8 +153,10 @@ void DaqAllFeedbackChannel::onReset( void )
 /*! ---------------------------------------------------------------------------
  */
 void
-DaqAllFeedbackChannel::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
-                        bool setValueValid )
+DaqAllFeedbackChannel::addItem( uint64_t time,
+                                MiLdaq::MIL_DAQ_T actValue,
+                                MiLdaq::MIL_DAQ_T setValue,
+                                bool setValueValid )
 {
    m_aPlotList.push_back(
    {
@@ -169,8 +171,8 @@ DaqAllFeedbackChannel::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T set
 /*! ---------------------------------------------------------------------------
  * @dotfile mdaqt.gv
  */
-void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
-                                                          MIL_DAQ_T setValue )
+void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
+                                                          MiLdaq::MIL_DAQ_T setValue )
 {
 //   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
 //      return;
@@ -198,7 +200,7 @@ void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             m_startTime = m_currentTime;
             if( getCommandLine()->isContinuePlottingEnabled() )
                m_timeToPlot = m_currentTime + getPlotIntervalTime();
-            addItem( 0, actValue, setValue, !isSetValueInvalid() );
+            addItem( 0, actValue, setValue, true ); //!!!isSetValueInvalid() );
             m_minTime = static_cast<uint64_t>(~0);
             m_maxTime = 0;
             FSM_TRANSITION( COLLECT );
@@ -211,7 +213,7 @@ void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             {
                FSM_TRANSITION_NEXT( PLOT, color = green );
             }
-            addItem( plotTime, actValue, setValue, !isSetValueInvalid() );
+            addItem( plotTime, actValue, setValue, true ); //!!!isSetValueInvalid() );
             if( getCommandLine()->isContinuePlottingEnabled() &&
                 (m_currentTime >= m_timeToPlot) )
             {
@@ -248,8 +250,7 @@ void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
  */
 AllDaqAdministration::AllDaqAdministration( CommandLine* m_poCommandLine,
                                             std::string ebAddress )
-   :DaqAdministrationFgList( new DaqEb::EtherboneConnection( ebAddress ) )
-   ,m_oSwi( getEbAccess() )
+   :FgFeedbackAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
    ,m_poCommandLine( m_poCommandLine )
 {
 }
@@ -345,7 +346,7 @@ int mdaqtMain( int argc, char** ppArgv )
          }
          case HOT_KEY_RESET:
          {
-            pDaqAdmin->reset();
+         //!!   pDaqAdmin->reset();
             if( cmdLine.isVerbose() )
                cout << "Reset" << endl;
             break;

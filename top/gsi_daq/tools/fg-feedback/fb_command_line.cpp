@@ -557,7 +557,7 @@ CommandLine::~CommandLine( void )
 
 /*-----------------------------------------------------------------------------
  */
-FgFeedbackAdministration* CommandLine::operator()( void )
+AllDaqAdministration* CommandLine::operator()( void )
 {
    if( getArgCount() < 2 )
    {
@@ -623,7 +623,7 @@ int CommandLine::onArgument( void )
             return -1;
 #endif
 
-         m_poAllDaq = new FgFeedbackAdministration( this, arg );
+         m_poAllDaq = new AllDaqAdministration( this, arg );
          FSM_TRANSITION( READ_SLOT );
          break;
       }
@@ -671,16 +671,16 @@ int CommandLine::onArgument( void )
             return -1;
          }
 #endif
-         if( !m_poAllDaq->isPresent( m_poCurrentDevice->getLocation(), number ) )
+         if( !m_poAllDaq->isPresent( m_poCurrentDevice->getSocket(), number ) )
          {
-            ERROR_MESSAGE( "No device in socket " << m_poCurrentDevice->getLocation()
+            ERROR_MESSAGE( "No device in socket " << m_poCurrentDevice->getSocket()
                             << " with the number " << number << " present!" );
             return -1;
          }
-         if( m_poCurrentDevice->getDaqCompare( number ) == nullptr )
+         if( m_poCurrentDevice->getChannel( number ) == nullptr )
          {
-            m_poCurrentChannel = new DaqMilCompare( number );
-            m_poCurrentDevice->registerDaqCompare( m_poCurrentChannel );
+            m_poCurrentChannel = new DaqAllFeedbackChannel( number );
+            m_poCurrentDevice->registerChannel( m_poCurrentChannel );
          }
          else
          {

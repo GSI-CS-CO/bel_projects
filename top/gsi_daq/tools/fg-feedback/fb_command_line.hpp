@@ -79,7 +79,7 @@ class CommandLine: public PARSER
    bool                       m_zoomYAxis;
    float                      m_xAxisLen;
 
-   FgFeedbackAdministration*  m_poAllDaq;
+   AllDaqAdministration*      m_poAllDaq;
    FgFeedbackDevice*          m_poCurrentDevice;
    DaqAllFeedbackChannel*     m_poCurrentChannel;
 
@@ -95,9 +95,9 @@ public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
 
-   FgFeedbackAdministration* operator()( void );
+   AllDaqAdministration* operator()( void );
 
-   FgFeedbackAdministration* getDaqAdminPtr( void )
+   AllDaqAdministration* getDaqAdminPtr( void )
    {
       return m_poAllDaq;
    }

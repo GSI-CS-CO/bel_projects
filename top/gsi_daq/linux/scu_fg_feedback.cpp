@@ -407,6 +407,7 @@ FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* 
 #ifdef CONFIG_MIL_FG
    ,m_oMilDaqAdmin( this, m_oAddacDaqAdmin.getEbAccess() )
 #endif
+   ,m_lm32Swi( m_oAddacDaqAdmin.getEbAccess() )
 {
    scan( doRescan );
 }
@@ -419,6 +420,7 @@ FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess
 #ifdef CONFIG_MIL_FG
   ,m_oMilDaqAdmin( this, poEbAccess )
 #endif
+  ,m_lm32Swi( poEbAccess )
 {
    scan( doRescan );
 }
@@ -436,7 +438,7 @@ void FgFeedbackAdministration::scan( const bool doRescan )
    m_vPollList.clear();
 
    if( doRescan )
-      m_oFoundFgs.scan( getEbAccess() );
+      m_oFoundFgs.scan( &m_lm32Swi );
    else
       m_oFoundFgs.sync( getEbAccess() );
 
