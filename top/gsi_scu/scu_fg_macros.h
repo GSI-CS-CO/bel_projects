@@ -515,14 +515,17 @@ void sendRefillSignalIfThreshold( const unsigned int channel );
  */
 STATIC inline void makeStop( const unsigned int channel )
 {
-   sendSignal( cbisEmpty( &g_shared.fg_regs[0], channel )?
-                                                      IRQ_DAT_STOP_EMPTY :
-                                                      IRQ_DAT_STOP_NOT_EMPTY,
-               channel );
+   const SIGNAL_T signal = cbisEmpty( &g_shared.fg_regs[0], channel )?
+                             IRQ_DAT_STOP_EMPTY : IRQ_DAT_STOP_NOT_EMPTY;
+   sendSignal( signal,  channel );
    disable_slave_irq( channel );
    g_shared.fg_regs[channel].state = STATE_STOPPED;
+
    //TODO Maybe disabling of ADDAC-DAQs here?
-  // mprintf( "fg-%d-%d stopped!\n", getSocket( channel ), getDevice( channel ) );
+
+#ifndef CONFIG_LOG_ALL_SIGNALS
+   hist_addx( HISTORY_XYZ_MODULE, signal2String( signal ), channel );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

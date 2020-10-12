@@ -53,6 +53,7 @@ FgFeedbackChannel::AddacFb::Receive::Receive( AddacFb* pParent, const uint n )
    ,m_blockLen( 0 )
    ,m_sequence( 0 )
 {
+   assert( n > 0 );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -83,7 +84,7 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    m_sequence = descriptorGetSequence();
    m_sampleTime = descriptorGetTimeBase();
    m_timestamp = descriptorGetTimeStamp() - m_sampleTime * m_blockLen;
-   ::memcpy( m_aBuffer, pData, m_blockLen );
+   ::memcpy( m_aBuffer, pData, m_blockLen * sizeof(daq::DAQ_DATA_T) );
    m_pParent->finalizeBlock();
    return false;
 }
@@ -109,8 +110,8 @@ void FgFeedbackChannel::AddacFb::Receive::onReset( void )
  */
 FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent )
    :Common( pParent )
-   ,m_oReceiveSetValue( this, daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber() ) )
-   ,m_oReceiveActValue( this, daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber() ) )
+   ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber() ) )
+   ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber() ) )
 {
 }
 
@@ -132,6 +133,8 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
    if( m_oReceiveActValue.getBlockLen() == 0 )
       return;
 
+   DEBUG_MESSAGE( "set sequence: " << (uint)m_oReceiveSetValue.getSequence() );
+   DEBUG_MESSAGE( "act sequence: " << (uint)m_oReceiveActValue.getSequence() );
    /*
     * One of both channels has received first, in this case it has to be wait
     * for the second channel.
@@ -158,10 +161,13 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
     */
    uint64_t timeStamp = m_oReceiveSetValue.getTimestamp();
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen();
-       i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
+        i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
    {
+      constexpr uint SHIFT = BIT_SIZEOF( MiLdaq::MIL_DAQ_T ) -
+                             BIT_SIZEOF( daq::DAQ_DATA_T );
       m_pParent->onData( timeStamp,
-                         m_oReceiveActValue[i], m_oReceiveSetValue[i] );
+                         m_oReceiveActValue[i] << SHIFT,
+                         m_oReceiveSetValue[i] << SHIFT );
    }
 }
 

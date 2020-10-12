@@ -217,7 +217,7 @@ int main( const int argc, const char** ppArgv )
        * This isn't really the best solution, but all other alternatives
        * will made this example too complex.
        */
-      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1;
+      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 10;
 
       /*
        * Polling loop. This could be a own thread as well.
@@ -232,7 +232,7 @@ int main( const int argc, const char** ppArgv )
           */
          myScu.distributeData();
       }
-      while( daq::getSysMicrosecs() < stopTime );
+      while( true ); //daq::getSysMicrosecs() < stopTime );
 
       /*
        * In this example the connection was made outside of the

@@ -239,6 +239,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
    },
+#if 0
    {
       OPT_LAMBDA( poParser,
       {
@@ -253,6 +254,7 @@ vector<OPTION> CommandLine::c_optList =
                     "That means no further arguments of slot and channel"
                     " number necessary."
    },
+#endif
    {
       OPT_LAMBDA( poParser,
       {

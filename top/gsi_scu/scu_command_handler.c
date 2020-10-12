@@ -127,7 +127,6 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          #pragma GCC diagnostic pop
       #endif
       #ifdef CONFIG_USE_SENT_COUNTER
-         //g_aFgChannels[value].param_sent = 0;
          for( unsigned int i = 0; i < ARRAY_SIZE( g_aFgChannels ); i++ )
             g_aFgChannels[i].param_sent = 0;
       #endif
@@ -152,7 +151,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          //mprintf( "Dauert ein bisschen lange lange lange....\n" );
          //if( value == 3 ) break; //!!!
       #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
-         suspendGapReading(); // TEST!!!
+      //   suspendGapReading(); // TEST!!!
       #endif
          enable_scub_msis( value );
          configure_fg_macro( value );
