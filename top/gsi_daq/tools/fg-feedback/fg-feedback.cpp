@@ -69,7 +69,7 @@ using namespace Scu;
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-DaqAllFeedbackChannel::DaqAllFeedbackChannel( uint iterfaceAddress )
+FbChannel::FbChannel( uint iterfaceAddress )
    :FgFeedbackChannel( iterfaceAddress )
    ,m_pPlot( nullptr )
    ,m_startTime( 0 )
@@ -81,6 +81,7 @@ DaqAllFeedbackChannel::DaqAllFeedbackChannel( uint iterfaceAddress )
    //,m_aPlotList( 1000, {0.0, 0.0, 0.0 } )
    ,m_iterator(m_aPlotList.begin())
    ,m_singleShoot( false )
+   ,m_callCount( 0 )
 {
    reset();
 
@@ -88,7 +89,7 @@ DaqAllFeedbackChannel::DaqAllFeedbackChannel( uint iterfaceAddress )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAllFeedbackChannel::~DaqAllFeedbackChannel( void )
+FbChannel::~FbChannel( void )
 {
    if( m_pPlot != nullptr )
       delete m_pPlot;
@@ -96,28 +97,28 @@ DaqAllFeedbackChannel::~DaqAllFeedbackChannel( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqAllFeedbackChannel::reset( void )
+void FbChannel::reset( void )
 {
    FSM_INIT_FSM( START, label='Start' );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-uint64_t DaqAllFeedbackChannel::getTimeLimitNanoSec( void )
+uint64_t FbChannel::getTimeLimitNanoSec( void )
 {
    return getCommandLine()->getXAxisLen() * daq::NANOSECS_PER_SEC;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-std::size_t DaqAllFeedbackChannel::getItemLimit( void )
+std::size_t FbChannel::getItemLimit( void )
 {
    return getCommandLine()->getXAxisLen() * MAX_ITEMS_PER_SECOND;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-uint64_t DaqAllFeedbackChannel::getPlotIntervalTime( void )
+uint64_t FbChannel::getPlotIntervalTime( void )
 {
    return std::max( m_plotIntervalTime,
                     getCommandLine()->getPoltTime() / 5 * m_plotIntervalTime );
@@ -126,7 +127,7 @@ uint64_t DaqAllFeedbackChannel::getPlotIntervalTime( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqAllFeedbackChannel::onInit( void )
+void FbChannel::onInit( void )
 {
    if( m_pPlot != nullptr )
       return;
@@ -139,7 +140,7 @@ void DaqAllFeedbackChannel::onInit( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqAllFeedbackChannel::onReset( void )
+void FbChannel::onReset( void )
 {
    m_minTime = static_cast<uint64_t>(~0);
    m_maxTime = 0;
@@ -153,7 +154,7 @@ void DaqAllFeedbackChannel::onReset( void )
 /*! ---------------------------------------------------------------------------
  */
 void
-DaqAllFeedbackChannel::addItem( uint64_t time,
+FbChannel::addItem( uint64_t time,
                                 MiLdaq::MIL_DAQ_T actValue,
                                 MiLdaq::MIL_DAQ_T setValue,
                                 bool setValueValid )
@@ -171,11 +172,10 @@ DaqAllFeedbackChannel::addItem( uint64_t time,
 /*! ---------------------------------------------------------------------------
  * @dotfile mdaqt.gv
  */
-void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
-                                                          MiLdaq::MIL_DAQ_T setValue )
+void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
+                                              MiLdaq::MIL_DAQ_T setValue )
 {
-//   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
-//      return;
+   m_callCount++;
    m_currentTime = wrTimeStamp;
    if( m_state != START )
    {
@@ -184,10 +184,13 @@ void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actV
       m_maxTime = std::max( m_maxTime, timeinterval );
    }
 
+   if( !isMil() && ((m_callCount % getCommandLine()->getPlotInterval()) != 0) )
+      return;
    /*!
     * @brief Repeat-flag becomes set to true in macro FSM_TRANSITION_NEXT
     */
    bool next;
+
    do
    {
       next = false;
@@ -203,6 +206,7 @@ void DaqAllFeedbackChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actV
             addItem( 0, actValue, setValue, true ); //!!!isSetValueInvalid() );
             m_minTime = static_cast<uint64_t>(~0);
             m_maxTime = 0;
+            m_callCount++;
             FSM_TRANSITION( COLLECT );
          }
          case COLLECT:
@@ -264,49 +268,28 @@ AllDaqAdministration::~AllDaqAdministration( void )
 
 /*! ---------------------------------------------------------------------------
  */
-#if 0
-void AllDaqAdministration::onUnregistered( RingItem* pUnknownItem )
-{
-   if( m_poCommandLine->isVerbose() )
-   {
-      std::cout << pUnknownItem->getTimestamp() << ' '
-                << static_cast<int>(pUnknownItem->getActValue()) << ' '
-                << static_cast<int>(pUnknownItem->getSetValue())
-                << " fg-" << pUnknownItem->getMilDaqLocation() << '-'
-                <<  pUnknownItem->getMilDaqAddress() << std::endl;
-   }
-
-   if( !m_poCommandLine->isAutoBuilding() )
-      return;
-
-   Device* pDevice = getDevice( pUnknownItem->getMilDaqLocation() );
-   if( pDevice == nullptr )
-   {
-      pDevice = new Device( pUnknownItem->getMilDaqLocation() );
-      registerDevice( pDevice );
-   }
-   pDevice->registerDaqCompare(
-                        new DaqAllFeedbackChannel( pUnknownItem->getMilDaqAddress()));
-}
-#endif
-/*! ---------------------------------------------------------------------------
- */
 void AllDaqAdministration::setSingleShoot( bool enable )
 {
    for( const auto& i: *this )
    {
       for( const auto& j : *i )
       {
-         static_cast<DaqAllFeedbackChannel*>(j)->setSingleShoot( enable );
+         static_cast<FbChannel*>(j)->setSingleShoot( enable );
       }
    }
 }
+
+uint AllDaqAdministration::getPlotInterval( void )
+{
+   return m_poCommandLine->getPlotInterval();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 inline
-int mdaqtMain( int argc, char** ppArgv )
+int fbMain( int argc, char** ppArgv )
 {
    DEBUG_MESSAGE( "Start" );
 #ifdef DEBUGLEVEL
@@ -346,7 +329,7 @@ int mdaqtMain( int argc, char** ppArgv )
          }
          case HOT_KEY_RESET:
          {
-         //!!   pDaqAdmin->reset();
+            pDaqAdmin->reset();
             if( cmdLine.isVerbose() )
                cout << "Reset" << endl;
             break;
@@ -392,7 +375,7 @@ int main( int argc, char** ppArgv )
 {
    try
    {
-      return mdaqtMain( argc, ppArgv );
+      return fbMain( argc, ppArgv );
    }
    catch( MiLdaq::Exception& e )
    {

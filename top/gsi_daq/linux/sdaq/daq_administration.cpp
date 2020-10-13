@@ -32,6 +32,7 @@
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
 #include <sys/time.h>
 #endif
+#include <daqt_messages.hpp>
 
 using namespace Scu;
 using namespace daq;
@@ -59,18 +60,20 @@ bool DaqChannel::SequenceNumber::compare( uint8_t sequence )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqChannel::DaqChannel( uint number )
+DaqChannel::DaqChannel( const uint number )
    :m_number( number )
    ,m_pParent(nullptr)
    ,m_poSequence(nullptr)
 {
    SCU_ASSERT( m_number <= DaqInterface::c_maxChannels );
+   DEBUG_MESSAGE( "Constructor of ADDAC/ACU channel number: " << m_number );
 }
 
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel::~DaqChannel( void )
 {
+   DEBUG_MESSAGE( "Destructor of ADDAC/ACU channel number: " << m_number );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -94,7 +97,7 @@ void DaqChannel::verifySequence( void )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice::DaqDevice( uint number )
+DaqDevice::DaqDevice( const uint number )
    :DaqBaseDevice( number )
    ,m_deviceNumber( 0 )
    ,m_slot( number )
@@ -599,6 +602,14 @@ uint DaqAdministration::distributeData( void )
 
 
    return getCurrentRamSize( false );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqAdministration::reset( void )
+{
+   for( const auto& pDev: m_devicePtrList )
+      pDev->reset();
 }
 
 //================================== EOF ======================================

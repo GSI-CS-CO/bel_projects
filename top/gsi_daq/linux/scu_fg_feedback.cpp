@@ -63,6 +63,7 @@ FgFeedbackChannel::AddacFb::Receive::~Receive( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Storing of a incoming ADDAC/ACU-DAQ data block.
  */
 bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
                                                        std::size_t wordLen )
@@ -71,6 +72,7 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    {
       return true;
    }
+
    if( wordLen >= ARRAY_SIZE(m_aBuffer) )
    {
       std::string str = "Size of received data out range. Actual: ";
@@ -86,6 +88,7 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    m_timestamp = descriptorGetTimeStamp() - m_sampleTime * m_blockLen;
    ::memcpy( m_aBuffer, pData, m_blockLen * sizeof(daq::DAQ_DATA_T) );
    m_pParent->finalizeBlock();
+
    return false;
 }
 
@@ -122,10 +125,12 @@ FgFeedbackChannel::AddacFb::~AddacFb( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Forwarding of actual- and set- values to the higher software-layer
+ *        once both data blocks has been received.
  */
 void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 {  /*
-    * At the first time one of both channels hasn't received yet,
+    * At the first time one of both channels doesn't received yet,
     * in this case it's block length is still zero.
     */
    if( m_oReceiveSetValue.getBlockLen() == 0 )
@@ -206,13 +211,13 @@ void FgFeedbackChannel::MilFb::Receive::onInit( void )
    m_pParent->m_pParent->onInit();
 }
 
-#if 0
 /*! ---------------------------------------------------------------------------
  */
 void FgFeedbackChannel::MilFb::Receive::onReset( void )
 {
+   m_pParent->m_pParent->onReset();
 }
-#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -504,11 +509,18 @@ FgFeedbackDevice* FgFeedbackAdministration::getDevice( const uint socket )
 
 /*! ---------------------------------------------------------------------------
  */
-uint FgFeedbackAdministration::distributeData( void )
+void FgFeedbackAdministration::distributeData( void )
 {
    for( const auto& poDaqAdmin: m_vPollList )
       poDaqAdmin->distributeData();
-   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::reset( void )
+{
+   for( const auto& poDaqAdmin: m_vPollList )
+      poDaqAdmin->reset();
 }
 
 //================================== EOF ======================================

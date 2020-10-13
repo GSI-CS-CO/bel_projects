@@ -29,8 +29,9 @@ using namespace Scu;
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
-
 /*! ---------------------------------------------------------------------------
+ * Specialization of class "FgFeedbackChannel" so that the callback function
+ * "onData" can be implemented.
  */
 class MyFeedbackChannel: public FgFeedbackChannel
 {
@@ -113,7 +114,7 @@ int main( const int argc, const char** ppArgv )
       /*
        * We need a object of class FgFeedbackAdministration
        * which handles the etherbone-connection respectively
-       * the communication from and to the LM32 application.
+       * the communication from and to the LM32 application and DDR3 memory.
        * And as container for at least one or more DAQ-devices.
        *
        * If it's impossible to establish a connection so the
@@ -146,10 +147,10 @@ int main( const int argc, const char** ppArgv )
        * In this example we use a bit unconventional method obtaining the first found
        * function generator via the iterator pointing to the list begin.
        */
-      const auto& pMyFirstFg = myScu.getFgList().begin();
-      cout << "Using first found FG: \"fg-" << pMyFirstFg->getSocket() << '-'
-           << pMyFirstFg->getDevice() << "\" its a "
-           << (pMyFirstFg->isMIL()? "MIL" : "ADDAC/ACU") << "-device" << endl;
+      const auto& pMyFirstFoundFg = myScu.getFgList().begin();
+      cout << "Using first found FG: \"fg-" << pMyFirstFoundFg->getSocket() << '-'
+           << pMyFirstFoundFg->getDevice() << "\" its a "
+           << (pMyFirstFoundFg->isMIL()? "MIL" : "ADDAC/ACU") << "-device" << endl;
 
 
       /*
@@ -166,7 +167,7 @@ int main( const int argc, const char** ppArgv )
        * NOTE: At this moment the feedback-channel-object doesn't know
        *       yet whether it's a MIL or ADDAC/ACU object.
        */
-      MyFeedbackChannel myFeedBackChannel( pMyFirstFg->getDevice() );
+      MyFeedbackChannel myFeedBackChannel( pMyFirstFoundFg->getDevice() );
 
       /*
        * Creating a feedback device as container for the feedback channels.
@@ -189,7 +190,7 @@ int main( const int argc, const char** ppArgv )
        * In the case of a invalid socket number the constructor will thrown
        * an exception!
        */
-      FgFeedbackDevice myFeedBackDevice( pMyFirstFg->getSocket() );
+      FgFeedbackDevice myFeedBackDevice( pMyFirstFoundFg->getSocket() );
 
       /*
        * Registering the function-generator feedback object in the feedback
@@ -232,7 +233,7 @@ int main( const int argc, const char** ppArgv )
           */
          myScu.distributeData();
       }
-      while( true ); //daq::getSysMicrosecs() < stopTime );
+      while( daq::getSysMicrosecs() < stopTime );
 
       /*
        * In this example the connection was made outside of the

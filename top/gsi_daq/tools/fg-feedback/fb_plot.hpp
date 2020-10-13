@@ -31,18 +31,14 @@
 
 namespace Scu
 {
-//namespace MiLdaq
-//{
-//namespace MiLdaqt
-//{
 
 ///////////////////////////////////////////////////////////////////////////////
 class Plot: public gpstr::PlotStream
 {
-   DaqAllFeedbackChannel*  m_pParent;
+   FbChannel*  m_pParent;
 
 public:
-   Plot( DaqAllFeedbackChannel* pParent );
+   Plot( FbChannel* pParent );
 
    void plot( void );
    void operator()( void )
@@ -54,8 +50,6 @@ public:
 };
 
 
-//} // namespace MiLdaqt
-//} // namespace MilDaq
 } // namespace Scu
 
 

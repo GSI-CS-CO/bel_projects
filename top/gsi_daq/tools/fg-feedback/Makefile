@@ -107,7 +107,9 @@ HOST ?= tcp/$(SCU_URL)
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = tcp/scuxl0107 -v
 
-CALL_ARGS = --generate_doc_tagged
+#CALL_ARGS = --generate_doc_tagged
+
+CALL_ARGS = scuxl0035 -ac
 
 # DEBUG = 1
 

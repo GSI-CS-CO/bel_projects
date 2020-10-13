@@ -159,7 +159,7 @@ public:
     *               DaqDevice::registerChannel gives this channel-object
     *               the next free number.
     */
-   DaqChannel( uint number = 0 );
+   DaqChannel( const uint number = 0 );
 
    /*!
     * @brief Destructor
@@ -511,7 +511,7 @@ public:
     *        DaqAdministration::registerDevice will set the slot number of
     *        next unregistered DAQ seen from the left side of the SCU slots.
     */
-   DaqDevice( uint slot = 0 );
+   DaqDevice( const uint slot = 0 );
 
    /*!
     * @brief Destructor
@@ -753,7 +753,7 @@ private:
 
    void reset( void );
 
-};
+}; // class DaqDevice
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -961,6 +961,8 @@ public:
     */
    uint distributeData( void ) override;
 
+   void reset( void ) override;
+
    /*!
     * @ingroup onDataBlock
     * @brief Returns the trigger condition of currently received block.
@@ -1083,7 +1085,7 @@ private:
 
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData, std::size_t len );
 
-};
+}; // class DaqAdministration
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

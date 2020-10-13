@@ -70,18 +70,16 @@ STATIC int listOrScanFGs( CommandLine* pCmdLine, bool doScan )
    {
       if( verbose )
          cout << "scanning..." << endl;
-      pAllDaq->scan();
+      pAllDaq->scan( doScan );
    }
    for( const auto& fg: pAllDaq->getFgList() )
    {
-      if( !fg.isMIL() && !verbose )
-         continue;
       if( verbose )
       {
          cout << "Slot: " << fg.getSlot() <<
                  ", Bits: " << fg.getOutputBits() <<
                  ", Version: " << fg.getVersion() << ",\t" <<
-                 (fg.isMIL()? "MIL":"ADAC") << " device\t";
+                 (fg.isMIL()? "MIL":"ADDAC/ACU") << " device\t";
       }
       cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
    }
@@ -97,8 +95,8 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         cout << "MIL-DAQ Plotter\n"
-                 "(c) 2019 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
+         cout << "Feedback-Plotter for SCU function generators\n"
+                 "(c) 2020 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
               << "Usage: " << poParser->getProgramName()
               << " <SCU- target IP-address> [options] [slot channel [slot channel ...]]\n\n"
                  "Hot keys:\n"
@@ -114,7 +112,7 @@ vector<OPTION> CommandLine::c_optList =
                  "\n\t" ESC_BOLD << poParser->getProgramName() <<  " tcp/scuxl4711 -ac" ESC_NORMAL
                  "\n\n\tWill make a plot of all found MIL-function-generators.\n\n"
                  "Example b:\n"
-                 "\tStep 1: Scanning for connected MIL-function generators:\n"
+                 "\tStep 1: Scanning for connected function generators:\n"
                  "\n\t\t" ESC_BOLD << poParser->getProgramName() << " scuxl4711 -S" ESC_NORMAL
                  "\n\n\tResut (e.g.):\n"
                  "\t\tfg-39-1\n"
@@ -148,7 +146,7 @@ vector<OPTION> CommandLine::c_optList =
             "<toolinfo>\n"
                "\t<name>" << name << "</name>\n"
                "\t<topic>Development, Release, Rollout</topic>\n"
-               "\t<description>Display actual- and set-values of MIL function generators via Gnuplot.</description>\n"
+               "\t<description>Display actual- and set- feedback values of SCU function generators via Gnuplot.</description>\n"
                "\t<usage>" << name << " {SCU- target IP-address}";
                for( const auto& pOption: *poParser )
                {
@@ -222,7 +220,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'l',
       .m_longOpt  = "always",
-      .m_helpText = "Plots always the set-value, even within a gap.\n"
+      .m_helpText = "Plots in the case of MIL-DAQs always the set-value, even within a gap.\n"
                     "Within a gab the last valid set-value will used.\n"
                     "NOTE: In general, a gap-plotting needs a actual LM32 firmware,"
                     " written by UB."
@@ -239,7 +237,6 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
    },
-#if 0
    {
       OPT_LAMBDA( poParser,
       {
@@ -254,7 +251,6 @@ vector<OPTION> CommandLine::c_optList =
                     "That means no further arguments of slot and channel"
                     " number necessary."
    },
-#endif
    {
       OPT_LAMBDA( poParser,
       {
@@ -319,6 +315,29 @@ vector<OPTION> CommandLine::c_optList =
                     " in seconds.\n"
                     "If this option not given, so the default value of "
                     TO_STRING(DEFAULT_X_AXIS_LEN) " seconds will used."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint plotInterval;
+         if( readInteger( plotInterval, poParser->getOptArg() ) )
+            return -1;
+         if( plotInterval == 0 )
+         {
+            ERROR_MESSAGE( " plot-interval of " << plotInterval << " is not allowed!" );
+            return -1;
+         }
+         static_cast<CommandLine*>(poParser)->m_plotInterval = plotInterval;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'i',
+      .m_longOpt  = "plot-interval",
+      .m_helpText = "In the case of ADDAC/ACU-DAQs it is necessary to reduce the points to plot\n"
+                    "for performance reasons.\n"
+                    "PARAM is used to specify after how many samples will be plotted again.\n"
+                    "The default value is: " TO_STRING(DEFAULT_PLOT_INTERVAL)
    },
    {
       OPT_LAMBDA( poParser,
@@ -416,9 +435,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'S',
       .m_longOpt  = "scan",
       .m_helpText = "Scanning for all connected function generators.\n"
-                    "NOTE: The verbosity mode (option -v has to be set before) "
-                    "will show all function-generators,\notherwise only MIL- "
-                    "function-generators will shown.\n"
+                    "NOTE: In the case of verbosity mode the option -v has to be set before\n"
                     ESC_BOLD "CAUTION: Don't use this option during function-"
                     "generators are running! Otherwise the timing becomes disturbed \n"
                     "and the function-generators will stopped!\n" ESC_NORMAL
@@ -435,9 +452,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'L',
       .m_longOpt  = "list",
       .m_helpText = "Lists all connected function generators.\n"
-                    "NOTE: The verbosity mode (option -v has to be set before) "
-                    "will show all function-generators,\notherwise only MIL- "
-                    "function-generators will shown.\n"
+                    "NOTE: In the case of verbosity mode the option -v has to be set before"
    },
    {
       OPT_LAMBDA( poParser,
@@ -480,7 +495,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'A',
       .m_longOpt  = "gap",
-      .m_helpText = "Activates or deactivates the gap reading. "
+      .m_helpText = "Activates or deactivates the gap reading in the case of MIL DAQs.\n"
                     "PARAM is the gap reading interval in milliseconds. "
                     "A value of zero deactivates the gap reading."
    }
@@ -538,6 +553,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_plotAlwaysSetValue( false )
    ,m_zoomYAxis( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
+   ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
@@ -557,6 +573,28 @@ CommandLine::~CommandLine( void )
        delete m_poAllDaq;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline
+void CommandLine::autoBuild( void )
+{
+   for( const auto& fg: m_poAllDaq->getFgList() )
+   {
+      Device* pDev = m_poAllDaq->getDevice( fg.getSocket() );
+      if( pDev == nullptr )
+      {
+         pDev = new Device( fg.getSocket() );
+         m_poAllDaq->registerDevice( pDev );
+      }
+      FbChannel* pChannel = static_cast<FbChannel*>(pDev->getChannel( fg.getDevice() ));
+      if( pChannel == nullptr )
+      {
+         pChannel = new FbChannel( fg.getDevice() );
+         pDev->registerChannel( pChannel );
+      }
+   }
+}
+
 /*-----------------------------------------------------------------------------
  */
 AllDaqAdministration* CommandLine::operator()( void )
@@ -571,7 +609,11 @@ AllDaqAdministration* CommandLine::operator()( void )
       return nullptr;
 
    if( m_poAllDaq != nullptr )
+   {
+      if( m_autoBuilding )
+         autoBuild();
       return m_poAllDaq;
+   }
 
    if( !m_targetUrlGiven )
    {
@@ -633,17 +675,6 @@ int CommandLine::onArgument( void )
       {
          m_numDevs++;
          m_poCurrentChannel = nullptr;
-#if 0
-         if( !gsi::isInRange( number, DaqInterface::c_startSlot,
-                                      DaqInterface::c_maxSlots ) )
-         {
-            ERROR_MESSAGE( "Given slot " << number <<
-                           " is out of the range of: " <<
-                           DaqInterface::c_startSlot << " and " <<
-                           DaqInterface::c_maxSlots << " !" );
-            return -1;
-         }
-#endif
          if( !m_poAllDaq->isSocketUsed( number ) )
          {
             ERROR_MESSAGE( "No device in socket " << number << " present!" );
@@ -663,16 +694,6 @@ int CommandLine::onArgument( void )
          assert( m_poCurrentDevice != nullptr );
          assert( m_poCurrentChannel == nullptr );
          m_numChannels++;
-#if 0
-         if( !gsi::isInRange( number, static_cast<uint>( 1 ),
-                                      DaqInterface::c_maxChannels ) )
-         {
-            ERROR_MESSAGE( "Requested channel " << number <<
-                           " is out of range of " <<
-                           DaqInterface::c_maxChannels << " !" );
-            return -1;
-         }
-#endif
          if( !m_poAllDaq->isPresent( m_poCurrentDevice->getSocket(), number ) )
          {
             ERROR_MESSAGE( "No device in socket " << m_poCurrentDevice->getSocket()
@@ -681,7 +702,7 @@ int CommandLine::onArgument( void )
          }
          if( m_poCurrentDevice->getChannel( number ) == nullptr )
          {
-            m_poCurrentChannel = new DaqAllFeedbackChannel( number );
+            m_poCurrentChannel = new FbChannel( number );
             m_poCurrentDevice->registerChannel( m_poCurrentChannel );
          }
          else

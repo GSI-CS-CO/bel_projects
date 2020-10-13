@@ -39,7 +39,7 @@ constexpr float Y_PADDING = 0.5;
 
 /*! ----------------------------------------------------------------------------
  */
-Plot::Plot( DaqAllFeedbackChannel* pParent )
+Plot::Plot( FbChannel* pParent )
    :gpstr::PlotStream( "-noraise", pParent->getCommandLine()->getGnuplotBinary() )
    ,m_pParent( pParent )
 {
@@ -62,7 +62,6 @@ void Plot::init( void )
                               << (DAQ_VPP_MAX/2 + Y_PADDING) << ']' << endl;
    *this << "set xrange [0.0:"
          << m_pParent->getCommandLine()->getXAxisLen() << ']' << endl;
-   //*this << "set style line 1 linecolor rgb \"red\"" << endl;
 }
 
 /*! ----------------------------------------------------------------------------
@@ -85,8 +84,6 @@ void Plot::plot( void )
          << " ms, interval max: " << (m_pParent->m_maxTime / MILISECS_PER_NANOSEC)
          << " ms; Samples: " << m_pParent->m_aPlotList.size() << "\"" << endl;
 
-   //if( m_pParent->m_aPlotList.empty() )
-   //   return;
    bool isDeviationPlottingEnabled =
                   m_pParent->getCommandLine()->isDeviationPlottingEnabled();
 

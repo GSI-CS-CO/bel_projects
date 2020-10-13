@@ -40,6 +40,7 @@ namespace Scu
 using namespace gsi;
 
 class FgFeedbackDevice;
+class FgFeedbackAdministration;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!
@@ -64,7 +65,7 @@ class FgFeedbackChannel
    public:
       Common( FgFeedbackChannel* pParent );
       virtual ~Common( void );
-   };
+   }; // class Common
 
    /*!
     * @brief Object type handling ADDAC/ACU-DAQ set- and actual- channel.
@@ -73,6 +74,10 @@ class FgFeedbackChannel
    {
       friend class FgFeedbackDevice;
 
+      /*!
+       * @brief Object type containing the data buffer for received actual or
+       *        set values of a ADDAC-DAQ data block.
+       */
       class Receive: public daq::DaqChannel
       {
          AddacFb*        m_pParent;
@@ -85,7 +90,6 @@ class FgFeedbackChannel
       public:
          Receive( AddacFb* pParent, const uint n );
          virtual ~Receive( void );
-         bool onDataBlock( daq::DAQ_DATA_T* pData, std::size_t wordLen ) override;
 
          uint64_t getTimestamp( void ) const
          {
@@ -114,11 +118,19 @@ class FgFeedbackChannel
          }
 
       protected:
+         bool onDataBlock( daq::DAQ_DATA_T* pData, std::size_t wordLen ) override;
          void onInit( void ) override;
          void onReset( void ) override;
-      };
+      }; // class Receive
 
+      /*!
+       * @brief Data buffer of the last received set values.
+       */
       Receive m_oReceiveSetValue;
+
+      /*!
+       * @brief Data buffer of the last received actual values.
+       */
       Receive m_oReceiveActValue;
 
    public:
@@ -127,7 +139,7 @@ class FgFeedbackChannel
 
    private:
       void finalizeBlock( void );
-   };
+   }; // class AddacFb
 
 #ifdef CONFIG_MIL_FG
    /*!
@@ -136,6 +148,11 @@ class FgFeedbackChannel
    class MilFb: public Common
    {
       friend class FgFeedbackDevice;
+
+      /*!
+       * @brief Object type to forwarding incoming MIL-data
+       *        to a higher software layer.
+       */
       class Receive: public MiLdaq::DaqCompare
       {
          MilFb*  m_pParent;
@@ -146,14 +163,15 @@ class FgFeedbackChannel
                       MiLdaq::MIL_DAQ_T actlValue,
                       MiLdaq::MIL_DAQ_T setValue ) override;
          void onInit( void ) override;
-      };
+         void onReset( void ) override;
+      }; // class Receive
 
       Receive m_oReceive;
 
    public:
       MilFb( FgFeedbackChannel* pParent );
       virtual ~MilFb( void );
-   };
+   }; // class MilFb
 #endif // ifdef CONFIG_MIL_FG
 
    const uint         m_fgNumber;
@@ -215,11 +233,10 @@ protected:
     */
    virtual void onReset( void ) {}
 
-};
+}; // class FgFeedbackChannel
 
 ///////////////////////////////////////////////////////////////////////////////
-class FgFeedbackAdministration;
-
+///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Object type for MIL-or ADDAC/ACU devices.
  *
@@ -321,7 +338,7 @@ public:
    {
       return m_lChannelList.end();
    }
-};
+}; // class FgFeedbackDevice
 
 #ifdef CONFIG_MIL_FG
 inline   bool FgFeedbackChannel::isMil( void )
@@ -330,7 +347,7 @@ inline   bool FgFeedbackChannel::isMil( void )
 }
 #endif
 
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Object type for the feedback administration of all types of
@@ -364,7 +381,7 @@ class FgFeedbackAdministration
         ,m_pParent( pParent )
       {
       }
-   };
+   }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
     */
@@ -387,6 +404,7 @@ class FgFeedbackAdministration
 
       void onUnregistered( RingItem* pUnknownItem )  override
       {
+         //TODO
       }
 
       RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
@@ -396,9 +414,9 @@ class FgFeedbackAdministration
 
       void clearBuffer( bool update = true ) override
       {
-
+         //TODO
       }
-   };
+   }; // class MilDaqAdministration
 
    /*!
     * @brief Object for MIL DAQ administration.
@@ -457,7 +475,7 @@ public:
    {
       m_lm32Swi.send( opCode, param );
    }
-   
+
    /*!
     * @brief Scanning and synchronizing of the function-generator list found
     *        by the LM32 application.
@@ -548,16 +566,27 @@ public:
 
    const GEN_DEV_LIST_T::iterator begin( void )
    {
-      return m_lDevList.begin();   
+      return m_lDevList.begin();
    }
-   
+
    const GEN_DEV_LIST_T::iterator end( void )
    {
       return m_lDevList.end();
    }
-   
-   uint distributeData( void );
-};
+
+   /*!
+    * @brief Central polling routine of all feedback channels.
+    *
+    * This function checks whether data from a DAQ channel in the appropriate
+    * shared LM32-memory and - if there - invokes the on "onData" function of
+    * the associated channel object.
+    *
+    * @note This function should run in a polling-loop of a own thread.
+    */
+   void distributeData( void );
+
+   void reset( void );
+}; // class FgFeedbackAdministration
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------

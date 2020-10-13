@@ -51,9 +51,15 @@ namespace Scu
    #define DEFAULT_LINE_STYLE "lines"
 #endif
 
+#ifndef DEFAULT_PLOT_INTERVAL
+  #define DEFAULT_PLOT_INTERVAL 5
+#endif
+#if DEFAULT_PLOT_INTERVAL == 0
+  #error DEFAULT_PLOT_INTERVAL shall not be zer0!
+#endif
+
 class AllDaqAdministration; // Loest Henne-Ei Problem...
-//class MiLdaq::Device;
-class DaqAllFeedbackChannel;
+class FbChannel;
 
 ///////////////////////////////////////////////////////////////////////////////
 class CommandLine: public PARSER
@@ -68,8 +74,8 @@ class CommandLine: public PARSER
    static std::vector<OPTION> c_optList;
    STATE_T                    m_state;
    bool                       m_targetUrlGiven;
-   int                        m_numDevs;
-   int                        m_numChannels;
+   uint                       m_numDevs;
+   uint                       m_numChannels;
    bool                       m_optionError;
    bool                       m_verbose;
    bool                       m_autoBuilding;
@@ -78,10 +84,11 @@ class CommandLine: public PARSER
    bool                       m_plotAlwaysSetValue;
    bool                       m_zoomYAxis;
    float                      m_xAxisLen;
+   uint                       m_plotInterval;
 
    AllDaqAdministration*      m_poAllDaq;
    FgFeedbackDevice*          m_poCurrentDevice;
-   DaqAllFeedbackChannel*     m_poCurrentChannel;
+   FbChannel*                 m_poCurrentChannel;
 
    std::string                m_gnuplotBin;
    std::string                m_gnuplotTerminal;
@@ -169,13 +176,19 @@ public:
       return static_cast<uint64_t>(m_xAxisLen);
    }
 
+   uint getPlotInterval( void ) const
+   {
+      return m_plotInterval;
+   }
+
 protected:
    int onErrorUnrecognizedShortOption( char unrecognized ) override;
    int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
-};
 
-//} // namespace MiLdaqt
-//} // namespace MiLdaq
+private:
+   void autoBuild( void );
+}; // class CommandLine
+
 } // namespace Scu
 
 

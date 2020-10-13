@@ -55,10 +55,6 @@
 
 namespace Scu
 {
-//namespace MiLdaq
-//{
-//namespace MiLdaqt
-//{
 
 #ifndef GNUPLOT_DEFAULT_TERMINAL
   #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
@@ -79,7 +75,7 @@ class CommandLine;
 class AllDaqAdministration;
 
 //////////////////////////////////////////////////////////////////////////////
-class DaqAllFeedbackChannel: public FgFeedbackChannel
+class FbChannel: public FgFeedbackChannel
 {
    friend class Plot;
    constexpr static uint64_t c_minimumPlotInterval = daq::NANOSECS_PER_SEC / 10;
@@ -117,10 +113,11 @@ class DaqAllFeedbackChannel: public FgFeedbackChannel
    PLOT_LIST_T           m_aPlotList;
    PLOT_LIST_T::iterator m_iterator;
    bool                  m_singleShoot;
+   uint                  m_callCount;
 
 public:
-   DaqAllFeedbackChannel( uint iterfaceAddress );
-   virtual ~DaqAllFeedbackChannel( void );
+   FbChannel( uint iterfaceAddress );
+   virtual ~FbChannel( void );
 
    Device* getParent( void );
 
@@ -181,9 +178,9 @@ class Device: public FgFeedbackDevice
 public:
    Device( uint n ): FgFeedbackDevice( n ) {}
 
-   DaqAllFeedbackChannel* getDaqCompare( const uint address )
+   FbChannel* getDaqCompare( const uint address )
    {
-      return static_cast<DaqAllFeedbackChannel*>(FgFeedbackDevice::getChannel( address ));
+      return static_cast<FbChannel*>(FgFeedbackDevice::getChannel( address ));
    }
 
    AllDaqAdministration* getParent( void );
@@ -195,7 +192,7 @@ public:
 class AllDaqAdministration: public FgFeedbackAdministration
 {
    friend class CommandLine;
-  // Lm32Swi        m_oSwi;
+
    CommandLine*   m_poCommandLine;
 
 public:
@@ -217,46 +214,26 @@ public:
    bool showUngegistered( void );
 
    void setSingleShoot( bool enable );
-#if 0
-   void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
-   {
-      m_oSwi.send( opCode, param );
-   }
-#endif
-#if 0
-   RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
-   {
-      std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
-      return 0;
-   }
 
-   void clearBuffer( bool update = true ) override
-   {
-      std::cerr << "Dummyfunction not used: " << __func__ << "()" << std::endl;
-   }
-#endif
-   void scan( void )
-   {
-     //!! DaqAdministrationFgList::scan( &m_oSwi );
-   }
+   uint getPlotInterval( void );
 };
 
 inline
-CommandLine* DaqAllFeedbackChannel::getCommandLine( void )
+CommandLine* FbChannel::getCommandLine( void )
 {
    return getParent()->getParent()->getCommandLine();
 }
 
 #if 0
 inline
-bool DaqAllFeedbackChannel::plotDuringCollecting( void )
+bool FbChannel::plotDuringCollecting( void )
 {
    return getCommandLine()->isContinuePlottingEnabled();
 }
 #endif
 
 inline
-Device* DaqAllFeedbackChannel::getParent( void )
+Device* FbChannel::getParent( void )
 {
    return static_cast<Device*>(FgFeedbackChannel::getParent());
 }
@@ -267,11 +244,6 @@ AllDaqAdministration* Device::getParent( void )
    return static_cast<AllDaqAdministration*>(FgFeedbackDevice::getParent());
 }
 
-
-
-
-//} // namespace MiLdaqt
-//} // namespace MilDaq
 } // namespace Scu
 #endif // ifndef _MDAQT_HPP
 //================================== EOF ======================================
