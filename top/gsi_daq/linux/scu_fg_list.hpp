@@ -25,6 +25,7 @@
 #ifndef _SCU_FG_LIST_HPP
 #define _SCU_FG_LIST_HPP
 
+#include <scu_control_config.h>
 #include <scu_lm32_mailbox.hpp>
 #include <vector>
 

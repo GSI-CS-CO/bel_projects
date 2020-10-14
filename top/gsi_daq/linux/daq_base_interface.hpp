@@ -25,10 +25,12 @@
 #ifndef _DAQ_BASE_INTERFACE_HPP
 #define _DAQ_BASE_INTERFACE_HPP
 
+#include <scu_control_config.h>
 #include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
 #include <scu_bus_defines.h>
 #include <scu_function_generator.h>
+#include <daqt_messages.hpp>
 
 #include <daq_ring_admin.h>
 
@@ -55,10 +57,12 @@ public:
    DaqBaseDevice( const uint socket )
       :m_socket( socket )
    {
+      DEBUG_MESSAGE( "Constructor of base device: socket: " << m_socket  );
    }
 
    virtual ~DaqBaseDevice( void )
    {
+      DEBUG_MESSAGE( "Destructor of base device: socket: " << m_socket  );
    }
 
    uint getSocket( void ) const
@@ -202,6 +206,8 @@ public:
     *        layers.
     */
    virtual uint distributeData( void ) = 0;
+
+   virtual void reset( void ) = 0;
 };
 
 } // namespace Scu

@@ -11,7 +11,6 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # USE_SHARED_LIB := 1
-DEFINES += CONFIG_FW_VERSION_3
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -33,26 +32,15 @@ else
  DOX_INPUT += $(MDAQ_LINUX_DIR)/mdaq_administration.hpp
 endif
 
-DEFINES += CONFIG_SCU_USE_DDR3
-DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
-
-
-
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
-DEFINES += _BSD_SOURCE
-DEFINES += _POSIX_C_SOURCE
-DEFINES += _DEFAULT_SOURCE
-#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
-DEFINES += _GLIBCXX_USE_CXX11_ABI=0
-DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#-----------------------------------------------------------------------------------------
 
-DEFINES += CONFIG_NO_SCU_RAM
+ DEFINES += CONFIG_NO_SCU_RAM
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
+INCLUDE_DIRS += $(DAQ_DIR)/tools
 # LIBS += boost_system
 
 # ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a

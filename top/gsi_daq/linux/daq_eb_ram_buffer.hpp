@@ -28,6 +28,8 @@
  */
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
+
+#include <scu_control_config.h>
 #include <EtherboneConnection.hpp>
 #include <scu_assert.h>
 #ifndef CONFIG_NO_SCU_RAM

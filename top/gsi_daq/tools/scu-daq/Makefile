@@ -15,8 +15,6 @@ MIAN_MODULE := daqt.cpp
 BASE_DIR := ..
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
-DEFINES += CONFIG_FW_VERSION_3
-
 DEFINES += CONFIG_AUTODOC_OPTION
 
 SOURCE += daqt_command_line.cpp
@@ -40,28 +38,17 @@ SOURCE += $(EB_SRC)/BusException.cpp
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
-#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
-DEFINES += _GLIBCXX_USE_CXX11_ABI=0
-DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#-----------------------------------------------------------------------------------------
-
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
 DEFINES += _DEFAULT_SOURCE
 
-DEFINES += DAQ_MAX_CHANNELS=4
 
-DEFINES += CONFIG_SCU_DAQ_INTEGRATION
-
-DEFINES += CONFIG_SCU_USE_DDR3
 #DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.5
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
-
- DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 
 INCLUDE_DIRS += $(EB_SRC)

@@ -27,6 +27,7 @@
 #define _SCU_FG_FEEDBACK_HPP
 
 #include <list>
+#include <scu_control_config.h>
 #include <daq_calculations.hpp>
 #include <daq_administration.hpp>
 #ifdef CONFIG_MIL_FG

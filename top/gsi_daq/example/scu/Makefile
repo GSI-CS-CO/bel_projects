@@ -11,7 +11,6 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # USE_SHARED_LIB := 1
-DEFINES += CONFIG_FW_VERSION_3
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -28,26 +27,13 @@ endif
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
-DEFINES += _BSD_SOURCE
-DEFINES += _POSIX_C_SOURCE
-DEFINES += _DEFAULT_SOURCE
-#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
-DEFINES += _GLIBCXX_USE_CXX11_ABI=0
-DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#-----------------------------------------------------------------------------------------
-DEFINES += DAQ_MAX_CHANNELS=4
-
 DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
-DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 DEFINES += CONFIG_DAQ_DEBUG
-
 DEFINES += CONFIG_DAQ_TIME_MEASUREMENT
-DEFINES += CONFIG_SCU_DAQ_INTEGRATION
-DEFINES += CONFIG_SCU_USE_DDR3
-DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(SDAQ_LINUX_DIR)

@@ -11,31 +11,24 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += VERSION=0.9
 
-  DEFINES += CONFIG_FW_VERSION_3
-
 MIAN_MODULE := mdaqt.cpp
 
 BASE_DIR := ..
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 SOURCE += mdaqt_command_line.cpp
-#SOURCE += daqt_attributes.cpp
-
+SOURCE += mdaq_plot.cpp
 SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
-
-# SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
-SOURCE += mdaq_plot.cpp
-
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
@@ -45,24 +38,19 @@ GNUPLOT_BIN ?= $(shell which gnuplot)
 
 DEFINES += CONFIG_AUTODOC_OPTION
 
-#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
-DEFINES += _GLIBCXX_USE_CXX11_ABI=0
-DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#-----------------------------------------------------------------------------------------
-
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
-DEFINES += _DEFAULT_SOURCE
-DEFINES += CONFIG_SCU_USE_DDR3
+# DEFINES += _DEFAULT_SOURCE
+# DEFINES += CONFIG_SCU_USE_DDR3
 #DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
-DEFINES += CONFIG_NO_SCU_RAM
+# DEFINES += CONFIG_NO_SCU_RAM
 
- DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+# DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)

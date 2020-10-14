@@ -23,10 +23,10 @@
  ******************************************************************************
  */
 #include <unistd.h>
-#include <scu_shared_mem.h>
 #include <sys/select.h>
 #include <iostream>
 #include <daq_interface.hpp>
+#include <scu_shared_mem.h>
 #ifdef CONFIG_DAQ_TEST
 #include <daqt_messages.hpp>
 #endif

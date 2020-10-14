@@ -24,6 +24,7 @@
  */
 #ifndef _DAQ_EXCEPTION_HPP
 #define _DAQ_EXCEPTION_HPP
+#include <scu_control_config.h>
 #include <exception>
 #include <string>
 
