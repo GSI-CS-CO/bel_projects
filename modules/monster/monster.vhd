@@ -1863,7 +1863,7 @@ end generate;
         ready_o        => phy_ready,
         loopen_i       => phy_loopen,
         drop_link_i    => phy_rst,
-        tx_clk_o       => phy_tx_clk,
+        tx_clk_o       => open,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
         tx_disparity_o => phy_tx_disparity,
@@ -1875,6 +1875,8 @@ end generate;
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
+        
+        phy_tx_clk <= clk_ref;
   end generate phy_a5;
 
   phy_a10 : if c_is_arria10 generate
