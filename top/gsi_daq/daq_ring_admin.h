@@ -32,6 +32,7 @@
 #ifndef _DAQ_RING_ADMIN_H
 #define _DAQ_RING_ADMIN_H
 
+#include <scu_control_config.h>
 #include <circular_index.h>
 
 #ifdef CONFIG_SCU_USE_DDR3

@@ -275,7 +275,7 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
 
 #if defined( CONFIG_SCU_DAQ_INTEGRATION ) || !defined( CONFIG_DAQ_SINGLE_APP )
 
-#if __DOXYGEN__
+#ifndef __DOXYGEN__
 /*
  * Putting DAQ_MAX_CHANNELS and MAX_FG_PER_SLAVE in a strongly relation.
  */
