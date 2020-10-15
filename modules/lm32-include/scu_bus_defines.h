@@ -204,13 +204,31 @@ typedef enum
 #define SLAVE_INFO_TEXT   0x01c0 //!< @brief Zero terminated info-string max. 512 byte
 #endif
 
-#define DAC1_BASE         0x200
-#define DAC2_BASE         0x210
+#ifdef __cplusplus
+namespace Bus
+{
+#endif
+
+/*!
+ * @brief Offset base addresses of devices in SCU-bus slaves
+ */
+typedef enum
+{
+   DAC1_BASE = 0x200,
+   DAC2_BASE = 0x210,
+   FG1_BASE  = 0x300,
+   FG2_BASE  = 0x340,
+   TMR_BASE  = 0x330,
+   ADC_BASE  = 0x230
+} BUS_BASE;
+
+//#define DAC1_BASE         0x200
+//#define DAC2_BASE         0x210
 #define DAC_CNTRL         0x0
 #define DAC_DATA          0x1
 
 #define IO4x8             0x220
-#define ADC_BASE          0x230
+//#define ADC_BASE          0x230
 #define ADC_CNTRL         0x0
 #define ADC_CHN1          0x1
 #define ADC_CHN2          0x2
@@ -224,8 +242,8 @@ typedef enum
 /*!
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
  */
-#define FG1_BASE          0x300
-#define FG2_BASE          0x340
+//#define FG1_BASE          0x300
+//#define FG2_BASE          0x340
 #define FG_CNTRL          0x0
 #define FG_A              0x1
 #define FG_B              0x2
@@ -252,7 +270,7 @@ typedef enum
 #define WB_RAMP_CNT       0x7
 #define WB_FG_SW_DST      0x8
 
-#define TMR_BASE          0x330
+//#define TMR_BASE          0x330
 #define TMR_CNTRL         0x0
 #define TMR_IRQ_CNT       0x1
 #define TMR_VALUEL        0x2
@@ -315,6 +333,7 @@ bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
 }
 
 #ifdef __cplusplus
+} /* namespace Bus */
 } /* namespace Scu */
 } /* extern "C"    */
 #endif

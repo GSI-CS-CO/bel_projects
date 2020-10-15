@@ -201,7 +201,7 @@ public:
 
    bool isDevicePresent( const uint slot ) const
    {
-      return scuBusIsSlavePresent( m_slotFlags, slot );
+      return Bus::scuBusIsSlavePresent( m_slotFlags, slot );
    }
 
    void sendReset( void )
