@@ -5,8 +5,8 @@ SPI_LANES		= ASx4
 RAM_SIZE		= 131072 
 SHARED_SIZE     = 98304 
 USRCPUCLK       = 125000
-VERSION         = 6.2.2
-RELEASE         = Enigma
+VERSION         = 7.0.1
+RELEASE         = Fallout 
 DEBUGLVL  		= 0 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
