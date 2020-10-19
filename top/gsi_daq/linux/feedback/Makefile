@@ -32,5 +32,16 @@ SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 
 # NO_LTO = 1
 
+DOX_INPUT += $(DAQ_DIR)/scu_ramBuffer.h
+DOX_INPUT += $(DAQ_DIR)/scu_ddr3.h
+DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
+DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
+DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
+DOX_INPUT += $(DAQ_LINUX_DIR)/daq_exception.hpp
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/sdb_ids.h
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
+DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================

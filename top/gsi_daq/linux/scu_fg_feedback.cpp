@@ -511,6 +511,17 @@ FgFeedbackDevice* FgFeedbackAdministration::getDevice( const uint socket )
  */
 void FgFeedbackAdministration::distributeData( void )
 {
+#ifdef __DOXYGEN__
+ /*
+  * Necessary for Doxygen - caller graph,
+  * it's not a part of the resulting binary.
+  */
+ #ifdef CONFIG_MIL_FG
+   MiLdaq::DaqAdministration::distributeData();
+ #endif
+   daq::DaqAdministration::distributeData();
+#endif
+
    for( const auto& poDaqAdmin: m_vPollList )
       poDaqAdmin->distributeData();
 }
@@ -519,6 +530,17 @@ void FgFeedbackAdministration::distributeData( void )
  */
 void FgFeedbackAdministration::reset( void )
 {
+#ifdef __DOXYGEN__
+ /*
+  * Necessary for Doxygen - caller graph,
+  * it's not a part of the resulting binary.
+  */
+ #ifdef CONFIG_MIL_FG
+   MiLdaq::DaqAdministration::reset();
+ #endif
+   daq::DaqAdministration::reset();
+#endif
+
    for( const auto& poDaqAdmin: m_vPollList )
       poDaqAdmin->reset();
 }
