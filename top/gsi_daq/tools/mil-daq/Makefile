@@ -9,7 +9,7 @@
 ## Date:     14.08.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.9
+DEFINES += VERSION=0.10
 
 MIAN_MODULE := mdaqt.cpp
 

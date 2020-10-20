@@ -42,6 +42,9 @@ DOX_INPUT += $(DAQ_LINUX_DIR)/daq_exception.hpp
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/sdb_ids.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
+DOX_INPUT += $(DAQ_DIR)/scu_control_config.h
+
+DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================

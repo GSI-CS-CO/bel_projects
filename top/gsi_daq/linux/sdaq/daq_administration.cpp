@@ -111,6 +111,8 @@ DaqDevice::DaqDevice( const uint number )
  */
 DaqDevice::~DaqDevice( void )
 {
+   for( const auto& channel: *this )
+      unregisterChannel( channel );
 }
 
 /* ----------------------------------------------------------------------------
@@ -151,6 +153,7 @@ bool DaqDevice::unregisterChannel( DaqChannel* pChannel )
       //m_channelPtrList.erase( pChannel );
    }
 
+   pChannel->m_pParent = nullptr;
    return false;
 }
 
@@ -228,6 +231,8 @@ DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess,
  */
 DaqAdministration::~DaqAdministration( void )
 {
+   //for( const auto& def: *this )
+   //   unregisterDevice( def );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -279,6 +284,11 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
  */
 bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
 {
+   if( pDevice->m_pParent != this )
+      return true;
+
+   pDevice->m_pParent = nullptr;
+
    return false;
 }
 

@@ -344,21 +344,11 @@ void _onException( const uint32_t sig )
 #endif
 }
 
-#ifdef CONFIG_FW_VERSION_3
-  #define fg_busy fg_rescan_busy
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Scans for fgs on mil extension and scu bus.
  */
 void scanFgs( void )
 {
-#ifdef CONFIG_USE_RESCAN_FLAG
-   /*
-    * signal busy to saftlib
-    */
-   g_shared.fg_busy = 1;
-#endif
 #if defined( CONFIG_READ_MIL_TIME_GAP ) && defined( CONFIG_MIL_FG )
    suspendGapReading();
 #endif
@@ -374,12 +364,6 @@ void scanFgs( void )
                  &g_shared.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
-#endif
-#ifdef CONFIG_USE_RESCAN_FLAG
-   /*
-    * signal done to saftlib
-    */
-   g_shared.fg_busy = 0;
 #endif
    printFgs();
 }
@@ -553,7 +537,7 @@ void main( void )
    * Will need by usleep_init()
    */
    timer_init(1);
-   usleep_init();
+   ATOMIC_SECTION() usleep_init();
 
    printCpuId();
    mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr);

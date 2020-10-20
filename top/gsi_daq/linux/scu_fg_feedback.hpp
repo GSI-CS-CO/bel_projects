@@ -8,6 +8,7 @@
  *
  * @author Ulrich Becker <u.becker@gsi.de>
  *
+ * @example ../example/feedback/feedback-example.cpp
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -182,6 +183,9 @@ class FgFeedbackChannel
 public:
    /*!
     * @brief Constructor of a single function generator feedback channel.
+    * @code
+    * fg-10-3 In this example is the function generator number 3.
+    * @endcode
     * @param fgNumber Number of function generator.
     */
    FgFeedbackChannel( const uint fgNumber )
@@ -193,16 +197,28 @@ public:
 
    virtual ~FgFeedbackChannel( void );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Returns the object of type FgFeedbackDevice
+    *        in which this object has been registered, if
+    *        not registered then a exception will thrown.
+    */
    FgFeedbackDevice* getParent( void );
 
    /*!
     * @brief Returns the function generator number.
+    *
+    * That is the constructors argument.
     */
    uint getFgNumber( void ) const
    {
       return m_fgNumber;
    }
 
+   /*!
+    * @brief Returns the socket number if this object has been registered
+    *        in a object of type FgFeedbackDevice else a exception will thrown.
+    */
    uint getSocket( void );
 
 #ifdef CONFIG_MIL_FG
@@ -244,6 +260,9 @@ protected:
  * Polymorphic object type, depending on the socket number
  * - the constructors argument - it converts to a MIL- or to a ADDAC/ACU-
  * device.
+ *
+ * A object of this type can contain one or more feedback channels
+ * in the shape of pointers of the base type FgFeedbackChannel*.
  */
 class FgFeedbackDevice
 {
@@ -256,19 +275,39 @@ class FgFeedbackDevice
    CHANNEL_LIST_T            m_lChannelList;
 
 public:
+   /*!
+    * @brief Constructor of a feedback device which can contain one or
+    *        more feedback-channels.
+    * @note If the given socket number invalid, so a exception will thrown!
+    * @param socked Socket-number
+    * @code
+    * fg-10-3 In this example the socket number is 10.
+    * @endcode
+    */
    FgFeedbackDevice( const uint socket );
+
    ~FgFeedbackDevice( void );
 
    FgFeedbackAdministration* getParent( void );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Registering of a single feedback channel associated
+    *        to a function generator.
+    * @note If the channel has been already registered or its channel-number
+    *       is invalid then a exception will thrown.
+    * @param pFeedbackChannel Pointer
+    */
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 
-   void unregisterChannel( FgFeedbackChannel* pFeedbackChannel ) {/*TODO*/}
+   void unregisterChannel( FgFeedbackChannel* pFeedbackChannel );
 
    /*!
     * @brief Returns the socket number.
     *
     * It is the constructors argument.
+    * @note In the case of a ADDAC/ACU device the slot number is identical to
+    *       the socket number.
     */
    uint getSocket( void ) const
    {
@@ -277,6 +316,8 @@ public:
 
    /*!
     * @brief Returns the SCU- bus slot number occupying this device.
+    * @note In the case of a ADDAC/ACU device the slot number is identical to
+    *       the socket number.
     */
    uint getSlot( void ) const
    {
@@ -286,7 +327,8 @@ public:
 #ifdef CONFIG_MIL_FG
    /*!
     * @brief Returns the pointer to the MIL device if this object has been
-    *        mutated to a MIL- object, else NULL.
+    *        mutated to a MIL- object after registration in
+    *        object of FgFeedbackAdministration, else NULL.
     */
    MiLdaq::DaqDevice* getMil( void ) const
    {
@@ -294,7 +336,8 @@ public:
    }
 
    /*!
-    * @brief Returns "true" if this object has been mutated to a MIL- object,
+    * @brief Returns "true" if this object has been mutated to a MIL- object
+    *        after registration in object of FgFeedbackAdministration,
     *        else "false".
     */
    bool isMil( void ) const
@@ -305,7 +348,8 @@ public:
 
    /*!
     * @brief Returns the pointer to the ADDAC/ACU device if this object
-    *        has been mutated to a ADDAC/ACU- object, else NULL.
+    *        has been mutated to a ADDAC/ACU- object after registration in
+    *        object of FgFeedbackAdministration, else NULL.
     */
    daq::DaqDevice* getAddac( void ) const
    {
@@ -314,7 +358,8 @@ public:
 
    /*!
     * @brief Returns "true" if this object has been mutated to a
-    *        ADDAC/ACU- object, else "false".
+    *        ADDAC/ACU- object after registration in
+    *        object of FgFeedbackAdministration, else "false".
     */
    bool isAddac( void ) const
    {
@@ -330,11 +375,22 @@ public:
     */
    FgFeedbackChannel* getChannel( const uint number );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @returns the start-iterator of the pointer of registered
+    *          channel objects of type FgFeedbackChannel*
+    *
+    */
    const CHANNEL_LIST_T::iterator begin( void )
    {
       return m_lChannelList.begin();
    }
 
+   /*!
+    * @ingroup REGISTRATION
+    * @returns the stop-iterator of the pointer of registered
+    *          channel objects of type FgFeedbackChannel*
+    */
    const CHANNEL_LIST_T::iterator end( void )
    {
       return m_lChannelList.end();
@@ -353,6 +409,9 @@ inline   bool FgFeedbackChannel::isMil( void )
 /*!
  * @brief Object type for the feedback administration of all types of
  *        SCU function generators
+ *
+ * A object of this type can contain one or more feedback channels
+ * in the shape of pointers of the base type FgFeedbackDevice*.
  */
 class FgFeedbackAdministration
 {
@@ -549,6 +608,7 @@ public:
    }
 
    /*!
+    * @ingroup REGISTRATION
     * @brief Returns a pointer to a registered device object.
     * @param socket Device number
     * @retval !=nullptr Pointer to the device object
@@ -557,19 +617,30 @@ public:
    FgFeedbackDevice* getDevice( const uint socket );
 
    /*!
+    * @ingroup REGISTRATION
     * @brief Registering of a device containing function generators.
     * @note If the given device or one of its containing function generators
-    *       are not present on the SCU, an exception will throw.
+    *       are not present on the SCU, than an exception will throw.
     */
    void registerDevice( FgFeedbackDevice* poDevice );
 
-   void unregisterDevice( FgFeedbackDevice* poDevice ) {/*TODO*/}
+   void unregisterDevice( FgFeedbackDevice* poDevice );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Returns the start iterator object of the list of registered
+    *        objects of base-type FgFeedbackDevice*.
+    */
    const GEN_DEV_LIST_T::iterator begin( void )
    {
       return m_lDevList.begin();
    }
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Returns the stop iterator object of the list of registered
+    *        objects of base-type FgFeedbackDevice*.
+    */
    const GEN_DEV_LIST_T::iterator end( void )
    {
       return m_lDevList.end();

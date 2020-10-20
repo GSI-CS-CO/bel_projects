@@ -1,0 +1,50 @@
+Found MsgBox at 0x80000000. MSI Path is 0x00000000
+Configured slot 7 in MsgBox
+IRQ table configured.
+SYS_CON found on adr: 0x80060400
+Loops per jiffy: 41640
+CPU ID: 0xbbee0000
+number MSI endpoints: 1
+wr_1wire_base is: 0x80060600
+user_1wire_base is: 0xa0000700
+scub_irq_base is: 0xa0000500
+mil_irq_base is: 0xa0000600
+
+ECA queue found at: 0xa0000100. Waiting for actions with tag 0xdeadbeef ...
+
+bus,device (0,0): 0xf6000000112adc42 temp: 59C
+bus,device (0,1): 0x5500000033602643
+bus,device (0,0): 0x7a000000157e9042 temp: 51C
+bus,device (1,0): 0x5100000050b66f42 temp: 34C
+fg-4-0 ver: 3 output-bits: 16
+fg-4-1 ver: 3 output-bits: 16
+fg-8-0 ver: 3 output-bits: 16
+fg-8-1 ver: 3 output-bits: 16
+
+
+================================================================================================
+
+[ lm32 CC ]     work/devicelist.o
+/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/dev/devicelist.c:10: warning: "SDBFS_BIG_ENDIAN" redefined
+   10 | #define SDBFS_BIG_ENDIAN
+      |
+<command-line>: note: this is the location of the previous definition
+[ lm32 CC ]     work/syscon.o
+/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/dev/syscon.c: In function ‘diag_read_word’:
+/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/dev/syscon.c:99:3: warning: implicit declaration of function ‘pp_printf’ [-Wimplicit-function-declaration]
+   99 |   pp_printf("fetching diag_rw_words\n");
+      |   ^~~~~~~~~
+[ lm32 CC ]     work/usleep.o
+[ lm32 CC ]     work/glue.o
+/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/sdb-lib/glue.c: In function ‘sdbfs_open_name’:
+/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/sdb-lib/glue.c:202:45: warning: pointer targets in passing argument 2 of ‘strncmp’ differ in signedness [-Wpointer-sign]
+  202 |   if (strncmp(name, d->sdb_component.product.name, len))
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+      |                                             |
+      |                                             uint8_t * {aka unsigned char *}
+In file included from /common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/sdb-lib/libsdbfs-freestanding.h:5,
+                 from /common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/sdb-lib/libsdbfs.h:10,
+                 from /common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/ip_cores/wrpc-sw/sdb-lib/glue.c:12:
+/common/home/bel/ubecker/lnx/.local/lm32-elf/include/string.h:43:29: note: expected ‘const char *’ but argument is of type ‘uint8_t *’ {aka ‘unsigned char *’}
+   43 | int  strncmp (const char *, const char *, size_t);
+      | 

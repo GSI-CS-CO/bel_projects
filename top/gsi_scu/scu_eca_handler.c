@@ -20,7 +20,11 @@ extern volatile uint16_t*     g_pScub_base;
  * @see initEcaQueue
  * @see ecaHandler
  */
-ECA_OBJ_T g_eca = { 0, NULL };
+ECA_OBJ_T g_eca =
+{
+  .tag    = 0xdeadbeef, /*!<@brief just define a tag for ECA actions we want to receive */
+  .pQueue = NULL
+};
 
 /*! ---------------------------------------------------------------------------
  * @brief Find the ECA queue of LM32
@@ -35,12 +39,13 @@ void initEcaQueue( void )
       while( true )
          NOP();
    }
-   g_eca.tag = g_eca.pQueue->tag;
+   //!@todo Check this story with ECA-tag...
+   //g_eca.tag = g_eca.pQueue->tag;
    mprintf( ESC_FG_MAGENTA
-            "ECA queue found at: 0x%08p.\n"
+            "ECA queue found at: 0x%p.\n"
             "\tWaiting for actions with tag 0x%08X...\n"
             ESC_NORMAL,
-            (unsigned int)g_eca.pQueue, g_eca.tag );
+            g_eca.pQueue, g_eca.tag );
 }
 
 /*! ---------------------------------------------------------------------------

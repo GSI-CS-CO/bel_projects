@@ -299,6 +299,9 @@ FgFeedbackDevice::~FgFeedbackDevice( void )
    if( m_pParent != nullptr )
        m_pParent->unregisterDevice( this );
 
+//   for( auto& channel: m_lChannelList )
+//      unregisterChannel( channel );
+
    if( m_poDevice != nullptr )
    {
       DEBUG_MESSAGE( "Destructor of " << (m_poDevice->isAddac()? "ADDAC" : "MIL")
@@ -398,6 +401,17 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
 
 /*! ---------------------------------------------------------------------------
  */
+void FgFeedbackDevice::unregisterChannel( FgFeedbackChannel* pFeedbackChannel )
+{
+   if( pFeedbackChannel->m_pParent != this )
+      return;
+   //!@bug this will make a segmentation fault!
+ //  m_lChannelList.remove( pFeedbackChannel );
+   pFeedbackChannel->m_pParent = nullptr;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 FgFeedbackChannel* FgFeedbackDevice::getChannel( const uint number )
 {
    for( const auto& i: m_lChannelList )
@@ -440,6 +454,8 @@ FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess
  */
 FgFeedbackAdministration::~FgFeedbackAdministration( void )
 {
+   for( const auto& dev: m_lDevList )
+      unregisterDevice( dev );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -493,6 +509,18 @@ void FgFeedbackAdministration::registerDevice( FgFeedbackDevice* poDevice )
    }
    poDevice->m_pParent = this;
    m_lDevList.push_back( poDevice );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::unregisterDevice( FgFeedbackDevice* poDevice )
+{
+   if( poDevice->m_pParent != this )
+      return;
+
+   //!@bug this will make a segmentation fault!
+   //m_lDevList.remove( poDevice );
+   poDevice->m_pParent = nullptr;
 }
 
 /*! ---------------------------------------------------------------------------

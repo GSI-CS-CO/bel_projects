@@ -31,7 +31,7 @@ DEFINES += _SCU_CONTROL_CONFIG_H
 # USE_LINUX_PRINTF := 1
 # DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
 
-BASE_VERSION = 3
+BASE_VERSION = 4
 
  DEFINES += _CONFIG_NEW
 
@@ -167,6 +167,7 @@ DOX_EXPAND_ONLY_PREDEF     = "YES"
 DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE __DAQ_SHARED_IO_T"
 DOX_DOTFILE_DIRS           += $(SCU_DIR)
 
+DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/lm32-firmware
 
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
