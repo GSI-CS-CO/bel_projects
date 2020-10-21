@@ -58,7 +58,7 @@
 /*!
  * @brief Providing LM32 firmware major version 3
  */
-#define CONFIG_FW_VERSION_3
+//#define CONFIG_FW_VERSION_3
 
 /*!
  * @brief MIL function generators will used.

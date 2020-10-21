@@ -9,7 +9,7 @@
 ## (c)     GSI Helmholtz Centre for Heavy Ion Research GmbH                  ##
 ## Date:   14.10.2020                                                        ##
 ###############################################################################
-VERSION_DIR="1.0.1"
+VERSION_DIR="1.2.0"
 
 SOURCE_BASE_DIR="/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/"
 DESTINATION_BASE_DIR="/common/usr/cscofe/opt/daq-fg/${VERSION_DIR}/"
@@ -29,6 +29,7 @@ EXAMPLE_FILE=${SOURCE_BASE_DIR}/top/gsi_daq/example/feedback/feedback-example.cp
 
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/scu_fg_feedback.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/scu_control_config.h"
+COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/daq_fg_allocator.h"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_calculations.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_administration.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_interface.hpp"

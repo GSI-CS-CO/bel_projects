@@ -850,9 +850,9 @@ unsigned int daqDescriptorGetTimeBase( register DAQ_DESCRIPTOR_T* pThis )
 
 /*! @} */ //End of group  DAQ_DESCRIPTOR
 #ifdef __cplusplus
-} /* extern "C" */
-} /* namespace Scu */
 } /* namespace daq */
+} /* namespace Scu */
+} /* extern "C" */
 #endif
 // Revision: 06.06.2019
 #endif /* ifndef _DAQ_DESCRIPTOR_H */
