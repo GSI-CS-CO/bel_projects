@@ -40,6 +40,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <helper_macros.h>
+#include <daq_fg_allocator.h>
 /*
  * For the reason LM32 RAM consume can be reduced here is the possibility
  * to overwrite DAQ_MAX by the Makefile.
@@ -73,27 +74,6 @@ namespace Scu
 namespace daq
 {
 #endif
-
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ_DEVICE
- * @brief Info-type holding the DAQ device type ADDAC or ACU
- */
-typedef enum
-{  /*!
-    * @brief DAQ- slave device is unknown (yet).
-    */
-   UNKNOWN = 0,
-
-   /*!
-    * @brief DAQ- slave device is a ADDAC-DAQ
-    */
-   ADDAC = 1,
-
-   /*!
-    * @brief DAQ- slave device is a ACU-DAQ
-    */
-   ACU = 2
-} DAQ_DEVICE_TYP_T;
 
 /*!
  * @ingroup DAQ_CHANNEL

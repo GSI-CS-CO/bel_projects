@@ -295,15 +295,43 @@ bool DaqInterface::cmdReadyWait( void )
 
 /*! ---------------------------------------------------------------------------
  */
+inline bool DaqInterface::permitCommand( DAQ_OPERATION_CODE_T cmd )
+{
+   if( m_doSendCommand )
+      return true;
+
+   switch( cmd )
+   {
+      case DAQ_OP_GET_ERROR_STATUS:
+      case DAQ_OP_GET_MACRO_VERSION:
+      case DAQ_OP_GET_SLOTS:
+      case DAQ_OP_GET_CHANNELS:
+      case DAQ_OP_GET_DEVICE_TYPE:
+      {
+         return true;
+      }
+      default: break;
+   }
+
+   DEBUG_MESSAGE( "LM32 command: " << command2String( cmd ) << " disabled!" );
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 DaqInterface::RETURN_CODE_T
 DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 {
+#if 0
    if( !m_doSendCommand )
    {
       DEBUG_MESSAGE( "LM32 command: " << command2String( cmd ) << " disabled!" );
       return DAQ_RET_OK;
    }
-
+#else
+   if( !permitCommand( cmd ) )
+      return DAQ_RET_OK;
+#endif
    DEBUG_MESSAGE( "Send command: " << command2String( cmd ) << " to LM32." );
 
    m_oSharedData.operation.code = cmd;
@@ -649,6 +677,19 @@ uint DaqInterface::readMacroVersion( const uint deviceNumber )
    sendCommand( DAQ_OP_GET_MACRO_VERSION );
    readParam1();
    return m_oSharedData.operation.ioData.param1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DAQ_DEVICE_TYP_T DaqInterface::readDeviceType( const uint deviceNumber )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   writeParam1();
+   sendCommand( DAQ_OP_GET_DEVICE_TYPE );
+   readParam1();
+   return static_cast<DAQ_DEVICE_TYP_T>(m_oSharedData.operation.ioData.param1);
 }
 
 /*! ---------------------------------------------------------------------------

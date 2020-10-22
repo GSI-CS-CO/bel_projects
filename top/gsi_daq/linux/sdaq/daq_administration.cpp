@@ -276,6 +276,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    pDevice->m_pParent     = this;
    m_devicePtrList.push_back( pDevice );
    pDevice->init();
+   pDevice->m_deviceTyp = readDeviceType( pDevice->m_deviceNumber );
 
    return false;
 }
@@ -288,7 +289,7 @@ bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
       return true;
 
    pDevice->m_pParent = nullptr;
-
+   pDevice->m_deviceTyp = UNKNOWN;
    return false;
 }
 

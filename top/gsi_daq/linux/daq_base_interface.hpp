@@ -33,6 +33,7 @@
 #include <daqt_messages.hpp>
 
 #include <daq_ring_admin.h>
+#include <daq_fg_allocator.h>
 
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
@@ -51,11 +52,20 @@ namespace Scu
  */
 class DaqBaseDevice
 {
+   /*!
+    * @brief Socket number of all device types.
+    * @note In the case of non-MIL is the socket-number equal
+    *       to the slot number.
+    */
    const uint m_socket;
+
+protected:
+   daq::DAQ_DEVICE_TYP_T m_deviceTyp;
 
 public:
    DaqBaseDevice( const uint socket )
       :m_socket( socket )
+      ,m_deviceTyp( daq::UNKNOWN )
    {
       DEBUG_MESSAGE( "Constructor of base device: socket: " << m_socket  );
    }
@@ -65,6 +75,11 @@ public:
       DEBUG_MESSAGE( "Destructor of base device: socket: " << m_socket  );
    }
 
+   /*!
+    * @brief Returns the socket-number this is the constructors argument.
+    * @note In the case of non-MIL is the socket-number equal
+    *       to the slot number.
+    */
    uint getSocket( void ) const
    {
       return m_socket;
@@ -72,10 +87,22 @@ public:
 
    /*!
     * @brief Returns the SCU bus slot number.
+    * @note In the case of non-MIL is the socket-number equal
+    *       to the slot number.
     */
    uint getSlot( void ) const
    {
       return getFgSlotNumber( m_socket );
+   }
+
+   /*!
+    * @brief Returns the device type.
+    * @note If the object isn't registered yet then this function will return
+    *       UNKNOWN, else ADDAC, ACU, DOIB or MIL.
+    */
+   daq::DAQ_DEVICE_TYP_T getTyp( void ) const
+   {
+      return m_deviceTyp;
    }
 
   /*!

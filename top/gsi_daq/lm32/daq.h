@@ -457,7 +457,7 @@ typedef struct
    /*!
     * @brief Number of DAQ-channels
     */
-   unsigned int maxChannels; //!< @brief Number of DAQ-channels
+   unsigned int maxChannels;
 
    /*!
     * @brief Device number becomes valid after daqBusFindAndInitializeAll

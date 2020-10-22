@@ -172,6 +172,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
       }
    }
    pDevice->m_pParent = this;
+   pDevice->m_deviceTyp = daq::MIL;
    m_devicePtrList.push_back( pDevice );
    pDevice->initAll();
    return false;
@@ -190,6 +191,7 @@ bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
          assert( i->m_pParent == this );
          m_devicePtrList.remove( i );
          i->m_pParent = nullptr;
+         i->m_deviceTyp = daq::UNKNOWN;
          return false;
       }
    }

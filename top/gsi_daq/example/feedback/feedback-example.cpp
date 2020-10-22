@@ -205,6 +205,12 @@ int main( const int argc, const char** ppArgv )
       myFeedBackDevice.registerChannel( &myFeedBackChannel );
 
       /*
+       * For info and debug purposes only:
+       * Before the registration the device doesn't know yet what type it belongs to.
+       */
+      cout << "Device type: " << deviceType2String( myFeedBackDevice.getTyp() ) << endl;
+
+      /*
        * Making the feedback-device known for the feedback administration of
        * this SCU.
        * Is the hardware belonging to this device not present or this device
@@ -213,12 +219,18 @@ int main( const int argc, const char** ppArgv )
       myScu.registerDevice( &myFeedBackDevice );
 
       /*
+       * For info and debug purposes only:
+       * After successful registration, the device knows what type it belongs to.
+       */
+      cout << "Device type: " << deviceType2String( myFeedBackDevice.getTyp() ) << endl;
+
+      /*
        * Function "daq::getSysMicrosecs()" is defined in "daq_calculations.hpp"
        * The following loop will run for 10 seconds.
        * This isn't really the best solution, but all other alternatives
        * will made this example too complex.
        */
-      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 10;
+      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1;
 
       /*
        * Polling loop. This could be a own thread as well.

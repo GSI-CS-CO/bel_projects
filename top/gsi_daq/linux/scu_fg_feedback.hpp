@@ -136,7 +136,7 @@ class FgFeedbackChannel
       Receive m_oReceiveActValue;
 
    public:
-      AddacFb( FgFeedbackChannel* pParent );
+      AddacFb( FgFeedbackChannel* pParent, daq::DAQ_DEVICE_TYP_T type );
       virtual ~AddacFb( void );
 
    private:
@@ -311,6 +311,7 @@ public:
     */
    uint getSocket( void ) const
    {
+      assert( dynamic_cast<DaqBaseDevice*>( m_poDevice ) != nullptr );
       return m_poDevice->getSocket();
    }
 
@@ -321,7 +322,19 @@ public:
     */
    uint getSlot( void ) const
    {
+      assert( dynamic_cast<DaqBaseDevice*>( m_poDevice ) != nullptr );
       return m_poDevice->getSlot();
+   }
+
+   /*!
+    * @brief Returns the device type.
+    * @note If the object isn't registered yet then this function will return
+    *       UNKNOWN, else ADDAC, ACU, DOIB or MIL.
+    */
+   daq::DAQ_DEVICE_TYP_T getTyp( void ) const
+   {
+      assert( dynamic_cast<DaqBaseDevice*>( m_poDevice ) != nullptr );
+      return m_poDevice->getTyp();
    }
 
 #ifdef CONFIG_MIL_FG
@@ -395,6 +408,11 @@ public:
    {
       return m_lChannelList.end();
    }
+
+private:
+
+   void generateAll( void );
+   void generate( FgFeedbackChannel* pFeedbackChannel );
 }; // class FgFeedbackDevice
 
 #ifdef CONFIG_MIL_FG

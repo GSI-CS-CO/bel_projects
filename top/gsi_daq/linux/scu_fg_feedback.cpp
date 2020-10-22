@@ -111,10 +111,11 @@ void FgFeedbackChannel::AddacFb::Receive::onReset( void )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent )
+FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent,
+                                     daq::DAQ_DEVICE_TYP_T type )
    :Common( pParent )
-   ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber() ) )
-   ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber() ) )
+   ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber(), type ) )
+   ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber(), type ) )
 {
 }
 
@@ -326,6 +327,70 @@ FgFeedbackAdministration* FgFeedbackDevice::getParent( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Generates the channel kernel for all registered channels,
+ *        depending on the device type if not already done.
+ */
+void FgFeedbackDevice::generateAll( void )
+{
+   for( const auto& pFeedbackChannel: m_lChannelList )
+   {
+      if( pFeedbackChannel->m_pCommon != nullptr )
+         continue;
+      generate( pFeedbackChannel );
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Generates the channel kernel depending on the device type.
+ */
+void FgFeedbackDevice::generate( FgFeedbackChannel* pFeedbackChannel )
+{
+   assert( pFeedbackChannel->m_pCommon == nullptr );
+   assert( m_pParent != nullptr );
+
+   const daq::DAQ_DEVICE_TYP_T type = getTyp();
+   DEBUG_MESSAGE( "generating channel for device type: " << deviceType2String( type ) );
+
+#ifdef CONFIG_MIL_FG
+   MiLdaq::DaqDevice* pMilDev = dynamic_cast<MiLdaq::DaqDevice*>(m_poDevice);
+   /*
+    * Is this object a MIL device?
+    */
+   if( pMilDev != nullptr )
+   {  /*
+       * The feedback channel object becomes registered in a MIL device so
+       * a MIL feedback object will created.
+       */
+      pFeedbackChannel->m_pCommon = new FgFeedbackChannel::MilFb( pFeedbackChannel );
+      pMilDev->registerDaqCompare( &static_cast<FgFeedbackChannel::MilFb*>(pFeedbackChannel->m_pCommon)->m_oReceive );
+      return;
+   }
+#endif // ifdef CONFIG_MIL_FG
+
+   daq::DaqDevice* pAddacDev = dynamic_cast<daq::DaqDevice*>(m_poDevice);
+   /*
+    * Here a ADDAC/ACU object is assumed.
+    */
+   assert( pAddacDev != nullptr );
+
+
+   /*
+    * The feedback channel object becomes registered in a ADDAC/ACU device so
+    * a ADDAC/ACU feedback object will created.
+    */
+   pFeedbackChannel->m_pCommon = new FgFeedbackChannel::AddacFb( pFeedbackChannel, type );
+
+   /*
+    * Register receive channel for set-values
+    */
+   pAddacDev->registerChannel( &static_cast<FgFeedbackChannel::AddacFb*>( pFeedbackChannel->m_pCommon )->m_oReceiveSetValue );
+   /*
+    * Register receive channel for actual-values
+    */
+   pAddacDev->registerChannel( &static_cast<FgFeedbackChannel::AddacFb*>( pFeedbackChannel->m_pCommon )->m_oReceiveActValue );
+}
+
+/*! ---------------------------------------------------------------------------
  */
 void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
 {
@@ -342,11 +407,10 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
    pFeedbackChannel->m_pParent = this;
 
 #ifdef CONFIG_MIL_FG
-   MiLdaq::DaqDevice* pMilDev = dynamic_cast<MiLdaq::DaqDevice*>(m_poDevice);
    /*
     * Is this object a MIL device?
     */
-   if( pMilDev != nullptr )
+   if( dynamic_cast<MiLdaq::DaqDevice*>(m_poDevice) != nullptr )
    {
       if( (pFeedbackChannel->getFgNumber() >= MAX_FG_MACROS) ||
           (pFeedbackChannel->getFgNumber() == 0) )
@@ -356,45 +420,29 @@ void FgFeedbackDevice::registerChannel( FgFeedbackChannel* pFeedbackChannel )
          str += " is out of range from 1 to <" TO_STRING( MAX_FG_MACROS ) " !";
          throw daq::Exception( str );
       }
-      /*
-       * The feedback channel object becomes registered in a MIL device so
-       * a MIL feedback object will created.
-       */
-      pFeedbackChannel->m_pCommon = new FgFeedbackChannel::MilFb( pFeedbackChannel );
-      pMilDev->registerDaqCompare( &static_cast<FgFeedbackChannel::MilFb*>(pFeedbackChannel->m_pCommon)->m_oReceive );
-
-      m_lChannelList.push_back( pFeedbackChannel );
-      return;
    }
+   else
 #endif // ifdef CONFIG_MIL_FG
-
-   daq::DaqDevice* pAddacDev = dynamic_cast<daq::DaqDevice*>(m_poDevice);
    /*
-    * Here a ADDAC/ACU object is assumed.
+    * Is this object a non-MIL device?
     */
-   assert( pAddacDev != nullptr );
-   if( pFeedbackChannel->getFgNumber() >= MAX_FG_PER_SLAVE )
+   if( dynamic_cast<daq::DaqDevice*>(m_poDevice) != nullptr )
    {
-      std::string str = "Function generator number for ADDAC/ACU-FG ";
-      str += std::to_string( pFeedbackChannel->getFgNumber() );
-      str += " is out of range from 0 to <" TO_STRING( MAX_FG_PER_SLAVE ) " !";
-      throw daq::Exception( str );
+      if( pFeedbackChannel->getFgNumber() >= MAX_FG_PER_SLAVE )
+      {
+         std::string str = "Function generator number for ADDAC/ACU-FG ";
+         str += std::to_string( pFeedbackChannel->getFgNumber() );
+         str += " is out of range from 0 to <" TO_STRING( MAX_FG_PER_SLAVE ) " !";
+         throw daq::Exception( str );
+      }
+   }
+   else
+   {
+      assert( false );
    }
 
-   /*
-    * The feedback channel object becomes registered in a ADDAC/ACU device so
-    * a ADDAC/ACU feedback object will created.
-    */
-   pFeedbackChannel->m_pCommon = new FgFeedbackChannel::AddacFb( pFeedbackChannel );
-
-   /*
-    * Register receive channel for set-values
-    */
-   pAddacDev->registerChannel( &static_cast<FgFeedbackChannel::AddacFb*>( pFeedbackChannel->m_pCommon )->m_oReceiveSetValue );
-   /*
-    * Register receive channel for actual-values
-    */
-   pAddacDev->registerChannel( &static_cast<FgFeedbackChannel::AddacFb*>( pFeedbackChannel->m_pCommon )->m_oReceiveActValue );
+   if( m_pParent != nullptr )
+      generate( pFeedbackChannel );
 
    m_lChannelList.push_back( pFeedbackChannel );
 }
@@ -508,6 +556,7 @@ void FgFeedbackAdministration::registerDevice( FgFeedbackDevice* poDevice )
       assert( false );
    }
    poDevice->m_pParent = this;
+   poDevice->generateAll();
    m_lDevList.push_back( poDevice );
 }
 

@@ -232,6 +232,8 @@ public:
 
    uint readMaxChannels( const uint deviceNumber );
 
+   DAQ_DEVICE_TYP_T readDeviceType( const uint deviceNumber );
+
    int sendEnablePostMortem( const uint deviceNumber,
                              const uint channel,
                              const bool restart = false
@@ -368,6 +370,7 @@ private:
    void probe( void );
    bool cmdReadyWait( void );
    void readSharedTotal( void );
+   bool permitCommand( DAQ_OPERATION_CODE_T );
    RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );
    DAQ_OPERATION_CODE_T getCommand( void );
 

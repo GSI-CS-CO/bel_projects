@@ -282,32 +282,6 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
 STATIC_ASSERT( DAQ_MAX_CHANNELS / 2 == MAX_FG_PER_SLAVE );
 #endif
 
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ
- * @brief Returns the channel number for the set-value of the given function-
- *        generator number.
- * @param fgNum ADDAC function generator number 0 or 1
- * @return Feedback DAQ-channel number for set value.
- */
-STATIC inline
-unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum )
-{
-   return fgNum + MAX_FG_PER_SLAVE;
-}
-
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ
- * @brief Returns the channel number for the actual-value of the given function-
- *        generator number.
- * @param fgNum ADDAC function generator number 0 or 1
- * @return Feedback DAQ-channel number for actual value.
- */
-STATIC inline
-unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum )
-{
-   return fgNum;
-}
-
 #endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
 
 /*!@} *//*defgroup DAQ_INTERFACE */

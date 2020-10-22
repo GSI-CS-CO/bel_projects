@@ -10,7 +10,7 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
- USE_SHARED_LIB := 1
+ # USE_SHARED_LIB := 1
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -19,6 +19,7 @@ MIAN_MODULE := feedback-example.cpp
 ifndef USE_SHARED_LIB
  DEFINES += DEBUGLEVEL
  SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
+ SOURCE += $(DAQ_DIR)/daq_fg_allocator.c
  SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
  SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
  SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
@@ -62,7 +63,7 @@ LIBS += etherbone
 
 
 # CALL_ARGS         = "tcp/scuxl0107"
-
+# CALL_ARGS         = "tcp/scuxl0192"
 # CALL_ARGS         = "tcp/scuxl0212"
  CALL_ARGS         = "tcp/scuxl0035"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"

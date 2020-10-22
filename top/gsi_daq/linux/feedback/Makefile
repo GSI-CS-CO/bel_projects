@@ -29,6 +29,7 @@ SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
+SOURCE += $(DAQ_DIR)/daq_fg_allocator.c
 
 # NO_LTO = 1
 

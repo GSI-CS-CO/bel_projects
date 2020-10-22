@@ -110,6 +110,7 @@ endif
 ifdef ADDAC_DAQ
   SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
   SOURCE += $(DAQ_LM32_DIR)/daq.c
+  SOURCE += $(DAQ_DIR)/daq_fg_allocator.c
   SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
   SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
   SOURCE += $(DAQ_LM32_DIR)/daq_main.c
@@ -155,8 +156,8 @@ endif
 
 
 # SCU_URL = scuxl0107
- SCU_URL = scuxl0035
-
+# SCU_URL = scuxl0035
+ SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
  # ACU-test
 
