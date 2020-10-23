@@ -5,11 +5,15 @@
  *
  * @note This module is suitable for LM32 and Linux
  *
+ * <a href="https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ * Data Aquisition Macro fuer SCU Slave Baugruppen</a>
+ *
  * @date 21.10.2020
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  * @author Ulrich Becker <u.becker@gsi.de>
  *
+ * @todo Allocation of DIOB devices
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,7 +44,7 @@ namespace daq
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
- * @brief Info-type holding the DAQ device type ADDAC or ACU
+ * @brief Info-type holding the DAQ device type ADDAC, ACU, DOIB or MIL.
  */
 typedef enum
 {  /*!
@@ -75,19 +79,25 @@ typedef enum
  * @ingroup DAQ
  * @brief Returns the channel number for the set-value of the given function-
  *        generator number.
+ * @todo Allocation of DIOB devices
  * @param fgNum ADDAC function generator number 0 or 1
+ * @param type Type of SCU-bus slave.
  * @return Feedback DAQ-channel number for set value.
  */
-unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum, const DAQ_DEVICE_TYP_T type );
+unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum,
+                                     const DAQ_DEVICE_TYP_T type );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @brief Returns the channel number for the actual-value of the given function-
  *        generator number.
+ * @todo Allocation of DIOB devices
  * @param fgNum ADDAC function generator number 0 or 1
+ * @param type Type of SCU-bus slave.
  * @return Feedback DAQ-channel number for actual value.
  */
-unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum, const DAQ_DEVICE_TYP_T type );
+unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum,
+                                        const DAQ_DEVICE_TYP_T type );
 
 #ifdef __cplusplus
 } /* namespace daq */

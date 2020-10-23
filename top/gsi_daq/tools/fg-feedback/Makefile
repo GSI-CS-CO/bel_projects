@@ -1,6 +1,6 @@
 ###############################################################################
 ##                                                                           ##
-##          Makefile for building the commandline tool "mdaqt"               ##
+##        Makefile for building the commandline tool "fg-feedback"           ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
 ## File:     gsi_daq/tools/fg-feedback/Makefile                              ##
@@ -9,9 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.1
-
-  DEFINES += CONFIG_FW_VERSION_3
+DEFINES += VERSION=0.2
 
 MIAN_MODULE := fg-feedback.cpp
 
@@ -28,6 +26,7 @@ SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
+SOURCE += $(DAQ_DIR)/daq_fg_allocator.c
 
 SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
@@ -45,29 +44,19 @@ SOURCE += $(EB_SRC)/BusException.cpp
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
-DEFINES += CONFIG_MIL_FG
-DEFINES += CONFIG_SCU_DAQ_INTEGRATION
-
 DEFINES += CONFIG_AUTODOC_OPTION
 
-#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
-DEFINES += _GLIBCXX_USE_CXX11_ABI=0
-DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#-----------------------------------------------------------------------------------------
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
-DEFINES += _DEFAULT_SOURCE
-DEFINES += CONFIG_SCU_USE_DDR3
-#DEFINES += DEBUGLEVEL=1
-DEFINES += CONFIG_DAQ_TEST
+# DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
 # DEFINES += CONFIG_NO_SCU_RAM
 
- DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+# DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)

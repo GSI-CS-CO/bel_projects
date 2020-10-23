@@ -13,29 +13,34 @@
 #ifndef _SCU_CONTROL_CONFIG_H
 #define _SCU_CONTROL_CONFIG_H
 
-#ifndef _BSD_SOURCE
-  #define _BSD_SOURCE
-#endif
-#ifndef _POSIX_C_SOURCE
-  #define _POSIX_C_SOURCE
-#endif
-#ifndef _DEFAULT_SOURCE
-  #define _DEFAULT_SOURCE
-#endif
-#if (_GLIBCXX_USE_CXX11_ABI != 0)
-  /*!
-   * @brief Necessary for backward compatibility if the compiler
-   *        version greater or equal 5
-   */
-  #define _GLIBCXX_USE_CXX11_ABI 0
-#endif
-#ifndef BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-  /*!
-   * @brief Necessary for backward compatibility if the compiler
-   *        version greater or equal 5
-   */
-   #define BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
-#endif
+#ifdef __cplusplus
+
+  #ifndef _BSD_SOURCE
+    #define _BSD_SOURCE
+  #endif
+  #ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE
+  #endif
+  #ifndef _DEFAULT_SOURCE
+    #define _DEFAULT_SOURCE
+  #endif
+  #if (_GLIBCXX_USE_CXX11_ABI != 0)
+    #undef _GLIBCXX_USE_CXX11_ABI
+    /*!
+     * @brief Necessary for backward compatibility if the compiler
+     *        version greater or equal 5
+     */
+    #define _GLIBCXX_USE_CXX11_ABI 0
+  #endif
+  #ifndef BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
+    /*!
+     * @brief Necessary for backward compatibility if the compiler
+     *        version greater or equal 5
+     */
+     #define BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
+  #endif
+
+#endif /* ifdef __cplusplus */
 
 #ifndef CONFIG_GSI
  /*!

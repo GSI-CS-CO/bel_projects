@@ -65,7 +65,7 @@ namespace Scu
  */
 #define   MAX_FG_PER_SLAVE  2
 
-
+//TODO Convert following macros to emums.
 #define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
 #define   OUTPUT_BITS       24

@@ -488,10 +488,10 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
          ramRingIncReadIndex( &pFeedback->aktionBuffer.index );
          pFeedback->fgNumber = pFeedback->aktionBuffer.aAction[i].fgNumber;
-         DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber)];
+         DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          if( pFeedback->aktionBuffer.aAction[i].action == FB_OFF )
          {
-            DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+            DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
 
             ATOMIC_SECTION()
             {
@@ -518,7 +518,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
             FSM_TRANSITION_SELF();
             break;
          }
-         DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber)];
+         DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          daqChannelSample1msOn( pActChannel );
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
          FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired.\n'
