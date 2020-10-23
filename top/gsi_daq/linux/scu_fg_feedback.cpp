@@ -300,8 +300,8 @@ FgFeedbackDevice::~FgFeedbackDevice( void )
    if( m_pParent != nullptr )
        m_pParent->unregisterDevice( this );
 
-//   for( auto& channel: m_lChannelList )
-//      unregisterChannel( channel );
+   for( auto& channel: m_lChannelList )
+      channel->m_pParent = nullptr;
 
    if( m_poDevice != nullptr )
    {
@@ -369,7 +369,7 @@ void FgFeedbackDevice::generate( FgFeedbackChannel* pFeedbackChannel )
 
    daq::DaqDevice* pAddacDev = dynamic_cast<daq::DaqDevice*>(m_poDevice);
    /*
-    * Here a ADDAC/ACU object is assumed.
+    * Here a ADDAC/ACU object is provided.
     */
    assert( pAddacDev != nullptr );
 
@@ -453,9 +453,12 @@ void FgFeedbackDevice::unregisterChannel( FgFeedbackChannel* pFeedbackChannel )
 {
    if( pFeedbackChannel->m_pParent != this )
       return;
-   //!@bug this will make a segmentation fault!
- //  m_lChannelList.remove( pFeedbackChannel );
+
+   m_lChannelList.remove( pFeedbackChannel );
    pFeedbackChannel->m_pParent = nullptr;
+   DEBUG_MESSAGE( "Channel fg-" << getSocket() << '-'
+                                << pFeedbackChannel->getFgNumber()
+                                << " unregistered!" );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -567,9 +570,9 @@ void FgFeedbackAdministration::unregisterDevice( FgFeedbackDevice* poDevice )
    if( poDevice->m_pParent != this )
       return;
 
-   //!@bug this will make a segmentation fault!
-   //m_lDevList.remove( poDevice );
+   m_lDevList.remove( poDevice );
    poDevice->m_pParent = nullptr;
+   DEBUG_MESSAGE( "Feedback device " << poDevice->getSocket() << " unregistered!" );
 }
 
 /*! ---------------------------------------------------------------------------
