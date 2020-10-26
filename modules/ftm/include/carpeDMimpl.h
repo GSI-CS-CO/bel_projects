@@ -61,7 +61,6 @@ private:
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
   void generateMgmtData();
-  void completeId(vertex_t v, Graph& g);
 
   void addition(Graph& g);
   void subtraction(Graph& g);
@@ -140,7 +139,7 @@ private:
 
   void readMgmtLLMeta();
 
-  
+
   vEbwrs& setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
   vEbwrs& setThrCursor(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, const std::string& name);
   void resetAllThreads();
@@ -218,6 +217,7 @@ public:
                void writeTextFile(const std::string& fn, const std::string& s);
         std::string readTextFile(const std::string& fn);
 
+        void completeId(vertex_t v, Graph& g);
 // Graphs to Dot
              Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
         std::string createDot( Graph& g, bool filterMeta);
@@ -241,7 +241,7 @@ public:
                 int clear(bool force);                              // clears all nodes from DM
 
 // Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
+
               vStrC getLockedBlocks(bool checkReadLock, bool checkWriteLock);
                 int sendCommandsDot(const std::string& s); //Sends a dotfile of commands to the DM
                 int sendCommandsDotFile(const std::string& fn);
@@ -396,7 +396,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showMemSpace();
                void lockManagerClear() {lm.clear();}
                bool lockManagerHasEntries() {return (lm.getLockVec().size() > 0);}
-               void softwareReset(bool clearStatistic); 
+               void softwareReset(bool clearStatistic);
 
 
 
