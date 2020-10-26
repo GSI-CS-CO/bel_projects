@@ -16,9 +16,5 @@ cp -a /opt/$NAME/$ARCH/usr/bin/* /usr/bin/
 log 'copying firmware to ramdisk'
 cp -a /opt/$NAME/firmware/* /
 
-#log 'starting monitoring service'
-#dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
-
-log 'starting the gateway'
-#dm-unipz_start.sh | logger -t dmunipz-start -sp local0.info
-b2btest-esr_start.sh
+log 'starting the b2b-sis18-rf'
+b2b-sis18-rf_start.sh
