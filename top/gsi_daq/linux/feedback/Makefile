@@ -45,7 +45,16 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
 DOX_INPUT += $(DAQ_DIR)/scu_control_config.h
 
-DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq
+DOX_INPUT += $(DAQ_LINUX_DIR)/../example/feedback/feedback-example.cpp
+
+ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
+   DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq
+endif
+
+DOX_EXAMPLE_PATH = $(DAQ_LINUX_DIR)/../example/feedback/
+
+DOX_INPUT += $(DAQ_LINUX_DIR)/feedback/scu_feedback.md
+DOX_FILE_PATTERNS += *.md
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
