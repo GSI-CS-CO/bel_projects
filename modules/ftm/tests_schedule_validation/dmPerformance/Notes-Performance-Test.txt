@@ -1,0 +1,59 @@
+1.[scenario]_gloabalSchedule.dot auf den Generator packen
+2. safeToRemove(G1_P1)
+3. [scenario]_removeSchedule.dot entfernen
+4.g1_p1_update_schedule.dot hinzufuegen.
+
+dm-cmd $DM -v halt
+dm-sched $DM -v clear
+dm-sched $DM -v add $1_globalSchedule.dot
+dm-cmd $DM -v chkrem G1_P1
+dm-sched $DM -v remove $1_removeSchedule.dot
+dm-sched $DM -v add g1_p1_update_schedule.dot
+
+Fragen:
+1. Schedule g1_p1_update_schedule.dot lädt nicht ohne Änderung.
+2. gnomon Ausgaben: Zusätzliche cout-Statements eingebaut?
+3. Eigener Branch für die Schedules und Codeänderungen?
+
+dm-sched $DM -v add g1_p1_update_schedule.dot | gnomon | grep -v '0.0000s' > gnomon_add_g1_p1.txt
+
+Add timestamps with gnomon and filter out all lines with 0.0 seconds, except those preceeding a line with positive timestamp.
+Redirect result to file.
+make test1 | gnomon | grep -vB 1 '0.0000s' > gnomon_test1.txt
+grep -rnH --exclude=lineNumbers.txt  'class="lineCov"' . > lineNumbers.txt
+Results:grep -rnH --exclude=lineNumbers.txt  'class="lineCov"' . > lineNumbers.txt
+SCHEDULE=groups_4_nonDefaultPatterns_9_blocksPerPattern_150 make test1 | gnomon | grep -vB 1 '0.0000s' > gnomon_test1x.txt
+Lange Zeiten mit 'Done': unklar, was in diesem Schritt gemacht wird.
+
+Call Make with callgrind:
+SCHEDULE=groups_4_nonDefaultPatterns_9_blocksPerPattern_150 valgrind --tool=callgrind make test1
+Display results:
+kcachegrind callgrind.out.1033 &
+
+----
+Checking BOOST usage and loops:
+~/dev/bel_projects/dm-enigma-merge-v3/modules/ftm$ grep -rnH --include={*.cpp,*.h} BOOST_FOREACH .
+1. Method void CarpeDM::CarpeDMimpl::addition(Graph& gTmp)
+find duplicate vertices in gUp and gTmp.
+./src/carpeDMuploadschedule.cpp:448:    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+./src/carpeDMuploadschedule.cpp:449:      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
+called by:
+./src/carpeDMuploadschedule.cpp:628:    addition(g);
+./src/carpeDMuploadschedule.cpp:716:    addition(g);
+
+2. Method void CarpeDM::CarpeDMimpl::subtraction(Graph& gTmp)
+./src/carpeDMuploadschedule.cpp:517:    BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
+./src/carpeDMuploadschedule.cpp:521:      BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+called by:
+./src/carpeDMuploadschedule.cpp:649:    subtraction(g);
+./src/carpeDMuploadschedule.cpp:690:    subtraction(gTmpRemove);
+
+3. Method int CarpeDM::CarpeDMimpl::keep(Graph& g, bool force)
+./src/carpeDMuploadschedule.cpp:669:    BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
+./src/carpeDMuploadschedule.cpp:672:      BOOST_FOREACH( vertex_t v, vertices(gTmpKeep) ) {
+called by:
+(not found)
+
+
+grep -rnH --exclude=lineNumbers.txt  'class="lineNoCov"' . > lineNumbers.txt
+grep -rnH --exclude=lineNumbers.txt  'class="lineCov"' . > lineNumbers.txt
