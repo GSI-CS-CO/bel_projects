@@ -82,6 +82,7 @@ class CommandLine: public PARSER
    bool                       m_deviationEnable;
    bool                       m_continuePlotting;
    bool                       m_plotAlwaysSetValue;
+   bool                       m_doClearBuffer;
    bool                       m_zoomYAxis;
    float                      m_xAxisLen;
    uint                       m_plotInterval;

@@ -612,6 +612,25 @@ void FgFeedbackAdministration::distributeData( void )
 
 /*! ---------------------------------------------------------------------------
  */
+void FgFeedbackAdministration::clearBuffer( const bool update )
+{
+#ifdef __DOXYGEN__
+ /*
+  * Necessary for Doxygen - caller graph,
+  * it's not a part of the resulting binary.
+  */
+ #ifdef CONFIG_MIL_FG
+   MiLdaq::DaqAdministration::clearBuffer();
+ #endif
+   daq::DaqAdministration::clearBuffer();
+#endif
+
+   for( const auto& poDaqAdmin: m_vPollList )
+      poDaqAdmin->clearBuffer( update );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void FgFeedbackAdministration::reset( void )
 {
 #ifdef __DOXYGEN__

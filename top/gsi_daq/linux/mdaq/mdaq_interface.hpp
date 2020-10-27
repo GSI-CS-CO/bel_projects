@@ -152,6 +152,8 @@ public:
 
    uint getBufferSize( void );
 
+   void clearBuffer( bool update = true ) override;
+
 protected:
    bool readRingPosition( void );
    void updateRingTail( void );

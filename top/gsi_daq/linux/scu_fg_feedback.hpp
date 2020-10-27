@@ -491,10 +491,6 @@ class FgFeedbackAdministration
          return 0;
       }
 
-      void clearBuffer( bool update = true ) override
-      {
-         //TODO
-      }
    }; // class MilDaqAdministration
 
    /*!
@@ -675,6 +671,13 @@ public:
     * @note This function should run in a polling-loop of a own thread.
     */
    void distributeData( void );
+
+   /*!
+    * @brief Makes the data buffer empty.
+    * @param update If true the indexes in the LM32 shared memory
+    *               becomes updated.
+    */
+   void clearBuffer( const bool update = true );
 
    void reset( void );
 }; // class FgFeedbackAdministration

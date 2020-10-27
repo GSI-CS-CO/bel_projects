@@ -342,6 +342,18 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         static_cast<CommandLine*>(poParser)->m_doClearBuffer = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'r',
+      .m_longOpt  = "reset",
+      .m_helpText = "Reset of the whole data buffer, that means clearing of history data."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
          static_cast<CommandLine*>(poParser)->m_zoomYAxis = true;
          return 0;
       }),
@@ -551,6 +563,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_deviationEnable( false )
    ,m_continuePlotting( false )
    ,m_plotAlwaysSetValue( false )
+   ,m_doClearBuffer( false )
    ,m_zoomYAxis( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
@@ -612,6 +625,8 @@ AllDaqAdministration* CommandLine::operator()( void )
    {
       if( m_autoBuilding )
          autoBuild();
+      if( m_doClearBuffer )
+         m_poAllDaq->clearBuffer();
       return m_poAllDaq;
    }
 

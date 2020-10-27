@@ -118,6 +118,25 @@ uint DaqInterface::getBufferSize( void ) //TODO Renaming in getCurrentRamSize
 
 /*! ---------------------------------------------------------------------------
  */
+void DaqInterface::clearBuffer( bool update )
+{
+#ifndef CONFIG_MIL_DAQ_USE_RAM
+   m_oRing.m_tail = m_oRing.m_head = 0;
+   if( !update )
+      return;
+
+   DAQ_RING_T tmp;
+   tmp.m_head = gsi::convertByteEndian( m_oRing.m_head );
+   tmp.m_tail = gsi::convertByteEndian( m_oRing.m_tail );
+   getEbAccess()->writeLM32( &tmp, sizeof( tmp ),
+                                  offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
+#else
+   #error TODO: DDR3-Application requiered!
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 inline
 void DaqInterface::readRingData( RING_ITEM_T* ptr, uint len, uint offset )
 {
