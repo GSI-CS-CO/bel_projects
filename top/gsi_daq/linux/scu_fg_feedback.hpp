@@ -8,7 +8,8 @@
  *
  * @author Ulrich Becker <u.becker@gsi.de>
  *
- * @example ../example/feedback/feedback-example.cpp
+ * example feedback-example.cpp
+ * @include feedback-example.cpp
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -88,7 +88,7 @@ void Plot::plot( void )
                   m_pParent->getCommandLine()->isDeviationPlottingEnabled();
 
    bool validSetDataPresent = false;
-   for( auto& i: m_pParent->m_aPlotList )
+   for( const auto& i: m_pParent->m_aPlotList )
        if( i.m_setValid )
           validSetDataPresent = true;
 

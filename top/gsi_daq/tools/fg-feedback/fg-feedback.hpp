@@ -61,7 +61,7 @@ namespace Scu
 #endif
 
 #ifndef MAX_ITEMS_PER_SECOND
-   #define MAX_ITEMS_PER_SECOND 200
+   #define MAX_ITEMS_PER_SECOND 1000
 #endif
 
 #ifdef FSM_DECLARE_STATE
@@ -162,9 +162,10 @@ private:
    void onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
                                       MiLdaq::MIL_DAQ_T setValue ) override;
 
-   void addItem( uint64_t time, MiLdaq::MIL_DAQ_T actValue,
-                 MiLdaq::MIL_DAQ_T setValue,
-                 bool setValueValid );
+   void addItem( const uint64_t time,
+                 const MiLdaq::MIL_DAQ_T actValue,
+                 const MiLdaq::MIL_DAQ_T setValue,
+                 const bool setValueValid );
 
    void onInit( void ) override;
    void onReset( void ) override;

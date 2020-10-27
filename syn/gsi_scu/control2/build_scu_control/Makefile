@@ -155,9 +155,9 @@ endif
  STACK_SIZE  =  4096
 
 
-# SCU_URL = scuxl0107
+ SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
- SCU_URL = scuxl0192
+# SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
  # ACU-test
 
@@ -168,8 +168,9 @@ DOX_EXPAND_ONLY_PREDEF     = "YES"
 DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE __DAQ_SHARED_IO_T"
 DOX_DOTFILE_DIRS           += $(SCU_DIR)
 
-DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/lm32-firmware
-
+ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
+   DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/lm32-firmware
+endif
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 

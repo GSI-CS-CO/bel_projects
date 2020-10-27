@@ -153,11 +153,10 @@ void FbChannel::onReset( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void
-FbChannel::addItem( uint64_t time,
-                                MiLdaq::MIL_DAQ_T actValue,
-                                MiLdaq::MIL_DAQ_T setValue,
-                                bool setValueValid )
+void FbChannel::addItem( const uint64_t time,
+                         const MiLdaq::MIL_DAQ_T actValue,
+                         const MiLdaq::MIL_DAQ_T setValue,
+                         const bool setValueValid )
 {
    m_aPlotList.push_back(
    {
@@ -184,7 +183,10 @@ void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
       m_maxTime = std::max( m_maxTime, timeinterval );
    }
 
-   if( !isMil() && ((m_callCount % getCommandLine()->getPlotInterval()) != 0) )
+   if( !isMil() &&
+      getCommandLine()->isContinuePlottingEnabled() &&
+      ((m_callCount % getCommandLine()->getPlotInterval()) != 0)
+     )
       return;
    /*!
     * @brief Repeat-flag becomes set to true in macro FSM_TRANSITION_NEXT
@@ -307,7 +309,7 @@ int fbMain( int argc, char** ppArgv )
       return EXIT_FAILURE;
    }
 
-   DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getWbDevice() );
+   DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getScuDomainName() );
    int key;
    Terminal oTerminal;
    DEBUG_MESSAGE( "Entering loop" );

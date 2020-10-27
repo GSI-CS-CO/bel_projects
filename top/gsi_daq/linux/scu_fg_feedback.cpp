@@ -505,8 +505,11 @@ FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess
  */
 FgFeedbackAdministration::~FgFeedbackAdministration( void )
 {
-   for( const auto& dev: m_lDevList )
-      unregisterDevice( dev );
+   DEBUG_MESSAGE( "Destructor of " <<
+                 __func__ << "( " << getScuDomainName() << " )" );
+
+   for( const auto& pDev: m_lDevList )
+      pDev->m_pParent = nullptr;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -524,6 +527,7 @@ void FgFeedbackAdministration::scan( const bool doRescan )
    if( getNumOfFoundMilFg() != 0 )
       m_vPollList.push_back( &m_oMilDaqAdmin );
 #endif
+
    if( getNumOfFoundNonMilFg() != 0 )
       m_vPollList.push_back( &m_oAddacDaqAdmin );
 
