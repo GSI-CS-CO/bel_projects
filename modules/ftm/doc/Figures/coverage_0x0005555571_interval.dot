@@ -1,0 +1,15 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A_M[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="0", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B_M[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="1", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0001000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+C_M[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="C", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="2", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0002000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+A_B[cpu="0", flags="0x00108007", type="block", tperiod="50000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+B_B[cpu="0", flags="0x00108007", type="block", tperiod="50000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+C_B[cpu="0", flags="0x00108007", type="block", tperiod="50000", pattern="C", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+A_M->A_B [type="defdst", color     = "red"];
+C_M->C_B [type="defdst", color     = "red"];
+B_M->B_B [type="defdst", color     = "red"];
+A_B->C_M [type="defdst", color     = "red"];
+C_B->C_M [type="defdst", color     = "red"];
+}

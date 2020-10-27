@@ -137,6 +137,7 @@ namespace dnt = DotStr::Node::TypeVal;
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
+    if(verbose) sLog << "Analysing downloaded graph binary " << std::dec << downloadData.size() << " bytes" << std::endl;
     uint32_t nodeCnt = 0;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
@@ -152,6 +153,8 @@ namespace dnt = DotStr::Node::TypeVal;
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           uint8_t     cpu       = i;
 
+
+          //FIXME Can't management and data be handled in parallel?... unsure
           // IMPORTANT: skip all mgmt nodes
           if (type == NODE_TYPE_MGMT) {continue; }
 
@@ -217,7 +220,7 @@ namespace dnt = DotStr::Node::TypeVal;
     }
 
 
-
+    if(verbose) sLog << "Node creation done. Creating Edges" << std::endl;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
@@ -241,7 +244,7 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
-
+    if(verbose) sLog << "Done. Graph generation complete" << std::endl;
   }
 
     //TODO assign to CPUs/threads
@@ -300,11 +303,13 @@ namespace dnt = DotStr::Node::TypeVal;
     // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     updateModTime();
 
-    if(verbose) sLog << "Done." << std::endl << "Parsing ...";
+    if(verbose) sLog << "Done." << std::endl << "Calling parser for Mgmt Meta" << std::endl ;
     readMgmtLLMeta(); // we have to do this before parsing
+    if(verbose) sLog << "returned." << std::endl << "Calling parser for Mgmt Data" << std::endl ;
     parseDownloadMgmt(vDlD);
+    if(verbose) sLog << "returned." << std::endl << "Calling parser for Download Meta" << std::endl ;
     parseDownloadData(vDlD);
-    if(verbose) sLog << "Done." << std::endl;
+    if(verbose) sLog << "returned." << std::endl;
 
     freshDownload = true;
     if(optimisedS2R) updateCovenants();

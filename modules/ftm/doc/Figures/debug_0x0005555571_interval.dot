@@ -1,0 +1,36 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A_M[cpu="0", flags="0x00012202", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="0", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "rosybrown1", fillcolor = "crimson", fontname="Times-Bold", fontcolor = "cyan", penwidth=2, color = "darkorange3"];
+B_M[cpu="0", flags="0x00002202", type="tmsg", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="1", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0001000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3"];
+C_M[cpu="0", flags="0x00002202", type="tmsg", toffs="0", pattern="C", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="2", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0002000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3"];
+A_B[cpu="0", flags="0x00128207", type="block", tperiod="50000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", fontname="Times-Bold", fontcolor = "blue2", fontsize="16", penwidth=2, color = "purple"];
+B_B[cpu="0", flags="0x00108207", type="block", tperiod="50000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", penwidth=2, color = "purple"];
+C_B[cpu="0", flags="0x00108207", type="block", tperiod="50000", pattern="C", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", penwidth=2, color = "purple"];
+A_M->A_B [type="defdst", color     = "red"];
+C_M->C_B [type="defdst", color     = "red"];
+B_M->B_B [type="defdst", color     = "red"];
+A_B->C_M [type="baddefdst", color     = "orange", style     = "dashed"];
+C_B->C_M [type="baddefdst", color     = "orange", style     = "dashed"];
+A_B->A_M [type="dynflowdst", color     = "maroon3"];
+A_B->B_M [type="dynflowdst", color     = "maroon3"];
+A_B->C_M [type="dynflowdst", color     = "maroon3"];
+B_B->A_M [type="dynflowdst", color     = "maroon3"];
+B_B->B_M [type="dynflowdst", color     = "maroon3"];
+B_B->C_M [type="dynflowdst", color     = "maroon3"];
+C_B->A_M [type="dynflowdst", color     = "maroon3"];
+C_B->B_M [type="dynflowdst", color     = "maroon3"];
+C_B->C_M [type="dynflowdst", color     = "maroon3"];
+A_B->A_M [type="domflowdst", color     = "cyan"];
+A_B->B_M [type="domflowdst", color     = "cyan"];
+A_B->C_M [type="domflowdst", color     = "cyan"];
+B_B->A_M [type="domflowdst", color     = "cyan"];
+B_B->B_M [type="domflowdst", color     = "cyan"];
+B_B->C_M [type="domflowdst", color     = "cyan"];
+C_B->A_M [type="domflowdst", color     = "cyan"];
+C_B->B_M [type="domflowdst", color     = "cyan"];
+C_B->C_M [type="domflowdst", color     = "cyan"];
+}
+//A_B#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->D2->D2->D2->eE
+//B_B#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->D2->D2->D2->eE
+//C_B#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->D2->D2->D2->eE

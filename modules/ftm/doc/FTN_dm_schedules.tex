@@ -1,0 +1,445 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[T1]{fontenc} % Output
+\usepackage[utf8]{inputenc} % Required for inputting international characters 
+\usepackage[english]{babel}
+\usepackage{sectsty}
+\usepackage[binary-units = true]{siunitx}
+\usepackage{fancyhdr}
+\usepackage[shortlabels]{enumitem}
+\usepackage{rotating}
+\usepackage{palatino} % Use the Palatino font by default
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{textcomp}
+\usepackage{datetime}
+\usepackage{xargs}
+\usepackage{csquotes}
+\usepackage{float}
+\usepackage[pdftex,dvipsnames]{xcolor}
+\usepackage{tocvsec2}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage{breakcites}
+\usepackage{changepage}
+
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[symbol]{footmisc}
+\usepackage{color}
+\usepackage[backend=bibtex,style=ieee,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{environ}  
+\usetikzlibrary{calc, positioning, shapes,arrows}
+\usepackage{tabularx, multirow}
+\usepackage{hhline}
+\usepackage{bytefield}
+\usepackage[toc,page]{appendix}
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{atbegshi}% http://ctan.org/pkg/atbegshi
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[nogroupskip, nomain, acronym]{glossaries}              % use glossaries-package
+\usepackage[printwatermark]{xwatermark}
+
+\usepackage{pmboxdraw}
+
+\DeclareUnicodeCharacter{2550}{\pmboxdrawuni{2550}}
+\DeclareUnicodeCharacter{2552}{\pmboxdrawuni{2552}}
+\DeclareUnicodeCharacter{2555}{\pmboxdrawuni{2555}}
+\DeclareUnicodeCharacter{2502}{\pmboxdrawuni{2502}}
+\DeclareUnicodeCharacter{251C}{\pmboxdrawuni{251C}}
+\DeclareUnicodeCharacter{2524}{\pmboxdrawuni{2524}}
+\DeclareUnicodeCharacter{2514}{\pmboxdrawuni{2514}}
+\DeclareUnicodeCharacter{2500}{\pmboxdrawuni{2500}}
+\DeclareUnicodeCharacter{2518}{\pmboxdrawuni{2518}}
+\DeclareUnicodeCharacter{255E}{\pmboxdrawuni{255E}}
+
+\lstdefinestyle{utf8text}{
+  extendedchars=false,
+  escapeinside={beginUTF8}{endUTF8},
+  belowcaptionskip=1\baselineskip,
+  captionpos=b,
+  breaklines=false,
+  breakatwhitespace=false,
+  keepspaces=true,
+  columns=flexible,
+  xleftmargin=0pt,
+  language=bash,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{black},
+  commentstyle=\itshape\color{purple!40!black},
+  tabsize=2
+}
+
+\newwatermark*[pagex={1, 2,3,4},color=red!50,angle=45,scale=3,xpos=0,ypos=-50]{DRAFT}
+
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\def\myemptymacro{}
+\newcommand*{\divideathousand}[1]
+        {\ifx\pgfmathresult\myemptymacro\else\pgfmathdivide{#1}{1000}\fi}
+
+\makeatletter
+\newsavebox{\measure@tikzpicture}
+\NewEnviron{scaletikzpicturetowidth}[1]{%
+  \def\tikz@width{#1}%
+  \def\tikzscale{1}\begin{lrbox}{\measure@tikzpicture}%
+  \BODY
+  \end{lrbox}%
+  \pgfmathparse{#1/\wd\measure@tikzpicture}%
+  \edef\tikzscale{\pgfmathresult}%
+  \BODY
+}
+
+
+%\AtBeginDocument{\AtBeginShipoutNext{\AtBeginShipoutDiscard}}
+
+\newdateformat{mydate}{%
+ \THEDAY, \monthname[\THEMONTH], \THEYEAR}
+\newcommand{\repeatcaption}[2]{%
+  \renewcommand{\thefigure}{\ref{#1}}%
+  \captionsetup{list=no}%
+  \caption{#2 (p. \pageref{#1})}%
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\DocBib}{thesis.bib}
+\newcommand{\AppendixA}{dm_memmap}
+\newcommand{\AppendixB}{dm_language}
+\newcommand{\AppendixC}{dm_troubleshooting}
+\newcommand{\DocAuthor}{Mathias Kreider}
+\newcommand{\DocContact}{m.kreider@gsi.de}
+\newcommand{\DocTitle}{CarpeDM\\Programming language for the DataMaster}
+\newcommand{\DocName}{Datamaster Manual}
+\newcommand{\DocRev}{12th of February, 2020} %\mydate\today}
+\newcommand{\DocVer}{0.1.9}
+\newcommand{\DocDate}{2018-02-01}
+\newcommand{\DocAbstract}{}
+\newcommand{\DocGroup}{TOS}
+\newcommand{\DocDept}{ACO}
+\newcommand{\DocHist}{
+0.1.0 & 01. Feb. 2018 & created & M. Kreider & Pending\\
+\hline
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+\newcommand{\colorbitbox}[4][rlbt]{%
+\rlap{\bitbox[#1]{#3}{\color{#2}\rule{\width}{\height}}}%
+\bitbox[#1]{#3}{#4}}
+
+\newcommand{\colorwordbox}[4][rlbt]{%
+\rlap{\wordbox[#1]{#3}{\color{#2}\rule{\dimexpr\width-0.4pt}{\dimexpr\height-0.4pt}}}%
+\wordbox[#1]{#3}{#4}}
+
+\newcommand{\memsection}[4]{%
+% define the height of the memsection
+\bytefieldsetup{bitheight=#3\baselineskip}%
+\bitbox[]{4}{%
+\texttt{#1}%      print end address
+\\
+%   do some spacing
+\vspace{#3\baselineskip}
+\vspace{-2\baselineskip}
+\vspace{-#3pt}
+\texttt{#2}%      print start address
+}%
+\bitbox{32}{#4}%    print box with caption
+}
+%default settings
+\bytefieldsetup{endianness=big, bitheight=2.8ex, bitwidth=0.03\linewidth}
+
+
+\definecolor{white}{RGB}{255,255,255}
+\definecolor{lightblue}{RGB}{175,198,233}
+\definecolor{lightpetrol}{RGB}{175,221,233}
+\definecolor{lightgreen}{RGB}{175,233,198}
+\definecolor{lightyellow}{RGB}{233,221,175}
+\definecolor{lightred}{RGB}{233,175,175}
+
+
+%\fancypagestyle{plain}{%
+%  \fancyhf{}
+%\fancyhead[C]{\small{\textbf{\thepage} \\ \vspace{0.5ex}}}
+%\setlength{\headsep}{2cm}
+%\fancyhead[LE, LO]{\footnotesize{\textbf{Document Title:} \DocTitle}}
+%\fancyhead[RE, RO]{}
+%\fancyfoot[LE, LO]{
+%\footnotesize
+%\begin{tabular}{l l}
+%\textbf{Author:} & \DocAuthor \\
+%\textbf{Revision:} & \DocRev
+%\end{tabular}
+%}
+
+%\fancyfoot[RE, RO]{
+%\footnotesize
+%\begin{tabular}{l l}
+%\textbf{Doc-Name: } & \DocName \\
+%\textbf{Version: } & \DocVer
+%\end{tabular}
+%}
+
+%\fancyfoot[C]{}
+%\renewcommand{\headrulewidth}{0.4pt}
+%\renewcommand{\footrulewidth}{0.4pt}
+%}
+%\pagestyle{plain}
+%%% C
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  breakatwhitespace=true,
+  keepspaces=true,
+  columns=flexible,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2
+}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\lstdefinestyle{customshell}{
+  belowcaptionskip=1\baselineskip,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=true,
+  keepspaces=true,
+  columns=flexible,
+  frame=L,
+  xleftmargin=\parindent,
+  language=bash,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{black},
+  commentstyle=\itshape\color{purple!40!black},
+  tabsize=2
+}
+
+\lstdefinestyle{customtext}{
+  belowcaptionskip=1\baselineskip,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=true,
+  keepspaces=true,
+  columns=flexible,
+  xleftmargin=\parindent,
+  language=bash,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{black},
+  commentstyle=\itshape\color{purple!40!black},
+  tabsize=2
+}
+
+%%% VHDL
+\lstdefinestyle{customvhdl}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  breakatwhitespace=true,
+  keepspaces=true,
+  columns=flexible,
+  frame=tB,
+  xleftmargin=\parindent,
+  language=VHDL,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2
+}
+
+%%% Asm
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+  tabsize=2
+}
+
+%%% Pseudo Code
+\newcounter{nalg}[chapter] % defines algorithm counter for chapter-level
+\renewcommand{\thenalg}{\thechapter .\arabic{nalg}} %defines appearance of the algorithm counter
+\DeclareCaptionLabelFormat{algocaption}{Algorithm \thenalg} % defines a new caption label as Algorithm x.y
+
+\lstnewenvironment{algorithm}[1][] %defines the algorithm listing environment
+{
+    \refstepcounter{nalg} %increments algorithm number
+    \captionsetup{labelformat=algocaption,labelsep=colon} %defines the caption setup for: it ises label format as the declared caption label above and makes label and caption text to be separated by a ':'
+    \lstset{ %this is the stype
+        frame=tB,
+        numbers=left,
+        numberstyle=\tiny,
+        basicstyle=\scriptsize,
+        keywordstyle=\color{black}\bfseries\em,
+        keywords={,input, output, constant, return, datatype, function, in, if, else, foreach, while, begin, end, goto, call} %add the keywords you want, or load a language as Rubens explains in his comment above.
+        numbers=left,
+        xleftmargin=.04\textwidth,
+        #1 % this is to add specific settings to an usage of this environment (for instnce, the caption and referable label)
+    }
+}
+{}
+
+\DefineBibliographyStrings{english}{%
+  bibliography = {Related Documentation},
+}
+\addbibresource{\DocBib} % The filename of the bibliography
+
+
+
+\appto\frontmatter{\pagestyle{empty}}
+\appto\mainmatter{\pagestyle{fancy}}
+
+
+
+
+\setcounter{chapter}{1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = blue, %Colour for external hyperlinks
+  linkcolor    = blue, %Colour of internal links
+  citecolor    = red %Colour of citations
+}
+\setlength{\glsdescwidth}{12cm}
+\newglossary[sl1]{sched}{sy1}{sg1}{Node Attributes} % create add. nodeattributes
+\newglossary[sl3]{id}{sy3}{sg3}{Timing ID sub fields} % create add. nodeattributes
+\newglossary[sl2]{cmd}{sy2}{sg2}{Director Command Attributes} % create add. nodeattributes
+
+\makeglossaries                                   % activate glossaries-package
+\newglossarystyle{symbvaltypelong}{%
+\renewcommand{\glossarypreamble}{\glsfindwidesttoplevelname[\currentglossary]}
+\setglossarystyle{alttree}% base this style on the list style
+}
+
+\loadglsentries{carpeDMglosentries_sched}
+\loadglsentries{carpeDMglosentries_cmd}
+\loadglsentries{carpeDMglosentries_id}
+\loadglsentries{carpeDMglosentries_acronyms}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace{2em} 
+
+\Huge{\DocName}\\[2cm]
+\Large{\DocTitle}\\[2cm] 
+
+\begin{large}
+\begin{tabularx}{\textwidth}{Xl}
+Version & \DocVer\\
+Last updated & \DocRev\\
+\vspace{1.5cm}\\
+Author & \DocAuthor\\
+Department & \DocDept\\
+Group & \DocGroup\\
+Contact & \DocContact
+\end{tabularx}%
+\end{large}
+
+\vfill
+
+\end{center}
+\end{titlepage}
+
+
+
+%\frontmatter
+%\pagenumbering{gobble}
+%\begin{figure}[H]
+%  \vspace*{-6cm}
+%  \makebox[\linewidth]{
+%  \textsf{\input{technote_title.pdf_tex}}
+%  \label{fig:title}
+%  }
+%
+%\end{figure}
+%
+%
+%\pagenumbering{arabic}
+%\mainmatter
+\pagestyle{plain} % dafuck ...
+\tableofcontents
+
+\glsunsetall
+\setcounter{chapter}{0}
+\include{dm_intro}
+\include{dm_userguide}
+\include{dm_sched_validation}
+\include{dm_sched_mod}
+\include{dm_traffic_analysis}
+\include{dm_nc}
+
+\include{\AppendixA}
+\include{\AppendixB}
+\include{\AppendixC}
+
+
+\appendix
+\renewcommand{\thechapter}{\Roman{chapter}}
+\chapter{Attached Documents}
+None.
+\begingroup
+\raggedright
+\sloppy
+\printbibliography[heading=bibnumbered]
+\endgroup
+\chapter{Document Information}
+\section{Document History}
+\begin{table}[H]
+\begin{tabular}{ | c | c | c | c | c |}
+\hline
+\textbf{Version} & \textbf{Date} & \textbf{Description} & \textbf{Author} & \textbf{Review / Approval} \\
+\hline
+\DocHist
+\hline
+\end{tabular}
+\end{table}
+\end{document}
+
+

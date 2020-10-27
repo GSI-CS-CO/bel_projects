@@ -1,0 +1,67 @@
+digraph g {
+name="Properties";
+
+graph [root="Demo",rankdir   = LR, nodesep           = 0.001, mindist     = 0.8, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black", shape     = "oval", labeljust=l, fixedsize="true", width=2.0 ]
+edge [style = "solid", color ="black", tailport=e, headport=w];
+//B_PPS[ shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+//Evt_PPS0       [label ="    ", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+subgraph cluster_block { 
+
+BLK              [label ="Block", shape     = "rectangle", fillcolor = "white", width=1.9];
+BLK_period       [label ="Period (ns)", color ="white", fillcolor = "white"];
+BLK_q_lo         [label ="Low Priority Q (bool)", color ="white", fillcolor = "white"];
+BLK_q_md         [label ="Med Priority Q (bool)", color ="white", fillcolor = "white"];
+BLK_q_hi         [label ="High Priority Q (bool)", color ="white", fillcolor = "white"];
+dummy [style="invis"];
+
+BLK           -> { BLK_period, BLK_q_lo, BLK_q_md, BLK_q_hi }  [tailport=e, headport=w]
+BLK_q_hi -> dummy [style="invis"];
+
+}
+ 
+subgraph cluster_msg { 
+
+TMSG          [label ="Timing Message", shape     = "oval",  fillcolor = "white", width=1.9];
+TMSG_offs     [label ="Time Offset (ns)",    color ="white", fillcolor = "white", width=1.7];
+TMSG_id       [label ="Event Id (64b)",      color ="white", fillcolor = "white", width=1.7];
+TMSG_par      [label ="Parameter (64b)",     color ="white", fillcolor = "white", width=1.7];
+TMSG_tef      [label ="Time fraction (int)", color ="white", fillcolor = "white", width=1.7];
+
+TMSG_id_fid   [label ="Format Id (4b)", color ="white", fillcolor = "white"];
+TMSG_id_gid   [label ="Group Id (12b)", color ="white", fillcolor = "white"];
+TMSG_id_evtno [label ="Event Number (12b)", color ="white", fillcolor = "white"];
+TMSG_id_bi  [label ="Beam In (1b)", color ="white", fillcolor = "white"];
+TMSG_id_sid   [label ="Sequence Id (12b)", color ="white", fillcolor = "white"];
+TMSG_id_bpid  [label ="Beam Process Id (14b)", color ="white", fillcolor = "white"];
+TMSG_id_rqnb  [label ="Req. No Beam (1b)", color ="white", fillcolor = "white"];
+TMSG_id_va    [label ="Virtual Accelerator (4b)", color ="white", fillcolor = "white"];
+
+TMSG          -> { TMSG_offs, TMSG_id, TMSG_par, TMSG_tef } [tailport=e, headport=w]
+TMSG_id       -> { TMSG_id_fid, TMSG_id_gid, TMSG_id_evtno, TMSG_id_bi, TMSG_id_sid, TMSG_id_bpid, TMSG_id_rqnb,  TMSG_id_va } [tailport=e, headport=w]
+
+}
+
+subgraph cluster_cmd { 
+
+CMD           [label ="Command", shape     = "oval",  fillcolor = "white",                width= 2.0];
+CMD_offs      [label ="Time Offset (ns)",    color ="white", fillcolor = "white",         width= 1.7];
+CMD_valid     [label ="Valid Time (ns)",     color ="white", fillcolor = "white",         width= 1.7];
+CMD_qty       [label ="Quantity (ns)",     color ="white", fillcolor = "white",           width= 2.0];
+CMD_perma     [label ="Permanent (bool)",     color ="white", fillcolor = "white",        width= 2.0];
+CMD_abs       [label ="Absolute (bool)",     color ="white", fillcolor = "white",         width= 2.0];
+CMD_flow      [label ="Flow Change", shape     = "oval",  fillcolor = "white",            width= 1.7];
+CMD_nop       [label ="No Operation", shape     = "oval",  fillcolor = "white",           width= 1.7];
+CMD_wait      [label ="Wait", shape     = "oval",  fillcolor = "white",                   width= 1.7];
+CMD_flush     [label ="Flush", shape     = "oval",  fillcolor = "white",                  width= 1.7];
+CMD_wait_time [label ="Wait Time (ns, abs/rel)",     color ="white", fillcolor = "white", width= 2.0];
+
+
+CMD        -> { CMD_flow, CMD_wait, CMD_flush, CMD_nop, CMD_offs, CMD_valid } 
+{ CMD_flow, CMD_nop } -> CMD_qty;
+{ CMD_flow } -> CMD_perma;
+CMD_wait -> {CMD_wait_time, CMD_abs};
+
+}
+
+}

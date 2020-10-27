@@ -1,0 +1,23 @@
+digraph g {
+name="Safe2RemoveExample5";
+graph []
+edge  [type="defdst"]
+node  [cpu="0"];
+
+//dynamic flow from BLOCK_B1 to MSG_R0
+//Dependency because independent is changed to incoming by dynamic command
+  MSG_R0    [type="tmsg",  pattern="R", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_R1  [type="block", pattern="R", patexit="true",  tperiod=100000000, qlo="1"];
+  MSG_R0 -> BLOCK_R1;
+
+  MSG_A0    [type="tmsg",  pattern="A", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=1, par="0"];
+  BLOCK_A2  [type="block", pattern="A", patexit="true",  tperiod=100000000, qlo="1"];  
+  MSG_A0 -> BLOCK_A2;
+
+  MSG_B0    [type="tmsg",  pattern="R", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_B1  [type="block", pattern="R", patexit="true",  tperiod=100000000, qlo="1"];
+  MSG_B0 -> BLOCK_B1 -> MSG_B0;
+
+
+
+}

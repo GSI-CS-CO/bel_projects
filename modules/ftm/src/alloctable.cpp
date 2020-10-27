@@ -73,6 +73,13 @@
     return ret;
   }
 
+  amI AllocTable::lookupHashNoEx(uint32_t hash) const  {
+    amI ret;
+    auto it = a.get<Hash>().find(hash);
+    ret = a.iterator_to( *it );
+    return ret;
+  }
+
   amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg) const {
 
     amI ret;
