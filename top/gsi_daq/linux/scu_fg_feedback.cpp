@@ -23,16 +23,56 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>
  ******************************************************************************
  */
+#include <stdlib.h>
 #include <daq_exception.hpp>
 #include <scu_fg_feedback.hpp>
 #include <daqt_messages.hpp>
 
 using namespace Scu;
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackChannel::Common::Throttle::Throttle( Common* pParent )
+   :m_pParent( pParent )
+   ,m_lastForwardedValue( 0 )
+   ,m_timeThreshold( 0 )
+{
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackChannel::Common::Throttle::~Throttle( void )
+{
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+bool FgFeedbackChannel::Common::Throttle::operator()( const uint64_t timestamp,
+                                                      const DAQ_T value )
+{
+   assert( m_pParent->m_pParent != nullptr );
+   assert( m_pParent->m_pParent->m_pParent != nullptr );
+   const FgFeedbackAdministration* pAdmin = m_pParent->m_pParent->m_pParent->m_pParent;
+   assert( pAdmin != nullptr );
+
+   if( ( static_cast<uint>(::abs( value - m_lastForwardedValue )) < pAdmin->m_throttleThreshold ) &&
+       ( timestamp < m_timeThreshold ) && ( pAdmin->m_throttleTimeout != 0 )
+     )
+      return false;
+
+   m_lastForwardedValue = value;
+   m_timeThreshold = timestamp + pAdmin->m_throttleTimeout;
+   return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackChannel::Common::Common( FgFeedbackChannel* pParent )
    :m_pParent( pParent )
+   ,m_oSetThrottle( this )
+   ,m_oActThrottle( this )
 {
 }
 
@@ -40,6 +80,22 @@ FgFeedbackChannel::Common::Common( FgFeedbackChannel* pParent )
  */
 FgFeedbackChannel::Common::~Common( void )
 {
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Data-reduced forwarding to the higher software-layer.
+ *
+ * Only value changes outside of a threshold and/or the time between two
+ * function calls exceeds a determined value becomes forwarded to the higher
+ * software layer.
+ */
+void FgFeedbackChannel::Common::evaluate( const uint64_t wrTimeStampTAI,
+                                          const DAQ_T actValue,
+                                          const DAQ_T setValue )
+{
+   if( m_oSetThrottle( wrTimeStampTAI, setValue ) ||
+       m_oActThrottle( wrTimeStampTAI, actValue ) )
+      m_pParent->onData( wrTimeStampTAI, actValue, setValue );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,8 +195,8 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
    if( m_oReceiveActValue.getBlockLen() == 0 )
       return;
 
-   DEBUG_MESSAGE( "set sequence: " << (uint)m_oReceiveSetValue.getSequence() );
-   DEBUG_MESSAGE( "act sequence: " << (uint)m_oReceiveActValue.getSequence() );
+   DEBUG_MESSAGE( "set sequence: " << static_cast<uint>(m_oReceiveSetValue.getSequence()) );
+   DEBUG_MESSAGE( "act sequence: " << static_cast<uint>(m_oReceiveActValue.getSequence()) );
    /*
     * One of both channels has received first, in this case it has to be wait
     * for the second channel.
@@ -169,11 +225,10 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen();
         i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
    {
-      constexpr uint SHIFT = BIT_SIZEOF( MiLdaq::MIL_DAQ_T ) -
-                             BIT_SIZEOF( daq::DAQ_DATA_T );
-      m_pParent->onData( timeStamp,
-                         m_oReceiveActValue[i] << SHIFT,
-                         m_oReceiveSetValue[i] << SHIFT );
+      constexpr uint SHIFT = FgFeedbackAdministration::VALUE_SHIFT;
+      evaluate( timeStamp,
+                m_oReceiveActValue[i] << SHIFT,
+                m_oReceiveSetValue[i] << SHIFT );
    }
 }
 
@@ -202,7 +257,8 @@ void FgFeedbackChannel::MilFb::Receive::onData( uint64_t wrTimeStampTAI,
    /*
     * Just forwarding to the grandpa, that's all.
     */
-   m_pParent->m_pParent->onData( wrTimeStampTAI, actlValue, setValue );
+   //m_pParent->m_pParent->onData( wrTimeStampTAI, actlValue, setValue );
+   m_pParent->evaluate( wrTimeStampTAI, actlValue, setValue );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -484,6 +540,8 @@ FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* 
    ,m_oMilDaqAdmin( this, m_oAddacDaqAdmin.getEbAccess() )
 #endif
    ,m_lm32Swi( m_oAddacDaqAdmin.getEbAccess() )
+   ,m_throttleThreshold( DEAAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
+   ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT * daq::NANOSECS_PER_MILISEC )
 {
    scan( doRescan );
 }
@@ -497,6 +555,8 @@ FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess
   ,m_oMilDaqAdmin( this, poEbAccess )
 #endif
   ,m_lm32Swi( poEbAccess )
+  ,m_throttleThreshold( DEAAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
+  ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT  * daq::NANOSECS_PER_MILISEC )
 {
    scan( doRescan );
 }

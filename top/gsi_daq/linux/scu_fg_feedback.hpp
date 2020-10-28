@@ -56,18 +56,48 @@ class FgFeedbackAdministration;
 class FgFeedbackChannel
 {
    friend class FgFeedbackDevice;
+   friend class FgFeedbackAdministration;
 
+public:
+   using DAQ_T = MiLdaq::MIL_DAQ_T;
+
+private:
    /*!
     * @brief Common object type for ADDAC/ACU- and MIL- feedback channel
     */
    class Common
    {
+      friend class FgFeedbackAdministration;
+
+      /*!
+       * @brief Object-type for reducing the forwarding to the higher
+       *        software layer.
+       */
+      class Throttle
+      {
+         Common*  m_pParent;
+         DAQ_T    m_lastForwardedValue;
+         uint64_t m_timeThreshold;
+
+      public:
+         Throttle( Common* pParent );
+         ~Throttle( void );
+         bool operator()( const uint64_t timestamp, const DAQ_T value );
+      }; // class Throttle
+
    protected:
       FgFeedbackChannel* m_pParent;
+
+   private:
+      Throttle           m_oSetThrottle;
+      Throttle           m_oActThrottle;
 
    public:
       Common( FgFeedbackChannel* pParent );
       virtual ~Common( void );
+      void evaluate( const uint64_t wrTimeStampTAI,
+                     const DAQ_T actValue,
+                     const DAQ_T setValue );
    }; // class Common
 
    /*!
@@ -235,8 +265,8 @@ protected:
     * @param setValue Set value from function generator
     */
    virtual void onData( uint64_t wrTimeStampTAI,
-                        MiLdaq::MIL_DAQ_T actlValue,
-                        MiLdaq::MIL_DAQ_T setValue ) = 0;
+                        DAQ_T actlValue,
+                        DAQ_T setValue ) = 0;
 
    /*!
     * @brief Optional callback function becomes invoked once this object
@@ -267,6 +297,7 @@ protected:
  */
 class FgFeedbackDevice
 {
+   friend class FgFeedbackChannel;
    friend class FgFeedbackAdministration;
 
    using CHANNEL_LIST_T = std::list<FgFeedbackChannel*>;
@@ -276,6 +307,8 @@ class FgFeedbackDevice
    CHANNEL_LIST_T            m_lChannelList;
 
 public:
+   using DAQ_T = FgFeedbackChannel::DAQ_T;
+
    /*!
     * @brief Constructor of a feedback device which can contain one or
     *        more feedback-channels.
@@ -434,9 +467,19 @@ inline   bool FgFeedbackChannel::isMil( void )
  */
 class FgFeedbackAdministration
 {
+   friend class FgFeedbackChannel::Common::Throttle;
+
    using DAQ_POLL_T     = std::vector<DaqBaseInterface*>;
    using GEN_DEV_LIST_T = std::list<FgFeedbackDevice*>;
 
+public:
+   using DAQ_T          = FgFeedbackDevice::DAQ_T;
+
+   static constexpr uint  VALUE_SHIFT = (BIT_SIZEOF( DAQ_T ) - BIT_SIZEOF( daq::DAQ_DATA_T ));
+   static constexpr DAQ_T DEAAULT_THROTTLE_THRESHOLD = 10;
+   static constexpr uint  DEFAULT_THROTTLE_TIMEOUT   = 10;
+
+private:
    /*!
     * @brief List of function generators found by the LM32 application.
     */
@@ -507,6 +550,9 @@ class FgFeedbackAdministration
    DAQ_POLL_T                 m_vPollList;
    GEN_DEV_LIST_T             m_lDevList;
 
+   DAQ_T                      m_throttleThreshold;
+   uint64_t                   m_throttleTimeout;
+
 protected:
    #define DEVICE_LIST_BASE std::list
    using DEVICE_LIST_T = DEVICE_LIST_BASE<FgFeedbackDevice*>;
@@ -532,6 +578,44 @@ public:
    daq::EbRamAccess* getEbAccess( void )
    {
       return m_oAddacDaqAdmin.getEbAccess();
+   }
+
+   /*!
+    * @brief Returns the throttle threshold in DAQ- raw-value
+    * @see setThrottleThreshold
+    */
+   DAQ_T getThrottleThreshold( void ) const
+   {
+      return m_throttleThreshold >> VALUE_SHIFT;
+   }
+
+   /*!
+    * @brief Sets the throttle threshold in DAQ raw-value.
+    * @see getThrottleThreshold
+    */
+   void setThrottleThreshold( const DAQ_T throttleThreshold = DEAAULT_THROTTLE_THRESHOLD )
+   {
+      m_throttleThreshold = throttleThreshold << VALUE_SHIFT;
+   }
+
+   /*!
+    * @brief Returns the currently throttle timeout in milliseconds.
+    * @note A value of zero means the timeout is infinite.
+    * @see setThrottleTimeout
+    */
+   uint getThrottleTimeout( void ) const
+   {
+      return m_throttleTimeout / daq::NANOSECS_PER_MILISEC;
+   }
+
+   /*!
+    * @brief Sets the throttle timeout in in milliseconds.
+    * @note A value of zero means the timeout is infinite.
+    * @see getThrottleTimeout
+    */
+   void setThrottleTimeout( const uint throttleTimeout = DEFAULT_THROTTLE_TIMEOUT )
+   {
+      m_throttleTimeout = throttleTimeout * daq::NANOSECS_PER_MILISEC;
    }
 
    /*!

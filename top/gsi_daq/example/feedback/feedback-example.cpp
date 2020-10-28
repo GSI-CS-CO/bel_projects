@@ -41,8 +41,8 @@ public:
    void onInit( void ) override;
 
    void onData( uint64_t wrTimeStampTAI,
-                MiLdaq::MIL_DAQ_T actlValue,
-                MiLdaq::MIL_DAQ_T setValue ) override;
+                FgFeedbackChannel::DAQ_T actlValue,
+                FgFeedbackChannel::DAQ_T setValue ) override;
 };
 
 /*-----------------------------------------------------------------------------
@@ -65,8 +65,8 @@ void MyFeedbackChannel::onInit( void )
  * the data of a registered function generator has been received.
  */
 void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
-                                MiLdaq::MIL_DAQ_T actlValue,
-                                MiLdaq::MIL_DAQ_T setValue )
+                                FgFeedbackChannel::DAQ_T actlValue,
+                                FgFeedbackChannel::DAQ_T setValue )
 {
    cout << "fg-" << getSocket() << '-'
         << getFgNumber() << "\ttime: " << wrTimeStampTAI << " readable: "
@@ -124,6 +124,11 @@ int main( const int argc, const char** ppArgv )
        * re-scan will made or not. If true a re-scan will made.
        */
       FgFeedbackAdministration myScu( &ebConnection, false );
+
+      /*!
+       * Uncomment this if you will not the history of the data-buffer.
+       */
+      myScu.clearBuffer();
 
       /*
        * After the successful generating of the object "myScu" some information

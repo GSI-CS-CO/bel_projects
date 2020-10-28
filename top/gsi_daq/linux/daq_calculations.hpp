@@ -54,6 +54,13 @@ constexpr uint64_t NANOSECS_PER_SEC  = 1000000000;
  */
 constexpr uint32_t MICROSECS_PER_SEC = 1000000;
 
+/*!
+ * @ingroup DAQ
+ * @brief Calculation factor converting nanoseconds to milliseconds and vice
+ *        versa.
+ */
+constexpr uint NANOSECS_PER_MILISEC = 1000000;
+
 using USEC_T = uint64_t;
 
 /*! ---------------------------------------------------------------------------

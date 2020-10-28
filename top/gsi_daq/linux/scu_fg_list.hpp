@@ -211,7 +211,7 @@ public:
    uint getNumOfFoundMilFg( void );
 
    /*!
-    * @brief Returns the number of ADDAC and/or ACO function generators after
+    * @brief Returns the number of ADDAC and/or ACU function generators after
     *        a scan has been made.
     */
    uint getNumOfFoundNonMilFg( void );
