@@ -86,6 +86,8 @@ class CommandLine: public PARSER
    bool                       m_zoomYAxis;
    float                      m_xAxisLen;
    uint                       m_plotInterval;
+   uint                       m_throttleThreshold;
+   uint                       m_throttleTimeout;
 
    AllDaqAdministration*      m_poAllDaq;
    FgFeedbackDevice*          m_poCurrentDevice;

@@ -59,7 +59,11 @@ class FgFeedbackChannel
    friend class FgFeedbackAdministration;
 
 public:
+ #ifdef CONFIG_MIL_FG
    using DAQ_T = MiLdaq::MIL_DAQ_T;
+ #else
+   using DAQ_T = uint32_t;
+ #endif
 
 private:
    /*!
@@ -89,7 +93,14 @@ private:
       FgFeedbackChannel* m_pParent;
 
    private:
+      /*!
+       * @brief Throttle object for the set data stream.
+       */
       Throttle           m_oSetThrottle;
+
+      /*!
+       * @brief Throttle object for the actual data stream.
+       */
       Throttle           m_oActThrottle;
 
    public:

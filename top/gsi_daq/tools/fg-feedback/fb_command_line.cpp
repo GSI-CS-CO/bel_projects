@@ -39,6 +39,13 @@ using namespace Scu;
    #define MAXIMUM_X_AXIS 300.0
 #endif
 
+#ifndef DEFAULT_THROTTLE_THRESHOLD
+  #define DEFAULT_THROTTLE_THRESHOLD 10
+#endif
+#ifndef DEFAUT_THROTTLE_TIMEOUT
+  #define DEFAULT_THROTTLE_TIMEOUT   10
+#endif
+
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
@@ -510,6 +517,43 @@ vector<OPTION> CommandLine::c_optList =
       .m_helpText = "Activates or deactivates the gap reading in the case of MIL DAQs.\n"
                     "PARAM is the gap reading interval in milliseconds. "
                     "A value of zero deactivates the gap reading."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint timeout;
+         if( readInteger( timeout, poParser->getOptArg() ) )
+            return -1;
+         static_cast<CommandLine*>(poParser)->m_throttleTimeout = timeout;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'm',
+      .m_longOpt  = "tTimeout",
+      .m_helpText = "Sets the throttle-timeout in milliseconds. "
+                    "The default value is " TO_STRING( DEFAULT_THROTTLE_TIMEOUT ) " ms.\n"
+                    "After this time a value tupel will plot in any cases.\n"
+                    "NOTE: A value of zero means the timeout is infinite."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint threshold;
+         if( readInteger( threshold, poParser->getOptArg() ) )
+            return -1;
+         static_cast<CommandLine*>(poParser)->m_throttleThreshold = threshold;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'n',
+      .m_longOpt  = "tThreshold",
+      .m_helpText = "Sets the throttle-threshold in DAQ-ADC raw units. "
+                    "The default value is " TO_STRING( DEFAULT_THROTTLE_THRESHOLD ) ".\n"
+                    "By this parameter it becomes possible to filtering "
+                    "out ripple and noise voltage, which increases the "
+                    "performance in plotting."
    }
 };
 
@@ -567,6 +611,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_zoomYAxis( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
+   ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )
+   ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
@@ -623,6 +669,8 @@ AllDaqAdministration* CommandLine::operator()( void )
 
    if( m_poAllDaq != nullptr )
    {
+      m_poAllDaq->setThrottleThreshold( m_throttleThreshold );
+      m_poAllDaq->setThrottleTimeout( m_throttleTimeout );
       if( m_autoBuilding )
          autoBuild();
       if( m_doClearBuffer )

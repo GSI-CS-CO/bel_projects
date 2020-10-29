@@ -70,19 +70,22 @@ void Plot::plot( void )
 {
    constexpr float MILISECS_PER_NANOSEC = 1000000.0;
 
+   FgFeedbackAdministration* pAdmin = m_pParent->getParent()->getParent();
+
    *this << "set title \"fg-" << m_pParent->getParent()->getSocket()
          << '-' << m_pParent->getFgNumber()
          << "  Date: "
          << daq::wrToTimeDateString( m_pParent->getCurrentTime() );
          if( m_pParent->isSingleShoot() )
             *this << " Single shoot!";
-         *this << endl;
+         *this << " Throttle: (timeout " << pAdmin->getThrottleTimeout() << " ms"
+               ", threshold " << pAdmin->getThrottleThreshold() << ")" << endl;
 
 
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
          << " ns; interval min: " << (m_pParent->m_minTime / MILISECS_PER_NANOSEC)
          << " ms, interval max: " << (m_pParent->m_maxTime / MILISECS_PER_NANOSEC)
-         << " ms; Samples: " << m_pParent->m_aPlotList.size() << "\"" << endl;
+         << " ms; Tuples: " << m_pParent->m_aPlotList.size() << "\"" << endl;
 
    bool isDeviationPlottingEnabled =
                   m_pParent->getCommandLine()->isDeviationPlottingEnabled();

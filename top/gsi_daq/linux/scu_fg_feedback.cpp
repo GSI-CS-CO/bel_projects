@@ -57,7 +57,7 @@ bool FgFeedbackChannel::Common::Throttle::operator()( const uint64_t timestamp,
    assert( pAdmin != nullptr );
 
    if( ( static_cast<uint>(::abs( value - m_lastForwardedValue )) < pAdmin->m_throttleThreshold ) &&
-       ( timestamp < m_timeThreshold ) && ( pAdmin->m_throttleTimeout != 0 )
+       (( timestamp < m_timeThreshold ) || ( pAdmin->m_throttleTimeout == 0 ))
      )
       return false;
 
