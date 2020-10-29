@@ -155,14 +155,24 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       std::string cmp = g[v].type;
 
+
+
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
         //std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
-        bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false,
-              genHi       = s2u<bool>(g[v].qHi),  hasHi = false,
-              genLo       = s2u<bool>(g[v].qLo),  hasLo = false,
-              hasMultiDst = false,            hasDstLst = false;
+        
+
+        bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasMultiDst, hasDstLst;
+        try{
+              genIl = s2u<bool>(g[v].qIl);  hasIl = false;
+              genHi = s2u<bool>(g[v].qHi);  hasHi = false;
+              genLo = s2u<bool>(g[v].qLo);  hasLo = false;
+              hasMultiDst = false; hasDstLst = false;
+
+        } catch (std::runtime_error const& err) {
+          throw std::runtime_error( "Parser error when processing node <" + g[v].name + ">. Cause: " + err.what());
+        }      
 
         for (out_cur = out_begin; out_cur != out_end; ++out_cur)
         {
@@ -270,13 +280,21 @@ using namespace DotStr::Misc;
       //try{
         //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
         hash = gUp[v].hash;
+        try {
         cpu  = s2u<uint8_t>(gUp[v].cpu);
-
+        } catch (std::runtime_error const& err) {
+          throw std::runtime_error( "Parser error when processing cpu tags of node <" + name + ">. Cause: " + err.what());
+        } 
         //add flags for beam process and pattern entry and exit points
+        try {
         flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS)
               | ((s2u<bool>(gUp[v].bpExit))   << NFLG_BP_EXIT_LM32_POS)
               | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
               | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
+
+        } catch (std::runtime_error const& err) {
+          throw std::runtime_error( "Parser error when processing pattern/BP entry/exit tags of node <" + name + ">. Cause: " + err.what());
+        }      
 
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
@@ -292,7 +310,7 @@ using namespace DotStr::Misc;
         //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
         auto* x = (AllocMeta*)&(*it);
 
-
+        try{
         // add timing node data objects to vertices
         if(gUp[v].np == nullptr) {
 
@@ -318,9 +336,9 @@ using namespace DotStr::Misc;
           //FIXME try to get info from download
           else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
         }
-      //} catch (std::runtime_error const& err) {
-      //  throw std::runtime_error( "Failed to create data object for node <" + name + ">. Cause: " + err.what());
-      //}
+        } catch (std::runtime_error const& err) {
+          throw std::runtime_error( "Failed to create data object for node <" + name + "> of type <" + cmp + ">. Cause: " + err.what());
+        }
     }
 
     // Crawl vertices and serialise their data objects for upload
@@ -473,8 +491,12 @@ using namespace DotStr::Misc;
     //add whats left to groups dict
     if(verbose) sLog << "Update Group dict" << std::endl;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
-      gt.setPattern(gUp[v].name, gUp[v].patName, (s2u<bool>(gUp[v].patEntry)), (s2u<bool>(gUp[v].patExit)));
+      try {
+        gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
+        gt.setPattern(gUp[v].name, gUp[v].patName, (s2u<bool>(gUp[v].patEntry)), (s2u<bool>(gUp[v].patExit)));
+      } catch (std::runtime_error const& err) {
+        throw std::runtime_error( "Parser error when processing entry/exit tags of node <" + gUp[v].name + ">. Cause: " + err.what());
+      }
     }
     //writeUpDotFile("inspect.dot", false);
     if(verbose) sLog << "Create binary for upload" << std::endl;
