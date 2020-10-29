@@ -554,7 +554,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes,
                            ESC_FG_WHITE ESC_BOLD "Final indexes" ESC_NORMAL );
    daqDescriptorPrintInfo( &oDescriptor );
-}
+} /* ramWriteDaqData() */
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h

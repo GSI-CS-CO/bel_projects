@@ -43,4 +43,11 @@ lrun:
 endif # ifndef IS_LIBRARY
 endif # ifdef SCU_URL
 
+ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
+PUBLIC_TARGET ?= /common/usr/cscofe/bin/
+.PHONY: public
+public: $(BIN_FILE)
+	cp -u $(BIN_FILE) $(PUBLIC_TARGET)
+endif
+
 #=================================== EOF ======================================
