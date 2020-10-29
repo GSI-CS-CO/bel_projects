@@ -705,68 +705,12 @@ uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
 STATIC inline
 uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
 {
-   //uint64_t ret;
-#if 0
-   ((uint16_t*)&ret)[0] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[3] );
-   ((uint16_t*)&ret)[1] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[2] );
-   ((uint16_t*)&ret)[2] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[1] );
-   ((uint16_t*)&ret)[3] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[0] );
-#endif
-#if 0
-   ((uint16_t*)&ret)[0] = pThis->name.wr.wordIndex[3];
-   ((uint16_t*)&ret)[1] = pThis->name.wr.wordIndex[2];
-   ((uint16_t*)&ret)[2] = pThis->name.wr.wordIndex[1];
-   ((uint16_t*)&ret)[3] = pThis->name.wr.wordIndex[0];
-#endif
-#if 0
-   ((uint16_t*)&ret)[0] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[0] );
-   ((uint16_t*)&ret)[1] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[1] );
-   ((uint16_t*)&ret)[2] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[2] );
-   ((uint16_t*)&ret)[3] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[3] );
-#endif
-#if 0
-   ((uint16_t*)&ret)[0] = 0; //pThis->name.wr.wordIndex[0];
-   ((uint16_t*)&ret)[1] = 0; //pThis->name.wr.wordIndex[1];
-   ((uint16_t*)&ret)[2] = pThis->name.wr.wordIndex[0];
-   ((uint16_t*)&ret)[3] = pThis->name.wr.wordIndex[1];
-#endif
-#if 0
-   ((uint16_t*)&ret)[0] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[0] );
-   ((uint16_t*)&ret)[1] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[1] );
-   ((uint16_t*)&ret)[2] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[2] );
-   ((uint16_t*)&ret)[3] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[3] );
-#endif
-#if 0
-   ((uint16_t*)&ret)[0] = pThis->name.wr.wordIndex[1];
-   ((uint16_t*)&ret)[1] = pThis->name.wr.wordIndex[0];
-   ((uint16_t*)&ret)[2] = pThis->name.wr.wordIndex[3];
-   ((uint16_t*)&ret)[3] = pThis->name.wr.wordIndex[2];
-#endif
-   //ret = pThis->name.wr.timeStamp;
-  // ret >>= 32;
-  // ret *= 1000000000L;
-
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * @todo  Divisor 512 is a workaround!!! Because of a possible VHDL bug
  *        copying the white rabbit tine in to the
  *        Remove this ASAP!!!!!
  */
    return pThis->name.wr.timeStamp / 512;
-#if 0
- uint32_t nsec = 0;
- uint32_t sec = 0;
-
- ((uint16_t*)&nsec)[0] = pThis->name.wr.wordIndex[0];
- ((uint16_t*)&nsec)[1] = pThis->name.wr.wordIndex[1];
-
- ((uint16_t*)&sec)[0] = (pThis->name.wr.wordIndex[2]);
- ((uint16_t*)&sec)[1] =(pThis->name.wr.wordIndex[3]);
-
- ret = sec; // * 1000000000L;
-// ret += nsec;
- return ret;
- // return 0x8877665544332211UL;
-#endif
 }
 
 #endif

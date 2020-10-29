@@ -298,10 +298,15 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
    DAQ_REGISTER_T expectedWords;
-   unsigned int descriptorIndex;
 
+   /*
+    * A local object of the current descriptor will use for verifying purposes
+    * to check the block integrity.
+    */
    DAQ_DESCRIPTOR_T    oDescriptor;
+   unsigned int        descriptorIndex;
    RAM_RING_INDEXES_T  oDescriptorIndexes;
+
    RAM_RING_INDEXES_T  oDataIndexes;
    RAM_RING_INDEXES_T* poIndexes;
 
@@ -365,6 +370,10 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       return;
    }
 #endif
+#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+   unsigned int wrIndex = 0;
+   _DAQ_WR_T wrTime = { .timeStamp = 0L };
+#endif
    descriptorIndex = 0;
    dataWordCounter = 0;
    do
@@ -405,7 +414,16 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             */
             RAM_ASSERT( descriptorIndex < ARRAY_SIZE(oDescriptor.index) );
          #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
-            //TODO Copy the interrupt timestamp into the descriptor here! pDaqChannel->timestamp
+           #warning "Patch of WR-timestamp in ADDAC-DAQ! Remove this asap! ASAP!!!"
+            if( (descriptorIndex >= (offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) / sizeof(DAQ_DATA_T))) &&
+                (wrIndex < (sizeof( _DAQ_WR_T ) / sizeof(DAQ_DATA_T)))
+              )
+            {  /*
+                * Overwriting the bullshit time-stamp! :-(
+                */
+               //!!data = wrTime.wordIndex[wrIndex];
+               wrIndex++;
+            }
          #endif
 
          #ifdef CONFIG_DAQ_SW_SEQUENCE
@@ -421,10 +439,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
          #endif
-         #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
-            //TODO Copy the interrupt timestamp into the descriptor here! pDaqChannel->timestamp
-         #endif
-            oDescriptor.index[descriptorIndex++] = data;
+           oDescriptor.index[descriptorIndex++] = data;
          }
 
          ramFillItem( &ramItem, payloadIndex, data );
