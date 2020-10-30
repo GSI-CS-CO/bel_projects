@@ -96,12 +96,27 @@ private:
       /*!
        * @brief Throttle object for the set data stream.
        */
-      Throttle           m_oSetThrottle;
+      Throttle  m_oSetThrottle;
 
       /*!
        * @brief Throttle object for the actual data stream.
        */
-      Throttle           m_oActThrottle;
+      Throttle  m_oActThrottle;
+
+      /*!
+       * @brief Storage of the last suppressed timestamp.
+       */
+      uint64_t  m_lastSupprTimestamp;
+
+      /*!
+       * @brief Storage of the last suppressed set-value.
+       */
+      DAQ_T     m_lastSupprSetValue;
+
+      /*!
+       * @brief Storage of the last suppressed actual-value.
+       */
+      DAQ_T     m_lastSupprActValue;
 
    public:
       Common( FgFeedbackChannel* pParent );

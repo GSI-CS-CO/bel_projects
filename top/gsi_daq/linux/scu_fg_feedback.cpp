@@ -73,6 +73,7 @@ FgFeedbackChannel::Common::Common( FgFeedbackChannel* pParent )
    :m_pParent( pParent )
    ,m_oSetThrottle( this )
    ,m_oActThrottle( this )
+   ,m_lastSupprTimestamp( 0 )
 {
 }
 
@@ -93,9 +94,29 @@ void FgFeedbackChannel::Common::evaluate( const uint64_t wrTimeStampTAI,
                                           const DAQ_T actValue,
                                           const DAQ_T setValue )
 {
+   assert( wrTimeStampTAI > 0 );
+
    if( m_oSetThrottle( wrTimeStampTAI, setValue ) ||
        m_oActThrottle( wrTimeStampTAI, actValue ) )
+   {
+      if( m_lastSupprTimestamp != 0 )
+      { /*
+         * When the last tuple was suppressed by throttling it becomes
+         * necessary to forwarding it here, because in order to avoiding
+         * a wrong line in a possible plot between two support dots.
+         */
+         m_pParent->onData( m_lastSupprTimestamp,
+                            m_lastSupprActValue, m_lastSupprSetValue );
+         m_lastSupprTimestamp = 0;
+      }
       m_pParent->onData( wrTimeStampTAI, actValue, setValue );
+   }
+   else
+   {
+      m_lastSupprTimestamp = wrTimeStampTAI;
+      m_lastSupprSetValue  = setValue;
+      m_lastSupprActValue  = actValue;
+   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
