@@ -30,6 +30,13 @@
 #include <eb_console_helper.h>
 #include <daq_ramBuffer.h>
 
+#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+ #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+  #include <lm32Interrupts.h>
+ #else
+  #include <scu_wr_time.h>
+ #endif
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 /*! ---------------------------------------------------------------------------
@@ -370,10 +377,17 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       return;
    }
 #endif
+
 #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
-   unsigned int wrIndex = 0;
-   _DAQ_WR_T wrTime = { .timeStamp = 0L };
+   unsigned int wrIndex = (sizeof( _DAQ_WR_T ) / sizeof(DAQ_DATA_T));
+   _DAQ_WR_T wrTime;
+ #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+   wrTime.timeStamp = irqGetTimestamp();
+ #else
+   wrTime.timeStamp = getWrSysTime();
+ #endif
 #endif
+
    descriptorIndex = 0;
    dataWordCounter = 0;
    do
@@ -416,13 +430,12 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
            #warning "Patch of WR-timestamp in ADDAC-DAQ! Remove this asap! ASAP!!!"
             if( (descriptorIndex >= (offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) / sizeof(DAQ_DATA_T))) &&
-                (wrIndex < (sizeof( _DAQ_WR_T ) / sizeof(DAQ_DATA_T)))
+                (wrIndex > 0)
               )
             {  /*
                 * Overwriting the bullshit time-stamp! :-(
                 */
-               //!!data = wrTime.wordIndex[wrIndex];
-               wrIndex++;
+               data = wrTime.wordIndex[--wrIndex];
             }
          #endif
 

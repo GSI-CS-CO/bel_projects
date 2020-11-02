@@ -502,7 +502,7 @@ public:
    using DAQ_T          = FgFeedbackDevice::DAQ_T;
 
    static constexpr uint  VALUE_SHIFT = (BIT_SIZEOF( DAQ_T ) - BIT_SIZEOF( daq::DAQ_DATA_T ));
-   static constexpr DAQ_T DEAAULT_THROTTLE_THRESHOLD = 10;
+   static constexpr DAQ_T DEFAULT_THROTTLE_THRESHOLD = 10;
    static constexpr uint  DEFAULT_THROTTLE_TIMEOUT   = 10;
 
 private:
@@ -619,7 +619,7 @@ public:
     * @brief Sets the throttle threshold in DAQ raw-value.
     * @see getThrottleThreshold
     */
-   void setThrottleThreshold( const DAQ_T throttleThreshold = DEAAULT_THROTTLE_THRESHOLD )
+   void setThrottleThreshold( const DAQ_T throttleThreshold = DEFAULT_THROTTLE_THRESHOLD )
    {
       m_throttleThreshold = throttleThreshold << VALUE_SHIFT;
    }

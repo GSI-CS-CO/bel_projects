@@ -13,6 +13,11 @@
 #ifndef _SCU_CONTROL_CONFIG_H
 #define _SCU_CONTROL_CONFIG_H
 
+/*!
+ * @todo Remove this switch asap!!!
+ */
+#define _CONFIG_PATCH_DAQ_TIMESTAMP
+
 #ifdef __cplusplus
 
   #ifndef _BSD_SOURCE

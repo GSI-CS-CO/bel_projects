@@ -112,7 +112,10 @@ void FgFeedbackChannel::Common::evaluate( const uint64_t wrTimeStampTAI,
       m_pParent->onData( wrTimeStampTAI, actValue, setValue );
    }
    else
-   {
+   { /*
+      * Storing of the suppressed tuple, maybe it will nevertheless
+      * used at the next time. See above.
+      */
       m_lastSupprTimestamp = wrTimeStampTAI;
       m_lastSupprSetValue  = setValue;
       m_lastSupprActValue  = actValue;
@@ -561,7 +564,7 @@ FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* 
    ,m_oMilDaqAdmin( this, m_oAddacDaqAdmin.getEbAccess() )
 #endif
    ,m_lm32Swi( m_oAddacDaqAdmin.getEbAccess() )
-   ,m_throttleThreshold( DEAAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
+   ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
    ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT * daq::NANOSECS_PER_MILISEC )
 {
    scan( doRescan );
@@ -576,7 +579,7 @@ FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess
   ,m_oMilDaqAdmin( this, poEbAccess )
 #endif
   ,m_lm32Swi( poEbAccess )
-  ,m_throttleThreshold( DEAAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
+  ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD << VALUE_SHIFT )
   ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT  * daq::NANOSECS_PER_MILISEC )
 {
    scan( doRescan );
