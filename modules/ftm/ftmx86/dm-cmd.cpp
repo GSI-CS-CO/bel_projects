@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <sys/param.h>
 
 #include "carpeDM.h"
 //#include "node.h"
@@ -305,7 +305,11 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 }
 
 
-
+std::string get_working_path()
+{
+   char temp[MAXPATHLEN];
+   return ( getcwd(temp, sizeof(temp)) ? std::string( temp ) : std::string("") );
+}
 
 
 int main(int argc, char* argv[]) {
@@ -318,8 +322,7 @@ int main(int argc, char* argv[]) {
   const char *program = argv[0];
   const char cTypeName[] = "status";
   const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
-  char dirnameBuff[80];
-  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
+  std::string dirname = get_working_path();
 
 
   int32_t tmp, error=0;
@@ -687,7 +690,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "chkrem")  {
       std::string report;
       bool isSafe = cdm.isSafeToRemove(targetName, report);
-      cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
+      cdm.writeTextFile(dirname + "/" + std::string(debugfile), report);
       std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
       return 0;
     }
