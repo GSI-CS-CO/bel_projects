@@ -102,6 +102,7 @@ namespace DotStr {
           extern const std::string sSid;
           extern const std::string sBpid;
           extern const std::string sBin;
+          extern const std::string sBPCstart;
           extern const std::string sReqNoB;
           extern const std::string sVacc;
           extern const std::string sRes;

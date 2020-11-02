@@ -302,6 +302,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     else  if (g[v].cmdDest      != DotStr::Misc::sUndefined)  { destination = g[v].cmdDest;}
     else  { destination = getPatternEntryNode(g[v].patName); } // if there is no destination, assign target to destination
 
+    try {
     type      = g[v].type;
     cmdPrio   = s2u<uint8_t>(g[v].prio);
     vabs      = s2u<bool>(g[v].vabs);
@@ -312,6 +313,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     qHi       = s2u<bool>(g[v].qHi);
     qLo       = s2u<bool>(g[v].qLo);
     perma     = s2u<bool>(g[v].perma);
+    
     lockRd    = true;
     lockWr    = true;
     //fixme hack to test compile
@@ -319,6 +321,9 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
   
     if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
     createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr);
+    } catch (std::runtime_error const& err) {
+        throw std::runtime_error( "Parser error when processing command <" + g[v].name + ">. Cause: " + err.what());
+    }
   }  
 
   return ew;
