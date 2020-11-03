@@ -1,0 +1,192 @@
+\documentclass{report}                           
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters \usepackage[T1]{fontenc} % Output
+\usepackage[english]{babel}
+\usepackage{sectsty}
+\usepackage[binary-units = true]{siunitx}
+\usepackage{fancyhdr}
+\usepackage[shortlabels]{enumitem}
+\usepackage{rotating}
+\usepackage{palatino} % Use the Palatino font by default
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{textcomp}
+\usepackage{datetime}
+\usepackage{xargs}
+\usepackage{csquotes}
+\usepackage{float}
+\usepackage[pdftex,dvipsnames]{xcolor}
+\usepackage{tocvsec2}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage{breakcites}
+\usepackage{changepage}
+
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[symbol]{footmisc}
+\usepackage{color}
+\usepackage[backend=bibtex,style=ieee,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{environ}  
+\usetikzlibrary{calc, positioning, shapes,arrows}
+\usepackage{tabularx, multirow}
+\usepackage{hhline}
+\usepackage{bytefield}
+\usepackage[toc,page]{appendix}
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{atbegshi}% http://ctan.org/pkg/atbegshi
+
+\usepackage{hyperref}
+\usepackage[acronym,toc, nogroupskip, nomain]{glossaries}              % use glossaries-package
+\usepackage{graphicx}
+
+%\AtBeginDocument{\AtBeginShipoutNext{\AtBeginShipoutDiscard}}
+
+
+
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = blue, %Colour for external hyperlinks
+  linkcolor    = blue, %Colour of internal links
+  citecolor   = red %Colour of citations
+}
+\DeclareGraphicsExtensions{.pdf,.jpeg,.png,.jpg} 
+
+
+\setlength{\glsdescwidth}{12cm}
+
+\newglossary[sl1]{sched}{sy1}{sg1}{Node Attributes} % create add. nodeattributes
+\newglossary[sl3]{id}{sy3}{sg3}{Timing ID sub fields} % create add. nodeattributes
+\newglossary[sl2]{cmd}{sy2}{sg2}{Director Command Attributes} % create add. nodeattributes
+
+\glsaddkey{valtype}{\glsentrytext{\glslabel}}{\glsentryvaltype}{\GLsentryvaltype}{\glsvaltype}{\Glsvaltype}{\GLSvaltype}
+
+\makeglossaries                                   % activate glossaries-package
+
+
+\newglossarystyle{symbvaltypelong}{%
+\renewcommand{\glossarypreamble}{\glsfindwidesttoplevelname[\currentglossary]}
+\setglossarystyle{alttree}% base this style on the list style
+
+  
+}
+
+
+\loadglsentries{carpeDMglosentries_sched}
+\loadglsentries{carpeDMglosentries_cmd}
+\loadglsentries{carpeDMglosentries_id}
+
+
+
+\begin{document}
+\gls{sched:permanent} is here!
+    Die Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+\gls{sched:type} is here!
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholen
+Die Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholen
+Die Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+   
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholen
+Die Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholen
+Die Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+   \gls{sched:id} is here!
+   \gls{sched:flags} is here!
+   \gls{cmd:dest} is here!
+   \gls{sched:thread} is here!
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholenDie Sendung geht an:   Mathias Kreider
+   32049367
+   Packstation 105
+   Darmstadt, 
+   Hessen 
+   64287
+   Deutschland
+
+Die Sendung wurde mit DHL Paket versandt. Wenn Sie diese Sendungen verfolgen möchten, benutzen Sie bitte diese Paketverfolgungsnummern: JJD000390011803951068.
+
+
+Abhängig von der gewählten Versandoption kann es sein, dass die Paketverfolgungsdaten zum Zeitpunkt des Erhalts dieser E-Mail noch nicht den neuesten Stand wiedergeben.
+
+Sollte eine Zustellung nicht erfolgreich sein, wird eine Benachrichtigung in Ihrem Briefkasten hinterlassen, mit der Sie über die DHL Servicehotline einen zweiten, kostenlosen Zustellversuch veranlassen können. Alternativ haben Sie die Möglichkeit, Ihre Sendung an der auf der Benachrichtigungskarte angegebenen Stelle abzuholen
+
+
+
+    \glsaddall
+    %\printglossary[type=\acronymtype,style=long]  % list of acronyms
+   
+    %\glsadd{n_dest}
+    \printglossary[type=sched, style=symbvaltypelong, nonumberlist]   % list of symbols
+    \vspace{-2cm}
+    \printglossary[type=id, style=symbvaltypelong,nonumberlist]   % list of symbols
+    \begin{figure}[h]
+      \label{fig:exwloop}
+      \hspace{-2cm}
+      \includegraphics*[width=1.3\textwidth,keepaspectratio]{../Figures/timingMessageFormat_v3}
+    \end{figure}
+    \printglossary[type=cmd, style=symbvaltypelong, nonumberlist]   % list of symbols
+    %\printglossary[type=main]                     % main glossary
+
+
+\end{document}

@@ -90,31 +90,29 @@ namespace coverage {
     qtyIsOk &= ((nodeQty == allocEntryQty) & (nodeQty == allocEntryQty) & (nodeQty == groupsEntryQty) & (nodeQty == hashEntryQty));
 
 
-      qtyReport += "Nodes:        " + std::to_string(nodeQty) + "\nAllocEntries: " + std::to_string(allocEntryQty)
-                +  "\nHashEntries:  " + std::to_string(hashEntryQty) +  "\nGroupEntries: " + std::to_string(groupsEntryQty) + "\n";
+    qtyReport += "Nodes:        " + std::to_string(nodeQty) + "\nAllocEntries: " + std::to_string(allocEntryQty)
+              +  "\nHashEntries:  " + std::to_string(hashEntryQty) +  "\nGroupEntries: " + std::to_string(groupsEntryQty) + "\n";
+
 
     // check if all graph nodes are known to all tables
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable
       if (!hm.contains(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Alloctable
       try {
         auto dummy = at.lookupVertex(v);
         (void) dummy; struct dummy; // suppress gcc warning about unused variable
       } catch (...) {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Groupstable
       auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
       if (x.first == x.second)   {groupsIsOk = false; groupsReport += sMiss + sFirst + g[v].name + "\n";}
+
+
     }
 
-    // Let's assume hashmap is okay if all node names are accounted for
-
-    // Let's assume alloctable is okay if all nodes are accounted for
-
+    //ALready covered by size and forward groupstable check
+/*
+    //FIXME This is a resource hog with square complexity
     // check if all groupstable entries are present in graph
     bool notFound;
     for (auto& patternIt : gt.getAllPatterns()) { //NOTE: use the pattern list in GroupTable, not the list in the Graph!
@@ -131,6 +129,7 @@ namespace coverage {
       }
 
     }
+    */
     isOk = qtyIsOk & allocIsOk & hashIsOk & groupsIsOk;
 
     intro       += (isOk       ? sOK : sERR);

@@ -1,0 +1,24 @@
+
+\chapter{Approaches for Chain Timestamp Distribution}
+
+
+One of the feature requirements for \gls{fair} is offering a unique identifier at the start of a scheduling chain to all its subsequent messages. 
+The reason is that a beam, from source to target, will traverse the machine rows in figure~\ref{}, following a stair pattern.
+This means that events at the end of a beam will occur simultaneously with the start of next iteration of the same beam.
+All events repeated in such a constellation can be ambiguous, the \gls{CS} needs a mechanism to distinguish between them. 
+\paragraph
+Let us assume for simplicity we are a synchrotron device listening for an event \enquote{LINAC Start}.This event will tell us when a shot from the linear accelerator will come our way. The linac will always repeat the same cycle, so the event ID is always the same. We need several shots for a filling, which means we'd need to count shots. But what if our device missed an event, has to be rebooted or is powered up late? We'll be in the wrong rythm forever. The only solution is to pass on an identifier, marking all following events as belonging to that specific linac shot.
+\paragraph
+One of the feature requirements for \gls{fair} is offering a unique identifier at the start of a scheduling chain to all its messages. 
+The reason is that a beam, from source to target, will traverse the machine rows in figure~\ref{}, which follow a stair pattern.
+A ramped device will thus see higher iterations of rows closer to the source than of those closer to the target at the same time.
+All events repeated in such a constellation can be ambiguous, the \gls{CS} needs a mechanism to distinguish between them. 
+\paragraph
+Let us assume for simplicity we are a synchrotron device listening for an event \enquote{LINAC Start}.This event will tell us when a shot from the linear accelerator will come our way. The linac will always repeat the same cycle, so the event ID is always the same. We need several shots for a filling, which means we'd need to count shots. But what if our device missed an event, has to be rebooted or is powered up late? We'll be in the wrong rythm forever. The only solution is to pass on an identifier, marking all following events as belonging to that specific linac shot.
+
+\begin{figure}[H]
+   \centering
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/event_system}
+   \caption{Event based System, Master (M) sends events to multiple slaves(S). Lines with lower delay (red) need to be compensated}
+   \label{fig:event_sys}
+\end{figure}

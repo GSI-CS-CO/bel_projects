@@ -216,8 +216,10 @@ void main(void) {
       *abort1 = 0; // clear abort bits
     }
 
+    //the workhorse. check if most urgent node is due and process it if this is the case.
     uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7;
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
+      //node is due. Execute it, then update cursor and deadline, return control to scheduler
       backlog++;
       *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
@@ -225,33 +227,38 @@ void main(void) {
       heapReplace(0);                                                               // call scheduler, re-sort only current thread
 
     } else {
-      //nothing due right now. did the host request any new threads to be started?
+      //nothing due right now. Check for requests of new threads to be started
       *bcklogmax   = ((backlog > *bcklogmax) ? backlog : *bcklogmax);
       backlog = 0;
 
-      if(*start) {
-        for(i=0;i<_THR_QTY_;i++) {
+      if(*start) { //check start bitfield for any request
+        for(i=0;i<_THR_QTY_;i++) { //iterate
           if (*start & (1<<i)) {
 
-            uint8_t* thrData   = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2];
-            uint8_t* startData = (uint32_t*)&p[( SHCTL_THR_STA + i * _T_TD_SIZE_) >> 2];
+            //current thread base pointers
+            uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
+            uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
 
-            uint64_t* startTime = (uint64_t*)&startData[T_TS_STARTTIME];
-            uint64_t* prepTime  = (uint64_t*)&startData[T_TS_PREPTIME];
-            uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
+	    //pointers to start fields
+            uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
+            uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
+            uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
+            
+	    //pointers to data fields
+	    uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
             uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
-            uint32_t* origin    = (uint32_t*)&startData[T_TS_NODE_PTR];
             uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
             uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
 
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 
+	    //init fields
             if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
             else                *currTime = *startTime;
 
             *cursor   = *origin;          // Set cursor to origin node
             *deadline = *currTime;        // Set the deadline to first blockstart
-            //if first node is an event, correctly increment deadline by its offset
+            //if first node is an event, starttime must be increment by its offset. Call deadline update function to handle this
             *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
 
 

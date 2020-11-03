@@ -1,0 +1,128 @@
+%% Creator: Inkscape inkscape 0.48.4, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'all_block_new.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{841.88974609bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.70707072)%
+    \put(0,0){\includegraphics[width=\unitlength]{Figures/all_block_new.pdf}}%
+    \put(0.29775622,0.3604125){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.16991443,0.36179048){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_1}$}}}%
+    \put(0.23733652,0.36045965){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{p}$}}}%
+    \put(0.36050483,0.36118138){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_1}$}}}%
+    \put(0.42330855,0.3604125){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.5503673,0.36118138){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.67718277,0.3604125){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.61676316,0.36045965){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{e}$}}}%
+    \put(0.73993136,0.36118138){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.80494652,0.36045965){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.48831828,0.36045965){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.22145988,0.3993433){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries EBM Framer}}}%
+    \put(0.38657548,0.39962227){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries EBM TX}}}%
+    \put(0.64342014,0.39977788){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries FEC}}}%
+    \put(0.86842293,0.36041894){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{N_1}$}}}%
+    \put(0.85886383,0.39729358){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries NIC TX}}}%
+    \put(0.15806319,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.34920509,0.06710913){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_F$}}}%
+    \put(0.22136328,0.06848717){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.2887854,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{d}$}}}%
+    \put(0.41195365,0.06787807){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.53875756,0.06710913){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_P$}}}%
+    \put(0.60150614,0.06787807){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_6}$}}}%
+    \put(0.66390784,0.06710913){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_R$}}}%
+    \put(0.72479353,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{rx}$}}}%
+    \put(0.85506814,0.06787807){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_2}$}}}%
+    \put(0.91628232,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{eca}$}}}%
+    \put(0.47692296,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.79239338,0.06715628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.88738893,0.10596053){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries ECA}}}%
+    \put(0.67124021,0.10595426){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries EBS Deframer}}}%
+    \put(0.56218769,0.10580492){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries EBS RX}}}%
+    \put(0.31702622,0.10596053){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries DFEC}}}%
+    \put(0.08842128,0.06661504){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{N_2}$}}}%
+    \put(0.08359733,0.10348968){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries NIC RX}}}%
+    \put(0.35522279,0.20767245){\color[rgb]{0.31372549,0.17647059,0.08627451}\makebox(0,0)[lb]{\smash{$\beta_{wr_1}$}}}%
+    \put(0.41986421,0.20767245){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr_2}$}}}%
+    \put(0.54907591,0.20767245){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr_4}$}}}%
+    \put(0.61303944,0.20767245){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr_5}$}}}%
+    \put(0.85287047,0.3204382){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+    \put(0.46660264,0.24524249){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries WR Network}}}%
+    \put(0.33920507,0.64176539){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{cpu}$}}}%
+    \put(0.28775161,0.66676623){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha_i$}}}%
+    \put(0.30547071,0.60835382){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{oh}_i$}}}%
+    \put(0.34080251,0.51863942){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{cpu}$}}}%
+    \put(0.28775161,0.54364023){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha_i$}}}%
+    \put(0.30523132,0.48522785){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{oh}_i$}}}%
+    \put(0.49488369,0.64090887){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_Q$}}}%
+    \put(0.49488369,0.51749427){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_Q$}}}%
+    \put(0.36561022,0.57610367){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries ...}}}%
+    \put(0.64577678,0.58493434){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{pq}$}}}%
+    \put(0.56271135,0.64020289){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{a}$}}}%
+    \put(0.56271135,0.51669062){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{a}$}}}%
+    \put(0.72224932,0.58413332){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.43200385,0.6405269){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cl}$}}}%
+    \put(0.60448534,0.67496274){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries PQ}}}%
+    \put(0.36147021,0.67350017){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries LM32}}}%
+    \put(0.36147021,0.55305665){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries LM32}}}%
+    \put(0.52905202,0.57610367){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries ...}}}%
+    \put(0.43200385,0.51727875){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cl}$}}}%
+    \put(0.73041077,0.37671192){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.54071941,0.37719185){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.35114105,0.37671192){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.59350564,0.08195952){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.40320233,0.08195952){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.21243885,0.08195952){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.48448074,0.20767245){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr_3}$}}}%
+    \put(0.53944054,0.2086532){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries ...}}}%
+    \put(0.66378558,0.25416761){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\bfseries Tunnel}}}%
+    \put(0.3412152,0.16748924){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+    \put(0.40585667,0.16748924){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+    \put(0.47047321,0.16748924){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+    \put(0.53506835,0.16748924){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+    \put(0.59903188,0.16748924){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\sum\alpha^{bg}$}}}%
+  \end{picture}%
+\endgroup%

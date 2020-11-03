@@ -1,0 +1,119 @@
+\chapter{Offline Schedule Validation}
+
+\section{Schedule Structure Validation}
+
+Schedules in carpeDM are built according to a given set of rules. Compliance is checked whenever a schedule graph in dot format is handed to carpeDM as
+a schedule action. Checks are made on different levels, such as node (unique name, consistent and complete set of properties, etc...), neighbourhood (types and numbers of neighbours a node can have),
+structure (sequences must have a terminating block, etc...) 
+\paragraph{}
+The action a schedule comes with (add, keep, remove) is also important as context to determine if the given schedule is valid. For example, removing pattern X from the global graphs existing pattern set of X,Y is fine,
+but adding a redundant X is not. Likewise, adding the pattern Z to the set of X,Y would be okay, removing the (not yet existing) Z from X,Y is not.
+\paragraph{}
+carpeDM therefore validates all given dot graphs for their purpose and aims to give an elaborate reason in its feedback when a schedule is rejected.
+This chapter presents the details of the schedule validation scheme and lists part of the implementation.
+
+\subsection{Validation on creation}
+
+Following is the list of rules carpeDM applies when validating schedules. The ruleset is split in a part applying to \enquote{real} nodes and a part only applying to meta data nodes,
+which are not included in the standard schedule output. Those nodes contain data for internal use by carpeDM.
+
+\paragraph{Rules for real nodes}
+\begin{itemize}
+  \item{Sequences}
+  \begin{itemize}
+    \item{Real nodes are timing messages, commands and blocks}
+    \item{A sequence is a set of real nodes connected by default destination edges}
+    \item{Sequences can be connected to other sequences by default or alternative destination edges}
+    \item{The maximum number of alternative destinations is 9 (subject to change in future)}
+    \item{All sequences must be terminated by a block}
+    \item{All real nodes except blocks must have a default successor}
+    \item{Only blocks are allowed to have themselves or none (idle) as default successor}
+    \item{The shortest possible sequence is a lone block}
+    \item{Sequences can form infinite loops}
+    \item{Time offsets within a sequence must be in ascending order}
+    \item{The max. time offset in a sequence must be less than its block's period}
+    \item{Sequences connected by default or alternative destination edges must reside on the same CPU}
+\end{itemize}
+  \item{Patterns}
+  \begin{itemize}
+    \item{Patterns must have exactly one entry and one exit point (might be subject to change in future)}
+    \item{Pattern entry points can be timing messages, commands or blocks}
+    \item{Pattern exit points must be blocks}
+    \item{All of a patterns nodes must reside on the same CPU (might be subject to change in future)}
+\end{itemize}
+  \item{Branching}
+  \begin{itemize}
+    \item{Branching requires a block with at least one queue}
+    \item{Stopping (unlinke aborting) is branching to idle}
+  \end{itemize}
+  \item{Commands}
+  \begin{itemize}
+    \item{Commands always target blocks, but the target can be empty}
+    \item{All commands can target blocks on own or other CPUs}
+    \item{Flow command destinations must either be real nodes or empty}
+    \item{Flow command destinations must be on the same CPU as the target block}
+    \item{Flow commands cannot initialise a loop they are a part of}
+\end{itemize}
+\end{itemize}
+
+\paragraph{Facts about meta nodes}
+\begin{itemize}
+  \item{Only blocks can have meta nodes, allowed are 0-3 queue buffer lists and 0-1 destination list (subject to change in future)}
+  \item{Only queue buffer lists can have queue buffers, 2 are currently mandatory}
+  \item{Management nodes contain compressed node names, group memberships and/or covenant data. Cannot be created manually}
+\end{itemize}
+
+\paragraph{Guidelines}
+\begin{itemize}
+  \item{To add queues, just list the priorities you want. carpeDM will handle the overhead for you}
+  \item{If a block has exactly one successor, don't add queues, this saves space}
+  \item{carpeDM will automatically add a destination list to a block if any alternative destinations are present}
+  \item{When using commands in schedules, $99.9\%$ of the time you will need them ASAP (vabs=true, tvalid=0) }
+  \item{\emph{Only define meta nodes manually if you know exactly what you are doing!}}
+\end{itemize}
+
+\newpage
+\subsection{Validation on change}
+\label{ssec:val-on-change}
+\paragraph{Rules for \emph{add}}
+\begin{itemize}
+  \item{An \emph{add} is a list of nodes and edges to be added and is a dotfile by itself}
+  \item{You cannot overwrite existing nodes, edges or their attributes using \emph{add}. Remove them first, then add new versions}
+  \item{If the addition is connected to existing nodes, only specify the edges to those nodes, not the nodes itself}
+  \item{You cannot add outgoing edges to active schedules except alternative destinations. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+\paragraph{Rules for \emph{remove}}
+\begin{itemize}
+  \item{A \emph{remove} is a list of nodes and edges to be removed and is a dotfile by itself}
+  \item{All nodes listed for \emph{remove} must exist in the DM graph}
+  \item{All edges leading in or out of removed nodes will also be removed}
+  \item{You cannot remove nodes from an active schedule. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+\paragraph{Rules for \emph{keep}}
+\begin{itemize}
+  \item{A \emph{keep} is a list of nodes and edges to be kept and is a dotfile by itself}
+  \item{A \emph{keep} is a \emph{remove} of the difference set of the \emph{keep} set and the DM graph}
+  \item{All nodes listed for \emph{keep} must exist in the DM graph}
+  \item{You cannot keep edges without keeping their nodes}
+  \item{All edges leading in or out of not-kept nodes will also not be kept}
+  \item{You cannot not-keep nodes from an active schedule. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+
+\subsection{Intentional late message generation}
+%
+It is possible to create late timing messages on purpose for debugging. This can be achieved by specifying negative time offsets for individiual timing messages. The negative offset must have an absolute value greater or equal the normal (as in \enquote{fitting into the ascending sequence}) time offset. Such a debugging schedule is in violation of the rule set and will be rejected by carpeDM. To force the acception, you must set the force flag in the Generator FESA class (on CLI, run \emph{dm-sched} with \enquote{-f} option). 
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add -f <late-message-dot.dot>
+\end{lstlisting}
+
+
+\subsection{Summary}
+The offline verification rule tables and algorithms make sure only valid schedule data will be accepted for upload to the DM. 
+All of the rules listed above except the ones about active schedules in subsection~\ref{ssec:val-on-change} are independent of current DM activity and therefore evaluated \enquote{at compile time}.
+The only exception is the use of absolute time values within schedules, which could become obsolete before upload is achieved. There is currently ($\le$ v0.27.1) no safeguard against the use of stale absolute times.
+Almost all of the rules are not solely good practice, but absolutely necessary to achieve expected behaviour of the DM firmware. However, for certain debug cases, it is possible to bend the rules somewhat without causing havoc in the DM hardware.
+
+

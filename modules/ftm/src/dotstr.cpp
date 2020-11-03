@@ -104,6 +104,7 @@ namespace DotStr {
           const std::string sSid           = "sid";       // Sequence ID
           const std::string sBpid          = "bpid";      // Beam process ID
           const std::string sBin           = "beamin";    // Beam In
+          const std::string sBPCstart      = "bpcstart";  // Beam Process Chain Start
           const std::string sReqNoB        = "reqnobeam"; // Request no beam
           const std::string sVacc          = "vacc";      // Virtual accelerator
           const std::string sRes           = "res";       // reserved

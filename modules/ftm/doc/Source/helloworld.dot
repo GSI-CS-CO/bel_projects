@@ -1,0 +1,17 @@
+digraph g {
+name="Helloworld_Example";
+
+graph []
+edge  [type="defdst"]
+
+subgraph HW {
+  node  [cpu="0", pattern="HW"];
+
+
+  Evt_PPS0 [type="tmsg",  patentry="true", toffs=0,  id="0x1000000000000000", par="0x0"];
+  Evt_PPS1 [type="tmsg",                   toffs=8,  id="0x1000000000000001", par="0x0"];
+  B_PPS    [type="block", patexit="true",  tperiod=1000000000, qlo="1", qhi="1", qil="1"];
+  Evt_PPS0 -> Evt_PPS1 -> B_PPS -> Evt_PPS0;
+}
+
+}

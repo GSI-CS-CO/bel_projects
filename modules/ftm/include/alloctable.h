@@ -176,6 +176,7 @@ public:
 
   amI lookupVertex(vertex_t v, const std::string& exMsg = "")   const;
   amI lookupHash(uint32_t hash, const std::string& exMsg = "")  const;
+  amI lookupHashNoEx(uint32_t hash) const;
   amI lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg = "")    const;
 
   bool isOk(amI it) const {return (it != a.end()); }

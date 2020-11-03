@@ -1,0 +1,25 @@
+digraph g {
+name="Safe2RemoveExample4";
+graph []
+edge  [type="defdst"]
+node  [cpu="0"];
+//Dependency because independent is changed to incoming by resident command
+  MSG_R0    [type="tmsg",  pattern="R", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_R1  [type="block", pattern="R", patexit="true",  tperiod=100000000, qlo="1"];
+  MSG_R0 -> BLOCK_R1;
+
+  MSG_A0    [type="tmsg",  pattern="A", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=1, par="0"];
+  CMD_A1    [type="flow", pattern="A", vabs="true", toffs=0, qty=1];
+  BLOCK_A2  [type="block", pattern="A", patexit="true",  tperiod=100000000, qlo="1"];  
+  MSG_A0 -> CMD_A1 -> MSG_B0;
+  CMD_A1 -> BLOCK_B1 [type="target"]
+  CMD_A1 -> MSG_R0 [type="flowdst"]
+
+
+  MSG_B0    [type="tmsg",  pattern="R", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_B1  [type="block", pattern="R", patexit="true",  tperiod=100000000, qlo="1"];
+  MSG_B0 -> BLOCK_B1 -> MSG_B0;
+
+
+
+}

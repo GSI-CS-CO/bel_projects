@@ -1,0 +1,1809 @@
+\chapter{Theoretical Model} % Main chapter title
+\label{chap:theomod} % Change X to a consecutive number; for referencing this chapter elsewhere, use~\ref{ChapterX}
+
+\tikzset{
+three sided/.style={
+        draw=none,
+        append after command={
+            [shorten <= -0.5\pgflinewidth]
+            ([shift={(-1.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north west)
+        edge([shift={( 0.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north east) 
+            ([shift={( 0.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north east)
+        edge([shift={( 0.5\pgflinewidth,+0.5\pgflinewidth)}]\tikzlastnode.south east)            
+            ([shift={( 0.5\pgflinewidth,+0.5\pgflinewidth)}]\tikzlastnode.south east)
+        edge([shift={(-1.0\pgflinewidth,+0.5\pgflinewidth)}]\tikzlastnode.south west)
+        }
+    },
+block/.style = {draw, fill=white, rectangle, minimum height=3em, minimum width=3em},
+tmp/.style  = {coordinate}, 
+sum/.style= {draw, fill=white, circle, node distance=1cm},
+input/.style = {coordinate},
+output/.style= {coordinate},
+pinstyle/.style = {pin edge={to-,thin,black}
+}
+}
+
+
+
+
+\section{Overview}
+
+\subsection{Motivation}
+
+This chapter investigates one of the most important aspects of this  \gls{cs}
+-- the conditions under which it can be guaranteed to work deterministically.
+The \gls{dm} is the head of an alarm based  \gls{cs} which provides a certain degree
+of freedom when choosing a \enquote{safe} lead for transmission. There are limiting factors though:
+
+\begin{itemize}
+\item{Target control loop speed}
+\item{Available computing power}
+\item{Available network bandwidth}
+%\item{Available System Reliability limits }
+\end{itemize}
+
+It is therefore necessary to create a model of the  \gls{cs}, which verifies if a chosen set of machine schedules
+can be scheduled within \gls{cpu} utilisation $\le$ 100\%, does not generate traffic $>$ \SI{1}{\giga\bit\per\second} (including overhead)
+and does not exceed the target delay. This goal is made more difficult by the possible need to change machine schedules during runtime.
+This will happen whenever interlocks and beam requests from experiments need to be serviced.
+\par
+The purpose of the model is to provide a guarantee that a given set of messages can be delivered on time.
+
+
+\subsection{Choice of Implementation}
+After a period of research in classical queuing theory~\cite{yue_advances_2009, daigle_queueing_2005}
+the conclusion was reached that queuing theory is not well suited for the task at hand. Queuing theory is very generic, requiring a lot of the mathematical elements to model this specific problem
+to be developed first. Queuing theory is also more focused on throughput and probabilities, rather than determinism and providing delay bounds.
+Attempts in modelling the \gls{dm} system using queuing theory turned out to lead into a lot of dead ends, the model never quite matched the prototype.
+Without an expert level knowledge in the field, there seemed to be little chance of accurately model a system as complex as the \gls{dm} in queuing theory.
+\par
+The author's specialisation in electrical engineering is communications, which is probably the main reason 
+why \emph{\gls{nc}} had to be encountered at some point in the search for a suitable tool to solve this particular problem. Parts of the problem in modelling the \gls{dm}
+were exhibiting a striking resemblance to problems quite common in system theory. Modelling machine schedules, in a way that would make their
+superposition and shifting in time manageable, showed a lot of the hallmarks of signal processing. Expressing the burstiness of
+a schedule over time as a function of frequency in a spectrogram seemed natural, just as the idea to smooth bursty flows by a filter element did.
+\par
+After deeper investigations of the work of~\cite{cruz_calculus_1991} (1991), and later~\cite{thiran_network_2001} (2001), \gls{nc} presented itself as an ideal tool for the problem at hand. 
+\gls{nc} is a mathematical framework to model concepts from system theory in a networking context,
+with focus on deterministic behaviour and bounds.
+
+\section{Introduction to Network Calculus}
+
+\subsection{Overview}
+
+\paragraph{System Theory for Signal Processing} Signal processing is a very important field in electrical engineering and computer science.
+In most electronic devices signals must be generated, shaped, filtered or distorted. Sheath current filters suppress low frequency humming in a sound system,
+a blur effect removes the high frequencies from an image, to just name a few examples.
+\par
+Complex behaviour in system theory is modelled by the concatenation of basic elements. These are small two-port networks, for which the signal transfer functions can be calculated.
+System theory provides the necessary mathematical tools to put these elements in series or parallel and so enables the calculation of complex signal transformations.
+\paragraph{Computer Networks} Another application of system theory would be modelling the traffic in computer networks. 
+Similar to signals, network traffic can be shaped, filtered, split or joined, but the application of classical system theory
+is rather tedious. Specialisation within queuing theory has evolved
+to deal with the flow in computer networks, focusing on optimising throughput.
+%
+\paragraph{Network calculus} \gls{nc} is an approach that applies system theory to deterministic queuing systems found in communications, such as computer networks.
+Contrary to traditional system theory used for electronic circuits, \gls{nc} employs a different set of algebra, the Min-Plus Dioid (addition becomes computation of the minimum, multiplication becomes addition).
+The approach is aimed at understanding and modelling fundamental properties of networks, such as delay or buffer requirements, scheduling or window flow control.
+The focus of \gls{nc} lies on worst case analysis in order to provide guarantees for a communication system.
+%
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=0.8\textwidth,height=\textheight,keepaspectratio]{Figures/nc_basics3_RC_sigma}
+  \caption{Equivalency: System Theory Low-Pass\\and \gls{nc} Shaper~\cite{thiran_network_2001}}
+  \label{fig:nc_sigma}
+\end{figure}
+%
+As an example, the similarity between an \gls{rc} low pass filter in system theory and a rate-limiting shaper node (server) in \gls{nc} is shown in
+figure~\ref{fig:nc_sigma}. The two-port filter network on the left transforms an incoming analogue signal by applying the convolution with the circuit's impulse response.
+In electrical engineering, a two-port network has a transfer function, which defines the output voltage in relation to the input voltage.
+In \gls{nc}, input- and output-\enquote{signals} are cumulative flows. This means the cumulative sum of units of data (bits, words, packets, etc.) over time.
+\par
+The similarity between a signal filter and a shaping node becomes more apparent when considering a constant rate of arriving packets is equivalent to a \emph{frequency} of packet arrivals.
+It therefore follows, that a shaper imposing a maximum rate (frequency) is low pass filtering the packet flow (signal).
+
+\paragraph{Example}
+\gls{nc} focuses on guarantees, it shows the bounds for maximum delay and backlog that a flow can experience.
+A convenient property of \gls{nc} is the minimal effort necessary to obtain backlog and delay values.
+As figure~\ref{fig:nc_basics1} shows, any input flow $y(t)$ passing a node produces an output flow $z(t)$ for which  $z(t) \le y(t)$ holds true.
+At any point in time, the current backlog can be determined by the vertical deviation of the flows.
+The current delay can be determined by calculating the horizontal deviation.
+Finding the respective maximum values by applying the supremum is then trivial.
+%
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=0.8\textwidth,height=\textheight,keepaspectratio]{Figures/nc_basics1}
+  \caption{Flow passing through a Shaper}
+  \label{fig:nc_basics1}
+\end{figure}
+%
+\subsection{Network Calculus Core Concepts}
+%
+While flows are defined as the cumulative sum of data over time, \gls{nc} defines systems in terms of arrival curves and service curves. Figure~\ref{fig:ex} shows two related examples.
+\paragraph{Arrival Curves} Describe sets of constraints that govern the input flow's behaviour over time. 
+These curves are usually piece-wise linear, concave functions. Their slope describes the maximum allowed rates, their vertical offset the burst tolerance. 
+\par
+An arrival curve could state that an incoming flow is allowed a peak rate of no more than \SI{500}{\mega\bit\per\second} up to an input buffer size of \SI{256}{\mega\byte},
+afterwards it must fall back to a sustainable rate of \SI{100}{\mega\bit\per\second} until the buffer's fill level is lower (figure~\ref{fig:ex_arr}).
+\paragraph{Service Curves} These are the counterpart to arrival curves, they describe the service a system offers to an input flow.
+Their horizontal offset is describing the amount of time lag packets experience, their slope describes the minimum rates. To again provide an example, a server's minimum service
+curve could state that it will delay packets for at least \SI{2}{\milli\second} and can handle traffic up to a rate of \SI{1}{\giga\bit\per\second}.
+These curves are usually piece-wise linear, convex functions (figure~\ref{fig:ex_serv}).
+\par
+One of the core constructs of \gls{nc} is a node behaviour called the \enquote{leaky bucket controller}. The analogy is simple: Consider a water bucket, able to hold an amount of water $b$, leaking with a constant rate of $C$.
+It can handle one or more of gushes of water of arbitrary volume, up to the capacity of the bucket.
+Once the bucket is full, it is easy to see that there is a maximum rate at which one can add more water without overflowing, which is $r \le C$ --
+a system with buffer size $b$, input data rate $r$ and output data rate $C$. This is equivalent to featuring an arrival curve $\alpha = \upsilon_{b,r} = rt + b$ and a minimum/maximum service curve $\beta = \lambda_C = Ct$
+(figure~\ref{fig:ex_leaky}).
+%
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics*[width=\linewidth,height=3cm,keepaspectratio]{Figures/nc_core_examples_a}
+            \caption{Arrival Curve}\label{fig:ex_arr}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics*[width=\linewidth,height=3cm,keepaspectratio]{Figures/nc_core_examples_b}
+            \caption{Service Curve}\label{fig:ex_serv}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+              \includegraphics*[width=\linewidth,height=3cm,keepaspectratio]{Figures/nc_core_examples_c}
+            \caption{\enquote{Leaky Bucket}}\label{fig:ex_leaky}
+        \end{subfigure}
+        \caption{\gls{nc} Examples}\label{fig:ex}
+\end{figure}
+%
+\paragraph{Output Arrival Curves}
+Arrival and service curves put constrains on input and system behaviour, but to give a guaranteed flow behaviour, the output of a system also needs to be constrained.
+The matching instrument is called an output arrival curve. It is similar to an arrival curve, but describes the flow \emph{after} it has traversed a node, having experiencing its service.
+It is used to define the input constraints for the next downstream node.
+As an example, consider a periodic input flow, sending with a rate of \SI{1}{\giga\bit\per\second} for 20\% of the time and idle otherwise. 
+If the node provides a service of \SI{250}{\mega\bit\per\second}, the output arrival curve would also be a periodic flow, sending at \SI{250}{\mega\bit\per\second} for 80\% of the time.
+\paragraph{Shaping Curves} are the application of service curves to form a flow.
+If a node forces a flow to conform to a specific target arrival curve, it is called a shaper. More details on shapers can be found in subsection~\ref{ssec:nc_elementary}.
+\paragraph{Bounds}
+The main goal of \gls{nc} is to provide bounds on delay, backlog and output, in order to give guarantees. Bounding the end-to-end delay a flow experience is for example necessary when calculating if the lag
+for an individual VoIP connection will always stay low enough not to impair a conversation. Bounding backlog, for example, is important for calculating the size of memory a router will need.
+And lastly, the necessity for bounding an output flow, which is explained under \enquote{output arrival curves}.
+
+
+\subsection{Mathematical Background}
+Most of the theory on Network Calculus in this chapter stems from~\citeauthor{thiran_network_2001}'s text book on the subject~\cite{thiran_network_2001}.
+This introduction will focus on the application of the presented theorems and limit the formal proof and mathematical background to the necessary minimum.
+After the work of~\citeauthor{thiran_network_2001}, \gls{nc} has forked into the direction of stochastic applications~\cite{jiang_basic_2006}. This is of no further interest to this
+case study, as the  \gls{cs} must be deterministic. Some of the most interesting advance in the field of deterministic \gls{nc}, as well intriguing problems and tricks of the trade,
+were gathered from the post-2006 publications of~\citeauthor{schmitt_comprehensive_2007}, as well as Fidler and most recently, Bondorf~\cite{schmitt_comprehensive_2007,fidler_way_2006,schmitt_delay_2008,bondorf_discodnc_2014,bondorf_improving_2016}.
+
+\paragraph{Min-Plus Algebra}
+\gls{nc} uses a different algebraic Dioid (similar to e.g. Boolean algebra, which replaces arithmetic operations by logic), which replaces addition with computation of the minimum
+and multiplication with addition. The two most important equations describe the convolution operations, similar to standard system theory. They are defined as
+%
+\begin{equation}
+\begin{aligned}
+&\text{Min-Plus Convolution} &f(t) \otimes g(t) &= \inf_{0 \le s \le t} \left\{f(t-s) + g(s) \right\} \\[8pt]
+&\text{Min-Plus Deconvolution}&f(t) \oslash g(t) &= \sup_{s \ge 0} \left\{f(t+s) - g(s) \right\}\\
+\end{aligned}
+\end{equation}
+%
+\paragraph{Max-Plus Algebra}
+The corresponding max-plus operations are also listed, not only for the sake of completeness, but because max-plus deconvolution
+will become useful when finding a curve providing a lower bound to a function. The concrete application will be shown in conjunction with scaling operators in section~\ref{ssec:nc_elementary}.
+%
+\begin{equation}
+\begin{aligned}
+&\text{Max-Plus Convolution} &f(t)\phantom{~} \overline{\otimes}\phantom{~} g(t) &= \sup_{0 \le s \le t} \left\{f(t-s) + g(s) \right\} \\[8pt]
+&\text{Max-Plus Deconvolution}&f(t)\phantom{~}  \overline{\oslash}\phantom{~} g(t) &= \inf_{s \ge 0} \left\{f(t+s) - g(s) \right\}
+\end{aligned}
+\end{equation}
+%
+\paragraph{Curves}
+We will follow the convention of marking output related curves and flows by appending an asterisk. Arrival curves (if not otherwise stated, an upper bound) are
+denoted by the letter $\alpha$ (and therefore, $\alpha^*$ denotes an output arrival curve). For service, there exists a maximum service denoted as $\gamma$,
+which is useful to calculate buffer sizes, and minimum service denoted $\beta$, which is used to calculate delay. Shapers are always denoted as $\sigma$.
+The definitions of all introduced curve types are as follows:
+%
+\begin{equation}
+\begin{aligned}
+&\text{Input-Output Relation} &R(t) &\ge R^*(t)\\[8pt]
+&\text{Max. Arrival Curve} &R(t) - R(s) &\le \alpha(t - s)\\[8pt]
+&\text{Max. Service Curve} &R^* &\le R \otimes \gamma\\[8pt]
+&\text{Min. Service Curve} &R^* &\ge R \otimes \beta\\[8pt]
+&\text{Shaping Curve} &R^* &= R \otimes \sigma \le (R \otimes \alpha) \otimes \sigma
+\end{aligned}
+\end{equation}
+%
+\paragraph{Bounds}
+The following equations concern the \enquote{three bounds}, as~\citeauthor{thiran_network_2001} called them: backlog, delay and output flow.
+Backlog and delay can be directly calculated from the difference between input and output flows (see figure~\ref{fig:nc_basics1}), as well as from
+arrival and service curves. It is easy to see here, that a node with an arrival curve, of a higher continuous rate than the service curve, cannot have bounds.
+%
+\begin{equation}
+\begin{aligned}
+&\text{Flow Backlog} &b(t) &= R(t) - R^*(t)\\[8pt]
+&\text{Flow Delay} &d(t) &= \inf\left\{\tau \ge 0 : R(t) \le R^*(t+\tau) \right\}\\
+\\
+&\text{Curve Backlog} &b(t) &= \alpha(t) - \beta(t)\\[8pt]
+&\text{Curve Delay} &d(t) &= \inf\left\{\tau \ge 0 : \alpha(t) \le \beta(t+\tau) \right\}
+\end{aligned}
+\end{equation}
+%
+For all systems, an output arrival curve (that is, the arrival curve for the following node) can be calculated by deconvolution
+of the input arrival curve with the node's service curve. If no arrival curve is known for a node, a minimal arrival curve can
+always be calculated by deconvolution of the input flow with itself.
+This leads to the following expressions:
+%
+\begin{equation}
+\begin{aligned}
+&\text{Output Arrival Curve} &\alpha^* &= \alpha \oslash \beta\\[8pt]
+&\text{Minimal Arrival Curve} &\alpha_{min} &= R \oslash R
+\label{eq:nc_outp_arr}
+\end{aligned}
+\end{equation}
+%
+\paragraph{Concatenation}
+Whenever a flow passes through multiple nodes in sequence, it is possible to concatenate service curves into a single equivalent node. This is similar to concatenation of transfer functions in system theory.
+The service curve of the equivalent node is the convolution of passed service curves: 
+%
+\begin{equation}
+\begin{aligned}
+&\text{Service Concatenation} &R^* &\ge r_1 \otimes \beta_2 \ge (r_1 \otimes \beta_1) \otimes \beta_2 = R \otimes (\beta_1 \otimes \beta_2)\\
+\end{aligned}
+\end{equation}
+%
+In \gls{nc}, there is selection of basic curve functions that are frequently encountered when modelling networks. More complex curves can be constructed from basic functions
+by adopting a piecewise-linear approach (figure~\ref{fig:compound_curve}). A compilation of common basic functions in the context of \gls{nc} is found in figure~\ref{fig:nc_functions}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=\textwidth,height=\textheight,keepaspectratio]{Figures/nc_basics_comp}
+  \caption{Examples of piecewise-linear Functions~\cite{thiran_network_2001}}
+  \label{fig:compound_curve}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=\textwidth,height=\textheight,keepaspectratio]{Figures/nc_functions}
+  \caption{Catalogue of commonly used Curve Functions in \gls{nc}~\cite{thiran_network_2001}}
+  \label{fig:nc_functions}
+\end{figure}
+\noindent
+\subsection{Elementary Building Blocks}
+\label{ssec:nc_elementary}
+\gls{nc} uses a number of basic elements to construct network models, similar to system theory having different types of filter, mixer and splitter nodes
+as basic elements. The behaviour of a complex, composite system is then derived from the behaviour of these basic elements.
+\paragraph{Shaper}
+A shaper is an element offering its shaping curve as both a minimum and maximum service.
+As figure~\ref{fig:nc_basics2} shows, the convolution applies the shaping curve simultaneously at
+\emph{every} point of the input flow,  thus forcing the flow to have $\sigma$ as its arrival curve. Whenever it would exceed the curve, data is delayed in time (moved to the right).
+There are two types of shapers defined in~\cite{thiran_network_2001}. 
+The first complies to the above definition, although it is left unclear how the process is actually implemented. 
+Focusing on the second definition, elements called \emph{greedy shapers}. A greedy shaper \enquote{\textit{delays the input bits in a buffer, whenever sending a bit would violate the constraint $\sigma$, but outputs them as
+soon as possible}}~\cite[p. 42]{thiran_network_2001}.
+%
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=0.7\textwidth,height=\textheight,keepaspectratio]{Figures/nc_basics2}
+  \caption{Visualisation of the Effect of min-plus Convolution:\\Shaping curve $\sigma$ is enforced at every point of input flow $y(t)$}
+  \label{fig:nc_basics2}
+\end{figure}
+%
+\paragraph{Packetiser}
+A packetiser is a variable delay element with a service curve roughly resembling a staircase (figure~\ref{fig:nc_pack}). 
+It delays the output so it stays at step level $L(n-1)$ until the input flow has reached $L(n)$.
+Packet data is thus only forwarded once the whole packet was received~\cite[pp. 218]{thiran_network_2001}.
+An element behaving in the way described is the so called \enquote{L-Packetiser}. These are theoretical constructs, assuming instantaneous packet arrival and departure.
+It employs the indicator function $1_{\{<expr.>\}}$, which is defined as
+%
+\begin{align}
+\mathrm{1_{\{<expr.>\}}} = 
+\begin{cases}
+1 & \text{when \emph{expression} is true}\\
+0 & \text{when \emph{expression} is false}
+\end{cases}
+\label{eq:func_ind}
+\end{align}
+%
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=0.6\textwidth,height=\textheight,keepaspectratio]{Figures/nc_basics_pack}
+  \caption{Definition of Function $P^L$~\cite{thiran_network_2001}}
+  \label{fig:nc_pack}
+\end{figure}
+\noindent
+The function for an L-Packetiser can be then written as eq.~\ref{eq:lpac}, $x$ being the current flow level ($R(t)$).
+%
+\begin{align}
+\mathrm{P^L(x)} &= \sup_{n \in \mathbb{N}}\left\{ L(n)1_{\left\{L(n)\le x\right\}}\right\}
+\label{eq:lpac}
+\end{align}
+%
+We will now take a closer look at the step function $L(n)$ which the packetiser employs to delay data until a packet is complete.
+$L(n)$ is the cumulative function of packet lengths,  $l(n)$ being the length of the $n$-th packet.
+$L(n)$ is defined as
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{L(0)} &= 0\\
+\mathrm{l(n)} &= L(n) - L(n-1)\\
+\mathrm{l_{max}} &= \sup \{l(n)\}
+\label{eq:l_gen}
+\end{aligned}
+\end{equation}
+%
+For variable length packets, step values for $L(n)$ are either delivered a-priori or calculated
+iteratively from $L(n-1)$. If packet length is constant, cumulative packet length can simply be written as
+%
+\begin{align}
+\mathrm{L(n)} &= n\cdot l
+\label{eq:l_const}
+\end{align}
+%
+L-packetisers are a virtual construct, because no components can provide instantaneous arrival \emph{and} departure (except wires if relative times are considered).
+A more realistic application of the theory are \gls{pgs}, which, as the name suggests,  model buffer
+delay by prefixing the L-packetiser with a greedy shaper:
+%
+\begin{align}
+\mathrm{R^*} &= P^L(R \otimes \sigma)
+\label{eq:l_framer}
+\end{align}
+%
+An L-Packetiser buffers a packet, the first bit of any incoming packet is delayed until the arrival of its last bit.
+Assuming a constant rate shaper $\lambda_C$ as the bit-by-bit system, the maximum delay experienced by a packet is the time it takes
+the maximum size packet, $\frac{l_{max}}{C}$. The equivalent minimum service of a packetiser can therefore be written as the concatenation of
+a constant rate node and the buffering delay, a rate-latency service of the form $\beta_{C,\frac{l_{max}}{C}}$.
+
+\paragraph{Multiplexer}
+
+Multiplexers are the most complex building elements in \gls{nc}, because their impact can vary widely depending on their inputs and policy.
+Aggregation of flows is a common scenario for routers, switches or even endpoints, if they run multiple services in parallel.
+The multiplexer is a node offering a total service $\beta$, which is usually a constant rate of  $\lambda_C$, to all incoming flows $\sum R_i(t)$. 
+Service allocation to the individual flows is defined by a scheduling policy. The main distinction is made between arbitrary multiplexing, which assumes
+no knowledge about policy, and several other cases. The assumption of an arbitrary policy always provides correct, but usually most pessimistic bounds. 
+The most important other case is \gls{fifo} multiplexing, which assumes messages are served in order of their arrival.
+\gls{fifo} and fixed priority policies (one input flow always preferred over another) are also handling well in \gls{nc}.  
+\par
+We shall give an example of a simple fixed priority setup with two flows.
+The service available to the \gls{lp} flow is the residual service, after the preferred flow has been served. 
+The \gls{hp} flow's arrival curve is subtracted from the available service, which amounts to the residual service for the \gls{lp} flow. 
+Because service curves are always wide-sense increasing~\cite[p. 19]{thiran_network_2001}, so the supremum of the difference must be used~\cite{schmitt_comprehensive_2007}.
+\par
+Whenever the slope of the arrival curve is greater than the slope of the service curve, the difference would be a decreasing function. This is in effect service backlog,
+but service curves cannot represent this directly. The delay this backlog causes is added instead.
+This is achieved through the supremum, as it keeps the residual service at constant level when it would be decreasing. Since no arrivals are serviced during that period, it introduces an equivalent delay.
+The shorthand notation for this residual service is defined as
+%
+\begin{align}
+\beta^{l.o.}_2 = \sup_{0 \le s \le t}\left\{\beta(s) - \alpha_1(s)\right\} = \beta \ominus \alpha_1
+\label{eq:nc_res_serv0}
+\end{align}
+%
+More explicitly, consider a multiplexer offering a constant service rate $C$. The high priority flow is constrained by an affine function of maximum rate $r$ and a buffer size $b$, with $r < C$.
+It is easy to see that the rate experienced by the \gls{lp} flow will be the difference between the \gls{hp} rate and the available rate in the system.
+Furthermore, if the \gls{hp} flow has backlogged traffic, it can completely saturate the system. This makes the \gls{lp} flow wait until all \gls{hp} backlog is serviced.
+Thus the residual service is a rate latency curve
+%
+\begin{align}
+\beta^{l.o.} = \beta_C \ominus \alpha_{r,b} = \beta_{C-r, \frac{b}{C-r}}
+\label{eq:nc_res_serv1}
+\end{align}
+%
+If there is more than one flow to be multiplexed, the residual service experienced by the flow of interest is calculated by summing up
+the arrival curves of all interfering flows, such that
+%
+\begin{align}
+\beta^{l.o.}_{foi} = \beta \ominus \sum_i \alpha_i
+\label{eq:nc_res_serv2}
+\end{align}
+%
+Depending on the system's arbitration policy, a peculiarity can occur for \gls{hp} service.
+If the system operates under a \gls{fifo} policy, \gls{hp} itself has a waiting condition, due to an ongoing \gls{lp} transmission (because it cannot pre-empt the \gls{lp} flow).
+In line with \gls{fifo}, there must exist an upper bound for the size of such units of data, $l_{max}$. Because the length is arbitrary, this holds for bits and whole packets alike.
+\gls{hp} is waiting for any ongoing \gls{lp} transmissions to complete, so its minimum service is defined as
+%
+\begin{align}
+\beta^{hi}_1 = \beta \ominus l_{max}
+\label{eq:serv_pl3}
+\end{align}
+%
+
+
+
+\paragraph{Scaler}
+
+In many networks, there are nodes that compress or decompress data (video-encoder, etc.).
+This is a problem in \gls{nc}, because the fundamental criterion, that $R(t) \le R^*(t)$, is
+violated in the case of compression. While it is kept in the case of decompression,
+the relation between input and output flow is still distorted. In both cases,  horizontal and vertical deviation
+no longer correspond to delay and backlog a flow is experiencing.
+\par
+Data Scaling, first introduced by~\citeauthor{fidler_way_2006}, is a concept for \gls{nc} which handles this problem by application of scaling curves~\cite{fidler_way_2006}.
+The Scaler will assign each bit of data $a = R(t)$ a scaled image of $S(a)$.
+$S$ is a wide-sense increasing, bijective function curve, thus an inverse function $S^{-1}$ exists.
+From the perspective of the system's ingress, delay and backlog can then be calculated since
+perspective is important because $R_S$ is scaled in relation to the ingress, but not in relation to a downstream node.
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{R_S^*(t)} &= S(R(t) \otimes \beta(t))\\
+\\
+\mathrm{b(t)} &= R(t) - S^{-1}(R_S^*(t))\\
+\mathrm{d(t)} &= \inf\left\{\tau \ge 0 : R(t) \le S^{-1}(R_S^*(t+\tau)) \right\}
+\label{eq:scaler1}
+\end{aligned}
+\end{equation}
+%
+\paragraph{Scaling Functions and Curves}
+Scaling functions can be directly applied to flows. However, application to arrival and service curves
+is not directly possible. Scaling curves must be derived from the function first. $\underline{S}$ is a minimum scaling curve of $S$ if it is less or equal to its max-plus deconvolution, likewise, $\overline{S}$ is a maximum scaling curve of $S$ if
+it is less or equal to its min-plus deconvolution:
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{\underline{S}(b)} &\le \inf_{a \in [0,\infty)} \left \{ S(b+a) - S(a) \right \} &&= S(b)\phantom{~}\overline{\oslash}\phantom{~}S(b)\\
+\mathrm{\overline{S}(b)}  &\le \sup_{a \in [0,\infty)} \left \{ S(b+a) - S(a) \right \} &&= S(b) \oslash S(b)
+\label{eq:scaler2}
+\end{aligned}
+\end{equation}
+%
+\paragraph{Inverse Scaling Curves}
+Obtaining inverse scaling curves follows directly from eq.~\ref{eq:scaler2} by applying the process to the inverse scaling function $S^{-1}$.
+It further holds that the maximum scaling curve of the inverse scaling function, $\overline{S^{-1}}$, is equal to the inverse of the minimum scaling curve of the scaling function, $\underline{S}^{-1}$.
+and vice versa~\cite[p. 290 (4)]{fidler_way_2006}.
+
+\paragraph{Scaled Servers}
+\label{scaled_service}
+To apply the above statements to finding an end-to-end delay bound, it is necessary to scale servers.
+This means applying scaling curves to service curves to obtain a scaled service. This may seem trivial, but is
+important as a way to allow concatenation of systems in the presence of scalers.
+\par
+The core concept is the equivalency of the following systems:
+The minimum and maximum service, $\beta$ and $\gamma$, of a server with scaled output (a) and a server with scaled input (b)
+lead to equivalent bounds, if S is bijective and:
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta^S(t)} &= \underline{S}(\beta(t))\\
+\mathrm{\gamma^S(t)} &= \overline{S}(\gamma(t))\\
+\\
+\mathrm{\beta(t)} &= \underline{S^{-1}}(\beta^S(t))\\
+\mathrm{\gamma(t)} &= \overline{S^{-1}}(\gamma^S(t))\\
+\label{eq:scaler3}
+\end{aligned}
+\end{equation}
+%
+
+\subsection{Delay Analysis Methodology}
+
+
+There are many different approaches to obtain end-to-end delay bounds for a system.
+The first three, \emph{\gls{tfa}}, \emph{\gls{sfa}} and \emph{\gls{pmoo}}, are the \enquote{classical} approaches, solely relying on network calculus.
+The different methods are demonstrated on a minimal example of two nodes in tandem~\cite{schmitt_comprehensive_2007}, through which two flows are multiplexed as a \gls{fifo} aggregate.
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.6\textwidth}
+  \input{Figures/test-2n-2f.pdf_tex}
+  \caption{Minimal Network Example: 2 Nodes, 2 Flows}
+  \label{fig:nc_basics_minnet}
+\end{figure}
+
+
+\paragraph{Total Flow Analysis}
+This form of an end-to-end analysis adds the delays encountered by the total flow, that is, the \emph{sum} of all flows, along the path.
+This is calculated per node, using the arrival curves transformed by the node. This means using the original arrival curves $\alpha_1$ and $\alpha_2$ at the first node, their output arrival curves
+$\alpha_1'$ and $\alpha_2'$ (see eq.~\ref{eq:nc_outp_arr}, p.~\pageref{eq:nc_outp_arr}) at the second node and so on.
+Delay is defined as horizontal deviation between input and output flow, so the delay for \gls{tfa} is calculated as
+%
+\begin{align}
+d_{TFA} = h(\alpha_1 + \alpha_2, \beta_1) + h \big( (\alpha_1 + \alpha_2) \oslash \beta_1, \beta_2 \big) 
+\label{eq:d_tfa}
+\end{align}
+%
+The obtained bound is valid for both the \gls{foi} and the interfering flow(s), but does not provide information about which flow it belongs to. It is thus overly pessimistic for all but one flow.
+\gls{tfa} tends to produce the least tight bounds.
+
+\paragraph{Separate Flow Analysis}
+\gls{sfa} aims to obtain a tight bound for the \gls{foi} by removing it from the system and inspecting the residual service available to it after servicing the interfering flow(s). 
+This is achieved by summing up all flows except the \gls{foi} and subtracting
+the aggregate flow from the total service of the system (see eq.~\ref{eq:nc_res_serv0}, p.~\pageref{eq:nc_res_serv0}). The residual service is then computed over all nodes by convolution,
+which equals the end-to-end service encountered by the \gls{foi} and thus provides its delay. This can be written as
+%
+\begin{align}
+d_{SFA} = h\Big(\alpha_1, \big(\beta_1 \ominus \alpha_2 \big) \otimes \big(\beta_2 \ominus (\alpha_2 \oslash \beta_1) \big) \Big) 
+\label{eq:d_sfa}
+\end{align}
+%
+Because \gls{sfa} includes topology information when calculating residual service, it is proven to deliver tight bounds for all multiplexing policies. Contrary to \gls{tfa},  \gls{sfa} pays bursts only once (PBOO criterion), because residual services are concatenated
+before calculating end-to-end delay.
+
+\paragraph{Pay Multiplexing Only Once Analysis}
+The downside of \gls{sfa} is an overly pessimistic accumulation of multiplexing delay at every node, even if it is not occurring there. Consider two \gls{fifo} multiplexed flows, which can both send at the same rate, passing through several nodes
+all capable of this rate. While it is true that only one flow can send at the same time, this only determines delay at the first node. Once the order of sending is determined, additional nodes should not introduce more multiplexing delay.
+\par
+\gls{pmoo} is a special case of \gls{sfa} which tries to, as the name suggests, avoid paying multiplexing multiple times by concatenation all encountered nodes into one equivalent node before the residual service calculation.
+In the example from figure~\ref{fig:nc_basics_minnet}, this means the convolution of $\beta_1$ and $\beta_2$ before subtracting $\alpha_2$:
+%
+\begin{align}
+d_{PMOO} = h \Big( \alpha_1, \big( (\beta_1 \otimes \beta_2) \ominus \alpha_2 \big) \Big)
+\label{eq:d_pmoo}
+\end{align}
+%
+In most cases, \gls{pmoo} delivers the tightest bounds. There are some special cases when \gls{sfa} can perform better than \gls{pmoo}, when the service rates is higher at downstream nodes than at the ingress~\cite{schmitt_delay_2008}.
+Contrary to \gls{sfa}, \gls{pmoo} analysis has only been proven for arbitrary multiplexing policy.
+
+\paragraph{Building on \gls{nc}}
+There are known problems with the described analysis methods when treating aggregated flows, because it can be proven~\cite{schmitt_delay_2008} that even with \gls{pmoo} analysis, multiplexing over multiple hops
+does not always produce the tight bounds. There were more recent advance in providing tight end-to-end delay bounds from Lencini et al.~\cite{lenzini_end--end_2007} and Schmitt et al.~\cite{schmitt_delay_2008}(2008), employing optimisation algorithms on top of network calculus. In order to obtain the minimum delay bound, these approaches define the service curve of all traversed nodes and then solve a linear optimisation problem for the distribution of backlog between these. 
+
+The most recent research by~\citeauthor{bondorf_delay_2016} from 2016 shows a very interesting development back to pure algebraic solutions. In their publication, they prove the existence of a completely algebraic technique,
+which requires much less computation than linear optimisation, but still closely matches experimental results to within 1.16\%~\cite{bondorf_delay_2016}.
+
+
+\section{Approach for modelling the Data Master}
+
+\subsection{Overview}
+
+The following is the overview of the intended \gls{nc} model to be used for an end-to-end delay analysis of the \gls{dm} and its environment.
+The first part of the model will be the \gls{dm} itself and its sub-components. The second part will be a black box model of the \gls{wr} switches, the third a model of \gls{tr}.
+While it would be feasible to model the switches more accurately, a white box approach is outside the scope of this work.
+\par
+The purpose of this model (and indeed of \gls{nc} as a whole) is to provide worst case bounds on delay, backlog and output flows, it does not provide exact input-output transformations. 
+While it is technically possible to create accurate transfer functions, the benefit of using \enquote{low-level} models would be limited to verifying the formally proven abstract modelling techniques
+provided by~\citeauthor{thiran_network_2001} and Schmitt.
+%
+\iffalse
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=\textwidth,height=\textheight,keepaspectratio]{Figures/dm-flow}
+  \caption{Global \gls{nc} Flow Model of the \gls{dm}}
+  \label{fig:dm-model}
+\end{figure}
+\noindent
+An overview of the model is presented in figure~\ref{fig:dm-model}. It shows, from left to right: \gls{lm32} Soft-\gls{cpu}s with their schedulers, the hardware priority queue,
+the EtherBone Master, Forward Error Correction encoder, Network Interface Circuit, White Rabbit Network (Switches) and a \gls{tr} as the endpoint.
+The figure provides a bird's eye view of the system, focusing on the in- and egress of flows into the model. 
+The only exception is the scaler, since the scope of the scaling is important when calculating an end-to-end bound.
+The depicted nodes are already a concatenation of individual services, a detailed breakdown of their components is provided in the corresponding sections.
+\par
+While it seems intuitive to arrange the discussion from source to sink, this is deviated from in some cases. The reason is that some modules are,
+in view of their function and how they can be modelled, subsets of others. These are presented in order of increasing complexity, adding to the previous stages.
+\fi
+\paragraph{Naming Conventions} 
+Within the timing system, server nodes are processing data at four different (three distinct) rates $r_x$. These are, in descending order:
+\begin{equation}
+\begin{aligned}
+\notag
+&r_3 &&= \SI{4}{\byte} \cdot \SI{8}{\per\nano\second} &= \SI{4}{\giga\bit\per\second}\\
+&r_{2a} &&= \SI{4}{\byte} \cdot  \SI{16}{\per\nano\second} &= \SI{2}{\giga\bit\per\second}\\
+&r_{2b} &&= \SI{2}{\byte} \cdot  \SI{8}{\per\nano\second}  &= \SI{2}{\giga\bit\per\second}\\ 
+&r_1 &&= \SI{1}{\byte} \cdot \SI{8}{\per\nano\second} &= \SI{1}{\giga\bit\per\second}
+\label{eq:rates}
+\end{aligned}
+\end{equation}
+%
+
+
+\subsection{Machine Schedules as Flows}
+\label{ssec:machine-flows}
+Before constructing a detailed service model, we shall have a closer look at the input flows, i.e. how they originate from a collection of
+machine schedules. All flows entering from the \gls{cpu} side are of potential interest for analysis, while the injected headers from the \gls{ebm} and \gls{wr} traffic will always be treated as interfering flows. 
+Machine Schedules provide content for timing messages as well as information about points of decision, i.e., which schedules can be played next and which is the default selection.
+Each message within a schedule requires a dispatch time in relation to its time offset. With these offsets and their arrival time, an \gls{edf} scheduler can create the corresponding message flow,
+the cumulative sum of messages over time.
+%
+\begin{figure}[H]
+  \centering
+  \includegraphics*[width=\textwidth,height=\textheight,keepaspectratio]{Figures/SchedExec}
+  \repeatcaption{fig:machine_sched}{Machine Schedules for the Accelerator}
+\end{figure}
+%
+\paragraph{Assignment of Arrival Curves}
+It is always possible to find a minimal arrival curve for a flow. This is obtained by the min-plus deconvolution of the flow with itself, thus $\alpha = R \oslash R$.
+These arrival curves tend to be \emph{very} form-fitting to the actual flow and are therefore tedious to describe formally. They are also often not concave, but star-shaped. For convenience (and especially for the following worst case of several schedules),
+it is advantages to find an approximated arrival curve from within a certain family of functions. A piece-wise affine function as shown in figure~\ref{fig:compound_curve} tends to provide a good approximation~\cite[p. ]{thiran_network_2001}.
+We will only briefly touch the subject of a suitable approach for approximation of arrival curves, as a full investigation is out of the scope of this work.
+\par
+The solution to the problem is finding the minimax solution, that is, minimisation of the maximum error when choosing affine segments. Apart from least square approximation, which does not necessarily converge~\cite{imamoto_recursive_2008},
+there are splitting algorithms that search for segments within a certain error criterion~\cite{vandewalle_calculation_1975} and also recursive approaches, which try to find the location of the tangent pivots directly~\cite{imamoto_recursive_2008}.
+While~\cite{imamoto_recursive_2008} will find an optimal solution, the result is only proven to be optimal for concave or convex functions. 
+This is a problem for minimal arrival curves: While concave functions are always sub-additive, sub-additivity does not imply concavity.
+It would therefore be necessary to either construct the concave hull of the minimal arrival curve before applying~\cite{imamoto_recursive_2008}, evaluate the quality of fits to sub-additive functions or choose for example the algorithm of~\citeauthor{vandewalle_calculation_1975}~\cite{vandewalle_calculation_1975}, which is applicable to arbitrary functions.
+\par
+It is important to note that assignment of arrival curves needs to consider the \emph{whole} flow, i.e. the concatenation of machine schedules.
+All successions of machine schedules in the \gls{dm} are either finite or periodic for the validity period of the analysis.
+Once a fitting arrival curve has been defined, it is possible to assign service to this flow at every node it passes through.
+This will allow to obtain an end-to-end delay bound for the corresponding flow.
+
+As a proof of concept for this approach, an example for the generation of a piece-wise affine arrival curve
+describing a periodic message flow is given in the following paragraph.
+%
+\begin{figure}[H]
+\input{Figures/arrival_res.tex}
+\caption{Generation of a piece-wise affine Arrival Curve from Flow.\\The corresponding Messages are shown in the stem plot below.}
+  \label{fig:arrival}
+\end{figure}
+%
+The example given in figure~\ref{fig:arrival} constructs the affine arrival curve for a periodic flow.
+The corresponding message flow is visualised as a stem plot at the bottom of the figure. Each circle signifies as a timing message of \SI{32}{\byte}, stacked circles show concurrent execution times. 
+As a first step, the flow's vector is cloned and concatenated to the original (black curve). Secondly, the minimal arrival curve is calculated by min-plus deconvolution of the flow with itself (red curve). Because the flow was cloned before, the minimal arrival curve (within the flow's interval) matches a periodic repetition. As the third step, the concave hull of the minimal arrival curve is constructed (blue dashed curve).
+All nodes not contributing to the outer shape are removed. As the fourth step, the affine function is reduced to the length of the flow's period, keeping the slope it had at the end of the interval.
+The resulting function is piece-wise described by affine functions of the form $m\cdot x + b$. It has a peak rate of $\approx$ \SI{5}{\mega\bit\per\second} and a sustainable rate of $\approx$ \SI{1}{\mega\bit\per\second}, with an initial burst of \SI{96}{\byte}.
+Eq.~\ref{eq:ac_gen} shows the description of this arrival curve (burst values in bytes, rates bytes per second, time in micro seconds):
+\begin{align}
+\label{eq:ac_gen}
+\alpha_{r_i, b_i} = \left\{
+\begin{array}{lcrl}
+\gamma_{96,\phantom{0} \phantom{1}6.5 \cdot 10^{5}}  & \hspace{1cm} & 0 & < x < \phantom{1}360 \\
+\gamma_{320, 1.28 \cdot 10^{5}} & \hspace{1cm} & 36  & \le x < 116 \\
+\gamma_{448, 1.25 \cdot 10^{5}} & \hspace{1cm} & 116 & \le x < \infty^+
+\end{array}
+\right\}
+\end{align}
+
+\subsection{Outside Interference}
+\label{ssec:outside_ctrl}
+\paragraph{Worst Case for Online Flow Control}
+Outside intervention through interlocks will change the path through the machine schedule graph (see figure~\ref{fig:machine_sched}) in realtime, yet the
+delay analysis will be done offline. The reason is that even if the analysis is carried out in realtime,
+detecting an imminent violation of the system's delay bound will not help containing the situation. Instead, the worst case combinatorial scenario
+of all possible flows at this point must be considered by taking the supremum of all minimal arrival curves. The supremum of sub-additive curves is also sub-additive, preserving their property.
+
+\begin{itemize}
+\item{Arrival curves of all involved Schedules}
+\item{Time of Points of decision}
+\item{Sets of alternative arrival curves for each Point of Decision}
+\end{itemize}
+If this information is available, it is possible to create compound worst case arrival curves from several individual ones by supremum of all alternatives. 
+In the case of the \gls{dm}, the combinatorial arrangement can only be conducted \emph{after} the first \gls{edf} scheduler in the \gls{lm32}'s firmware.
+The reason is finding the worst case combination is only possibly with arrival curves of flows in which messages already occupy their scheduled release times.
+
+\paragraph{Relaxed case for optional Online Flow Control}
+All requests from experiments are not regarded as time-critical, they can thus be delayed without penalty. This creates a degree of freedom in online flow control, as each requested change to the schedule configuration,
+can instead be included by re-computation of the delay analysis.  
+If the delay bound is violated, the change will not be executed and there are several possibilities to solve the problem. These range from telling the operator
+that this change is not allowed to automatically shifting the desired schedule change in time until the system can provide a suitable service. 
+Arrival curves thus do not need to cover all possible combinations of requests from experiments, only the ones currently selected.
+
+\subsection{Recurring Analyses} 
+At the time the very first analysis is undertaken, the model is representing a system at time $t=0$ and thus without history.
+When the analysis is repeated during runtime on change of machine schedules, it is obvious that the system is \emph{not} in this state. 
+There are three possible approaches to treating case study, the first being trivial:
+\paragraph{Clean Slate} The first possibility is to halt the system completely. Because all messages were scheduled to spend a maximum time $\Delta_t$ in the system,
+ceasing the input flows and waiting for $\Delta_t$ will guarantee a system with empty buffers, hence the system is equivalent to the state at $t=0$. This will initially be the preferred mode of operation for the case study.
+\paragraph{Prepare for Everything} The second possibility is accepting more loose arrival curves for the input flows and cover \emph{all} possible combinations of machine schedules
+per input flow, thus never needing a second analysis. This would work for smaller sets of schedules and can be complemented by rare resets as described in the first approach.
+\paragraph{Time Stop} The third option involves halting time at the point of change, calculating backlog at every node, update input flows according
+to the requested changes,  apply~\citeauthor{thiran_network_2001}'s theorem~\cite[p. 225]{thiran_network_2001} for shapers with non-empty buffers and update service curves.
+
+\section{Scheduler Models}
+
+\paragraph{Type}
+The \gls{dm} requires two layers of schedulers to sort timing messages into chronological order by their deadlines.
+All schedulers are implemented as packetised earliest deadline first based on delay values.
+\paragraph{Lower Layer}
+The lower level scheduler is implemented in hardware and aggregates the flows from all instantiated processors.
+This module has been dubbed Hardware Priority Queue (\gls{pq}) and has been described in detail in chapter~\ref{sec:pq}.
+\paragraph{Upper Layer}
+The upper level of schedulers is implemented in firmware inside the processors, as presented in chapter~\ref{sec:sched}.
+The scheduler would not strictly be necessary at this point, but does allow a better utilisation of available processing time.
+Machine schedules must be distributed to individual \gls{cpu}s depending on their current utilisation, as it must always
+be $\le 100\%$. While it is possible to aggregate all these schedules into one big schedule per processor before running,
+this would be very inflexible. Every update would require a complete stop and exchange of the whole aggregate. 
+Instead, software \gls{edf}s can easily aggregate individual machine schedules, each assigned to a worker thread, into a chronological flow.
+Such a scheduler is thus a prerequisite to enable online update of machine schedules and online flow control as described in~\ref{sec:rt_flow_ctrl} and~\ref{ssec:outside_ctrl}. 
+
+\subsection{Scheduling under Network Calculus}
+Both schedulers are treated here within the \gls{dm} as delay based schedulers, which means the decision for the next packet to service is done
+by the remaining delay budget per packet. A delay budget is spanning the time from a packe's arrival to its latest possible departure.
+The general schedulability criterion is derived from the maximum horizontal deviation between the sum of all arrival curves and the available service $\beta = \lambda_C$.
+If it is finite and not greater than the maximum allowed delay budget, the set of arrival curves is schedulable.
+%
+\begin{equation}
+\begin{aligned}
+\sum_i \alpha_i(t-d_i) \le \beta\\
+\label{eq:min_d}
+\end{aligned}
+\end{equation}
+%
+In the case of the \gls{dm}, this presents a problem, as each packet's delay budget is referring to its execution at the endpoint, not the departure time at that particular \gls{dm} node.
+Each local deadline is a part of the total delay budget, but it is unknown. A rough estimate can be given once all static delays are known and subtracted. If all delays from cross traffic
+are bounded as well, exact calculation is possible, but this does not provide any additional information at this point. The scheduler equation can be used, however, as a simple and fast instrument to detect overload
+by a set of flows before attempting a full delay analysis.
+
+\subsection{Soft-CPU Scheduler}
+The input flows in \gls{cpu}s are derived from timing messages in machine schedules. It is the purpose of the \gls{cpu} scheduler to chronologically sort
+and aggregate messages from all threads and send them as early as possible within the time window of $D_j - \Delta_t$.
+
+\paragraph{Joining Two Worlds}
+The very first point to address is the existence of several distinct domains within the \gls{dm}: \gls{cpu}, \gls{wb} bus and Network. 
+The latter two relate and are thus trivial to describe in \gls{nc}, as they only differ in bandwidth and in the network always being packetised while \gls{wb} is a cycle based bus.
+The relation between programs in a \gls{dm} \gls{cpu} and bus/network activity is not trivial though and
+we shall start modelling the \gls{dm} with an approach for a \gls{cpu}/traffic relation.
+\paragraph{\gls{cpu} Activity vs Generated Traffic}
+An \gls{lm32} \gls{cpu} can be described as an \gls{nc} node, offering a constant rate service (operations executed over time), and a program as a flow (cumulative operations over time).
+The output flow (of interest) is all bus activity downstream towards the network interface. This means that a program is already an aggregate of flows. They are flows that generate traffic downstream and flows
+that do not, i.e. message and overhead flows. The composition of overhead and its impact on message service are discussed here.
+
+\paragraph{Overhead Concept}
+Consider the following: The processor arbitrates its computing power between a number of $N$ threads and the scheduler itself.
+According to chapter~\ref{sec:detprog}, it is assumed that all tasks have a deterministic execution time which is previously known.
+The scheduler itself also has a deterministic execution time.
+So there is not only a \gls{cpu} rate, but also a message rate, the maximum rate the firmware can send messages at.
+While formal investigation of program execution time can be a highly complex and computationally intensive task, measuring the maximum message rate using the \gls{cpu} cycle counter
+or a logic analyser is trivial. 
+\par
+The scheduler further has a dispatch function $f$, which transforms a skeleton message from \gls{ram}
+into a timing message on the bus. Let there be another function $g$ which sends synchronisation messages to \gls{cpu}s.
+The function $g$ does not produce messages on the timing network, and since it uses the \gls{msi} \gls{wb} bus, it has no impact on the normal \gls{wb} traffic neither.
+Because the effort of preparing and sending synchronisation and timing messages is very similar, $f$ and $g$ can be assumed to have equal execution times.
+\par
+Sync messages are part of machine schedules, all message flows therefore have an associated sync overhead flow.
+This produces the interfering flows in the \gls{cpu} node. Sync flows are of no further interest to the analysis, as they are extracted again directly after the \gls{cpu} node. Only their effect on the \gls{cpu}'s residual service curve to the messages is considered.
+\paragraph{Overhead Flows}
+Figure~\ref{fig:lm32-edf} shows the block diagram of the \gls{cpu} service node, a constant rate server used by the message flows and several interfering overhead flows. 
+%
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.25\textwidth}
+  \input{Figures/lm32-edf.pdf_tex}
+  \caption{\gls{cpu} Scheduler node}
+  \label{fig:lm32-edf}
+\end{figure}
+\noindent
+The leftover service available to all timing messages is the total service of the \gls{cpu} after per flow sync overhead $\alpha_{{oh}_i}$ has been subtracted: 
+ %
+\begin{align}
+\mathrm{\beta^{cpu}} &= \lambda_{r_3} \ominus \sum_i \alpha^{oh}_i
+\label{eq:sched_cpu_serv}
+\end{align}
+%
+\paragraph{Actual Implementation}
+We know there exists a limit $\Delta_t$ dictated by the control loop speed, which is the end-to-end delay budget of a message. In the present case, it signifies the minimum time before
+its deadline $D_j$ a message shall be dispatched.
+The actual implementation determines the task with the minimum deadline at the very moment its predecessor was serviced.
+Afterwards a separate check is run periodically if this message is eligible for dispatch, that is, if $t \ge D_j - \Delta_t$. If it is positive, the message is sent.
+The rate of this check is the same as the service rate offered to messages by the \gls{cpu}.
+\paragraph{Simplification}
+Representation in \gls{nc} can be simplified by reordering these steps and crafting slightly different input flows. Instead of letting new messages arrive immediately after service,
+messages can be placed in accordance with their arrival times $D_j - \Delta_t$. This already takes care of the eligibility window $\Delta_t$.
+Feeding such a flow through the \gls{cpu}'s service window will then introduce the same delay as in the prior case.
+
+\paragraph{\gls{cpu} Schedulability}
+It is first necessary to obtain information about the possible size of the delay budget $d$ for the scheduler input flows. However, it is not possible to determine the budget in the present case.
+The delay budget for \gls{edf} schedulers is defined as the maximum time between arrival and departure \emph{at the server containing the scheduler}. In the present case, this partial budget is unknown -
+only the end-to-end budget is. A loose approximation can be obtained by deducting the sum of all static delays $\sum \delta$ (which will be deduced in this chapter) from the end-to-end budget $\Delta_t$.
+Note that being schedulable is no guarantee for timely arrival with regard to the endpoint, but unschedulable flows are guaranteed to be late.
+A general schedulability criterion for each processor node is:
+%
+\begin{equation}
+\begin{aligned}
+\sum_i \alpha_i(t-d) \le \beta^{cpu}(t)\\
+\\
+\text{with~} d = \Delta_t - \sum \delta
+\label{eq:cpu_min_d}
+\end{aligned}
+\end{equation}
+%
+
+
+\subsection{Processor Output}
+
+Since $\beta^{cpu}$ is known, the output flow of a \gls{cpu} can be derived. For \gls{tfa}, the output flow and arrival curve can be calculated with the aid of
+the sum of all inputs:
+%
+\begin{equation}
+\begin{aligned}
+R^*  = \sum_i R_i \phantom{x}\otimes \beta^{cpu}\\
+\\
+\alpha^*  = \sum_i \alpha_i \phantom{x}\oslash \beta^{cpu}\\
+\label{eq:sched_cpu_tfa}
+\end{aligned}
+\end{equation}
+%
+The leftover service curve required for both \gls{sfa} and \gls{tfa} on the other hand can be obtained from a slight variant of eq.~\ref{eq:sched_cpu_serv}.
+The overhead caused by the scheduler, all sync flows and all interfering message flows can be subtracted from the \gls{cpu}'s service, resulting in the residual service for the message flow of interest:
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta^{l.o.}_{foi}} &= \lambda_{r_3} \ominus \left( \sum_i \alpha^{oh}_i + \sum_{i \neq foi} \alpha_{i} \right)
+\label{eq:sched_cpu_sfa}
+\end{aligned}
+\end{equation}
+%
+
+\subsection{Priority Queue Scheduler}
+
+We now have the processors' outputs, which are packet flows with wide-sense increasing deadlines.
+The next node on the path is the \gls{pq}, the second layer of \gls{edf} schedulers in the \gls{dm}. Its purpose is the chronological aggregation of all input flows
+into one output flow, ordered by deadlines.
+
+\paragraph{\gls{pq} Schedulability}
+The constraint is that there must be no back-pressure to the \gls{cpu}, so overflow of the input queues is not permitted.
+This is necessary to keep program execution deterministic and hence maintain the schedulability criterion.
+We will first derive an upper limit to the delay budget $d_i$ from the buffer capacity of the input queue. The input queue can take in data at a rate of $r_3$, so it offers a maximum service $\gamma_{r_3}$.
+The delay $d_i$ must therefore be the time it takes an incoming flow constrained by $\alpha_i$ (which must be sub-additive) to fill an input queue of size $b$. Since $\gamma_{r_3}$ poses an upper limit on the input rate, we will
+convolute it with $\alpha_i$, the min-plus convolution of two sub-additive functions being the minimum~\cite[p. 113]{thiran_network_2001} of both. This will result in the following schedulability criterion:
+%
+\begin{equation}
+\begin{aligned}
+&\sum_i \alpha_i(t-d_i) \le \beta(t)\\
+\\
+&\text{with~} d_i = min\{ s > 0 : min(\alpha_i, \gamma_{r_3})(s) = b\}
+\label{eq:pq_min_d}
+\end{aligned}
+\end{equation}
+%
+%NOTE explicit calculation does not bring us new knowledge for analysis. Leaving material out for now}
+\iffalse
+
+\subsection{Flow Calculations}
+
+Modelling the service of each \gls{pq} input channel presents a bigger challenge than the threads inside the processors. The main difference lies in the availability of elements to chose from.
+At the processors, all messages were simultaneously available in memory, thus all deadlines could be considered in the sort. 
+The \gls{pq} on the other hand will output the most urgent message \emph{present}. This applies to all messages which are in one of the input queues and not serviced yet.
+More precisely, the \gls{pq} will only consider messages on top of the input queues when calculating the minimum deadline.
+\par
+Contrary to the \gls{lm32} schedulers, the \gls{pq} does not have a concept of eligibility window. It is a pure \gls{edf}, which is work conserving and can therefore never be idle if there is at least one message present.
+As consequence of this behaviour, deadlines of the output flow are not necessarily wide-sense increasing. A message whose deadline is the current minimum will be serviced first,
+but a message with an even \emph{earlier deadline} might be \emph{arriving later} on a different input channel, thus decreasing the sequence. 
+Interestingly, this makes the model more complex, not less, as we shall show shortly.
+\par
+Once again, we shall enumerate $M$ channels, $j \in (0,M] \subseteq \mathbb{N}$ and count packets per channel as $n \in \mathbb{N}$.
+All messages can therefore be addressed by a tuple $(j,n)$, being the $n$-th message of the $j$-th channel.
+ 
+\subsection{Priority Queue Inputs}
+
+\paragraph{Queue Properties}
+As stated in the overview subsection, the \gls{pq} considers the top elements of all input queues. Being inside a queue means, in terms of \gls{nc}, arrived but not yet serviced. This is the definition of backlog,
+the difference $b = R - R^*$ between input (arrived) and output (serviced). Two properties of the system follow directly: First, since we need to consider the system's output, this is not a feed-forward network.
+Second, all inputs need to buffer delayed messages, which means allocation of a hardware \gls{fifo} buffer of size $b$.
+If there would be any back-pressure to a processor, equation~\ref{eq:sched_cpu_sfa} would not hold, the dispatch function would no longer be of fixed length and thus the service windows no longer periodic.
+The maximum backlog must therefore never exceed $b$. We can thus state that all inputs must be constrained by a leaky bucket controller curve $\alpha_{r,b}$, with $r$ being the maximum input rate of the \gls{fifo} and $b$ its size.
+Before a message can be considered to be chosen, there is a (small) fixed delay $T_a$ before its timestamp is read and pipelined through the comparators.
+Each channel's \gls{edf} service function must therefore be concatenated with a guaranteed delay node $\delta_{T}$.
+A Service curve based \gls{edf} scheduler sets the number of packets with a deadline $\le t$ to $(R_j \otimes \beta_j)(t) = R_j^*(t)$,
+which is the output flow. In the next steps, we will be constructing these channels output flows explicitly. 
+\par
+Obtaining the corresponding service curves by applying the
+deconvolution with the input flow, $\beta_j = R_j \oslash R_j^*$ is possible. However, it is not helpful in the present case. The goal can either be to exactly simulate each flow or run an abstract model, but not both simultaneously.
+
+\paragraph{Tops of the Queues}
+Before calculating a minimum deadline is possible, the top queue elements must first be obtained.
+As the first step, a look-up function providing the indices of all queued packets at a certain time is required.
+All packets occurring in a channel are continuously enumerated and only whole packets are to be considered.
+We are not interested in the most recent arrival, but the packet on top of the queue. 
+We can then calculate the current minimum delay among all top elements and thus iteratively construct the current $R^*_j(t)$.
+
+\paragraph{Stabilising the Decision}
+Before picking a minimum, we have to consider the implication of a packet arriving or leaving.
+This could change the decision (because the current candidate is no longer a minimum),
+so the process has to be protected against interruption. We will therefore insert a fixed size packetiser
+before the scheduler, so complete packets can arrive and depart instantaneously (see~\ref{ssec:nc_elementary}).
+\par
+It follows that we need to obtain the number of the packet that arrived first and was not yet serviced (at the last time less than $t$,
+or, in discrete time, $t-1$).
+This will be the minimum of all arrived packets ($R_j$) with a higher number than the last serviced packet ($R_j^*$).
+The packet number can be obtained in the present case by simple division by $l$ and applying a floor function.
+\par
+The tuple addressing a queue's current top element, $Q_j(t)$, and the set $C(t)$ of all current top elements can thus be written as:
+\begin{equation}
+\begin{aligned}
+n(x) &=  \left \lfloor \frac{x}{l} \right \rfloor\\
+\\
+Q_j(t) &=  \left(j, \min \left\{ n(R_j(s)) : n(R_j(s)) > n(R_j^*(s))  \right\} \right) & s = sup\{s : 0 < s < t\}\\
+\\
+C(t) &= \bigcup\limits_{j=0}^{M-1} Q_j(t)&
+\label{eq:q_tops}
+\end{aligned}
+\end{equation}
+
+\subsection{Channel Output}
+
+\paragraph{Minimum Decision}
+The deadlines for all packets of interest can now be addressed by means of the acquired $(j,n)$ tuples.
+From the set of all current elements $C(t)$ follows the definition of the set of the all current elements with minimal deadlines, $S(t)$:
+%
+\begin{equation}
+\begin{aligned}
+S(t) &= (j,n) : \big( D_{(j,n)} = \min (D_{(j,n)} : (j,n) \in C(t) )\big)
+\label{eq:ch_min_d}
+\end{aligned}
+\end{equation}
+%
+Note that the resulting set $S(t)$ can contain more than one tuple, if messages with equal deadlines are queued.
+We will focus on the channel output functions here and push the corner case downstream.
+This will leave the problem of arbitration in case of concurrency to the following constant rate multiplexer node.
+\paragraph{Output Flow}
+Eq.~\ref{eq:q_tops} and~\ref{eq:min_d} now allow to iteratively construct the output flow corresponding to $R_j$,
+applying also the delay $T_a$ from the input comparator:
+%
+\begin{equation}
+\begin{aligned}
+R_j^*(t) &= l \cdot \{ j \in \mathbb{N} : (j,n) \in S(t-T) \}
+\label{eq:ch_serv}
+\end{aligned}
+\end{equation}
+%
+
+\fi
+
+\paragraph{Abstract Model - Service Curves}
+
+In the analysis of the abstract model of an \gls{edf}, the maximum delay depends solely on the total flow passing through the scheduler's constant rate node.
+In this case, a service curve containing a fixed delay $T_a$ for evaluation of each timestamp and the impact of the packetiser in each queue ($\beta_{r_3, \frac{l_p}{r_3}}$) must be
+included, as all inputs experience this. This can be written as
+\begin{equation}
+\begin{aligned}
+\beta^{ch} = \delta_{T_a} \otimes \beta_{r_3, \frac{l_p}{r_3}} 
+\label{eq:pq_serv}
+\end{aligned}
+\end{equation}
+%
+The complete \gls{edf} scheduler in the \gls{pq} module features $M$ channels, each connected to the constant rate node of the \gls{pq}.
+%
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.55\textwidth}
+  \input{Figures/pq-edf.pdf_tex}
+  \caption{\gls{pq} Scheduler node}
+  \label{fig:pq-edf}
+\end{figure}
+\noindent
+And with equation~\ref{eq:pq_serv}, we can finally calculate the residual service a single flow (at the \gls{pq}, which already can be aggregates) would experience:
+%
+\begin{equation}
+\begin{aligned}
+\beta_{foi}^{l.o.} &= \lambda_{r_3} \ominus ( \sum_{j \neq foi} (\alpha_j \oslash \beta^{ch})\\
+\label{eq:foi_serv}
+\end{aligned}
+\end{equation}
+
+\section{Etherbone Master -- Framer}
+\label{sec:ebmf}
+
+The \gls{ebm} is responsible for wrapping \gls{wb} accesses to other systems in the \gls{eb} protocol, it creates a network packet and hands it over to the network interface.
+
+\subsection{Etherbone Master Functional Recap}
+
+The \gls{ebm} gathers Wishbone Bus Operations and a framer sub-module analyses type, order and destination. It then generates appropriate \gls{eb} record headers and inserts them
+as required. Once dispatch of the opened packet is requested, the \gls{ebm} finalises and inserts the network header information, and starts transmission. 
+More details can be found in chapter~\ref{sec:ebm}.
+Because the \gls{ebm} is controlled by the \gls{pq} in the present case, requests for dispatch can be caused by reaching the size limit or by hitting a timeout.
+\par
+Following the path from the \gls{pq} downstream, we will begin by modelling the framer sub-module of the \gls{ebm}.
+
+\subsection{Input Parser}
+The overhead produced by the framer depends on the \gls{wb} operations. In the case of \gls{dm} traffic though, only timing messages will arrive.
+These follow a fixed format of 8 consecutive write operations to the same destination, which makes the introduced record overhead constant (see chapter~\ref{sec:ebm}).
+\par
+Timing messages must not be split, and therefore the payload of \gls{eb} records will be of a constant length $l_p$.
+This is packetisation at message level, and so the framer needs to contain a fixed length packetiser (see section~\ref{ssec:nc_elementary}) in the payload flow.
+Because $l_p$ is constant, the length function $L(n)_p$ of the $n$-th payload packet is $L(n)_p = n \cdot l_p$.
+This results in the following service curve for the message payload L-packetiser:
+%
+\begin{align}
+\mathrm{P^L_{p}(x)} &= \sup_{n \in \mathbb{N}}\left\{ l_p n \cdot 1_{\left\{l_p n\le x\right\}}\right\}
+\label{eq:lpac_p_framer}
+\end{align}
+%
+The framer now needs a shaper prefixing the L-packetiser, which would be a guaranteed rate node of some arbitrary rate $\lambda_r$. 
+The time $T_a$ the framer requires to analyse the input needs to be accounted for. Because the analyser is pipelined
+and the input format fixed, this delay can be expressed as a simple guaranteed delay node $\delta_{T_a}$. The two nodes can be concatenated to form a rate-latency node as the shaping curve $\sigma$:
+%
+\begin{equation}
+\begin{aligned}
+\sigma_{r, T_a} = rt + T_a
+\label{eq:lpac_p_sigma}
+\end{aligned}
+\end{equation}
+%
+\paragraph{Impact}
+It is known from~\cite[p. 43]{thiran_network_2001} that a packetiser offers a minimum service described by the rate of the bit-by-bit system and 
+the maximum delay from packet buffering, $\beta_{r,\frac{l_{max}}{r}}$. The impact of payload's packetised greedy shaper on the system's service is:
+%
+\begin{equation}
+\begin{aligned}
+\beta_{p}  &= \beta_{r,\frac{l_p}{r}} \otimes \delta_{T_a}
+\label{eq:lpac_p_beta}
+\end{aligned}
+\end{equation}
+%
+\subsection{Header Generation}
+\label{ssec:ebmf_hg}
+The framer must now prefix each timing message with an appropriate \gls{eb} record header of constant length $l_{h}$,
+which will create \gls{eb} records of length $l_{h} + l_{p}$. While the header themselves are of no particular interest to an analysis,
+they are necessary in terms of the system service they consume. There are two different strategies to discuss through which injection
+of overhead can be modelled.
+
+%NOTE explicit calculation of the interfering flow does not bring us new knowledge for analysis. Leaving material out for now
+\iffalse
+\paragraph{Approach I: Interfering Flow}
+This first method creates headers as a separate, interfering flow. It is necessary to synchronise this source to the payload flow, because obviously,
+a header should only be created when there is a timing message to prefix. 
+\par
+The payload flow is getting packetised, its flow modified by eq.~\ref{eq:lpac_p_framer}. This function resembles a staircase with variable
+intervals between steps. Incidentally, these are the intervals at which headers need to be generated. 
+This basically allows reuse of eq.~\ref{eq:lpac_p_framer}, but the step-size is wrong, because a header is of length $l_h$, not $l_p$.
+The header's flow would thus follow
+%
+\begin{align}
+\mathrm{P^L_{h}(x_p)} &= \sup_{n \in \mathbb{N}}\left\{ l_h n \cdot 1_{\left\{l_p n\le x_p\right\}}\right\}
+\label{eq:lpac_h_framer}
+\end{align}
+%
+Next, the two flows need to be interleaved. We know that $R_h(t)$ follows~\ref{eq:lpac_h_framer}, and that it will consume service which then is no longer
+available to the payload flow. We will model this by means of a non-preemptive fixed priority node, offering a constant rate service $\beta$ of the form $\lambda_C$ and give the higher priority to the header flow (because it should
+precede payload). Since the node is also non-preemptive, the header flow shall delayed if payload transmission is still in progress. 
+To determine the service received by $R'_p$, we first need to obtain an arrival curve for $R_h$. This can be achieved by obtaining the minimal arrival curve ($R \oslash R$):
+%
+\begin{equation}
+\begin{aligned}
+R_h &= {P^L_{h}(R(t) \otimes \sigma)}\\
+\alpha^h &= R_h \oslash R_h
+\label{eq:foi1}
+\end{aligned}
+\end{equation}
+%
+The residual service available to the payload flow is thus
+%
+\begin{equation}
+\begin{aligned}
+\beta_p^{l.o.} &= \lambda_C \ominus \alpha_h\\
+\label{eq:foi2}
+\end{aligned}
+\end{equation}
+%
+While certainly viable, the whole concept is a somewhat tedious solution in the present case. Because both header and payload are of constant size, we have exact knowledge
+about the relationship $\frac{l_h}{l_p}$ and therefore should be able to find a more elegant solution, without a dependency of $R_h$ on $R_p$.
+\par
+We shall, however, keep this approach in mind, because it is also viable for a system of variable payload size with constant headers.
+Such a system will be encountered later in the \gls{ebm} \gls{tx} block.
+
+\fi
+
+\paragraph{Scaled Flow Approach} 
+Consider the knowledge about the expected input and output flows. The output is obtained by injection of data of size $l_h$ every $l_p$ in the input flow. 
+Assuming header insertion would happen instantaneously, gives
+%
+\begin{equation}
+\begin{aligned}
+R^*(t) = R(t) \cdot \frac{l_p + l_h}{l_p} 
+\label{eq:framer_relation}
+\end{aligned}
+\end{equation}
+%
+Eq.~\ref{eq:framer_relation} shows header injection to be in fact data scaling, if a bijective relation between header and payload size exists.
+The overhead can be modelled by application of a scaling function (see \enquote{Scaler}, p.~\pageref{ssec:nc_elementary}) in the \gls{ebm}
+and the inverse function in the \gls{tr}. The scaling curve and its inverse are:
+%
+\begin{equation}
+\begin{aligned}
+S_R(a) = a \cdot \frac{l_p + l_h}{l_p}\\
+\\
+S_R^{-1}(a) = a \cdot \frac{l_p}{l_p + l_h}
+\label{eq:scale_framer}
+\end{aligned}
+\end{equation}
+%
+\subsection{Output Flow and Service Curves}
+Scaling is the simple and accurate representation of constant header insertion into packets of constant size.
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.6875\textwidth}
+  \input{Figures/framer.pdf_tex}
+  \caption{Block Diagram of \gls{ebm} Framer Module}
+  \label{fig:framer}
+\end{figure}
+\noindent
+Figure~\ref{fig:framer} shows the resulting block diagram with packetiser, parser and scaler.
+With eq.~\ref{eq:lpac_p_framer},~\ref{eq:lpac_p_sigma},~\ref{eq:lpac_p_beta}, and~\ref{eq:scale_framer}, the output flow and service of the \gls{ebm} framer can be modelled using the following equations:
+%
+\begin{align}
+R^*_f &= S_R \big(P^L_p (\sigma \otimes R) \otimes \delta_{T_p} \big) &&\text{~\ref{eq:lpac_p_framer},~\ref{eq:lpac_p_sigma}},~\ref{eq:scale_framer} \label{eq:out_framer}\\ 
+\notag\\
+\beta_f &=  \beta_{r_2, \frac{l_p}{r_2}} \otimes \delta_{T_p} &&\text{~\ref{eq:lpac_p_beta},~\ref{eq:scale_framer}} \label{eq:beta_framer}
+\end{align}
+%
+\paragraph{Scaling}
+It is noteworthy that the service does \emph{not} include the scaling function $S_R$, although the output flow $R^*_f$ does.
+\citeauthor{fidler_way_2006} show~\cite{fidler_way_2006} that the order of scaling and service elements is interchangeable within a certain rule-set.
+In order to obtain a suitable equivalent system, it is necessary to consider the complete network, not individual modules.
+\par
+All scaling effects spilling over to downstream modules are therefore ignored until reaching the analysis section~\ref{sec:e2e_da}.
+Instead only the scaling functions and unscaled service equations are provided.
+
+
+\section{Etherbone Master -- TX}
+\label{sec:ebm_tx}
+The purpose of the \gls{tx} sub-module is to take in a variable number of \gls{eb} records and, by prefixing it with a packet header, turn them into network packets.
+The maximum packet length and how long \gls{tx} should gather \gls{eb} records before producing a packet is configurable.
+
+\paragraph{Header and Payload Size}
+Let $l_{nh}$ be the aggregated size of all headers for the \gls{eth}, \gls{ip}, \gls{udp} and \gls{eb} protocol. Let $l^S_p$ be the length of a timing message with an \gls{eb} record header. The number of messages going into the same packet has a constant upper limit given by the maximum payload size, $l_{max} - l_{nh}$, and a constant lower limit of one message, $l^S_p$. 
+
+\subsection{Variable Length Function}
+
+It is clear that waiting for a full packet is not an option, since the delay would be inversely proportional to the arriving flow.
+This is an undesired effect, as incoming flows would need to be padded to reduce delay and an equilibrium between transmission delay from the rest of the system
+and waiting time in the \gls{ebm} \gls{tx} would have to be found.
+\paragraph{Timeout}
+A timeout was introduced to bound the delay, which requires limiting the maximum waiting time for the first message to enter a packet. This results in a variable payload length $l_to(t)$.
+The payload packetiser therefore employs a length function $L(n)$,  which provides cumulative packet lengths with a step-size being the minimum of $l_{max}$ and the level at the timeout, $l_{to}$.
+Since $l(n) = L(n) - L(n-1)$, it is possible to calculate $L(n)$ from $L(n-1)$. 
+\par
+The timeout starts at the first message entering a packet, which is the case when $R'(t)$ (which is $R(t)$ after the packetisers bit-by-bit system) crosses the packet boundary (now $L(n-1)$).
+With $F(t)$ being the flow level at time $t$, we get
+%
+\begin{align}
+\mathrm{g(x)}   &= \inf_{s \in \mathbb{R_+^*}}\left\{ s : F(s) > x \right\} &
+\label{eq:tstartk}
+\end{align}
+%
+The timeout occurs after a timespan $T$. Unfortunately, this will introduce a problem:
+While $R$ is packetised to be always multiple of $l^S_p$, it has to pass a bit-by-bit shaper, becoming $F = (R \otimes \sigma)(t) = R'$.
+Therefore, $R'(g(x) + T)$ can return a level right in the middle of a message (eq.~\ref{eq:multiple2}).
+%
+\begin{equation}
+\begin{aligned}
+M &= \{ k \cdot l^S_p\},& k \in \mathbb{N}&&&\\
+\\
+x &\in M &\to&&F\big(g(x)\big) &\in M\\
+T &\in \mathbb{R}&\to&& \exists T  : F\big(g(x)+T\big) &\notin M
+\label{eq:multiple2}
+\end{aligned}
+\end{equation}
+%
+To guarantee the delay bound, it is not possible to wait for a commenced message to fully arrive.
+To only put complete messages into a packet, it is necessary to round $R'(t)$ down to the nearest multiple of $l^S_p$.
+This means applying a floor function, which is equivalent to run $R'(t)$ again through the L-packetiser of the \gls{ebm} framer:
+%
+\begin{align}
+\mathrm{R''(t)} = \left \lfloor{\frac{R'(t)}{l^S_p}}\right \rfloor  \cdot l^S_p = P^L_f\big((R \otimes \sigma)(t)\big)
+\label{eq:l_to_tx}
+\end{align}
+%
+And with eq.~\ref{eq:l_to_tx} and $F = R''$ so L-function for the network payload is:
+%
+\begin{align}
+\mathrm{L_{np}(n)} =  \min \left \{(L(n-1) + l_{max}),  R''\big(g(L(n-1)) + T \big) \right \}, \hspace{3em} n \in \mathbb{N}
+\label{eq:l_nw}
+\end{align}
+%
+\subsection{Header}
+The present case requires packets of variable payload length $l(n)$, yet with a header of fixed length $l_{nh}$.
+As mentioned in~\cite[p. 290 (4)]{fidler_way_2006}, scaling functions can be applied to the length function $L(n)$ of a packetiser.
+$L(n)$ is only point-wise defined for $n \in \mathbb{N}$ though, while scaling functions must be continuous. 
+%
+\begin{align}
+\mathrm{P^L(x)} &= \sup_{n \in \mathbb{N}}\left\{ L(n) 1_{\left\{L(n)\le x\right\}}\right\}
+\label{eq:lpac_h_framer}
+\end{align}
+%
+However, the L-packetiser function from eq.~\ref{eq:lpac_h_framer} is defined for all real numbers~\cite[p. 42]{thiran_network_2001},
+thus allowing the extension of $L(n)$ into the $\mathbb{R^*_+}$ domain by assigning each $a = R(t)$ a value from $L(n)$.
+So having obtained a continuous scaling function, scaling curves can be derived.
+\paragraph{Scaling Function}
+The L-packetiser equation is modified by a scaling function for constant header insertion.
+This means that each packet length $l(n)$ must be scaled by the addition of $l_h$, so that  $S_P^p(l(n)) = l(n) + l_{nh}$.
+With the definition of the length function given by $L(n) = L(n-1) + l(n) \to L(n) = \sum_{i}^n l(i)$,
+the point-wise defined scaling function $S_P^p$ now becomes:
+%
+\begin{align}
+S_P^p(L(n)) = \sum_{i}^n (l(i) + l_h) = L(n) + n \cdot l_{nh}\notag
+\end{align}
+%
+Combination with the L-packetiser equation~\ref{eq:lpac_h_framer} provides the scaling function $S_P$ defined for $\mathbb{R}$,
+swapping the pre-factor for the indicator function with its condition provides the inverse:
+%
+\begin{align}
+\mathrm{S_P(a)}      &= \sup_{n \in \mathbb{N}} \left \{ (L(n) + n \cdot l_{nh} )1_{ \left \{ L(n)               \le a \right \} }\right \}\label{eq:tx_scaling}\\
+\mathrm{S^{-1}_P(a)} &= \sup_{n \in \mathbb{N}} \left \{ L(n)               1_{ \left \{ L(n) + n \cdot l_{nh}  \le a \right \} }\right\}\label{eq:rx_scaling}
+\end{align}
+%
+The appropriate minimum and maximum scaling curves can once again be derived from max-plus and respectively min-plus deconvolution of the scaling function with itself.
+%
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textwidth}
+  \input{Figures/packet_hdr_scaler.pdf_tex}
+  \caption{Packet Header Scaling Functions}
+  \label{fig:hdr_scaler}
+\end{figure}
+\noindent
+Figure~\ref{fig:hdr_scaler} illustrates the scaling functions (thick \textcolor{Red}{red} line) for packet header handling. The left plot shows header insertion with eq.~\ref{eq:tx_scaling},
+the right the removal via the inverse function, eq.~\ref{eq:rx_scaling}. The diagonal mirror axis is sketched in to demonstrate function inversion.
+
+\subsection{Finding Limits for Payload Length and Timeout}
+With the presented scaling curve, it is possible to calculate the exact introduced overhead at any given point in time for a specific flow.
+However, by careful choice of the payload limit and timeout value of the packetiser, it is possible to constrain the setting in a way that allows simplification of the scaling curve to a constant factor.
+\paragraph{Impact of Payload Length}
+The behaviour of the \gls{tx} module is governed by two parameters, the allowed payload length
+$\Phi $ and the timeout $T$. Bandwidth utilisation depends on the overhead to payload ratio, the larger the payload, the better. 
+As $\Phi$ approaches $l_{max} - l_{nh}$, that is, maximum possible packet length (\SI{1500}{\byte}) without the header, bandwidth utilisation is at its optimum with $r_2\frac{\Phi}{l_{max}}$. 
+Lowering $\Phi$ splits the payload into more packets, which generates more overhead
+and therefore directly consumes extra bandwidth. Because latency in a packetiser is determined by the maximum packet length over rate, lowering $\Phi$ also lowers latency.
+\paragraph{Impact of Timeout}
+The necessity of  $T \ge \frac{\Phi}{r_2}$ immediately becomes obvious. If $T$ was less, the packetiser could never reach $\Phi$ before hitting the timeout and so a lower limit for $T$ has been found.
+We shall now establish a sensible upper boundary for $T$.
+\par
+A packet size $l$ processed over a timespan $T$ is an expression of bandwidth. $\Phi$ being set, we can now employ $T$ to choose the bandwidth.
+Because the \gls{dm} is the only source of high priority traffic, unused bandwidth is equivalent to bandwidth lost to overhead.
+The proposition is therefore that it is allowable to introduce additional overhead without changing maximum throughput, as long as the combined traffic does not exceed the maximum bandwidth at the system's bottleneck.
+\par
+The bottleneck is encountered at the \gls{wr} network, the switches having the lowest rate at $r_1$. This is in turn down scaled by a factor $S^{-1}_F$ because, as discussed in section~\ref{sec:fec},
+forward error correction will introduce further redundancy. The resulting bandwidth is denoted as the system's sustainable rate $r_s$. 
+This can be used to propose the limits for $T$:
+%
+\begin{align}
+\frac{\Phi}{r_2} \le T &\le \frac{\Phi + l_{nh}}{r_s}
+\end{align}
+%
+The reason is that if a maximum sized payload plus its header can be processed at the systems sustainable rate within the timeout,
+any reduction in payload flow will create more overhead. However, if the sum stays within the sustainable rate, backlog from overhead cannot accumulate.
+So $T = \frac{\Phi + l_{nh}}{r_s}$ would ensue an optimal bandwidth utilisation. In the absence of any other high priority source, eq.~\ref{eq:tx_scaling} and~\ref{eq:rx_scaling} can be simplified to:
+\begin{align}
+\mathrm{S_{Ps}(a)}      &=  \frac{\Phi + l_{nh}}{\Phi} \label{eq:simple_tx_scaling}\\
+\notag\\
+\mathrm{S^{-1}_{Ps}(a)} &=  \frac{\Phi}{\Phi + l_{nh}}  \label{eq:simple_rx_scaling}
+\end{align}
+
+If any lower latency is required, it can be obtained at the loss of bandwidth to overhead by decreasing $T_{tx}$.
+
+\paragraph{Absolute Figures}
+The total delay budget for the system was given as $\Delta_t = \SI{500}{\micro\second}$, so it is interesting whether to test the obtained boundaries chosen for $T$ actually fit within this frame.
+\begin{align}
+T_{min} &=\frac{\Phi}{r_2} &&= \frac{\SI{1440}{\byte}}{ \SI{2}{\giga\bit\per\second}} &= \SI{5.76}{\micro\second}\\
+\notag\\
+T_{max} &= \frac{\Phi + l_{nh}}{S^{-1}_F(r_1)} &&= \frac{\SI{1496}{\byte}}{0.25 \cdot \SI{1}{\giga\bit\per\second}} &= \SI{47.78}{\micro\second}
+\end{align}
+At $1.2\%$ of the total delay budget, we can assume $T_{min}$ to be a safe choice. $T_{max}$ however, at $9.5\%$, should be
+examined again in the final analysis.
+\paragraph{Service}
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.6875\textwidth}
+  \input{Figures/tx.pdf_tex}
+  \caption{Block Diagram of \gls{ebm} \gls{tx} Module}
+  \label{fig:tx}
+\end{figure}
+\noindent
+The minimum (and because of the fixed timeout also maximum) service curve for the \gls{tx} module is that of a standard packetiser, but the delay is solely determined by $T$. 
+Note that scaling is applied last and therefore not part of the service curve of this module.
+The resulting curve is thus very straightforward:
+%
+\begin{align}
+\beta_{tx} = \beta_{r_2, T_{tx}}
+\end{align}
+%
+\section{\glsentrytext{4wderr}}
+\label{sec:fec}
+\paragraph{Context and Necessity}
+The  \gls{cs} ultimately needs a central instance (separate, but synchronised instances are just an equivalent model) which communicates that servers providing the physical calculations to control the accelerator.
+This again means that there must be a fan-out from the  \gls{cs}'s \gls{dm} to numerous endpoints, placing it as the root node of one or more networks of a tree topology.
+\par
+The concept of the current  \gls{cs} relies on treating the whole system and timing network as lossless.
+If it was not, commands would need to be re-sent if they did not arrive at their destination, which adds the need for feedback from the endpoints. 
+Due to the tree topology, this is already a problem because the bottleneck on the way up to the root node is getting ever tighter and a reason to avoid re-transmission.
+The second reason is that an upper bound on control loop delay is only possible if re-transmission does not need to be considered.
+\paragraph{Application}
+The chances of packet loss has to be reduced to a level at which, for all practical purposes, the system can be treated as lossless.
+The way to achieve this involves both increasing the system's mean-time-between-failure and employing forward error correction algorithms. 
+The purpose of the latter is to protect both network packets \emph{and} their meta information against bit errors, more details can be found in the work of~\citeauthor{prados_boda_fec_2010},~\cite{prados_boda_fec_2010}. 
+\paragraph{Impact on the Model}
+In the scope of this work, the \gls{4wderr} will be treated as a black box system. The observable effect is the creation of $k$ interleaved packets from one incoming packet after a packetisation and encoding delay.
+
+\subsection{\gls{4wderr} Encoding}
+The \gls{4wderr} re-packetises to the length set in the \gls{ebm} \gls{tx} modules, then starts the encoding process, buffers the resulting encoded packets and finally sends the encoded (scaled) data.
+
+\paragraph{Packetiser} Because the packets are of variable size, the first packetiser does introduce a delay equal to $\frac{l_{max}}{r_2}$. After encoding,
+the second packetiser has to deal with the scaled version of the packets, thus adding a delay of $k \cdot \frac{  l_{max}}{r_2}$.
+
+\paragraph{Encoding Time}
+We will assume a constant encoding time in the \gls{4wderr}, introducing a delay of $T_e$, which already includes the introduced $k-1$ inter-frame gaps between the generated packets.
+Additionally it is assumed that a time $T_d \ge T_e$ is required to decode the information again in the \gls{tr}.
+
+\paragraph{Scaling}
+Data will be scaled up to mimic the \gls{4wderr}s introduction of redundant data.
+Similar to the \gls{ebm} framer in~\ref{sec:ebmf}, this can be described by the application of a scaling curve for the \gls{4wderr}, $S_F$, 
+which multiplies packet size by $k$, the number of packets generated. 
+\par
+The resulting sub-system, packetiser, delay and scaler and output packetiser,
+is shown in figure~\ref{fig:fec}.
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.6875\textwidth}
+  \input{Figures/fec.pdf_tex}
+  \caption{Block Diagram of \gls{4wderr} Module}
+  \label{fig:fec}
+\end{figure}
+\noindent
+The resulting scaling functions are:
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{S_{F}(a)} &= k \cdot a \\
+\\
+\mathrm{S^{-1}_{F}(a)} &= \frac{1}{k} \cdot a
+\end{aligned}
+\end{equation}
+%
+\paragraph{Service}
+The rightmost packetiser in figure~\ref{fig:fec} is expecting the scaled data. We can therefore apply the scaling function to the maximum packet size and obtain
+the following service curve for the \gls{4wderr}: 
+%
+\begin{align}
+\mathrm{\beta_{F1}} &= \beta_{r_2,\frac{l_{max}}{r_2}} \otimes \delta_{T_e} \otimes \beta_{r_2,\frac{S_F\left(l_{max}\right)}{r_2}} \label{eq:fec_enc_serv}
+\end{align}
+%
+\subsection{\gls{tr}}
+\paragraph{\gls{4wderr} Decoding}
+Interest lies in determining an \emph{end-to-end} delay bound for the timing system. 
+In the present case, the decoding happens in the timing endpoint, which is why it is necessary to also model this part of the \gls{tr} in some detail.
+\paragraph{Gathering Packets and Decoding Time}
+For forward error correction, only a part of the packets belonging to one transmission need to arrive.
+It is necessary to assume the worst case though, which means waiting for the last packet to arrive.
+The first step is therefore re-packetising all arriving packets from one transmission into one big packet.
+Afterwards, the packets are decoded, which makes the whole decoder use the same equation as the encoder.
+The service curve is similar to eq.~\ref{eq:fec_enc_serv}.
+\paragraph{Symmetric Scaling}
+As already presented in section~\ref{ssec:nc_elementary}, a symmetric scaling variant is applied, which requires the
+corresponding decoder to apply the inverse of the original scaling function.
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.6875\textwidth}
+  \input{Figures/dfec.pdf_tex}
+  \caption{Block Diagram of the decoder Module}
+  \label{fig:dfec}
+\end{figure}
+%
+\begin{align}
+\mathrm{\beta_{F2}} &= \beta_{r_2,\frac{S_F\left(l_{max}\right)}{r_2}} \otimes \delta_{T_d} \otimes \beta_{r_2,\frac{l_{max}}{r_2}}
+\label{eq:delay_p_framer}
+\end{align}
+%
+
+\section{Etherbone Slave and Event-Condition-Action Unit}
+
+\paragraph{Demultiplexing}
+Removal of the packet header happens instantaneous at the inverse scaler.
+So the \gls{eb}S \gls{rx} block diagram looks like a mirrored version of the \gls{ebm} \gls{tx} (see figure~\ref{fig:tx} and~\ref{fig:all_block}).
+The \gls{eb}S de-framer does not work the same way as the \gls{ebm} framer, it removes the \gls{eb} record header and adds a delay, but does not re-packetise.
+This can therefore be described as an inverse scaler followed by a rate-latency system (see lower right of figure~\ref{fig:all_block}, \enquote{\gls{eb}S Deframer}).
+\par
+This finally leaves the \gls{eca} unit (see ~\ref{sec:fastio}). Being one of the most complex logic cores in the system, it can nevertheless be described as a simple black box model.
+\gls{eca} is responsible to schedule actions originating from arriving messages to be executed at the timestamp they carry. To sort
+arrivals, \gls{eca} adds a bounded delay of \SI{4}{\micro\second}.
+\par
+This would be followed by an \gls{edf} scheduler, which is not modelled. The reason is that all messages are dispatched $\Delta_t = \SI{500}{\micro\second}$ before they are due. 
+For all messages that arrive on time, the \gls{edf} would hold them back until their execution time. This would hide the leftover delay budget from the analysis. 
+
+\section{White Rabbit Network Model}
+
+\subsection{Interference at \gls{nic}}
+\paragraph{Origin} At the network interface, the \gls{dm}'s flow is multiplexed with flows from the \gls{wr} timing core. \gls{wr} uses \gls{ptp} packets to synchronise the
+\gls{utc} time between \gls{tr}s/switches. In addition, there are other services spuriously sending packets, like the \gls{arp},
+\gls{dhcp} or \gls{snmp}. 
+
+\paragraph{Approach for \gls{dm} \gls{hp} Service}
+\gls{dm} traffic has the highest priority of all services. However, pre-emption is not allowed, so the minimum service to the \gls{dm} has to consider waiting for transmission of the longest possible low priority packet.
+Packet lengths of lower priority services can be described as $l_{\text{<name>}}\sup_{n\in \mathbb{N}}\{l_{\text{<name>}}(n)\}$. 
+The longest possible low priority packet is thus $l^{lo}_{max} = \max\{l_{ptp}, l_{arp}, l_{dhcp}, l_{snmp}\}$, resulting in the \gls{dm} a minimum service of
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta_{N}} &= \beta_{r_1} \ominus l^{lo}_{max}
+\label{eq:wr-nic}
+\end{aligned}
+\end{equation}
+
+\paragraph{Improving \gls{wr} \gls{ptp} performance}
+%NOTE This paragraph comes under the heading 'suggestion for improvements' and is optional
+\gls{wr} \gls{ptp} periodically has to send packets to synchronise \gls{utc} time to counter long term drift against the time reference (\gls{gps} receiver).
+It is questionable if a system with only two priorities is a good design choice because a continued starvation of \gls{wr} \gls{ptp} service would lead
+long periods of uncompensated clock drift in all downstream timing switches and receivers. 
+It would therefore be sensible to introduce another priority level between \gls{dm} and background for \gls{wr} \gls{ptp}, and allocating a minimum service rate for clock synchronisation.
+\par
+\gls{ptp} needs periodic adjustment, so it is assumed that all \gls{wr} \gls{ptp} flows are periodic. The corresponding staircase functions are sufficient to model the arrival curves~\cite[p. 8]{thiran_network_2001}.
+The presented approach models the mutual influence on service by application of one shaper per flow. This limits the influence of the interfering flow to its maximum allocated rate.
+Assuming a fraction of the total rate $k$ is assigned, with  $k \in \mathbb{N^*}$, to \gls{wr} traffic. It would then be forced to obey $\sigma_{ptp} = \lambda_{\frac{r_1}{k}}$, making sure $\alpha_{ptp}$ (as an interfering flow)
+does not exceed this rate in the presence of \gls{dm} traffic. It follows that the shaper for the \gls{dm} traffic must guarantee the agreed minimum rate to \gls{wr}, which leads to $\sigma_{dm} = \lambda_{r_1 \cdot \frac{k-1}{k}}$.
+The shaping curves are the guaranteed service for each flow, and $\lambda_{r_1} \ge \sigma_{ptp} + \sigma_{dm}$.
+The maximum length packet to be considered in the delay equation differs for \gls{wr} and \gls{dm} flows, as \gls{dm} is of highest priority, \gls{wr} of second highest and all others of lowest priority.
+The leftover service for each of the higher priority flows can be calculated as:
+%
+%\begin{equation}
+\begin{align}
+\mathrm{\alpha_{ptp}} &= l_{ptp} \cdot \upsilon_{T_{ptp},0} = l_{ptp} \cdot \left \lceil \frac{t+0}{T_{ptp}} \right \rceil = \gamma_{\frac{l_{ptp}}{T_{ptp}}, l_{ptp}}\\
+\notag\\
+\mathrm{\beta_{nic}} &= \lambda_{r_1} \ominus (\alpha_{ptp} \oslash \sigma_{ptp}) \otimes \delta_{\frac{l_{max}}{r_1}}%\\
+%\\
+%\mathrm{\beta_{ptp}} &= \lambda_{r_1} \ominus (\alpha_{dm} \oslash \sigma_{dm}) \otimes \delta_{\frac{l^{mid}_{max}}{r_1}}
+\end{align}
+%\end{equation}
+
+
+\subsection{\gls{wr} Switches}
+
+The \gls{dm} is connected via a tree topology to 2000+ \gls{tr}s. \gls{wr} switches feature 18 ports each, which means a fanout of 1-17. 
+This indicates a minimum of $k = \lceil \log_{17} 2000 \rceil = 3$ layers of switches. The topology is adjusted for geographical reasons though, so the actual size is likely to be 5 layers.
+\gls{wr} switches are treated as black boxes. The delay they introduce has been removed from traffic measurements and is represented in a simplified model.
+
+\paragraph{Switch Properties}
+All switches treat traffic from the \gls{dm} as high priority. The switches feature cut-through for low latency. This means \gls{hp} packets are passed on as soon as possible,
+sending the first bits before their last bits have arrived. The switches are non-preemptive, meaning they must buffer (introduce a delay) if a lower priority packet is currently being transfered.
+\par
+The switches are therefore modelled as a small constant delay $T_s$ representing the time it takes to inspect the packet header and apply the switching matrix.
+Following this is the multiplexer, a constant rate node operating at $r_1$. Because the switch can be busy with a low priority packet, there is another delay of $\frac{l^{lo}_{max}}{r_1}$
+in its minimum service. Because \gls{lp} traffic is partly point-to-point and originates at all switches, it cannot be assumed multiplexing is applied only at the first switch.
+The service of a \gls{wr} switch is therefore defined as:
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta_{sw}} &=  \delta_{T_s} \otimes (\beta_{r_1} \ominus l^{lo}_{max})
+\label{eq:wr-sw}
+\end{aligned}
+\end{equation}
+%
+\section{End-to-End Delay Analysis}
+\label{sec:e2e_da}
+All sub-components of the  \gls{cs} have been modelled and an end-to-end delay analysis of the complete system can now be conducted.
+We will perform the necessary preparation for a \gls{pmoo} analysis, as it (in most cases) leads to the tightest delay bounds.
+In the scope of this thesis, \gls{pmoo} also has the benefit that the required reduction of the system into a single equivalent node allows a clearer visualisation.
+\par
+For ease of representation, the system is split into four parts. The first is the sink tree posed by \gls{cpu}s, aggregating flows from their threads,
+and the \gls{pq}, aggregating flows from \gls{cpu}s. The second is the single-path section of the \gls{dm} without the \gls{nic}, the third are the \gls{nic}s of \gls{dm} and \gls{tr}
+as well as all \gls{wr} switches. The fourth and last is the \gls{tr}.
+\paragraph{Packetisers in the Big Picture}
+To reduce the size of the figures, all packetiser blocks in the following diagrams show not just L-packetisers, but already \gls{pgs},
+a combination of a bit-by-bit system and an L-packetiser (see figure~\ref{fig:framer},~\ref{fig:tx}). Furthermore, a substitution of L-packetiser functions was applied.
+Packetiser $P_{M_1}$ has a maximum packet size of $l_p = \SI{32}{\byte}$. Afterwards, \gls{eb} record headers are added, the packets are scaled. $P_{P_1}$ collects \gls{eb} records, which is a timing message scaled with $S_R$.
+It has maximum packet (payload) size of $l_{np} = k \cdot S_R(l_p) = S_R(kl_p)$. \gls{4wderr} input collects payloads plus network header, which means scaling them by $S_P$ so maximum packet size is
+$l_{n} = S_P(S_R(kl_p))$. The encoder outputs encoded packets,  means scaled by $S_F$, which equals a maximum packet size of $l_{f} = S_F(S_P(S_R(kl_p)))$.
+All three L-packetisers can therefore be expressed by the same L-packetiser and a scaling function.  
+In the block diagram, all L-packetiser scaling is noted \emph{above} the \gls{pgs}' name
+and any scaling applying to the bit-by-bit system \emph{below} the \gls{pgs}' name.
+\paragraph{Network Tunnel}
+Because flows of timing messages are aggregated into network packets and separated at the endpoints \gls{eb}S, they intermittently become a single flow in the model. This is called a trunk or tunnelled connection
+and is marked in grey in the following overview figure~\ref{fig:all_block}. More details can be found under subsection~\ref{ssec:tunnel}.
+\subsection{\gls{edf} Sink Tree}
+Depending on whether the flow of interest for \gls{pmoo} analysis is defined as all timing message input flows or a single one,
+different service and arrival curves for \gls{cpu} and \gls{pq} have to be used. We shall designate a flow of interest with ingress at the \gls{cpu}
+level as $R_{xy}$, being the $x$-th flow at \gls{cpu} $y$.
+
+\paragraph{Sum of all Timing Flows}
+If the intention is finding the delay bound for any and all of the timing flows, the arrival curves of all flows must be aggregated and the service
+of the \gls{pq}'s constant rate note is concatenated with the single path section of the system, denoted as $\beta_{sp}$. The incoming flow at the \gls{pq} node 
+is then defined by
+\begin{equation}
+\begin{aligned}
+\mathrm{\alpha_{pq}} &=  \sum_j^{N-1} \sum_i^{M-1} \left( \alpha_{ij} \oslash (\beta^{\gls{cpu}} \otimes \beta_q \otimes \delta_a) \right)
+\label{eq:foi_sum}
+\end{aligned}
+\end{equation}
+%
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textheight}
+  % \vspace*{-10mm}
+ %\hspace*{-10mm}
+   \rotatebox{90}{ \tiny{\input{Figures/all_block_new.pdf_tex}}}
+  \caption{Block Diagram of \gls{nc}  \gls{cs} Model:\\Data Master (1st and 2nd row), White Rabbit Network (3rd row),\\\gls{tr} (4th row). Tunnel coverage is shown in grey}
+  \label{fig:all_block}
+\end{figure}
+
+
+
+\paragraph{Single Flow of Interest}
+The delay bound for a single timing message flow can be obtained by calculating the leftover service at both the \gls{cpu} at which the \gls{foi}
+originates and the \gls{pq}. We shall start by modifying eq.~\ref{eq:foi_sum} to include only the flows originating at \emph{other} \gls{cpu}s by replacing
+the limits of the first sum by $j \in [0,N) - \{y\}$, with $y$ being the index of the origin \gls{cpu} of the \gls{foi}.
+\begin{equation}
+\begin{aligned}
+\mathrm{\alpha^*_{-y}} &=  \sum_{j \neq y}^{N-1} \sum_i^{M-1} \left( \alpha_{ij} \oslash (\beta^{\gls{cpu}} \otimes \beta_q \otimes \delta_a) \right)
+\label{eq:pq_arr_1}
+\end{aligned}
+\end{equation}
+\par
+We then need to add all flows originating at \gls{cpu} $y$, except for the \gls{foi} $x$, and calculate the matching output arrival curve by feeding
+the aggregate flow through the \gls{cpu}s leftover service, after serving the \gls{foi}:
+%
+\begin{align}
+\mathrm{\beta^{l.o.}_{-xy}} &=  \left( \beta^{\gls{cpu}}  \ominus  \left(\sum^{M-1}_{i} \alpha^{oh}_i + \alpha_{xy} \right) \right)  \otimes \beta_q \otimes \delta_a \\
+\notag\\
+\mathrm{\alpha^{*}_{-xy}} &= \sum_{i \neq x} \alpha_{iy} \oslash  \beta^{l.o.}_{-xy}\label{eq:pq_arr_2}
+\end{align}
+This leaves concatenating the leftover service the \gls{foi} experienced at both \gls{cpu} and \gls{pq} level. The leftover service for the \gls{foi} at \gls{cpu} level is given by eq.~\ref{eq:sched_cpu_sfa} on p.~\pageref{eq:sched_cpu_sfa}. 
+Combined with eq.~\ref{eq:pq_arr_1} and~\ref{eq:pq_arr_2}, the leftover service in the sink tree is
+%
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta^{l.o.}_{st}} &= \lambda_{r3} \ominus (\alpha^*_{-y} + \alpha^{*}_{-xy})
+\label{eq:lo_serv}
+\end{aligned}
+\end{equation}
+
+
+
+\subsection{Equivalent Circuit for \gls{wr} Network}
+The \gls{wr} network consists of several layers of \gls{wr} switches for which an equivalent node needs to be created. The \gls{nic} nodes of \gls{dm} and \gls{tr} are
+also to be combined into the equivalent system, because they also carry the interfering \gls{wr} background flows (\gls{ptp}, \gls{dhcp}, \gls{arp}, \gls{snmp}).
+The middle row in figure~\ref{fig:all_block} shows the structure of the \gls{wr} system. An equivalent node is therefore the leftover service 
+in the concatenation of all involved nodes. Since \gls{dm} traffic is high priority and non-preemptive, all nodes must allow for a maximum length
+low priority packet to complete. For the \gls{wr} switches~\ref{eq:wr-sw} and the \gls{nic}s~\ref{eq:wr-nic}, this is already included. 
+\par
+It is noteworthy that the calculation of leftover service in the present case does pay for multiplexing several times. 
+This is done on purpose, because \gls{wr} background traffic is generated at all
+switch levels and the \gls{nic}s. Therefore, multiplexing \emph{does} happen at each node again. The equivalent service for all \gls{wr} network nodes
+can be written as
+\begin{align}
+\mathrm{\beta_{wr}} &= \beta_{N1} \otimes \bigotimes_{1 \le i \le k} \beta_{sw} \otimes \beta_{N2}
+\label{eq:wr-serv}
+\end{align}
+
+
+\subsection{Data Master to Timing Endpoint}
+
+\paragraph{Concatenation and Scalers}
+The presence of scalers in the system (all $S_x$ blocks in figure~\ref{fig:all_block}) prevents direct analysis.
+Nodes separated by a scalers cannot be concatenated by standard \gls{nc}, so the scalers need to be removed.
+This can be achieved by one of three ways:
+\begin{itemize}
+\item{Move all scalers to ingress}
+\item{Move all scalers to egress}
+\item{Move symmetric scalers to their inverse}
+\end{itemize}
+
+\paragraph{Moving Scalers}
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.8\textwidth}
+  \input{Figures/scaler_order.pdf_tex}
+  \caption{Equivalent Circuits for Scalers}
+  \label{fig:scaler_order}
+\end{figure}
+\noindent
+The present case has symmetric scalers, so it is possible to move them towards their respective inverse functions ($S_x$ adjacent to $S^{-1}_x$)
+so they cancel each other out.
+Moving a scaler is achieved by replacing it with its equivalent circuit from figure~\ref{fig:scaler_order}.
+The replacement follows the rules for scaled service on p.~\pageref{scaled_service} in section~\ref{scaled_service},
+the same principle holds for L-packetisers and their scaling functions.
+\par
+The tightness of the achieved bounds depends on the chosen equivalent circuits. The best choice differs for
+backlog, output and delay bounds. 
+\cite[p. 294 (8)]{fidler_way_2006} states that for delay analysis, a system in the a.) row of figure~\ref{fig:scaler_order} should stay unchanged,
+and a system from the b.) row can be changed to a.). This means the three scalers $S_R$, $S_P$ and $S_F$ in the \gls{dm} are to be moved downstream
+until they reach  $S^{-1}_R$, $S^{-1}_P$ and $S^{-1}_F$ and cancel each other out.
+ 
+ 
+\paragraph{Step-by-Step Removal}
+While the presented method removes the scaler blocks, it is clear that their influence on other components remains.
+The removal process is described using the notation for packetisers and their bit-by-bit systems from p.~\pageref{sec:e2e_da}. 
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textheight}
+   \vspace*{-10mm}
+ \hspace*{-10mm}
+  \rotatebox{90}{\tiny{\input{Figures/full_block2.pdf_tex}}}
+  \caption{Introduction of Symbols for\\static Delays and \gls{wr} Network}
+  \label{fig:block2}
+\end{figure}
+
+\definecolor{hgrau}{gray}{.588}
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textheight}
+  \vspace*{-10mm}
+ \hspace*{-10mm}
+  \rotatebox{270}{
+  \tiny{\input{Figures/full_block3.pdf_tex}}}
+  \caption{Replacement of \gls{dm} Scalers}
+  \label{fig:block3}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textheight}
+   \vspace*{-10mm}
+ \hspace*{-10mm}
+  \rotatebox{90}{
+  \tiny{\input{Figures/full_block4.pdf_tex}}}
+  \caption{Scaling \gls{wr} \gls{nw} and Replacement of \gls{tr} Scalers}
+  \label{fig:block4}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \def\svgwidth{0.95\textheight}
+  \vspace*{-10mm}
+ \hspace*{-10mm}
+  \rotatebox{270}{
+  \tiny{\input{Figures/full_block5.pdf_tex}}}
+  \caption{Final \gls{tr} Scaler Replacement and Join with \gls{dm} Blocks}
+  \label{fig:block5}
+\end{figure}
+
+\subsection{Equivalent Service of Packetised Greedy Shapers}
+Moving a scaler downstream past a packetised greedy shaper will influence both the L-packetiser and the bit-by-bit system. 
+Thus, it will transform a system of the form $\sigma, P^{L_{S}}$ into an equivalent circuit of  $\underline{S^{-1}}(\sigma), P^{L}$.
+
+\paragraph{Iterative Scaling}
+Because the minimal scaling curve (max-plus deconvolution) of scaling functions are defined to represent less or equal service, it follows that iterative use drives the curves towards pessimistic service representations, so 
+\begin{equation}
+\notag
+(S_X \phantom{~}\overline{\oslash}\phantom{~} S_X) ((S_Y \phantom{~}\overline{\oslash}\phantom{~} S_Y)(a)) \phantom{~}  \le \phantom{~} S_X(S_Y(A)) \phantom{~}\overline{\oslash}\phantom{~} S_X(S_Y(a))
+\end{equation}
+Therefore the process followed is to firstly apply all scaling functions, i.e. $S_X(S_Y(S_Z(a))$ \dots, then apply the deconvolution operator. Because the scaling functions are bijective, the order is of no consequence.
+To provide a more readable representation, the following notation is used:
+%
+\begin{equation}
+\begin{aligned}
+\notag
+\mathrm{ S_1(a)} &= S_R(a)\\
+\mathrm{ S_2(a)} &= S_R(S_P(a))\\
+\mathrm{ S_3(a)} &= S_R(S_P(S_F(a)))
+\label{eq:scaling-shorthand}
+\end{aligned}
+\end{equation}
+%
+Using these shortforms, the equivalent service of all packetisers in block diagram~\ref{fig:block5} is given by the following equations:
+\begin{align}
+\mathrm{P_{M_1}} &=  \mathrm{P_{M_2}} &&\to \beta_{r_2, \frac{l_p}{r_2}}&\phantom{~}\\[6pt]
+\mathrm{P_{P_1}} &=  \mathrm{P_{P_6}} &&\to \underline{S^{-1}_1} \left ( \beta_{P} \right) &\le \beta_{S^{-1}_1(r_2), \frac{kl_p}{S^{-1}_1(r_2)}}\\[6pt]
+\mathrm{P_{P_2}} &=  \mathrm{P_{P_5}} &&\to \underline{S^{-1}_2} \left ( \beta_{P} \right) &\le \beta_{S^{-1}_2(r_2), \frac{kl_p}{S^{-1}_2(r_2)}}\\[6pt]
+\mathrm{P_{P_3}} &=  \mathrm{P_{P_4}} &&\to \underline{S^{-1}_3} \left ( \beta_{P} \right) &\le \beta_{S^{-1}_3(r_2), \frac{kl_p}{S^{-1}_3(r_2)}}
+\label{eq:pack_serv}
+\end{align}
+%
+For the sake of completeness, a shorthand scaled version of the \gls{wr} service reads
+\begin{align}
+\mathrm{\beta_{wr_s}} &=  \underline{S^{-1}_3} \left ( \beta_{wr} \right)
+\label{eq:wr-serv-concat}
+\end{align}
+
+\subsection{Aggregate Scheduling}
+\label{ssec:tunnel}
+The system has been modelled in terms of its service, but there is a hitherto unconsidered constraint on flows traversing the system. When flows of timing messages are multiplexed on the \gls{dm}'s \gls{wb} bus,
+this follows a standard \gls{nc} model. Between the \gls{dm} and the endpoint however, this becomes an Ethernet based network connection. 
+\paragraph{Aggregation}
+From the \gls{eb} \gls{tx} module to the \gls{eb} \gls{rx} module, messages are bundled into network packets (grey area in figure~\ref{fig:all_block}).
+This wrapping is called aggregate scheduling, or in more general networking terms, a tunnelled connection. There is a significant difference in the multiplexing behaviour, because the multiple timing message flows become
+one single flow of network packages while they are in the tunnel. Message flows are no longer running as cross traffic to each other and thus cannot delay each other.
+The resulting single flow only has the \gls{wr} services as its cross traffic and because \gls{dm} traffic is treated as \gls{hp} without pre-emption within the \gls{wr} network, only the processing times for maximum length \gls{lp} traffic accumulate as latency.
+As a result, the latency for traversing the tunnel, and therefore the end-to-end delay, strongly decreases (compare chapter~\ref{ssec:fair_mod}, figure~\ref{fig:fair-model-tunnel} and~\ref{fig:fair-model-no-tunnel}).
+\par
+For \gls{tfa}, this is of no consequence, as it operates on the assumption that all incoming flows are aggregated (added) before analysis.
+For \gls{sfa} and \gls{pmoo} however, the ingress, the tunnel and the egress must be analysed as separate cases.
+The transition between the ingress and the tunnel is trivial, because the arrival curve entering the tunnel is the aggregate, i.e. sum of all the ingress's output arrival curves:
+%
+\begin{align}
+\mathrm{\alpha_t} &=  \sum \alpha^*_{{in}_i}
+\label{eq:in_tu}
+\end{align}
+%
+\paragraph{Regaining Individual Flows}
+Once the tunnel ends at the \gls{eb} \gls{rx} module though, a problem presents itself. The output aggregate flow constrained by $\alpha_t$ must now be split up again into the original number of flows, which is not as trivial as it might seem.
+For the demonstration cases in chapter~\ref{chap:eval}, the problem can be circumvented because all incoming flows were chosen to be equal. Thus, the output arrival curve of the last node in the tunnel can be divided by the number of original flows.
+Finding a generic solution for the corresponding residual service curves is not trivial and still work in progress in the beginning of 2017 (see chapter~\ref{ssec:optimisation}). However, there exists usable workaround for the present case.
+\citeauthor{bondorf_improving_2016} proved in~\cite{bondorf_improving_2016} that the maximum backlog encountered in a \gls{tfa} at a given node is also the maximum backlog any other form of analysis can encounter, thus capping the backlog.
+Furthermore, the sustainable rates of the individual flows cannot have increased inside the tunnel. If one consequently assigns the rates of the ingress's output arrival curves $\alpha^*_{{in}_i}$ to $\alpha_{{out}_i}$ and sets their initial burst to the \gls{tfa} bounded burst value of the aggregate output arrival curve $\alpha_t^*$, all $\alpha_{{out}_i}$ are defined by valid arrival curves. From the rate and burst limits, it follows that the resulting arrival curves must be greater or equal to the tight arrival bound, which means they are still valid constraints to their flows. 
+\par
+This allows to obtain an end-to-end delay by adding the individual delay for ingress, tunnel and egress.   The calculated difference in latency between assigning the best case (zero burstiness) and the worst case (aggregate burstiness) to any or all output arrival curves causes latency differences in the single digit microsecond range in the \gls{dm} simulation. The approach was therefore considered an acceptable intermediate solution for the present case. 
+
+\iffalse
+\subsection{Final Equivalent System}
+Taking in all nodes after the reduction in figure~\ref{fig:block5}, it is now possible to provide a single equivalent node for the single path section of the \gls{dm}, the \gls{wr} network and the \gls{tr}.
+
+The concatenation of all nodes is:
+
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta_{sp}} &=   \beta_{M} \otimes \underline{S^{-1}_1} \left ( \beta_{P}\right) \otimes \underline{S^{-1}_2} \left ( \beta_{P}\right) \otimes \underline{S^{-1}_3} \left ( \beta_{P} \right) \otimes \beta_{wr_s}\\
+&\otimes  \underline{S^{-1}_3} \left ( \beta_{P}\right)  \otimes \underline{S^{-1}_2} \left ( \beta_{P} \right) \otimes \underline{S^{-1}_1} \left ( \beta_{P} \right) \otimes   \beta_{M} \otimes \beta_{rx} \otimes \beta_{eca} \otimes \delta
+\label{eq:sp-serv}
+\end{aligned}
+\end{equation}
+
+This can be reduced further by applying some basic \gls{nc} principles. The service curves of all packetisers are the equivalent service of the form $\beta_{r,\frac{l_max}{r}}$. When concatenating rate latency systems, all delays are added and
+the minimum rate (bottleneck) dominates the equivalent system. 
+To get absolute figures in the end, values for packet sizes and scaling factors are needed first. These are given by:
+\begin{equation}
+\begin{aligned}
+l_p &= \SI{32}{\byte}&&~\\[8pt]
+kl_p &= \SI{1152}{\byte}&&~\\[8pt]
+S^{-1}_1 &= \frac{4}{5} &&= 0.8\\[8pt]
+S^{-1}_2 &= \frac{4}{5}\cdot \frac{1440}{1496} &&= 0.77\\[8pt]
+S^{-1}_3 &= \frac{4}{5}\cdot \frac{1440}{1496} \cdot \frac{1}{4} &&= 0.19
+\label{eq:scalings}
+\end{aligned}
+\end{equation}
+%
+As stated before, the rate of the equivalent node is the minimum of all rates along the path:
+%
+\begin{equation}
+\begin{aligned}
+r_{sp} &= \min\left\{r_2, S^{-1}_1(r_2), S^{-1}_2(r_2), S^{-1}_3(r_2), S^{-1}_3(r_1) \right\}\\[8pt]
+ &= S^{-1}_3(r_1)\\[8pt]
+ &= \SI{190}{\mega\bit\per\second}
+\end{aligned}
+\end{equation}
+%
+The latency introduced by the equivalent system is the sum of all delays along the path. We shall perform the calculation in steps for ease of representation and start with the packetisers.
+The \gls{ebm} \gls{tx} encoder is listed differently, as introduces its collection latency, which can be higher than maximum packet size over rate. 
+With the help of the absolute rates on p.~\pageref{eq:rates}, the absolute latency values can be provided:
+%
+\begin{equation}
+\begin{aligned}
+T_p &=&&  \frac{l_p}{r_2} + T_{tx} +  \frac{kl_p}{S^{-1}_2(r_2)} +  \frac{kl_p}{S^{-1}_3(r_2)}\\[8pt] 
+       &&+&   \frac{kl_p}{S^{-1}_3(r_2)} +  \frac{kl_p}{S^{-1}_2(r_2)} + \frac{kl_p}{S^{-1}_1(r_2)} +\frac{l_p}{r_2} \\[8pt]
+&=&& \SI{160}{\nano\second} + \SI{47.78}{\micro\second}  +  \SI{6.22}{\micro\second} +  \SI{25.21}{\micro\second} \\[8pt] 
+&&+&  \SI{25.21}{\micro\second}) + \SI{6.22}{\micro\second} + \SI{5.98}{\micro\second} + \SI{160}{\nano\second} \\[8pt]
+&=&&  \SI{118.36}{\micro\second}
+\end{aligned}
+\end{equation}
+%
+All constant delays which were known initially have been aggregated and are denoted as $\delta$. We shall now assign their absolute delay values. The latency at a \gls{wb} crossbar in the $r_2$ domain, $\delta_{cb}$,
+is four clock cycles, which amounts to \SI{64}{\nano\second}. The parsing time in the \gls{ebm} is at five clock cycles, \SI{80}{\nano\second}. There are no fixed values available yet for 
+encoding and decoding times, as there is no functional implementation yet. An approximation by the developer indicates both times are less than \SI{2}{\micro\second}~\cite{lipinski_white_2011-1}.
+%
+\begin{equation}
+\begin{aligned}
+T_\delta &= \delta_{p} + \delta_{cb} + \delta_{e} + \delta_{cb} + \delta_{cb} +\delta_{d} + \delta_{cb} + \delta_{cb}\\
+&= \SI{80}{\nano\second} + \SI{64}{\nano\second} + \SI{2}{\micro\second} + \SI{64}{\nano\second} + \SI{64}{\nano\second} + \SI{2}{\micro\second} + \SI{64}{\nano\second}\\
+&= \SI{4.4}{\micro\second}
+ \end{aligned}
+\end{equation}
+%
+The delay introduced by the \gls{wr} network components can be summarised by eq.~\ref{eq:wr-nic} and~\ref{eq:wr-sw}. $T_s$ can only be approximated, but can be assumed to be approximately \SI{0.5}{\micro\second}.
+The maximum delay per layer is given by maximum low priority packet length over rate, which is \SI{1500}{\byte} at \SI{1}{\giga\bit\per\second}. With five switch layers, \gls{wr} delay can therefore be written as:
+%
+\begin{equation}
+\begin{aligned}
+T_{wr} &= 7 \cdot \frac{l^{lo}_{max}}{r_1} + 5 \cdot T_s\\
+&= 7 \cdot \SI{12}{\micro\second} + 5 \cdot \SI{500}{\nano\second}\\
+&= \SI{87.5}{\micro\second}
+ \end{aligned}
+\end{equation}
+%
+The \gls{eca} needs \SI{4}{\micro\second} worst case time to scan its input for due elements, which are added to the delay of the equivalent single path system:
+%
+\begin{equation}
+\begin{aligned}
+T_{sp} &= T_p + T_\delta + T_{wr}\\
+&= \SI{118.36}{\micro\second} + \SI{4.4}{\micro\second} + \SI{87.5}{\micro\second}\\
+&= \SI{210.26}{\micro\second}
+\label{eq:tot_delay}
+ \end{aligned}
+\end{equation}
+%
+\subsection{Concatenation with the Sink Tree}
+Applying the single path equivalent node to the sink tree ingress of the system is a simple procedure.
+The resulting value from eq.~\ref{eq:tot_delay} can also be employed by using a constant rate equivalent system $\beta_{sp} = \lambda_{S^{-1}_3(r_1)}$ and subtracting $T_{sp}$ directly from the available delay budget $\Delta_t$.
+\par
+However, a rate latency system will be used $\beta_{sp} = \beta_{S^{-1}_3(r_1), T_{sp}}$ is concatenated with the egress node of the \gls{pq}, obtaining a modified variant of eq.~\ref{eq:foi_sum}.
+Finally a manageable form of the complete model is obtained:
+%
+\begin{equation}
+\begin{aligned}
+\mathrm{\beta^{l.o.}_{st}} &= \beta_{\gls{cpu}} \otimes \beta_{sp} \ominus (\alpha^*_{-y} + \alpha^{*}_{-xy})
+ \end{aligned}
+\end{equation}
+\fi
+
+\subsection{Summary}
+
+In this chapter, it has been shown that \gls{nc} is applicable to the case study and how its peculiarities can be handled.
+Additionally, it has been shown that machine schedules, which control accelerator components in the \gls{fair} case study, can be modelled as network flows.
+Changing flows can be expressed by using suprema of alternative arrival curves or recurring analyses with non-empty buffers.
+\par
+The model has been further enhanced to show how the trinity of Program, Cycle based Bus and packet based Network of the SoC System can be modelled in \gls{nc}.
+All sub-modules have been discussed in detail and service representations have been deduced. The findings were then combined
+to produce a single equivalent service, which can be used to calculate the maximum delay for a particular flow of interest or the sum of all flows.
+\par
+In the evaluation in chapter~\ref{chap:eval}, the results obtained by simulating the model in the Disco D\gls{nc} v2 simulator~\cite{bondorf_discodnc_2014} will be represented and the 
+results, as far as feasibly possible, compared with tests of the prototype system.

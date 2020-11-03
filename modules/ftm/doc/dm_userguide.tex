@@ -1,0 +1,585 @@
+
+\chapter{CarpeDM User Guide}
+\label{chap:userguide}
+\emph{carpeDM} is a framework for a domain specific programming language, designed to interface with both the \gls{dm} and \gls{lsa}. It's purpose is to provide a description format for accelerator schedules, manipulate the resulting graphs and compile/decompile them for use in the \gls{dm}. carpeDM validates syntax, grammar and structure for incoming graphs. It also handles runtime commands to the \gls{dm} and assures transaction safe manipulations. It also handles \gls{dm} memory management and content loading them  them back and forth between the LSA physics model and the real-time hardware (HW) of the DM. carpeDM also handles data transmission to and from the DM and manages the DM's HW resources (memory, bandwidth, etc.). The name carpeDM was also used for the corresponding c++ library.
+%The DM in turn processes this low level representation and broadcasts streams of timing messages to the network. Timing receivers are programmed for individual reactions to a certain message ahead of time,  which will message then determines the execution
+\paragraph{Representation}
+carpeDM uses \emph{dot} graphs as defined by the graphviz organisation\cite{}. Dot graphs are a generic format for directed or undirected graphs. Each graph consists of nodes and connecting edges,
+as well as style and layout parameters. Style parameters are automatically generated into carpeDM's output files for ease of understanding, but are ignored on input files.
+\par
+An opensource suite of tools to generate graphic representations of dot files is freely available. For human interaction (operators) and especially in the deployment phase, these visualisations already were of great value to reduce the time to determine the facilities state and debug its behaviour.
+
+
+
+\section{Getting Started}
+
+\subsection{Installing carpeDM Tools}
+%
+First, you will need the BEL projects sources from the GSI controls repository. If you have not already done so, you can get the sources here:
+%
+\begin{lstlisting}[style = customshell]
+$ git clone --recursive https://github.com/GSI-CS-CO/bel_projects.git
+$ cd bel_projects
+$ git checkout master
+$ ./fixgit
+\end{lstlisting}
+%
+To build and run carpeDM, you will need the boost libraries $\ge$ 1.5.4 (if you build on the ASL cluster, these are already installed).
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install libboost
+\end{lstlisting}
+
+Next, you'll need to build the toolchain and the carpeDM library and tools. From the root folder of your BEL projects checkout, call
+%
+\begin{lstlisting}[style = customshell]
+$ make
+$ cd syn/gsi_pexarria5/ftm
+$ make tools #To also get DM gateware, run plain make instead
+$ sudo make install
+\end{lstlisting}
+%
+This leaves you with the carpeDM library \emph{libcarpedm.so} and two command line tools, \emph{dm-sched} and \emph{dm-cmd}.
+
+\subsection{Installing Visualisation}
+
+There's two options how to use dot visualisation. If you are interested in viewing, navigating and searching through graphs, you'll want the xdot viewer. This python app is lightweight and easy to use.
+If you need renderings of a graph for documentation or want more control over all the render parameters, you should use the graphviz tools directly on the command line.
+
+\paragraph{Installing all prerequisites}
+First, we need to install the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp) 
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install graphviz
+\end{lstlisting}
+
+It is sensible to render dot files into a vector format (pdf, svg, etc), as bitmaps of schedules tend to get \emph{very} big. The graphviz CLI tools accept parameters for the renderer, which are grouped
+into graph, node and edge parameters. A lot of the parameters are specific to one renderer, and are ignored if you run another. These can also be supplied in the graph itself, however, CLI parameters always override. For example, \emph{-Grankdir=TB} will cause the dot renderer to arrange the graph top to bottom instead of left to right. Especially the neato renderer is very useful for the large sequences found in schedules, but needs some extra parameters to produce sensible results.
+
+\begin{lstlisting}[style = customshell]
+$ neato <a-dot-file.dot> -Goverlap=compress -Gmodel=subset
+\end{lstlisting}
+
+You can try adding several moree parameters to the call to refine node distance, edge spring force, different arrangement models and so on
+%
+\begin{lstlisting}[style = customshell]
+$ ./dotrender.sh download &
+\end{lstlisting}
+%
+To get a live view of the DM's content, open download.svg in a viewer supporting auto refresh. If you have larger and more complex schedules, you might want a different layout to get a better overview. In this case, try the \mbox{\emph{neatorender.sh}} script instead. It will produce a more \enquote{organic}, more compact graph that is better suited to get the big picture.
+
+\paragraph{The Xdot Viewer}
+
+The second option is to use the Xdot Viewer tool. This is a Gtk 3 based GUI viewer written in python, providing a much more comfortable interface to schedule graphs. It is also faster than using the CLI renderer plus an image viewer. For carpeDM, a fork has been made of the original xdot project, adding new features.
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install python3
+$ sudo apt-get install python3-setuptools
+$ git clone https://github.com/GSI-CS-CO-Forks/xdot.py.git
+$ cd xdot
+$ git checkout xdot-gsi-dm
+\end{lstlisting}
+
+\begin{lstlisting}[style = customshell]
+#Try it out
+$ python3 -m xdot <a-dot-file.dot>
+
+#Install
+$ sudo python3 setup.py install --record files.txt
+
+#Uninstall
+$ cat files.txt | xargs sudo rm -rf
+\end{lstlisting}
+
+\subsection{Xdot Viewer Short Manual}
+
+\begin{figure}[H]
+   \centering
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/xdot}
+   \caption{Xdot Viewer}
+   \label{fig:xdot}
+\end{figure}
+%
+From the installation on, you can call xdot like any other program. There are CLI option to choose the renderer and pass arguments to it. The following call will start xdot with a neato configured for schedule graphs:
+%
+\begin{lstlisting}[style = customshell]
+$ xdot <a-dot-file.dot> -f neato --filterargs="-Goverlap=compress -Gmodel=subset"
+\end{lstlisting}
+
+\paragraph{Files and Printing}
+The File dialogue can be used to load dot files and is pretty much self explanatory. Printing is still buggy, as it only chooses the correct print area if the window it at its original (when opening the program) size.
+Future releases should feature an SVG export
+
+\paragraph{Navigation}
+The arrow keys can be used for scrolling, as can the pressed middle mouse button. Zooming is achieved by using $<$PageUp$>$/$<$PageDown$>$ or using the mouse wheel.
+In addition, the toolbar buttons can be used to control zoom.
+%
+\paragraph{Copy Name}
+A right click on a node will copy its name to the clipboard. 
+%
+\paragraph{Inspection Window}
+Clicking the info button in the toolbar will open the IW. Left clicking a node or edge will show its bundled properties. The window contains three columns, description, tag and value.
+Descriptions are only available for carpeDM properties and explanatory comments. The tag column is the actual tag in the dot file, the value is the value from the dotfile. Note that the value can be converted. For example,
+time is not shown as a integer of nanoseconds \SI{1003000}{\nano\second}, but as seconds in scientific notation \SI{1.003e-6}{\second}.
+%
+\paragraph{Text Search}
+The toolbar provides a text search field to search for nodes and edges.
+$<$Enter$>$ begins the search and will zoom/scroll in the group of found nodes or edges. All found items are highlighted in light red.
+Text search also allows the use of regular expressions.
+For example, 
+\begin{lstlisting}[style = customtext]
+SIS18_RING_.*00.
+\end{lstlisting}
+will search for all node names starting with \emph{SIS18\_RING} and ending in \emph{00x}.
+\vskip\baselineskip
+When the inspection window is active, text search will also search bundled properties. They are stored internally as strings of the format $<$key=value$>$ and can be searched as such.
+Regular expressions are very powerful when used as boolean connections of search criteria.
+For example, 
+\begin{lstlisting}[style = customtext]
+gid=300|gid=508
+\end{lstlisting}
+will search for all nodes belonging to group ID \emph{300} or \emph{508}, while 
+\begin{lstlisting}[style = customtext]
+(?=.*gid=300)(?=.*evtno=258)
+\end{lstlisting}
+will find nodes of group \emph{300} and having an event number of \emph{258}.
+
+
+
+
+\subsection{Hello World!}
+
+We will assume that you have a freshly booted (or halted and cleared) DM available over an EB connection. If you encounter any error messages, especially during status check, please look at appendix \ref{apx:troubleshooting}, Troubleshooting.
+
+\paragraph{First encounter}
+
+First, let's have a look what the DM thinks it's doing right now
+The following command will give you the detailed runtime status report.
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> status -v
+\end{lstlisting}
+%
+The output will look something similar to the listing \ref{lst:dm-cmd-status}. Note that none of the worker threads is running right now and none has assigned a pattern or node to it.
+
+\begin{lstlisting}[style = utf8text,label={lst:dm-cmd-status},caption={Output of dm-cmd status}]
+beginUTF8╒══════════════════════════════════════════════════════════════╕endUTF8
+beginUTF8│endUTF8 DataMaster: dev/ttyUSB0        beginUTF8│endUTF8 WR-Time: Tue Feb 6 17:50:44 beginUTF8│endUTF8
+beginUTF8\pmboxdrawuni{255E}══════════════════════════════════════════════════════════════\pmboxdrawuni{2561}endUTF8
+beginUTF8│endUTF8 Cpu beginUTF8│endUTF8 Thr beginUTF8│endUTF8 Running beginUTF8│endUTF8 MsgCount beginUTF8│endUTF8    Pattern beginUTF8│endUTF8           Node beginUTF8│endUTF8
+beginUTF8\pmboxdrawuni{255E}══════════════════════════════════════════════════════════════\pmboxdrawuni{2561}endUTF8
+beginUTF8│endUTF8  0  beginUTF8│endUTF8  0  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+beginUTF8│endUTF8  0  beginUTF8│endUTF8  1  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+...
+beginUTF8│endUTF8  3  beginUTF8│endUTF8  7  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+beginUTF8└──────────────────────────────────────────────────────────────┘endUTF8
+\end{lstlisting}
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add helloworld.dot
+\end{lstlisting}
+carpeDM will parse and validate the dotfile, create the graph and upload it to the DM. It then reads back the binary, transforms it into graph again, annotes it with visualisation tags and writes it to download.dot.
+The result should look similar to figure~\ref{fig:helloworld}.
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/helloworld}
+   \caption{Visualisation of Hello World Schedule Graph }
+   \label{fig:helloworld}
+\end{figure}
+%
+The DM yet has to be told that we wish to play the Hello World Pattern. Dots are also used to describe runtime commands to the DM,
+and we shall use prefabricated ones in this example.
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> -i helloworld_start.dot
+\end{lstlisting}
+%
+This started the pattern execution. Let's check the status again, this time without the verbose flag:
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> status
+\end{lstlisting}
+%
+The DM is now sending two messages once every second, with an execution time \SI{8}{\nano\second} apart.
+If the output is connected to a TR over a WR switch, such as an SCU, you can log into your SCU and see the events caused by our messages coming in.
+For this to happen, you need to tell the \emph{saft-ctl} tool what you wish to see. In our case, we filter to show only our own hello world events.
+%
+\begin{lstlisting}[style = customshell]
+$ ssh root@<Your SCU's Name>.acc.gsi.de
+SCU$ saft-ctl tr0 -v -f snoop 0x0 0x0 0x0
+\end{lstlisting}
+%
+\begin{lstlisting}[style = customshell]
+tDeadline: 2018-02-06 17:08:10.556617664 ... EVTNO:  280 ...
+tDeadline: 2018-02-06 17:08:10.556667664 ... EVTNO:  273 ... !delayed (by 565680 ns)
+\end{lstlisting}
+%
+Yep, there they are! Note that the second message has a comment saying it is \emph{delayed}.
+This is nothing to worry about. The the snooping action by the SCU is way slower than the TR hardware, unable to process another message only \SI{8}{\nano\second} after the first.
+All status reports by TR's are explained in detail in chapter~\ref{xxx1}.
+\par
+\noindent
+Congratulations, you just ran your very first accelerator schedule with carpeDM and saw the result on real hardware!
+
+
+
+
+
+
+
+
+
+\section{Command line tools}
+
+carpeDM comes with two command line tools, \emph{dm-sched} and \emph{dm-cmd}. dm-sched is responsible for schedule upload, download and manipulation. dm-cmd covers manual thread and flow control, status queries, runtime diagnostics and node and queue inspection. For detailed help, call either with the \enquote{-h} flag.
+
+to be continued\dots
+
+\section{Schedules}
+\label{ssec:bblocks}
+
+\subsection{Overview}
+
+carpeDM schedules use nodes of three basic types to model the control message stream to the accelerator. These are \emph{Messages}, \emph{Commands} and \emph{Blocks}. All necessary management overhead is contained in nodes of a fourth \emph{Meta} type, which is by default invisible to the user.
+
+\paragraph{Message Nodes}
+Messages, aka timing messages, provide what it says on the box - they create messages to be broadcasted to timing receivers on the White Rabbit (WR) network.
+\paragraph{Block Nodes}
+Blocks provide three functions in one. First, they carry a timespan or period, which is added to the running time sum once they are processed. Second, they can be outfitted with a sink for commands, allowing dynamic actions. These could be a request to wait or changes to the flow through the graph (alternative successor nodes). And third, Blocks can be made to dynamically adjust their period to fit a given time grid.
+\paragraph{Command Nodes} Command nodes use the same command interface as Blocks do, but they are sources, not sinks. They can be used for synchronisation or loops with various properties. An example would be a loop waiting for an external command to continue, but terminating when reaching a given timeout.
+
+\begin{figure}[H]
+\def\svgwidth{0.8\textwidth}
+\graphicspath{{Figures/}}
+\input{Figures/legend_nodes.pdf_tex}
+\caption{Legend for Node Visualisation }
+\label{fig:legend_nodes}
+\end{figure}
+
+\begin{figure}[H]
+\def\svgwidth{0.8\textwidth}
+\graphicspath{{Figures/}}
+\input{Figures/legend_edges.pdf_tex}
+\caption{Legend for Edge Visualisation }
+\label{fig:legend_edges}
+\end{figure}
+
+
+\subsection{Basics}
+
+\newpage
+\section{Flow Control}
+Like other program languanges, carpeDM schedules support branches and loops. There is no generic conditional conditional check when deciding wether to take a branch though. Instead, a message inbox,
+the command queue, is checked for new orders. This means that commands are queued at the point in the graph where the change is to be made.
+To allow parrallel operation, there are as many command queues as there are points of decision. Points of decision are always of the \enquote{block} type, but blocks are not always points of decision.
+
+\subsection{Blocks and Changes during Runtime}
+For blocks to be used dynamically, they need to act as a sink for commands. This is enabled by adding command queues to the block. Up to three priorities are supported, forming a single priority queue. When a block is processed, it will only ever execute a single command and will always choose the highest priority pending.
+\par
+Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain command type can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{xxx2}.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc00_if}
+    \caption{if\dots then\footnotemark}\label{fig:cc0_if}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc01_if_else}
+    \caption{if\dots then, else}\label{fig:cc1_if_else}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc02_case}
+    \caption{case\dots with default}\label{fig:cc2_case}
+  \end{subfigure}
+  \vskip0.5em
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc03_until_repeat}
+    \caption{until \dots repeat}\label{fig:cc3_urep}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc04_repeat_until}
+    \caption{repeat until \dots}\label{fig:cc4_repu}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc05_while_do}
+    \caption{while \dots do}\label{fig:cc5_whiledo}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc06_do_while}
+    \caption{do while \dots}\label{fig:cc6_dowhile}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc07_for_lt}
+    \caption{for $0 \le i < n$}\label{fig:cc7_forlt}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc08_for_le}
+    \caption{for $0 \le i \le n$}\label{fig:cc8_forle}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc09_wait_until}
+    \caption{Simple wait loop}\label{fig:cc9_wait}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc10_wait_until_timeout}
+    \caption{Wait loop with timeout}\label{fig:cc10_waitto}
+  \end{subfigure}
+  \vskip\baselineskip
+  \caption{\textbf{Schedule cheatsheet}}\label{fig:branch}
+\end{figure}
+\footnotetext[1]{Add optional blocks to achieve different durations of alternate paths}
+
+
+
+
+\subsection{Branches}
+
+\emph{TODO complete missing examples!}
+
+Using the \emph{flow} command, blocks can temporarily or permanently change their successor node. Figure~\ref{fig:exbranch0} (exbranch.dot) shows a minimal example containing two alternative branches. The default branch taken contains the 'A' nodes, and block BLOCK\_BRANCH features a single low level command queue (meta nodes shown for demonstration). Changing the flow from the 'A' to the 'B' branch can be achieved by sending a command to block BLOCK\_BRANCH.
+
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch0}
+   \caption{ Example of simple branch }
+   \label{fig:exbranch0}
+\end{figure}
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add exbranch.dot
+$ dm-cmd <eb-device> startpattern BRANCH
+$ dm-sched <eb-device>
+\end{lstlisting}
+
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch1}
+   \caption{ Default flow through 'A' branch }
+   \label{fig:exbranch1}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Branch}, label={lst:branch}]{Source/exbranch.dot}
+
+Calling dm-sched on a DM without any further parameters will automatically call the status report, which will make the render script update the graph image. The green fill in figure~\ref{fig:exbranch1} shows that the DM followed the red default edges as expected and executed the 'A' branch at least once, but did not enter the 'B' branch. We can now change the flow by
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> flow BLOCK_BRANCH MSG_B0
+#or
+$ dm-cmd <eb-device> flowpattern BRANCH B
+#followed by
+$ dm-sched <eb-device>
+\end{lstlisting}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch2}
+   \caption{ Flow changed to 'B' branch }
+   \label{fig:exbranch2}
+\end{figure}
+
+We can see now that the DM changed the default path towards the 'B' branch, the green fill showing it was executed.
+
+\subsection{Loops}
+\label{ssec:exwloop}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/exwloop}
+   \caption{Wait Loop}
+   \label{fig:exwloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:exwloop.dot}]{Source/exwloop.dot}
+
+The most basic example of command-controlled loop is an infinite loop. It is executed until an incoming flow command orders the DM to leave the loop.
+Figure~\ref{fig:exwloop} shows the setup. A Block with its default edge pointing at itself is forming an infinite loop. Note that only blocks are allowed to have themselves as a successor.
+The loop can be left by sending the block a flow command, which will order the DM to the node Msg\_CONTINUE. The flow in the example is temporary, it does not change the default destination. This allows the wait loop to be used again without further action required. The period of wait loops must be chosen greater than the maximum time the DM's scheduler requires to process the block. A value of \SI{10}{\micro\second} or more is recommended.
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add exwloop.dot
+$ dm-cmd <eb-device> startpattern LOOP
+$ dm-sched <eb-device>
+\end{lstlisting}
+
+\newpage
+\subsection{Default Pattern Example}
+
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.7\textwidth}
+   \includegraphics*[width=0.7\textwidth,keepaspectratio]{Figures/exdefpat}
+   \caption{ Default pattern with two alternatives }
+   \label{fig:exdefpat}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Default pattern with two alternatives}, label={lst:defpat}]{Source/exdefpat.dot}
+
+Based on the examples of branches and simple wait loops, we can construct a scenario using a default pattern and alternative patterns which will only be played on request.
+The basic principle is the same as the wait loop, with the difference of the loop being a productive sequence. This is a common case for FAIR, where a default pattern is played whenever no
+beam requests are demanding other patterns (d-d-d-d-A-d-d-A-B \dots).
+\par You might have noted that we did not start the DM this time, but still issued the flow command. It will lie in wait inside the default patterns command queue until the block is evaluated.
+The command line tools also provide a way to take a peek at the queue content. Using the following command
+
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> queue BLOCK_def
+\end{lstlisting}
+
+\begin{lstlisting}[style = customshell, caption={Output of dm-cmd queue inspection}, label={lst:queue}]
+Inspecting Queues of Block BLOCK_DEF
+Priority 2 (prioil)  Not instantiated
+Priority 1 (priohi)  Not instantiated
+Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1
+#0 pending Valid Time: 0x1523c7a1dd6e1200    CmdType: flow    Permanent: NO     Qty: 1    BLOCK_DEF --> MSG_A0
+#1 empty   -
+#2 empty   -
+#3 empty   -
+\end{lstlisting}
+
+carpeDM will list the content of all queues for the given block name, the result will look similar to listing~\ref{lst:queue}.
+Because the DM was not told to run the schedule yet, we can see the flow command as still pending. We can also see that the change is temporary (not permanent),
+and the last column tells us that the flow goes from the default pattern exit (BLOCK\_DEF) to the entry of pattern 'A' (MSG\_A0).
+
+This leaves the 'valid time' and 'Qty' properties. The valid time of a command specifies the WR time in \SI{}{\nano\second} \emph{after} which a command
+is valid for evaluation, meaning the DM will not process it before that time. If the element at the front of a queue is not valid yet,
+no other queued elements will be evaluated neither. This also hold down the priorities: if the high priority queue is not empty but not yet valid,
+the low priority queue will also not be serviced.
+\label{ssec:exdefpat}
+The repetition quantity (qty) specifies the number of times this element will yield the command it
+carries before it is exhausted and popped. In our example, the quantity is 1: the command will be executed once, then the containing element will be popped from the queue.
+
+\newpage
+\section{Static Commands}
+\subsection{Concept}
+In the previous section, schedule behaviour was influenced solely from the outside. It is also possible to integrate commands into the schedule itself, allowing for a large number of new possibilities.
+This can be used as loops with initialisers (for), executing the following sequence \emph{n} times. Another use is synchronisation, where one schedule is in a wait loop it will exit on the command from another schedule reaching the sync point. This approach can of course also be mixed with external commands, allowing for example for wait loops with a timeout.
+\subsection{Access Management}
+\label{ssec:locks}
+Static commands introduce a possible race condition within the DM, because the 1:1 relationship between command producers and consumers is no longer valid. There could be as as many producers per Queue as there are DM CPUs plus the host. This means that simultaneous access to a queue will create a conflict which must be handled. To prevent the race condition, a locking mechanism had to be introduced.
+\begin{itemize}
+  \item{Host: manages, sets and removes locks}
+  \begin{itemize}
+    \item{always has priority when writing}
+    \item{must lock queue before write access}
+    \item{must verify DM CPUs obey set lock}
+    \item{does \emph{NOT} manage producer--consumer constellations!}
+  \end{itemize}
+  \item{DM CPUs: obeys locks}
+  \begin{itemize}
+   \item{Locks are non-blocking}
+   \item{treat static commands to a write-locked block as Noop} 
+   \item{skip queues of read-locked blocks, use default successor}
+  \end{itemize}
+\end{itemize}
+
+
+
+
+
+
+
+\paragraph{Mechanism}
+The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity. 
+Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Updating the indices of different priorities from the host side would therefore still access the same word and cause a race condition. Lock flags are read/write to the host and read only to the DM. 
+%FIXME WTF does this mean ?
+Not all modules can be combined as producers and consumers of commands when sharing a block/queue. There are several valid combinations which will produce orderly behaviour.
+As mentioned in the above list, it is not the responsibility of the host (ie. Generator FESA class with carpeDM library)
+to assign or validate the constellation of command producers and consumers per block. This task lies solely with schedule (LSA) and command generation (Director). The following constellations are valid:
+
+
+\begin{tabular}[t]{|l|l|l|}
+\hline
+  \textbf{Producer} & \textbf{Consumer} & \textbf{Lock required} \\ \hline
+  Host               & DM Cpu & RD*     \\ %\hline
+  DM Cpu             & DM Cpu & --    \\ %\hline
+  Host \& DM Cpu     & DM Cpu & RD* \& WR      \\ %\hline
+  EB Slave (UNI-GW)  & DM Cpu & -- \\
+  EB Slave (B2B)     & DM Cpu & --\\
+  \hline
+\end{tabular}
+
+
+\paragraph{Sequence} 
+The host sets a lock, and checks the queue indices in regular intervals until no more changes are observed between checks. It is then certain that all ongoing DM actions (which might have been begun before the lock flags were visible) are concluded. The duration of host actions \SI{}{\milli\second} is three to four orders of magnitude longer than DM actions (\SI{}{\micro\second}), so a wait time in the low millisecond range between checks is sufficient. Once the lock flags are certain to be visible, the DM firmware will ensure that the locked block's queues are not modified. After the host has written to the queue, it clears the block's lock flags, allowing the DM to modify queues again.
+
+
+\newpage
+
+
+
+
+\subsection{Counter Loop Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/excntloop}
+   \caption{ Counter Loop }
+   \label{fig:excntloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Counter Loop}, label={lst:excntloop.dot}]{Source/excntloop.dot}
+
+As described in~\ref{ssec:exdefpat} on page~\pageref{ssec:exdefpat}, commands come with a repetition quantity, specifiying how often they can be executed before they are popped from the queue.
+When the command is integrated into the schedule, this can used as a loop initialiser, similar to the head of a for-loop. Since each block has its own
+counter, there is no need for a stack to keep track of the variables. This allows nesting of several loops. The example in figure~\ref{fig:excntloop} sets up a nested loop, where the whole pattern runs infinitely, the outer loop executes 3 times and the inner loop executes 2 times per iteration. Line~\ref{lst:excntloop:def} nicely shows that the whole schedule is actually very simple, stringed together by the red default destination arrows like beads on a chain.
+Only once the commands get executed, there are several loops to go through.
+\par It is obvious that the initialiser must only be called when there are not more repetitions of its command left, as it would otherwise flood the queue.
+This also means that you must not jump into or out of loops without flushing the corresponding queues.
+\vspace{2ex}
+
+\subsection{Timeout Loop Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/extoloop}
+   \caption{ Timeout Loop }
+   \label{fig:extoloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Timeout Loop}, label={lst:extoloop.dot}]{Source/extoloop.dot}
+
+A timeout loop is similar to the wait loop from~\ref{ssec:exwloop} on page~\pageref{ssec:exwloop}, it will exit on command, but it will also terminate after a given number of iterations (timeout).
+This can be achieved by using an initialiser to set up the time out, and then invert the exit logic: leaving the loop is now the default behaviour. Similarily, the command to exit is different: instead of issueing a flow command to leave the loop, we now issue a command to make the schedule stop staying inside the loop. Therefore, sending a flush command to the medium priority clearing the low priority (where the static flow went) will leave the loop before the timeout. The actual magic then happens in line~\ref{lst:extoloop:init}, setting the length of the timeout to \emph{qty} $\cdot$ \emph{period}.
+\vspace{2ex}
+
+
+\subsection{Alternation with Default Pattern Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/excntloop}
+   \caption{Alternating Counter Loop}
+   \label{fig:excntloop-alternate}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Alternating Counter Loop}, label={lst:excntloop-alternate.dot}]{Source/excntloop-alternate.dot}
+While making two alternating patterns is a trival matter of setting their default destinations to each others entry points,
+alternating sequences mixed with the default pattern (d-A-d-B-d-A-d-B-\dots) are a more interesting case.
+Figure~\ref{fig:excntloop-alternate} shows how to achieve this with static flow commands inside the alternative patterns:
+The default pattern will run in a loop. If made to flow to pattern A, pattern A will then send a command to the default pattern to go to pattern B next.
+After one execution of the default pattern, B is executed, sending a command to the default pattern with pattern A as the successor, and so on.
+To leave this sequence, one would send a flush command to the default pattern at medium priority, after which the schedule would loop the default pattern.

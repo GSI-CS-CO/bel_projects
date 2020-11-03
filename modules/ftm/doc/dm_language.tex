@@ -1,0 +1,180 @@
+\chapter{Quick Reference} % Main appendix title
+\sloppy
+\label{AppendixB} 
+
+%\DeclareGraphicsExtensions{.pdf,.jpeg,.png,.jpg} 
+
+
+\input{carpeDMglosentries_sched}
+\input{carpeDMglosentries_cmd}
+\input{carpeDMglosentries_id}
+\glsaddall
+%\printglossary[type=\acronymtype,style=long]  % list of acronyms
+
+%\glsadd{n_dest}
+\printglossary[type=sched, style=symbvaltypelong, nonumberlist]   % list of symbols
+\vspace{-2cm}
+\printglossary[type=id, style=symbvaltypelong,nonumberlist]   % list of symbols
+\begin{figure}[h]
+  \label{fig:timingMessageFormat_v3}
+  \hspace{-2cm}
+  \includegraphics*[width=1.3\textwidth,keepaspectratio]{Figures/timingMessageFormat_v3}
+\end{figure}
+\printglossary[type=cmd, style=symbvaltypelong, nonumberlist]   % list of symbols
+%\printglossary[type=main]                     % main glossary
+
+\input{carpeDMglosentries_acronyms}
+\printacronyms[style=symbvaltypelong, nonumberlist]
+
+
+\begin{table}
+\renewcommand{\arraystretch}{1.2}
+\caption{Schedule -- Applicable attributes per node type}
+\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
+
+\hline
+\multirow{2}{*}{Attribute}  & \multicolumn{7}{c|}{Schedule Node Type} \\
+ \cline{2-8}
+ & tmsg       & noop       & flow       & flush      & wait       & block      & blockalign \\
+\hline
+cpu       & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+thread    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+patentry  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+patexit   & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
+pattern   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+bpentry   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+bpexit    & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
+beamproc  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+tperiod   & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
+qil       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
+qhi       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
+qlo       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
+toffs     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
+id        & \checkmark & --         & --         & --         & --         & --         & -- \\       
+tvalid    & --         & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
+vabs      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & -- \\       
+prio      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & -- \\       
+qty       & \checkmark & \checkmark & --         & --         & --         & --         & -- \\       
+twait     & --         & --         & --         & \checkmark & --         & --         & -- \\       
+permanent & --         & --         & \checkmark & \checkmark & --         & --         & -- \\       
+\hline
+\end{tabular}
+\end{table}
+%\hspace{-2cm}
+%\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|}
+%\hline
+% & \multicolumn{10}{|c|}{Cmd Node Type I} \\
+% \hline
+%Attribute         & start      & stop       &  noop      & flow       & flush      & wait       & staticflush & lock       & unlock     & asyncclear  \\
+%\hline
+%cpu               & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+%thread            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+%target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\       
+%pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+%beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+%dest              & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%destpattern       & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%destbeamproc      & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%qil               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
+%qhi               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
+%qlo               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
+%tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
+%vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
+%prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
+%qty               & --         & --         & \checkmark & --         & --         & --         & --          & --         & --         & --          \\       
+%twait             & --         & --         & --         & --         & \checkmark & --         & --          & --         & --         & --          \\       
+%permanent         & --         & --         & --         & \checkmark & \checkmark & --         & --          & --         & --         & --          \\       
+%\hline
+%\end{tabular}
+
+%\hspace{-2cm}
+\begin{table}
+\renewcommand{\arraystretch}{1.2}
+\caption{Command -- Applicable attributes per node type}
+\begin{tabular}[t]{|l|c|c|c|c|c|c|}
+\hline
+ Attribute & \multicolumn{6}{c|}{Cmd Node Type I} \\
+ \hline
+         & start      & stop       &  noop      & flow       & flush      & wait       \\
+\hline
+cpu               & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+thread            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\       
+pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\ 
+beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\ 
+dest              & --         & --         & --         & \checkmark & \checkmark & --         \\
+destpattern       & --         & --         & --         & \checkmark & \checkmark & --         \\
+destbeamproc      & --         & --         & --         & \checkmark & \checkmark & --         \\
+qil               & --         & --         & --         & --         & \checkmark & --         \\       
+qhi               & --         & --         & --         & --         & \checkmark & --         \\       
+qlo               & --         & --         & --         & --         & \checkmark & --         \\       
+tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
+vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
+prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
+qty               & --         & --         & \checkmark & --         & --         & --         \\       
+twait             & --         & --         & --         & --         & \checkmark & --         \\       
+permanent         & --         & --         & --         & \checkmark & \checkmark & --         \\       
+\hline
+\end{tabular}
+\end{table}
+
+%\hspace{-2cm}
+\begin{table}
+\renewcommand{\arraystretch}{1.2}
+\caption{Command -- Applicable attributes per node type (continued)}
+\begin{tabular}[t]{|l|c|c|c|c|}
+\hline
+ Attribute & \multicolumn{4}{c|}{Cmd Node Type II} \\
+ \hline
+         & staticflush & lock       & unlock     & asyncclear  \\
+\hline
+cpu               & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+thread            & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+target            & \checkmark  & \checkmark & \checkmark & \checkmark  \\       
+pattern           & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+beamproc          & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+dest              & \checkmark  & --         & --         & --          \\
+destpattern       & \checkmark  & --         & --         & --          \\
+destbeamproc      & \checkmark  & --         & --         & --          \\
+qil               & \checkmark  & --         & --         & --          \\       
+qhi               & \checkmark  & --         & --         & --          \\       
+qlo               & \checkmark  & --         & --         & --          \\       
+tvalid            & --          & --         & --         & --          \\       
+vabs              & --          & --         & --         & --          \\       
+prio              & --          & --         & --         & --          \\       
+qty               & --          & --         & --         & --          \\       
+twait             & --          & --         & --         & --          \\       
+permanent         & --          & --         & --         & --          \\       
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}
+\begin{adjustwidth}{-2cm}{}
+\renewcommand{\arraystretch}{1.2}
+\caption{Schedule -- Valid edge types per node type}
+\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|}
+
+\hline
+Edge Type & \multicolumn{10}{c|}{Node Type} \\
+\hline
+ & tmsg   & noop       & flow       & flush      & wait       & lock       & unlock     & asyncclear & block      & blockalign \\
+\hline
+defdst    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+altdst    & --         & --         & --         & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
+target    & --         & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
+flowdst   & --         & --         & \checkmark & --         & --         & --         & --         & --         & --         & -- \\       
+flushovr  & --         & --         & --         & \checkmark & --         & --         & --         & --         & --         & -- \\       
+dynid x   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+dynpar0   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+dynpar1   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+dyntef    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+dynres    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+\hline
+\end{tabular}
+\end{adjustwidth}
+\end{table}
+
+
+

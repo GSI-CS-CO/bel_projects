@@ -42,6 +42,7 @@ Builds basic Saftlib tools and library.
 make saftlib
 (optional) make saftlib-install
 ```
+For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 
 # Build Gateware(s)
 Currently we support a few different form factors.

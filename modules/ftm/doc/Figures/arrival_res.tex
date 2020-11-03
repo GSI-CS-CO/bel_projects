@@ -1,0 +1,77 @@
+\begin{tikzpicture}
+  \pgfplotstableread[col sep=comma]{./arrival0.csv} \msgdata
+  \pgfplotstableread[col sep=comma]{./arrival1.csv} \flowarrdata
+  \pgfplotstableread[col sep=comma]{./arrival2.csv} \conchulldata
+  \pgfplotstableread[col sep=comma]{./arrival3.csv} \redconchulldata 
+  \begin{axis}[
+    name=first,
+    width=0.95\textwidth,
+    height=0.5\textheight,
+    %xtick distance=10.0,
+    %ytick distance=100.0,
+    xlabel={},
+    xticklabels={},
+    %ytick={0.2, 0.25, 0.3, 0.35,  0.400, 0.45, 0.500, 0.600, 0.700, 0.8, 0.9, 1.000, 1.100, 1.200},
+    %log ticks with fixed point,
+    %mark repeat={25},
+    unbounded coords=jump,
+    grid style={black!20},
+    grid=both,
+    %ymode=log,
+    %scale=\tikzscale,
+    legend cell align={left},
+    %legend columns=3,
+    %x label style={at={(axis description cs:0.5,-0.01)},anchor=north},
+    y label style={at={(axis description cs:0.025,.5)}, anchor=south},
+    %xlabel = Time / \SI{}{\micro\second},
+    xmax   = 750,
+    xmin   = -50,
+    ylabel = \small{Data / \SI{}{\byte}},
+    ymax   = 1400,
+    ymin   = 0,
+    %minor tick num=1,
+    %legend pos ={north west},
+    legend style={at={(axis cs:5.0,1400)}, anchor=north west},
+    legend entries = {Flow, Minimal Arrival Curve, Concave Hull, Flow Interval}
+    ]
+   \addplot [black] table[x = 0, y = 1] from \flowarrdata;
+    \addplot [red]     table[x = 0, y = 2] from \flowarrdata;
+    \addplot [mark=triangle*, blue]               table[x = 0, y = 1] from \redconchulldata ;  
+\addplot [mark=none, gray, dashed, very thick ] coordinates {(540,0.00000001) (540,10000)};
+  \end{axis}
+%
+  \begin{axis}[
+    at=(first.below south west),	
+   anchor=north west,
+    yshift=+0.3cm,
+    width=0.95\textwidth,
+    height=0.125\textheight,
+    %xtick distance=10.0,
+    %ytick distance=100.0,
+    %xtick={0, 25, 50, 75, 100, 125, 150, 175, 192.7},
+    ytick={0,1,2, 3},
+    %log ticks with fixed point,
+    %mark repeat={25},
+    unbounded coords=jump,
+    grid style={black!20},
+    grid=both,
+    %ymode=log,
+    %scale=\tikzscale,
+    legend cell align={left},
+    %legend columns=3,
+    x label style={at={(axis description cs:0.5,-0.01)},anchor=north},
+    y label style={at={(axis description cs:0.025,.5)}, anchor=south},
+    xlabel = \small{Time / \SI{}{\micro\second}},
+    xmax   = 750,
+    xmin   = -50,
+    ylabel =\small{Msgs},
+    ymax   = 4,
+    ymin   = 0,
+    %minor tick num=1,
+    %legend pos ={north west},
+    legend entries = {}
+    ]
+    \addplot+[ycomb, black, mark options={black}]                             table[x= 0, y = 1]  from \msgdata;
+    \addplot [mark=none, gray, dashed, very thick ] coordinates {(540,0.00000001) (540,4)};
+  \end{axis}
+\end{tikzpicture}

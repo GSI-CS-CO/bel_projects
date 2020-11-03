@@ -1,0 +1,83 @@
+%% Creator: Inkscape 0.48.5, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'packet_hdr_scaler.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{549.52123171bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.49024309)%
+    \put(0,0){\includegraphics[width=\unitlength]{Figures/packet_hdr_scaler.pdf}}%
+    \put(0.14865138,0.04388221){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)$}}}%
+    \put(0.06930037,0.04388221){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(0)$}}}%
+    \put(0.26319246,0.04388221){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)$}}}%
+    \put(0.31141687,0.04388221){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)$}}}%
+    \put(0.02069589,0.14657358){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)$}}}%
+    \put(-0.02106627,0.16569965){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)+1h$ }}}%
+    \put(-0.02106627,0.30168719){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)+2h$ }}}%
+    \put(-0.02106627,0.36333492){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)+3h$ }}}%
+    \put(0.02069589,0.26940531){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)$}}}%
+    \put(0.02069589,0.31791847){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)$}}}%
+    \put(0.67263279,0.0389562){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)+1h $}}}%
+    \put(0.81011175,0.0389562){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)+2h $}}}%
+    \put(0.89175954,0.0889562){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)+3h$ }}}%
+    \put(0.64565157,0.01868668){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)$}}}%
+    \put(0.76574874,0.01868668){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)$}}}%
+    \put(0.82330228,0.01868669){\color[rgb]{0.60784314,0.60784314,0.60784314}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)$}}}%
+    \put(0.52667344,0.06716822){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(0)$}}}%
+    \put(0.52667344,0.14571948){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(1)$}}}%
+    \put(0.52667344,0.26454051){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(2)$}}}%
+    \put(0.52667344,0.31127342){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(3)$}}}%
+    \put(-0.02106627,0.07183726){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(0)+0h $}}}%
+    \put(0.57825304,0.0389562){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\fontsize{8pt}{1em}$L(0)+0h $}}}%
+    \put(0.44617351,0.04340781){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$a$}}}%
+    \put(0.05787911,0.41279382){\color[rgb]{0,0,0}\rotatebox{90}{\makebox(0,0)[lb]{\smash{$S(a)$}}}}%
+    \put(0.92242647,0.03958856){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S(a)$}}}%
+    \put(0.56264009,0.42796562){\color[rgb]{0,0,0}\rotatebox{90}{\makebox(0,0)[lb]{\smash{$a$}}}}%
+    \put(0.1403965,0.45264009){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{Header insertion}}}%
+    \put(0.64048396,0.45264009){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{Header removal}}}%
+  \end{picture}%
+\endgroup%
+
