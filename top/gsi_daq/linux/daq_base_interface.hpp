@@ -42,13 +42,15 @@
 
 namespace Scu
 {
-
+namespace daq
+{
 /*! ----------------------------------------------------------------------------
  * @ingroup DEBUG
- * @brief Converts the command return code of LM32 into a string.
+ * @brief Converts the device type into a string.
  */
-const std::string deviceType2String( daq::DAQ_DEVICE_TYP_T typ );
+const std::string deviceType2String( const DAQ_DEVICE_TYP_T typ );
 
+} // namespace daq
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!

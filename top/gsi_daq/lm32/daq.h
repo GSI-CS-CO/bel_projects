@@ -142,9 +142,9 @@ typedef enum
 {
    CtrlReg         = 0x00, //!< @see DAQ_CTRL_REG_T
    TRIG_LW         = 0x10, //!< @brief Least significant word for SCU-bus event
-                           //!<        tag tregger condition.
+                           //!<        tag trigger condition.
    TRIG_HW         = 0x20, //!< @brief Most significant word for SCU-bus event
-                           //!<        tag tregger condition.
+                           //!<        tag trigger condition.
    TRIG_DLY        = 0x30, //!< @brief Trigger delay in samples.
    PM_DAT          = 0x40, //!< @brief Data of PostMortem respectively HiRes-FiFos.
    DAQ_DAT         = 0x50, //!< @brief Data of DAQ-FiFo.
@@ -1198,6 +1198,7 @@ DAQ_REGISTER_T daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  * @param value trigger delay
+ * @bug It doesn't work yet!
  */
 STATIC inline
 void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,

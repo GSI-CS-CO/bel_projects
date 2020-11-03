@@ -54,6 +54,7 @@ void Plot::init( void )
          << m_pParent->getCommandLine()->getTerminal()
          << " title \"SCU: "
          << m_pParent->getParent()->getParent()->getScuDomainName()
+         << ", DAQ-Type: " << daq::deviceType2String( m_pParent->getParent()->getTyp() )
          << "\"" << endl;
    *this << "set grid" << endl;
    *this << "set ylabel \"Voltage\"" << endl;

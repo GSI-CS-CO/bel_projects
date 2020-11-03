@@ -504,7 +504,9 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
             break;
          }
          DAQ_ASSERT( pFeedback->aktionBuffer.aAction[i].action == FB_ON );
+         daqChannelSetTriggerDelay( pSetChannel, 100 ); //TODO
          daqChannelSample1msOn( pSetChannel );
+        // mprintf( "D=%d\n", daqChannelGetTriggerDelay( pSetChannel ) );
          pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
          FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
                                             'Switch DAQ for set value on.' );
