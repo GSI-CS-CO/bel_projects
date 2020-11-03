@@ -165,8 +165,17 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    m_blockLen = wordLen;
    m_sequence = descriptorGetSequence();
    m_sampleTime = descriptorGetTimeBase();
-   m_timestamp = descriptorGetTimeStamp() - m_sampleTime * m_blockLen;
+
+   const uint64_t timestamp = descriptorGetTimeStamp();
+   const uint blockTime = m_sampleTime * m_blockLen;
+#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+   m_timestamp += blockTime;
+   if( timestamp > (m_timestamp + blockTime) )
+#endif
+      m_timestamp = timestamp - blockTime;
+
    ::memcpy( m_aBuffer, pData, m_blockLen * sizeof(daq::DAQ_DATA_T) );
+
    m_pParent->finalizeBlock();
 
    return false;
