@@ -338,6 +338,8 @@ unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
    return retVal;
 }
 
+//IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
+
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -345,12 +347,19 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
+   STATIC_ASSERT( TS_COUNTER_WD1+1 == TS_COUNTER_WD2 );
+   STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
+   STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
+   //uint64_t _ts = convertByteEndian_uint64_t( ts );
+   mprintf( "ts: 0x%08X%08X\n", ((uint32_t*)&ts)[0], ((uint32_t*)&ts)[1] );
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
-   //for( int i = (sizeof(uint64_t)/sizeof(uint16_t))-1; i >= 0; i--)
    {
+    #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+      pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i];
+    #else
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
-     // mprintf( "%d: 0x%04x\n", i, pThis->pReg->i[TS_COUNTER_WD1+i]);
+    #endif
    }
 }
 
@@ -361,12 +370,20 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
+   STATIC_ASSERT( TS_COUNTER_WD1+1 == TS_COUNTER_WD2 );
+   STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
+   STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
    uint64_t ts = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
+   {
+    #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+      ((uint16_t*)&ts)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i] = pThis->pReg->i[TS_COUNTER_WD1+i];
+    #else
       ((uint16_t*)&ts)[i] = pThis->pReg->i[TS_COUNTER_WD1+i];
-
+    #endif
+   }
    return ts;
 }
 
@@ -377,9 +394,16 @@ void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
+   STATIC_ASSERT( TS_CNTR_TAG_LW+1 == TS_CNTR_TAG_HW );
 
    for( unsigned int i = 0; i < (sizeof(uint32_t)/sizeof(uint16_t)); i++ )
+   {
+    #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+      pThis->pReg->i[TS_CNTR_TAG_LW+i] = ((uint16_t*)&tsTag)[((sizeof(uint32_t)/sizeof(uint16_t))-1) - i];
+    #else
       pThis->pReg->i[TS_CNTR_TAG_LW+i] = ((uint16_t*)&tsTag)[i];
+    #endif
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -389,12 +413,17 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
-
+   STATIC_ASSERT( TS_CNTR_TAG_LW+1 == TS_CNTR_TAG_HW );
    uint32_t tsTag = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint32_t)/sizeof(uint16_t)); i++ )
+   {
+    #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+      ((uint16_t*)&tsTag)[((sizeof(uint32_t)/sizeof(uint16_t))-1) - i] = pThis->pReg->i[TS_CNTR_TAG_LW+i];
+    #else
       ((uint16_t*)&tsTag)[i] = pThis->pReg->i[TS_CNTR_TAG_LW+i];
-
+    #endif
+   }
    return tsTag;
 }
 

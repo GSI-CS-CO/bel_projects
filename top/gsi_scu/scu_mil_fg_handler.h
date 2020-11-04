@@ -36,10 +36,11 @@ extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
 
  /*!
   * @brief Initializing value for global variable g_gapReadingTime
+  *        in milliseconds.
   * @see g_gapReadingTime
   */
  #ifndef DEFAULT_GAP_READING_INTERVAL
-  #define DEFAULT_GAP_READING_INTERVAL 0
+  #define DEFAULT_GAP_READING_INTERVAL 10
  #endif
 #endif /* ifdef _CONFIG_VARIABLE_MIL_GAP_READING */
 

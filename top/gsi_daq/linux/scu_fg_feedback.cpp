@@ -205,6 +205,9 @@ FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent,
    :Common( pParent )
    ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber(), type ) )
    ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber(), type ) )
+#ifdef _CONFIG_PATCH_PHASE
+   ,m_lastTimestamp( 0 )
+#endif
 {
 }
 
@@ -262,6 +265,9 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
       evaluate( timeStamp,
                 m_oReceiveActValue[i] << SHIFT,
                 m_oReceiveSetValue[i] << SHIFT );
+   #ifdef _CONFIG_PATCH_PHASE
+      m_lastTimestamp = timeStamp;
+   #endif
    }
 }
 
