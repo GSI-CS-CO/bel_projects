@@ -381,11 +381,11 @@ int main( int argc, char** ppArgv )
    }
    catch( MiLdaq::Exception& e )
    {
-      ERROR_MESSAGE( "Exception occurred: " << e.what() );
+      ERROR_MESSAGE( "Exception occurred: \"" << e.what() << '"' );
    }
    catch( std::exception& e )
    {
-      ERROR_MESSAGE( "std::exception occurred: " << e.what() );
+      ERROR_MESSAGE( "std::exception occurred: \"" << e.what() << '"' );
    }
    catch( ... )
    {

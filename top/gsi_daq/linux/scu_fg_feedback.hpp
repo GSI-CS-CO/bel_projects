@@ -170,11 +170,7 @@ private:
             return m_blockLen;
          }
 
-         daq::DAQ_DATA_T operator[]( const uint i ) const
-         {
-            assert( i < ARRAY_SIZE(m_aBuffer) );
-            return m_aBuffer[i];
-         }
+         DAQ_T operator[]( const std::size_t i ) const;
 
       protected:
          bool onDataBlock( daq::DAQ_DATA_T* pData, std::size_t wordLen ) override;
@@ -193,7 +189,7 @@ private:
       Receive m_oReceiveActValue;
 
    #ifdef _CONFIG_PATCH_PHASE
-      uint64_t m_lastTimestamp;
+      uint64_t m_expectedTimestamp;
       DAQ_T    m_lastValue;
    #endif
    public:

@@ -290,17 +290,22 @@ STATIC_ASSERT( offsetof( _DAQ_TRIGGER, delay ) == 2 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(DAQ_DATA_T) );
 #endif
 
+/*!
+ * @brief Data type of ADDAC-DAQ- block sequence counter
+ */
+typedef uint8_t DAQ_SEQUENCE_T;
+
 /*! ---------------------------------------------------------------------------
  * @brief CRC and placeholder data type
  */
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-   DAQ_DATA_T sequence: 8;
-   DAQ_DATA_T crc:      8;
+   DAQ_SEQUENCE_T sequence: 8;
+   DAQ_DATA_T     crc:      8;
 #else
-   DAQ_DATA_T crc:      8;
-   DAQ_DATA_T sequence: 8;
+   DAQ_DATA_T     crc:      8;
+   DAQ_SEQUENCE_T sequence: 8;
 #endif
 } _DAQ_BF_CRC_REG;
 
@@ -747,7 +752,7 @@ void daqDescriptorSetCRC( register DAQ_DESCRIPTOR_T* pThis, uint8_t crc )
  * @return Sequence number.
  */
 STATIC inline
-uint8_t daqDescriptorGetSequence( register DAQ_DESCRIPTOR_T* pThis )
+DAQ_SEQUENCE_T daqDescriptorGetSequence( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.crcReg.sequence;
 }

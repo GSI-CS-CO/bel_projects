@@ -197,6 +197,16 @@ void FgFeedbackChannel::AddacFb::Receive::onReset( void )
       m_pParent->m_pParent->onReset();
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline FgFeedbackChannel::DAQ_T
+FgFeedbackChannel::AddacFb::Receive::operator[]( const std::size_t i ) const
+{
+   assert( i < ARRAY_SIZE(m_aBuffer) );
+   return m_aBuffer[i] << FgFeedbackAdministration::VALUE_SHIFT;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -206,7 +216,7 @@ FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent,
    ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber(), type ) )
    ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber(), type ) )
 #ifdef _CONFIG_PATCH_PHASE
-   ,m_lastTimestamp( 0 )
+   ,m_expectedTimestamp( 0 )
 #endif
 {
 }
@@ -233,13 +243,32 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
    DEBUG_MESSAGE( "set sequence: " << static_cast<uint>(m_oReceiveSetValue.getSequence()) );
    DEBUG_MESSAGE( "act sequence: " << static_cast<uint>(m_oReceiveActValue.getSequence()) );
+
    /*
     * One of both channels has received first, in this case it has to be wait
     * for the second channel.
     * This will accomplished by comparing the sequence numbers.
     */
-   if( m_oReceiveSetValue.getSequence() != m_oReceiveActValue.getSequence() )
-      return;
+   const uint sequenceDeviation = ::abs( m_oReceiveSetValue.getSequence() -
+                                         m_oReceiveActValue.getSequence() );
+   if( sequenceDeviation != 0 )
+   {
+      if( sequenceDeviation == 1 || sequenceDeviation == static_cast<daq::DAQ_SEQUENCE_T>(~0) )
+      { /*
+         * A sequence number deviation of one means that at the moment only one channel has
+         * received a new data block, therefore it must be wait for the incoming block
+         * of the other channel.
+         */
+         return;
+      }
+
+      std::string str = "Deviation of sequence numbers from set value input stream: ";
+      str += std::to_string( static_cast<uint>(m_oReceiveSetValue.getSequence()) );
+      str += ", and actual value input stream: ";
+      str += std::to_string( static_cast<uint>(m_oReceiveActValue.getSequence()) );
+      str += " are greater than one!";
+      throw daq::Exception( str );
+   }
 
    // TODO comparing of both time-stamps.
    /*
@@ -258,17 +287,23 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
     * Forwarding of set- and actual- values to the higher software layer.
     */
    uint64_t timeStamp = m_oReceiveSetValue.getTimestamp();
+#ifdef _CONFIG_PATCH_PHASE
+   for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen(); i++ )
+   {
+      if( m_expectedTimestamp == timeStamp )
+         evaluate( timeStamp, m_lastValue, m_oReceiveSetValue[i] );
+
+      m_lastValue = m_oReceiveActValue[i];
+      timeStamp += m_oReceiveSetValue.getSampleTime();
+      m_expectedTimestamp = timeStamp;
+   }
+#else
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen();
         i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
    {
-      constexpr uint SHIFT = FgFeedbackAdministration::VALUE_SHIFT;
-      evaluate( timeStamp,
-                m_oReceiveActValue[i] << SHIFT,
-                m_oReceiveSetValue[i] << SHIFT );
-   #ifdef _CONFIG_PATCH_PHASE
-      m_lastTimestamp = timeStamp;
-   #endif
+      evaluate( timeStamp, m_oReceiveActValue[i], m_oReceiveSetValue[i] );
    }
+#endif
 }
 
 #ifdef CONFIG_MIL_FG
