@@ -139,12 +139,12 @@ private:
        */
       class Receive: public daq::DaqChannel
       {
-         AddacFb*        m_pParent;
-         uint64_t        m_timestamp;
-         uint            m_sampleTime;
-         std::size_t     m_blockLen;
-         uint8_t         m_sequence;
-         daq::DAQ_DATA_T m_aBuffer[daq::DaqAdministration::c_contineousDataLen];
+         AddacFb*            m_pParent;
+         uint64_t            m_timestamp;
+         uint                m_sampleTime;
+         std::size_t         m_blockLen;
+         daq::DAQ_SEQUENCE_T m_sequence;
+         daq::DAQ_DATA_T     m_aBuffer[daq::DaqAdministration::c_contineousDataLen];
 
       public:
          Receive( AddacFb* pParent, const uint n );
@@ -160,7 +160,7 @@ private:
             return m_sampleTime;
          }
 
-         uint8_t getSequence( void ) const
+         daq::DAQ_SEQUENCE_T getSequence( void ) const
          {
             return m_sequence;
          }
