@@ -1,23 +1,25 @@
 #!/bin/sh
 # startup script for timing receivers for SIS18
 #
-# set -x
+set -x
 
 ###########################################
 # dev/wbm0 -> tr0 -> phase measurement
 # dev/wbm1 -> tr1 -> CBU
 ###########################################
+export TRPM=$(saft-eb-fwd tr0)
+export TRCBU=$(saft-eb-fwd tr1)
 
 ###########################################
 # clean up stuff
 ###########################################
 echo -e b2b-sis18 - start: bring possibly resident firmware to idle state
-b2b-ctl dev/wbm0 stopop
-b2b-ctl dev/wbm1 stopop
+b2b-ctl $TRPM stopop
+b2b-ctl $TRCBU stopop
 sleep 5
 
-b2b-ctl dev/wbm0 idle
-b2b-ctl dev/wbm1 idle
+b2b-ctl $TRPM idle
+b2b-ctl $TRCBU idle
 sleep 5
 echo -e b2b-sis18 - start: destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl tr0 -x
@@ -31,18 +33,18 @@ saft-io-ctl tr1 -w
 # load firmware to lm32
 ###########################################
 echo -e b2b-sis18 - start: load firmware 
-eb-fwload dev/wbm0 u 0x0 b2bpm.bin
-eb-fwload dev/wbm1 u 0x0 b2bcbu.bin
+eb-fwload $TRPM u 0x0 b2bpm.bin
+eb-fwload $TRCBU u 0x0 b2bcbu.bin
 
 echo -e b2b-sis18 configure firmware
 sleep 5
-b2b-ctl dev/wbm0 configure
+b2b-ctl $TRPM configure
 sleep 5
-b2b-ctl dev/wbm0 startop
+b2b-ctl $TRPM startop
 sleep 5
-b2b-ctl dev/wbm1 configure
+b2b-ctl $TRCBU configure
 sleep 5
-b2b-ctl dev/wbm1 startop
+b2b-ctl $TRCUB startop
 
 echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
 ################################################
