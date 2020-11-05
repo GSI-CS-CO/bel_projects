@@ -65,6 +65,9 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
 // public variables
+
+volatile uint32_t *pSharedMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
+volatile uint32_t *pSharedSID;          // pointer to a "user defined" u32 register; here: sequence ID of B2B transfer
 volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
 volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
@@ -73,13 +76,9 @@ volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
 volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile uint32_t *pSharedPcFixExt;     // fixed correction: phase_corrected = phase_measured + PCFIX (extraction)   
-volatile uint32_t *pSharedPcFixInj;     // fixed correction: phase_corrected = phase_measured + PCFIX (injection)    
-volatile uint32_t *pSharedPcVarExt;     // variable correction: phase_corrected += PCVAR (extraction)                
-volatile uint32_t *pSharedPcVarInj;     // variable correction: phase_corrected += PCVAR (injection))                
-volatile uint32_t *pSharedKcFixExt;     // fixed correction: kicker_corrected = kicker + KCFIX (extraction)          
-volatile uint32_t *pSharedKcFixInj;     // fixed correction: kicker_corrected = kicker + KCFIX (injection)           
-
+volatile int32_t *pSharedCPhase;        // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob')
+volatile int32_t *pSharedCTrigExt;      // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob')
+volatile int32_t *pSharedCTrigInj;      // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob')
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -92,12 +91,7 @@ uint32_t nHExt;                         // harmonic number of extraction machine
 uint32_t nHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
-int32_t  pcFixExt;                      // fixed correction: phase_corrected = phase_measured + PCFIX (extraction)       
-int32_t  pcFixInj;                      // fixed correction: phase_corrected = phase_measured + PCFIX (injection)        
-int32_t  pcVarExt;                      // variable correction: phase_corrected += PCVAR (extraction)                    
-int32_t  pcVarInj;                      // variable correction: phase_corrected += PCVAR (injection))                    
-int32_t  kcFixExt;                      // fixed correction: kicker_corrected = kicker + KCFIX (extraction)              
-int32_t  kcFixInj;                      // fixed correction: kicker_corrected = kicker + KCFIX (injection)             
+
 
 void init() // typical init for lm32
 {
@@ -119,6 +113,8 @@ void initSharedMem() // determine address and clear shared mem
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
 
+  pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE       >> 2));
+  pSharedSID              = (uint32_t *)(pShared + (B2B_SHARED_SID        >> 2));
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
   pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT      >> 2));
@@ -127,13 +123,9 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNHInj            = (uint32_t *)(pShared + (B2B_SHARED_NHINJ      >> 2));
   pSharedTBeatHi          = (uint32_t *)(pShared + (B2B_SHARED_TBEATHI    >> 2));
   pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO    >> 2));
-  pSharedPcFixExt         = (uint32_t *)(pShared + (B2B_SHARED_PCFIXEXT   >> 2));
-  pSharedPcFixInj         = (uint32_t *)(pShared + (B2B_SHARED_PCFIXINJ   >> 2));
-  pSharedPcVarExt         = (uint32_t *)(pShared + (B2B_SHARED_PCVAREXT   >> 2));
-  pSharedPcVarInj         = (uint32_t *)(pShared + (B2B_SHARED_PCVARINJ   >> 2));
-  pSharedKcFixExt         = (uint32_t *)(pShared + (B2B_SHARED_KCFIXEXT   >> 2));
-  pSharedKcFixInj         = (uint32_t *)(pShared + (B2B_SHARED_KCFIXINJ   >> 2));
-
+  pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE     >> 2));
+  pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT   >> 2));
+  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINT   >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
