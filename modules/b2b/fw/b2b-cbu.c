@@ -65,9 +65,9 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
 // public variables
-
+volatile uint32_t *pSharedGIDExt;       // pointer to a "user defined" u32 register; here: group ID of extraction machine
+volatile uint32_t *pSharedSIDExt;       // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
 volatile uint32_t *pSharedMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
-volatile uint32_t *pSharedSID;          // pointer to a "user defined" u32 register; here: sequence ID of B2B transfer
 volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
 volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
@@ -76,9 +76,9 @@ volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
 volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t *pSharedCPhase;        // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob')
-volatile int32_t *pSharedCTrigExt;      // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob')
-volatile int32_t *pSharedCTrigInj;      // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob')
+volatile int32_t *pSharedCPhase;        // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile int32_t *pSharedCTrigExt;      // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t *pSharedCTrigInj;      // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -112,9 +112,9 @@ void initSharedMem() // determine address and clear shared mem
   
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
-
+  pSharedGIDExt           = (uint32_t *)(pShared + (B2B_SHARED_GIDEXT     >> 2));
+  pSharedSIDExt           = (uint32_t *)(pShared + (B2B_SHARED_SIDEXT     >> 2));
   pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE       >> 2));
-  pSharedSID              = (uint32_t *)(pShared + (B2B_SHARED_SID        >> 2));
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
   pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT      >> 2));
@@ -125,7 +125,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO    >> 2));
   pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE     >> 2));
   pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT   >> 2));
-  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINT   >> 2));
+  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ   >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -193,6 +193,9 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // set initial nonsense values
+  *pSharedGIDExt     = 0xffff;
+  *pSharedSIDExt     = 0xffff;
+  *pSharedMode       = 0x0;
   *pSharedTH1ExtHi   = 0x000000E8; // 1 kHz dummy
   *pSharedTH1ExtLo   = 0xD4A51000;
   *pSharedNHExt      = 1;
@@ -201,12 +204,9 @@ uint32_t extern_entryActionOperation()
   *pSharedNHInj      = 1;
   *pSharedTBeatHi    = 0x000000E8; // 1 kHz dummy
   *pSharedTBeatLo    = 0xD4A51000;
-  *pSharedPcFixExt   = 0x0;
-  *pSharedPcFixInj   = 0x0;
-  *pSharedPcVarExt   = 0x0;
-  *pSharedPcVarInj   = 0x0;
-  *pSharedKcFixExt   = 0x0;
-  *pSharedKcFixInj   = 0x0;
+  *pSharedCPhase     = 0x0;
+  *pSharedCTrigExt   = 0x0;
+  *pSharedCTrigInj   = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -263,7 +263,8 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
     nHFast = nHInj;
   }
   else {
-    DBPRINT3("b2b-cbu: injection is fast\n");
+128
+  DBPRINT3("b2b-cbu: injection is fast\n");
     TSlow  = TH1Inj;
     tSlow  = (tH1Inj - epoch) * nineO;
     nHSlow = nHInj;
@@ -364,7 +365,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
     
   switch (ecaAction) {
-    case B2B_ECADO_B2B_START :
+    case B2B_ECADO_KICKSTART :
       // received: B2B_START from DM
       
       TH1Ext          = (uint64_t)(*pSharedTH1ExtHi) << 32;
@@ -377,12 +378,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       tH1Inj          = 0x0;
       *pSharedTBeatHi = 0x0;
       *pSharedTBeatLo = 0x0;
-      pcFixExt        = *pSharedPcFixExt;
-      pcFixInj        = *pSharedPcFixInj;
-      pcVarExt        = *pSharedPcVarExt;
-      pcVarInj        = *pSharedPcVarInj;
-      kcFixExt        = *pSharedKcFixExt;
-      kcFixInj        = *pSharedKcFixInj;
+      /* pcFixExt        = *pSharedPcFixExt; chk maybes sth similar with CPHASE */
 
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1000000000000000;                                        // FID

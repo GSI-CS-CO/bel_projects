@@ -69,9 +69,10 @@
 // ****************************************************************************************
 
 // offsets
-#define B2B_SHARED_MODE           (COMMON_SHARED_END        + _32b_SIZE_)       // mode of B2B transfer
-#define B2B_SHARED_SID            (B2B_SHARED_MODE          + _32b_SIZE_)       // relevant sequence ID for B2B transfer 
-#define B2B_SHARED_TH1EXTHI       (B2B_SHARED_SID           + _32b_SIZE_)       // period of h=1 extraction, high bits
+#define B2B_SHARED_GIDEXT         (COMMON_SHARED_END        + _32b_SIZE_)       // GID of B2B Transfer (
+#define B2B_SHARED_SIDEXT         (B2B_SHARED_GIDEXT        + _32b_SIZE_)       // sequence ID for B2B transfer 
+#define B2B_SHARED_MODE           (B2B_SHARED_SIDEXT        + _32b_SIZE_)       // mode of B2B transfer
+#define B2B_SHARED_TH1EXTHI       (B2B_SHARED_MODE          + _32b_SIZE_)       // period of h=1 extraction, high bits
 #define B2B_SHARED_TH1EXTLO       (B2B_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2B_SHARED_NHEXT          (B2B_SHARED_TH1EXTLO      + _32b_SIZE_)       // harmonic number of extraction RF
 #define B2B_SHARED_TH1INJHI       (B2B_SHARED_NHEXT         + _32b_SIZE_)       // period of h=1 injection, high bits 
@@ -79,9 +80,9 @@
 #define B2B_SHARED_NHINJ          (B2B_SHARED_TH1INJLO      + _32b_SIZE_)       // harmonic number of injection RF
 #define B2B_SHARED_TBEATHI        (B2B_SHARED_NHINJ         + _32b_SIZE_)       // period of beating, high bits
 #define B2B_SHARED_TBEATLO        (B2B_SHARED_TBEATHI       + _32b_SIZE_)       // period of beating, low bits
-#define B2B_SHARED_CPHASE         (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // correction for phase matching ('phase knob')
-#define B2B_SHARED_CTRIGEXT       (B2B_SHARED_CPHASE        + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob')
-#define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEX       + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob')
+#define B2B_SHARED_CPHASE         (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
+#define B2B_SHARED_CTRIGEXT       (B2B_SHARED_CPHASE        + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
+#define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEXT      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
 
 // diagnosis: end of used shared memory
 #define B2B_SHARED_END            (B2B_SHARED_CTRIGINJ      + _32b_SIZE_) 
