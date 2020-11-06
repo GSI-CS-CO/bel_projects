@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-September-2020
+ *  version : 6-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000100                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000200                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -92,6 +92,18 @@ uint32_t nHInj;                         // harmonic number of injection machine 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
 
+#define  NGID 3
+uint32_t b2bgid[]  = {0x3a0, 0x3a1, 0x3a2};                               // GID B2B
+uint32_t etgid[]   = {0x12c, 0x12c, 0x12c};                               // GID extraction trigger
+uint32_t itgid[]   = {0xfff, 0x154, 0x136};                               // GID injection trigger
+uint32_t actmsk[]  = {0x003, 0x00f, 0x00f};                               // masks for actions flags
+
+uint32_t flagsTodo;                     // things we need to to; see B2B_ACTION_...
+uint32_t flagsDone;                     // things already done
+uint32_t sidTrans;                      // SID user for transfer
+uint32_t gidTrans;                      // GID used for transfer
+uint32_t gidETrig;                      // GID used for extraction kicker
+uint32_t gidITrig;                      // GID used for injectin kicker
 
 void init() // typical init for lm32
 {
@@ -216,6 +228,43 @@ uint32_t extern_exitActionOperation()
 {
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
+
+
+uint32_t calcTodo(uint32_t gid, uint32_t mode){
+  uint32_t flags;;
+  int      i;
+  int      gidValid;
+
+  flags    = 0;
+  gidValid = 0;
+
+  // check for valid GID
+  for (i=0; i<NGID; i++) if (gid == b2bgid[i]) gidValid = i;
+  if (!gidValid) return flags;
+   
+  switch (mode) {
+    case 1 :
+      flags = flags | B2B_ACTION_TRIGEXT;
+      break;
+    case 2 :
+      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT;
+      break;
+    case 3 :
+      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGGERINJ;
+      break;
+    case 4 :
+      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGGERINJ | B2B_ACTION_PHASEMATCH;
+      break;
+    default :
+      break;
+  } // switch
+
+  // mask flags irrelevant for GID
+  flags    = flags & actmask[gidValid];
+  gidTrans = b2bgid[gidValid];
+  gidETrig = b2betrig[gidValid];
+  gidITrig = b2bitrig[gidValid];
+} // calcTodo
 
 
 uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
@@ -357,6 +406,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
+  uint32_t recSID:
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t TBeat;                                             // period of beating
 
@@ -366,8 +416,35 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
   switch (ecaAction) {
     case B2B_ECADO_KICKSTART :
-      // received: B2B_START from DM
-      
+      // received: EVT_KICK_START1/2 from DM; B2B transfer starts
+      // note: ECA is configured to trigger the action by B2B_AHEADOFFSET ahead of time
+
+      // check for correct sequency ID
+      sidTrans  = *pSharedSIDExt;
+      recSID    = (uint32_t)(recID >> 20) & 0xfff;
+      if (sidTrans != recSID) return;
+
+      // checkout todo list
+      flagsTodo = 0x0;
+      flagsDone = 0x0;
+      gidTrans  = 0xfff;
+      gidETrig  = 0xfff;
+      gidITrig  = 0xfff;
+
+      if (!(flagsTodo = calcTodo(*pSharedGIDExt, *pSharedMode))) return;
+
+      // special case: ONLY extraction trigger upon EVT_KICK_START
+      if (flagsTodo == B2B_ACTION_TRIGEXT) {
+        // send command: trigger extraction kicker on time with EVT_KICK_START
+        sendEvtId    = 0x1000000000000000;                                        // FID
+        sendEvtId    = sendEvtId | ((uint64_t)gidETrig << 48);                    // GID 
+        sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
+        sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
+        sendParam    = 0x0;
+        sendDeadline = recDeadline + (uint64_t)B2B_AHEADOFFSET;
+        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+      } //B2B_ACTION_TRIGEXT
+
       TH1Ext          = (uint64_t)(*pSharedTH1ExtHi) << 32;
       TH1Ext          = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
       nHExt           = *pSharedNHExt;

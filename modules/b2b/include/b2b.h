@@ -36,19 +36,16 @@
 #define  B2B_FLAG_TRANSPEXT         0x2    // flag: got measured phase from extraction
 #define  B2B_FLAG_TRANSPINJ         0x4    // flag: got measured phase from injection
 
-// B2B modes
-#define  B2B_MODE_NA                0x0    // N/A: do nothing
-#define  B2B_MODE_B2B               0x1    // bunch to bucket transfer
-#define  B2B_MODE_B2C               0x2    // bunch to coasting transfer
-#define  B2B_MODE_B2E               0x3    // simple bunch extraction
-#define  B2B_MODE_KSB               0x4    // EVT_KICK_START: trigger both (extraction and injection) kickers
-#define  B2B_MODE_KSE               0x5    // EVT_KICK_START: trigger extraction kicker
-#define  B2B_MODE_KSI               0x6    // EVT_KICK_START: trigger injection kicker
+// B2B mode flags                          //                                            | ext trig | ext phase | inj trig | inj phase |
+#define  B2B_MODE_KSE                 1    // EVT_KICK_START: trigger extraction kicker  |     x    |           |          |           |
+#define  B2B_MODE_B2E                 2    // simple bunch extraction                    |     x    |     x     |          |           | 
+#define  B2B_MODE_B2C                 3    // bunch to coasting transfer                 |     x    |     x     |    x     |           | 
+#define  B2B_MODE_B2B                 4    // bunch to bucket transfer                   |     x    |     x     |    x     |     x     | 
 
 // B2B action flags
 #define  B2B_ACTION_TRIGEXT         0x1    // trigger extraction
-#define  B2B_ACTION_TRIGINJ         0x2    // trigger injection
-#define  B2B_ACTION_PEXT            0x4    // consider phase of extraction only
+#define  B2B_ACTION_PEXT            0x2    // consider phase of extraction only
+#define  B2B_ACTION_TRIGINJ         0x4    // trigger injection
 #define  B2B_ACTION_PMATCH          0x8    // match phase of extraction and injection
 
 // group IDs
