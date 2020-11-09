@@ -164,6 +164,14 @@ public:
    ~DaqInterface( void ) override;
 
    /*!
+    * @brief Returns "true" if the LM32 firmware supports ADDAC/ACU DAQs.
+    */
+   bool isAddacDaqSupport( void ) const
+   {
+      return m_daqLM32Offset != INVALID_OFFSET;
+   }
+
+   /*!
     * @brief Returns true when the command sending to LM32 is enabled.
     *
     * It's the value of the constructors third parameter.
@@ -314,6 +322,8 @@ public:
    void clearBuffer( bool update = true ) override;
 
 protected:
+   void checkAddacSupport( void );
+
    virtual bool onCommandReadyPoll( USEC_T pollCount );
 
    void readLM32( eb_user_data_t pData,

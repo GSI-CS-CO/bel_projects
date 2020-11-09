@@ -107,6 +107,7 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
    #undef __RET_CODE_CASE_ITEM
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 /*! ---------------------------------------------------------------------------
@@ -148,6 +149,9 @@ void DaqInterface::init( void )
 
    probe();
 
+   if( !isAddacDaqSupport() )
+      return;
+
    getEbAccess()->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
@@ -159,6 +163,8 @@ void DaqInterface::init( void )
  */
 inline void DaqInterface::probe( void )
 {
+   m_daqLM32Offset = INVALID_OFFSET;
+
    uint32_t actMagicNumber;
 
    /*
@@ -194,7 +200,9 @@ inline void DaqInterface::probe( void )
    }
 
    if( m_daqLM32Offset != INVALID_OFFSET )
+   {
       return;
+   }
 
    if( actMagicNumber != FG_MAGIC_NUMBER )
    {
@@ -217,7 +225,16 @@ inline void DaqInterface::probe( void )
       return;
    }
 
-   throw DaqException( "Single FG application is loaded!" );
+   m_daqLM32Offset = INVALID_OFFSET;
+}
+
+/*----------------------------------------------------------------------------
+ */
+void DaqInterface::checkAddacSupport( void )
+{
+   if( isAddacDaqSupport() )
+      return;
+   throw DaqException( "LM32-Firmware doesn't support ADDAC/ACU-DAQ!" );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -302,7 +319,7 @@ inline bool DaqInterface::permitCommand( DAQ_OPERATION_CODE_T cmd )
 
    switch( cmd )
    {
-      case DAQ_OP_GET_ERROR_STATUS:
+      //case DAQ_OP_GET_ERROR_STATUS:
       case DAQ_OP_GET_MACRO_VERSION:
       case DAQ_OP_GET_SLOTS:
       case DAQ_OP_GET_CHANNELS:
@@ -322,6 +339,8 @@ inline bool DaqInterface::permitCommand( DAQ_OPERATION_CODE_T cmd )
 DaqInterface::RETURN_CODE_T
 DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 {
+   checkAddacSupport();
+
 #if 0
    if( !m_doSendCommand )
    {
@@ -329,6 +348,7 @@ DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
       return DAQ_RET_OK;
    }
 #else
+
    if( !permitCommand( cmd ) )
       return DAQ_RET_OK;
 #endif
@@ -341,12 +361,16 @@ DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
                                  offsetof( DAQ_SHARED_IO_T, operation.code ) );
 
    if( cmdReadyWait() )
+   {
       throw DaqException( "Timeout at waiting for command feedback",
                           DAQ_ERR_RESPONSE_TIMEOUT );
+   }
 
    if( m_oSharedData.operation.retCode < DAQ_RET_OK )
+   {
       throw DaqException( "DAQ firmware error",
                           m_oSharedData.operation.retCode );
+   }
 
    return m_oSharedData.operation.retCode;
 }
@@ -361,6 +385,8 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    static_assert( static_cast<int>(offsetof( DAQ_OPERATION_T, retCode )) -
                   static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
                   "Wrong order in DAQ_OPERATION_T" );
+
+   checkAddacSupport();
 
    DAQ_OPERATION_T temp;
 
@@ -378,6 +404,8 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
 {
+   checkAddacSupport();
+
    DAQ_OPERATION_T temp;
 
    readLM32( &temp,
@@ -395,6 +423,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_T temp;
 
    readLM32( &temp,
@@ -413,6 +442,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_T temp;
 
    readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
@@ -431,6 +461,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_T temp;
    readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
                                 sizeof( temp.ioData.param4 )) -
@@ -449,6 +480,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 {
+   checkAddacSupport();
    RAM_RING_INDEXES_T temp;
    readLM32( &temp, sizeof( RAM_RING_INDEXES_T ),
                         offsetof( DAQ_SHARED_IO_T, ramIndexes.ringIndexes ));
@@ -462,6 +494,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
  */
 void DaqInterface::sendUnlockRamAccess( void )
 {
+   checkAddacSupport();
    m_oSharedData.ramIndexes.ramAccessLock = false;
    uint32_t temp = 0;
    writeLM32( &temp, sizeof( temp ),
@@ -472,6 +505,7 @@ void DaqInterface::sendUnlockRamAccess( void )
  */
 void DaqInterface::writeParam1( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
@@ -485,6 +519,7 @@ void DaqInterface::writeParam1( void )
  */
 void DaqInterface::writeParam12( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
@@ -514,6 +549,7 @@ void DaqInterface::writeParam123( void )
  */
 void DaqInterface::writeParam1234( void )
 {
+   checkAddacSupport();
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
@@ -530,6 +566,7 @@ void DaqInterface::writeParam1234( void )
  */
 void DaqInterface::writeRamIndexesAndUnlock( void )
 {
+   checkAddacSupport();
    m_oSharedData.ramIndexes.ramAccessLock = false;
 
    RAM_RING_SHARED_OBJECT_T temp;
@@ -918,6 +955,9 @@ bool DaqInterface::receiveTriggerSourceHiRes( const uint deviceNumber,
  */
 void DaqInterface::clearBuffer( bool update )
 {
+   if( !isAddacDaqSupport() )
+      return;
+
    ramRingReset( &m_oScuRam.pSharedObj->ringIndexes );
    if( update )
       writeRamIndexesAndUnlock();
