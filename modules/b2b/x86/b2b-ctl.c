@@ -255,22 +255,22 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t pcFixExt, int32_t pcFixInj, int32_t pcVarExt, int32_t pcVarInj, int32_t kcFixExt, int32_t kcFixInj)
+void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj)
 {
   printf("\n\n");
   printf("b2b: statistics ...\n\n");
 
+  printf("GID                   : %012u\n"     , gid);
+  printf("SID                   : %012u\n"     , sid);
+  printf("mode                  : %012u\n"     , mode);
   printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
   printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("phase c. fixed extr.  : %012d\n"     , pcFixExt);
-  printf("phase c. fixed inj.   : %012d\n"     , pcFixInj);
-  printf("phase c. variable extr: %012d\n"     , pcVarExt);
-  printf("phase c. variable inj : %012d\n"     , pcVarInj);
-  printf("kick c. fixed extr.   : %012d\n"     , kcFixExt);
-  printf("kick c. fixed inj.    : %012d\n"     , kcFixInj);
+  printf("corr. matching        : %012d\n"     , cPhase);
+  printf("corr. trigger extr    : %012d\n"     , cTrigExt);
+  printf("corr. trigger inj     : %012d\n"     , cTrigInj);
 } // printDiags
 
 
