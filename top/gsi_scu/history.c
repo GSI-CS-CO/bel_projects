@@ -99,6 +99,8 @@ void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T da
    }
 }
 
+#define CONFIG_HIST_NO_REPEAT_OLD_LOGS
+
 /*! ---------------------------------------------------------------------------
  * @see history.h
  */
@@ -126,6 +128,9 @@ void hist_print( const bool doReturn )
       idx++;
       idx %= ARRAY_SIZE( mg_aHistbuf );
    }
+#ifdef CONFIG_HIST_NO_REPEAT_OLD_LOGS
+   mg_histstart = idx;
+#endif
    if( !doReturn )
       PRINTF( "+++ System stopped! +++\n" );
    PRINTF("*********** end history *************\n\n");

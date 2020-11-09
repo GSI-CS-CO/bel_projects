@@ -38,7 +38,7 @@
  * @brief  Number of HistItem entries in history buffer
  */
 #ifndef HISTSIZE
-   #define HISTSIZE 512
+   #define HISTSIZE 256
 #endif
 
 /*!

@@ -90,6 +90,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    */
    printSwIrqCode( code, value );
 
+#ifdef CONFIG_USE_HISTORY
+   if( code != FG_OP_PRINT_HISTORY )
+      hist_addx( HISTORY_XYZ_MODULE, fgCommand2String( code ), value );
+#endif
+
   /*
    * Verifying the command parameter for all commands with a
    * array index as parameter.
@@ -127,7 +132,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    {
       case FG_OP_INITIALIZE:
       {
-         hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
+         //hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
       #if __GNUC__ >= 9
          #pragma GCC diagnostic push
          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
