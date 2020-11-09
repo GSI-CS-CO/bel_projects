@@ -79,18 +79,22 @@ echo -e b2b-sis18 - start: configure tr1 as cbu
 ################################################
 # configure CBU (SIS18 -> ESR)
 ################################################
-# IO1 generates TTL for B2B_START event
+# IO1 generates TTL for EVT_KICK_START1 event
 # convenience for triggering scope
 saft-io-ctl tr1 -n IO1 -o 1 -t 0
-saft-io-ctl tr1 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl tr1 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 10000000 0x0 0 -u
 
-# lm32 listens to B2B_START message from DM
-saft-ecpu-ctl tr1 -c 0x1fa7800000000000 0xfffffff000000000 0 0x800 -d
+# lm32 listens to EVT_KICK_START1  message from DM
+saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 0 0x031 -d
 
+# SIS18_B2B_EXTRACT
 # lm32 listens to B2B_PREXT message from extraction machine
-saft-ecpu-ctl tr1 -c 0x1fa7803000000000 0xfffffff000000000 0 0x803 -d
+saft-ecpu-ctl tr1 -c 0x13a0802000000000 0xfffffff000000000 0 0x802 -d
 
+# SIS18_B2B_ESR
+# lm32 listens to B2B_PREXT message from extraction machine
+saft-ecpu-ctl tr1 -c 0x13a1802000000000 0xfffffff000000000 0 0x802 -d
 # lm32 listens to B2B_PRINJ message from injection machine
-saft-ecpu-ctl tr1 -c 0x1fa7804000000000 0xfffffff000000000 0 0x804 -d
+saft-ecpu-ctl tr1 -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
 

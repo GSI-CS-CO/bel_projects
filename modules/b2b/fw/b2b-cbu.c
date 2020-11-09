@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 6-November-2020
+ *  version : 9-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -65,8 +65,8 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
 // public variables
-volatile uint32_t *pSharedGIDExt;       // pointer to a "user defined" u32 register; here: group ID of extraction machine
-volatile uint32_t *pSharedSIDExt;       // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
+volatile uint32_t *pSharedGid;          // pointer to a "user defined" u32 register; here: group ID of extraction machine
+volatile uint32_t *pSharedSid;          // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
 volatile uint32_t *pSharedMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
 volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
@@ -76,21 +76,28 @@ volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
 volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t *pSharedCPhase;        // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
-volatile int32_t *pSharedCTrigExt;      // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
-volatile int32_t *pSharedCTrigInj;      // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile int32_t  *pSharedCPhase;       // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile int32_t  *pSharedCTrigExt;     // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t  *pSharedCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of ongoing transfer
+
+uint32_t sidTrans;                      // SID user for transfer
+uint32_t gidTrans;                      // GID used for transfer
+uint32_t mode;                          // mode for transfer
 uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
 uint64_t TH1Inj;                        // h=1 period [as] of injection machine
 uint32_t nHExt;                         // harmonic number of extraction machine 0..15
 uint32_t nHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
+int32_t  cPhase;                        // correction for phase matching [ns]
+int32_t  cTrigExt;                      // correction for extraction trigger
+int32_t  cTrigInj;                      // correction for injection trigger
 
 #define  NGID 3
 uint32_t b2bgid[]  = {0x3a0, 0x3a1, 0x3a2};                               // GID B2B
@@ -100,8 +107,6 @@ uint32_t actmsk[]  = {0x003, 0x00f, 0x00f};                               // mas
 
 uint32_t flagsTodo;                     // things we need to to; see B2B_ACTION_...
 uint32_t flagsDone;                     // things already done
-uint32_t sidTrans;                      // SID user for transfer
-uint32_t gidTrans;                      // GID used for transfer
 uint32_t gidETrig;                      // GID used for extraction kicker
 uint32_t gidITrig;                      // GID used for injectin kicker
 
@@ -124,8 +129,8 @@ void initSharedMem() // determine address and clear shared mem
   
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
-  pSharedGIDExt           = (uint32_t *)(pShared + (B2B_SHARED_GIDEXT     >> 2));
-  pSharedSIDExt           = (uint32_t *)(pShared + (B2B_SHARED_SIDEXT     >> 2));
+  pSharedGid              = (uint32_t *)(pShared + (B2B_SHARED_GID        >> 2));
+  pSharedSid              = (uint32_t *)(pShared + (B2B_SHARED_SID        >> 2));
   pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE       >> 2));
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
@@ -205,8 +210,8 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // set initial nonsense values
-  *pSharedGIDExt     = 0xffff;
-  *pSharedSIDExt     = 0xffff;
+  *pSharedGid        = 0xffff;
+  *pSharedSid        = 0xffff;
   *pSharedMode       = 0x0;
   *pSharedTH1ExtHi   = 0x000000E8; // 1 kHz dummy
   *pSharedTH1ExtLo   = 0xD4A51000;
@@ -250,20 +255,20 @@ uint32_t calcTodo(uint32_t gid, uint32_t mode){
       flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT;
       break;
     case 3 :
-      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGGERINJ;
+      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGINJ;
       break;
     case 4 :
-      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGGERINJ | B2B_ACTION_PHASEMATCH;
+      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGINJ | B2B_ACTION_PMATCH;
       break;
     default :
       break;
   } // switch
 
   // mask flags irrelevant for GID
-  flags    = flags & actmask[gidValid];
+  flags    = flags & actmsk[gidValid];
   gidTrans = b2bgid[gidValid];
-  gidETrig = b2betrig[gidValid];
-  gidITrig = b2bitrig[gidValid];
+  gidETrig = etgid[gidValid];
+  gidITrig = itgid[gidValid];
 } // calcTodo
 
 
@@ -406,7 +411,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
-  uint32_t recSID:
+  uint32_t recSID;                                            // SID received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t TBeat;                                             // period of beating
 
@@ -420,9 +425,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // note: ECA is configured to trigger the action by B2B_AHEADOFFSET ahead of time
 
       // check for correct sequency ID
-      sidTrans  = *pSharedSIDExt;
-      recSID    = (uint32_t)(recID >> 20) & 0xfff;
-      if (sidTrans != recSID) return;
+      sidTrans  = *pSharedSid;;
+      recSID    = (uint32_t)(recId >> 20) & 0xfff;
+      if (sidTrans != recSID) return COMMON_STATUS_OK;
 
       // checkout todo list
       flagsTodo = 0x0;
@@ -431,9 +436,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gidETrig  = 0xfff;
       gidITrig  = 0xfff;
 
-      if (!(flagsTodo = calcTodo(*pSharedGIDExt, *pSharedMode))) return;
+      if (!(flagsTodo = calcTodo(*pSharedGid, *pSharedMode))) return COMMON_STATUS_OK;
 
-      // special case: ONLY extraction trigger upon EVT_KICK_START
+      // most primitive case: ONLY extraction trigger upon EVT_KICK_START
       if (flagsTodo == B2B_ACTION_TRIGEXT) {
         // send command: trigger extraction kicker on time with EVT_KICK_START
         sendEvtId    = 0x1000000000000000;                                        // FID
@@ -443,8 +448,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         sendParam    = 0x0;
         sendDeadline = recDeadline + (uint64_t)B2B_AHEADOFFSET;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+        return COMMON_STATUS_OK;
       } //B2B_ACTION_TRIGEXT
 
+      /*      
       TH1Ext          = (uint64_t)(*pSharedTH1ExtHi) << 32;
       TH1Ext          = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
       nHExt           = *pSharedNHExt;
@@ -455,7 +462,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       tH1Inj          = 0x0;
       *pSharedTBeatHi = 0x0;
       *pSharedTBeatLo = 0x0;
-      /* pcFixExt        = *pSharedPcFixExt; chk maybes sth similar with CPHASE */
+      // pcFixExt        = *pSharedPcFixExt; chk maybes sth similar with CPHASE 
 
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1000000000000000;                                        // FID
@@ -511,6 +518,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       
       transStat     = transStat | B2B_FLAG_TRANSPINJ;
       break;
+      */
       
     default :
       break;
@@ -518,7 +526,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // we have everything we need 
   if (transStat == (B2B_FLAG_TRANSACTIVE | B2B_FLAG_TRANSPEXT | B2B_FLAG_TRANSPINJ)) {
-
+    /*
     DBPRINT2("b2b: we have everything we need\n");
     
     if ((status = calcPhaseMatch(&tMatch, &TBeat)) != COMMON_STATUS_OK) {
@@ -553,8 +561,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     *pSharedTBeatHi = (uint32_t)(TBeat >> 32);
     *pSharedTBeatLo = (uint32_t)(TBeat && 0xffffffff);
 
-    transStat = 0x0; 
+    transStat = 0x0; */
   } // if transStat
+
 
   return status;
 } // doActionOperation

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-September-2019
+ *  version : 9-November-2020
  *
  * Command-line interface for b2b
  *
@@ -80,6 +80,9 @@ eb_address_t b2b_tS0Lo;        // time when FW was in S0 state (start of FW), lo
 // application specific stuff
 eb_address_t b2b_nTransfer;    // # of transfers
 eb_address_t b2b_transStat;    // status of transfer
+eb_address_t b2b_gid;          // GID for transfer
+eb_address_t b2b_sid;          // SID for transfer    
+eb_address_t b2b_mode;         // mode of B2B transfer
 eb_address_t b2b_TH1ExtHi;     // period of h=1 extraction, high bits
 eb_address_t b2b_TH1ExtLo;     // period of h=1 extraction, low bits
 eb_address_t b2b_nHExt;        // harmonic number of extraction RF
@@ -88,13 +91,9 @@ eb_address_t b2b_TH1InjLo;     // period of h=1 injection, low bits
 eb_address_t b2b_nHInj;        // harmonic number of injection RF
 eb_address_t b2b_TBeatHi;      // period of beating, high bits
 eb_address_t b2b_TBeatLo;      // period of beating, low bits
-eb_address_t b2b_pcFixExt;     // phase correction, fixed, extraction
-eb_address_t b2b_pcFixInj;     // phase correction, fixed, injection
-eb_address_t b2b_pcVarExt;     // phase correction, variable, extraction
-eb_address_t b2b_pcVarInj;     // phase correction, variable, injection
-eb_address_t b2b_kcFixExt;     // kicker correction, fixed, extraction
-eb_address_t b2b_kcFixInj;     // kicker correction, fixed, injection
-
+eb_address_t b2b_cPhase;       // phase correction
+eb_address_t b2b_cTrigExt;     // kicker correction extraction
+eb_address_t b2b_cTrigInj;     // kicker correction injection
 
 eb_data_t   data1;
  
@@ -129,12 +128,12 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  seth1inj <freq> <h> set h=1 frequency [Hz] and harmonic number of injection machine\n");
   fprintf(stderr, "  seth1ext <freq> <h> set h=1 frequency [Hz] and harmonic number of extraction machine\n");
-  fprintf(stderr, "  setpcfixext <offs>  set fixed phase correction of extraction\n");
-  fprintf(stderr, "  setpcfixinj <offs>  set fixed phase correction of injetion\n");
-  fprintf(stderr, "  setpcvarext <offs>  set variable phase correction of extraction\n");
-  fprintf(stderr, "  setpcvarinj <offs>  set variable phase correction of injection\n");
-  fprintf(stderr, "  setkcfixext <offs>  set fixed kicker correction of extraction\n");
-  fprintf(stderr, "  setkcfixinj <offs>  set fixed kicker correction of injection\n");  
+  fprintf(stderr, "  setgid      <SID>   set Group ID of B2B transfer ('0x3a1')\n");
+  fprintf(stderr, "  setsid      <SID>   set Sequence ID of schedule in extraction machine\n");
+  fprintf(stderr, "  setmode     <SID>   set mode (0: EVT_KICK_START, 2: B2Extraction, 3: B2Coasting, 4: B2Bucket\n");
+  fprintf(stderr, "  setcphase   <offs>  set correction for phase matching [ns]\n");
+  fprintf(stderr, "  setctrigext <offs>  set correction for trigger kicker extraction\n");
+  fprintf(stderr, "  setctriginj <offs>  set correction for trigger kicker injection\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
@@ -171,44 +170,43 @@ const char* statusText(uint32_t bit) {
 } // status_text
 
 
-int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *pcFixExt, int32_t *pcFixInj, int32_t *pcVarExt, int32_t *pcVarInj, int32_t *kcFixExt, int32_t *kcFixInj)
+int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
 
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2b_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2b_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2b_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2b_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2b_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2b_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2b_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2b_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2b_pcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2b_pcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2b_pcVarExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2b_pcVarInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2b_kcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2b_kcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-
+  eb_cycle_read(cycle, b2b_gid,           EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, b2b_sid,           EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, b2b_mode,          EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, b2b_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, b2b_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, b2b_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, b2b_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, b2b_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, b2b_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2b_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2b_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2b_cPhase,        EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2b_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2b_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b: eb_cycle_close", eb_status);
 
-  *TH1Ext        = (uint64_t)(data[0]) << 32;
-  *TH1Ext       += data[1];
-  *nHExt         = data[2];
-  *TH1Inj        = (uint64_t)(data[3]) << 32;
-  *TH1Inj       += data[4];
-  *nHInj         = data[5];
-  *TBeat         = (uint64_t)(data[6]) << 32;
-  *TBeat        += data[7];
-  *pcFixExt      = data[8];
-  *pcFixInj      = data[9];
-  *pcVarExt      = data[10];
-  *pcVarInj      = data[11];
-  *kcFixExt      = data[12];
-  *kcFixInj      = data[13];
+  *gid           = data[0];
+  *sid           = data[1];
+  *mode          = data[2];
+  *TH1Ext        = (uint64_t)(data[3]) << 32;
+  *TH1Ext       += data[4];
+  *nHExt         = data[5];
+  *TH1Inj        = (uint64_t)(data[6]) << 32;
+  *TH1Inj       += data[7];
+  *nHInj         = data[8];
+  *TBeat         = (uint64_t)(data[9]) << 32;
+  *TBeat        += data[10];
+  *cPhase        = data[11];
+  *cTrigExt      = data[12];
+  *cTrigInj      = data[13];
  
   return eb_status;
 } // readDiags
@@ -307,17 +305,17 @@ int main(int argc, char** argv) {
   uint32_t nTransfer;
   uint32_t nInjection;
   uint32_t statTrans;
+  uint32_t gid;                                // GID 
+  uint32_t sid;                                // SID
+  uint32_t mode;                               // mode
   uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
   uint64_t TH1Inj;                             // h=1 period [as] of injection machine
   uint32_t nHExt;                              // harmonic number extraction machine
   uint32_t nHInj;                              // harmonic number injection machine
   uint64_t TBeat;                              // period [as] of frequency beating
-  int32_t  pcFixExt;                           // phase correction, fixed, extraction
-  int32_t  pcFixInj;                           // phase correction, fixed, injection 
-  int32_t  pcVarExt;                           // phase correction, variable, extraction
-  int32_t  pcVarInj;                           // phase correction, variable, injection
-  int32_t  kcFixExt;                           // kicker correction, fixed, extraction
-  int32_t  kcFixInj;                           // kicker correction, fixed, injection
+  int32_t  cPhase;                             // phase correction
+  int32_t  cTrigExt;                           // trigger correction extraction
+  int32_t  cTrigInj;                           // trigger correction injection
   double   fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   double   fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
@@ -392,6 +390,9 @@ int main(int argc, char** argv) {
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
   api_initShared(lm32_base, SHARED_OFFS);
+  b2b_gid          = lm32_base + SHARED_OFFS + B2B_SHARED_GID;
+  b2b_sid          = lm32_base + SHARED_OFFS + B2B_SHARED_SID;
+  b2b_mode         = lm32_base + SHARED_OFFS + B2B_SHARED_MODE;;
   b2b_TH1ExtHi     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTHI;
   b2b_TH1ExtLo     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTLO;
   b2b_nHExt        = lm32_base + SHARED_OFFS + B2B_SHARED_NHEXT;
@@ -400,12 +401,9 @@ int main(int argc, char** argv) {
   b2b_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_NHINJ;
   b2b_TBeatHi      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATHI;
   b2b_TBeatLo      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATLO;
-  b2b_pcFixExt     = lm32_base + SHARED_OFFS + B2B_SHARED_PCFIXEXT;
-  b2b_pcFixInj     = lm32_base + SHARED_OFFS + B2B_SHARED_PCFIXINJ;
-  b2b_pcVarExt     = lm32_base + SHARED_OFFS + B2B_SHARED_PCVAREXT;
-  b2b_pcVarInj     = lm32_base + SHARED_OFFS + B2B_SHARED_PCVARINJ;
-  b2b_kcFixExt     = lm32_base + SHARED_OFFS + B2B_SHARED_KCFIXEXT;
-  b2b_kcFixInj     = lm32_base + SHARED_OFFS + B2B_SHARED_KCFIXINJ;
+  b2b_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_CPHASE;
+  b2b_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGEXT;
+  b2b_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGINJ;
   
   if (getConfig) {
     readConfig(&mac, &ip);
@@ -462,8 +460,8 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
-      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &pcFixExt, &pcFixInj, &pcVarExt, &pcVarInj, &kcFixExt, &kcFixInj);
-      printDiags(TH1Ext, nHExt, TH1Inj, nHInj, TBeat, pcFixExt, pcFixInj, pcVarExt, pcVarInj, kcFixExt, kcFixInj);
+      readDiags(&gid, &sid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj);
+      printDiags(gid, sid, mode, TH1Ext, nHExt, TH1Inj, nHInj, TBeat, cPhase, cTrigExt, cTrigInj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
@@ -500,71 +498,71 @@ int main(int argc, char** argv) {
       eb_device_write(device, b2b_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
     } // "seth1ext"
 
-   if (!strcasecmp(command, "setpcfixext")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcfixext <value>\n"); return 1;}
+   if (!strcasecmp(command, "setgid")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setgid <value>\n"); return 1;}
 
-      pcFixExt = strtol(argv[optind+1], &tail, 0);
+      gid = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b: invalid group ID -- %s\n", argv[optind+2]); return 1;}
+
+      printf("gidExt %d\n", gid);
+            
+      eb_device_write(device, b2b_gid,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)gid        , 0, eb_block);
+   } // "setgid"  
+
+   if (!strcasecmp(command, "setsid")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setsid <value>\n"); return 1;}
+
+      sid = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b: invalid sequence ID -- %s\n", argv[optind+2]); return 1;}
+
+      printf("sid %d\n", sid);
+            
+      eb_device_write(device, b2b_sid,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)sid        , 0, eb_block);
+   } // "setsid"  
+
+   if (!strcasecmp(command, "setmode")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setmode <value>\n"); return 1;}
+
+      mode  = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b: invalid mode -- %s\n", argv[optind+2]); return 1;}
+
+      printf("mode %d\n", mode);
+            
+      eb_device_write(device, b2b_mode,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)mode       , 0, eb_block);
+   } // "setmode"  
+
+   if (!strcasecmp(command, "setcphase")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setcphase <value>\n"); return 1;}
+
+      cPhase = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("pcFixExt %d\n", pcFixExt);
+      printf("cPhase %d\n", cPhase);
             
-      eb_device_write(device, b2b_pcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixExt   , 0, eb_block);
-   } // "setpcfixext"  
+      eb_device_write(device, b2b_cPhase,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cPhase      , 0, eb_block);
+   } // "setcphase"  
 
-   if (!strcasecmp(command, "setpcfixinj")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcfixinj <value>\n"); return 1;}
+   if (!strcasecmp(command, "setctrigext")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setctrigext <value>\n"); return 1;}
 
-      pcFixInj = strtol(argv[optind+1], &tail, 0);
+      cTrigExt = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("pcFixInj %d\n", pcFixInj);
+      printf("cTrigExt %d\n", cTrigExt);
             
-      eb_device_write(device, b2b_pcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixInj   , 0, eb_block);
-   } // "setpcfixinj"  
+      eb_device_write(device, b2b_cTrigExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigExt    , 0, eb_block);
+   } // "setctrigext"  
 
-   if (!strcasecmp(command, "setpcvarext")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcvarext <value>\n"); return 1;}
+   if (!strcasecmp(command, "setctriginj")) {
+      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setctriginj <value>\n"); return 1;}
 
-      pcVarExt = strtol(argv[optind+1], &tail, 0);
+      cTrigInj = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("pcVarExt %d\n", pcVarExt);
+      printf("cTrigExt %d\n", cTrigInj);
             
-      eb_device_write(device, b2b_pcVarExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarExt   , 0, eb_block);
-   } // "setpcvarext"  
-
-   if (!strcasecmp(command, "setpcvarinj")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setpcvarinj <value>\n"); return 1;}
-
-      pcVarInj = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
-
-      printf("pcVarInj %d\n", pcVarInj);
-            
-      eb_device_write(device, b2b_pcVarInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarInj   , 0, eb_block);
-   } // "setpcvarinj"  
-
-   if (!strcasecmp(command, "setkcfixext")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setkcfixext <value>\n"); return 1;}
-
-      kcFixExt = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
-
-      printf("kcFixExt %d\n", kcFixExt);
-            
-      eb_device_write(device, b2b_kcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixExt   , 0, eb_block);
-   } // "setkcfixext"  
-
-   if (!strcasecmp(command, "setkcfixinj")) {
-      if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setkcfixinj <value>\n"); return 1;}
-
-      kcFixInj = strtol(argv[optind+1], &tail, 0);
-      if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
-
-      printf("kcFixInj %d\n", kcFixInj);
-            
-      eb_device_write(device, b2b_kcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixInj   , 0, eb_block);
-   } // "setkcfixinj"  
+      eb_device_write(device, b2b_cTrigExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigExt    , 0, eb_block);
+   } // "setctriginj"  
 
   } //if command
 

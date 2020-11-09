@@ -18,18 +18,20 @@
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define  B2B_ECADO_TIMEOUT         COMMON_ECADO_TIMEOUT
-#define  B2B_ECADO_UNKOWN             1    // unkown activity requested (unexpected action by ECA)
-#define  B2B_ECADO_TLUINPUT           2    // event from input (TLU)
-#define  B2B_ECADO_KICKSTART        100    // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
-#define  B2B_ECADO_B2B_PMEXT       2048    // command: perform phase measurement (extraction)
-#define  B2B_ECADO_B2B_PMINJ       2049    // command: perform phase measurement (injection)
-#define  B2B_ECADO_B2B_PREXT       2050    // command: result of phase measurement (extraction)
-#define  B2B_ECADO_B2B_PRINJ       2051    // command: result of phase measurement (injecton)
-#define  B2B_ECADO_B2B_TRIGGEREXT  2052    // command: trigger kicker (extraction)
-#define  B2B_ECADO_B2B_TRIGGERINJ  2053    // command: trigger kicker (injection)
-#define  B2B_ECADO_B2B_DIAGMATCH   2054    // command: time, when h=1 phases of extraction and injection will match, includes phase corrections
-#define  B2B_ECADO_B2B_DIAGEXT     2055    // command: projects measured phase 100000 periods into the future (extraction), includes phase corrections
-#define  B2B_ECADO_B2B_DIAGINJ     2056    // command: projects measured phase 100000 periods into the future (injection), includes phase corrections
+#define  B2B_ECADO_UNKOWN              1   // unkown activity requested (unexpected action by ECA)
+#define  B2B_ECADO_TLUINPUT            2   // event from input (TLU)
+#define  B2B_ECADO_KICKSTART         100   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
+#define  B2B_ECADO_B2B_PMEXT       0x800   // command: perform phase measurement (extraction)
+#define  B2B_ECADO_B2B_PMINJ       0x801   // command: perform phase measurement (injection)
+#define  B2B_ECADO_B2B_PREXT       0x802   // command: result of phase measurement (extraction)
+#define  B2B_ECADO_B2B_PRINJ       0x803   // command: result of phase measurement (injecton)
+#define  B2B_ECADO_B2B_TRIGGEREXT  0x804   // command: trigger kicker (extraction)
+#define  B2B_ECADO_B2B_TRIGGERINJ  0x805   // command: trigger kicker (injection)
+#define  B2B_ECADO_B2B_DIAGMATCH   0x806   // command: optional diagnostic, indicates when phases match
+#define  B2B_ECADO_B2B_DIAGEXT     0x807   // command: optional diagnostic (extraction)
+#define  B2B_ECADO_B2B_DIAGINJ     0x808   // command: optional diagnostic (injection)
+#define  B2B_ECADO_B2B_DIAGKICKEXT 0x809   // command: optional kick diagnostic (extraction)
+#define  B2B_ECADO_B2B_DIAGKICKINJ 0x80a   // command: optional kick diagnostic (injection)
 
 // status flags
 #define  B2B_FLAG_TRANSACTIVE       0x1    // flag: transfer active
@@ -54,7 +56,8 @@
 #define  SIS18_B2B_SIS100         0x3a2    // GID: SIS18 to CRYRING
 #define  ESR_B2B_EXTRACT          0x3a5    // GID: ESR simple extraction
 #define  ESR_B2B_CRYRING          0x3a6    // GID: ESR to CRYRING
-#define  CRYRING_B2B_EXTRACT      0x3a0    // GID: CRYRING simple extraction
+#define  CRYRING_B2B_EXTRACT      0x3aa    // GID: CRYRING simple extraction
+#define  SIS100_B2B_EXTRACT       0x3b0    // GID: CRYRING simple extraction
 
 // specialities
 #define  B2B_AHEADOFFSET            500    // offset [us] used for receiving KICK_START or for sending messages
@@ -66,9 +69,9 @@
 // ****************************************************************************************
 
 // offsets
-#define B2B_SHARED_GIDEXT         (COMMON_SHARED_END        + _32b_SIZE_)       // GID of B2B Transfer (
-#define B2B_SHARED_SIDEXT         (B2B_SHARED_GIDEXT        + _32b_SIZE_)       // sequence ID for B2B transfer 
-#define B2B_SHARED_MODE           (B2B_SHARED_SIDEXT        + _32b_SIZE_)       // mode of B2B transfer
+#define B2B_SHARED_GID            (COMMON_SHARED_END        + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define B2B_SHARED_SID            (B2B_SHARED_GID           + _32b_SIZE_)       // sequence ID for B2B transfer 
+#define B2B_SHARED_MODE           (B2B_SHARED_SID           + _32b_SIZE_)       // mode of B2B transfer
 #define B2B_SHARED_TH1EXTHI       (B2B_SHARED_MODE          + _32b_SIZE_)       // period of h=1 extraction, high bits
 #define B2B_SHARED_TH1EXTLO       (B2B_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2B_SHARED_NHEXT          (B2B_SHARED_TH1EXTLO      + _32b_SIZE_)       // harmonic number of extraction RF
