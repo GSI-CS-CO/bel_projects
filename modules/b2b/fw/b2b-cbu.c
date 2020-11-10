@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 9-November-2020
+ *  version : 10-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -241,11 +241,12 @@ uint32_t calcTodo(uint32_t gid, uint32_t mode){
   int      gidValid;
 
   flags    = 0;
-  gidValid = 0;
+  gidValid = 0xffff;
 
   // check for valid GID
   for (i=0; i<NGID; i++) if (gid == b2bgid[i]) gidValid = i;
-  if (!gidValid) return flags;
+  pp_printf("b2b gidValid %u\n", gidValid);
+  if (gidValid==0xffff) return flags;
    
   switch (mode) {
     case 1 :
@@ -269,6 +270,10 @@ uint32_t calcTodo(uint32_t gid, uint32_t mode){
   gidTrans = b2bgid[gidValid];
   gidETrig = etgid[gidValid];
   gidITrig = itgid[gidValid];
+
+  pp_printf("b2b: flags %u\n", flags);
+
+  return flags;
 } // calcTodo
 
 
@@ -427,6 +432,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // check for correct sequency ID
       sidTrans  = *pSharedSid;;
       recSID    = (uint32_t)(recId >> 20) & 0xfff;
+      pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
       if (sidTrans != recSID) return COMMON_STATUS_OK;
 
       // checkout todo list
@@ -435,9 +441,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gidTrans  = 0xfff;
       gidETrig  = 0xfff;
       gidITrig  = 0xfff;
-
+      pp_printf("sharedGid %u, sharedMode %u\n", *pSharedGid, *pSharedMode);
       if (!(flagsTodo = calcTodo(*pSharedGid, *pSharedMode))) return COMMON_STATUS_OK;
-
+      pp_printf("flagsTodo %u\n", flagsTodo);
       // most primitive case: ONLY extraction trigger upon EVT_KICK_START
       if (flagsTodo == B2B_ACTION_TRIGEXT) {
         // send command: trigger extraction kicker on time with EVT_KICK_START

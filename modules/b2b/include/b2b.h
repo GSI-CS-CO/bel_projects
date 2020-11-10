@@ -20,7 +20,7 @@
 #define  B2B_ECADO_TIMEOUT         COMMON_ECADO_TIMEOUT
 #define  B2B_ECADO_UNKOWN              1   // unkown activity requested (unexpected action by ECA)
 #define  B2B_ECADO_TLUINPUT            2   // event from input (TLU)
-#define  B2B_ECADO_KICKSTART         100   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
+#define  B2B_ECADO_KICKSTART        0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define  B2B_ECADO_B2B_PMEXT       0x800   // command: perform phase measurement (extraction)
 #define  B2B_ECADO_B2B_PMINJ       0x801   // command: perform phase measurement (injection)
 #define  B2B_ECADO_B2B_PREXT       0x802   // command: result of phase measurement (extraction)
