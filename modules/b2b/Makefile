@@ -35,10 +35,10 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
 	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
-	cp $(ASL)/b2b-sis18.sh $(STAGING)                                   # nfs init script SIS18
-	cp $(ASL)/b2b-esr.sh $(STAGING)                                     # nfs init script ESR
-	cp $(SW)/b2b-sis18_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin      # FEC init script SIS18
-	cp $(SW)/b2b-esr_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # FEC init script ESR
+	cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18
+	cp $(ASL)/b2b-esr-rf.sh $(STAGING)                                  # nfs init script ESR
+	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18
+	cp $(SW)/b2b-esr-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # FEC init script ESR
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware

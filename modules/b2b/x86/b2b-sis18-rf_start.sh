@@ -4,11 +4,13 @@
 set -x
 
 ###########################################
-# dev/wbm0 -> tr0 -> phase measurement
-# dev/wbm1 -> tr1 -> CBU
+#dev/wbm0 -> tr0 -> phase measurement
+#dev/wbm1 -> tr1 -> CBU
 ###########################################
-export TRPM=$(saft-eb-fwd tr0)
-export TRCBU=$(saft-eb-fwd tr1)
+#export TRPM=$(saft-eb-fwd tr0)
+#export TRCBU=$(saft-eb-fwd tr1)
+export TRPM=dev/wbm0
+export TRCBU=dev/wbm1
 
 ###########################################
 # clean up stuff
@@ -44,7 +46,7 @@ b2b-ctl $TRPM startop
 sleep 5
 b2b-ctl $TRCBU configure
 sleep 5
-b2b-ctl $TRCUB startop
+b2b-ctl $TRCBU startop
 
 echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
 ################################################
