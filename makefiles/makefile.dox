@@ -2446,6 +2446,7 @@ ${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY} ${DOX_ADDITIONAL_DEPENDENCIES}
 	@echo 'EXCLUDE_SYMLINKS          = ${DOX_EXCLUDE_SYMLINKS}'       >> ${DOXY_CFG_FILE}
 	@echo 'EXCLUDE_PATTERNS          = ${DOX_EXCLUDE_PATTERNS}'       >> ${DOXY_CFG_FILE}
 	@echo 'EXCLUDE_SYMBOLS           = ${DOX_EXCLUDE_SYMBOLS}'        >> ${DOXY_CFG_FILE}
+	@echo 'EXAMPLE_PATH              = ${DOX_EXAMPLE_PATH}'           >> ${DOXY_CFG_FILE}
 	@echo 'EXAMPLE_PATTERNS          = ${DOX_EXAMPLE_PATTERNS}'       >> ${DOXY_CFG_FILE}
 	@echo 'EXAMPLE_RECURSIVE         = ${DOX_EXAMPLE_RECURSIVE}'      >> ${DOXY_CFG_FILE}
 	@echo 'IMAGE_PATH                = ${DOX_IMAGE_PATH}'             >> ${DOXY_CFG_FILE}

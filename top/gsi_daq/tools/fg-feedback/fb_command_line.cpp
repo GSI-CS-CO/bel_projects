@@ -73,6 +73,11 @@ STATIC int listOrScanFGs( CommandLine* pCmdLine, bool doScan )
       return -1;
 
    const bool verbose = pCmdLine->isVerbose();
+   if( !pAllDaq->isAddacDaqSupport() )
+   {
+      WARNING_MESSAGE( "LM32-firmware doesn't support ADDAC/ACU- DAQs!" );
+   }
+
    if( doScan )
    {
       if( verbose )

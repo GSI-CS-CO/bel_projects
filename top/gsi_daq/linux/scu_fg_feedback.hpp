@@ -607,6 +607,14 @@ public:
    }
 
    /*!
+    * @brief Returns "true" if the LM32 firmware supports ADDAC/ACU DAQs.
+    */
+   bool isAddacDaqSupport( void ) const
+   {
+      return m_oAddacDaqAdmin.isAddacDaqSupport();
+   }
+
+   /*!
     * @brief Returns the throttle threshold in DAQ- raw-value
     * @see setThrottleThreshold
     */

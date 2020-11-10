@@ -28,6 +28,7 @@
 using namespace Scu;
 using namespace std;
 
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  * Specialization of class "FgFeedbackChannel" so that the callback function
@@ -36,13 +37,12 @@ using namespace std;
 class MyFeedbackChannel: public FgFeedbackChannel
 {
 public:
+
    MyFeedbackChannel( const uint fgNumber ): FgFeedbackChannel( fgNumber ) {}
 
    void onInit( void ) override;
 
-   void onData( uint64_t wrTimeStampTAI,
-                FgFeedbackChannel::DAQ_T actlValue,
-                FgFeedbackChannel::DAQ_T setValue ) override;
+   void onData( uint64_t wrTimeStampTAI, DAQ_T actlValue, DAQ_T setValue ) override;
 };
 
 /*-----------------------------------------------------------------------------
@@ -65,8 +65,8 @@ void MyFeedbackChannel::onInit( void )
  * the data of a registered function generator has been received.
  */
 void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
-                                FgFeedbackChannel::DAQ_T actlValue,
-                                FgFeedbackChannel::DAQ_T setValue )
+                                DAQ_T actlValue,
+                                DAQ_T setValue )
 {
    cout << "fg-" << getSocket() << '-'
         << getFgNumber() << "\ttime: " << wrTimeStampTAI << " readable: "
@@ -146,6 +146,17 @@ int main( const int argc, const char** ppArgv )
               << ", Bits: " << fg.getOutputBits()
               << ", fg-" << fg.getSocket() << '-' << fg.getDevice()
               << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC/ACU") << endl;
+      }
+
+      /*
+       * Checks whether the currently loaded LM32-firmware supports ADDAC/ACQ DAQs,
+       * if not, than an exception becomes thrown when trying to register
+       * an ADDAC/DAQ- feedback channel.
+       */
+      if( !myScu.isAddacDaqSupport() )
+      {
+         cerr << "CAUTION: The currently loaded firmware on " << myScu.getScuDomainName()
+              << " doesn't support ADDAC/ACU- DAQs! " << endl;
       }
 
       /*

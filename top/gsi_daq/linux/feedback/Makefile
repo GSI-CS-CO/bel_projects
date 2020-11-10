@@ -45,7 +45,6 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
 DOX_INPUT += $(DAQ_DIR)/scu_control_config.h
 
-DOX_INPUT += $(DAQ_LINUX_DIR)/../example/feedback/feedback-example.cpp
 
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq

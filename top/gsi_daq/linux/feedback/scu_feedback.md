@@ -1,7 +1,7 @@
 Introduction in the library  scu_fg_feedback.a  {#mainpage}
 ==============================================
 
-The library user interface consists of three classes:
+The library user interface consists of three classes declared in header-file scu_fg_feedback.hpp :
 
 1. [FgFeedbackChannel](@ref Scu::FgFeedbackChannel)
 2. [FgFeedbackDevice](@ref Scu::FgFeedbackDevice)
@@ -31,5 +31,5 @@ This class contains the polling function [distributeData](@ref Scu::FgFeedbackAd
 This function has to be put in a polling-loop, which runs for example in a own thread.
 
 
-See also in the following link of a small well documented example program.\n
-[C++ example](@ref feedback-example.cpp)
+See also in the following small well documented example program
+@include feedback-example.cpp
