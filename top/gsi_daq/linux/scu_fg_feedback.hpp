@@ -236,6 +236,7 @@ private:
    const uint         m_fgNumber;
    FgFeedbackDevice*  m_pParent;
    Common*            m_pCommon;
+   uint64_t           m_lastTimestamp;
 
 public:
    /*!
@@ -245,13 +246,12 @@ public:
     * @endcode
     * @param fgNumber Number of function generator.
     */
-   FgFeedbackChannel( const uint fgNumber )
-      :m_fgNumber( fgNumber )
-      ,m_pParent( nullptr )
-      ,m_pCommon( nullptr )
-   {
-   }
+   FgFeedbackChannel( const uint fgNumber );
 
+   /*!
+    * @brief Destructor, if a if a instance of this type has been registered
+    *        then it will deregistered by its self.
+    */
    virtual ~FgFeedbackChannel( void );
 
    /*!
@@ -279,8 +279,21 @@ public:
    uint getSocket( void );
 
 #ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Returns true if this object communicates with a MIL-DAQ.
+    */
    bool isMil( void );
 #endif
+
+   /*!
+    * @brief Returns the time-stamp of the last data tuple independently
+    *        whether the tuple was suppressed by throttling or not.
+    * @note When the returned value is zero then no data was received yet.
+    */
+   uint64_t getLastTimestamp( void ) const
+   {
+      return m_lastTimestamp;
+   }
 
 protected:
    /*!
@@ -299,6 +312,9 @@ protected:
     *        is registered in its container of type DaqDevice and this
     *        container is again registered in the administrator
     *        object of type DaqAdministration.
+    *
+    * That means once the connection-path of this object to
+    * the LM32-application has been established.
     */
    virtual void onInit( void ) {}
 
@@ -346,8 +362,19 @@ public:
     */
    FgFeedbackDevice( const uint socket );
 
+   /*!
+    * @brief Destructor, if a instance of this type has been registered
+    *        then it will deregistered by its self.
+    */
    ~FgFeedbackDevice( void );
 
+
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Returns a pointer to the parent object in which this
+    *        object has been registered.
+    * @note If this object not registered, then a exception will thrown!
+    */
    FgFeedbackAdministration* getParent( void );
 
    /*!
@@ -360,6 +387,10 @@ public:
     */
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 
+   /*!
+    * @brief Counterpart to registerChannel.
+    * @see registerChannel
+    */
    void unregisterChannel( FgFeedbackChannel* pFeedbackChannel );
 
    /*!
@@ -585,8 +616,32 @@ protected:
    DEVICE_LIST_T m_devicePtrList;
 
 public:
+   /*!
+    * @brief First constructor variant: Establishes a wishbone/etherbone
+    *        connection and initialized the communication between
+    *        Linux-host and LM32 application.
+    * @note If the wishbone/etherbone connection not already open then
+    *       this constructor will do that.
+    * @param poEtherbone Pointer to a object of type EtherboneConnection
+    * @param doRescan If true then a rescan command will send to the
+    *                 LM32 -application.
+    */
    FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone, const bool doRescan = false );
+
+   /*!
+    * @brief Second constructor variant:
+    * @param poEbAccess Pointer to a object of type daq::EbRamAccess
+    * @param doRescan If true then a rescan command will send to the
+    *                 LM32 -application.
+    */
    FgFeedbackAdministration( daq::EbRamAccess* poEbAccess, const bool doRescan = false );
+
+   /*!
+    * @brief Destructor:
+    * @note If the constructor has opened the wishbone/etherbone- connection
+    *       then this destructor will disconnect this,
+    *       otherwise it will nothing do.
+    */
    virtual ~FgFeedbackAdministration( void );
 
    /*!
@@ -599,7 +654,7 @@ public:
    }
 
    /*!
-    * @brief returns a pointer to an object of type daq::EbRamAccess
+    * @brief Returns a pointer to an object of type daq::EbRamAccess
     */
    daq::EbRamAccess* getEbAccess( void )
    {
@@ -757,6 +812,11 @@ public:
     */
    void registerDevice( FgFeedbackDevice* poDevice );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Counterpart to registerDevice
+    * @see registerDevice
+    */
    void unregisterDevice( FgFeedbackDevice* poDevice );
 
    /*!

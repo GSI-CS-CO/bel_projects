@@ -120,6 +120,8 @@ void FgFeedbackChannel::Common::evaluate( const uint64_t wrTimeStampTAI,
       m_lastSupprSetValue  = setValue;
       m_lastSupprActValue  = actValue;
    }
+
+   m_pParent->m_lastTimestamp = wrTimeStampTAI;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -329,9 +331,8 @@ void FgFeedbackChannel::MilFb::Receive::onData( uint64_t wrTimeStampTAI,
                                                 MiLdaq::MIL_DAQ_T setValue )
 {
    /*
-    * Just forwarding to the grandpa, that's all.
+    * Just forwarding, that's all.
     */
-   //m_pParent->m_pParent->onData( wrTimeStampTAI, actlValue, setValue );
    m_pParent->evaluate( wrTimeStampTAI, actlValue, setValue );
 }
 
@@ -367,6 +368,16 @@ FgFeedbackChannel::MilFb::~MilFb( void )
 #endif // ifdef CONFIG_MIL_FG
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+FgFeedbackChannel::FgFeedbackChannel( const uint fgNumber )
+      :m_fgNumber( fgNumber )
+      ,m_pParent( nullptr )
+      ,m_pCommon( nullptr )
+      ,m_lastTimestamp( 0 )
+{
+}
+
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackChannel::~FgFeedbackChannel( void )

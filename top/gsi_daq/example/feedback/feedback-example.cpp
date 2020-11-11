@@ -69,7 +69,10 @@ void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
                                 DAQ_T setValue )
 {
    cout << "fg-" << getSocket() << '-'
-        << getFgNumber() << "\ttime: " << wrTimeStampTAI << " readable: "
+        << getFgNumber()
+        << "\tlast time-stamp: " << getLastTimestamp() << " readable: "
+        << daq::wrToTimeDateString( getLastTimestamp() )
+        << "\tcurrent time-stamp: " << wrTimeStampTAI << " readable: "
         << daq::wrToTimeDateString( wrTimeStampTAI )
         << "\tset value: " << daq::rawToVoltage( setValue )
         << " Volt\tactual value: " << daq::rawToVoltage( actlValue )
