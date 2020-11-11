@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000100                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000200                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -239,6 +239,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t recEvtId;                                          // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
+  uint32_t recGid;                                            // GID received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
@@ -255,9 +256,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
    
   switch (ecaAction) {
     case B2B_ECADO_B2B_PMEXT :
-      *pSharedTH1ExtHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
-      *pSharedTH1ExtLo = (uint32_t)( TH1           & 0xffffffff);
-      *pSharedNHExt    = (uint32_t)( recEvtId      & 0xf       );
+      *pSharedTH1ExtHi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
+      *pSharedTH1ExtLo = (uint32_t)( TH1             & 0xffffffff);
+      *pSharedNHExt    = (uint32_t)( recEvtId        & 0xf       );
+      recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -272,8 +274,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
-        sendEvtId    = 0x1000000000000000;                                        // FID
-        sendEvtId    = sendEvtId | ((uint64_t)B2B_GID << 48);                 // GID chk hackish         
+        sendEvtId    = 0x1000000000000000;                                    // FID
+        sendEvtId    = sendEvtId | ((uint64_t)recEvtId << 48);                // GID chk hackish         
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);     // EVTNO
         sendParam    = tH1Ext;
         sendDeadline = getSysTime() + COMMON_AHEADT;
@@ -306,8 +308,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
-        sendEvtId    = 0x1000000000000000;                                        // FID
-        sendEvtId    = sendEvtId | ((uint64_t)B2B_GID << 48);                 // GID chk hackish         
+        sendEvtId    = 0x1000000000000000;                                    // FID
+        sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID chk hackish         
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);     // EVTNO
         sendParam    = tH1Inj;
         sendDeadline = getSysTime() + COMMON_AHEADT;
