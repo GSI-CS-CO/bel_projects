@@ -88,7 +88,7 @@ saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 10000000 0x0 0 -u
 
 # lm32 listens to EVT_KICK_START1  message from DM
-saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 0 0x031 -d
+saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 1000000 0x031 -dg
 
 # SIS18_B2B_EXTRACT
 # lm32 listens to B2B_PREXT message from extraction machine
