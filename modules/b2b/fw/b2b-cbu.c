@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-November-2020
+ *  version : 11-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -79,6 +79,7 @@ volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 regis
 volatile int32_t  *pSharedCPhase;       // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
 volatile int32_t  *pSharedCTrigExt;     // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
 volatile int32_t  *pSharedCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile int32_t  *pSharedDmLatency;    // pointer to a "user defined" u32 register; here: latency for messages received from DM (prio Q + network) [ns]
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -98,6 +99,7 @@ uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
 int32_t  cPhase;                        // correction for phase matching [ns]
 int32_t  cTrigExt;                      // correction for extraction trigger
 int32_t  cTrigInj;                      // correction for injection trigger
+int32_t  dmLatency;                     // latency for messages received from DM (prio Q + network) [ns]
 
 #define  NGID 3
 uint32_t b2bgid[]  = {0x3a0, 0x3a1, 0x3a2};                               // GID B2B
@@ -143,6 +145,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE     >> 2));
   pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT   >> 2));
   pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ   >> 2));
+  pSharedDmLatency        =  (int32_t *)(pShared + (B2B_SHARED_DMLATENCY  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -224,6 +227,7 @@ uint32_t extern_entryActionOperation()
   *pSharedCPhase     = 0x0;
   *pSharedCTrigExt   = 0x0;
   *pSharedCTrigInj   = 0x0;
+  *pSharedDmLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -245,7 +249,7 @@ uint32_t calcTodo(uint32_t gid, uint32_t mode){
 
   // check for valid GID
   for (i=0; i<NGID; i++) if (gid == b2bgid[i]) gidValid = i;
-  pp_printf("b2b gidValid %u\n", gidValid);
+  //pp_printf("b2b gidValid %u\n", gidValid);
   if (gidValid==0xffff) return flags;
    
   switch (mode) {
@@ -271,7 +275,7 @@ uint32_t calcTodo(uint32_t gid, uint32_t mode){
   gidETrig = etgid[gidValid];
   gidITrig = itgid[gidValid];
 
-  pp_printf("b2b: flags %u\n", flags);
+  //pp_printf("b2b: flags %u\n", flags);
 
   return flags;
 } // calcTodo
@@ -427,12 +431,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   switch (ecaAction) {
     case B2B_ECADO_KICKSTART :
       // received: EVT_KICK_START1/2 from DM; B2B transfer starts
-      // note: ECA is configured to trigger the action by B2B_AHEADOFFSET ahead of time
+      // !!! NB: ECA is configured to >>>> trigger the action 1ms <<<< ahead of time!!!
+      dmLatency = (int32_t)(getSysTime() - recDeadline);
 
       // check for correct sequency ID
       sidTrans  = *pSharedSid;;
       recSID    = (uint32_t)(recId >> 20) & 0xfff;
-      pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
+      //pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
       if (sidTrans != recSID) return COMMON_STATUS_OK;
 
       // checkout todo list
@@ -441,9 +446,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gidTrans  = 0xfff;
       gidETrig  = 0xfff;
       gidITrig  = 0xfff;
-      pp_printf("sharedGid %u, sharedMode %u\n", *pSharedGid, *pSharedMode);
+      //pp_printf("sharedGid %u, sharedMode %u\n", *pSharedGid, *pSharedMode);
       if (!(flagsTodo = calcTodo(*pSharedGid, *pSharedMode))) return COMMON_STATUS_OK;
-      pp_printf("flagsTodo %u\n", flagsTodo);
+      //pp_printf("flagsTodo %u\n", flagsTodo);
       // most primitive case: ONLY extraction trigger upon EVT_KICK_START
       if (flagsTodo == B2B_ACTION_TRIGEXT) {
         // send command: trigger extraction kicker on time with EVT_KICK_START
@@ -452,7 +457,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
         sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
         sendParam    = 0x0;
-        sendDeadline = recDeadline + (uint64_t)B2B_AHEADOFFSET;
+        sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
         return COMMON_STATUS_OK;
       } //B2B_ACTION_TRIGEXT
@@ -632,6 +637,7 @@ int main(void) {
     pubState          = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
+    *pSharedDmLatency = dmLatency;
   } // while
 
   return (1); // this should never happen ...

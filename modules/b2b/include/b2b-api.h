@@ -37,7 +37,7 @@
 #ifndef _B2B_API_H_
 #define _B2B_API_H_
 
-#define B2B_X86_VERSION "00.01.00"                     // version
+#define B2B_X86_VERSION "00.02.01"                     // version
 #define B2B_F_CLK       200000000                      // clock for DDS, here: BuTiS 200 MHz
 
 #include <b2b.h>

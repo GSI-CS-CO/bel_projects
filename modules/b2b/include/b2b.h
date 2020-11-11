@@ -60,8 +60,8 @@
 #define  SIS100_B2B_EXTRACT       0x3b0    // GID: CRYRING simple extraction
 
 // specialities
-#define  B2B_AHEADOFFSET            500    // offset [us] used for receiving KICK_START or for sending messages
-                                           // this value is very special and should be about of the value used by the DM
+#define  B2B_DMOFFSET           1000000    // offset [ns] used for receiving KICK_START or for sending messages
+                                           // this value is very special and should equal the value used by the DM
 
 
 // ****************************************************************************************
@@ -83,8 +83,9 @@
 #define B2B_SHARED_CPHASE         (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
 #define B2B_SHARED_CTRIGEXT       (B2B_SHARED_CPHASE        + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
 #define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEXT      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_DMLATENCY      (B2B_SHARED_CTRIGINJ      + _32b_SIZE_)       // latency for messages received from DM (prio Q + network) [ns]
 
 // diagnosis: end of used shared memory
-#define B2B_SHARED_END            (B2B_SHARED_CTRIGINJ      + _32b_SIZE_) 
+#define B2B_SHARED_END            (B2B_SHARED_DMLATENCY     + _32b_SIZE_) 
 
 #endif
