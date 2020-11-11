@@ -249,7 +249,7 @@ public:
    FgFeedbackChannel( const uint fgNumber );
 
    /*!
-    * @brief Destructor, if a if a instance of this type has been registered
+    * @brief Destructor, if a instance of this type has been registered
     *        then it will deregistered by its self.
     */
    virtual ~FgFeedbackChannel( void );
