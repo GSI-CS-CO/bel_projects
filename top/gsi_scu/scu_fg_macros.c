@@ -449,7 +449,7 @@ void disable_slave_irq( const unsigned int channel )
  */
 void sendRefillSignalIfThreshold( const unsigned int channel )
 {
-   if( cbgetCountSave( &g_shared.fg_regs[0], channel ) == THRESHOLD )
+   if( cbgetCountSave( &g_shared.fg_regs[0], channel ) == FG_REFILL_THRESHOLD )
    {
      // mprintf( "*" ); //!!
       sendSignal( IRQ_DAT_REFILL, channel );

@@ -184,7 +184,8 @@ STATIC const char* state2string( const FG_STATE_T state )
    return "unknown";
    #undef __CASE_RETURN
 }
-#define CONFIG_LAGE_TIME_DETECT
+
+//#define CONFIG_LAGE_TIME_DETECT
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
