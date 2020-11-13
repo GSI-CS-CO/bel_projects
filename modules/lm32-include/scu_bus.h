@@ -384,8 +384,8 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSlavesByMatchList16( const void* pScuBusBase,
  *         system address and group address match.
  */
 SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
-                                               const uint16_t systemAddr,
-                                               const uint16_t grupAddr );
+                                               const SLAVE_SYSTEM_T systemAddr,
+                                               const SLAVE_GROUP_T grupAddr );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS

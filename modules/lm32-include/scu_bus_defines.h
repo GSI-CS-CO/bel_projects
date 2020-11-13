@@ -52,6 +52,8 @@
 extern "C" {
 namespace Scu
 {
+namespace Bus
+{
 #endif
 
 /*!
@@ -105,6 +107,7 @@ STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
  * @brief Address space in bytes for each SCU bus slave 128k
  */
 #define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)
+
 
 
 /*!
@@ -189,27 +192,8 @@ typedef enum
    SCUBUS_INVALID_INDEX16 = (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
 } SCUBUS_ADDR_OFFSET_T;
 
-#define POWER_UP_IRQ      0x0001
-
-#if 0
-/* Deprecated defines */
-//#define CID_SYS           0x4
-//#define CID_GROUP         0x5
-#define SLAVE_VERSION     0x6
-#define SLAVE_INT_ENA     0x21
-#define SLAVE_INT_PEND    0x22
-#define SLAVE_INT_ACT     0x24
-#define SLAVE_EXT_CLK     0x30
-
-#define SLAVE_INFO_TEXT   0x01c0 //!< @brief Zero terminated info-string max. 512 byte
-#endif
-
-#ifdef __cplusplus
-namespace Bus
-{
-#endif
-
 /*!
+ * @ingroup SCU_BUS
  * @brief Offset base addresses of devices in SCU-bus slaves
  */
 typedef enum
@@ -220,15 +204,16 @@ typedef enum
    FG2_BASE  = 0x340,
    TMR_BASE  = 0x330,
    ADC_BASE  = 0x230
-} BUS_BASE;
+} BUS_BASE_T;
 
-//#define DAC1_BASE         0x200
-//#define DAC2_BASE         0x210
+#ifdef __lm32__
+
+#define POWER_UP_IRQ      0x0001
+
 #define DAC_CNTRL         0x0
 #define DAC_DATA          0x1
 
 #define IO4x8             0x220
-//#define ADC_BASE          0x230
 #define ADC_CNTRL         0x0
 #define ADC_CHN1          0x1
 #define ADC_CHN2          0x2
@@ -242,8 +227,6 @@ typedef enum
 /*!
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
  */
-//#define FG1_BASE          0x300
-//#define FG2_BASE          0x340
 #define FG_CNTRL          0x0
 #define FG_A              0x1
 #define FG_B              0x2
@@ -270,7 +253,6 @@ typedef enum
 #define WB_RAMP_CNT       0x7
 #define WB_FG_SW_DST      0x8
 
-//#define TMR_BASE          0x330
 #define TMR_CNTRL         0x0
 #define TMR_IRQ_CNT       0x1
 #define TMR_VALUEL        0x2
@@ -282,19 +264,34 @@ typedef enum
 #define SRQ_ACT           0x8
 #define MULTI_SLAVE_SEL   0xc
 #define MULTICAST_ACC     0x8
-//#define MAX_SCU_SLAVES    12    /*!< @brief Maximum number of slots */
 
-#define SYS_LOEP    3
-#define SYS_CSCO    55
-#define SYS_PBRF    42
+#endif /* ifdef __lm32__ */
 
-#define GRP_ADDAC1  3   /*!<@brief Group ID ADDAC 2 */
-#define GRP_ADDAC2  38  /*!<@brief Group ID ADDAC 2 */
-#define GRP_DIOB    26
-#define GRP_FIB_DDS 1
-#define GRP_MFU     2   /*!<@brief Group ID: ACU/MFU */
-#define GRP_SIO3    69  /*!<@brief Group ID: SIO 2 */
-#define GRP_SIO2    23  /*!<@brief Group ID: SIO 2 */
+/*!
+ * @ingroup SCU_BUS
+ * @brief Definition of SCU-bus slave system IDs.
+ */
+typedef enum
+{
+   SYS_LOEP =   3,
+   SYS_CSCO =  55,
+   SYS_PBRF =  42
+} SLAVE_SYSTEM_T;
+
+/*!
+ * @ingroup SCU_BUS
+ * @brief Definition of SCU-bus slave group IDs.
+ */
+typedef enum
+{
+   GRP_ADDAC1  =   3,  /*!<@brief Group ID ADDAC 1 */
+   GRP_ADDAC2  =  38,  /*!<@brief Group ID ADDAC 2 */
+   GRP_DIOB    =  26,
+   GRP_FIB_DDS =   1,
+   GRP_MFU     =   2,  /*!<@brief Group ID: ACU/MFU */
+   GRP_SIO3    =  69,  /*!<@brief Group ID: SIO 3 */
+   GRP_SIO2    =  23   /*!<@brief Group ID: SIO 2 */
+} SLAVE_GROUP_T;
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS

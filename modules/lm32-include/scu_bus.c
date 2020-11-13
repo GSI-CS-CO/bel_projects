@@ -106,8 +106,8 @@ SCUBUS_SLAVE_FLAGS_T
  *         system address and group address match.
  */
 SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
-                                               const uint16_t systemAddr,
-                                               const uint16_t grupAddr )
+                                               const SLAVE_SYSTEM_T systemAddr,
+                                               const SLAVE_GROUP_T grupAddr )
 {
    const SCU_BUS_MATCH_ITEM16_T matchList[] =
    {
