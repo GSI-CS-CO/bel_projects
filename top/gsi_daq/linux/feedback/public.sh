@@ -35,6 +35,7 @@ COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_administrat
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_interface.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_base_interface.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_exception.hpp"
+COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/scu_env.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_eb_ram_buffer.hpp"
 #COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/feSupport/scu/etherbone/EtherboneConnection.hpp"
 #COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}ip_cores/etherbone-core/api/etherbone.h"
