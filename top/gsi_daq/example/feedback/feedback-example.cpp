@@ -23,7 +23,9 @@
  ******************************************************************************
  */
 #include <iostream>
+#include <scu_env.hpp>
 #include <scu_fg_feedback.hpp>
+
 
 using namespace Scu;
 using namespace std;
@@ -90,7 +92,17 @@ int main( const int argc, const char** ppArgv )
    cout << "SCU-URL: " << ppArgv[1] << endl;
 
    try
-   {  /*
+   {
+      /*
+       * Just nice to have the following function.
+       */
+      if( !isRunningOnScu() )
+      {
+         cout << "CAUTION: This application doesn't run on SCU, in this case"
+                 " the port- forwarder \"socat\" has to be run on SCU at first!" << endl;
+      }
+
+      /*
        * Building a object of etherbone-connection for the communication
        * whith a DAQ via wishbone/etherbone.
        *
