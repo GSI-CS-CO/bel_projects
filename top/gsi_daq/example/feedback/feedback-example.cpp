@@ -84,23 +84,26 @@ void MyFeedbackChannel::onData( uint64_t wrTimeStampTAI,
 ///////////////////////////////////////////////////////////////////////////////
 int main( const int argc, const char** ppArgv )
 {
-   if( argc < 2 )
-   {
-      cerr << "ERROR: No SCU-URL given!" << endl;
-      return EXIT_FAILURE;
-   }
-   cout << "SCU-URL: " << ppArgv[1] << endl;
-
    try
    {
-      /*
-       * Just nice to have the following function.
-       */
-      if( !isRunningOnScu() )
+      string ebDeviceName;
+      if( isRunningOnScu() )
+      {
+         ebDeviceName = "dev/wbm0";
+      }
+      else
       {
          cout << "CAUTION: This application doesn't run on SCU, in this case"
                  " the port- forwarder \"socat\" has to be run on SCU at first!" << endl;
+         if( argc < 2 )
+         {
+            cerr << "ERROR: No SCU-URL given!" << endl;
+            return EXIT_FAILURE;
+         }
+         ebDeviceName = ppArgv[1];
       }
+
+      cout << "Wishbone-device: " << ebDeviceName << endl;
 
       /*
        * Building a object of etherbone-connection for the communication
@@ -115,7 +118,7 @@ int main( const int argc, const char** ppArgv )
        * "tcp/scuxl4711" or in the case this example will run directly in
        * the IPC of a SCU: "dev/wbm0".
        */
-      DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
+      DaqEb::EtherboneConnection ebConnection( ebDeviceName );
 
       /*
        * If the etherbone connection will not made outside of the class
