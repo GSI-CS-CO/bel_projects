@@ -571,6 +571,14 @@ begin
           when c_lvds_in_gate_set_high_reg    => r_dat <= r_lvds_in_gate(63 downto 32);
           when c_lvds_in_gate_reset_low_reg   => r_dat <= r_lvds_in_gate(31 downto  0);
           when c_lvds_in_gate_reset_high_reg  => r_dat <= r_lvds_in_gate(63 downto 32);
+          when c_gpio_out_gate_set_low_reg    => r_dat <= r_gpio_out_gate(31 downto  0);
+          when c_gpio_out_gate_set_high_reg   => r_dat <= r_gpio_out_gate(63 downto 32);
+          when c_gpio_out_gate_reset_low_reg  => r_dat <= r_gpio_out_gate(31 downto  0);
+          when c_gpio_out_gate_reset_high_reg => r_dat <= r_gpio_out_gate(63 downto 32);
+          when c_lvds_out_gate_set_low_reg    => r_dat <= r_lvds_out_gate(31 downto  0);
+          when c_lvds_out_gate_set_high_reg   => r_dat <= r_lvds_out_gate(63 downto 32);
+          when c_lvds_out_gate_reset_low_reg  => r_dat <= r_lvds_out_gate(31 downto  0);
+          when c_lvds_out_gate_reset_high_reg => r_dat <= r_lvds_out_gate(63 downto 32);
         when others =>
           -- Get driven GPIO OUT values
           if (slave_i.adr(15 downto 2) >= c_set_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_gpio_out_end_reg) then
