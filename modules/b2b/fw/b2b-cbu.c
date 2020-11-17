@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-November-2020
+ *  version : 17-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000200                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000201                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -175,6 +175,7 @@ void extern_clearDiag() // clears all statistics
   statusArray = 0x0;
   nTransfer   = 0x0;
   transStat   = 0x0;
+  dmLatency   = 0x0;
 } // extern_clearDiag 
 
 
@@ -438,7 +439,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       sidTrans  = *pSharedSid;;
       recSID    = (uint32_t)(recId >> 20) & 0xfff;
       //pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
-      if (sidTrans != recSID) return COMMON_STATUS_OK;
+      if (sidTrans != recSID) {
+        pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
+        return COMMON_STATUS_OK;
+      }
 
       // checkout todo list
       flagsTodo = 0x0;
@@ -447,7 +451,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gidETrig  = 0xfff;
       gidITrig  = 0xfff;
       //pp_printf("sharedGid %u, sharedMode %u\n", *pSharedGid, *pSharedMode);
-      if (!(flagsTodo = calcTodo(*pSharedGid, *pSharedMode))) return COMMON_STATUS_OK;
+      if (!(flagsTodo = calcTodo(*pSharedGid, *pSharedMode))) {
+        pp_printf("sharedGid %u, sharedMode %u\n", *pSharedGid, *pSharedMode);
+        return COMMON_STATUS_OK;
+      }
       //pp_printf("flagsTodo %u\n", flagsTodo);
       // most primitive case: ONLY extraction trigger upon EVT_KICK_START
       if (flagsTodo == B2B_ACTION_TRIGEXT) {
@@ -459,6 +466,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         sendParam    = 0x0;
         sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+        pp_printf("trig %ux, %ux\n", (uint32_t)((sendEvtId >> 32) & 0xffffffff), (uint32_t)((sendEvtId) & 0xffffffff));
         return COMMON_STATUS_OK;
       } //B2B_ACTION_TRIGEXT
 
