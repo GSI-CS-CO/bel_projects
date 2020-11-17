@@ -25,17 +25,32 @@ extern volatile unsigned int* g_pScu_mil_base;
  */
 #define INVALID_SLAVE_NR ((unsigned int)~0)
 
+#ifdef CONFIG_READ_MIL_TIME_GAP
+  #define _GAP_TIME_INIT .gapReadingTime = 0LL,
+#else
+  #define _GAP_TIME_INIT
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Initializer of a single MIL task
+ * @see g_aMilTaskData
  */
-#ifdef CONFIG_READ_MIL_TIME_GAP
-  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
-                                           0, 0, 0, 0, {{0, 0, 0}} }
-#else
-  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
-                                           0, 0, 0, {{0, 0, 0}} }
-#endif
+#define MIL_TASK_DATA_ITEM_INITIALIZER      \
+{                                           \
+   .state            = ST_WAIT,             \
+   .slave_nr         = INVALID_SLAVE_NR,    \
+   .lastChannel      = 0,                   \
+   .task_timeout_cnt = 0,                   \
+   .timestamp1       = 0LL,                 \
+   _GAP_TIME_INIT                           \
+   .aFgChannels =                           \
+   {{                                       \
+      .irq_data         = 0,                \
+      .setvalue         = 0,                \
+      .daq_timestamp    = 0LL               \
+   }}                                       \
+}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -57,6 +72,58 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
  * Mil-library uses "short" rather than "uint16_t"! :-(
  */
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Converts the states of the FSM in strings.
+ * @note For debug purposes only!
+ */
+STATIC const char* state2string( const FG_STATE_T state )
+{
+   #define __CASE_RETURN( s ) case s: return #s
+   switch( state )
+   {
+      __CASE_RETURN( ST_WAIT );
+      __CASE_RETURN( ST_PREPARE );
+      __CASE_RETURN( ST_FETCH_STATUS );
+      __CASE_RETURN( ST_HANDLE_IRQS );
+      __CASE_RETURN( ST_DATA_AQUISITION );
+      __CASE_RETURN( ST_FETCH_DATA );
+   }
+   return "unknown";
+   #undef __CASE_RETURN
+}
+
+
+#ifdef _CONFIG_DBG_MIL_TASK
+/*! ---------------------------------------------------------------------------
+ * @brief For debug purposes only!
+ */
+void dbgPrintMilTaskData( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      mprintf( "FSM-state[%u]: %s\n",          i, state2string( g_aMilTaskData[i].state ));
+      mprintf( "slave_nr[%u]: 0x%08X\n",       i, g_aMilTaskData[i].slave_nr );
+      mprintf( "lastChannel[%u]: %u\n",        i, g_aMilTaskData[i].lastChannel );
+      mprintf( "task_timeout_cnt[%u]: %u\n",   i, g_aMilTaskData[i].task_timeout_cnt );
+      mprintf( "timestamp1[%u]: 0x%08X%08X\n", i, (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].timestamp1),
+                                                  (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].timestamp1) );
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+      mprintf( "gapReadingTime[%u]: %08X%08X\n", i, (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].gapReadingTime),
+                                                    (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].gapReadingTime) );
+   #endif
+      for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
+      {
+         mprintf( "\tirq_data[%u][%u]: 0x%04X\n", i, j, g_aMilTaskData[i].aFgChannels[j].irq_data );
+         mprintf( "\tsetvalue[%u][%u]: %u\n", i, j, g_aMilTaskData[i].aFgChannels[j].setvalue );
+         mprintf( "\tdaq_timestamp[%u][%u]: 0x%08X%08X\n", i, j,
+                   (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp),
+                   (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp) );
+      }
+   }
+}
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -164,26 +231,6 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
    return TASKMIN + channel + getMilTaskId( pMilTaskData );
 }
 
-/*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Converts the states of the FSM in strings.
- * @note For debug purposes only!
- */
-STATIC const char* state2string( const FG_STATE_T state )
-{
-   #define __CASE_RETURN( s ) case s: return #s
-   switch( state )
-   {
-      __CASE_RETURN( ST_WAIT );
-      __CASE_RETURN( ST_PREPARE );
-      __CASE_RETURN( ST_FETCH_STATUS );
-      __CASE_RETURN( ST_HANDLE_IRQS );
-      __CASE_RETURN( ST_DATA_AQUISITION );
-      __CASE_RETURN( ST_FETCH_DATA );
-   }
-   return "unknown";
-   #undef __CASE_RETURN
-}
 
 //#define CONFIG_LAGE_TIME_DETECT
 
@@ -649,7 +696,17 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
+   /*!
+    * @brief Currently channel number for loop-macros FOR_EACH_FG and
+    *        FOR_EACH_FG_CONTINUING
+    * @see FOR_EACH_FG
+    * @see FOR_EACH_FG_CONTINUING
+    */
    unsigned int channel;
+
+   /*!
+    * @brief Return value of the MIL-access functions.
+    */
    int status = OKAY;
 
   /*
@@ -908,6 +965,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          break;
       }
    #endif
+
       case ST_PREPARE:
       {
       #ifdef CONFIG_READ_MIL_TIME_GAP
@@ -923,6 +981,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
          break;
       }
+
       case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:
       { /*
@@ -932,6 +991,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          pMilData->task_timeout_cnt = 0;
          break;
       }
+
       default: break;
    } /* End of state entry activities */
 } /* End function milDeviceHandler */

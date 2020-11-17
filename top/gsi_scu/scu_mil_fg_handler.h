@@ -69,6 +69,12 @@ typedef enum
 } FG_STATE_T;
 
 
+#ifdef _CONFIG_DBG_MIL_TASK
+void  dbgPrintMilTaskData( void );
+#else
+#define dbgPrintMilTaskData()
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief helper function which clears the state of a dev bus after malfunction
  */

@@ -518,7 +518,9 @@ void main( void )
             ESC_NORMAL
 #endif
            , pCpuMsiBox, pMyMsi );
-
+#ifdef CONFIG_MIL_FG
+   dbgPrintMilTaskData();
+#endif
    initializeGlobalPointers();
    initInterrupt();
    tellMailboxSlot();
