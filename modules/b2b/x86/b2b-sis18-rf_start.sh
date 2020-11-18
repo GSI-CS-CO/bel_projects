@@ -65,7 +65,8 @@ saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
 # configure lm32 and outputs (SIS18 -> ESR)
 ################################################
 # lm32 listens to B2B_PMEXT message from CBU
-saft-ecpu-ctl tr0 -c 0x1fa7801000000000 0xfffffff000000000 0 0x801 -d
+saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
+saft-ecpu-ctl tr0 -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
 
 # testing pulse upon B2B_DIAGEXT message from CBU
 saft-io-ctl tr0 -n IO2 -o 1 -t 1

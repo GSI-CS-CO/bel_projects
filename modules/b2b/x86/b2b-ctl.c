@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-November-2020
+ *  version : 18-November-2020
  *
  * Command-line interface for b2b
  *
@@ -133,8 +133,8 @@ static void help(void) {
   fprintf(stderr, "  setsid      <SID>   set Sequence ID of schedule in extraction machine\n");
   fprintf(stderr, "  setmode     <SID>   set mode (0: Off, 1: EVT_KICK_START, 2: B2Extraction, 3: B2Coasting, 4: B2Bucket\n");
   fprintf(stderr, "  setcphase   <offs>  set correction for phase matching [ns]\n");
-  fprintf(stderr, "  setctrigext <offs>  set correction for trigger kicker extraction\n");
-  fprintf(stderr, "  setctriginj <offs>  set correction for trigger kicker injection\n");
+  fprintf(stderr, "  setctrigext <offs>  set correction for trigger kicker extraction [ns]\n");
+  fprintf(stderr, "  setctriginj <offs>  set correction for trigger kicker injection [ns]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");

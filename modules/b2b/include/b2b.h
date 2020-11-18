@@ -34,23 +34,39 @@
 #define  B2B_ECADO_B2B_DIAGKICKINJ 0x80a   // command: optional kick diagnostic (injection)
 
 // status flags
-#define  B2B_FLAG_TRANSACTIVE       0x1    // flag: transfer active
-#define  B2B_FLAG_TRANSPEXT         0x2    // flag: got measured phase from extraction
-#define  B2B_FLAG_TRANSPINJ         0x4    // flag: got measured phase from injection
+//#define  B2B_FLAG_TRANSACTIVE       0x1    // flag: transfer active
+//#define  B2B_FLAG_TRANSPEXTS        0x2    // flag: phase measurement extraction, request has been sent
+//#define  B2B_FLAG_TRANSPEXTR        0x4    // flag: phase measurement extraction, data has been received
+//#define  B2B_FLAG_TRANSPINJS        0x8    // flag: phase measurement injection, request has been sent
+//#define  B2B_FLAG_TRANSPINJR        0x10   // flag: phase measurement injection, data has been received
 
 // B2B mode flags                          //                                            | ext trig | ext phase | inj trig | inj phase |
 #define  B2B_MODE_KSE                 1    // EVT_KICK_START: trigger extraction kicker  |     x    |           |          |           |
 #define  B2B_MODE_B2E                 2    // simple bunch extraction                    |     x    |     x     |          |           | 
 #define  B2B_MODE_B2C                 3    // bunch to coasting transfer                 |     x    |     x     |    x     |           | 
-#define  B2B_MODE_B2B                 4    // bunch to bucket transfer                   |     x    |     x     |    x     |     x     | 
+#define  B2B_MODE_B2B                 4    // bunch to bucket transfer                   |     x    |     x     |    x     |     x     |
+
+// B2B todo flags
+#define B2B_TODO_NOTHING            0x0    // nothing to do
+#define B2B_TODO_EXTPS              0x1    // phase measurement extraction, send request to PM
+#define B2B_TODO_EXTPR              0x2    // phase measurement extraction, receive data from PM
+#define B2B_TODO_EXTKST             0x4    // calculate time for immediate extraction at EVT_KICK_START
+#define B2B_TODO_EXTBGT             0x8    // calculate time for extraction at next bunch gap
+#define B2B_TODO_EXTMATCHT         0x10    // calculate time for phase matching 
+#define B2B_TODO_EXTTRIG           0x20    // trigger extraction kicker
+#define B2B_TODO_INJPS             0x40    // phase measurement injection, send request to PM
+#define B2B_TODO_INJPR             0x80    // phase measurement injection, receive data from PM
+#define B2B_TODO_INJTRIG          0x100    // trigger injection kicker
 
 // B2B action flags
-#define  B2B_ACTION_TRIGEXT         0x1    // trigger extraction
-#define  B2B_ACTION_PEXT            0x2    // consider phase of extraction only
-#define  B2B_ACTION_TRIGINJ         0x4    // trigger injection
-#define  B2B_ACTION_PMATCH          0x8    // match phase of extraction and injection
+//#define  B2B_ACTION_TRIGEXT         0x1    // trigger extraction
+//#define  B2B_ACTION_PEXT            0x2    // consider phase of extraction
+//#define  B2B_ACTION_TRIGINJ         0x4    // trigger injection
+//#define  B2B_ACTION_PINJ            0x8    // consider phase of injection (= matching/alignment)
 
 // group IDs
+#define  GID_INVALID                0x0    // invalid GID
+#define  SIS18_RING               0x12c    // LSA GID
 #define  SIS18_B2B_EXTRACT        0x3a0    // GID: SIS18 simple extraction
 #define  SIS18_B2B_ESR            0x3a1    // GID: SIS18 to ESR
 #define  SIS18_B2B_SIS100         0x3a2    // GID: SIS18 to CRYRING
@@ -72,10 +88,10 @@
 #define B2B_SHARED_GID            (COMMON_SHARED_END        + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
 #define B2B_SHARED_SID            (B2B_SHARED_GID           + _32b_SIZE_)       // sequence ID for B2B transfer 
 #define B2B_SHARED_MODE           (B2B_SHARED_SID           + _32b_SIZE_)       // mode of B2B transfer
-#define B2B_SHARED_TH1EXTHI       (B2B_SHARED_MODE          + _32b_SIZE_)       // period of h=1 extraction, high bits
+#define B2B_SHARED_TH1EXTHI       (B2B_SHARED_MODE          + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
 #define B2B_SHARED_TH1EXTLO       (B2B_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2B_SHARED_NHEXT          (B2B_SHARED_TH1EXTLO      + _32b_SIZE_)       // harmonic number of extraction RF
-#define B2B_SHARED_TH1INJHI       (B2B_SHARED_NHEXT         + _32b_SIZE_)       // period of h=1 injection, high bits 
+#define B2B_SHARED_TH1INJHI       (B2B_SHARED_NHEXT         + _32b_SIZE_)       // period [as] of h=1 injection, high bits
 #define B2B_SHARED_TH1INJLO       (B2B_SHARED_TH1INJHI      + _32b_SIZE_)       // period of h=1 injection, low bits
 #define B2B_SHARED_NHINJ          (B2B_SHARED_TH1INJLO      + _32b_SIZE_)       // harmonic number of injection RF
 #define B2B_SHARED_TBEATHI        (B2B_SHARED_NHINJ         + _32b_SIZE_)       // period of beating, high bits
