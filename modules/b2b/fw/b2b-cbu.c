@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-November-2020
+ *  version : 18-November-2020
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000201                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000202                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -464,9 +464,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
         sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
         sendParam    = 0x0;
-        sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET;
+        sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET + *pSharedCTrigExt;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-        pp_printf("trig %ux, %ux\n", (uint32_t)((sendEvtId >> 32) & 0xffffffff), (uint32_t)((sendEvtId) & 0xffffffff));
+        nTransfer++;
+        //pp_printf("trig %ux, %ux\n", (uint32_t)((sendEvtId >> 32) & 0xffffffff), (uint32_t)((sendEvtId) & 0xffffffff));
         return COMMON_STATUS_OK;
       } //B2B_ACTION_TRIGEXT
 
