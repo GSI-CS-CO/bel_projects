@@ -540,7 +540,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
                                             'Switch DAQ for set value on.' );
          break;
-      }
+      } /* End case FB_READY */
 
       case FB_FIRST_ON:
       {
@@ -555,7 +555,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired.\n'
                                            'Switch DAQ for actual value on.' );
          break;
-      }
+      } /* End case FB_FIRST_ON */
 
       case FB_BOTH_ON:
       {
@@ -566,7 +566,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          }
          FSM_TRANSITION( FB_READY, label='Waiting time expired.');
          break;
-      }
+      } /* End case FB_BOTH_ON */
 
       default: DAQ_ASSERT( false );
    }

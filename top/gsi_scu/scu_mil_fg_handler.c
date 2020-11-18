@@ -717,6 +717,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    FG_ASSERT( (unsigned int)pThis->pTaskData >= (unsigned int)&g_aMilTaskData[0] );
    FG_ASSERT( (unsigned int)pThis->pTaskData <= (unsigned int)&g_aMilTaskData[ARRAY_SIZE(g_aMilTaskData)-1] );
 
+   /*!
+    * @brief Pointer to the currently MIL-task.
+    */
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
 
    const FG_STATE_T lastState = pMilData->state;
@@ -848,7 +851,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                */
                continue;
             }
-            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime(); // store the sample timestamp of daq
+            /*
+             * Store the sample timestamp of DAQ.
+             */
+            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime();
+
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
                printDeviceError( status, 23, "dev_sio read daq" );
