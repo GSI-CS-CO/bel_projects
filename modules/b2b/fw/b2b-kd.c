@@ -231,33 +231,43 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
       sendEvtNo = B2B_ECADO_B2B_DIAGKICKEXT;
     case B2B_ECADO_B2B_TRIGGERINJ :
-      // NB: we need to pretrigger on this event as we need time to enable the input gates
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_DIAGKICKINJ;
+
+      // NB: we need to pretrigger on this event as we need time to enable the input gates
+      recDeadline    += B2B_PRETRIGGER;
+      
+      nTransfer++;
+
       tKickTrig       = recDeadline;
       tKickMon        = 0;
       tKickProbe      = 0;
-      flacRecMon      = 0;
+      flagRecMon      = 0;
       flagRecProbe    = 0;
-      kickGid         = (uint32_t)((recEvtId >> 48) & 0xfff     );
-      kickSid         = (uint32_t)((recEvtId >> 20) & 0xfff     );
-      *psharedKickGid = kickGid;
-      *psharedKickSid = kickSid;
+      recGid          = (uint32_t)((recEvtId >> 48) & 0xfff);
+      recSid          = (uint32_t)((recEvtId >> 20) & 0xfff);
+      *pSharedKickGid = recGid;
+      *pSharedKickSid = recSid;
 
       fwlib_ioCtrlSetGate(1, 1);                              // enable input gate monitor signal
       fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal
 
+      // get monitor signal
       ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
       if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickMon = recDeadline; flagRecMon = 1;}
-      if (ecaAction == B2B_ECADO_TIMEOUT)   break;            // seen no monitor signal: give up
+      if (ecaAction == B2B_ECADO_TIMEOUT)   return COMMON_STATUS_TIMEDOUT;   // seen no monitor signal: give up
+
+      // get probe signal
       ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT)  {tProbeMon = recDeadline; flagRecProbe = 1;}
+      if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickProbe = recDeadline; flagRecProbe = 1;}
 
       fwlib_ioCtrlSetGate(0, 1);                              // disable input gates 
       fwlib_ioCtrlSetGate(0, 0);
+
+      /* chk it might be a good idea to check if the received deadlines make sense .... */
       
       DBPRINT2("b2b-kd: received kick mon signal %d, kick probe signal %d\n", flagRecMon, flagRecProbe);
 
-      if (flagRecProbe) dKickProbe = tProbeMon - tKickTrig;
+      if (flagRecProbe) dKickProbe = tKickProbe - tKickTrig;
       else              dKickProbe = 0;
 
       // send command: transmit measured phase value
@@ -266,9 +276,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);     // EVTNO
       sendEvtId    = sendEvtId | ((uint64_t)recSid    << 20);     // SID
       sendParam    = dKickProbe;
-      sendDeadLine = tKickMon + (uint64_t)(4 * COMMON_AHEADT);
+      sendDeadline = tKickMon + (uint64_t)(4 * COMMON_AHEADT);
 
-      if (getSysTime() > (sendDeadLine - COMMON_AHEADT)) return COMMON_STATUS_TIMEDOUT;  // ophs, too late
+      if (getSysTime() > (sendDeadline - COMMON_AHEADT)) return COMMON_STATUS_TIMEDOUT;  // ophs, too late
 
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
@@ -280,14 +290,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedtKickSonLo  = (uint32_t)( tKickProbe        & 0xffffffff);
 
       transStat    = flagRecMon + flagRecProbe;
-      nTransfer++;
       
       break; //  B2B_ECADO_B2B_TRIGGERINJ
     default : ;
   } // switch ecaAction
  
 
-  status = actStatus; /* chk */
+  status = actStatus;
   
   return status;
 } // doActionOperation

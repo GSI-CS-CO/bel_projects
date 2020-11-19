@@ -41,6 +41,7 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 # $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
+b2bkd.elf:  $(PATHFW)/b2b-kd.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
