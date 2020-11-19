@@ -170,6 +170,14 @@ private:
    void onInit( void ) override;
    void onReset( void ) override;
 
+   void onAddacDataBlock( const bool isSetData,
+                          const uint64_t timestamp,
+                          daq::DAQ_DATA_T* pData,
+                          std::size_t wordLen ) override;
+
+   void onMilData( const uint64_t timestamp,
+                   MiLdaq::MIL_DAQ_T actlValue,
+                   MiLdaq::MIL_DAQ_T setValue ) override;
 };
 
 

@@ -323,6 +323,24 @@ protected:
     */
    virtual void onReset( void ) {}
 
+   /*!
+    * @brief Optional callback function for debug purposes becomes
+    *        invoked for all incoming ADDAC/ACO-DAQ data blocks.
+    */
+   virtual void onAddacDataBlock( const bool isSetData,
+                                  const uint64_t timestamp,
+                                  daq::DAQ_DATA_T* pData,
+                                  std::size_t wordLen ) {}
+
+#ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Optional callback function for debug purposes becomes
+    *        invoked for all incoming MIL data tuples.
+    */
+   virtual void onMilData( const uint64_t timestamp,
+                           MiLdaq::MIL_DAQ_T actlValue,
+                           MiLdaq::MIL_DAQ_T setValue ) {}
+#endif
 }; // class FgFeedbackChannel
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -722,6 +740,17 @@ public:
    void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
    {
       m_lm32Swi.send( opCode, param );
+   }
+
+   /*!
+    * @brief Enabling and adjusting the gap-reading for all
+    *        MIL- function generators or disabling the gap reading.
+    * @param gapInterval Gap read interval in milliseconds.
+    *                    The value of zero disables the gap reading.
+    */
+   void sendGapReadingInterval( const uint gapInterval = 0 )
+   {
+      sendSwi( FG::FG_OP_MIL_GAP_INTERVAL, gapInterval );
    }
 
    /*!

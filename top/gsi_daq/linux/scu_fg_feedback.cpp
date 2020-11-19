@@ -150,6 +150,11 @@ FgFeedbackChannel::AddacFb::Receive::~Receive( void )
 bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
                                                        std::size_t wordLen )
 {
+   const uint64_t timestamp = descriptorGetTimeStamp();
+   m_pParent->m_pParent->onAddacDataBlock( this == &m_pParent->m_oReceiveSetValue,
+                                           timestamp,
+                                           pData, wordLen );
+
    if( !descriptorWasContinuous() )
    {
       return true;
@@ -168,7 +173,6 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
    m_sequence = descriptorGetSequence();
    m_sampleTime = descriptorGetTimeBase();
 
-   const uint64_t timestamp = descriptorGetTimeStamp();
    const uint blockTime = m_sampleTime * m_blockLen;
 #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
    m_timestamp += blockTime;
@@ -333,6 +337,7 @@ void FgFeedbackChannel::MilFb::Receive::onData( uint64_t wrTimeStampTAI,
    /*
     * Just forwarding, that's all.
     */
+   m_pParent->m_pParent->onMilData( wrTimeStampTAI, actlValue, actlValue );
    m_pParent->evaluate( wrTimeStampTAI, actlValue, setValue );
 }
 

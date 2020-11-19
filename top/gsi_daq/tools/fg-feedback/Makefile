@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.3
+DEFINES += VERSION=0.4
 
 MIAN_MODULE := fg-feedback.cpp
 
@@ -92,14 +92,14 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
 #CALL_ARGS = scuxl0107 -avcd
 #CALL_ARGS = -V
-#CALL_ARGS = scuxl0035 -vS
+#CALL_ARGS = scuxl0118 -vS
 #CALL_ARGS = tcp/scuxl0107 -h
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
-#CALL_ARGS = tcp/scuxl0107 -v
+#CALL_ARGS = tcp/scuxl0107 -vS
 
 #CALL_ARGS = --generate_doc_tagged
 
-CALL_ARGS = scuxl0035 -adt1
+CALL_ARGS = scuxl0035 -vadt1
 
 # DEBUG = 1
 

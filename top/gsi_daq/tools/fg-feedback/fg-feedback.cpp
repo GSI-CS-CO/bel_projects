@@ -153,6 +153,36 @@ void FbChannel::onReset( void )
 
 /*! ---------------------------------------------------------------------------
  */
+void FbChannel::onAddacDataBlock( const bool isSetData,
+                                  const uint64_t timestamp,
+                                  daq::DAQ_DATA_T* pData,
+                                  std::size_t wordLen )
+{
+   if( !getCommandLine()->isVerbose() )
+      return;
+
+   cout << (isSetData? "   set":"actual") << "-values: fg-";
+   cout << getSocket() << '-' << getFgNumber() << " received: " << wordLen,
+   cout << " words, timestamp: " << daq::wrToTimeDateString( timestamp );
+   cout << ", " << timestamp << endl;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FbChannel::onMilData( const uint64_t timestamp,
+                           MiLdaq::MIL_DAQ_T actlValue,
+                           MiLdaq::MIL_DAQ_T setValue )
+{
+   if( !getCommandLine()->isVerbose() )
+      return;
+
+   cout << "MIL value: fg-" << getSocket() << '-' << getFgNumber();
+   cout << "timestamp: " << daq::wrToTimeDateString( timestamp );
+   cout << ", " << timestamp << endl;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void FbChannel::addItem( const uint64_t time,
                          const MiLdaq::MIL_DAQ_T actValue,
                          const MiLdaq::MIL_DAQ_T setValue,
@@ -351,7 +381,7 @@ int fbMain( int argc, char** ppArgv )
                gapReadInterval = gapReadTime;
             else
                gapReadInterval = 0;
-            pDaqAdmin->sendSwi( FG::FG_OP_MIL_GAP_INTERVAL, gapReadInterval );
+            pDaqAdmin->sendGapReadingInterval( gapReadInterval );
             if( cmdLine.isVerbose() )
                cout << "Gap reading " << ((gapReadInterval != 0)? "enabled" : "disabled") << endl;
             break;

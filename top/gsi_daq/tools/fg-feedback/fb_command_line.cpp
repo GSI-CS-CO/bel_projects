@@ -511,7 +511,7 @@ vector<OPTION> CommandLine::c_optList =
          if( readInteger( gapInterval, poParser->getOptArg() ) )
             return -1;
 
-         pAllDaq->sendSwi( FG::FG_OP_MIL_GAP_INTERVAL, gapInterval );
+         pAllDaq->sendGapReadingInterval( gapInterval );
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
