@@ -40,7 +40,7 @@ extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
   * @see g_gapReadingTime
   */
  #ifndef DEFAULT_GAP_READING_INTERVAL
-  #define DEFAULT_GAP_READING_INTERVAL 10
+  #define DEFAULT_GAP_READING_INTERVAL 0
  #endif
 #endif /* ifdef _CONFIG_VARIABLE_MIL_GAP_READING */
 

@@ -835,7 +835,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             }
             status = milHandleAndWrite( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError(status, 22, "dev_sio end handle");
+               printDeviceError( status, 22, "dev_sio end handle");
          }
          FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
@@ -884,7 +884,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          #endif
          }
         /*
-         * fetch daq data
+         * fetch DAQ data
          */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
