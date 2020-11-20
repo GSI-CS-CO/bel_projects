@@ -1,9 +1,11 @@
 #ifndef _COMMON_FWLIB_
 #define _COMMON_FWLIB_
 
-// !!!!!
-// experimental: let's try to use common routines by my (DB) lm32 projects
-// !!!!!
+// project time t1 [ns] to approximately t2 [ns] in multiples of period T [as]
+uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
+                           uint64_t t2,               // time 2 [ns], where t2 > t1
+                           uint64_t Tas               // period T [as]
+                           );
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();

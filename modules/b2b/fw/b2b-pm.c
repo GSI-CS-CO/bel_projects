@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Novmember-2020
+ *  version : 20-Novmember-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000201                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000203                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -69,12 +69,9 @@ uint64_t SHARED  dummy = 0;
 
 // global variables 
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
-volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
-volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
-volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
-volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
-volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
-volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
+volatile uint32_t *pSharedTH1Hi;        // pointer to a "user defined" u32 register; here: period of h=1, high bits
+volatile uint32_t *pSharedTH1Lo;        // pointer to a "user defined" u32 register; here: period of h=1, low bits
+volatile uint32_t *pSharedNH;           // pointer to a "user defined" u32 register; here: harmonic number
 
 uint32_t *cpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 
@@ -107,12 +104,9 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pShared                 = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI  >> 2));
-  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO  >> 2));
-  pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT     >> 2));
-  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJHI  >> 2));
-  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJLO  >> 2));
-  pSharedNHInj            = (uint32_t *)(pShared + (B2B_SHARED_NHINJ     >> 2));
+  pSharedTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI  >> 2));   // for simplicity: use 'EXT' for data
+  pSharedTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO  >> 2));
+  pSharedNH            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT     >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -207,14 +201,17 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32
   int      i;
   int      usedIdx;      // index of used timestamp
   uint64_t periodNs;     // period in ns
-  uint64_t tmp;          // 
+  uint64_t phaseTmp;     // intermediate value;
+  uint64_t tmp;          // helper variable
 
   // determine phase
   usedIdx     = nSamples / 2;                                          // use a timestamp in the middle
-  if (usedIdx < FIRSTTS)      return B2B_STATUS_PHASEFAILED;       // check range
-  if (usedIdx > nSamples -2)  return B2B_STATUS_PHASEFAILED;       // check range, '-2' is on purpose
-  *phase      = tStamp[usedIdx];
-
+  if (usedIdx < FIRSTTS)      return B2B_STATUS_PHASEFAILED;           // check range
+  if (usedIdx > nSamples -2)  return B2B_STATUS_PHASEFAILED;           // check range, '-2' is on purpose
+  phaseTmp = tStamp[usedIdx];
+  //*phase   = fwlib_advanceTime(phaseTmp, getSysTime(), period);        // advancing to 'now' is important in case of low frequencies
+  *phase   = phaseTmp;
+  
   // estimate phase error from preceding and successing array element
   // this is tricky, as timestamps are not necessarily ordered
   *dt         = 0;
@@ -243,23 +240,28 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
+  uint32_t sendEvtNo;                                         // EvtNo to send
   
   int      nInput;                                            // # of timestamps
   uint64_t TH1;                                               // h=1 period
-  uint64_t tH1Ext;                                            // h=1 timestamp of extraction ( = 'phase')
-  uint64_t tH1Inj;                                            // h=1 timestamp of injection ( = 'phase')
+  uint64_t tH1;                                               // h=1 timestamp of phase ( = 'phase')
   uint32_t dt;                                                // uncertainty of h=1 timestamp
 
-  status = actStatus;
+  status    = actStatus;
+  sendEvtNo = 0x0;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &TH1, &recTEF, &flagIsLate);
    
   switch (ecaAction) {
-    case B2B_ECADO_B2B_PMEXT :
-      *pSharedTH1ExtHi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
-      *pSharedTH1ExtLo = (uint32_t)( TH1             & 0xffffffff);
-      *pSharedNHExt    = (uint32_t)( recEvtId        & 0xf       );
-      recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
+    case B2B_ECADO_B2B_PMEXT :                                // this is an OR, no 'break' on purpose
+      sendEvtNo = B2B_ECADO_B2B_PREXT;
+    case B2B_ECADO_B2B_PMINJ :
+      if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
+      
+      *pSharedTH1Hi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
+      *pSharedTH1Lo = (uint32_t)( TH1             & 0xffffffff);
+      *pSharedNH    = (uint32_t)( recEvtId        & 0xf       );
+      recGid        = (uint32_t)((recEvtId >> 48) & 0xfff     );
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -270,14 +272,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // while nInput
       fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
       
-      DBPRINT2("b2b-pm: extraction phase measurement with samples %d\n", nInput);
+      DBPRINT2("b2b-pm: phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext, &dt) == COMMON_STATUS_OK)) {
+      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
         sendEvtId    = 0x1000000000000000;                                    // FID
         sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID 
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);     // EVTNO
-        sendParam    = tH1Ext;
+        sendParam    = tH1;
         sendDeadline = getSysTime() + COMMON_AHEADT;
         
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
@@ -290,45 +292,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nTransfer++;
       
       break; // case  B2B_ECADO_B2B_PMEXT
-    case B2B_ECADO_B2B_PMINJ :
-      *pSharedTH1InjHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
-      *pSharedTH1InjLo = (uint32_t)( TH1           & 0xffffffff);
-      *pSharedNHInj    = (uint32_t)( recEvtId      & 0xf       );
-      
-      nInput = 0;
-      fwlib_ioCtrlSetGate(1, 2);                                       // enable input gate
-      while (nInput < NSAMPLES) {                                      // treat 1st TS as junk
-        ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-        if (ecaAction == B2B_ECADO_TLUINPUT)  {tStamp[nInput] = recDeadline; nInput++;}
-        if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-      } // while nInput
-      fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
-      
-      DBPRINT2("b2b-pm: injection phase measurement with samples %d\n", nInput);
-      
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj, &dt) == COMMON_STATUS_OK)) {
-        // send command: transmit measured phase value
-        sendEvtId    = 0x1000000000000000;                                    // FID
-        sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID chk hackish         
-        sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);     // EVTNO
-        sendParam    = tH1Inj;
-        sendDeadline = getSysTime() + COMMON_AHEADT;
-        
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-
-        transStat    = dt;
-        
-      } // if nInput
-      else actStatus = B2B_STATUS_PHASEFAILED;
-      
-      nTransfer++;
-      
-      break; // case B2B_ECADO_B2B_PMIN
-    default :
-      break; // case 'default'
+    default : ;
   } // switch ecaAction
  
-
   status = actStatus; /* chk */
   
   return status;

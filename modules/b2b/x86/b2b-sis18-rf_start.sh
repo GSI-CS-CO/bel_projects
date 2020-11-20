@@ -49,39 +49,38 @@ sleep 5
 b2b-ctl $TRCBU startop
 
 echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
-################################################
-# configure phase measurement input (SIS18 DDS)
-################################################
+###########################
+# configure PM Unit (SIS18)
+###########################
 # IO3 configured as TLU input (from 'DDS')
 # configure TLU
 saft-io-ctl tr0 -n IO3 -o 0 -t 1
 saft-io-ctl tr0 -n IO3 -b 0xffff100000000000
-#eb-write dev/wbm0 0x4012000/4 0x0004
 
 # lm32 listens to TLU
 saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
 
-################################################
-# configure lm32 and outputs (SIS18 -> ESR)
-################################################
-# lm32 listens to B2B_PMEXT message from CBU
+# lm32 listens to CMD_B2B_PMEXT  message from CBU
 saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
 saft-ecpu-ctl tr0 -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
 
-# testing pulse upon B2B_DIAGEXT message from CBU
+# testing pulse upon CMD_B2B_TRIGGEREXT message from CBU
 saft-io-ctl tr0 -n IO2 -o 1 -t 1
-saft-io-ctl tr0 -n IO2 -c 0x1fa7805000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl tr0 -n IO2 -c 0x1fa7805000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl tr0 -n IO2 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl tr0 -n IO2 -c 0x112c804000000000 0xfffffff000000000 10000000 0x0 0 -u
 
-# testing pulse upon B2B_DIAGMATCH message from CBU
+# testing pulse upon CMD_B2B_DIAGEXT message from CBU
 saft-io-ctl tr0 -n IO1 -o 1 -t 0
-saft-io-ctl tr0 -n IO1 -c 0x1fa7807000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl tr0 -n IO1 -c 0x1fa7807000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl tr0 -n IO1 -c 0x13a0807000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl tr0 -n IO1 -c 0x13a0807000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl tr0 -n IO1 -c 0x13a1807000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl tr0 -n IO1 -c 0x13a1807000000000 0xfffffff000000000 10000000 0x0 0 -u
+# add SIS100 later
 
 echo -e b2b-sis18 - start: configure tr1 as cbu
-################################################
+##############################
 # configure CBU (SIS18 -> ESR)
-################################################
+##############################
 # IO1 generates TTL for EVT_KICK_START1 event
 # convenience for triggering scope
 saft-io-ctl tr1 -n IO1 -o 1 -t 0

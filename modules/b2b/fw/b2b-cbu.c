@@ -3,9 +3,9 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-November-2020
+ *  version : 20-November-2020
  *
- *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
+ *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000202                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000203                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -306,29 +306,21 @@ uint32_t getTrigGid(uint32_t extFlag)
 
 uint32_t calcExtTime(uint64_t *tExtract)
 {
-  uint64_t epoch;                                   // temporary epoch                [>>n<<s]
-  uint64_t tNow;                                    // current time                   [ns]
-  uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
-  uint64_t TExtract;                                // time when to extract           [as]
-  uint64_t TAhead;                                  // ahead time                     [as]
-  uint64_t NAhead;                                  // number of rf-periods we have to advance
+  uint64_t tNow;                                                               // current time
+  uint64_t tExtr;                                                              // approximate time when to extract
 
-  // define temporary epoch [ns]
-  tNow     = getSysTime();
-  epoch    = tNow - nineO * 1;                                                     // subtracting one second should be safe
-
-  // check for unreasonable values
-  if (TH1Ext == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
-  if (nHExt  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
-  if ((tH1Ext + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
-
-  // calculate number of rf-periods we have to advance
-  TAhead   = (uint64_t)COMMON_AHEADT * nineO;               // approximate time we have to advance
-  NAhead   = (uint64_t)((double)TAhead / (double)TH1Ext);   // number of rf periods
-  TExtract = (NAhead + 1) * TH1Ext;                         // add a safety margin one rf-period 
+  tNow      = getSysTime();
+  tExtr     = tNow + (uint64_t)COMMON_AHEADT;                                  // consider propagation time in network
   
-  // convert back to [ns] and get rid of temporary epoch
-  *tExtract = (uint64_t)((double)TExtract / (double)nineO) + epoch;
+  // check for unreasonable values
+  if (TH1Ext == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for period
+  if (nHExt  == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for harmonic number
+  if ((tH1Ext + (1 << 30)) < tNow)   return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
+  
+  *tExtract = fwlib_advanceTime(tH1Ext, tExtr, TH1Ext);
+  if (*tExtract == 0)                return COMMON_STATUS_OUTOFRANGE;
+  
+  //pp_printf("tnow - tH1Ext %u\n", (uint32_t)(*tExtract - tNow));
 
   if (*tExtract < tNow) DBPRINT3("b2b-cbu: err -- now - extract %u ns\n", (unsigned int)(tNow - *tExtract));
   else                  DBPRINT3("b2b-cbu: ok  -- match - now %u ns\n",   (unsigned int)(*Extract - tNow));
@@ -454,7 +446,7 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
  
   // convert back to [ns] and get rid of temporary epoch
   *tPhaseMatch = (uint64_t)((double)tMatch / (double)nineO) + epoch;
-
+  /* chk  if we have enough time COMMON_AHEADT */
   if (*tPhaseMatch < tNow) DBPRINT3("b2b-cbu: err -- now - match %u ns\n", (unsigned int)(tNow - *tPhaseMatch));
   else                     DBPRINT3("b2b-cbu: ok  -- match - now %u ns\n", (unsigned int)(*tPhaseMatch - tNow));
 
@@ -552,24 +544,27 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       nTransfer++;
       modeTrans = *pSharedMode;
       gidTrans  = *pSharedGid;
+      cPhase    = *pSharedCPhase;
+      cTrigExt  = *pSharedCTrigExt;
+      cTrigInj  = *pSharedCTrigInj;
+
       transStat = 0x0;
       todoItem  = getNextTodo(modeTrans,  B2B_TODO_NOTHING);
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
       tH1Ext        = recParam;
+
       // do some math
-      /*
-      tH1Ext        = recParam + pcFixExt + pcVarExt;
       sendDeadline  = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
       
       // send DIAGEXT to extraction machine
-      sendEvtId     = 0x1000000000000000;                                       // FID
-      sendEvtId    = sendEvtId | ((uint64_t)B2B_GID << 48);                 // GID chk hackish 
+      sendEvtId     = 0x1000000000000000;                                   // FID
+      sendEvtId     = sendEvtId | ((uint64_t)gidTrans << 48);               // GID chk hackish 
       sendEvtId     = sendEvtId | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);  // EVTNO
       sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-      */
+      
       transStat |= todoItem;
       todoItem   = getNextTodo(modeTrans, todoItem);
       //pp_printf("todoitem %x\n", todoItem);
@@ -595,7 +590,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     default : ;
   } // switch ecaAction
       
-  // extraction in bunch gap: calculate extraction ttime
+  // extraction at time of EVT_KICK_START1/2
   if (todoItem == B2B_TODO_EXTKST) {
     tTrigExt   = recDeadline + (uint64_t)B2B_DMOFFSET;
     transStat |= todoItem;
@@ -615,17 +610,24 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);         // EVTNO
     sendEvtId    = sendEvtId | (uint64_t)(nHExt & 0xf);                       // RESERVED, use only four bits
     sendParam    = TH1Ext;
-    sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    //sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;                  // this would be the FASTPATH
+    sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET + 1;                  // deadline in at EVT_KICK_START + 1ns
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
     transStat |= todoItem;
     todoItem   = getNextTodo(modeTrans, todoItem);
   } // B2B_TODO_EXTPS
 
-  // extraction in bunch gap: calculate extraction ttime
+  // extraction in bunch gap: calculate extraction time
   if (todoItem == B2B_TODO_EXTBGT) {
-    calcExtTime(&tTrigExt);
-    transStat |= todoItem;
-    todoItem   = getNextTodo(modeTrans, todoItem);
+    if (calcExtTime(&tTrigExt) == COMMON_STATUS_OK) {
+      transStat |= todoItem;
+      todoItem   = getNextTodo(modeTrans, todoItem);
+    } // if OK
+    else {
+      transStat = 0x0;
+      todoItem  = B2B_TODO_NOTHING;
+    } // if not ok
+    
   } // B2B_TODO_EXTTC
 
     // trigger extraction kicker
@@ -635,8 +637,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
     sendParam    = 0x0;
-    sendDeadline = tMatch;
-    fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
+    sendDeadline = tTrigExt + cTrigExt;                                       // trigger correction
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    //pp_printf("todo2 %u, extTime - now %d\n", todoItem, (uint32_t)(sendDeadline - getSysTime()));
     transStat |= todoItem;
     todoItem   = getNextTodo(modeTrans, todoItem);
   } // B2B_ACTION_TRIGEXT

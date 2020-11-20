@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-August-2020
+ *  version : 20-November-2020
  *
  *  common functions used by various firmware projects
  *  
@@ -206,6 +206,31 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
+uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
+{
+  uint64_t dtns;                // approximate time interval to advance [ns]
+  uint64_t dtas;                // approximate time interval to advance [as]
+  uint64_t nPeriods;            // # of periods
+  uint64_t intervalAs;          // interval [as]
+  uint64_t intervalNs;          // interval [ns]
+  uint64_t tAdvanced;           // result
+  uint64_t nineO = 1000000000;  // nine order of magnitude
+
+  if (Tas == 0)          return 0;
+  if (t2 < t1)           return 0;               // order ok ?
+  if ((t2 - t1) > nineO) return 0;               // not more than 1s! (~18 s max!)
+
+  dtns       = t2 - t1;
+  dtas       = dtns * nineO;
+  nPeriods   = (uint64_t)((double)dtas / (double)Tas) + 1;
+  intervalAs = nPeriods * Tas;
+  intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
+  tAdvanced  = t1 + intervalNs;
+
+  return tAdvanced;
+} //fwlib_advanceTime
+
+
 uint64_t fwlib_wrGetMac()  // get my own MAC
 {
   uint32_t macHi, macLo;
@@ -429,8 +454,6 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   *pSharedNBadState    = 0;
   flagRecover          = 0;
 } // fwlib_init
-
-
 
 
 void fwlib_printOLED(char *chars)
