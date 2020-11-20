@@ -131,11 +131,16 @@ void FbChannel::onInit( void )
 {
    if( m_pPlot != nullptr )
       return;
-   m_pPlot = new Plot( this );
 
-   //m_aPlotList.reserve( 1000000 );
-
-  // m_pPlot->plot();
+   try
+   {
+      m_pPlot = new Plot( this );
+   }
+   catch( gpstr::Exception& e )
+   {
+      WARNING_MESSAGE( "Unable to plot: \"" << e.what() << "\"" );
+      m_pPlot = nullptr;
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -204,6 +209,9 @@ void FbChannel::addItem( const uint64_t time,
 void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
                                               MiLdaq::MIL_DAQ_T setValue )
 {
+   if( m_pPlot == nullptr )
+      return;
+
    m_callCount++;
    m_currentTime = wrTimeStamp;
    if( m_state != START )
