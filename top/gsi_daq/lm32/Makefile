@@ -15,6 +15,9 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # ACU := 1
 
+# Avoiding of including of scu_control_config.h
+DEFINES += _SCU_CONTROL_CONFIG_H
+
 ifdef ACU
   TARGET := daq_acu_control
 else

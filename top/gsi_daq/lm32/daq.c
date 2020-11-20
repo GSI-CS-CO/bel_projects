@@ -627,7 +627,7 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
    for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel);
         channel++ )
    {
-      DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
+      DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04X\n",
              slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
 
       DAQ_CANNEL_T* pCurrentChannel = &pThis->aChannel[channel];
@@ -663,8 +663,15 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
       DBPRINT2( "DBG: ctrReg: 0b%04b\n",
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
-         break; /* Supposing this channel isn't present. */
-
+      {
+       #ifndef CONFIG_NO_DAQ_INFO_PRINT
+         mprintf( ESC_WARNING
+                  "No DAQ-channel %u found on slave %u !\n"
+                  ESC_NORMAL,
+                  channel, slot );
+       #endif
+         continue; /* Supposing this channel isn't present. */
+      }
       DAQ_ASSERT((*((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr(
                                            pCurrentChannel )) & 0x0FFF) == 0 );
       /* If the assertion above has been occurred, check the element types
@@ -728,7 +735,9 @@ SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
 ONE_TIME_CALL
 SCUBUS_SLAVE_FLAGS_T findAllAddacDevices( const void* pScuBusBase )
 {
-   return scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC2 );
+   SCUBUS_SLAVE_FLAGS_T slaveFlags = scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC2 );
+   slaveFlags |= scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC1 );
+   return slaveFlags;
 }
 
 /*! ---------------------------------------------------------------------------
