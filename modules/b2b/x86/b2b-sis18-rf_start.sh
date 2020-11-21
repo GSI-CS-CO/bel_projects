@@ -61,8 +61,8 @@ saft-io-ctl tr0 -n IO3 -b 0xffff100000000000
 saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
 
 # lm32 listens to CMD_B2B_PMEXT  message from CBU
-saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
-saft-ecpu-ctl tr0 -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
+saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 500000 0x800 -dg
+saft-ecpu-ctl tr0 -c 0x13a1800000000000 0xfffffff000000000 500000 0x800 -dg
 
 # testing pulse upon CMD_B2B_TRIGGEREXT message from CBU
 saft-io-ctl tr0 -n IO2 -o 1 -t 1
@@ -87,12 +87,12 @@ saft-io-ctl tr1 -n IO1 -o 1 -t 0
 saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr1 -n IO1 -c 0x112c031000000000 0xfffffff000000000 10000000 0x0 0 -u
 
-# lm32 listens to EVT_KICK_START1  message from DM
-saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 1000000 0x031 -dg
+# lm32 listens to EVT_KICK_START1  message from DM, 500us pretrigger
+saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 500000 0x031 -dg
 
 # SIS18_B2B_EXTRACT
 # lm32 listens to B2B_PREXT message from extraction machine
-saft-ecpu-ctl tr1 -c 0x13a0802000000000 0xfffffff000000000 0 0x802 -d
+saft-ecpu-ctl tr1 -c 0x13a0802000000000 0xfffffff000000000 500000 0x802 -dg
 
 # SIS18_B2B_ESR
 # lm32 listens to B2B_PREXT message from extraction machine

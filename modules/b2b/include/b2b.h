@@ -76,8 +76,6 @@
 #define  SIS100_B2B_EXTRACT       0x3b0    // GID: CRYRING simple extraction
 
 // specialities
-#define  B2B_DMOFFSET           1000000    // offset [ns] used for receiving KICK_START or for sending messages
-                                           // this value is very special and should equal the value used by the DM
 #define  B2B_PRETRIGGER           20000    // offset [ns] used for pre-trigger on the trigger event
 
 

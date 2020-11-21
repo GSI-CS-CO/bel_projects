@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Novmember-2020
+ *  version : 21-November-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000203                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000204                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -73,7 +73,7 @@ volatile uint32_t *pSharedTH1Hi;        // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedTH1Lo;        // pointer to a "user defined" u32 register; here: period of h=1, low bits
 volatile uint32_t *pSharedNH;           // pointer to a "user defined" u32 register; here: harmonic number
 
-uint32_t *cpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
@@ -232,7 +232,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
-  uint64_t recDeadline;                                       // deadline received
+  uint64_t recDeadline;                                       // deadline received from ECA
+  uint64_t reqDeadline;                                       // deadline requested by sender
   uint64_t recEvtId;                                          // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
@@ -251,13 +252,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   sendEvtNo = 0x0;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &TH1, &recTEF, &flagIsLate);
-   
+
   switch (ecaAction) {
     case B2B_ECADO_B2B_PMEXT :                                // this is an OR, no 'break' on purpose
       sendEvtNo = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
-      
+
+      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;          // ECA is configured to pre-trigger ahead of time!!!
       *pSharedTH1Hi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
       *pSharedTH1Lo = (uint32_t)( TH1             & 0xffffffff);
       *pSharedNH    = (uint32_t)( recEvtId        & 0xf       );
@@ -280,8 +282,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID 
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);     // EVTNO
         sendParam    = tH1;
-        sendDeadline = getSysTime() + COMMON_AHEADT;
-        
+        sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
         transStat    = dt;

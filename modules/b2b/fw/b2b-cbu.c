@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000203                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000204                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -100,18 +100,6 @@ int32_t  cPhase;                        // correction for phase matching [ns]
 int32_t  cTrigExt;                      // correction for extraction trigger
 int32_t  cTrigInj;                      // correction for injection trigger
 int32_t  dmLatency;                     // latency for messages received from DM (prio Q + network) [ns]
-
-//#define  NGID 3
-//uint32_t b2bgid[]  = {0x3a0, 0x3a1, 0x3a2};                               // GID B2B
-//uint32_t etgid[]   = {0x12c, 0x12c, 0x12c};                               // GID extraction trigger
-//uint32_t itgid[]   = {0xfff, 0x154, 0x136};                               // GID injection trigger
-//uint32_t actmsk[]  = {0x003, 0x00f, 0x00f};                               // masks for actions flags
-
-//uint32_t flagsTodo;                     // things we need to to; see B2B_ACTION_...
-//uint32_t flagsDone;                     // things already done
-//uint32_t gidETrig;                      // GID used for extraction kicker
-//uint32_t gidITrig;                      // GID used for injectin kicker
-
 uint32_t todoItem;                      // what to do next
 
 void init() // typical init for lm32
@@ -242,51 +230,6 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
-/*uint32_t calcTodo(uint32_t gid, uint32_t mode){
-  uint32_t flags;
-  uint32_t retFlags;
-  int      i;
-  int      gidValid;
-
-  flags    = 0;
-  gidValid = 0xffff;
-
-  // check for valid GID
-  for (i=0; i<NGID; i++) if (gid == b2bgid[i]) gidValid = i;
-  if (gidValid==0xffff) {
-    pp_printf("b2b gidValid %u\n", gidValid);
-    return flags;
-  } // gid not valid
-   
-  switch (mode) {
-    case 1 :
-      flags = flags | B2B_ACTION_TRIGEXT;
-      break;
-    case 2 :
-      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT;
-      break;
-    case 3 :
-      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGINJ;
-      break;
-    case 4 :
-      flags = flags | B2B_ACTION_TRIGEXT | B2B_ACTION_PEXT | B2B_ACTION_TRIGINJ | B2B_ACTION_PINJ;
-      break;
-    default :
-      break;
-  } // switch
-
-  // mask flags irrelevant for GID
-  retFlags = flags & actmsk[gidValid];
-  gidTrans = b2bgid[gidValid];
-  gidETrig = etgid[gidValid];
-  gidITrig = itgid[gidValid];
-
-  //pp_printf("b2b: flags %x, gidTrans %x, gidETrig %x, gidITrig %x, gidValue %d, actMsk %x, redFlags %x\n", flags, gidTrans, gidETrig, gidITrig, gidValid, actmsk[gidValid], retFlags);
-
-  return retFlags;
-} // calcTodo
-*/
-
 uint32_t getTrigGid(uint32_t extFlag)
 {
   uint32_t trigGid;
@@ -304,26 +247,23 @@ uint32_t getTrigGid(uint32_t extFlag)
 } // getTrigGid
 
 
-uint32_t calcExtTime(uint64_t *tExtract)
+uint32_t calcExtTime(uint64_t *tExtract, uint64_t tExtr)
 {
-  uint64_t tNow;                                                               // current time
-  uint64_t tExtr;                                                              // approximate time when to extract
-
-  tNow      = getSysTime();
-  tExtr     = tNow + (uint64_t)COMMON_AHEADT;                                  // consider propagation time in network
+  uint32_t period;
+  //uint32_t dwant;
+  //uint32_t get;
   
   // check for unreasonable values
   if (TH1Ext == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for period
   if (nHExt  == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for harmonic number
-  if ((tH1Ext + (1 << 30)) < tNow)   return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
+  if ((tH1Ext + (1 << 30)) < tExtr)  return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
   
   *tExtract = fwlib_advanceTime(tH1Ext, tExtr, TH1Ext);
   if (*tExtract == 0)                return COMMON_STATUS_OUTOFRANGE;
-  
-  //pp_printf("tnow - tH1Ext %u\n", (uint32_t)(*tExtract - tNow));
 
-  if (*tExtract < tNow) DBPRINT3("b2b-cbu: err -- now - extract %u ns\n", (unsigned int)(tNow - *tExtract));
-  else                  DBPRINT3("b2b-cbu: ok  -- match - now %u ns\n",   (unsigned int)(*Extract - tNow));
+  //period = (uint32_t)((double)TH1Ext / 1000000000.0);
+  //dwant  = (uint32_t)(*tExtract - tExtr);
+  //pp_printf("period %u, diff %u\n", period, dwant);
 
   return COMMON_STATUS_OK;
 } // calcExtTime
@@ -514,11 +454,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendEvtId;                                         // evtID to send
   uint64_t sendParam;                                         // param to send
   uint64_t recDeadline;                                       // deadline received
+  uint64_t reqDeadline;                                       // deadline requested by sender
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
   uint32_t recSID;                                            // SID received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
+  uint64_t tWantExt;                                          // approximate time of extraction
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered
   uint64_t TBeat;                                             // period of beating
 
@@ -529,12 +471,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   switch (ecaAction) {
 
     case B2B_ECADO_KICKSTART :                                // received: EVT_KICK_START1/2 from DM; B2B transfer starts
-      // !!! NB: ECA is configured to >>>> trigger the action 1ms <<<< ahead of time!!!
-      dmLatency = (int32_t)(getSysTime() - recDeadline);
+      reqDeadline = recDeadline + (uint64_t)COMMON_AHEADT;    // ECA is configured to pre-trigger ahead of time!!!
+      dmLatency   = (int32_t)(getSysTime() - recDeadline);
 
       // check for correct sequency ID
-      sidTrans  = *pSharedSid;
-      recSID    = (uint32_t)(recId >> 20) & 0xfff;
+      sidTrans    = *pSharedSid;
+      recSID      = (uint32_t)(recId >> 20) & 0xfff;
       //pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
       if (sidTrans != recSID) {
         pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
@@ -542,17 +484,18 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       }
 
       nTransfer++;
-      modeTrans = *pSharedMode;
-      gidTrans  = *pSharedGid;
-      cPhase    = *pSharedCPhase;
-      cTrigExt  = *pSharedCTrigExt;
-      cTrigInj  = *pSharedCTrigInj;
+      modeTrans   = *pSharedMode;
+      gidTrans    = *pSharedGid;
+      cPhase      = *pSharedCPhase;
+      cTrigExt    = *pSharedCTrigExt;
+      cTrigInj    = *pSharedCTrigInj;
 
-      transStat = 0x0;
-      todoItem  = getNextTodo(modeTrans,  B2B_TODO_NOTHING);
+      transStat   = 0x0;
+      todoItem    = getNextTodo(modeTrans,  B2B_TODO_NOTHING);
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
+      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
       tH1Ext        = recParam;
 
       // do some math
@@ -592,7 +535,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       
   // extraction at time of EVT_KICK_START1/2
   if (todoItem == B2B_TODO_EXTKST) {
-    tTrigExt   = recDeadline + (uint64_t)B2B_DMOFFSET;
+    tTrigExt   = reqDeadline;                
     transStat |= todoItem;
     todoItem   = getNextTodo(modeTrans, todoItem);
   } // B2B_TODO_EXTTC
@@ -610,16 +553,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);         // EVTNO
     sendEvtId    = sendEvtId | (uint64_t)(nHExt & 0xf);                       // RESERVED, use only four bits
     sendParam    = TH1Ext;
-    //sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;                  // this would be the FASTPATH
-    sendDeadline = recDeadline + (uint64_t)B2B_DMOFFSET + 1;                  // deadline in at EVT_KICK_START + 1ns
+    sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    transStat |= todoItem;
-    todoItem   = getNextTodo(modeTrans, todoItem);
+    transStat   |= todoItem;
+    todoItem     = getNextTodo(modeTrans, todoItem);
   } // B2B_TODO_EXTPS
 
   // extraction in bunch gap: calculate extraction time
   if (todoItem == B2B_TODO_EXTBGT) {
-    if (calcExtTime(&tTrigExt) == COMMON_STATUS_OK) {
+    tWantExt     = reqDeadline + (uint64_t)COMMON_AHEADT;
+    if (calcExtTime(&tTrigExt, tWantExt) == COMMON_STATUS_OK) {
       transStat |= todoItem;
       todoItem   = getNextTodo(modeTrans, todoItem);
     } // if OK
