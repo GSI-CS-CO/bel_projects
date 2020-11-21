@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-November-2020
+ *  version : 21-November-2020
  *
  * Command-line interface for b2b
  *
@@ -48,13 +48,13 @@
 #include <etherbone.h>
 
 // b2b
+#include <common-lib.h>                  // COMMON
 #include <b2b-api.h>                     // API
 #include <b2b.h>                         // FW
 #include <b2bcbu_shared_mmap.h>          // LM32
 
 const char* program;
 static int getInfo    = 0;
-static int getConfig  = 0;
 static int getVersion = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
@@ -62,24 +62,7 @@ static int logLevel   = 0;
 eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
 
-// common stuff
-eb_address_t b2b_status;       // status of b2b, read
-eb_address_t b2b_state;        // state, read
-eb_address_t b2b_cmd;          // command, write
-eb_address_t b2b_version;      // version, read
-eb_address_t b2b_macHi;        // ebm src mac, read
-eb_address_t b2b_macLo;        // ebm src mac, read
-eb_address_t b2b_ip;           // ebm src ip, read
-eb_address_t b2b_nBadStatus;   // # of bad status ("ERROR") incidents, read
-eb_address_t b2b_nBadState;    // # of bad state ("not in operation") incidents, read
-eb_address_t b2b_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t b2b_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t b2b_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t b2b_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
-
 // application specific stuff
-eb_address_t b2b_nTransfer;    // # of transfers
-eb_address_t b2b_transStat;    // status of transfer
 eb_address_t b2b_gid;          // GID for transfer
 eb_address_t b2b_sid;          // SID for transfer    
 eb_address_t b2b_mode;         // mode of B2B transfer
@@ -95,6 +78,7 @@ eb_address_t b2b_cPhase;       // phase correction
 eb_address_t b2b_cTrigExt;     // kicker correction extraction
 eb_address_t b2b_cTrigInj;     // kicker correction injection
 eb_address_t b2b_dmLatency;    // latency for message transfer from DM
+eb_address_t b2b_cmd;          // command, write
 
 eb_data_t   data1;
  
@@ -109,7 +93,7 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -c                  display configuration of B2B\n");
+  /*fprintf(stderr, "  -c                  display configuration of B2B\n");*/
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on B2B\n");
   fprintf(stderr, "  -s<n>               snoop ... for information continuously\n");
@@ -164,7 +148,7 @@ const char* statusText(uint32_t bit) {
     case B2B_STATUS_PHASEFAILED      : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;
     case B2B_STATUS_TRANSFER         : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
     case B2B_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
-    default                          : sprintf(message, "%s",  api_statusText(bit)) ; break;
+    default                          : sprintf(message, "%s",  comlib_statusText(bit)) ; break;
   }
 
   return message;
@@ -215,34 +199,6 @@ int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, ui
 } // readDiags
 
 
-int readConfig(uint64_t *mac, uint32_t *ip)
-{
-  eb_cycle_t  cycle;
-  eb_status_t eb_status;
-  eb_data_t   data[10];
-
-  uint32_t macHi, macLo;
-
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b: eb_cycle_open", eb_status);
-
-  eb_cycle_read(cycle, b2b_macHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2b_macLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2b_ip,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b: eb_cycle_close", eb_status);
-
-  macHi   = data[0];
-  macLo   = data[1];  
-  *ip     = data[2];
-  
-  *mac    = macHi;
-  *mac    = (*mac << 32);
-  *mac    = *mac + macLo;
-
-  return eb_status;
-} //readConfig
-
-
 void printTransferHeader()
 {
   printf("b2b:        nTrans |                 INFO                  \n");
@@ -285,7 +241,6 @@ int main(int argc, char** argv) {
   
   eb_status_t         eb_status;
   eb_socket_t         socket;
-  eb_data_t           data;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
@@ -304,6 +259,7 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t version;
+  uint32_t usedSize;
   uint64_t tDiag;
   uint64_t tS0;
   uint32_t nTransfer;
@@ -335,11 +291,8 @@ int main(int argc, char** argv) {
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
+  while ((opt = getopt(argc, argv, "s:eih")) != -1) {
     switch (opt) {
-    case 'c':
-      getConfig = 1;
-      break;
     case 'e':
       getVersion = 1;
       break;
@@ -394,7 +347,8 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  api_initShared(lm32_base, SHARED_OFFS);
+  comlib_initShared(lm32_base, SHARED_OFFS);
+  b2b_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
   b2b_gid          = lm32_base + SHARED_OFFS + B2B_SHARED_GID;
   b2b_sid          = lm32_base + SHARED_OFFS + B2B_SHARED_SID;
   b2b_mode         = lm32_base + SHARED_OFFS + B2B_SHARED_MODE;;
@@ -411,31 +365,24 @@ int main(int argc, char** argv) {
   b2b_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGINJ;
   b2b_dmLatency    = lm32_base + SHARED_OFFS + B2B_SHARED_DMLATENCY;
   
-  if (getConfig) {
-    readConfig(&mac, &ip);
-    printf("b2b: EB Master: mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", mac, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
-  } // if getConfig
-
   if (getVersion) {
-    eb_device_read(device, b2b_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
-    version = data;
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
     printf("b2b: software (firmware) version %s (%06x)\n",  B2B_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
     // status
-    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
     printTransferHeader();
     printTransfer(nTransfer);
-    printf(", %s (%6u), ",  api_stateText(state), nBadState);
+    printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    eb_device_read(device, b2b_state, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
-    state = data;
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -465,7 +412,7 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
       readDiags(&gid, &sid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, &dmLatency);
       printDiags(gid, sid, mode, TH1Ext, nHExt, TH1Inj, nHInj, TBeat, cPhase, cTrigExt, cTrigInj, dmLatency);
     } // "diag"
@@ -582,7 +529,7 @@ if (snoop) {
     printTransferHeader();
 
     while (1) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -601,12 +548,12 @@ if (snoop) {
 
       if (printFlag) {
         printTransfer(nTransfer); 
-        printf(", %s (%6u), ",  api_stateText(state), nBadState);
+        printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
         // print set status bits (except OK)
         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", api_statusText(i));
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", comlib_statusText(i));
         } // for i
       } // if printFlag
 

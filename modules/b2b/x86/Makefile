@@ -20,13 +20,13 @@ LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 all: $(TARGETS)
 
 b2b-ctl: b2b-ctl.c
-	$(CC) $(CFLAGS) b2b-api.c -o b2b-ctl b2b-ctl.c $(LIBS)
+	$(CC) $(CFLAGS) b2b-api.c ../../common-libs/x86/common-lib.c -o b2b-ctl b2b-ctl.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
 
 deploy:
-	 mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin
+	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin	
 
 .PHONY: all clean
