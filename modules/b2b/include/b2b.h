@@ -99,14 +99,13 @@
 #define B2B_SHARED_CTRIGEXT       (B2B_SHARED_CPHASE        + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
 #define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEXT      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
 #define B2B_SHARED_DMLATENCY      (B2B_SHARED_CTRIGINJ      + _32b_SIZE_)       // latency for messages received from DM (prio Q + network) [ns]
-#define B2B_SHARED_TKTRIGHI       (B2B_SHARED_DMLATENCY     + _32b_SIZE_)       // time of kicker trigger signal, high bits
-#define B2B_SHARED_TKTRIGLO       (B2B_SHARED_TKTRIGHI      + _32b_SIZE_)       // time of kicker trigger signal, low bits
-#define B2B_SHARED_TKMONHI        (B2B_SHARED_TKTRIGLO      + _32b_SIZE_)       // time of kicker monitor signal, high bits
-#define B2B_SHARED_TKMONLO        (B2B_SHARED_TKMONHI       + _32b_SIZE_)       // time of kicker monitor signal, low bits
-#define B2B_SHARED_TKSONHI        (B2B_SHARED_TKMONLO       + _32b_SIZE_)       // time of kicker probe signal, high bits
-#define B2B_SHARED_TKSONLO        (B2B_SHARED_TKSONHI       + _32b_SIZE_)       // time of kicker probe signal, low bits
+#define B2B_SHARED_TKTRIGHI       (B2B_SHARED_DMLATENCY     + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
+#define B2B_SHARED_TKTRIGLO       (B2B_SHARED_TKTRIGHI      + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
+#define B2B_SHARED_DKMON          (B2B_SHARED_TKTRIGLO      + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal
+#define B2B_SHARED_DKPROBE        (B2B_SHARED_DKMON         + _32b_SIZE_)       // delay of kicker probe signal [ns], delay is measured from kicker trigger signal
+#define B2B_SHARED_LKPROBE        (B2B_SHARED_DKPROBE       + _32b_SIZE_)       // length of kicker probe signal [ns]
 
 // diagnosis: end of used shared memory
-#define B2B_SHARED_END            (B2B_SHARED_TKSONLO       + _32b_SIZE_) 
+#define B2B_SHARED_END            (B2B_SHARED_LKPROBE       + _32b_SIZE_) 
 
 #endif

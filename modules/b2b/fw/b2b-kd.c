@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Novmember-2020
+ *  version : 21-November-2020
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000201                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000203                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -67,13 +67,11 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 volatile uint32_t *pSharedtKickTrigHi;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, high bits
 volatile uint32_t *pSharedtKickTrigLo;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, low bits
-volatile uint32_t *pSharedtKickMonHi;   // pointer to a "user defined" u32 register; here: time of kicker monitor signal, high bits
-volatile uint32_t *pSharedtKickMonLo;   // pointer to a "user defined" u32 register; here: time of kicker monitor signal, low bits
-volatile uint32_t *pSharedtKickSonHi;   // pointer to a "user defined" u32 register; here: time of kicker probe signal, high bits
-volatile uint32_t *pSharedtKickSonLo;   // pointer to a "user defined" u32 register; here: time of kicker probe signal, low bits
+volatile uint32_t *pSharedtKickDMon;    // pointer to a "user defined" u32 register; here: delay of monitor signal 
+volatile uint32_t *pSharedtKickDProbe;  // pointer to a "user defined" u32 register; here: delay of probe signal
+volatile uint32_t *pSharedtKickLProbe;  // pointer to a "user defined" u32 register; here: length of probe signal
 volatile uint32_t *pSharedKickSid;      // pointer to a "user defined" u32 register; here: SID of last kicker event
 volatile uint32_t *pSharedKickGid;      // pointer to a "user defined" u32 register; here: GID of last kicker event
-
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -104,12 +102,9 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   // get address to data
   pSharedtKickTrigHi     = (uint32_t *)(pShared + (B2B_SHARED_TKTRIGHI    >> 2));
   pSharedtKickTrigLo     = (uint32_t *)(pShared + (B2B_SHARED_TKTRIGLO    >> 2));
-  pSharedtKickMonHi      = (uint32_t *)(pShared + (B2B_SHARED_TKMONHI     >> 2));
-  pSharedtKickMonLo      = (uint32_t *)(pShared + (B2B_SHARED_TKMONLO     >> 2));
-  pSharedtKickSonHi      = (uint32_t *)(pShared + (B2B_SHARED_TKSONHI     >> 2));
-  pSharedtKickSonLo      = (uint32_t *)(pShared + (B2B_SHARED_TKSONLO     >> 2));
-  pSharedKickSid         = (uint32_t *)(pShared + (B2B_SHARED_SID         >> 2));
-  pSharedKickGid         = (uint32_t *)(pShared + (B2B_SHARED_GID         >> 2));
+  pSharedtKickDMon       = (uint32_t *)(pShared + (B2B_SHARED_DKMON       >> 2));
+  pSharedtKickDProbe     = (uint32_t *)(pShared + (B2B_SHARED_DKPROBE     >> 2));
+  pSharedtKickLProbe     = (uint32_t *)(pShared + (B2B_SHARED_LKPROBE     >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -216,10 +211,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   uint64_t tKickTrig;                                         // time of kicker trigger signal
   uint64_t tKickMon;                                          // time of kicker monitor signal
-  uint64_t tKickProbe;                                        // time of kicker probe signal
-  uint64_t dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal
+  uint64_t tKickProbe1;                                       // time of kicker probe signal rising edge
+  uint64_t tKickProbe2;                                       // time of kicker probe signal falling edge
+  uint32_t dKickMon;                                          // delay of kicker monitor signal with respect to kicker trigger signal 
+  uint32_t dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal 
+  uint64_t lKickProbe;                                        // length of kicker probe signal with respect to kicker trigger signal
   uint32_t flagRecMon;                                        // flag: received monitor signal
-  uint32_t flagRecProbe;                                      // flag: received probe signal
+  uint32_t flagRecProbe1;                                     // flag: received probe signal1
+  uint32_t flagRecProbe2;                                     // flag: received probe signal2
   
   status    = actStatus;
   transStat = 0x0;
@@ -240,9 +239,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       tKickTrig       = recDeadline;
       tKickMon        = 0;
-      tKickProbe      = 0;
+      tKickProbe1     = 0;
+      tKickProbe2     = 0;
+      dKickMon        = 0;
+      dKickProbe      = 0;
+      lKickProbe      = 0;
       flagRecMon      = 0;
-      flagRecProbe    = 0;
+      flagRecProbe1   = 0;
+      flagRecProbe2   = 0;
       recGid          = (uint32_t)((recEvtId >> 48) & 0xfff);
       recSid          = (uint32_t)((recEvtId >> 20) & 0xfff);
       *pSharedKickGid = recGid;
@@ -252,31 +256,39 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal
 
       // get monitor signal
-      ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      uwait(50);
+      ecaAction = fwlib_wait4ECAEvent(0, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
       if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickMon = recDeadline; flagRecMon = 1;}
-      if (ecaAction == B2B_ECADO_TIMEOUT)   return COMMON_STATUS_TIMEDOUT;   // seen no monitor signal: give up
 
-      // get probe signal
-      ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickProbe = recDeadline; flagRecProbe = 1;}
+      // get probe signal 1
+      ecaAction = fwlib_wait4ECAEvent(0, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickProbe1 = recDeadline; flagRecProbe1 = 1;}
+
+      // get probe signal 2
+      ecaAction = fwlib_wait4ECAEvent(0, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      if (ecaAction == B2B_ECADO_TLUINPUT)  {tKickProbe2 = recDeadline; flagRecProbe2 = 1;}
 
       fwlib_ioCtrlSetGate(0, 1);                              // disable input gates 
       fwlib_ioCtrlSetGate(0, 0);
 
       /* chk it might be a good idea to check if the received deadlines make sense .... */
-      
-      DBPRINT2("b2b-kd: received kick mon signal %d, kick probe signal %d\n", flagRecMon, flagRecProbe);
+    
 
-      if (flagRecProbe) dKickProbe = tKickProbe - tKickTrig;
-      else              dKickProbe = 0;
+      if (flagRecMon)    dKickMon   = (uint32_t)(tKickMon    - tKickTrig);
+      else               dKickMon   = 0xffffffff;
+      if (flagRecProbe1) dKickProbe = (uint32_t)(tKickProbe1 - tKickTrig);
+      else               dKickProbe = 0xffffffff;
+      if (flagRecProbe2) lKickProbe = (uint32_t)(tKickProbe2 - tKickProbe1);
+      else               lKickProbe = 0xffffffff;
 
       // send command: transmit measured phase value
       sendEvtId    = 0x1000000000000000;                          // FID
-      sendEvtId    = sendEvtId | ((uint64_t)recGid    << 48);     // GID 
-      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);     // EVTNO
-      sendEvtId    = sendEvtId | ((uint64_t)recSid    << 20);     // SID
-      sendParam    = dKickProbe;
-      sendDeadline = tKickMon + (uint64_t)(4 * COMMON_AHEADT);
+      sendEvtId    = sendEvtId | ((uint64_t)recGid      << 48);   // GID 
+      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo   << 36);   // EVTNO
+      sendEvtId    = sendEvtId | ((uint64_t)recSid      << 20);   // SID
+      sendParam    =             ((uint64_t)dKickProbe  << 32);   // delay of probe signal
+      sendParam    = sendParam |  (uint64_t)lKickProbe;           // length of probe signal
+      sendDeadline = tKickMon +   (uint64_t)(2 * COMMON_AHEADT);  // data shall become true 1ms after trigger event
 
       if (getSysTime() > (sendDeadline - COMMON_AHEADT)) return COMMON_STATUS_TIMEDOUT;  // ophs, too late
 
@@ -284,12 +296,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       *pSharedtKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
       *pSharedtKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
-      *pSharedtKickMonHi  = (uint32_t)((tKickMon   >> 32) & 0xffffffff);
-      *pSharedtKickMonLo  = (uint32_t)( tKickMon          & 0xffffffff);
-      *pSharedtKickSonHi  = (uint32_t)((tKickProbe >> 32) & 0xffffffff);
-      *pSharedtKickSonLo  = (uint32_t)( tKickProbe        & 0xffffffff);
+      *pSharedtKickDMon   = dKickMon;
+      *pSharedtKickDProbe = dKickProbe;
+      *pSharedtKickLProbe = lKickProbe;
 
-      transStat    = flagRecMon + flagRecProbe;
+      transStat    = flagRecMon + flagRecProbe1 + flagRecProbe2;
       
       break; //  B2B_ECADO_B2B_TRIGGERINJ
     default : ;

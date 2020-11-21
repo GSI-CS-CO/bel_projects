@@ -7,7 +7,7 @@ set -x
 #dev/wbm0 -> tr0 -> trigger
 ###########################################
 #export TRTRIG=$(saft-eb-fwd tr0)
-export TRTRIG=dev/wbm0
+export TRTRIG=dev/ttyUSB0
 
 ###########################################
 # clean up stuff
@@ -29,7 +29,7 @@ saft-io-ctl tr0 -w -x
 # load firmware to lm32
 ###########################################
 echo -e b2b-sis18 - start: load firmware 
-eb-fwload $TRTRIG u 0x0 b2bpm.bin
+eb-fwload $TRTRIG u 0x0 b2bkd.bin
 
 echo -e b2b-sis18 configure firmware
 sleep 5
@@ -38,10 +38,7 @@ sleep 5
 b2b-ctl $TRTRIG startop
 
 
-echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
-####################################################
-# configure signal measurement inputs (SIS18 kicker)
-####################################################
+echo -e b2b-sis18 - start: configure for kicker diagnostic measurements
 # IO2 configured as TLU input (from 'monitor')
 # configure TLU !!! NO TERMINATION !!!
 saft-io-ctl tr0 -n IO2 -o 0 -t 0
@@ -56,9 +53,7 @@ saft-io-ctl tr0 -n IO1 -b 0xffff100000000000
 saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
 
 echo -e b2b-sis18 - start: configure outputs
-################################################
 # configure outputs (SIS18 trigger)
-################################################
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
 saft-ecpu-ctl tr0 -c  0x112c804000000000 0xfffffff000000000 20000 0x804 -d -g
 
