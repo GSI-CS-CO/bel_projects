@@ -238,6 +238,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
   uint32_t recGid;                                            // GID received
+  uint32_t recSid;                                            // SID received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
@@ -264,6 +265,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedTH1Lo = (uint32_t)( TH1             & 0xffffffff);
       *pSharedNH    = (uint32_t)( recEvtId        & 0xf       );
       recGid        = (uint32_t)((recEvtId >> 48) & 0xfff     );
+      recSid        = (uint32_t)((recEvtId >> 20) & 0xfff     );
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -281,6 +283,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = 0x1000000000000000;                                    // FID
         sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID 
         sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);     // EVTNO
+        sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);                  // SID
         sendParam    = tH1;
         sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
