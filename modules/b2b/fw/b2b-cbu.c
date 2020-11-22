@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-November-2020
+ *  version : 22-November-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000204                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000205                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -65,6 +65,33 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
 // public variables
+// set values for a single commit
+volatile uint32_t *pSharedSetGid;       // pointer to a "user defined" u32 register; here: group ID of extraction machine
+volatile uint32_t *pSharedSetSid;       // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
+volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of B2B transfer
+volatile uint32_t *pSharedSetTH1ExtHi;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
+volatile uint32_t *pSharedSetTH1ExtLo;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedSetNHExt;     // pointer to a "user defined" u32 register; here: harmonic number extraction
+volatile uint32_t *pSharedSetTH1InjHi;  // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
+volatile uint32_t *pSharedSetTH1InjLo;  // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
+volatile uint32_t *pSharedSetNHInj;     // pointer to a "user defined" u32 register; here: harmonic number injection
+volatile int32_t  *pSharedSetCPhase;    // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile int32_t  *pSharedSetCTrigExt;  // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t  *pSharedSetCTrigInj;  // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+
+// set values for all SIDs; the index equals the SID
+uint32_t setFlagValid[B2B_NSID];            
+uint32_t setGid[B2B_NSID];
+uint32_t setMode[B2B_NSID];
+uint64_t setTH1Ext[B2B_NSID];
+uint32_t setNHExt[B2B_NSID];
+uint64_t setTH1Inj[B2B_NSID];
+uint32_t setNHInj[B2B_NSID];
+uint32_t setCPhase[B2B_NSID];
+uint32_t setCTrigExt[B2B_NSID];
+uint32_t setCTrigInj[B2B_NSID];
+
+// get values
 volatile uint32_t *pSharedGid;          // pointer to a "user defined" u32 register; here: group ID of extraction machine
 volatile uint32_t *pSharedSid;          // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
 volatile uint32_t *pSharedMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
@@ -81,26 +108,31 @@ volatile int32_t  *pSharedCTrigExt;     // pointer to a "user defined" u32 regis
 volatile int32_t  *pSharedCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
 volatile int32_t  *pSharedDmLatency;    // pointer to a "user defined" u32 register; here: latency for messages received from DM (prio Q + network) [ns]
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+uint32_t gid;                           // GID used for transfer
+uint32_t sid;                           // SID user for transfer
+uint32_t mode;                          // mode for transfer
+uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
+uint32_t nHExt;                         // harmonic number of extraction machine 0..15
+uint64_t TH1Inj;                        // h=1 period [as] of injection machine
+uint32_t nHInj;                         // harmonic number of injection machine 0..15
+uint64_t TBeat;                         // beating frquency
+int32_t  cPhase;                        // correction for phase matching [ns]
+int32_t  cTrigExt;                      // correction for extraction trigger
+int32_t  cTrigInj;                      // correction for injection trigger
+
+uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
+uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of ongoing transfer
-
-uint32_t sidTrans;                      // SID user for transfer
-uint32_t gidTrans;                      // GID used for transfer
-uint32_t modeTrans;                     // mode for transfer
-uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
-uint64_t TH1Inj;                        // h=1 period [as] of injection machine
-uint32_t nHExt;                         // harmonic number of extraction machine 0..15
-uint32_t nHInj;                         // harmonic number of injection machine 0..15
-uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
-uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
-int32_t  cPhase;                        // correction for phase matching [ns]
-int32_t  cTrigExt;                      // correction for extraction trigger
-int32_t  cTrigInj;                      // correction for injection trigger
 int32_t  dmLatency;                     // latency for messages received from DM (prio Q + network) [ns]
 uint32_t todoItem;                      // what to do next
+
+// flags
+uint32_t flagClearAllSid;               // data for all SIDs shall be cleared
+
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 void init() // typical init for lm32
 {
@@ -121,21 +153,33 @@ void initSharedMem() // determine address and clear shared mem
   
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
-  pSharedGid              = (uint32_t *)(pShared + (B2B_SHARED_GID        >> 2));
-  pSharedSid              = (uint32_t *)(pShared + (B2B_SHARED_SID        >> 2));
-  pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE       >> 2));
-  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));
-  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
-  pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT      >> 2));
-  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJHI   >> 2));
-  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJLO   >> 2));
-  pSharedNHInj            = (uint32_t *)(pShared + (B2B_SHARED_NHINJ      >> 2));
-  pSharedTBeatHi          = (uint32_t *)(pShared + (B2B_SHARED_TBEATHI    >> 2));
-  pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO    >> 2));
-  pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE     >> 2));
-  pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT   >> 2));
-  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ   >> 2));
-  pSharedDmLatency        =  (int32_t *)(pShared + (B2B_SHARED_DMLATENCY  >> 2));
+  pSharedSetGid           = (uint32_t *)(pShared + (B2B_SHARED_SET_GID        >> 2));
+  pSharedSetSid           = (uint32_t *)(pShared + (B2B_SHARED_SET_SID        >> 2));
+  pSharedSetMode          = (uint32_t *)(pShared + (B2B_SHARED_SET_MODE       >> 2));
+  pSharedSetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTHI   >> 2));
+  pSharedSetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTLO   >> 2));
+  pSharedSetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHEXT      >> 2));
+  pSharedSetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJHI   >> 2));
+  pSharedSetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJLO   >> 2));
+  pSharedSetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHINJ      >> 2));
+  pSharedSetCPhase        =  (int32_t *)(pShared + (B2B_SHARED_SET_CPHASE     >> 2));
+  pSharedSetCTrigExt      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGEXT   >> 2));
+  pSharedSetCTrigInj      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
+  pSharedGid              = (uint32_t *)(pShared + (B2B_SHARED_GID            >> 2));
+  pSharedSid              = (uint32_t *)(pShared + (B2B_SHARED_SID            >> 2));
+  pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE           >> 2));
+  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI       >> 2));
+  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO       >> 2));
+  pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT          >> 2));
+  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJHI       >> 2));
+  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJLO       >> 2));
+  pSharedNHInj            = (uint32_t *)(pShared + (B2B_SHARED_NHINJ          >> 2));
+  pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE         >> 2));
+  pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT       >> 2));
+  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ       >> 2));
+  pSharedTBeatHi          = (uint32_t *)(pShared + (B2B_SHARED_TBEATHI        >> 2));
+  pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO        >> 2));
+  pSharedDmLatency        =  (int32_t *)(pShared + (B2B_SHARED_DMLATENCY      >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -169,9 +213,58 @@ void extern_clearDiag() // clears all statistics
 } // extern_clearDiag 
 
 
+void clearAllSid()
+{
+  int i;
+  for (i=0; i<B2B_NSID; i++) {
+    setFlagValid[i] = 0;            
+    setGid[i]       = 0;
+    setMode[i]      = 0;
+    setTH1Ext[i]    = 0;
+    setNHExt[i]     = 0;
+    setTH1Inj[i]    = 0;
+    setNHInj[i]     = 0;
+    setCPhase[i]    = 0;
+    setCTrigExt[i]  = 0;
+    setCTrigInj[i]  = 0;
+  } // for i
+} // clearAllSid
+
+
+uint32_t setSubmit()
+{
+  int sid;
+  if (*pSharedSetSid > 15)  return COMMON_STATUS_OUTOFRANGE;
+  else                      sid = *pSharedSetSid;
+  /* more checking required chk */
+  setFlagValid[sid]    = 0;
+
+  setGid[sid]          = *pSharedSetGid;     
+  setMode[sid]         = *pSharedSetMode;    
+  setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
+  setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtLo) | setTH1Ext[sid];
+  setNHExt[sid]        = *pSharedSetNHExt;   
+  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjHi) << 32;
+  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjLo) | setTH1Inj[sid];
+  setNHExt[sid]        = *pSharedSetNHInj;   
+  setCPhase[sid]       = *pSharedSetCPhase;  
+  setCTrigExt[sid]     = *pSharedSetCTrigExt;
+  setCTrigInj[sid]     = *pSharedSetCTrigInj;
+
+  setFlagValid[sid]    = 1;
+
+  return COMMON_STATUS_OK;
+} // setSubmit
+
+
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
+
+  fwlib_clearDiag();
+  clearAllSid();
+
+  flagClearAllSid = 0;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
@@ -203,21 +296,35 @@ uint32_t extern_entryActionOperation()
   while (fwlib_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
-  // set initial nonsense values
-  *pSharedGid        = 0xffff;
-  *pSharedSid        = 0xffff;
+  // init set values
+  *pSharedSetGid      =0x0;     
+  *pSharedSetSid      =0x0;     
+  *pSharedSetMode     =0x0;    
+  *pSharedSetTH1ExtHi =0x0;
+  *pSharedSetTH1ExtLo =0x0;
+  *pSharedSetNHExt    =0x0;   
+  *pSharedSetTH1InjHi =0x0;
+  *pSharedSetTH1InjLo =0x0;
+  *pSharedSetNHInj    =0x0;   
+  *pSharedSetCPhase   =0x0;  
+  *pSharedSetCTrigExt =0x0;  
+  *pSharedSetCTrigInj =0x0;
+    
+  // init get values
+  *pSharedGid        = 0x0;
+  *pSharedSid        = 0x0;
   *pSharedMode       = 0x0;
-  *pSharedTH1ExtHi   = 0x000000E8; // 1 kHz dummy
-  *pSharedTH1ExtLo   = 0xD4A51000;
-  *pSharedNHExt      = 1;
-  *pSharedTH1InjHi   = 0x000001D1; // 2 kHz dummy
-  *pSharedTH1InjLo   = 0xA94A2000;
-  *pSharedNHInj      = 1;
-  *pSharedTBeatHi    = 0x000000E8; // 1 kHz dummy
-  *pSharedTBeatLo    = 0xD4A51000;
+  *pSharedTH1ExtHi   = 0x0; 
+  *pSharedTH1ExtLo   = 0x0;
+  *pSharedNHExt      = 0x0;
+  *pSharedTH1InjHi   = 0x0;
+  *pSharedTH1InjLo   = 0x0;
+  *pSharedNHInj      = 0x0;
   *pSharedCPhase     = 0x0;
   *pSharedCTrigExt   = 0x0;
   *pSharedCTrigInj   = 0x0;
+  *pSharedTBeatHi    = 0x0;
+  *pSharedTBeatLo    = 0x0;
   *pSharedDmLatency  = 0x0;
 
   return COMMON_STATUS_OK;
@@ -234,7 +341,7 @@ uint32_t getTrigGid(uint32_t extFlag)
 {
   uint32_t trigGid;
 
-  switch (gidTrans) {
+  switch (gid) {
     case SIS18_B2B_EXTRACT :
       if (extFlag) trigGid = SIS18_RING;
       else         trigGid = GID_INVALID;
@@ -389,6 +496,28 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
 } // calcPhaseMatch
 
 
+// command handler, handles commands specific for this project
+void cmdHandler(uint32_t *reqState, uint32_t cmd)
+{
+  // check, if the command is valid and request state change
+  if (cmd) {                             // check, if cmd is valid
+    switch (cmd) {                       // do action according to command
+      case B2B_CMD_CONFSUBMIT :
+        DBPRINT3("b2b: received cmd %d\n", cmd);
+        if (setSubmit() != COMMON_STATUS_OK) DBPRINT1("b2b: submission of config data failed\n");
+        break;
+      case B2B_CMD_CONFCLEAR :
+        DBPRINT3("b2b: received cmd %d\n", cmd);
+        flagClearAllSid = 1;
+        break;
+      default:
+        DBPRINT3("b2b: received unknown command '0x%08x'\n", cmd);
+        break;
+    } // switch 
+  } // if command 
+} // cmdHandler
+
+
 uint32_t getNextTodo(uint32_t mode, uint32_t actTodo) {
   uint32_t nextTodo = B2B_TODO_NOTHING;
 
@@ -476,7 +605,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
-  uint32_t recSID;                                            // SID received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t tWantExt;                                          // approximate time of extraction
   uint64_t tTrig;                                             // time when kickers shall be triggered
@@ -494,24 +622,23 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       reqDeadline = recDeadline + (uint64_t)COMMON_AHEADT;    // ECA is configured to pre-trigger ahead of time!!!
       dmLatency   = (int32_t)(getSysTime() - recDeadline);
 
-      // check for correct sequency ID
-      sidTrans    = *pSharedSid;
-      recSID      = (uint32_t)(recId >> 20) & 0xfff;
-      //pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
-      if (sidTrans != recSID) {
-        pp_printf("sidTrans %u, recSID %u\n", sidTrans, recSID);
-        return COMMON_STATUS_OK;
-      }
+      sid      = (uint32_t)(recId >> 20) & 0xfff;
+      if (sid > 15)  {sid = 0; todoItem = B2B_TODO_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
+      if (!setFlagValid[sid]) {todoItem = B2B_TODO_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
+  
+      gid      = setGid[sid];
+      mode     = setMode[sid];
+      TH1Ext   = setTH1Ext[sid];
+      nHExt    = setNHExt[sid];
+      TH1Inj   = setTH1Inj[sid];
+      nHInj    = setNHInj[sid];
+      cPhase   = setCPhase[sid];
+      cTrigExt = setCTrigExt[sid];
+      cTrigInj = setCTrigInj[sid];
 
       nTransfer++;
-      modeTrans   = *pSharedMode;
-      gidTrans    = *pSharedGid;
-      cPhase      = *pSharedCPhase;
-      cTrigExt    = *pSharedCTrigExt;
-      cTrigInj    = *pSharedCTrigInj;
-
       transStat   = 0x0;
-      todoItem    = getNextTodo(modeTrans,  B2B_TODO_NOTHING);
+      todoItem    = getNextTodo(mode, B2B_TODO_NOTHING);
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
@@ -531,7 +658,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       */
       transStat |= todoItem;
-      todoItem   = getNextTodo(modeTrans, todoItem);
+      todoItem   = getNextTodo(mode, todoItem);
       //pp_printf("todoitem %x\n", todoItem);
       break;
 
@@ -559,7 +686,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (todoItem == B2B_TODO_EXTKST) {
     tTrig      = reqDeadline;                
     transStat |= todoItem;
-    todoItem   = getNextTodo(modeTrans, todoItem);
+    todoItem   = getNextTodo(mode, todoItem);
   } // B2B_TODO_EXTTC
 
   // request phase measurement of extraction 
@@ -571,15 +698,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     // send command: phase measurement at extraction machine
     sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)gidTrans << 48);                    // GID
+    sendEvtId    = sendEvtId | ((uint64_t)gid << 48);                         // GID
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);         // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
+    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendEvtId    = sendEvtId | (uint64_t)(nHExt & 0xf);                       // RESERVED, use only four bits
     sendParam    = TH1Ext;
     sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
     transStat   |= todoItem;
-    todoItem     = getNextTodo(modeTrans, todoItem);
+    todoItem     = getNextTodo(mode, todoItem);
   } // B2B_TODO_EXTPS
 
   // trigger in bunch gap of extraction machine: calculate trigger time
@@ -587,7 +714,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tWantExt     = reqDeadline + (uint64_t)COMMON_AHEADT;
     if (calcExtTime(&tTrig, tWantExt) == COMMON_STATUS_OK) {
       transStat |= todoItem;
-      todoItem   = getNextTodo(modeTrans, todoItem);
+      todoItem   = getNextTodo(mode, todoItem);
     } // if OK
     else {
       transStat = 0x0;
@@ -601,13 +728,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = 0x1000000000000000;                                        // FID
     sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(1) << 48);               // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
+    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendParam    = 0x0;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
     //pp_printf("todo2 %u, extTime - now %d\n", todoItem, (uint32_t)(sendDeadline - getSysTime()));
     transStat |= todoItem;
-    todoItem   = getNextTodo(modeTrans, todoItem);
+    todoItem   = getNextTodo(mode, todoItem);
   } // B2B_TODO_EXTTRIG
 
   // trigger injection kicker
@@ -615,13 +742,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = 0x1000000000000000;                                        // FID
     sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(1) << 48);               // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sidTrans << 20);                    // SID
+    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendParam    = 0x0;
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam);
     //pp_printf("todo2 %u, extTime - now %d\n", todoItem, (uint32_t)(sendDeadline - getSysTime()));
     transStat |= todoItem;
-    todoItem   = getNextTodo(modeTrans, todoItem);
+    todoItem   = getNextTodo(mode, todoItem);
   } // B2B_TODO_TRIGINJ
   
       /*      
@@ -686,12 +813,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     *pSharedTBeatHi = (uint32_t)(TBeat >> 32);
     *pSharedTBeatLo = (uint32_t)(TBeat && 0xffffffff); */
 
+  if (flagClearAllSid) {clearAllSid(); flagClearAllSid = 0;}
+
   return status;
 } // doActionOperation
 
 
 int main(void) {
   uint32_t status;                              // (error) status
+  uint32_t cmd;                                 // command via shared memory
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
@@ -715,6 +845,7 @@ int main(void) {
   while (1) {
     check_stack_fwid(buildID);
     fwlib_cmdHandler(&reqState, &dummy1);                                     // check for commands and possibly request state changes
+    cmdHandler(&reqState, cmd);                                               // check for project relevant commands
     status = COMMON_STATUS_OK;                                                // reset status for each iteration
 
     // state machine
@@ -747,7 +878,23 @@ int main(void) {
     pubState          = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedDmLatency = dmLatency;
+
+    // update get values
+    *pSharedGid        = gid;
+    *pSharedSid        = sid;
+    *pSharedMode       = mode;
+    *pSharedTH1ExtHi   = (uint32_t)((TH1Ext >> 32) & 0xffffffff); 
+    *pSharedTH1ExtLo   = (uint32_t)( TH1Ext        & 0xffffffff);
+    *pSharedNHExt      = nHExt;
+    *pSharedTH1InjHi   = (uint32_t)((TH1Inj >> 32) & 0xffffffff); 
+    *pSharedTH1InjLo   = (uint32_t)( TH1Inj        & 0xffffffff);
+    *pSharedNHInj      = nHInj;
+    *pSharedCPhase     = cPhase;
+    *pSharedCTrigExt   = cTrigExt;
+    *pSharedCTrigInj   = cTrigInj;
+    *pSharedTBeatHi    = (uint32_t)((TBeat >> 32) & 0xffffffff); 
+    *pSharedTBeatLo    = (uint32_t)( TBeat        & 0xffffffff);
+    *pSharedDmLatency  = dmLatency;
   } // while
 
   return (1); // this should never happen ...
