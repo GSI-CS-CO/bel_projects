@@ -194,14 +194,15 @@ void initSharedMem() // determine address and clear shared mem
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ) + 1);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-cbu: used size of shared mem is %d words, begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
-  } // initSharedMem
+  DBPRINT2("b2b-cbu: used size of shared mem is %d words, begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp);
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+} // initSharedMem
 
 
 void extern_clearDiag() // clears all statistics
@@ -246,13 +247,13 @@ uint32_t setSubmit()
   setNHExt[sid]        = *pSharedSetNHExt;   
   setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjHi) << 32;
   setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjLo) | setTH1Inj[sid];
-  setNHExt[sid]        = *pSharedSetNHInj;   
+  setNHInj[sid]        = *pSharedSetNHInj;   
   setCPhase[sid]       = *pSharedSetCPhase;  
   setCTrigExt[sid]     = *pSharedSetCTrigExt;
   setCTrigInj[sid]     = *pSharedSetCTrigInj;
 
   setFlagValid[sid]    = 1;
-
+  pp_printf("submit %u\n", sid);
   return COMMON_STATUS_OK;
 } // setSubmit
 
@@ -345,6 +346,10 @@ uint32_t getTrigGid(uint32_t extFlag)
     case SIS18_B2B_EXTRACT :
       if (extFlag) trigGid = SIS18_RING;
       else         trigGid = GID_INVALID;
+      break;
+    case SIS18_B2B_ESR :
+      if (extFlag) trigGid = SIS18_RING;
+      else         trigGid = ESR_RING;
       break;
     default :
       trigGid = GID_INVALID;
@@ -623,9 +628,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       dmLatency   = (int32_t)(getSysTime() - recDeadline);
 
       sid      = (uint32_t)(recId >> 20) & 0xfff;
-      if (sid > 15)  {sid = 0; todoItem = B2B_TODO_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
-      if (!setFlagValid[sid]) {todoItem = B2B_TODO_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
-  
+      if (sid > 15)  {sid = 0; todoItem = B2B_TODO_NOTHING; return status;}
+      if (!setFlagValid[sid]) {todoItem = B2B_TODO_NOTHING; return status;}
       gid      = setGid[sid];
       mode     = setMode[sid];
       TH1Ext   = setTH1Ext[sid];
@@ -635,6 +639,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase   = setCPhase[sid];
       cTrigExt = setCTrigExt[sid];
       cTrigInj = setCTrigInj[sid];
+      //pp_printf("b2b: gid %u, mode %u, nHExt %u\n", gid, mode, nHExt);
 
       nTransfer++;
       transStat   = 0x0;
@@ -659,7 +664,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       */
       transStat |= todoItem;
       todoItem   = getNextTodo(mode, todoItem);
-      //pp_printf("todoitem %x\n", todoItem);
+      //pp_printf("b2b: PREXT %u\n", todoItem);
       break;
 
       /*case B2B_ECADO_B2B_PRINJ :
@@ -691,9 +696,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // request phase measurement of extraction 
   if (todoItem == B2B_TODO_EXTPS) {
-    TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
-    TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
-    nHExt        = *pSharedNHExt;
+    //TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
+    //TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
+    //nHExt        = *pSharedNHExt;
     tH1Ext       = 0x0;
     
     // send command: phase measurement at extraction machine
@@ -719,8 +724,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     else {
       transStat = 0x0;
       todoItem  = B2B_TODO_NOTHING;
-    } // if not ok
-    
+    } // if not ok    
+    //pp_printf("b2b: EXTBGT %u\n", todoItem);
   } // B2B_TODO_EXTTC
 
   // trigger extraction kicker
@@ -740,7 +745,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // trigger injection kicker
   if (todoItem == B2B_TODO_INJTRIG ) {
     sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(1) << 48);               // GID 
+    sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(0) << 48);               // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendParam    = 0x0;
@@ -825,7 +830,7 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
-  uint32_t dummy1;                              // dummy parameter
+  //uint32_t dummy1;                              // dummy parameter
   uint32_t *buildID;                            // WB address of build ID
 
   // init local variables
@@ -838,13 +843,13 @@ int main(void) {
   nTransfer      = 0x0;
 
   init();                                                                     // initialize stuff for lm32
-  initSharedMem();                                                            // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-cbu", B2BCBU_FW_VERSION); // init common stuff
+  initSharedMem();                                                            // initialize shared memory
   fwlib_clearDiag();                                                          // clear common diagnostic data
 
   while (1) {
     check_stack_fwid(buildID);
-    fwlib_cmdHandler(&reqState, &dummy1);                                     // check for commands and possibly request state changes
+    fwlib_cmdHandler(&reqState, &cmd);                                        // check for commands and possibly request state changes
     cmdHandler(&reqState, cmd);                                               // check for project relevant commands
     status = COMMON_STATUS_OK;                                                // reset status for each iteration
 

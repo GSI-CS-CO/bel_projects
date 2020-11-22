@@ -28,8 +28,11 @@ saft-ecpu-ctl tr0 -x
 saft-ecpu-ctl tr1 -x
 
 echo -e b2b-sis18 - start: disable all events from I/O inputs to ECA
-saft-io-ctl tr0 -w -x
-saft-io-ctl tr1 -w -x
+saft-io-ctl tr0 -w
+saft-io-ctl tr1 -w
+saft-io-ctl tr0 -x
+saft-io-ctl tr1 -x
+
 
 ###########################################
 # load firmware to lm32

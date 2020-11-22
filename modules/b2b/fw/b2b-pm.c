@@ -127,14 +127,14 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ) + 1);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
   DBPRINT2("b2b-pm: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
-
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
 } // initSharedMem 
 
 
@@ -208,6 +208,7 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32
   usedIdx     = nSamples / 2;                                          // use a timestamp in the middle
   if (usedIdx < FIRSTTS)      return B2B_STATUS_PHASEFAILED;           // check range
   if (usedIdx > nSamples -2)  return B2B_STATUS_PHASEFAILED;           // check range, '-2' is on purpose
+  if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // check range
   phaseTmp = tStamp[usedIdx];
   //*phase   = fwlib_advanceTime(phaseTmp, getSysTime(), period);        // advancing to 'now' is important in case of low frequencies
   *phase   = phaseTmp;
@@ -324,8 +325,8 @@ int main(void) {
   nTransfer      = 0;
 
   init();                                                                     // initialize stuff for lm32
-  initSharedMem(&reqState);                                                   // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-pm", B2BPM_FW_VERSION); // init common stuff
+  initSharedMem(&reqState);                                                   // initialize shared memory
   fwlib_clearDiag();                                                          // clear common diagnostics data
   
   while (1) {

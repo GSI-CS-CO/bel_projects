@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000203                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000204                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -332,8 +332,8 @@ int main(void) {
   nTransfer      = 0;
 
   init();                                                                     // initialize stuff for lm32
-  initSharedMem(&reqState);                                                   // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-kd", B2BPM_FW_VERSION); // init common stuff
+  initSharedMem(&reqState);                                                   // initialize shared memory
   fwlib_clearDiag();                                                          // clear common diagnostics data
   
   while (1) {
