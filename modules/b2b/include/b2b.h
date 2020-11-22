@@ -19,7 +19,8 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define B2B_ECADO_TIMEOUT        COMMON_ECADO_TIMEOUT
 #define B2B_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
-#define B2B_ECADO_TLUINPUT             2   // event from input (TLU)
+#define B2B_ECADO_TLUINPUT1        0xa01   // event from IO1 (TLU)
+#define B2B_ECADO_TLUINPUT2        0xa02   // event from IO2 (TLU)
 #define B2B_ECADO_KICKSTART         0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define B2B_ECADO_B2B_PMEXT        0x800   // command: perform phase measurement (extraction)
 #define B2B_ECADO_B2B_PMINJ        0x801   // command: perform phase measurement (injection)
@@ -69,6 +70,7 @@
 
 // specialities
 #define B2B_PRETRIGGER             20000    // offset [ns] used for pre-trigger on the trigger event
+#define B2B_ACCEPTDIAG               100    // timewindow [us]!!! in which diagnostic signals from kicker are expected
 #define B2B_NSID                      16    // max number of SID settings
 
 
