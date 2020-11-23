@@ -26,6 +26,7 @@ software::
 firmware:
 	$(MAKE) TARGET=b2bcbu -C $(FW)
 	$(MAKE) TARGET=b2bpm -C $(FW)	
+	$(MAKE) TARGET=b2bkd -C $(FW)	
 
 clean:
 	$(MAKE) -C $(SW) clean
@@ -46,6 +47,7 @@ deploy:
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
+	cp $(FW)/b2bkd.bin $(STAGING)/firmware
 
 .PHONY: all clean
 
