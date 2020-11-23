@@ -108,8 +108,8 @@
 #define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEXT      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
 #define B2B_SHARED_TBEATHI        (B2B_SHARED_CTRIGINJ      + _32b_SIZE_)       // period of beating, high bits
 #define B2B_SHARED_TBEATLO        (B2B_SHARED_TBEATHI       + _32b_SIZE_)       // period of beating, low bits
-#define B2B_SHARED_DMLATENCY      (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // latency for messages received from DM (prio Q + network) [ns]
-#define B2B_SHARED_TKTRIGHI       (B2B_SHARED_DMLATENCY     + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
+#define B2B_SHARED_COMLATENCY     (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // latency for messages received from via ECA (tDealine - tNow)) [ns]
+#define B2B_SHARED_TKTRIGHI       (B2B_SHARED_COMLATENCY    + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
 #define B2B_SHARED_TKTRIGLO       (B2B_SHARED_TKTRIGHI      + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
 #define B2B_SHARED_DKMON          (B2B_SHARED_TKTRIGLO      + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal
 #define B2B_SHARED_DKPROBE        (B2B_SHARED_DKMON         + _32b_SIZE_)       // delay of kicker probe signal [ns], delay is measured from kicker trigger signal

@@ -106,7 +106,7 @@ volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 regis
 volatile int32_t  *pSharedCPhase;       // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
 volatile int32_t  *pSharedCTrigExt;     // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
 volatile int32_t  *pSharedCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
-volatile int32_t  *pSharedDmLatency;    // pointer to a "user defined" u32 register; here: latency for messages received from DM (prio Q + network) [ns]
+volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t gid;                           // GID used for transfer
 uint32_t sid;                           // SID user for transfer
@@ -126,7 +126,7 @@ uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of ongoing transfer
-int32_t  dmLatency;                     // latency for messages received from DM (prio Q + network) [ns]
+int32_t  comLatency;                    // latency for messages received via ECA
 uint32_t todoItem;                      // what to do next
 
 // flags
@@ -179,7 +179,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ       >> 2));
   pSharedTBeatHi          = (uint32_t *)(pShared + (B2B_SHARED_TBEATHI        >> 2));
   pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO        >> 2));
-  pSharedDmLatency        =  (int32_t *)(pShared + (B2B_SHARED_DMLATENCY      >> 2));
+  pSharedComLatency       =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY     >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -194,7 +194,7 @@ void initSharedMem() // determine address and clear shared mem
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ) + 1);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
@@ -210,7 +210,7 @@ void extern_clearDiag() // clears all statistics
   statusArray = 0x0;
   nTransfer   = 0x0;
   transStat   = 0x0;
-  dmLatency   = 0x0;
+  comLatency  = 0x0;
 } // extern_clearDiag 
 
 
@@ -298,35 +298,35 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init set values
-  *pSharedSetGid      =0x0;     
-  *pSharedSetSid      =0x0;     
-  *pSharedSetMode     =0x0;    
-  *pSharedSetTH1ExtHi =0x0;
-  *pSharedSetTH1ExtLo =0x0;
-  *pSharedSetNHExt    =0x0;   
-  *pSharedSetTH1InjHi =0x0;
-  *pSharedSetTH1InjLo =0x0;
-  *pSharedSetNHInj    =0x0;   
-  *pSharedSetCPhase   =0x0;  
-  *pSharedSetCTrigExt =0x0;  
-  *pSharedSetCTrigInj =0x0;
+  *pSharedSetGid      = 0x0;     
+  *pSharedSetSid      = 0x0;     
+  *pSharedSetMode     = 0x0;    
+  *pSharedSetTH1ExtHi = 0x0;
+  *pSharedSetTH1ExtLo = 0x0;
+  *pSharedSetNHExt    = 0x0;   
+  *pSharedSetTH1InjHi = 0x0;
+  *pSharedSetTH1InjLo = 0x0;
+  *pSharedSetNHInj    = 0x0;   
+  *pSharedSetCPhase   = 0x0;  
+  *pSharedSetCTrigExt = 0x0;  
+  *pSharedSetCTrigInj = 0x0;
     
   // init get values
-  *pSharedGid        = 0x0;
-  *pSharedSid        = 0x0;
-  *pSharedMode       = 0x0;
-  *pSharedTH1ExtHi   = 0x0; 
-  *pSharedTH1ExtLo   = 0x0;
-  *pSharedNHExt      = 0x0;
-  *pSharedTH1InjHi   = 0x0;
-  *pSharedTH1InjLo   = 0x0;
-  *pSharedNHInj      = 0x0;
-  *pSharedCPhase     = 0x0;
-  *pSharedCTrigExt   = 0x0;
-  *pSharedCTrigInj   = 0x0;
-  *pSharedTBeatHi    = 0x0;
-  *pSharedTBeatLo    = 0x0;
-  *pSharedDmLatency  = 0x0;
+  *pSharedGid         = 0x0;
+  *pSharedSid         = 0x0;
+  *pSharedMode        = 0x0;
+  *pSharedTH1ExtHi    = 0x0; 
+  *pSharedTH1ExtLo    = 0x0;
+  *pSharedNHExt       = 0x0;
+  *pSharedTH1InjHi    = 0x0;
+  *pSharedTH1InjLo    = 0x0;
+  *pSharedNHInj       = 0x0;
+  *pSharedCPhase      = 0x0;
+  *pSharedCTrigExt    = 0x0;
+  *pSharedCTrigInj    = 0x0;
+  *pSharedTBeatHi     = 0x0;
+  *pSharedTBeatLo     = 0x0;
+  *pSharedComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -625,7 +625,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_KICKSTART :                                // received: EVT_KICK_START1/2 from DM; B2B transfer starts
       reqDeadline = recDeadline + (uint64_t)COMMON_AHEADT;    // ECA is configured to pre-trigger ahead of time!!!
-      dmLatency   = (int32_t)(getSysTime() - recDeadline);
+      comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       sid      = (uint32_t)(recId >> 20) & 0xfff;
       //pp_printf("b2b: sid %u \n", sid);
@@ -649,6 +649,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
       reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
+      comLatency  = (int32_t)(getSysTime() - recDeadline);
       tH1Ext        = recParam;
 
       /*
@@ -900,7 +901,7 @@ int main(void) {
     *pSharedCTrigInj   = cTrigInj;
     *pSharedTBeatHi    = (uint32_t)((TBeat >> 32) & 0xffffffff); 
     *pSharedTBeatLo    = (uint32_t)( TBeat        & 0xffffffff);
-    *pSharedDmLatency  = dmLatency;
+    *pSharedComLatency = comLatency;
   } // while
 
   return (1); // this should never happen ...

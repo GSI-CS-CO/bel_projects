@@ -72,12 +72,14 @@ volatile uint32_t *pSharedtKickDProbe;  // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedtKickLProbe;  // pointer to a "user defined" u32 register; here: length of probe signal
 volatile uint32_t *pSharedKickSid;      // pointer to a "user defined" u32 register; here: SID of last kicker event
 volatile uint32_t *pSharedKickGid;      // pointer to a "user defined" u32 register; here: GID of last kicker event
+volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
+int32_t  comLatency;                    // latency for messages received via ECA
 
 void init() // typical init for lm32
 {
@@ -107,6 +109,8 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pSharedtKickLProbe     = (uint32_t *)(pShared + (B2B_SHARED_LKPROBE     >> 2));
   pSharedKickSid         = (uint32_t *)(pShared + (B2B_SHARED_SID         >> 2));
   pSharedKickGid         = (uint32_t *)(pShared + (B2B_SHARED_GID         >> 2));
+  pSharedComLatency      =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY  >> 2));
+  
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
@@ -126,7 +130,7 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
@@ -143,6 +147,7 @@ void extern_clearDiag()
   statusArray  = 0x0; 
   nTransfer    = 0;
   transStat    = 0;
+  comLatency   = 0;
 } // extern_clearDiag
   
 
@@ -183,6 +188,15 @@ uint32_t extern_entryActionOperation()
   i = 0;
   while (fwlib_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-kd: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+
+  *pSharedtKickTrigHi  = 0x0;
+  *pSharedtKickTrigLo  = 0x0;
+  *pSharedtKickDMon    = 0x0;
+  *pSharedtKickDProbe  = 0x0;
+  *pSharedtKickLProbe  = 0x0;
+  *pSharedKickSid      = 0x0;
+  *pSharedKickGid      = 0x0;
+  *pSharedComLatency   = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -237,7 +251,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // NB: we need to pretrigger on this event as we need time to enable the input gates
       reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
-      
+      comLatency  = (int32_t)(getSysTime() - recDeadline);
       nTransfer++;
 
       tKickTrig       = reqDeadline;
@@ -374,9 +388,10 @@ int main(void) {
     
     if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) fwlib_incBadStateCnt();
     fwlib_publishStatusArray(statusArray);
-    pubState = actState;
+    pubState           = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
+    *pSharedComLatency = comLatency;
   } // while
 
   return(1); // this should never happen ...

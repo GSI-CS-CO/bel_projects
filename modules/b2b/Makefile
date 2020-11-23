@@ -1,7 +1,8 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   'make PREFIX= all'                                                    (hack: leave PREFIX empty for SCU path)
+#   'make clean'                                                 
+#   'make PREFIX= all'                                                (hack: leave PREFIX empty for SCU path)
 # Example deploy:
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-sis18 deploy' (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-esr deploy'   (hack: leave PREFIX empty for SCU path)

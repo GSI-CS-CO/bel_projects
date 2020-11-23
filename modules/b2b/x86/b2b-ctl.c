@@ -95,7 +95,7 @@ eb_address_t b2b_TBeatLo;      // period of beating, low bits
 eb_address_t b2b_cPhase;       // phase correction
 eb_address_t b2b_cTrigExt;     // kicker correction extraction
 eb_address_t b2b_cTrigInj;     // kicker correction injection
-eb_address_t b2b_dmLatency;    // latency for message transfer from DM
+eb_address_t b2b_comLatency;    // latency for message transfer via ECA
  
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -173,7 +173,7 @@ const char* statusText(uint32_t bit) {
 } // status_text
 
 
-int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *dmLatency)
+int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -194,7 +194,7 @@ int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, ui
   eb_cycle_read(cycle, b2b_cPhase,        EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
   eb_cycle_read(cycle, b2b_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
   eb_cycle_read(cycle, b2b_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, b2b_dmLatency,     EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(cycle, b2b_comLatency,    EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b: eb_cycle_close", eb_status);
 
   *gid           = data[0];
@@ -211,7 +211,7 @@ int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, ui
   *cPhase        = data[11];
   *cTrigExt      = data[12];
   *cTrigInj      = data[13];
-  *dmLatency     = data[14];
+  *comLatency    = data[14];
  
   return eb_status;
 } // readDiags
@@ -232,7 +232,7 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t dmLatency)
+void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
 {
   printf("\n\n");
   printf("b2b: statistics ...\n\n");
@@ -248,7 +248,7 @@ void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint
   printf("corr. matching        : %012d\n"     , cPhase);
   printf("corr. trigger extr    : %012d\n"     , cTrigExt);
   printf("corr. trigger inj     : %012d\n"     , cTrigInj);
-  printf("DM latency            : %012.3f us\n", (double)dmLatency/1000.0);
+  printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
 } // printDiags
 
 
@@ -294,7 +294,7 @@ int main(int argc, char** argv) {
   int32_t  cPhase;                             // phase correction
   int32_t  cTrigExt;                           // trigger correction extraction
   int32_t  cTrigInj;                           // trigger correction injection
-  int32_t  dmLatency;                          // message latency from DM
+  int32_t  comLatency;                         // message latency from ECA
   double   fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   double   fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
@@ -393,7 +393,7 @@ int main(int argc, char** argv) {
   b2b_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_CPHASE;
   b2b_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGEXT;
   b2b_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGINJ;
-  b2b_dmLatency    = lm32_base + SHARED_OFFS + B2B_SHARED_DMLATENCY;
+  b2b_comLatency   = lm32_base + SHARED_OFFS + B2B_SHARED_COMLATENCY;
   
   if (getVersion) {
     comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
@@ -450,8 +450,8 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
-      readDiags(&gid, &sid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, &dmLatency);
-      printDiags(gid, sid, mode, TH1Ext, nHExt, TH1Inj, nHInj, TBeat, cPhase, cTrigExt, cTrigInj, dmLatency);
+      readDiags(&gid, &sid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, &comLatency);
+      printDiags(gid, sid, mode, TH1Ext, nHExt, TH1Inj, nHInj, TBeat, cPhase, cTrigExt, cTrigInj, comLatency);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {

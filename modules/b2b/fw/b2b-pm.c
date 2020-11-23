@@ -72,12 +72,14 @@ volatile uint32_t *pShared;             // pointer to begin of shared memory reg
 volatile uint32_t *pSharedTH1Hi;        // pointer to a "user defined" u32 register; here: period of h=1, high bits
 volatile uint32_t *pSharedTH1Lo;        // pointer to a "user defined" u32 register; here: period of h=1, low bits
 volatile uint32_t *pSharedNH;           // pointer to a "user defined" u32 register; here: harmonic number
+volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
+int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
 #define NSAMPLES 16                     // # of timestamps for sampling h=1
@@ -104,10 +106,10 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pShared                 = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI  >> 2));   // for simplicity: use 'EXT' for data
-  pSharedTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO  >> 2));
-  pSharedNH            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT     >> 2));
-  
+  pSharedTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
+  pSharedTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
+  pSharedNH            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT      >> 2));
+  pSharedComLatency    =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY >> 2));
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
@@ -127,7 +129,7 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ) + 1);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
@@ -144,6 +146,7 @@ void extern_clearDiag()
   statusArray  = 0x0; 
   nTransfer    = 0;
   transStat    = 0;
+  comLatency   = 0x0;
 } // extern_clearDiag
   
 
@@ -183,6 +186,12 @@ uint32_t extern_entryActionOperation()
   i = 0;
   while (fwlib_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-pm: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+
+  // init get values
+  *pSharedTH1Hi       = 0x0;
+  *pSharedTH1Lo       = 0x0;
+  *pSharedNH          = 0x0;
+  *pSharedComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -256,12 +265,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &TH1, &recTEF, &flagIsLate);
 
   switch (ecaAction) {
-    case B2B_ECADO_B2B_PMEXT :                                // this is an OR, no 'break' on purpose
+    case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
       reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;          // ECA is configured to pre-trigger ahead of time!!!
+      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      
       *pSharedTH1Hi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
       *pSharedTH1Lo = (uint32_t)( TH1             & 0xffffffff);
       *pSharedNH    = (uint32_t)( recEvtId        & 0xf       );
@@ -363,6 +374,7 @@ int main(void) {
     pubState = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
+    *pSharedComLatency = comLatency;
   } // while
 
   return(1); // this should never happen ...
