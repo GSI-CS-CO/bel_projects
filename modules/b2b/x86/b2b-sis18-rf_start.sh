@@ -7,10 +7,10 @@ set -x
 #dev/wbm0 -> tr0 -> phase measurement
 #dev/wbm1 -> tr1 -> CBU
 ###########################################
-export TRPM=$(saft-eb-fwd tr0)
-export TRCBU=$(saft-eb-fwd tr1)
-#export TRPM=dev/wbm0
-#export TRCBU=dev/wbm1
+#export TRPM=$(saft-eb-fwd tr0)
+#export TRCBU=$(saft-eb-fwd tr1)
+export TRPM=dev/wbm0
+export TRCBU=dev/wbm1
 
 ###########################################
 # clean up stuff
@@ -58,10 +58,10 @@ echo -e b2b-sis18 - start: configure tr0 for phase measurement TLU
 # IO3 configured as TLU input (from 'DDS')
 # configure TLU
 saft-io-ctl tr0 -n IO3 -o 0 -t 1
-saft-io-ctl tr0 -n IO3 -b 0xffff100000000000
+saft-io-ctl tr0 -n IO3 -b 0xffffa03000000000
 
 # lm32 listens to TLU
-saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
+saft-ecpu-ctl tr0 -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # lm32 listens to CMD_B2B_PMEXT  message from CBU
 saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 500000 0x800 -dg

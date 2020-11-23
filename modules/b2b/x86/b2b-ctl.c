@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-November-2020
+ *  version : 23-November-2020
  *
  * Command-line interface for b2b
  *

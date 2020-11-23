@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-November-2020
+ *  version : 23-November-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000205                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000206                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -628,6 +628,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       dmLatency   = (int32_t)(getSysTime() - recDeadline);
 
       sid      = (uint32_t)(recId >> 20) & 0xfff;
+      //pp_printf("b2b: sid %u \n", sid);
       if (sid > 15)  {sid = 0; todoItem = B2B_TODO_NOTHING; return status;}
       if (!setFlagValid[sid]) {todoItem = B2B_TODO_NOTHING; return status;}
       gid      = setGid[sid];

@@ -21,6 +21,7 @@
 #define B2B_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
 #define B2B_ECADO_TLUINPUT1        0xa01   // event from IO1 (TLU)
 #define B2B_ECADO_TLUINPUT2        0xa02   // event from IO2 (TLU)
+#define B2B_ECADO_TLUINPUT3        0xa03   // event from IO2 (TLU)
 #define B2B_ECADO_KICKSTART         0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define B2B_ECADO_B2B_PMEXT        0x800   // command: perform phase measurement (extraction)
 #define B2B_ECADO_B2B_PMINJ        0x801   // command: perform phase measurement (injection)

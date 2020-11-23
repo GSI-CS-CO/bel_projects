@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-November-2020
+ *  version : 23-November-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000204                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000206                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -272,7 +272,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
       while (nInput < NSAMPLES) {                                     // treat 1st TS as junk
         ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-        if (ecaAction == B2B_ECADO_TLUINPUT)  {tStamp[nInput] = recDeadline; nInput++;}
+        if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
         if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
       } // while nInput
       fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 

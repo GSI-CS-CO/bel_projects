@@ -6,8 +6,8 @@ set -x
 ###########################################
 #dev/wbm0 -> tr0 -> trigger
 ###########################################
-export TRTRIG=$(saft-eb-fwd tr0)
-#export TRTRIG=dev/ttyUSB0
+#export TRTRIG=$(saft-eb-fwd tr0)
+export TRTRIG=dev/wbm0
 
 ###########################################
 # clean up stuff
@@ -53,14 +53,15 @@ saft-io-ctl tr0 -n IO1 -b 0xffffa01000000000
 # lm32 listens to TLU
 # IO2 is monitor from electronics
 # IO1 is probe from kicker magnet
-# hack: to preserve order of the two signals on IO1, we must prevent
-# the 1st signal being late by adding a delay of 10us
-saft-ecpu-ctl tr0 -c 0xffffa01000000001 0xffffffffffffffff 10000 0xa01 -d
+# to preserve order of the two signals on IO1, we must prevent
+#  the 1st signal being late by ADDING an offset of 20us
+saft-ecpu-ctl tr0 -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 saft-ecpu-ctl tr0 -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 
 echo -e b2b-sis18 - start: configure outputs
 # configure outputs (SIS18 trigger)
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
+# as we need time to enable the input gates we SUBTRACT and offset of 20us
 saft-ecpu-ctl tr0 -c  0x112c804000000000 0xfffffff000000000 20000 0x804 -d -g
 
 # generate pulse upon CMD_B2B_TRIGGEREXT

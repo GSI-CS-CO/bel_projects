@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-November-2020
+ *  version : 23-November-2020
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000204                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000206                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -267,12 +267,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       uwait(B2B_ACCEPTDIAG);
       // input on TLU not received from preceeding 'eca wait': wait again
       if (ecaAction != B2B_ECADO_TLUINPUT1) ecaAction = fwlib_wait4ECAEvent(0, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT1) {tKickProbe1 = recDeadline; flagRecProbe1 = 1;}
+      if (ecaAction == B2B_ECADO_TLUINPUT1) {tKickProbe1 = recDeadline - (uint64_t)B2B_PRETRIGGER; flagRecProbe1 = 1;}
 
       // get 2nd probe signal 'falling edge'
       uwait(B2B_ACCEPTDIAG);
       ecaAction = fwlib_wait4ECAEvent(0, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT1) {tKickProbe2 = recDeadline; flagRecProbe2 = 1;}
+      if (ecaAction == B2B_ECADO_TLUINPUT1) {tKickProbe2 = recDeadline - (uint64_t)B2B_PRETRIGGER; flagRecProbe2 = 1;}
 
       fwlib_ioCtrlSetGate(0, 1);                              // disable input gates 
       fwlib_ioCtrlSetGate(0, 0);
