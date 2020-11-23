@@ -268,12 +268,13 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
          return;
       }
 
-      std::string str = "Deviation of sequence numbers from set value input stream: ";
-      str += std::to_string( static_cast<uint>(m_oReceiveSetValue.getSequence()) );
-      str += ", and actual value input stream: ";
-      str += std::to_string( static_cast<uint>(m_oReceiveActValue.getSequence()) );
-      str += " are greater than one!";
-      throw daq::Exception( str );
+      /*
+       * Throwing a exception if following function will not be overwritten.
+       */
+      m_pParent->onActSetBlockDeviation( m_oReceiveSetValue.getSequence(),
+                                         m_oReceiveActValue.getSequence() );
+
+      return;
    }
 
    // TODO comparing of both time-stamps.
@@ -408,6 +409,17 @@ FgFeedbackDevice* FgFeedbackChannel::getParent( void )
    return m_pParent;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
+{
+   std::string str = "Deviation of sequence numbers from set value input stream: ";
+   str += std::to_string( setSequ );
+   str += ", and actual value input stream: ";
+   str += std::to_string( actSequ );
+   str += " are greater than one!";
+   throw daq::Exception( str );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

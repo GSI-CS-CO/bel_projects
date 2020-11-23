@@ -332,6 +332,14 @@ protected:
                                   daq::DAQ_DATA_T* pData,
                                   std::size_t wordLen ) {}
 
+   /*!
+    * @brief Over-writable function becomes invoked if the deviation of sequence-numbers
+    *        of actual- and set -values greater than one.
+    * @param setSequ Sequence number of last received set-value block
+    * @param actSequ Sequence number of last received actual-value block
+    */
+   virtual void onActSetBlockDeviation( const uint setSequ, const uint actSequ );
+
 #ifdef CONFIG_MIL_FG
    /*!
     * @brief Optional callback function for debug purposes becomes
