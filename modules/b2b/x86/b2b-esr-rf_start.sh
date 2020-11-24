@@ -89,8 +89,8 @@ echo -e b2b: configure tr1 as cbu
 saft-ecpu-ctl tr1 -c 0x1154045000000000 0xfffffff000000000 500000 0x031 -dg
 
 # lm32 listens to CMD_B2B_PREXT message from extraction machine
-saft-ecpu-ctl tr1 -c 0x13a0802000000000 0xfffffff000000000 500000 0x802 -dg
-saft-ecpu-ctl tr1 -c 0x13a1802000000000 0xfffffff000000000 500000 0x802 -dg
+saft-ecpu-ctl tr1 -c 0x13a5802000000000 0xfffffff000000000 500000 0x802 -dg
+saft-ecpu-ctl tr1 -c 0x13a6802000000000 0xfffffff000000000 500000 0x802 -dg
 
 # lm32 listens to CMD_B2B_PRINJ message from injection machine, only for B2B, later
 #saft-ecpu-ctl tr1 -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
