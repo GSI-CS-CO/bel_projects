@@ -61,6 +61,7 @@
 #define GID_INVALID                  0x0   // invalid GID
 #define SIS18_RING                 0x12c   // LSA GID
 #define ESR_RING                   0x154   // LSA GID
+#define CRYRING_RING               0x0d2   // LSA GID
 #define SIS18_B2B_EXTRACT          0x3a0   // GID: SIS18 simple extraction
 #define SIS18_B2B_ESR              0x3a1   // GID: SIS18 to ESR
 #define SIS18_B2B_SIS100           0x3a2   // GID: SIS18 to CRYRING

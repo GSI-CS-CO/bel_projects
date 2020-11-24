@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-November-2020
+ *  version : 24-November-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000206                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000207                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -350,6 +350,14 @@ uint32_t getTrigGid(uint32_t extFlag)
     case SIS18_B2B_ESR :
       if (extFlag) trigGid = SIS18_RING;
       else         trigGid = ESR_RING;
+      break;
+    case ESR_B2B_EXTRACT :
+      if (extFlag) trigGid = ESR_RING;
+      else         trigGid = GID_INVALID;
+      break;
+    case ESR_B2B_CRYRING :
+      if (extFlag) trigGid = ESR_RING;
+      else         trigGid = CRYRING_RING;
       break;
     default :
       trigGid = GID_INVALID;
