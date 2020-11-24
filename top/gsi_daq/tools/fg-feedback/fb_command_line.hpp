@@ -89,6 +89,8 @@ class CommandLine: public PARSER
    uint                       m_throttleThreshold;
    uint                       m_throttleTimeout;
 
+   const bool                 m_isRunningOnScu;
+
    AllDaqAdministration*      m_poAllDaq;
    FgFeedbackDevice*          m_poCurrentDevice;
    FbChannel*                 m_poCurrentChannel;

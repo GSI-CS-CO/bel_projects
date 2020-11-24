@@ -151,12 +151,15 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
                                                        std::size_t wordLen )
 {
    const uint64_t timestamp = descriptorGetTimeStamp();
-   m_pParent->m_pParent->onAddacDataBlock( this == &m_pParent->m_oReceiveSetValue,
-                                           timestamp,
-                                           pData, wordLen );
+   const bool isSetData = (this == &m_pParent->m_oReceiveSetValue);
+
+   m_pParent->m_pParent->onAddacDataBlock( isSetData,
+                                           timestamp, pData, wordLen );
 
    if( !descriptorWasContinuous() )
    {
+      m_pParent->m_pParent->onHighResPostMortemBlock( isSetData,
+                                                      timestamp, pData, wordLen );
       return true;
    }
 

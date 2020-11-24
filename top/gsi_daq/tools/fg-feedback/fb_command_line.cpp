@@ -24,6 +24,7 @@
  */
 #ifndef __DOCFSM__
  #include <daqt_onFoundProcess.hpp>
+#include <scu_env.hpp>
 #endif
 
 #include "fb_command_line.hpp"
@@ -46,7 +47,7 @@ using namespace Scu;
   #define DEFAULT_THROTTLE_TIMEOUT   10
 #endif
 
-#define FSM_INIT_FSM( state, attr... )      m_state( state )
+#define FSM_INIT_FSM( state, attr... )      m_state = state
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
 /*! ---------------------------------------------------------------------------
@@ -108,9 +109,15 @@ vector<OPTION> CommandLine::c_optList =
       OPT_LAMBDA( poParser,
       {
          cout << "Feedback-Plotter for SCU function generators\n"
-                 "(c) 2020 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
-              << "Usage: " << poParser->getProgramName()
+                 "(c) 2020 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n\n"
+              << "Usage when running outside of SCU:\n" << poParser->getProgramName()
               << " <SCU- target IP-address> [options] [slot channel [slot channel ...]]\n\n"
+                 "Usage when running directly on SCU:\n" << poParser->getProgramName()
+              << " [options] [slot channel [slot channel ...]]\n\n"
+              << "NOTE: When running directly on SCU then no graphic output is possible,\n"
+                 "except Gnuplot has been copied on this SCU and the environment variable\n"
+                 "DISPLAY was initialized by a server-IP address where a X-server is running.\n"
+                 "(Not tested yet.)\n\n"
                  "Hot keys:\n"
               << HOT_KEY_RESET    << ": Reset zooming of all plot windows\n"
               << HOT_KEY_RECEIVE  << ": Toggling receiving on / off\n"
@@ -602,7 +609,7 @@ bool CommandLine::readFloat( float& rValue, const string& roStr )
  */
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
-   ,FSM_INIT_FSM( READ_EB_NAME )
+   //,FSM_INIT_FSM( READ_EB_NAME )
    ,m_targetUrlGiven( false )
    ,m_numDevs( 0 )
    ,m_numChannels( 0 )
@@ -618,6 +625,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )
    ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT )
+   ,m_isRunningOnScu( isRunningOnScu() )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
@@ -625,6 +633,15 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
    ,m_gnuplotLineStyle( DEFAULT_LINE_STYLE )
 {
+   if( m_isRunningOnScu )
+   {
+      m_poAllDaq = new AllDaqAdministration( this, "dev/wbm0" );
+      FSM_INIT_FSM( READ_SLOT, label='running inside of SCU' );
+   }
+   else
+   {
+      FSM_INIT_FSM( READ_EB_NAME, label='running outside of SCU' );
+   }
    add( c_optList );
    sortShort();
 }
@@ -741,6 +758,7 @@ int CommandLine::onArgument( void )
       }
       case READ_SLOT:
       {
+         assert( dynamic_cast<AllDaqAdministration*>(m_poAllDaq) != nullptr );
          m_numDevs++;
          m_poCurrentChannel = nullptr;
          if( !m_poAllDaq->isSocketUsed( number ) )

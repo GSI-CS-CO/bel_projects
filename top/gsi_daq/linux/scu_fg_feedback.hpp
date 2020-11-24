@@ -333,6 +333,16 @@ protected:
                                   std::size_t wordLen ) {}
 
    /*!
+    * @brief Optional callback function becomes invoked by incoming non-
+    *        continuous ADDAC_DAQ-blocks that means for high resolution or
+    *        post mortem blocks.
+    */
+   virtual void onHighResPostMortemBlock( const bool isSetData,
+                                          const uint64_t timestamp,
+                                          daq::DAQ_DATA_T* pData,
+                                          std::size_t wordLen ) {}
+
+   /*!
     * @brief Over-writable function becomes invoked if the deviation of sequence-numbers
     *        of actual- and set -values greater than one.
     * @param setSequ Sequence number of last received set-value block
