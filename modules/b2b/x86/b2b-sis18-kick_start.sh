@@ -4,10 +4,11 @@
 set -x
 
 ###########################################
-#dev/wbm0 -> tr0 -> KD
+# setting for production
+#dev/wbm0 -> tr0 -> KD (dev/wbm0)
 ###########################################
-export TRTRIG=$(saft-eb-fwd tr0)
-#export TRTRIG=dev/wbm0
+#export TRTRIG=$(saft-eb-fwd tr0)
+export TRTRIG=dev/wbm0
 
 echo -e B2B start script for SIS18 kicker room
 
@@ -46,7 +47,6 @@ echo -e b2b: configure tr0 as KD
 ###########################################
 # configure KD
 ###########################################
-
 echo -e b2b: configure for kicker diagnostic measurements
 # IO2 configured as TLU input (from 'monitor') !!! NO TERMINATION !!!
 saft-io-ctl tr0 -n IO2 -o 0 -t 0
@@ -62,7 +62,6 @@ saft-io-ctl tr0 -n IO1 -b 0xffffa01000000000
 saft-ecpu-ctl tr0 -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 saft-ecpu-ctl tr0 -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 
-
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
 # as we need time to enable the input gates we SUBTRACT and offset of 20us
 saft-ecpu-ctl tr0 -c  0x112c804000000000 0xfffffff000000000 20000 0x804 -d -g
@@ -74,13 +73,13 @@ saft-io-ctl tr0 -n IO3 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO3 -c 0x112c804000000000 0xfffffff000000000 1000 0x0 0 -u 
 
 # generate test pulses upon CMD_B2B_TRIGGEREXT
-saft-io-ctl tr0 -n IO5 -o 1 -t 0 -a 1
-saft-io-ctl tr0 -n IO5 -c 0x112c804000000000 0xfffffff000000000 4000 0x0 1 -u
-saft-io-ctl tr0 -n IO5 -c 0x112c804000000000 0xfffffff000000000 5000 0x0 0 -u 
-saft-io-ctl tr0 -n IO6 -o 1 -t 0 -a 1
-saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 10000 0x0 1 -u
-saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 11000 0x0 0 -u 
-saft-io-ctl tr0 -n IO6 -o 1 -t 0 -a 1
-saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 13000 0x0 1 -u
-saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 14000 0x0 0 -u 
+#saft-io-ctl tr0 -n IO5 -o 1 -t 0 -a 1
+#saft-io-ctl tr0 -n IO5 -c 0x112c804000000000 0xfffffff000000000 4000 0x0 1 -u
+#saft-io-ctl tr0 -n IO5 -c 0x112c804000000000 0xfffffff000000000 5000 0x0 0 -u 
+#saft-io-ctl tr0 -n IO6 -o 1 -t 0 -a 1
+#saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 10000 0x0 1 -u
+#saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 11000 0x0 0 -u 
+#saft-io-ctl tr0 -n IO6 -o 1 -t 0 -a 1
+#saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 13000 0x0 1 -u
+#saft-io-ctl tr0 -n IO6 -c 0x112c804000000000 0xfffffff000000000 14000 0x0 0 -u 
 

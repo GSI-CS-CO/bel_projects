@@ -4,13 +4,14 @@
 set -x
 
 ###########################################
-#dev/wbm0 -> tr0 -> PM
-#dev/wbm1 -> tr1 -> CBU
+# setting for production
+#dev/wbm0 -> tr0 -> PM (dev/wbm0)
+#dev/wbm1 -> tr1 -> CBU (dev/wbm1)
 ###########################################
-export TRPM=$(saft-eb-fwd tr0)
-export TRCBU=$(saft-eb-fwd tr1)
-#export TRPM=dev/wbm0
-#export TRCBU=dev/wbm1
+#export TRPM=$(saft-eb-fwd tr0)
+#export TRCBU=$(saft-eb-fwd tr1)
+export TRPM=dev/wbm0
+export TRCBU=dev/wbm1
 
 echo -e B2B start script for SIS18 rf room
 
@@ -64,21 +65,14 @@ saft-io-ctl tr0 -n IO3 -b 0xffffa03000000000
 # lm32 listens to TLU
 saft-ecpu-ctl tr0 -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
-# lm32 listens to CMD_B2B_PMEXT  message from CBU
+# lm32 listens to CMD_B2B_PMEXT  message from SIS18 CBU
 saft-ecpu-ctl tr0 -c 0x13a0800000000000 0xfffffff000000000 500000 0x800 -dg
 saft-ecpu-ctl tr0 -c 0x13a1800000000000 0xfffffff000000000 500000 0x800 -dg
 
-# diag: generate pulse upon CMD_B2B_TRIGGEREXT message from CBU
-saft-io-ctl tr0 -n IO2 -o 1 -t 1
+# diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
+saft-io-ctl tr0 -n IO2 -o 1 -t 0
 saft-io-ctl tr0 -n IO2 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO2 -c 0x112c804000000000 0xfffffff000000000 10000000 0x0 0 -u
-
-# testing pulse upon CMD_B2B_DIAGEXT message from CBU
-#saft-io-ctl tr0 -n IO1 -o 1 -t 0
-#saft-io-ctl tr0 -n IO1 -c 0x13a0807000000000 0xfffffff000000000 0 0x0 1 -u
-#saft-io-ctl tr0 -n IO1 -c 0x13a0807000000000 0xfffffff000000000 10000000 0x0 0 -u
-#saft-io-ctl tr0 -n IO1 -c 0x13a1807000000000 0xfffffff000000000 0 0x0 1 -u
-#saft-io-ctl tr0 -n IO1 -c 0x13a1807000000000 0xfffffff000000000 10000000 0x0 0 -u
 
 echo -e b2b: configure tr1 as cbu
 ###########################################
@@ -91,7 +85,7 @@ saft-ecpu-ctl tr1 -c 0x112c031000000000 0xfffffff000000000 500000 0x031 -dg
 saft-ecpu-ctl tr1 -c 0x13a0802000000000 0xfffffff000000000 500000 0x802 -dg
 saft-ecpu-ctl tr1 -c 0x13a1802000000000 0xfffffff000000000 500000 0x802 -dg
 
-# lm32 listens to CMD_B2B_PRINJ message from injection machine
+# lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B -> later
 #saft-ecpu-ctl tr1 -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
 
 # diag: generate pulse upon EVT_KICK_START event
