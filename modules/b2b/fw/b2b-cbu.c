@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-November-2020
+ *  version : 25-November-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000207                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000208                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -127,7 +127,7 @@ uint64_t statusArray;                   // all status infos are ORed bit-wise in
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of ongoing transfer
 int32_t  comLatency;                    // latency for messages received via ECA
-uint32_t todoItem;                      // what to do next
+uint32_t mState;                        // state of 'miniFSM' 
 
 // flags
 uint32_t flagClearAllSid;               // data for all SIDs shall be cleared
@@ -531,78 +531,78 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
 } // cmdHandler
 
 
-uint32_t getNextTodo(uint32_t mode, uint32_t actTodo) {
-  uint32_t nextTodo = B2B_TODO_NOTHING;
+uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
+  uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
     case B2B_MODE_KSE :  // extraction beam now!
-      switch (actTodo) {
-        case B2B_TODO_NOTHING :
-          nextTodo =  B2B_TODO_EXTKST;
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState =  B2B_MFSM_EXTKST;
           break;
-        case B2B_TODO_EXTKST :
-          nextTodo =  B2B_TODO_EXTTRIG;
+        case B2B_MFSM_EXTKST :
+          nextMState =  B2B_MFSM_EXTTRIG;
           break;
-        case B2B_TODO_EXTTRIG :
-          nextTodo = B2B_TODO_NOTHING;
+        case B2B_MFSM_EXTTRIG :
+          nextMState = B2B_MFSM_NOTHING;
           break;
         default:
-          nextTodo = B2B_TODO_NOTHING;
-      } // switch actTodo mode KSE
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode KSE
       break;
     case B2B_MODE_B2E : // extract beam in bunch gap
-      switch (actTodo) {
-        case B2B_TODO_NOTHING :
-          nextTodo = B2B_TODO_EXTPS;
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXTPS;
           break;
-        case  B2B_TODO_EXTPS :
-          nextTodo = B2B_TODO_EXTPR;
+        case  B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_EXTPR;
           break;
-        case B2B_TODO_EXTPR :
-          nextTodo = B2B_TODO_EXTBGT;
+        case B2B_MFSM_EXTPR :
+          nextMState = B2B_MFSM_EXTBGT;
           break;
-        case B2B_TODO_EXTBGT :
-          nextTodo = B2B_TODO_EXTTRIG;
+        case B2B_MFSM_EXTBGT :
+          nextMState = B2B_MFSM_EXTTRIG;
           break;
-        case B2B_TODO_EXTTRIG :
-          nextTodo = B2B_TODO_NOTHING;
+        case B2B_MFSM_EXTTRIG :
+          nextMState = B2B_MFSM_NOTHING;
           break;
         default :
-          nextTodo = B2B_TODO_NOTHING;
-      } // switch actTodo mode B2E
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode B2E
       break;
     case B2B_MODE_B2C : // bunch to coasting beam
-      switch (actTodo) {
-        case B2B_TODO_NOTHING :
-          nextTodo = B2B_TODO_EXTPS;
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXTPS;
           break;
-        case  B2B_TODO_EXTPS :
-          nextTodo = B2B_TODO_EXTPR;
+        case  B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_EXTPR;
           break;
-        case B2B_TODO_EXTPR :
-          nextTodo = B2B_TODO_EXTBGT;
+        case B2B_MFSM_EXTPR :
+          nextMState = B2B_MFSM_EXTBGT;
           break;
-        case B2B_TODO_EXTBGT :
-          nextTodo = B2B_TODO_EXTTRIG;
+        case B2B_MFSM_EXTBGT :
+          nextMState = B2B_MFSM_EXTTRIG;
           break;
-        case B2B_TODO_EXTTRIG :
-          nextTodo = B2B_TODO_INJTRIG ;
+        case B2B_MFSM_EXTTRIG :
+          nextMState = B2B_MFSM_INJTRIG ;
           break;
-        case B2B_TODO_INJTRIG :
-          nextTodo = B2B_TODO_NOTHING;
+        case B2B_MFSM_INJTRIG :
+          nextMState = B2B_MFSM_NOTHING;
           break;
         default :
-          nextTodo = B2B_TODO_NOTHING;
-      } // switch actTodo mode B2C
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode B2C
       break;
     default :
-      nextTodo = B2B_TODO_NOTHING;
+      nextMState = B2B_MFSM_NOTHING;
   } // switch mode
 
-  //if (!nextTodo) pp_printf("mode %x, actTodo %x\n", mode, actTodo);
+  //if (!nextMState) pp_printf("mode %x, actMState %x\n", mode, actMState);
 
-  return nextTodo;
-} // getNextTodo
+  return nextMState;
+} // getNextMState
 
 
 uint32_t doActionOperation(uint32_t actStatus)                // actual status of firmware
@@ -613,11 +613,14 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
   uint64_t sendParam;                                         // param to send
+  uint32_t sendGid;                                           // GID to send
   uint64_t recDeadline;                                       // deadline received
   uint64_t reqDeadline;                                       // deadline requested by sender
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
+  uint32_t recGid;                                            // GID received
+  uint32_t recSid;                                            // SID received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t tWantExt;                                          // approximate time of extraction
   uint64_t tTrig;                                             // time when kickers shall be triggered
@@ -637,8 +640,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       sid      = (uint32_t)(recId >> 20) & 0xfff;
       //pp_printf("b2b: sid %u \n", sid);
-      if (sid > 15)  {sid = 0; todoItem = B2B_TODO_NOTHING; return status;}
-      if (!setFlagValid[sid]) {todoItem = B2B_TODO_NOTHING; return status;}
+      if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
+      if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid      = setGid[sid];
       mode     = setMode[sid];
       TH1Ext   = setTH1Ext[sid];
@@ -652,13 +655,21 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       nTransfer++;
       transStat   = 0x0;
-      todoItem    = getNextTodo(mode, B2B_TODO_NOTHING);
+      mState    = getNextMState(mode, B2B_MFSM_S0);
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
       reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
-      comLatency  = (int32_t)(getSysTime() - recDeadline);
-      tH1Ext        = recParam;
+      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      recGid        = (uint32_t)((recId >> 48) & 0xfff     );
+      recSid        = (uint32_t)((recId >> 20) & 0xfff     );
+
+      // check, if received evtID is valid
+      if (recGid != gid)            return COMMON_STATUS_OUTOFRANGE;   
+      if (recSid != sid)            return COMMON_STATUS_OUTOFRANGE;
+      if (mState != B2B_MFSM_EXTPR) return COMMON_STATUS_OUTOFRANGE;
+      
+      tH1Ext        = recParam; 
 
       /*
       // do some math
@@ -672,9 +683,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       */
-      transStat |= todoItem;
-      todoItem   = getNextTodo(mode, todoItem);
-      //pp_printf("b2b: PREXT %u\n", todoItem);
+      transStat |= mState;
+      mState   = getNextMState(mode, mState);
+      //pp_printf("b2b: PREXT %u\n", mState);
       break;
 
       /*case B2B_ECADO_B2B_PRINJ :
@@ -694,18 +705,19 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
       */
 
-    default : ;
+    default :
+      return status;                                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
       
   // trigger at time of EVT_KICK_START1/2 of extraction machine
-  if (todoItem == B2B_TODO_EXTKST) {
+  if (mState == B2B_MFSM_EXTKST) {
     tTrig      = reqDeadline;                
-    transStat |= todoItem;
-    todoItem   = getNextTodo(mode, todoItem);
-  } // B2B_TODO_EXTTC
+    transStat |= mState;
+    mState   = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTTC
 
   // request phase measurement of extraction 
-  if (todoItem == B2B_TODO_EXTPS) {
+  if (mState == B2B_MFSM_EXTPS) {
     //TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
     //TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
     //nHExt        = *pSharedNHExt;
@@ -720,51 +732,55 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = TH1Ext;
     sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    transStat   |= todoItem;
-    todoItem     = getNextTodo(mode, todoItem);
-  } // B2B_TODO_EXTPS
+    transStat   |= mState;
+    mState     = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTPS
 
   // trigger in bunch gap of extraction machine: calculate trigger time
-  if (todoItem == B2B_TODO_EXTBGT) {
+  if (mState == B2B_MFSM_EXTBGT) {
     tWantExt     = reqDeadline + (uint64_t)COMMON_AHEADT;
     if (calcExtTime(&tTrig, tWantExt) == COMMON_STATUS_OK) {
-      transStat |= todoItem;
-      todoItem   = getNextTodo(mode, todoItem);
+      transStat |= mState;
+      mState   = getNextMState(mode, mState);
     } // if OK
     else {
       transStat = 0x0;
-      todoItem  = B2B_TODO_NOTHING;
+      mState  = B2B_MFSM_NOTHING;
     } // if not ok    
-    //pp_printf("b2b: EXTBGT %u\n", todoItem);
-  } // B2B_TODO_EXTTC
+    //pp_printf("b2b: EXTBGT %u\n", mState);
+  } // B2B_MFSM_EXTTC
 
   // trigger extraction kicker
-  if (todoItem == B2B_TODO_EXTTRIG ) {
+  if (mState == B2B_MFSM_EXTTRIG ) {
+    sendGid      =  getTrigGid(1);
+    if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(1) << 48);               // GID 
+    sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendParam    = 0x0;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
-    //pp_printf("todo2 %u, extTime - now %d\n", todoItem, (uint32_t)(sendDeadline - getSysTime()));
-    transStat |= todoItem;
-    todoItem   = getNextTodo(mode, todoItem);
-  } // B2B_TODO_EXTTRIG
+    //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
+    transStat |= mState;
+    mState   = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTTRIG
 
   // trigger injection kicker
-  if (todoItem == B2B_TODO_INJTRIG ) {
+  if (mState == B2B_MFSM_INJTRIG ) {
+    sendGid      =  getTrigGid(0);
+    if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)getTrigGid(0) << 48);               // GID 
+    sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendParam    = 0x0;
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam);
-    //pp_printf("todo2 %u, extTime - now %d\n", todoItem, (uint32_t)(sendDeadline - getSysTime()));
-    transStat |= todoItem;
-    todoItem   = getNextTodo(mode, todoItem);
-  } // B2B_TODO_TRIGINJ
+    //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
+    transStat   |= mState;
+    mState       = getNextMState(mode, mState);
+  } // B2B_MFSM_TRIGINJ
   
       /*      
       TH1Inj          = (uint64_t)(*pSharedTH1InjHi) << 32;

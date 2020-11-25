@@ -45,17 +45,18 @@
 #define B2B_MODE_B2C                   3   // bunch to coasting transfer                 |     x    |     x     |    x     |           | 
 #define B2B_MODE_B2B                   4   // bunch to bucket transfer                   |     x    |     x     |    x     |     x     |
 
-// B2B todo flags
-#define B2B_TODO_NOTHING             0x0   // nothing to do
-#define B2B_TODO_EXTPS               0x1   // phase measurement extraction, send request to PM
-#define B2B_TODO_EXTPR               0x2   // phase measurement extraction, receive data from PM
-#define B2B_TODO_EXTKST              0x4   // calculate time for immediate extraction at EVT_KICK_START
-#define B2B_TODO_EXTBGT              0x8   // calculate time for extraction at next bunch gap
-#define B2B_TODO_EXTMATCHT          0x10   // calculate time for phase matching 
-#define B2B_TODO_EXTTRIG            0x20   // trigger extraction kicker
-#define B2B_TODO_INJPS              0x40   // phase measurement injection, send request to PM
-#define B2B_TODO_INJPR              0x80   // phase measurement injection, receive data from PM
-#define B2B_TODO_INJTRIG           0x100   // trigger injection kicker
+// B2B states of 'miniFSM'
+#define B2B_MFSM_S0                  0x1   // start state
+#define B2B_MFSM_EXTPS               0x2   // phase measurement extraction, send request to PM
+#define B2B_MFSM_EXTPR               0x4   // phase measurement extraction, receive data from PM
+#define B2B_MFSM_EXTKST              0x8   // calculate time for immediate extraction at EVT_KICK_START
+#define B2B_MFSM_EXTBGT             0x10   // calculate time for extraction at next bunch gap
+#define B2B_MFSM_EXTMATCHT          0x20   // calculate time for phase matching 
+#define B2B_MFSM_EXTTRIG            0x40   // trigger extraction kicker
+#define B2B_MFSM_INJPS              0x80   // phase measurement injection, send request to PM
+#define B2B_MFSM_INJPR             0x100   // phase measurement injection, receive data from PM
+#define B2B_MFSM_INJTRIG           0x200   // trigger injection kicker
+#define B2B_MFSM_NOTHING        0x100000   // nothing to do
 
 // group IDs
 #define GID_INVALID                  0x0   // invalid GID

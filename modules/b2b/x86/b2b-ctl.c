@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-November-2020
+ *  version : 25-November-2020
  *
  * Command-line interface for b2b
  *
@@ -549,9 +549,9 @@ int main(int argc, char** argv) {
       cTrigInj = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("cTrigExt %d\n", cTrigInj);
+      printf("cTrigInj %d\n", cTrigInj);
             
-      eb_device_write(device, b2b_set_cTrigExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigExt    , 0, eb_block);
+      eb_device_write(device, b2b_set_cTrigInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigInj    , 0, eb_block);
    } // "setctriginj"  
 
   } //if command
