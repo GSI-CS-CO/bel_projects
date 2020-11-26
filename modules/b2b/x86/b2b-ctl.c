@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-November-2020
+ *  version : 26-November-2020
  *
  * Command-line interface for b2b
  *
@@ -56,6 +56,7 @@
 const char* program;
 static int getInfo    = 0;
 static int getVersion = 0;
+static int ddsValue   = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
 
@@ -309,33 +310,36 @@ int main(int argc, char** argv) {
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:eih")) != -1) {
+  while ((opt = getopt(argc, argv, "s:eihd")) != -1) {
     switch (opt) {
-    case 'e':
-      getVersion = 1;
-      break;
-    case 'i':
-      getInfo = 1;
-      break;
-    case 's':
-      snoop = 1;
-      logLevel = strtol(optarg, &tail, 0);
-      if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
-        exit(1);
-      } /* if *tail */
-      if ((logLevel < COMMON_LOGLEVEL_ALL) || (logLevel > COMMON_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
-      break;
-    case 'h':
-      help();
-      return 0;
+      case 'e':
+        getVersion = 1;
+        break;
+      case 'i':
+        getInfo = 1;
+        break;
+      case 'd':
+        ddsValue = 1;
+        break;
+      case 's':
+        snoop = 1;
+        logLevel = strtol(optarg, &tail, 0);
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } /* if *tail */
+        if ((logLevel < COMMON_LOGLEVEL_ALL) || (logLevel > COMMON_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
+        break;
+      case 'h':
+        help();
+        return 0;
       case ':':
       case '?':
         error = 1;
-      break;
-    default:
-      fprintf(stderr, "%s: bad getopt result\n", program);
-      return 1;
+        break;
+      default:
+        fprintf(stderr, "%s: bad getopt result\n", program);
+        return 1;
     } /* switch opt */
   } /* while opt */
 
@@ -459,8 +463,14 @@ int main(int argc, char** argv) {
 
       fH1Inj = strtod(argv[optind+1], &tail);
       if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
-      TH1Inj = (double)1000000000000000000.0 / api_flsa2fdds(fH1Inj);  // period in attoseconds
+      if (ddsValue) {
+        printf("b2b: dds %f [Hz]\n", fH1Inj);
+        TH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;         // period in attoseconds       
+      } // if ddsValue     
+      else {
+        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
+        TH1Inj = (double)1000000000000000000.0 / api_flsa2fdds(fH1Inj);  // period in attoseconds
+      } // else ddsValue
 
       nHInj  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
@@ -476,8 +486,14 @@ int main(int argc, char** argv) {
 
       fH1Ext = strtod(argv[optind+1], &tail);
       if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
-      TH1Ext = (double)1000000000000000000.0 / api_flsa2fdds(fH1Ext);  // period in attoseconds
+      if (ddsValue) {
+        printf("b2b: dds %f [Hz]\n", fH1Ext);
+        TH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;         // period in attoseconds
+      } // if ddsValue     
+      else {
+        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
+        TH1Ext = (double)1000000000000000000.0 / api_flsa2fdds(fH1Ext);  // period in attoseconds
+      } // else ddsValue
 
       nHExt  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
