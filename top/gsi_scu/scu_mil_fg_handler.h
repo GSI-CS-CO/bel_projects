@@ -85,10 +85,23 @@ void clear_handler_state( const unsigned int socket );
  * @brief
  */
 typedef struct
-{
-   int16_t   irq_data;      /*!<@brief saved irq state */
-   int       setvalue;      /*!<@brief setvalue from the tuple sent */
-   uint64_t  daq_timestamp; /*!<@brief timestamp of daq sampling */
+{  /*!
+    * @brief Saved irq state
+    * @see milGetStatus
+    * @see scub_get_task_mil
+    * @see get_task_mil
+    */
+   int16_t   irq_data;
+
+   /*!
+    * @brief Setvalue from the tuple sent
+    */
+   int       setvalue;
+
+   /*!
+    * @brief Timestamp of daq sampling.
+    */
+   uint64_t  daq_timestamp;
 } FG_CHANNEL_TASK_T;
 
 /*! --------------------------------------------------------------------------
@@ -98,18 +111,41 @@ typedef struct
  * @see milDeviceHandler
  */
 typedef struct
-{
-   FG_STATE_T        state;            /*!<@brief current FSM state */
-   unsigned int      slave_nr;         /*!<@brief slave nr of the controlling sio card
-                                                  its the SCU-slot number when > 0,
-                                                  in the case of zero the MIL-extention */
-   unsigned int      lastChannel;      /*!<@brief loop index for channel */
-   unsigned int      task_timeout_cnt; /*!<@brief timeout counter */
-   uint64_t          timestamp1;       /*!<@brief timestamp */
+{  /*!
+    * @brief Current FSM state
+    */
+   FG_STATE_T        state;
+
+   /*!
+    * @brief Slave number of the controlling SIO-card its the
+    *        SCU-slot number when > 0,
+    *        in the case of zero the MIL-extention.
+    */
+   unsigned int      slave_nr;
+
+   /*!
+    * @brief Continuation of loop index for channel.
+    */
+   unsigned int      lastChannel;
+
+   /*!
+    * @brief timeout counter
+    */
+   unsigned int      task_timeout_cnt;
+
+   /*!
+    * @brief Timestamp
+    */
+   uint64_t          timestamp1;
 #ifdef CONFIG_READ_MIL_TIME_GAP
-   uint64_t          gapReadingTime; // Workaround!!! Move this in FG_CHANNEL_T resp. g_aFgChannels!!!
+   // Workaround!!! Move this in FG_CHANNEL_T resp. g_aFgChannels!!!
+   uint64_t          gapReadingTime;
 #endif
-   FG_CHANNEL_TASK_T aFgChannels[ARRAY_SIZE(g_aFgChannels)]; /*!<@see FG_CHANNEL_TASK_T */
+
+    /*!
+     * @see FG_CHANNEL_TASK_T
+     */
+   FG_CHANNEL_TASK_T aFgChannels[ARRAY_SIZE(g_aFgChannels)];
 } MIL_TASK_DATA_T;
 
 extern MIL_TASK_DATA_T g_aMilTaskData[5];

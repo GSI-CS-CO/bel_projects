@@ -2,6 +2,7 @@
  * @file scu_fg_macros.c
  * @brief Module for handling MIL and non MIL
  *        function generator macros
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuFgDoc
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 04.02.2020
@@ -19,6 +20,7 @@
 extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
+STATIC_ASSERT( sizeof( *g_pScu_mil_base ) == sizeof( uint32_t ) );
 #endif
 
 /*!
@@ -42,7 +44,7 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
  */
 void printDeviceError( const int status, const int slot, const char* msg )
 {
-  static const char* pText = ESC_ERROR"dev bus access in slot ";
+  static const char* pText = ESC_ERROR "dev bus access in slot ";
   char* pMessage;
   #define __MSG_ITEM( status ) case status: pMessage = #status; break
   switch( status )
@@ -54,12 +56,14 @@ void printDeviceError( const int status, const int slot, const char* msg )
      __MSG_ITEM( RCV_TASK_ERR );
      default:
      {
-        mprintf("%s%d failed with code %d"ESC_NORMAL"\n", pText, slot, status);
+        mprintf( "%s%d failed with code %d" ESC_NORMAL "\n",
+                 pText, slot, status);
         return;
      }
   }
   #undef __MSG_ITEM
-  mprintf("%s%d failed with message %s, %s"ESC_NORMAL"\n", pText, slot, pMessage, msg);
+  mprintf( "%s%d failed with message %s, %s" ESC_NORMAL "\n",
+           pText, slot, pMessage, msg);
 }
 
 /*! ---------------------------------------------------------------------------

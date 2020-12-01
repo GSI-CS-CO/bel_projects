@@ -3,6 +3,8 @@
  *  @brief Main module of SCU function generators in LM32.
  *
  *  @date 10.07.2019
+ *
+ *  @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuFgDoc
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>

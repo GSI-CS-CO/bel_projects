@@ -3,6 +3,7 @@
  *  @brief Definition of shared memory for communication of
  *         function generator between LM32 and Linux host
  *
+ *  @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuFgDoc
  *  @date 10.07.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
