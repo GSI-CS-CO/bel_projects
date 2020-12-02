@@ -14,7 +14,7 @@
 /*!***********************************************************
  * @file scu_mil.h MIL bus library
  * @author  Wolfgang Panschow
- * 
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * This library works but has two issues:
  * 
  * 1. usage of platfrom dependent data types such as int

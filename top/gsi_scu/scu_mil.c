@@ -2,7 +2,9 @@
 //#include "aux.h"
 #include "scu_bus.h"
 
-
+/*!
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
+ */
 /***********************************************************
  ***********************************************************
  *  

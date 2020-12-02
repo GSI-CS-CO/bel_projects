@@ -86,7 +86,8 @@ void clear_handler_state( const unsigned int socket );
  */
 typedef struct
 {  /*!
-    * @brief Saved irq state
+    * @brief Saved irq state, becomes initialized in function milGetStatus()
+    *        respectively scub_get_task_mil() or get_task_mil()
     * @see milGetStatus
     * @see scub_get_task_mil
     * @see get_task_mil

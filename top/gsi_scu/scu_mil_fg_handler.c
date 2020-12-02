@@ -221,6 +221,7 @@ inline STATIC unsigned int getMilTaskId( const MIL_TASK_DATA_T* pMilTaskData )
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Returns the task number of a mil device.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData Pointer to the currently running system task.
  * @param channel Channel number
  */
@@ -260,7 +261,7 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
    if( lastTime > 0 )
    {
       if( (timestamp - lastTime) > 100000000ULL )
-         mprintf( ESC_WARNING"Time-gap: %d"ESC_NORMAL"\n", count++ );
+         mprintf( ESC_WARNING "Time-gap: %d" ESC_NORMAL "\n", count++ );
    }
    lastTime = timestamp;
 #endif
@@ -313,7 +314,7 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
 STATIC void printTimeoutMessage( register MIL_TASK_DATA_T* pMilTaskData,
                                  const bool isScuBus )
 {
-   mprintf( ESC_WARNING"timeout %s: state %s, taskid %d index %d"ESC_NORMAL"\n",
+   mprintf( ESC_WARNING "timeout %s: state %s, taskid %d index %d" ESC_NORMAL"\n",
             isScuBus? "dev_bus_handler" : "dev_sio_handler",
             state2string( pMilTaskData->state ),
             getMilTaskId( pMilTaskData ),
@@ -352,6 +353,7 @@ bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Requests the current status of the MIL device.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -359,8 +361,9 @@ bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
  * @see milDeviceHandler
  */
 STATIC inline
-int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
-                                                  const unsigned int channel )
+int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
+                     const bool isScuBus,
+                     const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const uint8_t      socket     = getSocket( channel );
@@ -389,6 +392,7 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Reads the currently status of the MIL device back.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -434,7 +438,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
 
    if( channel >= ARRAY_SIZE( g_aFgChannels ) )
    {
-      mprintf( ESC_ERROR"%s: FG-number %d out of range!"ESC_NORMAL"\n",
+      mprintf( ESC_ERROR "%s: FG-number %d out of range!" ESC_NORMAL "\n",
                __func__, channel );
       return;
    }
@@ -504,7 +508,7 @@ void handleMilFg( const unsigned int socket,
    const unsigned int channel = ctrlReg.bv.number;
    if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
    {
-      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL,
+      mprintf( ESC_ERROR "%s: Channel out of range: %d\n" ESC_NORMAL,
                __func__, channel );
       return;
    }
@@ -568,6 +572,7 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Set the read task of the MIL device
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -596,6 +601,7 @@ STATIC_ASSERT( sizeof(short) == sizeof(int16_t) );
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Reads the actual ADC value from MIL-device
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -684,6 +690,7 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter called SCU_SIO.
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  *
  * @dotfile scu_mil_fg_handler.gv State graph for this function
  * @see https://github.com/UlrichBecker/DocFsm
