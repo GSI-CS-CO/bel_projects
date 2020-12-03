@@ -29,7 +29,7 @@
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 //#define configTOTAL_HEAP_SIZE                   10240
-#define configTOTAL_HEAP_SIZE                   (4 * 1024)
+#define configTOTAL_HEAP_SIZE                   (8 * 1024)
 #define configAPPLICATION_ALLOCATED_HEAP        1
 
 /* Hook function related definitions. */
