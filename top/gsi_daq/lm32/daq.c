@@ -518,10 +518,11 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          ramRingIncReadIndex( &pFeedback->aktionBuffer.index );
          pFeedback->fgNumber = pFeedback->aktionBuffer.aAction[i].fgNumber;
          DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
+         DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
+         pSetChannel->sequenceContinuous = 0;
+         pActChannel->sequenceContinuous = 0;
          if( pFeedback->aktionBuffer.aAction[i].action == FB_OFF )
          {
-            DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
-
             ATOMIC_SECTION()
             {
                daqChannelSample1msOff( pSetChannel );

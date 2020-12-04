@@ -3,6 +3,7 @@
  * @brief Module for handling MIL and non MIL
  *        function generator macros
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuFgDoc
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 04.02.2020

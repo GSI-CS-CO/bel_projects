@@ -5,6 +5,8 @@
  *  @date 21.10.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
+ *  @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
+ *
  *  @author Stefan Rauch perhaps...
  *  @revision Ulrich Becker <u.becker@gsi.de>
  *
@@ -167,20 +169,24 @@ STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
 #define OUTPUT_BIT_MASK          ~SET_VALUE_NOT_VALID_MASK
 
 #if 1
+/*!
+ * @see https://github.com/GSI-CS-CO/bel_projects/blob/proposed_master/modules/function_generators/fg_quad/fg_quad_scu_bus.vhd
+ * @see FG_PARAM_SET_T
+ */
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint32_t __not_used__: 15;
+   uint32_t __not_used__: 14;
    uint32_t shift_a:       6;
-   uint32_t shift_b:       5;
+   uint32_t shift_b:       6;
    uint32_t frequency:     3;
    uint32_t step:          3;
 #else
    uint32_t step:          3;
    uint32_t frequency:     3;
-   uint32_t shift_b:       5;
+   uint32_t shift_b:       6;
    uint32_t shift_a:       6;
-   uint32_t __not_used__: 15;
+   uint32_t __not_used__: 14;
 #endif
 } FG_CONTROL_REG_T;
 
@@ -195,6 +201,11 @@ STATIC_ASSERT( sizeof(FG_CONTROL_REG_T) == sizeof(uint32_t) );
  * @brief Polynomial type for function generator.
  * @see send_fg_param
  * @see configure_fg_macro
+ *
+ * Meaning of the polynomial coefficients:\n
+ * @f$ voltage(t) = coeff\_a \times 2^{shift\_a} \times t^2
+ *                + coeff\_b \times 2^{shift\_b} \times t
+ *                + coeff\_c  @f$
  */
 typedef struct PACKED_SIZE
 {
