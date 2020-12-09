@@ -9,6 +9,8 @@ class Node;
 
 class Event;
 class Block;
+class BlockAlign;
+class BlockFixed;
 class Meta;
 
 class Command;
@@ -45,7 +47,8 @@ enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
   public:
     VisitorVertexWriter(std::ostream& out) : out(out) {};
     ~VisitorVertexWriter() {};
-    virtual void visit(const Block& el) const;
+    virtual void visit(const BlockFixed& el) const;
+    virtual void visit(const BlockAlign& el) const;
     virtual void visit(const TimingMsg& el) const;
     virtual void visit(const Flow& el) const;
     virtual void visit(const Switch& el) const;

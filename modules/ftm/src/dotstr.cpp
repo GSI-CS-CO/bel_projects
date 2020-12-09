@@ -206,7 +206,7 @@ namespace DotStr {
       namespace Block {
         const std::string sLookDef       = "shape     = \"rectangle\"";
         const std::string sLookFix       = sLookDef;
-        const std::string sLookAlign     = sLookDef;
+        const std::string sLookAlign     = sLookDef + ", style  = \"dotted\"";
 
 
       }

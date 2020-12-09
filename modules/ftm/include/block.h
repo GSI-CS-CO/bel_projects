@@ -24,10 +24,10 @@ public:
     rdIdxIl(0), rdIdxHi(0), rdIdxLo(0), wrIdxIl(0), wrIdxHi(0), wrIdxLo(0) {}
   Block(const Block& src) : Node(src), tPeriod(src.tPeriod), rdIdxIl(src.rdIdxIl), rdIdxHi(src.rdIdxHi), rdIdxLo(src.rdIdxLo), wrIdxIl(src.wrIdxIl), wrIdxHi(src.wrIdxHi), wrIdxLo(src.wrIdxLo) {}
   ~Block()  {};
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
-  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)       const = 0;
+  virtual void accept(const VisitorUploadCrawler& v)      const = 0;
+  virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
+  virtual void accept(const VisitorValidation& v)         const = 0;
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
@@ -58,7 +58,10 @@ public:
     //  std::cout << "BlockFixed Clone " << this->name << "this: " << this << " cpy " << tmp << std::endl;
     return boost::make_shared<BlockFixed>(BlockFixed(*this));
   }
-
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
 };
 
@@ -76,6 +79,10 @@ public:
     //std::cout << "BlockAlign Clone " << this->name << std::endl;
     return boost::make_shared<BlockAlign>(BlockAlign(*this));
   }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 };
 
 
