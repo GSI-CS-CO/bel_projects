@@ -198,6 +198,22 @@ FT rawToVoltage( const IT rawData, const FT maxVpp = DAQ_VPP_MAX )
 #undef __CALC_VOLTAGE_CASE
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Calculating of the Y value of a quadratic polynomial.
+ * 
+ * @param a Quadratic coefficient.
+ * @param b Linear coefficient,
+ * @param c Offset coefficient.
+ * @param x Value of x-axis.
+ * @return Value of y-axis.
+ */
+template <typename T>
+T calcPolynom( const T a, const T b, const T c, const T x )
+{
+   return x * (a * x + b) + c;
+}
+
+
 } // namespace daq
 } // namespace Scu
 

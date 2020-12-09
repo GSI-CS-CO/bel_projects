@@ -23,204 +23,18 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef __DOCFSM__
-#include <stdlib.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
 #include <cmath>
-#include <limits.h>
-#include <daq_calculations.hpp>
-#include <daq_exception.hpp>
-#include <daqt_messages.hpp>
-#endif
-
-
+#include <fgw_parser.hpp>
+#include <gnuplotstream.hpp>
 
 using namespace std;
 using namespace Scu;
-
+using namespace fgw;
 
 #ifndef DEFAULT_LINE_STYLE
    #define DEFAULT_LINE_STYLE "lines"
 #endif
 
-
-struct POLYNOM_T
-{
-   int   a;
-   uint  shiftA;
-   int   b;
-   uint  shiftB;
-   int   c;
-   uint  step;
-   uint  frequ;
-};
-
-using POLYMOM_VECT_T = vector<POLYNOM_T>;
-
-#define FSM_DECLARE_STATE( state, attr... ) state
-enum STATE_T
-{
-   FSM_DECLARE_STATE( READ_COEFF_A ),
-   FSM_DECLARE_STATE( READ_SHIFT_A ),
-   FSM_DECLARE_STATE( READ_COEFF_B ),
-   FSM_DECLARE_STATE( READ_SHIFT_B ),
-   FSM_DECLARE_STATE( READ_COEFF_C ),
-   FSM_DECLARE_STATE( READ_STEP ),
-   FSM_DECLARE_STATE( READ_FREQUENCY )
-};
-
-string printReadState( const STATE_T state )
-{
-   #define _CASE_STATE( _s ) case _s: return #_s
-   switch( state )
-   {
-      _CASE_STATE( READ_COEFF_A );
-      _CASE_STATE( READ_SHIFT_A );
-      _CASE_STATE( READ_COEFF_B );
-      _CASE_STATE( READ_SHIFT_B );
-      _CASE_STATE( READ_COEFF_C );
-      _CASE_STATE( READ_STEP );
-      _CASE_STATE( READ_FREQUENCY );
-   }
-   #undef _CASE_STATE
-   return "unknown";
-}
-
-void throwStateMessage( const STATE_T state, const int line )
-{
-   string errorMessage = "Reading in line: ";
-   errorMessage += to_string( line );
-   errorMessage += ": Value of state: ";
-   errorMessage += printReadState( state );
-   errorMessage += " out of range!";
-   throw( daq::Exception( errorMessage ) );
-}
-
-#define FSM_INIT_FSM( _state, attr... )      STATE_T state = _state
-#define FSM_TRANSITION( newState, attr... ) state = newState; nextState = false; break
-#define FSM_TRANSITION_NEXT( newState, attr... ) state = newState; break
-
-int readFile( POLYMOM_VECT_T& rVect, istream& rInput )
-{
-   int i = 1;
-
-   for( string oLine; getline( rInput, oLine ); i++ )
-   {
-      POLYNOM_T polynom;
-      size_t pos = 0;
-      bool nextState = true;
-      FSM_INIT_FSM( READ_COEFF_A );
-      do
-      {
-         int number;
-         try
-         {
-            number = stoi( oLine, &pos );
-         }
-         catch( ... )
-         {
-            string errorMessage = "Reading in line: ";
-            errorMessage += to_string( i );
-            errorMessage += " on state: ";
-            errorMessage += printReadState( state );
-            errorMessage += " out of range!";
-            throw( daq::Exception( errorMessage ) );
-         }
-         oLine = oLine.substr( pos );
-         switch( state )
-         {
-            case READ_COEFF_A: // No break here.
-            case READ_COEFF_B:
-            {
-               if( !gsi::isInRange( number, SHRT_MIN, SHRT_MAX ) )
-                  throwStateMessage( state, i );
-               break;
-            }
-
-            case READ_SHIFT_A: // No break here.
-            case READ_SHIFT_B:
-            {
-               if( !gsi::isInRange( number, 0,  static_cast<int>(BIT_SIZEOF(uint64_t)-BIT_SIZEOF(uint16_t))) )
-                  throwStateMessage( state, i );
-               break;
-            }
-
-            case READ_COEFF_C:
-            {
-               if( !gsi::isInRange( number, INT_MIN, INT_MAX ) )
-                  throwStateMessage( state, i );
-               break;
-            }
-
-            case READ_STEP:     // No break here.
-            case READ_FREQUENCY:
-            { /*
-               * The value shall not exceed the size of 3 bits!
-               */
-               if( !gsi::isInRange( number, 0, 7 ) )
-                  throwStateMessage( state, i );
-               break;
-            }
-
-            default: break;
-         }
-
-         switch( state )
-         {
-
-            case READ_COEFF_A:
-            {
-               polynom.a = number;
-               FSM_TRANSITION_NEXT( READ_SHIFT_A );
-            }
-
-            case READ_SHIFT_A:
-            {
-               polynom.shiftA = number;
-               FSM_TRANSITION_NEXT( READ_COEFF_B );
-            }
-
-            case READ_COEFF_B:
-            {
-               polynom.b = number;
-               FSM_TRANSITION_NEXT( READ_SHIFT_B );
-            }
-
-            case READ_SHIFT_B:
-            {
-               polynom.shiftB = number;
-               FSM_TRANSITION_NEXT( READ_COEFF_C );
-            }
-
-            case READ_COEFF_C:
-            {
-               polynom.c = number;
-               FSM_TRANSITION_NEXT( READ_STEP );
-            }
-
-            case READ_STEP:
-            {
-               polynom.step = number;
-               FSM_TRANSITION_NEXT( READ_FREQUENCY );
-            }
-
-            case READ_FREQUENCY:
-            {
-               polynom.frequ = number;
-               FSM_TRANSITION( READ_COEFF_A );
-            }
-
-            default: break;
-         }
-      }
-      while( nextState );
-      rVect.push_back( polynom );
-   }
-   return i;
-}
 
 /*
  * -- constants for frequency and step value counters
@@ -256,14 +70,14 @@ const uint g_frequencyTab[] =
 #else
 const uint g_frequencyTab[] =
 {
-   16000,
-   32000,
-   64000,
-   125000,
-   250000,
-   500000,
-   1000000,
-   2000000
+     16,
+     32,
+     64,
+    125,
+    250,
+    500,
+    1000,
+    2000
 };
 #endif
 
@@ -310,48 +124,56 @@ constexpr long double F_MAX = static_cast<long double>(static_cast<uint64_t>(~0)
  */
 constexpr float Y_PADDING = 0.5;
 
-
-double calcPolynom( const double a, const double b, const double c, const double x )
+double calcPolynomTuple( const POLYNOM_T& polynom, const int64_t x )
 {
-   return x * (a * x + b) + c;
-   //return c;
+   return daq::calcPolynom( static_cast<int64_t>( polynom.a ) << polynom.shiftA,
+                            static_cast<int64_t>( polynom.b ) << polynom.shiftB,
+                            static_cast<int64_t>( polynom.c ) << 32,
+                            x
+                          );
 }
 
-double calcPolynomTuple( const POLYNOM_T& polynom, const double x )
+void printPolynomVectFloat( ostream& out, const POLYMOM_VECT_T& rVect, const uint repeat = 1 )
 {
-   return calcPolynom( static_cast<int64_t>( polynom.a ) << polynom.shiftA,
-                       static_cast<int64_t>( polynom.b ) << polynom.shiftB,
-                       static_cast<int64_t>( polynom.c ) << 32,
-                       x
-                     );
-}
-
-
-
-void printPolynomVectFloat( const POLYMOM_VECT_T& rVect )
-{
-   double t = 0.0;
-
-   cout << "set grid" << endl;
-   cout <<"set yrange [" << -(DAQ_VPP_MAX/2 + Y_PADDING) << ':'
-                              << (DAQ_VPP_MAX/2 + Y_PADDING) << ']' << endl;
-   cout << "plot '-' title 'set value' with " << DEFAULT_LINE_STYLE << " lc rgb 'green'" << endl;
-
-   //for( int r = 0; r < 3; r++ )
+   out << "set grid" << endl;
+   //out << "set yrange [" << -(DAQ_VPP_MAX/2 + Y_PADDING) << ':'
+   //                           << (DAQ_VPP_MAX/2 + Y_PADDING) << ']' << endl;
+   out << "set ylabel \"Voltage\"" << endl;                           
+   double xRange = 0.0;
    for( const auto& polynom: rVect )
    {
-      double tStep = 0.0;
-      for( int i = calcStep(polynom.step) ; i >= 0; i-- )
-      {
-         cout << t << ' ' << (calcPolynomTuple( polynom, tStep ) * DAQ_VPP_MAX / F_MAX) << endl;
-         assert( polynom.frequ < ARRAY_SIZE( g_frequencyTab ) );
-         tStep +=  (double)g_frequencyTab[polynom.frequ] / SCU_FREQUENCY;
-        // tStep +=  1.0 / SCU_FREQUENCY;
-         t += tStep;
-      }
-
+      assert( polynom.frequ < ARRAY_SIZE( g_frequencyTab ) );
+      xRange += static_cast<double>(g_frequencyTab[polynom.frequ] * calcStep( polynom.step ));
    }
-   cout << 'e' << endl;
+   assert( xRange > 0.0 );
+   xRange /= (SCU_FREQUENCY * 2);
+   const double frequency = 1.0 / xRange;
+   xRange *= repeat;
+   out << "set xrange [0:" << xRange << ']' << endl;
+   out << "set xlabel \"Time\"" << endl;
+   out << "set title \"Frequency: " << frequency << " Hz\"" << endl;
+   
+   //out << "plot '-' title 'set value' with " << DEFAULT_LINE_STYLE << " lc rgb 'green'" << endl;
+   out << "plot '-' title '' with " << DEFAULT_LINE_STYLE << " lc rgb 'green'" << endl;
+   double tOrigin = 0.0;
+   for( uint r = 0; r < repeat; r++ )
+   {
+      for( const auto& polynom: rVect )
+      {
+         double tStep = 0.0;
+         uint step = calcStep( polynom.step );
+         assert( step > 0 );
+         assert( polynom.frequ < ARRAY_SIZE( g_frequencyTab ) );
+         const double tPart = static_cast<double>(g_frequencyTab[polynom.frequ]) / step / SCU_FREQUENCY;
+         for( uint i = 0; i < step; i++ )
+         {
+            out << tOrigin << ' ' << (calcPolynomTuple( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
+            tStep += tPart;
+            tOrigin += tStep;
+         }
+      }
+   }
+   out << 'e' << endl;
 }
 
 
@@ -367,17 +189,20 @@ int main( int argc, char** ppArgv )
       if( argc > 1 )
       {
          fInput.open( ppArgv[1] );
-         readFile( oPolyVect, fInput );
+         parseInStream( oPolyVect, fInput );
       }
       else
-         readFile( oPolyVect, cin );
+         parseInStream( oPolyVect, cin );
+      
+      gpstr::PlotStream oPlot( "-p" );
+      printPolynomVectFloat( oPlot, oPolyVect );
    }
    catch( daq::Exception& e )
    {
       ERROR_MESSAGE( "Exception occurred: \"" << e.what() << '"' );
       return EXIT_FAILURE;
    }
-   printPolynomVectFloat( oPolyVect );
+   
    return EXIT_SUCCESS;
 }
 

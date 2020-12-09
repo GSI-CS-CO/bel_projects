@@ -18,16 +18,16 @@ BASE_DIR := ..
 
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
-
+SOURCE += $(BASE_DIR)/fgw_parser.cpp
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
 DEFINES += CONFIG_AUTODOC_OPTION
+DEFINES += _SCU_CONTROL_CONFIG_H
+DEFINES += _DEFAULT_SOURCE
+#DEFINES += _BSD_SOURCE
+#DEFINES += _POSIX_C_SOURCE
 
-
-DEFINES += _BSD_SOURCE
-DEFINES += _POSIX_C_SOURCE
-# DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
 # DEFINES += DEBUGLEVEL
@@ -44,11 +44,11 @@ INCLUDE_DIRS += $(DAQ_LINUX_DIR)
 
 # LIBS += pthread
 LIBS += stdc++
-LIBS += m
+# LIBS += m
 
 CALL_ARGS = ../../../gsi_scu/sinus-test.txt
 
-# DEBUG = 1
+  DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
