@@ -88,16 +88,28 @@ void VisitorVertexWriter::pushStopEyecandy(const Node& el) const {
   if(el.isPatExit()) pushSingle(ec::Node::Base::sLookPatExit);
 }
 
+void VisitorVertexWriter::visit(const BlockAlign& el) const  {
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sBlockAlign);
+  pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FormatNum::DEC);
+  pushMembershipInfo((Node&)el);
+  uint32_t qInfo = (el.getFlags() >> NFLG_BLOCK_QS_POS) & NFLG_BLOCK_QS_MSK;
+  for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) pushPair(dnp::Block::sGenQPrio[prio], (qInfo >> prio) & 1, FormatNum::BOOL);
+  pushSingle(ec::Node::Block::sLookAlign);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
+  pushStopEyecandy((Node&)el);
+  pushEnd();
+}
 
-
-void VisitorVertexWriter::visit(const Block& el) const  {
+void VisitorVertexWriter::visit(const BlockFixed& el) const  {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sBlock);
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FormatNum::DEC);
   pushMembershipInfo((Node&)el);
   uint32_t qInfo = (el.getFlags() >> NFLG_BLOCK_QS_POS) & NFLG_BLOCK_QS_MSK;
   for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) pushPair(dnp::Block::sGenQPrio[prio], (qInfo >> prio) & 1, FormatNum::BOOL);
-  pushSingle(ec::Node::Block::sLookDef);
+  pushSingle(ec::Node::Block::sLookFix);
   pushPaintedEyecandy((Node&)el);
   pushStartEyecandy((Node&)el);
   pushStopEyecandy((Node&)el);
