@@ -65,7 +65,7 @@ which are not included in the standard schedule output. Those nodes contain data
 
 \paragraph{Guidelines}
 \begin{itemize}
-  \item{To add queues, just list the priorities you want. carpeDM will handle the overhead for you}
+  \item{To add queues, just list the priorities you want. carpeDM will handle the overhead of meta node creation for you}
   \item{If a block has exactly one successor, don't add queues, this saves space}
   \item{carpeDM will automatically add a destination list to a block if any alternative destinations are present}
   \item{When using commands in schedules, $99.9\%$ of the time you will need them ASAP (vabs=true, tvalid=0) }
@@ -112,7 +112,7 @@ $ dm-sched <eb-device> add -f <late-message-dot.dot>
 
 \subsection{Summary}
 The offline verification rule tables and algorithms make sure only valid schedule data will be accepted for upload to the DM. 
-All of the rules listed above except the ones about active schedules in subsection~\ref{ssec:val-on-change} are independent of current DM activity and therefore evaluated \enquote{at compile time}.
+All of the rules listed above except the ones about active schedules in subsection~\ref{ssec:val-on-change} are independent of current DM activity and therefore evaluated \enquote{at compile time} of the schedule.
 The only exception is the use of absolute time values within schedules, which could become obsolete before upload is achieved. There is currently ($\le$ v0.27.1) no safeguard against the use of stale absolute times.
 Almost all of the rules are not solely good practice, but absolutely necessary to achieve expected behaviour of the DM firmware. However, for certain debug cases, it is possible to bend the rules somewhat without causing havoc in the DM hardware.
 

@@ -100,7 +100,7 @@ When removing a schedule, a severe side effect can occur in inactive schedules. 
 
 
 \subsection{Visual Reports}
-The
+The implementation is capable of creating visual reports for the reasoning behind a found decision. This is achieved by colorisation of all traversible paths to entry points of the schedule to be removed in red, as unsafe. This is handled inside the static equivalent model, the worst case scenario where all possible future connections are treated as existent. The execution cursors, or rather, the last known node positions of them, are coloured in as well. If any happens to be inside an unsafe area, the conclusion is that a cursor could currently be inside the schedule to be removed or enter it in the near future. This allows humans to easily follow the connections between nodes with their eyes, even in large patterns. The colorisation gives a simple yet effective distinction of territory.
 
 
 \section{Enhanced Equivalent Static Model\\(aka \enquote{crystal ball})}
@@ -165,7 +165,7 @@ But because it's valid time is not yet reached, the outcome is uncertain - the c
 
 
 \section{Summary}
-A verification algorithm able to tell if a schedule is inactive and therefore safe to remove was created. The second and third approach listed in~\ref{sched_mod1} were implemented.
+A reliable means of telling if a schedule branch is inactive is a core requirement for safe changes to schedules during runtime. Doing such changes blindly on an active schedule would run into several race conditions with severe consequences in terms of pointer errors and following memory corruption. A verification algorithm able to tell if a schedule is inactive and therefore safe to remove was created. The second and third approach listed in~\ref{sched_mod1} were implemented. 
 \paragraph{Equivalent static model} This approach creates a time-invariant equivalent model, the ESM, from the original graph. In combination with the cursor positions in the DM, a safety assessment for the schedule removal is possible. The ESM is obtained by stripping the original graph of all but the default successor edges and adding virtual paths representing all flow commands in queues. Further virtual paths are iteratively added for all resident flow commands reachable by the current iteration of the model. The virtual path scheme provides a representation of flow commands which is independent of the time the command queues were observed.
 In the resulting ESM, the reverse tree originating from critical schedule's entry point can be mapped. If an intersection with the set of cursors
 is found, the schedule is active and therefore unsafe to remove.
