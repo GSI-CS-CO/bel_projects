@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-November-2020
+ *  version : 10-December-2020
  *
  * Command-line interface for b2b
  *
@@ -49,7 +49,7 @@
 
 // b2b
 #include <common-lib.h>                  // COMMON
-#include <b2b-api.h>                     // API
+#include <b2blib.h>                      // API
 #include <b2b.h>                         // FW
 #include <b2bcbu_shared_mmap.h>          // LM32
 
@@ -60,6 +60,7 @@ static int ddsValue   = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
 
+/*
 eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
 
@@ -97,6 +98,8 @@ eb_address_t b2b_cPhase;       // phase correction
 eb_address_t b2b_cTrigExt;     // kicker correction extraction
 eb_address_t b2b_cTrigInj;     // kicker correction injection
 eb_address_t b2b_comLatency;    // latency for message transfer via ECA
+
+*/
  
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -106,6 +109,8 @@ static void die(const char* where, eb_status_t status) {
 
 
 static void help(void) {
+  uint32_t version;
+  
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
@@ -156,7 +161,9 @@ static void help(void) {
   fprintf(stderr, "                 ' |       '- state\n");
   fprintf(stderr, "                 '- # of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", B2B_X86_VERSION);
+
+  b2b_version_library(&version);
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(version));
 } //help
 
 
@@ -173,7 +180,7 @@ const char* statusText(uint32_t bit) {
   return message;
 } // status_text
 
-
+/*
 int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency)
 {
   eb_cycle_t  cycle;
@@ -216,7 +223,7 @@ int readDiags(uint32_t *gid, uint32_t *sid, uint32_t *mode, uint64_t *TH1Ext, ui
  
   return eb_status;
 } // readDiags
-
+*/
 
 void printTransferHeader()
 {
@@ -233,7 +240,7 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
+void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
 {
   printf("\n\n");
   printf("b2b: statistics ...\n\n");
@@ -252,18 +259,26 @@ void printDiags(uint32_t gid, uint32_t sid, uint32_t mode, uint64_t TH1Ext, uint
   printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
 } // printDiags
 
+void initSetValues(uint32_t *setsid, uint32_t *setgid, uint32_t *setmode, uint64_t *setTH1Ext, uint64_t *setTH1Inj, uint32_t *setnHExt, uint32_t *setnHInj, int32_t  *setcPhase, int32_t  *setcTrigExt, int32_t  *setcTrigInj)
+{
+  *setsid      = 0;
+  *setgid      = 0;
+  *setmode     = 0;
+  *setTH1Ext   = 0;
+  *setTH1Inj   = 0;
+  *setnHExt    = 1;
+  *setnHInj    = 1;
+  *setcPhase   = 0;
+  *setcTrigExt = 0;
+  *setcTrigInj = 0;
+} // iniSetValues
+
 
 int main(int argc, char** argv) {
+  /*
 #define GSI           0x00000651
 #define LM32_RAM_USER 0x54111351
-
-  
-  eb_status_t         eb_status;
-  eb_socket_t         socket;
-
-  struct sdb_device   sdbDevice;          // instantiated lm32 core
-  int                 nDevices;           // number of instantiated cores
-
+  */
   
   const char* devName;
   const char* command;
@@ -277,36 +292,45 @@ int main(int argc, char** argv) {
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
-  uint32_t version;
-  uint32_t usedSize;
-  uint64_t tDiag;
-  uint64_t tS0;
   uint32_t nTransfer;
-  uint32_t nInjection;
-  uint32_t statTrans;
-  uint32_t gid;                                // GID 
-  uint32_t sid;                                // SID
-  uint32_t mode;                               // mode
-  uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
-  uint64_t TH1Inj;                             // h=1 period [as] of injection machine
-  uint32_t nHExt;                              // harmonic number extraction machine
-  uint32_t nHInj;                              // harmonic number injection machine
-  uint64_t TBeat;                              // period [as] of frequency beating
-  int32_t  cPhase;                             // phase correction
-  int32_t  cTrigExt;                           // trigger correction extraction
-  int32_t  cTrigInj;                           // trigger correction injection
-  int32_t  comLatency;                         // message latency from ECA
   double   fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   double   fH1Inj;                             // h=1 frequency [Hz] of injection machine
+  uint32_t setsid;                             // SID
+  uint32_t setgid;                             // GID 
+  uint32_t setmode;                            // mode
+  uint64_t setTH1Ext;                          // h=1 period [as] of extraction machine
+  uint64_t setTH1Inj;                          // h=1 period [as] of injection machine
+  uint32_t setnHExt;                           // harmonic number extraction machine
+  uint32_t setnHInj;                           // harmonic number injection machine
+  int32_t  setcPhase;                          // phase correction
+  int32_t  setcTrigExt;                        // trigger correction extraction
+  int32_t  setcTrigInj;                        // trigger correction injection
+  uint32_t getsid;                             // SID
+  uint32_t getgid;                             // GID 
+  uint32_t getmode;                            // mode
+  uint64_t getTH1Ext;                          // h=1 period [as] of extraction machine
+  uint64_t getTH1Inj;                          // h=1 period [as] of injection machine
+  uint32_t getnHExt;                           // harmonic number extraction machine
+  uint32_t getnHInj;                           // harmonic number injection machine
+  int32_t  getcPhase;                          // phase correction
+  int32_t  getcTrigExt;                        // trigger correction extraction
+  int32_t  getcTrigInj;                        // trigger correction injection
+  uint64_t getTBeat;                           // period [as] of frequency beating
+  int32_t  getcomLatency;                      // message latency from ECA
+
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
-
-  uint64_t mac;                                // mac for config of EB master
-  uint32_t ip;                                 // ip for config of EB master
+  uint32_t verLib;
+  uint32_t verFw;
 
   int      i;
+
+  uint64_t ebDevice;
+  uint32_t cpu;
+  uint32_t status;
+
 
   program = argv[0];    
 
@@ -360,103 +384,86 @@ int main(int argc, char** argv) {
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
 
-  /* open Etherbone device and socket */
-  if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &socket)) != EB_OK) die("eb_socket_open", eb_status);
-  if ((eb_status = eb_device_open(socket, devName, EB_ADDRX|EB_DATAX, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
-
-  /* get device Wishbone address of lm32 */
-  nDevices = 1; // quick and dirty, use only first core
-  if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
-  lm32_base =  sdbDevice.sdb_component.addr_first;
-
-  comlib_initShared(lm32_base, SHARED_OFFS);
-  b2b_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
-  b2b_set_gid      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GID;     
-  b2b_set_sid      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SID;     
-  b2b_set_mode     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_MODE;;   
-  b2b_set_TH1ExtHi = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1EXTHI;
-  b2b_set_TH1ExtLo = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1EXTLO;
-  b2b_set_nHExt    = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHEXT;   
-  b2b_set_TH1InjHi = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJHI;
-  b2b_set_TH1InjLo = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJLO;
-  b2b_set_nHInj    = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHINJ;
-  b2b_set_cPhase   = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CPHASE;  
-  b2b_set_cTrigExt = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGEXT;
-  b2b_set_cTrigInj = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGINJ;                   
-  b2b_gid          = lm32_base + SHARED_OFFS + B2B_SHARED_GID;
-  b2b_sid          = lm32_base + SHARED_OFFS + B2B_SHARED_SID;
-  b2b_mode         = lm32_base + SHARED_OFFS + B2B_SHARED_MODE;;
-  b2b_TH1ExtHi     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTHI;
-  b2b_TH1ExtLo     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1EXTLO;
-  b2b_nHExt        = lm32_base + SHARED_OFFS + B2B_SHARED_NHEXT;
-  b2b_TH1InjHi     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1INJHI;
-  b2b_TH1InjLo     = lm32_base + SHARED_OFFS + B2B_SHARED_TH1INJLO;
-  b2b_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_NHINJ;
-  b2b_TBeatHi      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATHI;
-  b2b_TBeatLo      = lm32_base + SHARED_OFFS + B2B_SHARED_TBEATLO;
-  b2b_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_CPHASE;
-  b2b_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGEXT;
-  b2b_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_CTRIGINJ;
-  b2b_comLatency   = lm32_base + SHARED_OFFS + B2B_SHARED_COMLATENCY;
+  if ((status =  b2b_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+  initSetValues(&setsid, &setgid, &setmode, &setTH1Ext, &setTH1Inj, &setnHExt, &setnHInj, &setcPhase, &setcTrigExt, &setcTrigInj);
   
   if (getVersion) {
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
-    printf("b2b: software (firmware) version %s (%06x)\n",  B2B_X86_VERSION, version);     
-  } // if getEBVersion
+    b2b_version_library(&verLib);
+    printf("b2b: library (firmware) version %s",  b2b_version_text(verLib));     
+    b2b_version_firmware(ebDevice, &verFw);
+    printf(" (%s)\n",  b2b_version_text(verFw));     
+  } // if getVersion
 
   if (getInfo) {
     // status
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+    b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency);
+    b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+
     printTransferHeader();
     printTransfer(nTransfer);
-    printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
+    printf(", %s (%6u), ", b2b_state_text(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
+    // print set status bits (except OK)
+    for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(i));
+    } // for i
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+    b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+      b2b_cmd_configure(ebDevice);
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("b2b: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
+
     if (!strcasecmp(command, "startop")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
+      b2b_cmd_startop(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
+
     if (!strcasecmp(command, "stopop")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
+      b2b_cmd_stopop(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
+
     if (!strcasecmp(command, "recover")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
+      b2b_cmd_recover(ebDevice);
       if (state != COMMON_STATE_ERROR) printf("b2b: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
+
     if (!strcasecmp(command, "idle")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
+      b2b_cmd_idle(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     // diagnostics
+
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
+      b2b_cmd_cleardiag(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
-    if (!strcasecmp(command, "submit")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2B_CMD_CONFSUBMIT, 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
-    } // "cleardiag"
-    if (!strcasecmp(command, "clearconfig")) {
-      eb_device_write(device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2B_CMD_CONFCLEAR, 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
-    } // "cleardiag"
+
     if (!strcasecmp(command, "diag")) {
-      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
-      readDiags(&gid, &sid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, &comLatency);
-      printDiags(gid, sid, mode, TH1Ext, nHExt, TH1Inj, nHInj, TBeat, cPhase, cTrigExt, cTrigInj, comLatency);
+      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
+      for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", b2b_status_text(i));
+      } // for i
+      b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency);
+      printDiags(getsid, getgid, getmode, getTH1Ext, getnHExt, getTH1Inj, getnHInj, getTBeat, getcPhase, getcTrigExt, getcTrigInj, getcomLatency);
     } // "diag"
+
+    if (!strcasecmp(command, "submit")) {
+      b2b_context_upload(ebDevice, setsid, setgid, setmode, setTH1Ext, setnHExt, setTH1Inj, setnHInj, setcPhase, setcTrigExt, setcTrigInj);
+      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
+    } // "submit"
+    
+    if (!strcasecmp(command, "clearconfig")) {
+      b2b_cmd_clearConfig(ebDevice);      
+      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
+    } // "clearconfig"
 
     if (!strcasecmp(command, "seth1inj")) {
       if (optind+3  != argc) {printf("b2b: expecting exactly two arguments: seth1inj <freq> <h>\n"); return 1;}
@@ -465,20 +472,17 @@ int main(int argc, char** argv) {
       if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
       if (ddsValue) {
         printf("b2b: dds %f [Hz]\n", fH1Inj);
-        TH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;         // period in attoseconds       
+        setTH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;         // period in attoseconds       
       } // if ddsValue     
       else {
-        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
-        TH1Inj = (double)1000000000000000000.0 / api_flsa2fdds(fH1Inj);  // period in attoseconds
+        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, b2b_flsa2fdds(fH1Inj));
+        setTH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
       } // else ddsValue
 
-      nHInj  = strtoul(argv[optind+2], &tail, 0);
+      setnHInj  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
 
-      /* chk, consider using one cycle */
-      eb_device_write(device, b2b_set_TH1InjHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32)       , 0, eb_block);
-      eb_device_write(device, b2b_set_TH1InjLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff), 0, eb_block);
-      eb_device_write(device, b2b_set_nHInj,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHInj                , 0, eb_block);
+      // values get written to FW on command 'submit'
     } // "seth1inj"
     
     if (!strcasecmp(command, "seth1ext")) {
@@ -488,86 +492,76 @@ int main(int argc, char** argv) {
       if (*tail != 0)        {printf("b2b: invalid frequency -- %s\n", argv[optind+2]); return 1;}
       if (ddsValue) {
         printf("b2b: dds %f [Hz]\n", fH1Ext);
-        TH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;         // period in attoseconds
+        setTH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;         // period in attoseconds
       } // if ddsValue     
       else {
-        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
-        TH1Ext = (double)1000000000000000000.0 / api_flsa2fdds(fH1Ext);  // period in attoseconds
+        printf("b2b: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, b2b_flsa2fdds(fH1Ext));
+        setTH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
       } // else ddsValue
 
-      nHExt  = strtoul(argv[optind+2], &tail, 0);
+      setnHExt  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
-      
-      /* chk, consider using one cycle */      
-      eb_device_write(device, b2b_set_TH1ExtHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32)       , 0, eb_block);
-      eb_device_write(device, b2b_set_TH1ExtLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff), 0, eb_block);
-      eb_device_write(device, b2b_set_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
+      // values get written to FW on command 'submit'
     } // "seth1ext"
 
    if (!strcasecmp(command, "setgid")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setgid <value>\n"); return 1;}
 
-      gid = strtol(argv[optind+1], &tail, 0);
+      setgid = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid group ID -- %s\n", argv[optind+2]); return 1;}
 
-      printf("gidExt %d\n", gid);
-            
-      eb_device_write(device, b2b_set_gid,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)gid        , 0, eb_block);
+      printf("gidExt %d\n", setgid);
+      // values get written to FW on command 'submit'            
    } // "setgid"  
 
    if (!strcasecmp(command, "setsid")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setsid <value>\n"); return 1;}
 
-      sid = strtol(argv[optind+1], &tail, 0);
+      setsid = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid sequence ID -- %s\n", argv[optind+2]); return 1;}
 
-      printf("sid %d\n", sid);
-            
-      eb_device_write(device, b2b_set_sid,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)sid        , 0, eb_block);
+      printf("sid %d\n", setsid);
+      // values get written to FW on command 'submit'            
    } // "setsid"  
 
    if (!strcasecmp(command, "setmode")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setmode <value>\n"); return 1;}
 
-      mode  = strtol(argv[optind+1], &tail, 0);
+      setmode  = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid mode -- %s\n", argv[optind+2]); return 1;}
 
-      printf("mode %d\n", mode);
-            
-      eb_device_write(device, b2b_set_mode,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)mode       , 0, eb_block);
+      printf("mode %d\n", setmode);
+      // values get written to FW on command 'submit'            
    } // "setmode"  
 
    if (!strcasecmp(command, "setcphase")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setcphase <value>\n"); return 1;}
 
-      cPhase = strtol(argv[optind+1], &tail, 0);
+      setcPhase = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("cPhase %d\n", cPhase);
-            
-      eb_device_write(device, b2b_set_cPhase,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cPhase      , 0, eb_block);
+      printf("cPhase %d\n", setcPhase);
+      // values get written to FW on command 'submit'            
    } // "setcphase"  
 
    if (!strcasecmp(command, "setctrigext")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setctrigext <value>\n"); return 1;}
 
-      cTrigExt = strtol(argv[optind+1], &tail, 0);
+      setcTrigExt = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("cTrigExt %d\n", cTrigExt);
-            
-      eb_device_write(device, b2b_set_cTrigExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigExt    , 0, eb_block);
+      printf("cTrigExt %d\n", setcTrigExt);
+      // values get written to FW on command 'submit'            
    } // "setctrigext"  
 
    if (!strcasecmp(command, "setctriginj")) {
       if (optind+2  != argc) {printf("b2b: expecting exactly one argument: setctriginj <value>\n"); return 1;}
 
-      cTrigInj = strtol(argv[optind+1], &tail, 0);
+      setcTrigInj = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("cTrigInj %d\n", cTrigInj);
-            
-      eb_device_write(device, b2b_set_cTrigInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)cTrigInj    , 0, eb_block);
+      printf("cTrigInj %d\n", setcTrigInj);
+      // values get written to FW on command 'submit'            
    } // "setctriginj"  
 
   } //if command
@@ -582,7 +576,7 @@ if (snoop) {
     printTransferHeader();
 
     while (1) {
-      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -617,9 +611,8 @@ if (snoop) {
     } // while
   } // if snoop
 
-  // close Etherbone device and socket
-  if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
-  if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);
+  // close connection to firmware
+  if ((status = b2b_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
 }

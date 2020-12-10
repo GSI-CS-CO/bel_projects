@@ -11,16 +11,22 @@ EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
 TARGETS     := b2b-ctl 
-
+B2BLIB      := libb2blib.so
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
-LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
 
 all: $(TARGETS)
 
 b2b-ctl: b2b-ctl.c
-	$(CC) $(CFLAGS) b2b-api.c ../../common-libs/x86/common-lib.c -o b2b-ctl b2b-ctl.c $(LIBS)
+	$(CC) $(CFLAGS) -o b2b-ctl b2b-ctl.c $(LIBS)
+
+lib: b2blib.c
+	$(CC) $(CFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
+	$(CC) -shared -Wl,-soname,$(B2BLIB).1 -o $(B2BLIB).1.0 b2blib.o common-lib.o -L $(EB)/.libs -letherbone
+	ln -sf $(B2BLIB).1.0 $(B2BLIB).1
+	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
 	rm -f *.o $(TARGETS)
@@ -28,5 +34,8 @@ clean:
 deploy:
 	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	
 	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin	
+	cp $(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib
+	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1
+	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB)
 
 .PHONY: all clean
