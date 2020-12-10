@@ -75,6 +75,7 @@
 #define B2B_PRETRIGGER             20000    // offset [ns] used for pre-trigger on the trigger event
 #define B2B_ACCEPTDIAG               100    // timewindow [us]!!! in which diagnostic signals from kicker are expected
 #define B2B_NSID                      16    // max number of SID settings
+#define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 
 
 // ****************************************************************************************
@@ -83,41 +84,41 @@
 
 // offsets
 // set values for data supply
-#define B2B_SHARED_SET_GID        (COMMON_SHARED_END        + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define B2B_SHARED_SET_SID        (B2B_SHARED_SET_GID       + _32b_SIZE_)       // sequence ID for B2B transfer 
-#define B2B_SHARED_SET_MODE       (B2B_SHARED_SET_SID       + _32b_SIZE_)       // mode of B2B transfer
-#define B2B_SHARED_SET_TH1EXTHI   (B2B_SHARED_SET_MODE      + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
-#define B2B_SHARED_SET_TH1EXTLO   (B2B_SHARED_SET_TH1EXTHI  + _32b_SIZE_)       // period of h=1 extraction, low bits
-#define B2B_SHARED_SET_NHEXT      (B2B_SHARED_SET_TH1EXTLO  + _32b_SIZE_)       // harmonic number of extraction RF
-#define B2B_SHARED_SET_TH1INJHI   (B2B_SHARED_SET_NHEXT     + _32b_SIZE_)       // period [as] of h=1 injection, high bits
-#define B2B_SHARED_SET_TH1INJLO   (B2B_SHARED_SET_TH1INJHI  + _32b_SIZE_)       // period of h=1 injection, low bits
-#define B2B_SHARED_SET_NHINJ      (B2B_SHARED_SET_TH1INJLO  + _32b_SIZE_)       // harmonic number of injection RF
-#define B2B_SHARED_SET_CPHASE     (B2B_SHARED_SET_NHINJ     + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
-#define B2B_SHARED_SET_CTRIGEXT   (B2B_SHARED_SET_CPHASE    + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
-#define B2B_SHARED_SET_CTRIGINJ   (B2B_SHARED_SET_CTRIGEXT  + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_SET_GID        (COMMON_SHARED_END         + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define B2B_SHARED_SET_SID        (B2B_SHARED_SET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer 
+#define B2B_SHARED_SET_MODE       (B2B_SHARED_SET_SID        + _32b_SIZE_)       // mode of B2B transfer
+#define B2B_SHARED_SET_TH1EXTHI   (B2B_SHARED_SET_MODE       + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
+#define B2B_SHARED_SET_TH1EXTLO   (B2B_SHARED_SET_TH1EXTHI   + _32b_SIZE_)       // period of h=1 extraction, low bits
+#define B2B_SHARED_SET_NHEXT      (B2B_SHARED_SET_TH1EXTLO   + _32b_SIZE_)       // harmonic number of extraction RF
+#define B2B_SHARED_SET_TH1INJHI   (B2B_SHARED_SET_NHEXT      + _32b_SIZE_)       // period [as] of h=1 injection, high bits
+#define B2B_SHARED_SET_TH1INJLO   (B2B_SHARED_SET_TH1INJHI   + _32b_SIZE_)       // period of h=1 injection, low bits
+#define B2B_SHARED_SET_NHINJ      (B2B_SHARED_SET_TH1INJLO   + _32b_SIZE_)       // harmonic number of injection RF
+#define B2B_SHARED_SET_CPHASE     (B2B_SHARED_SET_NHINJ      + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
+#define B2B_SHARED_SET_CTRIGEXT   (B2B_SHARED_SET_CPHASE     + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
+#define B2B_SHARED_SET_CTRIGINJ   (B2B_SHARED_SET_CTRIGEXT   + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
 //get values
-#define B2B_SHARED_GID            (B2B_SHARED_SET_CTRIGINJ  + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define B2B_SHARED_SID            (B2B_SHARED_GID           + _32b_SIZE_)       // sequence ID for B2B transfer 
-#define B2B_SHARED_MODE           (B2B_SHARED_SID           + _32b_SIZE_)       // mode of B2B transfer
-#define B2B_SHARED_TH1EXTHI       (B2B_SHARED_MODE          + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
-#define B2B_SHARED_TH1EXTLO       (B2B_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
-#define B2B_SHARED_NHEXT          (B2B_SHARED_TH1EXTLO      + _32b_SIZE_)       // harmonic number of extraction RF
-#define B2B_SHARED_TH1INJHI       (B2B_SHARED_NHEXT         + _32b_SIZE_)       // period [as] of h=1 injection, high bits
-#define B2B_SHARED_TH1INJLO       (B2B_SHARED_TH1INJHI      + _32b_SIZE_)       // period of h=1 injection, low bits
-#define B2B_SHARED_NHINJ          (B2B_SHARED_TH1INJLO      + _32b_SIZE_)       // harmonic number of injection RF
-#define B2B_SHARED_CPHASE         (B2B_SHARED_NHINJ         + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
-#define B2B_SHARED_CTRIGEXT       (B2B_SHARED_CPHASE        + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
-#define B2B_SHARED_CTRIGINJ       (B2B_SHARED_CTRIGEXT      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
-#define B2B_SHARED_TBEATHI        (B2B_SHARED_CTRIGINJ      + _32b_SIZE_)       // period of beating, high bits
-#define B2B_SHARED_TBEATLO        (B2B_SHARED_TBEATHI       + _32b_SIZE_)       // period of beating, low bits
-#define B2B_SHARED_COMLATENCY     (B2B_SHARED_TBEATLO       + _32b_SIZE_)       // latency for messages received from via ECA (tDealine - tNow)) [ns]
-#define B2B_SHARED_TKTRIGHI       (B2B_SHARED_COMLATENCY    + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
-#define B2B_SHARED_TKTRIGLO       (B2B_SHARED_TKTRIGHI      + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
-#define B2B_SHARED_DKMON          (B2B_SHARED_TKTRIGLO      + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal
-#define B2B_SHARED_DKPROBE        (B2B_SHARED_DKMON         + _32b_SIZE_)       // delay of kicker probe signal [ns], delay is measured from kicker trigger signal
-#define B2B_SHARED_LKPROBE        (B2B_SHARED_DKPROBE       + _32b_SIZE_)       // length of kicker probe signal [ns]
+#define B2B_SHARED_GET_GID        (B2B_SHARED_SET_CTRIGINJ   + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define B2B_SHARED_GET_SID        (B2B_SHARED_GET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer 
+#define B2B_SHARED_GET_MODE       (B2B_SHARED_GET_SID        + _32b_SIZE_)       // mode of B2B transfer
+#define B2B_SHARED_GET_TH1EXTHI   (B2B_SHARED_GET_MODE       + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
+#define B2B_SHARED_GET_TH1EXTLO   (B2B_SHARED_GET_TH1EXTHI   + _32b_SIZE_)       // period of h=1 extraction, low bits
+#define B2B_SHARED_GET_NHEXT      (B2B_SHARED_GET_TH1EXTLO   + _32b_SIZE_)       // harmonic number of extraction RF
+#define B2B_SHARED_GET_TH1INJHI   (B2B_SHARED_GET_NHEXT      + _32b_SIZE_)       // period [as] of h=1 injection, high bits
+#define B2B_SHARED_GET_TH1INJLO   (B2B_SHARED_GET_TH1INJHI   + _32b_SIZE_)       // period of h=1 injection, low bits
+#define B2B_SHARED_GET_NHINJ      (B2B_SHARED_GET_TH1INJLO   + _32b_SIZE_)       // harmonic number of injection RF
+#define B2B_SHARED_GET_CPHASE     (B2B_SHARED_GET_NHINJ      + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
+#define B2B_SHARED_GET_CTRIGEXT   (B2B_SHARED_GET_CPHASE     + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
+#define B2B_SHARED_GET_CTRIGINJ   (B2B_SHARED_GET_CTRIGEXT   + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_GET_TBEATHI    (B2B_SHARED_GET_CTRIGINJ   + _32b_SIZE_)       // period of beating, high bits
+#define B2B_SHARED_GET_TBEATLO    (B2B_SHARED_GET_TBEATHI    + _32b_SIZE_)       // period of beating, low bits
+#define B2B_SHARED_GET_COMLATENCY (B2B_SHARED_GET_TBEATLO    + _32b_SIZE_)       // latency for messages received from via ECA (tDealine - tNow)) [ns]
+#define B2B_SHARED_GET_TKTRIGHI   (B2B_SHARED_GET_COMLATENCY + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
+#define B2B_SHARED_GET_TKTRIGLO   (B2B_SHARED_GET_TKTRIGHI   + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
+#define B2B_SHARED_GET_DKMON      (B2B_SHARED_GET_TKTRIGLO   + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal
+#define B2B_SHARED_GET_DKPROBE    (B2B_SHARED_GET_DKMON      + _32b_SIZE_)       // delay of kicker probe signal [ns], delay is measured from kicker trigger signal
+#define B2B_SHARED_GET_LKPROBE    (B2B_SHARED_GET_DKPROBE    + _32b_SIZE_)       // length of kicker probe signal [ns]
 
 // diagnosis: end of used shared memory
-#define B2B_SHARED_END            (B2B_SHARED_LKPROBE       + _32b_SIZE_) 
+#define B2B_SHARED_END            (B2B_SHARED_GET_LKPROBE    + _32b_SIZE_) 
 
 #endif

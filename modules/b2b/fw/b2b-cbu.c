@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-November-2020
+ *  version : 10-December-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000208                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000209                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -92,21 +92,21 @@ uint32_t setCTrigExt[B2B_NSID];
 uint32_t setCTrigInj[B2B_NSID];
 
 // get values
-volatile uint32_t *pSharedGid;          // pointer to a "user defined" u32 register; here: group ID of extraction machine
-volatile uint32_t *pSharedSid;          // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
-volatile uint32_t *pSharedMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
-volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
-volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
-volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
-volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
-volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
-volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
-volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
-volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t  *pSharedCPhase;       // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
-volatile int32_t  *pSharedCTrigExt;     // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
-volatile int32_t  *pSharedCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
-volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
+volatile uint32_t *pSharedGetGid;          // pointer to a "user defined" u32 register; here: group ID of extraction machine
+volatile uint32_t *pSharedGetSid;          // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
+volatile uint32_t *pSharedGetMode;         // pointer to a "user defined" u32 register; here: mode of B2B transfer
+volatile uint32_t *pSharedGetTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
+volatile uint32_t *pSharedGetTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedGetNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
+volatile uint32_t *pSharedGetTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
+volatile uint32_t *pSharedGetTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
+volatile uint32_t *pSharedGetNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
+volatile uint32_t *pSharedGetTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
+volatile uint32_t *pSharedGetTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
+volatile int32_t  *pSharedGetCPhase;       // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile int32_t  *pSharedGetCTrigExt;     // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t  *pSharedGetCTrigInj;     // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile int32_t  *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t gid;                           // GID used for transfer
 uint32_t sid;                           // SID user for transfer
@@ -165,21 +165,21 @@ void initSharedMem() // determine address and clear shared mem
   pSharedSetCPhase        =  (int32_t *)(pShared + (B2B_SHARED_SET_CPHASE     >> 2));
   pSharedSetCTrigExt      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGEXT   >> 2));
   pSharedSetCTrigInj      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
-  pSharedGid              = (uint32_t *)(pShared + (B2B_SHARED_GID            >> 2));
-  pSharedSid              = (uint32_t *)(pShared + (B2B_SHARED_SID            >> 2));
-  pSharedMode             = (uint32_t *)(pShared + (B2B_SHARED_MODE           >> 2));
-  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI       >> 2));
-  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO       >> 2));
-  pSharedNHExt            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT          >> 2));
-  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJHI       >> 2));
-  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2B_SHARED_TH1INJLO       >> 2));
-  pSharedNHInj            = (uint32_t *)(pShared + (B2B_SHARED_NHINJ          >> 2));
-  pSharedCPhase           =  (int32_t *)(pShared + (B2B_SHARED_CPHASE         >> 2));
-  pSharedCTrigExt         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGEXT       >> 2));
-  pSharedCTrigInj         =  (int32_t *)(pShared + (B2B_SHARED_CTRIGINJ       >> 2));
-  pSharedTBeatHi          = (uint32_t *)(pShared + (B2B_SHARED_TBEATHI        >> 2));
-  pSharedTBeatLo          = (uint32_t *)(pShared + (B2B_SHARED_TBEATLO        >> 2));
-  pSharedComLatency       =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY     >> 2));
+  pSharedGetGid           = (uint32_t *)(pShared + (B2B_SHARED_GET_GID        >> 2));
+  pSharedGetSid           = (uint32_t *)(pShared + (B2B_SHARED_GET_SID        >> 2));
+  pSharedGetMode          = (uint32_t *)(pShared + (B2B_SHARED_GET_MODE       >> 2));
+  pSharedGetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));
+  pSharedGetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
+  pSharedGetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
+  pSharedGetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJHI   >> 2));
+  pSharedGetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJLO   >> 2));
+  pSharedGetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHINJ      >> 2));
+  pSharedGetCPhase        =  (int32_t *)(pShared + (B2B_SHARED_GET_CPHASE     >> 2));
+  pSharedGetCTrigExt      =  (int32_t *)(pShared + (B2B_SHARED_GET_CTRIGEXT   >> 2));
+  pSharedGetCTrigInj      =  (int32_t *)(pShared + (B2B_SHARED_GET_CTRIGINJ   >> 2));
+  pSharedGetTBeatHi       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATHI    >> 2));
+  pSharedGetTBeatLo       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATLO    >> 2));
+  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -298,35 +298,35 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init set values
-  *pSharedSetGid      = 0x0;     
-  *pSharedSetSid      = 0x0;     
-  *pSharedSetMode     = 0x0;    
-  *pSharedSetTH1ExtHi = 0x0;
-  *pSharedSetTH1ExtLo = 0x0;
-  *pSharedSetNHExt    = 0x0;   
-  *pSharedSetTH1InjHi = 0x0;
-  *pSharedSetTH1InjLo = 0x0;
-  *pSharedSetNHInj    = 0x0;   
-  *pSharedSetCPhase   = 0x0;  
-  *pSharedSetCTrigExt = 0x0;  
-  *pSharedSetCTrigInj = 0x0;
+  *pSharedSetGid         = 0x0;     
+  *pSharedSetSid         = 0x0;     
+  *pSharedSetMode        = 0x0;    
+  *pSharedSetTH1ExtHi    = 0x0;
+  *pSharedSetTH1ExtLo    = 0x0;
+  *pSharedSetNHExt       = 0x0;   
+  *pSharedSetTH1InjHi    = 0x0;
+  *pSharedSetTH1InjLo    = 0x0;
+  *pSharedSetNHInj       = 0x0;   
+  *pSharedSetCPhase      = 0x0;  
+  *pSharedSetCTrigExt    = 0x0;  
+  *pSharedSetCTrigInj    = 0x0;
     
   // init get values
-  *pSharedGid         = 0x0;
-  *pSharedSid         = 0x0;
-  *pSharedMode        = 0x0;
-  *pSharedTH1ExtHi    = 0x0; 
-  *pSharedTH1ExtLo    = 0x0;
-  *pSharedNHExt       = 0x0;
-  *pSharedTH1InjHi    = 0x0;
-  *pSharedTH1InjLo    = 0x0;
-  *pSharedNHInj       = 0x0;
-  *pSharedCPhase      = 0x0;
-  *pSharedCTrigExt    = 0x0;
-  *pSharedCTrigInj    = 0x0;
-  *pSharedTBeatHi     = 0x0;
-  *pSharedTBeatLo     = 0x0;
-  *pSharedComLatency  = 0x0;
+  *pSharedGetGid         = 0x0;
+  *pSharedGetSid         = 0x0;
+  *pSharedGetMode        = 0x0;
+  *pSharedGetTH1ExtHi    = 0x0; 
+  *pSharedGetTH1ExtLo    = 0x0;
+  *pSharedGetNHExt       = 0x0;
+  *pSharedGetTH1InjHi    = 0x0;
+  *pSharedGetTH1InjLo    = 0x0;
+  *pSharedGetNHInj       = 0x0;
+  *pSharedGetCPhase      = 0x0;
+  *pSharedGetCTrigExt    = 0x0;
+  *pSharedGetCTrigInj    = 0x0;
+  *pSharedGetTBeatHi     = 0x0;
+  *pSharedGetTBeatLo     = 0x0;
+  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -911,21 +911,21 @@ int main(void) {
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
 
     // update get values
-    *pSharedGid        = gid;
-    *pSharedSid        = sid;
-    *pSharedMode       = mode;
-    *pSharedTH1ExtHi   = (uint32_t)((TH1Ext >> 32) & 0xffffffff); 
-    *pSharedTH1ExtLo   = (uint32_t)( TH1Ext        & 0xffffffff);
-    *pSharedNHExt      = nHExt;
-    *pSharedTH1InjHi   = (uint32_t)((TH1Inj >> 32) & 0xffffffff); 
-    *pSharedTH1InjLo   = (uint32_t)( TH1Inj        & 0xffffffff);
-    *pSharedNHInj      = nHInj;
-    *pSharedCPhase     = cPhase;
-    *pSharedCTrigExt   = cTrigExt;
-    *pSharedCTrigInj   = cTrigInj;
-    *pSharedTBeatHi    = (uint32_t)((TBeat >> 32) & 0xffffffff); 
-    *pSharedTBeatLo    = (uint32_t)( TBeat        & 0xffffffff);
-    *pSharedComLatency = comLatency;
+    *pSharedGetGid        = gid;
+    *pSharedGetSid        = sid;
+    *pSharedGetMode       = mode;
+    *pSharedGetTH1ExtHi   = (uint32_t)((TH1Ext >> 32) & 0xffffffff); 
+    *pSharedGetTH1ExtLo   = (uint32_t)( TH1Ext        & 0xffffffff);
+    *pSharedGetNHExt      = nHExt;
+    *pSharedGetTH1InjHi   = (uint32_t)((TH1Inj >> 32) & 0xffffffff); 
+    *pSharedGetTH1InjLo   = (uint32_t)( TH1Inj        & 0xffffffff);
+    *pSharedGetNHInj      = nHInj;
+    *pSharedGetCPhase     = cPhase;
+    *pSharedGetCTrigExt   = cTrigExt;
+    *pSharedGetCTrigInj   = cTrigInj;
+    *pSharedGetTBeatHi    = (uint32_t)((TBeat >> 32) & 0xffffffff); 
+    *pSharedGetTBeatLo    = (uint32_t)( TBeat        & 0xffffffff);
+    *pSharedGetComLatency = comLatency;
   } // while
 
   return (1); // this should never happen ...

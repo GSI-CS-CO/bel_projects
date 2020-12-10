@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-November-2020
+ *  version :10-December-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000206                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000209                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -69,10 +69,10 @@ uint64_t SHARED  dummy = 0;
 
 // global variables 
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
-volatile uint32_t *pSharedTH1Hi;        // pointer to a "user defined" u32 register; here: period of h=1, high bits
-volatile uint32_t *pSharedTH1Lo;        // pointer to a "user defined" u32 register; here: period of h=1, low bits
-volatile uint32_t *pSharedNH;           // pointer to a "user defined" u32 register; here: harmonic number
-volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
+volatile uint32_t *pSharedGetTH1Hi;     // pointer to a "user defined" u32 register; here: period of h=1, high bits
+volatile uint32_t *pSharedGetTH1Lo;     // pointer to a "user defined" u32 register; here: period of h=1, low bits
+volatile uint32_t *pSharedGetNH;        // pointer to a "user defined" u32 register; here: harmonic number
+volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -106,10 +106,10 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pShared                 = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
-  pSharedTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_TH1EXTLO   >> 2));
-  pSharedNH            = (uint32_t *)(pShared + (B2B_SHARED_NHEXT      >> 2));
-  pSharedComLatency    =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY >> 2));
+  pSharedGetTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
+  pSharedGetTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
+  pSharedGetNH            = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
+  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
@@ -188,10 +188,10 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-pm: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init get values
-  *pSharedTH1Hi       = 0x0;
-  *pSharedTH1Lo       = 0x0;
-  *pSharedNH          = 0x0;
-  *pSharedComLatency  = 0x0;
+  *pSharedGetTH1Hi       = 0x0;
+  *pSharedGetTH1Lo       = 0x0;
+  *pSharedGetNH          = 0x0;
+  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -270,14 +270,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;          // ECA is configured to pre-trigger ahead of time!!!
-      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;       // ECA is configured to pre-trigger ahead of time!!!
+      comLatency       = (int32_t)(getSysTime() - recDeadline);
       
-      *pSharedTH1Hi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
-      *pSharedTH1Lo = (uint32_t)( TH1             & 0xffffffff);
-      *pSharedNH    = (uint32_t)( recEvtId        & 0xf       );
-      recGid        = (uint32_t)((recEvtId >> 48) & 0xfff     );
-      recSid        = (uint32_t)((recEvtId >> 20) & 0xfff     );
+      *pSharedGetTH1Hi = (uint32_t)((TH1 >> 32)      & 0xffffffff);
+      *pSharedGetTH1Lo = (uint32_t)( TH1             & 0xffffffff);
+      *pSharedGetNH    = (uint32_t)( recEvtId        & 0xf       );
+      recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
+      recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -374,7 +374,7 @@ int main(void) {
     pubState = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedComLatency = comLatency;
+    *pSharedGetComLatency = comLatency;
   } // while
 
   return(1); // this should never happen ...

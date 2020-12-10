@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-November-2020
+ *  version : 10-December-2020
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000206                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000209                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -64,22 +64,22 @@ unsigned int     cpuId, cpuQty;
 uint64_t SHARED  dummy = 0;
 
 // global variables 
-volatile uint32_t *pShared;             // pointer to begin of shared memory region
-volatile uint32_t *pSharedtKickTrigHi;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, high bits
-volatile uint32_t *pSharedtKickTrigLo;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, low bits
-volatile uint32_t *pSharedtKickDMon;    // pointer to a "user defined" u32 register; here: delay of monitor signal 
-volatile uint32_t *pSharedtKickDProbe;  // pointer to a "user defined" u32 register; here: delay of probe signal
-volatile uint32_t *pSharedtKickLProbe;  // pointer to a "user defined" u32 register; here: length of probe signal
-volatile uint32_t *pSharedKickSid;      // pointer to a "user defined" u32 register; here: SID of last kicker event
-volatile uint32_t *pSharedKickGid;      // pointer to a "user defined" u32 register; here: GID of last kicker event
-volatile int32_t  *pSharedComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
+volatile uint32_t *pShared;                // pointer to begin of shared memory region
+volatile uint32_t *pSharedGettKickTrigHi;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, high bits
+volatile uint32_t *pSharedGettKickTrigLo;  // pointer to a "user defined" u32 register; here: time of kicker trigger signal, low bits
+volatile uint32_t *pSharedGettKickDMon;    // pointer to a "user defined" u32 register; here: delay of monitor signal 
+volatile uint32_t *pSharedGettKickDProbe;  // pointer to a "user defined" u32 register; here: delay of probe signal
+volatile uint32_t *pSharedGettKickLProbe;  // pointer to a "user defined" u32 register; here: length of probe signal
+volatile uint32_t *pSharedGetKickSid;      // pointer to a "user defined" u32 register; here: SID of last kicker event
+volatile uint32_t *pSharedGetKickGid;      // pointer to a "user defined" u32 register; here: GID of last kicker event
+volatile int32_t  *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM            
 
-uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
-uint32_t nTransfer;                     // # of transfers
-uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
-int32_t  comLatency;                    // latency for messages received via ECA
+uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
+uint32_t nTransfer;                        // # of transfers
+uint32_t transStat;                        // status of transfer, here: meanDelta of 'poor mans fit'
+int32_t  comLatency;                       // latency for messages received via ECA
 
 void init() // typical init for lm32
 {
@@ -102,14 +102,14 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pShared                 = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedtKickTrigHi     = (uint32_t *)(pShared + (B2B_SHARED_TKTRIGHI    >> 2));
-  pSharedtKickTrigLo     = (uint32_t *)(pShared + (B2B_SHARED_TKTRIGLO    >> 2));
-  pSharedtKickDMon       = (uint32_t *)(pShared + (B2B_SHARED_DKMON       >> 2));
-  pSharedtKickDProbe     = (uint32_t *)(pShared + (B2B_SHARED_DKPROBE     >> 2));
-  pSharedtKickLProbe     = (uint32_t *)(pShared + (B2B_SHARED_LKPROBE     >> 2));
-  pSharedKickSid         = (uint32_t *)(pShared + (B2B_SHARED_SID         >> 2));
-  pSharedKickGid         = (uint32_t *)(pShared + (B2B_SHARED_GID         >> 2));
-  pSharedComLatency      =  (int32_t *)(pShared + (B2B_SHARED_COMLATENCY  >> 2));
+  pSharedGettKickTrigHi   = (uint32_t *)(pShared + (B2B_SHARED_GET_TKTRIGHI    >> 2));
+  pSharedGettKickTrigLo   = (uint32_t *)(pShared + (B2B_SHARED_GET_TKTRIGLO    >> 2));
+  pSharedGettKickDMon     = (uint32_t *)(pShared + (B2B_SHARED_GET_DKMON       >> 2));
+  pSharedGettKickDProbe   = (uint32_t *)(pShared + (B2B_SHARED_GET_DKPROBE     >> 2));
+  pSharedGettKickLProbe   = (uint32_t *)(pShared + (B2B_SHARED_GET_LKPROBE     >> 2));
+  pSharedGetKickSid       = (uint32_t *)(pShared + (B2B_SHARED_GET_SID         >> 2));
+  pSharedGetKickGid       = (uint32_t *)(pShared + (B2B_SHARED_GET_GID         >> 2));
+  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -189,14 +189,14 @@ uint32_t extern_entryActionOperation()
   while (fwlib_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-kd: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
-  *pSharedtKickTrigHi  = 0x0;
-  *pSharedtKickTrigLo  = 0x0;
-  *pSharedtKickDMon    = 0x0;
-  *pSharedtKickDProbe  = 0x0;
-  *pSharedtKickLProbe  = 0x0;
-  *pSharedKickSid      = 0x0;
-  *pSharedKickGid      = 0x0;
-  *pSharedComLatency   = 0x0;
+  *pSharedGettKickTrigHi  = 0x0;
+  *pSharedGettKickTrigLo  = 0x0;
+  *pSharedGettKickDMon    = 0x0;
+  *pSharedGettKickDProbe  = 0x0;
+  *pSharedGettKickLProbe  = 0x0;
+  *pSharedGetKickSid      = 0x0;
+  *pSharedGetKickGid      = 0x0;
+  *pSharedGetComLatency   = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -254,20 +254,20 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       comLatency  = (int32_t)(getSysTime() - recDeadline);
       nTransfer++;
 
-      tKickTrig       = reqDeadline;
-      tKickMon        = 0;
-      tKickProbe1     = 0;
-      tKickProbe2     = 0;
-      dKickMon        = 0;
-      dKickProbe      = 0;
-      lKickProbe      = 0;
-      flagRecMon      = 0;
-      flagRecProbe1   = 0;
-      flagRecProbe2   = 0;
-      recGid          = (uint32_t)((recEvtId >> 48) & 0xfff);
-      recSid          = (uint32_t)((recEvtId >> 20) & 0xfff);
-      *pSharedKickGid = recGid;
-      *pSharedKickSid = recSid;
+      tKickTrig          = reqDeadline;
+      tKickMon           = 0;
+      tKickProbe1        = 0;
+      tKickProbe2        = 0;
+      dKickMon           = 0;
+      dKickProbe         = 0;
+      lKickProbe         = 0;
+      flagRecMon         = 0;
+      flagRecProbe1      = 0;
+      flagRecProbe2      = 0;
+      recGid             = (uint32_t)((recEvtId >> 48) & 0xfff);
+      recSid             = (uint32_t)((recEvtId >> 20) & 0xfff);
+      *pSharedGetKickGid = recGid;
+      *pSharedGetKickSid = recSid;
 
       fwlib_ioCtrlSetGate(1, 1);                              // enable input gate monitor signal
       fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal
@@ -315,11 +315,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
-      *pSharedtKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
-      *pSharedtKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
-      *pSharedtKickDMon   = dKickMon;
-      *pSharedtKickDProbe = dKickProbe;
-      *pSharedtKickLProbe = lKickProbe;
+      *pSharedGettKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
+      *pSharedGettKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
+      *pSharedGettKickDMon   = dKickMon;
+      *pSharedGettKickDProbe = dKickProbe;
+      *pSharedGettKickLProbe = lKickProbe;
 
       transStat    = flagRecMon + flagRecProbe1 + flagRecProbe2;
       
@@ -388,10 +388,10 @@ int main(void) {
     
     if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) fwlib_incBadStateCnt();
     fwlib_publishStatusArray(statusArray);
-    pubState           = actState;
+    pubState              = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedComLatency = comLatency;
+    *pSharedGetComLatency = comLatency;
   } // while
 
   return(1); // this should never happen ...
