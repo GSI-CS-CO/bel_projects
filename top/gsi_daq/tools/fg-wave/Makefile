@@ -15,7 +15,8 @@ MIAN_MODULE := fg-wave.cpp
 
 BASE_DIR := ..
 
-
+SOURCE += fgw_commandline.cpp
+SOURCE += fgw_polynom.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/fgw_parser.cpp
@@ -29,7 +30,7 @@ DEFINES += _DEFAULT_SOURCE
 #DEFINES += _POSIX_C_SOURCE
 
 # DEFINES += NDEBUG
-DEFINES += CONFIG_DAQ_DEBUG
+
 # DEFINES += DEBUGLEVEL
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
@@ -47,7 +48,7 @@ LIBS += stdc++
 # LIBS += m
 
 CALL_ARGS = ../../../gsi_scu/sinus-test.txt
-
+CALL_ARGS = sinus.fgw
   DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"

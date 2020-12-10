@@ -24,6 +24,8 @@
  ******************************************************************************
  */
 #ifndef _FGW_PARSER_HPP
+#define _FGW_PARSER_HPP
+
 #ifndef __DOCFSM__
  #include <stdlib.h>
  #include <iostream>
