@@ -251,8 +251,28 @@ uint32_t b2b_version_library(uint32_t *version)
 } // b2b_version_library
 
 
+void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
+{
+  printf("\n\n");
+  printf("b2b: statistics ...\n\n");
+
+  printf("GID                   : %012u\n"     , gid);
+  printf("SID                   : %012u\n"     , sid);
+  printf("mode                  : %012u\n"     , mode);
+  printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
+  printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
+  printf("harmonic number extr. : %012d\n"     , nHExt);
+  printf("harmonic number inj.  : %012d\n"     , nHInj);
+  printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
+  printf("corr. matching        : %012d\n"     , cPhase);
+  printf("corr. trigger extr    : %012d\n"     , cTrigExt);
+  printf("corr. trigger inj     : %012d\n"     , cTrigInj);
+  printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
+} // b2b_printDiags
+
+
 uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase,
-                       int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency)
+                       int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency, int printFlag)
 {
   eb_cycle_t  eb_cycle;
   eb_status_t eb_status;
@@ -296,11 +316,13 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   *cTrigInj      = data[13];
   *comLatency    = data[14];
 
+  if (printFlag) b2b_printDiag(*gid, *sid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, *cPhase, *cTrigExt, *cTrigInj, *comLatency);
+  
   return COMMON_STATUS_OK;
 } // b2b_info_read
 
 
-uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, uint32_t printDiag)
+uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, int printDiag)
 {
   eb_status_t eb_status;
   eb_device_t eb_device;

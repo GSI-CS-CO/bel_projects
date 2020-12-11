@@ -1,4 +1,4 @@
-/* 04-Oct-2020 */
+/* 11-Dec-2020 */
 #include <ivtpar.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -7,10 +7,10 @@
 #include <string.h>
 
 
-#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------- GB, DB 1990-2020 \033[0m "
-#define FACE_INVERT   "\033[7m"
-#define FACE_NORMAL   "\033[0m"
+#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1990-2020 \033[0m"
+// search escape sequences, https://stackoverflow.com/questions/51024909/how-to-move-cursor-back-in-c-console
 
+// define special keys
 #define KEY_UP       274
 #define KEY_DOWN     275
 #define KEY_RIGHT    276
@@ -143,6 +143,10 @@ void clrscr()
 /* helper function, leftover from VAX late 1980s */
 void vtpo(int line, int column)
 {
+  /* tried with C escape sequences, look into this maybe later
+     printf("\033[0m\n"); //Esc[0m           
+     printf("\033[%d;%df\n", line, column); 
+  */ 
   // MoveCursor(line, column)
 } /* vtpo */
 
@@ -246,8 +250,8 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
    */
    if (fgets(vtline,100,file)) nch = strlen(vtline) - 1;
    else break;
-   if (nch >= 80) { /* check for illegal length of line */
-     printf("\n ivtpar: Illegal (>80) line length in txtfile");
+   if (nch > 80) { /* check for illegal length of line */
+     printf("\n ivtpar: Illegal (>80) line length in txtfile \n");
      ch = readKeyboard();
      clrscr();
      return 0;
@@ -286,7 +290,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   } /* for il */
   fclose(file);
  }
- else {printf("\n IVTPAR: Error reading textfile\n");return 0;}
+ else {printf("\n ivtpar: Error reading textfile\n");return 0;}
 
  /* 
    read the parameter file
@@ -359,7 +363,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   else {
    vtpo(28,1);
    printf("parameter file not found, I''ll create a new one\n");
-   file = fopen(parnam,"r");
+   file = fopen(parnam,"w");
    no_parfile=0;
    fclose(file);
   } /* if file */
@@ -412,7 +416,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   printf("%s\n", TOPHEADER);
   for(il=0;il<line;il++){ 
     for(ic=0;ic<vt81[il];ic++) buff[ic] = vt[ic][il];
-    if (il == vtp[ipar-1][2]-iofl) buff[vtp[ipar-1][1]-iofc+1] = '#'; 
+    if (il == vtp[ipar-1][2]-iofl) buff[vtp[ipar-1][1]-iofc+1] = '#';
     if (vt81[il] > 0) buff[vt81[il]] = '\0';
     else sprintf(buff,"%s","");
     printf("%s\n",buff);
@@ -421,9 +425,9 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   /* print bottom line */      
   printf("\033[7m move with arrow keys | exit with <RET> or <ESC> + <digit>");
   time_date = time(0);
-  strftime(buff,50,"        %d-%b-%y %H:%M ",localtime(&time_date));
+  strftime(buff,50,"      %d-%b-%y %H:%M ",localtime(&time_date));
   printf("%s",buff);
-  printf("\033[0m \n");
+  printf("\033[0m\n");
 
   ichara = readKeyboard();
    

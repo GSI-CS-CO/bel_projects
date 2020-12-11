@@ -161,7 +161,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
 } // comlib_printDiag;
 
 
-int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t *usedSize, uint32_t  printFlag)
+int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t *usedSize, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;

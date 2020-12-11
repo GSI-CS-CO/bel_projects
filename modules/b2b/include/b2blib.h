@@ -65,7 +65,9 @@ extern "C" {
 #define  B2BLIB_STATE_STOPPING            5            // in operation -> CONFIGURED (automatic)
 #define  B2BLIB_STATE_ERROR               6            // in error -> IDLE ("recover")
 #define  B2BLIB_STATE_FATAL               7            // in fatal error; RIP
-
+  
+  enum ringMachine{NORING, SIS18, ESR, CRYRING};
+  typedef enum ringMachine ring_t;
   // ---------------------------------
   // helper routines
   // ---------------------------------
@@ -124,7 +126,8 @@ extern "C" {
                          int32_t *cPhase,                      // correction of phase [ns]
                          int32_t *cTrigExt,                    // correction of extraction kicker trigger [ns]
                          int32_t *cTrigInj,                    // correction of injection kicker trigger [ns]
-                         int32_t *comLatency                   // communication latency [ns]
+                         int32_t *comLatency,                  // communication latency [ns]
+                         int     printFlag                     // prints info on b2b firmware properties to stdout
                          );
   
   // get common properties from firmware, returns error code
@@ -135,7 +138,7 @@ extern "C" {
                            uint32_t *nBadState,                // # of bad state incidents
                            uint32_t *version,                  // FW version
                            uint32_t *nTransfer,                // # of transfer
-                           uint32_t printDiag                  // prints info on common firmware properties to stdout
+                           int      printDiag                  // prints info on common firmware properties to stdout
                            );
   
   // uploads configuration for a SID, returns error code

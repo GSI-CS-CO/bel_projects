@@ -22,6 +22,9 @@ all: $(TARGETS)
 b2b-ctl: b2b-ctl.c
 	$(CC) $(CFLAGS) -o b2b-ctl b2b-ctl.c $(LIBS)
 
+b2b-ui: b2b-ui.c
+	$(CC) $(CFLAGS) -o b2b-ui b2b-ui.c ../../common-libs/x86/ivtpar.c $(LIBS)
+
 lib: b2blib.c
 	$(CC) $(CFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
 	$(CC) -shared -Wl,-soname,$(B2BLIB).1 -o $(B2BLIB).1.0 b2blib.o common-lib.o -L $(EB)/.libs -letherbone
@@ -29,7 +32,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o $(TARGETS)
+	rm -f *.o b2b-ctl b2b-ui libb2bllib.so*
 
 deploy:
 	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	

@@ -70,7 +70,7 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nInjection,           // # of injection within ongoing transfers
                     uint32_t    *statTrans,            // status bits of transfer (application specific)
                     uint32_t    *usedSize,             // used size of shared memory
-                    uint32_t    printFlag              // '1' print information to stdout
+                    int         printFlag              // '1' print information to stdout
                     );
 
 void comlib_printDiag(uint64_t  statusArray,           // array with status bits
