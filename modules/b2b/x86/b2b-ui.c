@@ -158,6 +158,11 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
   TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
 
+  /*
+  printf(" sid %d, gid %d\n", sid, gid);
+  getchar();
+  */
+  
   // submit parameters to FW
   b2b_context_upload(ebDevice, sid, gid, mode, TH1Ext, nHExt, TH1Inj, nHInj, cPhase, cTrigExt, cTrigInj);
 } // submitSid
@@ -172,7 +177,7 @@ void menuExpert()
 } // menuExpert
 
 
-void menuSID(ring_t ring, uint32_t sid)
+void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
 {
   // ivtpar
   int    i, l0, lchange[IVTMAXPAR];
@@ -202,13 +207,13 @@ void menuSID(ring_t ring, uint32_t sid)
         // tune phase
         break;
       case 4 :
-        // submit
+        submitSid(ebDevice, ring, sid);
         break;
       case 5 :
-        done = 1;
+        // help
         break;
       case 6 :
-        // help
+        done = 1;
         break;
       default :
         ;
@@ -217,7 +222,7 @@ void menuSID(ring_t ring, uint32_t sid)
 } //menuSID
 
 
-void menuConfig(ring_t ring, uint64_t ebDevice)
+void menuConfig(uint64_t ebDevice, ring_t ring)
 {
   // ivtpar
   int      i, l0, lchange[IVTMAXPAR];
@@ -238,7 +243,7 @@ void menuConfig(ring_t ring, uint64_t ebDevice)
     i = ivtpar (txtname, parname, &l0, lchange);
     switch (i) {
       case 1 ... 16 :
-        menuSID(ring, i-1);
+        menuSID(ebDevice, ring, i-1);
         break;
       case 17 :
         // submit all
@@ -276,21 +281,25 @@ void menuSIS18()
     i = ivtpar (MENUTXT_SIS18, MENUPAR_SIS18, &l0, lchange);
     switch (i) {
       case 1 :
-        menuConfig(SIS18, ebDevice);
+        menuConfig(ebDevice, SIS18);
         break;
       case 2 :
         //monitor
         break;
       case 3 :
-        done = 1;
-        break;
-      case 4 :
         b2b_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, &dummy32d, &dummy32e, 1);
         b2b_info_read(ebDevice, &dummy32a, &dummy32b, &dummy32c, &dummy64a, &dummy32d, &dummy64b, &dummy32e, &dummy64c, &dummy32f, &dummy32g, &dummy32h, &dummy32i, 1);
         getchar();
         break;
-      case 5 :
+      case 4 :
         b2b_cmd_cleardiag(ebDevice);
+        break;
+      case 5 :
+        help();
+        getchar();
+        break;
+      case 6 :
+        done = 1;
         break;
       default :
         ;

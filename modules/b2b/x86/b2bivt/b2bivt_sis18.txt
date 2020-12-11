@@ -1,0 +1,21 @@
+                                   SIS18
+                                   -----
+
+
+
+
+
+
+
+
+
+
+
+
+
+        [ & Configure  ]                             [ & Monitor    ]
+
+      ( [ & Diag       ]                             [ & Clear Diag ] )
+
+        [ & Help       ]                             [ & Exit       ]
+

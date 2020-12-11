@@ -1,0 +1,21 @@
+                    SIS18 - Configure Settings for Sequence ID
+                    ------------------------------------------
+     Comment          : $                                                      
+     Mode             : $               (0: off; 1: EKS, 2: B2E; 3: B2C; 4: B2B)
+     Destination Ring : $               (1: ESR)
+
+     Extraction   H=1 frequency [Hz]  : $                       
+                  harmonic number     : $                  
+     Injection    H=1 frequency [Hz]  : $                
+                  harmonic number     : $               
+
+     Corrections [ns]
+     ----------------------------------------------------------------
+     | ext trig: $          | inj trig: $          | phase : $         |
+     |           [ & knob ] |           [ & knob ] |        [ & knob ] |
+     ----------------------------------------------------------------
+     
+         [ & Submit          ]
+
+         [ & Help            ]               [ & Exit            ]         
+
