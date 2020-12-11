@@ -59,7 +59,7 @@ int main( int argc, char** ppArgv )
       
       POLYMOM_VECT_T oPolyVect;
       parseInStream( oPolyVect, *pIstream );
-      gpstr::PlotStream oPlot( "-p" );
+      gpstr::PlotStream oPlot( "-p -noraise" );
       Polynom polynom( oCmdLine );
       polynom.plot( oPlot, oPolyVect );
    }

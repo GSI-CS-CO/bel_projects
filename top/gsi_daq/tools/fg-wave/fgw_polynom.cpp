@@ -96,10 +96,13 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    }
    out << "set ylabel \"Voltage\"" << endl;                           
    double xRange = 0.0;
+   uint daConversions = 0; 
    for( const auto& polynom: rVect )
    {
       assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
-      xRange += static_cast<double>(c_frequencyTab[polynom.frequ] * calcStep( polynom.step ));
+      const uint steps = calcStep( polynom.step );
+      xRange += static_cast<double>(c_frequencyTab[polynom.frequ] * steps);
+      daConversions += steps;
    }
    assert( xRange > 0.0 );
    xRange /= (SCU_FREQUENCY * 2);
@@ -107,7 +110,18 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    xRange *= repeat;
    out << "set xrange [0:" << xRange << ']' << endl;
    out << "set xlabel \"Time\"" << endl;
-   out << "set title \"Frequency: " << frequency << " Hz\"" << endl;
+   
+   out << "set title \"frequency: " << frequency << " Hz"
+       << ", tuples: " << rVect.size()
+       << ", dots/tuple: ";
+   if( m_rCommandline.getDotsPerTuple() == 0 )
+      out << "all";
+   else
+      out << m_rCommandline.getDotsPerTuple();
+   out << ", D/A- conversions: " << daConversions;
+   if( repeat > 1 )
+      out << ", repeats: " << repeat;
+   out << '"' << endl;
 
    out << "plot '-' title '' with " << m_rCommandline.getLineStyle() << " lc rgb 'green'" << endl;
    double tOrigin = 0.0;
@@ -116,14 +130,19 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
       for( const auto& polynom: rVect )
       {
          double tStep = 0.0;
-         uint step = calcStep( polynom.step );
+         const uint step = calcStep( polynom.step );
          assert( step > 0 );
+         uint dotsPerTuple = m_rCommandline.getDotsPerTuple();
+         if( dotsPerTuple == 0 )
+            dotsPerTuple = step;
+         const uint interval = step / dotsPerTuple;
          assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
          const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / step / SCU_FREQUENCY;
          for( uint i = 0; i < step; i++ )
          {
-            out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
-            tStep += tPart;
+            if( ((i+1) % interval) == 0 )
+               out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
+            tStep   += tPart;
             tOrigin += tStep;
          }
       }

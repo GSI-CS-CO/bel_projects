@@ -40,11 +40,13 @@ class CommandLine: CLOP::PARSER
 {
    using OPT_LIST_T = std::vector<CLOP::OPTION>;
    static OPT_LIST_T c_optList;
+
    bool              m_verbose;
    bool              m_zoomYAxis;
    bool              m_noSquareTerm;
    bool              m_noLinearTerm;
    uint              m_repetitions;
+   uint              m_dotsPerTuple;
 
    std::string       m_gnuplotBin;
    std::string       m_gnuplotTerminal;
@@ -85,6 +87,11 @@ public:
       return m_repetitions;
    }
    
+   uint getDotsPerTuple( void ) const
+   {
+      return m_dotsPerTuple;
+   }
+   
    const std::string& getLineStyle( void )
    {
       return m_gnuplotLineStyle;
@@ -93,6 +100,11 @@ public:
    const std::string& getGnuplotTerminal( void )
    {
       return m_gnuplotTerminal;
+   }
+   
+   const std::string& getGnuplotBinary( void )
+   {
+      return m_gnuplotBin;
    }
 
    const std::string& getFileName( void )

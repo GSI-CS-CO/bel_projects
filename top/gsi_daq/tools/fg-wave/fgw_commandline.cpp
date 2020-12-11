@@ -35,6 +35,9 @@ using namespace CLOP;
 #ifndef GNUPLOT_DEFAULT_TERMINAL
    #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
 #endif
+#ifndef DEFAULT_DOTS_PER_TUPLE
+   #define DEFAULT_DOTS_PER_TUPLE 10
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing the command line options.
@@ -44,7 +47,28 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         cout << "Wave viewer plotting wave-files for SCU- function generators.\n"
+                 "(c) 2020 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n\n"
+                 "Usage:\n\t"
+              << poParser->getProgramName() << " [options] <wave-file.fgw>\n"
+                 "or\n"
+                 "\techo -e <coeff_a shift_a coeff_b shift_b coeff_c step frequ_select> "
+                 "| " << poParser->getProgramName() << " [options]\n\n"
+                 "The format of the \"wave-file\" is identical like for the"
+                 " saft-lib service program \"saft-fg-ctl\".\n"
+                 "The calculation of the quadratic polynomial is:\n\t"
+                 "f(x) = (coeff_a * 2^shift_a) * x^2 + (coeff_b * 2^shift_b) * x + coeff_c;\n"
+                 "\t{0 <= x < (250*2^step)}\n"
+                 "\t{0 <= step <= 7}\n\n"
+                 "Options:\n";
          poParser->list( cout );
+         cout << "\n----------------------------------------\n"
+                 "Example 1 file reading:\n\t"
+              << poParser->getProgramName() << " sinus.fgw\n\n"
+                 "Example 2 pipe mode, plotting three tuples for five times with 100 dots per tuple:\n\t"
+              << "echo -e \"0 0 0 0 2147483647 3 6\\n0 0 0 0 -2147483648 4 6\\n0 0 0 0 0 3 6\" | "
+              << poParser->getProgramName() << " -d100 -r5\n"
+              << endl;
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
@@ -234,7 +258,26 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_longOpt  = "terminal",
       .m_helpText = "PARAM replaces the terminal which is used by Gnuplot."
                     " Default is: \"" GNUPLOT_DEFAULT_TERMINAL "\""
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint dotsPerTuple;
+         if( readInteger( dotsPerTuple, poParser->getOptArg() ) )
+            return -1;
+         static_cast<CommandLine*>(poParser)->m_dotsPerTuple = dotsPerTuple; 
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'd',
+      .m_longOpt  = "dotsPerTuple",
+      .m_helpText = "PARAM is the number of dots per tuple which will plot.\n"
+                    "This reduces the calculation time but it increases the granularity.\n"
+                    "The default value is " TO_STRING( DEFAULT_DOTS_PER_TUPLE ) " dots/tuple.\n"
+                    "The exception is zero that means that all dots will plotted."
    }
+   
 }; // CommandLine::c_optList
    
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,6 +307,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noSquareTerm( false )
    ,m_noLinearTerm( false )
    ,m_repetitions( 1 )
+   ,m_dotsPerTuple( DEFAULT_DOTS_PER_TUPLE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
    ,m_gnuplotLineStyle( DEFAULT_LINE_STYLE )
    ,m_fileName( "stdin" )
@@ -292,7 +336,7 @@ int CommandLine::onArgument( void )
    }
    m_fileName = getArgVect()[getArgIndex()];
    m_pInStream = new ifstream;
-   m_pInStream->open( m_fileName );
+   m_pInStream->open( m_fileName, ifstream::in );
    return 0;
 }
 

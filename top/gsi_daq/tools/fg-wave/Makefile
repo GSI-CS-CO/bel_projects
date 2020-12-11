@@ -47,8 +47,10 @@ INCLUDE_DIRS += $(DAQ_LINUX_DIR)
 LIBS += stdc++
 # LIBS += m
 
-CALL_ARGS = ../../../gsi_scu/sinus-test.txt
-CALL_ARGS = sinus.fgw
+# CALL_ARGS = ../../../gsi_scu/sinus-test.txt
+#CALL_ARGS = sinus.fgw
+CALL_ARGS = -r3 sinus.fgw
+
   DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
