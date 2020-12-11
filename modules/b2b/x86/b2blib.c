@@ -167,8 +167,8 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   nDevices = 1;
 
   // open Etherbone device and socket 
-  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_device_open(eb_socket, devName, EB_ADDR32|EB_DATA32, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
 
   //  get Wishbone address of lm32 
   if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
