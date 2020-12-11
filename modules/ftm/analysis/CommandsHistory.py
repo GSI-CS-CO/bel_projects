@@ -46,6 +46,8 @@ def extractScript(commands_history_file):
                 with open(dot_file_name, 'w') as writer:
                     writer.write(''.join(graph_lines[1:]))
             entry_no = match.group(1)
+            if len(entry_no) < 6:
+                entry_no = '000000'[0:6-len(entry_no)] + entry_no
             dot_file_name = f'{prefix}-{entry_no}.dot'
             collect_lines = False
             graph_lines = []
