@@ -3917,27 +3917,31 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         --Cave A
         when x"0001"    => FQ_abort <= spill_case_abort(0);
                            spill_armed <= "0001";
-                           RF_abort <= spill_case_abort(0);
+                           RF_abort <= not spill_case_abort(0);
                            spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then
                             KO_abort <= '0';
+                            RF_abort <= '1';
                            else
                             KO_abort <= '1';
+                            RF_abort <= '0';
                            end if;
         --Cave M
         when x"0002"    => FQ_abort <= spill_case_abort(1);
                            spill_armed <= "0010";
-                           RF_abort <= spill_case_abort(1);
+                           RF_abort <= not spill_case_abort(1);
                            spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(1) = '0' or spill_pause(1) = '0') then
                             KO_abort <= '0';
+                            RF_abort <= '1';
                            else
                             KO_abort <= '1';
+                            RF_abort <= '0';
                            end if;
        --FRS
         when x"0004"    => FQ_abort <= spill_case_abort(2);
                            spill_armed <= "0100";
-                           RF_abort <= spill_case_abort(2);
+                           RF_abort <= not spill_case_abort(2);
                            KO_abort <= spill_case_abort(2);
                            spill_abort_HWInterlock(0) <= not spill_case_abort(2);
                            spill_abort_HWInterlock(1) <= '0';
@@ -3945,14 +3949,14 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
       --HADES
         when x"0008"    => FQ_abort <= spill_case_abort(3);
                            spill_armed <= "1000";
-                           RF_abort <= spill_case_abort(3);
+                           RF_abort <= not spill_case_abort(3);
                            KO_abort <= spill_case_abort(3);
                            spill_abort_HWInterlock(0) <= '0';
                            spill_abort_HWInterlock(1) <= not spill_case_abort(3);
 
         when others     => FQ_abort <=  '1';
                            spill_armed <= "0000";
-                           RF_abort <= '1';
+                           RF_abort <= '0';
                            KO_abort <= '1';
                            spill_abort_HWInterlock <= (others => '0');
       end case;
