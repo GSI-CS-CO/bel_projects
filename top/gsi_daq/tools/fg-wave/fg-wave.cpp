@@ -33,17 +33,20 @@ using namespace std;
 using namespace Scu;
 using namespace fgw;
 
-void printPolynomVect( const POLYMOM_VECT_T& rVect )
+/*! ---------------------------------------------------------------------------
+ */
+void static printPolynomVect( const POLYMOM_VECT_T& rVect )
 {
    for( const auto& polynom: rVect )
    {
-      cout  << polynom.a << '\t'
-            << polynom.shiftA << '\t'
-            << polynom.b << '\t'
-            << polynom.shiftB << '\t'
-            << polynom.c << '\t'
-            << polynom.step << '\t'
-            << polynom.frequ << endl;
+      cout << polynom.a << ' '
+           << polynom.shiftA << ' '
+           << polynom.b << ' '
+           << polynom.shiftB << ' '
+           << polynom.c << ' '
+           << polynom.step << ' '
+           << polynom.frequ
+           << endl;
    }
 }
 
@@ -59,6 +62,11 @@ int main( int argc, char** ppArgv )
       
       POLYMOM_VECT_T oPolyVect;
       parseInStream( oPolyVect, *pIstream );
+      if( oCmdLine.isDoStrip() )
+      {
+         printPolynomVect( oPolyVect );
+         return EXIT_SUCCESS;
+      }
       gpstr::PlotStream oPlot( "-p -noraise" );
       Polynom polynom( oCmdLine );
       polynom.plot( oPlot, oPolyVect );

@@ -9,7 +9,7 @@
 ## Date:     07.12.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.1
+DEFINES += VERSION=0.2
 
 MIAN_MODULE := fg-wave.cpp
 

@@ -45,6 +45,7 @@ class CommandLine: CLOP::PARSER
    bool              m_zoomYAxis;
    bool              m_noSquareTerm;
    bool              m_noLinearTerm;
+   bool              m_doStrip;
    uint              m_repetitions;
    uint              m_dotsPerTuple;
 
@@ -80,6 +81,11 @@ public:
    bool isNoLinearTerm( void ) const
    {
       return m_noLinearTerm;
+   }
+
+   bool isDoStrip( void )
+   {
+      return m_doStrip;
    }
 
    uint getRepetitions( void ) const

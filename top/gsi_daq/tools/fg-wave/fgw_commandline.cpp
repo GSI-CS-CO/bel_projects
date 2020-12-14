@@ -56,10 +56,10 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                  "| " << poParser->getProgramName() << " [options]\n\n"
                  "The format of the \"wave-file\" is identical like for the"
                  " saft-lib service program \"saft-fg-ctl\".\n"
-                 "The calculation of the quadratic polynomial is:\n\t"
-                 "f(x) = (coeff_a * 2^shift_a) * x^2 + (coeff_b * 2^shift_b) * x + coeff_c;\n"
+                 "The calculation of the quadratic polynomial is:\n\t" ESC_BOLD
+                 "f(x) = (coeff_a * 2^shift_a) * x^2 + (coeff_b * 2^shift_b) * x + (coeff_c * 2^32);\n"
                  "\t{0 <= x < (250*2^step)}\n"
-                 "\t{0 <= step <= 7}\n\n"
+                 "\t{0 <= step <= 7}\n\n" ESC_NORMAL
                  "Options:\n";
          poParser->list( cout );
          cout << "\n----------------------------------------\n"
@@ -276,6 +276,19 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     "This reduces the calculation time but it increases the granularity.\n"
                     "The default value is " TO_STRING( DEFAULT_DOTS_PER_TUPLE ) " dots/tuple.\n"
                     "The exception is zero that means that all dots will plotted."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_doStrip = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'S',
+      .m_longOpt  = "strip",
+      .m_helpText = "Prints the entire fgw-file in stdout but without empty "
+                    "lines and/or comment-lines with the leading character #." 
    }
    
 }; // CommandLine::c_optList
@@ -306,6 +319,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_zoomYAxis( false )
    ,m_noSquareTerm( false )
    ,m_noLinearTerm( false )
+   ,m_doStrip( false )
    ,m_repetitions( 1 )
    ,m_dotsPerTuple( DEFAULT_DOTS_PER_TUPLE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )

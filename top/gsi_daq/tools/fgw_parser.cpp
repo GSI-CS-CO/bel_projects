@@ -40,7 +40,8 @@ enum STATE_T
    FSM_DECLARE_STATE( READ_SHIFT_B ),
    FSM_DECLARE_STATE( READ_COEFF_C ),
    FSM_DECLARE_STATE( READ_STEP ),
-   FSM_DECLARE_STATE( READ_FREQUENCY )
+   FSM_DECLARE_STATE( READ_FREQUENCY ),
+   FSM_DECLARE_STATE( LINE_READY )
 };
 
 string printReadState( const STATE_T state )
@@ -55,6 +56,7 @@ string printReadState( const STATE_T state )
       _CASE_STATE( READ_COEFF_C );
       _CASE_STATE( READ_STEP );
       _CASE_STATE( READ_FREQUENCY );
+      _CASE_STATE( LINE_READY );
    }
    #undef _CASE_STATE
    return "unknown";
@@ -80,9 +82,16 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
 
    for( string oLine; getline( rInput, oLine ); i++ )
    {
+      if( oLine.empty() )
+         continue;
+
+      if( oLine.find_first_of( '#' ) != string::npos )
+         continue;
+         
       POLYNOM_T polynom;
       size_t pos = 0;
       bool nextState = true;
+
       FSM_INIT_FSM( READ_COEFF_A );
       do
       {
@@ -97,9 +106,12 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             errorMessage += to_string( i );
             errorMessage += " on state: ";
             errorMessage += printReadState( state );
-            errorMessage += " out of range!";
+            errorMessage += " unknown characters: \"";
+            errorMessage += oLine;
+            errorMessage += "\"!";
             throw( daq::Exception( errorMessage ) );
          }
+         
          oLine = oLine.substr( pos );
          switch( state )
          {
@@ -181,13 +193,27 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             case READ_FREQUENCY:
             {
                polynom.frequ = number;
-               FSM_TRANSITION( READ_COEFF_A );
+               FSM_TRANSITION( LINE_READY );
             }
 
             default: break;
          }
       }
       while( nextState );
+      
+      for( const auto& c: oLine )
+      {
+         if( c != ' ' )
+         {
+            string errorMessage = "Extra characters found in line ";
+            errorMessage += to_string( i );
+            errorMessage += ": \"";
+            errorMessage += oLine;
+            errorMessage += "\" !";
+            throw( daq::Exception( errorMessage ) );
+         }
+      }
+      
       rVect.push_back( polynom );
    }
    return i;

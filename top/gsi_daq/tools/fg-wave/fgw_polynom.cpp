@@ -107,11 +107,13 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    assert( xRange > 0.0 );
    xRange /= (SCU_FREQUENCY * 2);
    const double frequency = 1.0 / xRange;
+   const double loadFrequency = rVect.size() / xRange;
    xRange *= repeat;
    out << "set xrange [0:" << xRange << ']' << endl;
    out << "set xlabel \"Time\"" << endl;
    
    out << "set title \"frequency: " << frequency << " Hz"
+       << ", fg-load frequ.: " << loadFrequency << " Hz"
        << ", tuples: " << rVect.size()
        << ", dots/tuple: ";
    if( m_rCommandline.getDotsPerTuple() == 0 )
