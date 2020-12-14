@@ -33,6 +33,7 @@ def extractScript(commands_history_file):
     collect_lines = False
     graph_lines = []
     script = open(script_file, 'w')
+    # Write header of script file
     script.write(f'#! /bin/bash\n\n')
     script.write(f'# Usage: {script_file} [options]\n')
     script.write(f'#        where options are used for dm-cmd and dm-sched\n')
@@ -52,10 +53,87 @@ def extractScript(commands_history_file):
             collect_lines = False
             graph_lines = []
             print(f'Entry: {entry_no} {lines[i+2][:-1]}')
-        if 'schedule remove' in lines[i]:
+        if 'schedule clear' in lines[i]:
+            collect_lines = False
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'dm-cmd $DM $OPTIONS halt\n')
+            script.write(f'dm-sched $DM $OPTIONS clear\n')
+        elif 'schedule add' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'dm-sched $DM $OPTIONS add {dot_file_name}\n')
+        elif 'schedule keep' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'dm-sched $DM $OPTIONS keep {dot_file_name}\n')
+        elif 'schedule remove' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'dm-sched $DM $OPTIONS remove {dot_file_name}\n')
+        elif 'schedule dump' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'dm-sched $DM $OPTIONS status {dot_file_name}\n')
+        elif 'table check result: true' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'table check result: false' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'command execute' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm-cmd $DM $OPTIONS -i {dot_file_name}\n')
+        elif 'is safe to remove' in line[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'result' in line[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'queue status for pattern' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'status report' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'static flush pattern' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'queue report for pattern' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set maintenance mode to true' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set maintenance mode to false' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set force schedule actions to true' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set force schedule actions to false' in lines[i]
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set optimizeSafeToRemove to true' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'set optimizeSafeToRemove to false' in lines[i]:
+            collect_lines = True
+            script.write(f'# entry {entry_no}\n')
+            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
         if collect_lines:
             graph_lines.append(lines[i])
     print(f'Lines: {len(lines)}.')
@@ -67,4 +145,3 @@ if __name__ == '__main__':
         extractScript(sys.argv[1])
     else:
         print(f'File name for command history missing')
-
