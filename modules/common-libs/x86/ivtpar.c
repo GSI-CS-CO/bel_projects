@@ -1,4 +1,51 @@
-/* 11-Dec-2020 */
+/********************************************************************************************
+ *  ivtpar.c
+ *
+ *  created   : ~1988
+ *  author    : Georg Bollen, Johannes Gutenberg-Universität Mainz
+ *  maintainer: Dietrich Beck, GSI-Darmstadt
+ *  version   : 11-December-2020
+ * 
+ *  history: 
+ *  late 1980s: original version by Georg Bollen
+ *  00-SEP-1990 last change by by Georg Bollen, 
+ *  29-JUL-1998 Dietrich Beck, C and UNIX version
+ *  07-AUG-1998 UNIX tested o.k. 
+ *  22-OCT-1998 (crippled) MS-DOS Version
+ *  03-DEC-1998 calls of GetChar2 changed slightly
+ *  17-DEC-1998 comments in code, cleaned up, and one bug removed
+ *  04-OCT-2020 reuse this retro code, simplified linux version only
+ *  14-DEC-2020 GPL licensed
+ *
+ *  This software helps in creating simple text based user interfaces for programs. 
+ *  See ivtpar.h for help.
+ *
+ * ------------------------------------------------------------------------------------------
+ * 
+ * License Agreement for this software:
+ * 
+ * Copyright (C) 2020  Dietrich Beck
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
+ * Planckstrasse 1
+ * D-64291 Darmstadt
+ * Germany
+ * 
+ * Contact: d.beck@gsi.de
+ *           
+ * This program is free software: you can redistribute it and/or modify it under the terms of the 
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *                
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http: /www.gnu.org/licenses/>.
+ * 
+ * For all questions and ideas contact: d.beck@gsi.de
+ * Last update: 14-December-2020
+ *********************************************************************************************/
 #include <ivtpar.h>
 #include <stdio.h>
 #include <unistd.h>

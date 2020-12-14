@@ -76,6 +76,8 @@ c
 c	Hierbei ist eine Aenderung definiert als jeder andere Tastendruck
 c	als die Cursertasten und <crt>
 c
+c   Licensed unter GPL v3
+c
 c--------------------------------------------------------------------------*/
 #ifndef _IVTPAR
 #define _IVTPAR
