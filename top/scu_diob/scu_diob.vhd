@@ -3883,7 +3883,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         --Cave A
         when x"0001"    => FQ_abort <= spill_case_abort(0);
                            spill_armed <= "0001";
-                           RF_abort <= not spill_case_abort(0);
                            spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then
                             KO_abort <= '0';
@@ -3895,7 +3894,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         --Cave M
         when x"0002"    => FQ_abort <= spill_case_abort(1);
                            spill_armed <= "0010";
-                           RF_abort <= not spill_case_abort(1);
                            spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(1) = '0' or spill_pause(1) = '0') then
                             KO_abort <= '0';
