@@ -14,7 +14,7 @@
 --		6 electrical inputs									|-SUB- Piggy-ID  00000011
 --		6 optical inputs									|-SUB- Piggy-ID  00000100
 --		6 optical outputs									|-SUB- Piggy-ID  00000101
-
+--		6 electrical outputs								|-SUB- Piggy-ID  00000110
 ----------------------------------------------------------------------------------------------------- 
 -- 4 new matrix configurations:
 ----------------------------------------------------------------------------------------------------- 
@@ -70,6 +70,7 @@ signal  IN_OPT_prot_cnt: integer range 0 to 12;
 signal  IN_LEMO_cnt: integer range 0 to 12; 
 signal  IN_OPT_I_cnt: integer range 0 to 12; 
 signal  IN_OPT_o_cnt: integer range 0 to 12; 
+signal  IN_LEMO_o_cnt: integer range 0 to 12; 
 type   IOBP_slot_check_state_t is   (IOBP_slot_check_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12,IOBP_slot_check_end);
 signal IOBP_slot_check_state:   IOBP_slot_check_state_t:= IOBP_slot_check_idle;
 signal who_I_am: std_logic_vector(7 downto 0);
@@ -86,6 +87,8 @@ begin
 		IN_LEMO_cnt <=0;
 		IN_OPT_I_cnt <=0;
         IN_OPT_O_cnt <=0;
+        IN_LEMO_o_cnt <=0;
+
         who_I_am <=(others =>'0');
 
         for i in 1 to 12 loop
@@ -101,6 +104,7 @@ begin
             when IOBP_slot_check_idle	=>  IN_LEMO_cnt <=0;
                                             IN_OPT_I_cnt <=0;
                                             IN_OPT_O_cnt <=0;
+                                            IN_LEMO_o_cnt <=0;
     
                                             IOBP_slot_check_state <= IOBP_slot1;
 
@@ -120,6 +124,9 @@ begin
                         
                                                 when "00000101" => 	
                                                                    IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
+                                                                   
+                                                when "00000110" => 	
+                                                                   IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                         
                                                 when others     =>  NULL;
                                             end case;
@@ -141,7 +148,9 @@ begin
     
                                                 when "00000101" => 	
                                                     IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
-    
+                        
+                                                when "00000110" => 	
+                                                    IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                            
                         
                                                 when others     =>  NULL;
@@ -164,6 +173,9 @@ begin
 
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
+                                                                    
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
 
                        
                     
@@ -188,7 +200,8 @@ begin
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
 
-                       
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                     
                                             when others     =>  NULL;
                                             end case;
@@ -210,6 +223,9 @@ begin
     
                                                 when "00000101" => 	
                                                         IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
+                                                                    
+                                                when "00000110" => 	
+                                                        IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
 
                                                 when others     =>  NULL;
                                             end case;
@@ -229,9 +245,11 @@ begin
                                                 when "00000100" => 
                                                     IN_OPT_I_cnt <= IN_OPT_I_cnt +1;
     
-                                                 when "00000101" => 	
+                                                when "00000101" => 	
                                                     IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
-    
+                                                                    
+                                                when "00000110" => 	
+                                                    IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                             
                         
                                                 when others     =>  NULL;
@@ -254,7 +272,9 @@ begin
     
                                                 when "00000101" => 	
                                                     IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
-    
+                        
+                                                when "00000110" => 	
+                                                    IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                            
                         
                                                 when others     =>  NULL;
@@ -278,7 +298,9 @@ begin
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
 
-                       
+                                           
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                     
                                             when others     =>  NULL;  
                                             end case;
@@ -301,7 +323,9 @@ begin
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
 
-                       
+                                           
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                     
                                             when others     =>  NULL; 
                                             end case;
@@ -324,7 +348,9 @@ begin
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
 
-                       
+                                           
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                     
                                             when others     =>  NULL; 
                                             end case;
@@ -346,7 +372,9 @@ begin
 
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
-
+                    
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                        
                     
                                             when others     =>  NULL;
@@ -370,13 +398,15 @@ begin
                                             when "00000101" => 	
                                                 IN_OPT_O_cnt <= IN_OPT_O_cnt +1;
 
-                       
+                                           
+                                            when "00000110" => 	
+                                                IN_LEMO_O_cnt <= IN_LEMO_O_cnt +1;
                     
                                             when others     =>  NULL;   
                                             end case;
                                             IOBP_slot_check_state <= IOBP_slot_check_end;
             
-                when IOBP_slot_check_end => if (IN_LEMO_prot_cnt=0) and (IN_OPT_prot_cnt=0) and (IN_LEMO_cnt=0) and (IN_OPT_I_cnt=0) and (IN_opt_O_cnt =0) then 
+                when IOBP_slot_check_end => if (IN_LEMO_prot_cnt=0) and (IN_OPT_prot_cnt=0) and (IN_LEMO_cnt=0) and (IN_OPT_I_cnt=0) and (IN_opt_O_cnt =0) and (IN_LEMO_O_cnt =0) then 
                                                 who_I_am <= "00000000";
                                             else     
                 
@@ -397,8 +427,12 @@ begin
                                                         else
                                                             if IN_LEMO_cnt=7 and IN_opt_I_cnt = 2 and IN_opt_O_cnt =3 then
                                                                 who_I_am  <= "00000100";--mixed input Matrix  
-                                                            else  
-                                                                who_I_am  <= "00000101";-- other new configuration Matrix 
+                                                            else 
+                                                                if (IN_LEMO_O_cnt /=0) then
+                                                                    who_I_am  <= "00000101";-- other new configuration Matrix 
+                                                                else
+                                                                    who_I_am  <= "00000111";-- other new configuration Matrix 
+                                                                end if;
                                                             end if;
                                                         end if;
                                                     end if;
