@@ -54,7 +54,7 @@
 #include <string.h>
 
 
-#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1990-2020 \033[0m"
+#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1989-2020 \033[0m"
 // search escape sequences, https://stackoverflow.com/questions/51024909/how-to-move-cursor-back-in-c-console
 
 // define special keys

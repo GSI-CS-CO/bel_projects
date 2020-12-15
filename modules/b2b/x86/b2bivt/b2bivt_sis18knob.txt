@@ -1,0 +1,18 @@
+                                    SIS18 - Knob
+                                    ------------
+     Comment          : $                                                      
+     Increment [ns]   : $               
+     Value            : $                        
+
+
+
+
+
+
+
+
+
+         [ & Increment <page up>    ]       [ & Decrement <page down> ]
+
+         [ & Help                   ]       [ & Exit                  ]         
+

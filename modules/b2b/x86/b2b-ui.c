@@ -58,10 +58,14 @@
 #define  MENUPAR_SIS18CONF  "b2bivt_sis18conf.par"
 #define  MENUTXT_SIS18SID   "b2bivt_sis18sid.txt"
 #define  MENUPAR_SIS18SID   "b2bivt_sis18sid"      // name is completed at run-time
+#define  MENUTXT_SIS18KNOB  "b2bivt_sis18knob.txt"
+#define  MENUPAR_SIS18KNOB  "b2bivt_sis18knob.par"
 
 #define  MAXLEN              256                   // max string length
 
 const char*  program;
+const char*  path;
+
 
 static void die(const char* where, uint32_t  status) {
   fprintf(stderr, "%s: %s failed: %d\n",
@@ -74,7 +78,7 @@ static void help(void)
 {
   uint32_t version;
 
-  fprintf(stderr, "Usage: %s [OPTION] \n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <path prefix>  \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "\n");
@@ -89,10 +93,12 @@ static void help(void)
 void getEbDevice(ring_t ring, char *ebDevice)
 {
   FILE   *parfile;
+  char   parname[MAXLEN];
   char   ebsis[MAXLEN];
   char   ebesr[MAXLEN];
 
-  if ((parfile = fopen(MENUPAR_EXPERT,"r"))) {
+  sprintf(parname, "%s/%s", path, MENUPAR_EXPERT);
+  if ((parfile = fopen(parname,"r"))) {
     fscanf(parfile,"%s",ebsis);
     fscanf(parfile,"%s",ebesr);
     fclose(parfile);
@@ -103,9 +109,56 @@ void getEbDevice(ring_t ring, char *ebDevice)
 } // getEbDevice
 
 
+void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *cTrigExt, int *cTrigInj, int *cPhase)
+{
+  int   ok;
+  FILE  *parfile;
+  
+  // read file with parameters
+  if ((parfile = fopen(filename,"r"))) {
+    ok         = fscanf(parfile,"%s" , comment);
+    if (ok) ok = fscanf(parfile,"%d" , mode);
+    if (ok) ok = fscanf(parfile,"%d" , ringInj);
+    if (ok) ok = fscanf(parfile,"%lf", fH1Ext);
+    if (ok) ok = fscanf(parfile,"%d" , nHExt);
+    if (ok) ok = fscanf(parfile,"%lf", fH1Inj);
+    if (ok) ok = fscanf(parfile,"%d" , nHInj);
+    if (ok) ok = fscanf(parfile,"%d" , cTrigExt);
+    if (ok) ok = fscanf(parfile,"%d" , cTrigInj);
+    if (ok) ok = fscanf(parfile,"%d" , cPhase);
+    fclose(parfile);
+    
+    if (!ok) die("read config for SID: ", 1);
+  } // if parfile
+} // parfileReadSID
+
+void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int cTrigExt, int cTrigInj, int cPhase)
+{
+  int   ok;
+  FILE  *parfile;
+
+  
+  // write file with parameters
+  if ((parfile = fopen(filename,"w"))) {
+    ok         = fprintf(parfile,"%s\n" , comment);
+    if (ok) ok = fprintf(parfile,"%d\n" , mode);
+    if (ok) ok = fprintf(parfile,"%d\n" , ringInj);
+    if (ok) ok = fprintf(parfile,"%lf\n", fH1Ext);
+    if (ok) ok = fprintf(parfile,"%d\n" , nHExt);
+    if (ok) ok = fprintf(parfile,"%lf\n", fH1Inj);
+    if (ok) ok = fprintf(parfile,"%d\n" , nHInj);
+    if (ok) ok = fprintf(parfile,"%d\n" , cTrigExt);
+    if (ok) ok = fprintf(parfile,"%d\n" , cTrigInj);
+    if (ok) ok = fprintf(parfile,"%d\n" , cPhase);
+    fclose(parfile);
+    
+    if (!ok) die("write config for SID: ", 1);
+  } // if parfile
+} // parfileWriteSID
+
+
 void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
 {
-  FILE     *parfile;
   char     parname[MAXLEN];
   int      ok;
 
@@ -127,7 +180,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   // get name of file and gid
   switch (ring) {
     case SIS18 :
-      sprintf(parname, "%s%d.par", MENUPAR_SIS18SID, sid);
+      sprintf(parname, "%s/%s%d.par", path, MENUPAR_SIS18SID, sid);
       gid = 0x3a0;
       break;
     default :
@@ -135,26 +188,12 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   } // switch ring
 
   // read file with parameters
-  if ((parfile = fopen(parname,"r"))) {
-    ok         = fscanf(parfile,"%s",comment);
-    if (ok) ok = fscanf(parfile,"%d",&mode);
-    if (ok) ok = fscanf(parfile,"%d",&ringInj);
-    if (ok) ok = fscanf(parfile,"%lf",&fH1Ext);
-    if (ok) ok = fscanf(parfile,"%d",&nHExt);
-    if (ok) ok = fscanf(parfile,"%lf",&fH1Inj);
-    if (ok) ok = fscanf(parfile,"%d",&nHInj);
-    if (ok) ok = fscanf(parfile,"%d",&cTrigExt);
-    if (ok) ok = fscanf(parfile,"%d",&cTrigInj);
-    if (ok) ok = fscanf(parfile,"%d",&cPhase);
-    fclose(parfile);
-
-    if (!ok) die("read config for SID: ", sid);
-  } // if parfile
+  parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &cTrigExt, &cTrigInj, &cPhase);
 
   /* chk range checking ? */
 
   // some gymnastics
-  if (mode >=  3) gid += ringInj;
+  if ((mode == 3) || (mode == 4)) gid += ringInj;
   TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
   TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
 
@@ -172,9 +211,113 @@ void menuExpert()
 {
   // ivtpar
   int    i, l0, lchange[IVTMAXPAR];
+  char   parname[MAXLEN];
+  char   txtname[MAXLEN];
 
-  i = ivtpar (MENUTXT_EXPERT, MENUPAR_EXPERT, &l0, lchange);
+  sprintf(txtname, "%s/%s", path, MENUTXT_EXPERT);
+  sprintf(parname, "%s/%s", path, MENUPAR_EXPERT);
+
+  i = ivtpar (txtname, parname, &l0, lchange);
 } // menuExpert
+
+
+void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, int inum)
+{
+  // ivtpar
+  int      i, l0, lchange[IVTMAXPAR];
+  char     parname[MAXLEN];
+  char     txtname[MAXLEN];
+  int      done      = 0;
+
+  char     comment[MAXLEN];
+  int      mode;
+  int      ringInj;
+  double   fH1Ext;
+  int      nHExt;
+  double   fH1Inj;
+  int      nHInj;
+  int      cTrigExt;
+  int      cTrigInj;
+  int      cPhase;
+
+  int      increment = 1;
+  int      *ipar = 0x0;
+
+  FILE     *parfile;
+  int      ok;
+
+
+  // set point to parameter
+  switch (inum) {
+    case 0 :
+      ipar = &cTrigExt;
+      sprintf(comment, "ext trigger [ns]");
+      break;
+    case 1 :
+      ipar = &cTrigInj;
+      sprintf(comment, "inj trigger [ns]");
+      break;
+    case 3 :
+      ipar = &cPhase;
+      sprintf(comment, "phase [ns]");
+      break;
+    default :
+      die("illegal parameter", inum);
+  } // switch inum
+  
+  parfileReadSID(sidparname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &cTrigExt, &cTrigInj, &cPhase);
+
+  switch (ring) {
+    case SIS18 :
+      sprintf(txtname, "%s/%s", path, MENUTXT_SIS18KNOB);
+      sprintf(parname, "%s/%s", path, MENUPAR_SIS18KNOB);
+      break;
+    default :
+      ;
+  } // switch ring
+
+  while (!done) {
+    // write file with parameters
+    if ((parfile = fopen(parname,"w"))) {
+      ok         = fprintf(parfile,"%s\n" , comment);
+      if (ok) ok = fprintf(parfile,"%d\n" , increment);
+      if (ok) ok = fprintf(parfile,"%d\n" , *ipar);
+      fclose (parfile);
+      if (!ok) die("error writing parameter file for knob", ok);
+    } // if parfile
+
+    i = ivtpar(txtname, parname, &l0, lchange);
+
+    // read file with parameters
+    if ((parfile = fopen(parname,"r"))) {
+      ok         = fscanf(parfile,"%s" , comment);
+      if (ok) ok = fscanf(parfile,"%d" , &increment);
+      if (ok) ok = fscanf(parfile,"%d" , ipar);
+      fclose (parfile);
+      if (!ok) die("error reading parameter file for knob", ok);
+    } // if parfile
+
+    
+    switch (i) {
+      case 1 :
+        *ipar += increment;
+        break;
+      case 2 :
+        *ipar -= increment;
+        break;
+      case 3 :
+        help();
+        break;
+      case 4 :
+        done = 1;
+        break;
+      default :
+        ;
+    } // switch i
+    parfileWriteSID(sidparname, comment, mode, ringInj, fH1Ext, nHExt, fH1Inj, nHInj, cTrigExt, cTrigInj, cPhase);
+    submitSid(ebDevice, ring, sid);
+  } // while not done
+}  // menuIKnob
 
 
 void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
@@ -187,8 +330,8 @@ void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
 
   switch (ring) {
     case SIS18 :
-      sprintf(txtname, MENUTXT_SIS18SID);
-      sprintf(parname, "%s%d.par", MENUPAR_SIS18SID, sid);
+      sprintf(txtname, "%s/%s", path, MENUTXT_SIS18SID);
+      sprintf(parname, "%s/%s%d.par", path, MENUPAR_SIS18SID, sid);
       break;
     default :
       ;
@@ -198,7 +341,7 @@ void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
     i = ivtpar (txtname, parname, &l0, lchange);
     switch (i) {
       case 1 :
-        // tune extraction trigger
+        menuIKnob(ebDevice, ring, sid, parname, 0);
         break;
       case 2 :
         // tune injection trigger
@@ -232,15 +375,15 @@ void menuConfig(uint64_t ebDevice, ring_t ring)
   
   switch (ring) {
     case SIS18 :
-      sprintf(txtname, MENUTXT_SIS18CONF);
-      sprintf(parname, MENUPAR_SIS18CONF);
+      sprintf(txtname, "%s/%s", path, MENUTXT_SIS18CONF);
+      sprintf(parname, "%s/%s", path, MENUPAR_SIS18CONF);
       break;
     default :
       ;
   } // switch ring
 
   while (!done) {
-    i = ivtpar (txtname, parname, &l0, lchange);
+    i = ivtpar(txtname, parname, &l0, lchange);
     switch (i) {
       case 1 ... 16 :
         menuSID(ebDevice, ring, i-1);
@@ -262,6 +405,8 @@ void menuSIS18()
 {
   // ivtpar
   int      i, l0, lchange[IVTMAXPAR];
+  char     parname[MAXLEN];
+  char     txtname[MAXLEN];
   int      done = 0;
 
   char     ebDevName[MAXLEN];
@@ -275,10 +420,15 @@ void menuSIS18()
 
   // open connection to firmware
   getEbDevice(SIS18, ebDevName);
+  /*printf("ebdev %s\n", ebDevName);
+    getchar();*/
   if ((status =  b2b_firmware_open(&ebDevice, ebDevName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+
+  sprintf(txtname, "%s/%s", path, MENUTXT_SIS18);
+  sprintf(parname, "%s/%s", path, MENUPAR_SIS18);
   
   while (!done) {
-    i = ivtpar (MENUTXT_SIS18, MENUPAR_SIS18, &l0, lchange);
+    i = ivtpar (txtname, parname, &l0, lchange);
     switch (i) {
       case 1 :
         menuConfig(ebDevice, SIS18);
@@ -319,10 +469,8 @@ int main(int argc, char** argv)
 
   // ivtpar
   int    i, l0, lchange[IVTMAXPAR];
-  char   par0[32];
-  double par1;
-  FILE   *parfile;
-
+  char   parname[MAXLEN];
+  char   txtname[MAXLEN];
   int  j;
   int  ok;
   
@@ -351,9 +499,21 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if (optind >= argc) {
+    fprintf(stderr, "%s: expecting one non-optional argument: <path prefix>\n", program);
+    fprintf(stderr, "\n");
+    help();
+    return 1;
+  }
+
+  path = argv[optind];
+  sprintf(txtname, "%s/%s", path, MENUTXT_MAIN);
+  sprintf(parname, "%s/%s", path, MENUPAR_MAIN);  
+  
+
   // main  menu
   while (1) {
-    i = ivtpar (MENUTXT_MAIN, MENUPAR_MAIN, &l0, lchange);
+    i = ivtpar(txtname, parname, &l0, lchange);
     
     switch (i) {
       case 1 :
