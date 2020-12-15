@@ -826,7 +826,7 @@ END COMPONENT hw_interlock;
     slave10_ID: in std_logic_vector(7 downto 0);
     slave11_ID: in std_logic_vector(7 downto 0);
     slave12_ID: in std_logic_vector(7 downto 0);
-    Trigger_matrix_Config:out  std_logic_vector(7 downto 0) -- maximum 5!= 120 theoretically possible configurations (01111000)
+    Trigger_matrix_Config:out  std_logic_vector(7 downto 0)
   );
 
     END COMPONENT qud_trig_matrix;
@@ -7503,7 +7503,7 @@ IOBP_Aktiv_LED_i(12) <=  (IOBP_Output(12)   &  Deb60_out(59 DOWNTO 55));  -- Sig
 --------------------------------------------------------------------------------------------------------------------------------------------------
 --else          --------------------------------------------------------------------------------------------------------------------------------------------------
 --
-when "00000010" | "00000100" | "00000011" |"00000101"  => 
+when "00000010" | "00000100" | "00000011" |"00000101"|"00000111"  => 
 
 -- STANDARD MATRIX 										
 -- 9 x [6 electrical inputs] 
