@@ -67,7 +67,10 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
               << poParser->getProgramName() << " sinus.fgw\n\n"
                  "Example 2 pipe mode, plotting three tuples for five times with 100 dots per tuple:\n\t"
               << "echo -e \"0 0 0 0 2147483647 3 6\\n0 0 0 0 -2147483648 4 6\\n0 0 0 0 0 3 6\" | "
-              << poParser->getProgramName() << " -d100 -r5\n"
+              << poParser->getProgramName() << " -d100 -r5\n\n"
+                 "Example 3 creating a fgw-file with 120 polynomials:\n\t"
+                 "echo -e \"0 0 0 0 2147483647 3 6\\n0 0 0 0 -2147483648 4 6\\n0 0 0 0 0 3 6\" | "
+              << poParser->getProgramName() << " -Sr40 >rect120.fgw\n"
               << endl;
          ::exit( EXIT_SUCCESS );
          return 0;
@@ -288,7 +291,14 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'S',
       .m_longOpt  = "strip",
       .m_helpText = "Prints the entire fgw-file in stdout but without empty "
-                    "lines and/or comment-lines with the leading character #." 
+                    "lines and/or comment-lines with the leading character #.\n"
+                    "NOTE:\n"
+                    "In combination with option \"-r, --repeat\" it becomes possible "
+                    "to expand the number of polynomials.\n"
+                    "Because by the current version of SaftLib and LM32 firmware, "
+                    "the number of polynomials should not fall below a minimum number.\n"
+                    "If not, the frequency of \"REFILL_REQUEST\" to the SaftLib becomes increased.\n"
+                    "At the moment the number of polynomials is 121 per channel."
    }
    
 }; // CommandLine::c_optList
@@ -351,7 +361,7 @@ int CommandLine::onArgument( void )
    m_fileName = getArgVect()[getArgIndex()];
    m_pInStream = new ifstream;
    m_pInStream->open( m_fileName, ifstream::in );
-   return 0;
+   return 1;
 }
 
 /*-----------------------------------------------------------------------------

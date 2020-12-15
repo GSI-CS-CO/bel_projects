@@ -59,16 +59,34 @@ namespace Scu
 /*!
  * @ingroup SHARED_MEMORY
  * @brief Maximum of supported function generator channels
+ * 
+ * Its the size of the array of FG_CHANNEL_BUFFER_T and FG_CHANNEL_REG_T
+ * 
+ * @see FG_CHANNEL_BUFFER_T
+ * @see FG_CHANNEL_REG_T
  */
 #define   MAX_FG_CHANNELS   16
 
 /*!
+ * @ingroup SHARED_MEMORY
  * @brief Maximum number of function generator channels per SCU-bus slave
  */
 #define   MAX_FG_PER_SLAVE  2
 
 //TODO Convert following macros to emums.
+
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Maximum number of polynomial (of type FG_PARAM_SET_T) 
+ *        per function generator channel.
+ * 
+ * Its the number of polynomials containing in FG_CHANNEL_BUFFER_T
+ * 
+ * @see FG_PARAM_SET_T
+ * @see FG_CHANNEL_BUFFER_T
+ */
 #define   BUFFER_SIZE       121
+
 #define   FG_REFILL_THRESHOLD         BUFFER_SIZE * 40 / 100
 //#define   FG_REFILL_THRESHOLD         BUFFER_SIZE * 20 / 100
 #define   OUTPUT_BITS       24
@@ -203,9 +221,9 @@ STATIC_ASSERT( sizeof(FG_CONTROL_REG_T) == sizeof(uint32_t) );
  * @see configure_fg_macro
  *
  * Meaning of the polynomial coefficients:\n
- * @f$ voltage(t) = coeff\_a \times 2^{shift\_a} \times t^2
- *                + coeff\_b \times 2^{shift\_b} \times t
- *                + coeff\_c  @f$
+ * @f$ f(x) = coeff\_a \times 2^{shift\_a} \times x^2
+ *          + coeff\_b \times 2^{shift\_b} \times x
+ *          + coeff\_c \times 2^32 @f$
  */
 typedef struct PACKED_SIZE
 {
@@ -314,7 +332,11 @@ STATIC_ASSERT( sizeof( FG_REG_STATE_T ) == sizeof( uint32_t ) );
 STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) == sizeof( uint32_t ) * 7 );
 #endif
 
-
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Buffer (vector) of polynomials for a single function generator channel.
+ * @see FG_PARAM_SET_T
+ */
 typedef struct PACKED_SIZE
 {
   FG_PARAM_SET_T pset[BUFFER_SIZE];

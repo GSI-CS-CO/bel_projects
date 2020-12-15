@@ -237,6 +237,10 @@ typedef struct PACKED_SIZE
    FG_CHANNEL_REG_T    fg_regs[MAX_FG_CHANNELS];
 
    /*!
+    * @brief Container for all polynomial vectors of all supported
+    *        function generator channels.
+    * @see FG_CHANNEL_BUFFER_T
+    * @see FG_PARAM_SET_T
     * @see FunctionGeneratorImpl::refill()
     *      in saftlib/drivers/FunctionGeneratorImpl.cpp
     */

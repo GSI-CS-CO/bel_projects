@@ -64,7 +64,8 @@ int main( int argc, char** ppArgv )
       parseInStream( oPolyVect, *pIstream );
       if( oCmdLine.isDoStrip() )
       {
-         printPolynomVect( oPolyVect );
+         for( uint i = oCmdLine.getRepetitions(); i > 0; i-- ) 
+            printPolynomVect( oPolyVect );
          return EXIT_SUCCESS;
       }
       gpstr::PlotStream oPlot( "-p -noraise" );

@@ -112,7 +112,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    out << "set xrange [0:" << xRange << ']' << endl;
    out << "set xlabel \"Time\"" << endl;
    
-   out << "set title \"frequency: " << frequency << " Hz"
+   out << "set title \"file-repeat-frequency: " << frequency << " Hz"
        << ", fg-load frequ.: " << loadFrequency << " Hz"
        << ", tuples: " << rVect.size()
        << ", dots/tuple: ";
