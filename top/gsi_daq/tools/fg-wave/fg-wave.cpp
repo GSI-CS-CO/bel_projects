@@ -53,6 +53,11 @@ void static printPolynomVect( const POLYMOM_VECT_T& rVect )
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** ppArgv )
 {
+#if 0
+   for( int i = 0; i < 10; i++ )
+      cout << i << ": " << daq::calcPolynom( 0, 1, 0, i ) << endl;
+   return EXIT_SUCCESS;
+#else
    try
    {
       CommandLine oCmdLine( argc, ppArgv );
@@ -79,6 +84,7 @@ int main( int argc, char** ppArgv )
    }
    
    return EXIT_SUCCESS;
+#endif
 }
 
 //================================== EOF ======================================

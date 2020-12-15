@@ -200,7 +200,9 @@ FT rawToVoltage( const IT rawData, const FT maxVpp = DAQ_VPP_MAX )
 
 /*! ---------------------------------------------------------------------------
  * @brief Calculating of the Y value of a quadratic polynomial.
- * 
+ *
+ * @f$ f(x) = a \times x^2 + b \times x + c @f$
+ *
  * @param a Quadratic coefficient.
  * @param b Linear coefficient,
  * @param c Offset coefficient.
@@ -210,7 +212,7 @@ FT rawToVoltage( const IT rawData, const FT maxVpp = DAQ_VPP_MAX )
 template <typename T>
 T calcPolynom( const T a, const T b, const T c, const T x )
 {
-   return x * (a * x + b) + c;
+  return x * (a * x + b) + c;
 }
 
 

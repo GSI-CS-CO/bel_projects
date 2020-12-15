@@ -70,7 +70,8 @@ Polynom::~Polynom( void )
 double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
 {
    constexpr int64_t ZERO = static_cast<int64_t>(0);
-   return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()? 
+#if 0
+   return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()?
                                ZERO:
                                (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
                             (m_rCommandline.isNoLinearTerm()?
@@ -79,6 +80,19 @@ double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
                             static_cast<int64_t>( polynom.c ) << 32,
                             x
                           );
+#else
+   return daq::calcPolynom( static_cast<long double>(m_rCommandline.isNoSquareTerm()?
+                               ZERO:
+                               (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
+                            static_cast<long double>(m_rCommandline.isNoLinearTerm()?
+                               ZERO:
+                               (static_cast<int64_t>( polynom.b ) << polynom.shiftB)),
+                            static_cast<long double>(static_cast<int64_t>( polynom.c ) << 32),
+                            static_cast<long double>(x)
+                          );
+
+#endif
+
 }
 
 /*! ---------------------------------------------------------------------------
@@ -111,7 +125,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    xRange *= repeat;
    out << "set xrange [0:" << xRange << ']' << endl;
    out << "set xlabel \"Time\"" << endl;
-   
+
    out << "set title \"file-repeat-frequency: " << frequency << " Hz"
        << ", fg-load frequ.: " << loadFrequency << " Hz"
        << ", tuples: " << rVect.size()
@@ -142,8 +156,13 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
          const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / step / SCU_FREQUENCY;
          for( uint i = 0; i < step; i++ )
          {
+#if 1
             if( ((i+1) % interval) == 0 )
                out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
+#else
+            out << i << ' ' << (daq::calcPolynom( (double)F_MAX , (double)0, (double)0, (double)i ) * DAQ_VPP_MAX / F_MAX) << endl;
+            //if( i == 10 ) break;
+#endif
             tStep   += tPart;
             tOrigin += tStep;
          }

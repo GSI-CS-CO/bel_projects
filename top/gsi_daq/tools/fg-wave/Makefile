@@ -49,9 +49,11 @@ LIBS += stdc++
 
 # CALL_ARGS = ../../../gsi_scu/sinus-test.txt
 #CALL_ARGS = sinus.fgw
-CALL_ARGS = -r3 sinus.fgw
-
-  DEBUG = 1
+# CALL_ARGS = -r3 sinus.fgw
+CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw
+#CALL_ARGS = -zd100 q.fgw
+#CALL_ARGS = -zd100 l.fgw
+#  DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
