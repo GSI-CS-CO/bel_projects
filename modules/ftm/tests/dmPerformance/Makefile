@@ -1,5 +1,5 @@
 SCHEDULE ?= groups_1_nonDefaultPatterns_1_blocksPerPattern_1
-DATAMASTER ?=tcp/dal029.acc
+DATAMASTER ?=$$DM
 
 PHONY: test0 test1 test2 test2x testx test3 coverage
 
