@@ -114,7 +114,7 @@ class DaqInterface: public DaqBaseInterface
    constexpr static uint        INVALID_OFFSET = static_cast<uint>(~0);
 
 public:
-   using SLOT_FLAGS_T  = SCUBUS_SLAVE_FLAGS_T;
+   using SLOT_FLAGS_T  = Bus::SCUBUS_SLAVE_FLAGS_T;
    using RETURN_CODE_T = DAQ_RETURN_CODE_T;
 
 private:
