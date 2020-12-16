@@ -56,12 +56,11 @@ int main( int argc, char** ppArgv )
 {
    try
    {
-      Terminal oTerminal;
       CommandLine oCmdLine( argc, ppArgv );
       istream* pIstream = oCmdLine();
       if( pIstream == nullptr )
          return EXIT_SUCCESS;
-      
+
       POLYMOM_VECT_T oPolyVect;
       parseInStream( oPolyVect, *pIstream );
       if( oCmdLine.isDoStrip() )
@@ -70,7 +69,7 @@ int main( int argc, char** ppArgv )
             printPolynomVect( oPolyVect );
          return EXIT_SUCCESS;
       }
-      
+
       string gnuplotCmdLine;
       if( oCmdLine.isDoQuit() )
          gnuplotCmdLine +=  "-p";
@@ -79,10 +78,11 @@ int main( int argc, char** ppArgv )
       Polynom polynom( oCmdLine );
 
       polynom.plot( oPlot, oPolyVect );
-      
+
       if( oCmdLine.isDoQuit() )
          return EXIT_SUCCESS;
-      
+
+      Terminal oTerminal;
       int key;
       if( oCmdLine.isVerbose() )
          cout << "Press Esc to exit." << endl;

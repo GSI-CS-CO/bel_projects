@@ -67,7 +67,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
               << poParser->getProgramName() << " sinus.fgw\n\n"
                  "Example 2 pipe mode, plotting three tuples for five times with 100 dots per tuple:\n\t"
               << "echo -e \"0 0 0 0 2147483647 3 6\\n0 0 0 0 -2147483648 4 6\\n0 0 0 0 0 3 6\" | "
-              << poParser->getProgramName() << " -d100 -r5\n\n"
+              << poParser->getProgramName() << " -Qd100 -r5\n\n"
                  "Example 3 creating a fgw-file with 120 polynomials:\n\t"
                  "echo -e \"0 0 0 0 2147483647 3 6\\n0 0 0 0 -2147483648 4 6\\n0 0 0 0 0 3 6\" | "
               << poParser->getProgramName() << " -Sr40 >rect120.fgw\n"
