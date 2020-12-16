@@ -3929,7 +3929,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
 
     FQ_rst   <= spill_case_rst(0) or spill_case_rst(1) or spill_case_rst(2)  or spill_case_rst(3) ;
 
-    TS_abort <= '0' when ((spill_case_abort = "1111") or  (KO_abort = '1')) else '1';
+    TS_abort <= RF_abort;
 
 quench_test_all : quench_detection
     Port map( clk => clk_sys,
