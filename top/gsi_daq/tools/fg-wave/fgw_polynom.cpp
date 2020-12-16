@@ -70,7 +70,7 @@ Polynom::~Polynom( void )
 double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
 {
    constexpr int64_t ZERO = static_cast<int64_t>(0);
-#if 0
+#if 1
    return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()?
                                ZERO:
                                (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
@@ -145,26 +145,19 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    {
       for( const auto& polynom: rVect )
       {
-         double tStep = 0.0;
-         const uint step = calcStep( polynom.step );
-         assert( step > 0 );
+         const uint steps = calcStep( polynom.step );
+         assert( steps > 0 );
          uint dotsPerTuple = m_rCommandline.getDotsPerTuple();
          if( dotsPerTuple == 0 )
-            dotsPerTuple = step;
-         const uint interval = step / dotsPerTuple;
+            dotsPerTuple = steps;
+         const uint interval = steps / dotsPerTuple;
          assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
-         const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / step / SCU_FREQUENCY;
-         for( uint i = 0; i < step; i++ )
+         const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / (SCU_FREQUENCY * 2);
+         for( uint i = 0; i < steps; i++ )
          {
-#if 1
             if( ((i+1) % interval) == 0 )
                out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
-#else
-            out << i << ' ' << (daq::calcPolynom( (double)F_MAX , (double)0, (double)0, (double)i ) * DAQ_VPP_MAX / F_MAX) << endl;
-            //if( i == 10 ) break;
-#endif
-            tStep   += tPart;
-            tOrigin += tStep;
+            tOrigin += tPart;
          }
       }
    }

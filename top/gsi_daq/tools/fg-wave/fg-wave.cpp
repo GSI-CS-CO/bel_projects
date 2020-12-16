@@ -23,7 +23,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <cmath>
+//#include <cmath>
+#include <daqt_read_stdin.hpp>
 #include <fgw_parser.hpp>
 #include <fgw_commandline.hpp>
 #include <gnuplotstream.hpp>
@@ -53,13 +54,9 @@ void static printPolynomVect( const POLYMOM_VECT_T& rVect )
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** ppArgv )
 {
-#if 0
-   for( int i = 0; i < 10; i++ )
-      cout << i << ": " << daq::calcPolynom( 0, 1, 0, i ) << endl;
-   return EXIT_SUCCESS;
-#else
    try
    {
+      Terminal oTerminal;
       CommandLine oCmdLine( argc, ppArgv );
       istream* pIstream = oCmdLine();
       if( pIstream == nullptr )
@@ -73,9 +70,26 @@ int main( int argc, char** ppArgv )
             printPolynomVect( oPolyVect );
          return EXIT_SUCCESS;
       }
-      gpstr::PlotStream oPlot( "-p -noraise" );
+      
+      string gnuplotCmdLine;
+      if( oCmdLine.isDoQuit() )
+         gnuplotCmdLine +=  "-p";
+      gpstr::PlotStream oPlot( gnuplotCmdLine );
+
       Polynom polynom( oCmdLine );
+
       polynom.plot( oPlot, oPolyVect );
+      
+      if( oCmdLine.isDoQuit() )
+         return EXIT_SUCCESS;
+      
+      int key;
+      if( oCmdLine.isVerbose() )
+         cout << "Press Esc to exit." << endl;
+      while( (key = Terminal::readKey()) != '\e' )
+      {
+         ::usleep( 100 );
+      }
    }
    catch( daq::Exception& e )
    {
@@ -84,7 +98,6 @@ int main( int argc, char** ppArgv )
    }
    
    return EXIT_SUCCESS;
-#endif
 }
 
 //================================== EOF ======================================

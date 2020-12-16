@@ -9,7 +9,7 @@
 ## Date:     07.12.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.3
+DEFINES += VERSION=0.4
 
 MIAN_MODULE := fg-wave.cpp
 
@@ -20,6 +20,7 @@ SOURCE += fgw_polynom.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/fgw_parser.cpp
+SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
@@ -48,11 +49,11 @@ LIBS += stdc++
 # LIBS += m
 
 # CALL_ARGS = ../../../gsi_scu/sinus-test.txt
-#CALL_ARGS = sinus.fgw
+CALL_ARGS = sinus-test.fgw -r4
 # CALL_ARGS = -r3 sinus.fgw
-CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw
+#CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw 
 #CALL_ARGS = -zd100 q.fgw
-#CALL_ARGS = -zd100 l.fgw
+#CALL_ARGS = -zd100 q.fgw
 #  DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"

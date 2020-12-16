@@ -299,6 +299,20 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     "the number of polynomials should not fall below a minimum number.\n"
                     "If not, the frequency of \"REFILL_REQUEST\" to the SaftLib becomes increased.\n"
                     "At the moment the number of polynomials is 121 per channel."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_doQuit = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'Q',
+      .m_longOpt  = "quit",
+      .m_helpText = "Program will terminate immediately after plotting.\n"
+                    "This is meaningful when the data has been read in via the standard input rather than a file.\n"
+                    "The disadvantage is that in this way its not possible to zoom the graph via mouse."
    }
    
 }; // CommandLine::c_optList
@@ -330,6 +344,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noSquareTerm( false )
    ,m_noLinearTerm( false )
    ,m_doStrip( false )
+   ,m_doQuit( false )
    ,m_repetitions( 1 )
    ,m_dotsPerTuple( DEFAULT_DOTS_PER_TUPLE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )

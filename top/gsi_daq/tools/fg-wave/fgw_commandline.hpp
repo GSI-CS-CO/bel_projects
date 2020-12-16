@@ -46,6 +46,7 @@ class CommandLine: CLOP::PARSER
    bool              m_noSquareTerm;
    bool              m_noLinearTerm;
    bool              m_doStrip;
+   bool              m_doQuit;
    uint              m_repetitions;
    uint              m_dotsPerTuple;
 
@@ -88,6 +89,11 @@ public:
       return m_doStrip;
    }
 
+   bool isDoQuit( void ) const
+   {
+      return m_doQuit;
+   }
+   
    uint getRepetitions( void ) const
    {
       return m_repetitions;
