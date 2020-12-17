@@ -68,6 +68,11 @@ extern "C" {
   
   enum ringMachine{NORING, SIS18, ESR, CRYRING};
   typedef enum ringMachine ring_t;
+
+  enum tuneKnob{NOKNOB, TRIGEXT, TRIGINJ, PHASE};
+  typedef enum tuneKnob knob_t;
+
+  
   // ---------------------------------
   // helper routines
   // ---------------------------------

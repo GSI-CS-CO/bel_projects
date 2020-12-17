@@ -1,5 +1,5 @@
-                              Transfer from SIS18
-                              -------------------
+                               Transfer from ESR
+                               -----------------
     Select Sequence ID:            [ &  0]
                                    [ &  1]
                                    [ &  2]
