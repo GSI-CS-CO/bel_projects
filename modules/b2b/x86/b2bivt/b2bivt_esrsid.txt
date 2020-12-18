@@ -6,7 +6,7 @@
 
      Extraction   H=1 frequency [Hz]  : $                       
                   harmonic number     : $                  
-     Injection    H=1 frequency [Hz]  : $                
+     Injection    H=1 frequency [Hz]  : $                       
                   harmonic number     : $               
 
      Adjustments [ns]:

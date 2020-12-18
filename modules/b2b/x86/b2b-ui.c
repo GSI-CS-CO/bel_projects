@@ -211,13 +211,17 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
 
   // read file with parameters
   parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &cTrigExt, &cTrigInj, &cPhase);
-
-  /* chk range checking ? */
+  //printf("fH1Ext %lf\n", fH1Ext);
+    /* chk range checking ? */
 
   // some gymnastics
   if ((mode == 3) || (mode == 4)) gid += ringInj;
   TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
   TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
+
+  //printf("TH1Ext %llu\n", TH1Inj);
+  //getchar();
+
 
   /*
   printf(" sid %d, gid %d, cTrigExt %d\n", sid, gid, cTrigExt);

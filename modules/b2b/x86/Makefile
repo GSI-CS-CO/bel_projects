@@ -27,7 +27,7 @@ b2b-ui: b2b-ui.c
 
 lib: b2blib.c
 	$(CC) $(CFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
-	$(CC) -shared -Wl,-soname,$(B2BLIB).1 -o $(B2BLIB).1.0 b2blib.o common-lib.o -L $(EB)/.libs -letherbone
+	$(CC) -shared -Wl,-soname,$(B2BLIB).1 -o $(B2BLIB).1.0 b2blib.o common-lib.o -L $(EB)/.libs -letherbone -lm
 	ln -sf $(B2BLIB).1.0 $(B2BLIB).1
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 

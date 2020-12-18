@@ -26,7 +26,7 @@
 #define B2B_ECADO_B2B_PMEXT        0x800   // command: perform phase measurement (extraction)
 #define B2B_ECADO_B2B_PMINJ        0x801   // command: perform phase measurement (injection)
 #define B2B_ECADO_B2B_PREXT        0x802   // command: result of phase measurement (extraction)
-#define B2B_ECADO_B2B_PRINJ        0x803   // command: result of phase measurement (injecton)
+#define B2B_ECADO_B2B_PRINJ        0x803   // command: result of phase measurement (injection)
 #define B2B_ECADO_B2B_TRIGGEREXT   0x804   // command: trigger kicker (extraction)
 #define B2B_ECADO_B2B_TRIGGERINJ   0x805   // command: trigger kicker (injection)
 #define B2B_ECADO_B2B_DIAGMATCH    0x806   // command: optional diagnostic, indicates when phases match
@@ -54,7 +54,7 @@
 #define B2B_MFSM_EXTMATCHT          0x20   // calculate time for phase matching 
 #define B2B_MFSM_EXTTRIG            0x40   // trigger extraction kicker
 #define B2B_MFSM_INJPS              0x80   // phase measurement injection, send request to PM
-#define B2B_MFSM_INJPR             0x100   // phase measurement injection, receive data from PM
+#define B2B_MFSM_BOTHPR            0x100   // phase measurement of extraction and injection, receive data from PM
 #define B2B_MFSM_INJTRIG           0x200   // trigger injection kicker
 #define B2B_MFSM_NOTHING        0x100000   // nothing to do
 

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version :10-December-2020
+ *  version : 18-December-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000209                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000210                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -203,7 +203,7 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
-uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t *dt)
+uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t *dt)
 {
 #define FIRSTTS     2    // index avoid using timestamps with smaller index
 
@@ -233,7 +233,7 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32
   } // for i
 
   return COMMON_STATUS_OK;
-} //poorMansFit
+} //phaseFit
 
 
 uint32_t doActionOperation(uint64_t *tAct,                    // actual time
@@ -290,11 +290,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       DBPRINT2("b2b-pm: phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1, &dt) == COMMON_STATUS_OK)) {
+      if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
         sendEvtId    = 0x1000000000000000;                                    // FID
         sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID 
-        sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);     // EVTNO
+        sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);               // EVTNO
         sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);                  // SID
         sendParam    = tH1;
         sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
