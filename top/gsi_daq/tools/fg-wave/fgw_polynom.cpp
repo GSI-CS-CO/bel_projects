@@ -155,7 +155,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
          const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / (SCU_FREQUENCY * 2);
          for( uint i = 0; i < steps; i++ )
          {
-            if( ((i+1) % interval) == 0 )
+            if( (i % interval) == 0 )
                out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
             tOrigin += tPart;
          }
