@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-November-2020
+ *  version : 21-December-2020
  *
  *  common functions used by various firmware projects
  *  
@@ -474,7 +474,7 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -490,7 +490,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *e
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000 + (uint64_t)1000; 
+  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000 + (uint64_t)1000; 
   
   while (getSysTime() < timeoutT) {
     if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
@@ -525,7 +525,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *e
 
 
 // wait for MIL event or timeout
-uint32_t fwlib_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
+uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -535,7 +535,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *ev
   int      valid;              // evt is valid
   int      i;                
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
+  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000;
   *virtAcc    = 0xffff;           
   *evtData    = 0xffff;
   *evtCode    = 0xffff;

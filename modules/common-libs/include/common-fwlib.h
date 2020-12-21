@@ -17,7 +17,7 @@ uint32_t fwlib_wrCheckSyncState();
 //uint32_t findWREp();
 
 // 1. query ECA for actions, 2. trigger activity, returns (error) status
-uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout,      // timeout [ms]
+uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
                              uint64_t *param,         // parameter field
