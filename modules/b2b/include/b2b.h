@@ -39,6 +39,13 @@
 #define B2B_CMD_CONFSUBMIT            11   // submit data written to DP RAM
 #define B2B_CMD_CONFCLEAR             12   // this will clear all event tables
 
+// B2B error flags (in EvtId)
+#define B2B_ERRFLAG_PMEXT            0x1   // error phase measurement extraction
+#define B2B_ERRFLAG_KDEXT            0x2   // error kick diagnostic extraction
+#define B2B_ERRFLAG_PMINJ            0x4   // error phase measurement injection
+#define B2B_ERRFLAG_KDINJ            0x8   // error kick diagnostic injection
+#define B2B_ERRFLAG_CBU             0x10   // error central b2b unit
+
 // B2B mode flags                          //                                            | ext trig | ext phase | inj trig | inj phase |
 #define B2B_MODE_KSE                   1   // EVT_KICK_START: trigger extraction kicker  |     x    |           |          |           |
 #define B2B_MODE_B2E                   2   // simple bunch extraction                    |     x    |     x     |          |           | 
@@ -116,9 +123,8 @@
 #define B2B_SHARED_GET_TKTRIGLO   (B2B_SHARED_GET_TKTRIGHI   + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
 #define B2B_SHARED_GET_DKMON      (B2B_SHARED_GET_TKTRIGLO   + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal
 #define B2B_SHARED_GET_DKPROBE    (B2B_SHARED_GET_DKMON      + _32b_SIZE_)       // delay of kicker probe signal [ns], delay is measured from kicker trigger signal
-#define B2B_SHARED_GET_LKPROBE    (B2B_SHARED_GET_DKPROBE    + _32b_SIZE_)       // length of kicker probe signal [ns]
 
 // diagnosis: end of used shared memory
-#define B2B_SHARED_END            (B2B_SHARED_GET_LKPROBE    + _32b_SIZE_) 
+#define B2B_SHARED_END            (B2B_SHARED_GET_DKPROBE    + _32b_SIZE_) 
 
 #endif
