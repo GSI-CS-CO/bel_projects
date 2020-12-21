@@ -30,10 +30,13 @@
 #define B2B_ECADO_B2B_TRIGGEREXT   0x804   // command: trigger kicker (extraction)
 #define B2B_ECADO_B2B_TRIGGERINJ   0x805   // command: trigger kicker (injection)
 #define B2B_ECADO_B2B_DIAGMATCH    0x806   // command: optional diagnostic, indicates when phases match
-#define B2B_ECADO_B2B_DIAGEXT      0x807   // command: optional diagnostic (extraction)
-#define B2B_ECADO_B2B_DIAGINJ      0x808   // command: optional diagnostic (injection)
+#define B2B_ECADO_B2B_PDREXT       0x807   // command: result of phase diagnostic (extraction)
+#define B2B_ECADO_B2B_PDRINJ       0x808   // command: result of phase diagnostic (injection)
 #define B2B_ECADO_B2B_DIAGKICKEXT  0x809   // command: optional kick diagnostic (extraction)
 #define B2B_ECADO_B2B_DIAGKICKINJ  0x80a   // command: optional kick diagnostic (injection)
+#define B2B_ECADO_B2B_PDEXT        0x81e   // internal command: perform phase diagnostic (extraction)
+#define B2B_ECADO_B2B_PDINJ        0x81f   // internal command: perform phase diagnostic (injection)
+
 
 // commands from the outside
 #define B2B_CMD_CONFSUBMIT            11   // submit data written to DP RAM
