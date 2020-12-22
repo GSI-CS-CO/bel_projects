@@ -8,6 +8,9 @@ global data_master
 """
 Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
+
+Usage: python <binary of dm-cmd> <datamaster>
+Prerequisite: datamaster must have a node with name B_PPS.
 """
 class TestDmCmd(unittest.TestCase):
 

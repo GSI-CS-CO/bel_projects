@@ -38,14 +38,15 @@ schedules:
 	./schedules/startAllPattern.sh
 
 singleEdgeTest:
-	test -d singleEdgeTest/dot || mkdir singleEdgeTest/dot
+	test -d dot/ || mkdir dot/
 	$(MAKE) -C singleEdgeTest/
 	LD_LIBRARY_PATH=$(CARPEDM_PATH_1) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 
 unittest:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python unittests/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
+	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python dmpps2.py $(DATAMASTER)
+	python unittests/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
 
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
