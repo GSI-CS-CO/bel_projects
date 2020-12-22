@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-December-2020
+ *  version : 22-December-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,6 +42,7 @@
 
 /* standard includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -264,8 +265,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static uint64_t TH1;                                        // h=1 period
   static uint64_t tH1;                                        // h=1 timestamp of phase ( = 'phase')
   uint32_t dt;                                                // uncertainty of h=1 timestamp
-  uint32_t nError;                                            // # of error bit
-  uint32_t flagError;                                         // error flag
+  static uint32_t flagPMError;                                // error flag phase measurement
 
   // diagnostic PM
   uint64_t tH1Diag;                                           // h=1 timestamp of phase
@@ -277,7 +277,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // diagnostic match
   static int64_t dtMatch;                                     // deviation from expected timestamp
   uint32_t min;                                               // minimum deviation
-  int      minIndex;                                          // index of minimum deviation
   int      i; 
 
 
@@ -289,12 +288,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   switch (ecaAction) {
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
-      nError      = 0;
     case B2B_ECADO_B2B_PMINJ :
-      if (!sendEvtNo) {
-        sendEvtNo = B2B_ECADO_B2B_PRINJ;
-        nError    = 2;
-      } // if PMINJ
+      if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
       reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;       // ECA is configured to pre-trigger ahead of time!!!
       comLatency       = (int32_t)(getSysTime() - recDeadline);
@@ -307,7 +302,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
       *pSharedGetGid   = recGid;
       *pSharedGetSid   = recSid;
-      dtMatch          = 0xffffffff;
+      dtMatch          = 0x7fffffff;
+      dtDiag           = 0x7fffffff;
+      flagPMError      = 0x0;
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -320,19 +317,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       DBPRINT2("b2b-pm: phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1, &dt) == COMMON_STATUS_OK)) flagError = 0;
-      else {
-        tH1       = 0xffffffffffffffff;
-        flagError = B2B_ERRFLAG_PMEXT;
+      if ((nInput != NSAMPLES) || (phaseFit(TH1, NSAMPLES, &tH1, &dt) != COMMON_STATUS_OK)) {
+        tH1       = 0x7fffffffffffffff;
+        if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
+        else                                   flagPMError = B2B_ERRFLAG_PMINJ;
         actStatus = B2B_STATUS_PHASEFAILED;
-      } // else
+      } // if some error occured
 
       // send command: transmit measured phase value
-      sendEvtId    = 0x1000000000000000;                                    // FID
-      sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);                  // GID 
-      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);               // EVTNO
-      sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);                  // SID
-      sendEvtId    = sendEvtId | ((uint64_t)flagError << nError);           // error flag        
+      sendEvtId    = 0x1000000000000000;                              // FID
+      sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);            // GID 
+      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);         // EVTNO
+      sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);            // SID
+      sendEvtId    = sendEvtId | ((uint64_t)flagPMError);             // error flag        
       sendParam    = tH1;
       sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
@@ -343,33 +340,32 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break; // case  B2B_ECADO_B2B_PMEXT
 
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
-    case B2B_ECADO_B2B_TRIGGERINJ :
+    case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
+      if (!flagPMError) {
 
-      reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;      // ECA is configured to pre-trigger ahead of time!!!
-      uwait(10);   /* chk collecting data for 20us not required */    // fudge wait
+        reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
+        uwait(10);   /* chk collecting data for 20us not required */  // fudge wait
+        dtMatch = 0x7fffffff;
 
-      flagError = 0;
-      fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
-      while (nInput < NSAMPLES) {                                     // treat 1st TS as junk
-        ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-        if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
-        if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-      } // while nInput
-      fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
-      
-      DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
-      
-      if (nInput == NSAMPLES) {
-        min = 0xffffffff;
-        for (i=0; i<NSAMPLES; i++) {                                  // find relevant timestamp
-          dtMatch = tStamp[i] - reqDeadline;
-          if (abs(dtMatch) < min) {min = dtMatch; minIndex = 1;}
-        } // for i
-      } // if NSAMPLES
-      else {
-        dtDiag    = 0x0;
-        flagError = 0x1;
-      } // else
+        fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
+        while (nInput < NSAMPLES) {                                   // treat 1st TS as junk
+          ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+          if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
+          if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
+        } // while nInput
+        fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
+        
+        DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
+        
+        if (nInput == NSAMPLES) {                                     // find relevant timestamp
+          min = 0x7fffffff;
+          for (i=0; i<NSAMPLES; i++) {
+            dtMatch = tStamp[i] - reqDeadline;
+            if (abs(dtMatch) < min) min = abs(dtMatch); 
+          } // for i
+        } // if NSAMPLES
+
+      } // if not pm error
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
@@ -378,51 +374,46 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDINJ :
       if (!sendEvtNo) 
         sendEvtNo = B2B_ECADO_B2B_PDINJ;
+      if(!flagPMError) {                                              // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
 
-      reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;       // ECA is configured to pre-trigger ahead of time!!!
-      recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
-      recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
-      
-      nInput    = 0;
-      flagError = 0;
-      fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
-      while (nInput < NSAMPLES) {                                     // treat 1st TS as junk
-        ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-        if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
-        if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-      } // while nInput
-      fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
-      
-      DBPRINT2("b2b-pm: phase diagnostic measurement with samples %d\n", nInput);
-      
-      if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1Diag, &dt) == COMMON_STATUS_OK)) {
-        if (tH1 == 0xffffffffffffffff) flagError = 1;
-        Dt          = (tH1Diag - tH1);                                // difference [ns]
-        Dt          = Dt * 1000000000;                                // difference [as]
-        remainder   = Dt % TH1;                                       // remainder [as]
-        remainder   = (uint64_t)((double)remainder / 1000000000.0);   // remainder [ns]
-        periodNs    = (uint64_t)((double)TH1 / 1000000000.0);         // period [ns]
-        if (remainder > (periodNs >> 1)) dtDiag = remainder - periodNs;
-        else                             dtDiag = remainder;
-      } // if STATUS_OK
-      else {
-        dtDiag    = 0x0;
-        flagError = 0x1;
-      } // else
+        reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;     // ECA is configured to pre-trigger ahead of time!!!
+        recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
+        recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
 
-      // send command: transmit diagnistic information
+        dtDiag    = 0x7fffffff;
+        nInput    = 0;
+
+        fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
+        while (nInput < NSAMPLES) {                                   // treat 1st TS as junk
+          ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+          if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
+          if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
+        } // while nInput
+        fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
+        
+        DBPRINT2("b2b-pm: phase diagnostic measurement with samples %d\n", nInput);
+        
+        if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1Diag, &dt) == COMMON_STATUS_OK)) {
+          Dt          = (tH1Diag - tH1);                              // difference [ns]
+          Dt          = Dt * 1000000000;                              // difference [as]
+          remainder   = Dt % TH1;                                     // remainder [as]
+          remainder   = (uint64_t)((double)remainder / 1000000000.0); // remainder [ns]
+          periodNs    = (uint64_t)((double)TH1 / 1000000000.0);       // period [ns]
+          if (remainder > (periodNs >> 1)) dtDiag = remainder - periodNs;
+          else                             dtDiag = remainder;
+        } // if ok
+
+      } // if not pm error
+
+      // send command: transmit diagnostic information
       sendEvtId    = 0x1000000000000000;                              // FID
       sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);            // GID 
       sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);         // EVTNO
       sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);            // SID
-      sendEvtId    = sendEvtId | ((uint64_t)flagError);               // error flag        
       sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);        // high word; phase diagnostic
       sendParam   |= (uint64_t)( dtMatch & 0xffffffff);               // low word; match diagnostic
       sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-      
-      transStat    = dt;
-      nTransfer++;
       
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
 

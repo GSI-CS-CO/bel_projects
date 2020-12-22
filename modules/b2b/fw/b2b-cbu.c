@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-December-2020
+ *  version : 22-December-2020
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000211                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000212                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -385,7 +385,7 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 } // calcExtTime
 
 
-uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
+uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat, int32_t cPhase)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' frequency     [as] // sic! atoseconds
   uint64_t TFast;                                   // period of 'fast' frequency     [as]
@@ -439,7 +439,7 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
     tFast  = (tH1Ext - epoch) * nineO;
     nHFast = nHExt;
   }
-
+  
   // period of frequency beats [as], required if next match is too close
   *TBeat = (uint64_t)((double)TFast / (double)(TSlow * nHFast - TFast * nHSlow) * (double)TSlow);  // period of beating [as]
 
@@ -740,6 +740,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
       
       tH1Inj        = recParam;
+      tH1Inj       += cPhase;
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);
@@ -807,7 +808,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTMATCHT) {
     tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;    
     if (errorFlags) tTrig =  tWantExt;                                        // plan B
-    else if ((status = calcPhaseMatch(&tTrig, &TBeat)) != COMMON_STATUS_OK) {
+    else if ((status = calcPhaseMatch(&tTrig, &TBeat, cPhase)) != COMMON_STATUS_OK) {
         tTrig       = tWantExt;                                               // plan B
         errorFlags |= B2B_ERRFLAG_CBU;
     } // if NOT STATUS_OK
@@ -825,7 +826,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
-    sendParam    = 0x0;
+    sendParam    = (uint64_t)(cTrigExt & 0xffffffff);                         // param field, cTrigExt as low word
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
     //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
@@ -842,7 +843,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
-    sendParam    = 0x0;
+    sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
+    sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam);
     //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
