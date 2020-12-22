@@ -6,7 +6,7 @@ CARPEDM_WRAPPER ?= ~/bel_projects/test/modules/ftm/ftmx86/
 CARPEDM_PATH_1 ?= ../lib/
 #CARPEDM_WRAPPER ?= ../ftmx86/
 
-all: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest
+all: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest unittest
 
 bpcStart:
 	cd bpcStart; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER):../common/ python bpcStart.py $(DATAMASTER)
@@ -44,10 +44,13 @@ singleEdgeTest:
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 
+unittest:
+	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python unittests/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
+
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest
+.PHONY: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest unittest
 
