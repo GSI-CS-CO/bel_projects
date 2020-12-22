@@ -267,13 +267,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t nError;                                            // # of error bit
   uint32_t flagError;                                         // error flag
 
-  // diagnostic
+  // diagnostic PM
   uint64_t tH1Diag;                                           // h=1 timestamp of phase
   uint64_t Dt;                                                // difference of the two timestamps
   uint64_t remainder;                                         // remainder
   int64_t  dtDiag;                                            // deviation from expected timestamp
   uint64_t periodNs;                                          // period [ns]
-  
+
+  // diagnostic match
+  static int64_t dtMatch;                                     // deviation from expected timestamp
+  uint32_t min;                                               // minimum deviation
+  int      minIndex;                                          // index of minimum deviation
+  int      i; 
+
 
   status    = actStatus;
   sendEvtNo = 0x0;
@@ -301,6 +307,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
       *pSharedGetGid   = recGid;
       *pSharedGetSid   = recSid;
+      dtMatch          = 0xffffffff;
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -334,6 +341,37 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nTransfer++;
       
       break; // case  B2B_ECADO_B2B_PMEXT
+
+    case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
+    case B2B_ECADO_B2B_TRIGGERINJ :
+
+      reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;      // ECA is configured to pre-trigger ahead of time!!!
+      uwait(10);   /* chk collecting data for 20us not required */    // fudge wait
+
+      flagError = 0;
+      fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
+      while (nInput < NSAMPLES) {                                     // treat 1st TS as junk
+        ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+        if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
+        if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
+      } // while nInput
+      fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
+      
+      DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
+      
+      if (nInput == NSAMPLES) {
+        min = 0xffffffff;
+        for (i=0; i<NSAMPLES; i++) {                                  // find relevant timestamp
+          dtMatch = tStamp[i] - reqDeadline;
+          if (abs(dtMatch) < min) {min = dtMatch; minIndex = 1;}
+        } // for i
+      } // if NSAMPLES
+      else {
+        dtDiag    = 0x0;
+        flagError = 0x1;
+      } // else
+      
+      break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_PDEXT;
@@ -378,14 +416,16 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);         // EVTNO
       sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);            // SID
       sendEvtId    = sendEvtId | ((uint64_t)flagError);               // error flag        
-      sendParam    = (uint64_t)((dtDiag & 0xffffffff) << 32);         // high word; phase diagnostic      
+      sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);        // high word; phase diagnostic
+      sendParam   |= (uint64_t)( dtMatch & 0xffffffff);               // low word; match diagnostic
       sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
       transStat    = dt;
       nTransfer++;
       
-      break; // case  B2B_ECADO_B2B_PMEXT
+      break; // case  B2B_ECADO_B2B_PDEXT/INJ
+
     default : ;
   } // switch ecaAction
  
