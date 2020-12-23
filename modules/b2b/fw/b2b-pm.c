@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-December-2020
+ *  version : 23-December-2020
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000212                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000213                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -276,6 +276,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   // diagnostic match
   static int64_t dtMatch;                                     // deviation from expected timestamp
+  int64_t  dtTmp;                                             // helper variable
   uint32_t min;                                               // minimum deviation
   int      i; 
 
@@ -286,6 +287,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
 
   switch (ecaAction) {
+    // the following two cases handle H=1 group DDS phase measurement
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
@@ -339,14 +341,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break; // case  B2B_ECADO_B2B_PMEXT
 
+    // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and H=1 group DDS signals
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
         reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
         uwait(10);   /* chk collecting data for 20us not required */  // fudge wait
-        dtMatch = 0x7fffffff;
 
+        nInput = 0;
         fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
         while (nInput < NSAMPLES) {                                   // treat 1st TS as junk
           ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
@@ -354,14 +357,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
         } // while nInput
         fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
-        
+
         DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
         
         if (nInput == NSAMPLES) {                                     // find relevant timestamp
-          min = 0x7fffffff;
+          min        = 0x7fffffff;
           for (i=0; i<NSAMPLES; i++) {
-            dtMatch = tStamp[i] - reqDeadline;
-            if (abs(dtMatch) < min) min = abs(dtMatch); 
+            dtTmp = reqDeadline - tStamp[i];
+            if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp;}
           } // for i
         } // if NSAMPLES
 
@@ -369,11 +372,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
+      // the following two cases handle frequency diagnostic and measure the skew between expected and H=1 group DDS signals
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
-      sendEvtNo   = B2B_ECADO_B2B_PDEXT;
+      sendEvtNo   = B2B_ECADO_B2B_DIAGEXT;
     case B2B_ECADO_B2B_PDINJ :
       if (!sendEvtNo) 
-        sendEvtNo = B2B_ECADO_B2B_PDINJ;
+        sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
       if(!flagPMError) {                                              // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
 
         reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;     // ECA is configured to pre-trigger ahead of time!!!
@@ -390,7 +394,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
         } // while nInput
         fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
-        
+
         DBPRINT2("b2b-pm: phase diagnostic measurement with samples %d\n", nInput);
         
         if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1Diag, &dt) == COMMON_STATUS_OK)) {

@@ -8,10 +8,10 @@ set -x
 #dev/wbm0 -> tr0 -> PM (dev/wbm0)
 #dev/wbm1 -> tr1 -> CBU (dev/wbm1)
 ###########################################
-#export TRPM=$(saft-eb-fwd tr0)
+export TRPM=$(saft-eb-fwd tr0)
 #export TRCBU=$(saft-eb-fwd tr1)
-export TRPM=dev/wbm0
-export TRCBU=dev/wbm1
+#export TRPM=dev/wbm0
+export TRCBU=dev/wbm0
 
 echo -e B2B start script for ESR rf room
 
@@ -65,18 +65,24 @@ saft-io-ctl tr0 -n IO3 -b 0xffffa03000000000
 # lm32 listens to TLU
 saft-ecpu-ctl tr0 -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
-# lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU, only for B2B, later
-#saft-ecpu-ctl tr0 -c 0x13a1801000000000 0xfffffff000000000 500000 0x800 -dg
+# lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU
+saft-ecpu-ctl tr0 -c 0x13a1801000000000 0xfffffff000000000 500000 0x801 -dg
 
 # lm32 listens to CMD_B2B_PMEXT message from ESR CBU 
 saft-ecpu-ctl tr0 -c 0x13a5800000000000 0xfffffff000000000 500000 0x800 -dg
-saft-ecpu-ctl tr0 -c 0x13a6800000000000 0xfffffff000000000 500000 0x800 -dg
 
-# diag: generate pulse upon CMD_B2B_TRIGGERINJ message from any CBU
+# lm32 listens to CMD_B2B_TRIGGERINJ message from SIS18 CBU - match diagnostic
+saft-ecpu-ctl tr0 -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
+
+# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMINJ) message from SIS18 CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
+saft-ecpu-ctl tr0 -c 0x13a1801000000000 0xfffffff000000000 19500000 0x81f -d
+
+# diag: generate pulse upon CMD_B2B_TRIGGERINJ message from SIS18 CBU
 saft-io-ctl tr0 -n IO1 -o 1 -t 0
 saft-io-ctl tr0 -n IO1 -c 0x1154805000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO1 -c 0x1154805000000000 0xfffffff000000000 10000000 0x0 0 -u
-# diag: generate pulse upon CMD_B2B_TRIGGEREXT message from any CBU
+
+# diag: generate pulse upon CMD_B2B_TRIGGEREXT message from ESR CBU
 saft-io-ctl tr0 -n IO2 -o 1 -t 0
 saft-io-ctl tr0 -n IO2 -c 0x1154804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO2 -c 0x1154804000000000 0xfffffff000000000 10000000 0x0 0 -u
