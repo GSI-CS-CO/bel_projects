@@ -385,25 +385,31 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 } // calcExtTime
 
 
-uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat, int32_t cPhase)  // calculates when extraction and injection machines are synchronized
+uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
-  uint64_t TSlow;                                   // period of 'slow' frequency     [as] // sic! atoseconds
-  uint64_t TFast;                                   // period of 'fast' frequency     [as]
-  uint64_t tSlow;                                   // phase of 'slow' frequency      [as]
-  uint64_t tFast;                                   // phase of 'fast' frequency      [as]
-  uint64_t nHSlow;                                  // harmonic number of 'slow' frequency
-  uint64_t nHFast;                                  // harmonic number of 'fast' frequency
-  uint64_t TMatch;                                  // 'period' till next match       [as]
-  uint64_t tMatch;                                  // phase of best match            [as]
-  uint64_t Tdiff;                                   // difference between periods     [as]
-  uint64_t TFastTmp;                                // temporary variable             [as]
-  uint64_t epoch;                                   // temporary epoch                [>>n<<s]
-  uint64_t tNow;                                    // current time                   [ns]
+  uint64_t TSlow;                                   // period of 'slow' H=1 signal              [as] // sic! atoseconds
+  uint64_t TFast;                                   // period of 'fast' H=1 signal              [as]
+  uint64_t tSlow;                                   // 0 phase of 'slow' H=1 signal             [as]
+  uint64_t tFast;                                   // 0 phase of 'fast' H=1 signal             [as]
+  uint64_t nHSlow;                                  // harmonic number of 'slow' signal 
+  uint64_t nHFast;                                  // harmonic number of 'fast' signal
+  uint64_t THighFast;                               // period of 'fast' higher harmonics signal [as]
+  uint64_t THighSlow;                               // period of 'slow' higher harmonics signal [as]
+  uint64_t Tdiff;                                   // difference of higher harmonics periods   [as]
+  uint64_t tMatch;                                  // 0 phase of best match                    [as]
+  uint64_t tD0;                                     // tFast - tSlow                            [as]
+  uint64_t nProject;                                // # we have to project Tdiff into the future
+  uint64_t tMatchEpoch;                             // 'tMatch' in units of [ns]                [ns]
+  uint64_t epoch;                                   // temporary epoch                          [ns] (!)
+  uint64_t tNow;                                    // current time                             [ns] (!
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
+  uint64_t tmp;                                     // helper variable
+  uint64_t half;                                    // helper variable
+  int64_t  TRemain;                                 // time till deadline                       [ns];
   
   // define temporary epoch [ns]
   tNow    = getSysTime();
-  epoch   = tNow - nineO * 1;                                                     // subtracting one second should be safe
+  epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
 
   DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nHExt %u, nHInj %u\n", (unsigned int)(tNow - tH1Ext), (unsigned int)(tNow - tH1Inj), nHExt, nHInj);
 
@@ -418,7 +424,6 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat, int32_t cPhase) 
   if ((tH1Inj + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
 
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
-  //if (TH1Ext * nHInj > TH1Inj * nHExt) {
   if (TH1Ext * nHInj > TH1Inj * nHExt) {
     DBPRINT3("b2b-cbu: extraction is fast\n");
     TSlow  = TH1Ext;
@@ -439,72 +444,38 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat, int32_t cPhase) 
     tFast  = (tH1Ext - epoch) * nineO;
     nHFast = nHExt;
   }
-  
-  // period of frequency beats [as], required if next match is too close
-  *TBeat = (uint64_t)((double)TFast / (double)(TSlow * nHFast - TFast * nHSlow) * (double)TSlow);  // period of beating [as]
+
+  THighFast = TFast * nHSlow;                       // this is a bit confusing, consider nue_fast * nHFast ~ nue_slow * nHSlow,
+  THighSlow = TSlow * nHFast;                       // and nue = 1 / T
 
   // make sure tSlow is earlier than tFast; this is a must for the formula below
-  // if not, subtract period
   while (tSlow > tFast)                      tFast = tFast + TFast;
 
   // make sure spacing between tSlow and tFast is not too large; otherwise we need to wait for too long
   while ((tFast - tSlow) > TFast           ) tFast = tFast - TFast;
 
-  // make sure there is sufficient spacing between tSlow and tFast; this is a fudge thing
-  //while ((tFast - tSlow) < (TFast / nHFast)) tFast = tFast + TFast;
-  if ((tFast - tSlow) < nineO) tMatch = tSlow;   // we are closer than 1ns ==> done!
-  else {
-    DBPRINT3("b2b-cbu: tSlow %llu as, tFast %llu as, diff %llu as\n", tSlow, tFast, tFast - tSlow);
-    
-    // now, tSlow is earlier than tFast and both values are at most one period apart
-    // we can now start our calculation
-    Tdiff = TSlow * nHFast - TFast * nHSlow;
-    DBPRINT3("b2b-cbu: TSlow * nHFast %llu as, TFast * nHSlow  %llu as, difference  %llu as\n", TSlow * nHFast, TFast * nHSlow, Tdiff);
-    DBPRINT3("b2b-cbu: TSlow          %llu as, TFast           %llu as, difference  %llu as\n", TSlow, TFast, TSlow - TFast);
-    DBPRINT3("b2b-cbu: tSlow          %llu as, tFast           %llu as, difference  %llu as\n", tSlow, tFast, tFast - tSlow);
-    
-    /*
-    // brute force; keep this for explaining the algorithm
-    uint64_t i;
-    uint64_t tFastTmp;                                // temporary variable             [as]
-    uint64_t tSlowTmp;                                // temporary variable             [as]
-    uint64_t TSlowTmp;                                // temporary variable             [as] 
-    
-    tSlowTmp = tSlow;
-    TSlowTmp = TSlow * nHFast;
-    tFastTmp = tFast;
-    TFastTmp = TFast * nHSlow; 
-    i        = 0;
-    DBPRINT3("b2b-cbu: TSlowTmp %llu as, TFastTmp %llu as \n", TSlowTmp, TFastTmp);
-    while (tFastTmp > tSlowTmp) {
-    tFastTmp += TFastTmp;
-    tSlowTmp += TSlowTmp;
-    i++;
-    } //
-    tMatch = tFastTmp;
-    TMatch = tMatch - tSlow;
-    DBPRINT3("b2b-cbu: TBeat %llu as, TMatch %llu as, i %llu\n", *TBeat, TMatch, i);
-    DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu\n", tMatch, TMatch);
-    */
-    
-    // calculate when phases will match
-    TFastTmp = TFast * nHSlow; 
-    TMatch = ((tFast - tSlow) / Tdiff) * TFastTmp + tFast - tSlow;
-    tMatch = TMatch + tSlow;
-    DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu\n", tMatch, TMatch, *TBeat);
-  } // values are further apart than 1ns
+  // now, tSlow is earlier than tFast and both values are at most one period apart; we can now start our calculation
+  tD0      = tFast - tSlow;                             // difference between timestamps
+  Tdiff    = THighSlow - THighFast;                     // difference between periods (higher harmonics RF)
+  half     = Tdiff >> 2;                                // required for rounding
+  nProject = tD0 / Tdiff;                               // this basically does a 'floor()'
+  if ((tD0 % Tdiff) > half) nProject++;                 // do a better job with rounding 
+  tMatch   = nProject * THighSlow + tSlow;              
+
+  *TBeat   = (THighSlow / Tdiff);                       // beating period
+  if ((*TBeat % Tdiff) > half) *TBeat++;
+  *TBeat   = *TBeat * THighSlow;
+
+  //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
+  // pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
+
   // check, that tMatch is further in the future than COMMON_AHEADT; if not, add one beating period
-  if((tSlow + (uint64_t)COMMON_AHEADT * nineO) > tMatch) {
-    tMatch += *TBeat;
-    DBPRINT2("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu (+ TBeat)\n", tMatch, TMatch, *TBeat);
-    DBPRINT2("b2b-cbu: tSlow          %llu as, tFast           %llu as, difference  %llu as\n", tSlow, tFast, tFast - tSlow);
-  }
+  TRemain = tMatch / nineO - (getSysTime() - epoch); 
+  if (TRemain <  COMMON_AHEADT) tMatch += *TBeat;
  
   // convert back to [ns] and get rid of temporary epoch
-  *tPhaseMatch = (uint64_t)((double)tMatch / (double)nineO) + epoch;
-  /* chk  if we have enough time COMMON_AHEADT */
-  if (*tPhaseMatch < tNow) DBPRINT3("b2b-cbu: err -- now - match %u ns\n", (unsigned int)(tNow - *tPhaseMatch));
-  else                     DBPRINT3("b2b-cbu: ok  -- match - now %u ns\n", (unsigned int)(*tPhaseMatch - tNow));
+  tMatchEpoch  = (uint64_t)((double)tMatch / (double)nineO);
+  *tPhaseMatch =  tMatchEpoch + epoch;
 
   return COMMON_STATUS_OK;
     
@@ -808,11 +779,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTMATCHT) {
     tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;    
     if (errorFlags) tTrig =  tWantExt;                                        // plan B
-    else if ((status = calcPhaseMatch(&tTrig, &TBeat, cPhase)) != COMMON_STATUS_OK) {
+    else if ((status = calcPhaseMatch(&tTrig, &TBeat)) != COMMON_STATUS_OK) {
         tTrig       = tWantExt;                                               // plan B
         errorFlags |= B2B_ERRFLAG_CBU;
+        /* pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat)); */
     } // if NOT STATUS_OK
-    /* pp_printf("b2b: TBeat %lu\n", (uint32_t)(TBeat)); */
     transStat |= mState;
     mState     = getNextMState(mode, mState);
   } // B2B_MFSM_EXTMATCHT
