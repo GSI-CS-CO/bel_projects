@@ -47,6 +47,7 @@ class CommandLine: CLOP::PARSER
    bool              m_noLinearTerm;
    bool              m_doStrip;
    bool              m_doQuit;
+   bool              m_plotCoeffC;
    uint              m_repetitions;
    uint              m_dotsPerTuple;
 
@@ -54,6 +55,7 @@ class CommandLine: CLOP::PARSER
    std::string       m_gnuplotTerminal;
    std::string       m_gnuplotOutput;
    std::string       m_gnuplotLineStyle;
+   std::string       m_gnuplotCoeffCLineStyle;
 
    std::string       m_fileName;
    std::ifstream*    m_pInStream;  
@@ -94,6 +96,11 @@ public:
       return m_doQuit;
    }
    
+   bool isPlotCoeffC( void ) const
+   {
+      return m_plotCoeffC;
+   }
+   
    uint getRepetitions( void ) const
    {
       return m_repetitions;
@@ -107,6 +114,11 @@ public:
    const std::string& getLineStyle( void )
    {
       return m_gnuplotLineStyle;
+   }
+   
+   const std::string& getCoeffCLineStyle( void )
+   {
+      return m_gnuplotCoeffCLineStyle;
    }
    
    const std::string& getGnuplotTerminal( void )

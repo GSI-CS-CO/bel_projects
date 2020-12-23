@@ -139,7 +139,16 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
       out << ", repeats: " << repeat;
    out << '"' << endl;
 
-   out << "plot '-' title '' with " << m_rCommandline.getLineStyle() << " lc rgb 'green'" << endl;
+   out << "plot '-' title ";
+   if( m_rCommandline.isPlotCoeffC() )
+   {
+      out << "'polynomials' with " << m_rCommandline.getLineStyle() << " lc rgb 'green', "
+          << "'-' title 'coefficient c' with " << m_rCommandline.getCoeffCLineStyle()
+          << " lc rgb 'red'" << endl; 
+   }
+   else
+      out << "'' with " << m_rCommandline.getLineStyle() << " lc rgb 'green'" << endl;
+
    double tOrigin = 0.0;
    for( uint r = 0; r < repeat; r++ )
    {
@@ -159,6 +168,24 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
                out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
             tOrigin += tPart;
          }
+      }
+   }
+   out << 'e' << endl;
+   
+   if( !m_rCommandline.isPlotCoeffC() )
+      return;
+
+   tOrigin = 0.0;
+   for( uint r = 0; r < repeat; r++ )
+   {
+      for( const auto& polynom: rVect )
+      {
+         out << tOrigin << ' '
+             << (static_cast<double>(static_cast<int64_t>( polynom.c ) << 32)
+                * DAQ_VPP_MAX / F_MAX)
+             << endl;
+         tOrigin += (static_cast<double>(c_frequencyTab[polynom.frequ])
+                 * calcStep( polynom.step ) / (SCU_FREQUENCY * 2));
       }
    }
    out << 'e' << endl;
