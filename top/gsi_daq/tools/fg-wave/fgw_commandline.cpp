@@ -132,6 +132,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_longOpt  = "generate_doc_tagged",
       .m_helpText = "Will need from autodoc."
    },
+#endif // ifdef CONFIG_AUTODOC_OPTION
    {
       OPT_LAMBDA( poParser,
       {
@@ -165,7 +166,6 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_longOpt  = "version",
       .m_helpText = "Print the software version and exit."
    },
-#endif // ifdef CONFIG_AUTODOC_OPTION
    {
       OPT_LAMBDA( poParser,
       {
