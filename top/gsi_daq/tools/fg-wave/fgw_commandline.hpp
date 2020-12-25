@@ -47,7 +47,6 @@ class CommandLine: CLOP::PARSER
    bool              m_noLinearTerm;
    bool              m_doStrip;
    bool              m_doQuit;
-   bool              m_plotCoeffC;
    uint              m_repetitions;
    uint              m_dotsPerTuple;
 
@@ -98,7 +97,7 @@ public:
    
    bool isPlotCoeffC( void ) const
    {
-      return m_plotCoeffC;
+      return !m_gnuplotCoeffCLineStyle.empty();
    }
    
    uint getRepetitions( void ) const

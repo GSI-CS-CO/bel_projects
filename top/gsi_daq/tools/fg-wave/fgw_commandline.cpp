@@ -314,7 +314,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     "This is meaningful when the data has been read in via the standard input rather than a file.\n"
                     "The disadvantage is that in this way its not possible to zoom the graph via mouse."
    }
-   
+   //TODO Option mit optionalem Line-Style Parameter fuer C-Koeffizienten.  
 }; // CommandLine::c_optList
    
 ///////////////////////////////////////////////////////////////////////////////
@@ -345,12 +345,10 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noLinearTerm( false )
    ,m_doStrip( false )
    ,m_doQuit( false )
-   ,m_plotCoeffC( false )
    ,m_repetitions( 1 )
    ,m_dotsPerTuple( DEFAULT_DOTS_PER_TUPLE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
    ,m_gnuplotLineStyle( DEFAULT_LINE_STYLE )
-   ,m_gnuplotCoeffCLineStyle( "points" )
    ,m_fileName( "stdin" )
    ,m_pInStream( nullptr )
 {
