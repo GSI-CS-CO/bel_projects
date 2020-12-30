@@ -313,8 +313,25 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_helpText = "Program will terminate immediately after plotting.\n"
                     "This is meaningful when the data has been read in via the standard input rather than a file.\n"
                     "The disadvantage is that in this way its not possible to zoom the graph via mouse."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         if( poParser->isOptArgPersent() )
+            static_cast<CommandLine*>(poParser)->m_gnuplotCoeffCLineStyle = poParser->getOptArg();
+         else
+            static_cast<CommandLine*>(poParser)->m_gnuplotCoeffCLineStyle = "points";
+         return 0;
+      }),
+      .m_hasArg   = OPTION::OPTIONAL_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'c',
+      .m_longOpt  = "ccoeff",
+      .m_helpText = "Extra plot of the coefficient \"c\" of the polynomial"
+                    " \"ax^2 + bx + c\".\n"
+                    "The optional parameter PARAM gives the line-style of Gnuplot."
+                    " The default is \"points\"."
    }
-   //TODO Option mit optionalem Line-Style Parameter fuer C-Koeffizienten.  
 }; // CommandLine::c_optList
    
 ///////////////////////////////////////////////////////////////////////////////
