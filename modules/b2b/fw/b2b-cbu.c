@@ -457,7 +457,7 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
   // now, tSlow is earlier than tFast and both values are at most one period apart; we can now start our calculation
   tD0      = tFast - tSlow;                             // difference between timestamps
   Tdiff    = THighSlow - THighFast;                     // difference between periods (higher harmonics RF)
-  half     = Tdiff >> 2;                                // required for rounding
+  half     = Tdiff >> 1;                                // required for rounding
   nProject = tD0 / Tdiff;                               // this basically does a 'floor()'
   if ((tD0 % Tdiff) > half) nProject++;                 // do a better job with rounding 
   tMatch   = nProject * THighSlow + tSlow;              

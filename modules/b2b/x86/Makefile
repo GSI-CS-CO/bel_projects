@@ -14,8 +14,12 @@ TARGETS     := b2b-ctl
 B2BLIB      := libb2blib.so
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
-LIBS        ?= -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
+#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
+#LIBS        ?= -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
+CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
+LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
+
+
 
 all: $(TARGETS)
 
@@ -24,6 +28,9 @@ b2b-ctl: b2b-ctl.c
 
 b2b-ui: b2b-ui.c
 	$(CC) $(CFLAGS) -o b2b-ui b2b-ui.c ../../common-libs/x86/ivtpar.c $(LIBS)
+
+saft-b2b: saft-b2b-mon.cpp
+	g++ --std=c++0x $(CFLAGS) -o saft-b2b-mon saft-b2b-mon.cpp $(LIBS)
 
 lib: b2blib.c
 	$(CC) $(CFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
