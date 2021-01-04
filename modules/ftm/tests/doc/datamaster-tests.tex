@@ -1,6 +1,32 @@
 \documentclass[12pt,a4paper]{report}
 % Language: English
-\usepackage{graphicx}
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
 
 \newcommand{\ry}{\rotatebox{90}}
 \begin{document}
@@ -70,8 +96,7 @@ status of queues is checked. Schedules are not started.
 \section{schedules}
 \texttt{schedules} collects scheduls which are started. Tests that the schedules are compiled and loaded.
 \section{singleEdgeTest}
-\texttt{singleEdgeTest} tests the validation of combinations of node types and edge types. This uses libcarepedm only. There are 1936 schedules 
-with at least one edge and two nodes tested. Some schedule are enlarged with meta nodes. 
+\include{singleEdgeTest}
 \section{unittests}
 \texttt{unittests} contains Python test scripts which contain Python unit tests for the tools dm-cmd, dm-sched. Each unit test calls dm-cmd 
 with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command 
