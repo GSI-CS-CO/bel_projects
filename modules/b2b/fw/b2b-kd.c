@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-December-2020
+ *  version : 04-January-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000211                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000214                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -291,9 +291,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     
 
       if (flagRecMon)    dKickMon   = (uint32_t)(tKickMon    - tKickTrig);
-      else              {dKickMon   = 0xffffffff; flagsError =  recRes | (B2B_ERRFLAG_KDEXT << nError);}
+      else              {dKickMon   = 0x7fffffff; flagsError =  recRes | (B2B_ERRFLAG_KDEXT << nError);}
       if (flagRecProbe)  dKickProbe = (uint32_t)(tKickProbe1 - tKickTrig);
-      else               dKickProbe = 0xffffffff;
+      else               dKickProbe = 0x7fffffff;
 
       // send command: transmit measured phase value
       sendEvtId    = 0x1000000000000000;                          // FID
