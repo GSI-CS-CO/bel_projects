@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-December-2020
+ *  version : 5-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000213                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000215                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -85,7 +85,7 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 16                     // # of timestamps for sampling h=1
+#define NSAMPLES 11                     // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
 
 void init() // typical init for lm32
@@ -278,7 +278,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static int64_t dtMatch;                                     // deviation from expected timestamp
   int64_t  dtTmp;                                             // helper variable
   uint32_t min;                                               // minimum deviation
-  int      i; 
+  int      i;
+  int64_t  waitUs;                                            // how many us to wait prior to TS acquisition
+  int      waitCycle;                                         // how many cycles to wait in handmade sleep
 
 
   status    = actStatus;
@@ -310,7 +312,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       nInput = 0;
       fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
-      while (nInput < NSAMPLES) {                                     // treat 1st TS as junk
+      while (nInput < NSAMPLES) {
         ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
         if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
         if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
@@ -347,11 +349,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (!flagPMError) {
 
         reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
-        uwait(10);   /* chk collecting data for 20us not required */  // fudge wait
+        nInput    = 0;
 
-        nInput = 0;
+        waitUs    = (reqDeadline - getSysTime()) >> 10;               // right shift of 10: poor man's division by 1000
+        waitUs   -= 5;        /* fudge 5us */                         // subtract
+        waitCycle = waitUs * 31;                                      // 31.25 asm(nop) take 1us
+        if (waitUs > 0) for (i=0; i < waitCycle; i++) {asm("nop");}   // handmade sleep
+        
         fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
-        while (nInput < NSAMPLES) {                                   // treat 1st TS as junk
+        while (nInput < NSAMPLES) {
           ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
           if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
           if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
@@ -362,7 +368,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         
         if (nInput == NSAMPLES) {                                     // find relevant timestamp
           min        = 0x7fffffff;
-          for (i=0; i<NSAMPLES; i++) {
+          for (i=1; i<NSAMPLES; i++) {                                // treat 1st TS as junk
             dtTmp = reqDeadline - tStamp[i];
             if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp;}
           } // for i
@@ -372,7 +378,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
-      // the following two cases handle frequency diagnostic and measure the skew between expected and H=1 group DDS signals
+    // the following two cases handle frequency diagnostic and measure the skew between expected and H=1 group DDS signals
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_DIAGEXT;
     case B2B_ECADO_B2B_PDINJ :
@@ -388,7 +394,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         nInput    = 0;
 
         fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
-        while (nInput < NSAMPLES) {                                   // treat 1st TS as junk
+        while (nInput < NSAMPLES) {
           ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
           if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
           if (ecaAction == B2B_ECADO_TIMEOUT)   break; 

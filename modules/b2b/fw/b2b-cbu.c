@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-December-2020
+ *  version : 05-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000213                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000215                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -122,7 +122,7 @@ int32_t  cTrigInj;                      // correction for injection trigger
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
-int32_t  nPhaseResult;                  // number of received phase result 
+int32_t  nPhaseResult;                  // number of received phase result, required to resolve diamond structure in mini FSM
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
@@ -385,7 +385,7 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 } // calcExtTime
 
 
-uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
+uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' H=1 signal              [as] // sic! atoseconds
   uint64_t TFast;                                   // period of 'fast' H=1 signal              [as]
@@ -405,7 +405,6 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t tmp;                                     // helper variable
   uint64_t half;                                    // helper variable
-  int64_t  TRemain;                                 // time till deadline                       [ns];
   
   // define temporary epoch [ns]
   tNow    = getSysTime();
@@ -469,16 +468,14 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates w
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
   // pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
-  // check, that tMatch is further in the future than COMMON_AHEADT; if not, add one beating period
-  TRemain = tMatch / nineO - (getSysTime() - epoch); 
-  if (TRemain <  COMMON_AHEADT) tMatch += *TBeat;
+  // check, that tMatch is far enough in the future; if not, add one beating period
+  if ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;
  
   // convert back to [ns] and get rid of temporary epoch
   tMatchEpoch  = (uint64_t)((double)tMatch / (double)nineO);
   *tPhaseMatch =  tMatchEpoch + epoch;
 
-  return COMMON_STATUS_OK;
-    
+  return COMMON_STATUS_OK;    
 } // calcPhaseMatch
 
 
@@ -658,15 +655,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
-      gid      = setGid[sid];
-      mode     = setMode[sid];
-      TH1Ext   = setTH1Ext[sid];
-      nHExt    = setNHExt[sid];
-      TH1Inj   = setTH1Inj[sid];
-      nHInj    = setNHInj[sid];
-      cPhase   = setCPhase[sid];
-      cTrigExt = setCTrigExt[sid];
-      cTrigInj = setCTrigInj[sid];
+      gid        = setGid[sid];
+      mode       = setMode[sid];
+      TH1Ext     = setTH1Ext[sid];
+      nHExt      = setNHExt[sid];
+      TH1Inj     = setTH1Inj[sid];
+      nHInj      = setNHInj[sid];
+      cPhase     = setCPhase[sid];
+      cTrigExt   = setCTrigExt[sid];
+      cTrigInj   = setCTrigInj[sid];
       //pp_printf("b2b: gid %u, mode %u, nHExt %u\n", gid, mode, nHExt);
 
       nTransfer++;
@@ -779,7 +776,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTMATCHT) {
     tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;    
     if (errorFlags) tTrig =  tWantExt;                                        // plan B
-    else if ((status = calcPhaseMatch(&tTrig, &TBeat)) != COMMON_STATUS_OK) {
+    else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat)) != COMMON_STATUS_OK) {
         tTrig       = tWantExt;                                               // plan B
         errorFlags |= B2B_ERRFLAG_CBU;
         /* pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat)); */
