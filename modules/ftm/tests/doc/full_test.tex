@@ -1,13 +1,13 @@
 \section{full\_test}
-\texttt{full\_test} is a collection of nine tests for szenarios with schedules, static and dynamic. The schedules are added and modified. The
+\texttt{full\_test} is a collection of nine tests for scenarios with schedules, static and dynamic. The schedules are added and modified. The
 status of queues is checked. Schedules are not started.
 \subsection{How to run the tests}
 Currently there are 9 automated tests for the data master. The tests are driven by a Python script \texttt{dm\_testman.py}.
 
 The static tests just add and remove patterns. The dynamic test in addition start the patterns.
 \subsection{Prerequisites}
-This test framework requires Python 3.6m or higher. A data master has to be accesible from the host. 
-The source for the tests is at 
+This test framework requires Python 3.6m or higher. A data master has to be accessible from the host.
+The source for the tests is at
 
 Project: \texttt{https://github.com/GSI-CS-CO/bel\_projects/},
 
@@ -30,18 +30,21 @@ For each test the data master is halted and cleared. All patterns are removed.
 
 	What is checked to state a successful test?
 \end{enumerate}
-\subsection{Static Tests - Basic}
+\subsection{Static Tests}
+\subsubsection{Basic}
 \begin{enumerate}
 	\item Purpose of Test
 
-	This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test} 
+	This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
 	is loaded into data master and removed afterwards.
 	\item Test Actions
 
-	On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
+	On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
+	that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
+	end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
 
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/static_basic.pdf}
         \caption{Pattern for the static basic test}
         \label{fig:Pattern_for_the_static_basic_test}
@@ -50,18 +53,18 @@ For each test the data master is halted and cleared. All patterns are removed.
 
 	The test is successful if no pattern is loaded. Checked with \texttt{dm-sched status}
 \end{enumerate}
-\subsection{Static Tests - Coupling}
+\subsubsection{Coupling}
 \begin{enumerate}
 	\item Purpose of Test
 
-	This test enlarges an existing pattern with a second pattern with edges into the first 
+	This test enlarges an existing pattern with a second pattern with edges into the first
 	pattern. See Figure~\ref{fig:Pattern_for_the_static_coupling_test} for the test patterns.
 	\item Test Actions
 
-	First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added. 
+	First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added.
 	This pattern contains edges into the first pattern.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/static_coupling1.pdf}
         \includegraphics{TestPattern/static_coupling2.pdf}
         \caption{Pattern for the static coupling test before and after coupling}
@@ -69,28 +72,28 @@ For each test the data master is halted and cleared. All patterns are removed.
     \end{figure}
 	\item Success Criteria
 
-	After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is 
+	After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is
 	compared to an expected dot-file.
 \end{enumerate}
-\subsection{Static Tests - Priority and Type}
+\subsubsection{Priority and Type}
 \begin{enumerate}
 	\item Purpose of Test
 
-The test checks the relative and the absolute time values for two nodes in a four node pattern. 
-See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for the test pattern 
-and \ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} for the test pattern with meta nodes, 
+The test checks the relative and the absolute time values for two nodes in a four node pattern.
+See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for the test pattern
+and \ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} for the test pattern with meta nodes,
 displaying the priority queues.
 	\item Test Actions
 
 	Add the pattern, check the relative time values. Clear the data master. Add the pattern again and check the absolute time values.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/static_prio_and_type.pdf}
         \caption{Pattern for the static priority and type test}
         \label{fig:Pattern_for_the_static_priority_and_type_test}
     \end{figure}
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/static_prio_and_type_meta.pdf}
         \caption{Pattern for the static priority and type test with meta nodes}
         \label{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
@@ -99,7 +102,8 @@ displaying the priority queues.
 
 	Two checks of the time values with \texttt{dm-cmd rawqueue}.
 \end{enumerate}
-\subsubsection{Dynanamic Tests - Async}
+\subsection{Dynamic Tests}
+\subsubsection{Async}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -108,23 +112,23 @@ displaying the priority queues.
 	See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
 	\item Test Actions
 
-	Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The 
-	nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with 
-	\texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}. 
-	Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this 
-	with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all 
+	Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The
+	nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with
+	\texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}.
+	Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this
+	with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all
 	nodes are visited and no blocks are locked (with \texttt{showlocks}).
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_async.pdf}
         \caption{Pattern for the dynamic async test}
         \label{fig:Pattern_for_the_dynamic_async_test}
     \end{figure}
 	\item Success Criteria
-	
+
 	Check that node 'MSG\_A' is visited after changing the destination of the flow.
 \end{enumerate}
-\subsubsection{Dynamic Tests - Basic - Run CPU 0 single}
+\subsubsection{Basic - Run CPU 0 single}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -132,11 +136,11 @@ displaying the priority queues.
 
 	See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test} for the test pattern.
 	\item Test Actions
-    
-    First check that no block is visited. Start pattern 'IN0'. Check that 'BLOCK\_A' and 'BLOCK\_IN0' are visited. 
+
+    First check that no block is visited. Start pattern 'IN0'. Check that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
     Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and 'BLOCK\_IN1' are visited.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_basic_run_cpu0_single.pdf}
         \caption{Pattern for the dynamic run CPU 0 single test}
         \label{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
@@ -145,7 +149,7 @@ displaying the priority queues.
 
 	In the end all blocks are visited.
 \end{enumerate}
-\subsubsection{Dynamic Tests - Basic - Run all single}
+\subsubsection{Basic - Run all single}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -154,10 +158,10 @@ displaying the priority queues.
 	See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
 	\item Test Actions
 
-	Add a schedule with four blocks to the data master. For each CPU, check that no block is visited. Then start 
+	Add a schedule with four blocks to the data master. For each CPU, check that no block is visited. Then start
 	a pattern for one CPU and check that the block specific for this pattern is visited.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_basic_run_all_single.pdf}
         \caption{Pattern for the dynamic run all test}
         \label{fig:Pattern_for_the_dynamic_run_all_test}
@@ -166,7 +170,7 @@ displaying the priority queues.
 
 	For each pattern the correct CPU is used.
 \end{enumerate}
-\subsubsection{Dynamic Tests - Start Stop Abort}
+\subsubsection{Basic - Start Stop Abort}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -174,23 +178,23 @@ displaying the priority queues.
 
 	See Figure~\ref{fig:Pattern_for_the_dynamic_start_stop_abort_test} for the test pattern.
 	\item Test Actions
-    
-    Add a schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running. 
-    Abort the pattern 'IN\_C0'. Check the visited nodes for the pattern. The second part is similar. 
-    Add the same schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running. 
+
+    Add a schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
+    Abort the pattern 'IN\_C0'. Check the visited nodes for the pattern. The second part is similar.
+    Add the same schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
     Stop the pattern 'IN\_C0'. Check the visited nodes for the pattern.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_basic_start_stop_abort.pdf}
         \caption{Pattern for the dynamic start stop abort test}
         \label{fig:Pattern_for_the_dynamic_start_stop_abort_test}
     \end{figure}
 	\item Success Criteria
 
-	Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or 
+	Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
 	stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
 \end{enumerate}
-\subsubsection{Dynamic Tests - Branch - Single}
+\subsubsection{Branch - Single}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -199,12 +203,12 @@ displaying the priority queues.
 	See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
 	\item Test Actions
 
-	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited, 
-        change the flow with the flowpattern command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flowpattern 
-        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flowpattern 
+	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+        change the flow with the flowpattern command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flowpattern
+        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flowpattern
         command is processed in the low priority queue and node 'BLOCK\_B' is visited.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_branch_single.pdf}
         \caption{Pattern for the dynamic branch single test}
         \label{fig:Pattern_for_the_dynamic_branch_single_test}
@@ -213,7 +217,7 @@ displaying the priority queues.
 
 	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
 \end{enumerate}
-\subsubsection{Dynamic Tests - Branch - Coupling}
+\subsubsection{Coupling}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -221,19 +225,19 @@ displaying the priority queues.
 	\item Test Actions
 	\item Success Criteria
 \end{enumerate}
-\subsubsection{Dynamic Tests - Loop}
+\subsubsection{Loop}
 \begin{enumerate}
 	\item Purpose of Test
 
-        Test loop with flow initialiser.
+        Test loop with flow initializer.
 
 	See Figure~\ref{fig:Pattern_for_the_dynamic_loop_test} for the test pattern.
 	\item Test Actions
 
-        Add a schedule and start pattern 'IN\_A'. Check the visited nodes. Nodes 'INIT\_A0', 'BLOCK\_LOOP', and 'BLOCK\_EXIT' 
+        Add a schedule and start pattern 'IN\_A'. Check the visited nodes. Nodes 'INIT\_A0', 'BLOCK\_LOOP', and 'BLOCK\_EXIT'
         should be visited. Start pattern 'IN\_B' and check the visited nodes. All nodes should be visited.
     \begin{figure}
-        \centering 
+        \centering
         \includegraphics{TestPattern/dynamic_loop.pdf}
         \caption{Pattern for the dynamic loop test}
         \label{fig:Pattern_for_the_dynamic_loop_test}
@@ -242,7 +246,7 @@ displaying the priority queues.
 
 	In the end all blocks are visited.
 \end{enumerate}
-\subsubsection{Dynamic Tests - Switch}
+\subsubsection{Switch}
 \begin{enumerate}
 	\item Purpose of Test
 
@@ -250,4 +254,3 @@ displaying the priority queues.
 	\item Test Actions
 	\item Success Criteria
 \end{enumerate}
-%\end{document}
