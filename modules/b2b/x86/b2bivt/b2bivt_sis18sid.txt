@@ -8,7 +8,7 @@
                   harmonic number     : $                  
      Injection    H=1 frequency [Hz]  : $                           
                   harmonic number     : $               
-
+                  (LSA values)        : $           
      Adjustments [ns]:
      -----------------------------------------------------------------------
      | ext kick: $           | inj kick: $           | RF-phase : $           |

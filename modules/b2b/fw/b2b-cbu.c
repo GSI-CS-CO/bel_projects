@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-January-2021
+ *  version : 06-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000215                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000216                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -708,7 +708,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
       
       tH1Inj        = recParam;
-      tH1Inj       += cPhase;
+      tH1Inj       -= cPhase;
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);

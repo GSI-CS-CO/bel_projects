@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-December-2020
+ *  version : 6-January-2021
  *
  *  user interface for B2B
  *
@@ -118,7 +118,7 @@ void getEbDevice(ring_t ring, char *ebDevice)
 } // getEbDevice
 
 
-void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *cTrigExt, int *cTrigInj, int *cPhase)
+void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *flagLsa ,int *cTrigExt, int *cTrigInj, int *cPhase)
 {
   int   ok;
   FILE  *parfile;
@@ -132,6 +132,7 @@ void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, doub
     if (ok) ok = fscanf(parfile,"%d" , nHExt);
     if (ok) ok = fscanf(parfile,"%lf", fH1Inj);
     if (ok) ok = fscanf(parfile,"%d" , nHInj);
+    if (ok) ok = fscanf(parfile,"%d" , flagLsa);
     if (ok) ok = fscanf(parfile,"%d" , cTrigExt);
     if (ok) ok = fscanf(parfile,"%d" , cTrigInj);
     if (ok) ok = fscanf(parfile,"%d" , cPhase);
@@ -141,7 +142,7 @@ void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, doub
   } // if parfile
 } // parfileReadSID
 
-void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int cTrigExt, int cTrigInj, int cPhase)
+void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int flagLsa, int cTrigExt, int cTrigInj, int cPhase)
 {
   int   ok;
   FILE  *parfile;
@@ -156,6 +157,7 @@ void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, doubl
     if (ok) ok = fprintf(parfile,"%d\n" , nHExt);
     if (ok) ok = fprintf(parfile,"%.9lf\n", fH1Inj);
     if (ok) ok = fprintf(parfile,"%d\n" , nHInj);
+    if (ok) ok = fprintf(parfile,"%d\n" , flagLsa);
     if (ok) ok = fprintf(parfile,"%d\n" , cTrigExt);
     if (ok) ok = fprintf(parfile,"%d\n" , cTrigInj);
     if (ok) ok = fprintf(parfile,"%d\n" , cPhase);
@@ -171,15 +173,13 @@ void parfileWriteDefaultSID(char *filename, uint32_t sid)
   char comment[MAXLEN];
 
   sprintf(comment, "SID-%d", sid);
-  parfileWriteSID(filename, comment, 1, 1, 1000000, 1, 1000000, 1, 0, 0, 0);
+  parfileWriteSID(filename, comment, 1, 1, 1000000, 1, 1000000, 1, 1, 0, 0, 0);
 } // parfileWriteDefaultSID
 
 
 void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
 {
   char     parname[MAXLEN];
-  int      ok;
-
   char     comment[MAXLEN];
   int      mode;
   int      ringInj;
@@ -187,6 +187,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   int      nHExt;
   double   fH1Inj;
   int      nHInj;
+  int      flagLsa;
   int      cTrigExt;
   int      cTrigInj;
   int      cPhase;
@@ -210,14 +211,20 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   } // switch ring
 
   // read file with parameters
-  parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &cTrigExt, &cTrigInj, &cPhase);
+  parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase);
   //printf("fH1Ext %lf\n", fH1Ext);
     /* chk range checking ? */
 
   // some gymnastics
   if ((mode == 3) || (mode == 4)) gid += ringInj;
-  TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
-  TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
+  if (flagLsa) {
+    TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
+    TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
+  } // if flagLSA
+  else {
+    TH1Ext = (double)1000000000000000000.0 / fH1Ext;                 // period in attoseconds
+    TH1Inj = (double)1000000000000000000.0 / fH1Inj;                 // period in attoseconds    
+  } // else flagLSA
 
   //printf("TH1Ext %llu\n", TH1Inj);
   //getchar();
@@ -262,6 +269,7 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
   int      nHExt;
   double   fH1Inj;
   int      nHInj;
+  int      flagLsa;
   int      cTrigExt;
   int      cTrigInj;
   int      cPhase;
@@ -293,7 +301,7 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
       die("illegal parameter", knob);
   } // switch inum
   
-  parfileReadSID(sidparname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &cTrigExt, &cTrigInj, &cPhase);
+  parfileReadSID(sidparname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase);
 
   switch (ring) {
     case SIS18 :
@@ -347,7 +355,7 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
       default :
         ;
     } // switch i
-    parfileWriteSID(sidparname, comment, mode, ringInj, fH1Ext, nHExt, fH1Inj, nHInj, cTrigExt, cTrigInj, cPhase);
+    parfileWriteSID(sidparname, comment, mode, ringInj, fH1Ext, nHExt, fH1Inj, nHInj, flagLsa, cTrigExt, cTrigInj, cPhase);
     submitSid(ebDevice, ring, sid);
   } // while not done
 }  // menuIKnob
@@ -360,8 +368,6 @@ void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
   char   parname[MAXLEN];
   char   txtname[MAXLEN];
   int    done=0;
-
-  char   comment[MAXLEN];
 
   switch (ring) {
     case SIS18 :
@@ -603,13 +609,8 @@ int main(int argc, char** argv)
   int    i, l0, lchange[IVTMAXPAR];
   char   parname[MAXLEN];
   char   txtname[MAXLEN];
-  int  j;
-  int  ok;
   
   // local variables
-  uint32_t status;
-  ring_t   ring;
-
   program = argv[0];    
 
   while ((opt = getopt(argc, argv, "h")) != -1) {
