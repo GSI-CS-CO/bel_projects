@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 5-January-2021
+ *  version : 7-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000215                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000217                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -262,7 +262,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t sendEvtNo;                                         // EvtNo to send
   
   int      nInput;                                            // # of timestamps
-  static uint64_t TH1;                                        // h=1 period
+  static uint64_t TH1;                                        // h=1 period [as]
   static uint64_t tH1;                                        // h=1 timestamp of phase ( = 'phase')
   uint32_t dt;                                                // uncertainty of h=1 timestamp
   static uint32_t flagPMError;                                // error flag phase measurement
@@ -278,6 +278,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static int64_t dtMatch;                                     // deviation from expected timestamp
   int64_t  dtTmp;                                             // helper variable
   uint32_t min;                                               // minimum deviation
+  
   int      i;
   int64_t  waitUs;                                            // how many us to wait prior to TS acquisition
   int      waitCycle;                                         // how many cycles to wait in handmade sleep
@@ -319,7 +320,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // while nInput
       fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
       
-      DBPRINT2("b2b-pm: phase measurement with samples %d\n", nInput);
+      /* pp_printf("b2b-pm: phase measurement with samples %d\n", nInput); */
       
       if ((nInput != NSAMPLES) || (phaseFit(TH1, NSAMPLES, &tH1, &dt) != COMMON_STATUS_OK)) {
         tH1       = 0x7fffffffffffffff;
@@ -350,11 +351,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
         reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
         nInput    = 0;
-
-        waitUs    = (reqDeadline - getSysTime()) >> 10;               // right shift of 10: poor man's division by 1000
-        waitUs   -= 5;        /* fudge 5us */                         // subtract
+        /* chk, make this more intelligent depending on the value of TH1 */
+        waitUs    = (reqDeadline - getSysTime()) >> 10;               // right shift of 10: poor man's division by 1000, conversion to us
+        if (waitUs > 10) waitUs = waitUs - 10;                        // this is a fudge thing
+        else             waitUs = 0;
         waitCycle = waitUs * 31;                                      // 31.25 asm(nop) take 1us
-        if (waitUs > 0) for (i=0; i < waitCycle; i++) {asm("nop");}   // handmade sleep
+        for (i=0; i < waitCycle; i++) {asm("nop");}                   // handmade sleep to reduces latency
         
         fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
         while (nInput < NSAMPLES) {
@@ -365,16 +367,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
 
         DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
-        
-        if (nInput == NSAMPLES) {                                     // find relevant timestamp
+
+        // find closest timestamp
+        if (nInput == NSAMPLES) {                                    
           min        = 0x7fffffff;
-          for (i=1; i<NSAMPLES; i++) {                                // treat 1st TS as junk
-            dtTmp = reqDeadline - tStamp[i];
+          for (i=1; i<NSAMPLES; i++) {                                // treat 1st TS as junk 
+            dtTmp = reqDeadline - tStamp[i];                        
             if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp;}
           } // for i
         } // if NSAMPLES
-
+        // this is ugly!!!! all but the 1st TS are late and thus no longer ordered
+        // even worse: the 'fitting' TS might be delayed further and not even received
       } // if not pm error
+      //for (i=1; i<nInput; i++) pp_printf(" %d", (int32_t)(reqDeadline - tStamp[i])); pp_printf(" n %d\n", nInput );
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 

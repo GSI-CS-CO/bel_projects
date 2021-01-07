@@ -405,6 +405,8 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t tmp;                                     // helper variable
   uint64_t half;                                    // helper variable
+  int      flagExt;                                 // flag: alignment to extraction required
+  uint64_t nPeriod;
   
   // define temporary epoch [ns]
   tNow    = getSysTime();
@@ -424,24 +426,26 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
 
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
   if (TH1Ext * nHInj > TH1Inj * nHExt) {
-    DBPRINT3("b2b-cbu: extraction is fast\n");
-    TSlow  = TH1Ext;
-    tSlow  = (tH1Ext - epoch) * nineO;
-    nHSlow = nHExt;
+    DBPRINT3("b2b-cbu: injection is fast\n");
+    flagExt = 0;
+    TSlow   = TH1Ext;
+    tSlow   = (tH1Ext - epoch) * nineO;
+    nHSlow  = nHExt;
 
-    TFast  = TH1Inj;
-    tFast  = (tH1Inj - epoch) * nineO;
-    nHFast = nHInj;
+    TFast   = TH1Inj;
+    tFast   = (tH1Inj - epoch) * nineO;
+    nHFast  = nHInj;
   }
   else {
-    DBPRINT3("b2b-cbu: injection is fast\n");
-    TSlow  = TH1Inj;
-    tSlow  = (tH1Inj - epoch) * nineO;
-    nHSlow = nHInj;
+    DBPRINT3("b2b-cbu: extraction is fast\n");
+    flagExt = 1;                                    // algorithm will lock to injection trigger, thus we need to realign to extraction later
+    TSlow   = TH1Inj;
+    tSlow   = (tH1Inj - epoch) * nineO;
+    nHSlow  = nHInj;
 
-    TFast  = TH1Ext;
-    tFast  = (tH1Ext - epoch) * nineO;
-    nHFast = nHExt;
+    TFast   = TH1Ext;
+    tFast   = (tH1Ext - epoch) * nineO;
+    nHFast  = nHExt;
   }
 
   THighFast = TFast * nHSlow;                       // this is a bit confusing, consider nue_fast * nHFast ~ nue_slow * nHSlow,
@@ -470,6 +474,13 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
 
   // check, that tMatch is far enough in the future; if not, add one beating period
   if ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;
+
+  if (flagExt) {
+    half    = TH1Ext >> 1;
+    nPeriod = (tMatch - tFast) / TH1Ext;
+    if (((tMatch - tFast) % TH1Ext) > half) nPeriod++;
+    tMatch  = tFast + nPeriod * TH1Ext;
+  } // if flagExt
  
   // convert back to [ns] and get rid of temporary epoch
   tMatchEpoch  = (uint64_t)((double)tMatch / (double)nineO);
