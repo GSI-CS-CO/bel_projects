@@ -114,13 +114,13 @@ SIGNAL t_sig_TP : STD_LOGIC_VECTOR(12 downto 1);
 
 SIGNAL	Async_On	: INTEGER := 0;
 
-SIGNAL	In_K1_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
-SIGNAL	In_K0_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	In_K1_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	In_K0_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
 
-SIGNAL	Mux_In_K0_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
-SIGNAL	Mux_In_K1_D : STD_LOGIC_VECTOR(15 downto 0) := x"FFFF";	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
-SIGNAL	Mux_In_K2_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
-SIGNAL	Mux_In_K3_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale müssen über getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	Mux_In_K0_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	Mux_In_K1_D : STD_LOGIC_VECTOR(15 downto 0) := x"FFFF";	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	Mux_In_K2_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
+SIGNAL	Mux_In_K3_D : STD_LOGIC_VECTOR(15 downto 0);	-- Eingangssignale muessen ueber getrennte Signale beschrieben werden, sonst Konflikt mit Apk_ID-Lesen
 
 
 
@@ -276,7 +276,7 @@ PROCEDURE MB_Cycle			(
 			Mod_Adr_In					: IN STD_LOGIC_VECTOR(4 DOWNTO 0);
 			Sub_Adr_In					: IN STD_LOGIC_VECTOR(7 DOWNTO 0);
 			RDnWR_In					: IN STD_LOGIC;
-			Wr_Data						: IN STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Ist RDnWR_IN = '0' dann wird mit diesem Wort ein Modulbus-Write-Zyklus durchgeführt.
+			Wr_Data						: IN STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Ist RDnWR_IN = '0' dann wird mit diesem Wort ein Modulbus-Write-Zyklus durchgefuehrt.
 			DS_Time_in_ns				: IN INTEGER;
 			DS_Gap_in_ns				: IN INTEGER;
 			SIGNAL Mod_Adr_Out			: OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
@@ -558,11 +558,11 @@ end process;
 --begin
 --	if t_sig_A_Sub_Adr = C_HSI_act_pos_edge_RD and t_sig_A_nDTACKA = '0' then
 --		if t_sig_A_Mod_Data(t_sig_A_Mod_Data'high) /= '1' then
---			--ASSERT FALSE REPORT "Timestamp ungültig!" SEVERITY Failure;
---			REPORT "Timestamp ungültig!";
+--			--ASSERT FALSE REPORT "Timestamp ungueltig!" SEVERITY Failure;
+--			REPORT "Timestamp ungueltig!";
 --		end if;
 --		if t_sig_A_Mod_Data(0) = '1' then
---			ASSERT FALSE REPORT "Soll-Signal zu früh" SEVERITY Failure;
+--			ASSERT FALSE REPORT "Soll-Signal zu frueh" SEVERITY Failure;
 --		end if;
 --		if t_sig_A_Mod_Data(1) = '1' then
 --			ASSERT FALSE REPORT "Signal unterbrochen" SEVERITY Failure;
@@ -570,14 +570,14 @@ end process;
 --	end if;
 --	if t_sig_A_Sub_Adr = C_HSI_neg_edge_RD and t_sig_A_nDTACKA = '0' then
 --		if t_sig_A_Mod_Data(t_sig_A_Mod_Data'high) /= '1' then
---			--ASSERT FALSE REPORT "Timestamp ungültig!" SEVERITY Failure;
---			REPORT "Timestamp ungültig!";
+--			--ASSERT FALSE REPORT "Timestamp ungueltig!" SEVERITY Failure;
+--			REPORT "Timestamp ungueltig!";
 --		end if;
 --	end if;
 --	if t_sig_A_Sub_Adr = C_HSI_act_neg_edge_RD and t_sig_A_nDTACKA = '0' then
 --		if t_sig_A_Mod_Data(t_sig_A_Mod_Data'high) /= '1' then
---			--ASSERT FALSE REPORT "Timestamp ungültig!" SEVERITY Failure;
---			REPORT "Timestamp ungültig!";
+--			--ASSERT FALSE REPORT "Timestamp ungueltig!" SEVERITY Failure;
+--			REPORT "Timestamp ungueltig!";
 --		end if;
 --	end if;
 --end process;
@@ -641,7 +641,7 @@ always : PROCESS
 	Mux_In_K0_D(15 downto 2) <= x"000" & "00";  
 
 	
-	REPORT "Test 1: Anforderung vor Strahlpuls, länger als 10us";
+	REPORT "Test 1: Anforderung vor Strahlpuls, laenger als 10us";
 	
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
@@ -686,7 +686,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test2: Anforderung vor Strahlpuls, kürzer als 10 us nach Strahlbeginn";
+	REPORT "Test2: Anforderung vor Strahlpuls, kuerzer als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -729,7 +729,7 @@ always : PROCESS
 	
 	wait for  30 us;
 	
-	REPORT "Test3: Anforderung nach Strahlpuls, länger als 10 us nach Strahlbeginn";
+	REPORT "Test3: Anforderung nach Strahlpuls, laenger als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -813,7 +813,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test5: Anforderung vor Strahlpuls, während Strahlpus unterbrochen";
+	REPORT "Test5: Anforderung vor Strahlpuls, waehrend Strahlpus unterbrochen";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -866,7 +866,7 @@ always : PROCESS
 
 	REPORT "Test mit UU einzeln";
 	
-	REPORT "Test 1: Anforderung vor Strahlpuls, länger als 10us";
+	REPORT "Test 1: Anforderung vor Strahlpuls, laenger als 10us";
 	
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
@@ -911,7 +911,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test2: Anforderung vor Strahlpuls, kürzer als 10 us nach Strahlbeginn";
+	REPORT "Test2: Anforderung vor Strahlpuls, kuerzer als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -954,7 +954,7 @@ always : PROCESS
 	
 	wait for  30 us;
 	
-	REPORT "Test3: Anforderung nach Strahlpuls, länger als 10 us nach Strahlbeginn";
+	REPORT "Test3: Anforderung nach Strahlpuls, laenger als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -1038,7 +1038,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test5: Anforderung vor Strahlpuls, während Strahlpus unterbrochen";
+	REPORT "Test5: Anforderung vor Strahlpuls, waehrend Strahlpus unterbrochen";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -1092,7 +1092,7 @@ always : PROCESS
 	
 	REPORT "Test mit beiden Anforder Signalen";
 	
-	REPORT "Test 1: Anforderung vor Strahlpuls, länger als 10us";
+	REPORT "Test 1: Anforderung vor Strahlpuls, laenger als 10us";
 	
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
@@ -1137,7 +1137,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test2: Anforderung vor Strahlpuls, kürzer als 10 us nach Strahlbeginn";
+	REPORT "Test2: Anforderung vor Strahlpuls, kuerzer als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -1180,7 +1180,7 @@ always : PROCESS
 	
 	wait for  30 us;
 	
-	REPORT "Test3: Anforderung nach Strahlpuls, länger als 10 us nach Strahlbeginn";
+	REPORT "Test3: Anforderung nach Strahlpuls, laenger als 10 us nach Strahlbeginn";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);
@@ -1264,7 +1264,7 @@ always : PROCESS
 	
 	wait for 30 us;
 	
-	REPORT "Test5: Anforderung vor Strahlpuls, während Strahlpus unterbrochen";
+	REPORT "Test5: Anforderung vor Strahlpuls, waehrend Strahlpus unterbrochen";
 	
 	-- !Interlock_HSI (4) & !Interlock_HLI (5) & HLI_ALV (3) & HSI_ALV(2)
 	MB_Cycle("11000", C_Strahlweg_Reg_RW, Wr, X"000C", C_Std_DS, C_Std_Gap, t_sig_A_A, t_sig_A_Sub_Adr, t_sig_A_MOD_DATA, t_sig_A_RDnWR, t_sig_A_nDS);

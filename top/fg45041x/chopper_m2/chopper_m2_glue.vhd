@@ -1,4 +1,4 @@
--- Zuweisen der Ausgänge auf Chop_macro2_Bus und Chop_m2_LEDs
+-- Zuweisen der Ausgaenge auf Chop_macro2_Bus und Chop_m2_LEDs
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
