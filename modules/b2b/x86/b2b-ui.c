@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 6-January-2021
+ *  version : 7-January-2021
  *
  *  user interface for B2B
  *

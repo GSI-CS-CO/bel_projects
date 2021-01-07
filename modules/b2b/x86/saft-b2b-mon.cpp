@@ -134,6 +134,110 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 } // on_action
 
 
+void calcStats(double *meanNew, double meanOld, double *streamNew, double streamOld, double val, uint32_t n, double *var, double *sdev)
+{
+  // see  ”The Art of ComputerProgramming, Volume 2: Seminumerical Algorithms“, Donald Knuth, or
+  // http://www.netzmafia.de/skripten/hardware/Control/auswertung.pdf
+  if (n > 1) {
+    *meanNew   = meanOld + (val - meanOld) / (double)n;
+    *streamNew = streamOld + (val - meanOld)*(val - *meanNew);
+    *var       = *streamNew / (double)(n - 1);
+    *sdev      = sqrt(*var);
+  }
+  else {
+    *meanNew = val;
+    *var     = 0;
+  }
+} // calcStats
+
+
+void calcNue(double *nue, double obsOffset, uint64_t TObs, uint64_t TH1)
+{
+  // nue frequency [Hz]
+  // obsOffset mean value of deviation [ns]
+  // TObs observation time [ns]
+  // H=1 gDDS period [as]
+  int64_t  nPeriod;      // # of rf periods within T
+  uint64_t half;
+  int64_t  offsetAs;     // offset [as]
+  int64_t  TAs;          // TObs [as]
+  int64_t  TH1ObsAs;     // observed TH1 [as]
+  double   TH1ObsNs;     // observed TH1 [ns]
+
+  if ((TH1 != 0) && (TObs != 0)) {
+    TAs       = TObs * 1000000000;
+    half      = TH1 >> 1;
+    nPeriod   = TAs / TH1;
+    if ((TAs % TH1) > half) nPeriod++;              
+    offsetAs  = (int64_t)(obsOffset * 1000000000.0);
+    TH1ObsAs  = TH1 + offsetAs / (double)nPeriod;
+    TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
+    *nue      = 1000000000.0 / TH1ObsNs;
+  } // avoid division by zero
+  else *nue  = 0.0;
+} // calcNue
+
+
+double ns2Degree(double phase, uint64_t T)
+{
+  // phase [ns]
+  // T     [as]
+  // returns degree
+
+  double period;    // [ns]
+  double degree;
+
+  period = (double)T / 1000000000.0;
+
+  degree = phase / period * 360.0;
+
+  return degree;
+}
+
+
+double calcDdsNue(double nue)
+{
+  double nue1, nue2;
+  double diff1, diff2; 
+
+  nue1 =  b2b_flsa2fdds(nue);
+  nue2 =  b2b_flsa2fdds(nue + DDSSTEP);
+
+  diff1 = nue - nue1;
+  diff2 = nue - nue2;
+
+  if (fabs(diff1) < fabs(diff2)) return nue1;
+  else                           return nue2;
+} // calcDdsNue
+
+
+int32_t getAlignedTS(int32_t ts,     // timestamp [ns]
+                    int32_t corr,   // (trigger)correction [ns]
+                    uint64_t TH1    // H=1 period [as]
+                    )
+{
+  int32_t TH1Ns;                    // H=1 period [ns]
+  int32_t half;                       
+  int32_t ts0;                      // timestamp with correction removed
+  int32_t min;
+  int32_t dtTmp;
+  int32_t dtMatch;
+    
+  ts0   = ts - corr;
+  TH1Ns = TH1 / 1000000000;
+  min   = 0x7fffffff;
+
+  for (dtTmp = ts0 - 5 * TH1Ns; dtTmp < ts0 + 5 * TH1Ns; dtTmp += TH1Ns) {
+    if (fabs(dtTmp) < min) {
+      min     = fabs(dtTmp);
+      dtMatch = dtTmp;
+    } // if fabs
+  } // for dtTmp
+
+  return dtMatch + corr;                 // we have to add back the correction (!)
+} //getAlignedTS
+
+
 // clear all data
 void clearAllData()
 {
@@ -241,35 +345,34 @@ void printSetValues()
   uint64_t THighSlow;
 
   printf("--- Set Values ---------------------------------------------------------------\n");
-  printf("ext: kick corr");
-  if (mode < 1) printf("    %s", TXTNA);
-  else          printf("  %4d ns", cTrigExt);
+  printf("ext: kick  corr");
+  if (mode < 1) printf("   %s", TXTNA);
+  else          printf(" %4d ns", cTrigExt);
   printf("; gDDS  ");
   if (mode < 2) printf(TXTNA);
   else {
     lambdaExt = (double)TH1Ext / 1000000000.0;
     fH1Ext    = 1000000000.0 / lambdaExt;
-    printf(" %15.6f Hz (%15.6f ns), H =%2d", fH1Ext, lambdaExt, nHExt);
+    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Ext, lambdaExt, nHExt);
   }
   printf("\n");
 
-  printf("inj: kick corr");
-  if (mode < 3) printf("    %s", TXTNA);
-  else          printf("  %4d ns", cTrigInj);
+  printf("inj: kick  corr");
+  if (mode < 3) printf("   %s", TXTNA);
+  else          printf(" %4d ns", cTrigInj);
   printf("; gDDS  ");
   if (mode < 4) printf(TXTNA);
   else {
     lambdaInj = (double)TH1Inj / 1000000000.0;
     fH1Inj    = 1000000000.0 / lambdaInj;
-    printf(" %15.6f Hz (%15.6f ns), H =%2d", fH1Inj, lambdaInj, nHInj);
+    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Inj, lambdaInj, nHInj);
   }
   printf("\n");
 
   printf("B2B: ");
-  if (mode < 4) printf(TXTNA);
+  if (mode < 4) printf("%s\n", TXTNA);
   else {
-    printf("phase corr %4d ns", cPhase);
-    printf("; beat  ");
+    printf("phase corr %4d ns, %8.3f°\n", cPhase, ns2Degree(cPhase, TH1Ext)); printf("     ");
     if (nHExt * fH1Ext < nHInj * fH1Inj) {
       THighFast = TH1Inj * nHExt;
       THighSlow = TH1Ext * nHInj;
@@ -285,7 +388,7 @@ void printSetValues()
     if ((TBeat % Tdiff) > (Tdiff >> 1)) TBeat++;
     TBeat = (TBeat * THighSlow);
     fBeat = 1000000000000000000.0 / double(TBeat);
-    printf(" %15.6f Hz (%15.6f ns)", fBeat, (double)TBeat/1000000000.0);
+    printf("beat [step / RF period]      %13.6f Hz, %12.3f ns [%5.3f ns]", fBeat, (double)TBeat/1000000000.0, (double)Tdiff/1000000000.0);
   }
   printf("\n");
 
@@ -303,13 +406,33 @@ void printSetValues()
 
 void printGetValues()
 {
-  int64_t DKick;                       // time difference between EVT_KICK_START and kicker trigger (without corrections)
+  static int32_t diagMatchExtMax     = 0x80000000;
+  static int32_t diagMatchExtMin     = 0x7fffffff;
+  static double  diagMatchExtAveNew  = 0;
+  double         diagMatchExtAveOld  = 0;
+  static double  diagMatchExtStrNew  = 0;
+  double         diagMatchExtStrOld  = 0;
+  double         diagMatchExtSdev    = 0;
+  static int32_t diagExtN            = 0;
+  static int32_t diagMatchInjMax     = 0x80000000;
+  static int32_t diagMatchInjMin     = 0x7fffffff;
+  static double  diagMatchInjAveNew  = 0;
+  double         diagMatchInjAveOld  = 0;
+  static double  diagMatchInjStrNew  = 0;
+  double         diagMatchInjStrOld  = 0;
+  double         diagMatchInjSdev    = 0;
+  static int32_t diagInjN            = 0;
 
-  if (mode == 1) DKick = 0;            // trigger upon EVT_KICK_START
-  else           DKick = 1000000;      // trigger at least 1ms after EVT_KICK_START
+  double         dummy;
+  
+  int32_t        diagMatchInjCorr;       // diagMatchInj corrected for cPhase (to match trigger)
+  int64_t DKick;                         // time difference between EVT_KICK_START and kicker trigger (without corrections)
+
+  if (mode == 1) DKick = 0;              // trigger upon EVT_KICK_START
+  else           DKick = 1000000;        // trigger at least 1ms after EVT_KICK_START
   
   printf("--- Get Values ---------------------------------------------------------------\n");
-  printf("ext: 'kicker delay'");
+  printf("ext: 'kick delay'  ");
   if (mode < 1) printf("    %s", TXTNA);
   else {
     printf(" electronics");
@@ -322,8 +445,8 @@ void printGetValues()
   }
   printf("\n");
 
-  printf("inj: 'kicker delay'");
-  if (mode < 4) printf("    %s", TXTNA);
+  printf("inj: 'kick delay'  ");
+  if (mode < 3) printf("    %s", TXTNA);
   else {
     printf(" electronics");
     if (kickElecDelInj != (int)0x7fffffff) printf(" %5d ns", kickElecDelInj);
@@ -334,82 +457,40 @@ void printGetValues()
     printf(", RF wait %8ld ns", tTrigInj - tKickStart - DKick);
   }
   printf("\n");
-} // printGetValues
 
-
-void calcMean(double *meanNew, double meanOld, double *varNew, double varOld, double val, uint32_t n)
-{
-  // see  ”The Art of ComputerProgramming, Volume 2: Seminumerical Algorithms“, Donald Knuth
-  if (n > 1) {
-    *meanNew = meanOld + (val - meanOld) / (double)n;
-    *varNew = ((varOld + (val - meanOld)*(val - *meanNew))/((double)(n-1)));
-  }
+  printf("ext:");
+  if (mode < 2) printf("%s", TXTNA);
   else {
-    *meanNew = val;
-    *varNew = 0;
-  }
-} // calcMean
+    if (diagMatchExt  != (int)0x7fffffff) {
+      diagExtN++;
+      if (diagMatchExt > diagMatchExtMax) diagMatchExtMax = diagMatchExt;
+      if (diagMatchExt < diagMatchExtMin) diagMatchExtMin = diagMatchExt;
+      diagMatchExtAveOld  = diagMatchExtAveNew;
+      diagMatchExtStrOld  = diagMatchExtStrNew;
+      calcStats(&diagMatchExtAveNew, diagMatchExtAveOld, &diagMatchExtStrNew, diagMatchExtStrOld, (double)diagMatchExt, diagExtN, &dummy, &diagMatchExtSdev );
+      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchExt, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
+    }
+    else printf("    %s", TXTUNKWN);
+  } // else: mode >= 2
+  printf("\n");
 
+  printf("inj:");
+  if (mode < 4) printf("%s", TXTNA);
+  else {
+    if (diagMatchInj  != (int)0x7fffffff) {
+      diagInjN++; diagMatchInjCorr    = diagMatchInj + cPhase;
+      if (diagMatchInjCorr > diagMatchInjMax) diagMatchInjMax = diagMatchInjCorr;
+      if (diagMatchInjCorr < diagMatchInjMin) diagMatchInjMin = diagMatchInjCorr;
+      diagMatchInjAveOld  = diagMatchInjAveNew;
+      diagMatchInjStrOld  = diagMatchInjStrNew;
+      calcStats(&diagMatchInjAveNew, diagMatchInjAveOld, &diagMatchInjStrNew, diagMatchInjStrOld, (double)diagMatchInjCorr, diagInjN, &dummy, &diagMatchInjSdev);
+      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
+    }
+    else printf("    %s", TXTUNKWN);
+  } // else: mode >= 2
+  printf("\n");
 
-double calcSdev(double var)
-{
-  if (var < 0) return sqrt(-var);
-  else         return sqrt(var);
-} // calcSdev
-
-
-void calcNue(double *nue, double obsOffset, double *dNue, double dObsOffset, uint64_t TObs, uint64_t TH1)
-{
-  // nue frequency [Hz]
-  // obsOffset mean value of deviation [ns]
-  // dNue uncertainty [Hz]
-  // dObsOffset uncertainty of deviation [ns]
-  // TObs observation time [ns]
-  // H=1 gDDS period [as]
-  int64_t  nPeriod;      // # of rf periods within T
-  uint64_t half;
-  int64_t  offsetAs;     // offset [as]
-  int64_t  TAs;          // TObs [as]
-  int64_t  TH1ObsAs;     // observed TH1 [as]
-  double   TH1ObsNs;     // observed TH1 [ns]
-
-  int64_t  dOffsetAs;    // delta offset [as]
-  int64_t  dTH1ObsAs;    // delta observed TH1 [as]
-  double   dTH1ObsNs;    // delta observed TH1 [ns]
-  double   nue2;
-  
-  TAs       = TObs * 1000000000;
-  half      = TH1 >> 1;
-  nPeriod   = TAs / TH1;
-  if ((TAs % TH1) > half) nPeriod++;              
-  offsetAs  = (int64_t)(obsOffset * 1000000000.0);
-  TH1ObsAs  = TH1 + offsetAs / nPeriod;
-  TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
-  *nue      = 1000000000.0 / TH1ObsNs;
-
-  // poor man's error propagation to avoid rounding errors
-  dOffsetAs = (int64_t)(dObsOffset * 1000000000.0);
-  dTH1ObsAs = TH1ObsAs + dOffsetAs / nPeriod;
-  dTH1ObsNs = (double)dTH1ObsAs / 1000000000.0;
-  nue2      = 1000000000.0 / dTH1ObsNs;
-  *dNue     = fabs(nue2 - *nue);
-} // calcNue
-
-
-double calcDdsNue(double nue)
-{
-  double nue1, nue2;
-  double diff1, diff2; 
-
-  nue1 =  b2b_flsa2fdds(nue);
-  nue2 =  b2b_flsa2fdds(nue + DDSSTEP);
-
-  diff1 = nue - nue1;
-  diff2 = nue - nue2;
-
-  if (fabs(diff1) < fabs(diff2)) return nue1;
-  else                           return nue2;
-} // calcDdsNue
+} // printGetValues
 
 
 void printRFDiagnostics()
@@ -418,20 +499,33 @@ void printRFDiagnostics()
   static int32_t diagPhaseExtMin     = 0x7fffffff;
   static double  diagPhaseExtAveNew  = 0;
   double         diagPhaseExtAveOld  = 0;
-  static double  diagPhaseExtVarNew  = 0;
-  double         diagPhaseExtVarOld  = 0;
+  static double  diagPhaseExtStrNew  = 0;
+  double         diagPhaseExtStrOld  = 0;
+  double         diagPhaseExtSdev    = 0;
   static int32_t diagExtN            = 0;
   static int32_t diagPhaseInjMax     = 0x80000000;
   static int32_t diagPhaseInjMin     = 0x7fffffff;
   static double  diagPhaseInjAveNew  = 0;
   double         diagPhaseInjAveOld  = 0;
-  static double  diagPhaseInjVarNew  = 0;
-  double         diagPhaseInjVarOld  = 0;
+  static double  diagPhaseInjStrNew  = 0;
+  double         diagPhaseInjStrOld  = 0;
+  double         diagPhaseInjSdev    = 0;
   static int32_t diagInjN            = 0;
 
-  double         nue;                    // observed frequency
-  double         dNue;                   // uncertainty of observed frequency
+  static double  diagNueExtAveNew    = 0;
+  double         diagNueExtAveOld    = 0;
+  static double  diagNueExtStrNew    = 0;
+  double         diagNueExtStrOld    = 0;
+  double         diagNueExtSdev      = 0;
+  static double  diagNueInjAveNew    = 0;
+  double         diagNueInjAveOld    = 0;
+  static double  diagNueInjStrNew    = 0;
+  double         diagNueInjStrOld    = 0;
+  double         diagNueInjSdev      = 0;
 
+  double         dummy;
+
+  double         nue;                    // observed frequency
     
   printf("--- RF Diagnostics @ %4.1f ms ---------------------- #ext %5u, #inj %5u ---\n", (double)TDIAGOBS/1000000.0, diagExtN, diagInjN);
   printf("ext:");
@@ -442,9 +536,9 @@ void printRFDiagnostics()
       if (diagPhaseExt > diagPhaseExtMax) diagPhaseExtMax = diagPhaseExt;
       if (diagPhaseExt < diagPhaseExtMin) diagPhaseExtMin = diagPhaseExt;
       diagPhaseExtAveOld  = diagPhaseExtAveNew;
-      diagPhaseExtVarOld  = diagPhaseExtVarNew;
-      calcMean(&diagPhaseExtAveNew, diagPhaseExtAveOld, &diagPhaseExtVarNew, diagPhaseExtVarOld, (double)diagPhaseExt, diagExtN);
-      printf(" 'gDDS diff  [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseExt, diagPhaseExtAveNew, calcSdev(diagPhaseExtVarNew), diagPhaseExtMin, diagPhaseExtMax);
+      diagPhaseExtStrOld  = diagPhaseExtStrNew;
+      calcStats(&diagPhaseExtAveNew, diagPhaseExtAveOld, &diagPhaseExtStrNew, diagPhaseExtStrOld, (double)diagPhaseExt, diagExtN, &dummy, &diagPhaseExtSdev);
+      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseExt, diagPhaseExtAveNew, diagPhaseExtSdev, diagPhaseExtMin, diagPhaseExtMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -458,9 +552,9 @@ void printRFDiagnostics()
       if (diagPhaseInj > diagPhaseInjMax) diagPhaseInjMax = diagPhaseInj;
       if (diagPhaseInj < diagPhaseInjMin) diagPhaseInjMin = diagPhaseInj;
       diagPhaseInjAveOld  = diagPhaseInjAveNew;
-      diagPhaseInjVarOld  = diagPhaseInjVarNew;
-      calcMean(&diagPhaseInjAveNew, diagPhaseInjAveOld, &diagPhaseInjVarNew, diagPhaseInjVarOld, (double)diagPhaseInj, diagInjN);
-      printf(" 'gDDS diff  [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseInj, diagPhaseInjAveNew, calcSdev(diagPhaseInjVarNew), diagPhaseInjMin, diagPhaseInjMax);
+      diagPhaseInjStrOld  = diagPhaseInjStrNew;
+      calcStats(&diagPhaseInjAveNew, diagPhaseInjAveOld, &diagPhaseInjStrNew, diagPhaseInjStrOld, (double)diagPhaseInj, diagInjN, &dummy, &diagPhaseInjSdev);
+      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseInj, diagPhaseInjAveNew, diagPhaseInjSdev, diagPhaseInjMin, diagPhaseInjMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -470,10 +564,13 @@ void printRFDiagnostics()
   if (mode < 2) printf("%s\n\n", TXTNA);
   else {
     if (diagPhaseExt  != (int)0x7fffffff) {
-      calcNue(&nue, diagPhaseExtAveNew, &dNue, diagPhaseExtVarNew, (double)TDIAGOBS, TH1Ext);
-      printf(" 'gDDS freq  [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, dNue, nue - fH1Ext); printf("    ");
-      printf(" 'gDDS freq  [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
-      printf(" 'LSA  freq  [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);      
+      calcNue(&nue, diagPhaseExtAveNew, (double)TDIAGOBS, TH1Ext);
+      diagNueExtAveOld  = diagNueExtAveNew;
+      diagNueExtStrOld  = diagNueExtStrNew;
+      calcStats(&diagNueExtAveNew, diagNueExtAveOld, &diagNueExtStrNew, diagNueExtStrOld, nue, diagExtN, &dummy, &diagNueExtSdev);
+      printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueExtSdev, nue - fH1Ext); printf("    ");
+      printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
+      printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);      
     }
     else printf("    %s\n\n", TXTUNKWN);
   } // else: mode >= 2
@@ -483,10 +580,13 @@ void printRFDiagnostics()
   if (mode < 4) printf("%s\n\n", TXTNA);
   else {
     if (diagPhaseInj  != (int)0x7fffffff) {
-      calcNue(&nue, diagPhaseInjAveNew, &dNue, diagPhaseInjVarNew, (double)TDIAGOBS, TH1Inj);
-      printf(" 'gDDS freq  [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, dNue, nue - fH1Inj); printf("    ");
-      printf(" 'gDDS freq  [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
-      printf(" 'LSA  freq  [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);            
+      calcNue(&nue, diagPhaseInjAveNew, (double)TDIAGOBS, TH1Inj);
+      diagNueInjAveOld  = diagNueInjAveNew;
+      diagNueInjStrOld  = diagNueInjStrNew;
+      calcStats(&diagNueInjAveNew, diagNueInjAveOld, &diagNueInjStrNew, diagNueInjStrOld, nue, diagInjN, &dummy, &diagNueInjSdev);
+      printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueInjSdev, nue - fH1Inj); printf("    ");
+      printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
+      printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);            
     }
     else printf("    %s\n\n", TXTUNKWN);
   } // else: mode >= 2
@@ -501,45 +601,51 @@ void printB2BDiagnostics()
   static int32_t diagMatchExtMin     = 0x7fffffff;
   static double  diagMatchExtAveNew  = 0;
   double         diagMatchExtAveOld  = 0;
-  static double  diagMatchExtVarNew  = 0;
-  double         diagMatchExtVarOld  = 0;
+  static double  diagMatchExtStrNew  = 0;
+  double         diagMatchExtStrOld  = 0;
+  double         diagMatchExtSdev    = 0;
   static int32_t diagExtN            = 0;
   static int32_t diagMatchInjMax     = 0x80000000;
   static int32_t diagMatchInjMin     = 0x7fffffff;
   static double  diagMatchInjAveNew  = 0;
   double         diagMatchInjAveOld  = 0;
-  static double  diagMatchInjVarNew  = 0;
-  double         diagMatchInjVarOld  = 0;
+  static double  diagMatchInjStrNew  = 0;
+  double         diagMatchInjStrOld  = 0;
+  double         diagMatchInjSdev    = 0;
   static int32_t diagInjN            = 0;
   static int32_t diagMatchH1Max      = 0x80000000;
   static int32_t diagMatchH1Min      = 0x7fffffff;
   static double  diagMatchH1AveNew   = 0;
   double         diagMatchH1AveOld   = 0;
-  static double  diagMatchH1VarNew   = 0;
-  double         diagMatchH1VarOld   = 0;
+  static double  diagMatchH1StrNew   = 0;
+  double         diagMatchH1StrOld   = 0;
+  double         diagMatchH1Sdev     = 0;
   static int32_t diagH1N             = 0;
+
+  double         dummy;
 
   int            flagExtOk           = 0;
   int            flagInjOk           = 0;
   int32_t        diagMatchExtCorr;       // diagMatchExt corrected for cTrigExt (to match phase)
   int32_t        diagMatchInjCorr;       // diagMatchInj corrected for cTrigInj and cPhase (to match phase)
   int32_t        diagMatchH1Corr;        // diagMatchExt/Inj corrected for cTrigExt, cTrigInj and cPhase (to match phase)
+  double         cPhaseD;
 
     
   printf("--- B2B Diagnostics ------------------- #ext %5u, #inj %5u, #B2B %5u ---\n", diagExtN, diagInjN, diagH1N);
   printf("ext:");
   if (mode < 2) printf("%s", TXTNA);
   else {
-    if ((diagMatchExt  != (int)0x7fffffff) && (abs(diagMatchExt) < (TH1Ext / 2000000000))) { // only accept differences up to T/2
+    if (diagMatchExt  != (int)0x7fffffff) {
       flagExtOk = 1;
       diagExtN++;
       diagMatchExtCorr    = diagMatchExt - cTrigExt;
       if (diagMatchExtCorr > diagMatchExtMax) diagMatchExtMax = diagMatchExtCorr;
       if (diagMatchExtCorr < diagMatchExtMin) diagMatchExtMin = diagMatchExtCorr;
       diagMatchExtAveOld  = diagMatchExtAveNew;
-      diagMatchExtVarOld  = diagMatchExtVarNew;
-      calcMean(&diagMatchExtAveNew, diagMatchExtAveOld, &diagMatchExtVarNew, diagMatchExtVarOld, (double)diagMatchExtCorr, diagExtN);
-      printf(" 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchExtCorr, diagMatchExtAveNew, calcSdev(diagMatchExtVarNew), diagMatchExtMin, diagMatchExtMax);
+      diagMatchExtStrOld  = diagMatchExtStrNew;
+      calcStats(&diagMatchExtAveNew, diagMatchExtAveOld, &diagMatchExtStrNew, diagMatchExtStrOld, (double)diagMatchExtCorr, diagExtN, &dummy, &diagMatchExtSdev);
+      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchExtCorr, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -548,23 +654,23 @@ void printB2BDiagnostics()
   printf("inj:");
   if (mode < 4) printf("%s", TXTNA);
   else {
-    if ((diagMatchInj  != (int)0x7fffffff) && (abs(diagMatchInj) < (TH1Inj / 2000000000))) { // only accept differences up to T/2
+    if (diagMatchInj  != (int)0x7fffffff) {
       flagInjOk = 1;
       diagInjN++;
       diagMatchInjCorr    = diagMatchInj - cTrigInj + cPhase;
       if (diagMatchInjCorr > diagMatchInjMax) diagMatchInjMax = diagMatchInjCorr;
       if (diagMatchInjCorr < diagMatchInjMin) diagMatchInjMin = diagMatchInjCorr;
       diagMatchInjAveOld  = diagMatchInjAveNew;
-      diagMatchInjVarOld  = diagMatchInjVarNew;
-      calcMean(&diagMatchInjAveNew, diagMatchInjAveOld, &diagMatchInjVarNew, diagMatchInjVarOld, (double)diagMatchInjCorr, diagInjN);
-      printf(" 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, calcSdev(diagMatchInjVarNew), diagMatchInjMin, diagMatchInjMax);
+      diagMatchInjStrOld  = diagMatchInjStrNew;
+      calcStats(&diagMatchInjAveNew, diagMatchInjAveOld, &diagMatchInjStrNew, diagMatchInjStrOld, (double)diagMatchInjCorr, diagInjN, &dummy, &diagMatchInjSdev);
+      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
   printf("\n");
 
   printf("B2B:");
-  if (mode < 4) printf("%s", TXTNA);
+  if (mode < 4) printf("%s\n", TXTNA);
   else {
     if (flagExtOk and flagInjOk) {
       diagH1N++;
@@ -572,14 +678,52 @@ void printB2BDiagnostics()
       if (diagMatchH1Corr > diagMatchH1Max) diagMatchH1Max = diagMatchH1Corr;
       if (diagMatchH1Corr < diagMatchH1Min) diagMatchH1Min = diagMatchH1Corr;
       diagMatchH1AveOld  = diagMatchH1AveNew;
-      diagMatchH1VarOld  = diagMatchH1VarNew;
-      calcMean(&diagMatchH1AveNew, diagMatchH1AveOld, &diagMatchH1VarNew, diagMatchH1VarOld, (double)diagMatchH1Corr, diagH1N);
-      printf(" 'diff H=1   [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchH1Corr, diagMatchH1AveNew, calcSdev(diagMatchH1VarNew), diagMatchH1Min, diagMatchH1Max);
+      diagMatchH1StrOld  = diagMatchH1StrNew;
+      calcStats(&diagMatchH1AveNew, diagMatchH1AveOld, &diagMatchH1StrNew, diagMatchH1StrOld, (double)diagMatchH1Corr, diagH1N, &dummy, &diagMatchH1Sdev);
+      printf(" 'phase      [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d\n", diagMatchH1Corr, diagMatchH1AveNew, diagMatchH1Sdev, diagMatchH1Min, diagMatchH1Max); printf("    ");
+      printf(" 'phase-corr [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchH1Corr - cPhase, diagMatchH1AveNew - cPhase, diagMatchH1Sdev,
+             diagMatchH1Min - cPhase, diagMatchH1Max - cPhase);
+    }
+    else printf("    %s\n", TXTUNKWN);
+  } // else: mode >= 2
+  printf("\n");
+
+  printf("ext:");
+  if (mode < 2) printf("%s", TXTNA);
+  else {
+    if (flagExtOk) {
+      printf(" 'gDDS        [°]' ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f", ns2Degree(diagMatchExtAveNew, TH1Ext), ns2Degree(diagMatchExtSdev, TH1Ext),
+             ns2Degree(diagMatchExtMin, TH1Ext), ns2Degree(diagMatchExtMax, TH1Ext));
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
   printf("\n");
 
+  printf("inj:");
+  if (mode < 4) printf("%s", TXTNA);
+  else {
+    if (flagExtOk) {
+      printf(" 'gDDS        [°]' ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f", ns2Degree(diagMatchInjAveNew, TH1Ext), ns2Degree(diagMatchInjSdev, TH1Ext),
+             ns2Degree(diagMatchInjMin, TH1Ext), ns2Degree(diagMatchInjMax, TH1Ext));
+    }
+    else printf("    %s", TXTUNKWN);
+  } // else: mode >= 2
+  printf("\n");
+
+  printf("B2B:");
+  if (mode < 4) printf("%s\n", TXTNA);
+  else {
+    if (flagExtOk and flagInjOk) {
+      cPhaseD = ns2Degree(cPhase, TH1Ext);
+      printf(" 'phase       [°]' ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n", ns2Degree(diagMatchH1AveNew, TH1Ext), ns2Degree(diagMatchH1Sdev, TH1Ext),
+             ns2Degree(diagMatchH1Min, TH1Ext), ns2Degree(diagMatchH1Max, TH1Ext));  printf("    ");
+      printf(" 'phase-corr  [°]' ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f", ns2Degree(diagMatchH1AveNew, TH1Ext) - cPhaseD, ns2Degree(diagMatchH1Sdev, TH1Ext),
+             ns2Degree(diagMatchH1Min, TH1Ext) - cPhaseD, ns2Degree(diagMatchH1Max, TH1Ext) - cPhaseD);
+    }
+    else printf("    %s\n", TXTUNKWN);
+  } // else: mode >= 2
+  printf("\n");
+  
 } // printB2BDiagnostics
 
 // print stuff to screen
@@ -596,9 +740,9 @@ void updateScreen()
   printf("\n");
   printGetValues();
   printf("\n");
-  printRFDiagnostics();
-  printf("\n");
   printB2BDiagnostics();
+  printf("\n");
+  printRFDiagnostics();
   
 } // updateScreen
 
@@ -610,8 +754,6 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
   uint32_t recEvtNo;
   uint32_t recSid;
 
-  static uint32_t nCycle = 0x0;
-  
   recGid      = ((id    & 0x0fff000000000000) >> 48);
   recEvtNo    = ((id    & 0x0000fff000000000) >> 36);
   recSid      = ((id    & 0x00000000fff00000) >> 20);
@@ -677,10 +819,12 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
     case DIAGEXT :
       diagPhaseExt   = ((param & 0xffffffff00000000) >> 32);
       diagMatchExt   = ((param & 0x00000000ffffffff));
+      diagMatchExt   = getAlignedTS(diagMatchExt, cTrigExt, TH1Ext);
       break;
     case DIAGINJ :
       diagPhaseInj   = ((param & 0xffffffff00000000) >> 32);
       diagMatchInj   = ((param & 0x00000000ffffffff));
+      diagMatchInj   = getAlignedTS(diagMatchInj, cTrigInj - cPhase, TH1Inj);
       break;
     default :
       ;
@@ -723,7 +867,6 @@ int main(int argc, char** argv)
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
-  uint64_t snoopMask   = 0x0;
 
   char    *deviceName = NULL;
 
