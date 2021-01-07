@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------------------------------------
--- Mil_dec_edge_timed_v1 empfängt einen manchester kodierten Datenstrom nach nach MIL-STD-1553B Protokoll.	--
+-- Mil_dec_edge_timed_v1 empfaengt einen manchester kodierten Datenstrom nach nach MIL-STD-1553B Protokoll.	--
 -- Autor: W. Panschow, GSI Darmstadt, Abt. BEL/BELAB, Tel. 2341												--
 -- Stand: 29.02.2012																						--
 -- Version: 01																								--
@@ -12,25 +12,25 @@ USE IEEE.STD_LOGIC_unsigned.all;
 
 ENTITY Mil_dec_edge_timed_v1 IS
 	GENERIC(
-			CLK_in_Hz		: INTEGER := 24_000_000;	-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu können 
-														-- (kürzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-														-- Die tatsächlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
-			Receive_pos_lane: INTEGER RANGE 0 TO 1 := 0	-- 0 => der Manchester-Datenstrom wird bipolar über Übertrager empfangen.
+			CLK_in_Hz		: INTEGER := 24_000_000;	-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+														-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+														-- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
+			Receive_pos_lane: INTEGER RANGE 0 TO 1 := 0	-- 0 => der Manchester-Datenstrom wird bipolar ueber Uebertrager empfangen.
 														-- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
 														-- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 
 			);
 	PORT(
 		Manchester_In			: IN	STD_LOGIC;		-- Eingangsdatenstrom MIL-1553B
-		RD_MIL					: IN	STD_LOGIC;		-- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurück. Muss synchron zur Clock 'clk' und mindesten eine
+		RD_MIL					: IN	STD_LOGIC;		-- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurueck. Muss synchron zur Clock 'clk' und mindesten eine
 														-- Periode lang aktiv sein!
-		Res						: IN	STD_LOGIC;		-- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+		Res						: IN	STD_LOGIC;		-- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.
 		Clk						: IN	STD_LOGIC;
 		Rcv_Cmd					: OUT	STD_LOGIC;		-- '1' es wurde ein Kommando empfangen.
-		Rcv_Error				: OUT	STD_LOGIC;		-- ist bei einem Fehler für einen Takt aktiv '1'.
+		Rcv_Error				: OUT	STD_LOGIC;		-- ist bei einem Fehler fuer einen Takt aktiv '1'.
 		Rcv_Rdy					: OUT	STD_LOGIC;		-- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
 		Mil_Rcv_Data			: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Empfangenes Datum oder Komando
-		Mil_Decoder_Diag		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgänge für Logikanalysator
+		Mil_Decoder_Diag		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgaenge fuer Logikanalysator
 		);
 
 END Mil_dec_edge_timed_v1;
@@ -94,11 +94,11 @@ ARCHITECTURE Arch_Mil_dec_edge_timed_v1 OF Mil_dec_edge_timed_v1 IS
 	CONSTANT	Timeout_Time_ns			: INTEGER	:= Sync_with_bit_max_ns + Delta_in_ns;
 	CONSTANT	Timeout_Time_cnt		: INTEGER	:= Timeout_Time_ns * 1000 / CLK_in_ps;
 	
-	CONSTANT	C_Time_between_2_Edges_cnt_width	: INTEGER	:= How_many_bits(Sync_with_bit_max_cnt)+1;	-- um ein Bit größer
+	CONSTANT	C_Time_between_2_Edges_cnt_width	: INTEGER	:= How_many_bits(Sync_with_bit_max_cnt)+1;	-- um ein Bit groesser
 
 
 	--------------------------------------------------
-	-- Zähler misst die Zeit zwischen zwei Flanken	--
+	-- Zaehler misst die Zeit zwischen zwei Flanken	--
 	--------------------------------------------------
 	SIGNAL	S_Time_between_2_Edges_cnt	: STD_LOGIC_VECTOR(C_Time_between_2_Edges_cnt_width-1 DOWNTO 0);
 
@@ -119,7 +119,7 @@ ARCHITECTURE Arch_Mil_dec_edge_timed_v1 OF Mil_dec_edge_timed_v1 IS
 	SIGNAL	S_Mil_Rcv_Shift_Reg	: STD_LOGIC_VECTOR(Data_Size+2-1 DOWNTO 0);
 																		-- + 2, weil in Bit [0] das Parity-Bit gespeichert wird,	--
 																		--	und weil eine vorgeladene '1' als implizite Endekennung --
-																		--	verwendet wird. So lange Bit[17] = '0' ist läuft die	--
+																		--	verwendet wird. So lange Bit[17] = '0' ist laeuft die	--
 																		--	Datenaufnahme inklusive des Paritybits.					--
 
 	SIGNAL	S_Mil_Rcv_Data		: STD_LOGIC_VECTOR(Data_Size-1 DOWNTO 0);
@@ -145,13 +145,13 @@ ARCHITECTURE Arch_Mil_dec_edge_timed_v1 OF Mil_dec_edge_timed_v1 IS
 	
 
 --+-----------------------------------------------------+
---|  CMD 8080hex Unipolar (negiert über Optokoppler)    |
+--|  CMD 8080hex Unipolar (negiert ueber Optokoppler)    |
 --|       3   2             2 2             2           |
 --|  _____   _  _ _ _ _ _ _ __  _ _ _ _ _ _ __ _____    |
 --|       ___ __ _ _ _ _ _ _  __ _ _ _ _ _ _  _         |
 --|       <------------ 18,5 us -------------->         |
 --|                                                     |
---|  CMD 8000hex Unipolar (negiert über Optokoppler)    |
+--|  CMD 8000hex Unipolar (negiert ueber Optokoppler)    |
 --|       3   2                                         | 
 --|  _____   _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ______    |
 --|       ___ __ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _          |
@@ -175,11 +175,11 @@ ARCHITECTURE Arch_Mil_dec_edge_timed_v1 OF Mil_dec_edge_timed_v1 IS
 BEGIN
 
 ASSERT NOT (CLK_in_Hz < 20_000_000)
-	REPORT "Die Freq. für 'Mil_dec_edge_timed_vhd' ist " & integer'image(Clk_in_Hz) & " Hz. Sie sollte aber > 20 MHz sein!"
+	REPORT "Die Freq. fuer 'Mil_dec_edge_timed_vhd' ist " & integer'image(Clk_in_Hz) & " Hz. Sie sollte aber > 20 MHz sein!"
 SEVERITY Error;
 
 ASSERT NOT (CLK_in_Hz >= 20_000_000)
-	REPORT "Die Freq. für 'Mil_dec_edge_timed_vhd' ist " & integer'image(Clk_in_Hz) & " Hz."
+	REPORT "Die Freq. fuer 'Mil_dec_edge_timed_vhd' ist " & integer'image(Clk_in_Hz) & " Hz."
 SEVERITY WARNING;
 
 P_Edge_Detect:	PROCESS	(clk, S_Manchester_Sync)
@@ -436,13 +436,13 @@ P_RCV_SM:	PROCESS	(clk, Res, S_Is_Timeout)
 						(S_Mil_Rcv_Shift_Reg(0) = '0' AND Receive_pos_lane = 1) THEN
 					--+-------------------------------------------------------------------------------------------------------------------------+
 					--| Das Empfangene letzte Bit war eine Null, d.h. es kommt noch eine Flanke! Diese muss noch abgewartet werden,	sonst ist	|
-					--| die Ablaufsteuerung zu früh in RCV_Idle und wertet die letzte Flanke als Sync-Flanke, was zu einem Fehler führt.		|
+					--| die Ablaufsteuerung zu frueh in RCV_Idle und wertet die letzte Flanke als Sync-Flanke, was zu einem Fehler fuehrt.		|
 					--+-------------------------------------------------------------------------------------------------------------------------+
-					IF S_Edge_Detect = '1' OR S_Leave_Parity_Tst = '1' THEN	-- Falls die Flanke zu spät kommt, soll kein Timeout auftreten.
+					IF S_Edge_Detect = '1' OR S_Leave_Parity_Tst = '1' THEN	-- Falls die Flanke zu spaet kommt, soll kein Timeout auftreten.
 																		-- Es kann trotzdem zu einem Fehler kommen, wenn der 'Rcv_Idle' durch
-																		-- die 'späte' Flanke verlassen wird und ein gültiges Telegramm in einem
-																		-- 'passenden' Abstand beginnt und damit die 'späte' Flanke nicht verworfen
-																		-- werden kann. Der Fehler ist nur im Blockmode möglich.
+																		-- die 'spaete' Flanke verlassen wird und ein gueltiges Telegramm in einem
+																		-- 'passenden' Abstand beginnt und damit die 'spaete' Flanke nicht verworfen
+																		-- werden kann. Der Fehler ist nur im Blockmode moeglich.
 						IF Receive_pos_lane = 0 THEN
 							IF S_Mil_Parity_Tst = S_Mil_Rcv_Shift_Reg(0) THEN
 								S_Parity_OK			<= '1';

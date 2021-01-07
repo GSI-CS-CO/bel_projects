@@ -185,21 +185,21 @@ P_I2C_Adr_Deco:	PROCESS (clk, Powerup_Res)
 
 P_I2C_ID_Mux:	PROCESS (CLK, Powerup_Res)
 
-	-- Der I2C-Bus benötigt zwei bidirektionale Leitungen. Beide Leitungen sind bei der Entwicklung der Kicker-Counter-Karte	--
-	-- vorgesehen worden. Leider befindet sich das Signal 'SDA' auf der D-Reihe des Modul-Busses, d. h. die I2C-Funktion wäre	--
-	-- nur für eine Karte mit 160-Poligen Stecker verfügbar. Um den I2C-Bus auch für einen Modul-Bus mit 96-Poligen Stecker		--
-	-- bereitzustellen ist einiges an Aufwand nötig, da im 96-Poligen Bereich des Modul-Busses kein Pin mehr frei ist, der		--
-	-- nur direkt zur Kicker-Counter-Karte geht. Aus diesem Grund müssen die beiden I2C-IOs mit zwei anderen Signalen des 96	--
+	-- Der I2C-Bus benoetigt zwei bidirektionale Leitungen. Beide Leitungen sind bei der Entwicklung der Kicker-Counter-Karte	--
+	-- vorgesehen worden. Leider befindet sich das Signal 'SDA' auf der D-Reihe des Modul-Busses, d. h. die I2C-Funktion waere	--
+	-- nur fuer eine Karte mit 160-Poligen Stecker verfuegbar. Um den I2C-Bus auch fuer einen Modul-Bus mit 96-Poligen Stecker		--
+	-- bereitzustellen ist einiges an Aufwand noetig, da im 96-Poligen Bereich des Modul-Busses kein Pin mehr frei ist, der		--
+	-- nur direkt zur Kicker-Counter-Karte geht. Aus diesem Grund muessen die beiden I2C-IOs mit zwei anderen Signalen des 96	--
 	-- Poligen Modul-Busses gemultiplext werden. Diese Funktion muss auf der Adapterkarte bereitgestellt werden. Als Umschalt-	--
-	-- signal für diesen Multiplexer wird der Pin verwendet, der ursprünglich mit dem 'I2C-SLC'-Signal belegt war. Dies ist ja	--
+	-- signal fuer diesen Multiplexer wird der Pin verwendet, der urspruenglich mit dem 'I2C-SLC'-Signal belegt war. Dies ist ja	--
 	-- der einzige freie Pin im 96-Pol. Modul-Bus-Layout. Aus dem 'I2C-SLC' wird Chipintern das Umschaltsignal 'nSEL_I2C'.		--
-	-- Der Ausgangspin behält seinen irreführenden Namen 'I2C-SLC' da die Pinvergabe aus dem Orcad-Design entnommen wird und	--
-	-- für die Kicker-Counter-Karte noch keine Layout-Änderung nötig war, und deshalb auch der Signalname nicht geändert wurde.	--
+	-- Der Ausgangspin behaelt seinen irrefuehrenden Namen 'I2C-SLC' da die Pinvergabe aus dem Orcad-Design entnommen wird und	--
+	-- fuer die Kicker-Counter-Karte noch keine Layout-Aenderung noetig war, und deshalb auch der Signalname nicht geaendert wurde.	--
 	--																															--
-	-- Die Multiplexer-Umschaltung muss folgendes berücksichtigen:																--
+	-- Die Multiplexer-Umschaltung muss folgendes beruecksichtigen:																--
 	--																															--
 	-- 	   Die Umschalt-Sequenz in den I2C-Mode wird nur einmalig durchlaufen. Sie wird mit dem Absetzen eines Start-Kommandos	--
-	--     veranlasst. Der I2C-Mode bleibt dann entweder bis zum Absetzen eines gültigen Stop-Kommandos, oder durch erreichen	--
+	--     veranlasst. Der I2C-Mode bleibt dann entweder bis zum Absetzen eines gueltigen Stop-Kommandos, oder durch erreichen	--
 	--     eines Timeouts, aktiv. Alle anderen Kommandos (auch weitere Start-Kommandos) werden direkt an den I2C-Macro			--
 	--     weitergeleitet.																										--
 	--																															--
@@ -207,13 +207,13 @@ P_I2C_ID_Mux:	PROCESS (CLK, Powerup_Res)
 	--																															--
 	--		| Der I2C-Mode ist noch nicht geschaltet und vom		| 														|	--	
 	--		| Modul-Bus wird ein 'Control Byte' (Start-Kommando)	| 														|	--
-	--		| auf die Subadresse I2C-Wr geschrieben. Während des 	| 														|	--
+	--		| auf die Subadresse I2C-Wr geschrieben. Waehrend des 	| 														|	--
 	--		| Schreibens wird das Busy-Flag des I2C-Macros			| 														|	--
-	--		| geprüft, nur wenn er frei ist (Busy = '0') akzeptiert	| 														|	--
+	--		| geprueft, nur wenn er frei ist (Busy = '0') akzeptiert	| 														|	--
 	--		| der I2C-Macro Kommandos, und nur dann wird nach der	| 														|	--
 	--      | Umschaltung ein Dtack zum Modul-Bus erzeugt.			|														|	--
 	--		|														| nSEL_I2C geht auf Low Level.							|	--
-	--		|														| Die Timeout-Überwachung wird gestartet.				|	--
+	--		|														| Die Timeout-Ueberwachung wird gestartet.				|	--
 	--		|														| Die VG-ID-Bits[7..6] werden gespeichert.				|	--
 	--		|														| Eine Microsekunde warten, bis die Analogschalter von	|	--
 	--		|														| den VG-ID-Bits[7..6] auf die I2C-Signale 'I2C-SLC'	|	--
@@ -222,25 +222,25 @@ P_I2C_ID_Mux:	PROCESS (CLK, Powerup_Res)
 	--		|														| und das Dtack zum Modul-Bus erzeugt werden.			|	--
 	--		| Ab jetzt wird jedes Schreib- oder Lesekommando		|														|	--
 	--		| direkt an den I2C-Macro weitergegeben. Ein Dtack		|														|	--
-	--		| wird nur erzeugt, wenn der Macro auch frei für		|														|	--
+	--		| wird nur erzeugt, wenn der Macro auch frei fuer		|														|	--
 	--		| Kommandos ist!										|														|	--
 	--																															--
-	--     Zurückgeschaltet in den Standard-Mode wird durch das gültige Absetzen eines Stopp-Kommandos, oder durch einen		--
-	--     Timeout. Nach dem Zurückschalten werden die VG-ID-Bits[7..6] wieder direkt gelesen. Die 'I2C-SLC'- 'I2C-SDA'-		--
-	--     Signale sind nur noch mit Pullup-Widerständen verbunden.																--
+	--     Zurueckgeschaltet in den Standard-Mode wird durch das gueltige Absetzen eines Stopp-Kommandos, oder durch einen		--
+	--     Timeout. Nach dem Zurueckschalten werden die VG-ID-Bits[7..6] wieder direkt gelesen. Die 'I2C-SLC'- 'I2C-SDA'-		--
+	--     Signale sind nur noch mit Pullup-Widerstaenden verbunden.																--
 	--     																														--
 	--     Die Umschaltung in den Standard-Mode erfolgt in der nachfolgend beschriebenen Sequenz.								--
 	--     																														--
 	--		| Wenn I2C-Mode eingeschaltet und der I2C-Macro frei 	| 														|	--	
 	--		| ist, wird das Stopp-Kommando an den I2C-Macro 		|														|	--
 	--		| weitergegeben und nur dann gibt es ein Dtack zum		|														|	--
-	--		| Modul-Bus.											| Ist das Stopp-Kommando durch den I2C-Macro ausgeführt	|	--
-	--		| 														| ausgeführt worden (das Status-Bit wird '0'), geht		|	--
+	--		| Modul-Bus.											| Ist das Stopp-Kommando durch den I2C-Macro ausgefuehrt	|	--
+	--		| 														| ausgefuehrt worden (das Status-Bit wird '0'), geht		|	--
 	--		|														| nSEL_I2C geht auf High Level.							|	--
 	--		|														| Eine Microsekunde warten, bis die Analogschalter von	|	--
 	--		|														| den I2C-Signalen 'I2C-SLC' und 'I2C-SDA' auf die		|	--
 	--		|														| VG-ID-Bits[7..6] umgeschaltet haben.					|	--
-	--		|														| Für den ID-Vergleich wieder die ID-Bits[7..6] direkt	|	--
+	--		|														| Fuer den ID-Vergleich wieder die ID-Bits[7..6] direkt	|	--
 	--		|														| verwenden.
 
 	BEGIN
