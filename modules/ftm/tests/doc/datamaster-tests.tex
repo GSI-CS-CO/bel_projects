@@ -46,7 +46,7 @@
 \tableofcontents
 
 \chapter{Overview - What is tested}
-All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}. 
+All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
 Each test has a seperate target in the \texttt{Makefile}.
@@ -72,17 +72,17 @@ unittests      &   T        &   x             &   x           &   -             
 \end{table}
 \chapter{The Tests}
 \section{bpcStart}
-\texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm. 
+\texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm.
 The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
-With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting. 
+With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
 In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
-The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and 
-then adds another schedule. This is done for a small schedule and a larger schedule. The test is ok if all commands 
+The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
+then adds another schedule. This is done for a small schedule and a larger schedule. The test is ok if all commands
 work. There is no check for this.
 \section{dmThreads}
-\texttt{dmThreads} tests the firmware with 4 threads. The same test for 6 threads fails due to a bug in the 
+\texttt{dmThreads} tests the firmware with 4 threads. The same test for 6 threads fails due to a bug in the
 firmware. For each thread a pattern with one block and one timing message is loaded.
 \section{fid7}
 \texttt{fid7} tests the fix for the format id 7 bug.
@@ -95,8 +95,8 @@ firmware. For each thread a pattern with one block and one timing message is loa
 \texttt{schedules} collects scheduls which are started. Tests that the schedules are compiled and loaded.
 \include{singleEdgeTest}
 \section{unittests}
-\texttt{unittests} contains Python test scripts which contain Python unit tests for the tools dm-cmd, dm-sched. Each unit test calls dm-cmd 
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command 
+\texttt{unittests} contains Python test scripts which contain Python unit tests for the tools dm-cmd, dm-sched. Each unit test calls dm-cmd
+with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
 line. These tests are successful when the response is the correct error message and not a core dump.
 \chapter{Common Components}
 \section{dm\_testbench.py}
