@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
-// Have a chat with saftlib and B2B
+// Have a chat with saftlib and B2B. This is tool is 'quick and dirty'
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2021-Jan-06
+// version: 2021-Jan-08
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -61,7 +61,8 @@ uint32_t reqSid;
 #define ESR         0x154               // ESR
 
 // EVTNO
-#define KICKSTART1  0x031 
+#define KICKSTART1  0x031
+#define KICKSTART2  0x045
 #define PMEXT 	    0x800
 #define PMINJ 	    0x801
 #define PREXT 	    0x802
@@ -211,14 +212,14 @@ double calcDdsNue(double nue)
 } // calcDdsNue
 
 
-int32_t getAlignedTS(int32_t ts,     // timestamp [ns]
+int32_t getAlignedTS(int32_t ts,    // timestamp [ns]
                     int32_t corr,   // (trigger)correction [ns]
                     uint64_t TH1    // H=1 period [as]
                     )
 {
-  int32_t TH1Ns;                    // H=1 period [ns]
+  int32_t TH1Ns;                         // H=1 period [ns]
   int32_t half;                       
-  int32_t ts0;                      // timestamp with correction removed
+  int32_t ts0;                           // timestamp with correction removed
   int32_t min;
   int32_t dtTmp;
   int32_t dtMatch;
@@ -226,6 +227,11 @@ int32_t getAlignedTS(int32_t ts,     // timestamp [ns]
   ts0   = ts - corr;
   TH1Ns = TH1 / 1000000000;
   min   = 0x7fffffff;
+
+  if (fabs(corr) > 1000000) return 0;    // corr > 1ms 
+  if (TH1Ns      <     100) return corr; // nue > 10 MHz
+  if (TH1Ns      >  100000) return corr; // nue < 10 kHz
+  if (fabs(ts0) >   100000) return corr; // max period (10 kHz)    
 
   for (dtTmp = ts0 - 5 * TH1Ns; dtTmp < ts0 + 5 * TH1Ns; dtTmp += TH1Ns) {
     if (fabs(dtTmp) < min) {
@@ -357,6 +363,11 @@ void printSetValues()
   }
   printf("\n");
 
+  printf("     next gDDS step @ LSA value");
+  if (mode < 2) printf(TXTNA);
+  else printf(" %15.6f Hz", fH1Ext + DDSSTEP);
+  printf("\n");
+
   printf("inj: kick  corr");
   if (mode < 3) printf("   %s", TXTNA);
   else          printf(" %4d ns", cTrigInj);
@@ -369,10 +380,17 @@ void printSetValues()
   }
   printf("\n");
 
+  printf("     next gDDS step @ LSA value");
+  if (mode < 4) printf(TXTNA);
+  else printf(" %15.6f Hz", fH1Inj + DDSSTEP);
+  printf("\n");
+
   printf("B2B: ");
-  if (mode < 4) printf("%s\n", TXTNA);
+  if (mode < 4) printf("%s\n\n\n\n\n\n\n\n\n\n", TXTNA);
   else {
-    printf("phase corr %4d ns, %8.3f°\n", cPhase, ns2Degree(cPhase, TH1Ext)); printf("     ");
+    printf("phase corr %4d ns,            %8.3f°\n", cPhase, ns2Degree(cPhase, TH1Ext));
+    printf("\n");
+    printf("--- 'Effective Beating' ------------------------------------------------------\n"); printf("     ");
     if (nHExt * fH1Ext < nHInj * fH1Inj) {
       THighFast = TH1Inj * nHExt;
       THighSlow = TH1Ext * nHInj;
@@ -388,20 +406,18 @@ void printSetValues()
     if ((TBeat % Tdiff) > (Tdiff >> 1)) TBeat++;
     TBeat = (TBeat * THighSlow);
     fBeat = 1000000000000000000.0 / double(TBeat);
-    printf("beat [step / RF period]      %13.6f Hz, %12.3f ns [%5.3f ns]", fBeat, (double)TBeat/1000000000.0, (double)Tdiff/1000000000.0);
+    printf("beating                      %13.6f Hz,  %15.6f ns\n", fBeat, (double)TBeat/1000000000.0);  printf("     ");
+    printf("ext                        %15.6f Hz,  %15.6f ns\n", fH1Ext / (double)nHInj, lambdaExt * (double)nHInj); printf("     ");
+    printf("inj                        %15.6f Hz,  %15.6f ns\n", fH1Inj / (double)nHExt, lambdaInj * (double)nHExt); printf("     ");
+    printf("ext                                             %12.3f periods\n", (double)TBeat / (double)(TH1Ext * nHInj)); printf("     ");
+    printf("inj                                             %12.3f periods\n", (double)TBeat / (double)(TH1Inj * nHExt)); printf("     ");
+    printf("diff                           %8.3f°               %8.6f ns\n", ns2Degree((double)Tdiff/1000000000.0, TH1Ext),(double)Tdiff/1000000000.0);
+    printf("     ---------- gDDS(H=1) ---------------------------------------------------\n"); printf("     ");
+    printf("ext                                             %12.3f periods\n", (double)TBeat / (double)TH1Ext); printf("     ");
+    printf("inj                                             %12.3f periods", (double)TBeat / (double)TH1Inj);
   }
   printf("\n");
-
-  printf("ext: next gDDS step @ LSA value");
-  if (mode < 2) printf(TXTNA);
-  else printf(" %15.6f Hz", fH1Ext + DDSSTEP);
-  printf("\n");
-
-  printf("inj: next gDDS step @ LSA value");
-  if (mode < 4) printf(TXTNA);
-  else printf(" %15.6f Hz", fH1Inj + DDSSTEP);
-  printf("\n");
-
+  
 } // printSetValues
 
 void printGetValues()
@@ -468,7 +484,7 @@ void printGetValues()
       diagMatchExtAveOld  = diagMatchExtAveNew;
       diagMatchExtStrOld  = diagMatchExtStrNew;
       calcStats(&diagMatchExtAveNew, diagMatchExtAveOld, &diagMatchExtStrNew, diagMatchExtStrOld, (double)diagMatchExt, diagExtN, &dummy, &diagMatchExtSdev );
-      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchExt, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
+      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagMatchExt, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -484,7 +500,7 @@ void printGetValues()
       diagMatchInjAveOld  = diagMatchInjAveNew;
       diagMatchInjStrOld  = diagMatchInjStrNew;
       calcStats(&diagMatchInjAveNew, diagMatchInjAveOld, &diagMatchInjStrNew, diagMatchInjStrOld, (double)diagMatchInjCorr, diagInjN, &dummy, &diagMatchInjSdev);
-      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
+      printf(" 'kick-gDDS [ns]'  act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -538,7 +554,7 @@ void printRFDiagnostics()
       diagPhaseExtAveOld  = diagPhaseExtAveNew;
       diagPhaseExtStrOld  = diagPhaseExtStrNew;
       calcStats(&diagPhaseExtAveNew, diagPhaseExtAveOld, &diagPhaseExtStrNew, diagPhaseExtStrOld, (double)diagPhaseExt, diagExtN, &dummy, &diagPhaseExtSdev);
-      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseExt, diagPhaseExtAveNew, diagPhaseExtSdev, diagPhaseExtMin, diagPhaseExtMax);
+      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagPhaseExt, diagPhaseExtAveNew, diagPhaseExtSdev, diagPhaseExtMin, diagPhaseExtMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -554,7 +570,7 @@ void printRFDiagnostics()
       diagPhaseInjAveOld  = diagPhaseInjAveNew;
       diagPhaseInjStrOld  = diagPhaseInjStrNew;
       calcStats(&diagPhaseInjAveNew, diagPhaseInjAveOld, &diagPhaseInjStrNew, diagPhaseInjStrOld, (double)diagPhaseInj, diagInjN, &dummy, &diagPhaseInjSdev);
-      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagPhaseInj, diagPhaseInjAveNew, diagPhaseInjSdev, diagPhaseInjMin, diagPhaseInjMax);
+      printf(" 'gDDS raw   [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagPhaseInj, diagPhaseInjAveNew, diagPhaseInjSdev, diagPhaseInjMin, diagPhaseInjMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -645,7 +661,7 @@ void printB2BDiagnostics()
       diagMatchExtAveOld  = diagMatchExtAveNew;
       diagMatchExtStrOld  = diagMatchExtStrNew;
       calcStats(&diagMatchExtAveNew, diagMatchExtAveOld, &diagMatchExtStrNew, diagMatchExtStrOld, (double)diagMatchExtCorr, diagExtN, &dummy, &diagMatchExtSdev);
-      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchExtCorr, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
+      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagMatchExtCorr, diagMatchExtAveNew, diagMatchExtSdev, diagMatchExtMin, diagMatchExtMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -663,7 +679,7 @@ void printB2BDiagnostics()
       diagMatchInjAveOld  = diagMatchInjAveNew;
       diagMatchInjStrOld  = diagMatchInjStrNew;
       calcStats(&diagMatchInjAveNew, diagMatchInjAveOld, &diagMatchInjStrNew, diagMatchInjStrOld, (double)diagMatchInjCorr, diagInjN, &dummy, &diagMatchInjSdev);
-      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
+      printf(" 'gDDS       [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagMatchInjCorr, diagMatchInjAveNew, diagMatchInjSdev, diagMatchInjMin, diagMatchInjMax);
     }
     else printf("    %s", TXTUNKWN);
   } // else: mode >= 2
@@ -680,8 +696,8 @@ void printB2BDiagnostics()
       diagMatchH1AveOld  = diagMatchH1AveNew;
       diagMatchH1StrOld  = diagMatchH1StrNew;
       calcStats(&diagMatchH1AveNew, diagMatchH1AveOld, &diagMatchH1StrNew, diagMatchH1StrOld, (double)diagMatchH1Corr, diagH1N, &dummy, &diagMatchH1Sdev);
-      printf(" 'phase      [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d\n", diagMatchH1Corr, diagMatchH1AveNew, diagMatchH1Sdev, diagMatchH1Min, diagMatchH1Max); printf("    ");
-      printf(" 'phase-corr [ns]' act %4d, ave(sdev) %8.3f(%5.3f), minmax %4d, %4d", diagMatchH1Corr - cPhase, diagMatchH1AveNew - cPhase, diagMatchH1Sdev,
+      printf(" 'phase      [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", diagMatchH1Corr, diagMatchH1AveNew, diagMatchH1Sdev, diagMatchH1Min, diagMatchH1Max); printf("    ");
+      printf(" 'phase-corr [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d", diagMatchH1Corr - cPhase, diagMatchH1AveNew - cPhase, diagMatchH1Sdev,
              diagMatchH1Min - cPhase, diagMatchH1Max - cPhase);
     }
     else printf("    %s\n", TXTUNKWN);
@@ -766,7 +782,8 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
   if (recSid != reqSid) return;
 
   switch (recEvtNo) {
-    case KICKSTART1 :
+    case KICKSTART1 :                                           // this is an OR, no 'break' on purpose
+    case KICKSTART2 : 
       if (!flagTransStart){
         clearAllData();
         flagTransStart=1;
