@@ -49,11 +49,9 @@
 using namespace std;
 
 static const char* program;
-static uint32_t pmode = PMODE_NONE;     // how data are printed (hex, dec, verbosity)
-bool UTC            = false;            // show UTC instead of TAI
-bool UTCleap        = false;
-uint32_t reqSid;
 
+uint32_t reqSid;
+uint32_t recGid;
 
 // GID
 #define GGSI        0x3a                // B2B prefix existing facility
@@ -61,7 +59,7 @@ uint32_t reqSid;
 #define ESR         0x154               // ESR
 
 // EVTNO
-#define KICKSTART1  0x031
+#define KICKSTART1  0x031               // event numbers used by B2B...
 #define KICKSTART2  0x045
 #define PMEXT 	    0x800
 #define PMINJ 	    0x801
@@ -75,9 +73,9 @@ uint32_t reqSid;
 #define DIAGINJ     0x809
 #define DIAGMATCH   0x80c
 
-#define FID         0x1
+#define FID         0x1                 // format ID of timing messages
 
-#define TUPDATE     50000000            // delay for updating screen after EVT_KICK_START [ns]
+#define TUPDATE     100000000           // delay for updating screen after EVT_KICK_START [ns]
 #define TDIAGOBS    20000000            // observation time for diagnostic [ns]
 #define DDSSTEP     0.046566129         // min frequency step of gDDS
 
@@ -124,18 +122,16 @@ int      flagErrKickExt;                // error flag kicker extraction
 int      flagErrKickInj;                // error flag kicker injection
 
 
-// this will be called, in case we are snooping for events - dummy routine
-static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
-{
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  std::cout << std::endl;
-} // on_action
-
-
-void calcStats(double *meanNew, double meanOld, double *streamNew, double streamOld, double val, uint32_t n, double *var, double *sdev)
+// calc basic statistic properties
+void calcStats(double *meanNew,         // new mean value, please remember for later
+               double meanOld,          // old mean value (required for 'running stats')
+               double *streamNew,       // new stream value, please remember for later
+               double streamOld,        // old stream value (required for 'running stats')
+               double val,              // the new value :-)
+               uint32_t n,              // number of values (required for 'running stats')
+               double *var,             // standard variance
+               double *sdev             // standard deviation
+               )
 {
   // see  ”The Art of ComputerProgramming, Volume 2: Seminumerical Algorithms“, Donald Knuth, or
   // http://www.netzmafia.de/skripten/hardware/Control/auswertung.pdf
@@ -152,18 +148,19 @@ void calcStats(double *meanNew, double meanOld, double *streamNew, double stream
 } // calcStats
 
 
-void calcNue(double *nue, double obsOffset, uint64_t TObs, uint64_t TH1)
+// calculate frequency from observed phase offset
+void calcNue(double *nue,               // frequency value [Hz]
+             double obsOffset,          // observed mean value of deviation from 'soll value' [ns]
+             uint64_t TObs,             // observation intervall [as]
+             uint64_t TH1               // H=1 gDDS period [as]
+             )
 {
-  // nue frequency [Hz]
-  // obsOffset mean value of deviation [ns]
-  // TObs observation time [ns]
-  // H=1 gDDS period [as]
-  int64_t  nPeriod;      // # of rf periods within T
+  int64_t  nPeriod;                     // # of rf periods within T
   uint64_t half;
-  int64_t  offsetAs;     // offset [as]
-  int64_t  TAs;          // TObs [as]
-  int64_t  TH1ObsAs;     // observed TH1 [as]
-  double   TH1ObsNs;     // observed TH1 [ns]
+  int64_t  offsetAs;                    // offset [as]
+  int64_t  TAs;                         // TObs [as]
+  int64_t  TH1ObsAs;                    // observed TH1 [as]
+  double   TH1ObsNs;                    // observed TH1 [ns]
 
   if ((TH1 != 0) && (TObs != 0)) {
     TAs       = TObs * 1000000000;
@@ -179,13 +176,12 @@ void calcNue(double *nue, double obsOffset, uint64_t TObs, uint64_t TH1)
 } // calcNue
 
 
-double ns2Degree(double phase, uint64_t T)
+// convert nanoseconds to degree
+double ns2Degree(double phase,          // phase [ns]
+                 uint64_t T             // period [as]
+                 )
 {
-  // phase [ns]
-  // T     [as]
-  // returns degree
-
-  double period;    // [ns]
+  double period;                        // [ns]
   double degree;
 
   period = (double)T / 1000000000.0;
@@ -193,9 +189,10 @@ double ns2Degree(double phase, uint64_t T)
   degree = phase / period * 360.0;
 
   return degree;
-}
+} 
 
 
+// calculate 'real' DDS frequency from give frequency
 double calcDdsNue(double nue)
 {
   double nue1, nue2;
@@ -212,9 +209,10 @@ double calcDdsNue(double nue)
 } // calcDdsNue
 
 
-int32_t getAlignedTS(int32_t ts,    // timestamp [ns]
-                    int32_t corr,   // (trigger)correction [ns]
-                    uint64_t TH1    // H=1 period [as]
+// basic fixing of timestamps
+int32_t fixAlignedTS(int32_t ts,         // timestamp [ns]
+                    int32_t corr,        // (trigger)correction [ns]
+                    uint64_t TH1         // H=1 period [as]
                     )
 {
   int32_t TH1Ns;                         // H=1 period [ns]
@@ -274,6 +272,29 @@ void clearAllData()
   flagErrKickExt = 0x1;
   flagErrKickInj = 0x1;
 } // clear all date
+
+
+// print heaader
+void printHeader()
+{
+  switch (recGid) {
+    case 0x3a0 :
+      printf("                  ___ ___ ___       ___ ___ ___ _ ___   \n");
+      printf("                 | _ )_  ) _ )     / __|_ _/ __/ ( _ )  \n");
+      printf("                 | _ \/ /| _ \     \__ \| |\__ \ / _ \  \n");
+      printf("                 |___/___|___/     |___/___|___/_\___/  \n");
+      break;
+    case 0x3a5 :
+      printf("                  ___ ___ ___       ___ ___ ___   \n");
+      printf("                 | _ )_  ) _ )     | __/ __| _ \  \n");
+      printf("                 | _ \/ /| _ \     | _|\__ \   /  \n");
+      printf("                 |___/___|___/     |___|___/_|_\  \n");
+    break;
+    default :
+      ;
+  } // switch gid
+}
+
 
 // print status
 void printStatus()
@@ -340,6 +361,8 @@ void printStatus()
   printf("\n");
 } // print status
 
+
+// print set values
 void printSetValues()
 {
   double   lambdaExt;
@@ -420,6 +443,8 @@ void printSetValues()
   
 } // printSetValues
 
+
+// print get values
 void printGetValues()
 {
   static int32_t diagMatchExtMax     = 0x80000000;
@@ -509,6 +534,7 @@ void printGetValues()
 } // printGetValues
 
 
+// print rf diagnostics
 void printRFDiagnostics()
 {
   static int32_t diagPhaseExtMax     = 0x80000000;
@@ -611,6 +637,7 @@ void printRFDiagnostics()
 } // printRFDiagnostics
 
 
+// print diagnostic info on B2B
 void printB2BDiagnostics()
 {
   static int32_t diagMatchExtMax     = 0x80000000;
@@ -742,6 +769,7 @@ void printB2BDiagnostics()
   
 } // printB2BDiagnostics
 
+
 // print stuff to screen
 void updateScreen()
 {
@@ -750,6 +778,8 @@ void updateScreen()
   //clear screen
   for (i=0;i<60;i++) printf("\n");
 
+  printHeader();
+  printf("\n");
   printStatus();
   printf("\n");
   printSetValues();
@@ -766,11 +796,9 @@ void updateScreen()
 // this will be called, in case we are snooping B2B
 static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  uint32_t recGid;
   uint32_t recEvtNo;
   uint32_t recSid;
 
-  recGid      = ((id    & 0x0fff000000000000) >> 48);
   recEvtNo    = ((id    & 0x0000fff000000000) >> 36);
   recSid      = ((id    & 0x00000000fff00000) >> 20);
 
@@ -785,6 +813,7 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
     case KICKSTART1 :                                           // this is an OR, no 'break' on purpose
     case KICKSTART2 : 
       if (!flagTransStart){
+        recGid       = ((id    & 0x0fff000000000000) >> 48);
         clearAllData();
         flagTransStart=1;
       }
@@ -808,7 +837,8 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
       flagErrPmInj   = ((id    & 0x0000000000000004) >> 2);
       break;
     case TRIGGEREXT :
-      if (!flagTransStart){                                     // argh: TRIGGEREXT might happen prio to EVT_KICK_START in case mode EKS AND negative cTrigExt
+      if (!flagTransStart){                                     // argh: TRIGGEREXT might happen prior to EVT_KICK_START in case mode EKS AND negative cTrigExt
+        recGid       = ((id    & 0x0fff000000000000) >> 48);
         clearAllData();
         flagTransStart=1;
       }
@@ -851,17 +881,13 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
 using namespace saftlib;
 using namespace std;
 
+
 // display help
 static void help(void) {
   std::cout << std::endl << "Usage: " << program << " <device name> [OPTIONS] [command]" << std::endl;
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -d                   display values in dec format" << std::endl;
-  std::cout << "  -x                   display values in hex format" << std::endl;
-  std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
-  std::cout << "  -U                   display/inject absolute time in UTC instead of TAI" << std::endl;
-  std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
   std::cout << "  snoop  <SID>         snoop events of the B2B system. Select SID of transfer" << std::endl;
   std::cout << std::endl;
@@ -889,7 +915,6 @@ int main(int argc, char** argv)
 
   const char *command;
 
-  pmode       = PMODE_NONE;
   nextUpdate  = saftlib::makeTimeTAI(0xffffffffffffffff);
 
   // parse for options
@@ -898,27 +923,6 @@ int main(int argc, char** argv)
     switch (opt) {
       case 'f' :
         useFirstDev = true;
-        break;
-      case 'U':
-        UTC = true;
-        pmode = pmode + PMODE_UTC;
-        break;
-      case 'L':
-        if (UTC) {
-          UTCleap = true;
-        } else {
-          std::cerr << "-L only works with -U" << std::endl;
-          return -1;
-        }
-        break;
-      case 'd':
-        pmode = pmode + PMODE_DEC;
-        break;
-      case 'x':
-        pmode = pmode + PMODE_HEX;
-        break;
-      case 'v':
-        pmode = pmode + PMODE_VERBOSE;
         break;
       case 'h':
         help();
