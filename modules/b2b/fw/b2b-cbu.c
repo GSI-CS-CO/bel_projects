@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-January-2021
+ *  version : 09-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  

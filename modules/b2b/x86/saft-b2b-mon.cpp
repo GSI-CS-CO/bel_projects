@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2021-Jan-08
+// version: 2021-Jan-09
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -57,6 +57,7 @@ uint32_t recGid;
 #define GGSI        0x3a                // B2B prefix existing facility
 #define SIS18       0x12c               // SIS18
 #define ESR         0x154               // ESR
+#define CRYRING     0x0d2               // CRYRING
 
 // EVTNO
 #define KICKSTART1  0x031               // event numbers used by B2B...
@@ -78,6 +79,11 @@ uint32_t recGid;
 #define TUPDATE     100000000           // delay for updating screen after EVT_KICK_START [ns]
 #define TDIAGOBS    20000000            // observation time for diagnostic [ns]
 #define DDSSTEP     0.046566129         // min frequency step of gDDS
+#define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x010               // ... mode EKS
+#define MSKRECMODE2 0x155               // ... mode B2E
+#define MSKRECMODE3 0x1f5               // ... mode B2C
+#define MSKRECMODE4 0x3ff               // ... mode B2B
 
 #define TXTERROR    "ERROR"
 #define TXTUNKWN    "UNKWN"
@@ -115,11 +121,9 @@ int32_t  diagPhaseInj;                  // phase diagnostics injection
 int32_t  diagMatchExt;                  // match diagnostics extraction
 int32_t  diagMatchInj;                  // match diagnostics injection
 int      flagTransStart;                // flag transfer started
-int      flagErrPmExt;                  // error flag phase measurement extraction
-int      flagErrPmInj;                  // error flag phase measurement injection
-int      flagErrCbu;                    // error flag CBU
-int      flagErrKickExt;                // error flag kicker extraction
-int      flagErrKickInj;                // error flag kicker injection
+int      flagEvtErr;                    // error flag;               0: PMEXT, 1: PMINJ, 2: PREXT, 3: PRINJ, 4: TRIGGEREXT, 5: TRIGGERNJ, 6: DIAGKICKEXT, 7: DIAGKICKINJ, 8: DIAGEXT, 9: DIAGINJ 
+int      flagEvtRec;                    // flag for events received; 0: PMEXT, 1: PMINJ, 2: PREXT, 3: PRINJ, 4: TRIGGEREXT, 5: TRIGGERNJ, 6: DIAGKICKEXT, 7: DIAGKICKINJ, 8: DIAGEXT, 9: DIAGINJ
+int      flagEvtLate;                   // flag for events late;     0: PMEXT, 1: PMINJ, 2: PREXT, 3: PRINJ, 4: TRIGGEREXT, 5: TRIGGERNJ, 6: DIAGKICKEXT, 7: DIAGKICKINJ, 8: DIAGEXT, 9: DIAGINJ
 
 
 // calc basic statistic properties
@@ -149,11 +153,11 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 
 
 // calculate frequency from observed phase offset
-void calcNue(double *nue,               // frequency value [Hz]
-             double obsOffset,          // observed mean value of deviation from 'soll value' [ns]
-             uint64_t TObs,             // observation intervall [as]
-             uint64_t TH1               // H=1 gDDS period [as]
-             )
+int calcNue(double *nue,                // frequency value [Hz]
+            double obsOffset,           // observed mean value of deviation from 'soll value' [ns]
+            uint64_t TObs,              // observation interval [as]
+            uint64_t TH1                // H=1 gDDS period [as]
+            )
 {
   int64_t  nPeriod;                     // # of rf periods within T
   uint64_t half;
@@ -171,8 +175,9 @@ void calcNue(double *nue,               // frequency value [Hz]
     TH1ObsAs  = TH1 + offsetAs / (double)nPeriod;
     TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
     *nue      = 1000000000.0 / TH1ObsNs;
+    return 0;
   } // avoid division by zero
-  else *nue  = 0.0;
+  else return 0;
 } // calcNue
 
 
@@ -216,15 +221,15 @@ int32_t fixAlignedTS(int32_t ts,         // timestamp [ns]
                     )
 {
   int32_t TH1Ns;                         // H=1 period [ns]
-  int32_t half;                       
   int32_t ts0;                           // timestamp with correction removed
   int32_t min;
   int32_t dtTmp;
   int32_t dtMatch;
     
-  ts0   = ts - corr;
-  TH1Ns = TH1 / 1000000000;
-  min   = 0x7fffffff;
+  ts0       = ts - corr;
+  TH1Ns     = TH1 / 1000000000;
+  min       = 0x7fffffff;
+  dtMatch = 0;
 
   if (fabs(corr) > 1000000) return 0;    // corr > 1ms 
   if (TH1Ns      <     100) return corr; // nue > 10 MHz
@@ -245,128 +250,117 @@ int32_t fixAlignedTS(int32_t ts,         // timestamp [ns]
 // clear all data
 void clearAllData()
 {
-  gid            = 0x0;    
-  sid            = 0x0;    
-  mode           = 0x0;   
-  TH1Ext         = 0x0;
-  nHExt          = 0x0;  
-  TH1Inj         = 0x0; 
-  nHInj          = 0x0;  
-  TBeat          = 0x0;  
-  cPhase         = 0x7fffffff;
-  cTrigExt       = 0x7fffffff;
-  cTrigInj       = 0x7fffffff;
-  tH1Ext         = 0x0; 
-  tH1Inj         = 0x0;
-  kickElecDelExt = 0x7fffffff;
-  kickProbDelExt = 0x7fffffff;
-  kickElecDelInj = 0x7fffffff;
-  kickProbDelInj = 0x7fffffff;
-  diagPhaseExt   = 0x7fffffff;
-  diagPhaseInj   = 0x7fffffff;
-  diagMatchExt   = 0x7fffffff;
-  diagMatchInj   = 0x7fffffff;
-  flagErrPmExt   = 0x1;
-  flagErrPmInj   = 0x1;
-  flagErrCbu     = 0x1;
-  flagErrKickExt = 0x1;
-  flagErrKickInj = 0x1;
+  gid             = 0x0;    
+  sid             = 0x0;    
+  mode            = 0x0;   
+  TH1Ext          = 0x0;
+  nHExt           = 0x0;  
+  TH1Inj          = 0x0; 
+  nHInj           = 0x0;  
+  TBeat           = 0x0;  
+  cPhase          = 0x7fffffff;
+  cTrigExt        = 0x7fffffff;
+  cTrigInj        = 0x7fffffff;
+  tTrigExt        = 0x0;
+  tTrigInj        = 0x0;
+  tH1Ext          = 0x0; 
+  tH1Inj          = 0x0;
+  kickElecDelExt  = 0x7fffffff;
+  kickProbDelExt  = 0x7fffffff;
+  kickElecDelInj  = 0x7fffffff;
+  kickProbDelInj  = 0x7fffffff;
+  diagPhaseExt    = 0x7fffffff;
+  diagPhaseInj    = 0x7fffffff;
+  diagMatchExt    = 0x7fffffff;
+  diagMatchInj    = 0x7fffffff;
+  flagEvtErr      = 0x0;
+  flagEvtRec      = 0x0;
+  flagEvtLate     = 0x0;
 } // clear all date
-
 
 // print heaader
 void printHeader()
 {
   switch (recGid) {
-    case 0x3a0 :
-      printf("                  ___ ___ ___       ___ ___ ___ _ ___   \n");
-      printf("                 | _ )_  ) _ )     / __|_ _/ __/ ( _ )  \n");
-      printf("                 | _ \/ /| _ \     \__ \| |\__ \ / _ \  \n");
-      printf("                 |___/___|___/     |___/___|___/_\___/  \n");
-      break;
-    case 0x3a5 :
-      printf("                  ___ ___ ___       ___ ___ ___   \n");
-      printf("                 | _ )_  ) _ )     | __/ __| _ \  \n");
-      printf("                 | _ \/ /| _ \     | _|\__ \   /  \n");
-      printf("                 |___/___|___/     |___|___/_|_\  \n");
+    case SIS18 :
+      printf("        ___ ___ ___   ___ ___ ___ _ ___   _                           \n");
+      printf("       | _ )_  ) _ ) / __|_ _/ __/ ( _ ) | |_ ___                     \n");
+      printf("       | _ \\/ /| _ \\ \\__ \\| |\\__ \\ / _ \\ |  _/ _ \\  _   _   _ \n");
+      printf("       |___/___|___/ |___/___|___/_\\___/  \\__\\___/ (_) (_) (_)     \n");
     break;
+    case ESR :
+      printf("        ___ ___ ___   ___ ___ ___   _                            \n");
+      printf("       | _ )_  ) _ ) | __/ __| _ \\ | |_ ___                     \n");
+      printf("       | _ \\/ /| _ \\ | _|\\__ \\   / |  _/ _ \\  _   _   _     \n");
+      printf("       |___/___|___/ |___|___/_|_\\  \\__\\___/ (_) (_) (_)      \n");
+      break;
     default :
-      ;
+      ;    // ASCII art inspired by http://patorjk.com/software
   } // switch gid
-}
+} // printHeader
 
 
 // print status
 void printStatus()
 {
   static uint32_t iter = 0;
+  int i;
+  char modeStr[64];
+  int  modeMask;
 
-  printf("--- Status ----------------------------------------------- #transfer %5u ---\n", iter);
-  iter++;
-  printf("CBU     ");
-  if (mode == 0) printf(TXTNA);
-  else {
-    if (flagErrCbu) printf(TXTERROR);
-    else            printf(TXTOK);
-  }
-  printf(", SID   %2d", reqSid); 
-  printf(", mode ");
   switch (mode) {
     case 0 :
-      printf("'off'");
+      sprintf(modeStr, "'off'");
+      modeMask = 0;
       break;
     case 1 :
-      printf("'EVT_KICK_START'");
+      sprintf(modeStr, "'EVT_KICK_START'");
+      modeMask = MSKRECMODE1;
       break;
     case 2 :
-      printf("'bunch 2 fast extraction'");
+      sprintf(modeStr, "'bunch 2 fast extraction'");
+      modeMask = MSKRECMODE2;
       break;
     case 3 :
-      printf("'bunch 2 coasting beam'");
+      sprintf(modeStr, "'bunch 2 coasting beam'");
+      modeMask = MSKRECMODE3;
       break;
     case 4 :
-      printf("'bunch 2 bucket'");
+      sprintf(modeStr, "'bunch 2 bucket'");
+      modeMask = MSKRECMODE4;
       break;
     default :
-      printf("'unknonwn'");
+      sprintf(modeStr, "'unknonwn'");
+      modeMask = MSKRECMODE0;
   } // switch mode
+  
+  printf("--- Status ----------- SID %2d, %25s, #transfer %5u ---\n", reqSid, modeStr, iter);
+  iter++;
+  printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI   DE   DI\n");
+
+  printf("required:");
+  for (i=0; i<10; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");
+  
+  printf("received:");
+  for (i=0; i<10; i++) if ((flagEvtRec  >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
 
-  printf("ext: PM ");
-  if (mode < 2) printf(TXTNA);
-  else {
-    if (flagErrPmExt) printf(TXTERROR);
-    else printf(TXTOK);
-  }
-  printf(", KD ");
-  if (mode == 0) printf(TXTNA);
-  else {
-    if (flagErrKickExt) printf(TXTERROR);
-    else printf(TXTOK);
-  }
+  printf("late    :");
+  for (i=0; i<10; i++) if ((flagEvtLate >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
-
-  printf("inj: PM ");
-  if (mode < 4) printf(TXTNA);
-  else {
-    if (flagErrPmInj) printf(TXTERROR);
-    else printf(TXTOK);
-  }
-  printf(", KD ");
-  if (mode < 3) printf(TXTNA);
-  else {
-    if (flagErrKickInj) printf(TXTERROR);
-    else printf(TXTOK);
-  }
-  printf("\n");
+  
+  printf("error   :");
+  for (i=0; i<10; i++) if ((flagEvtErr  >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");  
 } // print status
 
 
 // print set values
 void printSetValues()
 {
-  double   lambdaExt;
-  double   lambdaInj;
+  double   lambdaExt = 0.0;
+  double   lambdaInj = 0.0;
   uint64_t Tdiff;
   uint64_t TBeat;
   double   fBeat;
@@ -412,8 +406,7 @@ void printSetValues()
   if (mode < 4) printf("%s\n\n\n\n\n\n\n\n\n\n", TXTNA);
   else {
     printf("phase corr %4d ns,            %8.3f°\n", cPhase, ns2Degree(cPhase, TH1Ext));
-    printf("\n");
-    printf("--- 'Effective Beating' ------------------------------------------------------\n"); printf("     ");
+    printf("--- 'Virtual Beating' --------------------------------------------------------\n"); printf("     ");
     if (nHExt * fH1Ext < nHInj * fH1Inj) {
       THighFast = TH1Inj * nHExt;
       THighSlow = TH1Ext * nHInj;
@@ -482,7 +475,7 @@ void printGetValues()
     printf(", magnet");
     if (kickProbDelExt != (int)0x7fffffff) printf(" %5d ns", kickProbDelExt);
     else                                   printf("    %s", TXTUNKWN);
-    printf(", RF wait %8ld ns", tTrigExt - tKickStart - DKick);
+    printf(", RF bonus %6ld ns", (long int)(tTrigExt - tKickStart - DKick -cTrigExt));
   }
   printf("\n");
 
@@ -495,7 +488,7 @@ void printGetValues()
     printf(", magnet");
     if (kickProbDelInj != (int)0x7fffffff) printf(" %5d ns", kickProbDelInj);
     else                                   printf("    %s", TXTUNKWN);
-    printf(", RF wait %8ld ns", tTrigInj - tKickStart - DKick);
+    printf(", RF bonus %6ld ns", (long int)(tTrigInj - tKickStart - DKick - cTrigInj));
   }
   printf("\n");
 
@@ -545,6 +538,7 @@ void printRFDiagnostics()
   double         diagPhaseExtStrOld  = 0;
   double         diagPhaseExtSdev    = 0;
   static int32_t diagExtN            = 0;
+
   static int32_t diagPhaseInjMax     = 0x80000000;
   static int32_t diagPhaseInjMin     = 0x7fffffff;
   static double  diagPhaseInjAveNew  = 0;
@@ -566,7 +560,8 @@ void printRFDiagnostics()
   double         diagNueInjSdev      = 0;
 
   double         dummy;
-
+  int            error;
+  
   double         nue;                    // observed frequency
     
   printf("--- RF Diagnostics @ %4.1f ms ---------------------- #ext %5u, #inj %5u ---\n", (double)TDIAGOBS/1000000.0, diagExtN, diagInjN);
@@ -606,10 +601,10 @@ void printRFDiagnostics()
   if (mode < 2) printf("%s\n\n", TXTNA);
   else {
     if (diagPhaseExt  != (int)0x7fffffff) {
-      calcNue(&nue, diagPhaseExtAveNew, (double)TDIAGOBS, TH1Ext);
+      error = calcNue(&nue, diagPhaseExtAveNew, (double)TDIAGOBS, TH1Ext);
       diagNueExtAveOld  = diagNueExtAveNew;
       diagNueExtStrOld  = diagNueExtStrNew;
-      calcStats(&diagNueExtAveNew, diagNueExtAveOld, &diagNueExtStrNew, diagNueExtStrOld, nue, diagExtN, &dummy, &diagNueExtSdev);
+      if (!error) calcStats(&diagNueExtAveNew, diagNueExtAveOld, &diagNueExtStrNew, diagNueExtStrOld, nue, diagExtN, &dummy, &diagNueExtSdev);
       printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueExtSdev, nue - fH1Ext); printf("    ");
       printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
       printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);      
@@ -622,10 +617,10 @@ void printRFDiagnostics()
   if (mode < 4) printf("%s\n\n", TXTNA);
   else {
     if (diagPhaseInj  != (int)0x7fffffff) {
-      calcNue(&nue, diagPhaseInjAveNew, (double)TDIAGOBS, TH1Inj);
+      error = calcNue(&nue, diagPhaseInjAveNew, (double)TDIAGOBS, TH1Inj);
       diagNueInjAveOld  = diagNueInjAveNew;
       diagNueInjStrOld  = diagNueInjStrNew;
-      calcStats(&diagNueInjAveNew, diagNueInjAveOld, &diagNueInjStrNew, diagNueInjStrOld, nue, diagInjN, &dummy, &diagNueInjSdev);
+      if (!error) calcStats(&diagNueInjAveNew, diagNueInjAveOld, &diagNueInjStrNew, diagNueInjStrOld, nue, diagInjN, &dummy, &diagNueInjSdev);
       printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueInjSdev, nue - fH1Inj); printf("    ");
       printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
       printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);            
@@ -798,9 +793,12 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
 {
   uint32_t recEvtNo;
   uint32_t recSid;
+  int      flagLate;
+  int      flagErr;
 
   recEvtNo    = ((id    & 0x0000fff000000000) >> 36);
   recSid      = ((id    & 0x00000000fff00000) >> 20);
+  flagLate    = flags & 0x1;
 
   if (deadline > nextUpdate) {
     updateScreen();
@@ -821,20 +819,29 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
       nextUpdate = saftlib::makeTimeTAI(tKickStart + (uint64_t)TUPDATE);
       break;
     case PMEXT :
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
       nHExt          = ((param & 0xff00000000000000) >> 56);
       TH1Ext         = ((param & 0x00ffffffffffffff));
       mode           = 2;                                       // mode B2E
       break;
     case PMINJ :
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
       nHInj          = ((param & 0xff00000000000000) >> 56);
       TH1Inj         = ((param & 0x00ffffffffffffff));
       mode           = 4;                                       // mode B2B
       break;
     case PREXT :
-      flagErrPmExt   = ((id    & 0x0000000000000001));
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000001));
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       break;
     case PRINJ :
-      flagErrPmInj   = ((id    & 0x0000000000000004) >> 2);
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000004) >> 2);
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       break;
     case TRIGGEREXT :
       if (!flagTransStart){                                     // argh: TRIGGEREXT might happen prior to EVT_KICK_START in case mode EKS AND negative cTrigExt
@@ -843,35 +850,52 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
         flagTransStart=1;
       }
       if (mode == 0) mode = 1;                                  // mode EKS (at least)
-      flagErrCbu     = ((id    & 0x0000000000000010) >> 4);
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000010) >> 4);
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       cTrigExt       = ((param & 0x00000000ffffffff));
       tTrigExt       = deadline.getTAI();
       break;
     case TRIGGERINJ :
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000010) >> 4);
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       cTrigInj       = ((param & 0x00000000ffffffff));
       cPhase         = ((param & 0xffffffff00000000) >> 32);
       tTrigInj       = deadline.getTAI();
       if (mode != 4) mode = 3;                                  // mode B2C
       break;
     case DIAGKICKEXT :
-      flagErrKickExt = ((id    & 0x0000000000000002) >> 1);
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000002) >> 1);
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       kickElecDelExt = ((param & 0xffffffff00000000) >> 32);
       kickProbDelExt = ((param & 0x00000000ffffffff));
       break;
     case DIAGKICKINJ :
-      flagErrKickInj = ((id    & 0x0000000000000002) >> 1);
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
+      flagErr        = ((id    & 0x0000000000000008) >> 3);
+      flagEvtErr    |= flagErr << (recEvtNo - PMEXT);
       kickElecDelInj = ((param & 0xffffffff00000000) >> 32);
       kickProbDelInj = ((param & 0x00000000ffffffff));
       break;
     case DIAGEXT :
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
       diagPhaseExt   = ((param & 0xffffffff00000000) >> 32);
       diagMatchExt   = ((param & 0x00000000ffffffff));
-      diagMatchExt   = getAlignedTS(diagMatchExt, cTrigExt, TH1Ext);
+      diagMatchExt   = fixAlignedTS(diagMatchExt, cTrigExt, TH1Ext);
       break;
     case DIAGINJ :
+      flagEvtRec    |= 1 << (recEvtNo - PMEXT);
+      flagEvtLate   |= flagLate << (recEvtNo - PMEXT);
       diagPhaseInj   = ((param & 0xffffffff00000000) >> 32);
       diagMatchInj   = ((param & 0x00000000ffffffff));
-      diagMatchInj   = getAlignedTS(diagMatchInj, cTrigInj - cPhase, TH1Inj);
+      diagMatchInj   = fixAlignedTS(diagMatchInj, cTrigInj - cPhase, TH1Inj);
       break;
     default :
       ;
@@ -985,7 +1009,7 @@ int main(int argc, char** argv)
     // snoop for B2B
     if (b2bSnoop) {
 
-      nCondition = 3;
+      nCondition = 4;
       
       std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
 
@@ -997,6 +1021,9 @@ int main(int argc, char** argv)
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)ESR << 48);
       condition[2] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, 0));
+
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)CRYRING << 48);
+      condition[3] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, 0));
 
       for (int i=0; i<nCondition; i++) {
         condition[i]->setAcceptLate(true);

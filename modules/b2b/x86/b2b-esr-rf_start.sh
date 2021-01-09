@@ -70,12 +70,20 @@ saft-ecpu-ctl tr0 -c 0x13a1801000000000 0xfffffff000000000 500000 0x801 -dg
 
 # lm32 listens to CMD_B2B_PMEXT message from ESR CBU 
 saft-ecpu-ctl tr0 -c 0x13a5800000000000 0xfffffff000000000 500000 0x800 -dg
+saft-ecpu-ctl tr0 -c 0x13a6800000000000 0xfffffff000000000 500000 0x800 -dg
 
 # lm32 listens to CMD_B2B_TRIGGERINJ message from SIS18 CBU - match diagnostic
 saft-ecpu-ctl tr0 -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
 
+# lm32 listens to CMD_B2B_TRIGGEREXT message from ESR CBU - match diagnostic
+saft-ecpu-ctl tr0 -c 0x1154804000000000 0xfffffff000000000 20000 0x804 -dg
+
 # lm32 listens to >> 20ms delayed<< (CMD_B2B_PMINJ) message from SIS18 CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
 saft-ecpu-ctl tr0 -c 0x13a1801000000000 0xfffffff000000000 19500000 0x81f -d
+
+# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMEXT) message from ESR CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
+saft-ecpu-ctl tr0 -c 0x13a5800000000000 0xfffffff000000000 19500000 0x81e -d
+saft-ecpu-ctl tr0 -c 0x13a6800000000000 0xfffffff000000000 19500000 0x81e -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGERINJ message from SIS18 CBU
 saft-io-ctl tr0 -n IO1 -o 1 -t 0
