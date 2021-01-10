@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2021-Jan-09
+// version: 2021-Jan-10
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -336,7 +336,7 @@ void printStatus()
   
   printf("--- Status ----------- SID %2d, %25s, #transfer %5u ---\n", reqSid, modeStr, iter);
   iter++;
-  printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI   DE   DI\n");
+  printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI  PDE  PDI @ %5.1f ms\n", (double)TUPDATE/1000000.0);
 
   printf("required:");
   for (i=0; i<10; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
@@ -605,9 +605,9 @@ void printRFDiagnostics()
       diagNueExtAveOld  = diagNueExtAveNew;
       diagNueExtStrOld  = diagNueExtStrNew;
       if (!error) calcStats(&diagNueExtAveNew, diagNueExtAveOld, &diagNueExtStrNew, diagNueExtStrOld, nue, diagExtN, &dummy, &diagNueExtSdev);
-      printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueExtSdev, nue - fH1Ext); printf("    ");
-      printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
-      printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);      
+      printf(" 'gDDS       [Hz]' ave(sdev)%13.6f(%8.6f), diff %9.6f\n", nue, diagNueExtSdev, nue - fH1Ext); printf("    ");
+      printf(" 'gDDS       [Hz]' calc     %13.6f - best guess\n", calcDdsNue(nue)); printf("    ");
+      printf(" 'LSA        [Hz]' calc     %13.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);      
     }
     else printf("    %s\n\n", TXTUNKWN);
   } // else: mode >= 2
@@ -621,9 +621,9 @@ void printRFDiagnostics()
       diagNueInjAveOld  = diagNueInjAveNew;
       diagNueInjStrOld  = diagNueInjStrNew;
       if (!error) calcStats(&diagNueInjAveNew, diagNueInjAveOld, &diagNueInjStrNew, diagNueInjStrOld, nue, diagInjN, &dummy, &diagNueInjSdev);
-      printf(" 'gDDS       [Hz]' ave(sdev) %12.6f(%8.6f), diff %9.6f\n", nue, diagNueInjSdev, nue - fH1Inj); printf("    ");
-      printf(" 'gDDS       [Hz]' calc      %12.6f - best guess\n", calcDdsNue(nue)); printf("    ");
-      printf(" 'LSA        [Hz]' calc      %12.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);            
+      printf(" 'gDDS       [Hz]' ave(sdev)%13.6f(%8.6f), diff %9.6f\n", nue, diagNueInjSdev, nue - fH1Inj); printf("    ");
+      printf(" 'gDDS       [Hz]' calc     %13.6f - best guess\n", calcDdsNue(nue)); printf("    ");
+      printf(" 'LSA        [Hz]' calc     %13.6f - proposed safe value", calcDdsNue(nue) + DDSSTEP/2);            
     }
     else printf("    %s\n\n", TXTUNKWN);
   } // else: mode >= 2
