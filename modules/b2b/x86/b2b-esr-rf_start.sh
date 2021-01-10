@@ -5,13 +5,21 @@ set -x
 
 ###########################################
 # setting for production
-#dev/wbm0 -> tr0 -> PM (dev/wbm0)
-#dev/wbm1 -> tr1 -> CBU (dev/wbm1)
+# PM : dev/wbm0, tr0
+# CBU: dev/wbm1, tr1
+export TRPM=dev/wbm0
+export SDPM=tr0
+export TRCBU=dev/wbm1
+export SDCBU=tr1
 ###########################################
-export TRPM=$(saft-eb-fwd tr0)
-#export TRCBU=$(saft-eb-fwd tr1)
-#export TRPM=dev/wbm0
-export TRCBU=dev/wbm0
+# setting for development
+# PM : dev/ttyUSB1, tr0
+# CBU: dev/wbm0, tr1
+#export TRPM=$(saft-eb-fwd tr0)
+#export SDPM=tr0
+#export TRCBU=dev/wbm0
+#export SDCBU=tr1
+###########################################
 
 echo -e B2B start script for ESR rf room
 
