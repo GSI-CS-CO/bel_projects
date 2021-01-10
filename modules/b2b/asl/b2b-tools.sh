@@ -10,14 +10,12 @@ HOSTNAME=$(/bin/hostname -s)
 log 'apply HACK to fix suspicous dynamic library hazard'
 ln -s /usr/lib/libetherbone.so.5 /lib/libetherbone.so.5
 
-log 'copying software, tools and startup script to ramdisk'
+log 'copying software to ramdisk'
 cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
 ldconfig
+cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ui /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ctl /usr/bin/
-cp -a /opt/$NAME/$ARCH/usr/bin/b2b-esr-rf_start.sh /usr/bin/
+cp -a /opt/$NAME/$ARCH/usr/bin/saft-b2b-mon /usr/bin/
+mkdir /tmp/b2bivt
+cp -a /opt/$NAME/$ARCH/tmp/b2bivt/* /tmp/b2bivt
 
-log 'copying firmware to ramdisk'
-cp -a /opt/$NAME/firmware/* /
-
-log 'starting'
-b2b-esr-rf_start.sh
