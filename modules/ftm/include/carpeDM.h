@@ -67,6 +67,7 @@ public:
 
                void completeId(vertex_t v, Graph& g);
 // Graphs to Dot
+             Graph& parseDot(const std::string& dotString, Graph& g); //Parse a .dot string to create unprocessed Graph
                void writeDotFile(const std::string& fn, Graph& g, bool filterMeta);
                void writeDownDotFile(const std::string& fn, bool filterMeta);
                void writeUpDotFile(const std::string& fn, bool filterMeta);

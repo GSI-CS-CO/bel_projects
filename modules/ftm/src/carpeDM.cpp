@@ -51,6 +51,7 @@
 
   void CarpeDM::completeId(vertex_t v, Graph& g)                                       {return impl_->completeId(v, g);}
 // Graphs to Dot
+  Graph& CarpeDM::parseDot(const std::string& dotString, Graph& g)                     { return impl_->parseDot(dotString, g);}
   void CarpeDM::writeDotFile(const std::string& fn, Graph& g, bool filterMeta)         { return impl_->writeDotFile(fn, g, filterMeta);}
   void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)               { return impl_->writeDownDotFile(fn, filterMeta);}
   void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)                 { return impl_->writeUpDotFile(fn, filterMeta);}
