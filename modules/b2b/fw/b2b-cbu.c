@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-January-2021
+ *  version : 12-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000218                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000219                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -387,26 +387,23 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 
 uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
-  uint64_t TSlow;                                   // period of 'slow' H=1 signal              [as] // sic! atoseconds
-  uint64_t TFast;                                   // period of 'fast' H=1 signal              [as]
+  uint64_t TSlow;                                   // period of 'slow' RF signal               [as] // sic! atoseconds
+  uint64_t TFast;                                   // period of 'fast' signal                  [as]
+  uint64_t TRfExt;                                  // period of RF signal extraction           [as]
+  uint64_t TRfInj;                                  // period of RF signal injection            [as]
   uint64_t tSlow;                                   // 0 phase of 'slow' H=1 signal             [as]
   uint64_t tFast;                                   // 0 phase of 'fast' H=1 signal             [as]
-  uint64_t nHSlow;                                  // harmonic number of 'slow' signal 
-  uint64_t nHFast;                                  // harmonic number of 'fast' signal
-  uint64_t THighFast;                               // period of 'fast' higher harmonics signal [as]
-  uint64_t THighSlow;                               // period of 'slow' higher harmonics signal [as]
-  uint64_t Tdiff;                                   // difference of higher harmonics periods   [as]
+  uint64_t tH1ExtAs;                                // 0 phase of H=1 signal extraction         [as]
+  uint64_t tH1InjAs;                                // 0 phase of H=1 signal injection          [as]
+  uint64_t Tdiff;                                   // difference of true RF periods            [as]
+  uint64_t nDiff;                                   // # we need project Tdiff into the future  
   uint64_t tMatch;                                  // 0 phase of best match                    [as]
   uint64_t tD0;                                     // tFast - tSlow                            [as]
-  uint64_t nProject;                                // # we have to project Tdiff into the future
-  uint64_t tMatchEpoch;                             // 'tMatch' in units of [ns]                [ns]
+  uint64_t tMatchNs;                                // 'tMatch' in units of [ns]                [ns]
   uint64_t epoch;                                   // temporary epoch                          [ns] (!)
   uint64_t tNow;                                    // current time                             [ns] (!
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
-  uint64_t tmp;                                     // helper variable
   uint64_t half;                                    // helper variable
-  int      flagExt;                                 // flag: alignment to extraction required
-  uint64_t nPeriod;
   
   // define temporary epoch [ns]
   tNow    = getSysTime();
@@ -415,7 +412,6 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nHExt %u, nHInj %u\n", (unsigned int)(tNow - tH1Ext), (unsigned int)(tNow - tH1Inj), nHExt, nHInj);
 
   // check for unreasonable values
-  if (TH1Ext * nHInj == TH1Inj * nHExt) return COMMON_STATUS_OUTOFRANGE;           // no beating
   if (TH1Ext == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
   if (TH1Inj == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
   if (nHExt  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
@@ -424,67 +420,75 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   if ((tH1Ext + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
   if ((tH1Inj + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
 
+  TRfExt = TH1Ext / nHExt;
+  TRfInj = TH1Inj / nHInj;
+
+  if (TRfExt == TRfInj)                 return COMMON_STATUS_OUTOFRANGE;           // no beating
+
+  tH1ExtAs  = (tH1Ext - epoch) * nineO;
+  tH1InjAs  = (tH1Inj - epoch) * nineO;
+  
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
-  if (TH1Ext * nHInj > TH1Inj * nHExt) {
-    DBPRINT3("b2b-cbu: injection is fast\n");
-    flagExt = 0;
-    TSlow   = TH1Ext;
-    tSlow   = (tH1Ext - epoch) * nineO;
-    nHSlow  = nHExt;
+  if (TRfExt > TRfInj) {
+    TSlow   = TRfExt;
+    tSlow   = tH1ExtAs;
 
-    TFast   = TH1Inj;
-    tFast   = (tH1Inj - epoch) * nineO;
-    nHFast  = nHInj;
-  }
+    TFast   = TRfInj;
+    tFast   = tH1InjAs;
+  } // if extraction has lower frequency
   else {
-    DBPRINT3("b2b-cbu: extraction is fast\n");
-    flagExt = 1;                                    // algorithm will lock to injection trigger, thus we need to realign to extraction later
-    TSlow   = TH1Inj;
-    tSlow   = (tH1Inj - epoch) * nineO;
-    nHSlow  = nHInj;
+    TSlow   = TRfInj;
+    tSlow   = tH1InjAs;
 
-    TFast   = TH1Ext;
-    tFast   = (tH1Ext - epoch) * nineO;
-    nHFast  = nHExt;
-  }
-
-  THighFast = TFast * nHSlow;                       // this is a bit confusing, consider nue_fast * nHFast ~ nue_slow * nHSlow,
-  THighSlow = TSlow * nHFast;                       // and nue = 1 / T
+    TFast   = TRfExt;
+    tFast   = tH1ExtAs;;
+  } // if etraction has higher frequency
 
   // make sure tSlow is earlier than tFast; this is a must for the formula below
-  while (tSlow > tFast)                      tFast = tFast + TFast;
+  while (tSlow > tFast)           tFast = tFast + TFast;
 
   // make sure spacing between tSlow and tFast is not too large; otherwise we need to wait for too long
-  while ((tFast - tSlow) > TFast           ) tFast = tFast - TFast;
+  while ((tFast - tSlow) > TFast) tFast = tFast - TFast;
 
   // now, tSlow is earlier than tFast and both values are at most one period apart; we can now start our calculation
   tD0      = tFast - tSlow;                             // difference between timestamps
-  Tdiff    = THighSlow - THighFast;                     // difference between periods (higher harmonics RF)
+  Tdiff    = TSlow - TFast;                             // difference between periods (higher harmonics RF)
   half     = Tdiff >> 1;                                // required for rounding
-  nProject = tD0 / Tdiff;                               // this basically does a 'floor()'
-  if ((tD0 % Tdiff) > half) nProject++;                 // do a better job with rounding 
-  tMatch   = nProject * THighSlow + tSlow;              
+  nDiff    = tD0 / Tdiff;                               // this basically does a 'floor()'
+  if ((tD0 % Tdiff) > half) nDiff++;                    // do a better job with rounding 
+  tMatch   = nDiff * TSlow + tSlow;              
 
-  *TBeat   = (THighSlow / Tdiff);                       // beating period
+  *TBeat   = (TSlow / Tdiff);                           // beating period
   if ((*TBeat % Tdiff) > half) *TBeat++;
-  *TBeat   = *TBeat * THighSlow;
+  *TBeat   = *TBeat * TSlow;
 
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
-  // pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
+  //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
   // check, that tMatch is far enough in the future; if not, add one beating period
   if ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;
 
-  if (flagExt) {
-    half    = TH1Ext >> 1;
-    nPeriod = (tMatch - tFast) / TH1Ext;
-    if (((tMatch - tFast) % TH1Ext) > half) nPeriod++;
-    tMatch  = tFast + nPeriod * TH1Ext;
-  } // if flagExt
- 
-  // convert back to [ns] and get rid of temporary epoch
-  tMatchEpoch  = (uint64_t)((double)tMatch / (double)nineO);
-  *tPhaseMatch =  tMatchEpoch + epoch;
+  // if the injection ring is larger than the extraction ring
+  // we need to align to the injection H=1 group DDS first
+  if (nHInj > nHExt) {
+    half   = TH1Inj >> 1;
+    nDiff  = (tMatch - tH1InjAs) / TH1Inj;
+    if (((tMatch - tH1InjAs) % TH1Inj) > half) nDiff++;
+    tMatch  = tH1InjAs + nDiff * TH1Inj;
+  } // if injection ring is larger
+  //pp_printf("TH1Inj %llu, nPeriod %llu, nHInj %u, flagExtSlow %d\n", TH1Inj, nPeriod, nHInj, flagExtSlow);
+  
+  // kickers need to trigger on extraction RF: final alignment to extraction ring
+  // !!! this only works for the simplified case, if the ratio of circumference 
+  // of both rings is an integer number
+  half    = TH1Ext >> 1;
+  nDiff   = (tMatch - tH1ExtAs) / TH1Ext;
+  if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
+  tMatch  = tH1ExtAs + nDiff * TH1Ext;
+  
+  // convert back to TAI [ns]
+  tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
+  *tPhaseMatch =  tMatchNs + epoch;
 
   return COMMON_STATUS_OK;    
 } // calcPhaseMatch

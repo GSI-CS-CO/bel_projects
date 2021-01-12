@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2021-Jan-10
+// version: 2021-Jan-11
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -359,13 +359,19 @@ void printStatus()
 // print set values
 void printSetValues()
 {
-  double   lambdaExt = 0.0;
-  double   lambdaInj = 0.0;
-  uint64_t Tdiff;
-  uint64_t TBeat;
-  double   fBeat;
-  uint64_t THighFast;
-  uint64_t THighSlow;
+  double   TH1ExtNs = 0.0;     // H=1 period [ns]
+  double   TH1InjNs = 0.0;     // H=1 period [ns]
+  uint64_t TRfExt   = 0;       // true RF period
+  uint64_t TRfInj   = 0;       // true RF period
+  uint64_t TRfFast;            // RF period of faster frequency
+  uint64_t TRfSlow;            // RF period of slower frequency
+  uint64_t Tdiff;              // difference between true RF periods
+  uint64_t nPeriods;           // helper variable
+  uint64_t TBeat;              // beating period
+  double   fBeat;              // beating frequency
+  double   nBeatExt;           // number of RF cycles within TBeat extraction
+  double   nBeatInj;           // number of RF cycles within TBeat injection
+  double   TBeatDelta;         // maximum deviation after integer RF cycles within TBeat
 
   printf("--- Set Values ---------------------------------------------------------------\n");
   printf("ext: kick  corr");
@@ -374,9 +380,9 @@ void printSetValues()
   printf("; gDDS  ");
   if (mode < 2) printf(TXTNA);
   else {
-    lambdaExt = (double)TH1Ext / 1000000000.0;
-    fH1Ext    = 1000000000.0 / lambdaExt;
-    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Ext, lambdaExt, nHExt);
+    TH1ExtNs  = (double)TH1Ext / 1000000000.0;
+    fH1Ext    = 1000000000.0 / TH1ExtNs;
+    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Ext, TH1ExtNs, nHExt);
   }
   printf("\n");
 
@@ -391,9 +397,9 @@ void printSetValues()
   printf("; gDDS  ");
   if (mode < 4) printf(TXTNA);
   else {
-    lambdaInj = (double)TH1Inj / 1000000000.0;
-    fH1Inj    = 1000000000.0 / lambdaInj;
-    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Inj, lambdaInj, nHInj);
+    TH1InjNs  = (double)TH1Inj / 1000000000.0;
+    fH1Inj    = 1000000000.0 / TH1InjNs;
+    printf(" %15.6f Hz, %15.6f ns, H =%2d", fH1Inj, TH1InjNs, nHInj);
   }
   printf("\n");
 
@@ -403,34 +409,43 @@ void printSetValues()
   printf("\n");
 
   printf("B2B: ");
-  if (mode < 4) printf("%s\n\n\n\n\n\n\n\n\n\n", TXTNA);
+  if (mode < 4) printf("%s\n\n\n\n\n\n\n", TXTNA);
   else {
     printf("phase corr %4d ns,            %8.3f°\n", cPhase, ns2Degree(cPhase, TH1Ext));
-    printf("--- 'Virtual Beating' --------------------------------------------------------\n"); printf("     ");
-    if (nHExt * fH1Ext < nHInj * fH1Inj) {
-      THighFast = TH1Inj * nHExt;
-      THighSlow = TH1Ext * nHInj;
-    } // extracion is slower
-    else {
-      THighFast = TH1Ext * nHInj;
-      THighSlow = TH1Inj * nHExt;
-    } // extraction is faster
+    printf("     Beating -----------------------------------------------------------------\n");
+    TRfExt = TH1Ext / nHExt;
+    TRfInj = TH1Inj / nHInj;
+    if (TRfExt != TRfInj) {
+      if (TRfExt > TRfInj) {
+        TRfFast = TRfInj;
+        TRfSlow = TRfExt;;
+      } // extraction has slower frequency
+      else {
+        TRfFast = TRfExt;
+        TRfSlow = TRfInj;
+      } // injection has slower frequency
+      
+      Tdiff = TRfSlow - TRfFast;
+      if (Tdiff > 0) nPeriods = TRfSlow / Tdiff;
+      else           nPeriods = 0;
+      /* chk if ((TRfSlow % Tdiff) > (Tdiff >> 1)) nPeriods++; */
+      TBeat = (nPeriods * TRfSlow);
 
-    Tdiff = THighSlow - THighFast;
-    if (Tdiff > 0) TBeat = THighSlow / Tdiff;
-    else           TBeat = 0;
-    if ((TBeat % Tdiff) > (Tdiff >> 1)) TBeat++;
-    TBeat = (TBeat * THighSlow);
-    fBeat = 1000000000000000000.0 / double(TBeat);
-    printf("beating                      %13.6f Hz,  %15.6f ns\n", fBeat, (double)TBeat/1000000000.0);  printf("     ");
-    printf("ext                        %15.6f Hz,  %15.6f ns\n", fH1Ext / (double)nHInj, lambdaExt * (double)nHInj); printf("     ");
-    printf("inj                        %15.6f Hz,  %15.6f ns\n", fH1Inj / (double)nHExt, lambdaInj * (double)nHExt); printf("     ");
-    printf("ext                                             %12.3f periods\n", (double)TBeat / (double)(TH1Ext * nHInj)); printf("     ");
-    printf("inj                                             %12.3f periods\n", (double)TBeat / (double)(TH1Inj * nHExt)); printf("     ");
-    printf("diff                           %8.3f°               %8.6f ns\n", ns2Degree((double)Tdiff/1000000000.0, TH1Ext),(double)Tdiff/1000000000.0);
-    printf("     ---------- gDDS(H=1) ---------------------------------------------------\n"); printf("     ");
-    printf("ext                                             %12.3f periods\n", (double)TBeat / (double)TH1Ext); printf("     ");
-    printf("inj                                             %12.3f periods", (double)TBeat / (double)TH1Inj);
+      fBeat      = 1000000000000000000.0 / double(TBeat);
+      nBeatExt   = (double)TBeat / (double)TRfExt;
+      nBeatInj   = (double)TBeat / (double)TRfInj;
+      TBeatDelta = (round(nBeatExt) * TRfExt - round(nBeatInj)*TRfInj) / 1000000000.0;
+      printf("     ext                        %15.6f Hz,  %15.6f ns\n", fH1Ext * (double)nHExt, TH1ExtNs / (double)nHExt);
+      printf("     inj                        %15.6f Hz,  %15.6f ns\n", fH1Inj * (double)nHInj, TH1InjNs / (double)nHInj);
+      printf("     diff                           %8.3f°               %8.6f ns\n", ns2Degree((double)Tdiff/1000000000.0, TRfExt),(double)Tdiff/1000000000.0);
+      printf("     beating                      %13.6f Hz,  %15.6f ns\n", fBeat, (double)TBeat/1000000000.0); 
+      printf("     ext                                             %15.6f periods\n", nBeatExt);
+      printf("     inj                                             %15.6f periods\n", nBeatInj);
+      printf("     calc delta [@1ns]             %9.3f° [%6.3f°]    %8.6f ns", ns2Degree(TBeatDelta, TRfExt), ns2Degree(1.0, TRfExt), TBeatDelta);
+    }
+    else {
+      printf("     no beating: identical frequencies for injection and extraction\n\n\n\n\n\n");
+    } // else
   }
   printf("\n");
   

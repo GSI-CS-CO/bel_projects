@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000218                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000219                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -346,7 +346,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
     // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and H=1 group DDS signals
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
-    case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
+    case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
         reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
