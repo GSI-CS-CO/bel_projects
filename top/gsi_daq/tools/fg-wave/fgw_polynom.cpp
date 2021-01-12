@@ -39,6 +39,7 @@ using namespace Scu;
  */
 constexpr float Y_PADDING = 0.5;
 
+#if 1
    constexpr uint c_frequencyTab[] =
    {
        16,
@@ -50,6 +51,31 @@ constexpr float Y_PADDING = 0.5;
       1000,
       2000
    };
+#else
+   constexpr double c_frequencyTab[] =
+   {
+    #if 0
+        16000,
+        32000,
+        64000,
+       125000,
+       250000,
+       500000,
+      1000000,
+      2000000
+    #else
+      2000000,
+      1000000,
+       500000,
+       250000,
+       125000,
+        64000,
+        32000,
+        16000
+    #endif
+   };
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -99,6 +125,8 @@ double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
  */
 void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
 {
+   constexpr double FREQUENCY = SCU_FREQUENCY * 2;
+
    const uint repeat = m_rCommandline.getRepetitions();
    out << "set terminal " << m_rCommandline.getGnuplotTerminal()
        << " title \"File: " << m_rCommandline.getFileName() << '"' << endl;
@@ -119,7 +147,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
       daConversions += steps;
    }
    assert( xRange > 0.0 );
-   xRange /= (SCU_FREQUENCY * 2);
+   xRange /= FREQUENCY;
    const double frequency = 1.0 / xRange;
    const double loadFrequency = rVect.size() / xRange;
    xRange *= repeat;
@@ -161,7 +189,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
             dotsPerTuple = steps;
          const uint interval = steps / dotsPerTuple;
          assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
-         const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / (SCU_FREQUENCY * 2);
+         const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / FREQUENCY;
          for( uint i = 0; i < steps; i++ )
          {
             if( (i % interval) == 0 )
@@ -185,7 +213,7 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
                 * DAQ_VPP_MAX / F_MAX)
              << endl;
          tOrigin += (static_cast<double>(c_frequencyTab[polynom.frequ])
-                 * calcStep( polynom.step ) / (SCU_FREQUENCY * 2));
+                 * calcStep( polynom.step ) / FREQUENCY);
       }
    }
    out << 'e' << endl;

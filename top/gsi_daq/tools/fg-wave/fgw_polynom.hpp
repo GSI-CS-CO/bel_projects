@@ -37,11 +37,11 @@ class Polynom
 {
    static constexpr uint SCU_FREQUENCY = 125000000;
    static constexpr long double F_MAX = static_cast<long double>(static_cast<uint64_t>(~0));
-   
+
    static uint calcStep( const uint i )
    {
       assert( i <= 7 );
-      return 250 << i;
+      return (250 << i);
    }
 
    CommandLine& m_rCommandline;
