@@ -24,14 +24,14 @@ ENTITY Rd_Apk_ID IS
 		Rd_Apk_ID_Activ		: OUT	STD_LOGIC;
 		Dtack_Apk_ID		: OUT	STD_LOGIC
 	);
-	
+
 END Rd_Apk_ID;
 
 
 
 ARCHITECTURE arch_Rd_Apk_ID OF Rd_Apk_ID IS
 
-	
+
 	CONSTANT 	C_Rd_K0_ID 			: STD_LOGIC_VECTOR(7 DOWNTO 0) := X"16";
 	CONSTANT 	C_Rd_K1_ID 			: STD_LOGIC_VECTOR(7 DOWNTO 0) := X"18";
 	CONSTANT 	C_Rd_K2_ID 			: STD_LOGIC_VECTOR(7 DOWNTO 0) := X"46";
@@ -40,17 +40,17 @@ ARCHITECTURE arch_Rd_Apk_ID OF Rd_Apk_ID IS
 	SIGNAL		S_Rd_K1_ID			: STD_LOGIC;
 	SIGNAL		S_Rd_K2_ID			: STD_LOGIC;
 	SIGNAL		S_Rd_K3_ID			: STD_LOGIC;
-	
+
 	SIGNAL		S_Update_Apk_ID		: STD_LOGIC;
-	
+
 	SIGNAL		S_Rd_Dtack			: STD_LOGIC;
 	SIGNAL		S_Wr_Dtack			: STD_LOGIC;
 	SIGNAL		S_Dtack_Apk_ID		: STD_LOGIC;
 
 	SIGNAL		Sel					: std_logic_vector(3 DOWNTO 0);
-	
+
 	SIGNAL		S_nRESET		: STD_LOGIC;
-	
+
 BEGIN
 
 S_nRESET <= not Powerup_Res;

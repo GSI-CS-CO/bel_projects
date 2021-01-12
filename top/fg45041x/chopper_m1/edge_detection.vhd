@@ -7,7 +7,7 @@ entity edge_detection is
 			input:		in std_logic;
 			pos_edge:	out std_logic;
 			neg_edge:	out std_logic;
-			
+
 			Reset:		in std_logic;
 			Clk:		in std_logic
 		);
@@ -27,11 +27,11 @@ begin
 			s_sig2 <= s_sig1;
 		end if;
 	end process;
-	
+
 	pos_edge <= s_sig1 and not s_sig2;
-	
+
 	neg_edge <= not s_sig1 and s_sig2;
-	
+
 
 end edge_detect_arch;
-			
+

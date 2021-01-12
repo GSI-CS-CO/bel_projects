@@ -1,5 +1,5 @@
 LIBRARY ieee;
-USE ieee.std_logic_1164.all; 
+USE ieee.std_logic_1164.all;
 USE IEEE.STD_LOGIC_arith.all;
 USE IEEE.STD_LOGIC_unsigned.all;
 LIBRARY lpm;
@@ -83,7 +83,7 @@ ARCHITECTURE Arch_APK_Stecker_ID_Cntrl OF APK_Stecker_ID_Cntrl IS
 			clock	: IN STD_LOGIC ;
 			cnt_en	: IN STD_LOGIC := '1';
 			q		: OUT STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0);
-			sset	: IN STD_LOGIC 
+			sset	: IN STD_LOGIC
 			);
 	END COMPONENT;
 
@@ -97,7 +97,7 @@ ARCHITECTURE Arch_APK_Stecker_ID_Cntrl OF APK_Stecker_ID_Cntrl IS
 
 	SIGNAL		S_Start_Edge		: STD_LOGIC;
 	SIGNAL		S_Start_ID_Sync		: STD_LOGIC_VECTOR(1 DOWNTO 0);
-	
+
 	SIGNAL		S_K3_ID				: STD_LOGIC_VECTOR (15 DOWNTO 0);
 	SIGNAL		S_K2_ID				: STD_LOGIC_VECTOR (15 DOWNTO 0);
 	SIGNAL		S_K1_ID				: STD_LOGIC_VECTOR (15 DOWNTO 0);
@@ -106,8 +106,8 @@ ARCHITECTURE Arch_APK_Stecker_ID_Cntrl OF APK_Stecker_ID_Cntrl IS
 	SIGNAL		S_La_Ena_ID			: STD_LOGIC;
 
 	SIGNAL		S_ID_Cntrl_Done		: STD_LOGIC;
-	
-	
+
+
 	TYPE	T_ID_SM	IS	(
 						ID_Idle,
 						GR_ID_Sel,
@@ -119,7 +119,7 @@ ARCHITECTURE Arch_APK_Stecker_ID_Cntrl OF APK_Stecker_ID_Cntrl IS
 	SIGNAL	S_ID_SM	:	T_ID_SM;
 
 
-BEGIN 
+BEGIN
 
 P_Edge: PROCESS (clk, Reset)
 	BEGIN
@@ -141,7 +141,7 @@ P_Edge: PROCESS (clk, Reset)
 wait_with_lpm: IF Use_LPM = 1 GENERATE -----------------------------------------------
 
 BEGIN
-    
+
 wait_cnt : lpm_counter
 	GENERIC MAP (
 				lpm_width	=> S_Wait_Cnt'LENGTH,
@@ -155,9 +155,9 @@ wait_cnt : lpm_counter
 			cnt_en	=> S_Sel_Wait_Cnt,
 			q		=> S_Wait_Cnt
 			);
-			
+
 END GENERATE wait_with_lpm; ----------------------------------------------------------
-			
+
 
 wait_without_lpm: IF Use_LPM = 0 GENERATE --------------------------------------------
 
@@ -174,9 +174,9 @@ P_Wait:	PROCESS (clk, Reset)
 			ELSE
 				S_Wait_Cnt <= S_Wait_Cnt;
 			END IF;
-		END IF;			
+		END IF;
 	END PROCESS;
-	
+
 END GENERATE wait_without_lpm; -------------------------------------------------------
 
 
@@ -185,23 +185,23 @@ P_ID_SM:	PROCESS (clk, Reset)
 	    IF Reset = '1' THEN
 			S_ID_SM <= ID_Idle;
 			S_ID_Cntrl_Done <= '0';
-			
+
 	    ELSIF rising_edge(clk) THEN
-			
+
 			S_Wait_Fin <= (S_Wait_Fin(0) & S_Wait_Cnt(S_Wait_Cnt'LEFT)); -- Schiebe-Reg. wird zur Flankenerkennung genutzt.
 
 			S_Ld_Wait <= '0';
 			S_La_Ena_ID <= '0';
 			S_Sel_Wait_Cnt <= '0';
-			
+
 			CASE S_ID_SM IS
 
-			   	WHEN ID_Idle =>
+	                        WHEN ID_Idle =>
 					S_Ld_Wait <= '1';
 					IF S_Start_Edge = '1' THEN
 						S_ID_SM <= GR_ID_Sel;
 					END IF;
-				
+
 				WHEN GR_ID_Sel =>
 					S_ID_Cntrl_Done <= '0';
 					S_Sel_Wait_Cnt <= '1';
@@ -210,7 +210,7 @@ P_ID_SM:	PROCESS (clk, Reset)
 					ElSIF S_Wait_Fin = "10" THEN
 						S_ID_SM <= ID_En;
 					END IF;
-					
+
 				WHEN ID_En =>
 					S_Sel_Wait_Cnt <= '1';
 					IF S_Wait_Fin = "01" THEN
@@ -219,7 +219,7 @@ P_ID_SM:	PROCESS (clk, Reset)
 					ElSIF S_Wait_Fin = "10" THEN
 						S_ID_SM <= GR_ID_Dis;
 					END IF;
-					
+
 				WHEN GR_ID_Dis =>
 					S_Sel_Wait_Cnt <= '1';
 					IF S_Wait_Fin = "01" THEN
@@ -227,16 +227,16 @@ P_ID_SM:	PROCESS (clk, Reset)
 					ElSIF S_Wait_Fin = "10" THEN
 						S_ID_SM <= ID_Done;
 					END IF;
-						
+
 				WHEN ID_Done =>
 					S_Sel_Wait_Cnt <= '1';
 					IF S_Wait_Fin = "01" THEN
 						S_ID_Cntrl_Done <= '1';
 						S_ID_SM <= ID_Idle;
 					END IF;
-			
+
 			END CASE;
-			
+
 		END IF;
 	END PROCESS P_ID_SM;
 
@@ -301,4 +301,4 @@ A_nK0_ID_En <= DB_K0_INP WHEN NOT ((S_ID_SM = ID_Idle) OR (S_ID_SM = ID_Done)) E
 
 ID_Cntrl_Done <= '1' WHEN S_ID_Cntrl_Done = '1' AND S_ID_SM = ID_Idle ELSE '0';
 
-END; 
+END;

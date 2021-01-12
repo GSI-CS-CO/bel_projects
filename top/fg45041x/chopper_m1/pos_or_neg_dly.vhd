@@ -6,8 +6,8 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.MATH_REAL.ALL;
 
 
-LIBRARY lpm; 
-USE lpm.lpm_components.all; 
+LIBRARY lpm;
+USE lpm.lpm_components.all;
 
 entity pos_or_neg_dly is
 	generic (
@@ -29,13 +29,14 @@ end pos_or_neg_dly;
 
 architecture  pos_or_neg_dly_arch of pos_or_neg_dly is
 
-type state_type is (	Idle,
-	 					pos_dly_activ,
-						wait_neg_edge,
-						neg_dly_activ,
-						in_is_pos 
-					);
-					
+type state_type is (
+  Idle,
+  pos_dly_activ,
+  wait_neg_edge,
+  neg_dly_activ,
+  in_is_pos
+);
+
 signal 	s_sync_sig_pos: std_logic;
 signal	s_sync_sig_neg: std_logic;
 signal 	state:	state_type;
@@ -52,26 +53,28 @@ ASSERT NOT(Edge_delay_cnt < 3)
 SEVERITY ERROR;
 
 
-delay_cnt: lpm_counter GENERIC MAP ( LPM_WIDTH => LPM_WIDTH,
-									LPM_SVALUE => integer'image(c_delay_start),
-									LPM_DIRECTION => "DOWN"
-									)
-						PORT MAP (	clock => Clk,
-						 			cnt_en => counter_cnt_en,
-									q => counter_q,
-									sset => counter_sset 
-									);
+delay_cnt: lpm_counter GENERIC MAP (
+  LPM_WIDTH     => LPM_WIDTH,
+  LPM_SVALUE    => integer'image(c_delay_start),
+  LPM_DIRECTION => "DOWN"
+)
+PORT MAP (
+  clock  => Clk,
+  cnt_en => counter_cnt_en,
+  q      => counter_q,
+  sset   => counter_sset
+);
 
 
-SYNC: process (Clk, Reset)
- begin
-		if Reset = '1' then
-			s_sync_sig_pos <= '0';
-			s_sync_sig_neg <= '0';
-     	elsif (rising_edge(Clk)) then 
-			s_sync_sig_pos <= Edge_pos;
-			s_sync_sig_neg <= Edge_neg;
-     	end if;
+sync: process (Clk, Reset)
+begin
+  if Reset = '1' then
+    s_sync_sig_pos <= '0';
+    s_sync_sig_neg <= '0';
+  elsif (rising_edge(Clk)) then
+    s_sync_sig_pos <= Edge_pos;
+    s_sync_sig_neg <= Edge_neg;
+  end if;
 end process;
 
 
@@ -87,9 +90,9 @@ begin
 		counter_sset <= '0';
 		--s_Sig_out_s <= '0';
 		--s_Sig_out_r <= '0';
-	
+
 		CASE (state) IS
-			
+
 			WHEN Idle =>
 				counter_sset <= '1';
 				If (s_sync_sig_pos = '1' AND s_sync_sig_neg = '0') THEN

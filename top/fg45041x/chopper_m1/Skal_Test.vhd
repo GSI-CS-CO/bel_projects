@@ -8,18 +8,18 @@ ENTITY Skal_Test IS
 			ST_160_Pol			: INTEGER := 1;
 			No_Port_Dir_Test	: INTEGER := 0;
 			K3_Input			: INTEGER := 1;
-			K3D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_3 Datenleitungen. Wird veglichen mit A_K3D_SPG.  
+			K3D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_3 Datenleitungen. Wird veglichen mit A_K3D_SPG.
 			K3C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_3 Steuerleitungen. Wird veglichen mit A_K3C_SPG.
 			K2_Input			: INTEGER := 1;
-			K2D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_2 Datenleitungen. Wird veglichen mit A_K2D_SPG.  
+			K2D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_2 Datenleitungen. Wird veglichen mit A_K2D_SPG.
 			K2C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_2 Steuerleitungen. Wird veglichen mit A_K2C_SPG.
 			Gr1_APK_ID			: INTEGER := 1;
 			Gr1_16Bit			: INTEGER := 1;
 			K1_Input			: INTEGER := 1;
-			K1D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_1 Datenleitungen. Wird veglichen mit A_K1D_SPG.  
+			K1D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_1 Datenleitungen. Wird veglichen mit A_K1D_SPG.
 			K1C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_1 Steuerleitungen. Wird veglichen mit A_K1C_SPG.
 			K0_Input			: INTEGER := 1;
-			K0D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_0 Datenleitungen. Wird veglichen mit A_K0D_SPG.  
+			K0D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_0 Datenleitungen. Wird veglichen mit A_K0D_SPG.
 			K0C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_0 Steuerleitungen. Wird veglichen mit A_K0C_SPG.
 			Gr0_APK_ID			: INTEGER := 1;
 			Gr0_16Bit			: INTEGER := 1;
@@ -33,13 +33,13 @@ ENTITY Skal_Test IS
 		VG_Mod_Skal			: IN STD_LOGIC_VECTOR(7 downto 0);
 		St_160_Skal			: IN STD_LOGIC_VECTOR(7 downto 0);
 		Logik				: IN STD_LOGIC_VECTOR(5 downto 0);
-		A_K3D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_3 Datenleitungen an ("0" = pull down, "1" = pull up).  
+		A_K3D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_3 Datenleitungen an ("0" = pull down, "1" = pull up).
 		A_K3C_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_3 Kontrollsignale an ("0" = pull down, "1" = pull up).
-		A_K2D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_2 Datenleitungen an ("0" = pull down, "1" = pull up).  
+		A_K2D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_2 Datenleitungen an ("0" = pull down, "1" = pull up).
 		A_K2C_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_2 Kontrollsignale an ("0" = pull down, "1" = pull up).
-		A_K1D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_1 Datenleitungen an ("0" = pull down, "1" = pull up).  
+		A_K1D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_1 Datenleitungen an ("0" = pull down, "1" = pull up).
 		A_K1C_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_1 Kontrollsignale an ("0" = pull down, "1" = pull up).
-		A_K0D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_0 Datenleitungen an ("0" = pull down, "1" = pull up).  
+		A_K0D_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_0 Datenleitungen an ("0" = pull down, "1" = pull up).
 		A_K0C_SPG			: IN STD_LOGIC;		-- zeigt den Default Level der Kanal_0 Kontrollsignale an ("0" = pull down, "1" = pull up).
 		clk 				: IN STD_LOGIC;
 		All_Okay 			: OUT STD_LOGIC;
@@ -67,21 +67,21 @@ ARCHITECTURE Arch_Skal_Test OF Skal_Test IS
 	CONSTANT	C_Gr0_APK_ID	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(Gr0_APK_ID, 1);
 	CONSTANT	C_Gr0_16Bit		: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(Gr0_16Bit, 1);
 
-	CONSTANT	C_K0D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K0D_Def_Level, 1);  
+	CONSTANT	C_K0D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K0D_Def_Level, 1);
 	CONSTANT	C_K0C_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K0C_Def_Level, 1);
-	CONSTANT	C_K1D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K1D_Def_Level, 1);  
+	CONSTANT	C_K1D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K1D_Def_Level, 1);
 	CONSTANT	C_K1C_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K1C_Def_Level, 1);
-	CONSTANT	C_K2D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K2D_Def_Level, 1);  
+	CONSTANT	C_K2D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K2D_Def_Level, 1);
 	CONSTANT	C_K2C_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K2C_Def_Level, 1);
-	CONSTANT	C_K3D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K3D_Def_Level, 1);  
+	CONSTANT	C_K3D_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K3D_Def_Level, 1);
 	CONSTANT	C_K3C_Def_Level	: STD_LOGIC_VECTOR(0 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(K3C_Def_Level, 1);
 
-	
+
 	SIGNAL		S_All_Okay		: STD_LOGIC;
 	SIGNAL		S_Mod_Skal_Ok	: STD_LOGIC;
 	SIGNAL		S_Logic_Ok		: STD_LOGIC;
 	SIGNAL		S_Level_Ok		: STD_LOGIC;
-	
+
 BEGIN
 
 ST_160: IF ST_160_Pol = 1 GENERATE -----------------------------------------------
@@ -92,7 +92,7 @@ P_Skal_Test:	PROCESS (clk)
 
 			IF No_Logic_Test = 0 THEN
 				IF 		VG_Mod_Skal(7 DOWNTO 4) = (C_K1_Input(0) & C_K0_Input(0) & C_Gr0_APK_ID(0) & C_Gr0_16Bit(0))
-			    	AND St_160_Skal(7 DOWNTO 4) = (C_K3_Input(0) & C_K2_Input(0) & C_Gr1_APK_ID(0) & C_Gr1_16Bit(0)) THEN
+                                        AND St_160_Skal(7 DOWNTO 4) = (C_K3_Input(0) & C_K2_Input(0) & C_Gr1_APK_ID(0) & C_Gr1_16Bit(0)) THEN
 					S_Mod_Skal_Ok <= '1';
 				ELSE
 					S_Mod_Skal_Ok <= '0';
@@ -111,7 +111,7 @@ P_Skal_Test:	PROCESS (clk)
 			ELSE
 				S_Logic_Ok <= '1';
 			END IF;
-			
+
 			IF No_Level_Test = 0 THEN
 				IF		A_K0C_SPG = C_K0C_Def_Level(0) AND A_K0D_SPG = C_K0D_Def_Level(0)
 					AND A_K1C_SPG = C_K1C_Def_Level(0) AND A_K1D_SPG = C_K1D_Def_Level(0)
@@ -124,7 +124,7 @@ P_Skal_Test:	PROCESS (clk)
 			ELSE
 				S_Level_Ok <= '1';
 			END IF;
-			
+
 			IF  S_Mod_Skal_Ok = '1' AND S_Logic_Ok = '1' AND S_Level_Ok = '1' THEN
 				S_All_Okay <= '1';
 				nSkal_Okay_LED <= '0';
@@ -132,10 +132,10 @@ P_Skal_Test:	PROCESS (clk)
 				S_All_Okay <= '0';
 				nSkal_Okay_LED <= 'Z';
 			END IF;
-			
+
 		END IF;
 	END PROCESS;
-	
+
 nK0_Switch_Ena <= '0';
 nK1_Switch_Ena <= '0';
 nK2_Switch_Ena <= '0';
@@ -168,7 +168,7 @@ P_Skal_Test:	PROCESS (clk)
 			ELSE
 				S_Level_Ok <= '1';
 			END IF;
-			
+
 			IF  S_Mod_Skal_Ok = '1' AND S_Level_Ok = '1' THEN
 				S_All_Okay <= '1';
 				nSkal_Okay_LED <= '0';
@@ -178,13 +178,13 @@ P_Skal_Test:	PROCESS (clk)
 			END IF;
 		END IF;
 	END PROCESS;
-	
+
 nK0_Switch_Ena <= '0';
 nK1_Switch_Ena <= '0';
 nK2_Switch_Ena <= '0';	-- obwohl der Kanal_2 nicht gebraucht wird muss er selektiert werden, damit die Pulldowns	--
-						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				-- 
+						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				--
 nK3_Switch_Ena <= '0';	-- obwohl der Kanal_3 nicht gebraucht wird muss er selektiert werden, damit die Pulldowns	--
-						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				-- 
+						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				--
 
 
 END GENERATE ST_96; -------------------------------------------------------------

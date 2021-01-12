@@ -11,7 +11,7 @@
 --|		Korrektur: Im Prozess "align_anf_hsi" wird "Off_Anforderung_In" mit "HSI_ALV" maskiert.						|
 --|				Und im Prozess "align_anf_hli" wird "Off_Anforderung_In" mit "HLI_ALV" maskiert.					|
 --+-----------------------------------------------------------------------------------------------------------------+
---| Vers_14:																										|																										
+--| Vers_14:																										|
 --| 	Autor: S. Rauch																								|
 --|		Datum: 11.10.2010																							|
 --|		Grund: Fehlerbehebung																						|
@@ -30,8 +30,8 @@ USE IEEE.STD_LOGIC_arith.all;
 USE IEEE.STD_LOGIC_unsigned.all;
 use IEEE.MATH_REAL.ALL;
 
-LIBRARY lpm; 
-USE lpm.lpm_components.all; 
+LIBRARY lpm;
+USE lpm.lpm_components.all;
 
 entity chopper_m1_logic is
 		GENERIC ( 	Clk_in_HZ : Integer := 200000000;	--! Frequenz des Clock Signals in Herz
@@ -46,16 +46,16 @@ entity chopper_m1_logic is
 			Interlock_Reg_WR:			IN std_logic;
 			TK8_Delay_WR:				IN std_logic;
 			CLK:						IN std_logic;		--! Sollte der Takt sein, der auch in den anderen Macros verwendet wird.
-			
+
 			Reset:						IN std_logic;
-			
+
 			Beam_Control_In:			IN std_logic_vector(15 downto 0) := x"0000"; --! Eingang für schnelle Signale
 			Strahlalarm_In:				IN std_logic_vector(15 downto 0) := x"FFFF"; --! Eingang für schnelle Signale
-															
+
 															--! Off Signale sind Active high
-			Off_Anforderung_In:			IN std_logic;		--! Ergebnis vom Chopper_Macro2, wird auf der zweiten MB64-Karte aktiviert und über die Bus_IO(0)-Leitung angeliefert.										
+			Off_Anforderung_In:			IN std_logic;		--! Ergebnis vom Chopper_Macro2, wird auf der zweiten MB64-Karte aktiviert und über die Bus_IO(0)-Leitung angeliefert.
 			Off_UU_In:					IN std_logic;		--! Ergebnis vom Chopper_Macro2, wird auf der zweiten MB64-Karte aktiviert und	über die Bus_IO(1)-Leitung angeliefert.										--
-			
+
 			Strahlweg_Reg:				OUT std_logic_vector(15 downto 0);	--! Strahlwegregister
 			Strahlweg_Maske:			OUT std_logic_vector(15 downto 0);	--! Strahlwegmaske
 
@@ -63,34 +63,34 @@ entity chopper_m1_logic is
 
 			Beam_Control_Out:			OUT std_logic_vector(15 downto 0);	--! Hardware Ausgang
 			Trafo_Timing_Out:			OUT std_logic_vector(15 downto 0);	--! Hardware Ausgang
-			
+
 			Interlock_Reg:				OUT std_logic_vector(15 downto 0);
 			TK8_Delay:					OUT std_logic_vector(15 downto 0);
-		
-			
+
+
 			HSI_act_pos_latch_out:		out std_logic_vector(15 downto 0);	--! Ausgang für die HSI Istwertmessung
 			HSI_neg_latch_out:			out	std_logic_vector(15 downto 0);	--! Ausgang für die HSI Istwertmessung
 			HSI_act_neg_latch_out:		out	std_logic_vector(15 downto 0);	--! Ausgang für die HSI Istwertmessung
-			
+
 			HLI_act_pos_latch_out:		out std_logic_vector(15 downto 0);	--! Ausgang für die HLI Istwertmessung
 			HLI_neg_latch_out:			out	std_logic_vector(15 downto 0);	--! Ausgang für die HLI Istwertmessung
 			HLI_act_neg_latch_out:		out	std_logic_vector(15 downto 0);	--! Ausgang für die HLI Istwertmessung
-			
-			Chop_m1_LEDs:				OUT std_logic_vector(15 downto 0)	--! LEDs auf der Frontseite der Logikkarte	
+
+			Chop_m1_LEDs:				OUT std_logic_vector(15 downto 0)	--! LEDs auf der Frontseite der Logikkarte
 		);
-		
-		
+
+
 		--constant  	CLK_in_Hz : integer := 150000000;		-- Damit das Design schnell auf eine andere Frequenz umgestellt werden kann, wird diese		--
 															-- in Hz festgelegt. Zähler die betimmte Zeiten realisieren sollen z.B. 'Edge_delay_50us'	--
 															-- werden entprechend berechnet.															--
 		--! 14 Bit + Overflow
-		--! 
-		--! |A |OV|Counter|       
+		--!
+		--! |A |OV|Counter|
 		--! |15|14|13 .. 0|
 		constant C_Chop_Count_Width:	Integer := 15;
 		constant C_Chop_neg_Diff:		Integer := 20;
 
-		
+
 end chopper_m1_logic;
 
 architecture chopper_m1_logic_arch of chopper_m1_logic is
@@ -108,7 +108,7 @@ component pos_or_neg_dly is
 		Sig_out:			out std_logic
 		);
 	end component;
-	
+
 component pos_or_neg_dly_trunc is
 	generic (
 		Edge_delay_cnt:		in integer := 200;
@@ -124,7 +124,7 @@ component pos_or_neg_dly_trunc is
 		Sig_out:			out std_logic
 		);
 	end component;
-	
+
 component Puls is
 		generic	(
 					delay_cnt:		integer := 10
@@ -133,7 +133,7 @@ component Puls is
 					Pos_Edge:		IN std_logic;
 					Clk:			IN std_logic;
 					Reset:			IN std_logic;
-				
+
 					Puls:			Out std_logic
 			);
 end component;
@@ -146,7 +146,7 @@ component trunc is
 					neg_edge:		in std_logic;
 					clk:			in std_logic;
 					reset:			in std_logic;
-				
+
 					trunc:			out std_logic
 			);
 end component;
@@ -161,14 +161,14 @@ component edge_detection is
 			);
 end component;
 
-component var_delay is		
+component var_delay is
 	port (
 			Signal_in:	in std_logic;
 			delay:		in std_logic_vector(15 downto 0);
 			en_100ns:	in std_logic;
 			Clk:		in std_logic;
 			Reset:		in std_logic;
-			
+
 			Signal_out:	out std_logic
 		);
 end component;
@@ -190,7 +190,7 @@ component chopper_monitoring is
 				neg_latch_out		: out std_logic_vector(C_Chop_Count_Width  downto 0);
 				act_neg_latch_out	: out std_logic_vector(C_Chop_Count_Width  downto 0)
 
-				
+
 			);
 end component chopper_monitoring;
 
@@ -202,7 +202,7 @@ begin
 	else
 		data := production;
 	end if;
-	
+
 	return data;
 end prod_or_test;
 
@@ -211,7 +211,7 @@ end prod_or_test;
 --+-----------------------------------------------------------------------------+
 									-- Produktion: 2000 * 0.1 us  ==> 200 us
 									-- Test:  20 * 0.1us => 2 us
-constant C_Edge_delay_cnt_200us:	integer	:= prod_or_test((CLK_in_Hz / 1000000) * 200, (CLK_in_Hz / 1000000) * 2, Test);								--				  V										V					--
+constant C_Edge_delay_cnt_200us:	integer	:= prod_or_test((CLK_in_Hz / 1000000) * 200, (CLK_in_Hz / 1000000) * 2, Test);
 
     								-- Produktion:  500 * 0.1 us  ==>  50 us
 									-- Test:   5 * 0.1us => 0.5 us
@@ -220,8 +220,8 @@ constant C_Edge_delay_cnt_50us:		integer := prod_or_test((CLK_in_Hz / 1000000) *
 constant C_Edge_delay_cnt_30us:		integer := prod_or_test((CLK_in_Hz / 1000000) *  30, (CLK_in_Hz / 1000000) / 3, Test);
 
 
-						
-									--V04  C_Edge_delay_cnt_5us in ..._10us geändert.		
+
+									--V04  C_Edge_delay_cnt_5us in ..._10us geändert.
 									-- Produktion:   100 * 0.1 us  ==> 10 us
 									-- Test:   3 * 0.1us => 0.3 us
 constant C_Edge_delay_cnt_10us:		integer := prod_or_test((CLK_in_Hz / 1000000) *  10, (CLK_in_Hz / 1000000) / 3, Test);
@@ -283,15 +283,15 @@ signal	Block_HLI:			std_logic;
 --|			Kontrollbits für Trafo-Interlock (von Interlock-SE)				 	|
 --+-----------------------------------------------------------------------------+
 signal	Mask_TK8DT2V:		std_logic;
-signal	Mask_UH4DT4P:		std_logic;	
-signal	Mask_US4DT7P:		std_logic;	
-signal	Mask_UT1DT0P:		std_logic;	
-signal	Mask_TK3DT4P:		std_logic;	
-signal	Mask_US_DT_E:		std_logic;	
-signal	Mask_UA_DT_E:		std_logic;	
+signal	Mask_UH4DT4P:		std_logic;
+signal	Mask_US4DT7P:		std_logic;
+signal	Mask_UT1DT0P:		std_logic;
+signal	Mask_TK3DT4P:		std_logic;
+signal	Mask_US_DT_E:		std_logic;
+signal	Mask_UA_DT_E:		std_logic;
 signal	Mask_TK_DT_E:		std_logic;
 signal  Mask_TK3DT3P:		std_logic;
-signal	Mask_TK_DT2V:		std_logic;	
+signal	Mask_TK_DT2V:		std_logic;
 
 --+---------------------------------------------------------------------------------+
 --|							Zeitsteuerpulse: Eingänge 								|
@@ -318,7 +318,7 @@ signal	UXZDT_V:					std_logic;
 signal	TK8DT2V:					std_logic;
 signal	SISDT_V:					std_logic;
 signal	Strahlalarm_Frei1:			std_logic;
-signal	Strahlalarm_Frei2:			std_logic;	
+signal	Strahlalarm_Frei2:			std_logic;
 signal	UH4DT4P:					std_logic;
 signal	US4DT7P:					std_logic;
 signal	UT1DT0P:					std_logic;
@@ -389,7 +389,7 @@ signal s_1us_set:					std_logic;
 signal s_prscl_100ns_out:			std_logic_vector(C_Prescaler_Width - 1 downto 0);
 signal s_100ns_en:					std_logic;
 signal s_100ns_set:					std_logic;
-	
+
 --------------------------------------------------------------------------------------
 -- Signale für den 25ms Watchdog Counter
 --------------------------------------------------------------------------------------
@@ -406,10 +406,10 @@ signal state:						state_type;
 --signal s_tcnt_rst:					std_logic;
 --signal s_tcnt_en:					std_logic;
 --signal s_tallowed:					std_logic;
-signal s_trunc_reset:				std_logic;	
+signal s_trunc_reset:				std_logic;
 --------------------------------------------------------------------------------------
 -- Ausrichten Anforderung / Verhindern von Retriggern
---------------------------------------------------------------------------------------			
+--------------------------------------------------------------------------------------
 
 signal puls_10us_after_chopp_hsi:	std_logic;
 signal chopp_hsi_pos:				std_logic;
@@ -421,7 +421,7 @@ signal s_anforderung_aligned_hli:	std_logic;
 
 signal s_anforderung_aligned_uu:	std_logic;
 
-	 				
+
 begin
 
 	Logik_not_Sel_or_Reset: process (clk)
@@ -434,21 +434,21 @@ begin
 				end if;
 			end if;
 	end process;
-	
+
 	--+-----------------------------------------------------------------------------+
 	--|	Strahlweg und Langsames Strahl-Interlock und Blockierung (von Interlock-SE)	|
 	--+-----------------------------------------------------------------------------+
-	
+
 	Strahlweg_Reg_ff: process (clk, Reset, s_Strahlweg_Reg)
 	begin
 		if Reset = '1' then
-			s_Strahlweg_Reg <= (others => '0');	
+			s_Strahlweg_Reg <= (others => '0');
 		elsif rising_edge(clk) then
 			if Strahlweg_Reg_WR = '1' then
 				s_Strahlweg_Reg <= Data_WR(10 downto 0);
 			end if;
 		end if;
-				
+
 		Qu_R_HSI 		<= s_Strahlweg_Reg(0);
 		Qu_L_HSI 		<= s_Strahlweg_Reg(1);
 		HSI_ALV 		<= s_Strahlweg_Reg(2);
@@ -460,26 +460,26 @@ begin
 		Request_SIS		<= s_Strahlweg_Reg(8);
 		TK9DC9_out		<= s_Strahlweg_Reg(9);
 		Enable_TK		<= s_Strahlweg_Reg(10);
-		
+
 		Strahlweg_Reg(10 downto 0) <= s_Strahlweg_Reg;
 		Strahlweg_Reg(15 downto 11) <= "00000";
-		
+
 	end process;
-		
+
 	--+-----------------------------------------------------------------------------+
 	--|			Kontrollbits für Trafo-Interlock (von Interlock-SE)				 	|
 	--+-----------------------------------------------------------------------------+
-	
-	Strahlweg_Maske_ff: process (clk, Reset, s_Strahlweg_Maske)	
+
+	Strahlweg_Maske_ff: process (clk, Reset, s_Strahlweg_Maske)
 	begin
 		if Reset = '1' then
-			s_Strahlweg_Maske <= "00000000";	
+			s_Strahlweg_Maske <= "00000000";
 		elsif rising_edge(clk) then
 			if Strahlweg_Maske_WR = '1' then
 				s_Strahlweg_Maske <= Data_WR(7 downto 0);
 			end if;
 		end if;
-		
+
 		Mask_UH4DT4P 	<= s_Strahlweg_Maske(0);
 		Mask_US_DT_E 	<= s_Strahlweg_Maske(1);
 		Mask_US4DT7P 	<= s_Strahlweg_Maske(2);
@@ -491,14 +491,14 @@ begin
 
 		Strahlweg_Maske(7 downto 0)		<= s_Strahlweg_Maske;
 		Strahlweg_Maske(15 downto 8) 	<= "00000000";
-						
+
 	end process;
-	
-	
+
+
 	--+-----------------------------------------------------------------------------+
 	--|			 Register für Zeitverletzungs Interlock				 				|
 	--+-----------------------------------------------------------------------------+
-	
+
 	Interlock_Reg_ff: process ( clk, Strahlweg_Reg_WR, Reset)
 	begin
 		if Reset = '1' or Strahlweg_Reg_WR = '1' then
@@ -508,22 +508,22 @@ begin
 				s_Interlock_Reg <= Data_WR(1 downto 0);
 			end if;
 		end if;
-		
-		
+
+
 	end process;
-	
+
 		No_ERR_HSI <= s_Interlock_Reg(0);
 		No_ERR_HLI <= s_Interlock_Reg(1);
-		
-		
+
+
 		Interlock_Reg(1 downto 0) <= s_Interlock_Reg;
 		Interlock_Reg(15 downto 2) <= X"FFF" & "11";
-	
-	
+
+
 	--+-----------------------------------------------------------------------------+
 	--|			 Register für Rahmen_TK8_Delay				 						|
 	--+-----------------------------------------------------------------------------+
-	
+
 	TK8_Delay_Reg: process ( clk, TK8_Delay_WR, Reset, s_TK8_Delay)
 	begin
 		if Reset = '1' then
@@ -533,117 +533,123 @@ begin
 				s_TK8_Delay <= Data_WR(15 downto 0);
 			end if;
 		end if;
-		
+
 		TK8_Delay(15 downto 0) <= s_TK8_Delay;
 	end process;
-	
-	
+
+
 	--------------------------------------------------------------
 	-- Prescaler für 1us
 	--------------------------------------------------------------
-	
-	Prescale_1us: lpm_counter GENERIC MAP (	LPM_WIDTH => C_Prescaler_Width,
-											LPM_TYPE => "LPM_COUNTER",
-											LPM_DIRECTION => "DOWN",
-											LPM_SVALUE => integer'image(C_Prescaler_cnt_1us)
-										)
-							PORT MAP	(	clock => Clk,
-									 		cnt_en => '1',
-											q => s_prscl_1us_out,
-											sset => s_1us_set	
-										);
-	
-	s_1us_en <= s_prscl_1us_out(s_prscl_1us_out'HIGH);
-	s_1us_set <= s_prscl_1us_out(s_prscl_1us_out'HIGH);
-	
-	
+
+	Prescale_1us: lpm_counter generic map (
+          lpm_width     => C_Prescaler_Width,
+          lpm_type      => "LPM_COUNTER",
+          lpm_direction => "DOWN",
+          lpm_svalue    => integer'image(C_Prescaler_cnt_1us)
+        )
+        port map (
+          clock  => Clk,
+          cnt_en => '1',
+          q      => s_prscl_1us_out,
+          sset   => s_1us_set
+        );
+
+	s_1us_en  <= s_prscl_1us_out(s_prscl_1us_out'HIGH);
+        s_1us_set <= s_prscl_1us_out(s_prscl_1us_out'HIGH);
+
+
 	--------------------------------------------------------------
 	-- Prescaler für 100ns
 	--------------------------------------------------------------
-	
-	Prescale_100n: lpm_counter GENERIC MAP (	LPM_WIDTH => C_Prescaler_Width,
-												LPM_DIRECTION => "DOWN",
-												LPM_SVALUE => integer'image(C_Prescaler_cnt_100ns)
-											)
-							PORT MAP	(	clock => Clk,
-									 		cnt_en => '1',
-											q => s_prscl_100ns_out,
-											sset => s_100ns_set	
-										);
-	
-	s_100ns_en <= s_prscl_100ns_out(s_prscl_100ns_out'HIGH);
+
+	Prescale_100n: lpm_counter generic map (
+          lpm_width     => C_Prescaler_Width,
+          lpm_direction => "DOWN",
+          lpm_svalue    => integer'image(C_Prescaler_cnt_100ns)
+	)
+	port map (
+          clock  => Clk,
+          cnt_en => '1',
+          q      => s_prscl_100ns_out,
+          sset   => s_100ns_set
+	);
+
+	s_100ns_en  <= s_prscl_100ns_out(s_prscl_100ns_out'HIGH);
 	s_100ns_set <= s_prscl_100ns_out(s_prscl_100ns_out'HIGH);
-	
-	
+
+
 	--------------------------------------------------------------
 	-- Watchdog Counter mit 25 ms
 	-- benutzt s_1us_en
 	--------------------------------------------------------------
-	
-	s_w_enable <= s_1us_en and not s_watch_timeout;
+
+	s_w_enable    <= s_1us_en and not s_watch_timeout;
 	s_watch_reset <= Strahlweg_Reg_WR or Reset;
-	
-	Watch_25ms: lpm_counter GENERIC MAP (	LPM_WIDTH => C_Watchdog_Width,
-											LPM_DIRECTION => "DOWN",
-											LPM_SVALUE => integer'image(C_Watchdog_Value)
-										)
-					PORT MAP			(	clock => Clk,
-						 					cnt_en => s_w_enable,
-											q => s_watch_out,
-											sset => s_watch_reset	
-										);
-										
+
+	Watch_25ms: lpm_counter generic map (
+          lpm_width     => C_Watchdog_Width,
+          lpm_direction => "DOWN",
+          lpm_svalue    => integer'image(C_Watchdog_Value)
+	)
+	PORT MAP (
+          clock  => Clk,
+          cnt_en => s_w_enable,
+          q      => s_watch_out,
+          sset   => s_watch_reset
+	);
+
 	s_watch_timeout <=  s_watch_out(s_watch_out'HIGH);
-	
-	
+
+
 	--------------------------------------------------------------
-	-- monitoring for chopper HSI 
+	-- monitoring for chopper HSI
 	--------------------------------------------------------------
-	
-	hsi_mon: chopper_monitoring GENERIC MAP (	
-												C_Chop_Count_Width => C_Chop_Count_Width,
-												C_Chop_neg_Diff => C_Chop_neg_Diff,
-												C_inl_cnt_value => C_inl_cnt_value
-											)
-							PORT MAP	(	
-									 		clk => clk,
-									 		reset => reset,
-									 		s_1us_en => s_1us_en,
-									 		clear => Strahlweg_Reg_WR,
-									 		chopp_signal_on		=> chopp_hsi_on,			-- Sollwert
-									 		chopp_signal_act	=> Chopper_HSI_act,			-- Istwert
-									 		act_pos_latch_out	=> HSI_act_pos_latch_out,	-- Timestamp
-									 		neg_latch_out		=> HSI_neg_latch_out,		-- Timestamp
-									 		act_neg_latch_out	=> HSI_act_neg_latch_out	-- Timestamp
-										);
-										
+
+	hsi_mon: chopper_monitoring generic map (
+          C_Chop_Count_Width => C_Chop_Count_Width,
+          C_Chop_neg_Diff    => C_Chop_neg_Diff,
+          C_inl_cnt_value    => C_inl_cnt_value
+        )
+        port map (
+          clk               => clk,
+          reset             => reset,
+          s_1us_en          => s_1us_en,
+          clear             => Strahlweg_Reg_WR,
+          chopp_signal_on   => chopp_hsi_on,                -- Sollwert
+          chopp_signal_act  => Chopper_HSI_act,             -- Istwert
+          act_pos_latch_out => HSI_act_pos_latch_out,       -- Timestamp
+          neg_latch_out     => HSI_neg_latch_out,           -- Timestamp
+          act_neg_latch_out => HSI_act_neg_latch_out        -- Timestamp
+        );
+
 	--------------------------------------------------------------
-	-- monitoring for chopper HLI 
+	-- monitoring for chopper HLI
 	--------------------------------------------------------------
-	
-	hli_mon: chopper_monitoring GENERIC MAP (	
-												C_Chop_Count_Width => C_Chop_Count_Width,
-												C_Chop_neg_Diff => C_Chop_neg_Diff,
-												C_inl_cnt_value => C_inl_cnt_value
-											)
-							PORT MAP	(	
-									 		clk => clk,
-									 		reset => reset,
-									 		s_1us_en => s_1us_en,
-									 		clear => Strahlweg_Reg_WR,
-									 		chopp_signal_on		=> chopp_hli_on,			-- Sollwert
-									 		chopp_signal_act 	=> Chopper_HLI_act,			-- Istwert
-									 		act_pos_latch_out 	=> HLI_act_pos_latch_out, 	-- Timestamp
-									 		neg_latch_out 		=> HLI_neg_latch_out,		-- Timestamp
-									 		act_neg_latch_out 	=> HLI_act_neg_latch_out	-- Timestamp
-										);
-	
+
+	hli_mon: chopper_monitoring generic map (
+          C_Chop_Count_Width => C_Chop_Count_Width,
+          C_Chop_neg_Diff    => C_Chop_neg_Diff,
+          C_inl_cnt_value    => C_inl_cnt_value
+        )
+        port map (
+          clk               => clk,
+          reset             => reset,
+          s_1us_en          => s_1us_en,
+          clear             => Strahlweg_Reg_WR,
+          chopp_signal_on   => chopp_hli_on,                -- Sollwert
+          chopp_signal_act  => Chopper_HLI_act,             -- Istwert
+          act_pos_latch_out => HLI_act_pos_latch_out,       -- Timestamp
+          neg_latch_out     => HLI_neg_latch_out,           -- Timestamp
+          act_neg_latch_out => HLI_act_neg_latch_out        -- Timestamp
+        );
+
 
 
 	--+---------------------------------------------------------------------------------+
 	--|	Signale der Strahlverlustüberwachung zur Interlock-SE (Lese-Register)			|
 	--+---------------------------------------------------------------------------------+
-	Interlock_to_SE(0)		<= UH_DT_V;
+          Interlock_to_SE(0)		<= UH_DT_V;
 	Interlock_to_SE(1)		<= UA_DT_V;
 	Interlock_to_SE(2)		<= TK_DT1V;
 	Interlock_to_SE(3)		<= UXZDT_V;
@@ -689,18 +695,18 @@ begin
 	--|	Trafosteuerpulse ('Trafo_Timing_Out(15..0)') mit den Signalnamen belegen	|
 	--+-----------------------------------------------------------------------------+
 
-	
+
 	Trafo_Timing_Out(0)				<= Rahmen_UL when Skal_Ok = '1' else 'Z';
-	Trafo_Timing_Out(1)				<= Klemm_UL when Skal_Ok = '1' else 'Z';	
+	Trafo_Timing_Out(1)				<= Klemm_UL when Skal_Ok = '1' else 'Z';
 	Trafo_Timing_Out(2)				<= Rahmen_UR when Skal_Ok = '1' else 'Z';
-	Trafo_Timing_Out(3)				<= Klemm_UR when Skal_Ok = '1' else 'Z';		
-	Trafo_Timing_Out(4)				<= Klemm_UH1 when Skal_Ok = '1' else 'Z';	
-	Trafo_Timing_Out(5)				<= Rahmen_UH when Skal_Ok = '1' else 'Z';	
-	Trafo_Timing_Out(6)				<= Klemm_UH when Skal_Ok = '1' else 'Z';		
-	Trafo_Timing_Out(7)				<= Rahmen_UN when Skal_Ok = '1' else 'Z';	
-	Trafo_Timing_Out(8)				<= Klemm_UN when Skal_Ok = '1' else 'Z';		
-	Trafo_Timing_Out(9)				<= Rahmen_UA when Skal_Ok = '1' else 'Z';	
-	Trafo_Timing_Out(10)			<= Klemm_UA when Skal_Ok = '1' else 'Z';	
+	Trafo_Timing_Out(3)				<= Klemm_UR when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(4)				<= Klemm_UH1 when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(5)				<= Rahmen_UH when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(6)				<= Klemm_UH when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(7)				<= Rahmen_UN when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(8)				<= Klemm_UN when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(9)				<= Rahmen_UA when Skal_Ok = '1' else 'Z';
+	Trafo_Timing_Out(10)			<= Klemm_UA when Skal_Ok = '1' else 'Z';
 	Trafo_Timing_Out(11)			<= Rahmen_TK8 when Skal_Ok = '1' else 'Z';
 	Trafo_Timing_Out(12)			<= Klemm_TK8 when Skal_Ok = '1' else 'Z';
 	Trafo_Timing_Out(13)			<= Rahmen_TK when Skal_Ok = '1' else 'Z';
@@ -711,16 +717,16 @@ begin
 	--+-----------------------------------------------------------------------------+
 	--|				Beam_Control_In(15..0) mit den Signalnamen belegen				|
 	--+-----------------------------------------------------------------------------+
-	
+
 	Chopper_HSI_act				<= Beam_Control_In(0); -- liefert den Istwert
 	Chopper_HLI_act				<= Beam_Control_In(1); -- liefert den Istwert
 	--TK_DT2V					<= Beam_Control_In(6); -- vorläufiger Name für Verlustüberwacher
 	Chop_TK						<= Beam_Control_In(7); -- umgelegt von Strahlalarm_In(15) 12.11.2007
-	
+
 	--+-------------------------------------------------------------------------+
 	--|   Signale der vier Pulszentralen (von Gatepulsgeneratoren erzeugt)		|
 	--+-------------------------------------------------------------------------+
-	
+
 	Strahl_R					<= Beam_Control_In(8);
 	IQ_R						<= Beam_Control_In(9);
 	Strahl_L					<= Beam_Control_In(10);
@@ -729,77 +735,77 @@ begin
 	Chopper_HLI					<= Beam_Control_In(13);
 	Strahl_HSI					<= Beam_Control_In(14);
 	Chopper_HSI					<= Beam_Control_In(15);
-	
-	
-	
+
+
+
 	--+-----------------------------------------------------------------------------+
 	--|				Beam_Control_Out(15..0) mit den Signalnamen belegen				|
 	--|				neue Belegung vom 12.09.06										|
 	--+-----------------------------------------------------------------------------+
-	
-	
-	
+
+
+
 	Beam_Control_Out(0)				<= Chopp_HSI_On when Skal_Ok = '1' else 'Z';		-- Soll Signal an Netzgerät
 	Beam_Control_Out(1)				<= HF_HSI_On when Skal_Ok = '1' else 'Z';
-	Beam_Control_Out(2)				<= Chopper_HSI_act when Skal_Ok = '1' else 'Z';		-- Diagnose	
-	Beam_Control_Out(3)				<= INL_HSI_BL when Skal_Ok = '1' else 'Z';			-- Diagnose	
-	Beam_Control_Out(4)				<= No_Beam_HSI when Skal_Ok = '1' else 'Z';			-- Diagnose	
-	Beam_Control_Out(5)				<= No_ERR_HSI when Skal_Ok = '1' else 'Z';			-- Interlock Signal an Netzgerät	
+	Beam_Control_Out(2)				<= Chopper_HSI_act when Skal_Ok = '1' else 'Z';		-- Diagnose
+	Beam_Control_Out(3)				<= INL_HSI_BL when Skal_Ok = '1' else 'Z';			-- Diagnose
+	Beam_Control_Out(4)				<= No_Beam_HSI when Skal_Ok = '1' else 'Z';			-- Diagnose
+	Beam_Control_Out(5)				<= No_ERR_HSI when Skal_Ok = '1' else 'Z';			-- Interlock Signal an Netzgerät
 	Beam_Control_Out(6)				<= Chopp_HLI_On when Skal_Ok = '1' else 'Z';		-- Soll SIgnal an Netzgerät
-	Beam_Control_Out(7)				<= Chopper_HLI_act when Skal_Ok = '1' else 'Z';		-- Diagnose	
-	Beam_Control_Out(8)				<= INL_HLI_BL when Skal_Ok = '1' else 'Z';			-- Diagnose		
-	Beam_Control_Out(9)				<= No_Beam_HLI when Skal_Ok = '1' else 'Z';			-- Diagnose		
-	Beam_Control_Out(10)			<= No_ERR_HLI when Skal_Ok = '1' else 'Z';			-- Interlock Signal an Netzgerät	
-	Beam_Control_Out(11)			<= HF_ALV_Off when Skal_Ok = '1' else 'Z';					
-	Beam_Control_Out(12)			<= Off_HSI when Skal_Ok = '1' else 'Z';				-- Diagnose		
-	Beam_Control_Out(13)			<= Off_ALV_PG when Skal_Ok = '1' else 'Z';			-- Diagnose	
+	Beam_Control_Out(7)				<= Chopper_HLI_act when Skal_Ok = '1' else 'Z';		-- Diagnose
+	Beam_Control_Out(8)				<= INL_HLI_BL when Skal_Ok = '1' else 'Z';			-- Diagnose
+	Beam_Control_Out(9)				<= No_Beam_HLI when Skal_Ok = '1' else 'Z';			-- Diagnose
+	Beam_Control_Out(10)			<= No_ERR_HLI when Skal_Ok = '1' else 'Z';			-- Interlock Signal an Netzgerät
+	Beam_Control_Out(11)			<= HF_ALV_Off when Skal_Ok = '1' else 'Z';
+	Beam_Control_Out(12)			<= Off_HSI when Skal_Ok = '1' else 'Z';				-- Diagnose
+	Beam_Control_Out(13)			<= Off_ALV_PG when Skal_Ok = '1' else 'Z';			-- Diagnose
 	Beam_Control_Out(14)			<= Off_ALV_Verlust when Skal_Ok = '1' else 'Z';		-- Diagnose
 	Beam_Control_Out(15)			<= Off_Anforderung_In when Skal_Ok = '1' else 'Z';	-- Diagnose
 
-	
-	
+
+
 	Klemm_UR_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_200us)
 										PORT MAP	(	Clk => Clk,
 														Reset => s_Logik_not_Sel_or_Reset,
 														Edge_neg => IQ_R,
 														Sig_out =>	Klemm_UR);
-														
+
 	Klemm_UL_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_200us)
 										PORT MAP	(	Clk => Clk,
 														Reset => s_Logik_not_Sel_or_Reset,
 														Edge_neg => IQ_L,
 														Sig_out =>	Klemm_UL);
-														
+
 
 	Klemm_UH1	<= (Qu_R_HSI and Klemm_UR) or (Qu_L_HSI and Klemm_UL);
-														
-	
+
+
 	Klemm_UH_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
 										PORT MAP	(	Clk => Clk,
 														Reset => s_Logik_not_Sel_or_Reset,
 														Edge_neg => Chopper_HSI,
 														Sig_out =>	Klemm_UH_delayed);
-	
-	
+
+
 	Klemm_UH <=  Klemm_UH_delayed and not Rahmen_UH_after_20us;
 	--Klemm_UH <=  Klemm_UH_delayed or Rahmen_UH_after_20us;
-	
-												
+
+
 	Klemm_UN_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
 											PORT MAP	(	Clk => Clk,
 															Reset => s_Logik_not_Sel_or_Reset,
 															Edge_neg => Chopper_HLI,
 															Sig_out =>	Klemm_UN_delayed);
-															
+
 	Klemm_UN <= Klemm_UN_delayed and not Rahmen_UN_after_20us;
-	
-	
+
+
 	Chopper_HSI_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
 											PORT MAP	(	Clk => Clk,
 															Reset => s_Logik_not_Sel_or_Reset,
 															Edge_pos => Chopper_HSI,
 															Sig_out =>	Chopper_HSI_delayed);
-														
+
 	Chopper_HLI_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
 											PORT MAP	(	Clk => Clk,
 															Reset => s_Logik_not_Sel_or_Reset,
@@ -819,73 +825,73 @@ begin
 														Reset => s_trunc_reset,
 														Pos_Edge => Chopper_HSI_delayed,
 														Puls => mask_10us_hsi );
-														
+
 	-- 10us puls after Strahl_HLI
 	puls_hli:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
 										PORT MAP	( 	Clk => Clk,
 														Reset => s_trunc_reset,
 														Pos_Edge => Chopper_HLI_delayed,
 														Puls => mask_10us_hli );
-														
+
 	-- 10us puls after Chopper_HSI
 	puls_hsi_anf:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
 										PORT MAP	( 	Clk => Clk,
 														Reset => s_trunc_reset,
 														Pos_Edge => Chopper_HSI_delayed,
 														Puls => puls_10us_after_chopp_hsi );
-														
+
 	-- 10us puls after Chopper_HLI
 	puls_hli_anf:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
 										PORT MAP	( 	Clk => Clk,
 														Reset => s_trunc_reset,
 														Pos_Edge => Chopper_HLI_delayed,
 														Puls => puls_10us_after_chopp_hli );
-	
+
 	edge_chopp_hsi: edge_detection port map (
 							clk => clk,
 							reset => s_trunc_reset,
 							input => Chopper_HSI_delayed,
 							pos_edge => chopp_hsi_pos
 						);
-						
+
 	edge_chopp_hli: edge_detection port map (
 							clk => clk,
 							reset => s_trunc_reset,
 							input => Chopper_HLI_delayed,
 							pos_edge => chopp_hli_pos
 						);
-	
-	
+
+
 	s_trunc_reset <= s_Logik_not_Sel_or_Reset or Strahlweg_Reg_WR;
-														
+
 	-- 20us nach Ende Rahmenpuls High Pegel
 	trunc_ua:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
 								port	map (	clk => clk,
 												reset => s_trunc_reset,
 												neg_edge => Rahmen_UA,
 												trunc => Rahmen_UA_after_20us );
-										
+
 	-- 20us nach Ende Rahmenpuls High Pegel
 	trunc_un:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
 								port	map (	clk => clk,
 												reset => s_trunc_reset,
 												neg_edge => Rahmen_UN,
 												trunc => Rahmen_UN_after_20us );
-												
+
 	-- 20us nach Ende Rahmenpuls High Pegel
 	trunc_uh:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
 								port	map (	clk => clk,
 												reset => s_trunc_reset,
 												neg_edge => Rahmen_UH,
-												trunc => Rahmen_UH_after_20us );	
+												trunc => Rahmen_UH_after_20us );
 	--------------------------------------------------------------------------------------
-	
-	
+
+
 	--------------------------------------------------------------------------------------
 	-- Entprellung und Ausrichtung der Anforder Signale
 	-- Off_Anforderung_In und Off_Anfoderung_UU aus der Logikkarte 2
 	--------------------------------------------------------------------------------------
-	
+
 	align_anf_uu: process (clk)
 	begin
 		if rising_edge(clk) then
@@ -900,8 +906,8 @@ begin
 			end if;
 		end if;
 	end process align_anf_uu;
-	
-	
+
+
 	align_anf_hsi: process (clk)
 	begin
 		if rising_edge(clk) then
@@ -916,23 +922,23 @@ begin
 			end if;
 		end if;
 	end process align_anf_hsi;
-	
+
 	align_anf_hli: process (clk)
 	begin
 		if rising_edge(clk) then
 			if s_trunc_reset = '1' then
 				s_anforderung_aligned_hli <= '0';
 			elsif (Off_Anforderung_In = '0' and HLI_ALV = '1') and chopp_hli_pos = '1' then					-- Vers_13: ...and HLI_ALV = '1'
-				s_anforderung_aligned_hli <= '1';                                                           
+				s_anforderung_aligned_hli <= '1';
 			elsif (Off_Anforderung_In = '1' and HLI_ALV = '1') and puls_10us_after_chopp_hli = '0' then		-- Vers_13: ...and HLI_ALV = '1'
-				s_anforderung_aligned_hli <= '0';                                                     
+				s_anforderung_aligned_hli <= '0';
 			elsif Chopper_HLI_delayed = '0' and puls_10us_after_chopp_hli = '0' then
 				s_anforderung_aligned_hli <= '0';
 			end if;
 		end if;
 	end process align_anf_hli;
-	
-	
+
+
 	Off_ALV_PG	<=	(US4DT7P and not Mask_US4DT7P)
 				or	(UT1DT0P and not Mask_UT1DT0P)
 				or	(TK3DT4P and not Mask_TK3DT4P)
@@ -941,7 +947,7 @@ begin
 				or	(TK3DT3P and not Mask_TK3DT3P);
 
 	Off_HSI_PG	<=	(UH4DT4P and not Mask_UH4DT4P)
-				or	(US_DT_E and not Mask_US_DT_E);  
+				or	(US_DT_E and not Mask_US_DT_E);
 
 
 	Off_ALV_Verlust	<=	(UA_DT_V or TK_DT1V or UA_DT_E or TK_DT_E or TK_DT2V)
@@ -949,26 +955,26 @@ begin
 					or	(SISDT_V and Request_SIS);
 
 	Off_ALV			<=	Off_ALV_PG or ( Off_ALV_Verlust AND HSI_ALV);
-	
-	
+
+
 	-- Die Verkürzung durch die Strahldiagnose wird auf 10µs Mindestpulslänge beschränkt
 	Off_ALV_min		<= Off_ALV and not (mask_10us_hli or mask_10us_hsi);	-- mask Off_ALV for 10us
 
 	Off_HSI_Verlust	<= UH_DT_V or US_DT_E;
 
 	Off_HSI			<=	Off_HSI_Verlust or Off_HSI_PG;
-	
+
 	-- Die Verkürzung durch die Strahldiagnose wird auf 10µs Mindestpulslänge beschränkt
 	Off_HSI_min		<= Off_HSI and not mask_10us_hsi;	-- mask Off_HSI for 10us
-	
+
 	-- Bei Strahlzielen hinter Alvarez können die Anforderungs-Signale auf die Verkürzung einwirken
 	-- Ansonsten wirkt nur die Verkürzung der Strahldiagnose (Verlust und PG-Schutz)
 	Verkuerzung_HSI <= ((Off_ALV_min or not s_anforderung_aligned_hsi) and HSI_ALV) or Off_HSI_min;
-	
+
 	-- Bei Strahlzielen hinter Alvarez können die Anforder Signale auf die Verkürzung einwirken
 	-- Ansonsten wirkt das Anfoderungs-Signal von UU
 	Verkuerzung_HLI <= ((Off_ALV_min or not s_anforderung_aligned_hli) and HLI_ALV) or not s_anforderung_aligned_uu;
-	
+
 	-- Die Signale Block_* und INL_* kommen von der PZU und können den Strahl für den Zyklus abschalten
 	-- Das Signal s_watch_timeout stammt vom Watchdog und hat den selben Effekt
 	No_Beam_HSI	<=	Verkuerzung_HSI or Block_HSI or INL_HSI_BL or s_watch_timeout;
@@ -982,20 +988,20 @@ begin
 	-- KLemm_UA überlappt den Rahmen_UA um 20us
 	Klemm_UA	<=	((Klemm_UN and HLI_ALV) or (Klemm_UH and HSI_ALV)) and not rahmen_ua_after_20us;
 
-	Rahmen_UA	<=	(Rahmen_UN and HLI_ALV) or (Rahmen_UH and HSI_ALV); 
+	Rahmen_UA	<=	(Rahmen_UN and HLI_ALV) or (Rahmen_UH and HSI_ALV);
 
 	Rahmen_UR	<=	Strahl_R;
-	
+
 	Rahmen_UL	<=	Strahl_L;
 
 -- 	V03  25.9.06
 	s_R_TK8 <= Rahmen_TK and not Off_ALV;	-- z.B. Ziel_TK
-	
+
 	-- TK9DC9_out ist 0-Aktiv
 	Rahmen_TK8 <= (Rahmen_UA and Chop_TK and not Off_ALV) when TK9DC9_out = '1' and Enable_TK = '1' else
 					Rahmen_TK8_delayed when TK9DC9_out = '0' else
 					'0';
-	
+
 	TK8_delayed:	var_delay  port map (   Signal_in => s_R_TK8,
 											delay => s_TK8_delay,
 											Clk => Clk,
@@ -1003,29 +1009,29 @@ begin
 											en_100ns => s_100ns_en,
 											Signal_out => Rahmen_TK8_delayed
 										);
-	
+
 
 	Klemm_TK8 <= Klemm_UA when ( Klemm_UA = '1' and not (Request_SIS = '0' and TK9DC9_out = '0')) else '0';
 
 	Chopp_HSI_On	<= Chopper_HSI_delayed and not No_beam_HSI;	-- Vers_14 Verknüpfung mit dem Event
-	
+
 	Chopp_HLI_On	<= Chopper_HLI_delayed and not No_Beam_HLI; -- Vers_14 Verknüpfung mit dem Event
-	
+
 --	HF_HSI_On	<=	not Off_HSI; ------------------------------ V01
 	HF_HSI_On	<=	not ((Off_HSI or Off_ALV) and KLEMM_UH); -- V02
-	
+
 --	HF_ALV_On	<=	not Off_ALV; ----------- V01
 	HF_ALV_Off	<=	Off_ALV AND KLEMM_UA; -- V02
 
-	Mask_TK8DT2V	<= Request_SIS and TK9DC9_out;	
-	
+	Mask_TK8DT2V	<= Request_SIS and TK9DC9_out;
+
 	Rahmen_TK	<= Rahmen_UA and Enable_TK; -- neu am 12.11.2007
-	
+
 
 	---------------------------------------------------------------
 	-- Signale für die 16 Leds
 	---------------------------------------------------------------
-  
+
 	Chop_m1_LEDs(15) <= Mask_TK8DT2V;
 	Chop_m1_LEDs(14) <= Mask_TK3DT4P;
 	Chop_m1_LEDs(13) <= Mask_US4DT7P;
@@ -1042,7 +1048,7 @@ begin
 	Chop_m1_LEDs(2)	 <= INL_HSI_BL;
 	Chop_m1_LEDs(1)	 <= HLI_ALV;
 	Chop_m1_LEDs(0)	 <= HSI_ALV;
-	
+
 end chopper_m1_logic_arch;
-		
-		
+
+

@@ -1,15 +1,15 @@
 -- Copyright (C) 1991-2010 Altera Corporation
--- Your use of Altera Corporation's design tools, logic functions 
--- and other software and tools, and its AMPP partner logic 
--- functions, and any output files from any of the foregoing 
--- (including device programming or simulation files), and any 
--- associated documentation or information are expressly subject 
--- to the terms and conditions of the Altera Program License 
--- Subscription Agreement, Altera MegaCore Function License 
--- Agreement, or other applicable license agreement, including, 
--- without limitation, that your use is for the sole purpose of 
--- programming logic devices manufactured by Altera and sold by 
--- Altera or its authorized distributors.  Please refer to the 
+-- Your use of Altera Corporation's design tools, logic functions
+-- and other software and tools, and its AMPP partner logic
+-- functions, and any output files from any of the foregoing
+-- (including device programming or simulation files), and any
+-- associated documentation or information are expressly subject
+-- to the terms and conditions of the Altera Program License
+-- Subscription Agreement, Altera MegaCore Function License
+-- Agreement, or other applicable license agreement, including,
+-- without limitation, that your use is for the sole purpose of
+-- programming logic devices manufactured by Altera and sold by
+-- Altera or its authorized distributors.  Please refer to the
 -- applicable agreement for further details.
 
 -- PROGRAM		"Quartus II"
@@ -17,11 +17,11 @@
 -- CREATED		"Thu Aug 26 16:54:14 2010"
 
 LIBRARY ieee;
-USE ieee.std_logic_1164.all; 
+USE ieee.std_logic_1164.all;
 
 LIBRARY work;
 
-ENTITY chopper_m1 IS 
+ENTITY chopper_m1 IS
 GENERIC (CLK_in_Hz : INTEGER := 200000000;
 		Loader_CLK_in_Hz : INTEGER := 150000000;
 		LPM_Ein_ist_1 : INTEGER := 1;
@@ -126,7 +126,7 @@ GENERIC (CLK_in_Hz : INTEGER := 200000000;
 	);
 END chopper_m1;
 
-ARCHITECTURE bdf_type OF chopper_m1 IS 
+ARCHITECTURE bdf_type OF chopper_m1 IS
 
 COMPONENT bus_io
 GENERIC (I0_1_is_Input : INTEGER;
@@ -564,7 +564,7 @@ SIGNAL	SYNTHESIZED_WIRE_40 :  STD_LOGIC;
 SIGNAL	SYNTHESIZED_WIRE_41 :  STD_LOGIC;
 
 
-BEGIN 
+BEGIN
 A_nMANUAL_RES <= '1';
 RDnWR_Transceiver <= A_RDnWR;
 A_nDTACKA <= SYNTHESIZED_WIRE_38;

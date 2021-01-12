@@ -4,34 +4,34 @@
 	-- und weitergezählt (bis OV)
 	-- Rücksetzen des Counters durch Lesezugriff auf StrahlwegReg
 	-----------------------------------------------------------------------
-	
+
 	--		act_pos_latch
 	--   |  15..8 | 7|6..0|
 	--   | Status |OV| Cnt|
-	
+
 	-- act_pos_latch latched:	Bit 15
 	-- act_pos_edge > 127:		Bit 11
 	-- Counter Overflow:			Bit 10
 	-- act high vor Start:		Bit 9
 	-- act nicht durchgängig: 	Bit 8
-	
-	
+
+
 	--  neg_latch
 	--   |    15   |14|13..0|
 	--   | latched |OV| Cnt |
-	
+
 	--  act_neg_latch
 	--   |   15    |14|13..0|
 	--   | latched |OV| Cnt |
 	-----------------------------------------------------------------------
-	
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.math_real.all;
 
-library lpm; 
-use lpm.lpm_components.all; 
+library lpm;
+use lpm.lpm_components.all;
 
 
 entity chopper_monitoring is
@@ -51,11 +51,11 @@ entity chopper_monitoring is
 				neg_latch_out		: out std_logic_vector(C_Chop_Count_Width  downto 0);
 				act_neg_latch_out : out std_logic_vector(C_Chop_Count_Width  downto 0)
 
-				
+
 			);
 end entity chopper_monitoring;
-	
-	
+
+
 architecture chopper_monitoring_arch of chopper_monitoring is
 
 
@@ -105,29 +105,29 @@ chopp_pos: edge_detection port map (
 							reset => reset,
 							input => chopp_signal_on,
 							pos_edge => chopper_pos
-						);	
-						
+						);
+
 chopp_neg: edge_detection port map (
 							clk => clk,
 							reset => reset,
 							input => chopp_signal_on,
 							neg_edge => chopper_neg
 						);
-						
+
 chopp_act_pos: edge_detection port map (
 							clk => clk,
 							reset => reset,
 							input => chopp_signal_act,
 							pos_edge => chopper_act_pos
-						);	
-						
+						);
+
 chopp_act_neg: edge_detection port map (
 							clk => clk,
 							reset => reset,
 							input => chopp_signal_act,
 							neg_edge => chopper_act_neg
 						);
----------------------------------------------------------------------------------------------	
+---------------------------------------------------------------------------------------------
 -- Starten / Stoppen des Zählers
 -- 19.02.2008 Zähler darf erst nach Zeitfenster starten, damit der Chopper ausschwingen kann.
 -- Vorschlag: Abhängig von Quellen HSI
@@ -157,14 +157,14 @@ begin
 			-- "high before"
 			if s_cnt_started = '0' then
 				s_act_pos_latch(9) <= '1';
-			-- Pegel nicht durchgängig 
+			-- Pegel nicht durchgängig
 			elsif s_act_neg_latch(s_act_neg_latch'HIGH) = '1' then
 				s_act_pos_latch(8) <= '1';
 			else
 				s_act_pos_latch(7 downto 0) <= s_cnt_value(7 downto 0);
 				s_act_pos_latch(s_act_pos_latch'HIGH) <= '1';
 			end if;
-			
+
 		-- Neg Edge Vorgabe
 		elsif chopper_neg = '1' then
 			s_neg_latch(s_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
@@ -177,7 +177,7 @@ begin
 		-- Overflow
 		elsif s_cnt_value(s_cnt_value'HIGH) = '1' then
 			s_act_pos_latch(10) <= '1';
-		-- Overflow act_pos_edge	
+		-- Overflow act_pos_edge
 		elsif s_cnt_value(7) = '1' and not s_act_pos_latch(s_act_pos_latch'HIGH) = '1' then
 			s_act_pos_latch(11) <= '1';
 		end if;
@@ -195,7 +195,7 @@ s_cnt_en <= s_cnt_started and s_1us_en and not s_cnt_value(s_cnt_value'HIGH);
 -- Rücksetzen des Zählerstandes bei clear
 timestamp: lpm_counter GENERIC MAP (
 									LPM_WIDTH => C_Chop_Count_Width,
-									
+
 									LPM_TYPE => "LPM_COUNTER",
 									LPM_DIRECTION => "UP"
 									)
@@ -205,7 +205,7 @@ timestamp: lpm_counter GENERIC MAP (
 									q => s_cnt_value,
 									sclr => clear
 								);
-								
+
 -----------------------------------------------------------------------
 -- Test auf Interlock Bedingung für Chopper
 -- Es wird auf drei Fälle getestet:
@@ -221,17 +221,17 @@ begin
 		s_act_late <= '0';
 		state_inl <= idle;
 	elsif rising_edge(Clk) then
-		
+
 		s_inl_start_en <= '0';
 		s_inl_sset <= '0';
-	
+
 	 case (state_inl) is
 		when idle =>
 			if chopper_pos = '1' or chopper_neg = '1' then
 				s_inl_start_en <= '1';
 				state_inl <= cnt_started;
 			end if;
-		
+
 		when cnt_started =>
 			s_inl_start_en <= '1';
 			if s_inl_s_value(s_inl_s_value'HIGH) = '1' then
@@ -240,13 +240,13 @@ begin
 				s_inl_sset <= '1';
 				state_inl <= idle;
 			end if;
-	
+
 		when cnt_reached =>
 			if chopper_act_pos = '1' or chopper_act_neg = '1' then
 				s_act_late <= '1';
 			end if;
 		end case;
-	
+
 	end if;
 end process;
 

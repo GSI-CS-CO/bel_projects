@@ -1,5 +1,5 @@
 LIBRARY ieee;
-USE ieee.std_logic_1164.all; 
+USE ieee.std_logic_1164.all;
 USE IEEE.STD_LOGIC_arith.all;
 USE IEEE.STD_LOGIC_unsigned.all;
 
@@ -15,7 +15,7 @@ ENTITY Signal_Stretch IS
 	);
 END Signal_Stretch;
 
-	
+
 ARCHITECTURE Arch_Signal_Stretch OF Signal_Stretch IS
 
     FUNCTION	How_many_Bits  (int: INTEGER) RETURN INTEGER IS
@@ -47,7 +47,7 @@ P_Stretch_Cnt:	PROCESS (clk, Sig_in)
 			END IF;
 		END IF;
 	END PROCESS P_Stretch_Cnt;
-	
+
 P_Stretch:	PROCESS (Sig_in, Stretch_on, S_Stretch_Cnt(S_Stretch_Cnt'left))
 	BEGIN
 		Sig_Out <= '0';

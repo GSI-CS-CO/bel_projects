@@ -27,7 +27,7 @@ ENTITY epld_vers IS
 		Vers_Rev :		OUT STD_LOGIC_VECTOR(7 downto 0);
 		Test_Activ :	OUT STD_LOGIC
 	);
-	
+
 END epld_vers;
 
 
@@ -50,5 +50,5 @@ SEVERITY WARNING;
 Test_Activ <= '0' when Test = 0 else '1';
 
 Vers_Rev(7 DOWNTO 0) <= (CONV_STD_LOGIC_VECTOR(C_Vers, 4) & CONV_STD_LOGIC_VECTOR(C_Revi, 4)) when Test = 0 else CONV_STD_LOGIC_VECTOR(0, 8);
-	
+
 END Arch_epld_vers;

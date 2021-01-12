@@ -4,8 +4,8 @@ USE IEEE.STD_LOGIC_arith.all;
 USE IEEE.STD_LOGIC_unsigned.all;
 use IEEE.MATH_REAL.ALL;
 
-LIBRARY lpm; 
-USE lpm.lpm_components.all; 
+LIBRARY lpm;
+USE lpm.lpm_components.all;
 
 
 entity var_delay is
@@ -13,13 +13,13 @@ entity var_delay is
 
 	port (
 		Signal_in:	in std_logic;
-		
+
 		en_100ns:	in std_logic;
 		Clk:		in std_logic;
 		Reset:		in std_logic;
-		
+
 		delay:		in std_logic_vector(15 downto 0);
-		
+
 		Signal_out:	out std_logic
 		);
 end var_delay;
@@ -53,7 +53,7 @@ begin
 
 cnt1:	lpm_counter generic map ( 	LPM_WIDTH => 16,
 									LPM_DIRECTION => "DOWN"
-									
+
 								)
 					port map	(	clock => Clk,
 									cnt_en => cnt1_en,
@@ -61,10 +61,10 @@ cnt1:	lpm_counter generic map ( 	LPM_WIDTH => 16,
 									q => cnt1_out,
 									sload => s_cnt1_set
 								);
-							
+
 cnt2:	lpm_counter generic map ( 	LPM_WIDTH => 16,
 									LPM_DIRECTION => "DOWN"
-									
+
 								)
 					port map	(	clock => Clk,
 									cnt_en => cnt2_en,
@@ -72,7 +72,7 @@ cnt2:	lpm_counter generic map ( 	LPM_WIDTH => 16,
 									q => cnt2_out,
 									sload => s_cnt2_set
 								);
-								
+
 signal_pos:	edge_detection port map (	Clk => Clk,
 										Reset => Reset,
 										input => Signal_in,
@@ -96,13 +96,13 @@ begin
 		elsif cnt1_out(cnt1_out'HIGH) = '1' then
 			-- Puls high
 			Signal_out <= '1';
-			
+
 			cnt1_run <= '0';
 			s_cnt1_set <= '1';	-- cnt1 rücksetzen
 		elsif cnt2_out(cnt2_out'HIGH) = '1' then
 			-- Puls low
 			Signal_out <= '0';
-			
+
 			cnt2_run <= '0';
 			s_cnt2_set <= '1';	-- cnt2 rücksetzen
 		elsif Reset = '1' then
@@ -112,10 +112,10 @@ begin
 			cnt1_run <= '0';
 			cnt2_run <= '0';
 		end if;
-		
+
 	end if;
 
 end process;
 
-						
+
 end architecture;
