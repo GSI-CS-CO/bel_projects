@@ -501,23 +501,21 @@ begin
 
 	Interlock_Reg_ff: process ( clk, Strahlweg_Reg_WR, Reset)
 	begin
-		if Reset = '1' or Strahlweg_Reg_WR = '1' then
-			s_Interlock_Reg <= "11";
-		elsif rising_edge(Clk) then
-			if Interlock_Reg_WR = '1' then
-				s_Interlock_Reg <= Data_WR(1 downto 0);
-			end if;
-		end if;
-
-
+          if rising_edge(Clk) then
+            if reset = '1' or Strahlweg_Reg_WR = '1' then
+              s_Interlock_Reg <= "11";
+            elsif Interlock_Reg_WR = '1' then
+              s_Interlock_Reg <= Data_WR(1 downto 0);
+            end if;
+          end if;
 	end process;
 
-		No_ERR_HSI <= s_Interlock_Reg(0);
-		No_ERR_HLI <= s_Interlock_Reg(1);
+	No_ERR_HSI <= s_Interlock_Reg(0);
+	No_ERR_HLI <= s_Interlock_Reg(1);
 
 
-		Interlock_Reg(1 downto 0) <= s_Interlock_Reg;
-		Interlock_Reg(15 downto 2) <= X"FFF" & "11";
+	Interlock_Reg(1 downto 0) <= s_Interlock_Reg;
+	Interlock_Reg(15 downto 2) <= X"FFF" & "11";
 
 
 	--+-----------------------------------------------------------------------------+

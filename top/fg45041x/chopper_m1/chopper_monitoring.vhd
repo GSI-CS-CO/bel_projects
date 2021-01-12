@@ -146,42 +146,45 @@ end process;
 -- Speichern der Zeitmarken
 cnt_latch: process(clk, reset, chopper_act_pos, chopper_neg, chopper_act_neg, clear)
 begin
-	if clear = '1' or reset = '1' then
-		s_act_pos_latch <= (OTHERS => '0');
-		s_neg_latch <= (OTHERS => '0');
-		s_act_neg_latch <= (OTHERS => '0');
-	elsif rising_edge(clk) then
-		-- Pos Edge Istwert
-		-- geändert am 19.09.06: chopper_act_pos
-		if chopper_act_pos = '1' then
-			-- "high before"
-			if s_cnt_started = '0' then
-				s_act_pos_latch(9) <= '1';
-			-- Pegel nicht durchgängig
-			elsif s_act_neg_latch(s_act_neg_latch'HIGH) = '1' then
-				s_act_pos_latch(8) <= '1';
-			else
-				s_act_pos_latch(7 downto 0) <= s_cnt_value(7 downto 0);
-				s_act_pos_latch(s_act_pos_latch'HIGH) <= '1';
-			end if;
+      if rising_edge(clk) then
+        if clear = '1' or reset = '1' then
+          s_act_pos_latch <= (OTHERS => '0');
+          s_neg_latch     <= (OTHERS => '0');
+          s_act_neg_latch <= (OTHERS => '0');
+        else
 
-		-- Neg Edge Vorgabe
-		elsif chopper_neg = '1' then
-			s_neg_latch(s_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
-			s_neg_latch(s_neg_latch'HIGH) <= '1';
-		-- Neg Edge Istwert
-		-- geändert am 19.09.06: chopper_act_neg
-		elsif chopper_act_neg = '1' then
-			s_act_neg_latch(s_act_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
-			s_act_neg_latch(s_act_neg_latch'HIGH) <= '1';
-		-- Overflow
-		elsif s_cnt_value(s_cnt_value'HIGH) = '1' then
-			s_act_pos_latch(10) <= '1';
-		-- Overflow act_pos_edge
-		elsif s_cnt_value(7) = '1' and not s_act_pos_latch(s_act_pos_latch'HIGH) = '1' then
-			s_act_pos_latch(11) <= '1';
-		end if;
-	end if;
+          -- Pos Edge Istwert
+          -- geändert am 19.09.06: chopper_act_pos
+          if chopper_act_pos = '1' then
+                  -- "high before"
+                  if s_cnt_started = '0' then
+                          s_act_pos_latch(9) <= '1';
+                  -- Pegel nicht durchgängig
+                  elsif s_act_neg_latch(s_act_neg_latch'HIGH) = '1' then
+                          s_act_pos_latch(8) <= '1';
+                  else
+                          s_act_pos_latch(7 downto 0) <= s_cnt_value(7 downto 0);
+                          s_act_pos_latch(s_act_pos_latch'HIGH) <= '1';
+                  end if;
+
+          -- Neg Edge Vorgabe
+          elsif chopper_neg = '1' then
+                  s_neg_latch(s_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
+                  s_neg_latch(s_neg_latch'HIGH) <= '1';
+          -- Neg Edge Istwert
+          -- geändert am 19.09.06: chopper_act_neg
+          elsif chopper_act_neg = '1' then
+                  s_act_neg_latch(s_act_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
+                  s_act_neg_latch(s_act_neg_latch'HIGH) <= '1';
+          -- Overflow
+          elsif s_cnt_value(s_cnt_value'HIGH) = '1' then
+                  s_act_pos_latch(10) <= '1';
+          -- Overflow act_pos_edge
+          elsif s_cnt_value(7) = '1' and not s_act_pos_latch(s_act_pos_latch'HIGH) = '1' then
+                  s_act_pos_latch(11) <= '1';
+          end if;
+        end if;
+      end if;
 end process;
 
 act_pos_latch_out <= s_act_pos_latch;
