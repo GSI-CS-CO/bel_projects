@@ -307,6 +307,7 @@ void printStatus()
   int i;
   char modeStr[64];
   int  modeMask;
+  int  flagEvtMiss;
 
   switch (mode) {
     case 0 :
@@ -333,6 +334,10 @@ void printStatus()
       sprintf(modeStr, "'unknonwn'");
       modeMask = MSKRECMODE0;
   } // switch mode
+
+  // a missing event is an error
+  flagEvtMiss = modeMask   & ~flagEvtRec;
+  flagEvtErr  = flagEvtErr | flagEvtMiss;
   
   printf("--- Status ----------- SID %2d, %25s, #transfer %5u ---\n", reqSid, modeStr, iter);
   iter++;
