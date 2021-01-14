@@ -14,6 +14,7 @@ bpcStart:
 dmPerformance:
 	$(MAKE) -C dmPerformance/ test0
 	SCHEDULE=groups_4_nonDefaultPatterns_9_blocksPerPattern_150 $(MAKE) -C dmPerformance/ test0
+	rm dmPerformance/debug.dot
 
 dmThreads:
 	$(MAKE) -C dmThreads/ four-threads
