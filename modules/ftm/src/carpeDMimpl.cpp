@@ -67,7 +67,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
         //sLog << "Input Node  " << g[v].name;
         fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
-        if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
+        if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " field in Node '" + g[v].name + "'");
         vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
         id = 0;
         for(auto& it : vTmp) {  //for each format vector element
@@ -85,7 +85,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       } else { //from ID to SubID fields
         id = s2u<uint8_t>(g[v].id);
         fid = ((id >> ID_FID_POS) & ID_FID_MSK);
-        if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + g[v].name + "'");
+        if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " within ID field of Node '" + g[v].name + "'");
         vPf& vTmp = idFormats[fid];
   
         for(auto& it : vTmp) {
