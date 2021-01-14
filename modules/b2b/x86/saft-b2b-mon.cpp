@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2021-Jan-11
+// version: 2021-Jan-14
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -50,8 +50,9 @@ using namespace std;
 
 static const char* program;
 
-uint32_t reqSid;
-uint32_t recGid;
+uint32_t reqSid;                        // requested sequence ID
+uint32_t recGid;                        // received group ID
+uint32_t reqExtRing;                    // requested extraction ring
 
 // GID
 #define GGSI        0x3a                // B2B prefix existing facility
@@ -80,7 +81,7 @@ uint32_t recGid;
 #define TDIAGOBS    20000000            // observation time for diagnostic [ns]
 #define DDSSTEP     0.046566129         // min frequency step of gDDS
 #define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x010               // ... mode EKS
+#define MSKRECMODE1 0x050               // ... mode EKS
 #define MSKRECMODE2 0x155               // ... mode B2E
 #define MSKRECMODE3 0x1f5               // ... mode B2C
 #define MSKRECMODE4 0x3ff               // ... mode B2B
@@ -832,6 +833,7 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
     case KICKSTART2 : 
       if (!flagTransStart){
         recGid       = ((id    & 0x0fff000000000000) >> 48);
+        if (recGid != reqExtRing) return;
         clearAllData();
         flagTransStart=1;
       }
@@ -866,6 +868,7 @@ static void on_action_sequence(uint64_t id, uint64_t param, saftlib::Time deadli
     case TRIGGEREXT :
       if (!flagTransStart){                                     // argh: TRIGGEREXT might happen prior to EVT_KICK_START in case mode EKS AND negative cTrigExt
         recGid       = ((id    & 0x0fff000000000000) >> 48);
+        if (recGid != reqExtRing) return;
         clearAllData();
         flagTransStart=1;
       }
@@ -932,6 +935,7 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
+  std::cout << "  -e<index>            species extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
   std::cout << std::endl;
   std::cout << "  snoop  <SID>         snoop events of the B2B system. Select SID of transfer" << std::endl;
   std::cout << std::endl;
@@ -955,20 +959,32 @@ int main(int argc, char** argv)
   // variables snoop event
   uint64_t snoopID     = 0x0;
 
-  char    *deviceName = NULL;
-
+  char       *deviceName = NULL;
   const char *command;
+  char       *tail;
 
   nextUpdate  = saftlib::makeTimeTAI(0xffffffffffffffff);
+  reqExtRing  = SIS18;
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "hdfULxv")) != -1) {
+  while ((opt = getopt(argc, argv, "e:hf")) != -1) {
     switch (opt) {
       case 'f' :
         useFirstDev = true;
         break;
-      case 'h':
+      case 'e' :
+        switch (strtol(optarg, &tail, 0)) {
+          case 0 : reqExtRing = SIS18; break;
+          case 1 : reqExtRing = ESR;   break;
+          default: ;
+        } // switch optarg
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'h' :
         help();
         return 0;
       default:
