@@ -1,0 +1,16 @@
+digraph "fg polymom" {
+   node [shape = Mrecord];
+   entry0_0 [shape = point, label = "start" ];
+   ST_IDLE;
+   ST_QUAD_INC;
+   ST_LIN_INC;
+   ST_ADD_XQ;
+   entry0_0 -> ST_IDLE;
+   ST_IDLE -> ST_IDLE;
+   ST_IDLE -> ST_QUAD_INC [label = "sync_start_in = '1'"];
+   ST_QUAD_INC -> ST_QUAD_INC;
+   ST_QUAD_INC -> ST_LIN_INC;
+   ST_QUAD_INC -> ST_IDLE;
+   ST_LIN_INC -> ST_ADD_XQ;
+   ST_ADD_XQ -> ST_QUAD_INC
+}

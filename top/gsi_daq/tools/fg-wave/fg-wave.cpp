@@ -23,7 +23,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-//#include <cmath>
+#include <cfloat>
 #include <daqt_read_stdin.hpp>
 #include <fgw_parser.hpp>
 #include <fgw_commandline.hpp>
@@ -51,6 +51,88 @@ void static printPolynomVect( const POLYMOM_VECT_T& rVect )
    }
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+int static printInfo( const POLYMOM_VECT_T& rVect, const bool beVerbose )
+{
+   if( rVect.size() == 0 )
+      return EXIT_FAILURE;
+
+   double interruptTimeMax = 0.0;
+   double interruptTimeMin = DBL_MAX;
+   double periodTime = 0.0;
+   for( const auto& polynom: rVect )
+   {
+      assert( polynom.frequ < ARRAY_SIZE( Polynom::c_timeTab ) );
+      double iTime = Polynom::calcStep( polynom.step ) * Polynom::c_timeTab[polynom.frequ];
+      interruptTimeMax = max( interruptTimeMax, iTime );
+      interruptTimeMin = min( interruptTimeMin, iTime );
+      periodTime += iTime;
+   }
+
+   assert( rVect.size() != 0 );
+   const double interruptTimeAvr = periodTime / rVect.size();
+
+   if( beVerbose )
+      cout << "min: ";
+   cout << interruptTimeMin << ' ';
+
+   if( beVerbose )
+      cout << "sec,\t";
+   if( interruptTimeMin != 0.0 )
+   {
+      cout << (1.0 / interruptTimeMin);
+      if( beVerbose )
+         cout << " Hz";
+   }
+   cout << '\n';
+
+   if( beVerbose )
+      cout << "avr: ";
+   cout << interruptTimeAvr << ' ';
+   if( beVerbose )
+      cout << "sec,\t";
+   if( interruptTimeAvr != 0.0 )
+   {
+      cout << (1.0 / interruptTimeAvr);
+      if( beVerbose )
+         cout << " Hz";
+   }
+   cout << '\n';
+
+   if( beVerbose )
+      cout << "max: ";
+   cout << interruptTimeMax << ' ';
+   if( beVerbose )
+      cout << "sec,\t";
+   if( interruptTimeMax != 0.0 )
+   {
+      cout << (1.0 / interruptTimeMax);
+      if( beVerbose )
+         cout << " Hz";
+   }
+   cout << '\n';
+
+   if( beVerbose )
+      cout << "per: ";
+   cout << periodTime << ' ';
+   if( beVerbose )
+      cout << "sec,\t";
+   if( periodTime != 0.0 )
+   {
+      cout << (1.0 / periodTime);
+      if( beVerbose )
+         cout << " Hz";
+   }
+   cout << '\n';
+
+   if( beVerbose )
+      cout << "Tuples: ";
+   cout << rVect.size() << endl;
+
+   return EXIT_SUCCESS;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** ppArgv )
 {
@@ -63,11 +145,17 @@ int main( int argc, char** ppArgv )
 
       POLYMOM_VECT_T oPolyVect;
       parseInStream( oPolyVect, *pIstream );
+
       if( oCmdLine.isDoStrip() )
       {
          for( uint i = oCmdLine.getRepetitions(); i > 0; i-- ) 
             printPolynomVect( oPolyVect );
          return EXIT_SUCCESS;
+      }
+
+      if( oCmdLine.isDoInfo() )
+      {
+         return printInfo( oPolyVect, oCmdLine.isVerbose() );
       }
 
       string gnuplotCmdLine;

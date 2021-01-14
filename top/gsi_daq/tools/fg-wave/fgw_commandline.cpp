@@ -303,6 +303,18 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         static_cast<CommandLine*>(poParser)->m_doInfo = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'i',
+      .m_longOpt  = "info",
+      .m_helpText = "Prints the information of minimum and maximum interrupt frequency of the given wave-file."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
          static_cast<CommandLine*>(poParser)->m_doQuit = true;
          return 0;
       }),
@@ -361,6 +373,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noSquareTerm( false )
    ,m_noLinearTerm( false )
    ,m_doStrip( false )
+   ,m_doInfo( false )
    ,m_doQuit( false )
    ,m_repetitions( 1 )
    ,m_dotsPerTuple( DEFAULT_DOTS_PER_TUPLE )

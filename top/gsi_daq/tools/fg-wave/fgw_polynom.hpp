@@ -35,14 +35,16 @@ namespace fgw
 ///////////////////////////////////////////////////////////////////////////////
 class Polynom
 {
+public:
    static constexpr long double F_MAX = static_cast<long double>(static_cast<uint64_t>(~0));
-   const static double c_timeTab[];
+   const static double c_timeTab[8];
    static uint calcStep( const uint i )
    {
       assert( i <= 7 );
       return (250 << i);
    }
 
+private:
    CommandLine& m_rCommandline;
 
 public:

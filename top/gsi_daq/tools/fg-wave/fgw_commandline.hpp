@@ -46,6 +46,7 @@ class CommandLine: CLOP::PARSER
    bool              m_noSquareTerm;
    bool              m_noLinearTerm;
    bool              m_doStrip;
+   bool              m_doInfo;
    bool              m_doQuit;
    uint              m_repetitions;
    uint              m_dotsPerTuple;
@@ -58,9 +59,9 @@ class CommandLine: CLOP::PARSER
 
    std::string       m_fileName;
    std::ifstream*    m_pInStream;  
-   
+
    static bool readInteger( uint&, const std::string& );
-   
+
 public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
@@ -85,21 +86,26 @@ public:
       return m_noLinearTerm;
    }
 
-   bool isDoStrip( void )
+   bool isDoStrip( void ) const
    {
       return m_doStrip;
+   }
+
+   bool isDoInfo( void ) const
+   {
+      return m_doInfo;
    }
 
    bool isDoQuit( void ) const
    {
       return m_doQuit;
    }
-   
+
    bool isPlotCoeffC( void ) const
    {
       return !m_gnuplotCoeffCLineStyle.empty();
    }
-   
+
    uint getRepetitions( void ) const
    {
       return m_repetitions;
