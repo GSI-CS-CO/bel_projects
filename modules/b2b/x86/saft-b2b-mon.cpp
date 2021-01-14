@@ -237,7 +237,7 @@ int32_t fixAlignedTS(int32_t ts,         // timestamp [ns]
   if (TH1Ns      >  100000) return corr; // nue < 10 kHz
   if (fabs(ts0) >   100000) return corr; // max period (10 kHz)    
 
-  for (dtTmp = ts0 - 5 * TH1Ns; dtTmp < ts0 + 5 * TH1Ns; dtTmp += TH1Ns) {
+  for (dtTmp = ts0 - 30 * TH1Ns; dtTmp < ts0 + 30 * TH1Ns; dtTmp += TH1Ns) {
     if (fabs(dtTmp) < min) {
       min     = fabs(dtTmp);
       dtMatch = dtTmp;
