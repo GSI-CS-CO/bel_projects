@@ -39,45 +39,24 @@ using namespace Scu;
  */
 constexpr float Y_PADDING = 0.5;
 
-#if 1
-   constexpr uint c_frequencyTab[] =
-   {
-       16,
-       32,
-       64,
-      125,
-      250,
-      500,
-      1000,
-      2000
-   };
-#else
-   constexpr double c_frequencyTab[] =
-   {
-    #if 0
-        16000,
-        32000,
-        64000,
-       125000,
-       250000,
-       500000,
-      1000000,
-      2000000
-    #else
-      2000000,
-      1000000,
-       500000,
-       250000,
-       125000,
-        64000,
-        32000,
-        16000
-    #endif
-   };
-
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Assignment table for POLYNOM_T::frequ.
+ * 
+ * Containing the period time.
+ */
+const double Polynom::c_timeTab[] =
+{
+   1.0 /   16000.0,
+   1.0 /   32000.0,
+   1.0 /   64000.0,
+   1.0 /  125000.0,
+   1.0 /  250000.0,
+   1.0 /  500000.0,
+   1.0 / 1000000.0,
+   1.0 / 2000000.0
+};
+
 /*! ---------------------------------------------------------------------------
  */
 Polynom::Polynom(  CommandLine& rCmdLine )
@@ -96,7 +75,7 @@ Polynom::~Polynom( void )
 double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
 {
    constexpr int64_t ZERO = static_cast<int64_t>(0);
-#if 1
+
    return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()?
                                ZERO:
                                (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
@@ -106,27 +85,12 @@ double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
                             static_cast<int64_t>( polynom.c ) << 32,
                             x
                           );
-#else
-   return daq::calcPolynom( static_cast<long double>(m_rCommandline.isNoSquareTerm()?
-                               ZERO:
-                               (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
-                            static_cast<long double>(m_rCommandline.isNoLinearTerm()?
-                               ZERO:
-                               (static_cast<int64_t>( polynom.b ) << polynom.shiftB)),
-                            static_cast<long double>(static_cast<int64_t>( polynom.c ) << 32),
-                            static_cast<long double>(x)
-                          );
-
-#endif
-
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
 {
-   constexpr double FREQUENCY = SCU_FREQUENCY * 2;
-
    const uint repeat = m_rCommandline.getRepetitions();
    out << "set terminal " << m_rCommandline.getGnuplotTerminal()
        << " title \"File: " << m_rCommandline.getFileName() << '"' << endl;
@@ -141,13 +105,12 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    uint daConversions = 0; 
    for( const auto& polynom: rVect )
    {
-      assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
+      assert( polynom.frequ < ARRAY_SIZE( c_timeTab ) );
       const uint steps = calcStep( polynom.step );
-      xRange += static_cast<double>(c_frequencyTab[polynom.frequ] * steps);
+      xRange += c_timeTab[polynom.frequ] * steps;
       daConversions += steps;
    }
    assert( xRange > 0.0 );
-   xRange /= FREQUENCY;
    const double frequency = 1.0 / xRange;
    const double loadFrequency = rVect.size() / xRange;
    xRange *= repeat;
@@ -177,6 +140,10 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    else
       out << "'' with " << m_rCommandline.getLineStyle() << " lc rgb 'green'" << endl;
 
+   constexpr double TO_VOLTAGE = DAQ_VPP_MAX / F_MAX;
+   /*
+    * Potting of all polynomials
+    */
    double tOrigin = 0.0;
    for( uint r = 0; r < repeat; r++ )
    {
@@ -188,12 +155,12 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
          if( dotsPerTuple == 0 )
             dotsPerTuple = steps;
          const uint interval = steps / dotsPerTuple;
-         assert( polynom.frequ < ARRAY_SIZE( c_frequencyTab ) );
-         const double tPart = static_cast<double>(c_frequencyTab[polynom.frequ]) / FREQUENCY;
+         assert( polynom.frequ < ARRAY_SIZE( c_timeTab ) );
+         const double tPart = c_timeTab[polynom.frequ];
          for( uint i = 0; i < steps; i++ )
          {
             if( (i % interval) == 0 )
-               out << tOrigin << ' ' << (calcPolynom( polynom, i ) * DAQ_VPP_MAX / F_MAX) << endl;
+               out << tOrigin << ' ' << (calcPolynom( polynom, i ) * TO_VOLTAGE) << endl;
             tOrigin += tPart;
          }
       }
@@ -203,6 +170,9 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    if( !m_rCommandline.isPlotCoeffC() )
       return;
 
+   /*
+    * Potting of c-coefficient only
+    */
    tOrigin = 0.0;
    for( uint r = 0; r < repeat; r++ )
    {
@@ -210,15 +180,13 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
       {
          out << tOrigin << ' '
              << (static_cast<double>(static_cast<int64_t>( polynom.c ) << 32)
-                * DAQ_VPP_MAX / F_MAX)
+                * TO_VOLTAGE)
              << endl;
-         tOrigin += (static_cast<double>(c_frequencyTab[polynom.frequ])
-                 * calcStep( polynom.step ) / FREQUENCY);
+         tOrigin += calcStep( polynom.step ) * c_timeTab[polynom.frequ];   
       }
    }
    out << 'e' << endl;
 }
-
 
 } // namespace fgw
 //================================== EOF ======================================

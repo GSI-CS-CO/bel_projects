@@ -9,7 +9,7 @@
 ## Date:     07.12.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=1.0
+DEFINES += VERSION=1.1
 
 MIAN_MODULE := fg-wave.cpp
 
@@ -51,7 +51,7 @@ LIBS += stdc++
 # CALL_ARGS = ../../../gsi_scu/sinus-test.txt
 CALL_ARGS = sinus-test.fgw -c
 # CALL_ARGS = -r3 sinus.fgw
-#CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw 
+# CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw 
 #CALL_ARGS = -zd100 q.fgw
 #CALL_ARGS = -zd100 q.fgw
 #  DEBUG = 1
