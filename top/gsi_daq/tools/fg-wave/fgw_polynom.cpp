@@ -159,14 +159,14 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
          const double tPart = c_timeTab[polynom.frequ];
          for( uint i = 0; i < steps; i++ )
          {
-            if( (i % interval) == 0 )
+            if( ((i % interval) == 0) || (i == (steps-1)) )
                out << tOrigin << ' ' << (calcPolynom( polynom, i ) * TO_VOLTAGE) << endl;
             tOrigin += tPart;
          }
       }
    }
    out << 'e' << endl;
-   
+
    if( !m_rCommandline.isPlotCoeffC() )
       return;
 
