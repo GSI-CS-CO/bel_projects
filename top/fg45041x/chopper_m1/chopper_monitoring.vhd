@@ -11,7 +11,7 @@
 
 	-- act_pos_latch latched:	Bit 15
 	-- act_pos_edge > 127:		Bit 11
-	-- Counter Overflow:			Bit 10
+	-- Counter Overflow:		Bit 10
 	-- act high vor Start:		Bit 9
 	-- act nicht durchgängig: 	Bit 8
 
@@ -27,7 +27,6 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
 use ieee.math_real.all;
 
 library lpm;
