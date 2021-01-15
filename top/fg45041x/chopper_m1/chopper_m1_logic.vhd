@@ -24,14 +24,13 @@
 --|					Diese verkürzt dann den Rahmenpulse Chopper_HSI/HLI_delayed.									|												|
 --+-----------------------------------------------------------------------------------------------------------------+
 
-library IEEE;
-USE ieee.std_logic_1164.all;
-USE IEEE.STD_LOGIC_arith.all;
-USE IEEE.STD_LOGIC_unsigned.all;
-use IEEE.MATH_REAL.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
 
-LIBRARY lpm;
-USE lpm.lpm_components.all;
+library lpm;
+use lpm.lpm_components.all;
 
 entity chopper_m1_logic is
 		GENERIC (
@@ -251,7 +250,7 @@ signal s_Logik_not_Sel_or_Reset : std_logic;
 signal s_Strahlweg_Reg          : std_logic_vector(10 downto 0);
 signal s_Strahlweg_Maske        : std_logic_vector(7 downto 0);
 signal s_Interlock_Reg          : std_logic_vector(1 downto 0);
-signal s_TK8_Delay              : std_logic_vector(15 downto 0);
+signal s_TK8_Delay              : unsigned(15 downto 0);
 
 
 --+-----------------------------------------------------------------------------+
@@ -523,14 +522,14 @@ begin
 	TK8_Delay_Reg: process ( clk, TK8_Delay_WR, Reset, s_TK8_Delay)
 	begin
 		if Reset = '1' then
-			s_TK8_Delay <= conv_std_logic_vector(150, 16);	-- 150 * 100ns = 15us
+			s_TK8_Delay <= to_unsigned(150, 16);	-- 150 * 100ns = 15us
 		elsif rising_edge(Clk) then
 			if TK8_Delay_WR = '1' then
-				s_TK8_Delay <= Data_WR(15 downto 0);
+				s_TK8_Delay <= unsigned(Data_WR(15 downto 0));
 			end if;
 		end if;
 
-		TK8_Delay(15 downto 0) <= s_TK8_Delay;
+		TK8_Delay(15 downto 0) <= std_logic_vector(s_TK8_Delay);
 	end process;
 
 
@@ -1070,7 +1069,7 @@ begin
 	TK8_delayed: var_delay
         port map (
           Signal_in  => s_R_TK8,
-          delay      => s_TK8_delay,
+          delay      => std_logic_vector(s_TK8_delay),
           Clk        => Clk,
           Reset      => Reset,
           en_100ns   => s_100ns_en,
