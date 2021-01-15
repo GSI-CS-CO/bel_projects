@@ -669,22 +669,22 @@ begin
 	--+---------------------------------------------+
 	--|   Trafo-Verlust/Profilgitter-Interlock		|
 	--+---------------------------------------------+
-	UH_DT_V           <= not Strahlalarm_In(0);  -- Kein Strom an           -- 
-	UA_DT_V           <= not Strahlalarm_In(1);  -- der Optokoppler-        -- 
-	TK_DT1V           <= not Strahlalarm_In(2);  -- Anpasskarte 'OIKUI'     -- 
-	UXZDT_V           <= not Strahlalarm_In(3);  -- soll die Verriegelung   -- 
-	TK8DT2V           <= not Strahlalarm_In(4);  -- auslösen.               -- 
-	SISDT_V           <= not Strahlalarm_In(5);  -- Dadurch ist bei         -- 
-	TK_DT2V           <= not Strahlalarm_In(6);  -- abgezogen Kabel die     -- 
-	Strahlalarm_Frei2 <= not Strahlalarm_In(7);  -- Schutzfunktion gewähr-  -- 
-	UH4DT4P           <= not Strahlalarm_In(8);  -- leistet. Die Logik ist  -- 
-	US4DT7P           <= not Strahlalarm_In(9);  -- für positive Signale    -- 
-	UT1DT0P           <= not Strahlalarm_In(10); -- definiert, deshalb sind -- 
-	TK3DT4P           <= not Strahlalarm_In(11); -- alle Verlust-Eingänge   -- 
-	US_DT_E           <= not Strahlalarm_In(12); -- negiert.                -- 
-	UA_DT_E           <= not Strahlalarm_In(13); --                         -- 
-	TK_DT_E           <= not Strahlalarm_In(14); --                         -- 
-	TK3DT3P           <= not Strahlalarm_In(15); -- 
+	UH_DT_V           <= not Strahlalarm_In(0);  -- Kein Strom an           --
+	UA_DT_V           <= not Strahlalarm_In(1);  -- der Optokoppler-        --
+	TK_DT1V           <= not Strahlalarm_In(2);  -- Anpasskarte 'OIKUI'     --
+	UXZDT_V           <= not Strahlalarm_In(3);  -- soll die Verriegelung   --
+	TK8DT2V           <= not Strahlalarm_In(4);  -- auslösen.               --
+	SISDT_V           <= not Strahlalarm_In(5);  -- Dadurch ist bei         --
+	TK_DT2V           <= not Strahlalarm_In(6);  -- abgezogen Kabel die     --
+	Strahlalarm_Frei2 <= not Strahlalarm_In(7);  -- Schutzfunktion gewähr-  --
+	UH4DT4P           <= not Strahlalarm_In(8);  -- leistet. Die Logik ist  --
+	US4DT7P           <= not Strahlalarm_In(9);  -- für positive Signale    --
+	UT1DT0P           <= not Strahlalarm_In(10); -- definiert, deshalb sind --
+	TK3DT4P           <= not Strahlalarm_In(11); -- alle Verlust-Eingänge   --
+	US_DT_E           <= not Strahlalarm_In(12); -- negiert.                --
+	UA_DT_E           <= not Strahlalarm_In(13); --                         --
+	TK_DT_E           <= not Strahlalarm_In(14); --                         --
+	TK3DT3P           <= not Strahlalarm_In(15); --
 
 	--+-----------------------------------------------------------------------------+
 	--|	Trafosteuerpulse ('Trafo_Timing_Out(15..0)') mit den Signalnamen belegen	|
@@ -769,55 +769,84 @@ begin
             Sig_out  => Klemm_UR
           );
 
-	Klemm_UL_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_200us)
-										PORT MAP	(	Clk => Clk,
-														Reset => s_Logik_not_Sel_or_Reset,
-														Edge_neg => IQ_L,
-														Sig_out =>	Klemm_UL);
+	Klemm_UL_dly: pos_or_neg_dly
+          generic map (
+            Edge_delay_cnt => C_Edge_delay_cnt_200us
+          )
+          port map (
+            Clk      => Clk,
+            Reset    => s_Logik_not_Sel_or_Reset,
+            Edge_neg => IQ_L,
+            Sig_out  => Klemm_UL
+          );
 
 
-	Klemm_UH1	<= (Qu_R_HSI and Klemm_UR) or (Qu_L_HSI and Klemm_UL);
+        Klemm_UH1 <= (Qu_R_HSI and Klemm_UR) or (Qu_L_HSI and Klemm_UL);
 
 
-	Klemm_UH_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
-										PORT MAP	(	Clk => Clk,
-														Reset => s_Logik_not_Sel_or_Reset,
-														Edge_neg => Chopper_HSI,
-														Sig_out =>	Klemm_UH_delayed);
+	Klemm_UH_dly: pos_or_neg_dly
+          generic map (
+            Edge_delay_cnt => C_Edge_delay_cnt_50us
+          )
+          port map (
+            Clk      => Clk,
+            Reset    => s_Logik_not_Sel_or_Reset,
+            Edge_neg => Chopper_HSI,
+            Sig_out  => Klemm_UH_delayed
+          );
+
+	Klemm_UH <= Klemm_UH_delayed and not Rahmen_UH_after_20us;
 
 
-	Klemm_UH <=  Klemm_UH_delayed and not Rahmen_UH_after_20us;
-	--Klemm_UH <=  Klemm_UH_delayed or Rahmen_UH_after_20us;
-
-
-	Klemm_UN_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
-											PORT MAP	(	Clk => Clk,
-															Reset => s_Logik_not_Sel_or_Reset,
-															Edge_neg => Chopper_HLI,
-															Sig_out =>	Klemm_UN_delayed);
+	Klemm_UN_dly: pos_or_neg_dly
+          generic map (
+            Edge_delay_cnt => C_Edge_delay_cnt_50us
+          )
+          port map (
+            Clk      => Clk,
+            Reset    => s_Logik_not_Sel_or_Reset,
+            Edge_neg => Chopper_HLI,
+            Sig_out  => Klemm_UN_delayed
+          );
 
 	Klemm_UN <= Klemm_UN_delayed and not Rahmen_UN_after_20us;
 
 
-	Chopper_HSI_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
-											PORT MAP	(	Clk => Clk,
-															Reset => s_Logik_not_Sel_or_Reset,
-															Edge_pos => Chopper_HSI,
-															Sig_out =>	Chopper_HSI_delayed);
+	Chopper_HSI_dly: pos_or_neg_dly
+        generic map (
+          Edge_delay_cnt => C_Edge_delay_cnt_50us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_Logik_not_Sel_or_Reset,
+          Edge_pos => Chopper_HSI,
+          Sig_out  => Chopper_HSI_delayed
+        );
 
-	Chopper_HLI_dly:		pos_or_neg_dly	GENERIC MAP (	Edge_delay_cnt => C_Edge_delay_cnt_50us)
-											PORT MAP	(	Clk => Clk,
-															Reset => s_Logik_not_Sel_or_Reset,
-															Edge_pos => Chopper_HLI,
-															Sig_out =>	Chopper_HLI_delayed);
+	Chopper_HLI_dly: pos_or_neg_dly
+        generic map (
+          Edge_delay_cnt => C_Edge_delay_cnt_50us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_Logik_not_Sel_or_Reset,
+          Edge_pos => Chopper_HLI,
+          Sig_out  => Chopper_HLI_delayed
+        );
 
 
 	-- 10us puls after Strahl_HSI
-	Rahmen_UH_min_dly:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
-										PORT MAP	( 	Clk => Clk,
-														Reset => s_Logik_not_Sel_or_Reset,
-														Pos_Edge => Strahl_HSI,
-														Puls => Rahmen_UH_min );
+	Rahmen_UH_min_dly: Puls
+        generic map (
+          delay_cnt => C_Edge_delay_cnt_10us
+        )
+        port map (
+          Clk => Clk,
+          Reset => s_Logik_not_Sel_or_Reset,
+          Pos_Edge => Strahl_HSI,
+          Puls => Rahmen_UH_min
+        );
+
 	-- 10us puls after Strahl_HSI
 	puls_hsi:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
 										PORT MAP	( 	Clk => Clk,
