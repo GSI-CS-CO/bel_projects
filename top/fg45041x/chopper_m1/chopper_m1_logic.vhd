@@ -459,7 +459,7 @@ begin
 		TK9DC9_out		<= s_Strahlweg_Reg(9);
 		Enable_TK		<= s_Strahlweg_Reg(10);
 
-		Strahlweg_Reg(10 downto 0) <= s_Strahlweg_Reg;
+		Strahlweg_Reg(10 downto 0)  <= s_Strahlweg_Reg;
 		Strahlweg_Reg(15 downto 11) <= "00000";
 
 	end process;
@@ -487,8 +487,8 @@ begin
 		Mask_TK3DT4P	<= s_Strahlweg_Maske(6);
 		Mask_TK3DT3P	<= s_Strahlweg_Maske(7); -- neu am 12.11.2007
 
-		Strahlweg_Maske(7 downto 0)		<= s_Strahlweg_Maske;
-		Strahlweg_Maske(15 downto 8) 	<= "00000000";
+		Strahlweg_Maske(7 downto 0)  <= s_Strahlweg_Maske;
+		Strahlweg_Maske(15 downto 8) <= "00000000";
 
 	end process;
 
@@ -512,7 +512,7 @@ begin
 	No_ERR_HLI <= s_Interlock_Reg(1);
 
 
-	Interlock_Reg(1 downto 0) <= s_Interlock_Reg;
+	Interlock_Reg(1 downto 0)  <= s_Interlock_Reg;
 	Interlock_Reg(15 downto 2) <= X"FFF" & "11";
 
 
@@ -841,77 +841,114 @@ begin
           delay_cnt => C_Edge_delay_cnt_10us
         )
         port map (
-          Clk => Clk,
-          Reset => s_Logik_not_Sel_or_Reset,
+          Clk      => Clk,
+          Reset    => s_Logik_not_Sel_or_Reset,
           Pos_Edge => Strahl_HSI,
-          Puls => Rahmen_UH_min
+          Puls     => Rahmen_UH_min
         );
 
 	-- 10us puls after Strahl_HSI
-	puls_hsi:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
-										PORT MAP	( 	Clk => Clk,
-														Reset => s_trunc_reset,
-														Pos_Edge => Chopper_HSI_delayed,
-														Puls => mask_10us_hsi );
+	puls_hsi: Puls
+        generic map (
+          delay_cnt => C_Edge_delay_cnt_10us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_trunc_reset,
+          Pos_Edge => Chopper_HSI_delayed,
+          Puls     => mask_10us_hsi
+        );
 
 	-- 10us puls after Strahl_HLI
-	puls_hli:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
-										PORT MAP	( 	Clk => Clk,
-														Reset => s_trunc_reset,
-														Pos_Edge => Chopper_HLI_delayed,
-														Puls => mask_10us_hli );
+	puls_hli: Puls
+        generic map (
+          delay_cnt => C_Edge_delay_cnt_10us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_trunc_reset,
+          Pos_Edge => Chopper_HLI_delayed,
+          Puls     => mask_10us_hli
+        );
 
 	-- 10us puls after Chopper_HSI
-	puls_hsi_anf:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
-										PORT MAP	( 	Clk => Clk,
-														Reset => s_trunc_reset,
-														Pos_Edge => Chopper_HSI_delayed,
-														Puls => puls_10us_after_chopp_hsi );
+	puls_hsi_anf: Puls
+        generic map (
+          delay_cnt => C_Edge_delay_cnt_10us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_trunc_reset,
+          Pos_Edge => Chopper_HSI_delayed,
+          Puls     => puls_10us_after_chopp_hsi
+        );
 
 	-- 10us puls after Chopper_HLI
-	puls_hli_anf:	Puls	 		GENERIC MAP (	delay_cnt => C_Edge_delay_cnt_10us)
-										PORT MAP	( 	Clk => Clk,
-														Reset => s_trunc_reset,
-														Pos_Edge => Chopper_HLI_delayed,
-														Puls => puls_10us_after_chopp_hli );
+	puls_hli_anf: Puls
+        generic map (
+          delay_cnt => C_Edge_delay_cnt_10us
+        )
+        port map (
+          Clk      => Clk,
+          Reset    => s_trunc_reset,
+          Pos_Edge => Chopper_HLI_delayed,
+          Puls     => puls_10us_after_chopp_hli
+        );
 
-	edge_chopp_hsi: edge_detection port map (
-							clk => clk,
-							reset => s_trunc_reset,
-							input => Chopper_HSI_delayed,
-							pos_edge => chopp_hsi_pos
-						);
+	edge_chopp_hsi: edge_detection
+        port map (
+          clk      => clk,
+          reset    => s_trunc_reset,
+          input    => Chopper_HSI_delayed,
+          pos_edge => chopp_hsi_pos
+        );
 
-	edge_chopp_hli: edge_detection port map (
-							clk => clk,
-							reset => s_trunc_reset,
-							input => Chopper_HLI_delayed,
-							pos_edge => chopp_hli_pos
-						);
+	edge_chopp_hli: edge_detection
+        port map (
+          clk      => clk,
+          reset    => s_trunc_reset,
+          input    => Chopper_HLI_delayed,
+          pos_edge => chopp_hli_pos
+        );
 
 
 	s_trunc_reset <= s_Logik_not_Sel_or_Reset or Strahlweg_Reg_WR;
 
 	-- 20us nach Ende Rahmenpuls High Pegel
-	trunc_ua:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
-								port	map (	clk => clk,
-												reset => s_trunc_reset,
-												neg_edge => Rahmen_UA,
-												trunc => Rahmen_UA_after_20us );
+	trunc_ua: trunc
+        generic map (
+          delay_cnt => c_edge_delay_cnt_20us
+        )
+        port map (
+          clk      => clk,
+          reset    => s_trunc_reset,
+          neg_edge => Rahmen_UA,
+          trunc    => Rahmen_UA_after_20us
+        );
 
 	-- 20us nach Ende Rahmenpuls High Pegel
-	trunc_un:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
-								port	map (	clk => clk,
-												reset => s_trunc_reset,
-												neg_edge => Rahmen_UN,
-												trunc => Rahmen_UN_after_20us );
+	trunc_un: trunc
+        generic map (
+          delay_cnt => c_edge_delay_cnt_20us
+        )
+        port map (
+          clk      => clk,
+          reset    => s_trunc_reset,
+          neg_edge => Rahmen_UN,
+          trunc    => Rahmen_UN_after_20us
+        );
 
 	-- 20us nach Ende Rahmenpuls High Pegel
-	trunc_uh:	trunc			generic map (	delay_cnt => c_edge_delay_cnt_20us )
-								port	map (	clk => clk,
-												reset => s_trunc_reset,
-												neg_edge => Rahmen_UH,
-												trunc => Rahmen_UH_after_20us );
+	trunc_uh: trunc
+        generic map (
+          delay_cnt => c_edge_delay_cnt_20us
+        )
+        port map (
+          clk      => clk,
+          reset    => s_trunc_reset,
+          neg_edge => Rahmen_UH,
+          trunc    => Rahmen_UH_after_20us
+        );
 	--------------------------------------------------------------------------------------
 
 
@@ -1030,13 +1067,15 @@ begin
 					Rahmen_TK8_delayed when TK9DC9_out = '0' else
 					'0';
 
-	TK8_delayed:	var_delay  port map (   Signal_in => s_R_TK8,
-											delay => s_TK8_delay,
-											Clk => Clk,
-											Reset => Reset,
-											en_100ns => s_100ns_en,
-											Signal_out => Rahmen_TK8_delayed
-										);
+	TK8_delayed: var_delay
+        port map (
+          Signal_in  => s_R_TK8,
+          delay      => s_TK8_delay,
+          Clk        => Clk,
+          Reset      => Reset,
+          en_100ns   => s_100ns_en,
+          Signal_out => Rahmen_TK8_delayed
+        );
 
 
 	Klemm_TK8 <= Klemm_UA when ( Klemm_UA = '1' and not (Request_SIS = '0' and TK9DC9_out = '0')) else '0';
