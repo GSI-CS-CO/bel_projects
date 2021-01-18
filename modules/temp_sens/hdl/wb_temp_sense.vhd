@@ -140,7 +140,7 @@ begin
       if (rst_n_i='0') then
         s_count 	<= (others => '0');
         s_clr_o 	<= '1';
-        s_ts_data <= (g_ts_data_width => '0', others =>'1');
+        s_ts_data <= ('0', others =>'1');
      else
         s_count <= s_count + 1;
 
@@ -187,7 +187,7 @@ temperature_sensor : temp_sens
 ---------------------------------------------------
 
   p_clk_wb_read: process (clk_sys_i)
-
+    variable s_wb_adr_3_2 : std_logic_vector(1 downto 0);
   begin
     if rising_edge(clk_sys_i) then
       if (rst_n_i='0') then
@@ -201,7 +201,8 @@ temperature_sensor : temp_sens
 
           if (s_wb_we = '0') then -- read access
 
-            case s_wb_adr(3 downto 2) is
+            s_wb_adr_3_2 := s_wb_adr(3 downto 2);
+            case s_wb_adr_3_2 is
               when c_address_tx_data =>  -- latest sensor raw data with the fault flag
                 s_wb_dat(g_ts_data_width -1 downto 0)            <= s_ts_data(g_ts_data_width -1 downto 0);
                 s_wb_dat(g_data_width -2 downto g_ts_data_width) <= (others => '0');
