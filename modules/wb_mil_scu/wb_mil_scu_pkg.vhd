@@ -13,6 +13,8 @@ constant  c_mil_byte_addr_range:  integer := 16#2000# * 4;              -- all r
                                                                         -- so multiply the c_mil_byte_addr_range by 4.
 constant  c_mil_addr_width:       integer := integer(ceil(log2(real(c_mil_byte_addr_range))));
 
+constant c_dummy_component : t_sdb_component := ((others => '0'), (others => '0'), ( (others => '0'), (others => '0'), (others => '0'), (others => '0'), "                   ") );
+
 constant c_xwb_gsi_mil_scu : t_sdb_device := (
   abi_class     => x"0000",             -- undocumented device
   abi_ver_major => x"01",
@@ -21,7 +23,7 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   wbd_width     => x"4",                -- only 32-bit port granularity allowed
   sdb_component => (
   addr_first    => x"0000000000000000",
-  addr_last     => std_logic_vector(to_unsigned(c_mil_byte_addr_range-1, t_sdb_component.addr_last'length)),
+  addr_last     => std_logic_vector(to_unsigned(c_mil_byte_addr_range-1, c_dummy_component.addr_last'length)),
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"35aa6b96",
