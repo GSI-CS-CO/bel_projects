@@ -27,6 +27,7 @@
 
 #include <stack.h>
 #include "scu_main.h"
+#include "event_measurement.h"
 #include "scu_command_handler.h"
 #include "scu_fg_macros.h"
 #ifdef CONFIG_MIL_FG
