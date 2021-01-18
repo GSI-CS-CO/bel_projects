@@ -260,7 +260,7 @@ begin
   begin
     if rising_edge(clk_ref_i) then
       if(rst_ref_n_i = '0' OR s_ctrl_reset_o(0) = '1' OR s_deadtime_stop = '1') then
-        r_deadtime     <= "0" & to_unsigned(-1, r_deadtime'length-1);
+        r_deadtime     <= "0" & unsigned(to_signed(-1, r_deadtime'length-1)); -- GHDL doesn't allow to_unsigned(-1, ...)
         r_deadtime_run <= "0";
       else
         r_deadtime_run(0) <= (r_deadtime_run(0) OR s_deadtime_start);
