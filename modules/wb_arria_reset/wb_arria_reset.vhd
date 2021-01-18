@@ -91,16 +91,18 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal halt_wd          : std_logic;
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
+  signal reset_or_trigger : std_logic;
 begin
 
   reset <= not rstn_upd_i;
 
+  reset_or_trigger <= reset_reg(0) or trigger_reconfig;
   ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
       clock       => clk_upd_i,
       param       => "000",
       read_param  => '0',
-      reconfig    => reset_reg(0) or trigger_reconfig,
+      reconfig    => reset_or_trigger,
       reset       => reset,
       reset_timer => '0',
       busy        => open,
@@ -113,7 +115,7 @@ begin
       clock       => clk_upd_i,
       param       => "000",
       read_param  => '0',
-      reconfig    => reset_reg(0) or trigger_reconfig,
+      reconfig    => reset_or_trigger,
       reset       => reset,
       reset_timer => '0',
       busy        => open,
