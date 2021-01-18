@@ -146,7 +146,7 @@ set_global_assignment -name REPORT_SOURCE_ASSIGNMENTS ON
 set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 256
+set_global_assignment -name SEED 108
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -291,6 +291,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legac
 set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/axi4lite32_axi4full64_bridge/axi4lite32_axi4full64_bridge.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/axi4lite_wb_bridge/xaxi4lite_wb_bridge.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/axi4_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/z7_axi_gpio_expander/axi_gpio_expander.vhd" -library work
@@ -308,6 +309,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/c
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_extend_pulse.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_edge_detect.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_fsm_watchdog.vhd" -library work
@@ -315,6 +317,8 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/c
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_i2c_slave.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_multichannel_frequency_meter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_negedge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_posedge.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd" -library work
@@ -323,9 +327,11 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/c
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sfp_i2c_adapter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_simple_spi_master.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_single_reset_gen.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_word_rd.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_word_wr.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd" -library work
@@ -338,6 +344,8 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/g
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/cheby/cheby_dpssram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/cheby/cheby_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
@@ -347,6 +355,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/g
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb16_to_wb32/wb16_to_wb32.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_axi4lite_bridge/wb_axi4lite_bridge.vhd" -library work
@@ -376,6 +385,8 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/w
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_indirect/wb_indirect_regs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_indirect/xwb_indirect.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_lm32.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd" -library work
