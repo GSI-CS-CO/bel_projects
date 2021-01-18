@@ -21,7 +21,7 @@ testbench: $(shell cat vhdl_sources) testbench.vhd
 
 
 vhdl_sources: hdl_sources
-	grep -r '.vhd$$' $< > $@
+	grep -r '.vhd$$' $< | grep -v legacy-vme64x-core > $@
 
 verilog_sources: hdl_sources
 	grep -r '.v$$' $< > $@
