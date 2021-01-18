@@ -106,7 +106,9 @@ signal td_sh:           std_logic_vector(3 downto 0);
 signal cds_sh:          std_logic_vector(3 downto 0);
 signal vw_sh:           std_logic_vector(3 downto 0);
 signal sdo_sh:          std_logic_vector(3 downto 0);
-signal dsc_cnt:         integer range 0 to 15; 
+
+subtype dsc_cnt_t is integer range 0 to 15;
+signal dsc_cnt:         dsc_cnt_t;
 	 
 begin
 
@@ -117,12 +119,12 @@ BEGIN
     dsc_cnt      <= 0;
     hw6408_rdy   <='0';   
   ELSIF rising_edge(dsc) THEN
-    IF dsc_cnt < dsc_cnt'high THEN   
+    IF dsc_cnt < dsc_cnt_t'high THEN   
       dsc_cnt    <= dsc_cnt + 1;   -- keep ready low for 16 µsek
       hw6408_rdy <='0';
     ELSE
       hw6408_rdy <='1';
-      dsc_cnt    <= dsc_cnt'high;  -- stay at 15 until next reset
+      dsc_cnt    <= dsc_cnt_t'high;  -- stay at 15 until next reset
     END IF;
   END IF;
 END PROCESS p_hw6408_rdy; 
