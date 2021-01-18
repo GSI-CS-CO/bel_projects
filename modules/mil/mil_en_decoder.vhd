@@ -36,8 +36,8 @@ port  (
     Mil_Rdy_4_WR:   out     std_logic;              -- Das Sende-Register ist frei.
     nSel_Mil_RCV:   out     std_logic;              -- '0' selektiert den Empfangspfad.
     nSel_Mil_DRV:   out     std_logic;              -- selektiert die ext. bipolaren Treiber von 'nMil_Out_Pos(_Neg)' einschalten (null-aktiv).
-    nMil_Out_Pos:   buffer  std_logic;              -- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
-    nMil_Out_Neg:   buffer  std_logic;              -- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+    nMil_Out_Pos:   out  std_logic;              -- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+    nMil_Out_Neg:   out  std_logic;              -- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
     RCV_Rdy:        out     std_logic;              -- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     RCV_ERROR:      out     std_logic;
     CMD_Rcv:        out     std_logic;              -- '1' es wurde ein Kommando empfangen.
@@ -61,13 +61,17 @@ ARCHITECTURE arch_mil_en_decoder OF mil_en_decoder IS
 
 SIGNAL  Neg_In :  std_logic;
 SIGNAL  Pos_In :  std_logic;
-
+SIGNAL  nMil_Out_Pos_Buf : std_logic;
+SIGNAL  nMil_Out_Neg_Buf : std_logic;
 
 BEGIN 
 
 -- Test-Multiplexer, wenn Test = 1 wird der Ausgang des Mil_Encoders direkt auf den Eingang des Mil_Decoders geschaltet.
-Pos_in <= not nMil_Out_Pos when (Test = '1') else Mil_in_Pos;
-Neg_in <= not nMil_Out_Neg when (Test = '1') else Mil_in_Neg;
+Pos_in <= not nMil_Out_Pos_Buf when (Test = '1') else Mil_in_Pos;
+Neg_in <= not nMil_Out_Neg_Buf when (Test = '1') else Mil_in_Neg;
+
+nMil_Out_Pos <= nMil_Out_Pos_Buf;
+nMil_Out_Neg <= nMil_Out_Neg_Buf;
 
 
 mil_dec:  Mil_bipol_dec
@@ -126,8 +130,8 @@ port map  (
                                       -- sonst ist die "Baudrate" des Manchester-Ausgangsdatenstroms verkehrt.
       Reset         => RES,           -- Die Ablaufsteuerung 'Mil_TRM_SM' wird zurueckgesetzt, unterbricht ein laufendes Mil-Send.
       Mil_TRM_D     => Mil_TRM_D,     -- solange Mil_Rdy_4_Wr gleich '0' ist, muss hier das zu sendende Datum anliegen.
-      nMil_Out_Pos  => nMil_Out_Pos,  -- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
-      nMil_Out_Neg  => nMil_Out_Neg,  -- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+      nMil_Out_Pos  => nMil_Out_Pos_Buf,-- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+      nMil_Out_Neg  => nMil_Out_Neg_Buf,-- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
       nSel_Mil_Drv  => nSel_Mil_Drv,  -- selektiert die ext. bipolaren Treiber von 'nMil_Out_Pos(_Neg)' einschalten (null-aktiv).
       nSel_Mil_Rcv  => nSel_Mil_Rcv,  -- '0' selektiert den Empfangspfad.
       Mil_Rdy_4_Wr  => Mil_Rdy_4_WR,  -- Das Sende-Register ist frei.
