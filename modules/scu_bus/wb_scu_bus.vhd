@@ -175,7 +175,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   constant  C_Sw_Tag_Low_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0010#, c_adr_width);	-- real address is multiplied by two
   constant  C_Sw_Tag_High_Adr               : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0012#, c_adr_width);	-- real address is multiplied by two
 
-
+  SIGNAL    s_i_adr           : INTEGER;
 
   SIGNAL    s_reset         : STD_LOGIC;
   SIGNAL    S_First_Sync_Reset    : STD_LOGIC;
@@ -562,8 +562,8 @@ begin
       S_SCUB_Wr_Err_no_Dtack <= '1';    -- SCU_Bus write error no dtack
     end if;
 
-
-    case unsigned(s_adr(c_adr_width-1 downto 0)) is
+    s_i_adr <= to_integer(unsigned(s_adr(c_adr_width-1 downto 0)));
+    case s_i_adr is
       when C_Status_Adr =>
         if wr_acc = '1' then
           s_int_ack <= '1';

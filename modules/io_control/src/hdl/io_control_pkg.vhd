@@ -64,7 +64,7 @@ package io_control_pkg is
       g_lvds_out    : natural := 0;
       g_lvds_inout  : natural := 0;
       g_fixed       : natural := 0;
-      g_io_table    : t_io_mapping_table_arg_array(natural range <>));
+      g_io_table    : t_io_mapping_table_arg_array);
     port(
       clk_i           : in  std_logic;
       rst_n_i         : in  std_logic;

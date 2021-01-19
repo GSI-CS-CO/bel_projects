@@ -197,6 +197,8 @@ signal    Mil_Rcv_Error:    std_logic;
 
 signal    SEL_6408:         std_logic;    -- used for modelsim
 
+signal    nReset_Puls:      std_logic;
+
 begin
 
 SEL_6408 <= not EPLD_Manchester_Enc;
@@ -236,7 +238,7 @@ hw6408: hw6408_vhdl
     valid_w       => Valid_W_6408,    -- Statusbit: '1' => ein Telegram, wurde empfangen.
     trm_rdy       => TRM_RDY_6408,    -- Statusbit: '1' => Sender ist frei.
     
-    nrst_i        => not Reset_Puls,
+    nrst_i        => nReset_Puls,
     clk_i         => Clk,
     
     res_6408      => Reset_6408,      -- verbinde mit HD6408(mr) = master reset.
@@ -244,6 +246,7 @@ hw6408: hw6408_vhdl
                                       -- ausgeschaltet.
     hw6408_rdy    => hw6408_rdy 
   );
+  nReset_Puls <= not Reset_Puls;
 
       
 mil_en_dec: mil_en_decoder
