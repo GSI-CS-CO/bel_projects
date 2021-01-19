@@ -357,13 +357,16 @@ signal   n_modulreset:              std_logic;
 signal   tx_req_led:                std_logic;
 signal   rx_avail_led:              std_logic;
 
-
-
+signal   Rst:                       std_logic;
+signal   modulreset:                std_logic;
 BEGIN
 
 
 slave_o.rty               <= '0';
 reset_6408                <= '0';
+
+Rst <= NOT nRst_i;
+modulreset <= NOT n_modulreset;
 
 -- only for reset register access , the ext_xxx_res signals are valid, otherwise take regular ones
 
@@ -570,7 +573,7 @@ p_deb_intl: debounce
     )
   PORT MAP (
     DB_In   => Interlock_Intr_i,            -- Das zu entprellende Signal
-    Reset   => NOT nRst_i,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Reset   => Rst,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => db_interlock_intr            -- Das entprellte Signal von "DB_In".
     );
@@ -586,7 +589,7 @@ p_deb_drdy: debounce
     )
   PORT MAP (
     DB_In   => Data_Rdy_Intr_i,             -- Das zu entprellende Signal
-    Reset   => NOT nRst_i,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Reset   => Rst,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => db_data_rdy_intr             -- Das entprellte Signal von "DB_In"
     );
@@ -602,7 +605,7 @@ p_deb_dreq: debounce
     )
   PORT MAP (
     DB_In   => Data_Req_Intr_i,             -- Das zu entprellende Signal
-    Reset   => NOT nRst_i,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Reset   => Rst,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => db_data_req_intr             -- Das entprellte Signal von "DB_In".
     );
@@ -617,7 +620,7 @@ p_deb_lemo_x: debounce
     )
   PORT MAP (
     DB_In   => lemo_data_i(i),              -- Das zu entprellende Signal
-    Reset   => NOT nRst_i,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Reset   => Rst,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => lemo_inp(i)                  -- Das entprellte Signal von "DB_In".
     );
@@ -647,7 +650,7 @@ Mil_1:  mil_hw_or_soft_ip
                                     --                    (Subject to the preceding cycle being completed).
     ME_SS         =>  ME_SS,        -- out: HD6408-input: sync select actuates a Command sync for an input high
                                     --                    and data sync for an input low.
-    Reset_Puls    =>  not n_modulreset,
+    Reset_Puls    =>  modulreset,
 
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
     ME_BOI        =>  ME_BOI,       -- out: HD6408-input: A high input should be applied to bipolar one in when the bus is in its
