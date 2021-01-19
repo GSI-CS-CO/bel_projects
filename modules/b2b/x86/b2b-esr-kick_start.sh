@@ -84,15 +84,15 @@ saft-io-ctl $SDTRIG -n IO3 -c 0x1154804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl $SDTRIG -n IO3 -c 0x1154804000000000 0xfffffff000000000 1000 0x0 0 -u
 
 # generate test pulses upon CMD_B2B_TRIGGERINJ
-saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 4000 0x0 1 -u
-saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 5000 0x0 0 -u 
-saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 10000 0x0 1 -u
-saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 11000 0x0 0 -u 
-saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 4000 0x0 1 -u
-saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 5000 0x0 0 -u 
-saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 10000 0x0 1 -u
-saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 11000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 4000 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 5000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 10000 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 11000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 4000 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 5000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 10000 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 11000 0x0 0 -u 
