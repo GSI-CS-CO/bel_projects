@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 7-January-2021
+ *  version : 19-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000220                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000221                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -96,7 +96,8 @@ void init() // typical init for lm32
 } // init
 
 
-void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
+// determine address and clear shared mem
+void initSharedMem(uint32_t *reqState)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -155,6 +156,7 @@ void extern_clearDiag()
 } // extern_clearDiag
   
 
+// entry action 'configured' state
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
@@ -175,6 +177,7 @@ uint32_t extern_entryActionConfigured()
 } // extern_entryActionConfigured
 
 
+// entry action 'operation' state
 uint32_t extern_entryActionOperation()
 {
   int      i;
@@ -210,39 +213,109 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
+// sort timestamps as they might be unordered
+void insertionSort(uint64_t *stamps, int n) {
+  int      i, j;
+  uint64_t tmp;
+  for (i=1; i<n; i++) {
+    tmp = stamps[i];
+    j   = i;
+    while ((--j >= 0) && (stamps[j] > tmp)) stamps[j+1] = stamps[j];
+    stamps[j+1] = tmp;
+  } // for i
+} // insertionSort
+
+
+// 'fit' phase value
 uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t *dt)
 {
-#define FIRSTTS     2    // index avoid using timestamps with smaller index
-
   int      i;
   int      usedIdx;      // index of used timestamp
-  uint64_t periodNs;     // period in ns
+  int32_t  diff;         // difference of two neighboring timestamps [ns]
+  int32_t  delta;        // difference from expected period [ns]
+  int32_t  periodNs;     // period [ns]
+  uint32_t maxDelta;     // max deviation of measured period [ns]
+  
   uint64_t phaseTmp;     // intermediate value;
   uint64_t tmp;          // helper variable
 
-  // determine phase
-  usedIdx     = nSamples / 2;                                          // use a timestamp in the middle
-  if (usedIdx < FIRSTTS)      return B2B_STATUS_PHASEFAILED;           // check range
-  if (usedIdx > nSamples -2)  return B2B_STATUS_PHASEFAILED;           // check range, '-2' is on purpose
-  if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // check range
-  phaseTmp = tStamp[usedIdx];
-  //*phase   = fwlib_advanceTime(phaseTmp, getSysTime(), period);        // advancing to 'now' is important in case of low frequencies
-  *phase   = phaseTmp;
+  int32_t  test;
+  uint64_t t1,t2;
+
+  if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // this does not make sense
+  if (nSamples < 3)           return B2B_STATUS_PHASEFAILED;           // have at least three samples
+
+  t1 = getSysTime();
+
+  // select timestamp in the middle (never use the first TS)
+  usedIdx  = nSamples >> 1;                                            // this is safe as we have at least three samples
+
+  // check period
+  periodNs = (int32_t)(period/1000000000);                             // convert to ns
+  maxDelta = periodNs / 10;                                            // allow 10% deviation
+  diff     = (int32_t)(tStamp[usedIdx+1] - tStamp[usedIdx]);           // time difference of selected timestamps
+  delta    = diff % periodNs;                                          // difference is multiple of period? (missing timestamp possible)!
+  if (delta > (periodNs >> 1)) *dt = periodNs - delta;
+  else                         *dt = delta;
+
+  /*
+  tmp = tStamp[nSamples - 1];
+  for(i=0; i<nSamples;i++) {
+    test = (int32_t)(tmp - tStamp[i]);
+    pp_printf(" %d", test);
+  }
+  pp_printf("\n"); */
   
-  // estimate phase error from preceding and successing array element
-  // this is tricky, as timestamps are not necessarily ordered
-  *dt         = 0;
-  periodNs    = (double)period/1000000000.0;                           // convert to ns
-  for (i=usedIdx;i<(usedIdx+1); i++) {
-    if (tStamp[i] > tStamp[i-1]) tmp = tStamp[i] > tStamp[i-1];
-    else                         tmp = tStamp[i-1] > tStamp[i];
-    *dt      += tmp % periodNs;                                        // remainder is difference to expected value
-  } // for i
+  if (*dt > maxDelta) {
+    //pp_printf("ohps,  delta %d, usedIDX %d\n", delta, usedIdx);
+    return B2B_STATUS_PHASEFAILED;
+  }
+  *phase   = tStamp[usedIdx];
+
+  /*
+  t2 = getSysTime();
+  test = (int32_t)(t2 -t1);
+  pp_printf("phasefit time: %d\n", test);
+  */
 
   return COMMON_STATUS_OK;
 } //phaseFit
 
 
+// aquires a series of timestamps from an IO; returns '0' on success
+int acquireTimestamps(uint64_t *ts,                           // array of timestamps [ns]
+                      uint32_t nReq,                          // number of requsted timestamps
+                      uint32_t *nRec,                         // number of received timestamps
+                      uint32_t interval,                      // interval for receiving timestamps [us]
+                      uint32_t io,                            // number of IO 0..n
+                      uint32_t tag                            // expected event tag
+                      )
+{
+  uint32_t ecaAction;                                         // action triggered by ECA
+  uint64_t recDeadline;                                       // received deadline
+  uint64_t recEvtId;                                          // received EvtId
+  uint64_t recParam;                                          // received Parameter
+  uint32_t recTEF;                                            // received TEF
+  uint32_t flagIsLate;                                        // is late?
+
+  *nRec = 0;
+
+  fwlib_ioCtrlSetGate(1, io);                                 // open input gate
+  uwait(interval);
+  fwlib_ioCtrlSetGate(0, io);                                 // disable input gate 
+  
+  while (*nRec < nReq) {
+    ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+    if (ecaAction == tag) {ts[*nRec] = recDeadline; (*nRec)++;}
+    if (ecaAction == B2B_ECADO_TIMEOUT) break; 
+  } // while nInput
+  //pp_printf("interval %u, nRec %u\n", interval, *nRec);
+
+  return COMMON_STATUS_OK;
+} // acquireTimestamps                  
+
+
+// do action of state operation: This is THE central code of this firmware
 uint32_t doActionOperation(uint64_t *tAct,                    // actual time
                            uint32_t actStatus)                // actual status of firmware
 {
@@ -261,7 +334,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendEvtNo;                                         // EvtNo to send
   
-  int      nInput;                                            // # of timestamps
+  uint32_t nInput;                                            // # of timestamps
+  static uint64_t TH1Ns;                                      // h=1 period [ns]
   static uint64_t TH1;                                        // h=1 period [as]
   static uint64_t tH1;                                        // h=1 timestamp of phase ( = 'phase')
   uint32_t dt;                                                // uncertainty of h=1 timestamp
@@ -279,10 +353,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   int64_t  dtTmp;                                             // helper variable
   uint32_t min;                                               // minimum deviation
   
-  int      i;
-  int64_t  waitUs;                                            // how many us to wait prior to TS acquisition
-  int      waitCycle;                                         // how many cycles to wait in handmade sleep
 
+  int      i;
+  int      imin;
+  static uint32_t nSamples;                                   // # of samples for measurement
+  static uint64_t TMeas;                                      // measurement window for timestamps [ns]
+  static uint32_t TMeasUs;                                    // measurement window [us]
+  int64_t  TWait;                                             // time till measurement start [ns]
+  int32_t  TWaitUs;                                           // time till measuremetn start [us]
+  uint64_t t1,t2;
 
   status    = actStatus;
   sendEvtNo = 0x0;
@@ -301,7 +380,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
-      *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as period
+      *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
       TH1              = recParam & 0x00ffffffffffffff;
       recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
@@ -310,19 +389,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       dtMatch          = 0x7fffffff;
       dtDiag           = 0x7fffffff;
       flagPMError      = 0x0;
+
+      if (TH1 > 2000000000000) nSamples = NSAMPLES >> 1;             // use only half the sample for nue > 1MHz
+      else                     nSamples = NSAMPLES;
+      TMeas           = (uint64_t)(nSamples)*(TH1 / 1000000000);     // window for acquiring timestamps [ns]
+      TMeasUs         = (int32_t)(TMeas / 1000) + 1;                 // add 1 us to avoid a too short window
       
       nInput = 0;
-      fwlib_ioCtrlSetGate(1, 2);                                      // enable input gate
-      while (nInput < NSAMPLES) {
-        ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-        if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
-        if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-      } // while nInput
-      fwlib_ioCtrlSetGate(0, 2);                                      // disable input gate 
-      
-      /* pp_printf("b2b-pm: phase measurement with samples %d\n", nInput); */
-      
-      if ((nInput != NSAMPLES) || (phaseFit(TH1, NSAMPLES, &tH1, &dt) != COMMON_STATUS_OK)) {
+      acquireTimestamps(tStamp, nSamples, &nInput, TMeasUs, 2, B2B_ECADO_TLUINPUT3);
+
+      if (nInput > 2) insertionSort(tStamp, nInput);                 // for 11 timestamps, this is below 10us
+      if ((nInput < 3) || (phaseFit(TH1, nInput, &tH1, &dt) != COMMON_STATUS_OK)) {
         tH1       = 0x7fffffffffffffff;
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
@@ -338,7 +415,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendParam    = tH1;
       sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-      
+
       transStat    = dt;
       nTransfer++;
       
@@ -349,37 +426,28 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
-        reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGER;    // ECA is configured to pre-trigger ahead of time!!!
-        nInput    = 0;
-        /* chk, make this more intelligent depending on the value of TH1 */
-        waitUs    = (reqDeadline - getSysTime()) >> 10;               // right shift of 10: poor man's division by 1000, conversion to us
-        if (waitUs > 10) waitUs = waitUs - 10;                        // this is a fudge thing
-        else             waitUs = 0;
-        waitCycle = waitUs * 31;                                      // 31.25 asm(nop) take 1us
-        for (i=0; i < waitCycle; i++) {asm("nop");}                   // handmade sleep to reduces latency
-        
-        fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
-        while (nInput < NSAMPLES) {
-          ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-          if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
-          if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-        } // while nInput
-        fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
-
-        DBPRINT2("b2b-pm: kicker trigger diagnostic measurement with samples %d\n", nInput);
+        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;         // ECA is configured to pre-trigger ahead of time!!!
+        nInput  = 0;
+        TWait   = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
+        TWaitUs = (TWait / 1000 - 10);                                // the '-10' is a fudge thing
+        if (TWaitUs > 0) uwait(TWaitUs);
+        acquireTimestamps(tStamp, nSamples, &nInput, TMeasUs, 2, B2B_ECADO_TLUINPUT3);
+        //pp_printf("TMeas %u, TMeasUs %u\n", (uint32_t)TMeas, (uint32_t)TMeasUs);
 
         // find closest timestamp
-        if (nInput == NSAMPLES) {                                    
+        if (nInput > 2) {
+          insertionSort(tStamp, nInput);                              // need at least two timestamps
           min        = 0x7fffffff;
-          for (i=1; i<NSAMPLES; i++) {                                // treat 1st TS as junk 
+          imin       = -1;
+          for (i=1; i<nInput; i++) {                                  // treat 1st TS as junk 
             dtTmp = reqDeadline - tStamp[i];                        
-            if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp;}
+            if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp; imin = i;}
           } // for i
-        } // if NSAMPLES
+          //for (i=1; i<nInput; i++) pp_printf(" %d", (int32_t)(reqDeadline - tStamp[i])); pp_printf(" imin %d, TWait %d, TWaitUs %d\n", imin, (int32_t)TWait, TWaitUs);
+        } // if nInput
         // this is ugly!!!! all but the 1st TS are late and thus no longer ordered
         // even worse: the 'fitting' TS might be delayed further and not even received
       } // if not pm error
-      //for (i=1; i<nInput; i++) pp_printf(" %d", (int32_t)(reqDeadline - tStamp[i])); pp_printf(" n %d\n", nInput );
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
@@ -398,33 +466,27 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         dtDiag    = 0x7fffffff;
         nInput    = 0;
 
-        fwlib_ioCtrlSetGate(1, 2);                                    // enable input gate
-        while (nInput < NSAMPLES) {
-          ecaAction = fwlib_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-          if (ecaAction == B2B_ECADO_TLUINPUT3) {tStamp[nInput] = recDeadline; nInput++;}
-          if (ecaAction == B2B_ECADO_TIMEOUT)   break; 
-        } // while nInput
-        fwlib_ioCtrlSetGate(0, 2);                                    // disable input gate 
-
-        DBPRINT2("b2b-pm: phase diagnostic measurement with samples %d\n", nInput);
-        
-        if ((nInput == NSAMPLES) && (phaseFit(TH1, NSAMPLES, &tH1Diag, &dt) == COMMON_STATUS_OK)) {
-          Dt          = (tH1Diag - tH1);                              // difference [ns]
-          Dt          = Dt * 1000000000;                              // difference [as]
-          remainder   = Dt % TH1;                                     // remainder [as]
-          remainder   = (uint64_t)((double)remainder / 1000000000.0); // remainder [ns]
-          periodNs    = (uint64_t)((double)TH1 / 1000000000.0);       // period [ns]
-          if (remainder > (periodNs >> 1)) dtDiag = remainder - periodNs;
-          else                             dtDiag = remainder;
-        } // if ok
+        acquireTimestamps(tStamp, nSamples, &nInput, TMeasUs, 2, B2B_ECADO_TLUINPUT3);
+        if (nInput > 2) {
+          insertionSort(tStamp, nInput);                              // need at least two timestamps
+          if (phaseFit(TH1, nInput, &tH1Diag, &dt) == COMMON_STATUS_OK) {
+            Dt          = (tH1Diag - tH1);                            // difference [ns]
+            Dt          = Dt * 1000000000;                            // difference [as]
+            remainder   = Dt % TH1;                                   // remainder [as]
+            remainder   = (uint64_t)((double)remainder / 1000000000.0); // remainder [ns]
+            periodNs    = (uint64_t)((double)TH1 / 1000000000.0);     // period [ns]
+            if (remainder > (periodNs >> 1)) dtDiag = remainder - periodNs;
+            else                             dtDiag = remainder;
+          } // if ok
+        } // if ninpu
 
         // send command: transmit diagnostic information
-        sendEvtId    = 0x1000000000000000;                              // FID
-        sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);            // GID 
-        sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);         // EVTNO
-        sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);            // SID
-        sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);        // high word; phase diagnostic
-        sendParam   |= (uint64_t)( dtMatch & 0xffffffff);               // low word; match diagnostic
+        sendEvtId    = 0x1000000000000000;                            // FID
+        sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);          // GID 
+        sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);       // EVTNO
+        sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);          // SID
+        sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);      // high word; phase diagnostic
+        sendParam   |= (uint64_t)( dtMatch & 0xffffffff);             // low word; match diagnostic
         sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       } // if not pm error
