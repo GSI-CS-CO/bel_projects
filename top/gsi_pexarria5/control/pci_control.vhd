@@ -227,6 +227,8 @@ architecture rtl of pci_control is
   signal butis_clk_200 : std_logic;
   signal butis_t0_ts   : std_logic;
 
+  signal ow_io_1       : std_logic := 'Z';
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -332,7 +334,7 @@ begin
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
       ow_io(0)                => n15,
-      ow_io(1)                => 'Z',
+      ow_io(1)                => ow_io_1,
       lcd_scp_o               => di(3),
       lcd_lp_o                => di(1),
       lcd_flm_o               => di(2),

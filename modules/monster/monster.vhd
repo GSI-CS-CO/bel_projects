@@ -590,6 +590,7 @@ architecture rtl of monster is
   signal clk_20m          : std_logic;
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
+  signal rst_sys          : std_logic;
   signal rstn_update      : std_logic;
   signal clk_200m         : std_logic;
 
@@ -772,7 +773,8 @@ architecture rtl of monster is
   signal  mil_data_req_intr_o:    std_logic;
   signal  mil_dly_intr_o:         std_logic;
   signal  mil_ev_fifo_ne_intr_o:  std_logic;
-  signal  mil_every_ms_intr_o:  std_logic;
+  signal  mil_every_ms_intr_o:    std_logic;
+  signal  mil_sel_drv_b:          std_logic;
 
   -- Mil-Extension signals
   ----------------------------------------------------------------------------------
@@ -801,6 +803,8 @@ architecture rtl of monster is
   signal s_vme_addr_o       : std_logic_vector(31 downto 1);
   signal s_vme_buffer       : t_vme_buffer;
   signal s_vme_buffer_latch : std_logic;
+  signal s_00_vme_ga_i       : std_logic_vector(5 downto 0);
+
 
   -- END OF VME signals
   ----------------------------------------------------------------------------------
@@ -908,6 +912,7 @@ begin
       rstn_o(1)     => rstn_sys,
       rstn_o(2)     => rstn_update,
       rstn_o(3)     => rstn_ref);
+    rst_sys <= not rstn_sys;
 
   dmtd_a2 : if c_is_arria2 generate
     dmtd_inst : dmtd_pll port map(
@@ -1050,8 +1055,8 @@ begin
       outclk_2    => clk_ref0, --  125 MHz
       outclk_3    => clk_ref1, --  200 MHz
       outclk_4    => clk_ref2, --   25 MHz
-      lvds_clk(0) => clk_ref3, -- 1000 MHz
-      loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
+      --lvds_clk(0) => clk_ref3, -- 1000 MHz
+      --loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
       locked      => ref_locked,
       scanclk     => clk_free,
       cntsel      => phase_sel,
@@ -1407,7 +1412,7 @@ end generate;
         vme_write_n_i   => vme_write_n_i,
         vme_am_i        => vme_am_i,
         vme_ds_n_i      => vme_ds_n_i,
-        vme_ga_i        => b"00" & vme_ga_i,
+        vme_ga_i        => s_00_vme_ga_i,
         vme_berr_o      => s_vme_berr_o,
         vme_dtack_n_o   => s_vme_dtack_n_o,
         vme_retry_n_o   => open,
@@ -1433,6 +1438,7 @@ end generate;
         info_slave_i    => dev_bus_master_o(dev_slaves'pos(devs_vme_info)),
         info_slave_o    => dev_bus_master_i(dev_slaves'pos(devs_vme_info)),
         debug           => open);
+    s_00_vme_ga_i <= "00" & vme_ga_i;
 
     U_BUFFER_CTRL : VME_Buffer_ctrl
       generic map(
@@ -1902,7 +1908,7 @@ end generate;
         reconfig_readdata_o    => reconfig_readdata,
         reconfig_waitrequest_o => reconfig_waitrequest,
         reconfig_clk_i(0)      => clk_sys,
-        reconfig_reset_i(0)    => not(rstn_sys),
+        reconfig_reset_i(0)    => rst_sys,
         ready_o                => phy_ready,
         drop_link_i            => phy_rst,
         loopen_i               => phy_loopen,
@@ -2763,12 +2769,12 @@ end generate;
       ctrl_slave_o    => dev_bus_master_i(dev_slaves'pos(devs_mil_ctrl)),
       ctrl_slave_i    => dev_bus_master_o(dev_slaves'pos(devs_mil_ctrl)),
       --irq lines
-      irq_i           => (mil_every_ms_intr_o,
-                          mil_ev_fifo_ne_intr_o,
-                          mil_dly_intr_o,
-                          mil_data_req_intr_o,
-                          mil_data_rdy_intr_o,
-                          mil_interlock_intr_o)
+      irq_i(5)        => mil_every_ms_intr_o,
+      irq_i(4)        => mil_ev_fifo_ne_intr_o,
+      irq_i(3)        => mil_dly_intr_o,
+      irq_i(2)        => mil_data_req_intr_o,
+      irq_i(1)        => mil_data_rdy_intr_o,
+      irq_i(0)        => mil_interlock_intr_o
       );
 
     mil : wb_mil_scu
@@ -2798,7 +2804,7 @@ end generate;
         ME_TD               => mil_me_td_i,
         Mil_BOI             => mil_boi_i,
         Mil_BZI             => mil_bzi_i,
-        Sel_Mil_Drv         => mil_sel_drv_o,
+        Sel_Mil_Drv         => mil_sel_drv_b,
         nSel_Mil_Rcv        => mil_nsel_rcv_o,
         Mil_nBOO            => mil_nboo_o,
         Mil_nBZO            => mil_nbzo_o,
@@ -2831,6 +2837,7 @@ end generate;
         n_tx_req_led        => open,
         n_rx_avail_led      => open
         );
+    mil_sel_drv_o <= mil_sel_drv_b;
   end generate;
 
 

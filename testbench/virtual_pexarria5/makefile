@@ -21,11 +21,25 @@ testbench: $(shell cat vhdl_sources) testbench.vhd
 
 
 vhdl_sources: hdl_sources
-	grep -r '.vhd$$' $< | grep -v legacy-vme64x-core > $@
+	grep -r '.vhd$$' $<                        | \
+	grep -v wb_pmc_host_bridge.vhd             | \
+	grep -v VME_CR_CSR_Space.vhd               | \
+	grep -v VME_IRQ_Controller.vhd             | \
+	grep -v VME_Wb_master_eb.vhd               | \
+	grep -v xVME64xCore_Top.vhd                | \
+	sed '/ep_rx_buffer.vhd/cep_rx_buffer.vhd'  | \
+	sed '/wr_core.vhd/cwr_core.vhd'            > $@
 
 verilog_sources: hdl_sources
 	grep -r '.v$$' $< > $@
 
 hdl_sources: 
 	hdlmake list-files > hdl_sources
+
+# patch for ep_rx_buffer.vhd
+ep_rx_buffer.vhd: ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
+	sed '/signal cur_addr  : in  std_logic_vector;/csignal cur_addr  : in  std_logic_vector(1 downto 0);' ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd > ep_rx_buffer.vhd
+
+wr_core.vhd: /home/michael/work/bel_projects/ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
+	sed "/dpram_wbb_i.adr <= /cdpram_wbb_i.adr <= \(others => \'0\'\);" ../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd > wr_core.vhd
 

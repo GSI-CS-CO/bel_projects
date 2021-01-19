@@ -50,160 +50,160 @@ architecture simulation of testbench is
     signal fpga_res        : std_logic := '0';
     signal nres            : std_logic := '1';
     signal pbs2            : std_logic := '0';
-    signal hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
-    signal ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
+    signal hpw             : std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
+    signal ant             : std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
 
     -----------------------------------------------------------------------
     -- pexaria5db1/2
     -----------------------------------------------------------------------
-    signal p1              : inout std_logic := 'Z'; -- HPWX0 logic analyzer: 3.3V
-    signal n1              : inout std_logic := 'Z'; -- HPWX1
-    signal p2              : inout std_logic := 'Z'; -- HPWX2
-    signal n2              : inout std_logic := 'Z'; -- HPWX3
-    signal p3              : inout std_logic := 'Z'; -- HPWX4
-    signal n3              : inout std_logic := 'Z'; -- HPWX5
-    signal p4              : inout std_logic := 'Z'; -- HPWX6
-    signal n4              : inout std_logic := 'Z'; -- HPWX7
-    signal p5              : out   std_logic := 'Z'; -- LED1 1-6: 3.3V (red)   1|Z=off, 0=on
-    signal n5              : out   std_logic := 'Z'; -- LED2           (blue)
-    signal p6              : out   std_logic := 'Z'; -- LED3           (green)
-    signal n6              : out   std_logic := 'Z'; -- LED4           (white)
-    signal p7              : out   std_logic := 'Z'; -- LED5           (red)
-    signal n7              : out   std_logic := 'Z'; -- LED6           (blue)
-    signal p8              : out   std_logic := 'Z'; -- LED7 7-8: 2.5V (green)
-    signal n8              : out   std_logic := 'Z'; -- LED8           (white)
+    signal p1              : std_logic := 'Z'; -- HPWX0 logic analyzer: 3.3V
+    signal n1              : std_logic := 'Z'; -- HPWX1
+    signal p2              : std_logic := 'Z'; -- HPWX2
+    signal n2              : std_logic := 'Z'; -- HPWX3
+    signal p3              : std_logic := 'Z'; -- HPWX4
+    signal n3              : std_logic := 'Z'; -- HPWX5
+    signal p4              : std_logic := 'Z'; -- HPWX6
+    signal n4              : std_logic := 'Z'; -- HPWX7
+    signal p5              : std_logic := 'Z'; -- LED1 1-6: 3.3V (red)   1|Z=off, 0=on
+    signal n5              : std_logic := 'Z'; -- LED2           (blue)
+    signal p6              : std_logic := 'Z'; -- LED3           (green)
+    signal n6              : std_logic := 'Z'; -- LED4           (white)
+    signal p7              : std_logic := 'Z'; -- LED5           (red)
+    signal n7              : std_logic := 'Z'; -- LED6           (blue)
+    signal p8              : std_logic := 'Z'; -- LED7 7-8: 2.5V (green)
+    signal n8              : std_logic := 'Z'; -- LED8           (white)
 
-    signal p9              : out   std_logic := 'Z'; -- TERMEN1 = terminate TTLIO1, 1=x, 0|Z=x (Q2 BSH103 -- G pin)
-    signal n9              : out   std_logic := 'Z'; -- TERMEN2 = terminate TTLIO2, 1=x, 0|Z=x
-    signal p10             : out   std_logic := 'Z'; -- TERMEN3 = terminate TTLIO3, 1=x, 0|Z=x
-    signal n10             : out   std_logic := 'Z'; -- TTLEN1  = TTLIO1 output enable, 0=enable, 1|Z=disable
-    signal p11             : out   std_logic := 'Z'; -- n/c
-    signal n11             : out   std_logic := 'Z'; -- TTLEN3  = TTLIO2 output enable, 0=enable, 1|Z=disable
-    signal p12             : out   std_logic := 'Z'; -- n/c
-    signal n12             : out   std_logic := 'Z'; -- n/c
-    signal p13             : out   std_logic := 'Z'; -- n/c
-    signal n13             : out   std_logic := 'Z'; -- n/c
-    signal p14             : out   std_logic := 'Z'; -- n/c
-    signal n14             : out   std_logic := 'Z'; -- TTLEN5  = TTLIO3 output enable, 0=enable, 1|Z=disable
-    signal p15             : out   std_logic := 'Z'; -- n/c
-    signal n15             : inout std_logic := 'Z'; -- ROM_DATA
-    signal p16             : out   std_logic := 'Z'; -- FPLED5  = TTLIO3 (red)  0=on, Z=off
-    signal n16             : out   std_logic := 'Z'; -- FPLED6           (blue)
+    signal p9              : std_logic := 'Z'; -- TERMEN1 = terminate TTLIO1, 1=x, 0|Z=x (Q2 BSH103 -- G pin)
+    signal n9              : std_logic := 'Z'; -- TERMEN2 = terminate TTLIO2, 1=x, 0|Z=x
+    signal p10             : std_logic := 'Z'; -- TERMEN3 = terminate TTLIO3, 1=x, 0|Z=x
+    signal n10             : std_logic := 'Z'; -- TTLEN1  = TTLIO1 output enable, 0=enable, 1|Z=disable
+    signal p11             : std_logic := 'Z'; -- n/c
+    signal n11             : std_logic := 'Z'; -- TTLEN3  = TTLIO2 output enable, 0=enable, 1|Z=disable
+    signal p12             : std_logic := 'Z'; -- n/c
+    signal n12             : std_logic := 'Z'; -- n/c
+    signal p13             : std_logic := 'Z'; -- n/c
+    signal n13             : std_logic := 'Z'; -- n/c
+    signal p14             : std_logic := 'Z'; -- n/c
+    signal n14             : std_logic := 'Z'; -- TTLEN5  = TTLIO3 output enable, 0=enable, 1|Z=disable
+    signal p15             : std_logic := 'Z'; -- n/c
+    signal n15             : std_logic := 'Z'; -- ROM_DATA
+    signal p16             : std_logic := 'Z'; -- FPLED5  = TTLIO3 (red)  0=on, Z=off
+    signal n16             : std_logic := 'Z'; -- FPLED6           (blue)
 
-    signal p17             : in    std_logic := '0';        -- N_LVDS_1 / SYnIN
-    signal n17             : in    std_logic := '1';        -- P_LVDS_1 / SYpIN
-    signal p18             : in    std_logic := '0';        -- N_LVDS_2 / TRnIN
-    signal n18             : in    std_logic := '1';        -- P_LVDS_2 / TRpIN
-    signal p19             : out   std_logic;        -- N_LVDS_3 / CK200n
-    signal --n19             : out   std_logic;        -- P_LVDS_3 / CK200p -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-    signal p21             : in    std_logic := '0';        -- N_LVDS_6  = TTLIO1 in
-    signal n21             : in    std_logic := '1';        -- P_LVDS_6
-    signal p22             : in    std_logic := '0';        -- N_LVDS_8  = TTLIO2 in
-    signal n22             : in    std_logic := '1';        -- P_PVDS_8
-    signal p23             : in    std_logic := '0';        -- N_LVDS_10 = TTLIO3 in
-    signal n23             : in    std_logic := '1';        -- P_LVDS_10
-    signal p24             : out   std_logic := '0';        -- N_LVDS_4 / SYnOU
-    signal --n24             : out   std_logic;        -- P_LVDS_4 / SYpOU -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-    signal p25             : out   std_logic := '0';        -- N_LVDS_5  = TTLIO1 out
-    signal n25             : out   std_logic := '1';        -- P_LVDS_5
-    signal p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
-    signal n26             : out   std_logic := 'Z'; -- FPLED4             (blue)
-    signal p27             : out   std_logic := '0';        -- N_LVDS_7  = TTLIO2 out
-    signal n27             : out   std_logic := '1';        -- P_LVDS_7
-    signal p28             : out   std_logic := '0';        -- N_LVDS_9  = TTLIO3 out
-    signal n28             : out   std_logic := '1';        -- P_LVDS_9
-    signal p29             : out   std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
-    signal n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
-    signal p30             : out   std_logic := 'Z'; -- n/c
-    signal n30             : out   std_logic := 'Z'; -- n/c
+    signal p17             : std_logic := '0';        -- N_LVDS_1 / SYnIN
+    signal n17             : std_logic := '1';        -- P_LVDS_1 / SYpIN
+    signal p18             : std_logic := '0';        -- N_LVDS_2 / TRnIN
+    signal n18             : std_logic := '1';        -- P_LVDS_2 / TRpIN
+    signal p19             : std_logic;        -- N_LVDS_3 / CK200n
+     --n19             : out   std_logic;        -- P_LVDS_3 / CK200p -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+    signal p21             : std_logic := '0';        -- N_LVDS_6  = TTLIO1 in
+    signal n21             : std_logic := '1';        -- P_LVDS_6
+    signal p22             : std_logic := '0';        -- N_LVDS_8  = TTLIO2 in
+    signal n22             : std_logic := '1';        -- P_PVDS_8
+    signal p23             : std_logic := '0';        -- N_LVDS_10 = TTLIO3 in
+    signal n23             : std_logic := '1';        -- P_LVDS_10
+    signal p24             : std_logic := '0';        -- N_LVDS_4 / SYnOU
+     --n24             : out   std_logic;        -- P_LVDS_4 / SYpOU -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+    signal p25             : std_logic := '0';        -- N_LVDS_5  = TTLIO1 out
+    signal n25             : std_logic := '1';        -- P_LVDS_5
+    signal p26             : std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
+    signal n26             : std_logic := 'Z'; -- FPLED4             (blue)
+    signal p27             : std_logic := '0';        -- N_LVDS_7  = TTLIO2 out
+    signal n27             : std_logic := '1';        -- P_LVDS_7
+    signal p28             : std_logic := '0';        -- N_LVDS_9  = TTLIO3 out
+    signal n28             : std_logic := '1';        -- P_LVDS_9
+    signal p29             : std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
+    signal n29             : std_logic := 'Z'; -- FPLED2             (blue)
+    signal p30             : std_logic := 'Z'; -- n/c
+    signal n30             : std_logic := 'Z'; -- n/c
 
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
-    signal con             : out std_logic_vector(5 downto 1);
+    signal con             : std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    signal slrd            : out   std_logic;
-    signal slwr            : out   std_logic;
-    signal fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    signal pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    signal ctl             : in    std_logic_vector(2 downto 0) := (others => 'Z');
-    signal uclk            : in    std_logic := '0';
-    signal ures            : out   std_logic;
+    signal slrd            : std_logic;
+    signal slwr            : std_logic;
+    signal fd              : std_logic_vector(7 downto 0) := (others => 'Z');
+    signal pa              : std_logic_vector(7 downto 0) := (others => 'Z');
+    signal ctl             : std_logic_vector(2 downto 0) := (others => 'Z');
+    signal uclk            : std_logic := '0';
+    signal ures            : std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    signal led             : out std_logic_vector(8 downto 1) := (others => '1');
+    signal led             : std_logic_vector(8 downto 1) := (others => '1');
 
     -----------------------------------------------------------------------
     -- leds SFPs
     -----------------------------------------------------------------------
-    signal ledsfpr          : out std_logic_vector(4 downto 1);
-    signal ledsfpg          : out std_logic_vector(4 downto 1);
-    signal sfp234_ref_clk_i : in  std_logic := '1';
+    signal ledsfpr          : std_logic_vector(4 downto 1);
+    signal ledsfpg          : std_logic_vector(4 downto 1);
+    signal sfp234_ref_clk_i : std_logic := '1';
 
     -----------------------------------------------------------------------
     -- SFP1
     -----------------------------------------------------------------------
 
-    signal sfp1_tx_disable_o : out std_logic := '0';
-    signal sfp1_tx_fault     : in std_logic := '0';
-    signal sfp1_los          : in std_logic := '0';
+    signal sfp1_tx_disable_o : std_logic := '0';
+    signal sfp1_tx_fault     : std_logic := '0';
+    signal sfp1_los          : std_logic := '0';
 
      --sfp1_txp_o        : out std_logic;
      --sfp1_rxp_i        : in  std_logic;
 
-    signal sfp1_mod0         : in    std_logic := 'Z'; -- grounded by module
-    signal sfp1_mod1         : inout std_logic := 'Z'; -- SCL
-    signal sfp1_mod2         : inout std_logic := 'Z'; -- SDA
+    signal sfp1_mod0         : std_logic := 'Z'; -- grounded by module
+    signal sfp1_mod1         : std_logic := 'Z'; -- SCL
+    signal sfp1_mod2         : std_logic := 'Z'; -- SDA
 
     -----------------------------------------------------------------------
     -- SFP2
     -----------------------------------------------------------------------
 
-    signal sfp2_tx_disable_o : out std_logic := '0';
-    signal sfp2_tx_fault     : in  std_logic := '0';
-    signal sfp2_los          : in  std_logic := '0';
+    signal sfp2_tx_disable_o : std_logic := '0';
+    signal sfp2_tx_fault     : std_logic := '0';
+    signal sfp2_los          : std_logic := '0';
 
      --sfp2_txp_o        : out std_logic;
      --sfp2_rxp_i        : in  std_logic;
 
-    signal sfp2_mod0         : in    std_logic := 'Z'; -- grounded by module
-    signal sfp2_mod1         : inout std_logic := 'Z'; -- SCL
-    signal sfp2_mod2         : inout std_logic := 'Z'; -- SDA
+    signal sfp2_mod0         : std_logic := 'Z'; -- grounded by module
+    signal sfp2_mod1         : std_logic := 'Z'; -- SCL
+    signal sfp2_mod2         : std_logic := 'Z'; -- SDA
 
     -----------------------------------------------------------------------
     -- SFP3
     -----------------------------------------------------------------------
 
-    signal sfp3_tx_disable_o : out std_logic := '0';
-    signal sfp3_tx_fault     : in std_logic := '0';
-    signal sfp3_los          : in std_logic := '0';
+    signal sfp3_tx_disable_o : std_logic := '0';
+    signal sfp3_tx_fault     : std_logic := '0';
+    signal sfp3_los          : std_logic := '0';
 
      --sfp3_txp_o        : out std_logic;
      --sfp3_rxp_i        : in  std_logic;
 
-    signal sfp3_mod0         : in    std_logic := 'Z'; -- grounded by module
-    signal sfp3_mod1         : inout std_logic := 'Z'; -- SCL
-    signal sfp3_mod2         : inout std_logic := 'Z'; -- SDA
+    signal sfp3_mod0         : std_logic := 'Z'; -- grounded by module
+    signal sfp3_mod1         : std_logic := 'Z'; -- SCL
+    signal sfp3_mod2         : std_logic := 'Z'; -- SDA
 
     -----------------------------------------------------------------------
     -- SFP4
     -----------------------------------------------------------------------
 
-    signal sfp4_tx_disable_o : out std_logic := '0';
-    signal sfp4_tx_fault     : in std_logic := '0';
-    signal sfp4_los          : in std_logic := '0';
+    signal sfp4_tx_disable_o : std_logic := '0';
+    signal sfp4_tx_fault     : std_logic := '0';
+    signal sfp4_los          : std_logic := '0';
 
-    signal sfp4_txp_o        : out std_logic;
-    signal sfp4_rxp_i        : in  std_logic := '0';
+    signal sfp4_txp_o        : std_logic;
+    signal sfp4_rxp_i        : std_logic := '0';
 
-    signal sfp4_mod0         : in    std_logic := 'Z'; -- grounded by module
-    signal sfp4_mod1         : inout std_logic := 'Z'; -- SCL
-    signal sfp4_mod2         : inout std_logic := 'Z'); -- SDA
+    signal sfp4_mod0         : std_logic := 'Z'; -- grounded by module
+    signal sfp4_mod1         : std_logic := 'Z'; -- SCL
+    signal sfp4_mod2         : std_logic := 'Z'; -- SDA
 
 begin
 
@@ -438,7 +438,7 @@ begin
     sfp4_mod0           => sfp4_mod0,
     sfp4_mod1           => sfp4_mod1,
     sfp4_mod2           => sfp4_mod2
-    )
+    );
 
 end architecture;
 

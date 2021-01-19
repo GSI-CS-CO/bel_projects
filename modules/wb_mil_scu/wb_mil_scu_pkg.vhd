@@ -345,7 +345,7 @@ component event_processing is
     ev_timer_res:     out   std_logic;
     ev_puls1:         out   std_logic;
     ev_puls2:         out   std_logic;
-    timing_received:  out   std_logic
+    timing_received:  buffer std_logic
     );
 end component event_processing;
 

@@ -36,8 +36,8 @@ port  (
     Mil_Rdy_4_WR:   out     std_logic;              -- Das Sende-Register ist frei.
     nSel_Mil_RCV:   out     std_logic;              -- '0' selektiert den Empfangspfad.
     nSel_Mil_DRV:   out     std_logic;              -- selektiert die ext. bipolaren Treiber von 'nMil_Out_Pos(_Neg)' einschalten (null-aktiv).
-    nMil_Out_Pos:   out  std_logic;              -- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
-    nMil_Out_Neg:   out  std_logic;              -- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+    nMil_Out_Pos:   buffer  std_logic;              -- Der positive Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
+    nMil_Out_Neg:   buffer  std_logic;              -- Der negative Bipolare Ausgang des Manchester-Sende-Stroms (null-aktiv).
     RCV_Rdy:        out     std_logic;              -- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     RCV_ERROR:      out     std_logic;
     CMD_Rcv:        out     std_logic;              -- '1' es wurde ein Kommando empfangen.
