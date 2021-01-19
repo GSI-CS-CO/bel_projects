@@ -87,7 +87,19 @@ architecture arch_event_processing of event_processing is
   
   signal    ev_timer_res_o:     std_logic;
 
+  signal    n_clr_ev_fifo:      std_logic;
+
+  signal    Rst:                std_logic;
+
+  signal    n_puls1:            std_logic;
+  signal    puls1_length_ena:   std_logic;
+
+  signal    n_puls2:            std_logic;
+  signal    puls2_length_ena:   std_logic;
+
 begin
+
+Rst <= not nRst_i;
 
 event_fifo: generic_sync_fifo
   generic map (
@@ -96,7 +108,7 @@ event_fifo: generic_sync_fifo
     g_show_ahead => true
     )
   port map (
-    rst_n_i        => not clr_ev_fifo,
+    rst_n_i        => n_clr_ev_fifo,
     clk_i          => clk_i,
     d_i            => event_d,
     we_i           => ev_to_fifo,
@@ -109,6 +121,7 @@ event_fifo: generic_sync_fifo
     count_o        => open);
     
 ev_fifo_ne <= not ev_fifo_empty;
+n_clr_ev_fifo <= not clr_ev_fifo;
 
 
 filter_ram: generic_spram
@@ -141,7 +154,7 @@ Serial_Timing:  mil_dec_edge_timed
     Manchester_In     => timing_i,      -- Eingangsdatenstrom MIL-1553B
     RD_MIL            => event_fin,     -- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurück. Muss synchron zur Clock 'clk' und 
                                         -- mindesten eine Periode lang aktiv sein!
-    Res               => not nRst_i,    -- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+    Res               => Rst,           -- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
     clk               => clk_i,
     Rcv_Cmd           => timing_cmd,    -- '1' es wurde ein Kommando empfangen.
     Rcv_Error         => open,          -- ist bei einem Fehler für einen Takt aktiv '1'.
@@ -225,14 +238,16 @@ p_filt_access:  process (clk_i, nRst_i)
   end process p_filt_access;
 
 
+puls1_length_ena <= puls1 and not puls1_frame;
+n_puls1 <= not puls1;
 puls1_length: div_n
   generic map (
     n => clk_in_hz / (1_000_000_000 / 500)  -- 500 ns Pulsbreite
     )
   port map (
-    res   => not puls1,
+    res   => n_puls1,
     clk   => clk_i,
-    ena   => puls1 and not puls1_frame,
+    ena   => puls1_length_ena,
     div_o => puls1_o
     );
 
@@ -257,15 +272,16 @@ p_puls1:  process (clk_i)
   
 ev_puls1 <= puls1;
 
-
+puls2_length_ena <= puls2 and not puls2_frame;
+n_puls2 <= not puls2;
 puls2_length: div_n
   generic map (
     n => clk_in_hz / (1_000_000_000 / 500)  -- 500 ns Pulsbreite
     )
   port map (
-    res   => not puls2,
+    res   => n_puls2,
     clk   => clk_i,
-    ena   => puls2 and not puls2_frame,
+    ena   => puls2_length_ena,
     div_o => puls2_o
     );
 

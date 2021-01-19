@@ -164,16 +164,16 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   SIGNAL    s_dly_multicast_dt_cnt  : unsigned(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
 
   constant  c_adr_width                     : INTEGER := 16;          -- define how many address bits are used to decode the internal FPGA-register
-  constant  C_Status_Adr                    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0000#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Global_Intr_Ena_Adr           : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0002#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Vers_Revi_Adr                 : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0004#, c_adr_width);	-- real address is multiplied by two
-  constant  C_SRQ_Ena_Adr                   : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0006#, c_adr_width);	-- real address is multiplied by two
-  constant  C_SRQ_Active_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0008#, c_adr_width);	-- real address is multiplied by two
-  constant  C_SRQ_In_Adr                    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000A#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Wr_Multi_Slave_Sel_Adr        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000C#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Bus_master_intern_Echo_1_Adr  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000E#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Sw_Tag_Low_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0010#, c_adr_width);	-- real address is multiplied by two
-  constant  C_Sw_Tag_High_Adr               : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0012#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Status_Adr                    : INTEGER := 16#0000#;    -- real address is multiplied by two
+  constant  C_Global_Intr_Ena_Adr           : INTEGER := 16#0002#;    -- real address is multiplied by two
+  constant  C_Vers_Revi_Adr                 : INTEGER := 16#0004#;    -- real address is multiplied by two
+  constant  C_SRQ_Ena_Adr                   : INTEGER := 16#0006#;    -- real address is multiplied by two
+  constant  C_SRQ_Active_Adr                : INTEGER := 16#0008#;    -- real address is multiplied by two
+  constant  C_SRQ_In_Adr                    : INTEGER := 16#000A#;    -- real address is multiplied by two
+  constant  C_Wr_Multi_Slave_Sel_Adr        : INTEGER := 16#000C#;    -- real address is multiplied by two
+  constant  C_Bus_master_intern_Echo_1_Adr  : INTEGER := 16#000E#;    -- real address is multiplied by two
+  constant  C_Sw_Tag_Low_Adr                : INTEGER := 16#0010#;    -- real address is multiplied by two
+  constant  C_Sw_Tag_High_Adr               : INTEGER := 16#0012#;    -- real address is multiplied by two
 
   SIGNAL    s_i_adr           : INTEGER;
 
