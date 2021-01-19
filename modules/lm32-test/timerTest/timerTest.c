@@ -25,12 +25,18 @@
 #include "eb_console_helper.h"
 #include "scu_lm32Timer.h"
 #include "lm32Interrupts.h"
+#include "event_measurement.h"
 
 #include "scu_msi.h"
 
 volatile uint32_t pxCurrentTCB = 0;
 
-#define configCPU_CLOCK_HZ   (USRCPUCLK * 1000)
+#define configCPU_CLOCK_HZ   (USRCPUCLK * 10)
+
+TIME_MEASUREMENT_T g_evTime = TIME_MEASUREMENT_INITIALIZER;
+
+
+
 
 void _onException( const uint32_t sig )
 {
@@ -57,10 +63,12 @@ volatile static unsigned int g_count = 0;
 
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
-   mprintf( "%s( %d, 0x%p ), count: %d\n", __func__, intNum, pContext, g_count );
+   timeMeasure( &g_evTime );
+
+//   mprintf( "%s( %d, 0x%p ), count: %d\n", __func__, intNum, pContext, g_count );
    g_count++;
-  ATOMIC_SECTION()
-  mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
+//  ATOMIC_SECTION()
+//  mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
   // lm32TimerDisable( (SCU_LM32_TIMER_T*)pContext );
    //lm32TimerSetPeriod( (SCU_LM32_TIMER_T*)pContext, configCPU_CLOCK_HZ );
 }
@@ -94,7 +102,13 @@ void main( void )
       ATOMIC_SECTION() currentCount = g_count;
       if( oldCount != currentCount )
       {
-         mprintf( "C: %d\n", currentCount );
+         //uint32_t evt = timeMeasureGetLast32Safe( &g_evTime );
+         //mprintf( "\nEVT: %d\n", evt );
+         mprintf( "\nEVT: " );
+        // timeMeasurePrintSecondsSafe( &g_evTime );
+         if( timeMeasureIsValid( &g_evTime ) )
+            timeMeasurePrintMilliseconds( &g_evTime );
+         mprintf( "\nC: %d\n", currentCount );
          oldCount = currentCount;
          /*
           * CAUTION: When oldCount the value 10 reached it will trigger
