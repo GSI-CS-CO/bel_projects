@@ -13,13 +13,15 @@ GHDLFLAGS = --ieee=synopsys --std=93c \
 
 all: vhdl_sources verilog_sources testbench
 
-testbench: $(shell cat vhdl_sources) testbench.vhd
-	ghdl -a -g $(GHDLFLAGS) $+
-	ghdl -m $(GHDLFLAGS) testbench 
+testbench: $(shell cat vhdl_sources) ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd testbench.vhd 
+	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) ez_usb_dev.vhd ez_usb_chip.vhd testbench.vhd 
+	ghdl -m $(GHDLFLAGS) -Wl,ez_usb_dev_c.o testbench 
 
 
+ez_usb_dev_c.o: ez_usb_dev_c.c
+	gcc -c $+
 
-
+# modify the list of VHDL source files ( exclude certain files or replace them with patched files)
 vhdl_sources: hdl_sources
 	grep -r '.vhd$$' $<                        | \
 	grep -v wb_pmc_host_bridge.vhd             | \
@@ -36,10 +38,14 @@ verilog_sources: hdl_sources
 hdl_sources: 
 	hdlmake list-files > hdl_sources
 
-# patch for ep_rx_buffer.vhd
+# patches for certain source files
 ep_rx_buffer.vhd: ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
 	sed '/signal cur_addr  : in  std_logic_vector;/csignal cur_addr  : in  std_logic_vector(1 downto 0);' ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd > ep_rx_buffer.vhd
 
 wr_core.vhd: /home/michael/work/bel_projects/ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
 	sed "/dpram_wbb_i.adr <= /cdpram_wbb_i.adr <= \(others => \'0\'\);" ../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd > wr_core.vhd
 
+
+
+clean:
+	rm -f ep_rx_buffer.vhd wr_core.vhd *.o 

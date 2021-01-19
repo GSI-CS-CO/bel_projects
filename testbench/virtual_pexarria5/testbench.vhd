@@ -208,25 +208,20 @@ architecture simulation of testbench is
 begin
 
 
-  --ez_usb_chip : if g_en_usb generate 
-  ---- instance of EZUSB-chip 
-  ---- this simulates the physical chip that is connected to the FPGA
-  --chip : entity work.ez_usb_chip
-  --  port map (
-  --    rstn_i    => usb_rstn,
-  --    ebcyc_o   => usb_ebcyc,
-  --    readyn_o  => usb_readyn,
-  --    fifoadr_i => usb_fifoadr,
-  --    fulln_o   => usb_fulln,
-  --    emptyn_o  => usb_emptyn,
-  --    sloen_i   => usb_sloen,
-  --    slrdn_i   => usb_slrdn,
-  --    slwrn_i   => usb_slwrn,
-  --    pktendn_i => usb_pktendn,
-  --    fd_io     => usb_fd_io
-  --    );
-  --end generate;
-
+  chip : entity work.ez_usb_chip
+    port map (
+      rstn_i    => ures,
+      ebcyc_o   => pa(3),
+      readyn_o  => pa(7),
+      fifoadr_i => pa(5 downto 4),
+      fulln_o   => ctl(1),
+      emptyn_o  => ctl(2),
+      sloen_i   => pa(2),
+      slrdn_i   => slrd,
+      slwrn_i   => slwr,
+      pktendn_i => pa(6),
+      fd_io     => fd
+      );
 
   --wrex : entity work.wr_timing
   --port map(
