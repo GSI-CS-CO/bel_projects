@@ -22,13 +22,15 @@ ez_usb_dev_c.o: ez_usb_dev_c.c
 	gcc -c $+
 
 # modify the list of VHDL source files ( exclude certain files or replace them with patched files)
-vhdl_sources: hdl_sources ep_rx_buffer.vhd wr_core.vhd
+vhdl_sources: hdl_sources ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd
 	grep -r '.vhd$$' $<                        | \
 	grep -v wb_pmc_host_bridge.vhd             | \
 	grep -v VME_CR_CSR_Space.vhd               | \
 	grep -v VME_IRQ_Controller.vhd             | \
 	grep -v VME_Wb_master_eb.vhd               | \
 	grep -v xVME64xCore_Top.vhd                | \
+	sed '/eca_sdp.vhd/ceca_sdp.vhd'            | \
+	sed '/eca_tdp.vhd/ceca_tdp.vhd'            | \
 	sed '/ep_rx_buffer.vhd/cep_rx_buffer.vhd'  | \
 	sed '/wr_core.vhd/cwr_core.vhd'            > $@
 
@@ -40,15 +42,28 @@ hdl_sources:
 
 # patches for certain source files
 ep_rx_buffer.vhd: ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
-	sed '/signal cur_addr  : in  std_logic_vector;/csignal cur_addr  : in  std_logic_vector(1 downto 0);' ../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd > ep_rx_buffer.vhd
+	sed '/signal cur_addr  : in  std_logic_vector;/csignal cur_addr  : in  std_logic_vector(1 downto 0);' $< > $@
 
-wr_core.vhd: /home/michael/work/bel_projects/ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
-	sed "/dpram_wbb_i.adr <= /cdpram_wbb_i.adr <= \(others => \'0\'\);" ../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd > wr_core.vhd
+wr_core.vhd: ../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
+	sed "/dpram_wbb_i.adr <= /cdpram_wbb_i.adr <= \(others => \'0\'\);" $< > $@
+
+
+# remove the assertions that trigger if an address has 'X'es in it
+eca_tdp.vhd: ../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd
+	sed "s/assert/--assert/g" $< > $@
+	sed -i "s/report/--report/g" $@
+	sed -i "s/severity/--severity/g" $@
+
+eca_sdp.vhd: ../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
+	sed "s/assert/--assert/g" $< > $@
+	sed -i "s/report/--report/g" $@
+	sed -i "s/severity/--severity/g" $@
+	sed -i "s/bug :/--bug :/g" $@
 
 
 
 clean:
-	rm -f ep_rx_buffer.vhd wr_core.vhd *.o hdl_sources verilog_sources vhdl_sources
+	rm -f ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd *.o hdl_sources verilog_sources vhdl_sources
 
 
 
