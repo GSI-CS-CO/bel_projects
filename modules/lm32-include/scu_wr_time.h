@@ -11,6 +11,7 @@
 
 #include <mini_sdb.h>
 #include <scu_lm32_macros.h>
+#include <lm32Interrupts.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,17 @@ STATIC inline uint64_t getWrSysTime( void )
 {
    return (((uint64_t)pCpuSysTime[0]) << BIT_SIZEOF(uint32_t)) |
           (pCpuSysTime[1] & 0xFFFFFFFF);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the current white rabbit time within a atomic section.
+ */
+STATIC inline uint64_t getWrSysTimeSafe( void )
+{
+   criticalSectionEnter();
+   const uint64_t time = getWrSysTime();
+   criticalSectionExit();
+   return time;
 }
 
 #ifdef __cplusplus
