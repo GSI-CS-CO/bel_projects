@@ -5190,8 +5190,8 @@ applicable agreement for further details.
 		(type "PARAMETER_UNSIGNED_BIN")	)
 	(parameter
 		"ifa_vers"
-		"00011100"
-		"0x1c"
+		"00011101"
+		"0x1d"
 		(type "PARAMETER_UNSIGNED_BIN")	)
 	(drawing
 		(rectangle (rect 16 16 240 480))
@@ -7104,7 +7104,7 @@ applicable agreement for further details.
 	(section (rect 0 48 368 72)(text "DESIGNER" (rect 2 0 59 11)(font "Arial" ))(text "RHart/BELAB" (rect 56 2 171 21)(font "Arial" (font_size 12)))(border))
 	(section (rect 0 72 280 96)(text "NUMBER" (rect 2 0 50 11)(font "Arial" ))(text "1.00" (rect 56 1 86 17)(font "Arial" (font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 1 26 12)(font "Arial" ))(text "B" (rect 43 1 53 17)(font "Arial" (font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Tue Jul  9 16:46:51 2019" (rect 56 3 230 19)(font "Arial" (font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Wed Jan 20 15:22:43 2021" (rect 56 3 244 19)(font "Arial" (font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 0 39 11)(font "Arial" ))(text "1" (rect 55 5 64 21)(font "Arial" (font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 25 11)(font "Arial" ))(text "1" (rect 34 4 43 20)(font "Arial" (font_size 10))))
 	(drawing

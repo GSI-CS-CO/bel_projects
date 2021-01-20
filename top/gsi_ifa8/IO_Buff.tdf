@@ -268,7 +268,7 @@ BEGIN
                 VG_nAC22_AC25_Ena                                  = NOT MB_SEL; -- enable mit MB_SEL
                 (VG_AC22_AC25_Out, T_A[25..22].oe, T_C[25..22].oe) = VCC;        -- Output
 
-                T_A[25..22]                                        = (MB_SUBA4, MB_SUBA4, MB_A0, MB_A2);
+                T_A[25..22]                                        = (MB_SUBA4, MB_SUBA6, MB_A0, MB_A2);
                 T_C[25..22]                                        = (MB_SUBA5, MB_SUBA7, MB_A1, MB_A3);
 
                 --======================= Buffer Gruppe B ========================================
