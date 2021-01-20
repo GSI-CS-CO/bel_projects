@@ -49,7 +49,7 @@ architecture simulation of testbench is
     -----------------------------------------------------------------------
     signal fpga_res        : std_logic := '0';
     signal nres            : std_logic := '1';
-    signal pbs2            : std_logic := '0';
+    signal pbs2            : std_logic := '0'; -- connected to core_rstn_i of monster
     signal hpw             : std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
     signal ant             : std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
 
@@ -235,6 +235,9 @@ begin
   --);
 
   tr : entity work.pci_control 
+  generic map (
+    g_simulation => true
+    )
   port map(
     clk_20m_vcxo_i    => clk_20m_vcxo_i,
     clk_125m_pllref_i => clk_125m_pllref_i,
@@ -439,6 +442,7 @@ begin
     clk_20m_vcxo_i    <= not clk_20m_vcxo_i    after 25 ns; -- 20MHz VCXO clock
     clk_125m_pllref_i <= not clk_125m_pllref_i after  4 ns; -- 125 MHz PLL reference
     clk_125m_local_i  <= not clk_125m_local_i  after  4 ns; -- local clk from 125Mhz oszillator
+    pbs2              <= '1' after 50 ns;                   -- release reset
 
 
 end architecture;

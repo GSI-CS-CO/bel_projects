@@ -72,6 +72,7 @@ use work.beam_dump_pkg.all;
 
 entity monster is
   generic(
+    g_simulation           : boolean; -- false for synthesis, true for simulation
     g_family               : string; -- "Arria II", "Arria V", or "Arria 10"
     g_project              : string;
     g_flash_bits           : natural;
@@ -614,6 +615,8 @@ architecture rtl of monster is
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(4 downto 0);
+  signal lvds_clk         : std_logic_vector(1 downto 0);
+  signal loaden           : std_logic_vector(1 downto 0);
 
   signal phase_butis      : phase_offset;
 
@@ -809,6 +812,7 @@ architecture rtl of monster is
   -- END OF VME signals
   ----------------------------------------------------------------------------------
 
+
   signal lcd_scp       : std_logic;
   signal lcd_lp        : std_logic;
   signal lcd_flm       : std_logic;
@@ -894,8 +898,8 @@ begin
     generic map(
       g_plls   => 4,
       g_clocks => 4,
-      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
-      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
+      g_areset => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024),
+      g_stable => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024))
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -1049,14 +1053,16 @@ begin
   end generate;
 
   ref_a10 : if (c_is_arria10 and not(g_a10_use_ref_fpll)) generate
+    lvds_clk <= ('0', clk_ref3);
+    loaden   <= ('0', clk_ref4);
     ref_inst : ref_pll10 port map(
       rst         => pll_rst,
       refclk      => core_clk_125m_pllref_i, -- 125 MHz
       outclk_2    => clk_ref0, --  125 MHz
       outclk_3    => clk_ref1, --  200 MHz
       outclk_4    => clk_ref2, --   25 MHz
-      --lvds_clk(0) => clk_ref3, -- 1000 MHz
-      --loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
+      lvds_clk    => lvds_clk, -- 1000 MHz
+      loaden      => loaden, -- 125 MHz, 1/8 duty, -1.5ns phase
       locked      => ref_locked,
       scanclk     => clk_free,
       cntsel      => phase_sel,
@@ -1478,7 +1484,8 @@ end generate;
     usb_fd_io <= s_usb_fd_o when s_usb_fd_oen='1' else (others => 'Z');
     usb : ez_usb
       generic map(
-        g_sdb_address => c_top_sdb_address)
+        g_sdb_address => c_top_sdb_address,
+        g_sys_freq    => f_pick(g_simulation, 10, 65000)) -- this is 65000 kHz for g_simulation=false, and 10 kHz for g_simulation=true
       port map(
         clk_sys_i => clk_sys,
         rstn_i    => rstn_sys,
@@ -1522,7 +1529,7 @@ end generate;
     U_WR_CORE : xwr_core
 
     generic map (
-      g_simulation                => 0,
+      g_simulation                => f_pick(g_simulation,1,0),
       g_with_external_clock_input => FALSE,
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
@@ -1621,7 +1628,7 @@ end generate;
     U_WR_CORE : xwr_core
 
     generic map (
-      g_simulation                => 0,
+      g_simulation                => f_pick(g_simulation,1,0),
       g_with_external_clock_input => FALSE,
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
@@ -1720,7 +1727,7 @@ end generate;
   U_WR_CORE : xwr_core
 
     generic map (
-      g_simulation                => 0,
+      g_simulation                => f_pick(g_simulation,1,0),
       g_with_external_clock_input => FALSE,
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
@@ -1992,6 +1999,9 @@ end generate;
       slave_o => dev_bus_master_i(dev_slaves'pos(devs_build_id)));
 
   dog : watchdog
+    generic map (
+      freq    => f_pick(g_simulation, 16, 62500000),
+      hold_s  => f_pick(g_simulation,  1, 5))
     port map(
       clk_i   => clk_sys,
       rst_n_i => rstn_sys,

@@ -13,8 +13,8 @@ GHDLFLAGS = --ieee=synopsys --std=93c \
 
 all: vhdl_sources verilog_sources testbench
 
-testbench: $(shell cat vhdl_sources) ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd testbench.vhd 
-	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) ez_usb_dev.vhd ez_usb_chip.vhd testbench.vhd 
+testbench: $(shell cat vhdl_sources) ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd testbench.vhd 
+	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd testbench.vhd 
 	ghdl -m $(GHDLFLAGS) -Wl,ez_usb_dev_c.o testbench 
 
 
@@ -22,7 +22,7 @@ ez_usb_dev_c.o: ez_usb_dev_c.c
 	gcc -c $+
 
 # modify the list of VHDL source files ( exclude certain files or replace them with patched files)
-vhdl_sources: hdl_sources
+vhdl_sources: hdl_sources ep_rx_buffer.vhd wr_core.vhd
 	grep -r '.vhd$$' $<                        | \
 	grep -v wb_pmc_host_bridge.vhd             | \
 	grep -v VME_CR_CSR_Space.vhd               | \
@@ -48,4 +48,8 @@ wr_core.vhd: /home/michael/work/bel_projects/ip_cores/wr-cores/modules/wrc_core/
 
 
 clean:
-	rm -f ep_rx_buffer.vhd wr_core.vhd *.o 
+	rm -f ep_rx_buffer.vhd wr_core.vhd *.o hdl_sources verilog_sources vhdl_sources
+
+
+
+

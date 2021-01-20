@@ -80,6 +80,7 @@ package monster_pkg is
 
   component monster is
     generic(
+      g_simulation           : boolean := false;
       g_family               : string; -- "Arria II" or "Arria V"
       g_project              : string;
       g_flash_bits           : natural;
