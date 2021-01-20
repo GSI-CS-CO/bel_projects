@@ -627,9 +627,10 @@ gen_clock_sync_yes : if (g_with_sync = true) generate
             ld_hi_p0(channel_count) <= '1';
           else
             ld_lo_p0(channel_count) <= '1';
-            channel_count <= channel_count + 1;
             if (channel_count = g_num_outputs-1) then
               channel_count <= 0;
+            else 
+              channel_count <= channel_count + 1;
             end if;
           end if;
           set_lo_count <= set_lo_count xor '1';
