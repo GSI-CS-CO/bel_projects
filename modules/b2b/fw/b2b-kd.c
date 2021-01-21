@@ -273,8 +273,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedGetKickSid = recSid;
       flagsError         = recRes;
 
+      fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal extraction
       fwlib_ioCtrlSetGate(1, 1);                              // enable input gate monitor signal
-      fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal
+      fwlib_ioCtrlSetGate(1, 3);                              // enable input gate probe signal injection
+
 
       // get monitor signal
       ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTDIAG, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
@@ -282,10 +284,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // get 1st probe signal 'rising edge'
       ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTDIAG, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT1) {tKickProbe1 = recDeadline - (uint64_t)B2B_PRETRIGGER; flagRecProbe = 1;}
+      if ((ecaAction == B2B_ECADO_TLUINPUT1) || (ecaAction == B2B_ECADO_TLUINPUT4)) {
+          tKickProbe1 = recDeadline - (uint64_t)B2B_PRETRIGGER;
+          flagRecProbe = 1;
+      } // if TLUINPUT
 
-      fwlib_ioCtrlSetGate(0, 1);                              // disable input gates 
-      fwlib_ioCtrlSetGate(0, 0);
+      fwlib_ioCtrlSetGate(0, 0);                              // disable input gates 
+      fwlib_ioCtrlSetGate(0, 1);
+      fwlib_ioCtrlSetGate(0, 3);
 
       /* chk it might be a good idea to check if the received deadlines make sense .... */
     
