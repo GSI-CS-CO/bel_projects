@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-January-2021
+ *  version : 21-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000220                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000222                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -804,15 +804,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTTRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
+    tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
+    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     sendEvtId    = 0x1000000000000000;                                        // FID
     sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
     sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
     sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
     sendParam    = (uint64_t)(cTrigExt & 0xffffffff);                         // param field, cTrigExt as low word
-    tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
-    //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -821,6 +821,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_INJTRIG ) {
     sendGid      =  getTrigGid(0);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
+    tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
+    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     sendEvtId    = 0x1000000000000000;                                        // FID
     sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
     sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
@@ -828,9 +830,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
-    tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam);
-    //pp_printf("todo2 %u, extTime - now %d\n", mState, (uint32_t)(sendDeadline - getSysTime()));
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ
