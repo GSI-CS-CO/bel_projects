@@ -121,6 +121,8 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout,             // timeout [ms]
                        );
 
 // write timing message via Etherbone, returns (error) status
+// deadline must be a least (COMMON_AHEADT / 2) in the future; if not
+// COMMON_AHEADT is added
 uint32_t fwlib_ebmWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
                           uint64_t param               // parameter field

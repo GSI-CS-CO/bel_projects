@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-December-2020
+ *  version : 21-January-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -341,10 +341,19 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
 
 uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
 {
-  uint32_t res, tef;
+  uint32_t res, tef;                   // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
+  
+  uint32_t status;                     // return value
+
+  // check deadline
+  if (deadline < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) {
+    deadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    status   = COMMON_STATUS_OUTOFRANGE;
+  } // if tRemain
+  else status = COMMON_STATUS_OK;
 
   // set high bits for EB master
   ebm_hi(COMMON_ECA_ADDRESS);
@@ -374,7 +383,7 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   // send timing message
   ebm_flush();
           
-  return COMMON_STATUS_OK;
+  return status;
 } //fwlib_bmWriteTM
 
 
