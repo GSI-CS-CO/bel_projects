@@ -214,6 +214,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
 
       case FG_OP_PRINT_HISTORY:
       {
+       #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+         mprintf( "\n\nLast IRQ time: ");
+         timeMeasurePrintMillisecondsSafe( &g_irqTimeMeasurement );
+         mprintf( " ms\n\n" );
+       #endif
        #ifdef CONFIG_USE_HISTORY
          hist_print( true );
        #else

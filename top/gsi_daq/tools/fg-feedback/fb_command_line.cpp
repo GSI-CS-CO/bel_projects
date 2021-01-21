@@ -567,6 +567,20 @@ vector<OPTION> CommandLine::c_optList =
                     "By this parameter it becomes possible to filtering "
                     "out ripple and noise voltage, which increases the "
                     "performance in plotting."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_exitOnError = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'e',
+      .m_longOpt  = "exit-on-error",
+      .m_helpText = "Program termination in the case of a detected sequence"
+                    "-error instead a warning only."
+
    }
 };
 
@@ -622,6 +636,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_plotAlwaysSetValue( false )
    ,m_doClearBuffer( false )
    ,m_zoomYAxis( false )
+   ,m_exitOnError( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )

@@ -56,6 +56,7 @@
 #include "eca_queue_type.h"
 #include "history.h"
 #include "scu_circular_buffer.h"
+#include "event_measurement.h"
 
 /*!
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
@@ -181,6 +182,15 @@ typedef enum
 #endif
 
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
+
+#ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+/*!
+ * @brief Holding the time between the last two happened interrupts.
+ * @note For debugging purposes only!
+ */
+extern TIME_MEASUREMENT_T g_irqTimeMeasurement;
+#endif
+
 
 /*!
  * @todo find the related definitions in the source code of SAFTLIB and

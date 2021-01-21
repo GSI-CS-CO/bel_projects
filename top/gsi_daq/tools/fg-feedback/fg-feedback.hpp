@@ -159,6 +159,8 @@ public:
    }
 
 private:
+   void onActSetBlockDeviation( const uint setSequ, const uint actSequ ) override;
+
    void onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
                                       MiLdaq::MIL_DAQ_T setValue ) override;
 

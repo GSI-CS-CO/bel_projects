@@ -46,8 +46,6 @@ fesa-fg-load --dev ~kain/fgtest/aeg/gs11mu2.rmp xgs11mu3 -v
 
 using namespace std;
 using namespace Scu;
-//using namespace MiLdaq;
-//using namespace MiLdaqt;
 
 #define FSM_INIT_FSM( startState, attr... ) m_state = startState
 
@@ -287,6 +285,18 @@ void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
    m_lastSetRawValue = setValue;
    m_lastActRawValue = actValue;
    m_lastTime = m_currentTime;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FbChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
+{
+   if( getCommandLine()->isExitOnError() )
+      FgFeedbackChannel::onActSetBlockDeviation( setSequ, actSequ );
+
+   WARNING_MESSAGE( "Deviation of sequence numbers from set value input stream: "
+                    << setSequ << ", and actual value input stream: "
+                    << actSequ << "  are greater than one!" );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

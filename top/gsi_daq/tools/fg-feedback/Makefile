@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.5
+DEFINES += VERSION=1.0
 
 MIAN_MODULE := fg-feedback.cpp
 

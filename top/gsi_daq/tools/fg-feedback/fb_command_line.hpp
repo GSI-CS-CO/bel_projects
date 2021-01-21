@@ -84,6 +84,7 @@ class CommandLine: public PARSER
    bool                       m_plotAlwaysSetValue;
    bool                       m_doClearBuffer;
    bool                       m_zoomYAxis;
+   bool                       m_exitOnError;
    float                      m_xAxisLen;
    uint                       m_plotInterval;
    uint                       m_throttleThreshold;
@@ -184,6 +185,11 @@ public:
    uint getPlotInterval( void ) const
    {
       return m_plotInterval;
+   }
+
+   bool isExitOnError( void ) const
+   {
+      return m_exitOnError;
    }
 
 protected:

@@ -27,7 +27,6 @@
 
 #include <stack.h>
 #include "scu_main.h"
-#include "event_measurement.h"
 #include "scu_command_handler.h"
 #include "scu_fg_macros.h"
 #ifdef CONFIG_MIL_FG
@@ -40,6 +39,10 @@
  #include "daq_main.h"
 #endif
 #include "lm32signal.h"
+
+#ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
+#endif
 
 
 typedef enum
@@ -209,7 +212,12 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 #endif
 
    if( (pendingIrqs & FG1_IRQ) != 0 )
+   {
+    #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+      timeMeasure( &g_irqTimeMeasurement );
+    #endif
       handleAdacFg( slot, FG1_BASE );
+   }
 
    if( (pendingIrqs & FG2_IRQ) != 0 )
       handleAdacFg( slot, FG2_BASE );
