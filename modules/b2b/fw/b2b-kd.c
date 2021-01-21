@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-January-2021
+ *  version : 21-January-2021
  *
  *  firmware required for kicker and related diagnostics
  *  

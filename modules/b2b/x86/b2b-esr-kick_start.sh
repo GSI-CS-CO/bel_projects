@@ -57,15 +57,20 @@ echo -e b2b: configure for kicker diagnostic measurements
 saft-io-ctl $SDTRIG -n IO2 -o 0 -t 0
 saft-io-ctl $SDTRIG -n IO2 -b 0xffffa02000000000
 
-# IO1 configured as TLU input (from 'probe')
+# IO1 configured as TLU input (from 'probe', extraction)
 saft-io-ctl $SDTRIG -n IO1 -o 0 -t 1
 saft-io-ctl $SDTRIG -n IO1 -b 0xffffa01000000000
+
+# IO4 configured as TLU input (from 'probe', injection)
+saft-io-ctl $SDTRIG -n IO4 -o 0 -t 1
+saft-io-ctl $SDTRIG -n IO4 -b 0xffffa04000000000
 
 # lm32 listens to TLU
 # to preserve order of the two signals on IO1, we must prevent
 #  the 1st signal being late by ADDING an offset of 20us
-saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
+saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
+saft-ecpu-ctl $SDTRIG -c 0xffffa04000000001 0xffffffffffffffff 20000 0xa04 -d
 
 # INJECTION: lm32 listens to CMD_B2B_TRIGGERINJ message from CBU
 # as we need time to enable the input gates we SUBTRACT and offset of 20us
@@ -83,16 +88,16 @@ saft-io-ctl $SDTRIG -n IO3 -c 0x1154805000000000 0xfffffff000000000 1000 0x0 0 -
 saft-io-ctl $SDTRIG -n IO3 -c 0x1154804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl $SDTRIG -n IO3 -c 0x1154804000000000 0xfffffff000000000 1000 0x0 0 -u
 
-# generate test pulses upon CMD_B2B_TRIGGERINJ
+# generate test pulses upon CMD_B2B_TRIGGERINJ (IO5,IO6) and CMD_B2B_TRIGGEREXT (IO5, IO7)
 #saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 4000 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 5000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3210 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3410 0x0 0 -u 
 #saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 10000 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 11000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4220 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4420 0x0 0 -u 
 #saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 4000 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 5000 0x0 0 -u 
-#saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 10000 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154804000000000 0xfffffff000000000 11000 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 2410 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 2610 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO7 -o 1 -t 0 -a 1
+#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 3420 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 3620 0x0 0 -u 
