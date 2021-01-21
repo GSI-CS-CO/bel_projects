@@ -17,11 +17,23 @@ testbench: \
             $(shell cat vhdl_sources) \
            ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    \
            ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd \
-           .gvi/lm32_top_full/lm32_top_full_wrapper.vhd \
+           .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.vhd  \
+           .gvi/lm32_top_full/lm32_top_full_wrapper.vhd  \
+           .gvi/lm32_top_medium_icache_debug/lm32_top_medium_icache_debug_wrapper.vhd  \
+           .gvi/lm32_top_medium_debug/lm32_top_medium_debug_wrapper.vhd  \
+           .gvi/lm32_top_medium_icache/lm32_top_medium_icache_wrapper.vhd  \
+           .gvi/lm32_top_medium/lm32_top_medium_wrapper.vhd  \
+           .gvi/lm32_top_minimal/lm32_top_minimal_wrapper.vhd  \
            testbench.vhd 
 	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) $(filter-out ez_usb_dev_c.o, $+) 
 	ghdl -m $(GHDLFLAGS) \
-	     $(shell cat .gvi/lm32_top_full/lm32_top_full_wrapper.flags) \
+         $(shell cat .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_full/lm32_top_full_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_medium_icache_debug/lm32_top_medium_icache_debug_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_medium_debug/lm32_top_medium_debug_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_medium_icache/lm32_top_medium_icache_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_medium/lm32_top_medium_wrapper.flags)  \
+         $(shell cat .gvi/lm32_top_minimal/lm32_top_minimal_wrapper.flags)  \
 	     $(shell cat .gvi/common.flags) \
 	     -Wl,ez_usb_dev_c.o \
 	     testbench 
@@ -29,9 +41,35 @@ testbench: \
 ##
 ez_usb_dev_c.o: ez_usb_dev_c.c
 	gcc -c $+
+
+## auto generate lm32 vhdl wrapper 
+.gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_full_debug -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_full_debug is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.vhd
+
 .gvi/lm32_top_full/lm32_top_full_wrapper.vhd: lm32_allprofiles.v gvi
 	./gvi -v lm32_allprofiles.v -t lm32_top_full -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
 	sed -i '/entity lm32_top_full is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_full/lm32_top_full_wrapper.vhd
+
+.gvi/lm32_top_medium_icache_debug/lm32_top_medium_icache_debug_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_medium_icache_debug -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_medium_icache_debug is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_medium_icache_debug/lm32_top_medium_icache_debug_wrapper.vhd
+
+.gvi/lm32_top_medium_debug/lm32_top_medium_debug_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_medium_debug -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_medium_debug is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_medium_debug/lm32_top_medium_debug_wrapper.vhd
+
+.gvi/lm32_top_medium_icache/lm32_top_medium_icache_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_medium_icache -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_medium_icache is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_medium_icache/lm32_top_medium_icache_wrapper.vhd
+
+.gvi/lm32_top_medium/lm32_top_medium_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_medium -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_medium is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_medium/lm32_top_medium_wrapper.vhd
+
+.gvi/lm32_top_minimal/lm32_top_minimal_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_minimal -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_minimal is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_minimal/lm32_top_minimal_wrapper.vhd
 
 
 
