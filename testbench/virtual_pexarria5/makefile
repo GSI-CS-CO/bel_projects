@@ -13,26 +13,45 @@ GHDLFLAGS = --ieee=synopsys --std=93c \
 
 all: vhdl_sources verilog_sources testbench
 
-testbench: $(shell cat vhdl_sources) ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd testbench.vhd 
-	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd testbench.vhd 
-	ghdl -m $(GHDLFLAGS) -Wl,ez_usb_dev_c.o testbench 
+testbench: \
+            $(shell cat vhdl_sources) \
+           ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    \
+           ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd \
+           .gvi/lm32_top_full/lm32_top_full_wrapper.vhd \
+           testbench.vhd 
+	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) $(filter-out ez_usb_dev_c.o, $+) 
+	ghdl -m $(GHDLFLAGS) \
+	     $(shell cat .gvi/lm32_top_full/lm32_top_full_wrapper.flags) \
+	     $(shell cat .gvi/common.flags) \
+	     -Wl,ez_usb_dev_c.o \
+	     testbench 
 
-
+##
 ez_usb_dev_c.o: ez_usb_dev_c.c
 	gcc -c $+
+.gvi/lm32_top_full/lm32_top_full_wrapper.vhd: lm32_allprofiles.v gvi
+	./gvi -v lm32_allprofiles.v -t lm32_top_full -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/src -I ../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
+	sed -i '/entity lm32_top_full is/ageneric(eba_reset: std_logic_vector(31 downto 0);sdb_address: std_logic_vector(31 downto 0));' .gvi/lm32_top_full/lm32_top_full_wrapper.vhd
+
+
+
+#lm32 
+lm32_allprofiles.v: ../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
+	sed    '/input \[ (32-1):0\] interrupt;/i \/\* verilator lint_off SYMRSVDWORD \*\/' $< > $@
+	sed -i '/input \[ (32-1):0\] interrupt;/a \/\* verilator lint_on  SYMRSVDWORD \*\/' $@
 
 # modify the list of VHDL source files ( exclude certain files or replace them with patched files)
 vhdl_sources: hdl_sources ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd
-	grep -r '.vhd$$' $<                        | \
-	grep -v wb_pmc_host_bridge.vhd             | \
-	grep -v VME_CR_CSR_Space.vhd               | \
-	grep -v VME_IRQ_Controller.vhd             | \
-	grep -v VME_Wb_master_eb.vhd               | \
-	grep -v xVME64xCore_Top.vhd                | \
-	sed '/eca_sdp.vhd/ceca_sdp.vhd'            | \
-	sed '/eca_tdp.vhd/ceca_tdp.vhd'            | \
-	sed '/ep_rx_buffer.vhd/cep_rx_buffer.vhd'  | \
-	sed '/wr_core.vhd/cwr_core.vhd'            > $@
+	grep -r '.vhd$$' $<                         | \
+	grep -v wb_pmc_host_bridge.vhd              | \
+	grep -v VME_CR_CSR_Space.vhd                | \
+	grep -v VME_IRQ_Controller.vhd              | \
+	grep -v VME_Wb_master_eb.vhd                | \
+	grep -v xVME64xCore_Top.vhd                 | \
+	sed '/\/eca_sdp.vhd/ceca_sdp.vhd'           | \
+	sed '/\/eca_tdp.vhd/ceca_tdp.vhd'           | \
+	sed '/\/ep_rx_buffer.vhd/cep_rx_buffer.vhd' | \
+	sed '/\/wr_core.vhd/cwr_core.vhd'           > $@
 
 verilog_sources: hdl_sources
 	grep -r '.v$$' $< > $@
@@ -63,7 +82,8 @@ eca_sdp.vhd: ../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 
 
 clean:
-	rm -f ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd *.o hdl_sources verilog_sources vhdl_sources
+	rm -f ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd *.o hdl_sources verilog_sources vhdl_sources work-obj93.cf
+	rm -rf .gvi
 
 
 
