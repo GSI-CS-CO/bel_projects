@@ -178,6 +178,7 @@ bool FgFeedbackChannel::AddacFb::Receive::onDataBlock( daq::DAQ_DATA_T* pData,
 
    const uint blockTime = m_sampleTime * m_blockLen;
 #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+   #warning Compiler switch _CONFIG_PATCH_DAQ_TIMESTAMP is active!
    m_timestamp += blockTime;
    if( timestamp > (m_timestamp + blockTime) )
 #endif
@@ -280,7 +281,7 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
       return;
    }
 
-   // TODO comparing of both time-stamps.
+   // TODO comparing of both time-stamps here.
    /*
     * Safety check: The data length of both blocks have to be equal!
     */
@@ -298,6 +299,7 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
     */
    uint64_t timeStamp = m_oReceiveSetValue.getTimestamp();
 #ifdef _CONFIG_PATCH_PHASE
+   #warning Compiler switch _CONFIG_PATCH_PHASE is active!
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen(); i++ )
    {
       if( m_expectedTimestamp == timeStamp )

@@ -18,6 +18,11 @@
  */
 #define _CONFIG_PATCH_DAQ_TIMESTAMP
 
+/*!
+ * @todo Remove this switch asap!!!
+ */
+#define _CONFIG_PATCH_PHASE
+
 #ifdef __cplusplus
 
   #ifndef _BSD_SOURCE
