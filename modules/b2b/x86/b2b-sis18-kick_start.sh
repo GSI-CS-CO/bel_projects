@@ -62,13 +62,13 @@ saft-io-ctl $SDTRIG -n IO1 -o 0 -t 1
 saft-io-ctl $SDTRIG -n IO1 -b 0xffffa01000000000
 
 # lm32 listens to TLU
-# to preserve order of the two signals on IO1, we must prevent
-#  the 1st signal being late by ADDING an offset of 20us
-saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
+# to preserve order of signals on IO1, (probe) compared
+# to IO2 (monitor), an offset is added for IO1
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
+saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
-# as we need time to enable the input gates we SUBTRACT and offset of 20us
+# need pre-trigger to open input gates for probe signal
 saft-ecpu-ctl $SDTRIG -c  0x112c804000000000 0xfffffff000000000 20000 0x804 -d -g
 
 echo -e b2b: configure outputs

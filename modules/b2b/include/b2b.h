@@ -84,7 +84,8 @@
 
 // specialities
 #define B2B_PRETRIGGER             20000    // offset [ns] used for pre-trigger on the trigger event
-#define B2B_ACCEPTDIAG               100    // timewindow [us]!!! in which diagnostic signals from kicker are expected
+#define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
+#define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 

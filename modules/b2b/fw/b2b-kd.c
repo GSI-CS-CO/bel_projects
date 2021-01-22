@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-January-2021
+ *  version : 22-January-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,10 +34,11 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000222                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000223                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -78,7 +79,6 @@ uint32_t *cpuRamExternal;                  // external address (seen from host b
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                        // # of transfers
 uint32_t transStat;                        // status of transfer, here: meanDelta of 'poor mans fit'
-int32_t  comLatency;                       // latency for messages received via ECA
 
 void init() // typical init for lm32
 {
@@ -145,7 +145,6 @@ void extern_clearDiag()
   statusArray  = 0x0; 
   nTransfer    = 0;
   transStat    = 0;
-  comLatency   = 0;
 } // extern_clearDiag
   
 
@@ -153,9 +152,12 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  // disable input gate 
+  // disable input gates for probe signals
   fwlib_ioCtrlSetGate(0, 1);
-  fwlib_ioCtrlSetGate(0, 0);
+  fwlib_ioCtrlSetGate(0, 4);
+
+  // enable input gate monitor signal
+  fwlib_ioCtrlSetGate(1, 1);
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
@@ -216,117 +218,153 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t recEvtId;                                          // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
-  uint32_t recGid;                                            // GID received
-  uint32_t recSid;                                            // SID received
+  static uint32_t recGid;                                     // GID received
+  static uint32_t recSid;                                     // SID received
   uint32_t recRes;                                            // reserved bits received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendEvtNo;                                         // evtNo to send
 
-  uint64_t tKickTrig;                                         // time of kicker trigger signal
-  uint64_t tKickMon;                                          // time of kicker monitor signal
-  uint64_t tKickProbe1;                                       // time of kicker probe signal rising edge
-  uint64_t tKickProbe2;                                       // time of kicker probe signal falling edge
-  uint32_t dKickMon;                                          // delay of kicker monitor signal with respect to kicker trigger signal 
-  uint32_t dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal 
-  uint64_t lKickProbe;                                        // length of kicker probe signal with respect to kicker trigger signal
-  uint32_t flagRecMon;                                        // flag: received monitor signal
-  uint32_t flagRecProbe;                                      // flag: received probe signal
-  uint32_t nError;                                            // # of error bit
-  uint32_t flagsError;                                        // error flags
+  static uint64_t tKickTrig;                                  // time of kicker trigger signal
+  static uint64_t tKickMon;                                   // time of kicker monitor signal
+  static uint64_t tKickProbe;                                 // time of kicker probe signal rising edge
+
+  static uint32_t flagsError;                                 // error flags
+  static uint32_t flagRecTrig;                                // flag: received trigger event
+  static uint32_t flagRecMon;                                 // flag: received monitor signal
+  static uint32_t flagRecProbe;                               // flag: received probe signal
+  static uint32_t flagIsExt;                                  // flag: extraction kicker
+  static uint32_t flagSendMessage;                            // flag: a message shall be sent
+
+  int64_t  dKickMon;                                          // delay of kicker monitor signal with respect to kicker trigger signal 
+  int64_t  dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal 
   
   status    = actStatus;
   transStat = 0x0;
-  sendEvtNo = 0x0;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-   
+
+  // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
-      sendEvtNo = B2B_ECADO_B2B_DIAGKICKEXT;
-      nError    = 0;
+      flagIsExt = 1;
     case B2B_ECADO_B2B_TRIGGERINJ :
-      if (!sendEvtNo) {
-        sendEvtNo = B2B_ECADO_B2B_DIAGKICKINJ;
-        nError = 2;
-      } // if TRIGGERINJ
 
-      // NB: we need to pretrigger on this event as we need time to enable the input gates
       reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
-      comLatency  = (int32_t)(getSysTime() - recDeadline);
-      nTransfer++;
 
-      tKickTrig          = reqDeadline;
-      tKickMon           = 0;
-      tKickProbe1        = 0;
-      tKickProbe2        = 0;
-      dKickMon           = 0;
-      dKickProbe         = 0;
-      lKickProbe         = 0;
-      flagRecMon         = 0;
-      flagRecProbe       = 0;
-      recGid             = (uint32_t)((recEvtId >> 48) & 0xfff);
-      recSid             = (uint32_t)((recEvtId >> 20) & 0xfff);
-      recRes             = (uint32_t)(recEvtId & 0x3f);       // lowest 6 bit of EvtId
-      *pSharedGetKickGid = recGid;
-      *pSharedGetKickSid = recSid;
-      flagsError         = recRes;
+      recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
+      recSid                 = (uint32_t)((recEvtId >> 20) & 0xfff);
+      recRes                 = (uint32_t)(recEvtId & 0x3f);  // lowest 6 bit of EvtId
 
-      fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal extraction
-      fwlib_ioCtrlSetGate(1, 1);                              // enable input gate monitor signal
-      fwlib_ioCtrlSetGate(1, 3);                              // enable input gate probe signal injection
+      tKickTrig              = reqDeadline;
+      flagsError             = recRes;
+      flagRecTrig            = 1;
 
-
-      // get monitor signal
-      ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTDIAG, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if (ecaAction == B2B_ECADO_TLUINPUT2) {tKickMon = recDeadline; flagRecMon = 1;}
-
-      // get 1st probe signal 'rising edge'
-      ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTDIAG, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      if ((ecaAction == B2B_ECADO_TLUINPUT1) || (ecaAction == B2B_ECADO_TLUINPUT4)) {
-          tKickProbe1 = recDeadline - (uint64_t)B2B_PRETRIGGER;
-          flagRecProbe = 1;
-      } // if TLUINPUT
-
-      fwlib_ioCtrlSetGate(0, 0);                              // disable input gates 
-      fwlib_ioCtrlSetGate(0, 1);
-      fwlib_ioCtrlSetGate(0, 3);
-
-      /* chk it might be a good idea to check if the received deadlines make sense .... */
-    
-
-      if (flagRecMon)    dKickMon   = (uint32_t)(tKickMon    - tKickTrig);
-      else              {dKickMon   = 0x7fffffff; flagsError =  recRes | (B2B_ERRFLAG_KDEXT << nError);}
-      if (flagRecProbe)  dKickProbe = (uint32_t)(tKickProbe1 - tKickTrig);
-      else               dKickProbe = 0x7fffffff;
-
-      // send command: transmit measured phase value
-      sendEvtId    = 0x1000000000000000;                          // FID
-      sendEvtId    = sendEvtId | ((uint64_t)recGid      << 48);   // GID 
-      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo   << 36);   // EVTNO
-      sendEvtId    = sendEvtId | ((uint64_t)recSid      << 20);   // SID
-      sendEvtId    = sendEvtId | flagsError;                      // Reserved
-      sendParam    =             ((uint64_t)dKickMon  << 32);     // delay of monitor signal
-      sendParam    = sendParam |  (uint64_t)dKickProbe;           // delay of probe signal
-      sendDeadline = recDeadline + (uint64_t)(2 * COMMON_AHEADT); // data shall become true 1ms after trigger event
-
-      if (getSysTime() > (sendDeadline - COMMON_AHEADT)) return COMMON_STATUS_TIMEDOUT;  // ophs, too late
-
-      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-
+      *pSharedGetKickGid     = recGid;
+      *pSharedGetKickSid     = recSid;
       *pSharedGettKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
       *pSharedGettKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
-      *pSharedGettKickDMon   = dKickMon;
-      *pSharedGettKickDProbe = dKickProbe;
+      *pSharedGetComLatency  = (int32_t)(getSysTime() - recDeadline);
 
-      transStat    = flagRecMon + flagRecProbe;
-      
+
+      // we must do this here, as doing this os B2B_ECADO_TLUINPUT2 would be too late
+      // hence, we receive probe signals only if the kicker fires after it has been triggered
+      fwlib_ioCtrlSetGate(1, 0);                             // enable input gate probe signal extraction
+      fwlib_ioCtrlSetGate(1, 3);                             // enable input gate probe signal injection
+
       break; //  B2B_ECADO_B2B_TRIGGERINJ
+
+    case B2B_ECADO_TLUINPUT2 :                               // received monitor signal from kicker electronics
+      
+      tKickMon           = recDeadline;
+      flagRecMon         = 1;
+
+      // check, if there is a rising edge of the probe signal 
+      ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      if ((ecaAction == B2B_ECADO_TLUINPUT1) || (ecaAction == B2B_ECADO_TLUINPUT4)) {
+        tKickProbe   = recDeadline - (uint64_t)B2B_PRETRIGGER;
+        flagRecProbe = 1;
+      } // if TLUINPUT
+      else flagRecProbe = 0;
+
+      break; //B2B_ECADO_TLUINPUT2
+
     default : ;
   } // switch ecaAction
- 
 
+  // in each iteration we decide to do based on the flags that mark received data
+  // - send a message, if trigger event and monitor signal have been received
+  // - send a message, if trigger event but not the monitor signal have been received
+  // - don't send a message, if only the monitor signal has been received
+  
+  // we received kicker trigger and monitor signal from electronics: perfect
+  if (flagRecTrig && flagRecMon) {
+    dKickMon           = tKickMon - tKickTrig;
+    if (abs(dKickMon) < B2B_ACCEPTKMON * 1000) {                   // check for coincidence
+      flagSendMessage  = 1;                                        
+      
+      if (flagRecProbe)  dKickProbe = tKickProbe - tKickTrig;
+      else               dKickProbe = 0x7fffffff;
+    } // if abs(dKickMon)
+       
+    flagRecTrig = 0;
+    flagRecMon  = 0;
+  } // if flags
+
+  if (flagRecTrig) {
+    // check, if we got a kicker trigger but not yet a monitor signal
+    // 
+    if (abs(getSysTime() - tKickTrig) > B2B_ACCEPTKMON * 1000) {    
+      if (flagIsExt) flagsError |=  B2B_ERRFLAG_KDEXT;
+      else           flagsError |=  B2B_ERRFLAG_KDINJ;
+      flagSendMessage            = 1;
+      dKickMon                   = 0x7fffffff;
+      dKickProbe                 = 0x7fffffff;
+
+      flagRecTrig = 0;
+    } // if abs...
+  } // if flagRecTrig
+
+  if (flagRecMon) {
+    // check, if we got a monitor signal but not yet a kicker trigger
+    if (abs(getSysTime() - tKickMon) > B2B_ACCEPTKMON * 1000) flagRecMon = 0;
+  } // if flagRecTrig
+  
+  if (flagSendMessage) {
+    nTransfer++;
+
+    if (flagIsExt) sendEvtNo = B2B_ECADO_B2B_DIAGKICKEXT;
+    else           sendEvtNo = B2B_ECADO_B2B_DIAGKICKINJ;
+    
+    // send command: transmit measured phase value
+    sendEvtId    = 0x1000000000000000;                          // FID
+    sendEvtId    = sendEvtId | ((uint64_t)recGid      << 48);   // GID 
+    sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo   << 36);   // EVTNO
+    sendEvtId    = sendEvtId | ((uint64_t)recSid      << 20);   // SID
+    sendEvtId    = sendEvtId | flagsError;                      // Reserved
+    sendParam    =             ((uint64_t)dKickMon  << 32);     // delay of monitor signal
+    sendParam    = sendParam |  (uint64_t)dKickProbe;           // delay of probe signal
+    sendDeadline = tKickTrig + (uint64_t)(2 * COMMON_AHEADT);   // data shall become true 1ms after trigger event
+
+    // if we are too late, reschedule message; this will happen in case there is no monitor signal from the electronics
+    if (getSysTime() > (sendDeadline - COMMON_AHEADT)) {
+      sendDeadline = getSysTime() + COMMON_AHEADT;
+      status = COMMON_STATUS_TIMEDOUT; // ohps, too late!
+    } // if getSysTime
+
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    fwlib_ioCtrlSetGate(0, 0);                            // disable input gates 
+    fwlib_ioCtrlSetGate(0, 3);
+    
+    *pSharedGettKickDMon   = dKickMon;
+    *pSharedGettKickDProbe = dKickProbe;
+    transStat              = flagsError;
+
+    flagSendMessage = 0;
+  } // if flagSendMessage
+    
   status = actStatus;
   
   return status;
@@ -390,7 +428,6 @@ int main(void) {
     pubState              = actState;
     fwlib_publishState(pubState);
     fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedGetComLatency = comLatency;
   } // while
 
   return(1); // this should never happen ...

@@ -10,6 +10,8 @@ export TRTRIG=dev/wbm0
 export SDTRIG=tr0
 ###########################################
 # setting for development
+# ! don't forget to (un)comment test pulses
+# at the end of this file
 # KD : dev/ttyUSB0, tr2
 #export TRTRIG=$(saft-eb-fwd tr2)
 #export SDTRIG=tr2
@@ -66,17 +68,17 @@ saft-io-ctl $SDTRIG -n IO4 -o 0 -t 1
 saft-io-ctl $SDTRIG -n IO4 -b 0xffffa04000000000
 
 # lm32 listens to TLU
-# to preserve order of the two signals on IO1, we must prevent
-#  the 1st signal being late by ADDING an offset of 20us
+# to preserve order of the signals on IO1/IO4 (probe) compared
+# to IO2 (monitor), an offset is added for IO1/IO4
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa04000000001 0xffffffffffffffff 20000 0xa04 -d
 
 # INJECTION: lm32 listens to CMD_B2B_TRIGGERINJ message from CBU
-# as we need time to enable the input gates we SUBTRACT and offset of 20us
+# need pre-trigger to open input gates for probe signal
 saft-ecpu-ctl $SDTRIG -c  0x1154805000000000 0xfffffff000000000 20000 0x805 -d -g
 # EXTRACTION: lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
-# as we need time to enable the input gates we SUBTRACT and offset of 20us
+# need pre-trigger to open input gates for probe signal
 saft-ecpu-ctl $SDTRIG -c  0x1154804000000000 0xfffffff000000000 20000 0x804 -d -g
 
 echo -e b2b: configure outputs
