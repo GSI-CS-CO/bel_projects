@@ -1,0 +1,76 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage{tabularx, multirow}
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\vspace{2em}
+\Huge{ScheduleCompare}\\[2cm]
+\Large{Documentation}\\[2cm]
+\begin{large}
+\begin{tabularx}{\textwidth}{Xl}
+Version & 1.0\\
+Last updated & 20201-01-22\\
+\vspace{1.5cm}\\
+Author & Martin Skorsky\\
+Department & ACO \\
+Group & TOS\\
+Contact & Martin Skorsky
+\end{tabularx}%
+\end{large}
+
+\vfill
+
+\end{center}
+\end{titlepage}
+\tableofcontents
+\chapter{Purpose of ScheduleCompare}
+The tool \texttt{scheduleCompare} tests if two graphs describe the same schedule. The graphs are written as dot-files.
+
+The output is either "graphs represent the same schedule" or "graphs represent different schedules and the differences are \textellipsis".
+The output in the later case should show at least the first vertex with non-matching attributes.
+
+The algorithm used ist the method \texttt{vf2\_subgraph\_iso} from the Boost Graph Library. This tests if a graph $g_1$ is isomorph to a subgraph og graph$g_2$. Thus, we have to test that $g_1$ is a subgraph of $g_2$ and $g_2$ is a subgraph $g_1$ to check that the two graphs are isomorph. This test can be shortened by testing that $g_1$ is a subgraph of $g_2$ and the number of vertices are equal $|V(g_1)| = |V(g_2)|$ and the number of edges are equal $|E(g_1)| = |E(g_2)|$.
+
+May be, it is also interesting to know that $g_1$ is a subgraph of $g_2$. In the following table, $g_1 S g_2$ 
+means $g_1$ is possibly a subgraph of $g_2$. In addition, $g_1 S g_2$ means $g_1$ is possibly isomorphic to $g_2$. 
+\begin{table}
+\label{tab:cardinalities}
+\begin{tabular}[t]{|c|ccc|}
+\hline
+                     & $|E(g_1)|<|E(g_2)|$ & $|E(g_1)|=|E(g_2)|$ & $|E(g_1)|>|E(g_2)|$ \\ \hline
+ $|V(g_1)|<|V(g_2)|$ &          S          &          S          &          -  \\
+ $|V(g_1)|=|V(g_2)|$ &          S          &          I          &          -  \\
+ $|V(g_1)|>|V(g_2)|$ &          -          &          -          &          -  \\ \hline
+\end{tabular}
+\end{table}
+\chapter{Arguments and Options}
+Usage: \texttt{scheduleCompare $<$dot file 1$>$ $<$dot file 2$>$}
+
+Options:
+\begin{enumerate}
+	\item -h: help and usage.
+	\item -s: silent, no output, only return code. Usefull for automated tests.
+	\item -v: verbose, output of input graphs as dot text.
+	\item -vv: super verbose, in addition to verbose more output.
+\end{enumerate}
+
+\chapter{Testframework and Test Cases}
+First attempt for the test framework are unit tests with Python. A test case in general calls \texttt{scheduleCompare} with two dot files and examines the output. For this, the return code of \texttt{scheduleCompare}.
+
+\begin{enumerate}
+	\item 9 test cases for the cardinalities from table~\ref{tab:cardinalities}
+	\item 1936 dot files from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is comparted with itself, the graphs should be isomorphic. These are 3.748.096 combinations.
+	\item same graph, but different names for the vertices.
+	\item same graph, but different types for vertices with the same name.
+	\item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
+\end{enumerate}
+
+\chapter{Source and Branches}
+The source code is in branch \texttt{dm-analysis}, \\ 
+folder \texttt{modules/ftm/analysis/sourceCompare/}. The subfolders
+\begin{enumerate}
+	\item doc for the documentation,
+	\item main for the source files,
+	\item test for the test framework and the test input
+\end{enumerate}
+\end{document}
