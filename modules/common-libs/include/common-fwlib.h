@@ -120,12 +120,24 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout,             // timeout [ms]
                        uint32_t eb_ops                 // see ebm 
                        );
 
+
+// builds 64 bit EvtId in format v1, see https://www-acc.gsi.de/wiki/Timing/TimingSystemEvent
+uint64_t fwlib_buildEvtidV1(uint32_t gid,              // group ID
+                            uint32_t evtno,            // event number
+                            uint32_t flags,            // flags
+                            uint32_t sid,              // sequence ID
+                            uint32_t bpid,             // beam process ID
+                            uint32_t reserved          // reserved
+                            );
+
+
 // write timing message via Etherbone, returns (error) status
-// deadline must be a least (COMMON_AHEADT / 2) in the future; if not
-// COMMON_AHEADT is added
+// deadline must be a least (COMMON_LATELIMIT) in the future
+// if not, the  message will be rescheduled using COMMON_AHEADT
 uint32_t fwlib_ebmWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
-                          uint64_t param               // parameter field
+                          uint64_t param,              // parameter field
+                          uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
                           );
 
 // write N words using Etherbone, returns (error) status

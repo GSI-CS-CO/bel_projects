@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-January-2021
+ *  version : 23-January-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -193,8 +193,8 @@ uint32_t findOLED() //find WB address of OLED
   // get Wishbone address for OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
-  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return COMMON_STATUS_ERROR;}
-  else                                                  return COMMON_STATUS_OK;
+  if (!pOLED) {DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;}
+  else                                                      return COMMON_STATUS_OK;
 } // findOLED
 
 
@@ -330,7 +330,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
     if (pSharedData4EB[handshakeIdx] != COMMON_EB_HACKISH) {                                         // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
-      // dbg mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
+      // dbg mprintf("fwlib: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
       return COMMON_STATUS_OK;
     }
   } //while not timed out
@@ -339,7 +339,24 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
 } //fwlib_ebmReadN
 
 
-uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
+uint64_t fwlib_buildEvtidV1(uint32_t gid, uint32_t evtno, uint32_t flags, uint32_t sid, uint32_t bpid, uint32_t reserved)
+{
+  uint64_t evtId;
+
+  evtId    = 0x1000000000000000;                               //  1 bit
+  evtId    = evtId | ((uint64_t)(gid      & 0x0fff) << 48);    // 12 bit
+  evtId    = evtId | ((uint64_t)(evtno    & 0x0fff) << 36);    // 12 bit
+  evtId    = evtId | ((uint64_t)(flags    & 0x000f) << 32);    //  4 bit
+  evtId    = evtId | ((uint64_t)(sid      & 0x0fff) << 20);    // 12 bit
+  evtId    = evtId | ((uint64_t)(bpid     & 0x3fff) <<  6);    // 14 bit
+  evtId    = evtId | ((uint64_t)(reserved & 0x003f)      );    //  6 bit
+
+  return evtId;
+}
+// fwlib_buildEvtidV1
+
+
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
 {
   uint32_t res, tef;                   // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
@@ -349,10 +366,10 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   uint32_t status;                     // return value
 
   // check deadline
-  if (deadline < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) {
+  if ((deadline < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) && !flagForceLate) {
     deadline = getSysTime() + (uint64_t)COMMON_AHEADT;
     status   = COMMON_STATUS_OUTOFRANGE;
-  } // if tRemain
+  } // if deadline
   else status = COMMON_STATUS_OK;
 
   // set high bits for EB master
