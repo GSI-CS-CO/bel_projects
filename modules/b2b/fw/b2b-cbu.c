@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-January-2021
+ *  version : 23-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000222                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000224                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -110,6 +110,7 @@ volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 regis
 
 uint32_t gid;                           // GID used for transfer
 uint32_t sid;                           // SID user for transfer
+uint32_t bpid;                          // BPID used for transfer
 uint32_t mode;                          // mode for transfer
 uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
 uint32_t nHExt;                         // harmonic number of extraction machine 0..15
@@ -657,6 +658,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       sid        = (uint32_t)(recId >> 20) & 0xfff;
       gid        = 0x0;
+      bpid       = 0x0;
       mode       = 0x0;
       nHExt      = 0x0;
       nHInj      = 0x0;
@@ -670,7 +672,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
-      gid        = setGid[sid];
+      gid        = setGid[sid]; 
+      bpid       = 0x2000;                                    // bit    13: indicate 'b2b' (bit 12: reserved)
+      bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
+      bpid      |= nTransfer & 0xf;                           // bit 0..3 : 4 bit counter of transfers
       mode       = setMode[sid];
       TH1Ext     = setTH1Ext[sid];
       nHExt      = setNHExt[sid];
@@ -745,14 +750,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Ext       = 0x0;
     
     // send command: phase measurement at extraction machine
-    sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)gid << 48);                         // GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);         // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
+    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0, sid, bpid, 0); 
     sendParam    = TH1Ext & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHExt & 0xff) << 56);              // use upper 8 bit as harmonic number 
     sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXTPS
@@ -762,14 +764,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Ext       = 0x0;
     
     // send command: phase measurement at injection machine
-    sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)gid << 48);                         // GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_PMINJ << 36);         // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
+    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0, sid, bpid, 0); 
     sendParam    = TH1Inj & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHInj & 0xff) << 56);              // use upper 8 bit as harmonic number 
     sendDeadline = reqDeadline + 2;                                           // add 2ns to avoid collisions with EVT_KICK_START or CMD_B2B_PMEXT
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState     = getNextMState(mode, mState);
   } // B2B_MFSM_INJPS
@@ -805,14 +804,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
-    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
-    sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);    // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
-    sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
+    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
+
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, 0, sid, bpid, errorFlags);
     sendParam    = (uint64_t)(cTrigExt & 0xffffffff);                         // param field, cTrigExt as low word
-    fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -822,15 +818,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(0);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
-    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_AHEADT / 2)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    sendEvtId    = 0x1000000000000000;                                        // FID
-    sendEvtId    = sendEvtId | ((uint64_t)sendGid << 48);                     // GID 
-    sendEvtId    = sendEvtId | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);    // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)sid << 20);                         // SID
-    sendEvtId    = sendEvtId | errorFlags;                                    // Reserved
+    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
+
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, 0, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
-    fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-January-2021
+ *  version : 23-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000222                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000224                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -329,6 +329,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recTEF;                                            // TEF received
   uint32_t recGid;                                            // GID received
   uint32_t recSid;                                            // SID received
+  uint32_t recBpid;                                           // BPID received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
@@ -384,6 +385,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       TH1              = recParam & 0x00ffffffffffffff;
       recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
+      recBpid          = (uint32_t)((recEvtId >>  6) & 0x3fff    );
       *pSharedGetGid   = recGid;
       *pSharedGetSid   = recSid;
       dtMatch          = 0x7fffffff;
@@ -407,14 +409,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if some error occured
 
       // send command: transmit measured phase value
-      sendEvtId    = 0x1000000000000000;                              // FID
-      sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);            // GID 
-      sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);         // EVTNO
-      sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);            // SID
-      sendEvtId    = sendEvtId | ((uint64_t)flagPMError);             // error flag        
+      sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1;
       sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
-      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
       transStat    = dt;
       nTransfer++;
@@ -462,6 +460,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;     // ECA is configured to pre-trigger ahead of time!!!
         recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
         recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
+        recBpid          = (uint32_t)((recEvtId >>  6) & 0x3fff    );
 
         dtDiag    = 0x7fffffff;
         nInput    = 0;
@@ -478,17 +477,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
             if (remainder > (periodNs >> 1)) dtDiag = remainder - periodNs;
             else                             dtDiag = remainder;
           } // if ok
-        } // if ninpu
+        } // if nInput
 
         // send command: transmit diagnostic information
-        sendEvtId    = 0x1000000000000000;                            // FID
-        sendEvtId    = sendEvtId | ((uint64_t)recGid << 48);          // GID 
-        sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo << 36);       // EVTNO
-        sendEvtId    = sendEvtId | ((uint64_t)recSid << 20);          // SID
+        sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
         sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);      // high word; phase diagnostic
         sendParam   |= (uint64_t)( dtMatch & 0xffffffff);             // low word; match diagnostic
         sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
       } // if not pm error
 
       break; // case  B2B_ECADO_B2B_PDEXT/INJ

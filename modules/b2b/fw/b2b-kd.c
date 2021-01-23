@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-January-2021
+ *  version : 23-January-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000223                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000224                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -220,6 +220,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recTEF;                                            // TEF received
   static uint32_t recGid;                                     // GID received
   static uint32_t recSid;                                     // SID received
+  static uint32_t recBpid;                                    // BPID received
   uint32_t recRes;                                            // reserved bits received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
@@ -255,6 +256,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
       recSid                 = (uint32_t)((recEvtId >> 20) & 0xfff);
+      recBpid                = (uint32_t)((recEvtId >>  6) & 0x3fff);
       recRes                 = (uint32_t)(recEvtId & 0x3f);  // lowest 6 bit of EvtId
 
       tKickTrig              = reqDeadline;
@@ -338,14 +340,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     else           sendEvtNo = B2B_ECADO_B2B_DIAGKICKINJ;
     
     // send command: transmit measured phase value
-    sendEvtId    = 0x1000000000000000;                          // FID
-    sendEvtId    = sendEvtId | ((uint64_t)recGid      << 48);   // GID 
-    sendEvtId    = sendEvtId | ((uint64_t)sendEvtNo   << 36);   // EVTNO
-    sendEvtId    = sendEvtId | ((uint64_t)recSid      << 20);   // SID
-    sendEvtId    = sendEvtId | flagsError;                      // Reserved
+    sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagsError);
     sendParam    =             ((uint64_t)dKickMon  << 32);     // delay of monitor signal
     sendParam    = sendParam |  (uint64_t)dKickProbe;           // delay of probe signal
-    sendDeadline = tKickTrig + (uint64_t)(2 * COMMON_AHEADT);   // data shall become true 1ms after trigger event
+    sendDeadline = tKickTrig +  (uint64_t)(2 * COMMON_AHEADT);  // data shall become true 1ms after trigger event
 
     // if we are too late, reschedule message; this will happen in case there is no monitor signal from the electronics
     if (getSysTime() > (sendDeadline - COMMON_AHEADT)) {
@@ -353,7 +351,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       status = COMMON_STATUS_TIMEDOUT; // ohps, too late!
     } // if getSysTime
 
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
     fwlib_ioCtrlSetGate(0, 0);                            // disable input gates 
     fwlib_ioCtrlSetGate(0, 3);
