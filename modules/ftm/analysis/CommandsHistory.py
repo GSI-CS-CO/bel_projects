@@ -86,11 +86,11 @@ def extractScript(commands_history_file):
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm-cmd $DM $OPTIONS -i {dot_file_name}\n')
-        elif 'is safe to remove' in line[i]:
+        elif 'is safe to remove' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
-        elif 'result' in line[i]:
+        elif 'result' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
@@ -122,7 +122,7 @@ def extractScript(commands_history_file):
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
-        elif 'set force schedule actions to false' in lines[i]
+        elif 'set force schedule actions to false' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
