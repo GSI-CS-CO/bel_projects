@@ -6874,8 +6874,8 @@ BEGIN
      --| OUT  | FQ_Abort   | FQ_Reset   | RF_Abort | KO_Abort |   |   |   | TS_Abort |           |           |         |
      --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+---------+
 
-      spill_req <=  Deb60_in(7) & Deb60_in(2) & Deb60_in(5) & Deb60_in(0);
-      spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
+      spill_req <=  Deb60_out(7) & Deb60_out(2) & Deb60_out(5) & Deb60_out(0);
+      spill_pause <= "00" & Deb60_out(6) & Deb60_out(1);
       IOBP_Output <= "0000" & TS_Abort & "000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
 
       UIO_Out(0)    <= spill_abort_HWI_out(0);
