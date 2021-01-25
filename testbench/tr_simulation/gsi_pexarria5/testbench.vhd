@@ -211,7 +211,7 @@ begin
   chip : entity work.ez_usb_chip
     port map (
       rstn_i    => ures,
-      ebcyc_o   => pa(3),
+      wu2_o     => pa(3),
       readyn_o  => pa(7),
       fifoadr_i => pa(5 downto 4),
       fulln_o   => ctl(1),

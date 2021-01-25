@@ -81,13 +81,14 @@ lm32_allprofiles.v: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/wishbone/
 	sed -i '/input \[ (32-1):0\] interrupt;/a \/\* verilator lint_on  SYMRSVDWORD \*\/' $@
 
 # modify the list of VHDL source files ( exclude certain files or replace them with patched files)
-vhdl_sources: hdl_sources ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd
+vhdl_sources: hdl_sources wb_irq_slave.vhd ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd 
 	grep -r '.vhd$$' $<                         | \
 	grep -v wb_pmc_host_bridge.vhd              | \
 	grep -v VME_CR_CSR_Space.vhd                | \
 	grep -v VME_IRQ_Controller.vhd              | \
 	grep -v VME_Wb_master_eb.vhd                | \
 	grep -v xVME64xCore_Top.vhd                 | \
+	sed '/\/wb_irq_slave.vhd/cwb_irq_slave.vhd' | \
 	sed '/\/eca_sdp.vhd/ceca_sdp.vhd'           | \
 	sed '/\/eca_tdp.vhd/ceca_tdp.vhd'           | \
 	sed '/\/ep_rx_buffer.vhd/cep_rx_buffer.vhd' | \
@@ -119,7 +120,9 @@ eca_sdp.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 	sed -i "s/severity/--severity/g" $@
 	sed -i "s/bug :/--bug :/g" $@
 
-
+# patch for wb_irq_slave to prevent out of bounds error
+wb_irq_slave.vhd: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd
+	sed "s/irq_q(queue_offs)/irq_q(queue_offs mod irq_q'length)/g" $< > $@
 
 clean:
 	rm -f ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd *.o hdl_sources verilog_sources vhdl_sources work-obj93.cf

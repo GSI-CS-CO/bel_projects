@@ -16,7 +16,7 @@ entity ez_usb_chip is
 		);
 	port (
       rstn_i    : in  std_logic; 
-      ebcyc_o   : out std_logic := '0'; -- not really a line of ez-usb-chip but this is needed by etherbone slave to work
+      wu2_o     : out std_logic := '0'; -- not really a line of ez-usb-chip but this is needed by etherbone slave to work
       readyn_o  : out std_logic := '0'; 
       fifoadr_i : in  std_logic_vector(1 downto 0); 
       fulln_o   : out std_logic := '1'; 
@@ -33,84 +33,90 @@ architecture simulation of ez_usb_chip is
 	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
 	signal clk_internal : std_logic := '1';
 	signal unlock_stop_mechanism : boolean := false;
+
+	type state_t is (s_init, s_work);
+	signal state : state_t := s_init;
+
+	signal slrdn_1   : std_logic;
+	signal slwrn_1   : std_logic;
+	signal pktendn_1 : std_logic;
+	signal fifoadr_1 : std_logic_vector(1 downto 0);
 begin
 
 	-- this will shutdown the simulation if usb is idle for too long
-	abort_mechanism: if g_stop_when_idle_for_too_long > 0 generate
-		clk_internal <= not clk_internal after 10 ns;
-		process
-			variable count : integer := 0;
-		begin
-			wait until rising_edge(clk_internal);
-			if unlock_stop_mechanism then
-				count := count + 1;
-				--report "count = " & integer'image(count);
-				if count = g_stop_when_idle_for_too_long then 
-					assert false report "QUIT" severity failure;
-				end if;
-				if sloen_i = '0' or slrdn_i = '0' or slwrn_i = '0' then
-					count := 0;
-				end if;
-			end if;
-		end process;
-	end generate;
+	--abort_mechanism: if g_stop_when_idle_for_too_long > 0 generate
+	--	clk_internal <= not clk_internal after 10 ns;
+	--	process
+	--		variable count : integer := 0;
+	--	begin
+	--		wait until rising_edge(clk_internal);
+	--		if unlock_stop_mechanism then
+	--			count := count + 1;
+	--			--report "count = " & integer'image(count);
+	--			if count = g_stop_when_idle_for_too_long then 
+	--				assert false report "QUIT" severity failure;
+	--			end if;
+	--			if sloen_i = '0' or slrdn_i = '0' or slwrn_i = '0' then
+	--				count := 0;
+	--			end if;
+	--		end if;
+	--	end process;
+	--end generate;
+
+	clk_internal <= not clk_internal after 5 ns;
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
 
-	main: process 
+
+	fulln_o <= '1'; -- we are never full
+	readyn_o <= '0'; -- we are always ready
+	dev: process 
 		variable value_from_file : integer;
 		variable client_connected : boolean;
 		variable stop_until_client_connects : boolean := g_stop_until_client_connects;
 	begin
-		-- initialization
-		wait until rising_edge(rstn_i);
-		fulln_o <= '1'; -- we are never full
-		readyn_o <= '0'; -- we are ready
 
-		while true loop
-			ez_usb_dev_init(stop_until_client_connects);
-			stop_until_client_connects := false;
-			client_connected := true;
-			unlock_stop_mechanism <= true;
+		wait until rising_edge(clk_internal);
+		slrdn_1   <= slrdn_i;
+		slwrn_1   <= slwrn_i;
+		fifoadr_1 <= fifoadr_i;
+		pktendn_1 <= pktendn_i;
 
-			-- worker loop
-			while client_connected loop
-	  			-- reading from file and provide it to the master
-				value_from_file := ez_usb_dev_read(timeout_value=>0);
-				if value_from_file = HANGUP then -- client disconnected
-					ebcyc_o <= '0';
-					wait until fifoadr_i = "00"; 
-					wait until fifoadr_i = "01"; 
-					client_connected := false;
-				elsif value_from_file >= 0 then
-					ebcyc_o <= '1';
-					wait until fifoadr_i = "00";
-					while value_from_file >= 0 loop
-						emptyn_o <= '1'; -- show the master that there is data
-						wait until falling_edge(slrdn_i);
-						out_value <= std_logic_vector(to_signed(value_from_file, 8));
-						wait until rising_edge(slrdn_i);
-						value_from_file := ez_usb_dev_read(timeout_value=>0);
-					end loop;	
-					emptyn_o <= '0'; -- show the master that all data was read - we're empty now
+		emptyn_o  <= '0';
+		if rstn_i = '1' then
+			if client_connected then 
+				-- read value from file unless we already have a valid value
+				if value_from_file < 0 then
+					value_from_file := ez_usb_dev_read(timeout_value => 0);
 				end if;
-
-				-- writing master data to file 
-				wait until falling_edge(slwrn_i) or fifoadr_i = "00";
-				if slwrn_i = '0' then		
-					while pktendn_i = '1' loop
-						wait until rising_edge(slwrn_i) or falling_edge(pktendn_i);
-						if pktendn_i = '1' then
-							ez_usb_dev_write(to_integer(unsigned(fd_io)));
-						end if;
-					end loop;
-					wait until rising_edge(pktendn_i);
+				-- change state based on value
+				if value_from_file = HANGUP then 
+					wu2_o            <= '0';
+					client_connected := false;
+				elsif value_from_file >= 0 and fifoadr_i = "00" then -- valid value
+					wu2_o    <= '1';
+					emptyn_o <= '1'; -- we are no longer empty and have data to send
+				end if;
+				-- communication with connected hardware
+				if slwrn_1 = '1' and slwrn_i = '0' then -- falling edge on slwrn_i
+					ez_usb_dev_write(to_integer(unsigned(fd_io)));
+				elsif slrdn_1 = '1' and slrdn_i = '0' then -- falling edge on slrdn_i
+					out_value <= std_logic_vector(to_signed(value_from_file, 8));
+				elsif slrdn_1 = '0' and slrdn_i = '1' then -- falling edge on slrdn_i
+					value_from_file := -1;
+				end if;
+				-- write send written data
+				if pktendn_1 = '1' and pktendn_i = '0' then
 					ez_usb_dev_flush;
 				end if;
+			else 
+				ez_usb_dev_init(stop_until_client_connects);
+				stop_until_client_connects := false;
+				client_connected := true;
+				unlock_stop_mechanism <= true;
+			end if; -- client_connected
+		end if; -- rstn_i = '1'
 
-			end loop;
-
-		end loop;
 	end process;
 
 end architecture;
