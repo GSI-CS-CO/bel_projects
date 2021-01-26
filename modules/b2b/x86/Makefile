@@ -33,6 +33,13 @@ b2b-ctl: b2b-ctl.c
 b2b-ui: b2b-ui.c
 	$(CC) $(CFLAGS) -o b2b-ui b2b-ui.c ../../common-libs/x86/ivtpar.c $(LIBS)
 
+b2b-serv-sys: b2b-serv-sys.c
+	$(CC) $(CFLAGS) -o b2b-serv-sys b2b-serv-sys.c $(LIBS) -ldim -lpthread
+
+b2b-client-sys: b2b-client-sys.c
+	$(CC) $(CFLAGS) -o b2b-client-sys b2b-client-sys.c $(LIBS) -ldim -lpthread
+
+
 saft-b2b: saft-b2b-mon.cpp
 	g++ --std=c++0x $(CFLAGS) -o saft-b2b-mon saft-b2b-mon.cpp $(LIBS)
 
