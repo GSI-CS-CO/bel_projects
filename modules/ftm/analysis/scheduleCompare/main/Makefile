@@ -15,7 +15,13 @@ STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o
 
-scheduleCompare.cpp: scheduleIsomorphism.h
+scheduleCompare.cpp: scheduleIsomorphism.h scheduleCompare.h
+
+scheduleIsomorphism.cpp: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h
+
+printSchedule.cpp: printSchedule.h 
+
+parseSchedule.cpp: parseSchedule.h scheduleCompare.h
 
 clean:
 	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare
