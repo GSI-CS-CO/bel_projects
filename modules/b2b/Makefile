@@ -12,6 +12,7 @@ ARCH        ?= /x86_64
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
+DIM         ?= /home/bel/dbeck/lnx/dim_v20r29
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
@@ -39,9 +40,13 @@ deploy:
 	mkdir -p $(STAGING)/firmware
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
 	cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18 RF room
+	cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
 	cp $(ASL)/b2b-sis18-kick.sh $(STAGING)                              # nfs init script SIS18 kicker room
+	cp $(ASL)/b2b-sis18-kick-div.sh $(STAGING)                          # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-esr-rf.sh $(STAGING)                                  # nfs init script ESR
+	cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR
 	cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
+	cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
 	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
 	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18
 	cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18
@@ -56,6 +61,9 @@ deploy:
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
 	cp $(FW)/b2bkd.bin $(STAGING)/firmware
+	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
+	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
+	cp $(SW)/b2b-client-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack 
 
 .PHONY: all clean
 
