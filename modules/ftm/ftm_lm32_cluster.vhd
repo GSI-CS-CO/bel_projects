@@ -310,8 +310,11 @@ begin
 
 
 
+  end generate;
 
 
+  no_prioQ: if not g_is_dm generate
+    dm_prioq_master_o <= c_DUMMY_WB_MASTER_OUT;
   end generate;
 
   genDiag : if(g_delay_diagnostics) generate
