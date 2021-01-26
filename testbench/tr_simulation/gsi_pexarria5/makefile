@@ -80,7 +80,7 @@ ez_usb_dev_c.o: ez_usb_dev_c.c
 
 
 #lm32 
-lm32_allprofiles.v: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
+lm32_allprofiles.v: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
 	sed    '/input \[ (32-1):0\] interrupt;/i \/\* verilator lint_off SYMRSVDWORD \*\/' $< > $@
 	sed -i '/input \[ (32-1):0\] interrupt;/a \/\* verilator lint_on  SYMRSVDWORD \*\/' $@
 
