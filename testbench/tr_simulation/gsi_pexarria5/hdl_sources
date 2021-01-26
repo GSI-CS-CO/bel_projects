@@ -135,6 +135,7 @@
 /home/michael/work/bel_projects/modules/mil/Mil_pkg.vhd
 /home/michael/work/bel_projects/modules/pll/altera_butis.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd
+/home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd
 /home/michael/work/bel_projects/ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd
@@ -201,6 +202,7 @@
 /home/michael/work/bel_projects/modules/wb_timer/wb_timer.vhd
 /home/michael/work/bel_projects/modules/wb_timer/wb_timer_pkg.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd
+/home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_sim_core/simbridge.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd
 /home/michael/work/bel_projects/ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
