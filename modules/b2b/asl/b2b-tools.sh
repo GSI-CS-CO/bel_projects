@@ -15,7 +15,9 @@ cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
 ldconfig
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ui /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ctl /usr/bin/
-cp -a /opt/$NAME/$ARCH/usr/bin/saft-b2b-mon /usr/bin/
+cp -a /opt/$NAME/$ARCH/usr/bin/b2b-serv-sys /usr/bin/
+cp -a /opt/$NAME/$ARCH/usr/bin/b2b-client-sys /usr/bin/
+
 mkdir /tmp/b2bivt
 cp -a /opt/$NAME/$ARCH/tmp/b2bivt/* /tmp/b2bivt
 
