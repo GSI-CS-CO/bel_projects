@@ -142,7 +142,7 @@ architecture rtl of pci_control is
     ("LVDS_DUMMY2",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX";
+  constant c_family        : string := "Arria 10 GX PEX10";
   constant c_project       : string := "pci_control";
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
