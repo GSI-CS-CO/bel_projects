@@ -43,6 +43,8 @@ means $g_1$ is possibly a subgraph of $g_2$. In addition, $g_1 S g_2$ means $g_1
  $|V(g_1)|>|V(g_2)|$ &          -          &          -          &          -  \\ \hline
 \end{tabular}
 \end{table}
+
+TODO: document prerequisites, like dot files syntactical correct, not a null graph.
 \chapter{Arguments and Options}
 Usage: \texttt{scheduleCompare $<$dot file 1$>$ $<$dot file 2$>$}
 
@@ -54,6 +56,7 @@ Options:
 	\item -vv: super verbose, in addition to verbose more output.
 \end{enumerate}
 
+TODO: document return codes
 \chapter{Testframework and Test Cases}
 First attempt for the test framework are unit tests with Python. A test case in general calls \texttt{scheduleCompare} with two dot files and examines the output. For this, the return code of \texttt{scheduleCompare}.
 
