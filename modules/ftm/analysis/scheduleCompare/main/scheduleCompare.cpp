@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
           usage(program);
           error = EXIT_SUCCESS;
         default:
-          std::cerr << program << ": bad option " << argv[optind] << std::endl;
+          std::cerr << program << ": bad option " << std::endl;
           error = BAD_ARGUMENTS;
       }
     }
