@@ -1,4 +1,5 @@
 digraph G {
+name=test1
 graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
 node [fid=0 style     = "filled", fillcolor = "white", color = "black"]
 B_PPS[cpu="1", flags="0x0010c107", type="block", tperiod="1000000000", pattern="PPS_TEST", patentry="false", patexit="true", beamproc="B3", bpentry="false", bpexit="true", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
