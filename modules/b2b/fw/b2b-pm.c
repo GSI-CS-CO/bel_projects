@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-January-2021
+ *  version : 26-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000224                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000225                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -494,7 +494,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
  
   status = actStatus; /* chk */
   
-  return status;
+  // check WR sync state
+  if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
+  else                                                     return status;
 } // doActionOperation
 
 
