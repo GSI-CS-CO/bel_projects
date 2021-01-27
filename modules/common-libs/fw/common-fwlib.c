@@ -546,6 +546,12 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
     } // if data is valid
   } // while not timed out
 
+  *deadline = 0x0;
+  *evtId    = 0x0;
+  *param    = 0x0;
+  *tef      = 0x0;
+  *isLate   = 0x0;
+  
   return COMMON_ECADO_TIMEOUT;
 } // fwlib_wait4ECAEvent
 
