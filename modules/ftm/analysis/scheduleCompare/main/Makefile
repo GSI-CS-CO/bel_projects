@@ -1,13 +1,8 @@
-TOP ?= /home/martin/bel_projects/dev
-FTMPATH ?= $(TOP)/modules/ftm
-
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I$(FTMPATH)/include
-# -fprofile-arcs -ftest-coverage
+CXXFLAGS = -g -std=c++11 -fPIC -Wall
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib
-LDLIBS = -L$(FTMPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lcarpedm
-# -lgcov
+LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
