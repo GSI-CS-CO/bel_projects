@@ -3,6 +3,7 @@
 import unittest
 import subprocess
 import sys
+import os
 
 global test_binary
 """
@@ -36,7 +37,7 @@ class TestScheduleCompare(unittest.TestCase):
     stdout, stderr = process.communicate()
     # print(f'Returncode: {process.returncode} of {self.binary}.')
     if expectedReturnCode > -1:
-      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}')
+      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Files: {file1}, {file2}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCerr, f'stderr: {lines}')
@@ -45,6 +46,21 @@ class TestScheduleCompare(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'stdout: {lines}')
     # print(f'stdout Lines:\n{lines}')
+
+  def allFilesInfolderTest(self, folder):
+    files = os.listdir(folder)
+    # print (files)
+    counter = 0
+    for dotFile1 in files:
+      for dotFile2 in files:
+        counter += 1
+        if counter % 100 == 0:
+          print(f'{counter},', end='', flush=True)
+        if dotFile1 == dotFile2:
+          returncode = 0
+        else:
+          returncode = 1
+        self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
 
   def test_first_isomorphism(self):
     self.callScheduleCompare('test0.dot', 'test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
@@ -67,24 +83,8 @@ class TestScheduleCompare(unittest.TestCase):
   def test_usage_message(self):
     self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=16, linesCout=0)
 
-
-  def targetName(self, command, count_out=0, count_err=0, options=''):
-    """
-    Common method for commands with target name.
-    Start dm-cmd with the command and check the output on stdout and stderr.
-    The checks check only the number of lines of the output, not the content.
-    """
-    process = subprocess.Popen([self.binary, self.data_master, command, 'B_PPS', options], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
-    stdout, stderr = process.communicate()   # get command output and error
-    lines = stdout.decode('utf-8').splitlines()
-#    print(f'Lines:\n{lines}')
-    self.assertEqual(len(lines), count_out, f'stdout, Number of lines {len(lines)}')
-    lines = stderr.decode('utf-8').splitlines()
-#    print(f'Lines:\n{lines}')
-    self.assertEqual(len(lines), count_err, f'stderr, Number of lines {len(lines)}')
-
-  def t1est_abswait(self):
-    self.targetName('abswait', options='100')
+  def test_folder_dot(self):
+    self.allFilesInfolderTest('dot/')
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
