@@ -15,16 +15,12 @@ class iso_callback {
   iso_callback(const Graph1& graph1, const Graph1& graph2) : graph1_(graph1), graph2_(graph2) {}
   template <typename CorrespondenceMap1To2, typename CorrespondenceMap2To1>
   bool operator()(CorrespondenceMap1To2 f, CorrespondenceMap2To1) {
-    BGL_FORALL_VERTICES_T(v, graph1_, Graph1) { 
-      vertex_iso_map.emplace_back(get(boost::vertex_index_t(), graph1_, v), get(boost::vertex_index_t(), graph2_, get(f, v))); 
-    }
+    BGL_FORALL_VERTICES_T(v, graph1_, Graph1) { vertex_iso_map.emplace_back(get(boost::vertex_index_t(), graph1_, v), get(boost::vertex_index_t(), graph2_, get(f, v))); }
     set_of_vertex_iso_map.push_back(vertex_iso_map);
     vertex_iso_map.clear();
     return false;
   }
-  std::vector<std::vector<std::pair<int, int>>> get_setvmap() { 
-    return set_of_vertex_iso_map; 
-  }
+  std::vector<std::vector<std::pair<int, int>>> get_setvmap() { return set_of_vertex_iso_map; }
 
  private:
   const Graph1& graph1_;
@@ -33,15 +29,12 @@ class iso_callback {
   std::vector<std::pair<int, int>> vertex_iso_map;
 };
 
-
 template <typename Graph1>
-//typedef typename boost::graph_traits<typename Graph1>::vertex_descriptor vertex_descriptor_t;
+// typedef typename boost::graph_traits<typename Graph1>::vertex_descriptor vertex_descriptor_t;
 class GraphCompare {
  public:
   GraphCompare(Graph1& graph1, const Graph1& graph2) : graph1_(graph1), graph2_(graph2) {}
-  bool operator()(long unsigned int v1, long unsigned int v2){
-    return graph1_[v1] == graph2_[v2];
-  }
+  bool operator()(long unsigned int v1, long unsigned int v2) { return graph1_[v1] == graph2_[v2]; }
 
  private:
   Graph1& graph1_;
@@ -85,8 +78,8 @@ bool scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuratio
     // Function vertex_order_by_mult is used to compute the order of
     // vertices of graph1. This is the order in which the vertices are examined
     // during the matching process.
-    bool isomorphic = vf2_subgraph_iso(*ref1, *ref2, std::ref(callback), vertex_order_by_mult(*ref1),
-                                       boost::vertices_equivalent(std::ref(graphComparator)).edges_equivalent(edge_compare));
+    bool isomorphic =
+        vf2_subgraph_iso(*ref1, *ref2, std::ref(callback), vertex_order_by_mult(*ref1), boost::vertices_equivalent(std::ref(graphComparator)).edges_equivalent(edge_compare));
     if (!config.silent) {
       if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
         std::cout << "Graphs " << getGraphName(*ref1) << " and " << getGraphName(*ref2) << " are " << (isomorphic ? "" : "NOT ") << "isomorphic." << std::endl;
@@ -99,7 +92,7 @@ bool scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuratio
 
       if (set_of_vertex_iso_map.size() > 0) {
         // output vector size here
-        std::cout << set_of_vertex_iso_map.size() << std::endl;
+        std::cout << "Number of isomorphisms: " << set_of_vertex_iso_map.size() << std::endl;
         for (auto set_of_v : set_of_vertex_iso_map) {
           for (auto v : set_of_v) {
             std::cout << "(" << v.first << ", " << v.second << ") {" << (*ref1)[v.first].name << ", " << (*ref2)[v.second].name << "} ";

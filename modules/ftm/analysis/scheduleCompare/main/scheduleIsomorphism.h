@@ -13,8 +13,8 @@ class ScheduleVertex {
   std::string type = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-    std::cout << "--> " << v1.name << ", " << v2.name << std::endl;
-//      return v1.type.compare(v2.type);
+    // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
+    //      return v1.type.compare(v2.type);
     if (v1.name == v2.name) {
       return v1.type.compare(v2.type);
     } else {
@@ -24,7 +24,7 @@ class ScheduleVertex {
 
   int compare(const ScheduleVertex& v2) {
     std::cout << "--> " << this->name << ", " << v2.name << std::endl;
-//      return this->type.compare(v2.type);
+    //      return this->type.compare(v2.type);
     if (this->name == v2.name) {
       return this->type.compare(v2.type);
     } else {
@@ -46,7 +46,7 @@ class ScheduleEdge {
   std::string type = std::string("");
 
   int compare(const ScheduleEdge& e1, const ScheduleEdge& e2) {
-    std::cout << "--> " << e1.name << ", " << e2.name << std::endl;
+    std::cout << "--E " << e1.name << ", " << e2.name << std::endl;
     if (e1.name == e2.name) {
       return e1.type.compare(e2.type);
     } else {
