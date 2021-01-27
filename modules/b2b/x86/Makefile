@@ -38,7 +38,7 @@ b2b-serv-sys: b2b-serv-sys.c
 	$(CC) $(CFLAGS) -o b2b-serv-sys b2b-serv-sys.c $(LIBS) -ldim -lpthread
 
 b2b-client-sys: b2b-client-sys.c
-	$(CC) $(CFLAGS) -o b2b-client-sys b2b-client-sys.c $(LIBS) -ldim -lpthread
+	$(CC) $(CFLAGS) -o b2b-client-sys b2b-client-sys.c $(LIBS) -ldim -lpthread 
 
 
 saft-b2b: saft-b2b-mon.cpp
@@ -51,7 +51,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-ctl b2b-ui libb2bllib.so*
+	rm -f *.o b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys saft-b2b-mon libb2bllib.so*
 
 deploy:
 	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	

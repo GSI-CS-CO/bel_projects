@@ -115,6 +115,8 @@ const char* b2b_status_text(uint32_t bit)
     case B2B_STATUS_PHASEFAILED          : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;                            
     case B2B_STATUS_TRANSFER             : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
     case B2B_STATUS_SAFETYMARGIN         : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
+    case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s",    bit, "no RF signal detected"); break;
+    case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s",    bit, "late timing message received"); break;
     default                              : sprintf(message, "%s", comlib_statusText(bit)); break;
   } // switch bit
   
@@ -369,8 +371,6 @@ uint32_t b2b_context_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint3
 
 uint32_t b2b_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t *nData)
 {
-  eb_cycle_t   eb_cycle;
-  
   if (!ebDevice) return COMMON_STATUS_EB;
 
   /* to be implemented */

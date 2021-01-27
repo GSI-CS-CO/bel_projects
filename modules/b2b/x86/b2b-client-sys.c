@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-January-2021
+ *  version : 27-January-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000225
+#define B2B_CLIENT_SYS_VERSION 0x000226
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <math.h>
 #include <time.h>
-#include <termios.h>
 
 // dim
 #include <dic.h>
@@ -111,17 +110,7 @@ struct b2bSystem_t {
 struct b2bSystem_t dicSystem[B2BNSYS];
 
 
-// exit with error message
-static void die(const char* where, eb_status_t status) {
-  fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
-  exit(1);
-} //die
-
-
 static void help(void) {
-  uint32_t version;
-  
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
@@ -133,10 +122,9 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s pro\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-
-  b2b_version_library(&version);
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(version));
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_CLIENT_SYS_VERSION));
 } //help
+
 
 // add all dim services
 void dicSubscribeServices(char *prefix)
@@ -168,37 +156,8 @@ void dicCmdClearDiag(char *prefix, uint32_t indexServer)
   dic_cmnd_service(name, 0, 0);
 } // dicCmdClearDiag
 
-// get character from terminal, 0: no character
-char getTermChar()
-{
-  static struct termios oldt, newt;
-  char ch = 0;
-  int  len;
 
-      // check for any character....
-    // get current terminal settings
-    tcgetattr(STDIN_FILENO, &oldt);
-
-    // set non canonical mode
-    newt = oldt;
-    //newt.c_lflag &= ~(ICANON);
-    newt.c_lflag &= ~(ICANON | ECHO); 
-
-    newt.c_cc[VMIN] = 0;
-    newt.c_cc[VTIME] = 0;
-    tcsetattr( STDIN_FILENO, TCSANOW, &newt);
-
-    len = read(STDIN_FILENO, &ch, 1);
-    
-    // reset to old terminal settings
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
-
-    if (len) return ch;
-    else     return 0;
-} // getTermChar
-
-
-// printServices
+// print services to screen
 void printServices(int flagOnce)
 {
   int i;
@@ -218,55 +177,55 @@ void printServices(int flagOnce)
   
   printf("  #   ring sys   fw-ver     state  transfers           status               node\n");
   for (i=0; i<B2BNSYS; i++) {
-    if (dicSystem[i].nTransfer == no_link_32) sprintf(cTransfer, "%9s", no_link_str);
-    else                                      sprintf(cTransfer, "%9u", dicSystem[i].nTransfer);
-    if (dicSystem[i].status    == no_link_64) sprintf(cStatus, "%16s", no_link_str);
-    else                                      sprintf(cStatus, "%16"PRIx64"", dicSystem[i].status);
+    if (dicSystem[i].nTransfer == no_link_32) sprintf(cTransfer, "%9s",         no_link_str);
+    else                                      sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
+    if (dicSystem[i].status    == no_link_64) sprintf(cStatus,  "%16s",         no_link_str);
+    else                                      sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
     
     printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], dicSystem[i].version, dicSystem[i].state, cTransfer, cStatus, dicSystem[i].hostname);
   } // for i
 
   if (!flagOnce) {
     printf("\n\n\n\n\n\n\n\n");
-    printf("\033[7m exit with <q> | clear status with <digit>                       %s\033[0m\n", buff);
+    //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+    printf("\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m\n", buff);
   } // if not once
 } // printServices
 
 
-int main(int argc, char** argv) {
-  const char* devName;
+// print status text to screen
+void printStatusText()
+{
+  int i,j;
+  uint64_t status;
 
+  for (i=0; i<B2BNSYS; i++) {
+    status = dicSystem[i].status;
+    if ((status != 0x1) && (status != no_link_64)) {
+      printf(" %6s %3s:\n", ringNames[i], typeNames[i]);
+      for (j = COMMON_STATUS_OK + 1; j<(int)(sizeof(status)*8); j++) {
+        if ((status >> j) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(j));
+      } // for j
+      printf("press any key to continue\n");
+      while (!comlib_getTermChar()) {usleep(200000);}
+    } // if status
+  } // for i
+} // printStatusText
+
+
+int main(int argc, char** argv) {
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
+  //  char *tail;
 
   int      getVersion;
   int      subscribe;
   int      once;
 
-  uint64_t statusArray;
-  uint32_t state;
-  uint32_t nBadStatus;
-  uint32_t nBadState;
-  uint32_t nTransfer;
-  int32_t  getcomLatency;                      // message latency from ECA
-
-  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
-  uint32_t sleepTime;                          // time to sleep [us]
-  uint32_t printFlag;                          // flag for printing
-  uint32_t verLib;
-  uint32_t verFw;
-
-  int      i;
   char     userInput;
   int      quit;
 
-  uint32_t cpu;
-  uint32_t status;
-
   char     prefix[DIMMAXSIZE];
-  char     disName[DIMMAXSIZE];
-  //  char     hostname[DIMCHARSIZE];
 
   program    = argv[0];
   getVersion = 0;
@@ -304,10 +263,7 @@ int main(int argc, char** argv) {
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
 
-  if (getVersion) {
-    b2b_version_library(&verLib);
-    printf("%s: version 0x%06x\n", program, B2B_CLIENT_SYS_VERSION);
-  } // if getVersion
+  if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
   if (subscribe) {
     printf("b2b-client-sys: starting client using prefix %s\n", prefix);
@@ -318,16 +274,19 @@ int main(int argc, char** argv) {
       if (once) {sleep(1); quit=1;}                 // wait a bit to get the values
       printServices(once);
       if (!quit) {
-        userInput = getTermChar();
+        userInput = comlib_getTermChar();
         switch (userInput) {
-          case 0x30 ... 0x39 :
+          case '0' ... '9' :
             dicCmdClearDiag(prefix, (uint32_t)(userInput - 48));
             break;
-          case 0x71        :
+          case 'q'         :
             quit = 1;
             break;
+          case 's'         :
+            printStatusText();
+            break;
           default          :
-            sleep(1);
+            usleep(500000);
         } // switch
       } // if !once
     } // while

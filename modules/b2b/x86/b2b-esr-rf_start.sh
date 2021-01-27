@@ -74,11 +74,11 @@ saft-io-ctl $SDPM -n IO3 -b 0xffffa03000000000
 saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU
-saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 500000 0x801 -dg
+saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 450000 0x801 -dg
 
 # lm32 listens to CMD_B2B_PMEXT message from ESR CBU 
-saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 500000 0x800 -dg
-saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 500000 0x800 -dg
+saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 450000 0x800 -dg
+saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 450000 0x800 -dg
 
 # lm32 listens to CMD_B2B_TRIGGERINJ message from SIS18 CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
