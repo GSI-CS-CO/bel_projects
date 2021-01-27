@@ -5,17 +5,11 @@
 
 #include "scheduleIsomorphism.h"
 
-const int BAD_ARGUMENTS = -3;
-
 int main(int argc, char* argv[]) {
   int error = 0;
   int opt;
   char* program = argv[0];
   configuration config;
-  if (argc < 3) {
-    usage(program);
-    return BAD_ARGUMENTS;
-  } else {
     while ((opt = getopt(argc, argv, "vsh")) != -1) {
       switch (opt) {
         case 'v':
@@ -37,15 +31,21 @@ int main(int argc, char* argv[]) {
           break;
         case 'h':
           usage(program);
-          error = EXIT_SUCCESS;
+          error = USAGE_MESSAGE;
+          break;
         default:
           std::cerr << program << ": bad option " << std::endl;
           error = BAD_ARGUMENTS;
+          break;
       }
     }
     if (error) {
       return error;
     } else {
+  if (argc < 2) {
+    usage(program);
+    return USAGE_MESSAGE;
+  } else {
       // use the last two arguments for the dot files after getopt permuted the arguments.
       return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
     }
@@ -60,4 +60,13 @@ void usage(char* program) {
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "        -s: silent mode, no output." << std::endl;
+  std::cerr << "Return codes: " << std::endl;
+  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
+  std::cerr << NOT_ISOMORPHIC << " NOT_ISOMORPHIC, graphs are not isomorphic." << std::endl;
+  std::cerr << SUBGRAPH_ISOMORPHIC << " SUBGRAPH_ISOMORPHIC, graph is isomorphic to a subgraph of the larger graph." << std::endl;
+  std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
+  std::cerr << MISSING_ARGUMENT << " MISSING_ARGUMENT, at least one of the file names is missing." << std::endl;
+  std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;
+  std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
+  std::cerr << "negative values are UNIX signals" << std::endl;
 }

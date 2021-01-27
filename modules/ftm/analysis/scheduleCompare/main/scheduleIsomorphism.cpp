@@ -43,7 +43,7 @@ class GraphCompare {
 
 /* This is the main method to check for an isomorphism. It contains the call to vf2_subgraph_iso.
  */
-bool scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration& config) {
+int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration& config) {
   ScheduleGraph graph1, graph2;
   boost::dynamic_properties dp1 = setDynamicProperties(graph1);
   bool parse1 = parseSchedule(dotFile1, graph1, dp1, config);
@@ -78,15 +78,22 @@ bool scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuratio
     // Function vertex_order_by_mult is used to compute the order of
     // vertices of graph1. This is the order in which the vertices are examined
     // during the matching process.
+    int result = -1;
     bool isomorphic =
         vf2_subgraph_iso(*ref1, *ref2, std::ref(callback), vertex_order_by_mult(*ref1), boost::vertices_equivalent(std::ref(graphComparator)).edges_equivalent(edge_compare));
-    if (!config.silent) {
-      if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
+    if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
+      if (!config.silent) {
         std::cout << "Graphs " << getGraphName(*ref1) << " and " << getGraphName(*ref2) << " are " << (isomorphic ? "" : "NOT ") << "isomorphic." << std::endl;
-      } else {
+      }
+      result = (isomorphic ? EXIT_SUCCESS : NOT_ISOMORPHIC);
+    } else {
+      if (!config.silent) {
         std::cout << "Graph " << getGraphName(*ref1) << " is " << (isomorphic ? "" : "NOT ") << "isomorphic to a subgraph of graph " << getGraphName(*ref2) << "." << std::endl;
       }
+      result = (isomorphic ? SUBGRAPH_ISOMORPHIC : NOT_ISOMORPHIC);
+    }
 
+    if (!config.silent) {
       // get vector from callback
       auto set_of_vertex_iso_map = callback.get_setvmap();
 
@@ -101,9 +108,9 @@ bool scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuratio
         }
       }
     }
-    return isomorphic;
+    return result;
   } else {
-    return EXIT_FAILURE;
+    return FILE_NOT_FOUND;
   }
 }
 

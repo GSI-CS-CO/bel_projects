@@ -85,7 +85,7 @@ struct nameEqualityFilter {
   VertexNameMap vertexNames2;
 };
 
-bool scheduleIsomorphic(std::string dotFile1, std::string dotfile2, configuration& config);
+int scheduleIsomorphic(std::string dotFile1, std::string dotfile2, configuration& config);
 boost::dynamic_properties setDynamicProperties(ScheduleGraph& g);
 std::string getGraphName(ScheduleGraph& g);
 #endif
