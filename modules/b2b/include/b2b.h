@@ -15,6 +15,8 @@
 #define B2B_STATUS_PHASEFAILED        16   // phase measurement failed
 #define B2B_STATUS_TRANSFER           17   // transfer failed
 #define B2B_STATUS_SAFETYMARGIN       18   // violation of safety margin for data master and timing network
+#define B2B_STATUS_NORF               19   // no RF signal detected
+#define B2B_STATUS_LATEMESSAGE        20   // late timing message received
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define B2B_ECADO_TIMEOUT        COMMON_ECADO_TIMEOUT
@@ -83,7 +85,8 @@
 #define SIS100_B2B_EXTRACT         0x3b0   // GID: CRYRING simple extraction
 
 // specialities
-#define B2B_PRETRIGGER             20000    // offset [ns] used for pre-trigger on the trigger event
+#define B2B_PRETRIGGERPM          450000    // offset [ns] used as pre-trigger on the PMINJ/PMEXT event 
+#define B2B_PRETRIGGER             20000    // offset [ns] used as pre-trigger on the trigger event
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
 #define B2B_NSID                      16    // max number of SID settings

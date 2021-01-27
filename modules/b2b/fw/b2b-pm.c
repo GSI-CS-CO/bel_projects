@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-January-2021
+ *  version : 27-January-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000225                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000226                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -376,7 +376,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;       // ECA is configured to pre-trigger ahead of time!!!
+      reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGERPM;    // ECA is configured to pre-trigger ahead of time!!!
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
@@ -405,7 +405,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         tH1       = 0x7fffffffffffffff;
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
-        actStatus = B2B_STATUS_PHASEFAILED;
+        if (nInput < 3) status = B2B_STATUS_NORF;
+        else            status = B2B_STATUS_PHASEFAILED;
       } // if some error occured
 
       // send command: transmit measured phase value
@@ -416,7 +417,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       transStat    = dt;
       nTransfer++;
-      
+      //flagIsLate = 0; /* chk */      
       break; // case  B2B_ECADO_B2B_PMEXT
 
     // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and H=1 group DDS signals
@@ -446,6 +447,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // this is ugly!!!! all but the 1st TS are late and thus no longer ordered
         // even worse: the 'fitting' TS might be delayed further and not even received
       } // if not pm error
+      //flagIsLate = 0; /* chk */
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
@@ -486,13 +488,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
       } // if not pm error
-
+      //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
 
-    default : ;
+    default :                                                         // flush ECA queue
+      flagIsLate = 0;                                                 // ingore late events
   } // switch ecaAction
  
-  status = actStatus; /* chk */
+  // check for late event
+  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;

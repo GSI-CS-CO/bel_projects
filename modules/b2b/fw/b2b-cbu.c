@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-January-2021
+ *  version : 27-January-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000225                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000226                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -830,7 +830,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   
   if (flagClearAllSid) {clearAllSid(); flagClearAllSid = 0;}
 
-  // check WR sync state
+  // check for late event
+  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+  
+  // check WR sync state; worst case, do this last
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
 } // doActionOperation

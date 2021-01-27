@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-January-2021
+ *  version : 27-January-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000225                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000226                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -363,8 +363,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     flagSendMessage = 0;
   } // if flagSendMessage
     
-  status = actStatus;
-  
+  // check for late event
+  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+ 
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
