@@ -92,6 +92,9 @@ vhdl_sources: hdl_sources wb_irq_slave.vhd ep_rx_buffer.vhd wr_core.vhd eca_tdp.
 	grep -v VME_IRQ_Controller.vhd              | \
 	grep -v VME_Wb_master_eb.vhd                | \
 	grep -v xVME64xCore_Top.vhd                 | \
+	sed '/\/eb_commit_fifo.vhd/ceb_commit_fifo.vhd' | \
+	sed '/\/eb_commit_len_fifo.vhd/ceb_commit_len_fifo.vhd' | \
+	sed '/\/inferred_sync_fifo.vhd/cinferred_sync_fifo.vhd' | \
 	sed '/\/wb_irq_slave.vhd/cwb_irq_slave.vhd' | \
 	sed '/\/eca_sdp.vhd/ceca_sdp.vhd'           | \
 	sed '/\/eca_tdp.vhd/ceca_tdp.vhd'           | \
@@ -111,6 +114,15 @@ ep_rx_buffer.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wr_endpoint/ep_r
 wr_core.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
 	sed "/dpram_wbb_i.adr <= /cdpram_wbb_i.adr <= \(others => \'0\'\);" $< > $@
 
+# patches for eb_commit_fifo.vhd eb_commit_len_fifo.vhd inferred_sync_fifo.vhd are needed for ghdl version <= 0.37. Later versions have the issue fixed
+eb_commit_fifo.vhd: $(BEL_PROJECTS_DIR)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd
+	cp $< $@
+
+eb_commit_len_fifo.vhd: $(BEL_PROJECTS_DIR)/ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd
+	cp $< $@
+
+inferred_sync_fifo.vhd: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd
+	cp $< $@
 
 # remove the assertions that trigger if an address has 'X'es in it
 eca_tdp.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd
