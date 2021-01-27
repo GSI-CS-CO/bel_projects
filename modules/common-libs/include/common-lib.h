@@ -37,12 +37,15 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.01.02"
+#define COMMON_LIB_VERSION "0.01.03"
 
 #include <etherbone.h>
 
-// small helper function
+// small helper functions
 uint64_t comlib_getSysTime();
+
+// get character from terminal, 0: no character
+char comlib_getTermChar();
 
 // convert state code to state text
 const char* comlib_stateText(uint32_t  bit             // state code

@@ -3,9 +3,9 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2020
+ *  version : 27-Jan-2021
  *
- *  common x86 routines for firmware
+ *  common x86 routines useful for CLIs handling firmware
  * 
  *  see common-lib.h for version, license and documentation 
  *
@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <termios.h>
 
 // etherbone
 #include <etherbone.h>
@@ -53,6 +55,7 @@ static void die(const char* where, eb_status_t status)
 } //die
 */
 
+// get host system time
 uint64_t comlib_getSysTime()
 {
   struct timeval tv;
@@ -61,6 +64,37 @@ uint64_t comlib_getSysTime()
 } // small helper function
 
 
+// read a single character from stdin
+char comlib_getTermChar()
+{
+  static struct termios oldt, newt;
+  char ch = 0;
+  int  len;
+
+  // check for any character....
+  // get current terminal settings
+  tcgetattr(STDIN_FILENO, &oldt);
+  
+  // set non canonical mode
+  newt = oldt;
+  //newt.c_lflag &= ~(ICANON);
+  newt.c_lflag &= ~(ICANON | ECHO); 
+  
+  newt.c_cc[VMIN] = 0;
+  newt.c_cc[VTIME] = 0;
+  tcsetattr( STDIN_FILENO, TCSANOW, &newt);
+  
+  len = read(STDIN_FILENO, &ch, 1);
+  
+  // reset to old terminal settings
+  tcsetattr( STDIN_FILENO, TCSANOW, &oldt);
+  
+  if (len) return ch;
+  else     return 0;
+} // comLib_getTermChar
+
+
+// returns state text
 const char* comlib_stateText(uint32_t code)
 {
   switch (code) {
@@ -77,6 +111,7 @@ const char* comlib_stateText(uint32_t code)
 } // comlib_stateText
 
 
+// returns status text
 const char* comlib_statusText(uint32_t bit)
 {  
   static char message[256];
