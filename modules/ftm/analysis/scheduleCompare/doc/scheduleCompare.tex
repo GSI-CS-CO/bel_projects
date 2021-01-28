@@ -29,7 +29,10 @@ The tool \texttt{scheduleCompare} tests if two graphs describe the same schedule
 The output is either "graphs represent the same schedule" or "graphs represent different schedules and the differences are \textellipsis".
 The output in the later case should show at least the first vertex with non-matching attributes.
 
-The algorithm used ist the method \texttt{vf2\_subgraph\_iso} from the Boost Graph Library. This tests if a graph $g_1$ is isomorph to a subgraph og graph$g_2$. Thus, we have to test that $g_1$ is a subgraph of $g_2$ and $g_2$ is a subgraph $g_1$ to check that the two graphs are isomorph. This test can be shortened by testing that $g_1$ is a subgraph of $g_2$ and the number of vertices are equal $|V(g_1)| = |V(g_2)|$ and the number of edges are equal $|E(g_1)| = |E(g_2)|$.
+The algorithm used ist the method \texttt{vf2\_subgraph\_iso} from the Boost Graph Library. This tests if a graph $g_1$ is isomorph 
+to a subgraph og graph$g_2$. Thus, we have to test that $g_1$ is a subgraph of $g_2$ and $g_2$ is a subgraph $g_1$ to check 
+that the two graphs are isomorph. This test can be shortened by testing that $g_1$ is a subgraph of $g_2$ and the number 
+of vertices are equal $|V(g_1)| = |V(g_2)|$ and the number of edges are equal $|E(g_1)| = |E(g_2)|$.
 
 May be, it is also interesting to know that $g_1$ is a subgraph of $g_2$. In the following table, $g_1 S g_2$ 
 means $g_1$ is possibly a subgraph of $g_2$. In addition, $g_1 S g_2$ means $g_1$ is possibly isomorphic to $g_2$. 
@@ -73,7 +76,7 @@ First attempt for the test framework are unit tests with Python. A test case in 
 
 \begin{enumerate}
 	\item 9 test cases for the cardinalities from table~\ref{tab:cardinalities}
-	\item 1936 dot files from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is comparted with itself, the graphs should be isomorphic. These are 3.748.096 combinations.
+	\item 1815 dot files (11 * 11 *15) from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is compared with itself, the graphs should be isomorphic. These are 3.294.225 combinations.
 	\item same graph, but different names for the vertices.
 	\item same graph, but different types for vertices with the same name.
 	\item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
