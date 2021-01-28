@@ -51,7 +51,11 @@ then
    die "Starting from wrong host: ${HOSTNAME}"
 fi
 
-if [ ! -f $1 ]
+if [ ! -n "$1" ]
+then
+   die "Missing filename!"
+fi
+if [ ! -f "$1" ]
 then
    die "Can't find \"$1\"!"
 fi
