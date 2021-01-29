@@ -16,7 +16,7 @@
 /*!
  * @todo Remove this switch asap!!!
  */
-#define _CONFIG_PATCH_DAQ_TIMESTAMP
+//#define _CONFIG_PATCH_DAQ_TIMESTAMP
 
 /*!
  * @todo Remove this switch asap!!!
