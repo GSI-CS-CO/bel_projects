@@ -1470,7 +1470,7 @@ BEGIN
       ELSIF timestamp_cntr = x"1111_1111_1111_1111" then
       timestamp_cntr    <= x"0000_0000_0000_0000";
     ELSE
-        timestamp_cntr    <= std_logic_vector(unsigned(timestamp_cntr) + x"0000_0000_0000_1000");
+        timestamp_cntr    <= std_logic_vector(unsigned(timestamp_cntr) + timestamp_cntr_increment);
       END IF;
 
   END IF;
