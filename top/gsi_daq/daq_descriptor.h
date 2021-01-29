@@ -715,11 +715,11 @@ uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
  *        copying the white rabbit tine in to the
  *        Remove this ASAP!!!!!
  */
-#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
+//#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
    return pThis->name.wr.timeStamp; // / 512;
-#else
-   return pThis->name.wr.timeStamp / 512;
-#endif
+//#else
+//   return pThis->name.wr.timeStamp / 512;
+//#endif
 }
 
 #endif
