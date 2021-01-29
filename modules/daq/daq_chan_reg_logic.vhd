@@ -1,7 +1,6 @@
 library ieee;  
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 library work;
@@ -33,32 +32,32 @@ generic(
 
 port  (
       -- SCUB interface
-      Adr_from_SCUB_LA:		in		std_logic_vector(15 downto 0);-- latched address from SCU_Bus
-      Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);-- latched data from SCU_Bus 
-      Ext_Adr_Val:			  in		std_logic;							      -- '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active:			in		std_logic;							      -- '1' => Rd-Cycle is active
-      Ext_Wr_active:			in		std_logic;							      -- '1' => Rd-Cycle is active      
-      clk_i:						  in		std_logic;							      -- should be the same clk, used by SCU_Bus_Slave
-      nReset:					    in		std_logic;
+      Adr_from_SCUB_LA:  in std_logic_vector(15 downto 0);-- latched address from SCU_Bus
+      Data_from_SCUB_LA: in std_logic_vector(15 downto 0);-- latched data from SCU_Bus
+      Ext_Adr_Val:       in std_logic;                                                            -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active:     in std_logic;                                                            -- '1' => Rd-Cycle is active
+      Ext_Wr_active:     in std_logic;                                                            -- '1' => Rd-Cycle is active
+      clk_i:             in std_logic;                                                            -- should be the same clk, used by SCU_Bus_Slave
+      nReset:            in std_logic;
       
-      PmDat:              in    std_logic_vector(15 downto 0);
-      DaqDat:             in    std_logic_vector(15 downto 0);
-      Ena_PM_rd:          in    std_logic;
-      daq_fifo_word:      in    std_logic_vector (8 downto 0);     
-      pm_fifo_word:       in    std_logic_vector (9 downto 0);
-      version_number:     in    std_logic_vector (15 downto 9);
-      max_ch_cnt:         in    std_logic_vector (15 downto 10);
+      PmDat:             in std_logic_vector(15 downto 0);
+      DaqDat:            in std_logic_vector(15 downto 0);
+      Ena_PM_rd:         in std_logic;
+      daq_fifo_word:     in std_logic_vector (8 downto 0);
+      pm_fifo_word:      in std_logic_vector (9 downto 0);
+      version_number:    in std_logic_vector (15 downto 9);
+      max_ch_cnt:        in std_logic_vector (15 downto 10);
       
-      Rd_Port:            out   std_logic_vector(15 downto 0);
-      user_rd_active:     out   std_logic;
+      Rd_Port:           out std_logic_vector(15 downto 0);
+      user_rd_active:    out std_logic;
       
-      CtrlReg_o:          out   std_logic_vector(15 downto 0);
-      TrigWord_LW_o :     out   std_logic_vector(15 downto 0);
-      TrigWord_HW_o:      out   std_logic_vector(15 downto 0);
-      Trig_dly_word_o:    out   std_logic_vector(15 downto 0);
-      rd_PMDat:           out   std_logic;      
-      rd_DAQDat:          out   std_logic;
-      dtack :             out   std_logic
+      CtrlReg_o:         out std_logic_vector(15 downto 0);
+      TrigWord_LW_o :    out std_logic_vector(15 downto 0);
+      TrigWord_HW_o:     out std_logic_vector(15 downto 0);
+      Trig_dly_word_o:   out std_logic_vector(15 downto 0);
+      rd_PMDat:          out std_logic;
+      rd_DAQDat:         out std_logic;
+      dtack :            out std_logic
            
     );
 end daq_chan_reg_logic;

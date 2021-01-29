@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.genram_pkg.all;
 use work.daq_pkg.all;
@@ -469,7 +468,8 @@ Trigger_Registered_Logic : FOR i IN 1 TO ch_num GENERATE
       IF (Ena_DAQ_Start_pulse(i) = '1' AND Ena_TrigMod(i) = '1') THEN
         Trig_dly_cnt(i) <= Trig_dly_word_Ch (i);      -- initial load
       ELSIF Trig_dly_cnt(i) /= "0000" AND ChRate(i) = '1' AND Wait_for_Trigger(i) = '0' THEN
-        Trig_dly_cnt(i) <= Trig_dly_cnt(i) - 1;       -- count on each tick until zero
+        -- count on each tick until zero
+        Trig_dly_cnt(i) <= std_logic_vector(unsigned(Trig_dly_cnt(i)) - 1);
       ELSE
         NULL;                                         --stay
       END IF;
@@ -720,7 +720,7 @@ DAQ_Descr: for i in 1 to ch_num generate
         DAQ_Descr_cntr(i)      <= (others => '0');
         DAQ_Descr_runs(i)      <='1';
       elsif DAQ_Descr_cntr(i) /= x"8"  and DAQ_Descr_runs(i)='1' then
-        DAQ_Descr_cntr(i)      <= DAQ_Descr_cntr(i) + 1;
+        DAQ_Descr_cntr(i)      <= std_logic_vector(unsigned(DAQ_Descr_cntr(i)) + 1);
         DAQ_Descr_runs(i)      <='1';
       else
         DAQ_Descr_runs(i)      <='0';
@@ -899,7 +899,7 @@ PM_Logic : for I in 1 to ch_num generate
         HiRes_runs(i)         <='1';                                                              --enable HiRes_Counter and wait for Trig_Pulse_HiRes
       elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
         if HiRes_trig_cntr(i) /=    x"0392" then
-          HiRes_trig_cntr(i)  <= HiRes_trig_cntr(i) + 1;
+          HiRes_trig_cntr(i)  <= std_logic_vector(unsigned(HiRes_trig_cntr(i)) + 1);
           HiRes_runs(i)       <='1';
         else
           HiRes_runs(i)       <='0';
@@ -987,7 +987,7 @@ PM_Logic : for I in 1 to ch_num generate
        if PM_Descr_cntr(i) = x"7" then
             PM_Descr_reached_7(i)   <='0';
        end if;
-        PM_Descr_cntr(i)      <= PM_Descr_cntr(i) + 1;
+        PM_Descr_cntr(i)      <= std_logic_vector(unsigned(PM_Descr_cntr(i)) + 1);
         PM_Descr_runs(i)      <='1';
       else
         PM_Descr_runs(i)      <='0';
@@ -1470,7 +1470,7 @@ BEGIN
       ELSIF timestamp_cntr = x"1111_1111_1111_1111" then
       timestamp_cntr    <= x"0000_0000_0000_0000";
     ELSE
-        timestamp_cntr    <= timestamp_cntr + x"0000_0000_0000_1000";
+        timestamp_cntr    <= std_logic_vector(unsigned(timestamp_cntr) + x"0000_0000_0000_1000");
       END IF;
 
   END IF;
