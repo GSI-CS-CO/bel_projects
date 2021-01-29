@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-January-2021
+ *  version : 29-January-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000226
+#define B2B_CLIENT_SYS_VERSION 0x000227
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define B2BNSYS     6                    // number of B2B systems
+#define B2BNSYS     7                    // number of B2B systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -73,6 +73,8 @@ const char * sysShortNames[] = {
   "esr-cbu",
   "esr-pm",
   "esr-kdx",
+  "sis18-raw"
+
 };
 
 const char * ringNames[] = {
@@ -82,6 +84,7 @@ const char * ringNames[] = {
   "   ESR",
   "   ESR",
   "   ESR",
+  " SIS18",
 };
 
 const char * typeNames[] = {
@@ -91,6 +94,7 @@ const char * typeNames[] = {
   "CBU",
   " PM",
   "KDX",
+  "DAQ",
 };
 
 struct b2bSystem_t {
@@ -116,7 +120,7 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -s                  subscribe and display system info\n");
-  fprintf(stderr, "  -o                  print info only once and exit\n");
+  fprintf(stderr, "  -o                  print info only once and exit (useful with '-s')\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display system information on the B2B system\n");
   fprintf(stderr, "Example1: '%s pro\n", program);
@@ -204,12 +208,12 @@ void printStatusText()
     if ((status != 0x1) && (status != no_link_64)) {
       printf(" %6s %3s:\n", ringNames[i], typeNames[i]);
       for (j = COMMON_STATUS_OK + 1; j<(int)(sizeof(status)*8); j++) {
-        if ((status >> j) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(j));
+        if ((status >> j) & 0x1)  printf("  ---------- status bit is set : %s\n", b2b_status_text(j));
       } // for j
-      printf("press any key to continue\n");
-      while (!comlib_getTermChar()) {usleep(200000);}
     } // if status
   } // for i
+  printf("press any key to continue\n");
+  while (!comlib_getTermChar()) {usleep(200000);}
 } // printStatusText
 
 
@@ -259,7 +263,13 @@ int main(int argc, char** argv) {
     help();
     return 1;
   }
-  
+
+  // no parameters, no command: just display help and exit
+  if ((optind == 1) && (argc == 1)) {
+    help();
+    return 0;
+  } // if optind
+
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
 
