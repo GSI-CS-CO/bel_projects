@@ -10,42 +10,42 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-    while ((opt = getopt(argc, argv, "vsh")) != -1) {
-      switch (opt) {
-        case 'v':
-          if (config.silent) {
-            std::cerr << program << ": silent is true, verbose ignored." << std::endl;
-          } else {
-            if (config.verbose) {
-              config.superverbose = true;
-            }
-            config.verbose = true;
-          }
-          break;
-        case 's':
+  while ((opt = getopt(argc, argv, "vsh")) != -1) {
+    switch (opt) {
+      case 'v':
+        if (config.silent) {
+          std::cerr << program << ": silent is true, verbose ignored." << std::endl;
+        } else {
           if (config.verbose) {
-            std::cerr << program << ": verbose is true, silent ignored." << std::endl;
-          } else {
-            config.silent = true;
+            config.superverbose = true;
           }
-          break;
-        case 'h':
-          usage(program);
-          error = USAGE_MESSAGE;
-          break;
-        default:
-          std::cerr << program << ": bad option " << std::endl;
-          error = BAD_ARGUMENTS;
-          break;
-      }
+          config.verbose = true;
+        }
+        break;
+      case 's':
+        if (config.verbose) {
+          std::cerr << program << ": verbose is true, silent ignored." << std::endl;
+        } else {
+          config.silent = true;
+        }
+        break;
+      case 'h':
+        usage(program);
+        error = USAGE_MESSAGE;
+        break;
+      default:
+        std::cerr << program << ": bad option " << std::endl;
+        error = BAD_ARGUMENTS;
+        break;
     }
-    if (error) {
-      return error;
-    } else {
-  if (argc < 2) {
-    usage(program);
-    return USAGE_MESSAGE;
+  }
+  if (error) {
+    return error;
   } else {
+    if (argc < 2) {
+      usage(program);
+      return USAGE_MESSAGE;
+    } else {
       // use the last two arguments for the dot files after getopt permuted the arguments.
       return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
     }
