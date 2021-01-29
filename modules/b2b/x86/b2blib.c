@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-December-2020
+ *  version : 27-January-2021
  *
  * library for b2b
  *
@@ -156,6 +156,13 @@ double b2b_flsa2fdds(double flsa)
   return fdds;
 } // b2b_flsa2fdds
 
+
+void b2b_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
+{
+  *nsecs = (uint32_t)(ts % 1000000000);
+  *secs  = (uint32_t)(ts / 1000000000);
+} // b2b_t2secs
+  
 
 uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address)
 {

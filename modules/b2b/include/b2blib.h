@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-December-2020
+ *  version : 29-January-2021
  *
  * library for b2b
  *
@@ -72,7 +72,40 @@ extern "C" {
   enum tuneKnob{NOKNOB, TRIGEXT, TRIGINJ, PHASE};
   typedef enum tuneKnob knob_t;
 
-  
+  enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
+  typedef enum evtTag evtTag_t;
+
+  typedef struct{                                      // data type set values
+    uint32_t flag_nok;                                 // flag: data not ok; bit 0: mode, bit 1: ext_T, ...
+    uint32_t mode;                                     // mode of B2B system
+    uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
+    uint32_t ext_h;                                    // extraction: harmonic number of rf
+    int32_t  ext_cTrig;                                // extraction: correction for extraction kicker [ns]
+    uint64_t inj_T;                                    // injection : ...
+    uint32_t inj_h;
+    int32_t  inj_cTrig;
+    int32_t  cPhase;                                   // phase correction for b2b mode
+  } setval_t;
+
+  typedef struct{                                      // data type get values
+    uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
+    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [ns]
+    int32_t  ext_dKickMon;                             // extraction: offset electroncis monitor signal [ns]
+    int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
+    int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    uint64_t inj_phase;                                // injection : ...
+    int32_t  inj_dKickMon;                             
+    int32_t  inj_dKickProb;
+    int32_t  inj_diagPhase;
+    int32_t  inj_diagMatch;
+    uint32_t flag_errPme;                              // flag: error phhase measurement extraction
+    uint32_t flag_errKde;                              // flag: error kick diagnostic extraction
+    uint32_t flag_errPmi;                              // flag: error phase measurement injection
+    uint32_t flag_errKdi;                              // flag: error kick diagnostic injection
+    uint32_t flag_errCbu;                              // flag: error central b2b unit
+  } getval_t;
+
   // ---------------------------------
   // helper routines
   // ---------------------------------
@@ -92,7 +125,11 @@ extern "C" {
   // convert LSA frequency to DDS frequency
   double b2b_flsa2fdds(double flsa                             // LSA frequency [Hz]
                        );
-
+  //convert timestamp to seconds and nanoseconds
+  void b2b_t2secs(uint64_t ts,                                 // timestamp
+                  uint32_t *secs,                              // seconds
+                  uint32_t *nsecs                              // nanosecons
+                  );
   
   // ---------------------------------
   // communication with lm32 firmware

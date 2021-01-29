@@ -14,7 +14,7 @@ TARGETS     := b2b-ctl b2b-ui saft-b2b lib b2b-serv-sys b2b-client-sys
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
-DIMPATH     := /home/bel/dbeck/lnx/dim_v20r29
+DIMPATH     := /blabla/dim_v20r29
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include/saftlib
 
@@ -40,6 +40,8 @@ b2b-serv-sys: b2b-serv-sys.c
 b2b-client-sys: b2b-client-sys.c
 	$(CC) $(CFLAGS) -o b2b-client-sys b2b-client-sys.c $(LIBS) -ldim -lpthread 
 
+b2b-serv-raw: b2b-serv-raw.cpp
+	g++ --std=c++0x $(CFLAGS) -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) -ldim -lpthread
 
 saft-b2b: saft-b2b-mon.cpp
 	g++ --std=c++0x $(CFLAGS) -o saft-b2b-mon saft-b2b-mon.cpp $(LIBS)
