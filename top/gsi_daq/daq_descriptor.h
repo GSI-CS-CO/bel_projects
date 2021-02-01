@@ -672,7 +672,6 @@ void daqDescriptorSetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis,
 }
 #endif
 
-#if 1
 /*! ---------------------------------------------------------------------------
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
@@ -695,34 +694,18 @@ uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.wr.name.utSec;
 }
 
-
-//STATIC inline IMPLEMENT_CONVERT_BYTE_ENDIAN( uint16_t )
-
 /*! --------------------------------------------------------------------------
  * @brief Returns the white rabbit time from the given descriptor.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *
- * @todo  Divisor 512 is a workaround!!! Because of a possible VHDL bug
- *        copying the white rabbit tine in to the
- *        Remove this ASAP!!!!!
+ * @return 64-bit white rabbit time-stamp.
  */
 STATIC inline
 uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
 {
-/*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * @todo  Divisor 512 is a workaround!!! Because of a possible VHDL bug
- *        copying the white rabbit tine in to the
- *        Remove this ASAP!!!!!
- */
-//#ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
-   return pThis->name.wr.timeStamp; // / 512;
-//#else
-//   return pThis->name.wr.timeStamp / 512;
-//#endif
+   return pThis->name.wr.timeStamp;
 }
 
-#endif
 /*! ---------------------------------------------------------------------------
  * @brief Get the CRC of this record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
