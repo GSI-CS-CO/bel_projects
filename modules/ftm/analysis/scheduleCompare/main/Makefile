@@ -6,7 +6,7 @@ LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
-.PHONY: clean format doc
+.PHONY: clean format doc test
 
 scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o
 
@@ -40,3 +40,7 @@ format:
 	clang-format-10 $(STYLE) -i ScheduleEdge.cpp
 
 doc:
+	$(MAKE) -C ../doc/
+
+test:
+	$(MAKE) -C ../test/
