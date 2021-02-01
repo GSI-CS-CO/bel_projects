@@ -43,10 +43,10 @@ testbench: \
 
 ##
 simbridge_pkg_c.o: ../../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg_c.cpp
-	g++ -c $+
+	g++ -fPIC -c $+
 
 ez_usb_dev_c.o: ez_usb_dev_c.c
-	gcc -c $+
+	gcc -fPIC -c $+
 
 ## auto generate lm32 vhdl wrapper 
 .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.vhd: lm32_allprofiles.v gvi
