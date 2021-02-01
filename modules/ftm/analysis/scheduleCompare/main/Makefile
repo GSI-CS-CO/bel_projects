@@ -12,11 +12,11 @@ scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSc
 
 scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h
 
-scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h
+scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h
 
-printSchedule.o: printSchedule.h 
+printSchedule.o: printSchedule.h scheduleCompare.h scheduleIsomorphism.h
 
-parseSchedule.o: parseSchedule.h scheduleCompare.h
+parseSchedule.o: parseSchedule.h scheduleCompare.h scheduleIsomorphism.h
 
 ScheduleVertex.o: ScheduleVertex.h
 
