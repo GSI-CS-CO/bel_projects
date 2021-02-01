@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include "ScheduleEdge.h"
+
+#include <iostream>
 
 int ScheduleEdge::compare(const ScheduleEdge& e1, const ScheduleEdge& e2) {
   std::cout << "--E " << e1.name << ", " << e2.name << std::endl;

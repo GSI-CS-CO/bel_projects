@@ -120,6 +120,10 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g) {
   dp.property("name", gname);
   dp.property("type", boost::get(&ScheduleVertex::type, g));
   dp.property("name", boost::get(&ScheduleVertex::name, g));
+  dp.property("tperiod", boost::get(&ScheduleVertex::tperiod, g));
+  dp.property("qlo", boost::get(&ScheduleVertex::qlo, g));
+  dp.property("qhi", boost::get(&ScheduleVertex::qhi, g));
+  dp.property("qil", boost::get(&ScheduleVertex::qil, g));
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   //  dp.property("name", boost::get(&ScheduleEdge::name, g));
   return dp;

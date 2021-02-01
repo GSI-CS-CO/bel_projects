@@ -37,7 +37,7 @@ class TestScheduleCompare(unittest.TestCase):
     stdout, stderr = process.communicate()
     # print(f'Returncode: {process.returncode} of {self.binary}.')
     if expectedReturnCode > -1:
-      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Files: {file1}, {file2}')
+      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {self.binary} {file1} {file2} {options}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCerr, f'stderr: {lines}')
@@ -56,6 +56,8 @@ class TestScheduleCompare(unittest.TestCase):
         counter += 1
         if counter % 100 == 0:
           print(f'{counter},', end='', flush=True)
+        if counter % 1000 == 0:
+          print(f'', flush=True)
         if dotFile1 == dotFile2:
           returncode = 0
         else:
@@ -83,8 +85,32 @@ class TestScheduleCompare(unittest.TestCase):
   def test_usage_message(self):
     self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=16, linesCout=0)
 
+  def test_tperiod_ok(self):
+    self.callScheduleCompare('tperiod-10.dot', 'tperiod-10.dot', expectedReturnCode=0)
+
+  def test_tperiod_fail(self):
+    self.callScheduleCompare('tperiod-10.dot', 'tperiod-11.dot', expectedReturnCode=1)
+
+  def test_tperiod_qlo(self):
+    self.callScheduleCompare('tperiod-10.dot', 'tperiod-qlo.dot', expectedReturnCode=1)
+
+  def test_tperiod_qhi(self):
+    self.callScheduleCompare('tperiod-10.dot', 'tperiod-qhi.dot', expectedReturnCode=1)
+
+  def test_tperiod_qil(self):
+    self.callScheduleCompare('tperiod-10.dot', 'tperiod-qil.dot', expectedReturnCode=1)
+
+  def test_qlo_qlo(self):
+    self.callScheduleCompare('tperiod-qlo.dot', 'tperiod-qlo.dot', expectedReturnCode=0)
+
+  def test_qhi_qhi(self):
+    self.callScheduleCompare('tperiod-qhi.dot', 'tperiod-qhi.dot', expectedReturnCode=0)
+
+  def test_qil_qil(self):
+    self.callScheduleCompare('tperiod-qil.dot', 'tperiod-qil.dot', expectedReturnCode=0)
+
   def test_folder_dot(self):
-    self.allFilesInfolderTest('dot/')
+    self.allFilesInfolderTest('dot1/')
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
