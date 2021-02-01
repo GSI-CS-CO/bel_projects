@@ -106,6 +106,39 @@ extern "C" {
     uint32_t flag_errCbu;                              // flag: error central b2b unit
   } getval_t;
 
+  typedef struct{
+    int32_t  ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
+    uint32_t ext_ddsOffN;                              // number of values
+    double   ext_ddsOffAve;                            // average value
+    double   ext_ddsOffSdev;                           // standard deviation
+    int32_t  ext_ddsOffMin;                            // minimum value
+    int32_t  ext_ddsOffMax;                            // maximum value
+    int32_t  inj_ddsOffAct;                            // injection, gDDS measured offset: ...
+    uint32_t inj_ddsOffN;
+    double   inj_ddsOffAve;
+    double   inj_ddsOffSdev;
+    int32_t  inj_ddsOffMin;
+    int32_t  inj_ddsOffMax;
+    int32_t  phaseOffAct;                              // gDDS measured phase offset: ...
+    uint32_t phaseOffN;
+    double   phaseOffAve;
+    double   phaseOffSdev;
+    int32_t  phaseOffMin;
+    int32_t  phaseOffMax;
+    int32_t  ext_rfOffAct;                            // extraction, measured rf offset
+    uint32_t ext_rfOffN;
+    double   ext_rfOffAve;
+    double   ext_rfOffSdev;
+    int32_t  ext_rfOffMin;
+    int32_t  ext_rfOffMax;
+    int32_t  inj_rfOffAct;                            // injection, measured rf offset
+    uint32_t inj_rfOffN;
+    double   inj_rfOffAve;
+    double   inj_rfOffSdev;
+    int32_t  inj_rfOffMin;
+    int32_t  inj_rfOffMax;
+  } diagval_t;
+
   // ---------------------------------
   // helper routines
   // ---------------------------------
