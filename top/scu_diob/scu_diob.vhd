@@ -12,7 +12,7 @@ use work.scu_diob_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
-use work.daq_pkg.all;
+
 
 --  Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)
 --  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
@@ -833,37 +833,6 @@ END COMPONENT hw_interlock;
     END COMPONENT qud_trig_matrix;
 
 
-  COMPONENT daq 
-    generic (
-        Base_addr:          unsigned(15 downto 0):= x"0000";
-        CLK_sys_in_Hz:      integer := 125_000_000;               
-        ch_num:             integer := 1                      
-            );
-    
-    port  (
-          Adr_from_SCUB_LA:    in    std_logic_vector(15 downto 0);
-          Data_from_SCUB_LA:   in    std_logic_vector(15 downto 0);
-          Ext_Adr_Val:         in    std_logic;                    
-          Ext_Rd_active:       in    std_logic;                   
-          Ext_Wr_active:       in    std_logic;                   
-          clk_i:               in    std_logic;                    
-          nReset:              in    std_logic;
-    
-          diob_extension_id:   in    std_logic_vector(15 downto 0);
-    
-          user_rd_active:      out   std_logic;
-          Rd_Port:             out   std_logic_vector(15 downto 0);
-          Dtack:               out   std_logic;                    
-          daq_srq:             out   std_logic;                    
-          HiRes_srq:           out   std_logic;                    
-          Timing_Pattern_LA:   in    std_logic_vector(31 downto 0);
-          Timing_Pattern_RCV:  in    std_logic;                    
-    
-          --daq input channels
-          daq_dat_i:           in    t_daq_dat (1 to ch_num);    
-          daq_ext_trig:        in    t_daq_ctl (1 to ch_num)       
-        );
-        END COMPONENT daq;
   
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
@@ -1156,19 +1125,6 @@ END COMPONENT hw_interlock;
 --  type   single_puls_state_t is   (single_puls_idle, single_puls_start, single_puls_pb_start, single_puls_pa_start, single_puls_end);
 --  signal single_puls_state:       single_puls_state_t:= single_puls_idle;
 
------------------DAQ-Signale---------------------------------------------------------------------------------------------------
-
---TYPE t_daq_ch_num IS ARRAY(NATURAL RANGE <>) OF integer range 1 to 16;
-constant daq_ch_num: integer := 4;
-signal daq_diob_ID: std_logic_vector(15 downto 0);
-signal daq_user_rd_active:    std_logic;
-signal daq_data_to_SCUB:           std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
-signal daq_Dtack:             std_logic;                    -- Dtack to SCU Bus Macro
-signal daq_srq:               std_logic;                    -- consolidated irq lines from n daq channels for "channel fifo full"
-signal daq_HiRes_srq:         std_logic;                    -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
---daq input channels signals
-signal daq_dat:             t_daq_dat (1 to daq_ch_num) := (others => dummy_daq_dat_in);
-signal daq_ext_trig:          t_daq_ctl (1 to daq_ch_num) := (others => dummy_daq_ctl_in);
 
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: P37IO  -- FG900_700                                    |
@@ -2565,36 +2521,6 @@ port map  (
     );
 
 
-DAQ_modul: daq
-GENERIC MAP(
-  Base_addr           => x"0000",
-  CLK_sys_in_Hz       => 125_000_000,        
-  ch_num => daq_ch_num                  
-      )
-
-PORT MAP  (
-
-    Adr_from_SCUB_LA      => ADR_from_SCUB_LA,
-    Data_from_SCUB_LA     => Data_from_SCUB_LA,
-    Ext_Adr_Val           => Ext_Adr_Val,
-    Ext_Rd_active         => Ext_Rd_active,
-    Ext_Wr_active         => Ext_Wr_active,
-    clk_i                 => clk_sys,
-    nReset                => rstn_sys,
-
-    diob_extension_id     =>  daq_diob_ID,
-    user_rd_active        =>  daq_user_rd_active,   
-    Rd_Port               =>  daq_data_to_SCUB,  
-    Dtack                 =>  daq_Dtack,
-    daq_srq               =>  daq_srq,
-    HiRes_srq             =>  daq_HiRes_srq,   
-    Timing_Pattern_LA     => Timing_Pattern_LA,
-    Timing_Pattern_RCV    => Timing_Pattern_RCV, 
-
-    --daq input channels
-    daq_dat_i             => daq_dat,
-    daq_ext_trig          =>  daq_ext_trig
-  );
 
 
 
@@ -2778,10 +2704,8 @@ port map (
     nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
     Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
     Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
-    intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & daq_srq  -- bit 15..12
-                               & daq_HiRes_srq & '0' & '0' &'0'            -- bit 11..8 
-   --intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
-  --                           & '0'& '0' & '0' &'0'            -- bit 11..8 
+   intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
+                             & '0'& '0' & '0' &'0'            -- bit 11..8 
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
     User_Ready              => '1',
@@ -2951,40 +2875,38 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(20 downto 0);
---  variable sel: unsigned(19 downto 0);
+  --variable sel: unsigned(20 downto 0);
+  variable sel: unsigned(19 downto 0);
 -- variable sel: unsigned(18 downto 0);
   begin
-      sel := daq_user_rd_active & 
-    --sel :=  
-            IOBP_in_rd_active  &
+    sel :=  IOBP_in_rd_active  &
             IOBP_hw_il_rd_active      & IOBP_qd_rd_active       & tmr_rd_active           & INL_xor1_rd_active        & INL_msk1_rd_active      &      
             AW_Port1_rd_active        & FG_1_rd_active          & FG_2_rd_active          & wb_scu_rd_active          & clk_switch_rd_active      &
             Conf_Sts1_rd_active       & Tag_Ctrl1_rd_active     & addac_rd_active         & io_port_rd_active         &
             IOBP_msk_rd_active        & IOBP_id_rd_active       & ATR_DAC_rd_active       & atr_comp_ctrl_rd_active   & atr_puls_ctrl_rd_active;
 
   case sel IS
-     when "100000000000000000000" => Data_to_SCUB <= daq_data_to_SCUB;
-      when "010000000000000000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
-      when "001000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
-      when "000100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
-      when "000010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "000001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "000000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "000000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "000000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "000000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "000000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "000000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "000000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "000000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "000000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
-      when "000000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "000000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
-      when "000000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
-      when "000000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
-      when "000000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
+
+      when "10000000000000000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
+      when "01000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
+      when "00100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
+      when "00010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "00000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "00000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "00000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "00000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "00000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "00000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "00000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "00000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "00000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
+      when "00000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "00000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "00000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
+      when "00000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
+      when "00000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
 
 
       when others      => Data_to_SCUB <= (others => '0');
@@ -2998,7 +2920,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     Dtack_to_SCUB <= ( tmr_dtack      or INL_xor1_Dtack       or INL_msk1_Dtack       or AW_Port1_Dtack   or FG_1_dtack       or
                        FG_2_dtack     or wb_scu_dtack         or clk_switch_dtack     or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                        addac_Dtack    or io_port_Dtack        or IOBP_msk_Dtack       or IOBP_id_Dtack    or  IOBP_qd_Dtack   or
-                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack or IOBP_in_Dtack or daq_Dtack);
+                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack or IOBP_in_Dtack);
  
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -5277,15 +5199,6 @@ BEGIN
                                Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Out(15 downto 0); -- Output positiv
     END IF;
 
-    --################################ daq id and channels nummer assignments    ###########################
-    daq_diob_id <= "0000000000000010";
-    ---daq_ch_num := 3;
-    --################################      daq_channel 3 assignments     ##################################
-    
-   -- daq_dat(3)<= P25IO_DAC_Out(2)(15 downto 0);
-	 daq_dat(3)<= AW_Output_Reg(2);
-    --################################ 
-
     --################################ 
     --    Output DAC-Daten
 
@@ -5399,11 +5312,6 @@ BEGIN
         AW_Input_Reg(2)(15 DOWNTO 0)    <=  P25IO_ADC_Data_FF_o(15 DOWNTO 0);  -- Input-Register-Daten
     END IF;
 
-  --################################      daq_channels 1 and 2 assignments     ##################################
-   
-    daq_dat(1) (7 downto 0)<=  AW_Input_Reg(2)(15 downto 8);
-
-    daq_dat(2) (7 downto 0)<=  AW_Input_Reg(2)(7 downto 0);
 
 
    --################################  LED-Ext_Timing  ##################################
@@ -5529,18 +5437,7 @@ BEGIN
         PIO_ENA(45), PIO_ENA(43)) <=  std_logic_vector'("1111"); -- Output Enable
       END IF;
 
---######################################## daq assignments #############################
---daq_ch_num := 4;
-daq_diob_ID <="0000000000000011";
 
-daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
-
-daq_dat(2)(5 downto 0)<= AW_Input_Reg(1)(13 downto 8);
-
-daq_dat(3)(7 downto 0)<= AW_Input_Reg(2)(7 downto 0);
-
-daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
---#########################################################
 
   WHEN   c_AW_OCIO1.ID | c_AW_OCIO2.ID  =>    --- OCIO1 oder OCIO2=>
 
@@ -5657,18 +5554,6 @@ daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
 
       END IF;
 
-    --###################################### daq assignments ##########################
-
-    --daq_ch_num := 4;
-    daq_diob_ID <="0000000000000100";
-
-    daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
-
-    daq_dat(2)(7 downto 0)<= AW_Input_Reg(1)(15 downto 8);
-
-    daq_dat(3)(7 downto 0)<= AW_Input_Reg(2)(7 downto 0);
-
-    daq_dat(4)(7 downto 0)<= AW_Output_Reg(1)(7 downto 0);
   
 
   WHEN   c_AW_UIO.ID =>
@@ -5943,15 +5828,6 @@ daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
         END IF;
     END IF;
 
---################################daq assignments to be checked ##########################################
---daq_ch_num:= 4;
-daq_diob_ID <="0000000000000101";
-
-daq_dat(1)(7 downto 0) <= AW_Input_Reg(1)(15 downto 8);
-daq_dat(2) <= AW_Input_Reg(2);
-
-daq_dat(3)(7 downto 0) <= AW_Output_Reg(1)(15 downto 8);
-daq_dat(4) <= AW_Output_Reg(2);
 
 
 
@@ -6241,16 +6117,7 @@ daq_dat(4) <= AW_Output_Reg(2);
     end if;
 
 
-  -- ############################## daq assignments #####################################
- --daq_ch_num := 2;
- daq_diob_ID <="0000000000000110";
 
- daq_ext_trig(1) <= DA_DAC1_Str;
- daq_ext_trig(2) <= DA_DAC2_Str;
-
-daq_dat(1)<= DA_DAC1_Data;
-daq_dat(2)<= DA_DAC2_Data;
-  --###################################
 -----------------------------------------------------------------------------------------------------------------------------------------
 
   WHEN   c_AW_ATR1.ID  | c_AW_ATR2.ID  =>    --- ATR1 oder ATR2=>
@@ -6559,15 +6426,6 @@ daq_dat(2)<= DA_DAC2_Data;
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------
--- ########################### daq assignments ##################################
---daq_ch_num := 3;
-daq_diob_ID <="0000000000000111";
-
-daq_ext_trig(1) <=  AW_Output_Reg(1)(0);
-
-daq_dat(1)(7 downto 0) <= AW_Input_Reg(2)(7 downto 0);
-daq_dat(2)(7 downto 0)<= AW_Config1(15 downto 8);
-daq_dat(3)<= UIO_Out;
 
 
   WHEN   c_AW_SPSIO1.ID | c_AW_SPSIOI1.ID  =>    --- SPSIO1 oder SPSIOI1
@@ -6671,14 +6529,6 @@ daq_dat(3)<= UIO_Out;
        PIO_ENA(103), PIO_ENA(105), PIO_ENA(107), PIO_ENA(109))  <=      std_logic_vector'("11111111");   -- Output Enable
    END IF;
 
-
-  --#################################daq assignments ######################################
-  --daq_ch_num := 3;
-  daq_diob_ID <="0000000000001000";
-
-  daq_dat(1) <= AW_Input_Reg(1);
-  daq_dat(2) <=  AW_Input_Reg(2); --but AW_Input_Reg(2)(15 downto 8) is "00000000"
-  daq_dat(3)(7 downto 0) <= AW_Output_Reg(1)(7 downto 0);
 
 
   WHEN   c_AW_HFIO.ID =>
@@ -6896,16 +6746,6 @@ daq_dat(3)<= UIO_Out;
         AW_Input_Reg(1)(1)   <=  HFIO_in_AMP_FEHLER_Deb_i;        -- Entprellung "ausgeschaltet"
         AW_Input_Reg(1)(0)   <=  HFIO_in_PHASE_FEHLER_Deb_i;      -- Entprellung "ausgeschaltet"
       END IF;
-   --####################### daq assignments  ##############################
-   --daq_ch_num := 4;
-   daq_diob_ID <="0000000000001001"; 
-
-   daq_dat(1) (1 downto 0)<= AW_Input_Reg(1)(1 downto 0);
-
-   daq_dat(2)(10 downto 0) <= AW_Output_Reg(1)(10 downto 0);
-   daq_dat(3)(10 downto 0) <= AW_Output_Reg(2)(10 downto 0); 
-   daq_dat(4)(12 downto 0) <= AW_Output_Reg(3)(12 downto 0);
-
 
 
   WHEN   c_AW_INLB12S.ID  => 
