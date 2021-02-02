@@ -7445,12 +7445,9 @@ AW_Input_Reg(5)( 15 downto  5) <=  "00000000000";
 --  STANDARD OUTPUT OUTREG
 --                                                    MaskenBit=0 --> Enable
 -- for in/out test at slot1 and slot10:
-IOBP_SK_Output(1) <= "111111"; 
---IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg5( 5 downto 0));  -- Output von Slave 10
-IOBP_SK_Output(2) <= "111111"; 
---IOBP_SK_Output(2) <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg5(11 downto 6));  -- Output von Slave 11
-IOBP_SK_Output(3) <= "111111"; 
---IOBP_SK_Output(3) <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg7(5 downto 0));  -- Output von Slave 12
+IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg5( 5 downto 0));  -- Output von Slave 10
+IOBP_SK_Output(2) <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg5(11 downto 6));  -- Output von Slave 11
+IOBP_SK_Output(3) <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg7(5 downto 0));  -- Output von Slave 12
 
 
 --################################ Aktiv-Led's ##################################
