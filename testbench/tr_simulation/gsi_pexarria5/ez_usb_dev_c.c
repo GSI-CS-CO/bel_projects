@@ -35,6 +35,10 @@ void ez_usb_dev_init(int stop_until_connected) {
 		ptsname_r(fd, name, 256);
 		printf("eb-device : %s\n",name);
 
+		FILE *f = fopen("/tmp/ez-usb-eb-device","w+");
+		fprintf(f,"%s\n",&name[1]);
+		fclose(f);
+
 		// put it in raw mode
 	   struct termios raw;
 		if (tcgetattr(fd, &raw) == 0)

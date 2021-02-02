@@ -208,20 +208,20 @@ architecture simulation of testbench is
 begin
 
 
-  --chip : entity work.ez_usb_chip
-  --  port map (
-  --    rstn_i    => ures,
-  --    wu2_o     => pa(3),
-  --    readyn_o  => pa(7),
-  --    fifoadr_i => pa(5 downto 4),
-  --    fulln_o   => ctl(1),
-  --    emptyn_o  => ctl(2),
-  --    sloen_i   => pa(2),
-  --    slrdn_i   => slrd,
-  --    slwrn_i   => slwr,
-  --    pktendn_i => pa(6),
-  --    fd_io     => fd
-  --    );
+  chip : entity work.ez_usb_chip
+    port map (
+      rstn_i    => ures,
+      wu2_o     => pa(3),
+      readyn_o  => pa(7),
+      fifoadr_i => pa(5 downto 4),
+      fulln_o   => ctl(1),
+      emptyn_o  => ctl(2),
+      sloen_i   => pa(2),
+      slrdn_i   => slrd,
+      slwrn_i   => slwr,
+      pktendn_i => pa(6),
+      fd_io     => fd
+      );
 
   --wrex : entity work.wr_timing
   --port map(
