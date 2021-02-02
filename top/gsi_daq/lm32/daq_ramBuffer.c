@@ -384,7 +384,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
  #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
    wrTime.timeStamp = irqGetTimestamp();
  #else
-   wrTime.timeStamp = getWrSysTime();
+   wrTime.timeStamp = getWrSysTimeSafe();
  #endif
 #endif
 

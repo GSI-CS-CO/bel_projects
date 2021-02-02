@@ -338,12 +338,12 @@ unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
    return retVal;
 }
 
-//IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
+IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
+void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, volatile uint64_t ts )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
@@ -351,8 +351,13 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
    STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
    STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
-   //uint64_t _ts = convertByteEndian_uint64_t( ts );
+
+   //ts = 0x1122334455667788L;
+ //  ts = 0x165FF5830B0DC120L;
+ //  volatile uint64_t _ts = convertByteEndian_uint64_t( ts );
    mprintf( "ts: 0x%08X%08X\n", ((uint32_t*)&ts)[0], ((uint32_t*)&ts)[1] );
+ //  mprintf( "ts: 0x%04X%04X%04X%04X\n", ((uint16_t*)&ts)[0], ((uint16_t*)&ts)[1], ((uint16_t*)&ts)[2], ((uint16_t*)&ts)[3] );
+
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
    {
     #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
@@ -360,6 +365,9 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
     #else
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
     #endif
+    //  mprintf( "pTS[%d]: %p, %04X, %04X, %04x\n", i, &pThis->pReg->i[TS_COUNTER_WD1+i], pThis->pReg->i[TS_COUNTER_WD1+i],
+    //     ((uint16_t*)&ts)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i], ((uint16_t*)&ts)[i]
+    //  );
    }
 }
 
@@ -374,7 +382,7 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
    STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
    STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
-   uint64_t ts = 0;
+   volatile uint64_t ts = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
    {
@@ -383,6 +391,8 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
     #else
       ((uint16_t*)&ts)[i] = pThis->pReg->i[TS_COUNTER_WD1+i];
     #endif
+     // mprintf( "pTS: %p\n", &pThis->pReg->i[TS_COUNTER_WD1+i] );
+     // mprintf( "pTS: %p, %04X\n", &pThis->pReg->i[TS_COUNTER_WD1+i], pThis->pReg->i[TS_COUNTER_WD1+i]);
    }
    return ts;
 }
@@ -832,6 +842,9 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
                 pCurrentDaqDevice->pReg );
 
 
+      /*
+       * Find and initialize all DAQ-channels of the current DAQ-device.
+       */
       if( daqDeviceFindChannels( pCurrentDaqDevice, slot ) == 0 )
       {
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
@@ -856,6 +869,12 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       daqDeviceClearHiResChannelInterrupts( pCurrentDaqDevice );
 
       daqDeviceSetTimeStampCounter( pCurrentDaqDevice, getWrSysTime() );
+
+#if 1
+      uint64_t ts = daqDeviceGetTimeStampCounter( pCurrentDaqDevice );
+      mprintf( "ts: 0x%08X%08X\n", ((uint32_t*)&ts)[0], ((uint32_t*)&ts)[1] );
+#endif
+
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )
          break;
