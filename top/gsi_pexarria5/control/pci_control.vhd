@@ -8,7 +8,8 @@ use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_control is
   generic (
-      g_simulation : boolean := false
+      g_simulation   : boolean := false;
+      g_en_simbridge : boolean := false
     );
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
@@ -264,6 +265,7 @@ begin
   main : monster
     generic map(
       g_simulation        => g_simulation,
+      g_en_simbridge      => g_en_simbridge,
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25,

@@ -205,23 +205,43 @@ architecture simulation of testbench is
     signal sfp4_mod1         : std_logic := 'Z'; -- SCL
     signal sfp4_mod2         : std_logic := 'Z'; -- SDA
 
+    constant en_simbridge  : boolean := false;
+
 begin
 
+  simbridge_y: if en_simbridge generate
+    chip : entity work.ez_usb_chip
+      port map (
+        rstn_i    => '0', -- always in reset
+        wu2_o     => pa(3),
+        readyn_o  => pa(7),
+        fifoadr_i => "00",
+        fulln_o   => ctl(1),
+        emptyn_o  => ctl(2),
+        sloen_i   => '1',
+        slrdn_i   => '1',
+        slwrn_i   => '1',
+        pktendn_i => pa(6),
+        fd_io     => fd
+        );
+  end generate;
+  simbridge_n: if not en_simbridge generate
+    chip : entity work.ez_usb_chip
+      port map (
+        rstn_i    => ures,
+        wu2_o     => pa(3),
+        readyn_o  => pa(7),
+        fifoadr_i => pa(5 downto 4),
+        fulln_o   => ctl(1),
+        emptyn_o  => ctl(2),
+        sloen_i   => pa(2),
+        slrdn_i   => slrd,
+        slwrn_i   => slwr,
+        pktendn_i => pa(6),
+        fd_io     => fd
+        );
+  end generate;
 
-  chip : entity work.ez_usb_chip
-    port map (
-      rstn_i    => ures,
-      wu2_o     => pa(3),
-      readyn_o  => pa(7),
-      fifoadr_i => pa(5 downto 4),
-      fulln_o   => ctl(1),
-      emptyn_o  => ctl(2),
-      sloen_i   => pa(2),
-      slrdn_i   => slrd,
-      slwrn_i   => slwr,
-      pktendn_i => pa(6),
-      fd_io     => fd
-      );
 
   --wrex : entity work.wr_timing
   --port map(
@@ -236,7 +256,8 @@ begin
 
   tr : entity work.pci_control 
   generic map (
-    g_simulation => true
+    g_simulation => true,
+    g_en_simbridge => en_simbridge
     )
   port map(
     clk_20m_vcxo_i    => clk_20m_vcxo_i,

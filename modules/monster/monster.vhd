@@ -74,6 +74,7 @@ use work.beam_dump_pkg.all;
 entity monster is
   generic(
     g_simulation           : boolean; -- false for synthesis, true for simulation
+    g_en_simbridge         : boolean; -- simbridge is enabled if g_simulation=true and g_en_simbridge=true
     g_family               : string; -- "Arria II", "Arria V", or "Arria 10"
     g_project              : string;
     g_flash_bits           : natural;
@@ -408,7 +409,7 @@ architecture rtl of monster is
     top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb), 
-    top_my_masters'pos(topm_simbridge)=>f_sdb_auto_msi(c_simbridge_msi, g_simulation), 
+    top_my_masters'pos(topm_simbridge)=>f_sdb_auto_msi(c_simbridge_msi, g_simulation and g_en_simbridge), 
     top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
@@ -1521,8 +1522,8 @@ end generate;
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
 
-  -- similar behavior to USB bridge, but much faster (and only works) in simulations 
-  simbridge_y : if g_simulation generate
+  -- similar to USB bridge, but much faster (and only works) in simulations 
+  simbridge_y : if g_simulation and g_en_simbridge generate
     simbridge : entity work.simbridge
     generic map(
         g_sdb_address => c_top_sdb_address
@@ -1537,7 +1538,10 @@ end generate;
       );
 
   end generate;
-
+  simbridge_n : if not g_simulation or not g_en_simbridge generate
+    top_bus_slave_i(top_my_masters'pos(topm_simbridge)) <= c_DUMMY_WB_MASTER_OUT;
+    top_msi_master_i(top_my_masters'pos(topm_simbridge)) <= c_DUMMY_WB_SLAVE_OUT;
+  end generate;
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
 
