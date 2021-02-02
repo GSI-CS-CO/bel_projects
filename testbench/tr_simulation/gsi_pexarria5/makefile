@@ -18,7 +18,7 @@ all: vhdl_sources verilog_sources testbench
 testbench: \
             $(shell cat vhdl_sources) \
            ref_pll.vhd   ref_pll_5_10.vhd   dmtd_pll.vhd   dmtd_pll_5_10.vhd   sys_pll.vhd    sys_pll_5_10.vhd   single_region.vhd   global_region.vhd    \
-           simbridge_pkg_c.o ez_usb_dev_c.o ez_usb_dev.vhd ez_usb_chip.vhd wr_timing.vhd \
+           simbridge_pkg_c.o wr_timing.vhd \
            .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.vhd  \
            .gvi/lm32_top_full/lm32_top_full_wrapper.vhd  \
            .gvi/lm32_top_medium_icache_debug/lm32_top_medium_icache_debug_wrapper.vhd  \
@@ -27,7 +27,7 @@ testbench: \
            .gvi/lm32_top_medium/lm32_top_medium_wrapper.vhd  \
            .gvi/lm32_top_minimal/lm32_top_minimal_wrapper.vhd  \
            testbench.vhd 
-	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) $(filter-out simbridge_pkg_c.o ez_usb_dev_c.o, $+) # filter out all object file dependencies... ghdl doesn't like them as input in -a stage
+	ghdl -a -g $(GHDLFLAGS) $(shell cat vhdl_sources) $(filter-out simbridge_pkg_c.o, $+) # filter out all object file dependencies... ghdl doesn't like them as input in -a stage
 	ghdl -m $(GHDLFLAGS) \
          $(shell cat .gvi/lm32_top_full_debug/lm32_top_full_debug_wrapper.flags)  \
          $(shell cat .gvi/lm32_top_full/lm32_top_full_wrapper.flags)  \
@@ -38,7 +38,6 @@ testbench: \
          $(shell cat .gvi/lm32_top_minimal/lm32_top_minimal_wrapper.flags)  \
 	     $(shell cat .gvi/common.flags) \
 	     -Wl,simbridge_pkg_c.o \
-	     -Wl,ez_usb_dev_c.o \
 	     testbench 
 
 ##
