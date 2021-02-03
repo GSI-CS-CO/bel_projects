@@ -1,0 +1,16 @@
+digraph g {
+name="TimeoutLoopExample";
+edge  [type="defdst"]
+node  [cpu="0"];
+  MSG_A0     [type="tmsg",  pattern="A", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=1, par="0"];
+  BLOCK_A1   [type="block", pattern="A", patexit="true",  tperiod=100000000];
+  MSG_B0     [type="tmsg",  pattern="B", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_B1   [type="block", pattern="B", patexit="true",  tperiod=100000000];
+  CMD_WAIT_TO   [type="flow",  pattern="WAIT", patentry="true", toffs  = 0, tvalid=0, qty=50000, prio="0"]; //(*@\label{lst:extoloop:init}@*)50000*20us = 10s
+  BLOCK_WAIT [type="block", pattern="WAIT", patexit="true", tperiod= 20000000, qlo="1", qhi="1"];
+  
+  MSG_A0 -> BLOCK_A1 -> CMD_WAIT_TO -> BLOCK_WAIT -> MSG_B0 -> BLOCK_B1 -> MSG_A0;
+  BLOCK_WAIT  -> BLOCK_WAIT [type="altdst"];
+  CMD_WAIT_TO -> BLOCK_WAIT [type="target"];
+  CMD_WAIT_TO -> BLOCK_WAIT [type="flowdst"];
+}

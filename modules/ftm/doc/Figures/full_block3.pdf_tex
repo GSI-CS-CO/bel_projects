@@ -1,0 +1,106 @@
+%% Creator: Inkscape 0.48.5, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'full_block3.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{841.88974609bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.70707072)%
+    \put(0,0){\includegraphics[width=\unitlength]{Figures/full_block3.pdf}}%
+    \put(0.24488441,0.43669484){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{9}}}%
+    \put(0.3106369,0.51012649){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{8}}}%
+    \put(0.18057174,0.5101265){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{7}}}%
+    \put(0.11817884,0.57971858){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{4}}}%
+    \put(0.24440447,0.57971856){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{5}}}%
+    \put(0.37063005,0.57971856){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{6}}}%
+    \put(0.12871689,0.61916881){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.06433775,0.61887462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_1}$}}}%
+    \put(0.19248365,0.61921396){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_1}$}}}%
+    \put(0.25630539,0.61950816){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.3805394,0.61916881){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.70306704,0.27358704){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{rx}$}}}%
+    \put(0.76478854,0.27358704){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_2}$}}}%
+    \put(0.83080219,0.27358704){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{eca}$}}}%
+    \put(0.51588235,0.61699484){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr}$}}}%
+    \put(0.17817878,0.63581556){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.30254194,0.63615493){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.31754841,0.61850758){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.42819449,0.63581556){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.44311625,0.61748945){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.1332691,0.5448637){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_1}$}}}%
+    \put(0.11656577,0.53366441){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{R}$}}}%
+    \put(0.19423231,0.54515784){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.24115254,0.56285046){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.25615901,0.5452031){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.24110722,0.53400379){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_{P}$}}}%
+    \put(0.32374433,0.54549724){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.36837192,0.53400379){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_{F}$}}}%
+    \put(0.36808947,0.56285046){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.38301122,0.54452435){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.44919139,0.54515787){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.19222865,0.47274709){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.17751623,0.46154775){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{P, R}$}}}%
+    \put(0.25531937,0.47456835){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.31878206,0.40194266){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.38415263,0.4749077){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.30609042,0.46256585){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P}$}}}%
+    \put(0.30580797,0.49141255){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.32072973,0.47308644){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.24358934,0.3899401){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P,R}$}}}%
+    \put(0.25822862,0.40046069){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.31374102,0.28964594){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.32866278,0.27131983){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.39213455,0.2741984){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_F$}}}%
+    \put(0.51449527,0.27292378){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_P$}}}%
+    \put(0.63904104,0.27328371){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_R$}}}%
+    \put(0.44003643,0.28965551){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.45495825,0.2713294){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.56560425,0.28999492){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.58052609,0.27166881){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_6}$}}}%
+    \put(0.89533104,0.2732731){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta$}}}%
+    \put(0.5780651,0.5494884){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\small{\begin{minipage}{0.34460073\unitlength}(\textbf{4,5,6})  First iteration of equivalent circuit replacement following pattern in fig.~\ref{fig:scaler_order}.\\ (\textbf{7,8,9}) After the second and third iteration, all L-packetisers are of equal packet size, while their bit-by-bit systems are scaled down with up to three inverse scaling functions.\\ The final result is shown in black, all intermediate steps are shown in \textcolor{hgrau}{grey}. \end{minipage}}}}%
+  \end{picture}%
+\endgroup%

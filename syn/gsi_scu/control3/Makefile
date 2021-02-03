@@ -5,7 +5,7 @@ RAM_SIZE    = 147456
 SHARED_SIZE = 80K
 USRCPUCLK   = 125000
 PATHSCU     = ../../../top/gsi_scu
-CFLAGS      = -I$(PSCU)/include -I$(PATHSCU) -DHISTORY -fno-toplevel-reorder
+CFLAGS      = -I. -I$(PSCU)/include -I$(PATHSCU) -DHISTORY -fno-toplevel-reorder
 
 include ../../build.mk
 

@@ -23,6 +23,7 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "history.h"
+#include "scu_control_shared_mmap.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -1394,9 +1395,10 @@ int main(void) {
   const int numTasks = tsk_getNumTasks(); // number of tasks
 
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
+  uint32_t *buildID = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);
 
   while(1) {
-    check_stack();
+    check_stack_fwid(buildID);
     tick = getSysTime();
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval

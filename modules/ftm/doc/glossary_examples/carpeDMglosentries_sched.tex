@@ -1,0 +1,175 @@
+\newglossaryentry{sched:type}{
+name={type},
+description={Determines the type of this node (e.g. block, tmsg, etc.)},
+type=sched}
+
+\newglossaryentry{sched:type:tmsg}{
+name={tmsg},
+description={Timing Message. Causes a message to be broadcasted to all timing receivers},type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:block}{
+name={block},
+description={Fixed length block. Terminates a sequence of nodes and defines the sequence's length in time. See \gls{sched:tperiod}},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:blockalign}{
+name={blockalign},
+description={Alignment block. Extends its own length so the time sum will become a multiple of the time grid (currently \SI{10}{\micro\second}). See \gls{sched:tperiod}, \gls{sched:type:block}},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:flow}{
+name={flow},
+description={Causes one or more repetitions of a flow command to be written to the target block's queue, changing it's default successor (e.g. branch, loop, etc) },
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:flush}{
+name={flush},
+description={Causes a flush command to be written to the target block's queue, emptying any selected queues. Can optionally also override the default successor},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:wait}{
+name={wait},
+description={Causes a wait command to be written to the target block's queue, temporarily stretching it's length in time},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:noop}{
+name={nop},
+description={Causes one or more No Operation command(s) to be written to the target block's queue. No direct effect, but can together with flow create a sequence of default and alternative successors},
+type=sched,
+parent={sched:type}
+}
+
+
+
+\newglossaryentry{sched:node_id}{
+name={node\_id},
+description={Tag of the node's name. Internal use only},
+type=sched}
+
+\newglossaryentry{sched:cpu}{
+name={cpu},
+description={Index of the CPU core this Node will reside in. To be replaced by auto-balancer algorithm},
+valtype={u8b},type=sched}
+
+\newglossaryentry{sched:thread}{
+name={thread},
+description={Index of the thread core this Node will be handled by. To be replaced by auto-balancer algorithm},
+type=sched}
+
+\newglossaryentry{sched:flags}{
+name={flags},
+description={Aggregation of certain node flags, internal use only},
+valtype={u32b},type=sched}
+
+\newglossaryentry{sched:patentry}{
+name={patentry},
+description={If true, this node is an entry point to the pattern it belongs to},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:patexit}{
+name={patexit},
+description={If true, this node is an exit point from the pattern it belongs to},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:pattern}{
+name={pattern},
+description={The name of thepattern this node belongs to},
+type=sched}
+
+\newglossaryentry{sched:bpentry}{
+name={bpentry},
+description={If true, this node is an entry point to the beamprocess it belongs to. Currently not supported},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:bpexit}{
+name={bpexit},
+description={If true, this node is an exit point from the beamprocess it belongs to. Currently not supported},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:beamproc}{
+name={beamproc},
+description={The name of the beamprocess this node belongs to. Currently not supported},
+type=sched}
+
+\newglossaryentry{sched:permanent}{
+name={permanent},
+description={If true, the corresponding flow command will permanently change the default destination of the target block, else the change lasts only during the execution of the command},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:tperiod}{
+name={tperiod},
+description={The duration of a block. Amount of time in \SI{}{\nano\second} it adds to the current time sum when processed},
+valtype={u64b},type=sched}
+
+\newglossaryentry{sched:qil}{
+name={qil},
+description={Block attribute, generates a command queue of priority High if true},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:qhi}{
+name={qhi},
+description={Block attribute, generates a command queue of priority Mid if true},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:qlo}{
+name={qlo},
+description={Block attribute, generates a command queue of priority Low if true},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:toffs}{
+name={toffs},
+description={The time offset \SI{}{\nano\second} relative to the block start at which this node is executed. Negative offsets can be used for debugging to force late events},
+valtype={s64b},type=sched}
+
+\newglossaryentry{sched:id}{
+name={id},
+description={Addresses the 64b ID field of a timing event. Sub-Id fields can be used instead, see \gls{id:id}},
+valtype={u64b},type=sched}
+
+\newglossaryentry{sched:tvalid}{
+name={tvalid},
+description={Time in \SI{}{\nano\second} at/after which this command will be valid (executable), can be absolute or relative depending on \gls{sched:vabs} flag},
+valtype={s64b},type=sched}
+
+\newglossaryentry{sched:vabs}{
+name={vabs},
+description={Chooses whether tvalid is interpreted as absolute value or an offset to current time sum. When using this as a loop initialiser head, \emph{always} use vabs=true and tvalid=0!},
+valtype={bool},type=sched}
+
+\newglossaryentry{sched:prio}{
+name={prio},
+description={Chooses the command queue level this command will be written to at the target block. },
+valtype={0(lo), 1(mid), 2(hi)},type=sched}
+
+\newglossaryentry{sched:qty}{
+name={qty},
+description={Repetition quantity of a command(-node). The generated command will be executed until qty reaches 0},
+valtype={u20b},type=sched}
+
+\newglossaryentry{sched:twait}{
+name={twait},
+description={Timespan in \SI{}{\nano\second} a wait command is goid to wait. Can absolute or relative to current time, depending on flag},
+valtype={s64b},type=sched}
+
+\newglossaryentry{sched:par}{
+name={par},
+description={Transparent parameter field, part of a timing message. Is passed through to a listening ECA channel in timing receiver},
+valtype={u64b},type=sched}
+
+\newglossaryentry{sched:tef}{
+name={tef},
+description={Fractional (sub-nanosecond) time extension field, part of a timing message. Currently not interpreted by ECA)},
+valtype={s8b},type=sched}
+

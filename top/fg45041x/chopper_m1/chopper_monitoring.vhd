@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
-	-- Counter für Soll- und Istwertmessung von Chopper Signal
+	-- Counter fuer Soll- und Istwertmessung von Chopper Signal
 	-- Bei Flanken wird der aktuelle Counter in Latches geschrieben
-	-- und weitergezählt (bis OV)
-	-- Rücksetzen des Counters durch Lesezugriff auf StrahlwegReg
+	-- und weitergezaehlt (bis OV)
+	-- Ruecksetzen des Counters durch Lesezugriff auf StrahlwegReg
 	-----------------------------------------------------------------------
 	
 	--		act_pos_latch
@@ -13,7 +13,7 @@
 	-- act_pos_edge > 127:		Bit 11
 	-- Counter Overflow:			Bit 10
 	-- act high vor Start:		Bit 9
-	-- act nicht durchgängig: 	Bit 8
+	-- act nicht durchgaengig: 	Bit 8
 	
 	
 	--  neg_latch
@@ -98,7 +98,7 @@ end component;
 
 begin
 
--- Flankenerkennung für Chopper
+-- Flankenerkennung fuer Chopper
 
 chopp_pos: edge_detection port map (
 							clk => clk,
@@ -128,9 +128,9 @@ chopp_act_neg: edge_detection port map (
 							neg_edge => chopper_act_neg
 						);
 ---------------------------------------------------------------------------------------------	
--- Starten / Stoppen des Zählers
--- 19.02.2008 Zähler darf erst nach Zeitfenster starten, damit der Chopper ausschwingen kann.
--- Vorschlag: Abhängig von Quellen HSI
+-- Starten / Stoppen des Zaehlers
+-- 19.02.2008 Zaehler darf erst nach Zeitfenster starten, damit der Chopper ausschwingen kann.
+-- Vorschlag: Abhaengig von Quellen HSI
 ---------------------------------------------------------------------------------------------
 monitor_cnt_en: process(clk, reset, chopper_pos, clear)
 begin
@@ -152,12 +152,12 @@ begin
 		s_act_neg_latch <= (OTHERS => '0');
 	elsif rising_edge(clk) then
 		-- Pos Edge Istwert
-		-- geändert am 19.09.06: chopper_act_pos
+		-- geaendert am 19.09.06: chopper_act_pos
 		if chopper_act_pos = '1' then
 			-- "high before"
 			if s_cnt_started = '0' then
 				s_act_pos_latch(9) <= '1';
-			-- Pegel nicht durchgängig 
+			-- Pegel nicht durchgaengig 
 			elsif s_act_neg_latch(s_act_neg_latch'HIGH) = '1' then
 				s_act_pos_latch(8) <= '1';
 			else
@@ -170,7 +170,7 @@ begin
 			s_neg_latch(s_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
 			s_neg_latch(s_neg_latch'HIGH) <= '1';
 		-- Neg Edge Istwert
-		-- geändert am 19.09.06: chopper_act_neg
+		-- geaendert am 19.09.06: chopper_act_neg
 		elsif chopper_act_neg = '1' then
 			s_act_neg_latch(s_act_neg_latch'HIGH-1 downto 0) <= s_cnt_value;
 			s_act_neg_latch(s_act_neg_latch'HIGH) <= '1';
@@ -192,7 +192,7 @@ act_neg_latch_out <= s_act_neg_latch;
 -- Stoppen bei Overflow
 s_cnt_en <= s_cnt_started and s_1us_en and not s_cnt_value(s_cnt_value'HIGH);
 
--- Rücksetzen des Zählerstandes bei clear
+-- Ruecksetzen des Zaehlerstandes bei clear
 timestamp: lpm_counter GENERIC MAP (
 									LPM_WIDTH => C_Chop_Count_Width,
 									
@@ -207,10 +207,10 @@ timestamp: lpm_counter GENERIC MAP (
 								);
 								
 -----------------------------------------------------------------------
--- Test auf Interlock Bedingung für Chopper
--- Es wird auf drei Fälle getestet:
--- Act Signal zu stark verzögert (Start)
--- Act Signal zu stark verzögert (Ende)
+-- Test auf Interlock Bedingung fuer Chopper
+-- Es wird auf drei Faelle getestet:
+-- Act Signal zu stark verzoegert (Start)
+-- Act Signal zu stark verzoegert (Ende)
 -- s_act_late
 -----------------------------------------------------------------------
 

@@ -292,8 +292,8 @@ P_ID_Compare: PROCESS (clk)
 La_Ena_Skal_In <= '1' WHEN (S_ID_SM /= ID_Idle) ELSE '0';
 La_Ena_Port_In <= '1' WHEN (S_ID_SM /= ID_Idle) ELSE '0';
 
-A_nGR1_ID_Sel <= '0' WHEN (S_ID_SM = ID_En) ELSE '1';												-- ID-Strobe für K3+K2
-A_nGR0_ID_Sel <= '0' WHEN (S_ID_SM = ID_En) ELSE '1';												-- ID-Strobe für K1+K0
+A_nGR1_ID_Sel <= '0' WHEN (S_ID_SM = ID_En) ELSE '1';												-- ID-Strobe fuer K3+K2
+A_nGR0_ID_Sel <= '0' WHEN (S_ID_SM = ID_En) ELSE '1';												-- ID-Strobe fuer K1+K0
 A_nK3_ID_En <= DB_K3_INP WHEN NOT ((S_ID_SM = ID_Idle) OR (S_ID_SM = ID_Done)) ELSE NOT DB_K3_INP;	-- ID_EN ist '0'-aktiv bei Output-APKs und '1'-aktiv bei Input-APKs!
 A_nK2_ID_En <= DB_K2_INP WHEN NOT ((S_ID_SM = ID_Idle) OR (S_ID_SM = ID_Done)) ELSE NOT DB_K2_INP;	-- ID_EN ist '0'-aktiv bei Output-APKs und '1'-aktiv bei Input-APKs!
 A_nK1_ID_En <= DB_K1_INP WHEN NOT ((S_ID_SM = ID_Idle) OR (S_ID_SM = ID_Done)) ELSE NOT DB_K1_INP;	-- ID_EN ist '0'-aktiv bei Output-APKs und '1'-aktiv bei Input-APKs!

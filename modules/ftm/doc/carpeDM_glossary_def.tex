@@ -1,0 +1,105 @@
+%Define "valcls" key:
+
+
+
+\documentclass{article}
+
+\usepackage[colorlinks]{hyperref}
+\usepackage{glossaries}
+
+
+
+\glsaddkey*
+  {kind}% key
+  {\glsentrytext{\glslabel}}% default value
+  {\glsentrykind}% command analogous to \glsentrytext
+  {\Glsentrykind}% command analogous to \Glsentrytext
+  {\glskind}% command analogous to \glstext
+  {\Glskind}% command analogous to \Glstext
+  {\GLSkind}% command analogous to \GLStext% 
+
+\glsaddkey*
+  {valtype}% key
+  {\glsentrytext{\glslabel}}% default value
+  {\glsentryvalcls}% command analogous to \glsentrytext
+  {\Glsentryvalcls}% command analogous to \Glsentrytext
+  {\glsvalcls}% command analogous to \glstext
+  {\Glsvalcls}% command analogous to \Glstext
+  {\GLSvalcls}% command analogous to \GLStext% 
+
+%name kind valuetype description see
+
+\newglossarystyle{symbunitlong}{%
+\setglossarystyle{long3col}% base this style on the list style
+\renewenvironment{theglossary}{% Change the table type --> 3 columns
+  \begin{longtable}{lp{0.6\glsdescwidth}>{\centering\arraybackslash}p{2cm}}}%
+  {\end{longtable}}%
+%
+\renewcommand*{\glossaryheader}{%  Change the table header
+  \bfseries Sign & \bfseries Description & \bfseries Unit \\
+  \hline
+  \endhead}
+\renewcommand*{\glossentry}[2]{%  Change the displayed items
+\glstarget{##1}{\glossentryname{##1}} %
+& \glossentrydesc{##1}% Description
+& \glsunit{##1}  \tabularnewline
+}
+}
+
+
+\setglossarystyle{symbunitlong}
+
+\newglossary[tlg]{foo}{tld}{tdn}{My first Glossary}
+\newglossary[tlg]{bar}{tld}{tdn}{Another Glossary}
+\newglossary[tlg]{fuck}{tld}{tdn}{You guess}
+\makeglossaries
+
+
+\newglossaryentry{n_fuck}{
+name={fuck},
+text={FUCK YOU},
+description={Index of the CPU core this Node will reside in. To be replaced by auto-balancer algorithm},
+valtype={u8b},
+type=foo}
+
+\newglossaryentry{n_thread}{
+type=bar,
+name={thread},
+text={Thread Index},
+description={Index of the thread core this Node will be handled by. To be replaced by auto-balancer algorithm},
+valtype={str}
+}
+
+\newglossaryentry{n_flags}{
+type=foo,
+name={flags},
+text={noname},
+description={blub},
+valtype={bla}
+}
+
+\newglossaryentry{n_patentry}{
+type=foo,
+name={patentry},
+text={noname},
+description={blub},
+valtype={bla},
+kind=lalelu
+}
+
+\newglossaryentry{n_patexit}{
+type=bar,
+name={patexit},
+text={noname},
+description={blub},
+valtype={bla}
+}
+
+
+
+\begin{document}
+Hello \gls{n_flags}, hello \gls{n_patexit}. Greetings to \gls{n_fuck} as well, also to \gls{n_patentry}.
+
+\printglossaries
+
+\end{document}

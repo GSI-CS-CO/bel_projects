@@ -1,0 +1,1022 @@
+
+
+\chapter{Introduction}
+
+
+\subsection{About this document}
+
+
+
+\subsection{What is carpeDM?}
+
+\emph{carpeDM} is a framework for a domain specific programming language, designed for use with both the FAIR Data Master (DM) and the LHC Software Architecture (LSA). It's main purpose is to provide a format for accelerator schedules, translating them back and forth between the LSA physics model and the real-time hardware (HW) of the DM. carpeDM also handles data transmission to and from the DM and manages the DM's HW resources (memory, bandwidth, etc.).
+The name carpeDM was also used for the corresponding c++ library.
+%The DM in turn processes this low level representation and broadcasts streams of timing messages to the network. Timing receivers are programmed for individual reactions to a certain message ahead of time,  which will message then determines the execution
+\paragraph{Representation}
+carpeDM uses graphs, particularily a format based on \emph{dot} graphs as defined by the graphviz organisation\cite{}. Dot graphs are a generic format for directed or undirected graphs of nodes and their connecting edges,
+as well as style and layout parameters. Directed dot-graphs with added custom node and edge properties have been shown to describe accelerator schedules faithfully.  While ignored on input files, visualisation parameters are automatically generated into carpeDM's output files for ease of understanding.
+\par
+An opensource suite of tools to generate graphic representations of dot files is freely available. For human interaction (operators) and especially in the deployment phase, these visualisations already were of great value to reduce the time to determine the facilities state and debug its behaviour.
+
+\pagebreak
+
+\section{Getting Started}
+
+\subsection{Installing carpeDM Tools}
+%
+First, you will need the BEL projects sources from the GSI controls repository. If you have not already done so, you can get the sources here:
+%
+\begin{lstlisting}[style = customshell]
+$ git clone --recursive https://github.com/GSI-CS-CO/bel_projects.git
+$ cd bel_projects
+$ git checkout master
+$ ./fixgit
+\end{lstlisting}
+%
+To build and run carpeDM, you will need the boost libraries $\ge$ 1.5.4 (if you build on the ASL cluster, these are already installed).
+Aditionally, for any visualisation of .dot files, you will also need the graphviz package. 
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install libboost
+$ sudo apt-get install graphviz
+\end{lstlisting}
+
+Next, you'll need to build the toolchain and the carpeDM library and tools. From the root folder of your BEL projects checkout, call
+%
+\begin{lstlisting}[style = customshell]
+$ make
+$ cd syn/gsi_pexarria5/ftm
+$ make tools #To also get DM gateware, run plain make instead
+$ sudo make install
+\end{lstlisting}
+%
+This leaves you with the carpeDM library \emph{libcarpedm.so} and two command line tools, \emph{dm-sched} and \emph{dm-cmd}.
+
+\subsection{Installing Visualisation}
+
+\paragraph{From Command Line}
+There are currently two variants of visualising graphs. The first one is very basic and uses the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp) 
+If you would like to use the scripts for automatic update on change, you will also need the inotify package.
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install inotify-tools
+\end{lstlisting}
+
+It is sensible to render dot files into a vector format (pdf, svg, etc), as bitmaps of schedules tend to get \emph{very} big. The graphviz CLI tools accept parameters for the renderer, which are grouped
+into graph, node and edge parameters. A lot of the parameters are specific to one renderer, and are ignored if you run another. These can also be supplied in the graph itself, however, CLI parameters always override. For example, \emph{-Grankdir=TB} will cause the dot renderer to arrange the graph top to bottom instead of left to right. Especially the neato renderer is very useful for the large sequences found in schedules, but needs some extra parameters to produce sensible results.
+
+\begin{lstlisting}[style = customshell]
+$ neato <a-dot-file.dot> -Goverlap=compress -Gmodel=subset
+\end{lstlisting}
+
+To automatically render dm-sched's download.dot output file as an SVG vector graphic, use the following script in your workspace for .dot files:
+%
+\begin{lstlisting}[style = customshell]
+$ ./dotrender.sh download &
+\end{lstlisting}
+%
+To get a live view of the DM's content, open download.svg in a viewer supporting auto refresh. If you have larger and more complex schedules, you might want a different layout to get a better overview. In this case, try the \mbox{\emph{neatorender.sh}} script instead. It will produce a more \enquote{organic}, more compact graph that is better suited to get the big picture.
+
+\paragraph{The Xdot Viewer}
+
+The second option is to use the Xdot Viewer tool. This is a Gtk 3 based GUI viewer written in python, providing a much more comfortable interface to schedule graphs. It is also faster than using the CLI renderer plus an image viewer. For carpeDM, a fork has been made of the original xdot project, adding new features.
+
+\begin{lstlisting}[style = customshell]
+$ sudo apt-get install python3
+$ sudo apt-get install python3-setuptools
+$ git clone https://github.com/GSI-CS-CO-Forks/xdot.py.git
+$ cd xdot
+$ git checkout xdot-gsi-dm
+\end{lstlisting}
+
+\begin{lstlisting}[style = customshell]
+#Try it out
+$ python3 -m xdot <a-dot-file.dot>
+
+#Install
+$ sudo python3 setup.py install --record files.txt
+
+#Uninstall
+$ cat files.txt | xargs sudo rm -rf
+\end{lstlisting}
+
+\subsection{Xdot Viewer Short Manual}
+
+\begin{figure}[H]
+   \centering
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/xdot}
+   \caption{Xdot Viewer}
+   \label{fig:xdot}
+\end{figure}
+%
+From the installation on, you can call xdot like any other program. There are CLI option to choose the renderer and pass arguments to it. The following call will start xdot with a neato configured for schedule graphs:
+%
+\begin{lstlisting}[style = customshell]
+$ xdot <a-dot-file.dot> -f neato --filterargs="-Goverlap=compress -Gmodel=subset"
+\end{lstlisting}
+
+\paragraph{Files and Printing}
+The File dialogue can be used to load dot files and is pretty much self explanatory. Printing is still buggy, or rather, works with a few glitches, as it only chooses the correct print area if the window
+it at its original (when opening the program) size.
+
+\paragraph{Navidation}
+The arrow keys can be used for scrolling, so can the pressed middle mouse button. Zooming is achieved by using $<$PageUp$>$/$<$PageDown$>$ or using the mouse wheel.
+In addition, the toolbar buttons can be used to control zoom.
+%
+\paragraph{Copy Name}
+A right click on a node will allow copying the name to the clipboard.
+%
+\paragraph{Inspection Window}
+Clicking the info button in the toolbar will open the IW. Left clicking a node or edge will show its bundled properties. The window contains three columns, description, tag and value.
+Descriptions are only available for carpeDM properties and explanatory comments. The tag column is the actual tag in the dot file, the value is the value from the dotfile. Note that the value can be converted. For example,
+time is not shown as a integer of nanoseconds \SI{1003000}{\nano\second}, but as seconds in scientific notation \SI{1.003e-6}{\second}.
+%
+\paragraph{Text Search}
+The toolbar provides a text search field to search for nodes and edges.
+$<$Enter$>$ begins the search and will zoom/scroll in the group of found nodes or edges. All found items are highlighted in light red.
+Text search also allows the use of regular expressions.
+For example, 
+\begin{lstlisting}[style = customtext]
+SIS18_RING_.*00.
+\end{lstlisting}
+will search for all node names starting with \emph{SIS18\_RING} and ending in \emph{00x}.
+\vskip\baselineskip
+When the inspection window is active, text search will also search bundled properties. They are stored internally as strings of the format $<$key=value$>$ and can be searched as such.
+Regular expressions are very powerful when used as boolean connections of search criteria.
+For example, 
+\begin{lstlisting}[style = customtext]
+gid=300|gid=508
+\end{lstlisting}
+will search for all nodes belonging to group ID \emph{300} or \emph{508}, while 
+\begin{lstlisting}[style = customtext]
+(?=.*gid=300)(?=.*evtno=258)
+\end{lstlisting}
+will find nodes of group \emph{300} and having an event number of \emph{258}.
+
+
+
+
+\subsection{Hello World!}
+
+We will assume that you have a freshly booted (or halted and cleared) DM available over an EB connection. If you encounter any error messages, especially during status check, please look at appendix\ref{}, Troubleshooting.
+
+\paragraph{First encounter}
+
+First, let's have a look what the DM thinks it's doing right now
+The following command will give you the detailed runtime status report.
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> status -v
+\end{lstlisting}
+%
+The output will look something similar to . Note that none of the worker threads is running right now and none has assigned a pattern or node to it.
+
+%\begin{lstlisting}[style = customshell]
+%╒══════════════════════════════════...═════════════...═══════════════════════════════╕
+%│ DataMaster: dev/ttyUSB0          ...             ... │ WR-Time: Tue Feb 6 17:50:44 │
+%├══════════════════════════════════...═════════════...═══════════════════════════════┤
+%│ Cpu │ Thr │ Running │  MsgCount │...    Pattern │...                          Node │
+%├══════════════════════════════════...═════════════...═══════════════════════════════┤
+%│  0  │  0  │    no   │         0 │...  undefined │...                          idle │
+%│  0  │  1  │    no   │         0 │...  undefined │...                          idle │
+%...
+%│  3  │  7  │    no   │         0 │...  undefined │...                          idle │
+%└──────────────────────────────────...─────────────...───────────────────────────────┘
+%...
+%\end{lstlisting}
+
+
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add helloworld.dot
+\end{lstlisting}
+carpeDM will parse and validate the dotfile, create the graph and upload it to the DM. It then reads back the binary, transforms it into graph again, annotes it with visualisation tags and writes it to download.dot.
+The result should look similar to figure~\ref{fig:hello}.
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/helloworld}
+   \caption{Visualisation of Hello World Schedule Graph }
+   \label{fig:hello}
+\end{figure}
+%
+The DM yet has to be told that we wish to play the Hello World Pattern. Dots are also used to describe runtime commands to the DM,
+and we shall use prefabricated ones in this example.
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> -i helloworld_start.dot
+\end{lstlisting}
+%
+This started the pattern execution. Let's check the status again, this time without the verbose flag:
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> status
+\end{lstlisting}
+%
+The DM is now sending two messages once every second, with an execution time \SI{8}{\nano\second} apart.
+If the output is connected to a TR over a WR switch, such as an SCU, you can log into your SCU and see the events caused by our messages coming in.
+For this to happen, you need to tell the \emph{saft-ctl} tool what you wish to see. In our case, we filter to show only our own hello world events.
+%
+\begin{lstlisting}[style = customshell]
+$ ssh root@<Your SCU's Name>.acc.gsi.de
+SCU$ saft-ctl tr0 -v -f snoop 0x0 0x0 0x0
+\end{lstlisting}
+%
+\begin{lstlisting}[style = customshell]
+tDeadline: 2018-02-06 17:08:10.556617664 ... EVTNO:  280 ...
+tDeadline: 2018-02-06 17:08:10.556667664 ... EVTNO:  273 ... !delayed (by 565680 ns)
+\end{lstlisting}
+%
+Yep, there they are! Note that the second message has a comment saying it is \emph{delayed}.
+This is nothing to worry about. The the snooping action by the SCU is way slower than the TR hardware, unable to process another message only \SI{8}{\nano\second} after the first.
+All status reports by TR's are explained in detail in chapter~\ref{}.
+\par
+\noindent
+Congratulations, you just ran your very first accelerator schedule with carpeDM and saw the result on real hardware!
+
+
+
+
+\section{The Hardware-Software-Stack}
+%color scheme
+% #C7E16F #71DB69 #6ADCA1 #6BDADD #5C8ECE #5B51C3
+%
+\begin{figure}[H]
+   \centering
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/stack}
+   \caption{Schematic of the DM components}
+   \label{fig:stack}
+\end{figure}
+%
+\subsection{From source to stream}
+There is a lot that goes on between LSA issueing a schedule's source code and there being a stream of timing messages on the network.
+\paragraph{Two worlds}
+Figure~\ref{fig:stack} shows the individual layers of the Datamaster, becoming more real-time from top to bottom. The high level connections to the LSA and Director black boxes provide the input.
+The Generator FESA class, CarpeDM Library and Etherbone Library all run on the Datamaster Server (x86\_64), which runs a standard frontend Linux without real-time extensions. Everything below runs in programmable hardware and is real-time (WR) capable. The default method of communication is using the Wishbone PCIe driver to connect to the server's PEXARIA V board (PCIe Bridge). For testing purposes, carpeDM can also be connected to remote DM hardware over network, using its host platform as a bridge (via socat). We will not go into detail on the Generator FESA class and the Etherbone library. The latter is well documented already~\cite{123}, while the former was intentionally designed as a lightweight middleware wrapper for carpeDM.
+\paragraph{High level}
+To fit LSA, the graph representation needed to be abstract, flexible and powerful. In order to make the DM sequencer deterministic however, the data structures used on the low level needed to be simple and efficient.
+Lossless bidirectional translation between high level and low level representation was also a requirement.
+\paragraph{Low level}
+The DM HW is the embedded system in charge of creating the stream. There is a strong separation between the actual real-time sequencer,
+which must never be disturbed from outside (no blocking calls) and the command interface. The DM consists of multiple embedded CPUs, each with their own independent RAM. To guarantee that the host does not block the DM HW, each RAM features two completely independent physical ports, removing bus access as a bottleneck. Using techniques borrowed from inter-thread communication models, the command module interacts with the realtime sequencer by message boxes and flags inside the DPRAM.
+\subsection{Language features}
+carpeDM was designed as a domain specific language, using graphs to represent machine schedules at a high level. The language is not turing complete, but is able to provide conditional branches, nested loops and realtime synchronisation.
+carpeDM then compiles the high level view (graphs) into binary structures. Subgraphs being turned into linked lists, which works well in combination with a lean minimal system.
+The filesystem assigns each graph node a (very small at \SI{52}{\byte}) page in memory, avoiding fragmentation while reaching near optimal memory utilisation.
+The intelligence and space for management is thus placed at the host side, This distinction is strongly needed, as both memory space and computing power for its management is scarce in the FPGA.
+The sequencer simply follows pointers through linked lists of memory chunks. Instead of a stack, it uses local queue storage at each point of decision for all dynamic change requests.
+This distribution of knownledge has several advantages~\cite[]{}. It particularily allows fine control of subgraphs, which can be individually added or removed during runtime.
+The current implementation also features a fast EB runtime interface for other time critical devices in the control system, such as the UNILAC gateway or later, BTB control and machine protection.
+
+
+\subsection{How message generation works}
+
+We shall now have closer look at the hello world example in figure~\ref{fig:hello}. There are two different node shapes there, rectangles and ovals. These represent timing messages and blocks. The nodes are connected by directed edges (arrows), designating each node's successor. A full legend of nodes, edge types and their appearance can be found at~\ref{ssec:bblocks}, but for now, we shall stick to the subset we saw here and have a first look the source code of the hello world example.
+%
+\lstinputlisting[style=dotfiles, caption={Hello World Source Code}, label={lst:hello}]{Source/helloworld.dot}
+\paragraph{What you see}
+As their \emph{type} tags show, the lines starting with \emph{Evt\_PPS} declare the two timing messages this schedule generates. Their time offsets are specified with the keyword \emph{toffs}:
+\SI{0}{\nano\second} and \SI{8}{\nano\second}. The line below, which starts with \emph{B\_PPS}, declares a block, and it also contains a time value,
+following the keyword \emph{tperiod}. This period (or duration) of the block is \SI{1e9}{\nano\second}, i.e. \SI{1}{\second}.
+This is equals the period with which the messages were generated. However, these are all timespans, while received events contained absolute points in time. We will get to the translation rule in a moment(~\ref{})
+\par
+The last line specifies directed edges between the nodes. From the recurring node name, it becomes obvious they are made to form a loop. This corresponds to the red arrows in figure~\ref{fig:hello}: Red edges are the \emph{default destinations},
+showing the successor of each node the DM will take without outside intervention. It might seem strange at first that they do not have \emph{type}, but wait\dots there is a line saying \emph{type="defdst"}, which is what we were looking for.
+Because default destinations are the most common edge types in most schedules, it makes sense to define a global default type to avoid clutter. This works for all tags and can always be overridden locally (e.g. within an individual node or edge declaration). More details can be found under~\ref{}.
+\paragraph{What you get}
+The schedule execution will start at the pattern entry point, which is the node \emph{Evt\_PPS0}, and follow the edges from there.
+To get absolute execution times for all messages along the way, the DM keeps a sum in each of its worker threads, consisting of the periods of all processed blocks If a block is processed multiple times during loops, their period gets added multiple times, thus unrolling all loops and taken branches. The execution times of messages are calculated
+by adding their offsets to the time sum. The start time, the absolute time the sum is initialised to, can either be supplied ($t_0>0$) or automatically chosen ($t_0=0$) by the DM depending on a flag (right now, next full second, etc).
+
+\paragraph{Example for HelloWorld}
+The time sum accumulates all blocks it comes past, so the sequence of execution times goes (assuming it started at $t=0$:
+\newline
+($\SI{0}{\second} + \SI{0}{\nano\second}, \SI{0}{\second} + \SI{8}{\nano\second}, \SI{1}{\second} + \SI{0}{\nano\second}, \SI{1}{\second} + \SI{8}{\nano\second}, ~~\dots~~ , n \cdot \SI{1}{\second} + \SI{0}{\nano\second}, n \cdot \SI{1}{\second} + \SI{8}{\nano\second}$). Because the time sum is absolute and offsets are relative, Blocks are necessary for repeating parts of a schedule.
+Otherwise, the realtive offsets would directly be interpreted as absolutes, placing all recurring messages at the exact same execution times, over and over, until they all lie in the past.
+\paragraph{Need for rules}
+The above example explains why all sequences must be terminated by blocks. There are a handful more rules for schedule generation, a full list can be found under~\ref{}.
+Don't worry, carpeDM checks the rules for you and will tell you off if you present it with bad schedules. It will even give you a (hopefully) comprehensive error message as to why your schedule was rejected.
+Just one problem though: Typos and .dot language errors are the only errors you will be getting a line number for. Most checks for carpeDM are on an abstract level, they can only be run \emph{after} your schedule was turned into a graph.
+At this point, there are no line numbers anymore, so you'll have to make do with the node/edge names when debugging your schedule.
+
+
+
+\chapter{CarpeDM User Guide}
+
+\section{Command line tools}
+
+carpeDM comes with two command line tools, \emph{dm-sched} and \emph{dm-cmd}. dm-sched is responsible for schedule upload, download and manipulation. dm-cmd covers manual thread and flow control, status queries, runtime diagnostics and node and queue inspection. For detailed help, call either with the \enquote{-h} flag.
+
+to be continued\dots
+
+\section{Schedules}
+
+\subsection{Overview}
+
+carpeDM schedules use nodes of three basic types to model the control message stream to the accelerator. These are \emph{Messages}, \emph{Commands} and \emph{Blocks}. All necessary management overhead is contained in nodes of a fourth \emph{Meta} type, which is by default invisible to the user.
+
+\paragraph{Message Nodes}
+Messages, aka timing messages, provide what it says on the box - they create messages to be broadcasted to timing receivers on the White Rabbit (WR) network.
+\paragraph{Block Nodes}
+Blocks provide three functions in one. First, they carry a timespan or period, which is added to the running time sum once they are processed. Second, they can be outfitted with a sink for commands, allowing dynamic actions. These could be a request to wait or changes to the flow through the graph (alternative successor nodes). And third, Blocks can be made to dynamically adjust their period to fit a given time grid.
+\paragraph{Command Nodes} Command nodes use the same command interface as Blocks do, but they are sources, not sinks. They can be used for synchronisation or loops with various properties. An example would be a loop waiting for an external command to continue, but terminating when reaching a given timeout.
+
+\begin{figure}[H]
+\def\svgwidth{0.8\textwidth}
+\graphicspath{{Figures/}}
+\input{Figures/legend_nodes.pdf_tex}
+\caption{Legend for Node Visualisation }
+\label{fig:legend_nodes}
+\end{figure}
+
+\begin{figure}[H]
+\def\svgwidth{0.8\textwidth}
+\graphicspath{{Figures/}}
+\input{Figures/legend_edges.pdf_tex}
+\caption{Legend for Edge Visualisation }
+\label{fig:legend_nodes}
+\end{figure}
+
+
+\subsection{Basics}
+
+\newpage
+\section{Flow Control}
+Like other program languanges, carpeDM schedules support branches and loops. There is no generic conditional conditional check when deciding wether to take a branch though. Instead, a message inbox,
+the command queue, is checked for new orders. This means that commands are queued at the point in the graph where the change is to be made.
+To allow parrallel operation, there are as many command queues as there are points of decision. Points of decision are always of the \enquote{block} type, but blocks are not always points of decision.
+
+\subsection{Blocks and Changes during Runtime}
+For blocks to be used dynamically, they need to act as a sink for commands. This is enabled by adding command queues to the block. Up to three priorities are supported, forming a single priority queue. When a block is processed, it will only ever execute a single command and will always choose the highest priority pending.
+\par
+Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain command type can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{}.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc00_if}
+    \caption{if\dots then\footnotemark}\label{fig:cc0_if}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc01_if_else}
+    \caption{if\dots then, else}\label{fig:cc1_if_else}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc02_case}
+    \caption{case\dots with default}\label{fig:cc2_case}
+  \end{subfigure}
+  \vskip0.5em
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc03_until_repeat}
+    \caption{until \dots repeat}\label{fig:cc3_urep}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc04_repeat_until}
+    \caption{repeat until \dots}\label{fig:cc4_repu}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc05_while_do}
+    \caption{while \dots do}\label{fig:cc5_whiledo}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc06_do_while}
+    \caption{do while \dots}\label{fig:cc6_dowhile}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc07_for_lt}
+    \caption{for $0 \le i < n$}\label{fig:cc7_forlt}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc08_for_le}
+    \caption{for $0 \le i \le n$}\label{fig:cc8_forle}
+  \end{subfigure}
+  %\vskip\baselineskip
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc09_wait_until}
+    \caption{Simple wait loop}\label{fig:cc9_wait}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics*[width=\linewidth,keepaspectratio]{Figures/cc10_wait_until_timeout}
+    \caption{Wait loop with timeout}\label{fig:cc10_waitto}
+  \end{subfigure}
+  \vskip\baselineskip
+  \caption{\textbf{Schedule cheatsheet}}\label{fig:branch}
+\end{figure}
+\footnotetext[1]{Add optional blocks to achieve different durations of alternate paths}
+
+
+
+
+\subsection{Branches}
+
+\emph{TODO complete missing examples!}
+
+Using the \emph{flow} command, blocks can temporarily or permanently change their successor node. Figure~\ref{fig:exbranch0} (exbranch.dot) shows a minimal example containing two alternative branches. The default branch taken contains the 'A' nodes, and block B\_BRANCH features a single low level command queue (meta nodes shown for demonstration). Changing the flow from the 'A' to the 'B' branch can be achieved by sending a command to block B\_BRANCH.
+
+%\begin{figure}[H]
+%   \centering
+%   \def\svgwidth{0.5\textwidth}
+%   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch0}
+%   \caption{ Example of simple branch }
+%   \label{fig:exbranch0}
+%\end{figure}
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add exbranch.dot
+$ dm-cmd <eb-device> startpattern BRANCH
+$ dm-sched <eb-device>
+\end{lstlisting}
+
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch1}
+   \caption{ Default flow through 'A' branch }
+   \label{fig:exbranch1}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Branch}, label={lst:branch}]{Source/exbranch.dot}
+
+Calling dm-sched on a DM without any further parameters will automatically call the status report, which will make the render script update the graph image. The green fill in figure~\ref{fig:exbranch1} shows that the DM followed the red default edges as expected and executed the 'A' branch at least once, but did not enter the 'B' branch. We can now change the flow by
+%
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> flow BLOCK_BRANCH MSG_B0
+#or
+$ dm-cmd <eb-device> flowpattern BRANCH B
+#followed by
+$ dm-sched <eb-device>
+\end{lstlisting}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.5\textwidth}
+   \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/exbranch2}
+   \caption{ Flow changed to 'B' branch }
+   \label{fig:exbranch2}
+\end{figure}
+
+We can see now that the DM changed the default path towards the 'B' branch, the green fill showing it was executed.
+
+\subsection{Loops}
+\label{ssec:exwloop}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/exwloop}
+   \caption{ Wait Loop }
+   \label{fig:exwloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/exwloop.dot}
+
+The most basic example of command-controlled loop is an infinite loop. It is executed until an incoming flow command orders the DM to leave the loop.
+Figure~\ref{fig:exwloop} shows the setup. A Block with its default edge pointing at itself is forming an infinite loop. Note that only blocks are allowed to have themselves as a successor.
+The loop can be left by sending the block a flow command, which will order the DM to the node Msg\_CONTINUE. The flow in the example is temporary, it does not change the default destination. This allows the wait loop to be used again without further action required. The period of wait loops must be chosen greater than the maximum time the DM's scheduler requires to process the block. A value of \SI{10}{\micro\second} or more is recommended.
+
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add exwloop.dot
+$ dm-cmd <eb-device> startpattern LOOP
+$ dm-sched <eb-device>
+\end{lstlisting}
+
+\newpage
+\subsection{Default Pattern Example}
+
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{0.7\textwidth}
+   \includegraphics*[width=0.7\textwidth,keepaspectratio]{Figures/exdefpat}
+   \caption{ Default pattern with two alternatives }
+   \label{fig:exdefpat}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Default pattern with two alternatives}, label={lst:defpat}]{Source/exdefpat.dot}
+
+Base on the examples of branches and simple wait loops, we can construct a scenario using a default pattern and alternative patterns which will only be played on request.
+The basic principle is the same as the wait loop, with the difference of the loop being a productive sequence. This is a common case for FAIR, where a default pattern is played whenever no
+beam requests are demanding other patterns (d-d-d-d-A-d-d-A-B \dots).
+\par You might have noted that we did not start the DM this time, but still issued the flow command. It will lie in wait inside the default patterns command queue until the block is evaluated.
+The command line tools also provide a way to take a peek at the queue content. Using the following command
+
+\begin{lstlisting}[style = customshell]
+$ dm-cmd <eb-device> queue BLOCK_def
+\end{lstlisting}
+
+\begin{lstlisting}[style = customshell, caption={Output of dm-cmd queue inspection}, label={lst:queue}]
+Inspecting Queues of Block BLOCK_DEF
+Priority 2 (prioil)  Not instantiated
+Priority 1 (priohi)  Not instantiated
+Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1
+#0 pending Valid Time: 0x1523c7a1dd6e1200    CmdType: flow    Permanent: NO     Qty: 1    BLOCK_DEF --> MSG_A0
+#1 empty   -
+#2 empty   -
+#3 empty   -
+\end{lstlisting}
+
+carpeDM will list the content of all queues for the given block name, the result will look similar to listing~\ref{lst:queue}.
+Because the DM was not told to run the schedule yet, we can see the flow command as still pending. We can also see that the change is temporary (not permanent),
+and the last column tells us that the flow goes from the default pattern exit (BLOCK\_DEF) to the entry of pattern 'A' (MSG\_A0).
+
+This leaves the 'valid time' and 'Qty' properties. The valid time of a command specifies the WR time in \SI{}{\nano\second} \emph{after} which a command
+is valid for evaluation, meaning the DM will not process it before that time. If the element at the front of a queue is not valid yet,
+no other queued elements will be evaluated neither. This also hold down the priorities: if the high priority queue is not empty but not yet valid,
+the low priority queue will also not be serviced.
+\label{ssec:exdefpat}
+The repetition quantity (qty) specifies the number of times this element will yield the command it
+carries before it is exhausted and popped. In our example, the quantity is 1: the command will be executed once, then the containing element will be popped from the queue.
+
+\newpage
+\section{Static Commands}
+\subsection{Concept}
+In the previous section, schedule behaviour was influenced solely from the outside. It is also possible to integrate commands into the schedule itself, allowing for a large number of new possibilities.
+This can be used as loops with initialisers (for), executing the following sequence \emph{n} times. Another use is synchronisation, where one schedule is in a wait loop it will exit on the command from another schedule reaching the sync point. This approach can of course also be mixed with external commands, allowing for example for wait loops with a timeout.
+\subsection{Access Management}
+\label{ssec:locks}
+Static commands introduce a possible race condition within the DM, because the 1:1 relationship between command producers and consumers is no longer valid. There could be as as many producers per Queue as there are DM CPUs plus the host. This means that simultaneous access to a queue will create a conflict which must be handled. To prevent the race condition, a locking mechanism had to be introduced.
+\begin{itemize}
+  \item{Host: manages, sets and removes locks}
+  \begin{itemize}
+    \item{always has priority when writing}
+    \item{must lock queue before write access}
+    \item{must verify DM CPUs obey set lock}
+    \item{does \emph{NOT} manage producer--consumer constellations!}
+  \end{itemize}
+  \item{DM CPUs: obeys locks}
+  \begin{itemize}
+   \item{Locks are non-blocking}
+   \item{treat static commands to a write-locked block as Noop} 
+   \item{skip queues of read-locked blocks, use default successor}
+  \end{itemize}
+\end{itemize}
+
+
+
+
+
+
+
+\paragraph{Mechanism}
+The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity. 
+Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Thus, updating the indices of different priorities will access the same word, which would still cause a race condition. Lock flags are read/write to the host and read only to the DM. 
+Not all modules can be combined as producers and consumers of commands when sharing a block/queue. There are several valid combinations which will produce orderly behaviour.
+As mentioned in the above list, it is not the responsibility of the host (ie. Generator FESA class with carpeDM library)
+to assign or validate the constellation of command producers and consumers per block. This task lies solely with schedule (LSA) and command generation (Director). The following constellations are valid:
+
+
+\begin{tabular}[t]{|l|l|l|}
+\hline
+  \textbf{Producer} & \textbf{Consumer} & \textbf{Lock required} \\ \hline
+  Host               & DM Cpu & RD*     \\ %\hline
+  DM Cpu             & DM Cpu & --    \\ %\hline
+  Host \& DM Cpu     & DM Cpu & RD* \& WR      \\ %\hline
+  EB Slave (UNI-GW)  & DM Cpu & -- \\
+  EB Slave (B2B)     & DM Cpu & --\\
+  \hline
+\end{tabular}
+
+
+\paragraph{Sequence} 
+The host sets a lock, and checks the queue indices in regular intervals until no more changes are observed between checks. It is then certain that all ongoing DM actions (which might have been begun before the lock flags were visible) are concluded. The duration of host actions \SI{}{\milli\second} is three to four orders of magnitude longer than DM actions (\SI{}{\micro\second}), so a wait time in the low millisecond range between checks is sufficient. Once the lock flags are certain to be visible, the DM firmware will ensure that the locked block's queues are not modified. After the host has written to the queue, it clears the block's lock flags, allowing the DM to modify queues again.
+
+
+\newpage
+
+
+
+
+\subsection{Counter Loop Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/excntloop}
+   \caption{ Counter Loop }
+   \label{fig:excntloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/excntloop.dot}
+
+As described in~\ref{ssec:exdefpat} on page~\pageref{ssec:exdefpat}, commands come with a repetition quantity, specifiying how often they can be executed before they are popped from the queue.
+When the command is integrated into the schedule, this can used as a loop initiliaser, similar to the head of a for-loop. Since each block has its own
+counter, there is no need for a stack to keep track of the variables. This allows nesting of several loops. The example in figure~\ref{fig:excntloop} sets up a nested loop, where the whole pattern runs infinitely, the outer loop executes 3 times and the inner loop executes 2 times per iteration. Line~\ref{lst:excntloop:def} nicely shows that the whole schedule is actually very simple, stringed together by the red default destination arrows like beads on a chain.
+Only once the commands get executed, there are several loops to go through.
+\par It is obvious that the initialiser must only be called when there are not more repetitions of its command left, as it would otherwise flood the queue.
+This also means that you must not jump into or out of loops without flushing the corresponding queues.
+\vspace{2ex}
+
+\subsection{Timeout Loop Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/extoloop}
+   \caption{ Timeout Loop }
+   \label{fig:extoloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Timeout Loop}, label={lst:wloop}]{Source/extoloop.dot}
+
+A timeout loop is similar to the wait loop from~\ref{ssec:exwloop} on page~\pageref{ssec:exwloop}, it will exit on command, but it will also terminate after a given number of iterations (timeout).
+This can be achieved by using an initialiser to set up the time out, and then invert the exit logic: leaving the loop is now the default behaviour. Similarily, the command to exit is different: instead of issueing a flow command to leave the loop, we now issue a command to make the schedule stop staying inside the loop. Therefore, sending a flush command to the medium priority clearing the low priority (where the static flow went) will leave the loop before the timeout. The actual magic then happens in line~\ref{lst:extoloop:init}, setting the length of the timeout to \emph{qty} $\cdot$ \emph{period}.
+\vspace{2ex}
+
+
+\subsection{Alternation with Default Pattern Example}
+%
+\begin{figure}[H]
+   \centering
+   \def\svgwidth{1.0\textwidth}
+   \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/excntloop}
+   \caption{ Counter Loop }
+   \label{fig:excntloop}
+\end{figure}
+
+\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/excntloop.dot}
+While making two alternating patterns is a trival matter of setting their default destinations to each others entry points,
+alternating sequences mixed with the default pattern (d-A-d-B-d-A-d-B-\dots) are a more interesting case.
+Figure~\ref{fig:excntloop} shows how to achieve this with static flow commands inside the alternative patterns:
+The default pattern will run in a loop. If made to flow to pattern A, pattern A will then send a command to the default pattern to go to pattern B next.
+After one execution of the default pattern, B is executed, sending a command to the default pattern with pattern A as the successor, and so on.
+To leave this sequence, one would send a flush command to the default pattern at medium priority, after which the schedule would loop the default pattern.
+
+
+\chapter{Offline Verification}
+
+
+
+
+
+\section{Schedule Structure Validation}
+
+\subsection{Problem Definition}
+Dot files offer great flexibility, and DM schedules only cover a very small section of what is supported in the dot format. carpeDM therefore must verfiy if dot graphs
+are valid DM schedules and aims to give an accurate reasoning when a schedule is rejected.
+
+\subsection{Validation on creation}
+\paragraph{Rules for real nodes}
+\begin{itemize}
+  \item{Sequences}
+  \begin{itemize}
+    \item{Real nodes are timing messages, commands and blocks}
+    \item{A sequence is a set of real nodes connected by default destination edges}
+    \item{Sequences can be connected to other sequences by default or alternative destination edges}
+    \item{The maximum number of alternative destinations is 9 (subject to change in future)}
+    \item{All sequences must be terminated by a block}
+    \item{All real nodes except blocks must have a default successor}
+    \item{Only blocks are allowed to have themselves or none (idle) as default successor}
+    \item{The shortest possible sequence is a lone block}
+    \item{Sequences can form infinite loops}
+    \item{Time offsets within a sequence must be in ascending order}
+    \item{The max. time offset in a sequence must be less than its block's period}
+    \item{Sequences connected by default or alternative destination edges must reside on the same CPU}
+\end{itemize}
+  \item{Patterns}
+  \begin{itemize}
+    \item{Patterns must have exactly one entry and one exit point (might be subject to change in future)}
+    \item{Pattern entry points can be timing messages, commands or blocks}
+    \item{Pattern exit points must be blocks}
+    \item{All of a patterns nodes must reside on the same CPU (might be subject to change in future)}
+\end{itemize}
+  \item{Branching}
+  \begin{itemize}
+    \item{Branching requires a block with at least one queue}
+    \item{Stopping is equivalent to branching to idle}
+  \end{itemize}
+  \item{Commands}
+  \begin{itemize}
+    \item{Commands always target blocks, but the target can be empty}
+    \item{All commands can target blocks on other CPUs}
+    \item{Flow command destinations are always real nodes, but can be empty}
+    \item{Flow command destinations must be on the same CPU as the target block}
+    \item{Flow commands cannot initialise a loop they are a part of}
+\end{itemize}
+\end{itemize}
+
+\paragraph{Facts about meta nodes}
+\begin{itemize}
+  \item{Only blocks can have meta nodes, allowed are 0-3 queue buffer lists and 0-1 destination list (subject to change in future)}
+  \item{Only queue buffer lists can have queue buffers, 2 are currently mandatory}
+  \item{Management nodes contain compressed node names, group memberships and/or covenant data. Cannot be created manually}
+\end{itemize}
+
+\paragraph{Guidelines}
+\begin{itemize}
+  \item{To add queues, just list the priorities you want. carpeDM will handle the overhead for you}
+  \item{If a block has exactly one successor, don't add queues, this saves space}
+  \item{carpeDM will automatically add a destination list to a block if any alternative destinations are present}
+  \item{When using commands in schedules, $99.9\%$ of the time you will need them ASAP (vabs=true, tvalid=0) }
+  \item{\emph{Only define meta nodes manually if you know exactly what you are doing!}}
+\end{itemize}
+
+\newpage
+\subsection{Validation on change}
+\label{ssec:val-on-change}
+\paragraph{Rules for \emph{add}}
+\begin{itemize}
+  \item{An \emph{add} is a list of nodes and edges to be added and is a dotfile by itself}
+  \item{You cannot overwrite existing nodes, edges or their attributes using \emph{add}. Remove them first, then add new versions}
+  \item{If the addition is connected to existing nodes, only specify the edges to those nodes, not the nodes itself}
+  \item{You cannot add outgoing edges to active schedules except alternative destinations. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+\paragraph{Rules for \emph{remove}}
+\begin{itemize}
+  \item{A \emph{remove} is a list of nodes and edges to be removed and is a dotfile by itself}
+  \item{All nodes listed for \emph{remove} must exist in the DM graph}
+  \item{All edges leading in or out of removed nodes will also be removed}
+  \item{You cannot remove nodes from an active schedule. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+\paragraph{Rules for \emph{keep}}
+\begin{itemize}
+  \item{A \emph{keep} is a list of nodes and edges to be kept and is a dotfile by itself}
+  \item{A \emph{keep} is a \emph{remove} of the difference set of the \emph{keep} set and the DM graph}
+  \item{All nodes listed for \emph{keep} must exist in the DM graph}
+  \item{You cannot keep edges without keeping their nodes}
+  \item{All edges leading in or out of not-kept nodes will also not be kept}
+  \item{You cannot not-keep nodes from an active schedule. See chapter~\ref{chap:online-sched-mod} for details on online verification}
+\end{itemize}
+
+\subsection{Summary}
+The offline verification rule tables and algorithms make sure only valid schedule data will be accepted for upload to the DM. 
+All of the rules listed above except the ones about active schedules in subsection~\ref{ssec:val-on-change} are independent of current DM activity and therefore evaluated \enquote{at compile time}.
+The only exception is the use of absolute time values within schedules, which could become obsolete before upload is achieved. There is currently ($\le$ v0.27.1) no safeguard against the use of stale absolute times.
+Almost all of the rules are not solely good practice, but absolutely necessary to achieve expected behaviour of the DM firmware. However, for certain debug cases, it is possible to bend the rules somewhat without causing havoc in the DM hardware.
+
+\paragraph{Bending the rules for debugging}
+%
+It is possible to create individual late timing messages on purpose for debugging. This can be achieved by specifying negative time offsets for timing messages. The negative offset must have an absolute value greater or equal the correct (fitting into the ascending sequence) time offset. To force the acception of schedules which are in violation of the rules, you must supply the \enquote{-f} (force) flag to dm-sched. 
+\begin{lstlisting}[style = customshell]
+$ dm-sched <eb-device> add -f <late-message-dot.dot>
+\end{lstlisting}
+
+\chapter{Online Schedule Modification}
+\label{chap:online-sched-mod}
+\section{Overview}
+
+\subsection{Problem Definition}
+
+During runtime, schedules often need to be modified. A trim is a perfect example of a measuring loop, which will iteratively change schedule data.
+There two systems which simultaneously access the DM's memory -- the high level host side and the DM realtime system.
+Any schedule data which is currently in use by the realtime system cannot be modified by the host without causing undefined behaviour.
+It is therefore important to determine wether and when modifying a schedule is safe.
+\paragraph{Data basis}
+Knowing which schedule data is actively used in the DM is therefore of paramount importance in the decision wether a schedule can safely be modified.
+Since the host system can only ever be broadly aware what the DM RT system is executing at any given time, discerning between active and inactive schedule data is not as trivial as it might sound.
+We will refer to all objects (schedules, paths, edges, nodes) that must not be used during safe manipulation as \emph{critical}.
+\par
+The available data consists of the complete schedule graph, the content of all command queues and the cursor positions, which mark which nodes of which the schedules the DM was executing.
+Because a lot of this data in the DM RT system can change during processing time and even during the data acquisiton itself, the memory image obtained by the host is suffers from a sort of \enquote{motion blur}, which must be considered. A valid approach must divide the data into conditions proven to be present, conditions proven not to be present and use the worst possibly outcome for any ambiguous cases.
+\paragraph{Testing for Safety}
+Safety means guaranteed inactivity. In order to give a guarantee on the basis of an inconsistent data set, all time factors (execution times, race conditions, atomicity...) must be eliminated from the verification process.
+It is easy to see that a schedule is active if a cursor is currently pointing to one of its member nodes.
+Considering the \enquote{motion blur} and our own processing time, the cursors might also already have left the schedule in question - the case it ambiguous and the worst case to be used is the cursor still being inside.
+Likewise, seeing the cursor outside a schedule is no guarantee for its inactivity. A cursor might well have entered it again just after we had a look\dots
+
+\subsection{Possible Approaches}
+Several approaches to modifying a schedule safely were investigated, all of which have pros and cons in terms of the dimensions Safety -- Speed -- Low Memory Req..
+
+
+
+\begin{itemize}
+   \begin{item}
+    The first is the first write a new version of the schedule in question, command the DM tw switch over to it. After assertaining the DM has left the obsolete version, it can be removed. From a runtime perspective, this is the safest and fastest method. However, there are drawbacks: Because essentially a copy is created (albeit slightly modified), twice the space of the original is required. And because it is uncertain when the DM will have left the obsolete version (possibly hours), this requires an asynchronous garbage collector on the host side.
+  \end{item}
+  \begin{item}
+    The second method is as safe as the first, more memory efficient, but also often much slower. The DM is redirected to another (safe) schedule, and once it is certain the DM has left the obsolete schedule and has no possibility of re-entry, it is removed. The new version is then written and the DM is commanded to use the new version. This is very space efficient, but verifiying that the schedule to be removed cannot be entered again is very challenging. Waiting for the DM to leave areas that could reconnect to the obsolete schedule can take up a lot of time (in the case of ESR, this could take hours). The details are described in subsection
+    ~\ref{sec:esm}.
+  \end{item}
+  \begin{item}
+    The third method is a hybrid approach. Sacrificing some safety margins allows combining the speed of the first approach with the low memory requirement and simple management of the second.
+    By extrapolating future DM behaviour from command queue content, it is possible to eliminate certain static paths from considerations. This often allows safe removal of the schedule almost immedately,
+    but comes at a price. The prediction will only hold true if the content of the involved command queues is not changed. The requesting party therefore enters a covenant with carpeDM once it removes the schedule in question. The covenant contains a list of command queues and their priorities which must not be modified or preempted, otherwise there will be undefined behaviour. Once all critical queue content is processed, the covenant is fulfilled. Details are described in subsection~\ref{sec:eesm}.
+  \end{item}
+  \begin{item}
+    The fourth method is radically different to the other three, as it modifies queues within an active pattern. To do this, lock bits are set for the block, ordering the DM to refrain from reading or writing queues associated with this block.
+    This by far the the fastest method to communicate changes to the DM in a safe manner, but also the most invasive. The problem can be seen in the definition of \enquote{safety}. The approach will not cause undefined behaviour, but can suppress commands originating within the DM. ~\ref{sec:eesm}.
+  \end{item}
+
+
+\end{itemize}
+
+\newpage
+\section{Equivalent Static Model}
+\label{sec:esm}
+The possibility of future cursors positions being inside the critical schedule makes it necessary to inspect all possible paths leading into the schedule (that it, to its entry point).
+A time invariant representation of the schedule with all of its static and dynamic links must be created and checked against the cursor positions.
+If a cursor is within the schedule or if a path from a cursor to the entry point exists, the schedule must be seen as active which makes removal unsafe - it is not to be touched.
+Likewise, if there is no cursor inside and no path to the entry point can be found, the schedule is inactive and can thus be safely removed. To draw any kind of usable conclusions, the director must remain silent
+once the verfification is in progress, so no more commands are entering the system. Any asynchronous external devices issueing commands such as the UNIPZ gateway must only write to their own uncritical schedules or remain silent.
+
+\paragraph{Handling inconsistency in memory snapshots}
+Reading out the data from several processors will lead to an inconsistent image of the current DM state. Depending on the type of objects, there are different appropriate methods to deduce facts about the state from of the available data.
+
+\begin{itemize}
+  \begin{item}
+    \emph{Default Successor Edges} are definite if the edge's parent is not a block with commmand queues. However, if that is the case, then the default successor is ambiguous and queue content must be considered. If the default successor of the block can be changed temporarily or permantently by its queue content, both the old and the new edge must be used.
+  \end{item}
+  \begin{item}
+    \emph{Qeue Content} is handled by both the DM and the host. They use the read and write indices of the queues' ring buffers to synchronise their access. Only the host can write new elements and modifiying the indices is always the last action in any queue access for both sides. When reading the verification data, the first action of the host is always to get the current WR system time. All commands written by the host must bear a current valid time (the moment in time after which the command is valid). This means that we can tell by the indices which commands are definitely consumed already and by the valid times which commands are definitely not consumed yet. All others must be seen as \enquote{possibly consumed}, which means using their worst possibly impact.
+  \end{item}
+  \begin{item}
+    \emph{Cursors} are the most \enquote{blurry} data objects which are read during verification. A cursor therefore can be seen not as a single node, but as a subtree of nodes originating at the observed cursor location and spreading to all reachable nodes. If the entry point would be found within the set of nodes formed by the cursor subtrees, it follows that the schedule is active. This makes the approach independent of the progress of the cursors since observation.
+    \par
+    The used implementation is in fact the inversion of the cursor subtree approach just described: a single subtree is constructed from the entry point of the schedule backwards, intersection with any cursor node shows the schedule is active.
+  \end{item}
+\end{itemize}
+
+%the same However, because the WR system time is read before reading the cursors, which are in turn read before the valid times of comand queue elements, it is possibly to tell if a cursor would have been able to consume a command from a block in its predicted path.
+\subsection{Path Analyses}
+\label{ssec:path}
+\paragraph{Static}
+The most basic form of analysis considers only static (default successor) paths, all other forms of connections are removed to simplify the graph. The reverse tree originating at the entry of the critical schedule is itself critical. If a cursor is inside the tree, it can reach reach the entry, making the schedule active and thus unsafe to modify.
+
+\paragraph{Dynamic}
+Static path analysis would not yield correct results in the presence of commands changing the flow through the graph at runtime. To cover this, the queue content must be analysed for flow commands. This not only covers the dynamic commands actually present in queues at readout, but also those which can be generated by resident flow commands. Those are flow commands which are part of the schedule.
+
+\paragraph{Virtual paths}
+To still allow the use of graph algorithms, dynamic changes must be modeled in a way that can be handled by such methods, which means a static equivalent graph using virtual edges.
+These show all possible paths resulting from commands and can be analysed for intersection just as the static graph. However, there is a corner cases to consider, which is resident flow commands.
+ They also must be represented by a virtual edge, but only if the block the virtual edge would originate from is within the limits of nodes which can be reached by
+a cursor.
+
+\paragraph{Iterative construction of virtual paths}
+Dynamic links only become real if the block is actually ever visited by a cursor. Therefore, not all queue content is worthy of consideration, all dynamic commands and static command generation which cannot be reached by any cursor are of no consequence. To be considered as valid virtual path(s), the reverse tree originating at any block with generated commands must have a connection to at least one cursor.
+
+\paragraph{Reverse Tree and Intersection}
+After the removal of all non-path edges and the addition of all virtual paths, the result is a equivalent static graph model (ESM). Using the entry point of the schedule to be removed as the start,
+the reverse tree is then constructed, going against edge direction and mapping all nodes connected by default or virtual paths. Loops in the tree are detected. Furthermore all member nodes of the schedule to be removed are added. This forms the complete set of nodes which have a connection to the entry point. If there is an intersection of this set with the set of cursors, the schedule is not safe to remove.
+
+\subsection{Orphaned command handling}
+When removing a schedule, a severe side effect can occur in inactive schedules. The queued commands of inactive schedules are ignored in the safety assessment, as they do not have an impact on the outcome. It follows that all flow commands pointing from inactive schedules to the critical schedule would become orphans when the critical schedule is removed, as their destination suddenly ceases to exist. If the inactive schedule is ever reactivated and its queue processed, this will cause undefined behaviour. Simply removing orphaned commands from queue buffers is not an option though, because the ring buffers cannot contain gaps. While this problem could be overcome by moving all other elements, there is a more elegant solution available. By setting the repetition counter of orphaned commands to 0, the command is no longer invalid but instead acts as a Noop instruction. It will then be normally processed and popped from the queue without further consequences.
+
+
+\subsection{Visual Reports}
+The
+
+
+\section{Enhanced Equivalent Static Model\\(aka \enquote{crystal ball})}
+\label{sec:eesm}
+\subsection{Problem Definition}
+The observed trouble with the approach described in section~\ref{sec:esm} is the blocking nature of the process. The resulting wait times can encompass all schedule duration encountered before. In the case of long schedules ( $T \gg \SI{100}{\milli\second}$ ), this becomes a severe hindrance for trimming, not to mention the de facto freeze the ESR's schedules with a duration of hours or days would cause.
+This effect will always come into play if there are several long schedules preceding one that is used to redirect the DM away from the schedule to be removed. Before the command for redirection is not consumed, there is no possibility of guaranteeing safety. An approach to make this verification non-blocking had to be found.
+
+\subsection{Contextual inconsequence of default successors}
+If a default successor edge is a connection between a cursor and the entry point, it is tipping the scales toward the verdict \enquote{unsafe}.
+The main issue hinges on the fact that dynamic changes to default successors are executed at the time their block is visited by a cursor. This means the change can come into effect a long time after the corresponding command was issued, causing the aforesaid wait times. The crucial question is therefore if the change to the default successor edge can already be considered a fact at the time the command is present, thus skipping the wait time to command processing. Found optimisations are expressed in the resulting ESM by removing the corresponding default edges and replacing them with dashed auxiliary edges.
+%One of the resulting tasks is obtaining a consistent image of both the cursors and the queue state, ie. an answer to the question wether a given command will be consumed when the cursor reached the block.
+%For this purpose, the valid time of a written command is always set slightly into the future (so it is valid only after the current access). When it is compared with the current WR time taken before the cursors are read,
+%it is possible to tell wether the cursor will trigger the command when reaching the block. This is only relevant if the cursors is within the same schedule as the block.
+
+\paragraph{Continuous successor override}
+A default edge can be optimised away if the DM can never take that path. This is the case if the default successor is either permanently changed to a safe schedule or changed to idle. In the latter case, permanent or temporary change type is irrelevant, as a cursor cannot return from idle without outside intervention. We will thus also consider idle as a permanent change.
+\par
+However, there may be more than one command present in the queue(s), and each visit by a cursor will only consume one charge of the top element. If the default destination is never to be used, it means that it must be constantly overridden by queued commands until the permanent change is reached. Since only flow commands can override the default, it follows that the presence of any other command type before the permanent change forbids optimisation.
+
+\paragraph{Command order of precedence}
+The order in which commands are executed depends on the priorities of the queues they have been written to. Highest priority present is always emptied first, the maxmimum queue length is 12 elements (4 x High, 4 x Mid, 4 x Low). It follows that once an optimisation is found and deemed a contribution to a \enquote{safe} verdict, any preemption of the containing queue is forbidden. This includes filling higher priorities with non-flow commands
+and the static flush option, which allows the host to asynchronously clear a queue.
+
+
+\subsection{Finding contributing optimisations}
+To find the queues to be protected for a safe schedule removal, it is necessary find which of the optimisations contributed to the positive outcome.
+The basic assumtpion is that any path leading to the entry point containing optimised edges can be optimised, it depends on all commands causing the traversed optimised edges the corresponding queues must therefore be protected. However, if such a path can be circumvented by another, the corresponding queues is irrelevant and should not be protected. A scheme had to be found which not only maps the optimisation depencies,
+but also preferably works with the intersection set test introduced in~\ref{ssec:path}.
+
+\paragraph{Dependency Mapping}
+The dependencies are the traversed optimised edges in critical paths (as in leading to the entry point).
+This is ultimately equivalent to the queues to be protected, which means the identifier of the block at the origin of the optimised edge. Because critical paths can depend on one another or be mutually exclusive, it is necessary to analyse all paths in parallel and accumulate their dependencies. To achieve this, the crawler once again creates the reverse tree originating from the entry point and propagates an individual set of dependencies along each branch, the content depending on the encountered edges. This means each node is assigned a set of all depencies encountered on route from the entry point to itself.
+As long as a default or virtual edge is traversed, a null identifier is added and propagated. When an optimised edge is traversed, the identifier of its source block is added to the dependency set and the propagated value is changed to the block identifier. This means only paths which depend on at least one optimisation will not carry null identifiers. If a node is reachable over multiple paths, all propagated identifiers will accumulate there.
+
+\paragraph{Enhanced Intersection Test}
+After the dependencies are mapped, we can once again check for the intersection between the reverse tree and the cursors. This time, however, there is an added twist to the process: Only the tree nodes whose dependency set contains a null identifier are considered when testing for safety, as they represent the critical paths. For all other members of the intersection set, their individual dependency set will show which queues must be protected in order to exploit the optimisation.
+
+\subsection{Covenants}
+\label{ssec:cov}
+The union of all dependency sets of non-critical intersections form a set of important commands. It allows the user to immedately remove the schedule in question in exchange, provided he does not preempt or delete any of the listed commands. The list is employed as covenants with the user (LSA / Director).
+Removing (by \emph{remove} or \emph{keep} command) the schedule will call the safe removal verfication and seal all associated covenants on success. Requesting verfication on its own has no lasting consequences.
+\par
+Covenants contain the block identifier, the queue priority and a checksum of their command. They are written to the DM memory as part of the management data and are automatically checked with each download operation and updated with each upload. If the contained command has been consumed, a covenant has been fulfilled and is removed. carpeDM will reject requested operations which would break a covenant in order to prevent undefined behaviour of the DM. Override can be forced if deemed necessary at the user's own peril. Like with all forced operations, the circumstances of the incident will be reported for later review.
+
+\subsection{Handling cursor to queue race conditions}
+\paragraph{Validity of Commands}
+When interpreting the DM's memory image, we have talked in depth about the blurriness of observed cursors. Yet another side effect of this comes into play when using the enhanced safe2remove alogrithm,
+because before now, all that was considered were worst cases. When interpreting queue content, this meant every element could be valid and was therefore added as an edges. This was the worst case, as the possible maximum of edges which could lead into critical areas were considered, no matter the order of execution. Since incrementing a queues read index is atomic and always the last action executed by the DM firmware before proceeding,
+it is known for certain that all elements seen as popped are indeed consumed. There might be less unconsumed elements than obeserved, but certainly not more, thus erring on the safe side.
+\par Now, however, the enhanced approach goes in the other direction, trying to shave something off the conservative first assessment. The question is therefore: Under which circumstances can queue elements be ignored?
+
+\paragraph{When to ignore queue elements}
+There are some possible answers to this, one might be that everything on lower priority than a flush command can be treated as void, for example. This is something not currently used, but should be investigated in the scope of future work (as of 22.10.2018).
+\par
+Yet another (implemented) approach is comparing the valid-timestamp of an element to the time at which the cursors were read.
+If read time is lower than an encountered valid time, the corresponding element is not available now and might still not be when the cursor arrives at this block.
+A valid-timestamp $\le$ read-time is thus a necessary condition to readjust the conservative assessment by overriding a critical default destination.
+\par
+As an example, let us assume the element at the front of the queue is a flow command, changing the block's critical default destination to a safe alternative, so it would make removal of the schedule safe.
+But because it's valid time is not yet reached, the outcome is uncertain - the command might or might not override the default destination. Because the analysis is not to rely on execution times, this flow command cannot be used as justification for an optimisation at this point.
+
+
+\section{Summary}
+A verification algorithm able to tell if a schedule is inactive and therefore safe to remove was created. The second and third approach listed in~\ref{} were implemented.
+\paragraph{Equivalent static model} This approach creates a time-invariant equivalent model, the ESM, from the original graph. In combination with the cursor positions in the DM, a safety assessment for the schedule removal is possible. The ESM is obtained by stripping the original graph of all but the default successor edges and adding virtual paths representing all flow commands in queues. Further virtual paths are iteratively added for all resident flow commands reachable by the current iteration of the model. The virtual path scheme provides a representation of flow commands which is independent of the time the command queues were observed.
+In the resulting ESM, the reverse tree originating from critical schedule's entry point can be mapped. If an intersection with the set of cursors
+is found, the schedule is active and therefore unsafe to remove.
+This result is independent of the cursor's progress since their observation time.
+\par The approach was proven to be valid by simulation for 3 fully  connected patterns (full coverage). The drawback was, as estimated, the blocking behaviour of the algorithm, producing possible wait times for a positive result in the dimensions of the longest pattern involved.
+\paragraph{Enhanced Equivalent static model}
+The enhanced verification algorithm was based on the ESM, augmenting it by replacing critical static links in the ESM with safe dynamic overrides. This requires a dynamic, permanent override (flow command) to a safe alternative destination to be present at the front of the queue or preceded by an unbroken chain of safe temporary overrides. Either allows immediate removal of the schedule in question; the involded queues must not be preempted until the crucial override to safety is executed. These promises have been named \emph{covenants} and are automatically managed and enforced by carpeDM.
+\par The algorithm was also proven to be valid by simulation for 3 fully connected patterns (full coverage). Wait times from the first approach were eliminated in exchange for compliance of the user with all active covenants.
+This is the standard for carpeDM $\ge$ v0.18.0.
+
+\chapter{Offline Resource Analysis}
+
+\section{Memory Load}
+
+\subsection{Problem Definition}
+Memory is a sparse resource in the DM, as it completely resides within the FPGA. Each CPU is assigned its own dual port memory containing all schedules this CPU executes. CPUs can technically also execute schedules residing outside their own memory. However, shared bus access is severe a bottleneck and source of non determinism, so this approach should be avoided at all costs. The consequence is that the assignment of schedules to CPUs has to be carefully planned to maximise resource utilisation.
+
+
+\subsection{Graph Data}
+
+\subsection{Meta Data}
+The overhead data present can be divided into two categories. 
+\par
+The first is directly linked to the schedule on a local basis and will be called schedule meta data.
+Their meta data forms distinct entities per node and can be read just like any other schedule node. 
+These come in the following varieties:
+%
+\begin{itemize}
+  \begin{item} Alternative destination list \end{item}
+  \begin{item} Queue buffer list \end{item}
+  \begin{item} Queue buffer \end{item}
+\end{itemize}
+%
+\par
+The second type contains meta data important to all schedules as a whole and is referred to as management data.
+Contrary to schedule data, management data is compressed and the archive is spread across the linked list of all management nodes. It can therefore not be interpreted on a per node level.
+Management data follows the minimal structure of nodes(type field, next ptr), but is only ever read by the host, never by the DM embedded system.
+It contains the following overhead information:
+%
+\begin{itemize}
+  \begin{item} Node relationship table \end{item}
+  \begin{itemize}
+    \begin{item} Node name \end{item}
+    \begin{item} Pattern name \end{item}
+    \begin{item} Node is entry to pattern \end{item}
+    \begin{item} Node is exit of pattern \end{item}
+    \begin{item} Beamprocess name\end{item}
+    \begin{item} Node is entry to beam process \end{item}
+    \begin{item} Node is exit of beam process \end{item}
+  \end{itemize}  
+  \begin{item} Covenant table \end{item}
+\end{itemize}
+%
+\subsection{Load Balancing}
+carpeDM $\ge$ v0.16.0 does auto-balance management data, but not schedule meta data, over all CPU RAMs.
+The currently is no memory load balancing for schedule data, all nodes are directly assigned to a CPU/RAM via a tag in their definition.
+This will be subject to change, but requires an a priori analysis of schedules, guaranteeing processor load to stay $\le100\%$. Since this is not implemented yet, an automatic assignment to CPUs is not sensible at the moment. See section~\ref{sec:nettraffic} for details on network calculus based load analysis.
+
+\subsection{Summary}
+
+
+
+\section{Network Traffic}
+\label{sec:nettraffic}
+
+\subsection{Problem Definition}
+
+\paragraph{CPU Performance}
+
+\paragraph{Network Performance}
+
+\subsection{Introduction to NC}
+
+\subsection{Introduction to DISCO DNC}
+
+\subsection{DM to Endpoint Model}
+
+\subsection{Arrival Curves from Schedules}
+
+\subsection{Verification Process}
+
+\subsection{Load Balancing}
+\label{ssec:ncloadbalance}
+
+\subsection{Summary}
+

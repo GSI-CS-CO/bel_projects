@@ -37,15 +37,15 @@ static void help(const char *program) {
 
 int main(int argc, char* argv[]) {
 
-  char dirnameBuff[80];
+//  char dirnameBuff[80];
 
-  bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
+  bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false, writefile=false;
   bool reqStatus = false;
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = outfile;
-  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
+  const char *netaddress, *inputFilename = NULL, *cmdName = "status", *outputFilename = outfile;
+//  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
   int32_t error=0;
 
 
@@ -55,10 +55,11 @@ int main(int argc, char* argv[]) {
 
          case 'o':
             outputFilename  = optarg;
+            writefile = true;
             if (outputFilename == NULL) {
               std::cerr << std::endl << program << ": option -o expects a filename" << std::endl;
+              error = -1;
             }
-            error = -1;
             break;
          case 'd':
             debug = true;
@@ -112,8 +113,6 @@ int main(int argc, char* argv[]) {
    if (optind+1 < argc) cmdName        = argv[optind+1];
    if (optind+2 < argc) inputFilename  = argv[optind+2];
 
-
-
   CarpeDM cdm;
 
 
@@ -142,8 +141,8 @@ int main(int argc, char* argv[]) {
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
-      if (cmd == "dump")      { cdm.download(); std::cout << cdm.downloadDot(strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
+      if (cmd == "status")    { cmdValid = true; reqStatus = true;}
+      if ((cmd == "status" && writefile) || cmd == "dump") { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "rawvisited"){ cdm.download(); cdm.showPaint(); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
         /*
@@ -163,7 +162,7 @@ int main(int argc, char* argv[]) {
         cmdValid = true;
       }
 
-      if(verbose) cdm.showUp(false);
+      //if(verbose) cdm.showUp(false);
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to execute <"<< cmd << ". Cause: " << err.what() << std::endl;
       return -6;
@@ -176,7 +175,7 @@ int main(int argc, char* argv[]) {
 
   if ( update ) {
     try {
-      cdm.downloadDotFile(outputFilename, strip);
+      cdm.download();
       if(verbose || reqStatus) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {

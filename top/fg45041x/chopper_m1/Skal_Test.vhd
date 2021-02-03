@@ -8,19 +8,19 @@ ENTITY Skal_Test IS
 			ST_160_Pol			: INTEGER := 1;
 			No_Port_Dir_Test	: INTEGER := 0;
 			K3_Input			: INTEGER := 1;
-			K3D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_3 Datenleitungen. Wird veglichen mit A_K3D_SPG.  
-			K3C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_3 Steuerleitungen. Wird veglichen mit A_K3C_SPG.
+			K3D_Def_Level		: INTEGER := 0;		-- Vorgabe fuer den Default Level der Kanal_3 Datenleitungen. Wird veglichen mit A_K3D_SPG.  
+			K3C_Def_Level		: INTEGER := 1;		-- Vorgabe fuer den Default Level der Kanal_3 Steuerleitungen. Wird veglichen mit A_K3C_SPG.
 			K2_Input			: INTEGER := 1;
-			K2D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_2 Datenleitungen. Wird veglichen mit A_K2D_SPG.  
-			K2C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_2 Steuerleitungen. Wird veglichen mit A_K2C_SPG.
+			K2D_Def_Level		: INTEGER := 0;		-- Vorgabe fuer den Default Level der Kanal_2 Datenleitungen. Wird veglichen mit A_K2D_SPG.  
+			K2C_Def_Level		: INTEGER := 1;		-- Vorgabe fuer den Default Level der Kanal_2 Steuerleitungen. Wird veglichen mit A_K2C_SPG.
 			Gr1_APK_ID			: INTEGER := 1;
 			Gr1_16Bit			: INTEGER := 1;
 			K1_Input			: INTEGER := 1;
-			K1D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_1 Datenleitungen. Wird veglichen mit A_K1D_SPG.  
-			K1C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_1 Steuerleitungen. Wird veglichen mit A_K1C_SPG.
+			K1D_Def_Level		: INTEGER := 0;		-- Vorgabe fuer den Default Level der Kanal_1 Datenleitungen. Wird veglichen mit A_K1D_SPG.  
+			K1C_Def_Level		: INTEGER := 1;		-- Vorgabe fuer den Default Level der Kanal_1 Steuerleitungen. Wird veglichen mit A_K1C_SPG.
 			K0_Input			: INTEGER := 1;
-			K0D_Def_Level		: INTEGER := 0;		-- Vorgabe für den Default Level der Kanal_0 Datenleitungen. Wird veglichen mit A_K0D_SPG.  
-			K0C_Def_Level		: INTEGER := 1;		-- Vorgabe für den Default Level der Kanal_0 Steuerleitungen. Wird veglichen mit A_K0C_SPG.
+			K0D_Def_Level		: INTEGER := 0;		-- Vorgabe fuer den Default Level der Kanal_0 Datenleitungen. Wird veglichen mit A_K0D_SPG.  
+			K0C_Def_Level		: INTEGER := 1;		-- Vorgabe fuer den Default Level der Kanal_0 Steuerleitungen. Wird veglichen mit A_K0C_SPG.
 			Gr0_APK_ID			: INTEGER := 1;
 			Gr0_16Bit			: INTEGER := 1;
 			No_Level_Test		: INTEGER := 0;
@@ -182,9 +182,9 @@ P_Skal_Test:	PROCESS (clk)
 nK0_Switch_Ena <= '0';
 nK1_Switch_Ena <= '0';
 nK2_Switch_Ena <= '0';	-- obwohl der Kanal_2 nicht gebraucht wird muss er selektiert werden, damit die Pulldowns	--
-						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				-- 
+						-- an anderen Seite des FET-Schalter die Einaenge am EPLD auf def. Pegel legen.				-- 
 nK3_Switch_Ena <= '0';	-- obwohl der Kanal_3 nicht gebraucht wird muss er selektiert werden, damit die Pulldowns	--
-						-- an anderen Seite des FET-Schalter die Einänge am EPLD auf def. Pegel legen.				-- 
+						-- an anderen Seite des FET-Schalter die Einaenge am EPLD auf def. Pegel legen.				-- 
 
 
 END GENERATE ST_96; -------------------------------------------------------------

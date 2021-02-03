@@ -1,7 +1,7 @@
 #ifndef _DM_UNIPZ_H_
 #define _DM_UNIPZ_H_
 
-#include <b2b-common.h>
+#include <common-defs.h>
 #include "../../ftm/include/ftm_common.h"     // defs and regs for data master
 
 
@@ -52,11 +52,12 @@
 #define  DMUNIPZ_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
-#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
+#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam at UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
 #define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
 #define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS via TLU
 #define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
+#define  DMUNIPZ_ECADO_PREPBEAM   8           // prepare beam at UNIPZ (preceedes 'REQBEAM')
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_REQTK       0           // TK requested
@@ -65,6 +66,8 @@
 #define DMUNIPZ_TRANS_REQBEAM     3           // beam requested
 #define DMUNIPZ_TRANS_REQBEAMOK   4           // beam request succeeded
 #define DMUNIPZ_TRANS_RELBEAM     5           // beam released
+#define DMUNIPZ_TRANS_PREPBEAM    6           // beam preparation requested
+#define DMUNIPZ_TRANS_UNPREPBEAM  7           // beam preparation released
 
 
 typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
@@ -108,13 +111,15 @@ typedef struct TPZSInfo1 {
   /* Bit  0..3  */  uint16_t free2         : 4;
 } TPZSInfo1;
 
+
 typedef struct TPZSInfo5 {
-  /* Bit  8..15 */  uint16_t freeIn1       : 8; 
-  /* Bit  7     */  uint16_t ReqNoBeam     : 1;   /* Request accelerator but without beam */
+  /* Bit  9..15 */  uint16_t freeIn1       : 7;
+  /* Bit  8     */  uint16_t SIS_PrepReq   : 1;   /* beam Request will happen in 100ms */
+  /* Bit  7     */  uint16_t ReqNoBeam     : 1;   /* Request accelerator but without beam (timing only) */
   /* Bit  6     */  uint16_t Req_not_ok_Ack: 1;   /* Acknowledge for beam request error */
   /* Bit  5     */  uint16_t SIS_Request   : 1;   /* Request beam for SIS */
   /* Bit  4     */  uint16_t TK_Request    : 1;   /* Request TK preparation */
-  /* Bit  0..3  */  uint16_t SIS_Acc_Select: 4;   /* Requested accelerator */ 
+  /* Bit  0..3  */  uint16_t SIS_Acc_Select: 4;   /* Requested accelerator */
 } TPZSInfo5;
 
 
@@ -155,5 +160,8 @@ typedef union {
 #define DMUNIPZ_SHARED_NR2STRANSFER   (DMUNIPZ_SHARED_DTREADY2SIS   + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_NR2SCYCLE      (DMUNIPZ_SHARED_NR2STRANSFER  + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_DTBPREP        (DMUNIPZ_SHARED_NR2SCYCLE     + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
+
+// diagnosis: end of used shared memory
+#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // end of shared memory
 
 #endif

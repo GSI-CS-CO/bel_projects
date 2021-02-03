@@ -6,11 +6,12 @@
 #   make STAGING=/tmp/package PREFIX=/usr install
 #   ... will compile the programs to expect installation into /usr, but
 #       will actually install them into /tmp/package/usr for zipping.
-STAGING      ?=
-PREFIX       ?= /usr/local
-SYSCONFDIR   ?= /etc
-PWD          := $(shell pwd)
-EXTRA_FLAGS  ?=
+STAGING         ?=
+PREFIX          ?= /usr/local
+SYSCONFDIR      ?= /etc
+PWD             := $(shell pwd)
+EXTRA_FLAGS     ?=
+WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -63,7 +64,7 @@ endef
 
 define check_timing
 	@test -f $(1).sta.rpt || echo "Error: Report file is missing!"
-	@ls -l $(1).sta.rpt 
+	@ls -l $(1).sta.rpt
 	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
 	@echo "Success! All Timing requirements were met!"
 endef
@@ -139,15 +140,27 @@ tlu-install::
 	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu install
 
 driver::
+ifeq ($(WISHBONE_SERIAL),)
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
+else
+	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all CONFIG_USB_SERIAL_WISHBONE=yes
+endif
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb all
 
 driver-clean::
+ifeq ($(WISHBONE_SERIAL),)
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb clean
+else
+	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb clean CONFIG_USB_SERIAL_WISHBONE=yes
+endif
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb clean
 
 driver-install::
+ifeq ($(WISHBONE_SERIAL),)
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb install
+else
+	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb install CONFIG_USB_SERIAL_WISHBONE=yes
+endif
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb install
 
 sdbfs::
@@ -247,7 +260,7 @@ pexarria5-check:
 
 microtca::	firmware
 	$(MAKE) -C $(PATH_MICROTCA) all
-	
+
 microtca-clean::
 	$(MAKE) -C $(PATH_MICROTCA) clean
 
@@ -409,3 +422,9 @@ prereq-rule::
 		(echo "Downloading submodules"; ./fix-git.sh)
 	@test -d lib/python2.7/site-packages || \
 		(echo "Installing hdlmake"; ./install-hdlmake.sh)
+
+git_submodules_update:
+	@git submodule update --recursive
+
+git_submodules_init:
+	@./fix-git.sh

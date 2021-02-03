@@ -7,11 +7,11 @@ use IEEE.MATH_REAL.ALL;
 
 --+---------------------------------------------------------------------------------------------------------------------------------------------------------+
 --|	Mil_bipol_dec:																																			|
---|		Das positive und negative Manchester-Signal mit wird von zwei unhabhängen Makros (Mil_dec_edge_timed_v1) empfangen.									|
---|		a)	Melden beide innerhalb der "max_jitter_ns" Zeit Valid Word, dann wird geprüft ob das empfangene Datum und die Kommando-Daten-Kennung 			|
---|			übereinstimmt. Falls nicht wird "Data_not_equal" oder "CMD_not_Equal" generiert. Es wird kein "Rcv_Rdy" erzeugt.								|
---|			Stimmt alles überein wird "Rcv_Rdy" erzeugt.																									|
---|		b)	Hat einer der unabhängigen Manchester-Dekoder ein gültiges Telegramm empfangen, dann wird dies mit der entsprechenden Kommando-Daten-Kennung	|
+--|		Das positive und negative Manchester-Signal mit wird von zwei unhabhaengen Makros (Mil_dec_edge_timed_v1) empfangen.									|
+--|		a)	Melden beide innerhalb der "max_jitter_ns" Zeit Valid Word, dann wird geprueft ob das empfangene Datum und die Kommando-Daten-Kennung 			|
+--|			uebereinstimmt. Falls nicht wird "Data_not_equal" oder "CMD_not_Equal" generiert. Es wird kein "Rcv_Rdy" erzeugt.								|
+--|			Stimmt alles ueberein wird "Rcv_Rdy" erzeugt.																									|
+--|		b)	Hat einer der unabhaengigen Manchester-Dekoder ein gueltiges Telegramm empfangen, dann wird dies mit der entsprechenden Kommando-Daten-Kennung	|
 --| 		weitergegeben und "Rcv_Rdy" erzeugt. Der Manchester-Dekoder, der kein Telegramm empfangen hat wird mit dem Fehlersignal "No_VW_p(n)" 			|
 --|			gekennzeichnet.																																	|
 --|																																							|
@@ -20,71 +20,71 @@ use IEEE.MATH_REAL.ALL;
 --|	Datum:		29.02.12																																	|
 --|																																							|
 --|	Version: 2	Datum:	27.03.12	Autor:	W.Panschow																										|
---|	Grund:		Wenn beide Decoder_n(p) ein Valid-Word geliefert haben, aber die Daten oder die Kommand-Daten-Kennung nicht übereinstimmt, wird kein		|
---|				"Rcv_Rdy" erzeugt. Dies hat zur Folge, dass die nachgeschaltete Datensenke auch kein "Rd_Mil" durchführt. Dies hat wiederum zur Folge, dass	|
---|				die beiden Decoder nicht schnellst möglich in den Idle-Zustand wechseln. In Version 2 generieren die Fehler-Signale "Data_not_equal" oder	|
---|				"CMD_not_Equal" ein automatisches "RD_Mil"-Signal. D.H. beide Decoder werden sofort zurückgesetzt.											|
+--|	Grund:		Wenn beide Decoder_n(p) ein Valid-Word geliefert haben, aber die Daten oder die Kommand-Daten-Kennung nicht uebereinstimmt, wird kein		|
+--|				"Rcv_Rdy" erzeugt. Dies hat zur Folge, dass die nachgeschaltete Datensenke auch kein "Rd_Mil" durchfuehrt. Dies hat wiederum zur Folge, dass	|
+--|				die beiden Decoder nicht schnellst moeglich in den Idle-Zustand wechseln. In Version 2 generieren die Fehler-Signale "Data_not_equal" oder	|
+--|				"CMD_not_Equal" ein automatisches "RD_Mil"-Signal. D.H. beide Decoder werden sofort zurueckgesetzt.											|
 --|																																							|
 --|	Version: 3	Datum:	28.03.12	Autor:	W.Panschow																										|
---|	Grund:		Die Zeitdifferenz "max_jitter_ns" in der positive und negative Manchester-Encoder das "valid word" liefern müssen, war zu kurz definiert.	|
---|				Dadurch wurde der Fehler "No_VW_p(n)" generiert, obwohl das Datum etwas später empfangen wurde. Die erlaubte Differenz wurde von 100 ns auf	|
---|				300 ns vergrößert.																															|
+--|	Grund:		Die Zeitdifferenz "max_jitter_ns" in der positive und negative Manchester-Encoder das "valid word" liefern muessen, war zu kurz definiert.	|
+--|				Dadurch wurde der Fehler "No_VW_p(n)" generiert, obwohl das Datum etwas spaeter empfangen wurde. Die erlaubte Differenz wurde von 100 ns auf	|
+--|				300 ns vergroessert.																															|
 --|																																							|
 --|	Version: 4	Datum:	30.03.12	Autor:	W.Panschow																										|
---|	Grund:		Zwei Fehlerzähler die das no valid word des positiven und negativen Dekoders erfassen wurden eingebaut. Sie sind im Ausgang No_VW_Cnt		|
---|				zusammengefasst worden. Sie können mit dem Eingang Clr_No_VW_Cnt = '1' (muss mindesten eine 'clk'-Periode lang aktiv sein) zurückgesetzt	|
+--|	Grund:		Zwei Fehlerzaehler die das no valid word des positiven und negativen Dekoders erfassen wurden eingebaut. Sie sind im Ausgang No_VW_Cnt		|
+--|				zusammengefasst worden. Sie koennen mit dem Eingang Clr_No_VW_Cnt = '1' (muss mindesten eine 'clk'-Periode lang aktiv sein) zurueckgesetzt	|
 --|				werden.																																		|
---|				Zwei weitere Fehlerzähler erfassen, wenn beide Dekoder ein Telegram empfangen haben, ob ein Unterschied in den Daten oder in der 			|
---|				Komando-Daten-Kennung besteht. Beide Zähler werden im Ausgang Not_Equal_Cnt zusammengefasst. Beide Zähler werden mit dem Eingang			|
---|				Clr_Not_Equal_Cnt = '1' (muss mindesten eine 'clk'-Periode lang aktiv sein) zurückgesetzt.													|
+--|				Zwei weitere Fehlerzaehler erfassen, wenn beide Dekoder ein Telegram empfangen haben, ob ein Unterschied in den Daten oder in der 			|
+--|				Komando-Daten-Kennung besteht. Beide Zaehler werden im Ausgang Not_Equal_Cnt zusammengefasst. Beide Zaehler werden mit dem Eingang			|
+--|				Clr_Not_Equal_Cnt = '1' (muss mindesten eine 'clk'-Periode lang aktiv sein) zurueckgesetzt.													|
 --|																																							|
 --|	Version: 5	Datum:	02.04.12	Autor:	W.Panschow																										|
---|	Grund:		Beim Einschalten der Interface-Karte könnte diese einen laufenden Transfer mit einer anderen Interface-Karte als Fehler auswerten. Dies		|
---|				wird vermieden, wenn die Fehlerzähler der Interface-Karte erst aktivert werden, wenn das Power-up-Bit der Interfacekarte quittiert wurde.	|
+--|	Grund:		Beim Einschalten der Interface-Karte koennte diese einen laufenden Transfer mit einer anderen Interface-Karte als Fehler auswerten. Dies		|
+--|				wird vermieden, wenn die Fehlerzaehler der Interface-Karte erst aktivert werden, wenn das Power-up-Bit der Interfacekarte quittiert wurde.	|
 --|																																							|
 --|	Version: 6	Datum:	23.04.12	Autor:	W.Panschow																										|
---|	Grund:		Die Zeitdifferenz die zwischen Valid Word des positiven und des negativen Dekoders auftreten kann ist von der Devicebuslänge abhängig.		|
+--|	Grund:		Die Zeitdifferenz die zwischen Valid Word des positiven und des negativen Dekoders auftreten kann ist von der Devicebuslaenge abhaengig.		|
 --|				Einer der beiden Dekoder muss immer darauf warten, dass das Paritiy-Bit die letzten Flanke mit einem Spannungspegel beendet, die nicht		|
 --|				dem Ruhepegel entspricht. Deshalb kommt am Ende der Parity-Bit-Zeit noch eine Flanke die durch das Ausschwingen in die Ruhespannung erzeugt	|
---|				wird. Dies wird aber nicht mehr aktiv betrieben, und dauert bei einem längeren Device-Bus durch die größere kapatizive Last entsprechend	|
---|				länger.	Bis Version 5 war die Zeitdifferenz "max_jitter_ns" auf 300 ns festgelegt.															|
---|				In Version 6 ist "max_jitter_ns" auf 900 ns erhöht worden.																					|
---|				Das hat zur Folge, dass die Lücke zwischen den Telegrammen größer als 900 ns sein muss.														|
+--|				wird. Dies wird aber nicht mehr aktiv betrieben, und dauert bei einem laengeren Device-Bus durch die groessere kapatizive Last entsprechend	|
+--|				laenger.	Bis Version 5 war die Zeitdifferenz "max_jitter_ns" auf 300 ns festgelegt.															|
+--|				In Version 6 ist "max_jitter_ns" auf 900 ns erhoeht worden.																					|
+--|				Das hat zur Folge, dass die Luecke zwischen den Telegrammen groesser als 900 ns sein muss.														|
 --+---------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
 ENTITY Mil_bipol_dec IS
 	GENERIC(
-			CLK_in_Hz:					INTEGER := 24_000_000;	-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu können 
-																-- (kürzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-																-- Die tatsächlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.
-			threshold_not_equal_err:	INTEGER := 15;			-- überschreiten die Fehlerzähler "S_Data_not_equal_cnt" oder "S_CMD_not_equal_cnt" diesen Wert, dann wird der Ausgang "error_limit_reached" aktiv 'eins'. 
-			threshold_no_VW_err:		INTEGER := 15			-- überschreiten die Fehlerzähler "S_No_VW_p_cnt" oder "S_No_VW_n_cnt" diesen Wert, dann wird der Ausgang "error_limit_reached" aktiv 'eins'. 
+			CLK_in_Hz:					INTEGER := 24_000_000;	-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+																-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+																-- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.
+			threshold_not_equal_err:	INTEGER := 15;			-- ueberschreiten die Fehlerzaehler "S_Data_not_equal_cnt" oder "S_CMD_not_equal_cnt" diesen Wert, dann wird der Ausgang "error_limit_reached" aktiv 'eins'. 
+			threshold_no_VW_err:		INTEGER := 15			-- ueberschreiten die Fehlerzaehler "S_No_VW_p_cnt" oder "S_No_VW_n_cnt" diesen Wert, dann wird der Ausgang "error_limit_reached" aktiv 'eins'. 
 			);
 	PORT(
 		Manchester_In_p			: IN	STD_LOGIC;				-- positiver Eingangsdatenstrom MIL-1553B
 		Manchester_In_n			: IN	STD_LOGIC;				-- negativer Eingangsdatenstrom MIL-1553B
-		RD_MIL					: IN	STD_LOGIC;				-- setzt Rcv_Rdy zurück. Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
-		Clr_No_VW_Cnt			: IN	STD_LOGIC;				-- Löscht die no valid word Fehler-Zähler des positiven und negativen Dekoders. Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
-		Clr_Not_Equal_Cnt		: IN	STD_LOGIC;				-- Löscht die Fehlerzähler für Data_not_equal und den Fehlerzähler für unterschiedliche Komando-Daten-Kennung (CMD_not_equal). Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
-		Res						: IN	STD_LOGIC;				-- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
-		Power_up				: IN	STD_LOGIC;				-- so lange Power_up = '1' ist, bleiben alle 4 Fehlerzähler auf null.
+		RD_MIL					: IN	STD_LOGIC;				-- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
+		Clr_No_VW_Cnt			: IN	STD_LOGIC;				-- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders. Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
+		Clr_Not_Equal_Cnt		: IN	STD_LOGIC;				-- Loescht die Fehlerzaehler fuer Data_not_equal und den Fehlerzaehler fuer unterschiedliche Komando-Daten-Kennung (CMD_not_equal). Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
+		Res						: IN	STD_LOGIC;				-- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.
+		Power_up				: IN	STD_LOGIC;				-- so lange Power_up = '1' ist, bleiben alle 4 Fehlerzaehler auf null.
 		Clk						: IN	STD_LOGIC;
 		Rcv_Cmd					: OUT	STD_LOGIC;				-- '1' es wurde ein Kommando empfangen.
 		Rcv_Rdy					: OUT	STD_LOGIC;				-- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
 		Mil_Rcv_Data			: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Empfangenes Datum oder Komando
-		Error_detect			: OUT	STD_LOGIC;				-- Zusammengefassung aller möglichen Fehlermeldungen (ein Takt aktiv '1').
+		Error_detect			: OUT	STD_LOGIC;				-- Zusammengefassung aller moeglichen Fehlermeldungen (ein Takt aktiv '1').
 		Rcv_Error_p				: OUT	STD_LOGIC;				-- im positiven Signalpfad ist ein Fehler aufgetreten (ein Takt aktiv '1').
 		Rcv_Error_n				: OUT	STD_LOGIC;				-- im negativen Signalpfad ist ein Fehler aufgetreten (ein Takt aktiv '1').
 		No_VW_p					: OUT	STD_LOGIC;				-- im positiven Signalpfad kam kein Valid Word (ein Takt aktiv '1').
 		No_VW_n					: OUT	STD_LOGIC;				-- im negativen Signalpfad kam kein Valid Word (ein Takt aktiv '1').
 		Data_not_equal			: OUT	STD_LOGIC;				-- das Datum zwischem negativen und positivem Signalpfad ist ungleich (ein Takt aktiv '1').
 		CMD_not_equal			: OUT	STD_LOGIC;				-- das Komando zwischem negativen und positivem Signalpfad ist ungleich (ein Takt aktiv '1').
-		No_VW_Cnt				: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Bit[15..8] Fehlerzähler für No Valid Word des positiven Decoders "No_VW_p", Bit[7..0] Fehlerzähler für No Valid Word des negativen Decoders "No_VM_n"
-		Not_Equal_Cnt			: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Bit[15..8] Fehlerzähler für Data_not_equal, Bit[7..0] Fehlerzähler für unterschiedliche Komando-Daten-Kennung (CMD_not_equal)
-		error_limit_reached		: OUT	STD_LOGIC;						-- wird aktiv 'eins' wenn die Fehlerzähler die Generics "threshold_not_equal_err" oder "threshold_no_VW_err" überschritten haben.
-		Mil_Decoder_Diag_p		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Diagnoseausgänge des Manchester Decoders am positiven Signalpfad.
-		Mil_Decoder_Diag_n		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgänge des Manchester Decoders am negativen Signalpfad.
+		No_VW_Cnt				: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p", Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n"
+		Not_Equal_Cnt			: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Bit[15..8] Fehlerzaehler fuer Data_not_equal, Bit[7..0] Fehlerzaehler fuer unterschiedliche Komando-Daten-Kennung (CMD_not_equal)
+		error_limit_reached		: OUT	STD_LOGIC;						-- wird aktiv 'eins' wenn die Fehlerzaehler die Generics "threshold_not_equal_err" oder "threshold_no_VW_err" ueberschritten haben.
+		Mil_Decoder_Diag_p		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Diagnoseausgaenge des Manchester Decoders am positiven Signalpfad.
+		Mil_Decoder_Diag_n		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgaenge des Manchester Decoders am negativen Signalpfad.
 		);
 
 END Mil_bipol_dec;
@@ -116,24 +116,24 @@ ARCHITECTURE Arch_Mil_bipol_dec OF Mil_bipol_dec IS
 
 COMPONENT Mil_dec_edge_timed_v1
 	GENERIC(
-			CLK_in_Hz		: INTEGER := 40_000_000;				-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu können 
-																	-- (kürzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-																	-- Die tatsächlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
+			CLK_in_Hz		: INTEGER := 40_000_000;				-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+																	-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+																	-- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
 			Receive_pos_lane: INTEGER RANGE 0 TO 1 := 0				-- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
 																	-- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 
 			);
 	PORT(
 		Manchester_In		: IN	STD_LOGIC;						-- Eingangsdatenstrom MIL-1553B
-		RD_MIL				: IN	STD_LOGIC;						-- setzt Rcv_Rdy zurück. Muss synchron zur Clock 'clk' und mindesten eine
+		RD_MIL				: IN	STD_LOGIC;						-- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine
 																	-- Periode lang aktiv sein!
-		Res					: IN	STD_LOGIC;						-- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+		Res					: IN	STD_LOGIC;						-- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.
 		Clk					: IN	STD_LOGIC;
 		Rcv_Cmd				: OUT	STD_LOGIC;						-- '1' es wurde ein Kommando empfangen.
-		Rcv_Error			: OUT	STD_LOGIC;						-- ist bei einem Fehler für einen Takt aktiv '1'.
+		Rcv_Error			: OUT	STD_LOGIC;						-- ist bei einem Fehler fuer einen Takt aktiv '1'.
 		Rcv_Rdy				: OUT	STD_LOGIC;						-- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
 		Mil_Rcv_Data		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Empfangenes Datum oder Komando
-		Mil_Decoder_Diag	: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgänge für Logikanalysator
+		Mil_Decoder_Diag	: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0)	-- Diagnoseausgaenge fuer Logikanalysator
 		);
 END COMPONENT;
 
@@ -152,12 +152,12 @@ SIGNAL  S_No_VW_p:				STD_LOGIC;						-- es wurde kein Valid Word vom positiven 
 SIGNAL  S_No_VW_n:				STD_LOGIC;						-- es wurde kein Valid Word vom negativen Manchester-Dekoder erzeugt
 SIGNAL  S_Data_not_equal:		STD_LOGIC;						-- Fehler: der positve und negative Manchester-Dekoder hat unterschiedliche Daten empfangen
 SIGNAL  S_CMD_not_equal:		STD_LOGIC;						-- Fehler: der positve und negative Manchester-Dekoder hat unterschiedliche unterschiedliche Kommando/Daten-Kennung
-SIGNAL  S_No_VW_p_cnt:			STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzähler für fehlendes Valid Word vom positiven Manchester-Dekoder
-SIGNAL  S_No_VW_n_cnt:			STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzähler für fehlendes Valid Word vom negativen Manchester-Dekoder
-SIGNAL  S_Data_not_equal_cnt:	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzähler wenn der positve und negative Manchester-Dekoder unterschiedliche Daten empfangen hat
-SIGNAL  S_CMD_not_equal_cnt:	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzähler wenn der positve und negative Manchester-Dekoder unterschiedliche Kommando/Daten-Kennung erzeugt hat
-SIGNAL	S_threshold_not_equal_err:	STD_LOGIC;					-- wird aktiv 'eins', wenn die Fehlerzähler "S_Data_not_equal_cnt" oder "S_CMD_not_equal_cnt" den Generic-Wert "threshold_not_equal_err" überschritten haben.
-SIGNAL	S_threshold_no_VW_err:		STD_LOGIC;					-- wird aktiv 'eins', wenn die Fehlerzähler "S_No_VW_p_cnt" oder "S_No_VW_n_cnt" den Generic-Wert "threshold_no_VW_err" überschritten haben.
+SIGNAL  S_No_VW_p_cnt:			STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzaehler fuer fehlendes Valid Word vom positiven Manchester-Dekoder
+SIGNAL  S_No_VW_n_cnt:			STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzaehler fuer fehlendes Valid Word vom negativen Manchester-Dekoder
+SIGNAL  S_Data_not_equal_cnt:	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzaehler wenn der positve und negative Manchester-Dekoder unterschiedliche Daten empfangen hat
+SIGNAL  S_CMD_not_equal_cnt:	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Fehlerzaehler wenn der positve und negative Manchester-Dekoder unterschiedliche Kommando/Daten-Kennung erzeugt hat
+SIGNAL	S_threshold_not_equal_err:	STD_LOGIC;					-- wird aktiv 'eins', wenn die Fehlerzaehler "S_Data_not_equal_cnt" oder "S_CMD_not_equal_cnt" den Generic-Wert "threshold_not_equal_err" ueberschritten haben.
+SIGNAL	S_threshold_no_VW_err:		STD_LOGIC;					-- wird aktiv 'eins', wenn die Fehlerzaehler "S_No_VW_p_cnt" oder "S_No_VW_n_cnt" den Generic-Wert "threshold_no_VW_err" ueberschritten haben.
 SIGNAL  S_Rd_Mil:				STD_LOGIC;
 
 SIGNAL	S_CMD_not_eq_pulse:		STD_LOGIC;
@@ -167,11 +167,11 @@ SIGNAL	S_Data_not_eq_pulse:	STD_LOGIC;
 BEGIN
 
 ASSERT NOT (CLK_in_Hz < 20_000_000)
-	REPORT "Die Freq. für 'Mil_bipol_dec' ist " & integer'image(Clk_in_Hz) & " Hz. Sie sollte aber > 20 MHz sein!"
+	REPORT "Die Freq. fuer 'Mil_bipol_dec' ist " & integer'image(Clk_in_Hz) & " Hz. Sie sollte aber > 20 MHz sein!"
 SEVERITY Error;
 
 ASSERT NOT (CLK_in_Hz >= 20_000_000)
-	REPORT "Die Freq. für 'Mil_bipol_dec' ist " & integer'image(Clk_in_Hz) & " Hz."
+	REPORT "Die Freq. fuer 'Mil_bipol_dec' ist " & integer'image(Clk_in_Hz) & " Hz."
 SEVERITY WARNING;
 
 ASSERT False
@@ -181,47 +181,47 @@ SEVERITY WARNING;
 
 Mil_dec_p:	Mil_dec_edge_timed_v1
 	GENERIC MAP(
-				CLK_in_Hz		=> CLK_in_Hz,			-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu können 
-														-- (kürzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-														-- Die tatsächlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
+				CLK_in_Hz		=> CLK_in_Hz,			-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+														-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+														-- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
 				Receive_pos_lane	=> 1				-- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
 														-- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 
 				)
 	PORT MAP(
 			Manchester_In	=> Manchester_In_p,			-- Eingangsdatenstrom MIL-1553B
-			RD_MIL			=> S_RD_MIL,				-- setzt Rcv_Rdy zurück. Muss synchron zur Clock 'clk' und mindesten eine
+			RD_MIL			=> S_RD_MIL,				-- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine
 														-- Periode lang aktiv sein!
-			Res				=> Res,						-- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+			Res				=> Res,						-- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.
 			Clk				=> Clk,
 			Rcv_Cmd			=> RCV_Cmd_p,				-- '1' es wurde ein Kommando empfangen.
-			Rcv_Error		=> S_Rcv_Error_p,			-- ist bei einem Fehler für einen Takt aktiv '1'.
+			Rcv_Error		=> S_Rcv_Error_p,			-- ist bei einem Fehler fuer einen Takt aktiv '1'.
 			Rcv_Rdy			=> Rcv_p,					-- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
 			Mil_Rcv_Data	=> Mil_Rcv_Data_p,			-- Empfangenes Datum oder Komando
-			Mil_Decoder_Diag	=> Mil_Decoder_Diag_p	-- Diagnoseausgänge für Logikanalysator
+			Mil_Decoder_Diag	=> Mil_Decoder_Diag_p	-- Diagnoseausgaenge fuer Logikanalysator
 			);
 
 
 Mil_dec_n:	Mil_dec_edge_timed_v1
 	GENERIC MAP(
-					CLK_in_Hz		=> CLK_in_Hz,		-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu können 
-														-- (kürzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-														-- Die tatsächlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
+					CLK_in_Hz		=> CLK_in_Hz,		-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+														-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+														-- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz" in Hertz beschrieben werden.  
 					Receive_pos_lane	=> 0			-- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
 														-- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 	
 				)
 	PORT MAP(
 				Manchester_In	=> Manchester_In_n,		-- Eingangsdatenstrom MIL-1553B
-				RD_MIL			=> S_RD_MIL,			-- setzt Rcv_Rdy zurück. Muss synchron zur Clock 'clk' und mindesten eine
+				RD_MIL			=> S_RD_MIL,			-- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine
 														-- Periode lang aktiv sein!
-				Res				=> Res,					-- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+				Res				=> Res,					-- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.
 				Clk				=> Clk,
 				Rcv_Cmd			=> RCV_Cmd_n,			-- '1' es wurde ein Kommando empfangen.
-				Rcv_Error		=> S_Rcv_Error_n,		-- ist bei einem Fehler für einen Takt aktiv '1'.
+				Rcv_Error		=> S_Rcv_Error_n,		-- ist bei einem Fehler fuer einen Takt aktiv '1'.
 				Rcv_Rdy			=> Rcv_n,				-- '1' es wurde ein Kommand oder Datum empfangen. Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
 				Mil_Rcv_Data	=> Mil_Rcv_Data_n,		-- Empfangenes Datum oder Komando
-			Mil_Decoder_Diag	=> Mil_Decoder_Diag_n	-- Diagnoseausgänge für Logikanalysator
+			Mil_Decoder_Diag	=> Mil_Decoder_Diag_n	-- Diagnoseausgaenge fuer Logikanalysator
 			);
 
 
@@ -267,13 +267,13 @@ P_Eval_RCV_SM:	PROCESS	(clk, Res)
 				WHEN RCV_p_RCV_n_together =>									-- Beide Encoder haben ein Telegram empfangen.
 					
 					IF RCV_Cmd_p = RCV_Cmd_n THEN								-- teste ob beide Encoder die gleiche Kommando-Daten-Kennung haben
-						S_RCV_Cmd <= RCV_Cmd_p;									-- ja, übernehme die Kommando-Daten-Kennung
+						S_RCV_Cmd <= RCV_Cmd_p;									-- ja, uebernehme die Kommando-Daten-Kennung
 					ELSE
 						S_CMD_not_equal <= '1';									-- signalisiere ungleiche Kommand-Daten-Kennung
 					END IF;
 					
 					IF Mil_Rcv_Data_p = Mil_Rcv_Data_n THEN						-- teste ob beide Encoder das gleiche Datum empfangen haben
-						Mil_Rcv_Data <= Mil_Rcv_Data_p;							-- ja, übernehme das Datum
+						Mil_Rcv_Data <= Mil_Rcv_Data_p;							-- ja, uebernehme das Datum
 					ELSE
 						S_Data_not_equal <= '1';								-- signalisiere ungleiches Datum
 					END IF;
@@ -284,11 +284,11 @@ P_Eval_RCV_SM:	PROCESS	(clk, Res)
 
 					IF jitter_cnt(jitter_cnt'high) = '0' THEN
 						IF Rcv_n = '1' THEN										-- innerhalb der erlaubten Zeitspanne hat auch der negative Encoder ein Telegram empfangen
-							Eval_RCV_SM <= RCV_p_RCV_n_together;				-- deshalb können beide Telegrame ausgewertet werden.
+							Eval_RCV_SM <= RCV_p_RCV_n_together;				-- deshalb koennen beide Telegrame ausgewertet werden.
 						END IF;
 					ELSE
 						S_RCV_Cmd <= RCV_Cmd_p;									-- Kommando-Datenkennung
-						Mil_Rcv_Data <= Mil_Rcv_Data_p;							-- und Datum vom positiven Encoder übernehmen.
+						Mil_Rcv_Data <= Mil_Rcv_Data_p;							-- und Datum vom positiven Encoder uebernehmen.
 						S_No_VW_n <= '1';										-- fehlender Empfang vom negativen Encoder signalisieren.
 						Eval_RCV_SM <= RCV_fin;
 					END IF;
@@ -297,11 +297,11 @@ P_Eval_RCV_SM:	PROCESS	(clk, Res)
 				
 					IF jitter_cnt(jitter_cnt'high) = '0' THEN
 						IF Rcv_p = '1' THEN										-- innerhalb der erlaubten Zeitspanne hat auch der positive Encoder ein Telegram empfangen
-							Eval_RCV_SM <= RCV_p_RCV_n_together;				-- deshalb können beide Telegrame ausgewertet werden.
+							Eval_RCV_SM <= RCV_p_RCV_n_together;				-- deshalb koennen beide Telegrame ausgewertet werden.
 						END IF;
 					ELSE
 						S_RCV_Cmd <= RCV_Cmd_n;									-- Kommando-Datenkennung
-						Mil_Rcv_Data <= Mil_Rcv_Data_n;							-- und Datum vom negativen Encoder übernehmen.
+						Mil_Rcv_Data <= Mil_Rcv_Data_n;							-- und Datum vom negativen Encoder uebernehmen.
 						S_No_VW_p <= '1';										-- fehlender Empfang vom positiven Encoder signalisieren.
 						Eval_RCV_SM <= RCV_fin;
 					END IF;
@@ -398,14 +398,14 @@ P_error_cnt:	PROCESS	(clk, Res)
 		END IF;
 	END PROCESS P_error_cnt;
 	
-No_VW_Cnt <= S_No_VW_p_cnt & S_No_VW_n_cnt;						-- Bit[15..8] Fehlerzähler für No Valid Word des positiven Decoders "No_VW_p", Bit[7..0] Fehlerzähler für No Valid Word des negativen Decoders "No_VM_n"
+No_VW_Cnt <= S_No_VW_p_cnt & S_No_VW_n_cnt;						-- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p", Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n"
 
-Not_Equal_Cnt <= S_Data_not_equal_cnt & S_CMD_not_equal_cnt;	-- Bit[15..8] Fehlerzähler für Data_not_equal, Bit[7..0] Fehlerzähler für unterschiedliche Komando-Daten-Kennung (CMD_not_equal).
+Not_Equal_Cnt <= S_Data_not_equal_cnt & S_CMD_not_equal_cnt;	-- Bit[15..8] Fehlerzaehler fuer Data_not_equal, Bit[7..0] Fehlerzaehler fuer unterschiedliche Komando-Daten-Kennung (CMD_not_equal).
 
-error_limit_reached <= '1' WHEN S_threshold_no_VW_err = '1' OR S_threshold_not_equal_err = '1' ELSE '0';	-- wird aktiv 'eins', wenn die Fehlerzähler die Generics "threshold_not_equal_err" oder "threshold_no_VW_err" überschritten haben.
+error_limit_reached <= '1' WHEN S_threshold_no_VW_err = '1' OR S_threshold_not_equal_err = '1' ELSE '0';	-- wird aktiv 'eins', wenn die Fehlerzaehler die Generics "threshold_not_equal_err" oder "threshold_no_VW_err" ueberschritten haben.
 	
-S_RD_Mil <= Rd_Mil or S_Data_not_equal or S_CMD_not_equal;  	-- S_Rd_Mil setzt 'rvc_rdy_p' und 'rcv_rdy_n' zurück, und falls kein Fehler aufgetreten ist
-																-- setzt Rd_Mil (das empfangene Datum wird von extern gelesen) die Signale zurück.
+S_RD_Mil <= Rd_Mil or S_Data_not_equal or S_CMD_not_equal;  	-- S_Rd_Mil setzt 'rvc_rdy_p' und 'rcv_rdy_n' zurueck, und falls kein Fehler aufgetreten ist
+																-- setzt Rd_Mil (das empfangene Datum wird von extern gelesen) die Signale zurueck.
  
 Rcv_Rdy <= S_Rcv_Rdy;
 

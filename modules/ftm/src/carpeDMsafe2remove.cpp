@@ -326,7 +326,7 @@ bool CarpeDM::CarpeDMimpl::isSafetyCritical(vertex_set_t& c) {
   else return false;
 }
 
-
+//FIXME Recursive function, valgrind this for cycle cost!
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
 void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant, int32_t maxNtEdges, int32_t tNtEdges) {
   vertex_t nextCovenant;
