@@ -118,12 +118,19 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g) {
   boost::dynamic_properties dp(boost::ignore_other_properties);
   boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
   dp.property("name", gname);
+  // attributes of vertices
   dp.property("type", boost::get(&ScheduleVertex::type, g));
   dp.property("name", boost::get(&ScheduleVertex::name, g));
   dp.property("tperiod", boost::get(&ScheduleVertex::tperiod, g));
   dp.property("qlo", boost::get(&ScheduleVertex::qlo, g));
   dp.property("qhi", boost::get(&ScheduleVertex::qhi, g));
   dp.property("qil", boost::get(&ScheduleVertex::qil, g));
+  dp.property("tef", boost::get(&ScheduleVertex::tef, g));
+  dp.property("toffs", boost::get(&ScheduleVertex::toffs, g));
+  dp.property("par", boost::get(&ScheduleVertex::par, g));
+  dp.property("res", boost::get(&ScheduleVertex::res, g));
+  dp.property("id", boost::get(&ScheduleVertex::id, g));
+  // attribute of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   //  dp.property("name", boost::get(&ScheduleEdge::name, g));
   return dp;

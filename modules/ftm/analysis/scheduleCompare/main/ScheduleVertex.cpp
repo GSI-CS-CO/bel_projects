@@ -36,7 +36,26 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
       } else if ("switch" == v1.type) {
         return v1.x.compare(v2.x);
       } else if ("tmsg" == v1.type) {
-        return v1.x.compare(v2.x);
+        if (v1.toffs == v2.toffs) {
+          if (v1.tef == v2.tef) {
+            if (v1.par == v2.par) {
+              if (v1.res == v2.res) {
+                if (v1.id.size() > 0) {
+  //                std::cout << "v1: " << v1.id << ", v2: " << v2.id << std::endl;
+                }
+                return v1.id.compare(v2.id);
+              } else {
+                return v1.res.compare(v2.res);
+              }
+            } else {
+              return v1.par.compare(v2.par);
+            }
+          } else {
+            return v1.tef.compare(v2.tef);
+          }
+        }else{
+          return v1.toffs.compare(v2.toffs);
+        }
       } else if ("wait" == v1.type) {
         return v1.x.compare(v2.x);
       } else {

@@ -11,6 +11,11 @@ class ScheduleVertex {
   std::string qlo = std::string("");
   std::string qhi = std::string("");
   std::string qil = std::string("");
+  std::string toffs = std::string("");
+  std::string tef = std::string("");
+  std::string par = std::string("");
+  std::string res = std::string("");
+  std::string id = std::string("");
   std::string x = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
