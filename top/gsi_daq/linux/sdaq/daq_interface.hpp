@@ -304,7 +304,15 @@ public:
    bool receiveTriggerSourceHiRes( const uint deviceNumber,
                                    const uint channel );
 
-
+   /*!
+    * @brief Prepares all found DAQ-devices on SCU-bus to synchronizing its
+    *        timestamp- counter.
+    * @param timeOffset Time in milliseconds in which the timing-ECA with
+    *                   the tag  ecaTag has to be emitted.
+    * @param ecaTag The ECA-tag of the timing event.
+    */
+   int sendSyncronizeTimestamps( const uint32_t timeOffset = DEFAULT_SYNC_TIMEOFFSET,
+                                 const uint32_t ecaTag = DEFAULT_ECA_SYNC_TAG ) override;
 
    /*!
     * @brief Returns the number of items which are currently in the

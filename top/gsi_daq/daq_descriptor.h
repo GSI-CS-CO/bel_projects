@@ -75,6 +75,22 @@ namespace daq
 {
 #endif
 
+#define __DAQ_DEFAULT_ECA_SYNC_TAG__ 0xBADABADA
+#ifdef __cplusplus
+   constexpr uint32_t DEFAULT_ECA_SYNC_TAG = __DAQ_DEFAULT_ECA_SYNC_TAG__;
+#else
+   #define DAQ_DEFAULT_ECA_SYNC_TAG ((uint32_t)__DAQ_DEFAULT_ECA_SYNC_TAG__)
+#endif
+
+
+#define __DAQ_DEFAULT_SYNC_TIMEOFFSET__  10000
+#ifdef __cplusplus
+   constexpr uint32_t DEFAULT_SYNC_TIMEOFFSET = __DAQ_DEFAULT_SYNC_TIMEOFFSET__;
+#else
+   #define DAQ_DEFAULT_SYNC_TIMEOFFSET ((uint32_t)__DAQ_DEFAULT_SYNC_TIMEOFFSET__)
+#endif
+
+
 /*!
  * @ingroup DAQ_CHANNEL
  * @brief Data type of DAQ FiFo containment

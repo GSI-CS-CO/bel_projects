@@ -1783,9 +1783,12 @@ DAQ_CANNEL_T* daqDeviceGetChannelObject( register DAQ_DEVICE_T* pThis,
  * @brief Presets the time stamp counter of this DAQ device;
  * @see daqDeviceGetTimeStampCounter
  * @param pThis Pointer to the DAQ-device object
- * @param ts 64 bit time value to preset.
+ * @param timeOffset Offset time in milliseconds presetting the
+ *        timestamp registers. Within this time the the timing-ECA has to be
+ *        occur!
  */
-void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts );
+void daqDevicePresetTimeStampCounter( register DAQ_DEVICE_T* pThis,
+                                      const uint32_t timeOffset  );
 
 
 /*! ---------------------------------------------------------------------------
@@ -1799,12 +1802,13 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
- * @brief Set the time stamp counter tag for this DAQ device.
+ * @brief Set the time stamp counter ECA- tag for this DAQ device.
  * @see daqDeviceGetTimeStampTag
  * @param pThis Pointer to the DAQ-device object
  * @param Value of time stamp tag.
  */
-void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag );
+void daqDeviceSetTimeStampCounterEcaTag( register DAQ_DEVICE_T* pThis,
+                                         const uint32_t tsTag );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
@@ -2001,19 +2005,22 @@ void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis );
  * @brief Presets the time stamp counters of all found DAQ devices on
  *        this SCU bus.
  * @param pThis Pointer to the DAQ bus object.
- * @param ts 64 bit time stamp value.
+ * @param timeOffset Offset time in milliseconds presetting the
+ *        timestamp registers. Within this time the the timing-ECA has to be
+ *        occur!
  */
-void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts );
+void daqBusPresetAllTimeStampCounters( register DAQ_BUS_T* pThis,
+                                       const uint32_t timeOffset );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS
- * @brief Sets the time stamp counter tags of all found DAQ devices on
+ * @brief Sets the time stamp counter ECA- tags of all found DAQ devices on
  *        this SCU bus.
  * @param pThis Pointer to the DAQ bus object.
  * @param tsTag 32 bit value for all time stamp counter tags.
  */
-void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis,
-                                       uint32_t tsTag );
+void daqBusSetAllTimeStampCounterEcaTags( register DAQ_BUS_T* pThis,
+                                          const uint32_t tsTag );
 
 
 #ifndef CONFIG_DAQ_SINGLE_APP

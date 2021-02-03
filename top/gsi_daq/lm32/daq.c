@@ -343,7 +343,8 @@ IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, volatile uint64_t ts )
+void daqDevicePresetTimeStampCounter( register DAQ_DEVICE_T* pThis,
+                                      volatile const uint32_t timeOffset )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
@@ -351,23 +352,26 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, volatile uint64
    STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
    STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
+#if 1
+   mprintf( "Time-Offset: 0x%08X\n", timeOffset );
+#endif
 
-   //ts = 0x1122334455667788L;
- //  ts = 0x165FF5830B0DC120L;
- //  volatile uint64_t _ts = convertByteEndian_uint64_t( ts );
-   mprintf( "ts: 0x%08X%08X\n", ((uint32_t*)&ts)[0], ((uint32_t*)&ts)[1] );
- //  mprintf( "ts: 0x%04X%04X%04X%04X\n", ((uint16_t*)&ts)[0], ((uint16_t*)&ts)[1], ((uint16_t*)&ts)[2], ((uint16_t*)&ts)[3] );
+   volatile const uint64_t futureTime = timeOffset * 1000000L + getWrSysTime();
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
    {
     #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-      pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i];
+      pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&futureTime)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i];
     #else
-      pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
+      pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&futureTime)[i];
     #endif
-    //  mprintf( "pTS[%d]: %p, %04X, %04X, %04x\n", i, &pThis->pReg->i[TS_COUNTER_WD1+i], pThis->pReg->i[TS_COUNTER_WD1+i],
-    //     ((uint16_t*)&ts)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i], ((uint16_t*)&ts)[i]
-    //  );
+    #if 1
+      mprintf( "pTS[%d]: %p, %04X, %04X, %04x\n", i,
+               &pThis->pReg->i[TS_COUNTER_WD1+i], pThis->pReg->i[TS_COUNTER_WD1+i],
+               ((uint16_t*)&futureTime)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i],
+               ((uint16_t*)&futureTime)[i]
+      );
+    #endif
    }
 }
 
@@ -400,11 +404,14 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
+void daqDeviceSetTimeStampCounterEcaTag( register DAQ_DEVICE_T* pThis, const uint32_t tsTag )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
    STATIC_ASSERT( TS_CNTR_TAG_LW+1 == TS_CNTR_TAG_HW );
+#if 1
+   mprintf( "ECA-Tag: 0x%08X\n", tsTag );
+#endif
 
    for( unsigned int i = 0; i < (sizeof(uint32_t)/sizeof(uint16_t)); i++ )
    {
@@ -468,7 +475,7 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis )
       daqChannelReset( daqDeviceGetChannelObject( pThis, i ) );
 
    //!!daqDeviceSetTimeStampCounter( pThis, 0L );
-   daqDeviceSetTimeStampTag( pThis, 0 );
+   //daqDeviceSetTimeStampTag( pThis, 0 );
 
 #ifndef CONFIG_DAQ_SINGLE_APP
    daqDeviceFeedBackReset( pThis );
@@ -868,7 +875,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       daqDeviceClearDaqChannelInterrupts( pCurrentDaqDevice );
       daqDeviceClearHiResChannelInterrupts( pCurrentDaqDevice );
 
-      daqDeviceSetTimeStampCounter( pCurrentDaqDevice, getWrSysTime() );
+      daqDeviceSetTimeStampCounterEcaTag( pCurrentDaqDevice, DAQ_DEFAULT_ECA_SYNC_TAG );
+      daqDevicePresetTimeStampCounter( pCurrentDaqDevice, DAQ_DEFAULT_SYNC_TIMEOFFSET );
 
 #if 1
       uint64_t ts = daqDeviceGetTimeStampCounter( pCurrentDaqDevice );
@@ -1013,23 +1021,23 @@ void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts )
+void daqBusPresetAllTimeStampCounters( register DAQ_BUS_T* pThis, const uint32_t timeOffset )
 {
    DAQ_ASSERT( pThis != NULL );
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
-      daqDeviceSetTimeStampCounter( daqBusGetDeviceObject( pThis, i ), ts );
+      daqDevicePresetTimeStampCounter( daqBusGetDeviceObject( pThis, i ), timeOffset );
 }
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis, uint32_t tsTag )
+void daqBusSetAllTimeStampCounterEcaTags( register DAQ_BUS_T* pThis, const uint32_t tsTag )
 {
    DAQ_ASSERT( pThis != NULL );
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
-      daqDeviceSetTimeStampTag( daqBusGetDeviceObject( pThis, i ), tsTag );
+      daqDeviceSetTimeStampCounterEcaTag( daqBusGetDeviceObject( pThis, i ), tsTag );
 }
 
 /*! ---------------------------------------------------------------------------

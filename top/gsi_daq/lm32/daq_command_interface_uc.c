@@ -673,6 +673,28 @@ DAQ_RETURN_CODE_T opGetDeviceType( DAQ_ADMIN_T* pDaqAdmin,
    return DAQ_RET_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Sending the device type of the given channel
+ */
+STATIC
+DAQ_RETURN_CODE_T opSyncTimeStamp( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBG_FUNCTION_INFO();
+
+   ATOMIC_SECTION()
+   {
+      daqBusPresetAllTimeStampCounters( &pDaqAdmin->oDaqDevs,
+                                        pData->param1 |
+                                        (pData->param2 << BIT_SIZEOF(DAQ_REGISTER_T)) );
+
+      daqBusSetAllTimeStampCounterEcaTags( &pDaqAdmin->oDaqDevs,
+                                           pData->param3 |
+                                           (pData->param4 << BIT_SIZEOF(DAQ_REGISTER_T)) );
+   }
+   return DAQ_RET_OK;
+}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
@@ -723,6 +745,7 @@ STATIC const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
    OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR, opSetTriggerSourceHir ),
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR, opGetTriggerSourceHir ),
    OPERATION_ITEM( DAQ_OP_GET_DEVICE_TYPE,        opGetDeviceType       ),
+   OPERATION_ITEM( DAQ_OP_SYNC_TIMESTAMP,         opSyncTimeStamp       ),
 
    OPERATION_ITEM_TERMINATOR
 };

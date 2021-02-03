@@ -545,6 +545,32 @@ vector<OPTION> CommandLine::c_optList =
                     "Example: PARAM = myFile.png:\n"
                     "         result: myFile_scuxl0035_acc_gsi_de_3_1_"
                     "12439792657334272.png"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         DaqAdministration* pAdmin = getDaqAdmin( poParser );
+         if( pAdmin == nullptr )
+            return -1;
+
+         uint timeOffset = 0xAABBCCDD; //DEFAULT_SYNC_TIMEOFFSET;
+         uint ecaTag =     0x11223344; // DEFAULT_ECA_SYNC_TAG;
+         if( poParser->isOptArgPersent() )
+         {
+
+         }
+         pAdmin->sendSyncronizeTimestamps( timeOffset, ecaTag );
+         exit( 0 );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::OPTIONAL_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'y',
+      .m_longOpt  = "sync",
+      .m_helpText = "Synchronizing of the timestamp-counter of all found"
+                    " ADDAC/SCU-DAQ slaves on SCU bis.\n"
+                    "PARAM: =<time-offset in milliseconds>,<ECA tag>"
+
    }
 };
 

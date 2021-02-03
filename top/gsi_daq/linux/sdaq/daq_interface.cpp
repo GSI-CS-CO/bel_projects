@@ -77,6 +77,7 @@ const std::string command2String( daq::DAQ_OPERATION_CODE_T op )
       __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR );
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR );
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_DEVICE_TYPE );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SYNC_TIMESTAMP );
    }
    return "unknown";
    #undef  __OP_CODE_CASE_ITEM
@@ -727,6 +728,19 @@ DAQ_DEVICE_TYP_T DaqInterface::readDeviceType( const uint deviceNumber )
    sendCommand( DAQ_OP_GET_DEVICE_TYPE );
    readParam1();
    return static_cast<DAQ_DEVICE_TYP_T>(m_oSharedData.operation.ioData.param1);
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::sendSyncronizeTimestamps( const uint32_t timeOffset,
+                                            const uint32_t ecaTag )
+{
+   m_oSharedData.operation.ioData.param1 = GET_LOWER_HALF( timeOffset );
+   m_oSharedData.operation.ioData.param2 = GET_UPPER_HALF( timeOffset );
+   m_oSharedData.operation.ioData.param3 = GET_LOWER_HALF( ecaTag );
+   m_oSharedData.operation.ioData.param4 = GET_UPPER_HALF( ecaTag );
+   writeParam1234();
+   return sendCommand( DAQ_OP_SYNC_TIMESTAMP );
 }
 
 /*! ---------------------------------------------------------------------------
