@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 1-February-2021
+ *  version : 3-February-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000227
+#define B2B_ANALYZER_VERSION 0x000228
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -50,11 +50,14 @@
 #include <dis.h>
 
 // b2b
-#include <common-lib.h>                  // COMMON
-#include <b2blib.h>                      // API
-#include <b2b.h>                         // FW
+#include <common-lib.h>                    // COMMON
+#include <b2blib.h>                        // API
+#include <b2b.h>                           // FW
 
 const char* program;
+
+#define TDIAGOBS    20000000               // observation time for diagnostic [ns]
+#define DDSSTEP     0.046566129            // min frequency step of gDDS
 
 // dim stuff
 #define   DIMCHARSIZE 32                   // standard size for char services
@@ -90,6 +93,37 @@ int32_t   ext_rfOffMax[B2B_NSID];
 double    ext_rfOffAveOld[B2B_NSID];
 double    ext_rfOffStreamOld[B2B_NSID];
 
+// extraction DDS match
+uint32_t  inj_ddsOffN[B2B_NSID];
+int32_t   inj_ddsOffMin[B2B_NSID];
+int32_t   inj_ddsOffMax[B2B_NSID];
+double    inj_ddsOffAveOld[B2B_NSID];
+double    inj_ddsOffStreamOld[B2B_NSID];
+
+// extraction rf phase match
+uint32_t  inj_rfOffN[B2B_NSID];
+int32_t   inj_rfOffMin[B2B_NSID];
+int32_t   inj_rfOffMax[B2B_NSID];
+double    inj_rfOffAveOld[B2B_NSID];
+double    inj_rfOffStreamOld[B2B_NSID];
+
+// b2b rf phase difference
+uint32_t  phaseOffN[B2B_NSID];
+int32_t   phaseOffMin[B2B_NSID];
+int32_t   phaseOffMax[B2B_NSID];
+double    phaseOffAveOld[B2B_NSID];
+double    phaseOffStreamOld[B2B_NSID];
+
+// extraction rf frequency
+uint32_t ext_rfNueN[B2B_NSID];                             
+double   ext_rfNueAveOld[B2B_NSID];
+double   ext_rfNueStreamOld[B2B_NSID];
+
+// injection, rf frequency
+uint32_t inj_rfNueN[B2B_NSID];                             
+double   inj_rfNueAveOld[B2B_NSID];
+double   inj_rfNueStreamOld[B2B_NSID];
+
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
   fprintf(stderr, "\n");
@@ -110,7 +144,7 @@ int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
               uint64_t TH1                                  // h=1 period [as]
                 )
 {
-  int32_t ts0;                                              // timestamp with correction removed [ns]
+  int64_t ts0;                                              // timestamp with correction removed [ns]
   int32_t dtMatch;
   int64_t ts0as;                                            // t0 [as]
   int64_t remainder;                     
@@ -121,13 +155,14 @@ int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
   ts0       = ts - corr;
   if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}                   // make this work for negative numbers too
   else         flagNeg = 0;
-    
-  ts0as     = ts0 * 1000000000;
+
+  ts0as     = ts0 * (int64_t)1000000000;
   half      = TH1 >> 1;
   remainder = ts0as % TH1;                                 
   if (remainder > half) ts0as = remainder - TH1;
+  else                  ts0as = remainder;
   dtMatch   = (int32_t)(ts0as / 1000000000);
-
+  
   if (flagNeg) dtMatch = -dtMatch;
 
   return dtMatch + corr;                 // we have to add back the correction (!)
@@ -143,13 +178,37 @@ void clearStats(uint32_t sid)
   ext_ddsOffAveOld[sid]    = 0;   
   ext_ddsOffStreamOld[sid] = 0;
 
+  inj_ddsOffN[sid]         = 0;
+  inj_ddsOffMax[sid]       = 0x80000000;       
+  inj_ddsOffMin[sid]       = 0x7fffffff;         
+  inj_ddsOffAveOld[sid]    = 0;   
+  inj_ddsOffStreamOld[sid] = 0;
+
   ext_rfOffN[sid]          = 0;
   ext_rfOffMax[sid]        = 0x80000000;       
   ext_rfOffMin[sid]        = 0x7fffffff;         
   ext_rfOffAveOld[sid]     = 0;   
   ext_rfOffStreamOld[sid]  = 0;
 
-  
+  inj_rfOffN[sid]          = 0;
+  inj_rfOffMax[sid]        = 0x80000000;       
+  inj_rfOffMin[sid]        = 0x7fffffff;         
+  inj_rfOffAveOld[sid]     = 0;   
+  inj_rfOffStreamOld[sid]  = 0;
+
+  phaseOffN[sid]           = 0;
+  phaseOffMax[sid]         = 0x80000000;       
+  phaseOffMin[sid]         = 0x7fffffff;         
+  phaseOffAveOld[sid]      = 0;   
+  phaseOffStreamOld[sid]   = 0;
+
+  ext_rfNueN[sid]          = 0;                             
+  ext_rfNueAveOld[sid]     = 0;
+  ext_rfNueStreamOld[sid]  = 0;
+
+  inj_rfNueN[sid]          = 0;                             
+  inj_rfNueAveOld[sid]     = 0;
+  inj_rfNueStreamOld[sid]  = 0;
 } // clearDiagData
 
 
@@ -179,17 +238,66 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 } // calcStats
 
 
+// calculate DDS frequency from observed phase offset
+int calcNue(double *nue,                // frequency value [Hz]
+            double obsOffset,           // observed mean value of deviation from 'soll value' [ns]
+            uint64_t TObs,              // observation interval [ns]
+            uint64_t TH1                // H=1 gDDS period [as]
+            )
+{
+  int64_t  nPeriod;                     // # of rf periods within T
+  uint64_t half;
+  int64_t  offsetAs;                    // offset [as]
+  int64_t  TAs;                         // TObs [as]
+  int64_t  TH1ObsAs;                    // observed TH1 [as]
+  double   TH1ObsNs;                    // observed TH1 [ns]
+
+  if ((TH1 != 0) && (TObs != 0)) {
+    TAs       = TObs * 1000000000;
+    half      = TH1 >> 1;
+    nPeriod   = TAs / TH1;
+    if ((TAs % TH1) > half) nPeriod++;              
+    offsetAs  = (int64_t)(obsOffset * 1000000000.0);
+    TH1ObsAs  = TH1 + offsetAs / (double)nPeriod;
+    TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
+    *nue      = 1000000000.0 / TH1ObsNs;
+    return 0;
+  } // avoid division by zero
+  else return 0;
+} // calcNue
+
+
+// estimate 'real' DDS frequency from given frequency
+double calcDdsNue(double nue)
+{
+  double nue1, nue2;
+  double diff1, diff2; 
+
+  nue1 =  b2b_flsa2fdds(nue);
+  nue2 =  b2b_flsa2fdds(nue + DDSSTEP);
+
+  diff1 = nue - nue1;
+  diff2 = nue - nue2;
+
+  if (fabs(diff1) < fabs(diff2)) return nue1;
+  else                           return nue2;
+} // calcDdsNue
+
+
 // receive set values
 void recGetvalue(long *tag, diagval_t *address, int *size)
 {
   uint32_t  sid;
   uint32_t  mode;
+  int32_t   cor;
   int32_t   act;
+  double    actD;
   uint32_t  n;
   double    sdev = 0;
   double    aveNew;
   double    streamNew = 0;
   double    dummy;
+  double    tmp;
 
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
@@ -200,11 +308,13 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if (mode <  2) return;                                    // no further analysis
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
-    act = fixTS(dicGetval[sid].ext_diagMatch - dicSetval[sid].ext_cTrig, 0, dicSetval[sid].ext_T);
+    cor = dicSetval[sid].ext_cTrig;
+    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
     n   = ++(ext_ddsOffN[sid]);
-
+    //printf("act %3d, actraw, %5d, cor %3d, n %3d\n", act, dicGetval[sid].ext_diagMatch, dicSetval[sid].ext_cTrig, n);
     // statistics
     calcStats(&aveNew, ext_ddsOffAveOld[sid], &streamNew, ext_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
+    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
     ext_ddsOffAveOld[sid]          = aveNew;
     ext_ddsOffStreamOld[sid]       = streamNew;
     if (act < ext_ddsOffMin[sid]) ext_ddsOffMin[sid] = act;
@@ -218,10 +328,10 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].ext_ddsOffMin  = ext_ddsOffMin[sid];
     disDiagval[sid].ext_ddsOffMax  = ext_ddsOffMax[sid];
 
-    // match diagnostics; theoretical value is '0'
-    act = fixTS(dicGetval[sid].ext_diagPhase, 0, dicSetval[sid].ext_T);
+    // rf phase diagnostics; theoretical value is '0'
+    cor = 0;
+    act = fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
     n   = ++(ext_rfOffN[sid]);
-    printf("act %d, n %d\n", act, n);
 
     // statistics
     calcStats(&aveNew, ext_rfOffAveOld[sid], &streamNew, ext_rfOffStreamOld[sid], act, n , &dummy, &sdev);
@@ -237,9 +347,105 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].ext_rfOffSdev  = sdev;
     disDiagval[sid].ext_rfOffMin   = ext_rfOffMin[sid];
     disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
-  } // if mode >=2
-  
 
+    // rf frequency diagnostics; theoretical value is '0'
+    calcNue(&actD, disDiagval[sid].ext_rfOffAct, (double)TDIAGOBS, dicSetval[sid].ext_T);
+    if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
+    else                           tmp = 0.0;
+    n   = ++(ext_rfNueN[sid]);
+
+    // statistics
+    calcStats(&aveNew, ext_rfNueAveOld[sid], &streamNew, ext_rfNueStreamOld[sid], actD, n ,&dummy , &sdev);
+    ext_rfNueAveOld[sid]           = aveNew;
+    ext_rfNueStreamOld[sid]        = streamNew;
+
+    // copy
+    disDiagval[sid].ext_rfNueN     = n;
+    disDiagval[sid].ext_rfNueAve   = aveNew;
+    disDiagval[sid].ext_rfNueSdev  = sdev;
+    disDiagval[sid].ext_rfNueDiff  = aveNew - tmp ;
+    disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);    
+  } // if mode >=2
+
+  if (mode == 4) {
+    // match diagnostics; theoretical value is '0'
+    cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
+    act = fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    n   = ++(inj_ddsOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, inj_ddsOffAveOld[sid], &streamNew, inj_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
+    inj_ddsOffAveOld[sid]          = aveNew;
+    inj_ddsOffStreamOld[sid]       = streamNew;
+    if (act < inj_ddsOffMin[sid]) inj_ddsOffMin[sid] = act;
+    if (act > inj_ddsOffMax[sid]) inj_ddsOffMax[sid] = act;
+
+    // copy
+    disDiagval[sid].inj_ddsOffAct  = act;
+    disDiagval[sid].inj_ddsOffN    = n;
+    disDiagval[sid].inj_ddsOffAve  = aveNew;
+    disDiagval[sid].inj_ddsOffSdev = sdev;
+    disDiagval[sid].inj_ddsOffMin  = inj_ddsOffMin[sid];
+    disDiagval[sid].inj_ddsOffMax  = inj_ddsOffMax[sid];
+
+    // rf phase diagnostics raw values; theoretical value is '0'
+    cor = 0;
+    act = fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T);
+    n   = ++(inj_rfOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, inj_rfOffAveOld[sid], &streamNew, inj_rfOffStreamOld[sid], act, n , &dummy, &sdev);
+    inj_rfOffAveOld[sid]           = aveNew;
+    inj_rfOffStreamOld[sid]        = streamNew;
+    if (act < inj_rfOffMin[sid]) inj_rfOffMin[sid] = act;
+    if (act > inj_rfOffMax[sid]) inj_rfOffMax[sid] = act;
+
+    // copy
+    disDiagval[sid].inj_rfOffAct   = act;
+    disDiagval[sid].inj_rfOffN     = n;
+    disDiagval[sid].inj_rfOffAve   = aveNew;
+    disDiagval[sid].inj_rfOffSdev  = sdev;
+    disDiagval[sid].inj_rfOffMin   = inj_rfOffMin[sid];
+    disDiagval[sid].inj_rfOffMax   = inj_rfOffMax[sid];
+
+    // b2bphase diagnostics; theoretical value is 'phase correction'
+    act = disDiagval[sid].inj_ddsOffAct - disDiagval[sid].ext_ddsOffAct + dicSetval[sid].cPhase;
+    n   = ++(phaseOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, phaseOffAveOld[sid], &streamNew, phaseOffStreamOld[sid], act, n , &dummy, &sdev);
+    phaseOffAveOld[sid]          = aveNew;
+    phaseOffStreamOld[sid]       = streamNew;
+    if (act < phaseOffMin[sid]) phaseOffMin[sid] = act;
+    if (act > phaseOffMax[sid]) phaseOffMax[sid] = act;
+
+    // copy
+    disDiagval[sid].phaseOffAct  = act;
+    disDiagval[sid].phaseOffN    = n;
+    disDiagval[sid].phaseOffAve  = aveNew;
+    disDiagval[sid].phaseOffSdev = sdev;
+    disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
+    disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
+
+    // rf frequency diagnostics; theoretical value is '0'
+    calcNue(&actD, disDiagval[sid].inj_rfOffAct, (double)TDIAGOBS, dicSetval[sid].inj_T);
+    if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+    else                           tmp = 0.0;
+    n   = ++(inj_rfNueN[sid]);
+
+    // statistics
+    calcStats(&aveNew, inj_rfNueAveOld[sid], &streamNew, inj_rfNueStreamOld[sid], actD, n ,&dummy , &sdev);
+    inj_rfNueAveOld[sid]           = aveNew;
+    inj_rfNueStreamOld[sid]        = streamNew;
+
+    // copy
+    disDiagval[sid].inj_rfNueN     = n;
+    disDiagval[sid].inj_rfNueAve   = aveNew;
+    disDiagval[sid].inj_rfNueSdev  = sdev;
+    disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
+    disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
+  } // mode == 4
+  
   dis_update_service(disDiagvalId[sid]);
 } // recGetvalue
   
@@ -281,7 +487,7 @@ void disAddServices(char *prefix)
 
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-diag_sid%02d", prefix, i);
-    disDiagvalId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
+    disDiagvalId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
   } // for i
 } // disAddServices
 
@@ -358,7 +564,6 @@ int main(int argc, char** argv) {
     disAddServices(prefix);
     dis_start_serving(disName);
     dicSubscribeServices(prefix);
-    
     
     while (1) sleep(1);
   } // if subscribe

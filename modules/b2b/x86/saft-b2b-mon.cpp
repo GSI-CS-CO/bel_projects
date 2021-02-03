@@ -198,7 +198,7 @@ double ns2Degree(double phase,          // phase [ns]
 } 
 
 
-// calculate 'real' DDS frequency from give frequency
+// calculate 'real' DDS frequency from given frequency
 double calcDdsNue(double nue)
 {
   double nue1, nue2;

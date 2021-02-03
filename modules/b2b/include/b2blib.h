@@ -125,7 +125,7 @@ extern "C" {
     double   phaseOffSdev;
     int32_t  phaseOffMin;
     int32_t  phaseOffMax;
-    int32_t  ext_rfOffAct;                            // extraction, measured rf offset
+    int32_t  ext_rfOffAct;                            // extraction, measured rf offsety
     uint32_t ext_rfOffN;
     double   ext_rfOffAve;
     double   ext_rfOffSdev;
@@ -137,6 +137,16 @@ extern "C" {
     double   inj_rfOffSdev;
     int32_t  inj_rfOffMin;
     int32_t  inj_rfOffMax;
+    uint32_t ext_rfNueN;                              // extraction, measured rf frequency
+    double   ext_rfNueAve;
+    double   ext_rfNueSdev;
+    double   ext_rfNueDiff;
+    double   ext_rfNueEst;
+    uint32_t inj_rfNueN;                              // injection, measured rf frequency
+    double   inj_rfNueAve;
+    double   inj_rfNueSdev;
+    double   inj_rfNueDiff;
+    double   inj_rfNueEst;
   } diagval_t;
 
   // ---------------------------------
