@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;  
 
 entity testbench is
+generic (g_en_simbridge : boolean);
 end entity;
 
 architecture simulation of testbench is
@@ -205,11 +206,9 @@ architecture simulation of testbench is
     signal sfp4_mod1         : std_logic := 'Z'; -- SCL
     signal sfp4_mod2         : std_logic := 'Z'; -- SDA
 
-    constant en_simbridge  : boolean := false;
-
 begin
 
-  simbridge_y: if en_simbridge generate
+  simbridge_y: if g_en_simbridge generate
     chip : entity work.ez_usb_chip
       port map (
         rstn_i    => '0', -- always in reset
@@ -225,7 +224,7 @@ begin
         fd_io     => fd
         );
   end generate;
-  simbridge_n: if not en_simbridge generate
+  simbridge_n: if not g_en_simbridge generate
     chip : entity work.ez_usb_chip
       port map (
         rstn_i    => ures,
@@ -257,7 +256,7 @@ begin
   tr : entity work.pci_control 
   generic map (
     g_simulation => true,
-    g_en_simbridge => en_simbridge
+    g_en_simbridge => g_en_simbridge
     )
   port map(
     clk_20m_vcxo_i    => clk_20m_vcxo_i,
