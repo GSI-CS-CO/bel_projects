@@ -43,4 +43,5 @@ doc:
 	$(MAKE) -C ../doc/
 
 test:
+	$(MAKE) scheduleCompare
 	$(MAKE) -C ../test/
