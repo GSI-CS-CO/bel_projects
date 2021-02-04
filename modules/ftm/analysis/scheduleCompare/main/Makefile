@@ -26,18 +26,8 @@ clean:
 	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare
 
 format:
-	clang-format-10 $(STYLE) -i scheduleCompare.h
-	clang-format-10 $(STYLE) -i scheduleCompare.cpp
-	clang-format-10 $(STYLE) -i scheduleIsomorphism.h
-	clang-format-10 $(STYLE) -i scheduleIsomorphism.cpp
-	clang-format-10 $(STYLE) -i printSchedule.h
-	clang-format-10 $(STYLE) -i printSchedule.cpp
-	clang-format-10 $(STYLE) -i parseSchedule.h
-	clang-format-10 $(STYLE) -i parseSchedule.cpp
-	clang-format-10 $(STYLE) -i ScheduleVertex.h
-	clang-format-10 $(STYLE) -i ScheduleVertex.cpp
-	clang-format-10 $(STYLE) -i ScheduleEdge.h
-	clang-format-10 $(STYLE) -i ScheduleEdge.cpp
+	for i in *.h   ; do clang-format-10 $(STYLE) -i $$i; done
+	for i in *.cpp ; do clang-format-10 $(STYLE) -i $$i; done
 
 doc:
 	$(MAKE) -C ../doc/
