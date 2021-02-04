@@ -760,6 +760,28 @@ FgFeedbackDevice* FgFeedbackAdministration::getDevice( const uint socket )
 
 /*! ---------------------------------------------------------------------------
  */
+int FgFeedbackAdministration::sendSyncronizeTimestamps( const uint32_t timeOffset,
+                                                        const uint32_t ecaTag )
+{
+#ifdef __DOXYGEN__
+ /*
+  * Necessary for Doxygen - caller graph,
+  * it's not a part of the resulting binary.
+  */
+ #ifdef CONFIG_MIL_FG
+//   MiLdaq::DaqAdministration::distributeData();
+ #endif
+   daq::DaqAdministration::sendSyncronizeTimestamps();
+#endif
+
+   for( const auto& poDaqAdmin: m_vPollList )
+      poDaqAdmin->sendSyncronizeTimestamps( timeOffset, ecaTag );
+
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void FgFeedbackAdministration::distributeData( void )
 {
 #ifdef __DOXYGEN__

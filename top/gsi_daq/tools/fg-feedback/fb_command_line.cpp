@@ -581,6 +581,73 @@ vector<OPTION> CommandLine::c_optList =
       .m_helpText = "Program termination in the case of a detected sequence"
                     "-error instead a warning only."
 
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         FgFeedbackAdministration* pAllDaq = getDaqAdministration( static_cast<CommandLine*>(poParser) );
+         if( pAllDaq == nullptr )
+            return -1;
+
+         uint timeOffset = daq::DEFAULT_SYNC_TIMEOFFSET;
+         uint ecaTag =     daq::DEFAULT_ECA_SYNC_TAG;
+         if( poParser->isOptArgPersent() )
+         {
+             string single;
+             istringstream input( poParser->getOptArg() );
+             for( uint i = 0; getline( input, single, ',' ); i++ )
+             {
+                if( i >= 2 )
+                {
+                   ERROR_MESSAGE( "To much arguments in option!" );
+                   ::exit( EXIT_FAILURE );
+                }
+                if( single.empty() )
+                   continue;
+
+                if( i == 0 )
+                {
+                   if( readInteger( timeOffset, single ) )
+                      ::exit( EXIT_FAILURE );
+                   continue;
+                }
+                if( readInteger( ecaTag, single ) )
+                   ::exit( EXIT_FAILURE );
+             }
+         }
+         if( static_cast<CommandLine*>(poParser)->m_verbose )
+         {
+            cout << "Timestamp synchronization:\n"
+                    "   Time-offset: " << timeOffset << " ms\n"
+                    "   ECA-Tag:     0x" << hex << ecaTag << dec << endl;
+         }
+         pAllDaq->sendSyncronizeTimestamps( timeOffset, ecaTag );
+         exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::OPTIONAL_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'y',
+      .m_longOpt  = "sync",
+      .m_helpText = "Synchronizing of the timestamp-counter of all found"
+                    " ADDAC/SCU-DAQ slaves on SCU bis.\n"
+                    "PARAM: =<time-offset in milliseconds>,<ECA tag>\n\n"
+                    ESC_BOLD "CAUTION: The timing ECA has to be appear within the "
+                    "given time-offset!" ESC_NORMAL "\n\n"
+                    "Example 1:\n"
+                    ESC_BOLD "-y" ESC_NORMAL "      Without parameter will send a default offset time of "
+                    TO_STRING( __DAQ_DEFAULT_SYNC_TIMEOFFSET__ ) " milliseconds "
+                    "and the default ECA-TAG of "
+                    TO_STRING( __DAQ_DEFAULT_ECA_SYNC_TAG__ ) ".\n\n"
+                    "Example 2:\n"
+                    ESC_BOLD "-y=2000,0xDADABAFF" ESC_NORMAL "  Will send a offset time of 2 seconds and a ECA-tag of 0xDADABAFF.\n\n"
+                    "Example 3:\n"
+                    ESC_BOLD "-y=3000" ESC_NORMAL "   Will send a 0ffset time of 3 seconds and the default ECA-tag of "
+                    TO_STRING( __DAQ_DEFAULT_ECA_SYNC_TAG__ ) ".\n\n"
+                    "Example 4:\n"
+                    ESC_BOLD "-y=,0xDACAFFEE" ESC_NORMAL "  Will send the default offset time of "
+                    TO_STRING( __DAQ_DEFAULT_SYNC_TIMEOFFSET__ ) " milliseconds "
+                    "and the ECA-tag of 0xDACAFFEE."
    }
 };
 

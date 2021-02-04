@@ -420,6 +420,9 @@ void daqDeviceSetTimeStampCounterEcaTag( register DAQ_DEVICE_T* pThis, const uin
     #else
       pThis->pReg->i[TS_CNTR_TAG_LW+i] = ((uint16_t*)&tsTag)[i];
     #endif
+    #if 0
+      mprintf( "ECA-Tag[%u]: %04X\n", i, pThis->pReg->i[TS_CNTR_TAG_LW+i] );
+    #endif
    }
 }
 

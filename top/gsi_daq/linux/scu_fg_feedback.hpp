@@ -887,6 +887,17 @@ public:
    }
 
    /*!
+    * @brief Prepares all found DAQ-devices on SCU-bus to synchronizing its
+    *        timestamp- counter.
+    * @note Dummy-function in the case of MIL-DAQs!
+    * @param timeOffset Time in milliseconds in which the timing-ECA with
+    *                   the tag  ecaTag has to be emitted.
+    * @param ecaTag The ECA-tag of the timing event.
+    */
+   int sendSyncronizeTimestamps( const uint32_t timeOffset = daq::DEFAULT_SYNC_TIMEOFFSET,
+                                         const uint32_t ecaTag = daq::DEFAULT_ECA_SYNC_TAG );
+
+   /*!
     * @brief Central polling routine of all feedback channels.
     *
     * This function checks whether data from a DAQ channel in the appropriate

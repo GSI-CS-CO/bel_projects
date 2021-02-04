@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=1.0
+DEFINES += VERSION=1.1
 
 MIAN_MODULE := fg-feedback.cpp
 
@@ -99,7 +99,11 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 #CALL_ARGS = --generate_doc_tagged
 
-CALL_ARGS = scuxl0035 -vadt1
+#CALL_ARGS = scuxl0035 -vadt1
+
+#CALL_ARGS = scuxl0212 -adt1
+
+CALL_ARGS = scuxl0035 -vy
 
 # DEBUG = 1
 
