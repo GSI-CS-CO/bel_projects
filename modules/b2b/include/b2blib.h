@@ -90,7 +90,7 @@ extern "C" {
   typedef struct{                                      // data type get values
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [ns]
-    int32_t  ext_dKickMon;                             // extraction: offset electroncis monitor signal [ns]
+    int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
@@ -99,11 +99,15 @@ extern "C" {
     int32_t  inj_dKickProb;
     int32_t  inj_diagPhase;
     int32_t  inj_diagMatch;
-    uint32_t flag_errPme;                              // flag: error phhase measurement extraction
-    uint32_t flag_errKde;                              // flag: error kick diagnostic extraction
-    uint32_t flag_errPmi;                              // flag: error phase measurement injection
-    uint32_t flag_errKdi;                              // flag: error kick diagnostic injection
-    uint32_t flag_errCbu;                              // flag: error central b2b unit
+    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
+    uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
+    uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
+    uint64_t tEKS;                                     // EKS deadline
+    int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
+    int32_t  preOff;                                   // offset from EKS to meaused extraction phasee
+    int32_t  priOff;                                   // offset from EKS to meaused injection phasee
+    int32_t  kteOff;                                   // offset from EKS to KTE deadline
+    int32_t  ktiOff;                                   // offset from EKS to KTI deadline
   } getval_t;
 
   typedef struct{
@@ -142,13 +146,46 @@ extern "C" {
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
     double   ext_rfNueEst;
-    uint32_t inj_rfNueN;                              // injection, measured rf frequency
+    uint32_t inj_rfNueN;                             // injection, measured rf frequency
     double   inj_rfNueAve;
     double   inj_rfNueSdev;
     double   inj_rfNueDiff;
     double   inj_rfNueEst;
   } diagval_t;
 
+  typedef struct {    
+    int32_t  eks_doneOffAct;                         // offset from EKS deadline to time when we are done
+    uint32_t eks_doneOffN;
+    double   eks_doneOffAve;
+    double   eks_doneOffSdev;
+    int32_t  eks_doneOffMin;
+    int32_t  eks_doneOffMax;
+    int32_t  eks_preOffAct;                          // offset from EKS to measured extraction phase
+    uint32_t eks_preOffN;
+    double   eks_preOffAve;
+    double   eks_preOffSdev;
+    int32_t  eks_preOffMin;
+    int32_t  eks_preOffMax;
+    int32_t  eks_priOffAct;                          // offset from EKS to measured injection phase
+    uint32_t eks_priOffN;
+    double   eks_priOffAve;
+    double   eks_priOffSdev;
+    int32_t  eks_priOffMin;
+    int32_t  eks_priOffMax;
+    int32_t  eks_kteOffAct;                          // offset from EKS to KTE
+    uint32_t eks_kteOffN;
+    double   eks_kteOffAve;
+    double   eks_kteOffSdev;
+    int32_t  eks_kteOffMin;
+    int32_t  eks_kteOffMax;
+    int32_t  eks_ktiOffAct;                          // offset from EKS to KTE
+    uint32_t eks_ktiOffN;
+    double   eks_ktiOffAve;
+    double   eks_ktiOffSdev;
+    int32_t  eks_ktiOffMin;
+    int32_t  eks_ktiOffMax;
+  } diagstat_t;
+    
   // ---------------------------------
   // helper routines
   // ---------------------------------

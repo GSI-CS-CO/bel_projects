@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-February-2021
+ *  version : 4-February-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000228
+#define B2B_VIEWER_VERSION 0x000229
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -63,13 +63,15 @@ uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
 char     no_link_str[] = "NO_LINK";
 
-setval_t  dicSetval;
-getval_t  dicGetval;
-diagval_t dicDiagval;
+setval_t   dicSetval;
+getval_t   dicGetval;
+diagval_t  dicDiagval;
+diagstat_t dicDiagstat;
 
 uint32_t  dicSetvalId;
 uint32_t  dicGetvalId;
 uint32_t  dicDiagvalId;
+uint32_t  dicDiagstatId;
 
 enum {SETVAL, GETVAL} what;
 #define  TXTNA       "  N/A"
@@ -103,8 +105,11 @@ double   b2b_diffD;                                         // difference of rf 
 double   b2b_beatNue;                                       // beat frequency
 double   b2b_beatT;                                         // beat period
 
-// diag values: use them directly
-
+#define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x050               // ... mode EKS
+#define MSKRECMODE2 0x155               // ... mode B2E
+#define MSKRECMODE3 0x1f5               // ... mode B2C
+#define MSKRECMODE4 0x3ff               // ... mode B2B
 
 // other
 int      flagPrintSet;                                      // flag: print set values
@@ -112,6 +117,8 @@ int      flagPrintBeat;                                     // flag: print b2b i
 int      flagPrintDiag;                                     // flag: print diagnostic info
 int      flagPrintRf;                                       // flag: print rf info
 int      flagPrintKick;                                     // flag: print kick info
+int      flagPrintStat;                                     // flag: print status info
+int      modeMask;                                          // mask: marks events used in actual mode
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
@@ -204,19 +211,23 @@ void dicSubscribeServices(char *prefix, uint32_t sid)
   printf("name %s\n", name);
   dicGetvalId = dic_info_service_stamped(name, MONITORED, 0, &dicGetval, sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
-  sprintf(name, "%s-diag_sid%02d", prefix, sid);
+  sprintf(name, "%s-cal_diag_sid%02d", prefix, sid);
   printf("name %s\n", name);
   dicDiagvalId = dic_info_service_stamped(name, MONITORED, 0, &dicDiagval, sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+
+  sprintf(name, "%s-cal_stat_sid%02d", prefix, sid);
+  printf("name %s\n", name);
+  dicDiagstatId = dic_info_service_stamped(name, MONITORED, 0, &dicDiagstat, sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 } // dicSubscribeServices
 
 
 // send 'clear diag' command to server
-void dicCmdClearDiag(char *prefix, uint32_t indexServer)
+void dicCmdClearDiag(char *prefix, uint32_t sid)
 {
   char name[DIMMAXSIZE];
 
-  //sprintf(name, "%s_%s_cmd_cleardiag", prefix, sysShortNames[indexServer]);
-  //dic_cmnd_service(name, 0, 0);
+  sprintf(name, "%s-cal_cmd_cleardiag", prefix);
+  dic_cmnd_service(name, &sid, sizeof(sid));
 } // dicCmdClearDiag
 
 
@@ -271,8 +282,9 @@ void calcBeatValues()
 
 
 // print beat values
-void printBeatValues()
+int printBeat()
 {
+  calcBeatValues(); 
   if (flagB2bValid) {
       printf("     ext                      %15.6f Hz, %15.6f ns\n", b2b_extNue, b2b_extT);
       printf("     inj                      %15.6f Hz, %15.6f ns\n", b2b_injNue, b2b_injT);
@@ -282,11 +294,12 @@ void printBeatValues()
       printf("     inj                                          %15.6f periods\n", b2b_injN);
   } // if beat valid
   else printf("     no beating: check set values\n\n\n\n\n\n");
-} // printBeatValues
+  return 6;                                                 // 6 lines
+} // printBeat
 
 
 // print set values
-void printSetvalues(uint32_t sid)
+int printSet(uint32_t sid)
 {
   char   modeStr[50];
   char   tEKS[100];
@@ -294,18 +307,23 @@ void printSetvalues(uint32_t sid)
   switch (set_mode) {
     case 0 :
       sprintf(modeStr, "'off'");
+      modeMask = 0;
       break;
     case 1 :
       sprintf(modeStr, "'EVT_KICK_START'");
+      modeMask = MSKRECMODE1;
       break;
     case 2 :
       sprintf(modeStr, "'bunch 2 fast extraction'");
+      modeMask = MSKRECMODE2;
       break;
     case 3 :
       sprintf(modeStr, "'bunch 2 coasting beam'");
+      modeMask = MSKRECMODE3;      
       break;
     case 4 :
       sprintf(modeStr, "'bunch 2 bucket'");
+      modeMask = MSKRECMODE4;
       break;
     default :
       sprintf(modeStr, "'unknonwn'");
@@ -342,13 +360,15 @@ void printSetvalues(uint32_t sid)
     default :
       ;
   } // switch set_mode
-} // printSetvalues
+
+  return 4;                                                 // 4 lines
+} // printSet
 
 
 // print diagnostic values
-void printDiagvalues(uint32_t sid)
+int printDiag(uint32_t sid)
 {
-  printf("--- diag ---                                #ext %5u, #inj %5u, #b2b %5u\n", dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN, dicDiagval.phaseOffN);
+  printf("--- diag ---                                  #ext %5u, #inj %5u, #b2b %5u\n", dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN, dicDiagval.phaseOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -373,14 +393,15 @@ void printDiagvalues(uint32_t sid)
       else  printf("b2b: 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
-default :
+    default :
       ;
   } // switch set mode
-} // printDiagValues
+  return 4;                                                 // 4 lines
+} // printDiag
 
 
 // print kicker info
-void printKickvalues(uint32_t sid)
+int printKick(uint32_t sid)
 {
   printf("--- kicker ---  \n");
   switch(set_mode) {
@@ -399,14 +420,82 @@ void printKickvalues(uint32_t sid)
       if (dicGetval.flag_nok >> 6) printf("ext: %s\n", TXTNA);
       else printf("inj: 'delay [ns]'   electronics %5d, magnet %5d\n", dicGetval.inj_dKickMon, dicGetval.inj_dKickProb);
       break;
-default :
+    default :
       ;
   } // switch set mode
-} // printKickValues
+  return 3;                                                 // 3 lines
+} // printKick
+
+// print status info
+int printStatus(uint32_t sid)
+{
+  int i;
+  uint32_t flagEvtErr;
+  double   sdevKteFin;
+
+  flagEvtErr  = dicGetval.flagEvtErr | (modeMask   & ~(dicGetval.flagEvtRec));
+
+  printf("--- status (expert) ---                       #ext %5u, #inj %5u, #b2b %5u \n", dicDiagstat.eks_kteOffN, dicDiagstat.eks_ktiOffN, dicDiagstat.eks_priOffN);
+
+  printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI  PDE  PDI\n");
+
+  printf("required:");
+  for (i=0; i<10; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");
+
+  printf("received:");
+  for (i=0; i<10; i++) if ((dicGetval.flagEvtRec  >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");
+
+  printf("late    :");
+  for (i=0; i<10; i++) if ((dicGetval.flagEvtLate >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");
+  
+  printf("error   :");
+  for (i=0; i<10; i++) if ((flagEvtErr  >> i) & 0x1) printf("    X"); else printf("     ");
+  printf("\n");
+
+  if (set_mode == 0) {
+    printf("fin-EKS [us]: %s\n", TXTNA);
+    printf("KTE-EKS [us]: %s\n", TXTNA);
+    printf("KTE-fin [us]: %s\n", TXTNA);
+  }
+  else {
+    sdevKteFin = sqrt(pow(dicDiagstat.eks_doneOffSdev, 2)+pow(dicDiagstat.eks_kteOffSdev, 2));
+    printf("fin-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.eks_doneOffAct/1000.0, dicDiagstat.eks_doneOffAve/1000.0, dicDiagstat.eks_doneOffSdev/1000.0,
+           (double)dicDiagstat.eks_doneOffMin/1000.0, (double)dicDiagstat.eks_doneOffMax/1000.0);
+    printf("KTE-fin [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)(dicDiagstat.eks_kteOffAct-dicDiagstat.eks_doneOffAct)/1000.0, (dicDiagstat.eks_kteOffAve-dicDiagstat.eks_doneOffAve)/1000.0, sdevKteFin/1000.0,
+           (double)(dicDiagstat.eks_kteOffMin-dicDiagstat.eks_doneOffMin)/1000.0, (double)(dicDiagstat.eks_kteOffMax-dicDiagstat.eks_doneOffMax)/1000.0);
+    printf("KTE-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.eks_kteOffAct/1000.0, dicDiagstat.eks_kteOffAve/1000.0, dicDiagstat.eks_kteOffSdev/1000.0,
+           (double)dicDiagstat.eks_kteOffMin/1000.0, (double)dicDiagstat.eks_kteOffMax/1000.0);
+  }
+  if (set_mode < 3)
+    printf("KTI-EKS [us]: %s\n", TXTNA);
+  else
+    printf("KTI-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.eks_ktiOffAct/1000.0, dicDiagstat.eks_ktiOffAve/1000.0, dicDiagstat.eks_ktiOffSdev/1000.0,
+           (double)dicDiagstat.eks_ktiOffMin/1000.0, (double)dicDiagstat.eks_ktiOffMax/1000.0);
+  if (set_mode <  2)
+    printf("t0E-EKS [us]: %s\n", TXTNA);
+  else
+    printf("t0E-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.eks_preOffAct/1000.0, dicDiagstat.eks_preOffAve/1000.0, dicDiagstat.eks_preOffSdev/1000.0,
+           (double)dicDiagstat.eks_preOffMin/1000.0, (double)dicDiagstat.eks_preOffMax/1000.0);
+  if (set_mode < 4)
+    printf("t0I-EKS [us]: %s\n", TXTNA);
+  else
+    printf("t0I-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.eks_priOffAct/1000.0, dicDiagstat.eks_priOffAve/1000.0, dicDiagstat.eks_priOffSdev/1000.0,
+           (double)dicDiagstat.eks_priOffMin/1000.0, (double)dicDiagstat.eks_priOffMax/1000.0);
+  return 12;                                                // 12 lines
+} // printStatus
 
 
 // print rf values
-void printRfvalues(uint32_t sid)
+int printRf(uint32_t sid)
 {
   printf("--- rf ---                                              #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
@@ -443,18 +532,18 @@ void printRfvalues(uint32_t sid)
            printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
-
-default :
+    default :
       ;
   } // switch set mode
-} // printRfValues
+  return 7;                                                 // 7 lines
+} // printRf
 
 
 // print data to screen
 void printData(int flagOnce, uint32_t sid)
 {
   int i;
-
+  int nLines = 0;
   char   cTransfer[10];
   char   cStatus[17];
   char   tLocal[100];
@@ -492,40 +581,20 @@ void printData(int flagOnce, uint32_t sid)
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 
-  if (flagPrintSet)  printSetvalues(sid);
-  if (flagPrintBeat) {calcBeatValues(); printBeatValues();}
-  if (flagPrintDiag) printDiagvalues(sid);
-  if (flagPrintRf)   printRfvalues(sid);
-  if (flagPrintKick) printKickvalues(sid);
-
+  if (flagPrintSet)  nLines += printSet(sid);
+  if (flagPrintBeat) nLines += printBeat();
+  if (flagPrintDiag) nLines += printDiag(sid);
+  if (flagPrintRf)   nLines += printRf(sid);
+  if (flagPrintKick) nLines += printKick(sid);
+  if (flagPrintStat) nLines += printStatus(sid);
+  
   if (!flagOnce) {
-    printf("\n\n\n\n\n\n\n\n");
-    printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick                       %s\033[0m\n", tLocal);
+    if (nLines < 24) for (i=0; i < (24 - nLines); i++) printf("\n");
+    //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <s>tatus              %s\033[0m\n", tLocal);
   } // if not once
 } // printServices
 
-
-/*
-// print status text to screen
-void printStatusText()
-{
-  int i,j;
-  uint64_t status;
-
-  for (i=0; i<B2BNSYS; i++) {
-    status = dicSystem[i].status;
-    if ((status != 0x1) && (status != no_link_64)) {
-      printf(" %6s %3s:\n", ringNames[i], typeNames[i]);
-      for (j = COMMON_STATUS_OK + 1; j<(int)(sizeof(status)*8); j++) {
-        if ((status >> j) & 0x1)  printf("  ---------- status bit is set : %s\n", b2b_status_text(j));
-      } // for j
-    } // if status
-  } // for i
-  printf("press any key to continue\n");
-  while (!comlib_getTermChar()) {usleep(200000);}
-} // printStatusText
-*/
 
 int main(int argc, char** argv) {
   int opt, error = 0;
@@ -554,6 +623,7 @@ int main(int argc, char** argv) {
   flagPrintDiag = 0;
   flagPrintRf   = 0;
   flagPrintKick = 0;
+  flagPrintStat = 0;
 
   while ((opt = getopt(argc, argv, "s:o:eh")) != -1) {
     switch (opt) {
@@ -621,7 +691,7 @@ int main(int argc, char** argv) {
         userInput = comlib_getTermChar();
         switch (userInput) {
           case 'c' :
-            //dicCmdClearDiag(prefix, (uint32_t)(userInput - 48));
+            dicCmdClearDiag(prefix, sid);
             break;
           case 'b' :
             flagPrintBeat = !flagPrintBeat;
@@ -635,11 +705,11 @@ int main(int argc, char** argv) {
           case 'r' :
             flagPrintRf = !flagPrintRf;
             break;
+          case 's' :
+            flagPrintStat = !flagPrintStat;
+            break;
           case 'q'         :
             quit = 1;
-            break;
-          case 's'         :
-            // printStatusText();
             break;
           default          :
             usleep(500000);

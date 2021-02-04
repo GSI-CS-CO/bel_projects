@@ -15,7 +15,7 @@ B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
 #DIMPATH     := /home/bel/dbeck/lnx/dim_v20r29
-DIMPATH     := /home/beck/schrott/dim_v20r29
+DIMPATH     := /opt/dim//dim_v20r29
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include/saftlib
 
@@ -60,7 +60,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys saft-b2b-mon libb2bllib.so*
+	rm -f *.o b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys saft-b2b-mon b2b-analyzer b2b-viewer b2b-serv-raw libb2bllib.so*
 
 deploy:
 	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	

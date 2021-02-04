@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 3-February-2021
+ *  version : 4-February-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000228
+#define B2B_ANALYZER_VERSION 0x000229
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -60,24 +60,26 @@ const char* program;
 #define DDSSTEP     0.046566129            // min frequency step of gDDS
 
 // dim stuff
-#define   DIMCHARSIZE 32                   // standard size for char services
-#define   DIMMAXSIZE  1024                 // max size for service names
+#define    DIMCHARSIZE 32                  // standard size for char services
+#define    DIMMAXSIZE  1024                // max size for service names
 
-uint32_t  no_link_32    = 0xdeadbeef;
-uint64_t  no_link_64    = 0xdeadbeefce420651;
-char      no_link_str[] = "NO_LINK";
+uint32_t   no_link_32    = 0xdeadbeef;
+uint64_t   no_link_64    = 0xdeadbeefce420651;
+char       no_link_str[] = "NO_LINK";
 
-setval_t  dicSetval[B2B_NSID];
-getval_t  dicGetval[B2B_NSID];
-diagval_t disDiagval[B2B_NSID]; 
+setval_t   dicSetval[B2B_NSID];
+getval_t   dicGetval[B2B_NSID];
+diagval_t  disDiagval[B2B_NSID];
+diagstat_t disDiagstat[B2B_NSID];
 
-uint32_t  dicSetvalId[B2B_NSID];
-uint32_t  dicGetvalId[B2B_NSID];
-uint32_t  disDiagvalId[B2B_NSID];
+uint32_t   dicSetvalId[B2B_NSID];
+uint32_t   dicGetvalId[B2B_NSID];
+uint32_t   disDiagvalId[B2B_NSID];
+uint32_t   disDiagstatId[B2B_NSID];
+uint32_t   disClearDiagId;
 
-int       flagSetValid[B2B_NSID];
-int       flagGetValid[B2B_NSID];
-int       flagDiagValid[B2B_NSID];
+int        flagSetValid[B2B_NSID];
+int        flagGetValid[B2B_NSID];
 
 // extraction DDS match
 uint32_t  ext_ddsOffN[B2B_NSID];
@@ -123,6 +125,41 @@ double   ext_rfNueStreamOld[B2B_NSID];
 uint32_t inj_rfNueN[B2B_NSID];                             
 double   inj_rfNueAveOld[B2B_NSID];
 double   inj_rfNueStreamOld[B2B_NSID];
+
+// offset from deadline EKS to time when we are done
+uint32_t  eks_doneOffN[B2B_NSID];
+int32_t   eks_doneOffMin[B2B_NSID];
+int32_t   eks_doneOffMax[B2B_NSID];
+double    eks_doneOffAveOld[B2B_NSID];
+double    eks_doneOffStreamOld[B2B_NSID];
+
+// offset from deadline EKS to measured extraction phase
+uint32_t  eks_preOffN[B2B_NSID];
+int32_t   eks_preOffMin[B2B_NSID];
+int32_t   eks_preOffMax[B2B_NSID];
+double    eks_preOffAveOld[B2B_NSID];
+double    eks_preOffStreamOld[B2B_NSID];
+
+// offset from deadline EKS to measured injection phase
+uint32_t  eks_priOffN[B2B_NSID];
+int32_t   eks_priOffMin[B2B_NSID];
+int32_t   eks_priOffMax[B2B_NSID];
+double    eks_priOffAveOld[B2B_NSID];
+double    eks_priOffStreamOld[B2B_NSID];
+
+// offset from deadline EKS to KTE
+uint32_t  eks_kteOffN[B2B_NSID];
+int32_t   eks_kteOffMin[B2B_NSID];
+int32_t   eks_kteOffMax[B2B_NSID];
+double    eks_kteOffAveOld[B2B_NSID];
+double    eks_kteOffStreamOld[B2B_NSID];
+
+// offset from deadline EKS to KTI
+uint32_t  eks_ktiOffN[B2B_NSID];
+int32_t   eks_ktiOffMin[B2B_NSID];
+int32_t   eks_ktiOffMax[B2B_NSID];
+double    eks_ktiOffAveOld[B2B_NSID];
+double    eks_ktiOffStreamOld[B2B_NSID];
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
@@ -209,6 +246,36 @@ void clearStats(uint32_t sid)
   inj_rfNueN[sid]          = 0;                             
   inj_rfNueAveOld[sid]     = 0;
   inj_rfNueStreamOld[sid]  = 0;
+
+  eks_doneOffN[sid]        = 0;
+  eks_doneOffMax[sid]      = 0x80000000;       
+  eks_doneOffMin[sid]      = 0x7fffffff;         
+  eks_doneOffAveOld[sid]   = 0;   
+  eks_doneOffStreamOld[sid]= 0;
+
+  eks_preOffN[sid]         = 0;
+  eks_preOffMax[sid]       = 0x80000000;       
+  eks_preOffMin[sid]       = 0x7fffffff;         
+  eks_preOffAveOld[sid]    = 0;   
+  eks_preOffStreamOld[sid] = 0;
+
+  eks_priOffN[sid]         = 0;
+  eks_priOffMax[sid]       = 0x80000000;       
+  eks_priOffMin[sid]       = 0x7fffffff;         
+  eks_priOffAveOld[sid]    = 0;   
+  eks_priOffStreamOld[sid] = 0;
+
+  eks_kteOffN[sid]         = 0;
+  eks_kteOffMax[sid]       = 0x80000000;       
+  eks_kteOffMin[sid]       = 0x7fffffff;         
+  eks_kteOffAveOld[sid]    = 0;   
+  eks_kteOffStreamOld[sid] = 0;
+
+  eks_ktiOffN[sid]         = 0;
+  eks_ktiOffMax[sid]       = 0x80000000;       
+  eks_ktiOffMin[sid]       = 0x7fffffff;         
+  eks_ktiOffAveOld[sid]    = 0;   
+  eks_ktiOffStreamOld[sid] = 0;
 } // clearDiagData
 
 
@@ -284,6 +351,18 @@ double calcDdsNue(double nue)
 } // calcDdsNue
 
 
+// clear diagnostic information
+void cmdClearDiag(long *tag, uint32_t *address, int *size)
+{
+  int32_t sid;
+  
+  if (*size != sizeof(uint32_t)) return;
+  sid = (uint32_t)(*address);
+
+  clearStats(sid);
+} // cmdClearDiag
+
+
 // receive set values
 void recGetvalue(long *tag, diagval_t *address, int *size)
 {
@@ -301,17 +380,56 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
-  if (!flagSetValid[sid]) {flagDiagValid[sid] = 0; return;}
+  if (!flagSetValid[sid])             return;
   flagGetValid[sid] = (*size != sizeof(uint32_t));
 
   mode = dicSetval[sid].mode;
-  if (mode <  2) return;                                    // no further analysis
+  if (mode <  1) return;                                    // no further analysis
+  if (mode >= 1) {
+    // offset from deadline EKS to time when we are done
+    act = dicGetval[sid].doneOff;
+    n   = ++(eks_doneOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, eks_doneOffAveOld[sid], &streamNew, eks_doneOffStreamOld[sid], act, n , &dummy, &sdev);
+    eks_doneOffAveOld[sid]          = aveNew;
+    eks_doneOffStreamOld[sid]       = streamNew;
+    if (act < eks_doneOffMin[sid]) eks_doneOffMin[sid] = act;
+    if (act > eks_doneOffMax[sid]) eks_doneOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].eks_doneOffAct  = act;
+    disDiagstat[sid].eks_doneOffN    = n;
+    disDiagstat[sid].eks_doneOffAve  = aveNew;
+    disDiagstat[sid].eks_doneOffSdev = sdev;
+    disDiagstat[sid].eks_doneOffMin  = eks_doneOffMin[sid];
+    disDiagstat[sid].eks_doneOffMax  = eks_doneOffMax[sid];    
+
+    // offset from deadline EKS to KTE
+    act = dicGetval[sid].kteOff;
+    n   = ++(eks_kteOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, eks_kteOffAveOld[sid], &streamNew, eks_kteOffStreamOld[sid], act, n , &dummy, &sdev);
+    eks_kteOffAveOld[sid]          = aveNew;
+    eks_kteOffStreamOld[sid]       = streamNew;
+    if (act < eks_kteOffMin[sid]) eks_kteOffMin[sid] = act;
+    if (act > eks_kteOffMax[sid]) eks_kteOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].eks_kteOffAct  = act;
+    disDiagstat[sid].eks_kteOffN    = n;
+    disDiagstat[sid].eks_kteOffAve  = aveNew;
+    disDiagstat[sid].eks_kteOffSdev = sdev;
+    disDiagstat[sid].eks_kteOffMin  = eks_kteOffMin[sid];
+    disDiagstat[sid].eks_kteOffMax  = eks_kteOffMax[sid];    
+  } // if mode >= 1
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
     cor = dicSetval[sid].ext_cTrig;
     act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
     n   = ++(ext_ddsOffN[sid]);
-    //printf("act %3d, actraw, %5d, cor %3d, n %3d\n", act, dicGetval[sid].ext_diagMatch, dicSetval[sid].ext_cTrig, n);
+
     // statistics
     calcStats(&aveNew, ext_ddsOffAveOld[sid], &streamNew, ext_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
     //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
@@ -364,8 +482,49 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].ext_rfNueAve   = aveNew;
     disDiagval[sid].ext_rfNueSdev  = sdev;
     disDiagval[sid].ext_rfNueDiff  = aveNew - tmp ;
-    disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);    
+    disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);
+
+    // offset from deadline EKS to measured extraction phase
+    act = dicGetval[sid].preOff;
+    n   = ++(eks_preOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, eks_preOffAveOld[sid], &streamNew, eks_preOffStreamOld[sid], act, n , &dummy, &sdev);
+    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
+    eks_preOffAveOld[sid]          = aveNew;
+    eks_preOffStreamOld[sid]       = streamNew;
+    if (act < eks_preOffMin[sid]) eks_preOffMin[sid] = act;
+    if (act > eks_preOffMax[sid]) eks_preOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].eks_preOffAct  = act;
+    disDiagstat[sid].eks_preOffN    = n;
+    disDiagstat[sid].eks_preOffAve  = aveNew;
+    disDiagstat[sid].eks_preOffSdev = sdev;
+    disDiagstat[sid].eks_preOffMin  = eks_preOffMin[sid];
+    disDiagstat[sid].eks_preOffMax  = eks_preOffMax[sid];    
   } // if mode >=2
+
+  if (mode >= 3) {
+    // offset from deadline EKS to KTI
+    act = dicGetval[sid].ktiOff;
+    n   = ++(eks_ktiOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, eks_ktiOffAveOld[sid], &streamNew, eks_ktiOffStreamOld[sid], act, n , &dummy, &sdev);
+    eks_ktiOffAveOld[sid]          = aveNew;
+    eks_ktiOffStreamOld[sid]       = streamNew;
+    if (act < eks_ktiOffMin[sid]) eks_ktiOffMin[sid] = act;
+    if (act > eks_ktiOffMax[sid]) eks_ktiOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].eks_ktiOffAct  = act;
+    disDiagstat[sid].eks_ktiOffN    = n;
+    disDiagstat[sid].eks_ktiOffAve  = aveNew;
+    disDiagstat[sid].eks_ktiOffSdev = sdev;
+    disDiagstat[sid].eks_ktiOffMin  = eks_ktiOffMin[sid];
+    disDiagstat[sid].eks_ktiOffMax  = eks_ktiOffMax[sid];    
+  } // if mode >= 3
 
   if (mode == 4) {
     // match diagnostics; theoretical value is '0'
@@ -444,9 +603,30 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].inj_rfNueSdev  = sdev;
     disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
     disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
+
+        // offset from deadline EKS to measured injection phase
+    act = dicGetval[sid].priOff;
+    n   = ++(eks_priOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, eks_priOffAveOld[sid], &streamNew, eks_priOffStreamOld[sid], act, n , &dummy, &sdev);
+    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
+    eks_priOffAveOld[sid]          = aveNew;
+    eks_priOffStreamOld[sid]       = streamNew;
+    if (act < eks_priOffMin[sid]) eks_priOffMin[sid] = act;
+    if (act > eks_priOffMax[sid]) eks_priOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].eks_priOffAct  = act;
+    disDiagstat[sid].eks_priOffN    = n;
+    disDiagstat[sid].eks_priOffAve  = aveNew;
+    disDiagstat[sid].eks_priOffSdev = sdev;
+    disDiagstat[sid].eks_priOffMin  = eks_priOffMin[sid];
+    disDiagstat[sid].eks_priOffMax  = eks_priOffMax[sid];    
   } // mode == 4
   
   dis_update_service(disDiagvalId[sid]);
+  dis_update_service(disDiagstatId[sid]);
 } // recGetvalue
   
 // receive set values
@@ -486,8 +666,14 @@ void disAddServices(char *prefix)
   int  i;
 
   for (i=0; i<B2B_NSID; i++) {
-    sprintf(name, "%s-diag_sid%02d", prefix, i);
-    disDiagvalId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
+    sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
+    disDiagvalId[i]  = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
+
+    sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
+    disDiagstatId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
+
+    sprintf(name, "%s-cal_cmd_cleardiag", prefix);
+    disClearDiagId   = dis_add_cmnd(name, "I:1", cmdClearDiag, 0);
   } // for i
 } // disAddServices
 
@@ -554,7 +740,7 @@ int main(int argc, char** argv) {
 
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
-   sprintf(disName, "%s-diag", prefix);
+   sprintf(disName, "%s-cal", prefix);
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ANALYZER_VERSION));
 
