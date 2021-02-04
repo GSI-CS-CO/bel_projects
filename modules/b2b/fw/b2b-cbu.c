@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000226                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000229                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -120,6 +120,7 @@ uint64_t TBeat;                         // beating frquency
 int32_t  cPhase;                        // correction for phase matching [ns]
 int32_t  cTrigExt;                      // correction for extraction trigger
 int32_t  cTrigInj;                      // correction for injection trigger
+uint64_t tEKS;                          // deadline of EVT_KICK_START
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
@@ -644,7 +645,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrig;                                             // time when kickers shall be triggered
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
-  /*uint64_t TBeat;                                             // period of beating*/
+  int32_t  offsetDone;                                        // offset from deadline EKS to time, when extraction trigger is sent
 
   status = actStatus;
 
@@ -684,8 +685,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase     = setCPhase[sid];
       cTrigExt   = setCTrigExt[sid];
       cTrigInj   = setCTrigInj[sid];
-      //pp_printf("b2b: gid %u, mode %u, nHExt %u\n", gid, mode, nHExt);
 
+      tEKS       = reqDeadline;
       nTransfer++;
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
@@ -805,9 +806,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
+    offsetDone   = (int32_t)(getSysTime() - tEKS);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, 0, sid, bpid, errorFlags);
-    sendParam    = (uint64_t)(cTrigExt & 0xffffffff);                         // param field, cTrigExt as low word
+    sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
+    sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
     transStat |= mState;
     mState   = getNextMState(mode, mState);
