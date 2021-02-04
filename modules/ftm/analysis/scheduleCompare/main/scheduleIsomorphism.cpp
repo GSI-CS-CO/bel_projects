@@ -128,8 +128,17 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g) {
   dp.property("tef", boost::get(&ScheduleVertex::tef, g));
   dp.property("toffs", boost::get(&ScheduleVertex::toffs, g));
   dp.property("par", boost::get(&ScheduleVertex::par, g));
-  dp.property("res", boost::get(&ScheduleVertex::res, g));
   dp.property("id", boost::get(&ScheduleVertex::id, g));
+  dp.property("fid", boost::get(&ScheduleVertex::fid, g));
+  dp.property("gid", boost::get(&ScheduleVertex::gid, g));
+  dp.property("evtno", boost::get(&ScheduleVertex::evtno, g));
+  dp.property("sid", boost::get(&ScheduleVertex::sid, g));
+  dp.property("bpid", boost::get(&ScheduleVertex::bpid, g));
+  dp.property("beamin", boost::get(&ScheduleVertex::beamin, g));
+  dp.property("bpcstart", boost::get(&ScheduleVertex::bpcstart, g));
+  dp.property("reqnobeam", boost::get(&ScheduleVertex::reqnobeam, g));
+  dp.property("vacc", boost::get(&ScheduleVertex::vacc, g));
+  dp.property("res", boost::get(&ScheduleVertex::res, g));
   // attribute of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   //  dp.property("name", boost::get(&ScheduleEdge::name, g));
