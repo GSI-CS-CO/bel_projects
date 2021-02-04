@@ -92,6 +92,18 @@ class TestScheduleCompare(unittest.TestCase):
   def test_folder_dot_block(self):
     self.allFilesInfolderTest('dot_block/')
 
+  def test_folder_dot_flow(self):
+    self.allFilesInfolderTest('dot_flow/')
+
+  def test_folder_dot_flush(self):
+    self.allFilesInfolderTest('dot_flush/')
+
+  def test_folder_dot_switch(self):
+    self.allFilesInfolderTest('dot_switch/')
+
+  def test_folder_dot_wait(self):
+    self.allFilesInfolderTest('dot_wait/')
+
   def test_folder_dot(self):
     self.allFilesInfolderTest('dot1/')
 

@@ -1,0 +1,4 @@
+digraph {
+	name="switch-target-tvalid-tabs-dst"
+	A [type=switch target="B" tvalid=100 tabs=1 dst="C"]
+}
