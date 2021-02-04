@@ -25,10 +25,18 @@ class ScheduleVertex {
   std::string reqnobeam = std::string("");
   std::string vacc = std::string("");
   std::string res = std::string("");
-  std::string x = std::string("");
+  std::string tvalid = std::string("");
+  std::string tabs = std::string("");
+  std::string target = std::string("");
+  std::string dst = std::string("");
+  std::string reps = std::string("");
+  std::string prio = std::string("");
+  std::string twait = std::string("");
+  std::string wabs = std::string("");
+  std::string clear = std::string("");
+  std::string ovr = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
-  // int compare(const ScheduleVertex& v2);
 
   inline bool operator==(const ScheduleVertex& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleVertex& rhs) { return compare(*this, rhs) != 0; }
@@ -38,6 +46,15 @@ class ScheduleVertex {
   inline bool operator>=(const ScheduleVertex& rhs) { return compare(*this, rhs) >= 0; }
 
  private:
+  int compareBlock(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareFlow(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareNoop(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2);
 };
 #endif
