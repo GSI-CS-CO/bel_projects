@@ -35,6 +35,8 @@ class ScheduleVertex {
   std::string wabs = std::string("");
   std::string clear = std::string("");
   std::string ovr = std::string("");
+  // for syntax check of dot files:
+  std::string beamproc = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
 

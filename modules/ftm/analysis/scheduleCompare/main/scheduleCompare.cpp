@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "vsh")) != -1) {
+  while ((opt = getopt(argc, argv, "vshc")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -32,6 +32,9 @@ int main(int argc, char* argv[]) {
       case 'h':
         usage(program);
         error = USAGE_MESSAGE;
+        break;
+      case 'c':
+        config.check = true;
         break;
       default:
         std::cerr << program << ": bad option " << std::endl;
@@ -56,6 +59,7 @@ void usage(char* program) {
   std::cerr << "Usage: " << program << " <dot file 1> <dot file 2>" << std::endl;
   std::cerr << "Checks that graphs in <dot file 1> and <dot file 2> are isomorphic, i.e. describe the same schedule." << std::endl;
   std::cerr << "Options: " << std::endl;
+  std::cerr << "        -c: check dot syntax (stops parsing on all unknown attributes)." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
@@ -68,5 +72,6 @@ void usage(char* program) {
   std::cerr << MISSING_ARGUMENT << " MISSING_ARGUMENT, at least one of the file names is missing." << std::endl;
   std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
+  std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
 }

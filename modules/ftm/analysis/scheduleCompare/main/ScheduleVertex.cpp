@@ -78,12 +78,12 @@ int ScheduleVertex::compareFlow(const ScheduleVertex& v1, const ScheduleVertex& 
   }
 }
 
-int ScheduleVertex::compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2) {   
-if (v1.target == v2.target) {
+int ScheduleVertex::compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  if (v1.target == v2.target) {
     if (v1.tvalid == v2.tvalid) {
       if (v1.tabs == v2.tabs) {
         if (v1.clear == v2.clear) {
-            return v1.ovr.compare(v2.ovr);
+          return v1.ovr.compare(v2.ovr);
         } else {
           return v1.clear.compare(v2.clear);
         }
@@ -96,16 +96,16 @@ if (v1.target == v2.target) {
   } else {
     return v1.target.compare(v2.target);
   }
- }
+}
 int ScheduleVertex::compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2) { return -1; }
 int ScheduleVertex::compareNoop(const ScheduleVertex& v1, const ScheduleVertex& v2) { return -1; }
 int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) { return 0; }
 int ScheduleVertex::compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2) { return 0; }
-int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2) { 
+int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   if (v1.target == v2.target) {
     if (v1.tvalid == v2.tvalid) {
       if (v1.tabs == v2.tabs) {
-            return v1.dst.compare(v2.dst);
+        return v1.dst.compare(v2.dst);
       } else {
         return v1.tabs.compare(v2.tabs);
       }
@@ -173,12 +173,12 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   }
 }
 
-int ScheduleVertex::compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2) { 
+int ScheduleVertex::compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   if (v1.target == v2.target) {
     if (v1.tvalid == v2.tvalid) {
       if (v1.tabs == v2.tabs) {
         if (v1.twait == v2.twait) {
-            return v1.wabs.compare(v2.wabs);
+          return v1.wabs.compare(v2.wabs);
         } else {
           return v1.twait.compare(v2.twait);
         }

@@ -45,12 +45,26 @@ class GraphCompare {
  */
 int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration& config) {
   ScheduleGraph graph1, graph2;
-  boost::dynamic_properties dp1 = setDynamicProperties(graph1);
-  bool parse1 = parseSchedule(dotFile1, graph1, dp1, config);
-  printSchedule("Graph 1:", graph1, dp1, config);
-  boost::dynamic_properties dp2 = setDynamicProperties(graph2);
-  bool parse2 = parseSchedule(dotFile2, graph2, dp2, config);
-  printSchedule("Graph 2:", graph2, dp2, config);
+  bool parse1 = false;
+  bool parse2 = false;
+  int result = -1;
+  try {
+    boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
+    parse1 = parseSchedule(dotFile1, graph1, dp1, config);
+    printSchedule("Graph 1:", graph1, dp1, config);
+  } catch (boost::property_not_found excep) {
+    std::cerr << "Parsing graph1: " << excep.what() << std::endl;
+    result = PARSE_ERROR;
+  }
+  try {
+    boost::dynamic_properties dp2 = setDynamicProperties(graph2, config);
+    parse2 = parseSchedule(dotFile2, graph2, dp2, config);
+    printSchedule("Graph 2:", graph2, dp2, config);
+  } catch (boost::property_not_found excep) {
+    std::cerr << "Parsing graph2: " << excep.what() << std::endl;
+    result = PARSE_ERROR;
+  }
+  // std::cerr << "parse1: " << parse1 << ", parse2: " << parse2 << ", result: " << result << std::endl;
   if (parse1 && parse2) {
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
@@ -78,7 +92,6 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     // Function vertex_order_by_mult is used to compute the order of
     // vertices of graph1. This is the order in which the vertices are examined
     // during the matching process.
-    int result = -1;
     bool isomorphic =
         vf2_subgraph_iso(*ref1, *ref2, std::ref(callback), vertex_order_by_mult(*ref1), boost::vertices_equivalent(std::ref(graphComparator)).edges_equivalent(edge_compare));
     if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
@@ -110,12 +123,16 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     }
     return result;
   } else {
-    return FILE_NOT_FOUND;
+    return (result == -1) ? FILE_NOT_FOUND : result;
   }
 }
 
-boost::dynamic_properties setDynamicProperties(ScheduleGraph& g) {
-  boost::dynamic_properties dp(boost::ignore_other_properties);
+boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& config) {
+  boost::dynamic_properties dp = boost::dynamic_properties(boost::ignore_other_properties);
+  if (config.check) {
+    dp = boost::dynamic_properties();
+    dp.property("beamproc", boost::get(&ScheduleVertex::beamproc, g));
+  }
   boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
   dp.property("name", gname);
   // attributes of vertices
