@@ -43,7 +43,9 @@ def extractScript(commands_history_file):
     for i in range(len(lines)):
         match = pattern.match(lines[i])
         if match:
-            if int(entry_no) > -1 and len(graph_lines) > 0:
+            # write graph_lines to dot file only if there is a graph.
+            # improvement: check for 'digraph' in the first line.
+            if int(entry_no) > -1 and len(graph_lines) > 2 and len(graph_lines[1]) > 6:
                 with open(dot_file_name, 'w') as writer:
                     writer.write(''.join(graph_lines[1:]))
             entry_no = match.group(1)
