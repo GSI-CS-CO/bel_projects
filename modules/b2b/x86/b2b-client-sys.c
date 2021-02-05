@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000227
+#define B2B_CLIENT_SYS_VERSION 0x000229
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define B2BNSYS     7                    // number of B2B systems
+#define B2BNSYS     10                    // number of B2B systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -70,31 +70,39 @@ const char * sysShortNames[] = {
   "sis18-cbu",
   "sis18-pm",
   "sis18-kde",
+  "sis18-raw",
+  "sis18-cal",
   "esr-cbu",
   "esr-pm",
   "esr-kdx",
-  "sis18-raw"
-
+  "esr-raw",
+  "esr-cal"
 };
 
 const char * ringNames[] = {
   " SIS18",
   " SIS18",
   " SIS18",
-  "   ESR",
-  "   ESR",
-  "   ESR",
   " SIS18",
+  " SIS18",
+  "   ESR",
+  "   ESR",
+  "   ESR",
+  "   ESR",
+  "   ESR"
 };
 
 const char * typeNames[] = {
   "CBU",
   " PM",
   "KDE",
+  "DAQ",
+  "CAL",
   "CBU",
   " PM",
   "KDX",
   "DAQ",
+  "CAL"
 };
 
 struct b2bSystem_t {

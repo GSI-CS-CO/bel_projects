@@ -102,7 +102,6 @@ static const char* program;
 #define NAMELEN     256                 // max size for names
 
 // services
-
 char      disVersion[DIMCHARSIZE];
 char      disState[DIMCHARSIZE];
 char      disHostname[DIMCHARSIZE];
@@ -368,6 +367,7 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
+  std::cerr << "Example1: '" << program << " tr1 -e0 sis18'" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;

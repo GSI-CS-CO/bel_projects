@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-January-2021
+ *  version : 5-February-2021
  *
  * library for b2b
  *
@@ -117,6 +117,7 @@ const char* b2b_status_text(uint32_t bit)
     case B2B_STATUS_SAFETYMARGIN         : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
     case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s",    bit, "no RF signal detected"); break;
     case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s",    bit, "late timing message received"); break;
+    case  B2B_STATUS_NOKICK              : sprintf(message, "error %d, %s",    bit, "no kicker signal detected"); break;
     default                              : sprintf(message, "%s", comlib_statusText(bit)); break;
   } // switch bit
   

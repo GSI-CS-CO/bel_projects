@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 4-February-2021
+ *  version : 5-February-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -75,6 +75,8 @@ uint32_t  dicDiagstatId;
 
 enum {SETVAL, GETVAL} what;
 #define  TXTNA       "  N/A"
+#define  TXTUNKWN    "UNKWN"
+#define  TXTERROR    "ERROR"
 
 // set values
 uint32_t flagSetValid;                                      // flag set data are valid 
@@ -121,7 +123,7 @@ int      flagPrintStat;                                     // flag: print statu
 int      modeMask;                                          // mask: marks events used in actual mode
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <name>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
@@ -130,7 +132,7 @@ static void help(void) {
   fprintf(stderr, "                      'what' 0: set val; 1: get val; .... \n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display information on the B2B system\n");
-  fprintf(stderr, "Example1: '%s sis18\n", program);
+  fprintf(stderr, "Example1: '%s sis18 -s7\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_VIEWER_VERSION));
@@ -368,7 +370,7 @@ int printSet(uint32_t sid)
 // print diagnostic values
 int printDiag(uint32_t sid)
 {
-  printf("--- diag ---                                  #ext %5u, #inj %5u, #b2b %5u\n", dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN, dicDiagval.phaseOffN);
+  printf("--- diag ---                                 #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -403,26 +405,36 @@ int printDiag(uint32_t sid)
 // print kicker info
 int printKick(uint32_t sid)
 {
-  printf("--- kicker ---  \n");
-  switch(set_mode) {
-    case 0 :
-      printf("ext: %s\n", TXTNA);
-      printf("inj: %s\n", TXTNA);
-      break;
-    case 1 ... 2 :
-      if (dicGetval.flag_nok >> 1) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'delay [ns]'   electronics %5d, magnet %5d\n", dicGetval.ext_dKickMon, dicGetval.ext_dKickProb);
-      printf("inj: %s\n", TXTNA);
-      break;
-    case 3 ... 4 :
-      if (dicGetval.flag_nok >> 1) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'delay [ns]'   electronics %5d, magnet %5d\n", dicGetval.ext_dKickMon, dicGetval.ext_dKickProb);
-      if (dicGetval.flag_nok >> 6) printf("ext: %s\n", TXTNA);
-      else printf("inj: 'delay [ns]'   electronics %5d, magnet %5d\n", dicGetval.inj_dKickMon, dicGetval.inj_dKickProb);
-      break;
-    default :
-      ;
-  } // switch set mode
+  uint32_t remainder;
+  
+  printf("--- kicker --- \n");
+
+  // extraction kicker
+  if (set_mode == 0) printf("ext: %s\n", TXTNA);
+  else {
+    if ((dicGetval.flag_nok >> 1) & 0x1)  printf("ext: %s\n", TXTERROR);
+    else {
+      if (set_extT != 0) remainder = dicGetval.ext_dKickMon % (int32_t)set_extT;
+      else               remainder = 0;
+      printf("ext: 'delay [ns]'   electronics(remainder) %5d(%5d), magnet ", dicGetval.ext_dKickMon, remainder);
+      if ((dicGetval.flag_nok >> 2) & 0x1)  printf("%s\n", TXTUNKWN);
+      else                                  printf("%5d\n", dicGetval.ext_dKickProb);
+    } // else flag_nok
+  } // else mode == 0
+
+  // injection kicker
+  if (set_mode < 3) printf("inj: %s\n", TXTNA);
+  else {
+    if ((dicGetval.flag_nok >> 6) & 0x1) printf("inj: %s\n", TXTERROR);
+    else {
+      if (set_extT != 0) remainder = dicGetval.inj_dKickMon % (int32_t)set_extT;
+      else               remainder = 0;
+      printf("inj: 'delay [ns]'   electronics(remainder) %5d(%5d), magnet ", dicGetval.inj_dKickMon, remainder);
+      if ((dicGetval.flag_nok >> 7) & 0x1)  printf("%s\n", TXTUNKWN);
+      else                                  printf("%5d\n", dicGetval.inj_dKickProb);
+    } // else flag_nok
+  } // else mode == 0
+
   return 3;                                                 // 3 lines
 } // printKick
 
@@ -435,7 +447,7 @@ int printStatus(uint32_t sid)
 
   flagEvtErr  = dicGetval.flagEvtErr | (modeMask   & ~(dicGetval.flagEvtRec));
 
-  printf("--- status (expert) ---                       #ext %5u, #inj %5u, #b2b %5u \n", dicDiagstat.eks_kteOffN, dicDiagstat.eks_ktiOffN, dicDiagstat.eks_priOffN);
+  printf("--- status (expert) ---                      #b2b %5u, #ext %5u, #inj %5u\n", dicDiagstat.eks_priOffN, dicDiagstat.eks_kteOffN, dicDiagstat.eks_ktiOffN);
 
   printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI  PDE  PDI\n");
 
@@ -467,7 +479,7 @@ int printStatus(uint32_t sid)
            (double)dicDiagstat.eks_doneOffMin/1000.0, (double)dicDiagstat.eks_doneOffMax/1000.0);
     printf("KTE-fin [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)(dicDiagstat.eks_kteOffAct-dicDiagstat.eks_doneOffAct)/1000.0, (dicDiagstat.eks_kteOffAve-dicDiagstat.eks_doneOffAve)/1000.0, sdevKteFin/1000.0,
-           (double)(dicDiagstat.eks_kteOffMin-dicDiagstat.eks_doneOffMin)/1000.0, (double)(dicDiagstat.eks_kteOffMax-dicDiagstat.eks_doneOffMax)/1000.0);
+           (double)(dicDiagstat.eks_kteOffMin-dicDiagstat.eks_doneOffMax)/1000.0, (double)(dicDiagstat.eks_kteOffMax-dicDiagstat.eks_doneOffMin)/1000.0);
     printf("KTE-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_kteOffAct/1000.0, dicDiagstat.eks_kteOffAve/1000.0, dicDiagstat.eks_kteOffSdev/1000.0,
            (double)dicDiagstat.eks_kteOffMin/1000.0, (double)dicDiagstat.eks_kteOffMax/1000.0);
@@ -497,7 +509,7 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  printf("--- rf ---                                              #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
+  printf("--- rf ---                                               #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -513,6 +525,7 @@ int printRf(uint32_t sid)
            printf("ext:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
            printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
+      printf("inj: %s\n\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
@@ -540,7 +553,7 @@ int printRf(uint32_t sid)
 
 
 // print data to screen
-void printData(int flagOnce, uint32_t sid)
+void printData(int flagOnce, uint32_t sid, char *name)
 {
   int i;
   int nLines = 0;
@@ -577,7 +590,7 @@ void printData(int flagOnce, uint32_t sid)
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(tLocal,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m--- B2B Viewer ------------- SID %02d %25s EKS @ %s.%03d\033[0m\n", sid, modeStr, tEKS, set_msecs);
+    printf("\033[7m--- b2b viewer (%5s) ---   SID %02d %25s EKS @ %s.%03d\033[0m\n", name, sid, modeStr, tEKS, set_msecs);
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 
@@ -609,6 +622,7 @@ int main(int argc, char** argv) {
   int      quit;
 
   char     prefix[DIMMAXSIZE];
+  char     name[DIMMAXSIZE];
   uint32_t sid;                             // sequence ID
 
 
@@ -674,8 +688,14 @@ int main(int argc, char** argv) {
     return 0;
   } // if optind
 
-  if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b");
+  if (optind< argc) {
+    sprintf(prefix, "b2b_%s", argv[optind]);
+    sprintf(name, "%s",  argv[optind]);
+  } // if optindex
+  else {
+    sprintf(prefix, "b2b");
+    sprintf(name, "none");
+  } // else optindex
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_VIEWER_VERSION));
 
@@ -686,7 +706,7 @@ int main(int argc, char** argv) {
 
     while (!quit) {
       /*if (once) {sleep(1); quit=1;}                 // wait a bit to get the values */
-      printData(once, sid);
+      printData(once, sid, name);
       if (!quit) {
         userInput = comlib_getTermChar();
         switch (userInput) {

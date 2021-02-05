@@ -67,11 +67,22 @@ uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
 char       no_link_str[] = "NO_LINK";
 
+char       disVersion[DIMCHARSIZE];
+char       disState[DIMCHARSIZE];
+char       disHostname[DIMCHARSIZE];
+uint64_t   disStatus;
+uint32_t   disNTransfer;
 setval_t   dicSetval[B2B_NSID];
 getval_t   dicGetval[B2B_NSID];
 diagval_t  disDiagval[B2B_NSID];
 diagstat_t disDiagstat[B2B_NSID];
 
+
+uint32_t   disVersionId      = 0;
+uint32_t   disStateId        = 0;
+uint32_t   disHostnameId     = 0;
+uint32_t   disStatusId       = 0;
+uint32_t   disNTransferId    = 0;
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
 uint32_t   disDiagvalId[B2B_NSID];
@@ -209,6 +220,8 @@ int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
 // clears diag data
 void clearStats(uint32_t sid)
 {
+  disNTransfer             = 0;
+  
   ext_ddsOffN[sid]         = 0;
   ext_ddsOffMax[sid]       = 0x80000000;       
   ext_ddsOffMin[sid]       = 0x7fffffff;         
@@ -386,6 +399,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   mode = dicSetval[sid].mode;
   if (mode <  1) return;                                    // no further analysis
   if (mode >= 1) {
+
+    disNTransfer++;
+      
     // offset from deadline EKS to time when we are done
     act = dicGetval[sid].doneOff;
     n   = ++(eks_doneOffN[sid]);
@@ -627,6 +643,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   
   dis_update_service(disDiagvalId[sid]);
   dis_update_service(disDiagstatId[sid]);
+  dis_update_service(disNTransferId);
 } // recGetvalue
   
 // receive set values
@@ -665,6 +682,25 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
   int  i;
 
+    // 'generic' services
+  sprintf(name, "%s-cal_version_fw", prefix);
+  sprintf(disVersion, "%s",  b2b_version_text(B2B_ANALYZER_VERSION));
+  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+
+  sprintf(name, "%s-cal_state", prefix);
+  sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
+  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+
+  sprintf(name, "%s-cal_hostname", prefix);
+  disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
+
+  sprintf(name, "%s-cal_status", prefix);
+  disStatus       = 0x1;   
+  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+
+  sprintf(name, "%s-cal_ntransfer", prefix);
+  disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
     disDiagvalId[i]  = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
@@ -738,8 +774,9 @@ int main(int argc, char** argv) {
     return 0;
   } // if optind
 
+  gethostname(disHostname, 32);
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b");
+  else              sprintf(prefix, "b2b_%s", disHostname);
    sprintf(disName, "%s-cal", prefix);
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ANALYZER_VERSION));

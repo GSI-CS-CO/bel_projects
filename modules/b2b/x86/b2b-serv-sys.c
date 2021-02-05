@@ -93,7 +93,7 @@ static void help(void) {
   fprintf(stderr, "  -s                  start server publishing system info\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KD...)\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm\n", program);
+  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
