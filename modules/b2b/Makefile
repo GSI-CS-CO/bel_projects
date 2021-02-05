@@ -12,7 +12,7 @@ ARCH        ?= /x86_64
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
-DIM         ?= /home/bel/dbeck/lnx/dim_v20r29
+DIM         ?= /common/usr/timing/b2b/dim_v20r29
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
@@ -64,6 +64,9 @@ deploy:
 	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-client-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack 
+	cp $(SW)/b2b-serv-raw $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
+	cp $(SW)/b2b-analyzer $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
+	cp $(SW)/b2b-viewer $(STAGING)$(ARCH)$(PREFIX)/usr/bin              # '/usr' is a hack 
 
 .PHONY: all clean
 
