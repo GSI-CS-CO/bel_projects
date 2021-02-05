@@ -321,9 +321,10 @@ inline bool DaqInterface::permitCommand( DAQ_OPERATION_CODE_T cmd )
    switch( cmd )
    {
       //case DAQ_OP_GET_ERROR_STATUS:
-      case DAQ_OP_GET_MACRO_VERSION:
-      case DAQ_OP_GET_SLOTS:
-      case DAQ_OP_GET_CHANNELS:
+      case DAQ_OP_SYNC_TIMESTAMP:      /* No break here */
+      case DAQ_OP_GET_MACRO_VERSION:   /* No break here */
+      case DAQ_OP_GET_SLOTS:           /* No break here */
+      case DAQ_OP_GET_CHANNELS:        /* No break here */
       case DAQ_OP_GET_DEVICE_TYPE:
       {
          return true;

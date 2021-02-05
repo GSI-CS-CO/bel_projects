@@ -96,7 +96,7 @@ CALL_ARGS = $(HOST) -vy=1000
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 
-DEBUG = 1
+# DEBUG = 1
 
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h

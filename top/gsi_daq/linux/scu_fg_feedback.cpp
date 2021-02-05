@@ -109,6 +109,11 @@ void FgFeedbackChannel::Common::evaluate( const uint64_t wrTimeStampTAI,
                             m_lastSupprActValue, m_lastSupprSetValue );
          m_lastSupprTimestamp = 0;
       }
+
+      /*
+       * Invoking the the callback function implemented in
+       * the next higher software layer.
+       */
       m_pParent->onData( wrTimeStampTAI, actValue, setValue );
    }
    else
