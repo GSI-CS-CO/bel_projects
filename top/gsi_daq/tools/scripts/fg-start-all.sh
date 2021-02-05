@@ -12,6 +12,8 @@
 ESC_ERROR="\e[1m\e[31m"
 ESC_SUCCESS="\e[1m\e[32m"
 ESC_NORMAL="\e[0m"
+ESC_FG_CYAN="\e[1m\e[36m"
+ESC_FG_BLUE="\e[34m"
 
 die()
 {
@@ -72,14 +74,20 @@ fi
 n=1
 for i in $FG_LIST
 do
-  echo -e "$n -> $i"
-  $FG_CTL -rf $i -g <$1 &
-  let n+=1
-  [ "$n" -gt "$m" ] && break
-  sleep 0.5
+  slot=$(echo $i | tr '-' ' ' | awk '{printf $2}')
+  if [ "$slot" -gt "0" ] && [ "$slot" -le "12" ]
+  then
+     echo -e ${ESC_FG_CYAN}"${n}: activating on slot ${slot}: $i"${ESC_NORMAL}
+     $FG_CTL -rf $i -g <$1 &
+     sleep 0.5
+     let n+=1
+     [ "$n" -gt "$m" ] && break
+  else
+     echo -e ${ESC_FG_BLUE}"omitting $i"${ESC_NORMAL}
+  fi
 done
 
-echo "Press enter to terminate all running function-generators"
+echo -e "\n\n*** Press enter to terminate all running function-generators ***"
 read key
 
 killall $(basename $FG_CTL) 2>/dev/null
