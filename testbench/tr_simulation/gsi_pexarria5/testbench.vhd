@@ -210,6 +210,7 @@ begin
 
   simbridge_y: if g_en_simbridge generate
     chip : entity work.ez_usb_chip
+      generic map(g_stop_until_client_connects => false)
       port map (
         rstn_i    => '0', -- always in reset
         wu2_o     => pa(3),
@@ -226,6 +227,7 @@ begin
   end generate;
   simbridge_n: if not g_en_simbridge generate
     chip : entity work.ez_usb_chip
+      generic map(g_stop_until_client_connects => false)
       port map (
         rstn_i    => ures,
         wu2_o     => pa(3),

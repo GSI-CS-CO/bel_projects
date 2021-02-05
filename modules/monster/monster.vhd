@@ -1524,7 +1524,7 @@ end generate;
 
   -- similar to USB bridge, but much faster (and only works) in simulations 
   simbridge_y : if g_simulation and g_en_simbridge generate
-    simbridge : entity work.simbridge
+    simbridge : entity work.simbridge_chopped
     generic map(
         g_sdb_address => c_top_sdb_address
       )

@@ -63,7 +63,7 @@ begin
 	--	end process;
 	--end generate;
 
-	clk_internal <= not clk_internal after 1 ns;
+	clk_internal <= not clk_internal after 5 ns;
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
 
@@ -98,8 +98,10 @@ begin
 					emptyn_o <= '1'; -- we are no longer empty and have data to send
 				end if;
 				-- communication with connected hardware
-				if slwrn_1 = '1' and slwrn_i = '0' and fifoadr_i = "10" then -- falling edge on slwrn_i
+				if slwrn_1 = '1' and slwrn_i = '0' and fifoadr_i = "10" then -- falling edge on slwrn_i to dev fifo
 					ez_usb_dev_write(to_integer(unsigned(fd_io)));
+				elsif slwrn_1 = '1' and slwrn_i = '0' and fifoadr_i = "11" then -- falling edge on slwrn_i to tty fifo
+					report "tty: " & character'val(to_integer(unsigned(fd_io)));
 				elsif slrdn_1 = '1' and slrdn_i = '0' then -- falling edge on slrdn_i
 					out_value <= std_logic_vector(to_signed(value_from_file, 8));
 				elsif slrdn_1 = '0' and slrdn_i = '1' then -- falling edge on slrdn_i
