@@ -2024,8 +2024,8 @@ end generate;
 
   dog : watchdog
     generic map (
-      freq    => f_pick(g_simulation, 16, 62500000),
-      hold_s  => f_pick(g_simulation,  1, 5))
+      freq    => f_pick(g_simulation, 6250, 62500000),
+      hold_s  => f_pick(g_simulation, 1, 5))
     port map(
       clk_i   => clk_sys,
       rst_n_i => rstn_sys,
