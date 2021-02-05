@@ -64,6 +64,7 @@ class TestScheduleCompare(unittest.TestCase):
         else:
           returncode = 1
         self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
+    print(f'Combinations tested: {counter}. ', end='', flush=True)
 
   def test_first_isomorphism(self):
     self.callScheduleCompare('test0.dot', 'test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
@@ -84,7 +85,7 @@ class TestScheduleCompare(unittest.TestCase):
     self.callScheduleCompare('x0.dot', 'x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
 
   def test_usage_message(self):
-    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=16, linesCout=0)
+    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=18, linesCout=0)
 
   def test_folder_dot_tmsg(self):
     self.allFilesInfolderTest('dot_tmsg/')
@@ -103,6 +104,15 @@ class TestScheduleCompare(unittest.TestCase):
 
   def test_folder_dot_wait(self):
     self.allFilesInfolderTest('dot_wait/')
+
+  def test_folder_dot_graph_entries(self):
+    self.allFilesInfolderTest('dot_graph_entries/')
+    
+  def test_dot_graph_entries_2(self):
+    self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-009852.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-008541.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_graph_entries/graph-entry-010773.dot', 'dot_graph_entries_2/graph-entry-010745.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_graph_entries_2/pro_2020_11_24.dot', 'dot_graph_entries_2/pro_2020_11_24.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
 
   def test_folder_dot(self):
     self.allFilesInfolderTest('dot1/')
