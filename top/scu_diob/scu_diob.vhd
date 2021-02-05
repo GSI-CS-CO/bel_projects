@@ -1160,7 +1160,10 @@ END COMPONENT hw_interlock;
 
 --TYPE t_daq_ch_num IS ARRAY(NATURAL RANGE <>) OF integer range 1 to 16;
 constant daq_ch_num: integer := 4;
-signal daq_diob_ID: std_logic_vector(15 downto 0);
+-- signal daq_diob_ID: std_logic_vector(15 downto 0);
+
+constant daq_diob_ID: std_logic_vector(15 downto 0):=x"0002"; --to be checked
+
 signal daq_user_rd_active:    std_logic;
 signal daq_data_to_SCUB:           std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
 signal daq_Dtack:             std_logic;                    -- Dtack to SCU Bus Macro
@@ -5277,9 +5280,7 @@ BEGIN
                                Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Out(15 downto 0); -- Output positiv
     END IF;
 
-    --################################ daq id and channels nummer assignments    ###########################
-    daq_diob_id <= "0000000000000010";
-    ---daq_ch_num := 3;
+ 
     --################################      daq_channel 3 assignments     ##################################
     
    -- daq_dat(3)<= P25IO_DAC_Out(2)(15 downto 0);
@@ -5530,8 +5531,7 @@ BEGIN
       END IF;
 
 --######################################## daq assignments #############################
---daq_ch_num := 4;
-daq_diob_ID <="0000000000000011";
+
 
 daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
 
@@ -5659,8 +5659,7 @@ daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
 
     --###################################### daq assignments ##########################
 
-    --daq_ch_num := 4;
-    daq_diob_ID <="0000000000000100";
+ 
 
     daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
 
@@ -5944,8 +5943,7 @@ daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
     END IF;
 
 --################################daq assignments to be checked ##########################################
---daq_ch_num:= 4;
-daq_diob_ID <="0000000000000101";
+
 
 daq_dat(1)(7 downto 0) <= AW_Input_Reg(1)(15 downto 8);
 daq_dat(2) <= AW_Input_Reg(2);
@@ -6242,8 +6240,7 @@ daq_dat(4) <= AW_Output_Reg(2);
 
 
   -- ############################## daq assignments #####################################
- --daq_ch_num := 2;
- daq_diob_ID <="0000000000000110";
+
 
  daq_ext_trig(1) <= DA_DAC1_Str;
  daq_ext_trig(2) <= DA_DAC2_Str;
@@ -6560,8 +6557,7 @@ daq_dat(2)<= DA_DAC2_Data;
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- ########################### daq assignments ##################################
---daq_ch_num := 3;
-daq_diob_ID <="0000000000000111";
+
 
 daq_ext_trig(1) <=  AW_Output_Reg(1)(0);
 
@@ -6673,8 +6669,7 @@ daq_dat(3)<= UIO_Out;
 
 
   --#################################daq assignments ######################################
-  --daq_ch_num := 3;
-  daq_diob_ID <="0000000000001000";
+
 
   daq_dat(1) <= AW_Input_Reg(1);
   daq_dat(2) <=  AW_Input_Reg(2); --but AW_Input_Reg(2)(15 downto 8) is "00000000"
@@ -6897,8 +6892,7 @@ daq_dat(3)<= UIO_Out;
         AW_Input_Reg(1)(0)   <=  HFIO_in_PHASE_FEHLER_Deb_i;      -- Entprellung "ausgeschaltet"
       END IF;
    --####################### daq assignments  ##############################
-   --daq_ch_num := 4;
-   daq_diob_ID <="0000000000001001"; 
+
 
    daq_dat(1) (1 downto 0)<= AW_Input_Reg(1)(1 downto 0);
 
