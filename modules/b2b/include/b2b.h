@@ -17,6 +17,7 @@
 #define B2B_STATUS_SAFETYMARGIN       18   // violation of safety margin for data master and timing network
 #define B2B_STATUS_NORF               19   // no RF signal detected
 #define B2B_STATUS_LATEMESSAGE        20   // late timing message received
+#define B2B_STATUS_NOKICK             21   // no kicker signal detected
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define B2B_ECADO_TIMEOUT        COMMON_ECADO_TIMEOUT

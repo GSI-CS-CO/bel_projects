@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-January-2021
+ *  version : 5-February-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000226                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000229                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -316,7 +316,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   if (flagRecTrig) {
     // check, if we got a kicker trigger but not yet a monitor signal
-    // 
     if (abs(getSysTime() - tKickTrig) > B2B_ACCEPTKMON * 1000) {    
       if (flagIsExt) flagsError |=  B2B_ERRFLAG_KDEXT;
       else           flagsError |=  B2B_ERRFLAG_KDINJ;
@@ -339,7 +338,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     if (flagIsExt) sendEvtNo = B2B_ECADO_B2B_DIAGKICKEXT;
     else           sendEvtNo = B2B_ECADO_B2B_DIAGKICKINJ;
     
-    // send command: transmit measured phase value
+    // send command: transmit measured monitor and probe data
     sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagsError);
     sendParam    =             ((uint64_t)dKickMon  << 32);     // delay of monitor signal
     sendParam    = sendParam |  (uint64_t)dKickProbe;           // delay of probe signal
@@ -348,7 +347,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     // if we are too late, reschedule message; this will happen in case there is no monitor signal from the electronics
     if (getSysTime() > (sendDeadline - COMMON_AHEADT)) {
       sendDeadline = getSysTime() + COMMON_AHEADT;
-      status = COMMON_STATUS_TIMEDOUT; // ohps, too late!
+      status = B2B_STATUS_NOKICK; // ohps, too late!
     } // if getSysTime
 
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
