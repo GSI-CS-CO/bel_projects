@@ -115,7 +115,10 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
         std::cout << "Number of isomorphisms: " << set_of_vertex_iso_map.size() << std::endl;
         for (auto set_of_v : set_of_vertex_iso_map) {
           for (auto v : set_of_v) {
-            std::cout << "(" << v.first << ", " << v.second << ") {" << (*ref1)[v.first].name << ", " << (*ref2)[v.second].name << "} ";
+            std::cout << "(" << v.first << ", " << v.second << ") ";
+            if (config.superverbose) {
+              std::cout << "{" << (*ref1)[v.first].name << ", " << (*ref2)[v.second].name << "} ";
+            }
           }
           std::cout << std::endl;
         }
