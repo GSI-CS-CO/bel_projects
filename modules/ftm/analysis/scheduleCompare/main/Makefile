@@ -16,7 +16,7 @@ scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h p
 
 printSchedule.o: printSchedule.h scheduleCompare.h scheduleIsomorphism.h
 
-parseSchedule.o: parseSchedule.h scheduleCompare.h scheduleIsomorphism.h
+parseSchedule.o: parseSchedule.h scheduleCompare.h scheduleIsomorphism.h ScheduleVertex.h
 
 ScheduleVertex.o: ScheduleVertex.h
 
