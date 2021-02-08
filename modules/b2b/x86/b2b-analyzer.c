@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 4-February-2021
+ *  version : 8-Feb-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000229
+#define B2B_ANALYZER_VERSION 0x000230
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -172,6 +172,21 @@ int32_t   eks_ktiOffMax[B2B_NSID];
 double    eks_ktiOffAveOld[B2B_NSID];
 double    eks_ktiOffStreamOld[B2B_NSID];
 
+// offset electronics monitor to KTE
+uint32_t  ext_monOffN[B2B_NSID];
+int32_t   ext_monOffMin[B2B_NSID];
+int32_t   ext_monOffMax[B2B_NSID];
+double    ext_monOffAveOld[B2B_NSID];
+double    ext_monOffStreamOld[B2B_NSID];
+
+// offset electronics monitor to KTI
+uint32_t  inj_monOffN[B2B_NSID];
+int32_t   inj_monOffMin[B2B_NSID];
+int32_t   inj_monOffMax[B2B_NSID];
+double    inj_monOffAveOld[B2B_NSID];
+double    inj_monOffStreamOld[B2B_NSID];
+
+
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
   fprintf(stderr, "\n");
@@ -289,6 +304,18 @@ void clearStats(uint32_t sid)
   eks_ktiOffMin[sid]       = 0x7fffffff;         
   eks_ktiOffAveOld[sid]    = 0;   
   eks_ktiOffStreamOld[sid] = 0;
+
+  ext_monOffN[sid]         = 0;
+  ext_monOffMax[sid]       = 0x80000000;       
+  ext_monOffMin[sid]       = 0x7fffffff;         
+  ext_monOffAveOld[sid]    = 0;   
+  ext_monOffStreamOld[sid] = 0;
+
+  inj_monOffN[sid]         = 0;
+  inj_monOffMax[sid]       = 0x80000000;       
+  inj_monOffMin[sid]       = 0x7fffffff;         
+  inj_monOffAveOld[sid]    = 0;   
+  inj_monOffStreamOld[sid] = 0;
 } // clearDiagData
 
 
@@ -439,7 +466,29 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].eks_kteOffSdev = sdev;
     disDiagstat[sid].eks_kteOffMin  = eks_kteOffMin[sid];
     disDiagstat[sid].eks_kteOffMax  = eks_kteOffMax[sid];    
+
+    // offset electronics monitor to KTE
+    if (!((dicGetval[sid].flag_nok >> 1) & 0x1)) {
+      act = dicGetval[sid].ext_dKickMon;
+      n   = ++(ext_monOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, ext_monOffAveOld[sid], &streamNew, ext_monOffStreamOld[sid], act, n , &dummy, &sdev);
+      ext_monOffAveOld[sid]          = aveNew;
+      ext_monOffStreamOld[sid]       = streamNew;
+      if (act < ext_monOffMin[sid]) ext_monOffMin[sid] = act;
+      if (act > ext_monOffMax[sid]) ext_monOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].ext_monOffAct  = act;
+      disDiagstat[sid].ext_monOffN    = n;
+      disDiagstat[sid].ext_monOffAve  = aveNew;
+      disDiagstat[sid].ext_monOffSdev = sdev;
+      disDiagstat[sid].ext_monOffMin  = ext_monOffMin[sid];
+      disDiagstat[sid].ext_monOffMax  = ext_monOffMax[sid];
+    } // if dicGetval
   } // if mode >= 1
+  
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
     cor = dicSetval[sid].ext_cTrig;
@@ -539,7 +588,28 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].eks_ktiOffAve  = aveNew;
     disDiagstat[sid].eks_ktiOffSdev = sdev;
     disDiagstat[sid].eks_ktiOffMin  = eks_ktiOffMin[sid];
-    disDiagstat[sid].eks_ktiOffMax  = eks_ktiOffMax[sid];    
+    disDiagstat[sid].eks_ktiOffMax  = eks_ktiOffMax[sid];
+
+    // offset electronics monitor to KTI
+    if (!((dicGetval[sid].flag_nok >> 6) & 0x1)) {
+      act = dicGetval[sid].inj_dKickMon;
+      n   = ++(inj_monOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, inj_monOffAveOld[sid], &streamNew, inj_monOffStreamOld[sid], act, n , &dummy, &sdev);
+      inj_monOffAveOld[sid]          = aveNew;
+      inj_monOffStreamOld[sid]       = streamNew;
+      if (act < inj_monOffMin[sid]) inj_monOffMin[sid] = act;
+      if (act > inj_monOffMax[sid]) inj_monOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].inj_monOffAct  = act;
+      disDiagstat[sid].inj_monOffN    = n;
+      disDiagstat[sid].inj_monOffAve  = aveNew;
+      disDiagstat[sid].inj_monOffSdev = sdev;
+      disDiagstat[sid].inj_monOffMin  = inj_monOffMin[sid];
+      disDiagstat[sid].inj_monOffMax  = inj_monOffMax[sid];
+    } // if dicGetval
   } // if mode >= 3
 
   if (mode == 4) {
@@ -620,13 +690,12 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
     disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
 
-        // offset from deadline EKS to measured injection phase
+    // offset from deadline EKS to measured injection phase
     act = dicGetval[sid].priOff;
     n   = ++(eks_priOffN[sid]);
 
     // statistics
     calcStats(&aveNew, eks_priOffAveOld[sid], &streamNew, eks_priOffStreamOld[sid], act, n , &dummy, &sdev);
-    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
     eks_priOffAveOld[sid]          = aveNew;
     eks_priOffStreamOld[sid]       = streamNew;
     if (act < eks_priOffMin[sid]) eks_priOffMin[sid] = act;
@@ -706,7 +775,7 @@ void disAddServices(char *prefix)
     disDiagvalId[i]  = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
 
     sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
-    disDiagstatId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
+    disDiagstatId[i] = dis_add_service(name, "I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2;I:2;D:2;I:2", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
 
     sprintf(name, "%s-cal_cmd_cleardiag", prefix);
     disClearDiagId   = dis_add_cmnd(name, "I:1", cmdClearDiag, 0);
