@@ -37,6 +37,20 @@ class ScheduleVertex {
   std::string ovr = std::string("");
   // for syntax check of dot files:
   std::string beamproc = std::string("");
+  std::string pattern = std::string("");
+  std::string patentry = std::string("");
+  std::string patexit = std::string("");
+  std::string bpentry = std::string("");
+  std::string bpexit = std::string("");
+  std::string cpu = std::string("");
+  std::string qty = std::string("");
+  std::string vabs = std::string("");
+  std::string flags = std::string("");
+  std::string shape = std::string("");
+  std::string penwidth = std::string("");
+  std::string fillcolor = std::string("");
+  std::string color = std::string("");
+  std::string style = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
 

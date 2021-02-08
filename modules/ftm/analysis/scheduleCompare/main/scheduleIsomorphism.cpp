@@ -135,6 +135,21 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   if (config.check) {
     dp = boost::dynamic_properties();
     dp.property("beamproc", boost::get(&ScheduleVertex::beamproc, g));
+    dp.property("pattern", boost::get(&ScheduleVertex::pattern, g));
+    dp.property("patentry", boost::get(&ScheduleVertex::patentry, g));
+    dp.property("patexit", boost::get(&ScheduleVertex::patexit, g));
+    dp.property("bpentry", boost::get(&ScheduleVertex::bpentry, g));
+    dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
+    dp.property("cpu", boost::get(&ScheduleVertex::cpu, g));
+    dp.property("qty", boost::get(&ScheduleVertex::qty, g));
+    dp.property("vabs", boost::get(&ScheduleVertex::vabs, g));
+    dp.property("flags", boost::get(&ScheduleVertex::flags, g));
+    dp.property("shape", boost::get(&ScheduleVertex::shape, g));
+    dp.property("penwidth", boost::get(&ScheduleVertex::penwidth, g));
+    dp.property("fillcolor", boost::get(&ScheduleVertex::fillcolor, g));
+    dp.property("color", boost::get(&ScheduleVertex::color, g));
+    dp.property("style", boost::get(&ScheduleVertex::style, g));
+    dp.property("color", boost::get(&ScheduleEdge::color, g));
   }
   boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
   dp.property("name", gname);

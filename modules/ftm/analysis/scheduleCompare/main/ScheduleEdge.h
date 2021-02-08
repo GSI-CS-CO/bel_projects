@@ -7,6 +7,7 @@ class ScheduleEdge {
  public:
   std::string name = std::string("");
   std::string type = std::string("");
+  std::string color = std::string("");
 
   int compare(const ScheduleEdge& e1, const ScheduleEdge& e2);
 
