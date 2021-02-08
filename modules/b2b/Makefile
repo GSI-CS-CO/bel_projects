@@ -1,5 +1,7 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
+# Note: setting the PKG_CONFIG_PATH might help too, example:
+# export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib/pkgconfig/
 # Example usage:
 #   'make clean'                                                 
 #   'make PREFIX= all'                                                (hack: leave PREFIX empty for SCU path)
@@ -43,6 +45,7 @@ deploy:
 	cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
 	cp $(ASL)/b2b-sis18-kick.sh $(STAGING)                              # nfs init script SIS18 kicker room
 	cp $(ASL)/b2b-sis18-kick-div.sh $(STAGING)                          # nfs init script SIS18 kicker room, other stuff
+	cp $(ASL)/b2b-sis18-daq.sh $(STAGING)                               # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-esr-rf.sh $(STAGING)                                  # nfs init script ESR
 	cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR
 	cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
