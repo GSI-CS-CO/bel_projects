@@ -7338,17 +7338,24 @@ IOBP_Aktiv_LED_i(12) <=  (IOBP_Output(12)   &  Deb60_out(59 DOWNTO 55));  -- Sig
 
 --###################################################################################################-
 
+
 when "00000010" | "00000100" | "00000011" |"00000101"|"00000111"  => 
+(PIO_OUT(138),  PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142), PIO_OUT(130)) <= IOBP_SK_Output(1);
+--(PIO_OUT(130),  PIO_OUT(120),  PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142)) <= IOBP_SK_Output(1); -- Slave-card 10 -> 6 elctrical or optical outputs
+--(PIO_OUT(42), PIO_OUT(44), PIO_OUT(40), PIO_OUT(46), PIO_OUT(31), PIO_OUT(48))       <= IOBP_SK_Output(2); -- Slave-card 11 ->6 elctrical or optical outputs
+--(PIO_OUT(48), PIO_OUT(31), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42))       <= IOBP_SK_Output(2); -- Slave-card 11 ->6 elctrical or optical output
+(PIO_OUT(38), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42), PIO_OUT(48))       <= IOBP_SK_Output(2);
+--(PIO_OUT(124), PIO_OUT(108), PIO_OUT(122), PIO_OUT(110), PIO_OUT(120), PIO_OUT(112))  <= IOBP_SK_Output(3); -- Slave-card 12 ->6 elctrical or optical output
+(PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))  <= IOBP_SK_Output(3); -- Slave-card 12 ->6 elctrical or optical output
+(PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124), PIO_OUT(112))  <= IOBP_SK_Output(3);
 
-(PIO_OUT(130),  PIO_OUT(120),  PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142)) <= IOBP_SK_Output(1); -- Slave-card 10 -> 6 optical outputs
---(PIO_OUT(42), PIO_OUT(44), PIO_OUT(40), PIO_OUT(46), PIO_OUT(31), PIO_OUT(48))       <= IOBP_SK_Output(2); -- Slave-card 11 ->6 optical outputs
-(PIO_OUT(48), PIO_OUT(31), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42))       <= IOBP_SK_Output(2); -- Slave-card 11 ->6 optical output
---(PIO_OUT(124), PIO_OUT(108), PIO_OUT(122), PIO_OUT(110), PIO_OUT(120), PIO_OUT(112))  <= IOBP_SK_Output(3); -- Slave-card 12 ->6 optical output
-(PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))  <= IOBP_SK_Output(3); -- Slave-card 12 ->6 optical output
+--(PIO_OUT(130),  PIO_OUT(120),  PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142),
+--PIO_OUT(48), PIO_OUT(31), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42),
+--PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))  <= std_logic_vector'("111111111111111111");   -- Output Enable
 
-(PIO_OUT(130),  PIO_OUT(120),  PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142),
-PIO_OUT(48), PIO_OUT(31), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42),
-PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))  <= std_logic_vector'("111111111111111111");   -- Output Enable
+(PIO_OUT(138),  PIO_OUT(128),  PIO_OUT(140), PIO_OUT(126), PIO_OUT(142), PIO_OUT(130),
+PIO_OUT(38), PIO_OUT(46), PIO_OUT(40), PIO_OUT(44), PIO_OUT(42), PIO_OUT(48),
+PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124),PIO_OUT(112))  <= std_logic_vector'("111111111111111111");   -- Output Enable
 
 
 IOBP_SK_Input(1)  <= ( PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58), PIO_SYNC(56));     -- Slave-card 1 -> 6 electrical or 6 optical inputs
