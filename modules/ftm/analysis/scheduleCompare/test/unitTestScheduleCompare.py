@@ -85,7 +85,7 @@ class TestScheduleCompare(unittest.TestCase):
     self.callScheduleCompare('x0.dot', 'x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
 
   def test_usage_message(self):
-    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=18, linesCout=0)
+    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=21, linesCout=0)
 
   def test_folder_dot_tmsg(self):
     self.allFilesInfolderTest('dot_tmsg/')

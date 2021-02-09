@@ -11,12 +11,20 @@ const int MISSING_ARGUMENT = 12;
 const int FILE_NOT_FOUND = 13;
 const int USAGE_MESSAGE = 14;
 const int PARSE_ERROR = 15;
+const int TEST_SUCCESS = 16;
+const int TEST_FAIL = 17;
 
 struct configuration {
+  // option -c
   bool check = false;
-  bool verbose = false;
-  bool superverbose = false;
+  // option -s
   bool silent = false;
+  // option -vv
+  bool superverbose = false;
+  // option -t
+  bool test = false;
+  // option -v
+  bool verbose = false;
 };
 
 void usage(char* program);

@@ -68,25 +68,26 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
   if (parse1 && parse2) {
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
+    std::string *refName1, *refName2;
     if (num_vertices(graph1) > num_vertices(graph2)) {
       ref1 = &graph2;
+      refName1 = &dotFile2;
       ref2 = &graph1;
+      refName2 = &dotFile1;
     } else {
       ref1 = &graph1;
+      refName1 = &dotFile1;
       ref2 = &graph2;
+      refName2 = &dotFile2;
     }
-
-    // create predicates for vertices
-    // typedef boost::property_map_equivalent<VertexNameMap, VertexNameMap> vertex_compare_t;
-    // vertex_compare_t vertex_compare = make_property_map_equivalent(boost::get(&ScheduleVertex::name, *ref1), boost::get(&ScheduleVertex::name, *ref2));
 
     // create predicates for edges
     typedef boost::property_map_equivalent<EdgeNameMap, EdgeNameMap> edge_compare_t;
     edge_compare_t edge_compare = make_property_map_equivalent(boost::get(&ScheduleEdge::type, *ref1), get(&ScheduleEdge::type, *ref2));
 
     // Create callback
-    //  boost::vf2_print_callback<ScheduleGraph, ScheduleGraph> callback(*ref1, *ref2);
     iso_callback<ScheduleGraph> callback(*ref1, *ref2);
+    // create predicates for vertices
     GraphCompare<ScheduleGraph> graphComparator(*ref1, *ref2);
     // Print out all subgraph isomorphism mappings between graph1 and graph2.
     // Function vertex_order_by_mult is used to compute the order of
@@ -96,12 +97,14 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
         vf2_subgraph_iso(*ref1, *ref2, std::ref(callback), vertex_order_by_mult(*ref1), boost::vertices_equivalent(std::ref(graphComparator)).edges_equivalent(edge_compare));
     if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
       if (!config.silent) {
-        std::cout << "Graphs " << getGraphName(*ref1) << " and " << getGraphName(*ref2) << " are " << (isomorphic ? "" : "NOT ") << "isomorphic." << std::endl;
+        std::cout << "Graphs " << getGraphName(*ref1) << " (" << *refName1 << ") and " << getGraphName(*ref2) << " (" << *refName2 << ") are " << (isomorphic ? "" : "NOT ")
+                  << "isomorphic." << std::endl;
       }
       result = (isomorphic ? EXIT_SUCCESS : NOT_ISOMORPHIC);
     } else {
       if (!config.silent) {
-        std::cout << "Graph " << getGraphName(*ref1) << " is " << (isomorphic ? "" : "NOT ") << "isomorphic to a subgraph of graph " << getGraphName(*ref2) << "." << std::endl;
+        std::cout << "Graph " << getGraphName(*ref1) << " (" << *refName1 << ") is " << (isomorphic ? "" : "NOT ") << "isomorphic to a subgraph of graph " << getGraphName(*ref2)
+                  << " (" << *refName2 << ")." << std::endl;
       }
       result = (isomorphic ? SUBGRAPH_ISOMORPHIC : NOT_ISOMORPHIC);
     }
@@ -191,3 +194,36 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
 }
 
 std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, boost::graph_name); }
+
+int testSingleGraph(std::string dotFile1, configuration& config) {
+  ScheduleGraph graph1;
+  bool parse1 = false;
+  int result = -1;
+  try {
+    boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
+    parse1 = parseSchedule(dotFile1, graph1, dp1, config);
+    printSchedule("Graph 1:", graph1, dp1, config);
+  } catch (boost::property_not_found excep) {
+    std::cerr << "Parsing graph1: " << excep.what() << std::endl;
+    result = PARSE_ERROR;
+  }
+  if (parse1) {
+    result = TEST_SUCCESS;
+    boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph1);
+    if (!config.silent) {
+      std::cout << "Testing " << getGraphName(graph1) << " (file: " << dotFile1 << ") with " << num_vertices(graph1) << " vertices." << std::endl;
+    }
+    BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph1)) {
+      ScheduleVertex vTemp = graph1[get(vertex_id, v)];
+      if (vTemp != vTemp) {
+        if (!config.silent) {
+          std::cout << "Test failed for " << vTemp.name << " (type=" << vTemp.type << ")." << std::endl;
+        }
+        result = TEST_FAIL;
+      }
+    }
+    return result;
+  } else {
+    return (result == -1) ? FILE_NOT_FOUND : result;
+  }
+}
