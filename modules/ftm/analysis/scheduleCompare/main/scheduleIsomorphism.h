@@ -33,6 +33,7 @@ struct nameEqualityFilter {
 };
 
 int scheduleIsomorphic(std::string dotFile1, std::string dotfile2, configuration& config);
+int testSingleGraph(std::string dotFile1, configuration& config);
 boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& config);
 std::string getGraphName(ScheduleGraph& g);
 #endif

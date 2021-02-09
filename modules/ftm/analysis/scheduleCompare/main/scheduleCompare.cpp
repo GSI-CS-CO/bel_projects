@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "vshc")) != -1) {
+  while ((opt = getopt(argc, argv, "chstv")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -36,6 +36,9 @@ int main(int argc, char* argv[]) {
       case 'c':
         config.check = true;
         break;
+      case 't':
+        config.test = true;
+        break;
       default:
         std::cerr << program << ": bad option " << std::endl;
         error = BAD_ARGUMENTS;
@@ -49,8 +52,12 @@ int main(int argc, char* argv[]) {
       usage(program);
       return USAGE_MESSAGE;
     } else {
-      // use the last two arguments for the dot files after getopt permuted the arguments.
-      return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
+      if (config.test) {
+        return testSingleGraph(std::string(argv[argc - 1]), config);
+      } else {
+        // use the last two arguments for the dot files after getopt permuted the arguments.
+        return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
+      }
     }
   }
 }
@@ -73,5 +80,7 @@ void usage(char* program) {
   std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
   std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
+  std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
+  std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
 }
