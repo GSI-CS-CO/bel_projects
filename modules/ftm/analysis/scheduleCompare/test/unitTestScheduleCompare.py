@@ -48,7 +48,7 @@ class TestScheduleCompare(unittest.TestCase):
       self.assertEqual(len(lines), linesCout, f'stdout: {lines}')
     # print(f'stdout Lines:\n{lines}')
 
-  def allFilesInfolderTest(self, folder):
+  def allPairsFilesInfolderTest(self, folder):
     files = os.listdir(folder)
     # print (files)
     counter = 0
@@ -64,7 +64,20 @@ class TestScheduleCompare(unittest.TestCase):
         else:
           returncode = 1
         self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
-    print(f'Combinations tested: {counter}. ', end='', flush=True)
+    print(f'Pairs tested: {counter}. ', end='', flush=True)
+
+  def allFilesInfolderTest(self, folder):
+    files = os.listdir(folder)
+    # print (files)
+    counter = 0
+    for dotFile1 in files:
+      counter += 1
+      if counter % 100 == 0:
+        print(f'{counter},', end='', flush=True)
+      if counter % 1000 == 0:
+        print(f'', flush=True)
+      self.callScheduleCompare(folder + dotFile1, '-t', expectedReturnCode=16, linesCout=1)
+    print(f'Files tested: {counter}. ', end='', flush=True)
 
   def test_first_isomorphism(self):
     self.callScheduleCompare('test0.dot', 'test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
@@ -88,34 +101,36 @@ class TestScheduleCompare(unittest.TestCase):
     self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=21, linesCout=0)
 
   def test_folder_dot_tmsg(self):
-    self.allFilesInfolderTest('dot_tmsg/')
+    self.allPairsFilesInfolderTest('dot_tmsg/')
 
   def test_folder_dot_block(self):
-    self.allFilesInfolderTest('dot_block/')
+    self.allPairsFilesInfolderTest('dot_block/')
 
   def test_folder_dot_flow(self):
-    self.allFilesInfolderTest('dot_flow/')
+    self.allPairsFilesInfolderTest('dot_flow/')
 
   def test_folder_dot_flush(self):
-    self.allFilesInfolderTest('dot_flush/')
+    self.allPairsFilesInfolderTest('dot_flush/')
 
   def test_folder_dot_switch(self):
-    self.allFilesInfolderTest('dot_switch/')
+    self.allPairsFilesInfolderTest('dot_switch/')
 
   def test_folder_dot_wait(self):
-    self.allFilesInfolderTest('dot_wait/')
+    self.allPairsFilesInfolderTest('dot_wait/')
 
   def test_folder_dot_graph_entries(self):
-    self.allFilesInfolderTest('dot_graph_entries/')
+    self.allPairsFilesInfolderTest('dot_graph_entries/')
     
   def test_dot_graph_entries_2(self):
     self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-009852.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-008541.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries/graph-entry-010773.dot', 'dot_graph_entries_2/graph-entry-010745.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_graph_entries/graph-entry-016159.dot', 'dot_graph_entries_2/graph-entry-016193.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries_2/pro_2020_11_24.dot', 'dot_graph_entries_2/pro_2020_11_24.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.allFilesInfolderTest('dot_graph_entries_2/')
 
   def test_folder_dot(self):
-    self.allFilesInfolderTest('dot1/')
+    self.allPairsFilesInfolderTest('dot1/')
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:

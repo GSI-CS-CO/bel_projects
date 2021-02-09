@@ -6,7 +6,9 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
   // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
   //      return v1.type.compare(v2.type);
   if (v1.name == v2.name) {
-    if (v1.type == v2.type) {
+    if (v1.type == "") {
+      return 0;
+    } else if (v1.type == v2.type) {
       if ("block" == v1.type || "blockalign" == v1.type) {
         return compareBlock(v1, v2);
       } else if ("flow" == v1.type) {
