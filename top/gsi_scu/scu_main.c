@@ -192,7 +192,7 @@ STATIC void msDelayBig( const uint64_t ms )
 
 
 // #define __MURKS
-
+#if 0
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
@@ -214,26 +214,89 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
    if( (pendingIrqs & FG1_IRQ) != 0 )
    {
     #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-      timeMeasure( &g_irqTimeMeasurement );
+     // timeMeasure( &g_irqTimeMeasurement );
     #endif
       handleAdacFg( slot, FG1_BASE );
+    #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+    //  timeMeasure( &g_irqTimeMeasurement );
+    #endif
+
    }
 
    if( (pendingIrqs & FG2_IRQ) != 0 )
+   {
       handleAdacFg( slot, FG2_BASE );
+   }
 
 #ifdef CONFIG_MIL_FG
    if( (pendingIrqs & DREQ ) != 0 )
+   {
       add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
+   }
 #endif
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+   {
       add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
-
+   }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
 }
+#else
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Handling of all SCU-bus MSI events.
+ */
+ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
+{
+   const unsigned int slot = pMessage->msg + 1;
+   uint16_t pendingIrqs;
 
+   while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot )) != 0)
+   {
+#ifdef __MURKS
+#warning MURKS!
+      static unsigned int X = 0;
+      X++;
+      if( (X % 10000) == 0 )
+         return;
+#endif
+
+      if( (pendingIrqs & FG1_IRQ) != 0 )
+      {
+       #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+        // timeMeasure( &g_irqTimeMeasurement );
+       #endif
+         handleAdacFg( slot, FG1_BASE );
+       #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
+       //  timeMeasure( &g_irqTimeMeasurement );
+       #endif
+      }
+
+      if( (pendingIrqs & FG2_IRQ) != 0 )
+      {
+         handleAdacFg( slot, FG2_BASE );
+      }
+
+#ifdef CONFIG_MIL_FG
+      if( (pendingIrqs & DREQ ) != 0 )
+      {
+         add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
+      }
+#endif
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+      if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+      {
+         add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
+      }
+   //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
+#endif
+   }
+}
+
+#endif
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Interrupt callback function for each Message Signaled Interrupt

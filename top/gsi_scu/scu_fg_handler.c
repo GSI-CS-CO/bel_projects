@@ -35,7 +35,7 @@ extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
 {
    FG_PARAM_SET_T pset;
-
+timeMeasure( &g_irqTimeMeasurement );
    /*!
     * @todo Move the FG-buffer into the DDR3-RAM!
     */
@@ -47,11 +47,13 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
       return false;
    }
 
+   timeMeasure( &g_irqTimeMeasurement );
    /*
     * clear freq, step select, fg_running and fg_enabled
     */
    setAdacFgRegs( pThis, &pset, (pThis->cntrl_reg.i16 & ~(0xfc07)) |
                                 ((pset.control & 0x3F) << 10) );
+
    return true;
 }
 
@@ -65,6 +67,7 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
 void handleAdacFg( const unsigned int slot,
                    const unsigned int fgAddrOffset )
 {
+  // timeMeasure( &g_irqTimeMeasurement );
    FG_REGISTER_T* pFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base,
                                                           slot, fgAddrOffset );
    const unsigned int channel = pFgRegs->cntrl_reg.bv.number;
@@ -78,13 +81,15 @@ void handleAdacFg( const unsigned int slot,
    g_shared.fg_regs[channel].ramp_count =  pFgRegs->ramp_cnt_low;
    g_shared.fg_regs[channel].ramp_count |= pFgRegs->ramp_cnt_high << BIT_SIZEOF( uint16_t );
 
-   //for( unsigned int i = 0; i < 20000; i++ ) NOP(); //!!Testing how many time we still have...
+
+   //for( unsigned int i = 0; i < 10000; i++ ) NOP(); //!!Testing how many time we still have...
 
    if( pFgRegs->cntrl_reg.bv.isRunning )
    {
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
       sendRefillSignalIfThreshold( channel );
+
    #ifdef CONFIG_USE_SENT_COUNTER
       if( feedAdacFg( pFgRegs ) )
          g_aFgChannels[channel].param_sent++;
@@ -96,6 +101,7 @@ void handleAdacFg( const unsigned int slot,
    {
       makeStop( channel );
    }
+  // timeMeasure( &g_irqTimeMeasurement );
 }
 
 /*================================== EOF ====================================*/
