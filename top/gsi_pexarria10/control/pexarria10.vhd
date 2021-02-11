@@ -7,7 +7,7 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 use work.stub_pll_pkg.all;
 
-entity pci_control is
+entity pexarria10 is
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -97,9 +97,9 @@ entity pci_control is
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic);
 
-end pci_control;
+end pexarria10;
 
-architecture rtl of pci_control is
+architecture rtl of pexarria10 is
 
   signal s_led_link_up  : std_logic;
   signal s_led_link_act : std_logic;
@@ -143,7 +143,7 @@ architecture rtl of pci_control is
   );
 
   constant c_family        : string := "Arria 10 GX PEX10";
-  constant c_project       : string := "pci_control";
+  constant c_project       : string := "pexarria10";
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
