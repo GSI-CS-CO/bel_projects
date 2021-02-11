@@ -232,7 +232,7 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
 }
 
 void listVertexProtocols(ScheduleGraph& graph) {
-	boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
+  boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
   BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph)) {
     ScheduleVertex vTemp = graph[get(vertex_id, v)];
     if (!vTemp.protocol.empty()) {
