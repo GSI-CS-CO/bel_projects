@@ -35,13 +35,13 @@ class ScheduleVertex {
   std::string wabs = std::string("");
   std::string clear = std::string("");
   std::string ovr = std::string("");
-  // for syntax check of dot files:
   std::string beamproc = std::string("");
   std::string pattern = std::string("");
   std::string patentry = std::string("");
   std::string patexit = std::string("");
   std::string bpentry = std::string("");
   std::string bpexit = std::string("");
+  // for syntax check of dot files:
   std::string cpu = std::string("");
   std::string qty = std::string("");
   std::string vabs = std::string("");
@@ -51,6 +51,9 @@ class ScheduleVertex {
   std::string fillcolor = std::string("");
   std::string color = std::string("");
   std::string style = std::string("");
+
+  // protocol of failed compare
+  std::string protocol = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
 
@@ -72,5 +75,7 @@ class ScheduleVertex {
   int compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareBoolean(const std::string& bool1, const std::string& bool2);
+  int compareValues(const std::string& value1, const std::string& value2, const std::string& key, const std::string& type);
 };
 #endif

@@ -120,77 +120,124 @@ int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex
 }
 
 int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-  if (v1.toffs == v2.toffs) {
-    if (v1.tef == v2.tef) {
-      if (v1.par == v2.par) {
-        if (v1.id == v2.id) {
-          if (v1.fid == v2.fid) {
-            if (v1.gid == v2.gid) {
-              if (v1.evtno == v2.evtno) {
-                if (v1.sid == v2.sid) {
-                  if (v1.bpid == v2.bpid) {
-                    if (v1.beamin == v2.beamin) {
-                      if (v1.bpcstart == v2.bpcstart) {
-                        if (v1.reqnobeam == v2.reqnobeam) {
-                          if (v1.vacc == v2.vacc) {
-                            return v1.res.compare(v2.res);
-                          } else {
-                            return v1.vacc.compare(v2.vacc);
-                          }
-                        } else {
-                          return v1.reqnobeam.compare(v2.reqnobeam);
-                        }
-                      } else {
-                        return v1.bpcstart.compare(v2.bpcstart);
-                      }
-                    } else {
-                      return v1.beamin.compare(v2.beamin);
-                    }
-                  } else {
-                    return v1.bpid.compare(v2.bpid);
-                  }
-                } else {
-                  return v1.sid.compare(v2.sid);
-                }
-              } else {
-                return v1.evtno.compare(v2.evtno);
-              }
-            } else {
-              return v1.gid.compare(v2.gid);
-            }
-          } else {
-            return v1.fid.compare(v2.fid);
-          }
-        } else {
-          return v1.id.compare(v2.id);
-        }
-      } else {
-        return v1.par.compare(v2.par);
-      }
-    } else {
-      return v1.tef.compare(v2.tef);
-    }
-  } else {
-    return v1.toffs.compare(v2.toffs);
+  int result = -1;
+  result = compareValues(v1.pattern, v2.pattern, "pattern", "string");
+  if (result != 0) {
+    // check failed, no further checks needed.
+    return result;
   }
+  result = compareValues(v1.beamproc, v2.beamproc, "beamproc", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.patentry, v2.patentry, "patentry", "boolean");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.bpentry, v2.bpentry, "bpentry", "boolean");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.toffs, v2.toffs, "toffs", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.tef, v2.tef, "tef", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.par, v2.par, "par", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.id, v2.id, "id", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.fid, v2.fid, "fid", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.gid, v2.gid, "gid", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.evtno, v2.evtno, "evtno", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.sid, v2.sid, "sid", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.bpid, v2.bpid, "bpid", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.beamin, v2.beamin, "beamin", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.bpcstart, v2.bpcstart, "bpcstart", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.reqnobeam, v2.reqnobeam, "reqnobeam", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.vacc, v2.vacc, "vacc", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.res, v2.res, "res", "string");
+  return result;
 }
 
 int ScheduleVertex::compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-  if (v1.target == v2.target) {
-    if (v1.tvalid == v2.tvalid) {
-      if (v1.tabs == v2.tabs) {
-        if (v1.twait == v2.twait) {
-          return v1.wabs.compare(v2.wabs);
-        } else {
-          return v1.twait.compare(v2.twait);
-        }
-      } else {
-        return v1.tabs.compare(v2.tabs);
-      }
-    } else {
-      return v1.tvalid.compare(v2.tvalid);
-    }
-  } else {
-    return v1.target.compare(v2.target);
+  int result = compareValues(v1.target, v2.target, "target", "string");
+  if (result != 0) {
+    return result;
   }
+  result = compareValues(v1.tvalid, v2.tvalid, "tvalid", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.tabs, v2.tabs, "tabs", "boolean");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.twait, v2.twait, "twait", "string");
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.wabs, v2.wabs, "wabs", "boolean");
+  return result;
+}
+
+int ScheduleVertex::compareBoolean(const std::string& bool1, const std::string& bool2) {
+//	std::cout << "bool1: " << bool1 << ", bool2: " << bool2 << ", Case:";
+  if (("1" == bool1) || ("True" == bool1) || ("true" == bool1)) {
+//	  std::cout << "True " << ("1" == bool2) << (("1" == bool2) || ("True" == bool2)) << !(("1" == bool2) || ("True" == bool2) || ("true" == bool2)) << bool2.empty() << std::endl;
+    return !(("1" == bool2) || ("True" == bool2) || ("true" == bool2));
+  } else if (bool1.empty() || ("0" == bool1) || ("False" == bool1) || ("false" == bool1)) {
+//	  std::cout << "False " << (("1" == bool2) || ("True" == bool2) || ("true" == bool2)) << std::endl;
+	      return !(bool2.empty() || ("0" == bool2) || ("False" == bool2) || ("false" == bool2));
+  } else {
+    return -1;
+  }
+}
+
+int ScheduleVertex::compareValues(const std::string& value1, const std::string& value2, const std::string& key, const std::string& type) {
+  int result = -1;
+  result = value1.compare(value2);
+  if (result != 0) {
+    if (type.compare("boolean") == 0) {
+      result = compareBoolean(value1, value2);
+    }
+    if (result != 0) {
+      protocol += "Result: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.\n";
+    }
+  }
+  return result;
 }

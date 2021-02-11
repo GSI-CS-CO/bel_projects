@@ -100,6 +100,9 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
         std::cout << "Graphs " << getGraphName(*ref1) << " (" << *refName1 << ") and " << getGraphName(*ref2) << " (" << *refName2 << ") are " << (isomorphic ? "" : "NOT ")
                   << "isomorphic." << std::endl;
       }
+      if (config.verbose) {
+        listVertexProtocols(*ref1);
+      }
       result = (isomorphic ? EXIT_SUCCESS : NOT_ISOMORPHIC);
     } else {
       if (!config.silent) {
@@ -137,12 +140,6 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   boost::dynamic_properties dp = boost::dynamic_properties(boost::ignore_other_properties);
   if (config.check) {
     dp = boost::dynamic_properties();
-    dp.property("beamproc", boost::get(&ScheduleVertex::beamproc, g));
-    dp.property("pattern", boost::get(&ScheduleVertex::pattern, g));
-    dp.property("patentry", boost::get(&ScheduleVertex::patentry, g));
-    dp.property("patexit", boost::get(&ScheduleVertex::patexit, g));
-    dp.property("bpentry", boost::get(&ScheduleVertex::bpentry, g));
-    dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
     dp.property("cpu", boost::get(&ScheduleVertex::cpu, g));
     dp.property("qty", boost::get(&ScheduleVertex::qty, g));
     dp.property("vabs", boost::get(&ScheduleVertex::vabs, g));
@@ -187,6 +184,12 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   dp.property("wabs", boost::get(&ScheduleVertex::wabs, g));
   dp.property("clear", boost::get(&ScheduleVertex::clear, g));
   dp.property("ovr", boost::get(&ScheduleVertex::ovr, g));
+  dp.property("beamproc", boost::get(&ScheduleVertex::beamproc, g));
+  dp.property("pattern", boost::get(&ScheduleVertex::pattern, g));
+  dp.property("patentry", boost::get(&ScheduleVertex::patentry, g));
+  dp.property("patexit", boost::get(&ScheduleVertex::patexit, g));
+  dp.property("bpentry", boost::get(&ScheduleVertex::bpentry, g));
+  dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
   // attribute of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   //  dp.property("name", boost::get(&ScheduleEdge::name, g));
@@ -217,7 +220,7 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
       ScheduleVertex vTemp = graph1[get(vertex_id, v)];
       if (vTemp != vTemp) {
         if (!config.silent) {
-          std::cout << "Test failed for " << vTemp.name << " (type=" << vTemp.type << ")." << std::endl;
+          std::cout << "Test failed for " << vTemp.name << " (type=" << vTemp.type << "), protocol: " << vTemp.protocol << "." << std::endl;
         }
         result = TEST_FAIL;
       }
@@ -225,5 +228,15 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
     return result;
   } else {
     return (result == -1) ? FILE_NOT_FOUND : result;
+  }
+}
+
+void listVertexProtocols(ScheduleGraph& graph) {
+	boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
+  BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph)) {
+    ScheduleVertex vTemp = graph[get(vertex_id, v)];
+    if (!vTemp.protocol.empty()) {
+      std::cout << vTemp.name << ": " << vTemp.protocol << std::endl;
+    }
   }
 }
