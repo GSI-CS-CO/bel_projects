@@ -176,6 +176,14 @@ class TestScheduleCompare(unittest.TestCase):
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_true.dot', 'dot_boolean/wait-target-tvalid-tabs_1.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_true.dot', 'dot_boolean/wait-target-tvalid-tabs_True.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_true.dot', 'dot_boolean/wait-target-tvalid-tabs_true.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_0.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_False.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_false.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_1.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_True.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_true.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_x.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
 
   def test_folder_dot(self):
     self.allPairsFilesInfolderTest('dot1/')

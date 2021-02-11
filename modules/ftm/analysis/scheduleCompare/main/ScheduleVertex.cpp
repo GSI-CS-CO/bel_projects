@@ -230,14 +230,13 @@ int ScheduleVertex::compareBoolean(const std::string& bool1, const std::string& 
 
 int ScheduleVertex::compareValues(const std::string& value1, const std::string& value2, const std::string& key, const std::string& type) {
   int result = -1;
-  result = value1.compare(value2);
-  if (result != 0) {
     if (type.compare("boolean") == 0) {
       result = compareBoolean(value1, value2);
-    }
+    } else{
+  result = value1.compare(value2);
+	}
     if (result != 0) {
       protocol += "Result: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.\n";
     }
-  }
   return result;
 }
