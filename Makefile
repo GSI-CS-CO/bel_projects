@@ -37,9 +37,9 @@ CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
-CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pexarria10
+CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
-CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pci_control
+CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2

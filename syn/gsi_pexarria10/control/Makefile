@@ -1,4 +1,4 @@
-TARGET		= pexarria10:
+TARGET		= pexarria10
 DEVICE		= 10AX066H2F
 FLASH		= EPCQL512
 SPI_LANES	= ASx4
