@@ -67,6 +67,21 @@ STATIC inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
+ * @brief Returns a pointer of a 16 bit slave device register by index.
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param index Location of relevant register to read, that means offset to
+ *              pAbsSlaveAddr
+ * @return Pointer to the 16 bit slave register located by index.
+ */
+STATIC inline uint16_t* scuBusGetSlaveRegisterPtr16( const void* pAbsSlaveAddr,
+                                                     const unsigned int index )
+{
+   return &((uint16_t* volatile)pAbsSlaveAddr)[index];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Reads a 16 bit register value from a SCU bus slave
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusSetSlaveValue16
@@ -88,7 +103,8 @@ uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr,
     */
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 );
 
-   return ((uint16_t* volatile)pAbsSlaveAddr)[index];
+   //return ((uint16_t* volatile)pAbsSlaveAddr)[index];
+   return *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, index );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -112,7 +128,7 @@ void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index,
     */
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 );
 
-   ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, index ) = value;
 }
 
 /*! ---------------------------------------------------------------------------

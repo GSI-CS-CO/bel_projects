@@ -152,14 +152,25 @@ int configure_fg_macro( const unsigned int channel )
    * Enable interrupts
    */
    if( isAddacFg( socket ) )
-   { /*
+   {
+      FG_ASSERT( dev < MAX_FG_PER_SLAVE );
+     /*
       * Enable interrupts for the slave
-      * Note: In the case of ADDAC FGs the socket-nunber is equal to the slot-number.
+      * Note: In the case of ADDAC FGs the socket-number is equal to the slot-number,
+      *       therefore it's not necessary to mask it out here.
       */
+   #ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
       scuBusEnableSlaveInterrupt( (void*)g_pScub_base, socket );
-      *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket )  = (FG1_IRQ | FG2_IRQ);
-      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) |= (FG1_IRQ | FG2_IRQ);
+   #endif
+      const uint16_t irqMask = (dev == 0)? FG1_IRQ : FG2_IRQ;
+     //!! *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket ) |= irqMask;
+      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) |= irqMask;
+
    #ifdef CONFIG_SCU_DAQ_INTEGRATION
+     /*
+      * Enabling of both daq-channels for the feedback of set- and actual values
+      * for this function generator channel.
+      */
       daqEnableFgFeedback( socket, dev );
    #endif
    }
@@ -175,8 +186,9 @@ int configure_fg_macro( const unsigned int channel )
    {
       const unsigned int slot = getFgSlotNumber( socket );
       FG_ASSERT( slot > 0 );
+#ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
       scuBusEnableSlaveInterrupt( (void*)g_pScub_base, slot );
-
+#endif
      /*
       * Enable receiving of data request.
       */
@@ -190,35 +202,36 @@ int configure_fg_macro( const unsigned int channel )
    }
 #endif /* CONFIG_MIL_FG */
 
-   unsigned int fg_base = 0;
+   BUS_BASE_T fg_base = 0;
   /*
    * Set to FG mode and reset
    */
    FG_REGISTER_T* pAddagFgRegs = NULL;
    if( isAddacFg( socket ) )
    {
-      unsigned int dac_base;
+      unsigned int dacControlIndex;
       switch( dev )
       {
          case 0:
          {
             fg_base = FG1_BASE;
-            dac_base = DAC1_BASE;
+            dacControlIndex = DAC1_BASE + DAC_CNTRL;
             break;
          }
          case 1:
          {
             fg_base = FG2_BASE;
-            dac_base = DAC2_BASE;
+            dacControlIndex = DAC2_BASE + DAC_CNTRL;
             break;
          }
          default: return -1;
       }
-      pAddagFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base, socket, fg_base );
      /*
       * Set ADDAC-DAC in FG mode
       */
-      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;
+      scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( (void*)g_pScub_base, socket ), dacControlIndex, 0x10 );
+
+      pAddagFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base, socket, fg_base );
       ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low ) = 0;
       ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
    }
@@ -244,7 +257,7 @@ int configure_fg_macro( const unsigned int channel )
   /*
    * Fetch first parameter set from buffer
    */
-   if( cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) != 0 )
+   if( cbReadSave( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) != 0 )
    {
       const uint16_t cntrl_reg_wr = ((pset.control & 0x3F) << 10) | channel << 4;
       if( isAddacFg( socket ) )
@@ -252,12 +265,19 @@ int configure_fg_macro( const unsigned int channel )
          FG_ASSERT( fg_base != 0 );
          FG_ASSERT( pAddagFgRegs != NULL );
 
+        // mprintf( "Tag: 0x%08X\n" , g_shared.fg_regs[channel].tag );
+
          setAdacFgRegs( pAddagFgRegs, &pset, cntrl_reg_wr );
          STATIC_ASSERT( sizeof( g_shared.fg_regs[0].tag ) == sizeof( uint32_t ) );
          STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
          STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
+#if 0
          ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( g_shared.fg_regs[channel].tag );
          ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( g_shared.fg_regs[channel].tag );
+#else
+        ADDAC_FG_ACCESS( pAddagFgRegs, tag_low ) =  ((uint16_t*)&g_shared.fg_regs[channel].tag)[1];
+        ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = ((uint16_t*)&g_shared.fg_regs[channel].tag)[0];
+#endif
          ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
       }
    #ifdef CONFIG_MIL_FG
@@ -339,31 +359,40 @@ void disable_channel( const unsigned int channel )
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
    if( isAddacFg( socket ) )
    {
-      unsigned int fg_base, dac_base;
+      unsigned int fgControlIndex, dacControlIndex;
       switch( dev )
       {
          case 0:
          {
-            fg_base = FG1_BASE;
-            dac_base = DAC1_BASE;
+            fgControlIndex  = FG1_BASE  + FG_CNTRL;
+            dacControlIndex = DAC1_BASE + DAC_CNTRL;
             break;
          }
          case 1:
          {
-            fg_base = FG2_BASE;
-            dac_base = DAC2_BASE;
+            fgControlIndex  = FG2_BASE  + FG_CNTRL;
+            dacControlIndex = DAC2_BASE + DAC_CNTRL;
             break;
          }
          default: return;
       }
    #ifdef CONFIG_SCU_DAQ_INTEGRATION
+     /*
+      * Disabling of both daq-channels for the feedback of set- and actual values
+      * for this function generator channel.
+      */
       daqDisableFgFeedback( socket, dev );
    #endif
       /*
        * Disarm hardware
        */
-      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
-      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+      const void* pAbsSlaveAddr = scuBusGetAbsSlaveAddr( (void*)g_pScub_base, socket );
+      *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, fgControlIndex ) &= ~(0x2);
+
+      /*
+       * Unset FG mode in ADC
+       */
+      *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, dacControlIndex ) &= ~(0x10);
    }
 #ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )

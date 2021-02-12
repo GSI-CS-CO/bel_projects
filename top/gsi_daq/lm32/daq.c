@@ -742,7 +742,7 @@ SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
 
    if( scuBusGetSlaveValue16( pSlaveAddr, CID_GROUP ) == GRP_MFU )
    { /*
-      * ACO device on slot 1 found, return by slave-flags: 0000 0000 0001
+      * ACU device on slot 1 found, return by slave-flags: 0000 0000 0001
       */
       return 0x001;
    }
@@ -756,9 +756,8 @@ SCUBUS_SLAVE_FLAGS_T findAcuMfuDeviceOnSlot1( const void* pScuBusBase )
 ONE_TIME_CALL
 SCUBUS_SLAVE_FLAGS_T findAllAddacDevices( const void* pScuBusBase )
 {
-   SCUBUS_SLAVE_FLAGS_T slaveFlags = scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC2 );
-   slaveFlags |= scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC1 );
-   return slaveFlags;
+   return scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC2 ) |
+          scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC1 );
 }
 
 /*! ---------------------------------------------------------------------------

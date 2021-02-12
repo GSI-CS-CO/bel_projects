@@ -167,10 +167,10 @@ STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
 ONE_TIME_CALL
 void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
-   SCUBUS_SLAVE_FLAGS_T slotFlags;
+   const SCUBUS_SLAVE_FLAGS_T slotFlags =
+               scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO2 )
+             | scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO3 );
 
-   slotFlags  = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO2 );
-   slotFlags |= scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO3 );
    if( slotFlags == 0 )
       return;
 
@@ -181,6 +181,11 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
    {
       if( !scuBusIsSlavePresent( slotFlags, slot ) )
          continue;
+
+   #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( (void*)scub_adr, slot );
+   #endif
+
       /*
        * MIL-bus adapter was in the current slot found.
        * Proofing whether MIL function generators connected to this adapter.
@@ -248,7 +253,10 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 {
    const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase,
                                                                     SYS_CSCO,
-                                                                    GRP_ADDAC2 );
+                                                                    GRP_ADDAC2 )
+                                        | scuBusFindSpecificSlaves( pScuBusBase,
+                                                                    SYS_CSCO,
+                                                                    GRP_ADDAC1 );
 
    if( slotFlags == 0 )
       return;
@@ -256,8 +264,14 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( scuBusIsSlavePresent( slotFlags, slot ) )
+      {
          addAddacToFgList( pScuBusBase, slot, pFGlist );
+      #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+         scuBusEnableSlaveInterrupt( pScuBusBase, slot );
+      #endif
+      }
    }
+
 }
 #endif /* ifndef CONFIG_SCU_DAQ_INTEGRATION */
 
@@ -415,6 +429,9 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
 #else
       getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
 #endif
+    //   scuBusEnableSlaveInterrupt( (void*)scub_base, socket );
+    //  *scuBusGetInterruptActiveFlagRegPtr( (void*)scub_base, socket ) = (FG1_IRQ | FG2_IRQ);
+
       return;
    }
 #ifdef CONFIG_MIL_FG
