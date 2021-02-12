@@ -40,6 +40,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
+CHECK_FTM10            = ./syn/gsi_pexarria10/control/ftm10
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -55,6 +56,7 @@ PATH_SCU4              = syn/gsi_scu/control4
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_FTM               = syn/gsi_pexarria5/ftm
 PATH_PEXARRIA10        = syn/gsi_pexarria10/control
+PATH_FTM10             = syn/gsi_pexarria10/ftm10
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -359,6 +361,18 @@ pexarria10-sort:
 
 pexarria10-check:
 	$(call check_timing, $(CHECK_PEXARRIA10))
+
+ftm10:	firmware
+	$(MAKE) -C $(PATH_FTM10) all
+
+ftm10-clean::
+	$(MAKE) -C $(PATH_FTM10) clean
+
+ftm10-sort:
+	$(call sort_file, $(CHECK_FTM10))
+
+ftm10-check:
+	$(call check_timing, $(CHECK_FTM10))
 
 # #################################################################################################
 # SCU slaves
