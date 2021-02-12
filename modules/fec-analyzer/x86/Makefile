@@ -20,7 +20,7 @@ ASLINC      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include/saftli
 EXTRA_FLAGS ?=
 #CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
 #LIBS        ?= -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
-CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I $(ASLINC) 
+CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I $(ASLINC)
 LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(ASLLIB) -L $(EB)/.libs -L $(DIMPATH)/linux -Wl,-rpath,$(PREFIX)/lib -lm -letherbone 
 
 

@@ -60,8 +60,15 @@
 #include "iOwned.h"
 #include "CommonFunctions.h"
 
+// etherbone
+#include <etherbone.h>
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
+
 
 using namespace std;
+using namespace saftlib;
+//using namespace std;
+
 
 // EVTNO
 #define BP_START     0x100              // event numbers used 
@@ -78,16 +85,23 @@ using namespace std;
 enum evtTag{tagBps, tagSqs, tagGps, tagGpe, tagFgp, tagFgs};
 typedef enum evtTag evtTag_t;
 
+const char * evtName[] = {"BP_START", "SEQ_START", "GAP_START", "GAP_END", "FG_PREP", "FG_START"};
+
 static const char* program;
+
+//std::shared_ptr<TimingReceiver_Proxy> receiverCB;
 
 // global variables
 uint32_t gid;                           // Group ID
 uint32_t sid;                           // Sequence ID
 uint32_t nCond;                         // # of conditions
+uint64_t aveOffset;                     // average system time offset;
+
+
 
 uint32_t nMsg[MAXCOND];                 // # of received messages
 uint32_t nLate[MAXCOND];                // # of late messages
-uint32_t nEearly[MAXCOND];              // # of early messages
+uint32_t nEarly[MAXCOND];               // # of early messages
 uint32_t nConflict[MAXCOND];            // # of conflict messages
 uint32_t nDelay[MAXCOND];               // # of delayed messages
 uint32_t dMin[MAXCOND];                 // mininum delay
@@ -102,6 +116,19 @@ double   sdAve[MAXCOND];                // average delivery time
 double   sdSdev[MAXCOND];               // standard deviation of delivery time
 double   sdStreamOld[MAXCOND];          // 'old' stream value of delivery time
 double   sdAveOld[MAXCOND];             // 'old' average value of delay
+
+// get host system time [ns]
+uint64_t getSysTime()
+{
+  uint64_t tNs;
+  
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  tNs = (tv.tv_sec*(uint64_t)1000000+tv.tv_usec) * 1000;
+
+  return tNs;
+} // small helper function
+
 
 // calc basic statistic properties
 void calcStats(double *meanNew,         // new mean value, please remember for later
@@ -132,24 +159,24 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 void clearStats(){
   int i;
 
-  for (i=1; i<(int)nCond; i++) {
-    nMsg[i] = 0;       
-    nLate[i] = 0;      
-    nEearly[i] = 0;    
-    nConflict[i] = 0;  
-    nDelay[i] = 0;     
-    dMin[i] = 0xffffffff;       
-    dMax[i] = 0;       
-    dAve[i] = 0;       
-    dSdev[i] = 0;      
-    dStreamOld[i] = 0;
-    dAveOld[i] = 0;
-    sdMin[i] = 0;      
-    sdMax[i] = 0;      
-    sdAve[i] = 0;      
-    sdSdev[i] = 0;     
+  for (i=0; i<(int)nCond; i++) {
+    nMsg[i]        = 0;       
+    nLate[i]       = 0;      
+    nEarly[i]      = 0;    
+    nConflict[i]   = 0;  
+    nDelay[i]      = 0;     
+    dMin[i]        = 0x7fffffff;       
+    dMax[i]        = 0;       
+    dAve[i]        = 0;       
+    dSdev[i]       = 0;      
+    dStreamOld[i]  = 0;
+    dAveOld[i]     = 0;
+    sdMin[i]       = 0x7fffffff;      
+    sdMax[i]       = 0;      
+    sdAve[i]       = 0;      
+    sdSdev[i]      = 0;     
     sdStreamOld[i] = 0;    
-    sdAveOld[i] = 0;    
+    sdAveOld[i]    = 0;    
   } // for i
 } // clearStats
 
@@ -164,11 +191,14 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   int                 flagConflict;
   int                 flagDelayed;
   uint64_t            delay;
+  uint64_t            tHost;
 
   double    sdev = 0;
   double    aveNew;
   double    streamNew = 0;
   double    dummy;
+
+  tHost        = getSysTime();
 
   recGid       = ((id    & 0x0fff000000000000) >> 48);
   recSid       = ((id    & 0x00000000fff00000) >> 20);
@@ -184,50 +214,60 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
 
   nMsg[tag]++;
   if (flagLate)  nLate[tag]++;      
-  if (flagEarly) nEearly[tag]++;
+  if (flagEarly) nEarly[tag]++;
   if (flagConflict) nConflict[tag]++;
   if (flagDelayed) {
     nDelay[tag]++;
     delay = executed.getTAI() - deadline.getTAI();
     
     // statistics
-    calcStats(&aveNew, dAveOld[sid], &streamNew, dStreamOld[sid], delay, nDelay[tag] , &dummy, &sdev);
-    dAveOld[sid]          = aveNew;
-    dStreamOld[sid]       = streamNew;
+    calcStats(&aveNew, dAveOld[tag], &streamNew, dStreamOld[tag], delay, nDelay[tag] , &dummy, &sdev);
+    dAveOld[tag]          = aveNew;
+    dStreamOld[tag]       = streamNew;
     
     if (delay < dMin[tag]) dMin[tag] = delay;
     if (delay > dMax[tag]) dMax[tag] = delay;
     dAve[tag]  = aveNew;
     dSdev[tag] = sdev;
   } // if flagDelay
+
+  // saftlib propagation time
+  delay = tHost + aveOffset - executed.getTAI(); // printf("%f\n", (double)delay/1000.0);
+
+  // statistics
+  calcStats(&aveNew, sdAveOld[tag], &streamNew, sdStreamOld[tag], delay, nMsg[tag] , &dummy, &sdev);
+  sdAveOld[tag]          = aveNew;
+  sdStreamOld[tag]       = streamNew;
     
-    
-    /*
-    sdMin[tag];      
-sdMax[tag];      
-sdAve[tag];      
-sdSdev[tag];     
-sdStreamOld[tag];  
-    */
-                           
+  if (delay < sdMin[tag]) sdMin[tag] = delay;
+  if (delay > sdMax[tag]) sdMax[tag] = delay;
+  sdAve[tag]  = aveNew;
+  sdSdev[tag] = sdev;
 } // recTimingMessage
 
 
 void printStats()
 {
-  printf("huhu\n");
+  int i;
+enum evtTag{tagBps, tagSqs, tagGps, tagGpe, tagFgp, tagFgs};
+  for (i=0; i<nCond; i++) printf("%10s: n %4d, late %4d, early %4d, conflict %4d, delayed %4d\n", evtName[i], nMsg[i], nLate[i], nEarly[i], nConflict[i], nDelay[i]);
+  for (i=0; i<nCond; i++) {
+    if (nDelay[i] > 0) printf("%10s - delay    [us]: ave(sdev) %8.3f(%8.3f) min %8.3f max %8.3f\n", evtName[i], (double)dAve[i]/1000.0, (double)dSdev[i]/1000.0, (double)dMin[i]/1000.0, (double)dMax[i]/1000.0);
+    else               printf("%10s - delay    [us]: N/A\n", evtName[i]);
+  } // for i
+  for (i=0; i<nCond; i++) printf("%10s - delivery [us]: ave(sdev) %8.3f(%8.3f) min %8.3f max %8.3f\n", evtName[i], (double)sdAve[i]/1000.0, (double)sdSdev[i]/1000.0, (double)sdMin[i]/1000.0, (double)sdMax[i]/1000.0);
+  printf("\n");
 } // printStats
 
                         
-using namespace saftlib;
-using namespace std;
-
 // display help
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> <gid> <sid> " << std::endl;
   std::cerr << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -e                   display version" << std::endl;
+  std::cerr << "  -o <value>           offset for FG_PREP" << std::endl;
+  std::cerr << "  -g                   use negative value for offset" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
   std::cerr << std::endl;
@@ -249,11 +289,32 @@ int main(int argc, char** argv)
   // variables and flags for command line parsing
   int  opt;
   bool useFirstDev    = false;
+  bool negOffset      = false;
+  int32_t offset      = 0;
   char *tail;
+
+#define NREAD       20
+  char              devName[32];
+  eb_socket_t       socket;
+  eb_status_t       status;
+  eb_cycle_t        cycle;
+  eb_data_t         data1, data2, data3;
+  eb_device_t       device;
+  eb_address_t      address_hi;
+  eb_address_t      address_lo;
+
+  uint64_t          t[NREAD];
+  uint64_t          offs[NREAD];
+  uint64_t          aveReadT;
+  
+
+  struct sdb_device sdbDevice;
+  int               nDevices;
 
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
+
   int i;
 
   // variables inject event
@@ -264,18 +325,29 @@ int main(int argc, char** argv)
   // variables attach, remove
   char    *deviceName = NULL;
 
+
   int quit       = 0;
   int getVersion = 0;
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "hf")) != -1) {
+  while ((opt = getopt(argc, argv, "o:hfdg")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion = 1;
         break;
       case 'f' :
         useFirstDev = true;
+        break;
+      case 'g' :
+         negOffset = true;
+        break;
+      case 'o' :
+        offset = strtol(optarg, &tail, 0);
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
         break;
       case 'h':
         help();
@@ -300,6 +372,54 @@ int main(int argc, char** argv)
 
   if (getVersion) printf("%s: version %x\n", program, FEC_ANALYZER_VERSION);
 
+  if (negOffset) offset = -offset;
+  printf("offset for FG_PREP is %8.3f us\n", (double)offset/1000.0);
+
+  // EB stuff: get wr time quickly
+  sprintf(devName, "dev/wbm0");
+  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) {std::cerr << "can't open socket" << std::endl; return 1;}
+  if ((status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) {std::cerr << "can't open device" << std::endl; return 1;}
+  nDevices = 1; //quick and dirty, only use first device
+  if ((status = eb_sdb_find_by_identity(device,  ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, &sdbDevice, &nDevices)) != EB_OK) {std::cerr << "can't find address" << std::endl; return 1;}
+  address_lo = sdbDevice.sdb_component.addr_first + ECA_TIME_LO_GET;
+  address_hi = sdbDevice.sdb_component.addr_first + ECA_TIME_HI_GET;
+
+  // determine average time to read a timestamp via EB
+  for (i=0; i<NREAD; i++) {
+    do {
+      if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {std::cerr << "can't open cycle" << std::endl; exit (1);}
+      eb_cycle_read(cycle, address_hi, EB_BIG_ENDIAN|EB_DATA32, &data1);
+      eb_cycle_read(cycle, address_lo, EB_BIG_ENDIAN|EB_DATA32, &data2);
+      eb_cycle_read(cycle, address_hi, EB_BIG_ENDIAN|EB_DATA32, &data3);
+      if ((status = eb_cycle_close(cycle)) != EB_OK) {std::cerr << "can't close cycle" << std::endl; exit (1);}
+    } while (data1 != data3);
+    t[i]  = (uint64_t)data1 << 32;
+    t[i] += (uint64_t)data2;
+  } // for i
+  aveReadT  = (t[NREAD - 1] - t[0]) / (NREAD - 1);
+
+  // determine system time offset
+  for (i=0; i<NREAD; i++) {
+    do {
+      if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {std::cerr << "can't open cycle" << std::endl; exit (1);}
+      eb_cycle_read(cycle, address_hi, EB_BIG_ENDIAN|EB_DATA32, &data1);
+      eb_cycle_read(cycle, address_lo, EB_BIG_ENDIAN|EB_DATA32, &data2);
+      eb_cycle_read(cycle, address_hi, EB_BIG_ENDIAN|EB_DATA32, &data3);
+      if ((status = eb_cycle_close(cycle)) != EB_OK) {std::cerr << "can't close cycle" << std::endl; exit (1);}
+    } while (data1 != data3);
+    t[i]  = (uint64_t)data1 << 32;
+    t[i] += (uint64_t)data2;
+    offs[i] = t[i] - getSysTime();
+  } // for i
+
+  aveOffset = 0;
+  for (i=0; i<NREAD; i++) aveOffset += offs[i];
+  aveOffset  = aveOffset / NREAD;
+  printf("average TS read time via EB is  %15.3f us \n", (double)aveReadT/1000.0);
+  printf("average system time offset is   %15.3f us \n", (double)aveOffset/1000.0);
+  aveOffset  = aveOffset - aveReadT/2;
+  printf("corrected system time offset is %15.3f us \n", (double)aveOffset/1000.0);
+
   deviceName = argv[optind];
   gid        = strtol(argv[optind+1], &tail, 0);
   sid        = strtol(argv[optind+2], &tail, 0);
@@ -318,16 +438,16 @@ int main(int argc, char** argv)
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
       } // find device
-      receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+      receiver   = TimingReceiver_Proxy::create(devices[deviceName]);
+      //receiverCB = receiver;
     } //if(useFirstDevice);
 
 
-    clearStats();
-    
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
 
     nCond = 6;
+    clearStats();
 
     if (nCond > MAXCOND) {
       std::cerr << "bah! number of conditions exceeds" << MAXCOND << "." << std::endl;
@@ -359,7 +479,7 @@ int main(int argc, char** argv)
 
     // FG_PREP
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gid << 48) | ((uint64_t)FG_PREP << 36);
-    condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+    condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, offset));
     tag[4]        = tagFgp;
 
     // FG_START
@@ -397,7 +517,6 @@ int main(int argc, char** argv)
     
     while(!quit) {
       saftlib::wait_for_signal();
-
       len = read(STDIN_FILENO, &ch, 1);
       if (len) {
         switch (ch) {
@@ -422,6 +541,9 @@ int main(int argc, char** argv)
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   } // catch
+
+  eb_device_close(device);
+  eb_socket_close(socket);
   
   return 0;
 } // main
