@@ -43,7 +43,10 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:pexarria10.tcl"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
-set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_scu4_pcie_hip/arria10gx_scu4_pcie_hip.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/dual_region/dual_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/single_region/single_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_pex10_pcie_hip/arria10gx_pex10_pcie_hip.qsys"
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/dmtd_pll10/dmtd_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/ref_fpll10_pex10/ref_fpll10_pex10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/ref_pll10/ref_pll10.qsys
