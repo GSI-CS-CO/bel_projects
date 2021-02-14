@@ -104,8 +104,8 @@ extern "C" {
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tEKS;                                     // EKS deadline
     int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
-    int32_t  preOff;                                   // offset from EKS to meaused extraction phasee
-    int32_t  priOff;                                   // offset from EKS to meaused injection phasee
+    int32_t  preOff;                                   // offset from EKS to meausured extraction phasee
+    int32_t  priOff;                                   // offset from EKS to meausured injection phasee
     int32_t  kteOff;                                   // offset from EKS to KTE deadline
     int32_t  ktiOff;                                   // offset from EKS to KTI deadline
   } getval_t;

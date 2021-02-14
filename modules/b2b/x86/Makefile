@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := b2b-ctl b2b-ui saft-b2b lib b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer
+TARGETS     := b2b-ctl b2b-ui saft-b2b lib b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
@@ -48,6 +48,9 @@ b2b-viewer: b2b-viewer.c
 b2b-analyzer: b2b-analyzer.c
 	$(CC) $(CFLAGS) -o b2b-analyzer b2b-analyzer.c $(LIBS) -ldim -lpthread 
 
+b2b-archiver: b2b-archiver.c
+	$(CC) $(CFLAGS) -o b2b-archiver b2b-archiver.c $(LIBS) -ldim -lpthread 
+
 b2b-serv-raw: b2b-serv-raw.cpp
 	g++ --std=c++0x $(CFLAGS) -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) -ldim -lpthread
 
@@ -61,7 +64,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys saft-b2b-mon b2b-analyzer b2b-viewer b2b-serv-raw libb2bllib.so*
+	rm -f *.o b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys saft-b2b-mon b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver libb2bllib.so*
 
 deploy:
 	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	

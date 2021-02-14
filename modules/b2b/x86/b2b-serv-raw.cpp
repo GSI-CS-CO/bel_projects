@@ -207,9 +207,9 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.inj_dKickProb = 0;
       getval.inj_diagPhase = 0;
       getval.inj_diagMatch = 0;
-      getval.flagEvtRec    = 0;
+      getval.flagEvtRec    = 0x1 << tag;
       getval.flagEvtErr    = 0;
-      getval.flagEvtLate   = 0;
+      getval.flagEvtLate   = flagLate << tag;;
       getval.tEKS          = deadline.getTAI() - EKSOFFSET;;
       getval.doneOff       = 0;
       getval.preOff        = 0;
@@ -457,7 +457,7 @@ int main(int argc, char** argv)
   printf("%s: starting server using prefix %s\n", program, prefix);
 
   disAddServices(prefix);
-  // Uuuuhhhh, mixing c++ and c  
+  // uuuuhhhh, mixing c++ and c  
   sprintf(tmp, "%s-raw_cmd_cleardiag", prefix);
   RecvCommand cmdClearDiag(tmp);
   
