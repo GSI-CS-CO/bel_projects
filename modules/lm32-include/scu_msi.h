@@ -266,6 +266,10 @@ bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
    return true;
 }
 
+#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+extern MSI_ITEM_T g_currentMSI;
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,11 @@
  ******************************************************************************
  */
 #include "lm32Interrupts.h"
+
+#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+  #include "scu_msi.h"
+#endif
+
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
  #include <scu_wr_time.h>
 #endif
@@ -66,6 +71,11 @@ typedef struct
  * @see MAX_LM32_INTERRUPTS
  */
 STATIC ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
+
+#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+MSI_ITEM_T g_currentMSI;
+#endif
+
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
@@ -158,6 +168,13 @@ void _irq_entry( void )
             continue; /* No, go to next possible interrupt. */
 
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+      #ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+         g_currentMSI.msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
+         g_currentMSI.adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
+         g_currentMSI.sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
+
+         IRQ_MSI_CONTROL_ACCESS( pop ) = mask;
+      #endif
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
          { /*
