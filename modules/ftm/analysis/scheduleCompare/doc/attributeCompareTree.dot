@@ -1,18 +1,38 @@
 digraph G {
 name="attrib_comp_tree"
-graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
-node [style     = "filled", fillcolor = "white", color = "black"]
-type_equ -> is_block -> period_equ -> has_lo_prio_equ -> has_md_prio_equ -> has_hi_prio_equ [label=yes];
-is_block -> is_event [label=no];
-is_event -> toff_equ -> is_tmsg -> tm_DEADLINE_equ -> tm_PARAM_equ -> tm_RES_equ -> tm_ID_equ [label=yes]; 
-is_event -> is_meta [label=no];
-tm_RES_equ -> tm_sub_ID_FID_equ -> tm_sub_ID_SID_equ -> tm_sub_ID_GID_equ -> tm_sub_ID_BPID_equ -> tm_sub_ID_FLAGS_equ  -> tm_sub_ID_EVTNO_equ -> tm_sub_ID_RES_equ [label=yes];
-is_event -> is_cmd [label=no];
-is_cmd -> target_equ -> tvalid_equ -> tabs_equ [label=yes];
-tabs_equ -> is_flow -> prio_equ -> reps_equ -> dst_equ [label=yes];
-is_flow -> is_switch -> is_wait [label=no];
-is_switch -> dst_equ [label=yes];
-is_wait -> twait_equ -> wabs_equ [label=yes];
-is_wait -> is_flush [label=no];
-is_flush -> clear_equ -> ovr_equ [label=yes];
+graph [rankdir=TB nodesep=0.6 mindist=1.0 ranksep=1.0 overlap=false]
+node [style=filled fillcolor=white color=black]
+dst_equ_switch [label=dst_equ]
+edge [label=yes]
+type_equ -> is_block -> period_equ -> has_lo_prio_equ -> has_md_prio_equ -> has_hi_prio_equ
+is_event -> toff_equ -> is_tmsg -> tm_DEADLINE_equ -> tm_PARAM_equ -> tm_RES_equ -> tm_ID_equ
+-> tm_sub_ID_FID_equ -> tm_sub_ID_SID_equ -> tm_sub_ID_GID_equ -> tm_sub_ID_BPID_equ -> tm_sub_ID_FLAGS_equ  -> tm_sub_ID_EVTNO_equ -> tm_sub_ID_RES_equ
+is_cmd -> target_equ -> tvalid_equ -> tabs_equ
+tabs_equ -> is_flow -> prio_equ -> reps_equ -> dst_equ
+is_switch -> dst_equ_switch
+is_wait -> twait_equ -> wabs_equ
+is_flush -> clear_equ -> ovr_equ
+edge [label=no]
+is_tmsg -> is_switch
+is_switch -> is_cmd
+is_wait -> is_flush
+is_block -> is_event
+is_event -> is_meta
+is_flow -> is_wait
+is_flush -> is_noop
+node [style=filled fillcolor=white color=black shape=rectangle label=OK]
+edge [label=yes]
+is_meta -> OK_meta
+has_hi_prio_equ -> OK_block
+tm_sub_ID_RES_equ -> OK_tmsg_sub_id
+dst_equ_switch -> OK_dst_equ_switch
+dst_equ -> OK_dst_equ
+wabs_equ -> OK_wabs_equ
+ovr_equ -> OK_ovr_equ
+is_noop -> OK_noop
+node [style=filled fillcolor=white color=black shape=rectangle label=fail]
+edge [label=no]
+is_cmd -> FAIL_cmd
+is_meta -> FAIL_meta
+is_noop -> FAIL_noop
 }
