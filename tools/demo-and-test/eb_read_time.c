@@ -47,7 +47,7 @@ int main(int argc, const char** argv) {
   eb_address_t      taiLo;                // low 32 bit of White Rabbit time
   eb_address_t      taiHi;                // hith 32 bit of White Rabbit time
   eb_data_t         data1, data2, data3;  // Etherbone data
-  const char* devName;                    // Etherbone device name
+  const char*       devName;              // Etherbone device name
 
   uint64_t          t;                    // White Rabbit time
 
@@ -82,7 +82,7 @@ int main(int argc, const char** argv) {
   // Find the ECA_CTRL device on the remote Wishbone bus using the SDB records.
   // Blocking call; use eb_sdb_scan_* for asynchronous access to full SDB table.
   // Increase sdbDevice and initial nDevices value to support multiple results,
-  // as there might multiple instances of the same type on the bus.
+  // as there might be multiple instances of the same type on the bus.
   // nDevices reports the number of devices found (potentially more than one fits).
   // Important: When calling eb_sdb_find... set the nDevices to the maximum number
   // of devices you like to search for. 
@@ -104,7 +104,7 @@ int main(int argc, const char** argv) {
 
   // up to now, a) we have a connection to the (remote) Wishbone bus via Etherbone
   // b) obtained the address of the Wishbone device and c) checked its version number
-  // this should only be done at the beginning when starting the application. From
+  // this should only be done ONCE, when starting the application. From
   // now on, we talk to our Wishbone slave directly.
 
   // example how to read data from a Wishbone device during run-time
