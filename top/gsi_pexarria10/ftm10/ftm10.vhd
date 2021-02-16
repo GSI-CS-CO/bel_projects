@@ -7,7 +7,7 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 use work.stub_pll_pkg.all;
 
-entity pexarria10 is
+entity ftm10 is
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -97,9 +97,9 @@ entity pexarria10 is
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic);
 
-end pexarria10;
+end ftm10;
 
-architecture rtl of pexarria10 is
+architecture rtl of ftm10 is
 
   signal s_led_link_up  : std_logic;
   signal s_led_link_act : std_logic;
