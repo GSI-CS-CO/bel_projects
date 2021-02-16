@@ -88,13 +88,13 @@ void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
  *  @param queue number of the queue
  *  @param m message which will be added to the queue
  */
-int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m)
+int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, const MSI_T* pm )
 {
    const RING_POS_T next_head = (mb[queue].ring_head + 1) % RING_SIZE;
    if (next_head != mb[queue].ring_tail)
    {
       /* there is room */
-      mb[queue].ring_data[mb[queue].ring_head] = m;
+      mb[queue].ring_data[mb[queue].ring_head] = *pm;
       mb[queue].ring_head = next_head;
       return 0;
    }

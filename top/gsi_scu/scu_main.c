@@ -282,14 +282,14 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
-         add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
+         add_msg( &g_aMsg_buf[0], DEVSIO, pMessage );
       }
 #endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
       if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       {
-         add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
+         add_msg( &g_aMsg_buf[0], DAQ, pMessage );
       }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
@@ -297,6 +297,17 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 }
 
 #endif
+
+/*
+ * Static check of compatibility.
+ */
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( MSI_T ) == sizeof( MSI_ITEM_T ) );
+STATIC_ASSERT( offsetof( MSI_T, msg ) == offsetof( MSI_ITEM_T, msg ) );
+STATIC_ASSERT( offsetof( MSI_T, adr ) == offsetof( MSI_ITEM_T, adr ) );
+STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Interrupt callback function for each Message Signaled Interrupt
@@ -308,6 +319,29 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
  * @see irq_pop_msi
  * @see dispatch
  */
+#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+STATIC void onScuMSInterrupt( const unsigned int intNum,
+                              const void* pContext UNUSED )
+{
+#ifndef _CONFIG_NO_DISPATCHER
+   #warning with deispatcher...
+   add_msg( &g_aMsg_buf[0], IRQ, (MSI_T*)&g_currentMSI );
+#else
+   switch( g_currentMSI.adr & 0xFF )
+   {
+    #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
+      case ADDR_SCUBUS: onScuBusEvent( (MSI_T*)&g_currentMSI ); break;
+    #else
+      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, (MSI_T*)&g_currentMSI ); break; // message from scu bus
+    #endif
+      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    (MSI_T*)&g_currentMSI ); break; // software message from saftlib
+    #ifdef CONFIG_MIL_FG
+      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&g_currentMSI ); break; // message from dev bus
+    #endif
+   }
+#endif // ifndef _CONFIG_NO_DISPATCHER
+}
+#else
 STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
@@ -320,23 +354,24 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
    {
    #ifndef _CONFIG_NO_DISPATCHER
       #warning with deispatcher...
-      add_msg( &g_aMsg_buf[0], IRQ, m );
+      add_msg( &g_aMsg_buf[0], IRQ, &m );
    #else
       switch( m.adr & 0xFF )
       {
        #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
          case ADDR_SCUBUS: onScuBusEvent( &m ); break;
        #else
-         case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); break; // message from scu bus
+         case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, &m ); break; // message from scu bus
        #endif
-         case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); break; // software message from saftlib
+         case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    &m ); break; // software message from saftlib
        #ifdef CONFIG_MIL_FG
-         case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); break; // message from dev bus
+         case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, &m ); break; // message from dev bus
        #endif
       }
    #endif // ifndef _CONFIG_NO_DISPATCHER
    }
 }
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -490,10 +525,10 @@ ONE_TIME_CALL void dispatch( void )
    criticalSectionExit();
    switch( m.adr & 0xFF )
    {
-      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
-      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
+      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, &m ); return; // message from scu bus
+      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    &m ); return; // software message from saftlib
    #ifdef CONFIG_MIL_FG
-      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
+      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, &m ); return; // message from dev bus
    #endif
    }
 }

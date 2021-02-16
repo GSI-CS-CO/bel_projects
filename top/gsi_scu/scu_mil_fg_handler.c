@@ -168,7 +168,7 @@ void clear_handler_state( const unsigned int socket )
       /*
        * Triggering of a software pseudo interrupt.
        */
-      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVSIO, m );
+      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVSIO, &m );
       return;
    }
 
@@ -179,7 +179,7 @@ void clear_handler_state( const unsigned int socket )
      /*
       * Triggering of a software pseudo interrupt.
       */
-      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVBUS, m );
+      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVBUS, &m );
    }
 }
 

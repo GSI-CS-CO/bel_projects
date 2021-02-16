@@ -190,9 +190,10 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
       //   suspendGapReading(); // TEST!!!
       #endif
-         // if( value == 2 ) break; //!!!!
 
+ //if( value == 2 ) break; //!!!!
          enable_scub_msis( value ); //duration: 0.03 ms
+
        #ifdef _CONFIG_MEASURE_COMMAND_HANDLER
          timeMeasure( &tm );
        #endif
@@ -205,7 +206,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
        #ifdef _CONFIG_MEASURE_COMMAND_HANDLER
          mprintf( "\n" );
          timeMeasurePrintMilliseconds( &tm );
-         mprintf( "\n" );
+         mprintf( "\n\n" );
        #endif
          break;
       }

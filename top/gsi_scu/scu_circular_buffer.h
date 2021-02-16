@@ -182,7 +182,7 @@ void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const
 
 void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int num );
 
-int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m);
+int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, const MSI_T* pm );
 
 MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
 
