@@ -1,0 +1,21 @@
+                              Transfer from SIS18
+                              -------------------
+     Comment           : $                                                      
+     Mode              : $              (0: off; 1: EKS, 2: B2E; 3: B2C; 4: B2B)
+     Injection to Ring : $              (1: ESR)
+
+     Extraction   H=1 frequency [Hz]  : $                       
+                  harmonic number     : $                  
+     Injection    H=1 frequency [Hz]  : $                           
+                  harmonic number     : $               
+                  (freq is LSA?)      : $           
+     Adjustments [ns]:
+     -----------------------------------------------------------------------
+     | ext kick: $           | inj kick: $           | RF-phase : $           |
+     |             [ & Poti ]|             [ & Poti ]|              [ & Poti ]|
+     -----------------------------------------------------------------------
+     
+         [ & Submit          ]               [ & Set to Defaults ]
+
+         [ & Help            ]               [ & Return      (7) ] 
+
