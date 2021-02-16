@@ -47,6 +47,11 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/single_region/single_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_ftm10_pcie_hip/arria10gx_ftm10_pcie_hip.qsys"
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_ftm10/dmtd_pll10/dmtd_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_ftm10/ref_fpll10_ftm10/ref_fpll10_ftm10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_ftm10/ref_pll10/ref_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_ftm10/sys_fpll10_ftm10/sys_fpll10_ftm10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_ftm10/sys_pll10/sys_pll10.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/gsi_pexarria10/ftm10/ftm10.sdc
 set_global_assignment -name SEED 123456
