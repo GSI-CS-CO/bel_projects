@@ -85,9 +85,41 @@ architecture rtl of top is
         Ena_Every_20ms:   out std_logic
         );
     end component;
+	 
+	 component main_pll
+	 port
+		(
+			areset	: in std_logic  := '0';
+			inclk0	: in std_logic  := '0';
+			c0		: out std_logic ;
+			locked	: out std_logic 
+		);
+	end component;
 
-  signal countx  : std_logic_vector(15 downto 0);
-  signal rst_n   : std_logic;
+
+  COMPONENT adc_control
+	PORT
+	(
+		clk		:	 IN STD_LOGIC;
+		clk_pll		:	 IN STD_LOGIC;
+		pll_locked		:	 IN STD_LOGIC;
+		nreset	:	 IN STD_LOGIC;
+		channel_0: out STD_LOGIC_VECTOR (11 downto 0);  
+		channel_1: out STD_LOGIC_VECTOR (11 downto 0); 
+		channel_2: out STD_LOGIC_VECTOR (11 downto 0);  
+		channel_3: out STD_LOGIC_VECTOR (11 downto 0); 
+		channel_4: out STD_LOGIC_VECTOR (11 downto 0);  
+		channel_5: out STD_LOGIC_VECTOR (11 downto 0);
+		channel_6: out STD_LOGIC_VECTOR (11 downto 0); 
+		channel_7: out STD_LOGIC_VECTOR (11 downto 0);  
+		channel_8: out STD_LOGIC_VECTOR (11 downto 0); 
+		tsd: out STD_LOGIC_VECTOR  (11 downto 0));  
+	END COMPONENT;
+
+  signal	clk_40MHz	  : std_logic;
+  signal	pll_locked	: std_logic;
+  signal countx       : std_logic_vector(15 downto 0);
+  signal rst_n        : std_logic;
 
   signal Ena_Every_100ns: std_logic;
   signal Ena_Every_166ns: std_logic;
@@ -97,6 +129,14 @@ architecture rtl of top is
   signal Ena_Every_1us:   std_logic;
 
   begin
+
+    main_pll_inst : main_pll
+		port map (
+			areset	 => '0',
+			inclk0	 => clk_base_i,
+			c0		   => clk_40MHz,
+			locked	 => pll_locked
+		);
 
 
 
@@ -140,5 +180,23 @@ architecture rtl of top is
           Ena_every_1us     =>  Ena_every_1us,
           Ena_Every_20ms    =>  Ena_Every_20ms
           );
+
+          adc_0 : adc_control 
+          Port map ( 
+            clk 		=> clk_40MHz,
+            clk_pll 	=> clk_40MHz,
+            pll_locked  => pll_locked,
+            nreset 		=> rst_n,
+            channel_0   => open,  
+            channel_1   => open, 
+            channel_2   => open,  
+            channel_3   => open, 
+            channel_4   => open,  
+            channel_5   => open,
+            channel_6   => open, 
+            channel_7   => open,  
+            channel_8   => open, 
+            tsd			=> open
+        );
 
 end;
