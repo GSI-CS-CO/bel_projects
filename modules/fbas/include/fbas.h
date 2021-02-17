@@ -2,6 +2,7 @@
 #define _FBAS_H_
 
 typedef struct {
+  uint64_t evtId;    // event ID
   uint64_t mac;      // MAC address (prepended with zeros)
 } mpsEventData_t;
 
@@ -23,7 +24,14 @@ typedef struct {
 #define BROADCAST_MAC 0xffffffffffff // broadcast MAC
 #define BROADCAST_IP      0xffffffff // broadcast IP
 
-// FBAS event tag
+// FBAS timing messages
+#define FBAS_TM_FID        0x1       // format ID, 2-bit
+#define FBAS_TM_GID        0xfcaUL   // group ID = 4042, 12-bit
+#define FBAS_TM_EVTNO      0xfcaUL   // event number = 4042, 12-bit
+#define FBAS_TM_FLAGS      0x0       // flags, 4-bit
+#define FBAS_TM_SID        0x0       // sequence ID, 12-bit
+#define FBAS_TM_BPID       0x0       // beam process ID, 14-bit
+#define FBAS_TM_RES        0x0       // reserved, 6-bit
 #define FBAS_IO_ACTION     0x42
 
 #endif

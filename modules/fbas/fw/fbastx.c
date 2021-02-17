@@ -233,9 +233,13 @@ uint32_t getEndpointInfo()
 
 // init of the MPS protocol data
 void initMpsData() {
+  mpsEventData.evtId = fwlib_buildEvtidV1(FBAS_TM_GID, FBAS_TM_EVTNO,
+      FBAS_TM_FLAGS, FBAS_TM_SID, FBAS_TM_BPID, FBAS_TM_RES);
   mpsEventData.mac = *pSharedMacHi;
   mpsEventData.mac <<= 32;
   mpsEventData.mac |= *pSharedMacLo;
+  DBPRINT3("fbastx: MPS protocol (evtId = %llu, mac = %llu\n",
+      mpsEventData.evtId, mpsEventData.mac);
 }
 
 // init last system time
@@ -253,7 +257,7 @@ void initAppData()
 // send MPS protocol
 void sendMpsProtocol()
 {
-  fwlib_ebmWriteTM(getSysTime(), 0x12345678, mpsEventData.mac);
+  fwlib_ebmWriteTM(getSysTime(), mpsEventData.evtId, mpsEventData.mac, 0);
 }
 
 uint32_t pollEcaBlocking(uint32_t usTimeout)
@@ -284,7 +288,7 @@ void wrConsolePeriodic(uint32_t seconds)
 
   if (now >= soon) {                          // if the given period is over, then proceed
     DBPRINT3("fbastx: now %llu, elap %lli\n", now, now - tsLast);
-    sendMpsProtocol(0);
+    sendMpsProtocol();
     tsLast = now;
   }
 }
