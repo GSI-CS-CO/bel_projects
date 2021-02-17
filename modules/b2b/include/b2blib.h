@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2021
+ *  version : 16-Feb-2021
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000102
+#define B2BLIB_VERSION 0x000103
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -184,18 +184,18 @@ extern "C" {
     double   eks_ktiOffSdev;
     int32_t  eks_ktiOffMin;
     int32_t  eks_ktiOffMax;
-    int32_t  ext_monOffAct;                          // offset electronics monitor to KTE
-    uint32_t ext_monOffN;
-    double   ext_monOffAve;
-    double   ext_monOffSdev;
-    int32_t  ext_monOffMin;
-    int32_t  ext_monOffMax;
-    int32_t  inj_monOffAct;                          // offset electronics monitor to KTE
-    uint32_t inj_monOffN;
-    double   inj_monOffAve;
-    double   inj_monOffSdev;
-    int32_t  inj_monOffMin;
-    int32_t  inj_monOffMax;
+    int32_t  ext_monRemAct;                          // remainder (ext_T, h=1) from phase to electronics monitor
+    uint32_t ext_monRemN;
+    double   ext_monRemAve;
+    double   ext_monRemSdev;
+    int32_t  ext_monRemMin;
+    int32_t  ext_monRemMax;
+    int32_t  inj_monRemAct;                          // remainder (ext_T, h=1) from phase to electronics monitor
+    uint32_t inj_monRemN;
+    double   inj_monRemAve;
+    double   inj_monRemSdev;
+    int32_t  inj_monRemMin;
+    int32_t  inj_monRemMax;
   } diagstat_t;
     
   // ---------------------------------

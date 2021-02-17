@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-February-2021
+ *  version : 17-February-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000229
+#define B2B_SERV_RAW_VERSION 0x000232
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -272,7 +272,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
     case tagKde     :
       getval.ext_dKickProb = ((param & 0x00000000ffffffff));
       getval.ext_dKickMon  = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffc;
+      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
       if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
       flagErr              = ((id & B2B_ERRFLAG_KDEXT) != 0);
       getval.flagEvtErr   |= flagErr << tag;

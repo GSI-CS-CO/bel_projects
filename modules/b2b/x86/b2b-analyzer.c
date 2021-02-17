@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-Feb-2021
+ *  version : 18-Feb-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000230
+#define B2B_ANALYZER_VERSION 0x000232
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -173,18 +173,18 @@ double    eks_ktiOffAveOld[B2B_NSID];
 double    eks_ktiOffStreamOld[B2B_NSID];
 
 // offset electronics monitor to KTE
-uint32_t  ext_monOffN[B2B_NSID];
-int32_t   ext_monOffMin[B2B_NSID];
-int32_t   ext_monOffMax[B2B_NSID];
-double    ext_monOffAveOld[B2B_NSID];
-double    ext_monOffStreamOld[B2B_NSID];
+uint32_t  ext_monRemN[B2B_NSID];
+int32_t   ext_monRemMin[B2B_NSID];
+int32_t   ext_monRemMax[B2B_NSID];
+double    ext_monRemAveOld[B2B_NSID];
+double    ext_monRemStreamOld[B2B_NSID];
 
 // offset electronics monitor to KTI
-uint32_t  inj_monOffN[B2B_NSID];
-int32_t   inj_monOffMin[B2B_NSID];
-int32_t   inj_monOffMax[B2B_NSID];
-double    inj_monOffAveOld[B2B_NSID];
-double    inj_monOffStreamOld[B2B_NSID];
+uint32_t  inj_monRemN[B2B_NSID];
+int32_t   inj_monRemMin[B2B_NSID];
+int32_t   inj_monRemMax[B2B_NSID];
+double    inj_monRemAveOld[B2B_NSID];
+double    inj_monRemStreamOld[B2B_NSID];
 
 
 static void help(void) {
@@ -305,17 +305,17 @@ void clearStats(uint32_t sid)
   eks_ktiOffAveOld[sid]    = 0;   
   eks_ktiOffStreamOld[sid] = 0;
 
-  ext_monOffN[sid]         = 0;
-  ext_monOffMax[sid]       = 0x80000000;       
-  ext_monOffMin[sid]       = 0x7fffffff;         
-  ext_monOffAveOld[sid]    = 0;   
-  ext_monOffStreamOld[sid] = 0;
+  ext_monRemN[sid]         = 0;
+  ext_monRemMax[sid]       = 0x80000000;       
+  ext_monRemMin[sid]       = 0x7fffffff;         
+  ext_monRemAveOld[sid]    = 0;   
+  ext_monRemStreamOld[sid] = 0;
 
-  inj_monOffN[sid]         = 0;
-  inj_monOffMax[sid]       = 0x80000000;       
-  inj_monOffMin[sid]       = 0x7fffffff;         
-  inj_monOffAveOld[sid]    = 0;   
-  inj_monOffStreamOld[sid] = 0;
+  inj_monRemN[sid]         = 0;
+  inj_monRemMax[sid]       = 0x80000000;       
+  inj_monRemMin[sid]       = 0x7fffffff;         
+  inj_monRemAveOld[sid]    = 0;   
+  inj_monRemStreamOld[sid] = 0;
 } // clearDiagData
 
 
@@ -417,6 +417,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   double    streamNew = 0;
   double    dummy;
   double    tmp;
+  uint64_t  tmp64;
 
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
@@ -467,25 +468,27 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].eks_kteOffMin  = eks_kteOffMin[sid];
     disDiagstat[sid].eks_kteOffMax  = eks_kteOffMax[sid];    
 
-    // offset electronics monitor to KTE
-    if (!((dicGetval[sid].flag_nok >> 1) & 0x1)) {
-      act = dicGetval[sid].ext_dKickMon;
-      n   = ++(ext_monOffN[sid]);
+    // remainder of h=1 phase at electronics monitor
+    if ((!((dicGetval[sid].flag_nok >> 1) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
+      tmp64 = dicGetval[sid].tEKS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]
+      act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
+      n   = ++(ext_monRemN[sid]);
       
       // statistics
-      calcStats(&aveNew, ext_monOffAveOld[sid], &streamNew, ext_monOffStreamOld[sid], act, n , &dummy, &sdev);
-      ext_monOffAveOld[sid]          = aveNew;
-      ext_monOffStreamOld[sid]       = streamNew;
-      if (act < ext_monOffMin[sid]) ext_monOffMin[sid] = act;
-      if (act > ext_monOffMax[sid]) ext_monOffMax[sid] = act;
+      calcStats(&aveNew, ext_monRemAveOld[sid], &streamNew, ext_monRemStreamOld[sid], act, n , &dummy, &sdev);
+      ext_monRemAveOld[sid]          = aveNew;
+      ext_monRemStreamOld[sid]       = streamNew;
+      if (act < ext_monRemMin[sid]) ext_monRemMin[sid] = act;
+      if (act > ext_monRemMax[sid]) ext_monRemMax[sid] = act;
       
       // copy
-      disDiagstat[sid].ext_monOffAct  = act;
-      disDiagstat[sid].ext_monOffN    = n;
-      disDiagstat[sid].ext_monOffAve  = aveNew;
-      disDiagstat[sid].ext_monOffSdev = sdev;
-      disDiagstat[sid].ext_monOffMin  = ext_monOffMin[sid];
-      disDiagstat[sid].ext_monOffMax  = ext_monOffMax[sid];
+      disDiagstat[sid].ext_monRemAct  = act;
+      disDiagstat[sid].ext_monRemN    = n;
+      disDiagstat[sid].ext_monRemAve  = aveNew;
+      disDiagstat[sid].ext_monRemSdev = sdev;
+      disDiagstat[sid].ext_monRemMin  = ext_monRemMin[sid];
+      disDiagstat[sid].ext_monRemMax  = ext_monRemMax[sid];
     } // if dicGetval
   } // if mode >= 1
   
@@ -590,25 +593,27 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].eks_ktiOffMin  = eks_ktiOffMin[sid];
     disDiagstat[sid].eks_ktiOffMax  = eks_ktiOffMax[sid];
 
-    // offset electronics monitor to KTI
-    if (!((dicGetval[sid].flag_nok >> 6) & 0x1)) {
-      act = dicGetval[sid].inj_dKickMon;
-      n   = ++(inj_monOffN[sid]);
+    // remainder phase to electronics monitor
+    if ((!((dicGetval[sid].flag_nok >> 6) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
+      tmp64 = dicGetval[sid].tEKS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
+      act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
+      n   = ++(inj_monRemN[sid]);
       
       // statistics
-      calcStats(&aveNew, inj_monOffAveOld[sid], &streamNew, inj_monOffStreamOld[sid], act, n , &dummy, &sdev);
-      inj_monOffAveOld[sid]          = aveNew;
-      inj_monOffStreamOld[sid]       = streamNew;
-      if (act < inj_monOffMin[sid]) inj_monOffMin[sid] = act;
-      if (act > inj_monOffMax[sid]) inj_monOffMax[sid] = act;
+      calcStats(&aveNew, inj_monRemAveOld[sid], &streamNew, inj_monRemStreamOld[sid], act, n , &dummy, &sdev);
+      inj_monRemAveOld[sid]          = aveNew;
+      inj_monRemStreamOld[sid]       = streamNew;
+      if (act < inj_monRemMin[sid]) inj_monRemMin[sid] = act;
+      if (act > inj_monRemMax[sid]) inj_monRemMax[sid] = act;
       
       // copy
-      disDiagstat[sid].inj_monOffAct  = act;
-      disDiagstat[sid].inj_monOffN    = n;
-      disDiagstat[sid].inj_monOffAve  = aveNew;
-      disDiagstat[sid].inj_monOffSdev = sdev;
-      disDiagstat[sid].inj_monOffMin  = inj_monOffMin[sid];
-      disDiagstat[sid].inj_monOffMax  = inj_monOffMax[sid];
+      disDiagstat[sid].inj_monRemAct  = act;
+      disDiagstat[sid].inj_monRemN    = n;
+      disDiagstat[sid].inj_monRemAve  = aveNew;
+      disDiagstat[sid].inj_monRemSdev = sdev;
+      disDiagstat[sid].inj_monRemMin  = inj_monRemMin[sid];
+      disDiagstat[sid].inj_monRemMax  = inj_monRemMax[sid];
     } // if dicGetval
   } // if mode >= 3
 
