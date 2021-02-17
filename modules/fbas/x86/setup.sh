@@ -31,6 +31,7 @@ sudo eb-write dev/wbm0 0x4060508/4 0x2
 #   common-fwlib: received cmd 2
 #   fbastx: received unknown command '0x00000002'
 #   common-fwlib: changed to state 4
+#   fbastx: now 1604321478293723256, elap 47781578728
 
 # setup ECA with the SAFT-tools
 
@@ -50,13 +51,14 @@ echo "disable all events from IO inputs to ECA"
 sudo saft-io-ctl tr0 -w
 
 echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x42"
-sudo saft-ecpu-ctl tr0 -c 0xffffeeee00000000 0xffffffff00000000 0 0x42 -d
+sudo saft-ecpu-ctl tr0 -c 0x1fcafca000000000 0xffffffff00000000 0 0x42 -d
 
 # inject a timing message
 
 echo "now test LM32 firmware by injecting timing messages (refer commands given below)"
-sudo saft-ctl bla -fp inject 0xffffeeee00000000 0x0 1000000
+sudo saft-ctl bla -fp inject 0x1fcafca000000000 0x0 1000000
 
 # wrc console output:
-#   fbastx: ECA action (tag 42, ts 1604322672001000000, now 1604322672001004352, elap 4352)
+#   fbastx: ECA action (tag 42, ts 1604322614001000000, now 1604322614001004320, poll 4320)
+#   the poll duration of 4-5 us results by querying ECA with timeout of 100us
 

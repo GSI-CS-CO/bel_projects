@@ -86,8 +86,8 @@ mpsEventData_t mpsEventData;            // data for the MPS event message
 uint64_t tsLast = 0;                    // last timestamp of system time
 
 // function prototypes
-static uint32_t pollEcaBlocking(uint32_t timeout_ms);
-
+static uint32_t pollEcaBlocking(uint32_t usTimeout);
+static void wrConsolePeriodic(uint32_t seconds);
 // typical init for lm32
 void init()
 {
@@ -196,10 +196,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 {
   uint32_t status;                                            // status returned by routines
   uint32_t nSeconds = 15;                                     // time period in secondes
+  uint32_t nUSeconds = 100 * COMMON_ECATIMEOUT;               // time period in microseconds
 
   status = actStatus;
 
-  pollEcaBlocking(1);                   // poll ECA action
+  pollEcaBlocking(nUSeconds);           // poll ECA action
   wrConsolePeriodic(nSeconds);          // periodic debug (level 3) output at console
 
   return status;
@@ -255,7 +256,7 @@ void sendMpsProtocol()
   fwlib_ebmWriteTM(getSysTime(), 0x12345678, mpsEventData.mac);
 }
 
-uint32_t pollEcaBlocking(uint32_t timeout_ms)
+uint32_t pollEcaBlocking(uint32_t usTimeout)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -264,11 +265,11 @@ uint32_t pollEcaBlocking(uint32_t timeout_ms)
   uint32_t ecaTef;        // TEF value in received ECA event
   uint32_t flagIsLate;    // flag indicates that received ECA event is 'late'
 
-  nextAction = fwlib_wait4ECAEvent(timeout_ms, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
+  nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
 
   if (nextAction == FBAS_IO_ACTION) {
     uint64_t now = getSysTime();
-    DBPRINT2("fbastx: ECA action (tag %x, ts %llu, now %llu, elap %lli)\n", nextAction, ecaDeadline, now, now - ecaDeadline);
+    DBPRINT2("fbastx: ECA action (tag %x, ts %llu, now %llu, poll %lli)\n", nextAction, ecaDeadline, now, now - ecaDeadline);
   }
 
   return nextAction;
