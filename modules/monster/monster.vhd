@@ -372,6 +372,7 @@ architecture rtl of monster is
   constant c_is_arria10gx_e3p1 : boolean := g_family = "Arria 10 GX E3P1";
   constant c_is_arria10gx_scu4 : boolean := g_family = "Arria 10 GX SCU4";
   constant c_is_arria10gx_px10 : boolean := g_family = "Arria 10 GX PEX10";
+  constant c_is_arria10gx_px10 : boolean := g_family = "Arria 10 GX FTM10";
   constant c_is_arria10        : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_px10;
   constant c_is_arria5         : boolean := g_family = "Arria V";
   constant c_is_arria2         : boolean := g_family = "Arria II";
@@ -405,7 +406,7 @@ architecture rtl of monster is
     top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb), 
+    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
     top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
@@ -443,7 +444,7 @@ architecture rtl of monster is
   signal sdb_dummy_dev            : std_logic := '0';
   attribute keep of sdb_dummy_top : signal is true;
   attribute keep of sdb_dummy_dev : signal is true;
- 
+
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -482,7 +483,7 @@ architecture rtl of monster is
     devs_eca_tap
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
-  
+
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
 
@@ -1876,7 +1877,7 @@ end generate;
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
-        
+
         phy_tx_clk <= clk_ref;
   end generate phy_a5;
 
