@@ -48,7 +48,8 @@ entity top is
     nPB_rst_in        : in    std_logic;                    -- Reset form Push Button
     nFPGA_rst_in      : in    std_logic;                    -- Reset from Arria10
     --Reset Out
-    nSYS_rst          : out   std_logic :='0';              -- Reset Out
+    nSYS_rst          : out   std_logic :='0';              -- Reset Out to COMX
+	 nArria_rst			 : out	std_logic :='0';					-- Reset Out to Arria10 
     nPCI_rst_out      : out   std_logic :='0';              -- PCI Reset Out
     nExt_rst_out      : out   std_logic :='0';              -- Reset to Extension Connector
     --Power
@@ -115,7 +116,7 @@ architecture rtl of top is
 
 
   rst_n <= nSCUext_rst_in and nExt_rst_in and nPB_rst_in and nFPGA_rst_in;
-
+  nArria_rst <= nSCUext_rst_in and nExt_rst_in and nPB_rst_in;
   nSYS_rst <= rst_n;
   nPCI_rst_out <= nCB_rst;
   nExt_rst_out <= nCB_rst;
