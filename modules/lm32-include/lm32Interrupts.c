@@ -156,7 +156,12 @@ void _irq_entry( void )
    /*
     * As long as there is an interrupt pending...
     */
-   while( (ip = irqGetAndResetPendingRegister() & irqGetMaskRegister()) != 0 )
+#ifdef CONFIG_IRQ_RESET_IP_AFTER
+   while( (ip = irqGetPendingRegister()) != 0 )
+#else
+   while( (ip = irqGetAndResetPendingRegister()) != 0 )
+   //while( (ip = irqGetAndResetPendingRegister() & irqGetMaskRegister()) != 0 )
+#endif
    { /*
       * Zero has the highest priority.
       */
@@ -169,6 +174,8 @@ void _irq_entry( void )
 
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
       #ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
+         if( (IRQ_MSI_CONTROL_ACCESS( status ) & mask) == 0 )
+            continue;
          g_currentMSI.msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
          g_currentMSI.adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
          g_currentMSI.sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
@@ -190,6 +197,9 @@ void _irq_entry( void )
             */
             irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
+      #ifdef CONFIG_IRQ_RESET_IP_AFTER
+         irqResetPendingRegister( mask );
+      #endif
       }
    }
 

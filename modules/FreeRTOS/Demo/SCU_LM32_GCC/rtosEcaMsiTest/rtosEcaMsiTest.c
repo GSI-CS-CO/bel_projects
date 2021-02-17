@@ -128,8 +128,8 @@ STATIC void onIrqEcaEvent( const unsigned int intNum,
 {
    MSI_ITEM_T m;
 
-  // irqMsiCopyObjectAndRemove( &m, intNum );
-   while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
+   irqMsiCopyObjectAndRemove( &m, intNum );
+   //while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
       xQueueSendToFrontFromISR( (QueueHandle_t) pContext, &m, NULL );
 }
 

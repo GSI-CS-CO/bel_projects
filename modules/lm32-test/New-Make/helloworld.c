@@ -69,6 +69,24 @@ void printBin( const uint32_t n )
    mprintf( "%s", str );
 }
 
+void foo64( uint64_t ts )
+{
+    mprintf( "ts: 0x%04X%04X%04X%04X\n", ((uint16_t*)&ts)[0], ((uint16_t*)&ts)[1], ((uint16_t*)&ts)[2], ((uint16_t*)&ts)[3] );
+    for( unsigned int i = 0; i < sizeof( uint64_t ) / sizeof( uint16_t ); i++ )
+    {
+        mprintf( "ts[%u]: 0x%04X\n", i, ((uint16_t*)&ts)[i] );
+    }
+}
+
+void foo32( uint32_t ts )
+{
+    mprintf( "ts: 0x%08X\n", ts);
+    for( unsigned int i = 0; i < sizeof( uint32_t ) / sizeof( uint16_t ); i++ )
+    {
+        mprintf( "ts[%u]: 0x%04X\n", i, ((uint16_t*)&ts)[i] );
+    }
+}
+
 
 
 int main( void )
@@ -88,6 +106,11 @@ int main( void )
    mprintf( "Bitvector: " );
    printBin( a.n );
    mprintf( "\n" );
+
+
+   foo64( 0x1122334455667788L );
+   mprintf( "\n" );
+   foo32( 0x11223344 );
 #ifdef __lm32__
    while( 1 );
 #endif
