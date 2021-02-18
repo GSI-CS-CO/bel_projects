@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-January-2021
+ *  version : 18-Feb-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000232
+#define B2B_CLIENT_SYS_VERSION 0x000233
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -183,7 +183,7 @@ void printServices(int flagOnce)
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m B2B System Status ----------------------------------------------------- v%06x\033[0m\n", B2B_CLIENT_SYS_VERSION);
+    printf("\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m\n", b2b_version_text(B2B_CLIENT_SYS_VERSION));
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
   
@@ -198,7 +198,7 @@ void printServices(int flagOnce)
   } // for i
 
   if (!flagOnce) {
-    printf("\n\n\n\n\n\n\n\n");
+    printf("\n\n\n\n\n\n\n\n\n\n");
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     printf("\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m\n", buff);
   } // if not once

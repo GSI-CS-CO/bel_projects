@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-February-2021
+ *  version : 18-February-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000232
+#define B2B_VIEWER_VERSION 0x000233
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -332,7 +332,7 @@ int printSet(uint32_t sid)
   } // switch mode
 
   strftime(tEKS, 19, "%H:%M:%S", gmtime(&set_secs));
-  printf("--- set values ---\n");
+  printf("--- set values ---                                                     v%8s\n", b2b_version_text(B2B_VIEWER_VERSION));
   switch (set_mode) {
     case 0 :
       printf("ext: %s\n", TXTNA);
@@ -405,7 +405,7 @@ int printDiag(uint32_t sid)
 // print kicker info
 int printKick(uint32_t sid)
 {
-  printf("--- kicker --- \n");
+  printf("--- kicker ---                                           #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
 
   // extraction kicker
   if (set_mode == 0) printf("ext: %s\n\n", TXTNA);
@@ -433,7 +433,7 @@ int printKick(uint32_t sid)
     } // else flag_nok
   } // else mode < 3
 
-  return 3;                                                 // 3 lines
+  return 5;                                                 // 5 lines
 } // printKick
 
 // print status info
@@ -600,7 +600,7 @@ void printData(int flagOnce, uint32_t sid, char *name)
   if (flagPrintStat) nLines += printStatus(sid);
   
   if (!flagOnce) {
-    if (nLines < 24) for (i=0; i < (24 - nLines); i++) printf("\n");
+    if (nLines < 21) for (i=0; i < (21 - nLines); i++) printf("\n");
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <s>tatus              %s\033[0m\n", tLocal);
   } // if not once
