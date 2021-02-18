@@ -50,6 +50,7 @@ deploy:
 	cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR
 	cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
 	cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
+	cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
 	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18
 	cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18
