@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 5-February-2021
+ *  version : 18-Feb-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000232                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000233                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -249,9 +249,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
-      flagIsExt = 1;
     case B2B_ECADO_B2B_TRIGGERINJ :
-
+      // this is ugly, but ...
+      if (ecaAction == B2B_ECADO_B2B_TRIGGEREXT) flagIsExt = 1;
+      else                                       flagIsExt = 0;
+      
       reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
 
       recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
