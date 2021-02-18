@@ -870,8 +870,6 @@ set_location_assignment PIN_C19 -to sfp_mod0_i
 set_location_assignment PIN_C20 -to sfp_los_i
 set_location_assignment PIN_C23 -to cpld_io[8]
 set_location_assignment PIN_C24 -to cpld_io[9]
-set_location_assignment PIN_D10 -to "clk_125m_pllref_i(n)"
-set_location_assignment PIN_D11 -to clk_125m_pllref_i
 set_location_assignment PIN_D17 -to usb_ures_o
 set_location_assignment PIN_D19 -to usb_uclkin_i
 set_location_assignment PIN_D20 -to usb_uclk_i
