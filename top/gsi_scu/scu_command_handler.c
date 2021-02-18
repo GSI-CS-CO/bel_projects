@@ -47,7 +47,7 @@ void printSwIrqCode( const unsigned int code, const unsigned int value )
   #define fg_busy fg_rescan_busy
 #endif
 
-#define _CONFIG_MEASURE_COMMAND_HANDLER
+//#define _CONFIG_MEASURE_COMMAND_HANDLER
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

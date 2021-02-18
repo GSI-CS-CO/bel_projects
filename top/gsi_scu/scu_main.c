@@ -201,8 +201,8 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 {
    const unsigned int slot = pMessage->msg + 1;
    const uint16_t pendingIrqs =
-      scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
-
+     // scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
+        *scuBusGetInterruptActiveFlagRegPtr((const void*)g_pScub_base, slot ); //!
 #ifdef __MURKS
 #warning MURKS!
    static unsigned int X = 0;
@@ -231,17 +231,18 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
 #ifdef CONFIG_MIL_FG
    if( (pendingIrqs & DREQ ) != 0 )
    {
-      add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
+      add_msg( &g_aMsg_buf[0], DEVSIO, pMessage );
    }
 #endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
    {
-      add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
+      add_msg( &g_aMsg_buf[0], DAQ, pMessage );
    }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
+   *scuBusGetInterruptActiveFlagRegPtr((const void*)g_pScub_base, slot ) = pendingIrqs; //!!
 }
 #else
 /*! ---------------------------------------------------------------------------
@@ -324,7 +325,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
 #ifndef _CONFIG_NO_DISPATCHER
-   #warning with deispatcher...
+   #warning with dispatcher...
    add_msg( &g_aMsg_buf[0], IRQ, (MSI_T*)&g_currentMSI );
 #else
    switch( g_currentMSI.adr & 0xFF )
@@ -349,11 +350,14 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
    /*!
     * @todo Use MSI_ITEM_T instead of MSI_T in future!
     */
-
+#ifdef CONFIG_IRQ_RESET_IP_AFTER
+   irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
+#else
    while( irqMsiCopyObjectAndRemoveIfActive( (MSI_ITEM_T*)&m, intNum ) )
+#endif
    {
    #ifndef _CONFIG_NO_DISPATCHER
-      #warning with deispatcher...
+      #warning with dispatcher...
       add_msg( &g_aMsg_buf[0], IRQ, &m );
    #else
       switch( m.adr & 0xFF )

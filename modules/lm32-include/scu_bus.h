@@ -70,15 +70,38 @@ STATIC inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
  * @brief Returns a pointer of a 16 bit slave device register by index.
  * @param pScuBusBase Base address of SCU bus.
  *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
- * @param index Location of relevant register to read, that means offset to
+ * @param index Location of relevant register for access, that means offset to
  *              pAbsSlaveAddr
  * @return Pointer to the 16 bit slave register located by index.
  */
 STATIC inline uint16_t* scuBusGetSlaveRegisterPtr16( const void* pAbsSlaveAddr,
                                                      const unsigned int index )
 {
+   SCUBUS_ASSERT( index >= 0 );
+   SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
+
    return &((uint16_t* volatile)pAbsSlaveAddr)[index];
 }
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
+ * @brief Returns a pointer of a 16 bit slave device register located by slot-
+ *        number and 16-bit offset index.
+ * @param pScuBusBase Base address of SCU bus.
+ * @param slot Slot-number between 1 and 12.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param index Location of relevant register for access, that means offset
+ *              within the slave address room.
+ * @return Pointer to the 16 bit slave register located by index.
+ */
+STATIC inline
+uint16_t* scuBusGetSlaveRegisterPtr16BySlot( const void* pScuBusBase,
+                                             const unsigned int slot,
+                                             const unsigned int index )
+{
+   return scuBusGetSlaveRegisterPtr16( scuBusGetAbsSlaveAddr( pScuBusBase, slot ), index );
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
@@ -95,9 +118,6 @@ STATIC inline volatile
 uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr,
                                 const unsigned int index )
 {
-   SCUBUS_ASSERT( index >= 0 );
-   SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
-
    /*
     * At least 2 bytes alignment assumed!
     */

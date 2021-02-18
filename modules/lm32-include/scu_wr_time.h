@@ -17,13 +17,28 @@
 extern "C" {
 #endif
 
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the current white rabbit time.
  */
 STATIC inline uint64_t getWrSysTime( void )
 {
-   return (((uint64_t)pCpuSysTime[0]) << BIT_SIZEOF(uint32_t)) |
-          (pCpuSysTime[1] & 0xFFFFFFFF);
+#if (__BYTE_ORDER__ != __ORDER_BIG_ENDIAN__)
+   #error Byteorder big-endian is requested for this function!
+#endif
+
+#ifdef CONFIG_WR_TIME_NO_CARRY
+   return (((uint64_t)pCpuSysTime[0]) << BIT_SIZEOF(uint32_t)) | pCpuSysTime[1];
+#else
+   uint64_t time;
+   do
+   {
+      time = (((uint64_t)pCpuSysTime[0]) << BIT_SIZEOF(uint32_t)) |
+              pCpuSysTime[1];
+   }
+   while( ((volatile uint32_t*)pCpuSysTime)[0] != ((uint32_t*)&time)[0] );
+   return time;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
