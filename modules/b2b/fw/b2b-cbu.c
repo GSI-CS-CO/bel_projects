@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000232                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000233                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -674,9 +674,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid        = setGid[sid]; 
-      bpid       = 0x2000;                                    // bit    13: indicate 'b2b' (bit 12: reserved)
-      bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
-      bpid      |= nTransfer & 0xf;                           // bit 0..3 : 4 bit counter of transfers
+      /*bpid       = 0x2000;        chk                            // bit    13: indicate 'b2b' (bit 12: reserved)
+      /bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
+      bpid      |= nTransfer & 0xf;                       */    // bit 0..3 : 4 bit counter of transfers
       mode       = setMode[sid];
       TH1Ext     = setTH1Ext[sid];
       nHExt      = setNHExt[sid];
