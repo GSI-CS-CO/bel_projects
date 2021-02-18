@@ -47,6 +47,11 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/single_region/single_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_pex10_pcie_hip/arria10gx_pex10_pcie_hip.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_atx_pll/wr_arria10_pex10_atx_pll.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_cmu_pll/wr_arria10_pex10_cmu_pll.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_det_phy/wr_arria10_pex10_det_phy.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_phy.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_pex10_phy/wr_arria10_pex10_rst_ctl/wr_arria10_pex10_rst_ctl.qsys"
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/dmtd_pll10/dmtd_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/ref_fpll10_pex10/ref_fpll10_pex10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_pex10/ref_pll10/ref_pll10.qsys
