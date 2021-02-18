@@ -55,10 +55,10 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(1 downto 0);
-    lemo_n_i : in    std_logic_vector(1 downto 0);
-    lemo_p_o : out   std_logic_vector(1 downto 0);
-    lemo_n_o : out   std_logic_vector(1 downto 0);
+    lemo_p_i : in    std_logic_vector(19 downto 0);
+    lemo_n_i : in    std_logic_vector(19 downto 0);
+    lemo_p_o : out   std_logic_vector(19 downto 0);
+    lemo_n_o : out   std_logic_vector(19 downto 0);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -108,10 +108,10 @@ architecture rtl of pexarria10 is
 
   signal s_gpio_o       : std_logic_vector(13 downto 0);
   signal s_gpio_i       : std_logic_vector(9 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(1 downto 0);
+  signal s_lvds_p_i     : std_logic_vector(19 downto 0);
+  signal s_lvds_n_i     : std_logic_vector(19 downto 0);
+  signal s_lvds_p_o     : std_logic_vector(19 downto 0);
+  signal s_lvds_n_o     : std_logic_vector(19 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -121,7 +121,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 15) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 33) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
@@ -138,8 +138,26 @@ architecture rtl of pexarria10 is
     ("LED2_BASE_B",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_BASE_G",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED4_BASE_W",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LVDS_DUMMY1",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
-    ("LVDS_DUMMY2",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
+    ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO4  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
 
   constant c_family        : string := "Arria 10 GX PEX10";
@@ -157,7 +175,7 @@ begin
       g_flash_bits       => 25, -- !!! TODO: Check this
       g_gpio_out         => 4,
       g_gpio_inout       => 10,
-      g_lvds_inout       => 2,
+      g_lvds_inout       => 20,
       g_en_pcie          => true,
       g_en_tlu           => false,
       g_en_usb           => true,
@@ -227,7 +245,7 @@ begin
   rt_leds_o     <= not s_gpio_o(13 downto 10);
 
   -- LEMOs
-  lemos : for i in 0 to 1 generate
+  lemos : for i in 0 to 19 generate
     s_lvds_p_i(i)      <= lemo_p_i(i);
     s_lvds_n_i(i)      <= lemo_n_i(i);
     lemo_p_o(i)        <= s_lvds_p_o(i);
