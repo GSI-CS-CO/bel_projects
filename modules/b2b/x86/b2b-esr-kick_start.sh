@@ -12,9 +12,9 @@ export SDTRIG=tr0
 # setting for development
 # ! don't forget to (un)comment test pulses
 # at the end of this file
-# KD : dev/ttyUSB0, tr2
-#export TRTRIG=$(saft-eb-fwd tr2)
-#export SDTRIG=tr2
+# KD : dev/ttyUSB1, tr0
+#export TRTRIG=$(saft-eb-fwd tr0)
+#export SDTRIG=tr0
 ###########################################
 
 echo -e B2B start script for ESR kicker room

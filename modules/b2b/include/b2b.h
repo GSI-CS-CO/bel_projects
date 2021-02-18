@@ -26,7 +26,8 @@
 #define B2B_ECADO_TLUINPUT2        0xa02   // event from IO2 (TLU)
 #define B2B_ECADO_TLUINPUT3        0xa03   // event from IO3 (TLU)
 #define B2B_ECADO_TLUINPUT4        0xa04   // event from IO4 (TLU)
-#define B2B_ECADO_KICKSTART         0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
+#define B2B_ECADO_KICKSTART         0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2; /* chk : rename to KICKSTART1 */ 
+#define B2B_ECADO_KICKSTART2        0x45   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define B2B_ECADO_B2B_PMEXT        0x800   // command: perform phase measurement (extraction)
 #define B2B_ECADO_B2B_PMINJ        0x801   // command: perform phase measurement (injection)
 #define B2B_ECADO_B2B_PREXT        0x802   // command: result of phase measurement (extraction)
