@@ -170,25 +170,26 @@ begin
 
   main : monster
     generic map(
-      g_family           => c_family,
-      g_project          => c_project,
-      g_flash_bits       => 25, -- !!! TODO: Check this
-      g_gpio_out         => 4,
-      g_gpio_inout       => 10,
-      g_lvds_inout       => 20,
-      g_en_pcie          => true,
-      g_en_tlu           => false,
-      g_en_usb           => true,
-      g_io_table         => io_mapping_table,
-      g_a10_use_sys_fpll => false,
-      g_a10_use_ref_fpll => false,
-      g_en_eca           => false,
-      g_lm32_are_ftm     => true,
-      g_lm32_MSIs        => 1,
-      g_lm32_cores       => c_cores,
-      g_lm32_ramsizes    => c_lm32_ramsizes/4,
-      g_lm32_init_files  => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores)
+      g_family            => c_family,
+      g_project           => c_project,
+      g_flash_bits        => 25, -- !!! TODO: Check this
+      g_gpio_out          => 4,
+      g_gpio_inout        => 10,
+      g_lvds_inout        => 20,
+      g_en_pcie           => true,
+      g_en_tlu            => false,
+      g_en_usb            => true,
+      g_io_table          => io_mapping_table,
+      g_a10_use_sys_fpll  => false,
+      g_a10_use_ref_fpll  => false,
+      g_en_eca            => false,
+      g_delay_diagnostics => true,
+      g_lm32_are_ftm      => true,
+      g_lm32_MSIs         => 1,
+      g_lm32_cores        => c_cores,
+      g_lm32_ramsizes     => c_lm32_ramsizes/4,
+      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
