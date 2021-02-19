@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-February-2021
+ *  version : 19-February-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000233
+#define B2B_VIEWER_VERSION 0x000234
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -426,8 +426,9 @@ int printKick(uint32_t sid)
     if ((dicGetval.flag_nok >> 6) & 0x1)  printf("inj: %s\n\n", TXTERROR);
     else {
       printf("inj: monitor delay [ns] %5d", dicGetval.inj_dKickMon);
-      if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
-      else                                  printf(", probe delay [ns] %5d\n", dicGetval.inj_dKickProb);
+      if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %5s", TXTUNKWN);
+      else                                  printf(", probe delay [ns] %5dn", dicGetval.inj_dKickProb);
+      printf(", diff mon. [ns] %d\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
       printf("     mon h=1 ph [ns] act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
              dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
     } // else flag_nok
@@ -730,7 +731,7 @@ int main(int argc, char** argv) {
             quit = 1;
             break;
           default          :
-            usleep(500000);
+            usleep(1000000);
         } // switch
       } // if !once
     } // while
