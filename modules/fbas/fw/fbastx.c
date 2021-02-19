@@ -71,23 +71,29 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 
 // global variables
+// shared memory layout
+uint32_t *pShared;                      // pointer to begin of shared memory region
+uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM
 uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
-
-// shared mem
-volatile uint32_t *pShared;             // pointer to begin of shared memory region
-uint32_t *pCpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
+uint32_t *pSharedSetNodeType;           // pointer to a "user defined" u32 register; here: node type (RX, TX, CM)
+uint32_t *pSharedGetNodeType;           // pointer to a "user defined" u32 register; here: node type (RX, TX, CM)
 
 // other global stuff
 uint32_t statusArray;                   // all status infos are ORed bit-wise into sum status, sum status is then published
 
+// application-specific variables
 mpsEventData_t mpsEventData;            // data for the MPS event message
 uint64_t tsLast = 0;                    // last timestamp of system time
+uint32_t cntMpsSignal = 0;              // counter for MPS signals
+nodeType_t nodeType = FBAS_NODE_TX;     // default node type
 
-// function prototypes
+// application-specific function prototypes
 static uint32_t pollEcaBlocking(uint32_t usTimeout);
 static void wrConsolePeriodic(uint32_t seconds);
+static void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag);
+
 // typical init for lm32
 void init()
 {
@@ -111,7 +117,10 @@ void initSharedMem()
   pShared           = (uint32_t *)_startshared;
 
   // get address to data
-  // ... insert code here to init pointers to shared RAM
+  pSharedSetNodeType = (uint32_t *)(pShared + (FBAS_SHARED_SET_NODETYPE >> 2));
+  pSharedGetNodeType = (uint32_t *)(pShared + (FBAS_SHARED_GET_NODETYPE >> 2));
+  DBPRINT3("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, pSharedSetNodeType);
+  DBPRINT3("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, pSharedGetNodeType);
 
   // find address of CPU from external perspective
   idx = 0;
@@ -120,14 +129,14 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("fbastx: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+  DBPRINT2("fbas%d: CPU RAM External 0x%8x, begin shared 0x%08x\n", nodeType, pCpuRamExternal, SHARED_OFFS);
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("fbastx: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
+  DBPRINT2("fbas%d: COMMON_SHARED_BEGIN 0x%08x\n", nodeType, pSharedTemp);
   // ... insert code here to clear shared RAM
-  DBPRINT2("fbastx: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+  DBPRINT2("fbas%d: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", nodeType, i, pShared, pSharedTemp-1);
 } // initSharedMem
 
 
@@ -147,7 +156,7 @@ uint32_t extern_entryActionConfigured()
 
   // configure Etherbone master (src MAC and IP are set by host, i.e. by eb-console or BOOTP)
   if ((status = fwlib_ebmInit(TIM_2000_MS, BROADCAST_MAC, BROADCAST_IP, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("fbastx: ERROR - init of EB master failed! %u\n", (unsigned int)status); // IP unset
+    DBPRINT1("fbas%d: ERROR - init of EB master failed! %u\n", nodeType, (unsigned int)status); // IP unset
   }
 
   fwlib_publishNICData(); // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
@@ -179,12 +188,22 @@ uint32_t extern_exitActionOperation(){
 // command handler, handles commands specific for this project
 void cmdHandler(uint32_t *reqState, uint32_t cmd)
 {
+  uint32_t u32val;
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
     switch (cmd) {                       // do action according to command
-      // ... insert code here
+      case FBAS_CMD_SET_NODETYPE:
+        u32val = *pSharedSetNodeType;
+        if (u32val < FBAS_NODE_UNDEF) {
+          nodeType = u32val;
+          *pSharedGetNodeType = nodeType;
+          DBPRINT3("fbas%d: node type %x\n", nodeType, nodeType);
+        } else {
+          DBPRINT3("fbas%d: invalid node type %x\n", nodeType, u32val);
+        }
+        break;
       default:
-        DBPRINT3("fbastx: received unknown command '0x%08x'\n", cmd);
+        DBPRINT3("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
         break;
     } // switch
   } // if command
@@ -222,7 +241,7 @@ uint32_t getEndpointInfo()
   uint32_t octet2 = octet0 << 16;
   uint32_t octet3 = octet0 << 24;
 
-  DBPRINT2("fbastx: MAC=%02x:%02x:%02x:%02x:%02x:%02x, IP=%d.%d.%d.%d\n",
+  DBPRINT2("fbas%d: MAC=%02x:%02x:%02x:%02x:%02x:%02x, IP=%d.%d.%d.%d\n", nodeType,
       (*pSharedMacHi & octet1) >> 8, (*pSharedMacHi & octet0),
       (*pSharedMacLo & octet3) >> 24,(*pSharedMacLo & octet2) >> 16,
       (*pSharedMacLo & octet1) >> 8, (*pSharedMacLo & octet0),
@@ -232,32 +251,41 @@ uint32_t getEndpointInfo()
 }
 
 // init of the MPS protocol data
-void initMpsData() {
+void initMpsData()
+{
   mpsEventData.evtId = fwlib_buildEvtidV1(FBAS_TM_GID, FBAS_TM_EVTNO,
       FBAS_TM_FLAGS, FBAS_TM_SID, FBAS_TM_BPID, FBAS_TM_RES);
   mpsEventData.mac = *pSharedMacHi;
   mpsEventData.mac <<= 32;
   mpsEventData.mac |= *pSharedMacLo;
-  DBPRINT3("fbastx: MPS protocol (evtId = %llu, mac = %llu\n",
+  DBPRINT3("fbas%d: MPS protocol (evtId = %llu, mac = %llu)\n", nodeType,
       mpsEventData.evtId, mpsEventData.mac);
 }
 
 // init last system time
-void initLast() {
+void initLast()
+{
   tsLast = getSysTime();
 }
 
 void initAppData()
 {
-  tsLast = getSysTime();  // init the last timestamp of the system time
+  initLast();             // init the last timestamp of the system time
   getEndpointInfo();      // get MAC/IP address of the Endpoint WB device
   initMpsData();          // init the MPS protocol data
+  cntMpsSignal = 0;
 }
 
 // send MPS protocol
-void sendMpsProtocol()
+void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
 {
-  fwlib_ebmWriteTM(getSysTime(), mpsEventData.evtId, mpsEventData.mac, 0);
+  if (nodeType != FBAS_NODE_TX) // only FBAS transmitter sends MPS protocol
+    return;
+
+  uint64_t evtParam = mpsFlag;
+  evtParam <<= 56;
+  evtParam |= mpsEventData.mac;
+  fwlib_ebmWriteTM(getSysTime(), mpsEventData.evtId, evtParam, 0);
 }
 
 uint32_t pollEcaBlocking(uint32_t usTimeout)
@@ -268,12 +296,21 @@ uint32_t pollEcaBlocking(uint32_t usTimeout)
   uint64_t ecaParam;      // parameter value in received ECA event
   uint32_t ecaTef;        // TEF value in received ECA event
   uint32_t flagIsLate;    // flag indicates that received ECA event is 'late'
+  uint64_t now;           // actual timestamp of the system time
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
 
-  if (nextAction == FBAS_IO_ACTION) {
-    uint64_t now = getSysTime();
-    DBPRINT2("fbastx: ECA action (tag %x, ts %llu, now %llu, poll %lli)\n", nextAction, ecaDeadline, now, now - ecaDeadline);
+  if (nextAction) {
+    now = getSysTime();
+
+    if (nextAction == FBAS_IO_ACTION)
+    {
+      cntMpsSignal++;
+      sendMpsProtocol(now, (uint8_t)cntMpsSignal);
+    }
+    int64_t poll = now - ecaDeadline;
+    DBPRINT3("fbas%d: ECA action (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
+        nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
   }
 
   return nextAction;
@@ -287,8 +324,8 @@ void wrConsolePeriodic(uint32_t seconds)
   uint64_t now = getSysTime();                // get the current time
 
   if (now >= soon) {                          // if the given period is over, then proceed
-    DBPRINT3("fbastx: now %llu, elap %lli\n", now, now - tsLast);
-    sendMpsProtocol();
+    //sendMpsProtocol((uint8_t)cntMpsSignal);
+    DBPRINT3("fbas%d: now %llu, elap %lli\n", nodeType, now, now - tsLast);
     tsLast = now;
   }
 }

@@ -1,6 +1,22 @@
 #ifndef _FBAS_H_
 #define _FBAS_H_
 
+// ****************************************************************************************
+// DP RAM layout (offsets)
+// ****************************************************************************************
+
+// set values for data supply
+#define FBAS_SHARED_SET_GID        (COMMON_SHARED_END          + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define FBAS_SHARED_SET_SID        (FBAS_SHARED_SET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer
+#define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_SID        + _32b_SIZE_)       // FBAS node type
+//get values
+#define FBAS_SHARED_GET_GID        (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define FBAS_SHARED_GET_SID        (FBAS_SHARED_GET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer
+#define FBAS_SHARED_GET_NODETYPE   (FBAS_SHARED_GET_SID        + _32b_SIZE_)       // FBAS node type
+
+// diagnosis: end of used shared memory
+#define FBAS_SHARED_END            (FBAS_SHARED_GET_NODETYPE   + _32b_SIZE_)
+
 typedef struct {
   uint64_t evtId;    // event ID
   uint64_t mac;      // MAC address (prepended with zeros)
@@ -10,6 +26,17 @@ typedef struct {
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
+
+// node type
+typedef enum {
+  FBAS_NODE_TX = 0,   // FBAS transmitter
+  FBAS_NODE_RX,       // FBAS receiver
+  FBAS_NODE_CM,       // FBAS common
+  FBAS_NODE_UNDEF     // undefined
+} nodeType_t;
+
+// application-specific commands
+#define FBAS_CMD_SET_NODETYPE   0x15   // set the node type
 
 // flags
 #define MPS_FLAG_OK        1   // OK
@@ -32,6 +59,9 @@ typedef struct {
 #define FBAS_TM_SID        0x0       // sequence ID, 12-bit
 #define FBAS_TM_BPID       0x0       // beam process ID, 14-bit
 #define FBAS_TM_RES        0x0       // reserved, 6-bit
-#define FBAS_IO_ACTION     0x42
+
+// ECA action tags
+#define FBAS_IO_ACTION     0x42      // ECA condition tag for FBAS TX
+#define FBAS_WR_EVT        0x24      // ECA condition tag for FBAS RX
 
 #endif
