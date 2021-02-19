@@ -162,7 +162,7 @@ architecture rtl of ftm10 is
 
   constant c_family        : string := "Arria 10 GX FTM10";
   constant c_project       : string := "ftm10";
-  constant c_cores         : natural:= 1;
+  constant c_cores         : natural:= 4;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
 
@@ -182,6 +182,9 @@ begin
       g_io_table         => io_mapping_table,
       g_a10_use_sys_fpll => false,
       g_a10_use_ref_fpll => false,
+      g_en_eca           => false,
+      g_lm32_are_ftm     => true,
+      g_lm32_MSIs        => 1,
       g_lm32_cores       => c_cores,
       g_lm32_ramsizes    => c_lm32_ramsizes/4,
       g_lm32_init_files  => f_string_list_repeat(c_initf_name, c_cores),
