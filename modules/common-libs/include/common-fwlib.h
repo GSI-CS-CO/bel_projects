@@ -101,7 +101,7 @@ uint32_t fwlib_doActionState(uint32_t *reqState,       // requested state (just 
 
 // set gate of LVDS input, returns (error) status
 uint32_t fwlib_ioCtrlSetGate(uint32_t enable,          // enable ('1') or disable ('0');
-                             uint32_t io);             // # of IO (starting at '1')
+                             uint32_t io);             // # of IO (starting at '0')
 
 // state machine - change state, returns (error) status
 uint32_t fwlib_changeState(uint32_t *actState,         // actual statue
