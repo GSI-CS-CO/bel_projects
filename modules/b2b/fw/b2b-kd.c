@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Feb-2021
+ *  version : 21-Feb-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000234                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000235                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -153,11 +153,15 @@ uint32_t extern_entryActionConfigured()
   uint32_t status = COMMON_STATUS_OK;
 
   // disable input gates for probe signals
-  fwlib_ioCtrlSetGate(0, 1);
-  fwlib_ioCtrlSetGate(0, 4);
+  /* fwlib_ioCtrlSetGate(0, 0); chk
+     fwlib_ioCtrlSetGate(0, 3); */
 
   // enable input gate monitor signal
   fwlib_ioCtrlSetGate(1, 1);
+
+  // enable input gate probe signal
+  fwlib_ioCtrlSetGate(1, 0); /* chk */
+  fwlib_ioCtrlSetGate(1, 3); /* chk */
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
@@ -248,17 +252,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
-    case B2B_ECADO_KICKSTART  :
-      fwlib_ioCtrlSetGate(1, 0);                              // enable input gate probe signal extraction
-      fwlib_ioCtrlSetGate(1, 3);                              // enable input gate probe signal injection
-      break;
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :
       // this is ugly, but ...
       if (ecaAction == B2B_ECADO_B2B_TRIGGEREXT) flagIsExt = 1;
       else                                       flagIsExt = 0;
       
-      reqDeadline = recDeadline;// + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
+      reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
 
       recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
       recSid                 = (uint32_t)((recEvtId >> 20) & 0xfff);
@@ -274,6 +274,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedGettKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
       *pSharedGettKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
       *pSharedGetComLatency  = (int32_t)(getSysTime() - recDeadline);
+
+
+      // we must do this here, as doing this os B2B_ECADO_TLUINPUT2 would be too late
+      // hence, we receive probe signals only if the kicker fires after it has been triggered
+      //fwlib_ioCtrlSetGate(1, 0);   chk                       // enable input gate probe signal extraction
+      //fwlib_ioCtrlSetGate(1, 3);   chk                       // enable input gate probe signal injection
 
       break; //  B2B_ECADO_B2B_TRIGGERINJ
 
@@ -340,9 +346,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     
     // send command: transmit measured monitor and probe data
     sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagsError);
-    sendParam    =             ((uint64_t)dKickMon  << 32);     // delay of monitor signal
-    sendParam    = sendParam |  (uint64_t)dKickProbe;           // delay of probe signal
-    sendDeadline = tKickTrig +  (uint64_t)(2 * COMMON_AHEADT);  // data shall become true 1ms after trigger event
+    sendParam    =             ((uint64_t)dKickMon  << 32);           // delay of monitor signal
+    sendParam    = sendParam |  ((uint64_t)dKickProbe & 0xffffffff);  // delay of probe signal
+    sendDeadline = tKickTrig +  (uint64_t)(2 * COMMON_AHEADT);        // data shall become true 1ms after trigger event
 
     // if we are too late, reschedule message; this will happen in case there is no monitor signal from the electronics
     if (getSysTime() > (sendDeadline - COMMON_AHEADT)) {
@@ -352,8 +358,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
-    fwlib_ioCtrlSetGate(0, 0);                            // disable input gates 
-    fwlib_ioCtrlSetGate(0, 3);
+    //fwlib_ioCtrlSetGate(0, 0);  chk                          // disable input gates 
+    //fwlib_ioCtrlSetGate(0, 3);  chk
     
     *pSharedGettKickDMon   = dKickMon;
     *pSharedGettKickDProbe = dKickProbe;

@@ -69,12 +69,9 @@ saft-io-ctl $SDTRIG -n IO1 -b 0xffffa01000000000
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
 
-# lm32 listens to EVT_KICK_START
-# required to open gate for probe signal
-saft-ecpu-ctl $SDTRIG -c  0x112c031000000000 0xfffffff000000000 0 0x031 -d
-
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CBU
-saft-ecpu-ctl $SDTRIG -c  0x112c804000000000 0xfffffff000000000 0 0x804 -d
+# need pre-trigger to open input gates for probe signal
+saft-ecpu-ctl $SDTRIG -c  0x112c804000000000 0xfffffff000000000 20000 0x804 -d -g
 
 echo -e b2b: configure outputs
 # generate pulse upon CMD_B2B_TRIGGEREXT
