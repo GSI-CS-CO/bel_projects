@@ -76,26 +76,24 @@ def extractScript(commands_history_file):
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
             script.write(f'dm-sched $DM $OPTIONS status {dot_file_name}\n')
-        elif 'table check result: true' in lines[i]:
-            collect_lines = True
-            script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
-        elif 'table check result: false' in lines[i]:
-            collect_lines = True
-            script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+        elif 'table check result:' in lines[i]:
+            collect_lines = False
+            script.write(f'# entry {entry_no}, lines[i]')
         elif 'command execute' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm-cmd $DM $OPTIONS -i {dot_file_name}\n')
+            script.write(f'dm-cmd $DM $OPTIONS -i {dot_file_name}\n')
         elif 'is safe to remove' in lines[i]:
-            collect_lines = True
-            script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+            collect_lines = False
+            try:
+              pattern_name = re.search('is safe to remove: (.+)$', lines[i]).group(1)
+              script.write(f'# entry {entry_no}\n')
+              script.write(f'dm-cmd $DM $OPTIONS chkrem {pattern_name}\n')
+            except AttributeError:
+              print(f'Pattern name not found: {lines[i]}, entry {entry_no}')
         elif 'result' in lines[i]:
-            collect_lines = True
-            script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+            collect_lines = False
+            script.write(f'# entry {entry_no}, {lines[i]}')
         elif 'queue status for pattern' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
@@ -109,9 +107,8 @@ def extractScript(commands_history_file):
             script.write(f'# entry {entry_no}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
         elif 'queue report for pattern' in lines[i]:
-            collect_lines = True
-            script.write(f'# entry {entry_no}\n')
-            script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
+            collect_lines = False
+            script.write(f'# entry {entry_no}, lines[i]')
         elif 'set maintenance mode to true' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
