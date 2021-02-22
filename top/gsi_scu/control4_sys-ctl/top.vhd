@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+
 
 entity top is
   generic (
@@ -116,8 +118,26 @@ architecture rtl of top is
 		tsd: out STD_LOGIC_VECTOR  (11 downto 0));  
 	END COMPONENT;
 
-  signal	clk_40MHz	  : std_logic;
-  signal	pll_locked	: std_logic;
+
+  COMPONENT debounce
+	PORT(
+		clk : IN std_logic;
+		input : IN std_logic;          
+		output : OUT std_logic;
+		en_deb : in std_logic
+		);
+	END COMPONENT;
+
+
+  constant  vcc12_up_thres:     integer   := 3615; --11.9V / ( 812muV * 4.01 )   
+  constant  vcc12_fail_thres:   integer   := 3038; --10.0V / ( 812muV * 4.01 )
+  constant  vccCore_up_thres:   integer   := 1052; --(0.95V * 0.9) / 812muV
+  constant  vccCore_down_thres: integer   := 117;  --(0.95V * 0.1) /812mV 
+  constant  vcc1_8_up_thres:    integer   := 1995; --(1.8V * 0.9) / 812muV
+  constant  vcc1_8_down_thres:  integer   := 221;  --(1.8V * 0.1) /812mV 
+
+  signal clk_40MHz	  : std_logic;
+  signal pll_locked	  : std_logic;
   signal countx       : std_logic_vector(15 downto 0);
   signal rst_n        : std_logic;
 
@@ -137,6 +157,17 @@ architecture rtl of top is
   signal adc_value_Vcc_1_8:       std_logic_vector (11 downto 0) := X"000";
   signal adc_value_Vcch_gxb:      std_logic_vector (11 downto 0) := X"000";
   signal adc_value_Vccrt_gxb:     std_logic_vector (11 downto 0) := X"000";
+
+  signal vcc12_up:       std_logic;
+  signal nVcc12_fail:    std_logic;
+  signal VccCore_up:     std_logic;
+  signal nVccCore_down:  std_logic;
+  signal Vcc1_8_up:      std_logic;
+  signal nVcc1_8_down:   std_logic;
+  signal Vcc1_8IO_up:    std_logic;
+  signal nVcc1_8IO_down: std_logic;
+  signal vcc_deb_in:     std_logic_vector (7 downto 0);
+  signal vcc_deb_out:    std_logic_vector (7 downto 0);
 
   begin
 
@@ -191,6 +222,8 @@ architecture rtl of top is
           Ena_Every_20ms    =>  Ena_Every_20ms
           );
 
+--ADC and ADC-based Signals
+------------------------------------------------------------------          
           adc_0 : adc_control 
           Port map ( 
             clk 		=> clk_40MHz,
@@ -208,5 +241,34 @@ architecture rtl of top is
             channel_8   => adc_value_Vccrt_gxb, 
             tsd			=> open
         );
+        
+
+
+        vcc_deb_in(0)  <= '1'  when to_integer(unsigned(adc_value_Vcc_12))    >= vcc12_up_thres else '0';
+        vcc_deb_in(1)  <= '1'  when to_integer(unsigned(adc_value_Vcc_12))    >= vcc12_fail_thres else '0';
+  		  vcc_deb_in(2)  <= '1'  when to_integer(unsigned(adc_value_Vcc_0_95))  >= vccCore_up_thres else '0';
+        vcc_deb_in(3)  <= '1'  when to_integer(unsigned(adc_value_Vcc_0_95))  >= vccCore_down_thres else '0';
+        vcc_deb_in(4)  <= '1'  when to_integer(unsigned(adc_value_Vcc_1_8))   >= vcc1_8_up_thres else '0';
+        vcc_deb_in(5)  <= '1'  when to_integer(unsigned(adc_value_Vcc_1_8))   >= vcc1_8_down_thres else '0';
+        vcc_deb_in(6)  <= '1'  when to_integer(unsigned(adc_value_Vcc_1_8IO)) >= vcc1_8_up_thres else '0';
+        vcc_deb_in(7)  <= '1'  when to_integer(unsigned(adc_value_Vcc_1_8IO)) >= vcc1_8_down_thres else '0';
+
+    ADC_Deb:  for I in 0 to 7 generate
+    Inst_debounce_I: debounce PORT MAP(
+      clk => clk_base_i,
+      input => vcc_deb_in(I),
+      output => vcc_deb_out(I),
+      en_deb => Ena_every_1us
+    );
+    end generate ADC_Deb;
+
+    vcc12_up       <= vcc_deb_out(0);
+    nVcc12_fail    <= vcc_deb_out(1);
+    vccCore_up     <= vcc_deb_out(2);
+    nVccCore_down  <= vcc_deb_out(3);
+    vcc1_8_up      <= vcc_deb_out(4);
+    nVcc1_8_down   <= vcc_deb_out(5);
+    vcc1_8IO_up    <= vcc_deb_out(6);
+    nVcc1_8IO_down <= vcc_deb_out(7);
 
 end;
