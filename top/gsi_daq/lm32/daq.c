@@ -352,10 +352,15 @@ void daqDevicePresetTimeStampCounter( register DAQ_DEVICE_T* pThis,
    STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
    STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
-#if 1
+#if 0
    mprintf( "Time-Offset: 0x%08X\n", timeOffset );
 #endif
 
+   /*
+    * CAUTION!
+    * Because of a compiler bug it's necessary using the keyword "volatile" for
+    * this 64-bit variable.
+    */
    volatile const uint64_t futureTime = timeOffset * 1000000L + getWrSysTime();
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
@@ -365,7 +370,7 @@ void daqDevicePresetTimeStampCounter( register DAQ_DEVICE_T* pThis,
     #else
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&futureTime)[i];
     #endif
-    #if 1
+    #if 0
       mprintf( "pTS[%d]: %p, %04X, %04X, %04x\n", i,
                &pThis->pReg->i[TS_COUNTER_WD1+i], pThis->pReg->i[TS_COUNTER_WD1+i],
                ((uint16_t*)&futureTime)[((sizeof(uint64_t)/sizeof(uint16_t))-1) - i],
@@ -386,6 +391,11 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
    STATIC_ASSERT( TS_COUNTER_WD1+2 == TS_COUNTER_WD3 );
    STATIC_ASSERT( TS_COUNTER_WD1+3 == TS_COUNTER_WD4 );
 
+   /*
+    * CAUTION!
+    * Because of a compiler bug it's necessary using the keyword "volatile" for
+    * this 64-bit variable.
+    */
    volatile uint64_t ts = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
@@ -409,7 +419,7 @@ void daqDeviceSetTimeStampCounterEcaTag( register DAQ_DEVICE_T* pThis, const uin
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
    STATIC_ASSERT( TS_CNTR_TAG_LW+1 == TS_CNTR_TAG_HW );
-#if 1
+#if 0
    mprintf( "ECA-Tag: 0x%08X\n", tsTag );
 #endif
 
@@ -850,6 +860,9 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       DBPRINT2( "DBG: DAQ found in slot: %2d, address: 0x%08X\n", slot,
                 pCurrentDaqDevice->pReg );
 
+   #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( pScuBusBase, slot );
+   #endif
 
       /*
        * Find and initialize all DAQ-channels of the current DAQ-device.
@@ -880,10 +893,11 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       daqDeviceSetTimeStampCounterEcaTag( pCurrentDaqDevice, DAQ_DEFAULT_ECA_SYNC_TAG );
       daqDevicePresetTimeStampCounter( pCurrentDaqDevice, DAQ_DEFAULT_SYNC_TIMEOFFSET );
 
-#if 1
+#if 0
       uint64_t ts = daqDeviceGetTimeStampCounter( pCurrentDaqDevice );
       mprintf( "ts: 0x%08X%08X\n", ((uint32_t*)&ts)[0], ((uint32_t*)&ts)[1] );
 #endif
+
 
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )

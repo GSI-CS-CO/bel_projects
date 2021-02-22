@@ -75,7 +75,7 @@ namespace daq
 {
 #endif
 
-#define __DAQ_DEFAULT_ECA_SYNC_TAG__ 0xBADABADA
+#define __DAQ_DEFAULT_ECA_SYNC_TAG__ 0xDEADBEEF
 #ifdef __cplusplus
    constexpr uint32_t DEFAULT_ECA_SYNC_TAG = __DAQ_DEFAULT_ECA_SYNC_TAG__;
 #else

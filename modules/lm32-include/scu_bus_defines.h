@@ -310,6 +310,21 @@ STATIC inline unsigned int scuBusGetSlotOffset( const unsigned int slot )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
+ * @brief Returns the slot-flag of the given SCU-bus slot number.
+ * @param slot Slot number
+ * @return Packed slave present bit belonging to the slot number.
+ */
+STATIC inline ALWAYS_INLINE
+SCUBUS_SLAVE_FLAGS_T scuBusGetSlaveFlag( const unsigned int slot )
+{
+   SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
+   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
+
+   return (1 << (slot-SCUBUS_START_SLOT));
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Extract a single slave-present-flag from the SCU-slave-flag-present
  *        field
  * @see scuBusFindSpecificSlaves
@@ -323,10 +338,7 @@ STATIC inline
 bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
                                                      const unsigned int slot )
 {
-   SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
-   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
-
-   return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
+   return ((flags & scuBusGetSlaveFlag( slot )) != 0);
 }
 
 #ifdef __cplusplus

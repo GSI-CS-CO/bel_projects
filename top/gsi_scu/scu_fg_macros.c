@@ -444,16 +444,12 @@ void disable_slave_irq( const unsigned int channel )
    //mprintf("IRQs for slave %d disabled.\n", socket);
 
    if( isAddacFg( socket ) )
-   {
-#if 0
-      if( dev == 0 )
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~FG1_IRQ; //disable fg1 irq
-      else if( dev == 1 )
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~FG2_IRQ; //disable fg2 irq
-#else
+   { /*
+      * In the case of ADDAC/ACU-FGs the socket-number is equal to the
+      * slot number, so it's not necessary to extract the slot number here.
+      */
       *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) &=
                                             ((dev == 0)? ~FG1_IRQ : ~FG2_IRQ);
-#endif
       return;
    }
 
