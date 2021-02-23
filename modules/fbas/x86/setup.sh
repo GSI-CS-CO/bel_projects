@@ -159,7 +159,8 @@ saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
 # wrc output (fbas RX):
 #   fbas1: ECA action (tag 24, flag 0, ts 1604323496001506864, now 1604323496001511016, poll 4152)
 #
-# transmit time (TX -> RX) = 511016 ns (1604323496001511016−1604323496001000000)
+# transmit time (TX -> RX) = 11016 ns (1604323496001511016 - 1604323496001000000 - 500000)
+#   ahead interval for sending timing messages is considered (COMMON_AHEADT = 500000 ns)
 
 ##########################################################
 # Test 2: Measure time between a signalling and TLU events (0xffffeeee00000000 and 0xffff100000000000)
@@ -171,8 +172,7 @@ saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
 #   fbas0: ECA action (tag 42, flag 0, ts 1604323287001000000, now 1604323287001004448, poll 4448)
 #   fbas0: ECA action (tag 43, flag 1, ts 1604323287001512575, now 1604323287011358920, poll 9846345)
 #
-# time between signalling and TLU events:
-# =   512575 ns (calculated by timestamp, 1604323287001512575 - 1604323287001000000)
-# = 10358920 ns (calculated by processing time point, consider DBPRINT exec time, 1604323287011358920 - 1604323287001000000)
-
+# time between signalling MPS event and polling TLU events:
+# =   12575 ns (calculated by timestamp, 1604323287001512575 - 1604323287001000000 - 500000)
+#       ahead interval for sending timing messages is considered (COMMON_AHEADT = 500000 ns)
 
