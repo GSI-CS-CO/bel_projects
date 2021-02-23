@@ -138,7 +138,6 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    {
       case FG_OP_INITIALIZE:
       {
-         //hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
       #if __GNUC__ >= 9
          #pragma GCC diagnostic push
          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"

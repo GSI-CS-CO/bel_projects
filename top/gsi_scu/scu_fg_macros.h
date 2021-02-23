@@ -558,7 +558,7 @@ void printDeviceError( const int status, const int slot, const char* msg );
  *  @param channel number of the specified function generator channel from
  *         0 to MAX_FG_CHANNELS-1
  */
-int configure_fg_macro( const unsigned int channel );
+void configure_fg_macro( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
  * @brief disable function generator channel
