@@ -732,15 +732,17 @@ int main(int argc, char* argv[]) {
     else if (cmp == "stoppattern")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) {
         cdm.stopPattern(targetName);
-      } else { std::cout << "Missing valid Pattern name" << std::endl; }
- 
-
-    }
+      } else { 
+        std::cout << "Missing valid Pattern name" << std::endl; 
+      }
+     }
     else if (cmp == "abortpattern")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) {
         cdm.abortPattern(targetName);
-      } else { std::cout << "Missing valid Pattern name" << std::endl; }
-
+      } else { 
+        std::cout << "Missing valid Pattern name" << std::endl; 
+      }
+      return 0;
     }
     else if (cmp == "staticflushpattern")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) {
