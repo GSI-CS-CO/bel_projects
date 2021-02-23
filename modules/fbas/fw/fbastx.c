@@ -88,11 +88,15 @@ mpsEventData_t mpsEventData;            // data for the MPS event message
 uint64_t tsLast = 0;                    // last timestamp of system time
 uint32_t cntMpsSignal = 0;              // counter for MPS signals
 nodeType_t nodeType = FBAS_NODE_TX;     // default node type
+uint32_t cntCmd = 0;                    // counter for user commands
 
 // application-specific function prototypes
 static uint32_t pollEcaBlocking(uint32_t usTimeout);
 static void wrConsolePeriodic(uint32_t seconds);
 static void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag);
+static uint32_t setIoOe(uint32_t channel, uint32_t idx);
+static uint32_t getIoOe(uint32_t channel);
+static void driveIo(uint32_t channel, uint32_t idx, uint8_t value);
 
 // typical init for lm32
 void init()
@@ -189,8 +193,10 @@ uint32_t extern_exitActionOperation(){
 void cmdHandler(uint32_t *reqState, uint32_t cmd)
 {
   uint32_t u32val;
+  uint8_t u8val;
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
+    cntCmd++;
     switch (cmd) {                       // do action according to command
       case FBAS_CMD_SET_NODETYPE:
         u32val = *pSharedSetNodeType;
@@ -201,6 +207,21 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         } else {
           DBPRINT3("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
+        break;
+      case FBAS_CMD_SET_LVDS_OE:
+        setIoOe(IO_CFG_CHANNEL_LVDS, 0);  // enable output for the IO1 port
+        break;
+      case FBAS_CMD_GET_LVDS_OE:
+        u32val = getIoOe(IO_CFG_CHANNEL_LVDS);
+        if (1) {
+          DBPRINT3("fbas%d: GPIO OE %x\n", nodeType, u32val);
+        }
+        break;
+      case FBAS_CMD_TOGGLE_LVDS:
+        u8val = cntCmd & 0x01;
+        u32val = 0;
+        driveIo(IO_CFG_CHANNEL_LVDS, u32val, u8val);
+        DBPRINT3("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
         break;
       default:
         DBPRINT3("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
@@ -262,6 +283,53 @@ void initMpsData()
       mpsEventData.evtId, mpsEventData.mac);
 }
 
+// set IO output enable
+uint32_t setIoOe(uint32_t channel, uint32_t idx)
+{
+  uint32_t reg = 0;
+  if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
+    reg = IO_GPIO_OE_SETLOW;
+  if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
+    reg = IO_LVDS_OE_SETLOW;
+
+  if (reg)
+    *(pIOCtrl + (reg >> 2)) = (1 << idx);
+}
+
+// get IO output enable
+uint32_t getIoOe(uint32_t channel)
+{
+  uint32_t reg = 0;
+  if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
+    reg = IO_GPIO_OE_SETLOW;
+  if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
+    reg = IO_LVDS_OE_SETLOW;
+
+  if (reg)
+    return *(pIOCtrl + (reg >> 2));
+}
+
+// toggle IO output
+void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
+{
+  uint32_t reg = 0;
+  uint32_t outVal = 0;
+
+  if (channel == IO_CFG_CHANNEL_GPIO) { // GPIO channel
+    reg = IO_GPIO_SET_OUTBEGIN;
+    if (value)
+      outVal = 0x01;
+  }
+  if (channel == IO_CFG_CHANNEL_LVDS) { // LVDS channel
+    reg = IO_LVDS_SET_OUTBEGIN;
+    if (value)
+      outVal = 0xff;
+  }
+
+  if (reg)
+    *(pIOCtrl + (reg >> 2) + idx) = outVal;
+}
+
 // init last system time
 void initLast()
 {
@@ -274,14 +342,14 @@ void initAppData()
   getEndpointInfo();      // get MAC/IP address of the Endpoint WB device
   initMpsData();          // init the MPS protocol data
   cntMpsSignal = 0;
+
+  DBPRINT3("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
+  setIoOe(IO_CFG_CHANNEL_LVDS, 0);  // enable output for the IO1 port
 }
 
 // send MPS protocol
 void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
 {
-  if (nodeType != FBAS_NODE_TX) // only FBAS transmitter sends MPS protocol
-    return;
-
   uint64_t evtParam = mpsFlag;
   evtParam <<= 56;
   evtParam |= mpsEventData.mac;
@@ -303,11 +371,23 @@ uint32_t pollEcaBlocking(uint32_t usTimeout)
   if (nextAction) {
     now = getSysTime();
 
-    if (nextAction == FBAS_IO_ACTION)
-    {
-      cntMpsSignal++;
-      sendMpsProtocol(now, (uint8_t)cntMpsSignal);
+    switch (nextAction) {
+      case FBAS_IO_ACTION:
+        if (nodeType == FBAS_NODE_TX) {// only FBAS transmitter sends MPS protocol
+          cntMpsSignal++;
+          sendMpsProtocol(now, (uint8_t)cntMpsSignal); //FIXME: transmission over the WR network takes around 500us
+        }
+        break;
+      case FBAS_WR_EVT:
+        if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
+          uint8_t u8val = (ecaParam >> 56) & 0x01; // cntMpsSignal value
+          driveIo(IO_CFG_CHANNEL_LVDS, 0, u8val); // drive the IO1 port
+        }
+        break;
+      default:
+        break;
     }
+
     int64_t poll = now - ecaDeadline;
     DBPRINT3("fbas%d: ECA action (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
         nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
