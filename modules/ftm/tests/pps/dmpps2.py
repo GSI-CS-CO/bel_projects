@@ -1,25 +1,6 @@
-import dm
-from datetime import datetime
-import pytz
+import dm_testbench
 import sys
 
-dmobj = dm.CarpeDM()
-dmobj.connect(sys.argv[1])
-dmobj.halt()
-dmobj.clear(True)
-dmobj.softwareReset(True)
-dmobj.addDotFile("pps2.dot", False);
-status = dmobj.downloadDot(False)
-print(status)
-dmobj.startPattern("PPS_TEST", 0)
+file_test_pattern = 'pps2.dot'
+dm_testbench.startpattern(sys.argv[1], file_test_pattern)
 
-wrt = dmobj.getDmWrTime()
-d = datetime.fromtimestamp(int(wrt/1e9), pytz.timezone('Europe/Berlin'))
-
-print("WR Time:  %s %u ns\n" % (d , wrt % 1e9 ))
-
-print("CPU Message Counters:")
-for i in range(0, 4):
-	hr = dm.HealthReport()
-	hr = dmobj.getHealth(i, hr)
-	print("%s#: %u" % (i, hr.msgCnt))

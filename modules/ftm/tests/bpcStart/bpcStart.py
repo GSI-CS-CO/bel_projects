@@ -5,7 +5,6 @@ import signal
 import csv
 import pathlib
 import dm_testbench
-import dm
 
 """
 Start a pattern and check with saft-ctl snoop that BPC start flag works.
@@ -15,13 +14,6 @@ Required argument:  device of data master.
 if len(sys.argv) > 1:
     file_test_pattern = 'bpcStart.dot'
     dm_testbench.startpattern(sys.argv[1], file_test_pattern)
-    dmobj = dm.CarpeDM()
-    dmobj.connect(sys.argv[1])
-    health = dmobj.getHealth(0, dm.HealthReport())
-#    print(f'Message count: {health.msgCnt}')
-    if health.msgCnt <= 0:
-        print(f'Message count is {health.msgCnt}, should be greater zero. Test failed.')
-        exit(0)
     file_name = 'snoop_protocol.csv'
     process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
     time.sleep(1) # adopt to pattern: how many messages a pattern produces in a second
@@ -58,6 +50,7 @@ if len(sys.argv) > 1:
         if len(lines) >= 10:
             test_result = 'bpcstart="1"' in lines[4] and 'bpcstart="1"' in lines[5]
         else:
+            test_result = False
             print(f'dm-sched: output too short ({len(lines)} lines), result: {test_result}')
     print(f'Test BPC start, result {test_result}')
 else:

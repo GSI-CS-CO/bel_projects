@@ -1,15 +1,16 @@
 # DATAMASTER to test
 DATAMASTER ?= $$DM
-# Path for libcarpedm to test and path to python wrapper for libcarpedm
-CARPEDM_PATH ?= ~/bel_projects/test/modules/ftm/lib/
-CARPEDM_WRAPPER ?= ~/bel_projects/test/modules/ftm/ftmx86/
-CARPEDM_PATH_1 ?= ../lib/
-#CARPEDM_WRAPPER ?= ../ftmx86/
+# Path for libcarpedm to test
+CARPEDM_PATH ?= ../lib/
 
-all: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest unittest
+all: bpcStart dmCmd dmPerformance dmThreads fid7 full_test pps safe2remove singleEdgeTest schedules
 
 bpcStart:
-	cd bpcStart; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER):../common/ python bpcStart.py $(DATAMASTER)
+	cd bpcStart; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python bpcStart.py $(DATAMASTER)
+
+dmCmd:
+	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python dmpps2.py $(DATAMASTER)
+	python dmCmd/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
 
 dmPerformance:
 	$(MAKE) -C dmPerformance/ test0
@@ -20,23 +21,20 @@ dmThreads:
 	$(MAKE) -C dmThreads/ four-threads
 
 fid7:
-	cd fid7; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER):../common/ python fid7_test.py $(DATAMASTER)
+	cd fid7; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python fid7_test.py $(DATAMASTER)
 
 full_test:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python full_test/dm_testman.py $(DATAMASTER)
+	LD_LIBRARY_PATH=$(CARPEDM_PATH) python full_test/dm_testman.py $(DATAMASTER)
 	rm download.dot
 
-messageCounter:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python messageCounter/messageCounter.py $(DATAMASTER)
+#messageCounter:
+#	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python messageCounter/messageCounter.py $(DATAMASTER)
 
 pps:
-	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python dmpps2.py $(DATAMASTER)
+	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common python dmpps2.py $(DATAMASTER)
 
-schedules:
-	dm-cmd $(DATAMASTER) halt
-	dm-sched $(DATAMASTER) clear
-	dm-sched $(DATAMASTER) add schedules/schedule.dot
-	./schedules/startAllPattern.sh
+safe2remove:
+	$(MAKE) -C safe2remove/
 
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
@@ -46,14 +44,16 @@ singleEdgeTest:
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/
 
-unittest:
-	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python dmpps2.py $(DATAMASTER)
-	python unittests/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
+schedules:
+	dm-cmd $(DATAMASTER) halt
+	dm-sched $(DATAMASTER) clear
+	dm-sched $(DATAMASTER) add schedules/schedule.dot
+	./schedules/startAllPattern.sh
 
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: bpcStart dmPerformance dmThreads fid7 full_test messageCounter pps schedules singleEdgeTest unittest
+.PHONY: bpcStart dmCmd dmPerformance dmThreads fid7 full_test messageCounter pps safe2remove singleEdgeTest schedules
 

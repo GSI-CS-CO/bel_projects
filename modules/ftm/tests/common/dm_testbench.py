@@ -1,4 +1,3 @@
-import dm
 import subprocess
 
 """
@@ -11,14 +10,18 @@ def startpattern(data_master, pattern_file):
     Search for the first pattern in the data master with 'dm-sched' and start it.
     """
     print (f"Connect to device {data_master}, pattern file {pattern_file}")
-    dmobj = dm.CarpeDM()
-    dmobj.connect(data_master)
-    dmobj.halt()
-    dmobj.clear(True)
-    dmobj.softwareReset(True)
-    dmobj.addDotFile(pattern_file, False);
-    dmobj.downloadDot(False)
-
+    process = subprocess.Popen(['dm-cmd', data_master, 'halt'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process.wait()
+#    print (f"dm-cmd halt {process.returncode}")
+    process = subprocess.Popen(['dm-sched', data_master, 'clear'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process.wait()
+#    print (f"dm-sched clear {process.returncode}")
+    process = subprocess.Popen(['dm-cmd', data_master, 'cleardiag'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process.wait()
+#    print (f"dm-cmd cleardiag {process.returncode}")
+    process = subprocess.Popen(['dm-sched', data_master, 'add', pattern_file], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process.wait()
+#    print (f"dm-sched add {process.returncode}")
     # run 'dm-sched data_master' as a sub process.
     process = subprocess.Popen(['dm-sched', data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
@@ -30,4 +33,7 @@ def startpattern(data_master, pattern_file):
         pattern_name = lines[i+1]
         break
     # start the first pattern found in the data master.
-    dmobj.startPattern(pattern_name, 0)
+#    print (f"Pattern: {pattern_name} {lines}")
+    process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', pattern_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process.wait()
+#    print (f"dm-cmd startpattern {process.returncode}")
