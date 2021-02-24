@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{2020-12-23}
+\Large{Last change: 2021-02-24}
 \end{center}
 \vfill
 \end{titlepage}
@@ -56,17 +56,17 @@ Each test has a seperate target in the \texttt{Makefile}.
 \centering
 \begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
 \hline
-Test           & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{DM-Wrapper } & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
-bpcStart       &   -        &   T             &   x           &   x              &   x              &   x         &   -       &   x                \\ \hline
-dmPerformance  &   x        &   T             &   x           &   -              &   -              &   -         &   x       &   -                \\ \hline
-dmThreads      &   x        &   x             &   T           &   -              &   -              &   -         &   x       &   -                \\ \hline
-fid7           &   -        &   x             &   T           &   x              &   x              &   x         &   -       &   x                \\ \hline
-full\_test     &   -        &   T             &   x           &   -              &   x              &   -         &   -       &   x                \\ \hline
-messageCounter &   -        &   x             &   x           &   T              &   x              &   -         &   -       &   -                \\ \hline
-pps            &   -        &   T             &   x           &   x              &   x              &   -         &   -       &   -                \\ \hline
-schedules      &   x        &   x             &   T           &   -              &   -              &   -         &   x       &   -                \\ \hline
-singleEdgeTest &   -        &   T             &   -           &   -              &   -              &   -         &   -       &   x                \\ \hline
-unittests      &   T        &   x             &   x           &   -              &   x              &   -         &   -       &   x                \\ \hline
+Test           & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
+bpcStart       &   -        &   T             &   x           &   x              &   x         &   -       &   x                \\ \hline
+dmCmd          &   T        &   x             &   x           &   x              &   -         &   -       &   x                \\ \hline
+dmPerformance  &   x        &   T             &   x           &   -              &   -         &   x       &   -                \\ \hline
+dmThreads      &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
+fid7           &   -        &   x             &   T           &   x              &   x         &   -       &   x                \\ \hline
+full\_test     &   -        &   T             &   x           &   x              &   -         &   -       &   x                \\ \hline
+pps            &   -        &   T             &   x           &   x              &   -         &   -       &   -                \\ \hline
+safe2remove    &   x        &   T             &   T           &   -              &   -         &   x       &   x                \\ \hline
+singleEdgeTest &   -        &   T             &   -           &   -              &   -         &   -       &   x                \\ \hline
+schedules      &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
 \end{tabular}
 %\end{center}
 \end{table}
@@ -76,6 +76,10 @@ unittests      &   T        &   x             &   x           &   -             
 The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
 With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
 In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
+\section{dmCmd}
+\texttt{dmCmd} contains Python test scripts which contain Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
+with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
+line. These tests are successful when the response is the correct error message and not a core dump.
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
 The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
@@ -91,13 +95,22 @@ firmware. For each thread a pattern with one block and one timing message is loa
 \texttt{messageCounter} is a basic test for the Python-Wrapper of libcarpedm.
 \section{pps}
 \texttt{pps} (pulse per second) is a basic test with a schedule which sends two timing messages every second.
-\section{schedules}
-\texttt{schedules} collects scheduls which are started. Tests that the schedules are compiled and loaded.
+\section{safe2remove}
+\texttt{safe2remove} tests to remove a pattern from a running schedule. Test steps:
+\begin{enumerate}
+\item Clear data master
+\item Add schedule
+\item Start all patterns
+\item Check removal of one pattern, should fail while pattern is running.
+\item Abort pattern
+\item check removal of this pattern, should be valid, since pattern is not running.
+\item Remove this pattern.
+\item Check status of remaining schedule.
+\end{enumerate}
+These test steps are applied to a bunch of schedules.
 \include{singleEdgeTest}
-\section{unittests}
-\texttt{unittests} contains Python test scripts which contain Python unit tests for the tools dm-cmd, dm-sched. Each unit test calls dm-cmd
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
-line. These tests are successful when the response is the correct error message and not a core dump.
+\section{schedules}
+\texttt{schedules} collects schedules which are started. Tests that the schedules are compiled and loaded.
 \chapter{Common Components}
 \section{dm\_testbench.py}
 \texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.

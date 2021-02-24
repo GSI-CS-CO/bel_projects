@@ -1,7 +1,8 @@
 
 all: datamaster-tests
 
-datamaster-tests: 
+datamaster-tests:
+	$(MAKE) -C TestPattern/
 	pdflatex $@.tex
 	pdflatex $@.tex
 
