@@ -67,16 +67,139 @@ void printDeviceError( const int status, const int slot, const char* msg )
            pText, slot, pMessage, msg);
 }
 
+/*! --------------------------------------------------------------------------
+ */
+ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
+                                             const unsigned int channel )
+{
+   return ((pPset->control & 0x3F) << 10) | (channel << 4);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Prepares the selected ADDAC/ACU- function generator.
+ *
+ * 1) Enabling the belonging interrupt. \n
+ * 2) Starts both belonging DAQ channels for feedback set- and actual- values. \n
+ * 3) Sets the digital to analog converter in the function generator mode. \n
+ * 4) Resets the ramp-counter \n
+ * 5) Sets the ECA-timing tag. \n
+ *
+ * @param pScuBus Pointer to the SCU-bus base address.
+ * @param slot SCU-bus slot number respectively slave- number.
+ * @param dev Device-number respectively one of the function generator
+ *            belonging to this slave.
+ * @param tag ECA- timing- tag (normally 0xDEADBEEF)
+ * @return Base pointer of the registers of the selected function generator.
+ */
+ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
+                                             const unsigned int slot,
+                                             const unsigned int dev,
+                                             const uint32_t tag
+                                           )
+{
+   FG_ASSERT( dev < MAX_FG_PER_SLAVE );
+
+   unsigned int dacControlIndex;
+   BUS_BASE_T   fg_base;
+   uint16_t     irqMask;
+   switch( dev )
+   {
+      case 0:
+      {
+         irqMask         = FG1_IRQ;
+         fg_base         = FG1_BASE;
+         dacControlIndex = DAC1_BASE + DAC_CNTRL;
+         break;
+      }
+      case 1:
+      {
+         irqMask         = FG2_IRQ;
+         fg_base         = FG2_BASE;
+         dacControlIndex = DAC2_BASE + DAC_CNTRL;
+         break;
+      }
+      default:
+      {
+         FG_ASSERT( false );
+         return NULL;
+      }
+   }
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  /*
+   * Enabling of both daq-channels for the feedback of set- and actual values
+   * for this function generator channel.
+   */
+   daqEnableFgFeedback( slot, dev );
+#endif
+
+  /*
+   * Enable interrupts for the slave
+   */
+#ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
+   scuBusEnableSlaveInterrupt( pScuBus, slot );
+#endif
+
+   *scuBusGetInterruptActiveFlagRegPtr( pScuBus, slot ) |= irqMask;
+   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= irqMask;
+
+
+  /*
+   * Set ADDAC-DAC in FG mode
+   */
+   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), dacControlIndex, 0x10 );
+
+   FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot, fg_base );
+
+   /*
+    * Resetting of the ramp-counter
+    */
+   ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low )  = 0;
+   ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
+
+   /*
+    * Setting of the ECA timing tag.
+    */
+   ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( tag );
+   ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( tag );
+
+   return pAddagFgRegs;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loads the selected ADDAC/ACU-function generator with the first
+ *        polynomial data set and enable it.
+ * @param pAddagFgRegs Base address of the register set of the selected
+ *                     function generator.
+ * @param pPset Pointer to the polynomial data set.
+ * @param channel Channel number of the concerned function generator.
+ */
+ONE_TIME_CALL void addacFgStart( FG_REGISTER_T* pAddagFgRegs,
+                                 const FG_PARAM_SET_T* pPset,
+                                 const unsigned int channel )
+{
+   const uint16_t cntrl_reg_wr = getFgControlRegValue( pPset, channel );
+   /*
+    * CAUTION: Don't change the order of the following both code lines!
+    */
+   setAdacFgRegs( pAddagFgRegs, pPset, cntrl_reg_wr );
+   ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
+}
+
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  * @brief Helper function of configure_fg_macro handles the handler state
  *        of MIL devices.
  * @see configure_fg_macro
- * @param socket
+ * @param pScuBus Base address of SCU-bus.
+ * @param pMilBus Base address of MIL-bus.
+ * @param socket Socket number containing location information and FG-typ
  * @retval true leave the function configure_fg_macro
  * @retval false continue the function configure_fg_macro
  */
-ONE_TIME_CALL bool milHandleClearHandlerState( const unsigned int socket )
+ONE_TIME_CALL bool milHandleClearHandlerState( const void* pScuBus,
+                                               const void* pMilBus,
+                                               const unsigned int socket )
 {
    uint16_t dreq_status = 0;
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
@@ -90,7 +213,7 @@ ONE_TIME_CALL bool milHandleClearHandlerState( const unsigned int socket )
    if( isMilScuBusFg( socket ) )
    {
       const unsigned int slot = getFgSlotNumber( socket );
-      scub_status_mil( g_pScub_base, slot, &dreq_status );
+      scub_status_mil( (volatile unsigned short*) pScuBus, slot, &dreq_status );
       slaveFlags = scuBusGetSlaveFlag( slot );
    }
    else if( isMilExtentionFg( socket ) )
@@ -125,8 +248,177 @@ ONE_TIME_CALL bool milHandleClearHandlerState( const unsigned int socket )
 
    return false;
 }
-#endif /* ifdef CONFIG_MIL_FG */
 
+/*! ---------------------------------------------------------------------------
+ * @brief Prepares the selected MIL- function generator.
+ *
+ * 1) Enabling the belonging interrupt \n
+ * 2) Starts both belonging DAQ channels for feedback set- and actual- values. \n
+ * 3) Sets the digital to analog converter in the function generator mode. \n
+ *
+ * @param pScuBus Base address of SCU-bus.
+ * @param pMilBus Base address of MIL-bus.
+ * @param socket Socket number containing location information and FG-typ
+ * @param dev Device number of the concerning FG-device
+ * @retval OKAY Action was successful
+ */
+ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
+                                const void* pMilBus,
+                                const unsigned int socket,
+                                const unsigned int dev )
+{
+   FG_ASSERT( !isAddacFg( socket ) );
+
+   int status;
+   if( isMilScuBusFg( socket ) )
+   {
+      const unsigned int slot = getFgSlotNumber( socket );
+      FG_ASSERT( slot > 0 );
+    #ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( pScuBus, slot );
+    #endif
+     /*
+      * Enable receiving of data request.
+      */
+      *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= DREQ;
+
+     /*
+      * Enable sending of data request.
+      */
+      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+      {
+         printDeviceError( status, slot, "enable dreq");
+         return status;
+      }
+
+     /*
+      * Set MIL-DAC in FG mode
+      */
+      if( (status = scub_write_mil((volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+      {
+         printDeviceError( status, slot, "set FG mode");
+      }
+      return status;
+   }
+
+   FG_ASSERT( isMilExtentionFg( socket ) );
+
+  /*
+   * Enable data request
+   */
+   if( (status = write_mil((volatile unsigned int*) pMilBus, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+   {
+      printDeviceError( status, 0, "enable dreq" );
+      return status;
+   }
+
+   /*
+    * Set MIL-DAC in FG mode
+    */
+   if( (status = write_mil((volatile unsigned int*) pMilBus, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+      printDeviceError( status, 0, "set FG mode");
+
+   return status;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loads the selected ADDAC/ACU-function generator with the first
+ *        polynomial data set and enable it.
+ * @param pScuBus Base address of SCU-bus.
+ * @param pMilBus Base address of MIL-bus.
+ * @param pPset Pointer to the polynomial data set.
+ * @param socket Socket number containing location and device type
+ * @param dev Device number
+ * @param channel Channel number of the concerned function generator.
+ * @retval OKAY Action was successful.
+ */
+ONE_TIME_CALL int milFgStart( const void* pScuBus,
+                              const void* pMilBus,
+                              const FG_PARAM_SET_T* pPset,
+                              const unsigned int socket,
+                              const unsigned int dev,
+                              const unsigned int channel )
+{
+   FG_ASSERT( !isAddacFg( socket ) );
+   int status;
+   const uint16_t cntrl_reg_wr = getFgControlRegValue( pPset, channel );
+
+   FG_MIL_REGISTER_T milFgRegs;
+   setMilFgRegs( &milFgRegs, pPset, cntrl_reg_wr );
+
+   /*
+    * Save the coeff_c as set-value for MIL-DAQ
+    */
+   g_aFgChannels[channel].last_c_coeff = pPset->coeff_c;
+   #if __GNUC__ >= 9
+     #pragma GCC diagnostic push
+     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+   #endif
+   if( isMilScuBusFg( socket ) )
+   {
+      const unsigned int slot = getFgSlotNumber( socket );
+
+      if( (status = scub_write_mil_blk( (volatile unsigned short*) pScuBus,
+                                        slot,
+                                        (short*)&milFgRegs,
+                                        FC_BLK_WR | dev)) != OKAY )
+      {
+         printDeviceError( status, slot, "blk trm");
+         return status;
+      }
+
+     /*
+      * Still in block mode !
+      */
+      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus,
+                                    slot,
+                                    cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
+      {
+         printDeviceError( status, slot, "end blk trm");
+         return status;
+      }
+
+      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus,
+                                    slot,
+                                    cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
+      {
+         printDeviceError( status, slot, "end blk mode");
+      }
+      return status;
+   }
+
+   FG_ASSERT( isMilExtentionFg( socket ) );
+
+   if((status = write_mil_blk( (volatile unsigned int*)pMilBus,
+                               (short*)&milFgRegs,
+                               FC_BLK_WR | dev)) != OKAY)
+   {
+      printDeviceError( status, 0, "blk trm");
+      return status;
+   }
+   /*
+    * Still in block mode !
+    */
+   if((status = write_mil( (volatile unsigned int*)pMilBus,
+                           cntrl_reg_wr,
+                           FC_CNTRL_WR | dev)) != OKAY)
+   {
+      printDeviceError( status, 0, "end blk trm");
+      return status;
+   }
+
+   if( (status = write_mil( (volatile unsigned int*)pMilBus,
+                            cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+      printDeviceError( status, 0, "end blk mode");
+
+   #if __GNUC__ >= 9
+     #pragma GCC diagnostic pop
+   #endif
+
+   return status;
+}
+
+#endif /* ifdef  CONFIG_MIL_FG */
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
@@ -137,128 +429,37 @@ void configure_fg_macro( const unsigned int channel )
    FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
 
    const unsigned int socket = getSocket( channel );
+   const unsigned int dev    = getDevice( channel );
 
-#ifdef CONFIG_MIL_FG
-   if( milHandleClearHandlerState( socket ) )
-      return;
-
-   int status;
-#endif /* CONFIG_MIL_FG */
-
-   const unsigned int dev = getDevice( channel );
-
-  /*
-   * Set to FG mode and reset
-   */
    FG_REGISTER_T* pAddagFgRegs = NULL;
-   STATIC_ASSERT( sizeof( g_shared.fg_regs[0].tag ) == sizeof( uint32_t ) );
-   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
-   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
 
 #ifdef CONFIG_MIL_FG
+   int status = OKAY;
+
    if( isAddacFg( socket ) )
    {
 #endif
-      FG_ASSERT( dev < MAX_FG_PER_SLAVE );
+      STATIC_ASSERT( sizeof( g_shared.fg_regs[0].tag ) == sizeof( uint32_t ) );
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
 
-      unsigned int dacControlIndex;
-      BUS_BASE_T fg_base;
-      uint16_t irqMask;
-      switch( dev )
-      {
-         case 0:
-         {
-            irqMask         = FG1_IRQ;
-            fg_base         = FG1_BASE;
-            dacControlIndex = DAC1_BASE + DAC_CNTRL;
-            break;
-         }
-         case 1:
-         {
-            irqMask         = FG2_IRQ;
-            fg_base         = FG2_BASE;
-            dacControlIndex = DAC2_BASE + DAC_CNTRL;
-            break;
-         }
-         default: return;
-      }
-   #ifdef CONFIG_SCU_DAQ_INTEGRATION
-     /*
-      * Enabling of both daq-channels for the feedback of set- and actual values
-      * for this function generator channel.
-      * In the case of ADDAC/ACU devices the socket number is equal to the slot
-      * number.
-      */
-      daqEnableFgFeedback( socket, dev );
-   #endif
-
-     /*
-      * Enable interrupts for the slave
-      * Note: In the case of ADDAC FGs the socket-number is equal to the slot-number,
-      *       therefore it's not necessary to mask it out here.
-      */
-   #ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
-      scuBusEnableSlaveInterrupt( (void*)g_pScub_base, socket );
-   #endif
-
-     //!! *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket ) |= irqMask;
-      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) |= irqMask;
-
-
-     /*
-      * Set ADDAC-DAC in FG mode
-      */
-      scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( (void*)g_pScub_base, socket ), dacControlIndex, 0x10 );
-
-      pAddagFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base, socket, fg_base );
-      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low ) = 0;
-      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
-#if 0
-      ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( g_shared.fg_regs[channel].tag );
-      ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( g_shared.fg_regs[channel].tag );
-#else
-      ADDAC_FG_ACCESS( pAddagFgRegs, tag_low ) =  ((uint16_t*)&g_shared.fg_regs[channel].tag)[1];
-      ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = ((uint16_t*)&g_shared.fg_regs[channel].tag)[0];
-#endif
-
+      /*
+       * Note: In the case of ADDAC/ACU-FGs the socket-number is equal
+       *       to the slot number.
+       */
+      pAddagFgRegs = addacFgPrepare( (void*)g_pScub_base,
+                                     socket, dev,
+                                     g_shared.fg_regs[channel].tag );
 #ifdef CONFIG_MIL_FG
    }
-   else if( isMilExtentionFg( socket ) )
-   { /*
-      * Enable data request
-      */
-      if( (status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         printDeviceError( status, 0, "enable dreq" );
-
-     /*
-      * Set MIL-DAC in FG mode
-      */
-      if( (status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         printDeviceError( status, 0, "set FG mode");
-   }
-   else if( isMilScuBusFg( socket ) )
+   else
    {
-      const unsigned int slot = getFgSlotNumber( socket );
-      FG_ASSERT( slot > 0 );
-    #ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
-      scuBusEnableSlaveInterrupt( (void*)g_pScub_base, slot );
-    #endif
-     /*
-      * Enable receiving of data request.
-      */
-      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, slot ) |= DREQ;
+      if( milHandleClearHandlerState( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket ) )
+         return;
 
-     /*
-      * Enable sending of data request.
-      */
-      if( (status = scub_write_mil( g_pScub_base, slot, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         printDeviceError( status, slot, "enable dreq");
-
-     /*
-      * Set MIL-DAC in FG mode
-      */
-      if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         printDeviceError( status, getFgSlotNumber( socket ), "set FG mode"); // set FG mode
+      status = milFgPrepare( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket, dev );
+      if( status != OKAY )
+         return;
    }
 #endif
 
@@ -269,65 +470,21 @@ void configure_fg_macro( const unsigned int channel )
    */
    if( cbReadSave( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) != 0 )
    {
-      const uint16_t cntrl_reg_wr = ((pset.control & 0x3F) << 10) | channel << 4;
-#ifdef CONFIG_MIL_FG
-      if( isAddacFg( socket ) )
+   #ifdef CONFIG_MIL_FG
+      if( pAddagFgRegs != NULL )
       {
-#endif
-         FG_ASSERT( pAddagFgRegs != NULL );
-
-         /*
-          * CAUTION: Don't change the order of the following both code lines!
-          */
-         setAdacFgRegs( pAddagFgRegs, &pset, cntrl_reg_wr );
-         ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
-#ifdef CONFIG_MIL_FG
+   #endif
+         addacFgStart( pAddagFgRegs, &pset, channel );
+   #ifdef CONFIG_MIL_FG
       }
       else
       {
-         FG_MIL_REGISTER_T milFgRegs;
-         setMilFgRegs( &milFgRegs, &pset, cntrl_reg_wr );
-         /*
-          * Save the coeff_c as set-value for MIL-DAQ
-          */
-         g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
-         #if __GNUC__ >= 9
-           #pragma GCC diagnostic push
-           #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-         #endif
-         if( isMilExtentionFg( socket ) )
-         {
-            if((status = write_mil_blk(g_pScu_mil_base, (short*)&milFgRegs, FC_BLK_WR | dev)) != OKAY)
-               printDeviceError( status, 0, "blk trm");
-           /*
-            * Still in block mode !
-            */
-            if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
-               printDeviceError( status, 0, "end blk trm");
-
-            if( (status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-               printDeviceError( status, 0, "end blk mode");
-         }
-         else if( isMilScuBusFg( socket ) )
-         {
-            if( (status = scub_write_mil_blk(g_pScub_base, getFgSlotNumber( socket ),
-                                               (short*)&milFgRegs, FC_BLK_WR | dev)) != OKAY)
-               printDeviceError( status, getFgSlotNumber( socket ), "blk trm");
-
-           /*
-            * Still in block mode !
-            */
-            if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
-                                     cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
-               printDeviceError( status, getFgSlotNumber( socket ), "end blk trm");
-
-            if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
-                                     cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
-               printDeviceError( status, getFgSlotNumber( socket ), "end blk mode");
-         }
-         #if __GNUC__ >= 9
-           #pragma GCC diagnostic pop
-         #endif
+         status = milFgStart( (void*)g_pScub_base,
+                              (void*)g_pScu_mil_base,
+                              &pset,
+                              socket, dev, channel );
+         if( status != OKAY )
+            return;
       }
    #endif /* CONFIG_MIL_FG */
    #ifdef CONFIG_USE_SENT_COUNTER
@@ -343,92 +500,185 @@ void configure_fg_macro( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ *  @brief Disables a running function generator.
+ *
+ * 1)
+ *
+ * @param pScuBus Pointer to the SCU- bus.
+ * @param solt Scu-bus slot number respectively slave number.
+ * @param dev Function generator number of the concerning slave.
+ */
+ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
+                                   const unsigned int slot,
+                                   const unsigned int dev )
+{
+   unsigned int fgControlIndex, dacControlIndex;
+   switch( dev )
+   {
+      case 0:
+      {
+         fgControlIndex  = FG1_BASE  + FG_CNTRL;
+         dacControlIndex = DAC1_BASE + DAC_CNTRL;
+         break;
+      }
+      case 1:
+      {
+         fgControlIndex  = FG2_BASE  + FG_CNTRL;
+         dacControlIndex = DAC2_BASE + DAC_CNTRL;
+         break;
+      }
+      default:
+      {
+         FG_ASSERT( false );
+         return;
+      }
+   }
+   /*
+    * Disarm hardware
+    */
+   const void* pAbsSlaveAddr = scuBusGetAbsSlaveAddr( pScuBus, slot );
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, fgControlIndex ) &= ~(0x2);
+
+   /*
+    * Unset FG mode in ADC
+    */
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, dacControlIndex ) &= ~(0x10);
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  /*
+   * Disabling of both daq-channels for the feedback of set- and actual values
+   * for this function generator channel.
+   */
+   daqDisableFgFeedback( slot, dev );
+#endif
+}
+
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ */
+ONE_TIME_CALL int milFgDisable( const void* pScuBus,
+                                const void* pMilBus,
+                                unsigned int socket,
+                                unsigned int dev )
+{
+   FG_ASSERT( !isAddacFg( socket ) );
+
+   int status;
+   int16_t data;
+
+   if( isMilScuBusFg( socket ) )
+   {
+      const unsigned int slot = getFgSlotNumber( socket );
+
+      if( (status = scub_read_mil( (volatile unsigned short*) pScuBus, slot,
+           &data, FC_CNTRL_RD | dev)) != OKAY )
+      {
+         printDeviceError( status, slot, "disarm hw 3" );
+         return status;
+      }
+
+      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot,
+           data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
+         printDeviceError( status, slot, "disarm hw 4" );
+
+      return status;
+   }
+
+   FG_ASSERT( isMilExtentionFg( socket ) );
+
+   if( (status = read_mil( (volatile unsigned int*)pMilBus, &data,
+                           FC_CNTRL_RD | dev)) != OKAY )
+   {
+      printDeviceError( status, 0, "disarm hw 1" );
+      return status;
+   }
+
+   if( (status = write_mil( (volatile unsigned int*)pMilBus,
+                            data & ~(0x2),
+                            FC_CNTRL_WR | dev)) != OKAY )
+      printDeviceError( status, 0, "disarm hw 2" );
+
+   return status;
+}
+#endif /* ifdef  CONFIG_MIL_FG */
+
+/*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
  */
 void disable_channel( const unsigned int channel )
 {
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
+
    FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
 
    if( pFgRegs->macro_number == SCU_INVALID_VALUE )
       return;
 
+   const unsigned int socket = getSocket( channel );
+   const unsigned int dev    = getDevice( channel );
+
 #ifdef CONFIG_MIL_FG
    int status;
-   int16_t data;
-#endif
-   const unsigned int socket = getSocket( channel );
-   const unsigned int dev   = getDevice( channel );
-   //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
-#ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) )
    {
 #endif
-      unsigned int fgControlIndex, dacControlIndex;
-      switch( dev )
-      {
-         case 0:
-         {
-            fgControlIndex  = FG1_BASE  + FG_CNTRL;
-            dacControlIndex = DAC1_BASE + DAC_CNTRL;
-            break;
-         }
-         case 1:
-         {
-            fgControlIndex  = FG2_BASE  + FG_CNTRL;
-            dacControlIndex = DAC2_BASE + DAC_CNTRL;
-            break;
-         }
-         default: return;
-      }
-   #ifdef CONFIG_SCU_DAQ_INTEGRATION
-     /*
-      * Disabling of both daq-channels for the feedback of set- and actual values
-      * for this function generator channel.
-      */
-      daqDisableFgFeedback( socket, dev );
-   #endif
       /*
-       * Disarm hardware
+       * Note: In the case if ADDAC/ACU- function generator the slot number
+       *       is equal to the socket number.
        */
-      const void* pAbsSlaveAddr = scuBusGetAbsSlaveAddr( (void*)g_pScub_base, socket );
-      *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, fgControlIndex ) &= ~(0x2);
-
-      /*
-       * Unset FG mode in ADC
-       */
-      *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, dacControlIndex ) &= ~(0x10);
+      addacFgDisable( (void*)g_pScub_base, socket, dev );
 #ifdef CONFIG_MIL_FG
    }
-   else if( isMilExtentionFg( socket ) )
-   {  // disarm hardware
-      if( (status = read_mil( g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
-         printDeviceError( status, 0, "disarm hw 1" );
+   else
+   {
+      status = milFgDisable( (void*)g_pScub_base,
+                             (void*)g_pScu_mil_base,
+                             socket, dev );
+      if( status != OKAY )
+         return;
 
-      if( (status = write_mil( g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         printDeviceError( status, 0, "disarm hw 2" );
-   }
-   else if( isMilScuBusFg( socket ) )
-   {  // disarm hardware
-      if( (status = scub_read_mil( g_pScub_base, getFgSlotNumber( socket ),
-           &data, FC_CNTRL_RD | dev)) != OKAY )
-         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 3" );
-
-      if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
-           data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 4" );
    }
 #endif /* CONFIG_MIL_FG */
 
    if( pFgRegs->state == STATE_ACTIVE )
    {    // hw is running
       hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
-      pFgRegs->rd_ptr =  pFgRegs->wr_ptr;
+      pFgRegs->rd_ptr = pFgRegs->wr_ptr;
    }
    else
    {
       pFgRegs->state = STATE_STOPPED;
       sendSignal( IRQ_DAT_DISARMED, channel );
    }
+}
+
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ */
+ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
+                                      const unsigned int slot,
+                                      const unsigned int dev )
+{
+   unsigned int invIrqMask;
+   switch( dev )
+   {
+      case 0:
+      {
+         invIrqMask = ~FG1_IRQ;
+         break;
+      }
+      case 1:
+      {
+         invIrqMask = ~FG2_IRQ;
+         break;
+      }
+      default:
+      {
+         FG_ASSERT( false );
+         return;
+      }
+   }
+   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= invIrqMask;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -453,8 +703,7 @@ void disable_slave_irq( const unsigned int channel )
       * In the case of ADDAC/ACU-FGs the socket-number is equal to the
       * slot number, so it's not necessary to extract the slot number here.
       */
-      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) &=
-                                            ((dev == 0)? ~FG1_IRQ : ~FG2_IRQ);
+      addacFgDisableIrq( (void*)g_pScub_base, socket, dev );
       return;
    }
 
