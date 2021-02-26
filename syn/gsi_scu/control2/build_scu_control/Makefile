@@ -112,7 +112,10 @@ SOURCE += $(SCU_LIB_SRC_DIR)/event_measurement.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
 SOURCE += $(SCU_DIR)/scu_function_generator.c
 SOURCE += $(SCU_DIR)/scu_circular_buffer.c
-SOURCE += $(SCU_DIR)/scu_fg_macros.c
+
+ SOURCE += $(SCU_DIR)/scu_fg_macros.c
+# SOURCE += $(SCU_DIR)/scu_fg_macros120221.c
+
 SOURCE += $(SCU_DIR)/scu_fg_handler.c
 SOURCE += $(SCU_DIR)/scu_command_handler.c
 SOURCE += $(SCU_DIR)/scu_temperature.c

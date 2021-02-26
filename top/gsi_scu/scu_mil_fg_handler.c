@@ -486,7 +486,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
 #endif
    if( status != OKAY )
    {
-      printDeviceError( status, getFgSlotNumber( socket ), __func__ );
+      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__ );
       return;
    }
 #ifdef CONFIG_USE_SENT_COUNTER
@@ -781,7 +781,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             status = milReqestStatus( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError( status, 20, "dev_sio set task" );
+               milPrintDeviceError( status, 20, "dev_sio set task" );
          }
          FSM_TRANSITION( ST_FETCH_STATUS, color=green );
          break;
@@ -842,7 +842,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             }
             status = milHandleAndWrite( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError( status, 22, "dev_sio end handle");
+               milPrintDeviceError( status, 22, "dev_sio end handle");
          }
          FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
@@ -865,7 +865,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError( status, 23, "dev_sio read daq" );
+               milPrintDeviceError( status, 23, "dev_sio read daq" );
          }
          FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;

@@ -519,11 +519,10 @@ STATIC inline void makeStop( const unsigned int channel )
 {
    const SIGNAL_T signal = cbisEmpty( &g_shared.fg_regs[0], channel )?
                              IRQ_DAT_STOP_EMPTY : IRQ_DAT_STOP_NOT_EMPTY;
+
    sendSignal( signal,  channel );
    disable_slave_irq( channel );
    g_shared.fg_regs[channel].state = STATE_STOPPED;
-
-   //TODO Maybe disabling of ADDAC-DAQs here?
 
 #ifndef CONFIG_LOG_ALL_SIGNALS
    hist_addx( HISTORY_XYZ_MODULE, signal2String( signal ), channel );
@@ -532,14 +531,18 @@ STATIC inline void makeStop( const unsigned int channel )
 
 /*! ---------------------------------------------------------------------------
  * @brief Helper function of function handleMacros().
+ *
+ * @note Function generator has received the tag or brc message.
+ *
  * @see handleMacros
  */
 STATIC inline void makeStart( const unsigned int channel )
 {
    g_shared.fg_regs[channel].state = STATE_ACTIVE;
-   sendSignal( IRQ_DAT_START, channel ); // fg has received the tag or brc message
+   sendSignal( IRQ_DAT_START, channel );
 }
 
+#ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  * @brief Prints a error message happened in the device-bus respectively
  *        MIL bus.
@@ -548,7 +551,8 @@ STATIC inline void makeStart( const unsigned int channel )
  *             SCU-Bus
  * @param msg String containing additional message text.
  */
-void printDeviceError( const int status, const int slot, const char* msg );
+void milPrintDeviceError( const int status, const int slot, const char* msg );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief configures each function generator channel.

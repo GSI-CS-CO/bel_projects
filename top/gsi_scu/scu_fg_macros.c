@@ -18,10 +18,14 @@
   #include "daq_main.h"
 #endif
 
+#define CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ
+
 extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( *g_pScu_mil_base ) == sizeof( uint32_t ) );
+#endif
 #endif
 
 /*!
@@ -34,38 +38,6 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
 #else
    {{0}};
 #endif
-
-/*! ---------------------------------------------------------------------------
- * @brief Prints a error message happened in the device-bus respectively
- *        MIL bus.
- * @param status return status of the MIL-driver module.
- * @param slot Slot-number in the case the mil connection is established via
- *             SCU-Bus
- * @param msg String containing additional message text.
- */
-void printDeviceError( const int status, const int slot, const char* msg )
-{
-  static const char* pText = ESC_ERROR "dev bus access in slot ";
-  char* pMessage;
-  #define __MSG_ITEM( status ) case status: pMessage = #status; break
-  switch( status )
-  {
-     __MSG_ITEM( OKAY );
-     __MSG_ITEM( TRM_NOT_FREE );
-     __MSG_ITEM( RCV_ERROR );
-     __MSG_ITEM( RCV_TIMEOUT );
-     __MSG_ITEM( RCV_TASK_ERR );
-     default:
-     {
-        mprintf( "%s%d failed with code %d" ESC_NORMAL "\n",
-                 pText, slot, status);
-        return;
-     }
-  }
-  #undef __MSG_ITEM
-  mprintf( "%s%d failed with message %s, %s" ESC_NORMAL "\n",
-           pText, slot, pMessage, msg);
-}
 
 /*! --------------------------------------------------------------------------
  */
@@ -188,6 +160,38 @@ ONE_TIME_CALL void addacFgStart( FG_REGISTER_T* pAddagFgRegs,
 
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
+ * @brief Prints a error message happened in the device-bus respectively
+ *        MIL bus.
+ * @param status return status of the MIL-driver module.
+ * @param slot Slot-number in the case the mil connection is established via
+ *             SCU-Bus
+ * @param msg String containing additional message text.
+ */
+void milPrintDeviceError( const int status, const int slot, const char* msg )
+{
+  static const char* pText = ESC_ERROR "dev bus access in slot ";
+  char* pMessage;
+  #define __MSG_ITEM( status ) case status: pMessage = #status; break
+  switch( status )
+  {
+     __MSG_ITEM( OKAY );
+     __MSG_ITEM( TRM_NOT_FREE );
+     __MSG_ITEM( RCV_ERROR );
+     __MSG_ITEM( RCV_TIMEOUT );
+     __MSG_ITEM( RCV_TASK_ERR );
+     default:
+     {
+        mprintf( "%s%d failed with code %d" ESC_NORMAL "\n",
+                 pText, slot, status);
+        return;
+     }
+  }
+  #undef __MSG_ITEM
+  mprintf( "%s%d failed with message %s, %s" ESC_NORMAL "\n",
+           pText, slot, pMessage, msg);
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Helper function of configure_fg_macro handles the handler state
  *        of MIL devices.
  * @see configure_fg_macro
@@ -287,7 +291,7 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
       */
       if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
       {
-         printDeviceError( status, slot, "enable dreq");
+         milPrintDeviceError( status, slot, "enable dreq");
          return status;
       }
 
@@ -296,7 +300,7 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
       */
       if( (status = scub_write_mil((volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
       {
-         printDeviceError( status, slot, "set FG mode");
+         milPrintDeviceError( status, slot, "set FG mode");
       }
       return status;
    }
@@ -308,7 +312,7 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
    */
    if( (status = write_mil((volatile unsigned int*) pMilBus, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
    {
-      printDeviceError( status, 0, "enable dreq" );
+      milPrintDeviceError( status, 0, "enable dreq" );
       return status;
    }
 
@@ -316,7 +320,7 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
     * Set MIL-DAC in FG mode
     */
    if( (status = write_mil((volatile unsigned int*) pMilBus, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-      printDeviceError( status, 0, "set FG mode");
+      milPrintDeviceError( status, 0, "set FG mode");
 
    return status;
 }
@@ -363,7 +367,7 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
                                         (short*)&milFgRegs,
                                         FC_BLK_WR | dev)) != OKAY )
       {
-         printDeviceError( status, slot, "blk trm");
+         milPrintDeviceError( status, slot, "blk trm");
          return status;
       }
 
@@ -374,7 +378,7 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
                                     slot,
                                     cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
       {
-         printDeviceError( status, slot, "end blk trm");
+         milPrintDeviceError( status, slot, "end blk trm");
          return status;
       }
 
@@ -382,7 +386,7 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
                                     slot,
                                     cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
       {
-         printDeviceError( status, slot, "end blk mode");
+         milPrintDeviceError( status, slot, "end blk mode");
       }
       return status;
    }
@@ -393,7 +397,7 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
                                (short*)&milFgRegs,
                                FC_BLK_WR | dev)) != OKAY)
    {
-      printDeviceError( status, 0, "blk trm");
+      milPrintDeviceError( status, 0, "blk trm");
       return status;
    }
    /*
@@ -403,13 +407,13 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
                            cntrl_reg_wr,
                            FC_CNTRL_WR | dev)) != OKAY)
    {
-      printDeviceError( status, 0, "end blk trm");
+      milPrintDeviceError( status, 0, "end blk trm");
       return status;
    }
 
    if( (status = write_mil( (volatile unsigned int*)pMilBus,
                             cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-      printDeviceError( status, 0, "end blk mode");
+      milPrintDeviceError( status, 0, "end blk mode");
 
    #if __GNUC__ >= 9
      #pragma GCC diagnostic pop
@@ -439,10 +443,11 @@ void configure_fg_macro( const unsigned int channel )
    if( isAddacFg( socket ) )
    {
 #endif
+   #ifndef __DOXYGEN__
       STATIC_ASSERT( sizeof( g_shared.fg_regs[0].tag ) == sizeof( uint32_t ) );
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
-
+   #endif
       /*
        * Note: In the case of ADDAC/ACU-FGs the socket-number is equal
        *       to the slot number.
@@ -544,7 +549,7 @@ ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
     */
    *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, dacControlIndex ) &= ~(0x10);
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
   /*
    * Disabling of both daq-channels for the feedback of set- and actual values
    * for this function generator channel.
@@ -573,13 +578,13 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
       if( (status = scub_read_mil( (volatile unsigned short*) pScuBus, slot,
            &data, FC_CNTRL_RD | dev)) != OKAY )
       {
-         printDeviceError( status, slot, "disarm hw 3" );
+         milPrintDeviceError( status, slot, "disarm hw 3" );
          return status;
       }
 
       if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot,
            data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         printDeviceError( status, slot, "disarm hw 4" );
+         milPrintDeviceError( status, slot, "disarm hw 4" );
 
       return status;
    }
@@ -589,14 +594,14 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
    if( (status = read_mil( (volatile unsigned int*)pMilBus, &data,
                            FC_CNTRL_RD | dev)) != OKAY )
    {
-      printDeviceError( status, 0, "disarm hw 1" );
+      milPrintDeviceError( status, 0, "disarm hw 1" );
       return status;
    }
 
    if( (status = write_mil( (volatile unsigned int*)pMilBus,
                             data & ~(0x2),
                             FC_CNTRL_WR | dev)) != OKAY )
-      printDeviceError( status, 0, "disarm hw 2" );
+      milPrintDeviceError( status, 0, "disarm hw 2" );
 
    return status;
 }
@@ -659,17 +664,17 @@ ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
                                       const unsigned int slot,
                                       const unsigned int dev )
 {
-   unsigned int invIrqMask;
+   uint16_t invIrqMask;
    switch( dev )
    {
       case 0:
       {
-         invIrqMask = ~FG1_IRQ;
+         invIrqMask = ((uint16_t)~FG1_IRQ);
          break;
       }
       case 1:
       {
-         invIrqMask = ~FG2_IRQ;
+         invIrqMask = ((uint16_t)~FG2_IRQ);
          break;
       }
       default:
@@ -679,7 +684,50 @@ ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
       }
    }
    *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= invIrqMask;
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ)
+  /*
+   * Disabling of both daq-channels for the feedback of set- and actual values
+   * for this function generator channel.
+   */
+   daqDisableFgFeedback( slot, dev );
+#endif
 }
+
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Disables the interrupts of a specific MIL- function generator.
+ * @param pScuBus Base address of SCU-bus.
+ * @param pMilBus Base address of MIL-bus.
+ * @param socket Socket number containing location and device type
+ * @param dev Device number
+ */
+ONE_TIME_CALL void milFgDisableIrq( const void* pScuBus,
+                                    const void* pMilBus,
+                                    const unsigned int socket,
+                                    const unsigned int dev )
+{
+   FG_ASSERT( !isAddacFg( socket ) );
+
+   int status;
+
+   if( isMilScuBusFg( socket ) )
+   {
+      status = scub_write_mil( (volatile unsigned short*)pScuBus,
+                               getFgSlotNumber( socket ),
+                               0x0, FC_IRQ_MSK | dev);
+   }
+   else
+   {
+      //write_mil((volatile unsigned int* )pMilBus, 0x0, FC_COEFF_A_WR | dev);  //ack drq
+      status = write_mil( (volatile unsigned int* )pMilBus,
+                          0x0, FC_IRQ_MSK | dev);
+
+   }
+   if( status != OKAY )
+      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__);
+}
+#endif /* ifdef CONFIG_MIL_FG */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -697,32 +745,21 @@ void disable_slave_irq( const unsigned int channel )
    const unsigned int dev    = getDevice( channel );
 
    //mprintf("IRQs for slave %d disabled.\n", socket);
-
+#ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) )
-   { /*
+   {
+#endif
+     /*
       * In the case of ADDAC/ACU-FGs the socket-number is equal to the
       * slot number, so it's not necessary to extract the slot number here.
       */
       addacFgDisableIrq( (void*)g_pScub_base, socket, dev );
+#ifdef CONFIG_MIL_FG
       return;
    }
 
-#ifdef CONFIG_MIL_FG
-   int status = OKAY;
-
-   if( isMilExtentionFg( socket ) )
-   {
-      //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
-      status = write_mil( g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev);
-   }
-   else if( isMilScuBusFg( socket ) )
-   {
-      status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
-                                   0x0, FC_IRQ_MSK | dev);
-   }
-   if( status != OKAY )
-      printDeviceError( status, getFgSlotNumber( socket ), __func__);
-#endif /* ifdef CONFIG_MIL_FG */
+   milFgDisableIrq( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket, dev );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
