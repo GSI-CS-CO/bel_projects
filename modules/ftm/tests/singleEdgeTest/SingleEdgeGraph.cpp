@@ -2,9 +2,12 @@
 
 #include "block.h"
 #include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "event.h"
 #include "graph.h"
 #include "meta.h"
+
+
 
 std::map<std::string, int> nodeMap = {
     {dnt::sTMsg, NODE_TYPE_TMSG},
@@ -22,7 +25,7 @@ std::map<std::string, int> nodeMap = {
 
 namespace det = DotStr::Edge::TypeVal;
 
-SingleEdgeGraph::SingleEdgeGraph(CarpeDM* carpeDM, std::string nodeT1, std::string nodeT2, std::string edgeT) {
+SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string nodeT1, std::string nodeT2, std::string edgeT) {
   cdm = carpeDM;
   // declare a graph object, adding the edges and edge properties
   Graph g = static_cast<Graph>(*this);

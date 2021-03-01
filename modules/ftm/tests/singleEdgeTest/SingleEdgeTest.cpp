@@ -13,7 +13,7 @@
 #include "SingleEdgeStatus.h"
 #include "SingleEdgeTables.h"
 #include "block.h"
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "event.h"
 #include "graph.h"
 #include "meta.h"
@@ -30,7 +30,7 @@ std::list<std::string> edgeTypes = {
 
 int main(int, char *[]) {
   Validation::init();
-  CarpeDM cdm;
+  CarpeDM::CarpeDMimpl cdm;
   SingleEdgeStatus status;
   int counterV1 = 0;  // counts the types of vertex v1.
   std::pair<std::string, int> entry1;

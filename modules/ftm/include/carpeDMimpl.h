@@ -25,6 +25,7 @@ class MiniCommand;
 
 
 class CarpeDM::CarpeDMimpl {
+   //friend class SingleEdgeTest;
 
 private:
 

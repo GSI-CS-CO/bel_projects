@@ -9,14 +9,14 @@
 #include "common.h"
 #include "graph.h"
 
+
+
 class CarpeDM {
 
-private:
 
-  class CarpeDMimpl;
-  std::unique_ptr<CarpeDMimpl> impl_;
 
 public:
+  class CarpeDMimpl;
   CarpeDM();
   CarpeDM(std::ostream& sLog);
   CarpeDM(std::ostream& sLog, std::ostream& sErr);
@@ -216,6 +216,10 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void lockManagerClear();
                bool lockManagerHasEntries();
                void softwareReset(bool clearStatistic);
+
+  private:
+  
+    std::unique_ptr<CarpeDMimpl> impl_;               
 };
 
 #endif

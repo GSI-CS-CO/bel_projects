@@ -3,7 +3,7 @@ CXX = g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -fprofile-arcs -ftest-coverage
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib
-LDLIBS = -L../../lib -lstdc++ -lboost_serialization -lboost_graph -lcarpedm -lgcov
+LDLIBS = -L../../lib -lstdc++ -lboost_serialization -lboost_graph -ldmtest -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 

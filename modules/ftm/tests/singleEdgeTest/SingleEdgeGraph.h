@@ -2,6 +2,7 @@
 #define _SINGLEEDGEGRAPH_H_
 
 #include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "dotstr.h"
 
 namespace dnt = DotStr::Node::TypeVal;
@@ -24,7 +25,7 @@ If node1 is of type qinfo, add node3 of type qbuf and connect this to node1. See
 */
 class SingleEdgeGraph : public Graph {
  private:
-  CarpeDM* cdm;
+  CarpeDM::CarpeDMimpl* cdm;
   /** The created graph. */
   Graph g1;
   /** Memorize the nodes for later use. node1 is stored in v1 an so on.*/
@@ -44,7 +45,7 @@ class SingleEdgeGraph : public Graph {
 \param nodeT2 Type of node2. Allowed values from namespace DotStr::Node::TypeVal.
 \param edgeT Type of edge from node1 to node2. Allowed values from namespace DotStr::Edge::TypeVal.
   */
-  SingleEdgeGraph(CarpeDM* cdm, std::string nodeT1, std::string nodeT2, std::string edgeT);
+  SingleEdgeGraph(CarpeDM::CarpeDMimpl* cdm, std::string nodeT1, std::string nodeT2, std::string edgeT);
   /** Return the graph stored in this object. */
   Graph getGraph() { return g1; };
   /** Print the graph as nodes and edges to stdout. */
