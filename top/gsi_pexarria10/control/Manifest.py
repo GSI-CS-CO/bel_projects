@@ -1,6 +1,6 @@
 files = [
    "pexarria10.vhd",
-   "pexarria10.sdc",
+   "../../common/arria10.sdc",
    "ramsize_pkg.vhd",
 ]
 
