@@ -10,7 +10,7 @@ bpcStart:
 
 dmCmd:
 	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python dmpps2.py $(DATAMASTER)
-	python dmCmd/test_dm_cmd.py ../ftmx86/dm-cmd $(DATAMASTER)
+	cd dmCmd; PYTHONPATH=../common/ python test_dm_cmd.py ../../ftmx86/dm-cmd $(DATAMASTER)
 
 dmPerformance:
 	$(MAKE) -C dmPerformance/ test0
@@ -39,7 +39,7 @@ safe2remove:
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
 	$(MAKE) -C singleEdgeTest/
-	LD_LIBRARY_PATH=$(CARPEDM_PATH_1) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
+	LD_LIBRARY_PATH=$(CARPEDM_PATH) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/

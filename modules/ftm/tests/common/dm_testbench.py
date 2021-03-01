@@ -2,48 +2,22 @@ import subprocess
 import unittest
 import difflib
 import os
+import pathlib
 
 """
 Module dm_testbench collects functions to handle patterns for the data master testbench.
 """
 class DmTestbench(unittest.TestCase):
 
-  def startpattern(data_master, pattern_file):
+  def startpattern(self, data_master, pattern_file):
     """
     Connect to the given data master and load the pattern file (dot format).
     The data master is halted, cleared, and statistics is reset.
     Search for the first pattern in the data master with 'dm-sched' and start it.
     """
-    print (f"Connect to device '{data_master}', pattern file '{pattern_file}'.   ", end='', flush=True)
-    process = subprocess.Popen(['dm-cmd', data_master, 'halt'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} halt')
-    process = subprocess.Popen(['dm-sched', data_master, 'clear'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} clear')
-    process = subprocess.Popen(['dm-cmd', data_master, 'cleardiag'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} cleardiag')
-    process = subprocess.Popen(['dm-sched', data_master, 'add', pattern_file], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {pattern_file}')
-    # run 'dm-sched data_master' as a sub process.
-    process = subprocess.Popen(['dm-sched', data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    # get command output and error
-    stdout, stderr = process.communicate()
-    lines = stdout.decode('utf-8').splitlines()
-    pattern_name = 'x'
-    for i in range(len(lines)):
-      if lines[i] == 'Patterns:':
-        pattern_name = lines[i+1]
-        break
-    # start the first pattern found in the data master.
-#    print (f"Pattern: {pattern_name} {lines}")
-    process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', pattern_name])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {pattern_name}')
+    self.startAllPattern(data_master, pattern_file, onePattern=True)
 
-  def startAllPattern(self, data_master, pattern_file):
+  def startAllPattern(self, data_master, pattern_file, onePattern=False):
     """
     Connect to the given data master and load the pattern file (dot format).
     The data master is halted, cleared, and statistics is reset.
@@ -75,6 +49,8 @@ class DmTestbench(unittest.TestCase):
         process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', lines[i]])
         process.wait()
         self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {lines[i]}')
+        if onePattern:
+          patterns = False
       if lines[i] == 'Patterns:':
         patterns = True
 
@@ -110,4 +86,7 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected))
   #  print(f'Diff: {diffLines}')
     self.assertEqual(len(diffLines), 0, f'Diff: {diffLines}')
- 
+
+  def deleteFile(self, file_name):
+    file_to_rem = pathlib.Path(file_name)
+    file_to_rem.unlink()

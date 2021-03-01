@@ -1,6 +1,9 @@
+#! /usr/bin/env python3
+
 import unittest
 import subprocess
 import sys
+import dm_testbench
 
 global test_binary
 global data_master
@@ -12,7 +15,7 @@ First section: all commands which need a target name. Test case names: test_<com
 Usage: python <binary of dm-cmd> <datamaster>
 Prerequisite: datamaster must have a node with name B_PPS.
 """
-class TestDmCmd(unittest.TestCase):
+class TestDmCmd(dm_testbench.DmTestbench):
 
   def setUp(self):
     """

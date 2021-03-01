@@ -1,19 +1,29 @@
-import sys
+#! /usr/bin/env python3
+
 import time
 import subprocess
-import signal
+import unittest
+import sys
 import csv
-import pathlib
+import signal
 import dm_testbench
 
 """
 Start a pattern and check with saft-ctl snoop that BPC start flag works.
 
-Required argument:  device of data master.
+Required argument: device of data master.
 """
-if len(sys.argv) > 1:
+class BpcStart(dm_testbench.DmTestbench):
+
+  def setUp(self):
+    """
+    Set up for all test cases: store the arguments in class variables.
+    """
+    self.datamaster = test_datamaster
+
+  def test_bpcstart(self):
     file_test_pattern = 'bpcStart.dot'
-    dm_testbench.startpattern(sys.argv[1], file_test_pattern)
+    self.startpattern(self.datamaster, file_test_pattern)
     file_name = 'snoop_protocol.csv'
     process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
     time.sleep(1) # adopt to pattern: how many messages a pattern produces in a second
@@ -35,23 +45,25 @@ if len(sys.argv) > 1:
             if test1 and test2:
                 test_result = False
                 break
-        print(f'Snoop: processed {line_count} lines, test result is {test_result}.')
-    file_to_rem = pathlib.Path(file_name)
-    file_to_rem.unlink()
+        print(f'Snoop: processed {line_count} lines, test result is {test_result}.   ', end='', flush=True)
+    self.deleteFile(file_name)
     if test_result:
         file_name = 'd1.dot'
-        process = subprocess.Popen(['dm-sched', sys.argv[1], '-o', file_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        process = subprocess.Popen(['dm-sched', self.datamaster, '-o', file_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         with open(file_name, 'r') as reader:
             lines = reader.readlines()
-        file_to_rem = pathlib.Path(file_name)
-        file_to_rem.unlink()
+        self.deleteFile(file_name)
 #            print(lines)
         if len(lines) >= 10:
             test_result = 'bpcstart="1"' in lines[4] and 'bpcstart="1"' in lines[5]
         else:
             test_result = False
             print(f'dm-sched: output too short ({len(lines)} lines), result: {test_result}')
-    print(f'Test BPC start, result {test_result}')
-else:
-    print('Required argument (data master device) missing.')
+
+if __name__ == '__main__':
+  if len(sys.argv) > 1:
+    test_datamaster = sys.argv.pop()
+    unittest.main(verbosity=2)
+  else:
+    print("Required argument missing", sys.argv)
