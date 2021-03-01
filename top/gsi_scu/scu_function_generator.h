@@ -51,79 +51,94 @@ namespace Scu
 #endif
 
 /*!
- * @ingroup SHARED_MEMORY
- * @brief Maximum of function generator macros
+ * @brief Definition of flag-masks and constants for ADDAC/ACU- and MIL-
+ *        function generators.
  */
-#define   MAX_FG_MACROS     256
+typedef enum
+{
+  /*!
+   * @ingroup SHARED_MEMORY
+   * @brief Maximum of function generator macros
+   */
+   MAX_FG_MACROS =    256,
 
-/*!
- * @ingroup SHARED_MEMORY
- * @brief Maximum of supported function generator channels
- * 
- * Its the size of the array of FG_CHANNEL_BUFFER_T and FG_CHANNEL_REG_T
- * 
- * @see FG_CHANNEL_BUFFER_T
- * @see FG_CHANNEL_REG_T
- */
-#define   MAX_FG_CHANNELS   16
+  /*!
+   * @ingroup SHARED_MEMORY
+   * @brief Maximum of supported function generator channels
+   *
+   * Its the size of the array of FG_CHANNEL_BUFFER_T and FG_CHANNEL_REG_T
+   *
+   * @see FG_CHANNEL_BUFFER_T
+   * @see FG_CHANNEL_REG_T
+   */
+   MAX_FG_CHANNELS =  16,
 
-/*!
- * @ingroup SHARED_MEMORY
- * @brief Maximum number of function generator channels per SCU-bus slave
- */
-#define   MAX_FG_PER_SLAVE  2
+  /*!
+   * @ingroup SHARED_MEMORY
+   * @brief Maximum number of function generator channels per SCU-bus slave
+   */
+   MAX_FG_PER_SLAVE =  2,
 
-//TODO Convert following macros to emums.
+  /*!
+   * @ingroup SHARED_MEMORY
+   * @brief Maximum number of polynomial (of type FG_PARAM_SET_T)
+   *        per function generator channel.
+   *
+   * Its the number of polynomials containing in FG_CHANNEL_BUFFER_T
+   *
+   * @see FG_PARAM_SET_T
+   * @see FG_CHANNEL_BUFFER_T
+   */
+   BUFFER_SIZE   =    121,
 
-/*!
- * @ingroup SHARED_MEMORY
- * @brief Maximum number of polynomial (of type FG_PARAM_SET_T) 
- *        per function generator channel.
- * 
- * Its the number of polynomials containing in FG_CHANNEL_BUFFER_T
- * 
- * @see FG_PARAM_SET_T
- * @see FG_CHANNEL_BUFFER_T
- */
-#define   BUFFER_SIZE       121
+   FG_REFILL_THRESHOLD = BUFFER_SIZE * 40 / 100,
 
-#define   FG_REFILL_THRESHOLD         BUFFER_SIZE * 40 / 100
-//#define   FG_REFILL_THRESHOLD         BUFFER_SIZE * 20 / 100
-#define   OUTPUT_BITS       24
-#define   MIL_EXT           1
-#define   MAX_SIO3          MAX_SCU_SLAVES 
-#define   IFK_MAX_ADR       254
-#define   GRP_IFA8          24
-#define   IFA_ID            0xcc 
-#define   IFA_VERS          0xcd 
+   OUTPUT_BITS   =    24,
+   MIL_EXT       =    1,
+   MAX_SIO3      =    MAX_SCU_SLAVES,
+   IFK_MAX_ADR   =    254,
+   GRP_IFA8      =    24,
+   IFA_ID        =    0xcc,
+   IFA_VERS      =    0xcd,
 
-#define FG_RUNNING    0x4
-#define FG_ENABLED    0x2
-#define FG_DREQ       0x8
-#define DRQ_BIT       (1 << 10)
-#define DEV_DRQ       (1 << 0)
-#define DEV_STATE_IRQ (1 << 1)
-#define MIL_EXT_SLOT  13
-#define DEV_SIO       0x20
-#define DEV_MIL_EXT   0x10
-#define FC_CNTRL_WR   (0x14 << 8)
-#define FC_COEFF_A_WR (0x15 << 8)
-#define FC_COEFF_B_WR (0x16 << 8)
-#define FC_SHIFT_WR   (0x17 << 8)
-#define FC_START_L_WR (0x18 << 8)
-#define FC_START_H_WR (0x19 << 8)
-#define FC_CNTRL_RD   (0xa0 << 8)
-#define FC_COEFF_A_RD (0xa1 << 8)
-#define FC_COEFF_B_RD (0xa2 << 8)
-#define FC_IRQ_STAT   (0xc9 << 8)
-#define FC_IRQ_MSK    (0x12 << 8)
-#define FC_IRQ_ACT_RD (0xa7 << 8)
-#define FC_IRQ_ACT_WR (0x21 << 8)
-#define FC_IFAMODE_WR (0x60 << 8)
-#define FC_BLK_WR     (0x6b << 8)
-#define FC_ACT_RD     (0x81 << 8)
+//#define FG_RUNNING    0x4
+//#define FG_ENABLED    0x2
+//#define FG_DREQ       0x8
 
-#define SCU_BUS_SLOT_MASK  0x0F
+
+   FG_ENABLED    = (1 << 1),
+   FG_RUNNING    = (1 << 2),
+   FG_DREQ       = (1 << 3),
+   DRQ_BIT       = (1 << 10),
+   DEV_DRQ       = (1 << 0),
+   DEV_STATE_IRQ = (1 << 1),
+   MIL_EXT_SLOT  = 13,
+   DEV_SIO       = 0x20,
+   DEV_MIL_EXT   = 0x10,
+   FC_CNTRL_WR   = (0x14 << 8),
+   FC_COEFF_A_WR = (0x15 << 8),
+   FC_COEFF_B_WR = (0x16 << 8),
+   FC_SHIFT_WR   = (0x17 << 8),
+   FC_START_L_WR = (0x18 << 8),
+   FC_START_H_WR = (0x19 << 8),
+   FC_CNTRL_RD   = (0xa0 << 8),
+   FC_COEFF_A_RD = (0xa1 << 8),
+   FC_COEFF_B_RD = (0xa2 << 8),
+   FC_IRQ_STAT   = (0xc9 << 8),
+   FC_IRQ_MSK    = (0x12 << 8),
+   FC_IRQ_ACT_RD = (0xa7 << 8),
+   FC_IRQ_ACT_WR = (0x21 << 8),
+   FC_IFAMODE_WR = (0x60 << 8),
+   FC_BLK_WR     = (0x6b << 8),
+   FC_ACT_RD     = (0x81 << 8),
+
+   /*!
+    * @brief Mask for extracting the SCU-bus slot- respectively slave-number
+    *        from the socket number.
+    */
+   SCU_BUS_SLOT_MASK = 0x0F
+
+} FG_CONSTANT_T;
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -223,7 +238,7 @@ STATIC_ASSERT( sizeof(FG_CONTROL_REG_T) == sizeof(uint32_t) );
  * Meaning of the polynomial coefficients:\n
  * @f$ f(x) = coeff\_a \times 2^{shift\_a} \times x^2
  *          + coeff\_b \times 2^{shift\_b} \times x
- *          + coeff\_c \times 2^32 @f$
+ *          + coeff\_c \times 2^{32} @f$
  */
 typedef struct PACKED_SIZE
 {

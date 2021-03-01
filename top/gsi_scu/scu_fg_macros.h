@@ -252,40 +252,22 @@ uint16_t getFgShiftRegValue( const FG_PARAM_SET_T* pPset )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Returns the lower 16 bit value of the C- coefficient.
- * @see getFgCoeffCHigh16
- */
-STATIC inline
-uint16_t getFgCoeffCLow16( const FG_PARAM_SET_T* pPset )
-{
-   STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
-   return GET_LOWER_HALF( pPset->coeff_c );
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the higher 16 bit value of the C- coefficient.
- * @see getFgCoeffCLow16
- */
-STATIC inline
-uint16_t getFgCoeffCHigh16( const FG_PARAM_SET_T* pPset )
-{
-   STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
-   return GET_UPPER_HALF( pPset->coeff_c );
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief Sets the registers of a ADAC function generator.
  */
 STATIC inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
                                   const FG_PARAM_SET_T* pPset,
                                   const uint16_t controlReg )
 {
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( sizeof( pFgRegs->start_l ) * 2 == sizeof( pPset->coeff_c ));
+   STATIC_ASSERT( sizeof( pFgRegs->start_h ) * 2 == sizeof( pPset->coeff_c ));
+#endif
    ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) = controlReg;
    ADDAC_FG_ACCESS( pFgRegs, coeff_a_reg )   = pPset->coeff_a;
    ADDAC_FG_ACCESS( pFgRegs, coeff_b_reg )   = pPset->coeff_b;
    ADDAC_FG_ACCESS( pFgRegs, shift_reg )     = getFgShiftRegValue( pPset );
-   ADDAC_FG_ACCESS( pFgRegs, start_l )       = getFgCoeffCLow16( pPset );
-   ADDAC_FG_ACCESS( pFgRegs, start_h )       = getFgCoeffCHigh16( pPset );
+   ADDAC_FG_ACCESS( pFgRegs, start_l )       = GET_LOWER_HALF( pPset->coeff_c );
+   ADDAC_FG_ACCESS( pFgRegs, start_h )       = GET_UPPER_HALF( pPset->coeff_c );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -473,12 +455,16 @@ STATIC inline void setMilFgRegs( FG_MIL_REGISTER_T* pFgRegs,
                                   const FG_PARAM_SET_T* pPset,
                                   const uint16_t controlReg )
 {
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( sizeof( pFgRegs->coeff_c_low_reg )  * 2 == sizeof( pPset->coeff_c ) );
+   STATIC_ASSERT( sizeof( pFgRegs->coeff_c_high_reg ) * 2 == sizeof( pPset->coeff_c ) );
+#endif
    pFgRegs->cntrl_reg.i16     = controlReg;
    pFgRegs->coeff_a_reg       = pPset->coeff_a;
    pFgRegs->coeff_b_reg       = pPset->coeff_b;
    pFgRegs->shift_reg         = getFgShiftRegValue( pPset );
-   pFgRegs->coeff_c_low_reg   = getFgCoeffCLow16( pPset );
-   pFgRegs->coeff_c_high_reg  = getFgCoeffCHigh16( pPset );
+   pFgRegs->coeff_c_low_reg   = GET_LOWER_HALF( pPset->coeff_c );
+   pFgRegs->coeff_c_high_reg  = GET_UPPER_HALF( pPset->coeff_c );
 }
 
 #endif /* CONFIG_MIL_FG */

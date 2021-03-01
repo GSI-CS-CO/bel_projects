@@ -129,6 +129,10 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low )  = 0;
    ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
 
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low )  * 2 == sizeof( tag ) );
+   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) * 2 == sizeof( tag ) );
+#endif
    /*
     * Setting of the ECA timing tag.
     */
@@ -149,12 +153,10 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
 ONE_TIME_CALL void addacFgStart( FG_REGISTER_T* pAddagFgRegs,
                                  const FG_PARAM_SET_T* pPset,
                                  const unsigned int channel )
-{
-   const uint16_t cntrl_reg_wr = getFgControlRegValue( pPset, channel );
-   /*
+{  /*
     * CAUTION: Don't change the order of the following both code lines!
     */
-   setAdacFgRegs( pAddagFgRegs, pPset, cntrl_reg_wr );
+   setAdacFgRegs( pAddagFgRegs, pPset, getFgControlRegValue( pPset, channel ));
    ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
 }
 
