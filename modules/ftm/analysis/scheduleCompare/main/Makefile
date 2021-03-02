@@ -4,6 +4,9 @@ CXXFLAGS = -g -std=c++11 -fPIC -Wall
 LDFLAGS = -Wl,-rpath,/usr/local/lib
 LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
 
+PREFIX         ?= /usr/local
+INSTALLPATH     = $(PREFIX)/bin
+
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 .PHONY: clean format doc test
@@ -21,6 +24,9 @@ parseSchedule.o: parseSchedule.h scheduleCompare.h scheduleIsomorphism.h Schedul
 ScheduleVertex.o: ScheduleVertex.h
 
 ScheduleEdge.o: ScheduleEdge.h
+
+install: scheduleCompare
+	cp scheduleCompare $(INSTALLPATH)
 
 clean:
 	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare
