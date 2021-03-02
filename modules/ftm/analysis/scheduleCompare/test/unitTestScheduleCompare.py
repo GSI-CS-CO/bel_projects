@@ -9,8 +9,9 @@ global test_binary
 """
 Class collects unit tests for scheduleCompare.
 Tests run scheduleCompare with two dot files and check the result.
+In addition, run scheduleCompare in test mode, comparing a dot file with itself.
 
-Usage: ./unittest/ScheduleCompare.py
+Usage: ./unitTestScheduleCompare.py <binary of scheduleCompare to test>
 """
 class TestScheduleCompare(unittest.TestCase):
 
