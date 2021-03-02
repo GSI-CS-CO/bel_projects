@@ -66,7 +66,7 @@ class ScheduleVertex {
   inline bool operator>=(const ScheduleVertex& rhs) { return compare(*this, rhs) >= 0; }
 
  private:
-  enum class valueType { STRING, BOOLEAN };
+  enum class valueType { STRING, BOOLEAN, HEX };
   int compareBlock(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlow(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2);
@@ -78,6 +78,8 @@ class ScheduleVertex {
   int compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareBoolean(const std::string& bool1, const std::string& bool2);
+  int compareHex(const std::string& hex1, const std::string& hex2);
+  bool startsWith(std::string value, std::string start, bool caseSensitive);
   int compareValues(const std::string& value1, const std::string& value2, const std::string& key, valueType type);
 };
 #endif

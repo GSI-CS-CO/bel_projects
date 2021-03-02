@@ -1,6 +1,8 @@
 #include "ScheduleVertex.h"
 
 #include <iostream>
+#include <sstream>
+#include <algorithm>
 
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
@@ -49,11 +51,11 @@ int ScheduleVertex::compareBlock(const ScheduleVertex& v1, const ScheduleVertex&
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.patentry, v2.patentry, "patentry", valueType::STRING);
+  result = compareValues(v1.patentry, v2.patentry, "patentry", valueType::BOOLEAN);
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.patexit, v2.patexit, "patexit", valueType::STRING);
+  result = compareValues(v1.patexit, v2.patexit, "patexit", valueType::BOOLEAN);
   if (result != 0) {
     return result;
   }
@@ -61,11 +63,11 @@ int ScheduleVertex::compareBlock(const ScheduleVertex& v1, const ScheduleVertex&
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.bpentry, v2.bpentry, "bpentry", valueType::STRING);
+  result = compareValues(v1.bpentry, v2.bpentry, "bpentry", valueType::BOOLEAN);
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.bpexit, v2.bpexit, "bpexit", valueType::STRING);
+  result = compareValues(v1.bpexit, v2.bpexit, "bpexit", valueType::BOOLEAN);
   if (result != 0) {
     return result;
   }
@@ -230,7 +232,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.par, v2.par, "par", valueType::STRING);
+  result = compareValues(v1.par, v2.par, "par", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -309,10 +311,34 @@ int ScheduleVertex::compareBoolean(const std::string& bool1, const std::string& 
   }
 }
 
+int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2) {
+  if (startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    unsigned long x1;
+    unsigned long x2;
+    std::stringstream hexStream2;
+    std::stringstream hexStream1;
+    hexStream1 << std::hex << hex1;
+    hexStream2 << std::hex << hex2;
+    hexStream1 >> x1;
+    hexStream2 >> x2;
+    if (x1 < x2) {
+      return -1;
+    } else if (x1 > x2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else {
+    return hex1.compare(hex2);
+  }
+}
+
 int ScheduleVertex::compareValues(const std::string& value1, const std::string& value2, const std::string& key, valueType type) {
   int result = -1;
   if (type == valueType::BOOLEAN) {
     result = compareBoolean(value1, value2);
+  } else if (type == valueType::HEX) {
+    result = compareHex(value1, value2);
   } else {
     result = value1.compare(value2);
   }
@@ -320,4 +346,22 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     protocol += "Result: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.\n";
   }
   return result;
+}
+
+/*
+ * Returns true, iff the string 'value' starts with given string 'start'.
+ * Flag caseSensitive controls if the test is done case sensitive.
+ */
+bool ScheduleVertex::startsWith(std::string value, std::string start, bool caseSensitive) {
+  if (!caseSensitive) {
+    // Convert value to lower case
+    std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+    // Convert start to lower case
+    std::transform(start.begin(), start.end(), start.begin(), ::tolower);
+  }
+  if (value.find(start) == 0) {
+    return true;
+  } else {
+    return false;
+  }
 }

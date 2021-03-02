@@ -116,6 +116,19 @@ class TestScheduleCompare(unittest.TestCase):
   def test_folder_dot_wait(self):
     self.allPairsFilesInfolderTest('dot_wait/')
 
+  def test_folder_dot_hex(self):
+    self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_000a.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_ffff.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_ffff.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_ffff.dot', 'dot_hex/tmsg-par_000a.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_000a.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_ffff.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+
   def test_folder_dot_graph_entries(self):
     self.allPairsFilesInfolderTest('dot_graph_entries/')
     
@@ -185,6 +198,15 @@ class TestScheduleCompare(unittest.TestCase):
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_True.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_true.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_x.dot', 'dot_boolean/wait-target-tvalid-tabs_x.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_false.dot', 'dot_boolean/tmsg-target-tvalid-patentry_false.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_false.dot', 'dot_boolean/tmsg-target-tvalid-patentry_False.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_false.dot', 'dot_boolean/tmsg-target-tvalid-patentry_True.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_False.dot', 'dot_boolean/tmsg-target-tvalid-patentry_false.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_False.dot', 'dot_boolean/tmsg-target-tvalid-patentry_False.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_False.dot', 'dot_boolean/tmsg-target-tvalid-patentry_True.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_True.dot', 'dot_boolean/tmsg-target-tvalid-patentry_false.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_True.dot', 'dot_boolean/tmsg-target-tvalid-patentry_False.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_True.dot', 'dot_boolean/tmsg-target-tvalid-patentry_True.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
 
   def test_folder_dot(self):
     self.allPairsFilesInfolderTest('dot1/')
