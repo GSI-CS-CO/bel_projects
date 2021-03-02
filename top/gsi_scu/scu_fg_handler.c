@@ -49,10 +49,12 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
 
 //timeMeasure( &g_irqTimeMeasurement );
    /*
-    * clear freq, step select, fg_running and fg_enabled
+    * Clear all except the function generator number.
     */
-   setAdacFgRegs( pThis, &pset, (pThis->cntrl_reg.i16 & ~(0xFC07)) |
-                                ((pset.control & 0x3F) << 10) );
+   setAdacFgRegs( pThis,
+                  &pset,
+                  (pThis->cntrl_reg.i16 & FG_NUMBER) |
+                  ((pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) );
 //timeMeasure( &g_irqTimeMeasurement );
    return true;
 }
@@ -83,11 +85,12 @@ timeMeasure( &g_irqTimeMeasurement );
 
 
   // for( unsigned int i = 0; i < 100000; i++ ) NOP(); //!!Testing how many time we still have...
-
+#if 1
    if( pFgRegs->cntrl_reg.bv.isRunning )
    {
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
+
       sendRefillSignalIfThreshold( channel );
 
    #ifdef CONFIG_USE_SENT_COUNTER
@@ -101,7 +104,27 @@ timeMeasure( &g_irqTimeMeasurement );
    {
       makeStop( channel );
    }
+#else
+   const uint16_t controlReg = ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 );
+   if( (controlReg & FG_RUNNING) != 0 )
+   {
+      if( (controlReg & FG_DREQ) != 0 )
+         makeStart( channel );
 
+      sendRefillSignalIfThreshold( channel );
+
+   #ifdef CONFIG_USE_SENT_COUNTER
+      if( feedAdacFg( pFgRegs ) )
+         g_aFgChannels[channel].param_sent++;
+   #else
+      feedAdacFg( pFgRegs );
+   #endif
+   }
+   else
+   {
+      makeStop( channel );
+   }
+#endif
 timeMeasure( &g_irqTimeMeasurement );
 
 }

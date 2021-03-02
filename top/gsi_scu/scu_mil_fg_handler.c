@@ -463,7 +463,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
     * clear freq, step select, fg_running and fg_enabled
     */
    setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
-                                    (pset.control & 0x3F) << 10) ;
+                                    (pset.control.i32 & 0x3F) << 10) ;
    int status;
  #if __GNUC__ >= 9
    #pragma GCC diagnostic push

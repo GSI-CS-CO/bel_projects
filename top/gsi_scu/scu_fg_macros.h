@@ -18,10 +18,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 /*!
  * @brief Control register of function generator.
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/FunctionGeneratorQuadratic#cntrl_reg
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
+ * @see FG_MASK_T
  */
 typedef struct HW_IMAGE
 {
@@ -56,13 +59,14 @@ typedef struct HW_IMAGE
    const bool isRunning:      1;
 
    /*!
-    * @brief Enable function generator (rw) bit
+    * @brief Enable function generator (rw) bit [1]
     * @see FG_ENABLED
     */
    bool enable:               1;
 
    /*!
     * @brief Reset, 1 -> active (rw) bit [0]
+    * @see FG_RESET
     */
    bool reset:                1;
 #else
@@ -243,12 +247,12 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
 #define ADDAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
 
 /*! ---------------------------------------------------------------------------
- * @brief Returns the 16 bit shift register value
+ * @brief Returns the the or-link of the shift-a and shift-b register value.
  */
 STATIC inline
 uint16_t getFgShiftRegValue( const FG_PARAM_SET_T* pPset )
 {
-   return (pPset->control & 0x3FFC0) >> 6;
+   return (pPset->control.i32 & (PSET_SHIFT_A | PSET_SHIFT_B)) >> 6;
 }
 
 /*! ---------------------------------------------------------------------------

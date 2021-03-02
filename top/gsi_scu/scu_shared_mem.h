@@ -119,6 +119,28 @@ typedef union PACKED_SIZE
 
 #define CONFIG_USE_RESCAN_FLAG /* A very bad idea!!! :-( */
 
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Adresses of LM32 shared memory
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
+ */
+typedef enum
+{
+   BOARD_ID        = 0x500, /*!<@brief onewire id of the scu base board    16 */
+   EXT_ID          = 0x508, /*!<@brief onewire id of the scu extension board   16 */
+   BACKPLANE_ID    = 0x510, /*!<@brief onewire id of the scu backplane     16 */
+   BOARD_TEMP      = 0x518, /*!<@brief temperature of the scu base board   8 */
+   EXT_TEMP        = 0x51C, /*!<@brief temperature of the scu extension board  8 */
+   BACKPLANE_TEMP  = 0x520, /*!<@brief temperature of the scu backplane    8 */
+   FG_VERSION_OFS  = 0x528, /*!<@brief version number of the fg macro  8 */
+   FG_MB_SLOT      = 0x52C, /*!<@brief mailbox slot for swi from linux     8 */
+   FG_NUM_CHANNELS = 0x530, /*!<@brief max number of fg channels   8 */
+   FG_BUFFER_SIZE  = 0x534, /*!<@brief buffersize per channel of fg_buffer     8 */
+   FG_MACROS       = 0x538, /*!<@brief [256]  hi..lo bytes: slot, device, version, output-bits    8 * 256 */
+   FG_REGS         = 0xD38, /*!<@brief [fg_num_channels]    array of struct channel_regs    8 * 7 * 256 */
+   FG_BUFFER       = 0x4538 /*!<@brief [fg_num_channels] */
+} SHARED_ADDRESS_T;
+
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
  * @brief Definition of shared memory area for the communication between LM32

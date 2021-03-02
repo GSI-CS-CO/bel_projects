@@ -408,10 +408,6 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    const unsigned int dev    = fg_macros[macro].device;
 
    //reset hardware
-#ifdef CONFIG_MIL_FG
-   reset_mil( devb_base );
-   scub_reset_mil( scub_base, socket );
-#endif
    //mprintf("reset fg %d in socked %d\n", device, socked);
    /* scub slave */
    if( isAddacFg( socket ) )
@@ -419,34 +415,36 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
 #if 0
       if( dev == 0 )
       {
-         scub_base[OFFS(socket) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
+         scub_base[OFFS(socket) + FG1_BASE + FG_CNTRL] = FG_RESET; // reset fg
          return;
       }
       if( dev == 1 )
       {
-         scub_base[OFFS(socket) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+         scub_base[OFFS(socket) + FG2_BASE + FG_CNTRL] = FG_RESET; // reset fg
       }
 #else
-      getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
+      //getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
+      getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.i16 = FG_RESET;
 #endif
     //   scuBusEnableSlaveInterrupt( (void*)scub_base, socket );
     //  *scuBusGetInterruptActiveFlagRegPtr( (void*)scub_base, socket ) = (FG1_IRQ | FG2_IRQ);
 
       return;
    }
+
 #ifdef CONFIG_MIL_FG
-   /* mil extension */
-   if( isMilExtentionFg( socket ) )
+   if( isMilScuBusFg( socket ) )
    {
-      write_mil( devb_base, 0x1, FC_CNTRL_WR | dev ); // reset fg
+      const unsigned int slot = getFgSlotNumber( socket );
+      scub_reset_mil( scub_base, slot );
+      scub_write_mil( scub_base, slot, FG_RESET, FC_CNTRL_WR | dev ); // reset fg
       return;
    }
 
-   if( isMilScuBusFg( socket ) )
-   {
-      scub_write_mil( scub_base, getFgSlotNumber( socket ),
-                      0x1, FC_CNTRL_WR | dev); // reset fg
-   }
+   /* mil extension */
+   FG_ASSERT( isMilExtentionFg( socket ) );
+   reset_mil( devb_base );
+   write_mil( devb_base, FG_RESET, FC_CNTRL_WR | dev ); // reset fg
 #endif
 }
 

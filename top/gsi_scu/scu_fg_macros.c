@@ -44,7 +44,7 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
 ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
                                              const unsigned int channel )
 {
-   return ((pPset->control & 0x3F) << 10) | (channel << 4);
+   return ((pPset->control.i32 & 0x3F) << 10) | (channel << 4);
 }
 
 /*! ---------------------------------------------------------------------------

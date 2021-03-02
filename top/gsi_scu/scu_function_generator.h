@@ -51,6 +51,50 @@ namespace Scu
 #endif
 
 /*!
+ * @brief Bit masks of the function generators control register.
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/FunctionGeneratorQuadratic#cntrl_reg
+ * @see FG_CTRL_RG_T_BV
+ */
+typedef enum
+{
+   /*!
+    * @brief Function generator reset mask.
+    */
+   FG_RESET   = (1 << 0),
+
+   /*!
+    * @brief Function generator enable mask.
+    */
+   FG_ENABLED = (1 << 1),
+
+   /*!
+    * @brief Function generator running indicator mask.
+    */
+   FG_RUNNING = (1 << 2),
+
+   /*!
+    * @brief Function generator data request indicator mask.
+    */
+   FG_DREQ    = (1 << 3),
+
+   /*!
+    * @brief Mask for function generator number.
+    */
+   FG_NUMBER  = 0x03F0,
+
+   /*!
+    * @brief Mask for the function generators polynomial step.
+    */
+   FG_STEP    = 0x1C00,
+
+   /*!
+    * @brief Mask for the function generators frequency select.
+    */
+   FG_FREQU   = 0xE000
+} FG_MASK_T;
+
+
+/*!
  * @brief Definition of flag-masks and constants for ADDAC/ACU- and MIL-
  *        function generators.
  */
@@ -89,54 +133,45 @@ typedef enum
    * @see FG_PARAM_SET_T
    * @see FG_CHANNEL_BUFFER_T
    */
-   BUFFER_SIZE   =    121,
+   BUFFER_SIZE         =    121,
 
    FG_REFILL_THRESHOLD = BUFFER_SIZE * 40 / 100,
 
-   OUTPUT_BITS   =    24,
-   MIL_EXT       =    1,
-   MAX_SIO3      =    MAX_SCU_SLAVES,
-   IFK_MAX_ADR   =    254,
-   GRP_IFA8      =    24,
-   IFA_ID        =    0xcc,
-   IFA_VERS      =    0xcd,
-
-//#define FG_RUNNING    0x4
-//#define FG_ENABLED    0x2
-//#define FG_DREQ       0x8
-
-
-   FG_ENABLED    = (1 << 1),
-   FG_RUNNING    = (1 << 2),
-   FG_DREQ       = (1 << 3),
-   DRQ_BIT       = (1 << 10),
-   DEV_DRQ       = (1 << 0),
-   DEV_STATE_IRQ = (1 << 1),
-   MIL_EXT_SLOT  = 13,
-   DEV_SIO       = 0x20,
-   DEV_MIL_EXT   = 0x10,
-   FC_CNTRL_WR   = (0x14 << 8),
-   FC_COEFF_A_WR = (0x15 << 8),
-   FC_COEFF_B_WR = (0x16 << 8),
-   FC_SHIFT_WR   = (0x17 << 8),
-   FC_START_L_WR = (0x18 << 8),
-   FC_START_H_WR = (0x19 << 8),
-   FC_CNTRL_RD   = (0xa0 << 8),
-   FC_COEFF_A_RD = (0xa1 << 8),
-   FC_COEFF_B_RD = (0xa2 << 8),
-   FC_IRQ_STAT   = (0xc9 << 8),
-   FC_IRQ_MSK    = (0x12 << 8),
-   FC_IRQ_ACT_RD = (0xa7 << 8),
-   FC_IRQ_ACT_WR = (0x21 << 8),
-   FC_IFAMODE_WR = (0x60 << 8),
-   FC_BLK_WR     = (0x6b << 8),
-   FC_ACT_RD     = (0x81 << 8),
+   OUTPUT_BITS         = 24,
+   MIL_EXT             = 1,
+   MAX_SIO3            = MAX_SCU_SLAVES,
+   IFK_MAX_ADR         = 254,
+   GRP_IFA8            = 24,
+   IFA_ID              = 0xcc,
+   IFA_VERS            = 0xcd,
+   DRQ_BIT             = (1 << 10),
+   DEV_DRQ             = (1 << 0),
+   DEV_STATE_IRQ       = (1 << 1),
+   MIL_EXT_SLOT        = 13,
+   DEV_SIO             = 0x20,
+   DEV_MIL_EXT         = 0x10,
+   FC_CNTRL_WR         = (0x14 << 8),
+   FC_COEFF_A_WR       = (0x15 << 8),
+   FC_COEFF_B_WR       = (0x16 << 8),
+   FC_SHIFT_WR         = (0x17 << 8),
+   FC_START_L_WR       = (0x18 << 8),
+   FC_START_H_WR       = (0x19 << 8),
+   FC_CNTRL_RD         = (0xa0 << 8),
+   FC_COEFF_A_RD       = (0xa1 << 8),
+   FC_COEFF_B_RD       = (0xa2 << 8),
+   FC_IRQ_STAT         = (0xc9 << 8),
+   FC_IRQ_MSK          = (0x12 << 8),
+   FC_IRQ_ACT_RD       = (0xa7 << 8),
+   FC_IRQ_ACT_WR       = (0x21 << 8),
+   FC_IFAMODE_WR       = (0x60 << 8),
+   FC_BLK_WR           = (0x6b << 8),
+   FC_ACT_RD           = (0x81 << 8),
 
    /*!
     * @brief Mask for extracting the SCU-bus slot- respectively slave-number
     *        from the socket number.
     */
-   SCU_BUS_SLOT_MASK = 0x0F
+   SCU_BUS_SLOT_MASK   = 0x0F
 
 } FG_CONSTANT_T;
 
@@ -201,7 +236,19 @@ STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
  */
 #define OUTPUT_BIT_MASK          ~SET_VALUE_NOT_VALID_MASK
 
-#if 1
+/*!
+ * @brief Constants for mask out the bit values of the polynomials
+ *        control register.
+ * @see FG_PARAM_SET_T
+ */
+typedef enum
+{
+   PSET_STEP     = 0x00000007,
+   PSET_FREQU    = 0x00000038,
+   PSET_SHIFT_B  = 0x00000FC0,
+   PSET_SHIFT_A  = 0x0003F000
+} PSET_CONTROLREG_MASK_T;
+
 /*!
  * @see https://github.com/GSI-CS-CO/bel_projects/blob/proposed_master/modules/function_generators/fg_quad/fg_quad_scu_bus.vhd
  * @see FG_PARAM_SET_T
@@ -209,25 +256,38 @@ STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint32_t __not_used__: 14;
-   uint32_t shift_a:       6;
-   uint32_t shift_b:       6;
-   uint32_t frequency:     3;
-   uint32_t step:          3;
+   unsigned int __not_used__: 14;
+   unsigned int shift_a:       6;
+   unsigned int shift_b:       6;
+   unsigned int frequency:     3;
+   unsigned int step:          3;
 #else
-   uint32_t step:          3;
-   uint32_t frequency:     3;
-   uint32_t shift_b:       6;
-   uint32_t shift_a:       6;
-   uint32_t __not_used__: 14;
+   unsigned int step:          3;
+   unsigned int frequency:     3;
+   unsigned int shift_b:       6;
+   unsigned int shift_a:       6;
+   unsigned int __not_used__: 14;
 #endif
 } FG_CONTROL_REG_T;
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(FG_CONTROL_REG_T) == sizeof(uint32_t) );
 #endif
-#endif
 
+/*!
+ * @brief Helper type for bit or integer access
+ * @see FG_CONTROL_REG_T
+ * @see FG_PARAM_SET_T
+ */
+typedef union PACKED_SIZE
+{
+   uint32_t          i32;
+   FG_CONTROL_REG_T  bv;
+} __FG_CONTROL_REG_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( __FG_CONTROL_REG_T ) == sizeof(uint32_t) );
+#endif
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -267,7 +327,7 @@ typedef struct PACKED_SIZE
     * @todo Use a bit field structure in attention of the
     *       endianes convention rather than uint32_t.
     */
-   uint32_t control;
+   __FG_CONTROL_REG_T control;
 } FG_PARAM_SET_T;
 
 
