@@ -3,7 +3,10 @@ DATAMASTER ?= $$DM
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
 
-all: bpcStart dmCmd dmPerformance dmThreads fid7 full_test pps safe2remove singleEdgeTest schedules
+all: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test pps safe2remove singleEdgeTest schedules
+
+addDownloadCompare:
+	$(MAKE) -C addDownloadCompare/
 
 bpcStart:
 	cd bpcStart; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python bpcStart.py $(DATAMASTER)
