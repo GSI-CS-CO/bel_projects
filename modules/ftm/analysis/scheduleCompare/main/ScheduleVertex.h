@@ -41,6 +41,7 @@ class ScheduleVertex {
   std::string patexit = std::string("");
   std::string bpentry = std::string("");
   std::string bpexit = std::string("");
+  std::string permanent = std::string("");
   // for syntax check of dot files:
   std::string cpu = std::string("");
   std::string qty = std::string("");
