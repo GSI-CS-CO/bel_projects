@@ -142,12 +142,12 @@ typedef enum
    MAX_SIO3            = MAX_SCU_SLAVES,
    IFK_MAX_ADR         = 254,
    GRP_IFA8            = 24,
-   IFA_ID              = 0xcc,
-   IFA_VERS            = 0xcd,
+   IFA_ID              = 0xCC,
+   IFA_VERS            = 0xCD,
    DRQ_BIT             = (1 << 10),
    DEV_DRQ             = (1 << 0),
    DEV_STATE_IRQ       = (1 << 1),
-   MIL_EXT_SLOT        = 13,
+   MIL_EXT_SLOT        = MAX_SCU_SLAVES + 1,
    DEV_SIO             = 0x20,
    DEV_MIL_EXT         = 0x10,
    FC_CNTRL_WR         = (0x14 << 8),
@@ -156,22 +156,38 @@ typedef enum
    FC_SHIFT_WR         = (0x17 << 8),
    FC_START_L_WR       = (0x18 << 8),
    FC_START_H_WR       = (0x19 << 8),
-   FC_CNTRL_RD         = (0xa0 << 8),
-   FC_COEFF_A_RD       = (0xa1 << 8),
-   FC_COEFF_B_RD       = (0xa2 << 8),
-   FC_IRQ_STAT         = (0xc9 << 8),
+   FC_CNTRL_RD         = (0xA0 << 8),
+   FC_COEFF_A_RD       = (0xA1 << 8),
+   FC_COEFF_B_RD       = (0xA2 << 8),
+   FC_IRQ_STAT         = (0xC9 << 8),
    FC_IRQ_MSK          = (0x12 << 8),
-   FC_IRQ_ACT_RD       = (0xa7 << 8),
+   FC_IRQ_ACT_RD       = (0xA7 << 8),
    FC_IRQ_ACT_WR       = (0x21 << 8),
    FC_IFAMODE_WR       = (0x60 << 8),
-   FC_BLK_WR           = (0x6b << 8),
+   FC_BLK_WR           = (0x6B << 8),
    FC_ACT_RD           = (0x81 << 8),
 
    /*!
     * @brief Mask for extracting the SCU-bus slot- respectively slave-number
     *        from the socket number.
     */
-   SCU_BUS_SLOT_MASK   = 0x0F
+   SCU_BUS_SLOT_MASK   = 0x000F,
+
+   /*!
+    * @brief Bit mask for "set-value not valid flag" which is integrated
+    *        in the element outputBits of FG_MACRO_T.
+    * @note This flag is in the ring-buffer data present only!
+    * @see FG_MACRO_T::outputBits
+    */
+   SET_VALUE_NOT_VALID_MASK = (1 << (BIT_SIZEOF(uint8_t)-1)),
+
+   /*!
+    * @brief Mask for obtaining the number of output bits of
+    *        the element  outputBits of FG_MACRO_T.
+    * @note This mask it in the ring-buffer necessary only.
+    * @see FG_MACRO_T::outputBits
+    */
+   OUTPUT_BIT_MASK           = ~SET_VALUE_NOT_VALID_MASK
 
 } FG_CONSTANT_T;
 
@@ -221,24 +237,9 @@ STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
 #endif
 
 /*!
- * @brief Bit mask for "set-value not valid flag" which is integrated
- *        in the element outputBits of FG_MACRO_T.
- * @note This flag is in the ring-buffer data present only!
- * @see FG_MACRO_T::outputBits
- */
-#define SET_VALUE_NOT_VALID_MASK (1 << (BIT_SIZEOF(uint8_t)-1))
-
-/*!
- * @brief Mask for obtaining the number of output bits of
- *        the element  outputBits of FG_MACRO_T.
- * @note This mask it in the ring-buffer necessary only.
- * @see FG_MACRO_T::outputBits
- */
-#define OUTPUT_BIT_MASK          ~SET_VALUE_NOT_VALID_MASK
-
-/*!
  * @brief Constants for mask out the bit values of the polynomials
  *        control register.
+ * @see FG_CONTROL_REG_T
  * @see FG_PARAM_SET_T
  */
 typedef enum

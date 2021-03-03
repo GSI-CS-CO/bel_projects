@@ -39,13 +39,6 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
    {{0}};
 #endif
 
-/*! --------------------------------------------------------------------------
- */
-ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
-                                             const unsigned int channel )
-{
-   return ((pPset->control.i32 & 0x3F) << 10) | (channel << 4);
-}
 
 /*! ---------------------------------------------------------------------------
  * @brief Prepares the selected ADDAC/ACU- function generator.
@@ -140,6 +133,20 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( tag );
 
    return pAddagFgRegs;
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief Returns the control register format for step, frequency select
+ *        and channel number.
+ * @param pPset Pointer to the polynomial data set.
+ * @param channel Channel number of the concerned function generator.
+ * @return Value for the function generators control register.
+ */
+ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
+                                             const unsigned int channel )
+{
+   return ((pPset->control.i32 & (PSET_STEP | PSET_FREQU)) << 10) |
+          (channel << 4);
 }
 
 /*! ---------------------------------------------------------------------------
@@ -428,7 +435,6 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
- * @todo Split this in two separate functions: MIL and non-MIL.
  */
 void configure_fg_macro( const unsigned int channel )
 {
