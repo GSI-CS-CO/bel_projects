@@ -51,13 +51,25 @@ means $g_1$ is possibly a subgraph of $g_2$. In addition, $g_1 S g_2$ means $g_1
 \end{tabular}
 \end{table}
 
-TODO: document prerequisites, like dot files syntactical correct, not a null graph.
+\section{Prerequisites}
+The dot files to compare should be syntactically correct.
+They should contain a graph with at least one vertex.
+It is not necessary that the dot file can be loaded into the datamaster. This is not checked.
+\texttt{libcarpedm} is not needed.
+
 \section{Compare Vertices}
 The Boost Graph algorithm needs a comparator for the vertices and a second comparator for the edges. 
 The comparator for the edges is easy: two edges are equal if and only if the types are equal (as strings).
 
 The comparator for the vertices has to handle the class hierarchy to the vertices (subclasses of \texttt{Node} in \texttt{libcarpedm}).
+The attributes for vertices are defined in \texttt{libcarpedm} for the dot parser, the members of \texttt{mxVertex}, and the subclasses of \texttt{Node}.
 The attributes for \texttt{Node} (see~\ref{tab:Node-attributes}) are common to all vertices.
+
+The comparator for the vertices checks as a first step the types. If a vertex has no type, this is interpreted as a wildcard for a type defined elsewhere.
+This occures for dot files with describe a pattern to remove. The dot file to remove describes a schedule which is isomorphic to a subgraph of the larger schedule.
+
+The comparator for the vertices handle sthe different data types of the values. For boolean values, \texttt{0}, \texttt{false}, \texttt{False}, and none (empty string) are interpreted as false.
+\texttt{1}, \texttt{true}, and \texttt{True} are interpreted as true. For hexadecimal values, leading zeros between prefix '0x' and the value are removed before comparing.
 
 \begin{table}
 \caption{Attributes for \texttt{Node}}
@@ -91,12 +103,12 @@ The attributes for \texttt{Block} include attributes for \texttt{Node}.
 \hline
 Attribute & Required   & Value Type & Value Range \\ \hline
 tperiod   & \checkmark & uint64     & -           \\
-rdidxlo   & not tested & unit8      &             \\
-rdidxhi   & not tested & unit8      &             \\
-rdidxil   & not tested & unit8      &             \\
-wridxlo   & not tested & unit8      &             \\
-wridxhi   & not tested & unit8      &             \\
-wridxil   & not tested & unit8      &             \\
+rdidxlo   & not tested & uint8      &             \\
+rdidxhi   & not tested & uint8      &             \\
+rdidxil   & not tested & uint8      &             \\
+wridxlo   & not tested & uint8      &             \\
+wridxhi   & not tested & uint8      &             \\
+wridxil   & not tested & uint8      &             \\
 \hline
 \end{tabular}
 \end{center}
@@ -212,46 +224,49 @@ Usage: \texttt{scheduleCompare $<$dot file 1$>$ $<$dot file 2$>$}
 
 Options:
 \begin{enumerate}
-	\item -c: check dot syntax (stops parsing on all unknown attributes).
-	\item -h: help and usage.
-	\item -s: silent, no output, only return code. Usefull for automated tests.
-	\item -t: test a single graph: compare each vertex with itself.
-	\item -v: verbose, output of input graphs as dot text.
-	\item -vv: super verbose, in addition to verbose more output.
+  \item -c: check dot syntax (stops parsing on all unknown attributes).
+  \item -h: help and usage.
+  \item -s: silent, no output, only return code. Usefull for automated tests.
+  \item -t: test a single graph: compare each vertex with itself.
+  \item -v: verbose, output of input graphs as dot text.
+  \item -vv: super verbose, in addition to verbose more output.
 \end{enumerate}
 
 Return Codes:
 \begin{enumerate}
-	\item 0 EXIT\_SUCCESS, graphs are isomorphic.
-	\item 1 NOT\_ISOMORPHIC, graphs are not isomorphic.
-	\item 2 SUBGRAPH\_ISOMORPHIC, graph is isomorphic to a subgraph of the larger graph.
-	\item 11 BAD\_ARGUMENTS, unknown arguments on command line.
-	\item 12 MISSING\_ARGUMENT, at least one of the file names is missing.
-	\item 13 FILE\_NOT\_FOUND, one of the dot files not found.
-	\item 14 USAGE\_MESSAGE, usage message (help) displayed.
+  \item 0 EXIT\_SUCCESS, graphs are isomorphic.
+  \item 1 NOT\_ISOMORPHIC, graphs are not isomorphic.
+  \item 2 SUBGRAPH\_ISOMORPHIC, graph is isomorphic to a subgraph of the larger graph.
+  \item 11 BAD\_ARGUMENTS, unknown arguments on command line.
+  \item 12 MISSING\_ARGUMENT, at least one of the file names is missing.
+  \item 13 FILE\_NOT\_FOUND, one of the dot files not found.
+  \item 14 USAGE\_MESSAGE, usage message (help) displayed.
   \item 15 PARSE\_ERROR, error while parsing, unknown tag or attribute.
   \item 16 TEST\_SUCCESS, test a single graph with success.
   \item 17 TEST\_FAIL, test a single graph with failure.
-	\item negative values are UNIX signals
+  \item negative values are UNIX signals
 \end{enumerate}
 
 \chapter{Testframework and Test Cases}
 First attempt for the test framework are unit tests with Python. A test case in general calls \texttt{scheduleCompare} with two dot files and examines the output. For this, the return code of \texttt{scheduleCompare}.
 
 \begin{enumerate}
-	\item 9 test cases for the cardinalities from table~\ref{tab:cardinalities}
-	\item 1815 dot files (11 * 11 *15) from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is compared with itself, the graphs should be isomorphic. These are 3.294.225 combinations.
-	\item same graph, but different names for the vertices.
-	\item same graph, but different types for vertices with the same name.
-	\item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
+  \item 9 test cases for the cardinalities from table~\ref{tab:cardinalities}
+  \item 1815 dot files (11 * 11 *15) from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is compared with itself, the graphs should be isomorphic. These are 3.294.225 combinations.
+This test runs for a long time. Start with \texttt{nohup} $<$ command $>$ \& to run this in the background without a tty / terminal.
+  \item same graph, but different names for the vertices.
+  \item same graph, but different types for vertices with the same name.
+  \item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
+  \item test cases for boolean values.
+  \item cases for hex values.
 \end{enumerate}
 
 \chapter{Source and Branches}
 The source code is in branch \texttt{dm-analysis}, \\ 
 folder \texttt{modules/ftm/analysis/sourceCompare/}. The subfolders
 \begin{enumerate}
-	\item doc for the documentation,
-	\item main for the source files,
-	\item test for the test framework and the test input
+  \item doc for the documentation,
+  \item main for the source files,
+  \item test for the test framework and the test input
 \end{enumerate}
 \end{document}

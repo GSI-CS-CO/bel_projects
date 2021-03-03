@@ -1,8 +1,8 @@
 #include "ScheduleVertex.h"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <algorithm>
 
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
@@ -177,13 +177,76 @@ int ScheduleVertex::compareFlush(const ScheduleVertex& v1, const ScheduleVertex&
   return result;
 }
 
-int ScheduleVertex::compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2) { return -1; }
+int ScheduleVertex::compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.beamproc, v2.beamproc, "beamproc", valueType::STRING);
+  return result;
+}
 
-int ScheduleVertex::compareNoop(const ScheduleVertex& v1, const ScheduleVertex& v2) { return -1; }
+int ScheduleVertex::compareNoop(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.tvalid, v2.tvalid, "tvalid", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.vabs, v2.vabs, "vabs", valueType::BOOLEAN);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.toffs, v2.toffs, "toffs", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.prio, v2.prio, "prio", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.qty, v2.qty, "qty", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.beamproc, v2.beamproc, "beamproc", valueType::STRING);
+  return result;
+}
 
-int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) { return 0; }
+int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) { 
+	  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.beamproc, v2.beamproc, "beamproc", valueType::STRING);
+  return result;
+ }
 
-int ScheduleVertex::compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2) { return 0; }
+int ScheduleVertex::compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2) {   int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.beamproc, v2.beamproc, "beamproc", valueType::STRING);
+  return result;
+ }
 
 int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   int result = -1;
@@ -195,7 +258,7 @@ int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.tabs, v2.tabs, "tabs", valueType::STRING);
+  result = compareValues(v1.tabs, v2.tabs, "tabs", valueType::BOOLEAN);
   if (result != 0) {
     return result;
   }
