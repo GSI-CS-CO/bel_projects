@@ -36,27 +36,19 @@
  #include <daq_calculations.hpp>
  #include <daq_exception.hpp>
  #include <daqt_messages.hpp>
+ #include <scu_function_generator.h>
 #endif
 
 namespace fgw
 {
 
-struct POLYNOM_T
-{
-   int   a;
-   uint  shiftA;
-   int   b;
-   uint  shiftB;
-   int   c;
-   uint  step;
-   uint  frequ;
-};
+using POLYNOM_T = Scu::FG_PARAM_SET_T;
 
 using POLYMOM_VECT_T = std::vector<POLYNOM_T>;
-
 
 int parseInStream( POLYMOM_VECT_T& rVect, std::istream& rInput );
 
 } // namespace fgw
+
 #endif // ifndef _FGW_PARSER_HPP
 //================================== EOF ======================================

@@ -30,7 +30,7 @@ using namespace Scu;
 
 namespace fgw
 {
-   
+
 #define FSM_DECLARE_STATE( state, attr... ) state
 enum STATE_T
 {
@@ -87,7 +87,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
 
       if( oLine.find_first_of( '#' ) != string::npos )
          continue;
-         
+
       POLYNOM_T polynom;
       size_t pos = 0;
       bool nextState = true;
@@ -111,7 +111,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             errorMessage += "\"!";
             throw( daq::Exception( errorMessage ) );
          }
-         
+
          oLine = oLine.substr( pos );
          switch( state )
          {
@@ -156,43 +156,43 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
 
             case READ_COEFF_A:
             {
-               polynom.a = number;
+               polynom.coeff_a = number;
                FSM_TRANSITION_NEXT( READ_SHIFT_A );
             }
 
             case READ_SHIFT_A:
             {
-               polynom.shiftA = number;
+               polynom.control.bv.shift_a = number;
                FSM_TRANSITION_NEXT( READ_COEFF_B );
             }
 
             case READ_COEFF_B:
             {
-               polynom.b = number;
+               polynom.coeff_b = number;
                FSM_TRANSITION_NEXT( READ_SHIFT_B );
             }
 
             case READ_SHIFT_B:
             {
-               polynom.shiftB = number;
+               polynom.control.bv.shift_b = number;
                FSM_TRANSITION_NEXT( READ_COEFF_C );
             }
 
             case READ_COEFF_C:
             {
-               polynom.c = number;
+               polynom.coeff_c = number;
                FSM_TRANSITION_NEXT( READ_STEP );
             }
 
             case READ_STEP:
             {
-               polynom.step = number;
+               polynom.control.bv.step = number;
                FSM_TRANSITION_NEXT( READ_FREQUENCY );
             }
 
             case READ_FREQUENCY:
             {
-               polynom.frequ = number;
+               polynom.control.bv.frequency = number;
                FSM_TRANSITION( LINE_READY );
             }
 
@@ -200,7 +200,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
          }
       }
       while( nextState );
-      
+
       for( const auto& c: oLine )
       {
          if( c != ' ' )
@@ -213,7 +213,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             throw( daq::Exception( errorMessage ) );
          }
       }
-      
+
       rVect.push_back( polynom );
    }
    return i;

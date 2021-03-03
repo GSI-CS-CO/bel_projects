@@ -78,11 +78,11 @@ double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
 
    return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()?
                                ZERO:
-                               (static_cast<int64_t>( polynom.a ) << polynom.shiftA)),
+                               (static_cast<int64_t>( polynom.coeff_a ) << polynom.control.bv.shift_a)),
                             (m_rCommandline.isNoLinearTerm()?
                                ZERO:
-                               (static_cast<int64_t>( polynom.b ) << polynom.shiftB)),
-                            static_cast<int64_t>( polynom.c ) << 32,
+                               (static_cast<int64_t>( polynom.coeff_b ) << polynom.control.bv.shift_b)),
+                            static_cast<int64_t>( polynom.coeff_c ) << 32,
                             x
                           );
 }
@@ -105,9 +105,9 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    uint daConversions = 0; 
    for( const auto& polynom: rVect )
    {
-      assert( polynom.frequ < ARRAY_SIZE( c_timeTab ) );
-      const uint steps = calcStep( polynom.step );
-      xRange += c_timeTab[polynom.frequ] * steps;
+      assert( polynom.control.bv.frequency < ARRAY_SIZE( c_timeTab ) );
+      const uint steps = calcStep( polynom.control.bv.step );
+      xRange += c_timeTab[polynom.control.bv.frequency] * steps;
       daConversions += steps;
    }
    assert( xRange > 0.0 );
@@ -149,14 +149,14 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
    {
       for( const auto& polynom: rVect )
       {
-         const uint steps = calcStep( polynom.step );
+         const uint steps = calcStep( polynom.control.bv.step );
          assert( steps > 0 );
          uint dotsPerTuple = m_rCommandline.getDotsPerTuple();
          if( dotsPerTuple == 0 )
             dotsPerTuple = steps;
          const uint interval = steps / dotsPerTuple;
-         assert( polynom.frequ < ARRAY_SIZE( c_timeTab ) );
-         const double tPart = c_timeTab[polynom.frequ];
+         assert( polynom.control.bv.frequency < ARRAY_SIZE( c_timeTab ) );
+         const double tPart = c_timeTab[polynom.control.bv.frequency];
          for( uint i = 0; i < steps; i++ )
          {
             if( ((i % interval) == 0) || (i == (steps-1)) )
@@ -179,10 +179,10 @@ void Polynom::plot( ostream& out, const POLYMOM_VECT_T& rVect )
       for( const auto& polynom: rVect )
       {
          out << tOrigin << ' '
-             << (static_cast<double>(static_cast<int64_t>( polynom.c ) << 32)
+             << (static_cast<double>(static_cast<int64_t>( polynom.coeff_c ) << 32)
                 * TO_VOLTAGE)
              << endl;
-         tOrigin += calcStep( polynom.step ) * c_timeTab[polynom.frequ];   
+         tOrigin += calcStep( polynom.control.bv.step ) * c_timeTab[polynom.control.bv.frequency];
       }
    }
    out << 'e' << endl;

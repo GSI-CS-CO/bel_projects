@@ -40,13 +40,13 @@ void static printPolynomVect( const POLYMOM_VECT_T& rVect )
 {
    for( const auto& polynom: rVect )
    {
-      cout << polynom.a << ' '
-           << polynom.shiftA << ' '
-           << polynom.b << ' '
-           << polynom.shiftB << ' '
-           << polynom.c << ' '
-           << polynom.step << ' '
-           << polynom.frequ
+      cout << polynom.coeff_a << ' '
+           << polynom.control.bv.shift_a << ' '
+           << polynom.coeff_b << ' '
+           << polynom.control.bv.shift_b << ' '
+           << polynom.coeff_c << ' '
+           << polynom.control.bv.step << ' '
+           << polynom.control.bv.frequency
            << endl;
    }
 }
@@ -63,8 +63,8 @@ int static printInfo( const POLYMOM_VECT_T& rVect, const bool beVerbose )
    double periodTime = 0.0;
    for( const auto& polynom: rVect )
    {
-      assert( polynom.frequ < ARRAY_SIZE( Polynom::c_timeTab ) );
-      double iTime = Polynom::calcStep( polynom.step ) * Polynom::c_timeTab[polynom.frequ];
+      assert( polynom.control.bv.frequency < ARRAY_SIZE( Polynom::c_timeTab ) );
+      double iTime = Polynom::calcStep( polynom.control.bv.step ) * Polynom::c_timeTab[polynom.control.bv.frequency];
       interruptTimeMax = max( interruptTimeMax, iTime );
       interruptTimeMin = min( interruptTimeMin, iTime );
       periodTime += iTime;

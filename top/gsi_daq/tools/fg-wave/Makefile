@@ -49,7 +49,7 @@ LIBS += stdc++
 # LIBS += m
 
 # CALL_ARGS = ../../../gsi_scu/sinus-test.txt
-CALL_ARGS = sinus-test.fgw -cql
+CALL_ARGS = sinus-test500.fgw -c
 # CALL_ARGS = -r3 sinus.fgw
 # CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw 
 #CALL_ARGS = -zd100 q.fgw
