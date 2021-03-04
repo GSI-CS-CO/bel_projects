@@ -1,7 +1,7 @@
-TARGET		?= fbastx
+TARGET		?= sb_scan
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
-#PLATFPATH       = ../../../syn/gsi_scu/control3
-PLATFPATH	= ../../../syn/gsi_pexarria5/control
+PLATFPATH       = ../../../syn/gsi_scu/control3
+#PLATFPATH	= ../../../syn/gsi_pexarria5/control
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
@@ -42,7 +42,7 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin
 
-$(TARGET).elf: $(PATHFW)/fbastx.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+$(TARGET).elf: $(PATHFW)/$(TARGET).c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 #b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 #b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 

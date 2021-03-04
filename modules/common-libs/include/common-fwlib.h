@@ -65,6 +65,9 @@ volatile uint32_t * fwlib_getMilPiggy();
 // get address of OLED
 volatile uint32_t * fwlib_getOLED();
 
+// get WB address of SCU bus master
+volatile uint16_t * fwlib_getSbMaster();
+
 // acquire and publish NIC data
 void fwlib_publishNICData();
 

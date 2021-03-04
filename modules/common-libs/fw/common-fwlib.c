@@ -73,6 +73,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
+volatile uint16_t *pSbMaster;           // WB address of SCU bus master
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -197,6 +198,16 @@ uint32_t findOLED() //find WB address of OLED
   else                                                      return COMMON_STATUS_OK;
 } // findOLED
 
+uint32_t findSbMaster() //find WB address of SCU bus master
+{
+  pSbMaster = 0x0;
+
+  // get Wishbone address for SCU bus master
+  pSbMaster = (uint16_t *)find_device_adr(GSI, SCU_BUS_MASTER);
+
+  if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
+  else                                                      return COMMON_STATUS_OK;
+} // findSbMaster
 
 uint32_t exitActionError()
 {
@@ -639,8 +650,9 @@ uint32_t fwlib_doActionS0()
   if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  findOLED();       // ignore error; not every TR has a MIL piggy
+  findOLED();       // ignore error; not every TR has OLED device
   findMILPiggy();   // ignore error; not every TR has a MIL piggy
+  findSbMaster();   // ignore error; not every TR has SCU bus master
 
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
@@ -665,6 +677,10 @@ volatile uint32_t* fwlib_getOLED()
   return pOLED;
 } // fwlib_getMilOLED
 
+volatile uint16_t* fwlib_getSbMaster()
+{
+  return pSbMaster;
+} // fwlib_getSbMaster
 
 void fwlib_publishNICData()
 {
