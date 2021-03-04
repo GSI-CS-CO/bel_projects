@@ -12,6 +12,30 @@
 ## General setup for all timing nodes
 #####################################
 
+echo "verify if a firmware runs on LM32"
+eb-info -w dev/wbm0
+
+********************
+* RAM @ 0x04060000 *
+********************
+UserLM32
+Stack Status:  okok
+Project     : fbastx
+Version     : 00.01.00
+Platform    : pcicontrol
+Build Date  : Fri Feb 26 12:41:13 CET 2021
+Prepared by : ebold Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
+Prepared on : acopc017
+OS Version  : Linux Mint 19.1 Tessa  Linux 4.15.0-135-generic x86_64
+GCC Version : lm32-elf-gcc(GCC)4.5.3 (build 190527-673a32-f3d6)
+IntAdrOffs  : 0x10000000
+SharedOffs  : 0x500
+SharedSize  : 8K
+FW-ID ROM will contain:
+
+   09bab356 fbas: re-calculated the transmission time of a timig message via a WRS
+
+
 echo "assign static IP addresses to the timing receivers: 192.168.131.30 for wbm0, 192.168.131.40 for wbm2"
 echo "set IP address (wrc): ip set 192.168.131.30"
 echo "verify IP address (wrc): ip"
