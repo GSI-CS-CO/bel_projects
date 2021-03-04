@@ -51,7 +51,6 @@
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 #include "ebm.h"                                                        // EB master
-#include "../../../tools/wb_slaves.h"                                   //
 
 // includes for this project
 #include <common-defs.h>                                                // common defs for firmware
