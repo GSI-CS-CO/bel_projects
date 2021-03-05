@@ -1,7 +1,17 @@
-TARGET		?= sb_scan
-#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
-PLATFPATH       = ../../../syn/gsi_scu/control3
-#PLATFPATH	= ../../../syn/gsi_pexarria5/control
+TARGET		?= fbastx
+
+ifeq ($(strip $(TARGET)),)
+  $(error empty TARGET)
+endif
+
+ifeq ($(TARGET), fbastx)
+  PLATFPATH = ../../../syn/gsi_pexarria5/control
+else ifeq ($(TARGET), sb_scan)
+  PLATFPATH = ../../../syn/gsi_scu/control3
+else
+  $(error unknown TARGET=$(TARGET), cannot set up PLATFPATH)
+endif
+
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')

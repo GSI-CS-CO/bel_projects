@@ -76,8 +76,7 @@ uint32_t *pCpuRamExternal;              // external address (seen from host brid
 uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
-uint32_t *pSharedSetNodeType;           // pointer to a "user defined" u32 register; here: node type (RX, TX, CM)
-uint32_t *pSharedGetNodeType;           // pointer to a "user defined" u32 register; here: node type (RX, TX, CM)
+uint32_t *pSharedApp;                   // pointer to a "user defined" u32 register set; here: application-specific register set
 
 // other global stuff
 uint32_t statusArray;                   // all status infos are ORed bit-wise into sum status, sum status is then published
@@ -119,12 +118,6 @@ void initSharedMem()
   // get pointer to shared memory
   pShared           = (uint32_t *)_startshared;
 
-  // get address to data
-  pSharedSetNodeType = (uint32_t *)(pShared + (FBAS_SHARED_SET_NODETYPE >> 2));
-  pSharedGetNodeType = (uint32_t *)(pShared + (FBAS_SHARED_GET_NODETYPE >> 2));
-  DBPRINT3("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, pSharedSetNodeType);
-  DBPRINT3("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, pSharedGetNodeType);
-
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
@@ -132,14 +125,29 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("fbas%d: CPU RAM External 0x%8x, begin shared 0x%08x\n", nodeType, pCpuRamExternal, SHARED_OFFS);
+  // print WB addresses (shared RAM, range reserved to user, command buffer etc) to WR console
+  pSharedTemp = pCpuRamExternal + (SHARED_OFFS >> 2) + (COMMON_SHARED_CMD >> 2);
+  DBPRINT2("fbas: CPU RAM External 0x%8x, begin shared 0x%08x, command 0x%08x\n",
+      pCpuRamExternal, SHARED_OFFS, pSharedTemp);
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("fbas%d: COMMON_SHARED_BEGIN 0x%08x\n", nodeType, pSharedTemp);
-  // ... insert code here to clear shared RAM
-  DBPRINT2("fbas%d: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", nodeType, i, pShared, pSharedTemp-1);
+  DBPRINT2("sb_scan: app specific shared begin 0x%08x\n", pSharedTemp);
+  while (pSharedTemp < (uint32_t *)(pShared + (FBAS_SHARED_END >> 2 ))) {
+    *pSharedTemp = 0x0;
+    pSharedTemp++;
+    i++;
+  }
+
+  // report shared memory usage
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+
+  // print application-specific register set (in shared mem)
+  pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
+  DBPRINT3("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
+  DBPRINT3("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
+
 } // initSharedMem
 
 
@@ -198,10 +206,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
     cntCmd++;
     switch (cmd) {                       // do action according to command
       case FBAS_CMD_SET_NODETYPE:
-        u32val = *pSharedSetNodeType;
+        u32val = *(pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2));
         if (u32val < FBAS_NODE_UNDEF) {
           nodeType = u32val;
-          *pSharedGetNodeType = nodeType;
+          *(pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)) = nodeType;
           DBPRINT3("fbas%d: node type %x\n", nodeType, nodeType);
         } else {
           DBPRINT3("fbas%d: invalid node type %x\n", nodeType, u32val);
@@ -352,7 +360,9 @@ void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
   uint64_t evtParam = mpsFlag;
   evtParam <<= 56;
   evtParam |= mpsEventData.mac;
-  fwlib_ebmWriteTM(getSysTime(), mpsEventData.evtId, evtParam, 0);
+
+  // ignore the ahead interval of 500 us by setting 'flagForceLate'
+  fwlib_ebmWriteTM(getSysTime(), mpsEventData.evtId, evtParam, 1);
 }
 
 uint32_t pollEcaBlocking(uint32_t usTimeout)
@@ -364,6 +374,7 @@ uint32_t pollEcaBlocking(uint32_t usTimeout)
   uint32_t ecaTef;        // TEF value in received ECA event
   uint32_t flagIsLate;    // flag indicates that received ECA event is 'late'
   uint64_t now;           // actual timestamp of the system time
+  int64_t  poll;          // elapsed time to poll a pending ECA event
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
 
@@ -371,25 +382,50 @@ uint32_t pollEcaBlocking(uint32_t usTimeout)
     now = getSysTime();
 
     switch (nextAction) {
-      case FBAS_IO_ACTION:
-        if (nodeType == FBAS_NODE_TX) {// only FBAS transmitter sends MPS protocol
+      case FBAS_GEN_EVT:
+        if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the generator events
           cntMpsSignal++;
-          sendMpsProtocol(now, (uint8_t)cntMpsSignal); //FIXME: transmission over the WR network takes around 500us
+          sendMpsProtocol(now, (uint8_t)cntMpsSignal);
+          *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 0) = (ecaDeadline >> 32);
+          *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 1) = ecaDeadline;
+          *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 0) = (now >> 32);
+          *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 1) = now;
+        }
+        break;
+      case FBAS_TLU_EVT:
+        if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the TLU events
+
+          // print timestamps
+          poll = now - ecaDeadline;
+          DBPRINT3("fbas%d: TLU evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
+              nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
+
+          ecaDeadline = *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+          ecaDeadline <<= 32;
+          ecaDeadline |= *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 1);
+          now = *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
+          now <<= 32;
+          now |= *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 1);
+
+          // print stored timestamps of generator event
+          poll = now - ecaDeadline;
+          DBPRINT3("fbas%d: generator evt timestamps (detect %llu, send %llu, poll %lli)\n",
+              nodeType, ecaDeadline, now, poll);
         }
         break;
       case FBAS_WR_EVT:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
           uint8_t u8val = (ecaParam >> 56) & 0x01; // cntMpsSignal value
           driveIo(IO_CFG_CHANNEL_LVDS, 0, u8val); // drive the IO1 port
+
+          poll = now - ecaDeadline;
+          DBPRINT3("fbas%d: ECA action (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
+              nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
         }
         break;
       default:
         break;
     }
-
-    int64_t poll = now - ecaDeadline;
-    DBPRINT3("fbas%d: ECA action (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
-        nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
   }
 
   return nextAction;

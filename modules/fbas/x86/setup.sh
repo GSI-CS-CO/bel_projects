@@ -95,16 +95,17 @@ saft-ecpu-ctl fbastx -l
 echo "destroy all unowned ECA conditions"
 saft-ecpu-ctl fbastx -x
 
-echo "disable all events from IO inputs to ECA"
-saft-io-ctl fbastx -w
-
 echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x42"
 saft-ecpu-ctl fbastx -c 0xffffeeee00000000 0xffffffff00000000 0 0x42 -d
 
+echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
+saft-ecpu-ctl fbastx -c 0xffff100000000000 0xffffffff00000000 0 0x43 -d
+
+echo "disable all events from IO inputs to ECA"
+saft-io-ctl fbastx -w
+
 echo "configure TLU: on signal transition at IO2 input, it will generate a timing event with the given ID"
 saft-io-ctl fbastx -n IO2 -b 0xffff100000000000
-echo "configure ECA: listen for TLU event with the given ID, tag 0x42"
-saft-ecpu-ctl fbastx -c 0xffff100000000000 0xffffffff00000000 0 0x43 -d
 
 echo "now both events can be snooped with a following command: saft-ctl fbastx -xv snoop 0 0 0"
 echo "or both events can be presented by the LM32 firmware if WR console is active: $ eb-console dev/wbm0"
@@ -133,7 +134,7 @@ eb-write dev/wbm2 0x4060508/4 0x1
 
 echo "set node type to FBASRX (0x1)"
 echo "write node type (0x1) to dedicated memory location"
-eb-write dev/wbm2 0x4060694/4 0x1
+eb-write dev/wbm2 0x4060820/4 0x1
 
 echo "tell LM32 to set the node type"
 eb-write dev/wbm2 0x4060508/4 0x15
@@ -143,7 +144,7 @@ eb-write dev/wbm2 0x4060508/4 0x15
 #   fbas1: node type 1
 
 echo "verify the actual node type"
-eb-read dev/wbm2 0x40606a0/4
+eb-read dev/wbm2 0x406082c/4
 
 # wrc output:
 #   00000001
@@ -161,21 +162,24 @@ saft-ecpu-ctl fbasrx -l
 echo "destroy all unowned ECA conditions"
 saft-ecpu-ctl fbasrx -x
 
-echo "disable all events from IO inputs to ECA"
-saft-io-ctl fbasrx -w
-
 echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x24"
 saft-ecpu-ctl fbasrx -c 0x1fcafca000000000 0xffffffff00000000 0 0x24 -d
+
+echo "disable all events from IO inputs to ECA"
+saft-io-ctl fbasrx -w
 
 ####################
 ## Test FW operation
 ####################
 
+echo "open wrc for FBASTX to see the debug output"
+eb-console dev/wbm0
+
 echo "injectg timing messages to FBASTX that simulate the FBAS class 2 signals"
 saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
 
 ###########################################################
-# Test 1: transmit a timing message between TX and RX nodes
+# Test 1: transmit a timing message between TX and RX nodes -> obsoleted!!!
 ###########################################################
 # wrc output (fbas TX):
 #   fbas0: ECA action (tag 42, flag 0, ts 1604323496001000000, now 1604323496001004400, poll 4400)
@@ -192,11 +196,34 @@ saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
+# Case 1: consider the ahead time of 500 us (flagForceLate=0)
 # wrc output (TX)
 #   fbas0: ECA action (tag 42, flag 0, ts 1604323287001000000, now 1604323287001004448, poll 4448)
-#   fbas0: ECA action (tag 43, flag 1, ts 1604323287001512575, now 1604323287011358920, poll 9846345)
+#   fbas0: ECA action (tag 43, flag 1, ts 1604323287001512575, now 1604323287011358920, poll 9846345) -> takes too long to output dbg msg!
 #
-# time between signalling MPS event and polling TLU events:
-# =   12575 ns (calculated by timestamp, 1604323287001512575 - 1604323287001000000 - 500000)
+# time between injecting MPS event and polling TLU event:
+# =   12575 ns (calculated by timestamp, 1604323287001512575 - 1604323287001000000 - 500000) -> not exact, because of ahead interval!
 #       ahead interval for sending timing messages is considered (COMMON_AHEADT = 500000 ns)
 
+# Case 2: ignore the ahead time of 500 us (flagForceLate=1)
+# wrc output (TX)
+#   fbas0: ECA action (tag 42, flag 0, ts 1604322044001000000, now 1604322044001004424, poll 4424)
+#   fbas0: ECA action (tag 43, flag 1, ts 1604322044001031206, now 1604322044011356712, poll 10325506) -> takes too long to output dbg msg!
+#
+# time period from detecting MPS event and detecting TLU events:
+# =   31206 ns (calculated by timestamp, 1604322044001031206 - 1604322044001000000)
+# time to transmit FBAS events (TX->RX):
+# =   26782 ns (1604322044001031206 - 1604322044001004424)
+
+# Case 3: ignore the ahead time of 500 us (flagForceLate=1), and output debug msg after handling the TLU events
+# wrc output (TX)
+#   fbas0: TLU evt (tag 43, flag 1, ts 1604325955001026839, now 1604325955001034872, poll 8033)
+#   fbas0: generator evt timestamps (detect 1604325955001000000, send 1604325955001004272, poll 4272)
+#
+#   fbas0: TLU evt (tag 43, flag 1, ts 1604325967001030350, now 1604325967001042848, poll 12498)      -> max poll time
+#   fbas0: generator evt timestamps (detect 1604325967001000000, send 1604325967001004384, poll 4384)
+#
+# time period from detecting MPS event and detecting TLU events:
+# =   42848 ns (calculated by timestamp, 1604325967001042848 - 1604325967001000000)
+# time to transmit FBAS events (TX->RX):
+# =   25966 ns (1604325967001030350 - 1604325967001004384)

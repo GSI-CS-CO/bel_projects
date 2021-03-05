@@ -23,10 +23,14 @@
 #define FBAS_SHARED_GET_SBSTSUSER  (FBAS_SHARED_GET_SBCFGUSER  + 2 * _32b_SIZE_)   // USER status
 #define FBAS_SHARED_GET_SBOUTUSER  (FBAS_SHARED_GET_SBSTSUSER  + 2 * _32b_SIZE_)   // USER output
 #define FBAS_SHARED_GET_SBINUSER   (FBAS_SHARED_GET_SBOUTUSER  + 3 * _32b_SIZE_)   // USER input
-#define FBAS_SHARED_GET_SBEND      (FBAS_SHARED_GET_SBINUSER   + 2 * _32b_SIZE_)   // end
+#define FBAS_SHARED_GET_TS1        (FBAS_SHARED_GET_SBINUSER   + _32b_SIZE_)       // timestamp1 (generator event deadline)
+#define FBAS_SHARED_GET_TS2        (FBAS_SHARED_GET_TS1        + _32b_SIZE_ * 2)   // timestamp2 (generator event polled by TX)
+#define FBAS_SHARED_GET_TS3        (FBAS_SHARED_GET_TS2        + _32b_SIZE_ * 2)   // timestamp3 (IO action event deadline)
+#define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + _32b_SIZE_ * 2)   // timestamp4 (IO action event polled by TX)
+#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_TS4        + _32b_SIZE_ * 2)   // end of the 'get' region
 
 // diagnosis: end of used shared memory
-#define FBAS_SHARED_END            (FBAS_SHARED_GET_SBEND      + _32b_SIZE_)
+#define FBAS_SHARED_END            (FBAS_SHARED_GET_END)
 
 typedef uint32_t status_t;
 
@@ -79,8 +83,9 @@ typedef enum {
 #define FBAS_TM_RES        0x0       // reserved, 6-bit
 
 // ECA action tags
-#define FBAS_IO_ACTION     0x42      // ECA condition tag for FBAS TX
-#define FBAS_WR_EVT        0x24      // ECA condition tag for FBAS RX
+#define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
+#define FBAS_TLU_EVT       0x43      // ECA condition tag for TLU event (handled by TX)
+#define FBAS_WR_EVT        0x24      // ECA condition tag for FBAS WR event (handled by RX)
 
 // IO-CTRL register map (ip_cores/saftlib/drivers/io_control_regs.h)
 #define IO_CFG_CHANNEL_GPIO          0
