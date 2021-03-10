@@ -206,66 +206,69 @@ typedef enum
    ADC_BASE  = 0x230
 } BUS_BASE_T;
 
-#ifdef __lm32__
 
-#define POWER_UP_IRQ      0x0001
 
-#define DAC_CNTRL         0x0
-#define DAC_DATA          0x1
+typedef enum
+{
+   POWER_UP_IRQ    = 0x0001,
 
-#define IO4x8             0x220
-#define ADC_CNTRL         0x0
-#define ADC_CHN1          0x1
-#define ADC_CHN2          0x2
-#define ADC_CHN3          0x3
-#define ADC_CHN4          0x4
-#define ADC_CHN5          0x5
-#define ADC_CHN6          0x6
-#define ADC_CHN7          0x7
-#define ADC_CHN8          0x8
+   DAC_CNTRL       = 0x0000,
+   DAC_DATA        = 0x0001,
 
-/*!
- * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
- */
-#define FG_CNTRL          0x0
-#define FG_A              0x1
-#define FG_B              0x2
-#define FG_BROAD          0x3
-#define FG_SHIFT          0x4
-#define FG_STARTH         0x5
-#define FG_STARTL         0x6
-#define FG_RAMP_CNT_LO    0x7
-#define FG_RAMP_CNT_HI    0x8
-#define FG_TAG_LOW        0x9
-#define FG_TAG_HIGH       0xa
-#define FG_VER            0xb
+   IO4x8           = 0x0220,
+   ADC_CNTRL       = 0x0000,
+   ADC_CHN1        = 0x0001,
+   ADC_CHN2        = 0x0002,
+   ADC_CHN3        = 0x0003,
+   ADC_CHN4        = 0x0004,
+   ADC_CHN5        = 0x0005,
+   ADC_CHN6        = 0x0006,
+   ADC_CHN7        = 0x0007,
+   ADC_CHN8        = 0x0008,
 
-#define FG1_IRQ           (1<<15)
-#define FG2_IRQ           (1<<14)
-#define DREQ              (1<<4)
-#define WB_FG_CNTRL       0x0
-#define WB_FG_A           0x1
-#define WB_FG_B           0x2
-#define WB_FG_BROAD       0x3
-#define WB_FG_SHIFTA      0x4
-#define WB_FG_SHIFTB      0x5
-#define WB_FG_START       0x6
-#define WB_RAMP_CNT       0x7
-#define WB_FG_SW_DST      0x8
+   /*!
+    * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
+    */
+   FG_CNTRL        = 0x0000,
+   FG_A            = 0x0001,
+   FG_B            = 0x0002,
+   FG_BROAD        = 0x0003,
+   FG_SHIFT        = 0x0004,
+   FG_STARTH       = 0x0005,
+   FG_STARTL       = 0x0006,
+   FG_RAMP_CNT_LO  = 0x0007,
+   FG_RAMP_CNT_HI  = 0x0008,
+   FG_TAG_LOW      = 0x0009,
+   FG_TAG_HIGH     = 0x000A,
+   FG_VER          = 0x000B,
 
-#define TMR_CNTRL         0x0
-#define TMR_IRQ_CNT       0x1
-#define TMR_VALUEL        0x2
-#define TMR_VALUEH        0x3
-#define TMR_REPEAT        0x4
+   FG1_IRQ         = (1<<15),
+   FG2_IRQ         = (1<<14),
+   DREQ            = (1<<4),
 
-#define GLOBAL_IRQ_ENA    0x2
-#define SRQ_ENA           0x6
-#define SRQ_ACT           0x8
-#define MULTI_SLAVE_SEL   0xc
-#define MULTICAST_ACC     0x8
+   WB_FG_CNTRL     = 0x0000,
+   WB_FG_A         = 0x0001,
+   WB_FG_B         = 0x0002,
+   WB_FG_BROAD     = 0x0003,
+   WB_FG_SHIFTA    = 0x0004,
+   WB_FG_SHIFTB    = 0x0005,
+   WB_FG_START     = 0x0006,
+   WB_RAMP_CNT     = 0x0007,
+   WB_FG_SW_DST    = 0x0008,
 
-#endif /* ifdef __lm32__ */
+   TMR_CNTRL       = 0x0000,
+   TMR_IRQ_CNT     = 0x0001,
+   TMR_VALUEL      = 0x0002,
+   TMR_VALUEH      = 0x0003,
+   TMR_REPEAT      = 0x0004,
+
+   GLOBAL_IRQ_ENA  = 0x0002,
+   SRQ_ENA         = 0x0006,
+   SRQ_ACT         = 0x0008,
+   MULTI_SLAVE_SEL = 0x000C,
+   MULTICAST_ACC   = 0x0008
+} BUS_DEVICES_T;
+
 
 /*!
  * @ingroup SCU_BUS
