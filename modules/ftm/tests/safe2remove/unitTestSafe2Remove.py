@@ -7,10 +7,10 @@ import dm_testbench
 import subprocess
 #import time
 #import signal
-import csv
-import contextlib
+#import csv
+#import contextlib
 import datetime
-import collections
+#import collections
 
 """
 Class collects unit tests for safe2remove.
@@ -48,22 +48,34 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.compareExpectedResult('status.dot', dot_file1 + '-status.dot', '')
     self.deleteFile('status.dot')
 
-  def test_safe2remove_blockalign1(self):
+  def t1est_safe2remove_blockalign1(self):
     self.safe2removeTestcase('blockalign1', 'PPS1_TEST')
     
   def doBranch1(self):
-    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '100', 'Block1', 'B1'), expectedReturnCode=0)
-    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '100', 'Block1', 'C1'), expectedReturnCode=0)
+    output = self.startAndGetSubprocessStdout(('dm-cmd', self.datamaster, 'deadline'), expectedReturnCode=0)
+    print()
+    print(f'Result deadline: {output}')
+    microseconds = float(output[0][21:-3])
+    deadlineTime = datetime.datetime.fromtimestamp(microseconds/1000000.0)
+    print(f'{output[0][21:-3]}, {deadlineTime}')
+    deadlineTime1 = datetime.datetime.fromtimestamp(microseconds/1000000.0 + 1.0)
+    print(f'{output[0][21:-3]}, {deadlineTime1}')
+    offsetTime = (deadlineTime1-datetime.datetime(1970,1,1)).total_seconds()
+    offsetNanoseconds = offsetTime * 1000000000
+    offsetNanosecondsStr = "{:.0f}".format(offsetNanoseconds)
+    print(f'{offsetTime}, {offsetNanoseconds} {offsetNanoseconds:.0f}, {offsetNanosecondsStr}')
+    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '10', '-a', '-l', offsetNanosecondsStr, 'Block1', 'B1'), expectedReturnCode=0)
+    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '10', '-a', '-l', offsetNanosecondsStr, 'Block1', 'C1'), expectedReturnCode=0)
   
   def test_branch1(self):
     self.startAllPattern(self.datamaster, 'branch1.dot')
     file_name = 'snoop_branch1.csv'
     parameter_column = 20
-    self.snoopToCsvWithAction(file_name, self.doBranch1, 3)
+    self.snoopToCsvWithAction(file_name, self.doBranch1, 2)
     self.analyseFrequencyFromCsv(file_name, parameter_column)
     self.deleteFile(file_name)
 
-  def test_safe2remove_blockflow1(self):
+  def t1est_safe2remove_blockflow1(self):
     self.startAllPattern(self.datamaster, 'block-flow1.dot')
     file_name = 'snoop_block-flow1.csv'
     parameter_column = 20

@@ -77,6 +77,26 @@ class DmTestbench(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
 
+  def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+    """
+    Common method to start a subprocess and check the return code.
+    The <argumentsList> contains the binary to execute and all arguments in one list.
+    Start the binary for the test step with the arguments and check the output on stdout and stderr and the return code as well.
+    """
+    # pass cmd and args to the function
+    process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    # get command output and error
+    stdout, stderr = process.communicate()
+    if expectedReturnCode > -1:
+      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    if linesCerr > -1:
+      lines = stderr.decode('utf-8').splitlines()
+      self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    if linesCout > -1:
+      lines = stdout.decode('utf-8').splitlines()
+      self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
+    return stdout.decode("utf-8").splitlines()
+
   def compareExpectedResult(self, file_current, file_expected, exclude):
     """
     Compare a file with a test result with an expected result contained in <file_expected>.
@@ -131,14 +151,15 @@ class DmTestbench(unittest.TestCase):
 
   def analyseFrequencyFromCsv(self, csv_file_name, column=20, printTable=True):
     """
-    Analyse the frequency of the values in the specified column. Defaule column is 20 (parameter of the timing message).
+    Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printtable=True) the table of values, counters, and frequency over the whole time span.
     """
     line_count = 0
     maxTime = datetime.datetime.strptime("2000-01-01", '%Y-%m-%d')
     minTime = datetime.datetime.strptime("2500-01-01", '%Y-%m-%d')
     listParam = []
-    # Read this file snoop_protocol.csv as csv
+    # Read csv_file_name as csv and collect the column in listParam.
+    # Read the message timestamp from column 1 and 2, precision: microseconds, not nanoseconds.
     with open(csv_file_name) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=' ')
       for row in csv_reader:

@@ -26,8 +26,8 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     schedule_file = 'testSingleEdge-block-blockalign-altdst.dot'
     schedule_file = 'testSingleEdge-tmsg-block-defdst.dot'
     self.startAllPattern(self.datamaster, schedule_file)
-    self.startAndCheckSubprocess('dm-sched', self.datamaster, 'status', '-ostatus.dot', expectedReturnCode=0)
-    self.startAndCheckSubprocess('scheduleCompare', schedule_file, 'status.dot')
+    self.startAndCheckSubprocess(('dm-sched', self.datamaster, 'status', '-o', 'status.dot'), expectedReturnCode=0)
+    self.startAndCheckSubprocess(('scheduleCompare', schedule_file, 'status.dot'), expectedReturnCode=0)
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:

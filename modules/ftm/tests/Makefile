@@ -3,7 +3,8 @@ DATAMASTER ?= $$DM
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
 
-all: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test pps safe2remove singleEdgeTest schedules
+all: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test parallelBranch \
+pps safe2remove singleEdgeTest schedules
 
 addDownloadCompare:
 	$(MAKE) -C addDownloadCompare/
@@ -33,6 +34,9 @@ full_test:
 #messageCounter:
 #	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python messageCounter/messageCounter.py $(DATAMASTER)
 
+parallelBranch:
+	$(MAKE) -C parallelBranch/
+
 pps:
 	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common python dmpps2.py $(DATAMASTER)
 
@@ -58,5 +62,6 @@ prepare:
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: bpcStart dmCmd dmPerformance dmThreads fid7 full_test messageCounter pps safe2remove singleEdgeTest schedules
+.PHONY: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test messageCounter parallelBranch \
+pps safe2remove singleEdgeTest schedules
 
