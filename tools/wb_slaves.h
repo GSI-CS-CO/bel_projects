@@ -163,6 +163,8 @@
 #define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
 #define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
 #define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write), write 'cafebabe' to prevent auto-restart
+                                                         //                            write 'cafebab0' to reenable auto-restart
+#define FPGA_RESET_WATCHDOG_TRG      0x0010              // retrigger watchdog (write), write 'cafebabe' regularly to prevent auto-restart
 
 // masks
 
