@@ -207,7 +207,11 @@ typedef enum
 } BUS_BASE_T;
 
 
-
+/*!
+ * @ingroup SCU_BUS
+ * @ingroup INTERRUPT
+ * @brief Relative register addresses and interrupt flags of specific SCU-bus slaves.
+ */
 typedef enum
 {
    POWER_UP_IRQ    = 0x0001,

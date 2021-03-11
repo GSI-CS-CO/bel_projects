@@ -672,6 +672,13 @@ void main( void )
    //print_regs();
    while( true )
    {
+#if 0
+      ATOMIC_SECTION()
+      {
+         for( volatile int i = 0; i < 100000; i++ )
+            NOP();
+      }
+#endif
       check_stack();
       schedule();
    }
