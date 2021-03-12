@@ -23,11 +23,12 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
     
   def doBranch1(self):
     output = self.startAndGetSubprocessStdout(('dm-cmd', self.datamaster, 'deadline'), expectedReturnCode=0)
-    offsetNanosecondsStr1 = "{:.0f}".format(int(output[0][21:]) + 500000000)
+    offsetNanosecondsStr1 = "{:0d}".format(int(output[0][21:]) + 500000000)
     offsetNanosecondsStr2 = "{:0d}".format(int(output[0][21:]) + 700000000)
     print()
     print(f'{offsetNanosecondsStr1} {offsetNanosecondsStr2}')
     print(f'{dt.fromtimestamp((int(output[0][21:]) + 500000000)/1000000000)} {dt.fromtimestamp((int(output[0][21:]) + 700000000)/1000000000)}')
+    print(f'{dt.utcfromtimestamp((int(output[0][21:]) + 500000000)/1000000000)} {dt.utcfromtimestamp((int(output[0][21:]) + 700000000)/1000000000)}')
     self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '1', '-a', '-l', offsetNanosecondsStr1, 'BlockA', 'A2'), expectedReturnCode=0)
     self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '1', '-a', '-l', offsetNanosecondsStr1, 'BlockB', 'B2'), expectedReturnCode=0)
     self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'flow', '-q', '1', '-a', '-l', offsetNanosecondsStr2, 'BlockA', 'A3'), expectedReturnCode=0)
@@ -40,6 +41,7 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
     self.snoopToCsvWithAction(file_name, self.doBranch1, 0.1)
     self.analyseFrequencyFromCsv(file_name, parameter_column)
     print(self.startAndGetSubprocessStdout(('grep', '-nHm', '1', 'a1', file_name), expectedReturnCode=0))
+    print(self.startAndGetSubprocessStdout(('grep', '-nHm', '1', 'b1', file_name), expectedReturnCode=0))
     print(self.startAndGetSubprocessStdout(('grep', '-nH', 'a2', file_name), expectedReturnCode=0))
     print(self.startAndGetSubprocessStdout(('grep', '-nH', 'b2', file_name), expectedReturnCode=0))
     print(self.startAndGetSubprocessStdout(('grep', '-nH', 'a3', file_name), expectedReturnCode=0))
