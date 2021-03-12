@@ -150,6 +150,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 # For DOXYGEN only, header files which doesn't have a appropriate C-file.
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 

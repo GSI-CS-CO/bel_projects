@@ -39,6 +39,51 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
    {{0}};
 #endif
 
+#ifndef __DOXYGEN__
+STATIC_ASSERT( ARRAY_SIZE(g_aFgChannels) == MAX_FG_CHANNELS );
+#endif
+
+
+/*!
+ * @brief Container of device properties of a ADDAC/ACU-device
+ */
+typedef struct
+{  /*!
+    * @brief Control register address offset of the digital to analog converter.
+    */
+   const unsigned int dacControl;
+
+   /*!
+    * @brief Interrupt mask of the concerning function generator.
+    */
+   const uint16_t     fgIrqMask;
+
+   /*!
+    * @brief Base address-offset of the concerning function generator.
+    */
+   const BUS_BASE_T   fgBaseAddr;
+} ADDAC_DEV_T;
+
+/*!
+ * @brief Property table of a ADDAC/ACU-slave device.
+ */
+STATIC const ADDAC_DEV_T mg_devTab[MAX_FG_PER_SLAVE] =
+{
+   {
+      .dacControl = DAC1_BASE + DAC_CNTRL,
+      .fgIrqMask  = FG1_IRQ,
+      .fgBaseAddr = FG1_BASE
+   },
+   {
+      .dacControl = DAC2_BASE + DAC_CNTRL,
+      .fgIrqMask  = FG2_IRQ,
+      .fgBaseAddr = FG2_BASE
+   }
+};
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( ARRAY_SIZE(mg_devTab) == MAX_FG_PER_SLAVE );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Prepares the selected ADDAC/ACU- function generator.
@@ -62,33 +107,9 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
                                              const uint32_t tag
                                            )
 {
-   FG_ASSERT( dev < MAX_FG_PER_SLAVE );
+   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
 
-   unsigned int dacControlIndex;
-   BUS_BASE_T   fg_base;
-   uint16_t     irqMask;
-   switch( dev )
-   {
-      case 0:
-      {
-         irqMask         = FG1_IRQ;
-         fg_base         = FG1_BASE;
-         dacControlIndex = DAC1_BASE + DAC_CNTRL;
-         break;
-      }
-      case 1:
-      {
-         irqMask         = FG2_IRQ;
-         fg_base         = FG2_BASE;
-         dacControlIndex = DAC2_BASE + DAC_CNTRL;
-         break;
-      }
-      default:
-      {
-         FG_ASSERT( false );
-         return NULL;
-      }
-   }
+   const ADDAC_DEV_T* pAddacObj = &mg_devTab[dev];
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   /*
@@ -105,16 +126,16 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    scuBusEnableSlaveInterrupt( pScuBus, slot );
 #endif
 
-   *scuBusGetInterruptActiveFlagRegPtr( pScuBus, slot ) |= irqMask;
-   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= irqMask;
+   *scuBusGetInterruptActiveFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
+   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
 
 
   /*
    * Set ADDAC-DAC in FG mode
    */
-   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), dacControlIndex, 0x10 );
+   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), pAddacObj->dacControl, 0x10 );
 
-   FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot, fg_base );
+   FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot, pAddacObj->fgBaseAddr );
 
    /*
     * Resetting of the ramp-counter
@@ -525,37 +546,20 @@ ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
                                    const unsigned int slot,
                                    const unsigned int dev )
 {
-   unsigned int fgControlIndex, dacControlIndex;
-   switch( dev )
-   {
-      case 0:
-      {
-         fgControlIndex  = FG1_BASE  + FG_CNTRL;
-         dacControlIndex = DAC1_BASE + DAC_CNTRL;
-         break;
-      }
-      case 1:
-      {
-         fgControlIndex  = FG2_BASE  + FG_CNTRL;
-         dacControlIndex = DAC2_BASE + DAC_CNTRL;
-         break;
-      }
-      default:
-      {
-         FG_ASSERT( false );
-         return;
-      }
-   }
+   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
+
+   const ADDAC_DEV_T* pAddacObj = &mg_devTab[dev];
+
    /*
     * Disarm hardware
     */
    const void* pAbsSlaveAddr = scuBusGetAbsSlaveAddr( pScuBus, slot );
-   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, fgControlIndex ) &= ~(0x2);
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->fgBaseAddr + FG_CNTRL ) &= ~(0x2);
 
    /*
     * Unset FG mode in ADC
     */
-   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, dacControlIndex ) &= ~(0x10);
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->dacControl ) &= ~(0x10);
 
 #if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
   /*
@@ -672,26 +676,10 @@ ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
                                       const unsigned int slot,
                                       const unsigned int dev )
 {
-   uint16_t invIrqMask;
-   switch( dev )
-   {
-      case 0:
-      {
-         invIrqMask = ((uint16_t)~FG1_IRQ);
-         break;
-      }
-      case 1:
-      {
-         invIrqMask = ((uint16_t)~FG2_IRQ);
-         break;
-      }
-      default:
-      {
-         FG_ASSERT( false );
-         return;
-      }
-   }
-   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= invIrqMask;
+   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
+
+   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= ~mg_devTab[dev].fgIrqMask;
+
 #if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ)
   /*
    * Disabling of both daq-channels for the feedback of set- and actual values
