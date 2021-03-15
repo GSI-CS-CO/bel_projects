@@ -15,8 +15,8 @@ B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
 
-DIMPATH     := /opt/dim/dim_v20r29
-#DIMPATH     := /common/usr/timing/b2b/dim_v20r29
+#DIMPATH     := /opt/dim/dim_v20r29
+DIMPATH     := /common/usr/timing/b2b/dim_v20r29
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include/saftlib
 
