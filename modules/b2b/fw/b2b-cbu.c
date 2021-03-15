@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Mar-2021
+ *  version : 15-Mar-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000236                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000237                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -408,6 +408,10 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
 
+  uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
+  uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
+  
+
   // define temporary epoch [ns]
   tNow    = getSysTime();
   epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
@@ -431,6 +435,13 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   tH1ExtAs  = (tH1Ext - epoch) * nineO;
   tH1InjAs  = (tH1Inj - epoch) * nineO;
 
+  // advance measured phase to approximate time of kick
+  // this should prevent adding additional beating times in case of short beating periods
+  nExtAdv   = 1000000000.0 * (tMin - tH1Ext) / TH1Ext;
+  nInjAdv   = 1000000000.0 * (tMin - tH1Inj) / TH1Inj;
+  tH1ExtAs += nExtAdv * TH1Ext;
+  tH1InjAs += nInjAdv * TH1Inj;
+
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
   if (TRfExt > TRfInj) {
     TSlow   = TRfExt;
@@ -444,7 +455,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
     tSlow   = tH1InjAs;
 
     TFast   = TRfExt;
-    tFast   = tH1ExtAs;;
+    tFast   = tH1ExtAs;
   } // if etraction has higher frequency
 
   // make sure tSlow is earlier than tFast; this is a must for the formula below
