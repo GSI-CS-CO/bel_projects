@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2021
+ *  version : 12-Mar-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,13 +34,14 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000235                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000236                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <math.h>
 
 /* includes specific for bel_projects */
 #include "dbg.h"
@@ -406,7 +407,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tNow;                                    // current time                             [ns] (!
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
-  
+
   // define temporary epoch [ns]
   tNow    = getSysTime();
   epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
@@ -429,7 +430,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
 
   tH1ExtAs  = (tH1Ext - epoch) * nineO;
   tH1InjAs  = (tH1Inj - epoch) * nineO;
-  
+
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
   if (TRfExt > TRfInj) {
     TSlow   = TRfExt;
@@ -467,8 +468,8 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
   //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
-  // check, that tMatch is far enough in the future; if not, add one beating period
-  if ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;
+  // check, that tMatch is far enough in the future; if not, add one -> chk --> sufficient beating periods
+  while ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;   // chk, if replace by while
 
   // if the injection ring is larger than the extraction ring
   // we need to align to the injection H=1 group DDS first
