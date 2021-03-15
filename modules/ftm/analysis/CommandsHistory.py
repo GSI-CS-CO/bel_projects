@@ -159,7 +159,7 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
           script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
       if collect_lines:
         graph_lines.append(lines[i])
-    print(f'Lines: {len(lines)}, dot files: {countDotFiles}, first eintry: {dtFirstEntry}, last entry: {dtLastEntry}.')
+    print(f'Lines: {len(lines)}, dot files: {countDotFiles}, first entry: {dtFirstEntry}, last entry: {dtLastEntry}.')
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
