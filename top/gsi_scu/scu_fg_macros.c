@@ -85,6 +85,22 @@ STATIC const ADDAC_DEV_T mg_devTab[MAX_FG_PER_SLAVE] =
 STATIC_ASSERT( ARRAY_SIZE(mg_devTab) == MAX_FG_PER_SLAVE );
 #endif
 
+#define DAC_FG_MODE   0x0010
+
+/*! --------------------------------------------------------------------------
+ * @brief Returns the control register format for step, frequency select
+ *        and channel number.
+ * @param pPset Pointer to the polynomial data set.
+ * @param channel Channel number of the concerned function generator.
+ * @return Value for the function generators control register.
+ */
+ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
+                                             const unsigned int channel )
+{
+   return ((pPset->control.i32 & (PSET_STEP | PSET_FREQU)) << 10) |
+          (channel << 4);
+}
+
 /*! ---------------------------------------------------------------------------
  * @brief Prepares the selected ADDAC/ACU- function generator.
  *
@@ -133,7 +149,7 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
   /*
    * Set ADDAC-DAC in FG mode
    */
-   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), pAddacObj->dacControl, 0x10 );
+   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), pAddacObj->dacControl, DAC_FG_MODE );
 
    FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot, pAddacObj->fgBaseAddr );
 
@@ -156,19 +172,6 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    return pAddagFgRegs;
 }
 
-/*! --------------------------------------------------------------------------
- * @brief Returns the control register format for step, frequency select
- *        and channel number.
- * @param pPset Pointer to the polynomial data set.
- * @param channel Channel number of the concerned function generator.
- * @return Value for the function generators control register.
- */
-ONE_TIME_CALL uint16_t getFgControlRegValue( const FG_PARAM_SET_T* pPset,
-                                             const unsigned int channel )
-{
-   return ((pPset->control.i32 & (PSET_STEP | PSET_FREQU)) << 10) |
-          (channel << 4);
-}
 
 /*! ---------------------------------------------------------------------------
  * @brief Loads the selected ADDAC/ACU-function generator with the first
@@ -187,6 +190,64 @@ ONE_TIME_CALL void addacFgStart( FG_REGISTER_T* pAddagFgRegs,
    setAdacFgRegs( pAddagFgRegs, pPset, getFgControlRegValue( pPset, channel ));
    ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
 }
+
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ */
+ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
+                                      const unsigned int slot,
+                                      const unsigned int dev )
+{
+   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
+
+   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= ~mg_devTab[dev].fgIrqMask;
+
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ)
+  /*
+   * Disabling of both daq-channels for the feedback of set- and actual values
+   * for this function generator channel.
+   */
+   daqDisableFgFeedback( slot, dev );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ *  @brief Disables a running function generator.
+ *
+ * 1)
+ *
+ * @param pScuBus Pointer to the SCU- bus.
+ * @param solt Scu-bus slot number respectively slave number.
+ * @param dev Function generator number of the concerning slave.
+ */
+ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
+                                   const unsigned int slot,
+                                   const unsigned int dev )
+{
+   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
+
+   const ADDAC_DEV_T* pAddacObj = &mg_devTab[dev];
+   const void* pAbsSlaveAddr    = scuBusGetAbsSlaveAddr( pScuBus, slot );
+
+   /*
+    * Disarm hardware
+    */
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->fgBaseAddr + FG_CNTRL ) &= ~FG_ENABLED;
+
+   /*
+    * Unset FG mode in ADC
+    */
+   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->dacControl ) &= ~DAC_FG_MODE;
+
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
+  /*
+   * Disabling of both daq-channels for the feedback of set- and actual values
+   * for this function generator channel.
+   */
+   daqDisableFgFeedback( slot, dev );
+#endif
+}
+
 
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
@@ -533,44 +594,42 @@ void configure_fg_macro( const unsigned int channel )
    return;
 }
 
-/*! ---------------------------------------------------------------------------
- *  @brief Disables a running function generator.
- *
- * 1)
- *
- * @param pScuBus Pointer to the SCU- bus.
- * @param solt Scu-bus slot number respectively slave number.
- * @param dev Function generator number of the concerning slave.
- */
-ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
-                                   const unsigned int slot,
-                                   const unsigned int dev )
-{
-   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
-
-   const ADDAC_DEV_T* pAddacObj = &mg_devTab[dev];
-
-   /*
-    * Disarm hardware
-    */
-   const void* pAbsSlaveAddr = scuBusGetAbsSlaveAddr( pScuBus, slot );
-   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->fgBaseAddr + FG_CNTRL ) &= ~(0x2);
-
-   /*
-    * Unset FG mode in ADC
-    */
-   *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->dacControl ) &= ~(0x10);
-
-#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
-  /*
-   * Disabling of both daq-channels for the feedback of set- and actual values
-   * for this function generator channel.
-   */
-   daqDisableFgFeedback( slot, dev );
-#endif
-}
 
 #ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Disables the interrupts of a specific MIL- function generator.
+ * @param pScuBus Base address of SCU-bus.
+ * @param pMilBus Base address of MIL-bus.
+ * @param socket Socket number containing location and device type
+ * @param dev Device number
+ */
+ONE_TIME_CALL void milFgDisableIrq( const void* pScuBus,
+                                    const void* pMilBus,
+                                    const unsigned int socket,
+                                    const unsigned int dev )
+{
+   FG_ASSERT( !isAddacFg( socket ) );
+
+   int status;
+
+   if( isMilScuBusFg( socket ) )
+   {
+      status = scub_write_mil( (volatile unsigned short*)pScuBus,
+                               getFgSlotNumber( socket ),
+                               0x0, FC_IRQ_MSK | dev);
+   }
+   else
+   {
+      //write_mil((volatile unsigned int* )pMilBus, 0x0, FC_COEFF_A_WR | dev);  //ack drq
+      status = write_mil( (volatile unsigned int* )pMilBus,
+                          0x0, FC_IRQ_MSK | dev);
+
+   }
+   if( status != OKAY )
+      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__);
+}
+
 /*! ---------------------------------------------------------------------------
  */
 ONE_TIME_CALL int milFgDisable( const void* pScuBus,
@@ -669,60 +728,8 @@ void disable_channel( const unsigned int channel )
    }
 }
 
-/*! --------------------------------------------------------------------------
- * @ingroup INTERRUPT
- */
-ONE_TIME_CALL void addacFgDisableIrq( const void* pScuBus,
-                                      const unsigned int slot,
-                                      const unsigned int dev )
-{
-   FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
-
-   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) &= ~mg_devTab[dev].fgIrqMask;
-
-#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ)
-  /*
-   * Disabling of both daq-channels for the feedback of set- and actual values
-   * for this function generator channel.
-   */
-   daqDisableFgFeedback( slot, dev );
-#endif
-}
 
 #ifdef CONFIG_MIL_FG
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Disables the interrupts of a specific MIL- function generator.
- * @param pScuBus Base address of SCU-bus.
- * @param pMilBus Base address of MIL-bus.
- * @param socket Socket number containing location and device type
- * @param dev Device number
- */
-ONE_TIME_CALL void milFgDisableIrq( const void* pScuBus,
-                                    const void* pMilBus,
-                                    const unsigned int socket,
-                                    const unsigned int dev )
-{
-   FG_ASSERT( !isAddacFg( socket ) );
-
-   int status;
-
-   if( isMilScuBusFg( socket ) )
-   {
-      status = scub_write_mil( (volatile unsigned short*)pScuBus,
-                               getFgSlotNumber( socket ),
-                               0x0, FC_IRQ_MSK | dev);
-   }
-   else
-   {
-      //write_mil((volatile unsigned int* )pMilBus, 0x0, FC_COEFF_A_WR | dev);  //ack drq
-      status = write_mil( (volatile unsigned int* )pMilBus,
-                          0x0, FC_IRQ_MSK | dev);
-
-   }
-   if( status != OKAY )
-      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__);
-}
 #endif /* ifdef CONFIG_MIL_FG */
 
 /*! ---------------------------------------------------------------------------
