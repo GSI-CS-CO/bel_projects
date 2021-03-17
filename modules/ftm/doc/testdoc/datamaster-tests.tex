@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-02-24}
+\Large{Last change: 2021-03-17}
 \end{center}
 \vfill
 \end{titlepage}
@@ -56,21 +56,26 @@ Each test has a seperate target in the \texttt{Makefile}.
 \centering
 \begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
 \hline
-Test           & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
-bpcStart       &   -        &   T             &   x           &   x              &   x         &   -       &   x                \\ \hline
-dmCmd          &   T        &   x             &   x           &   x              &   -         &   -       &   x                \\ \hline
-dmPerformance  &   x        &   T             &   x           &   -              &   -         &   x       &   -                \\ \hline
-dmThreads      &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
-fid7           &   -        &   x             &   T           &   x              &   x         &   -       &   x                \\ \hline
-full\_test     &   -        &   T             &   x           &   x              &   -         &   -       &   x                \\ \hline
-pps            &   -        &   T             &   x           &   x              &   -         &   -       &   -                \\ \hline
-safe2remove    &   x        &   T             &   T           &   -              &   -         &   x       &   x                \\ \hline
-singleEdgeTest &   -        &   T             &   -           &   -              &   -         &   -       &   x                \\ \hline
-schedules      &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
+Test               & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
+addDownloadCompare &   T        &   T             &   T           &   x              &   x         &   -       &   -                \\ \hline
+bpcStart           &   -        &   T             &   x           &   x              &   x         &   -       &   x                \\ \hline
+dmCmd              &   T        &   x             &   x           &   x              &   -         &   -       &   x                \\ \hline
+dmPerformance      &   x        &   T             &   x           &   -              &   -         &   x       &   -                \\ \hline
+dmThreads          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
+fid7               &   -        &   x             &   T           &   x              &   x         &   -       &   x                \\ \hline
+full\_test         &   -        &   T             &   x           &   x              &   -         &   -       &   x                \\ \hline
+pps                &   -        &   T             &   x           &   x              &   -         &   -       &   -                \\ \hline
+safe2remove        &   x        &   T             &   T           &   -              &   -         &   x       &   x                \\ \hline
+singleEdgeTest     &   -        &   T             &   -           &   -              &   -         &   -       &   x                \\ \hline
+schedules          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
 \end{tabular}
 %\end{center}
 \end{table}
 \chapter{The Tests}
+\section{addDownloadCompare}
+\texttt{addDownloadCompare} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmaware.
+The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}. 
+There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
 \section{bpcStart}
 \texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm.
 The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
@@ -91,7 +96,7 @@ firmware. For each thread a pattern with one block and one timing message is loa
 \section{fid7}
 \texttt{fid7} tests the fix for the format id 7 bug.
 \include{full_test}
-\section{messageCounter}
+\section{messageCounter} This test is obsolete.
 \texttt{messageCounter} is a basic test for the Python-Wrapper of libcarpedm.
 \section{pps}
 \texttt{pps} (pulse per second) is a basic test with a schedule which sends two timing messages every second.

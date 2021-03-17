@@ -1,6 +1,9 @@
 \section{singleEdgeTest}
-\texttt{singleEdgeTest} tests the validation of combinations of node types and edge types. This uses libcarepedm only. There are 1936 schedules
+\texttt{singleEdgeTest} tests the validation of combinations of node types and edge types. This uses libcarpedm in a special version, called dmtest. 
+There are all private methods of libcarpedm accessible in dmtest. There are 1936 schedules
 with at least one edge and two nodes tested. Some schedule are enlarged with meta nodes.
+
+Build process: when building the test object libcarpedm / dmtest, start with \texttt{make clean} to build a consitent etst object.
 
 For this, the combinations of a node and an outgoing edge and,
 respectively, a node and an incoming edge.
