@@ -24,7 +24,7 @@ entity top is
 	 uart_rx				 : out 	std_logic;
 
     pGood             : in    std_logic_vector (3 downto 0);  -- Power good (0.95V, 1.8V, 3.3V, 5V)
-    jtag_present	  	: in		std_logic;							        -- JTAG TMS Signal
+    jtag_present	  	: in		std_logic;							        -- JTAG TCK Signal
     nPB_user_in       : in    std_logic;                      -- User Push-Button In
     wdt               : in    std_logic;                      -- Watchdog COMX
     rtc_voltage       : in    std_logic;                      -- Voltage Level for RTC-VCC 
