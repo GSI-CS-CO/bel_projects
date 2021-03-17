@@ -3,7 +3,7 @@
 all: test convertTime
 	
 test:
-	PYTHONPATH=../ python3 -m unittest testCommandsHistory.py
+	PYTHONPATH=../ python3 -m unittest testCommandsHistory.py $(ARGS)
 
 convertTime:
 	PYTHONPATH=../ python3 -m unittest testConvertTimestamp.py

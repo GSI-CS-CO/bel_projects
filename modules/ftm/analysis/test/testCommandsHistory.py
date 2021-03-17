@@ -22,8 +22,8 @@ class Capturing(list):
     del self._stringio    # free up some memory
     sys.stdout = self._stdout
 
-"""
-Usage:
+"""Unit tests for CommandsHistory.py (rewrite datamaster log files into shell scripts).
+Usage for tests:
 python3 -m unittest testCommandsHistory.py -v
 Add folder with CommandsHistory.py to the PYTHONPATH.
 """
@@ -35,18 +35,12 @@ class TestCommandsHistory(unittest.TestCase):
     file_to_rem = pathlib.Path(file_name)
     file_to_rem.unlink()
 
-  def test_CommandsHistoryX(self):
-    """Test CommandHistory.py with a log file and a time interval.
-    The interval starts before the log file starts and ends before the end of the log file.
-    This means that the first part of the log file is rewritten to a script.
-    The output (stdout, generated script) is compared with the expected outut.
-    """
-    history_file = 'GeneratorCommandsHistory_Fri_Feb__5_13.33.22_2021'
+  def runCommandsHistoryTest(self, history_file, begin_date, begin_time, end_date, end_time):
+    with open('expected_' + history_file[9:] + '_stdout.txt') as expected_stdout:
+      expectedStdout = expected_stdout.read().splitlines()
     with Capturing() as stdOutLines:
-      C.main([history_file + '.log', '2021-02-04', '12:00', '2021-02-05', '13:50'])
-    self.assertEqual(stdOutLines, ['Rewrite command history file GeneratorCommandsHistory_Fri_Feb__5_13.33.22_2021.log to script CommandsHistory_Fri_Feb__5_13.33.22_2021.sh.', 
-      'Schedules written to CommandsHistory_Fri_Feb__5_13.33.22_2021/graph-entry-n.dot, where n is the entry number.', 
-      'Lines: 3416, dot files: 32, first entry: 2021-02-05 13:36:22, last entry: 2021-02-05 14:07:52.'])
+      C.main([history_file + '.log', begin_date, begin_time, end_date, end_time])
+    self.assertEqual(stdOutLines, expectedStdout)
     lines = []
     shell_file = history_file[9:] + '.sh'
     with open(shell_file) as script:
@@ -57,6 +51,14 @@ class TestCommandsHistory(unittest.TestCase):
     self.assertEqual(lines, expectedLines)
     self.deleteFile(shell_file)
     shutil.rmtree(history_file[9:] + '/')
+
+  def test_CommandsHistory_firstPart(self):
+    """Test CommandHistory.py with a log file GeneratorCommandsHistory_Fri_Feb__5_13.33.22_2021. Time interval ends before log file.
+    The interval starts before the log file starts and ends before the end of the log file.
+    This means that the first part of the log file is rewritten to a script.
+    The output (stdout, generated script) is compared with the expected outut.
+    """
+    self.runCommandsHistoryTest('GeneratorCommandsHistory_Fri_Feb__5_13.33.22_2021', '2021-02-04', '12:00', '2021-02-05', '13:50')
 
   def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
     """
