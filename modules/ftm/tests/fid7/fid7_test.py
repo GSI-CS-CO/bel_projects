@@ -15,7 +15,7 @@ When FID 7 occurs, the test failed.
 
 Required argument:  device of data master.
 """
-class BpcStart(dm_testbench.DmTestbench):
+class Fid7(dm_testbench.DmTestbench):
 
   def setUp(self):
     """
@@ -25,7 +25,7 @@ class BpcStart(dm_testbench.DmTestbench):
 
   def test_fid7(self):
     file_test_pattern = 'fid.dot'
-    self.startpattern(self.datamaster, file_test_pattern)
+    self.startPattern(self.datamaster, file_test_pattern)
     file_name = 'snoop_protocol.csv'
     process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
     time.sleep(1) # adopt to pattern: how many messages a pattern produces in a second

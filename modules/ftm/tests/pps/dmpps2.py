@@ -6,11 +6,11 @@ import unittest
 
 global test_datamaster
 """
-Start a pattern and check with saft-ctl snoop that BPC start flag works.
+Start a pps pattern.
 
 Required argument: device of data master.
 """
-class BpcStart(dm_testbench.DmTestbench):
+class DmPps(dm_testbench.DmTestbench):
 
   def setUp(self):
     """
@@ -20,7 +20,7 @@ class BpcStart(dm_testbench.DmTestbench):
 
   def test_pps(self):
     file_test_pattern = 'pps2.dot'
-    self.startpattern(self.datamaster, file_test_pattern)
+    self.startPattern(self.datamaster, file_test_pattern)
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:

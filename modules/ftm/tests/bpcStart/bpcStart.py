@@ -23,7 +23,7 @@ class BpcStart(dm_testbench.DmTestbench):
 
   def test_bpcstart(self):
     file_test_pattern = 'bpcStart.dot'
-    self.startpattern(self.datamaster, file_test_pattern)
+    self.startPattern(self.datamaster, file_test_pattern)
     file_name = 'snoop_protocol.csv'
     process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
     time.sleep(1) # adopt to pattern: how many messages a pattern produces in a second
