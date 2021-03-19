@@ -1,7 +1,7 @@
 SCHEDULE ?= groups_1_nonDefaultPatterns_1_blocksPerPattern_1
 DATAMASTER ?=$$DM
 
-PHONY: test0 test1 test2 test2x testx test3 coverage
+.PHONY: test0 test1 test2 test2x testx test3 coverage
 
 test0:
 	date --rfc-3339=ns

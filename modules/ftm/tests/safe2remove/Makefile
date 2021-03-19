@@ -1,8 +1,8 @@
 DATAMASTER ?= $$DM
 
-all: blockalign1
+all: safe2remove
 
-blockalign1:
+safe2remove:
 	PYTHONPATH=../common ./unitTestSafe2Remove.py $(DATAMASTER)
 
 blockalign1-make:

@@ -3,7 +3,7 @@ DATAMASTER ?= $$DM
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
 
-all: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test parallelBranch \
+all: addDownloadCompare bpcStart dmCmd dmThreads fid7 full_test parallelBranch \
 pps safe2remove singleEdgeTest schedules
 
 addDownloadCompare:
