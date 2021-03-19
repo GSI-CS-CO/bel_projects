@@ -109,6 +109,7 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_psram             : boolean := false;
       g_en_beam_dump         : boolean := false;
+      g_dual_port_wr         : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
       g_a10_use_sys_fpll     : boolean := false;
@@ -156,6 +157,13 @@ package monster_pkg is
       wr_dac_sclk_o          : out   std_logic;
       wr_dac_din_o           : out   std_logic;
       wr_ndac_cs_o           : out   std_logic_vector(2 downto 1);
+      -- Optional dual port white rabbit pins
+      wr_aux_onewire_io      : inout std_logic;
+      wr_aux_sfp_sda_io      : inout std_logic;
+      wr_aux_sfp_scl_io      : inout std_logic;
+      wr_aux_sfp_det_i       : in    std_logic := '0';
+      wr_aux_sfp_tx_o        : out   std_logic;
+      wr_aux_sfp_rx_i        : in    std_logic := '0';
       -- Optional WR features
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
@@ -165,8 +173,13 @@ package monster_pkg is
       sfp_tx_disable_o       : out   std_logic := '0';
       sfp_tx_fault_i         : in    std_logic;
       sfp_los_i              : in    std_logic;
+      sfp_aux_tx_disable_o   : out   std_logic := '0';
+      sfp_aux_tx_fault_i     : in    std_logic := '1';
+      sfp_aux_los_i          : in    std_logic := '1';
       phy_rx_ready_o         : out   std_logic;
       phy_tx_ready_o         : out   std_logic;
+      phy_aux_rx_ready_o     : out   std_logic;
+      phy_aux_tx_ready_o     : out   std_logic;
       phy_debug_o            : out   std_logic;
       phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
@@ -192,6 +205,10 @@ package monster_pkg is
       led_link_act_o         : out   std_logic;
       led_track_o            : out   std_logic;
       led_pps_o              : out   std_logic;
+      led_aux_link_up_o      : out   std_logic;
+      led_aux_link_act_o     : out   std_logic;
+      led_aux_track_o        : out   std_logic;
+      led_aux_pps_o          : out   std_logic;
       -- g_en_pcie
       pcie_refclk_i          : in    std_logic := '0';
       pcie_rstn_i            : in    std_logic := '0';
@@ -570,3 +587,4 @@ package body monster_pkg is
   end f_report_wishbone_address;
 
 end monster_pkg;
+
