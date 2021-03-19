@@ -45,13 +45,15 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data_io : inout std_logic;
+    rom_data_io     : inout std_logic;
+    rom_aux_data_io : inout std_logic;
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     fpga_res_i : in std_logic;
     nres_i     : in std_logic;
+
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
@@ -63,8 +65,9 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o     : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_aux_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    rt_leds_o     : out std_logic_vector(3 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- usb
@@ -84,7 +87,7 @@ entity ftm10 is
     cpld_io : inout std_logic_vector(9 downto 0);
 
     -----------------------------------------------------------------------
-    -- SFP
+    -- SFP (main WR Interface)
     -----------------------------------------------------------------------
     sfp_led_fpg_o    : out   std_logic;
     sfp_led_fpr_o    : out   std_logic;
@@ -95,7 +98,21 @@ entity ftm10 is
     sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic);
+    sfp_mod2_io      : inout std_logic;
+
+    -----------------------------------------------------------------------
+    -- SFP (auxiliary)
+    -----------------------------------------------------------------------
+    sfp_aux_led_fpg_o    : out   std_logic;
+    sfp_aux_led_fpr_o    : out   std_logic;
+    sfp_aux_tx_disable_o : out   std_logic := '0';
+    sfp_aux_tx_fault_i   : in    std_logic;
+    sfp_aux_los_i        : in    std_logic;
+    sfp_aux_txp_o        : out   std_logic;
+    sfp_aux_rxp_i        : in    std_logic;
+    sfp_aux_mod0_i       : in    std_logic;
+    sfp_aux_mod1_io      : inout std_logic;
+    sfp_aux_mod2_io      : inout std_logic);
 
 end ftm10;
 
@@ -105,6 +122,11 @@ architecture rtl of ftm10 is
   signal s_led_link_act : std_logic;
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
+
+  signal s_led_aux_link_up  : std_logic;
+  signal s_led_aux_link_act : std_logic;
+  signal s_led_aux_track    : std_logic;
+  signal s_led_aux_pps      : std_logic;
 
   signal s_gpio_o       : std_logic_vector(13 downto 0);
   signal s_gpio_i       : std_logic_vector(9 downto 0);
@@ -182,6 +204,7 @@ begin
       g_io_table          => io_mapping_table,
       g_a10_use_sys_fpll  => false,
       g_a10_use_ref_fpll  => false,
+      g_dual_port_wr      => true,
       g_en_eca            => false,
       g_delay_diagnostics => true,
       g_lm32_are_ftm      => true,
@@ -196,18 +219,27 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      wr_dac_sclk_o           => wr_dac_sclk_o,
+      wr_dac_din_o            => wr_dac_din_o,
+      wr_ndac_cs_o            => wr_ndac_cs_o,
       wr_onewire_io           => rom_data_io,
+      wr_aux_onewire_io       => rom_aux_data_io,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
       wr_sfp_tx_o             => sfp_txp_o,
       wr_sfp_rx_i             => sfp_rxp_i,
-      wr_dac_sclk_o           => wr_dac_sclk_o,
-      wr_dac_din_o            => wr_dac_din_o,
-      wr_ndac_cs_o            => wr_ndac_cs_o,
+      wr_aux_sfp_sda_io       => sfp_aux_mod2_io,
+      wr_aux_sfp_scl_io       => sfp_aux_mod1_io,
+      wr_aux_sfp_det_i        => sfp_aux_mod0_i,
+      wr_aux_sfp_tx_o         => sfp_aux_txp_o,
+      wr_aux_sfp_rx_i         => sfp_aux_rxp_i,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
+      sfp_aux_tx_disable_o    => open,
+      sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
+      sfp_aux_los_i           => sfp_aux_los_i,
       gpio_o                  => s_gpio_o,
       gpio_i                  => s_gpio_i,
       lvds_p_i                => s_lvds_p_i,
@@ -231,22 +263,29 @@ begin
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
       led_pps_o               => s_led_pps,
+      led_aux_link_up_o       => s_led_aux_link_up,
+      led_aux_link_act_o      => s_led_aux_link_act,
+      led_aux_track_o         => s_led_aux_track,
+      led_aux_pps_o           => s_led_aux_pps,
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o);
 
-  -- SFP
-  sfp_tx_disable_o <= '0';
+  -- SFPs
+  sfp_tx_disable_o     <= '0';
+  sfp_aux_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o <= not s_led_link_up;
-  sfp_led_fpr_o <= not s_led_link_act;
-  rt_leds_o     <= not s_gpio_o(13 downto 10);
+  wr_leds_o(0)     <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
+  wr_leds_o(1)     <= not s_led_link_up;                              -- blue  = link
+  wr_leds_o(2)     <= not s_led_track;                                -- green = timing valid
+  wr_leds_o(3)     <= not s_led_pps;                                  -- white = PPS
+  wr_aux_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
+  wr_aux_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
+  wr_aux_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
+  wr_aux_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
+  rt_leds_o        <= not s_gpio_o(13 downto 10);
 
   -- LEMOs
   lemos : for i in 0 to 19 generate
@@ -263,3 +302,4 @@ begin
   end generate;
 
 end rtl;
+
