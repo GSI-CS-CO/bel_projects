@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
-use work.stub_pll_pkg.all;
 
 entity ftm10 is
   port(
@@ -65,9 +64,9 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o     : out std_logic_vector(3 downto 0) := (others => '1');
-    wr_aux_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o     : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- usb
@@ -89,8 +88,6 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
     -----------------------------------------------------------------------
-    sfp_led_fpg_o    : out   std_logic;
-    sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic := '0';
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -103,8 +100,6 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- SFP (auxiliary)
     -----------------------------------------------------------------------
-    sfp_aux_led_fpg_o    : out   std_logic;
-    sfp_aux_led_fpr_o    : out   std_logic;
     sfp_aux_tx_disable_o : out   std_logic := '0';
     sfp_aux_tx_fault_i   : in    std_logic;
     sfp_aux_los_i        : in    std_logic;
@@ -281,10 +276,12 @@ begin
   wr_leds_o(1)     <= not s_led_link_up;                              -- blue  = link
   wr_leds_o(2)     <= not s_led_track;                                -- green = timing valid
   wr_leds_o(3)     <= not s_led_pps;                                  -- white = PPS
-  wr_aux_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
-  wr_aux_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
-  wr_aux_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
-  wr_aux_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
+
+  wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
+  wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
+  wr_aux_leds_or_node_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
+  wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
+
   rt_leds_o        <= not s_gpio_o(13 downto 10);
 
   -- LEMOs
@@ -302,4 +299,3 @@ begin
   end generate;
 
 end rtl;
-
