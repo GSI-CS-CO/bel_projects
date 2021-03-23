@@ -80,12 +80,11 @@ timeMeasure( &g_irqTimeMeasurement );
       return;
    }
 
-   g_shared.fg_regs[channel].ramp_count =  pFgRegs->ramp_cnt_low;
-   g_shared.fg_regs[channel].ramp_count |= pFgRegs->ramp_cnt_high << BIT_SIZEOF( uint16_t );
+   //if( g_shared.fg_regs[0].ramp_count == 1000 ) return;
 
 
-  // for( unsigned int i = 0; i < 100000; i++ ) NOP(); //!!Testing how many time we still have...
-#if 1
+  // for( unsigned int i = 0; i < 10000; i++ ) NOP(); //!!Testing how many time we still have...
+#if 0
    if( pFgRegs->cntrl_reg.bv.isRunning )
    {
       if( pFgRegs->cntrl_reg.bv.dataRequest )
@@ -119,12 +118,18 @@ timeMeasure( &g_irqTimeMeasurement );
    #else
       feedAdacFg( pFgRegs );
    #endif
+      ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) |= FG_RUNNING;
    }
    else
    {
       makeStop( channel );
    }
 #endif
+
+   g_shared.fg_regs[channel].ramp_count =  ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_low );
+   g_shared.fg_regs[channel].ramp_count |= ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_high ) << BIT_SIZEOF( pFgRegs->ramp_cnt_low );
+
+
 timeMeasure( &g_irqTimeMeasurement );
 
 }

@@ -502,6 +502,14 @@ void disable_slave_irq( const unsigned int channel );
 void sendRefillSignalIfThreshold( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
+ */
+STATIC inline void sendSignalArmed( const unsigned int channel )
+{
+   g_shared.fg_regs[channel].state = STATE_ARMED;
+   sendSignal( IRQ_DAT_ARMED, channel );
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Helper function of function handleMacros().
  * @see handleMacros
  */

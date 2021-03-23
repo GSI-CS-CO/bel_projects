@@ -54,28 +54,44 @@ namespace Scu
 {
 namespace Bus
 {
+  #define __NAMESPACE_SCU_BUS( m ) Bus::m
+#else
+  #define __NAMESPACE_SCU_BUS( m ) m
 #endif
 
 /*!
  * @ingroup SCU_BUS
- * @brief Physical maximum number of SCU-Bus slots
+ * @brief Basic form-factor constants of the SCU-bus
  */
-#ifndef MAX_SCU_SLAVES
-  #define MAX_SCU_SLAVES    12
-#endif
+typedef enum
+{ /*!
+   * @ingroup SCU_BUS
+   * @brief Physical maximum number of SCU-Bus slots
+   */
+   MAX_SCU_SLAVES           = 12,
 
-#if (MAX_SCU_SLAVES > 12)
-  #error Maximum value of macro MAX_SCU_SLAVES has to be 12 !
-#endif
-#if (MAX_SCU_SLAVES < 1)
-  #error Minimum value of macro MAX_SCU_SLAVES has to be at least 1 !
-#endif
+   /*!
+    * @ingroup SCU_BUS
+    * @brief First slot of SCU-bus
+    */
+   SCUBUS_START_SLOT        = 1,
 
-/*!
- * @ingroup SCU_BUS
- * @brief First slot of SCU-bus
- */
-#define SCUBUS_START_SLOT  1
+   /*!
+    * @ingroup SCU_BUS
+    * @brief Invalid register content.
+    *        Preinitialized value when no hardware connected.
+    * @todo What shall we do when 0xdead is a real register content?!? \n
+    *       That isn't 100% impossible! >:-/
+    * @note In any case it's not usable to probing all registers with that.
+    */
+   SCUBUS_INVALID_VALUE     = 0xDEAD,
+
+   /*!
+    * @ingroup SCU_BUS
+    * @brief Address space in bytes for each SCU bus slave 128k
+    */
+   SCUBUS_SLAVE_ADDR_SPACE  = (1 << 17)
+} BASIC_T;
 
 /*!
  * @ingroup SCU_BUS
@@ -91,24 +107,6 @@ typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
 #endif
-
-/*!
- * @ingroup SCU_BUS
- * @brief Invalid register content.
- *        Preinitialized value when no hardware connected.
- * @todo What shall we do when 0xdead is a real register content?!? \n
- *       That isn't 100% impossible! >:-/
- * @note In any case it's not usable to probing all registers with that.
- */
-#define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
-
-/*!
- * @ingroup SCU_BUS
- * @brief Address space in bytes for each SCU bus slave 128k
- */
-#define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)
-
-
 
 /*!
  * @ingroup SCU_BUS

@@ -126,6 +126,8 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    FG_ASSERT( dev < ARRAY_SIZE(mg_devTab) );
 
    const ADDAC_DEV_T* pAddacObj = &mg_devTab[dev];
+   FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot,
+                                                               pAddacObj->fgBaseAddr );
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   /*
@@ -134,40 +136,39 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
    */
    daqEnableFgFeedback( slot, dev );
 #endif
+   ATOMIC_SECTION()
+   { /*
+      * Enable interrupts for the slave
+      */
+   #ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( pScuBus, slot );
+   #endif
+      *scuBusGetInterruptActiveFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
+      *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
 
-  /*
-   * Enable interrupts for the slave
-   */
-#ifdef _CONFIG_IRQ_ENABLE_IN_START_FG
-   scuBusEnableSlaveInterrupt( pScuBus, slot );
-#endif
 
-   *scuBusGetInterruptActiveFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
-   *scuBusGetInterruptEnableFlagRegPtr( pScuBus, slot ) |= pAddacObj->fgIrqMask;
+     /*
+      * Set ADDAC-DAC in FG mode
+      */
+      scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ),
+                             pAddacObj->dacControl, DAC_FG_MODE );
 
+      /*
+       * Resetting of the ramp-counter
+       */
+      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low )  = 0;
+      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
 
-  /*
-   * Set ADDAC-DAC in FG mode
-   */
-   scuBusSetSlaveValue16( scuBusGetAbsSlaveAddr( pScuBus, slot ), pAddacObj->dacControl, DAC_FG_MODE );
-
-   FG_REGISTER_T* pAddagFgRegs = getFgRegisterPtrByOffsetAddr( pScuBus, slot, pAddacObj->fgBaseAddr );
-
-   /*
-    * Resetting of the ramp-counter
-    */
-   ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low )  = 0;
-   ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
-
-#ifndef __DOXYGEN__
-   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low )  * 2 == sizeof( tag ) );
-   STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) * 2 == sizeof( tag ) );
-#endif
-   /*
-    * Setting of the ECA timing tag.
-    */
-   ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( tag );
-   ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( tag );
+   #ifndef __DOXYGEN__
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low )  * 2 == sizeof( tag ) );
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) * 2 == sizeof( tag ) );
+   #endif
+      /*
+       * Setting of the ECA timing tag.
+       */
+      ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( tag );
+      ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( tag );
+   } /* ATOMIC_SECTION() */
 
    return pAddagFgRegs;
 }
@@ -587,13 +588,11 @@ void configure_fg_macro( const unsigned int channel )
    #endif
    } /* if( cbRead( ... ) != 0 ) */
 
-   // reset watchdog
+ // reset watchdog
  //  g_aFgChannels[channel].timeout = 0;
-   g_shared.fg_regs[channel].state = STATE_ARMED;
-   sendSignal( IRQ_DAT_ARMED, channel );
-   return;
-}
 
+   sendSignalArmed( channel );
+}
 
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------

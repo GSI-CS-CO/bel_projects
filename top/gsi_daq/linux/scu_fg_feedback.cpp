@@ -445,7 +445,7 @@ FgFeedbackDevice::FgFeedbackDevice( const uint socket )
       m_poDevice = new daq::DaqDevice( socket );
    }
 #ifdef CONFIG_MIL_FG
-   else if( ::isMilFg( socket ) && (getFgSlotNumber( socket ) <= MAX_SCU_SLAVES))
+   else if( ::isMilFg( socket ) && (getFgSlotNumber( socket ) <= Bus::MAX_SCU_SLAVES))
    {
       DEBUG_MESSAGE( "Creating MIL-device on slot: " << ::getFgSlotNumber( socket ) );
       m_poDevice = new MiLdaq::DaqDevice( socket );
