@@ -109,12 +109,6 @@ entity scu_control is
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
 
     -----------------------------------------------------------------------
-    -- LA port (Logic Analyzer HDMI Port)
-    -----------------------------------------------------------------------
-    la_ch           : out std_logic_vector(15 downto 0);
-    la_clk          : out std_logic;
-
-    -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
     ext_ch           : inout std_logic_vector(21 downto 0);
@@ -136,7 +130,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     wr_leds_o   : out std_logic_vector(1 downto 0) := (others => '1');
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
-    user_led_1  : out std_logic_vector(2 downto 0) := (others => '1');
+    wr_rgb_led  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
 
 	 -----------------------------------------------------------------------
@@ -175,8 +169,8 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
-    sfp_led_fpg_o    : out   std_logic;
-    sfp_led_fpr_o    : out   std_logic;
+    --sfp_led_fpg_o    : out   std_logic;
+    --sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic := '0';
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -339,10 +333,10 @@ begin
   -- LEDs
   wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
   wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
-  sfp_led_fpr_o         <= not s_led_link_act;
+  --sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
+  --sfp_led_fpr_o         <= not s_led_link_act;
   user_led_0            <= not s_gpio_o(2 downto 0);
-  user_led_1            <= not s_gpio_o(5 downto 3);
+  --user_led_1            <= not s_gpio_o(5 downto 3);
 
   -- LEMOs
   lemos : for i in 0 to 1 generate
