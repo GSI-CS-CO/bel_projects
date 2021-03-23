@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
-use work.stub_pll_pkg.all;
 
 entity pexarria10 is
   port(
@@ -46,12 +45,14 @@ entity pexarria10 is
     -- OneWire
     -----------------------------------------------------------------------
     rom_data_io : inout std_logic;
+    rom_aux_data_io_nc : inout std_logic;
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     fpga_res_i : in std_logic;
     nres_i     : in std_logic;
+
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
@@ -63,8 +64,9 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- usb
@@ -86,8 +88,6 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
-    sfp_led_fpg_o    : out   std_logic;
-    sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic := '0';
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -95,7 +95,19 @@ entity pexarria10 is
     sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic);
+    sfp_mod2_io      : inout std_logic;
+
+    -----------------------------------------------------------------------
+    -- SFP (auxiliary - not used here)
+    -----------------------------------------------------------------------
+    sfp_aux_tx_disable_o_nc : out   std_logic := '0';
+    sfp_aux_tx_fault_i_nc   : in    std_logic;
+    sfp_aux_los_i_nc        : in    std_logic;
+    sfp_aux_txp_o_nc        : out   std_logic;
+    sfp_aux_rxp_i_nc        : in    std_logic;
+    sfp_aux_mod0_i_nc       : in    std_logic;
+    sfp_aux_mod1_io_nc      : inout std_logic;
+    sfp_aux_mod2_io_nc      : inout std_logic);
 
 end pexarria10;
 
@@ -106,7 +118,7 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(13 downto 0);
+  signal s_gpio_o       : std_logic_vector(17 downto 0);
   signal s_gpio_i       : std_logic_vector(9 downto 0);
   signal s_lvds_p_i     : std_logic_vector(19 downto 0);
   signal s_lvds_n_i     : std_logic_vector(19 downto 0);
@@ -121,7 +133,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 33) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 37) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
@@ -138,6 +150,10 @@ architecture rtl of pexarria10 is
     ("LED2_BASE_B",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_BASE_G",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED4_BASE_W",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED5_AUX_Y1",  IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED6_AUX_Y2",  IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED7_AUX_O1",  IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED8_AUX_O2",  IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -173,7 +189,7 @@ begin
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25, -- !!! TODO: Check this
-      g_gpio_out          => 4,
+      g_gpio_out          => 8,
       g_gpio_inout        => 10,
       g_lvds_inout        => 20,
       g_en_pcie           => true,
@@ -234,15 +250,19 @@ begin
       pcie_tx_o               => pcie_tx_o);
 
   -- SFP
-  sfp_tx_disable_o <= '0';
+  sfp_tx_disable_o        <= '0';
+  sfp_aux_tx_disable_o_nc <= 'Z';
+  sfp_aux_mod1_io_nc      <= 'Z';
+  sfp_aux_mod2_io_nc      <= 'Z';
 
   -- LEDs
   wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
   wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
   wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
   wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o <= not s_led_link_up;
-  sfp_led_fpr_o <= not s_led_link_act;
+  
+  wr_aux_leds_or_node_leds_o(3 downto 0) <= not s_gpio_o(17 downto 14);
+  
   rt_leds_o     <= not s_gpio_o(13 downto 10);
 
   -- LEMOs
