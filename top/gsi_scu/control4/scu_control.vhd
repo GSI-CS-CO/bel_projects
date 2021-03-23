@@ -128,7 +128,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o   : out std_logic_vector(1 downto 0) := (others => '1');
+    wr_led_pps  : out std_logic := '1';
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
     wr_rgb_led  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
@@ -189,7 +189,7 @@ architecture rtl of scu_control is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(9 downto 0);
+  signal s_gpio_o       : std_logic_vector(6 downto 0);
   signal s_lvds_p_i     : std_logic_vector(1 downto 0);
   signal s_lvds_n_i     : std_logic_vector(1 downto 0);
   signal s_lvds_p_o     : std_logic_vector(1 downto 0);
@@ -203,7 +203,7 @@ architecture rtl of scu_control is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 13) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 10) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -211,13 +211,10 @@ architecture rtl of scu_control is
     ("USER_LED0_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_R",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_G",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_B",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_0 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_0 ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
   );
@@ -238,7 +235,7 @@ begin
       g_flash_bits       => 25, -- !!! TODO: Check this
       g_psram_bits       => c_psram_bits,
       g_gpio_in          => 2,
-      g_gpio_out         => 10,
+      g_gpio_out         => 7,
       g_lvds_inout       => 2,
       g_en_scubus        => true,
       g_en_pcie          => true,
@@ -331,12 +328,8 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
-  --sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
-  --sfp_led_fpr_o         <= not s_led_link_act;
+  wr_led_pps           <= not s_led_pps;                          -- white = PPS
   user_led_0            <= not s_gpio_o(2 downto 0);
-  --user_led_1            <= not s_gpio_o(5 downto 3);
 
   -- LEMOs
   lemos : for i in 0 to 1 generate
@@ -346,7 +339,7 @@ begin
     lemo_n_o(i)        <= s_lvds_n_o(i);
   end generate;
 
-  lemo_out <= not s_gpio_o(9 downto 6);
+  lemo_out <= not s_gpio_o(6 downto 3);
 
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
