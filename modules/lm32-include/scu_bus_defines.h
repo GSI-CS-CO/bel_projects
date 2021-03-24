@@ -54,9 +54,6 @@ namespace Scu
 {
 namespace Bus
 {
-  #define __NAMESPACE_SCU_BUS( m ) Bus::m
-#else
-  #define __NAMESPACE_SCU_BUS( m ) m
 #endif
 
 /*!

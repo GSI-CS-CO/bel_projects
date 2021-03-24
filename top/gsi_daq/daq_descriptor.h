@@ -49,9 +49,9 @@
    /*! @ingroup DAQ_DEVICE
     * @brief Maximum number of DAQ's
     */
-   #define DAQ_MAX __NAMESPACE_SCU_BUS( MAX_SCU_SLAVES )
+   #define DAQ_MAX ADD_NAMESPACE( Bus, MAX_SCU_SLAVES )
 #else
-  #if DAQ_MAX > __NAMESPACE_SCU_BUSMAX_SCU_SLAVES
+  #if DAQ_MAX > DAQ_MAX ADD_NAMESPACE( Bus, MAX_SCU_SLAVES )
     #error Macro DAQ_MAX can not be greater than MAX_SCU_SLAVES !
   #endif
 #endif

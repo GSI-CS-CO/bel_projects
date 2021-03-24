@@ -578,6 +578,18 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
   #define STATIC static
 #endif
 
+/*!
+ * @brief Adds a namespace expression to a object in the case of C++ otherwise the
+ *        name will ignored in the case of C.
+ *
+ * This macro is especially for header files which becomes included
+ * in C and C++ modules.
+ */
+#ifdef __cplusplus
+   #define ADD_NAMESPACE( name, object ) name::object
+#else
+   #define ADD_NAMESPACE( name, object ) object
+#endif
 
 /*! @} */
 
