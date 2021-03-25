@@ -207,10 +207,17 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         uint32_t value                         // value to be written to the reset controller
                         );
 
-// disable the watchdog and prevent automated restart
+// disable or enable the watchdog for automated FPGA reset
 eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
+                           int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
+                           int flagEnable                      // 0: disable watchdog, 1: enable watchdog 
+                           );
+
+// retrigger an enabled  watchdog to prevent automated FPGA reset; if the watchdog is enabled, it must be retriggered regularly
+eb_status_t wb_wr_watchdog_retrigger(eb_device_t device,       // EB device
                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
                            );
+
 
 // put user lm32 into reset state
 eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device

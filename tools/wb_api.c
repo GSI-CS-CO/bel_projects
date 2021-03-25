@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 16-Jan-2020
+//  version : 25-Mar-2021
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -813,7 +813,7 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
 } // wb_wr_reset
 
 
-eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex)
+eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)
 {
   eb_data_t    data;
   eb_address_t address;
@@ -827,12 +827,35 @@ eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex)
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_WATCHDOG_DISABLE;
-  data    = (eb_data_t)0xcafebabe;
+  if (enable) data = (eb_data_t)0xcafebab0;
+  else        data = (eb_data_t)0xcafebabe;
 
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
 
   return status;
 } // wb_wr_watchdog
+
+
+eb_status_t wb_wr_watchdog_retrigger(eb_device_t device, int devIndex)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_WATCHDOG_TRG;
+  data = (eb_data_t)0xcafebabe;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_watchdog_retrigger
 
 
 eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)

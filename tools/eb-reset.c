@@ -3,10 +3,11 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-August-2019
+ *  version : 25-March-2021
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
- * in the local flash of the timing receiver.
+ * in the local flash of the timing receiver. 
+ * This tool also helps in configuring the watchdog
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -35,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.1.2"
+#define EBRESET_VERSION "1.2.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -72,7 +73,9 @@ static void help(void) {
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  wddisable        disables the watchdog (preventing automated restart)\n");
+  fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset)\n");
+  fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after some time)\n");
+  fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset)\n");
   fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
@@ -197,10 +200,26 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "wddisable")) {
       cmdExecuted = 1;
 
-      status = wb_wr_watchdog(device, devIndex);
+      status = wb_wr_watchdog(device, devIndex, 0);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // watchdog disable
 
+    // watchdog enable
+    if (!strcasecmp(command, "wdenable")) {
+      cmdExecuted = 1;
+
+      status = wb_wr_watchdog(device, devIndex, 1);
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // watchdog enable
+
+    // watchdog retrigger
+    if (!strcasecmp(command, "wdretrigger")) {
+      cmdExecuted = 1;
+
+      status = wb_wr_watchdog_retrigger(device, devIndex);
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // watchdog retrigger
+    
     // halt user CPU
     if (!strcasecmp(command, "cpuhalt")) {
       cmdExecuted = 1;
