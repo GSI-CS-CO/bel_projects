@@ -142,7 +142,7 @@ typedef enum
 
    OUTPUT_BITS         = 24,
    MIL_EXT             = 1,
-   MAX_SIO3            = __NAMESPACE_SCU_BUS(MAX_SCU_SLAVES),
+   MAX_SIO3            = ADD_NAMESPACE( Bus, MAX_SCU_SLAVES ),
    IFK_MAX_ADR         = 254,
    GRP_IFA8            = 24,
    IFA_ID              = 0xCC,
@@ -150,7 +150,7 @@ typedef enum
    DRQ_BIT             = (1 << 10),
    DEV_DRQ             = (1 << 0),
    DEV_STATE_IRQ       = (1 << 1),
-   MIL_EXT_SLOT        = __NAMESPACE_SCU_BUS(MAX_SCU_SLAVES) + 1,
+   MIL_EXT_SLOT        = ADD_NAMESPACE( Bus, MAX_SCU_SLAVES ) + 1,
    DEV_SIO             = 0x20,
    DEV_MIL_EXT         = 0x10,
    FC_CNTRL_WR         = (0x14 << 8),
@@ -487,10 +487,9 @@ ALWAYS_INLINE STATIC inline bool isNonMilFg( const unsigned int socket )
 ALWAYS_INLINE STATIC inline
 bool isAddacFg( const unsigned int socket )
 {
-   //return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
-   return (socket > 0) && (socket <= __NAMESPACE_SCU_BUS(MAX_SCU_SLAVES));
+   return (socket >= ADD_NAMESPACE( Bus, SCUBUS_START_SLOT )) &&
+          (socket <= ADD_NAMESPACE( Bus, MAX_SCU_SLAVES ));
 }
-
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" in the case the function generator belonging to the

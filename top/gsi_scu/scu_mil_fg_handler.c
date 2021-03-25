@@ -496,6 +496,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
 
 /*! ---------------------------------------------------------------------------
  * @brief Handling of a MIL function generator.
+ * @see handleAdacFg
  */
 STATIC inline
 void handleMilFg( const unsigned int socket,

@@ -21,13 +21,14 @@ extern "C" {
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
- * @brief Handles a ADAC-FG
+ * @brief Handles a ADAC- respectively ACU- function generator.
+ * @see handleMilFg
  * @param slot SCU-bus slot number respectively slave number.
  * @param fgAddrOffset Relative address offset of the concerning FG-macro
  *                     till now FG1_BASE or FG2_BASE.
  */
 void handleAdacFg( const unsigned int slot,
-                   const unsigned int fgAddrOffset );
+                   const BUS_BASE_T fgAddrOffset );
 
 
 #ifdef __cplusplus

@@ -152,7 +152,6 @@ void enable_scub_msis( const unsigned int channel )
    if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
    {
 #endif
-      //SCU Bus Master
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       const uint16_t slot = getFgSlotNumber( socket ) - 1;
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;
@@ -190,89 +189,20 @@ STATIC void msDelayBig( const uint64_t ms )
    }
 }
 
-
-// #define __MURKS
-#if 0
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
  */
-ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
-{
-   const unsigned int slot = pMessage->msg + 1;
-   const uint16_t pendingIrqs =
-     // scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
-        *scuBusGetInterruptActiveFlagRegPtr((const void*)g_pScub_base, slot ); //!
-#ifdef __MURKS
-#warning MURKS!
-   static unsigned int X = 0;
-   X++;
-   if( (X % 10000) == 0 )
-      return;
-#endif
-
-   if( (pendingIrqs & FG1_IRQ) != 0 )
-   {
-    #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-     // timeMeasure( &g_irqTimeMeasurement );
-    #endif
-      handleAdacFg( slot, FG1_BASE );
-    #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-    //  timeMeasure( &g_irqTimeMeasurement );
-    #endif
-
-   }
-
-   if( (pendingIrqs & FG2_IRQ) != 0 )
-   {
-      handleAdacFg( slot, FG2_BASE );
-   }
-
-#ifdef CONFIG_MIL_FG
-   if( (pendingIrqs & DREQ ) != 0 )
-   {
-      add_msg( &g_aMsg_buf[0], DEVSIO, pMessage );
-   }
-#endif
-
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
-   {
-      add_msg( &g_aMsg_buf[0], DAQ, pMessage );
-   }
-   //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
-#endif
-   *scuBusGetInterruptActiveFlagRegPtr((const void*)g_pScub_base, slot ) = pendingIrqs; //!!
-}
-#else
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Handling of all SCU-bus MSI events.
- */
-ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
+ONE_TIME_CALL void onScuBusEvent( const MSI_T* pMessage )
 {
    const unsigned int slot = pMessage->msg + 1;
    uint16_t pendingIrqs;
 
    while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot )) != 0)
    {
-#ifdef __MURKS
-#warning MURKS!
-      static unsigned int X = 0;
-      X++;
-      if( (X % 10000) == 0 )
-         return;
-#endif
-
       if( (pendingIrqs & FG1_IRQ) != 0 )
       {
-       #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-        // timeMeasure( &g_irqTimeMeasurement );
-       #endif
          handleAdacFg( slot, FG1_BASE );
-       #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-       //  timeMeasure( &g_irqTimeMeasurement );
-       #endif
       }
 
       if( (pendingIrqs & FG2_IRQ) != 0 )
@@ -297,8 +227,6 @@ ONE_TIME_CALL void onScuBusEvent( MSI_T* pMessage )
    }
 }
 
-#endif
-
 /*
  * Static check of compatibility.
  */
@@ -320,29 +248,6 @@ STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
  * @see irq_pop_msi
  * @see dispatch
  */
-#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
-STATIC void onScuMSInterrupt( const unsigned int intNum,
-                              const void* pContext UNUSED )
-{
-#ifndef _CONFIG_NO_DISPATCHER
-   #warning with dispatcher...
-   add_msg( &g_aMsg_buf[0], IRQ, (MSI_T*)&g_currentMSI );
-#else
-   switch( g_currentMSI.adr & 0xFF )
-   {
-    #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
-      case ADDR_SCUBUS: onScuBusEvent( (MSI_T*)&g_currentMSI ); break;
-    #else
-      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, (MSI_T*)&g_currentMSI ); break; // message from scu bus
-    #endif
-      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    (MSI_T*)&g_currentMSI ); break; // software message from saftlib
-    #ifdef CONFIG_MIL_FG
-      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&g_currentMSI ); break; // message from dev bus
-    #endif
-   }
-#endif // ifndef _CONFIG_NO_DISPATCHER
-}
-#else
 STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
@@ -350,32 +255,48 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
    /*!
     * @todo Use MSI_ITEM_T instead of MSI_T in future!
     */
-#ifdef CONFIG_IRQ_RESET_IP_AFTER
-   irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
-#else
    while( irqMsiCopyObjectAndRemoveIfActive( (MSI_ITEM_T*)&m, intNum ) )
-#endif
    {
-   #ifndef _CONFIG_NO_DISPATCHER
-      #warning with dispatcher...
-      add_msg( &g_aMsg_buf[0], IRQ, &m );
-   #else
-      switch( m.adr & 0xFF )
+      switch( GET_LOWER_HALF( m.adr )  )
       {
-       #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
-         case ADDR_SCUBUS: onScuBusEvent( &m ); break;
-       #else
-         case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, &m ); break; // message from scu bus
-       #endif
-         case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    &m ); break; // software message from saftlib
+         case ADDR_SCUBUS:
+         { /*
+            * Message from SCU- bus.
+            */
+          #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
+            onScuBusEvent( &m );
+          #else
+            add_msg( &g_aMsg_buf[0], SCUBUS, &m );
+          #endif
+            break;
+         }
+
+         case ADDR_SWI:
+         { /*
+            * Command message from SAFT-lib
+            */
+            add_msg( &g_aMsg_buf[0], SWI,    &m );
+            break;
+         }
+
        #ifdef CONFIG_MIL_FG
-         case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, &m ); break; // message from dev bus
+         case ADDR_DEVBUS:
+         { /*
+            * Message from MIL-bus respectively device-bus.
+            */
+            add_msg( &g_aMsg_buf[0], DEVBUS, &m );
+            break;
+         }
        #endif
+
+         default:
+         {
+            FG_ASSERT( false );
+            break;
+         }
       }
-   #endif // ifndef _CONFIG_NO_DISPATCHER
    }
 }
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -385,20 +306,16 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  */
 ONE_TIME_CALL void initInterrupt( void )
 {
-#ifdef _CONFIG_NO_DISPATCHER
- #ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
+#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
    cbReset( &g_aMsg_buf[0], SCUBUS );
- #endif
+#endif
    cbReset( &g_aMsg_buf[0], SWI );
- #ifdef CONFIG_SCU_DAQ_INTEGRATION
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
    cbReset( &g_aMsg_buf[0], DAQ );
- #endif
- #ifdef CONFIG_MIL_FG
+#endif
+#ifdef CONFIG_MIL_FG
    cbReset( &g_aMsg_buf[0], DEVSIO );
    cbReset( &g_aMsg_buf[0], DEVBUS );
- #endif
-#else
-   cbReset( &g_aMsg_buf[0], IRQ );
 #endif
 
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
@@ -481,7 +398,6 @@ void scanFgs( void )
    printFgs();
 }
 
-/* task prototypes */
 #ifndef __DOXYGEN__
 #ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
 STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
@@ -513,30 +429,6 @@ STATIC TASK_T g_aTasks[] =
 #endif
    { NULL,               ALWAYS, 0, commandHandler  }
 };
-
-#ifndef _CONFIG_NO_DISPATCHER
-
-/*! ---------------------------------------------------------------------------
- * @brief Move messages to the correct queue, depending on source
- * @see onScuMSInterrupt
- * @see schedule
- * @todo Remove this function and do this in the interrupt handler direct.
- */
-ONE_TIME_CALL void dispatch( void )
-{
-   criticalSectionEnter();
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
-   criticalSectionExit();
-   switch( m.adr & 0xFF )
-   {
-      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, &m ); return; // message from scu bus
-      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    &m ); return; // software message from saftlib
-   #ifdef CONFIG_MIL_FG
-      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, &m ); return; // message from dev bus
-   #endif
-   }
-}
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -625,11 +517,11 @@ void main( void )
            "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Found MsgBox at 0x%p. MSI Path is 0x%p\n"
-#if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
+       #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
             "CAUTION! Time gap reading for MIL FGs activated!\n"
             ESC_NORMAL
-#endif
+       #endif
            , pCpuMsiBox, pMyMsi );
 #ifdef CONFIG_MIL_FG
    dbgPrintMilTaskData();
@@ -638,7 +530,7 @@ void main( void )
    initInterrupt();
    tellMailboxSlot();
 
-  /*!
+  /*
    * Wait for wr deamon to read sdbfs
    */
    msDelayBig(1500);
@@ -655,16 +547,16 @@ void main( void )
    ATOMIC_SECTION() usleep_init();
 
    printCpuId();
-   mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr);
-   mprintf("g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser);
-   mprintf("g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base);
+   mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr );
+   mprintf("g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser  );
+   mprintf("g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base );
 #ifdef CONFIG_MIL_FG
-   mprintf("g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base);
+   mprintf("g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base );
    initEcaQueue();
 #endif
 
    hist_init(HISTORY_XYZ_MODULE);
-   /*!
+   /*
     * Scanning and initializing all FG's and DAQ's
     */
    initAndScan();
@@ -672,13 +564,6 @@ void main( void )
    //print_regs();
    while( true )
    {
-#if 0
-      ATOMIC_SECTION()
-      {
-         for( volatile int i = 0; i < 100000; i++ )
-            NOP();
-      }
-#endif
       check_stack();
       schedule();
    }

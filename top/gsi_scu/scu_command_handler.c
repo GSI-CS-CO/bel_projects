@@ -47,8 +47,6 @@ void printSwIrqCode( const unsigned int code, const unsigned int value )
   #define fg_busy fg_rescan_busy
 #endif
 
-//#define _CONFIG_MEASURE_COMMAND_HANDLER
-
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Handles so called software interrupts (SWI) coming from SAFTLIB.
@@ -107,7 +105,6 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    */
    switch( code )
    {
-      // case FG_OP_INITIALIZE:          /* Go immediately to next case. */
       case FG_OP_CONFIGURE:           /* Go immediately to next case. */
       case FG_OP_DISABLE_CHANNEL:     /* Go immediately to next case. */
       case FG_OP_CLEAR_HANDLER_STATE:
@@ -174,39 +171,8 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       { /*
          * Start of a function generator.
          */
-
-#if 0
-         ATOMIC_SECTION()
-         mprintf( "Das "
-                  "dauert "
-                  "ein "
-                  "bisschen "
-                  "lange "
-                  "lange "
-                  "lange...."
-                  "\n" );
-#endif
-      #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
-      //   suspendGapReading(); // TEST!!!
-      #endif
-
- //if( value == 2 ) break; //!!!!
          enable_scub_msis( value ); //duration: 0.03 ms
-
-       #ifdef _CONFIG_MEASURE_COMMAND_HANDLER
-         timeMeasure( &tm );
-       #endif
-
          configure_fg_macro( value ); //duration: 0.12 ms
-      #ifdef _CONFIG_MEASURE_COMMAND_HANDLER
-         timeMeasure( &tm );
-       #endif
-
-       #ifdef _CONFIG_MEASURE_COMMAND_HANDLER
-         mprintf( "\n" );
-         timeMeasurePrintMilliseconds( &tm );
-         mprintf( "\n\n" );
-       #endif
          break;
       }
 

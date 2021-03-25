@@ -157,6 +157,16 @@
 #define GET_UPPER_HALF( v ) \
    (((v) >> (BIT_SIZEOF(TYPEOF(v))/2)) & LOWER_HALF_BIT_MASK(v))
 
+/*!
+ * @brief Macro returns the or linked value of the values "low" and "high".
+ * @note CAUTION: The byte-size of the return value has to be at least the
+ *       double size of given parameters!
+ * @param high High value part of the return value
+ * @param low  Low value part of the return value.
+ * @return Or linked value of "high" and "low".
+ */
+#define MERGE_HIGH_LOW( high, low ) ((low) | ((high) << BIT_SIZEOF(low)))
+
 #ifndef __GNUC__
   #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition PACKED_SIZE will work."
 #endif

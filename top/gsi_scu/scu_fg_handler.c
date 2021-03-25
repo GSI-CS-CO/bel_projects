@@ -47,7 +47,6 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
       return false;
    }
 
-//timeMeasure( &g_irqTimeMeasurement );
    /*
     * Clear all except the function generator number.
     */
@@ -55,7 +54,6 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
                   &pset,
                   (pThis->cntrl_reg.i16 & FG_NUMBER) |
                   ((pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) );
-//timeMeasure( &g_irqTimeMeasurement );
    return true;
 }
 
@@ -67,12 +65,12 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
  *                     till now FG1_BASE or FG2_BASE.
  */
 void handleAdacFg( const unsigned int slot,
-                   const unsigned int fgAddrOffset )
+                   const BUS_BASE_T fgAddrOffset )
 {
-timeMeasure( &g_irqTimeMeasurement );
    FG_REGISTER_T* pFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base,
                                                           slot, fgAddrOffset );
    const unsigned int channel = pFgRegs->cntrl_reg.bv.number;
+
    if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
    {
       mprintf( ESC_ERROR"%s: Channel of ADAC FG out of range: %d\n"ESC_NORMAL,
@@ -80,58 +78,59 @@ timeMeasure( &g_irqTimeMeasurement );
       return;
    }
 
-   //if( g_shared.fg_regs[0].ramp_count == 1000 ) return;
-
-
-  // for( unsigned int i = 0; i < 10000; i++ ) NOP(); //!!Testing how many time we still have...
-#if 0
-   if( pFgRegs->cntrl_reg.bv.isRunning )
-   {
-      if( pFgRegs->cntrl_reg.bv.dataRequest )
-         makeStart( channel );
-
-      sendRefillSignalIfThreshold( channel );
-
-   #ifdef CONFIG_USE_SENT_COUNTER
-      if( feedAdacFg( pFgRegs ) )
-         g_aFgChannels[channel].param_sent++;
-   #else
-      feedAdacFg( pFgRegs );
-   #endif
-   }
-   else
-   {
-      makeStop( channel );
-   }
-#else
-   const uint16_t controlReg = ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 );
-   if( (controlReg & FG_RUNNING) != 0 )
-   {
-      if( (controlReg & FG_DREQ) != 0 )
-         makeStart( channel );
-
-      sendRefillSignalIfThreshold( channel );
-
-   #ifdef CONFIG_USE_SENT_COUNTER
-      if( feedAdacFg( pFgRegs ) )
-         g_aFgChannels[channel].param_sent++;
-   #else
-      feedAdacFg( pFgRegs );
-   #endif
-      ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) |= FG_RUNNING;
-   }
-   else
-   {
-      makeStop( channel );
-   }
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( sizeof( pFgRegs->ramp_cnt_high ) == sizeof( pFgRegs->ramp_cnt_low ) );
+   STATIC_ASSERT( sizeof( g_shared.fg_regs[0].ramp_count ) >= 2 * sizeof( pFgRegs->ramp_cnt_low ) );
 #endif
+   /*
+    * Read the hardware ramp counter respectively polynomial counter
+    * from the concerning function generator.
+    */
+   g_shared.fg_regs[channel].ramp_count = MERGE_HIGH_LOW( ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_high ),
+                                                          ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_low ));
 
-   g_shared.fg_regs[channel].ramp_count =  ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_low );
-   g_shared.fg_regs[channel].ramp_count |= ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_high ) << BIT_SIZEOF( pFgRegs->ramp_cnt_low );
+   const uint16_t controlReg = ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 );
+   /*
+    * Is function generator running?
+    */
+   if( (controlReg & FG_RUNNING) == 0 )
+   { /*
+      * Function generator has stopped.
+      * Sending a appropriate stop-message including the reason
+      * to the SAFT-lib.
+      */
+      makeStop( channel );
+      return;
+   }
 
+   /*
+    * Function generator is running.
+    */
 
-timeMeasure( &g_irqTimeMeasurement );
+   if( (controlReg & FG_DREQ) == 0 )
+   { /*
+      * The concerned function generator has received the
+      * timing- tag or the broadcast message.
+      * Sending a start-message to the SAFT-lib.
+      */
+      makeStart( channel );
+   }
 
+   /*
+    * Send a refill-message to the SAFT-lib if
+    * the buffer has reached a critical level.
+    */
+   sendRefillSignalIfThreshold( channel );
+
+   /*
+    * Sending the current polynomial data set to the function generator.
+    */
+#ifdef CONFIG_USE_SENT_COUNTER
+   if( feedAdacFg( pFgRegs ) )
+      g_aFgChannels[channel].param_sent++;
+#else
+   feedAdacFg( pFgRegs );
+#endif
 }
 
 /*================================== EOF ====================================*/
