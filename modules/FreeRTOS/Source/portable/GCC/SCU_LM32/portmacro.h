@@ -169,14 +169,16 @@ typedef uint32_t       UBaseType_t;
  * @brief Port Disable Interrupts
  * @see irqDisable
  */
-#define portDISABLE_INTERRUPTS() irqDisable()
+//#define portDISABLE_INTERRUPTS() irqDisable()
+#define portDISABLE_INTERRUPTS() criticalSectionEnter()
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Port Enable Interrupts
  * @see irqEnable
  */
-#define portENABLE_INTERRUPTS()  irqEnable()
+//#define portENABLE_INTERRUPTS()  irqEnable()
+#define portENABLE_INTERRUPTS() criticalSectionExit()
 
 /*-----------------------------------------------------------*/
 

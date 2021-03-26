@@ -86,14 +86,6 @@ namespace gsi
  */
 #define IRQ_IE ((uint32_t)0x00000001)
 
-#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Returns the white rabbit time-stamp of the last occurred interrupt.
- */
-uint64_t irqGetTimestamp( void );
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Signature of interrupt callback function.
@@ -103,6 +95,14 @@ uint64_t irqGetTimestamp( void );
  * @param pContext User context, second parameter of registerISR().
  */
 typedef void(*ISRCallback)( const unsigned int intNum, const void* pContext );
+
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the white rabbit time-stamp of the last occurred interrupt.
+ */
+uint64_t irqGetTimestamp( void );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT OVERWRITABLE
@@ -138,6 +138,28 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
  *       nesting depth.
  */
 unsigned int irqGetAtomicNestingCount( void );
+
+#ifdef CONFIG_RTOS
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Resets the atomic nesting counter.
+ * @note This function will used by FreeRTOS only within the function
+ *       xPortStartScheduler() because the interrupts becomes enabled
+ *       in the assembler routine vStartFirstTask() implemented in
+ *       port.c.
+ */
+void __irqResetAtomicNestingCounter( void );
+
+#else
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Enables the global interrupt.
+ * @note This function is only for non FreeRTOS applications available! \n
+ *       If a Free-RTOS application used, so the Free-RTOS function
+ *       vTaskStartScheduler() will accomplished this.
+ */
+void irqEnable( void );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -275,9 +297,13 @@ STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
  * @ingroup INTERRUPT
  * @brief Global enabling of all registered and activated interrupts.
  *        Counterpart of irqDisable().
+ * @note Use this for one time in your application only, for further
+ *       interrupt enable/disable actions prefer the functions \n
+ *       criticalSectionEnter() and criticalSectionExit() respectively
+ *       the macro ATOMIC_SECTION().
  * @see irqDisable
  */
-STATIC inline ALWAYS_INLINE void irqEnable( void )
+STATIC inline ALWAYS_INLINE void _irqEnable( void )
 {
 //#ifdef CONFIG_RTOS
 //     irqSetEnableRegister( IRQ_IE );
@@ -290,6 +316,9 @@ STATIC inline ALWAYS_INLINE void irqEnable( void )
  * @ingroup INTERRUPT
  * @brief Global disabling of all interrupts.
  *        Counterpart of irqEnable()
+ * @note CAUTION! Prefer the functions criticalSectionEnter()
+ *       and criticalSectionExit() respectively the macro ATOMIC_SECTION()
+ *       rather than this function in your application!
  * @see irqEnable
  */
 STATIC inline ALWAYS_INLINE void irqDisable( void )

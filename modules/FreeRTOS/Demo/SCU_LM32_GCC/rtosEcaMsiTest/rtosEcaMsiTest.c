@@ -222,7 +222,7 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
 
    configureEcaMsiForLM32();
 
-   ATOMIC_SECTION() irqRegisterISR( ECA_INTERRUPT_NUMBER, xMsiQueue, onIrqEcaEvent );
+   irqRegisterISR( ECA_INTERRUPT_NUMBER, xMsiQueue, onIrqEcaEvent );
    mprintf( "Installing of ECA interrupt is done.\n" );
 
    unsigned int i = 0;

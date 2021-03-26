@@ -283,7 +283,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    if( status != pdPASS )
       return status;
 
-   portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
    return status;

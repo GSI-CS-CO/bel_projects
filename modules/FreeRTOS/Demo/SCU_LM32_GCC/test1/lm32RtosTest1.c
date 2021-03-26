@@ -156,7 +156,6 @@ void main( void )
       while( true );
    }
 
-   portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n" ESC_NORMAL );

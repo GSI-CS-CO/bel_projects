@@ -24,21 +24,28 @@
  ******************************************************************************
  */
 #include "lm32Interrupts.h"
-
-#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
-  #include "scu_msi.h"
-#endif
-
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
  #include <scu_wr_time.h>
 #endif
+
 /*!
  * @ingroup INTERRUPT
  * @brief Nesting counter for critical sections.
+ * @note The nesting counter becomes pre-initialized with 1 so it becomes
+ *       possible to use critical sections before the global interrupt
+ *       is enabled. \n
+ *       The function irqEnable() for non FreeRTOS applications or
+ *       the FreeRTOS function vTaskStartScheduler() respectively
+ *       the port-function xPortStartScheduler() will reset this counter
+ *       to zero.
  */
-volatile uint32_t mg_criticalSectionNestingCount = 0;
+volatile unsigned int mg_criticalSectionNestingCount = 1;
 
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+/*!
+ * @ingroup INTERRUPT
+ * @brief White rabbit time stamp of the last occurred interrupt.
+ */
 volatile uint64_t mg_interruptTimestamp = 0LL;
 #endif
 
@@ -72,11 +79,6 @@ typedef struct
  */
 STATIC ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 
-#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
-MSI_ITEM_T g_currentMSI;
-#endif
-
-
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
@@ -84,6 +86,26 @@ inline unsigned int irqGetAtomicNestingCount( void )
 {
    return mg_criticalSectionNestingCount;
 }
+
+#ifdef CONFIG_RTOS
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+inline void __irqResetAtomicNestingCounter( void )
+{
+   mg_criticalSectionNestingCount = 0;
+}
+
+#else
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+inline void irqEnable( void )
+{
+   mg_criticalSectionNestingCount = 0;
+   _irqEnable();
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
@@ -169,19 +191,13 @@ void _irq_entry( void )
       {
          const unsigned int intNum = _irqReorderPriority( prio );
          const uint32_t mask = _irqGetPendingMask( intNum );
+
          if( (mask & ip) == 0 ) /* Is this interrupt pending? */
             continue; /* No, go to next possible interrupt. */
-
+         /*
+          * Handling of detected pending interrupt.
+          */
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-      #ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
-         if( (IRQ_MSI_CONTROL_ACCESS( status ) & mask) == 0 )
-            continue;
-         g_currentMSI.msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
-         g_currentMSI.adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
-         g_currentMSI.sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
-
-         IRQ_MSI_CONTROL_ACCESS( pop ) = mask;
-      #endif
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
          { /*
@@ -217,40 +233,6 @@ void _irq_entry( void )
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
- */
-void irqRegisterISR( const unsigned int intNum, void* pContext,
-                     ISRCallback pfCallback )
-{
-   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-
-   ISREntryTable[intNum].pfCallback = pfCallback;
-   ISREntryTable[intNum].pContext   = pContext;
-
-   const uint32_t mask = _irqGetPendingMask( intNum );
-   const uint32_t im = irqGetMaskRegister();
-   irqSetMaskRegister( (pfCallback == NULL)? (im & ~mask) : (im | mask) );
-}
-
-/*! ---------------------------------------------------------------------------
- * @see lm32Interrupts.h
- */
-void irqDisableSpecific( const unsigned int intNum )
-{
-   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-   irqSetMaskRegister( irqGetMaskRegister() & ~_irqGetPendingMask( intNum ) );
-}
-
-/*! ---------------------------------------------------------------------------
- * @see lm32Interrupts.h
- */
-void irqEnableSpecific( const unsigned int intNum )
-{
-   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-   irqSetMaskRegister( irqGetMaskRegister() | _irqGetPendingMask( intNum ) );
-}
-
-/*! ---------------------------------------------------------------------------
- * @see lm32Interrupts.h
  *
  * When the compiler and linker has LTO ability so the following inline
  * declarations will be really inline.
@@ -272,8 +254,51 @@ inline void criticalSectionExit( void )
    IRQ_ASSERT( mg_criticalSectionNestingCount != 0 );
    mg_criticalSectionNestingCount--;
    if( mg_criticalSectionNestingCount == 0 )
-      irqEnable();
+      _irqEnable();
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+void irqRegisterISR( const unsigned int intNum, void* pContext,
+                     ISRCallback pfCallback )
+{
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+
+   criticalSectionEnter();
+
+   ISREntryTable[intNum].pfCallback = pfCallback;
+   ISREntryTable[intNum].pContext   = pContext;
+
+   const uint32_t mask = _irqGetPendingMask( intNum );
+   const uint32_t im = irqGetMaskRegister();
+   irqSetMaskRegister( (pfCallback == NULL)? (im & ~mask) : (im | mask) );
+
+   criticalSectionExit();
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+void irqDisableSpecific( const unsigned int intNum )
+{
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+
+   criticalSectionEnter();
+   irqSetMaskRegister( irqGetMaskRegister() & ~_irqGetPendingMask( intNum ) );
+   criticalSectionExit();
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+void irqEnableSpecific( const unsigned int intNum )
+{
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+
+   criticalSectionEnter();
+   irqSetMaskRegister( irqGetMaskRegister() | _irqGetPendingMask( intNum ) );
+   criticalSectionExit();
+}
 
 /*================================== EOF ====================================*/
