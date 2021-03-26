@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-March-2021
+ *  version : 26-March-2021
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver. 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.2.0"
+#define EBRESET_VERSION "1.2.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -73,9 +73,10 @@ static void help(void) {
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset)\n");
-  fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after some time)\n");
-  fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset)\n");
+  fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset permanently)\n");
+  fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after 'some time')\n");
+  fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset for 'some time')\n");
+  fprintf(stderr, "  wdstatus         gets the status of the watchdog; '1': enabled, '0': disabled\n");
   fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
@@ -114,6 +115,7 @@ int main(int argc, char** argv) {
   char *tail;
 
   int         ip;
+  int         flagEnabled;
 
   program = argv[0];
 
@@ -220,6 +222,15 @@ int main(int argc, char** argv) {
       if (status != EB_OK)  die("eb-reset: ", status);
     } // watchdog retrigger
     
+    // watchdog status
+    if (!strcasecmp(command, "wdstatus")) {
+      cmdExecuted = 1;
+      status = wb_wr_watchdog_status(device, devIndex, &flagEnabled);
+      if (status != EB_OK)  die("eb-reset: ", status);
+      printf("%d\n", flagEnabled);
+    } // get watchdog 'enabled' status
+
+
     // halt user CPU
     if (!strcasecmp(command, "cpuhalt")) {
       cmdExecuted = 1;
