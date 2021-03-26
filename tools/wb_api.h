@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 16-Jan-2020
+//  version : 26-Mar-2021
 //
-#define WB_API_VERSION "0.14.2"
+#define WB_API_VERSION "0.14.3"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -218,6 +218,11 @@ eb_status_t wb_wr_watchdog_retrigger(eb_device_t device,       // EB device
                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
                            );
 
+// get watchdog status
+eb_status_t wb_wr_watchdog_status(eb_device_t device,          // EB device
+                                  int devIndex,                // 0,1,2... - there may be more than 1 device on the WB bus
+                                  int *flagEnabled             // 1: watchdog is enabled, 0: watchdog is disabled
+                                  );
 
 // put user lm32 into reset state
 eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device
