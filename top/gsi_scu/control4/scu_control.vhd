@@ -328,8 +328,11 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_led_pps           <= not s_led_pps;                          -- white = PPS
-  user_led_0            <= not s_gpio_o(2 downto 0);
+  wr_led_pps              <= not s_led_pps;                            -- white = PPS
+  wr_rgb_led(0)           <= not s_led_link_act;                       -- WR-RGB Red
+  wr_rgb_led(1)           <= not s_led_track;                          -- WR-RGB Green
+  wr_rgb_led(2)           <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
+  user_led_0              <= not s_gpio_o(2 downto 0);
 
   -- LEMOs
   lemos : for i in 0 to 1 generate
