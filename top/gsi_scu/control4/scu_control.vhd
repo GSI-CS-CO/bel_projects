@@ -100,10 +100,10 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(1 downto 0);
-    lemo_n_i : in    std_logic_vector(1 downto 0);
-    lemo_p_o : out   std_logic_vector(1 downto 0);
-    lemo_n_o : out   std_logic_vector(1 downto 0);
+    lemo_p_i : in    std_logic_vector(2 downto 0);
+    lemo_n_i : in    std_logic_vector(2 downto 0);
+    lemo_p_o : out   std_logic_vector(2 downto 0);
+    lemo_n_o : out   std_logic_vector(2 downto 0);
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
@@ -190,10 +190,10 @@ architecture rtl of scu_control is
   signal s_led_pps      : std_logic;
 
   signal s_gpio_o       : std_logic_vector(6 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(1 downto 0);
+  signal s_lvds_p_i     : std_logic_vector(2 downto 0);
+  signal s_lvds_n_i     : std_logic_vector(2 downto 0);
+  signal s_lvds_p_o     : std_logic_vector(2 downto 0);
+  signal s_lvds_n_o     : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -203,7 +203,7 @@ architecture rtl of scu_control is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 10) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 11) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -216,7 +216,8 @@ architecture rtl of scu_control is
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
+    ("FAST_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IO_2  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
   );
 
   constant c_family        : string := "Arria 10 GX SCU4";
@@ -236,7 +237,7 @@ begin
       g_psram_bits       => c_psram_bits,
       g_gpio_in          => 2,
       g_gpio_out         => 7,
-      g_lvds_inout       => 2,
+      g_lvds_inout       => 3,
       g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
@@ -335,7 +336,7 @@ begin
   user_led_0              <= not s_gpio_o(2 downto 0);
 
   -- LEMOs
-  lemos : for i in 0 to 1 generate
+  lemos : for i in 0 to 2 generate
     s_lvds_p_i(i)      <= lemo_p_i(i);
     s_lvds_n_i(i)      <= lemo_n_i(i);
     lemo_p_o(i)        <= s_lvds_p_o(i);
