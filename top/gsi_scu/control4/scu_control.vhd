@@ -194,6 +194,7 @@ architecture rtl of scu_control is
   signal s_lvds_n_i     : std_logic_vector(2 downto 0);
   signal s_lvds_p_o     : std_logic_vector(2 downto 0);
   signal s_lvds_n_o     : std_logic_vector(2 downto 0);
+  signal s_lvds_term    : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -218,9 +219,9 @@ architecture rtl of scu_control is
     ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
+    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
+    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS)
   );
 
   constant c_family        : string := "Arria 10 GX SCU4";
@@ -281,6 +282,7 @@ begin
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
       lvds_n_o                => s_lvds_n_o,
+      lvds_term_o             => s_lvds_term,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -352,5 +354,8 @@ begin
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
+      
+  --Extension Piggy
+  ext_ch(21 downto 19) <= s_lvds_term;
 
 end rtl;
