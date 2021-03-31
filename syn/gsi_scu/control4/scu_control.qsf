@@ -757,18 +757,18 @@ set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_sfpref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_local_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_pllref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_sfpref_i
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i[1]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o[1]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i[1]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o[1]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[0]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[1]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[2]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_o[0]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_o[1]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_o[2]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_i[0]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_i[1]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_i[2]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[0]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[1]
+set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[2]
 set_instance_assignment -name IO_STANDARD LVDS -to pcie_refclk_i
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
@@ -830,7 +830,8 @@ set_location_assignment PIN_AB6 -to wr_dac_sclk_o
 set_location_assignment PIN_AC10 -to altera_reserved_tdi
 set_location_assignment PIN_AC13 -to lemo_out[2]
 set_location_assignment PIN_AC15 -to lemo_out[3]
-set_location_assignment PIN_AC18 -to lemo_n_i[0]
+set_location_assignment PIN_AC16 -to fastIO_p_i[2]
+set_location_assignment PIN_AC17 -to fastIO_n_i[2]
 set_location_assignment PIN_AC1 -to f2f[5]
 set_location_assignment PIN_AC21 -to pa[7]
 set_location_assignment PIN_AC22 -to scu_cb_version[0]
@@ -840,11 +841,11 @@ set_location_assignment PIN_AC3 -to "clk_125m_local_alt_i(n)"
 set_location_assignment PIN_AC5 -to ext_ch[13]
 set_location_assignment PIN_AC6 -to nFPGA_Res_Out
 set_location_assignment PIN_AC7 -to ext_ch[8]
-set_location_assignment PIN_AD13 -to lemo_p_i[1]
-set_location_assignment PIN_AD14 -to lemo_n_i[1]
+set_location_assignment PIN_AD13 -to fastIO_p_i[1]
+set_location_assignment PIN_AD14 -to fastIO_n_i[1]
 set_location_assignment PIN_AD15 -to serial_cb_in[0]
-set_location_assignment PIN_AD18 -to lemo_p_i[0]
-set_location_assignment PIN_AD20 -to lemo_p_o[0]
+set_location_assignment PIN_AD19 -to fastIO_n_i[0]
+set_location_assignment PIN_AD20 -to fastIO_p_i[0]
 set_location_assignment PIN_AD22 -to scu_cb_version[1]
 set_location_assignment PIN_AD23 -to fd[2]
 set_location_assignment PIN_AD2 -to ext_ch[14]
@@ -855,7 +856,6 @@ set_location_assignment PIN_AE11 -to rear_out[1]
 set_location_assignment PIN_AE14 -to serial_cb_out[0]
 set_location_assignment PIN_AE15 -to lemo_out[0]
 set_location_assignment PIN_AE16 -to lemo_in[0]
-set_location_assignment PIN_AE19 -to lemo_p_o[1]
 set_location_assignment PIN_AE1 -to ext_ch[6]
 set_location_assignment PIN_AE21 -to pa[5]
 set_location_assignment PIN_AE22 -to scu_cb_version[2]
@@ -1035,8 +1035,6 @@ set_location_assignment PIN_K6 -to A_nSEL[1]
 set_location_assignment PIN_K7 -to A_nSRQ[1]
 set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to A_A[12]
-set_location_assignment PIN_L2 -to lemo_n_o[0]
-set_location_assignment PIN_L3 -to "lemo_n_o[0](n)"
 set_location_assignment PIN_L4 -to rear_out[0]
 set_location_assignment PIN_L7 -to A_nSEL[4]
 set_location_assignment PIN_L8 -to psram_dq[13]
@@ -1094,7 +1092,6 @@ set_location_assignment PIN_U5 -to A_D[13]
 set_location_assignment PIN_U6 -to A_A[7]
 set_location_assignment PIN_V25 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_V26 -to pcie_rx_i[0]
-set_location_assignment PIN_V2 -to "lemo_n_o[1](n)"
 set_location_assignment PIN_V3 -to A_D[6]
 set_location_assignment PIN_V5 -to A_A[10]
 set_location_assignment PIN_V7 -to A_A[11]
@@ -1106,7 +1103,6 @@ set_location_assignment PIN_W23 -to "clk_125m_tcb_sfpref_i(n)"
 set_location_assignment PIN_W24 -to clk_125m_tcb_sfpref_i
 set_location_assignment PIN_W27 -to "pcie_tx_o[0](n)"
 set_location_assignment PIN_W28 -to pcie_tx_o[0]
-set_location_assignment PIN_W2 -to lemo_n_o[1]
 set_location_assignment PIN_W3 -to A_D[9]
 set_location_assignment PIN_W4 -to user_led_0[0]
 set_location_assignment PIN_W5 -to f2f[7]

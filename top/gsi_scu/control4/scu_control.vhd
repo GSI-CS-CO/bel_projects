@@ -100,10 +100,10 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(2 downto 0);
-    lemo_n_i : in    std_logic_vector(2 downto 0);
-    lemo_p_o : out   std_logic_vector(2 downto 0);
-    lemo_n_o : out   std_logic_vector(2 downto 0);
+    fastIO_p_i : in    std_logic_vector(2 downto 0);
+    fastIO_n_i : in    std_logic_vector(2 downto 0);
+    fastIO_p_o : out   std_logic_vector(2 downto 0);
+    fastIO_n_o : out   std_logic_vector(2 downto 0);
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
@@ -343,10 +343,10 @@ begin
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
+    s_lvds_p_i(i)      <= fastIO_p_i(i);
+    s_lvds_n_i(i)      <= fastIO_n_i(i);
+    fastIO_p_o(i)        <= s_lvds_p_o(i);
+    fastIO_n_o(i)        <= s_lvds_n_o(i);
   end generate;
 
   lemo_out <= not s_gpio_o(6 downto 3);
