@@ -108,7 +108,8 @@ SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_bus.c
 SOURCE += $(SCU_LIB_SRC_DIR)/event_measurement.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
-SOURCE += $(SCU_DIR)/scu_function_generator.c
+# SOURCE += $(SCU_DIR)/scu_function_generator.c
+SOURCE += $(SCU_DIR)/scu_fg_list.c
 SOURCE += $(SCU_DIR)/scu_circular_buffer.c
 
  SOURCE += $(SCU_DIR)/scu_fg_macros.c
@@ -147,6 +148,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 # For DOXYGEN only, header files which doesn't have a appropriate C-file.
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
+DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h

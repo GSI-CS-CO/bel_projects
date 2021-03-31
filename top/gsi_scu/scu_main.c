@@ -28,6 +28,7 @@
 #include <stack.h>
 #include "scu_main.h"
 #include "scu_command_handler.h"
+#include <scu_fg_list.h>
 #include "scu_fg_macros.h"
 #ifdef CONFIG_MIL_FG
  #include "scu_eca_handler.h"
@@ -461,9 +462,6 @@ ONE_TIME_CALL void schedule( void )
    const uint64_t tick = getWrSysTime();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
-#ifndef _CONFIG_NO_DISPATCHER
-      dispatch();
-#endif
       TASK_T* pCurrent = &g_aTasks[i];
       if( (tick - pCurrent->lasttick) < pCurrent->interval )
       {

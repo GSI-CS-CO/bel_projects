@@ -35,6 +35,7 @@
 #ifndef CONFIG_DAQ_SINGLE_APP
  #include <lm32Interrupts.h>
  #include <daq_command_interface.h>
+ #include <scu_fg_list.h>
 #endif
 #if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_NO_DAQ_INFO_PRINT ) || !defined( CONFIG_DAQ_SINGLE_APP )
  #include <eb_console_helper.h>
@@ -338,7 +339,7 @@ unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
    return retVal;
 }
 
-IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
+//IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h

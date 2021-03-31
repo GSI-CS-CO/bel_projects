@@ -280,14 +280,9 @@ STATIC inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
  */
 STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
 {
-#if 0
-   return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
-#else
    const FG_CTRL_RG_T ctrlReg = { .i16 = reg };
    return ctrlReg.bv.number;
-#endif
 }
-
 
 /*! --------------------------------------------------------------------------
  * @brief Returns the relative offset address of the register set of a
@@ -295,13 +290,7 @@ STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
  * @param number Number of functions generator macro till now 0 or 1.
  * @return Relative offset address in uint16_t alignment.
  */
-STATIC inline
-unsigned int getFgOffsetAddress( const unsigned int number )
-{
-   static const unsigned int fgAddrTab[] = { FG1_BASE, FG2_BASE };
-   FG_ASSERT( number < ARRAY_SIZE( fgAddrTab ) );
-   return fgAddrTab[ number ];
-}
+BUS_BASE_T getFgOffsetAddress( const unsigned int number );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the pointer of the register structure of a

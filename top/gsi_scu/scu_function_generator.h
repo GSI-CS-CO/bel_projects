@@ -1,14 +1,15 @@
 /*!
- *  @file scu_function_generator.h
- *  @brief SCU-Function generator module for LM32.
+ * @file scu_function_generator.h
+ * @brief SCU-Function generator module for LM32.
+ * @note Header only
+ * @date 21.10.2019
+ * @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @date 21.10.2019
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
  *
- *  @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
- *  @author Stefan Rauch perhaps...
- *  @revision Ulrich Becker <u.becker@gsi.de>
+ * @note This file is suitable for LM32 and Linux.
  *
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
@@ -31,13 +32,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <helper_macros.h>
+#include <scu_bus_defines.h>
 
 #ifdef __lm32__
-  #include <scu_bus.h>
   #define LINUX_CONST
   #define LM32_CONST const
 #else
-  #include <scu_bus_defines.h>
   #define LINUX_CONST const
   #define LM32_CONST
 #endif
@@ -424,51 +424,6 @@ typedef struct PACKED_SIZE
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFER_SIZE );
 #endif
-
-#if defined( __lm32__ ) || defined(__DOXYGEN__)
-
-/*! ---------------------------------------------------------------------------
- * @brief Prints all found function generators.
- */
-void printFgs( void );
-
-/*! ---------------------------------------------------------------------------
- * @brief Print the values and states of all channel registers.
- */
-void print_regs( void );
-
-/*! ---------------------------------------------------------------------------
- */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-void addAddacToFgList( const void* pScuBusBase,  
-                       const unsigned int slot,
-                       FG_MACRO_T* pFGlist );
-#endif
-
-/*! --------------------------------------------------------------------------
- * @brief Finding of all kinds of function generators connected to
- *        this SCU.
- */
-void scan_all_fgs( volatile uint16_t *base_adr,
-                #ifdef CONFIG_MIL_FG
-                   volatile unsigned int* mil_base,
-                #endif
-                   FG_MACRO_T* fglist,
-                   uint64_t *ext_id );
-
-/*! ---------------------------------------------------------------------------
- * @brief  init the buffers for MAX_FG_CHANNELS
- */
-void init_buffers( FG_CHANNEL_REG_T* cr,
-                   const unsigned int channel,
-                   FG_MACRO_T* macro,
-                   volatile uint16_t* scub_base
-                 #ifdef CONFIG_MIL_FG
-                   , volatile unsigned int* devb_base
-                 #endif
-                 );
-
-#endif /* ifdef __lm32__ */
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" in the case the function generator belonging to the

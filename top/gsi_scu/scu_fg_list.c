@@ -1,33 +1,19 @@
 /*!
- *  @file scu_function_generator.c
- *  @brief SCU-Function generator module for LM32.
- *
- *  @date 21.10.2019
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
- *
- *  @author Stefan Rauch perhaps...
- *  @revision Ulrich Becker <u.becker@gsi.de>
- *
- ******************************************************************************
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library. If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************
+ * @file scu_fg_list.c
+ * @brief Module for scanning the SCU for function generators and initializing
+ *        the function generator list in the shared memory.
+ * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuFgDoc
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
+ * @author Ulrich Becker <u.becker@gsi.de>
+ * @date 21.10.2019
+ * Renamed from scu_function_generator.c 21.10.2019
  */
 #if !defined(__lm32__) && !defined(__DOXYGEN__) && !defined(__DOCFSM__)
   #error This module is for the target LM32 only!
 #endif
 
-#include <scu_function_generator.h>
+#include <scu_fg_list.h>
 #include <scu_main.h>
 #include <eb_console_helper.h>
 #ifdef CONFIG_MIL_FG
@@ -103,8 +89,10 @@ STATIC void fgInitMacro( FG_MACRO_T* pMacro,
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
-                          const uint16_t cid_sys, const uint16_t cid_group,
+STATIC int add_to_fglist( const uint8_t socked,
+                          const uint8_t dev,
+                          const uint16_t cid_sys,
+                          const uint16_t cid_group,
                           const uint8_t fg_ver,
                           FG_MACRO_T* fglist )
 {
@@ -392,7 +380,7 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
 
    cr[channel].wr_ptr = 0;
    cr[channel].rd_ptr = 0;
-   cr[channel].state = 0;
+   cr[channel].state = STATE_STOPPED;
    cr[channel].ramp_count = 0;
 
    /*
@@ -412,20 +400,8 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    /* scub slave */
    if( isAddacFg( socket ) )
    {
-#if 0
-      if( dev == 0 )
-      {
-         scub_base[OFFS(socket) + FG1_BASE + FG_CNTRL] = FG_RESET; // reset fg
-         return;
-      }
-      if( dev == 1 )
-      {
-         scub_base[OFFS(socket) + FG2_BASE + FG_CNTRL] = FG_RESET; // reset fg
-      }
-#else
       //getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
       getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.i16 = FG_RESET;
-#endif
     //   scuBusEnableSlaveInterrupt( (void*)scub_base, socket );
     //  *scuBusGetInterruptActiveFlagRegPtr( (void*)scub_base, socket ) = (FG1_IRQ | FG2_IRQ);
 

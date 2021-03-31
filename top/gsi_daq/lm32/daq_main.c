@@ -284,7 +284,7 @@ void forEachScuDaqDevice( void )
  */
 void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
-   DEBUG_FEEDBACK_ON_OFF();
+  // DEBUG_FEEDBACK_ON_OFF();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
 
    DAQ_ASSERT( pDaqDevice != NULL );

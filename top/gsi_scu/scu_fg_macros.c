@@ -28,13 +28,15 @@ STATIC_ASSERT( sizeof( *g_pScu_mil_base ) == sizeof( uint32_t ) );
 #endif
 #endif
 
+#define DAC_FG_MODE   0x0010
+
 /*!
  * @brief Memory space of sent function generator data.
  *        Non shared memory part for each function generator channel.
  */
 FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
 #ifdef CONFIG_USE_SENT_COUNTER
-   {{0,0}};//,0}};
+   {{0,0}};
 #else
    {{0}};
 #endif
@@ -85,9 +87,16 @@ STATIC const ADDAC_DEV_T mg_devTab[MAX_FG_PER_SLAVE] =
 STATIC_ASSERT( ARRAY_SIZE(mg_devTab) == MAX_FG_PER_SLAVE );
 #endif
 
-#define DAC_FG_MODE   0x0010
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_macros.h
+ */
+inline BUS_BASE_T getFgOffsetAddress( const unsigned int number )
+{
+   FG_ASSERT( number < ARRAY_SIZE( mg_devTab ) );
+   return mg_devTab[number].fgBaseAddr;
+}
 
-/*! --------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
  * @brief Returns the control register format for step, frequency select
  *        and channel number.
  * @param pPset Pointer to the polynomial data set.

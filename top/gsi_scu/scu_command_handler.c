@@ -7,6 +7,7 @@
  * Outsourced from scu_main.c
  */
 #include <scu_fg_macros.h>
+#include <scu_fg_list.h>
 #ifdef CONFIG_MIL_FG
   #include <scu_mil_fg_handler.h>
 #endif
