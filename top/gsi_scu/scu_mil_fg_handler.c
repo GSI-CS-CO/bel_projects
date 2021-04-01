@@ -156,7 +156,7 @@ STATIC void printMilError( const int status, const int slave_nr )
 /*! ---------------------------------------------------------------------------
  * @see scu_mil_fg_handler.h
  */
-void clear_handler_state( const unsigned int socket )
+void fgMilClearHandlerState( const unsigned int socket )
 {
    MSI_T m;
 

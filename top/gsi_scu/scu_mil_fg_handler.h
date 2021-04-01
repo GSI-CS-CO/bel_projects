@@ -76,9 +76,9 @@ void  dbgPrintMilTaskData( void );
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @brief helper function which clears the state of a dev bus after malfunction
+ * @brief helper function which clears the state of MIL-bus after malfunction
  */
-void clear_handler_state( const unsigned int socket );
+void fgMilClearHandlerState( const unsigned int socket );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM

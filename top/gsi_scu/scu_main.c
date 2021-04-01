@@ -143,10 +143,13 @@ void tellMailboxSlot( void )
  * the offset 0x20. \n
  * A hardware macro is used, which generates MSIs from legacy interrupts.
  *
+ * @todo Replace this awful naked index-numbers by well documented
+ *       and meaningful constants!
+ *
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
- * @see disable_slave_irq
+ * @see fgDisableInterrupt
  */
-void enable_scub_msis( const unsigned int channel )
+void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel )
 {
    const unsigned int socket = getSocket( channel );
 #ifdef CONFIG_MIL_FG
@@ -155,23 +158,23 @@ void enable_scub_msis( const unsigned int channel )
 #endif
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       const uint16_t slot = getFgSlotNumber( socket ) - 1;
+
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;
-      g_pScub_irq_base[8]  = slot;            // channel select
-      g_pScub_irq_base[9]  = slot;            // msg: socket number
-      g_pScub_irq_base[10] = (uint32_t)pMyMsi + 0x0;    // msi queue destination address of this cpu
-      g_pScub_irq_base[2]  = (1 << slot); // enable slave
-      //mprintf("IRQs for slave %d enabled.\n", (socket & SCU_BUS_SLOT_MASK));
-      return;
+      g_pScub_irq_base[MSI_CHANNEL_SELECT]  = slot;
+      g_pScub_irq_base[MSI_SOCKET_NUMBER]   = slot;
+      g_pScub_irq_base[MSI_DEST_ADDR]       = (uint32_t)pMyMsi + 0x0;
+      g_pScub_irq_base[MSI_ENABLE]          = (1 << slot);
 #ifdef CONFIG_MIL_FG
+      return;
    }
 
    if( !isMilExtentionFg( socket ) )
       return;
 
-   g_pMil_irq_base[8]   = MIL_DRQ;
-   g_pMil_irq_base[9]   = MIL_DRQ;
-   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-   g_pMil_irq_base[2]   = (1 << MIL_DRQ);
+   g_pMil_irq_base[MSI_CHANNEL_SELECT] = MIL_DRQ;
+   g_pMil_irq_base[MSI_SOCKET_NUMBER]  = MIL_DRQ;
+   g_pMil_irq_base[MSI_DEST_ADDR]      = (uint32_t)pMyMsi + 0x20;
+   g_pMil_irq_base[MSI_ENABLE]         = (1 << MIL_DRQ);
 #endif
 }
 
@@ -190,16 +193,26 @@ STATIC void msDelayBig( const uint64_t ms )
    }
 }
 
+/*
+ * Static check of compatibility.
+ */
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( MSI_T ) == sizeof( MSI_ITEM_T ) );
+STATIC_ASSERT( offsetof( MSI_T, msg ) == offsetof( MSI_ITEM_T, msg ) );
+STATIC_ASSERT( offsetof( MSI_T, adr ) == offsetof( MSI_ITEM_T, adr ) );
+STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
  */
-ONE_TIME_CALL void onScuBusEvent( const MSI_T* pMessage )
+ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
 {
-   const unsigned int slot = pMessage->msg + 1;
+   const unsigned int slot = pMessage->msg + SCUBUS_START_SLOT;
    uint16_t pendingIrqs;
 
-   while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot )) != 0)
+   while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((void*)g_pScub_base, slot )) != 0)
    {
       if( (pendingIrqs & FG1_IRQ) != 0 )
       {
@@ -214,29 +227,19 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_T* pMessage )
 #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
-         add_msg( &g_aMsg_buf[0], DEVSIO, pMessage );
+         add_msg( &g_aMsg_buf[0], DEVSIO, (MSI_T*)pMessage );
       }
 #endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
       if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       {
-         add_msg( &g_aMsg_buf[0], DAQ, pMessage );
+         add_msg( &g_aMsg_buf[0], DAQ, (MSI_T*)pMessage );
       }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
    }
 }
-
-/*
- * Static check of compatibility.
- */
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( MSI_T ) == sizeof( MSI_ITEM_T ) );
-STATIC_ASSERT( offsetof( MSI_T, msg ) == offsetof( MSI_ITEM_T, msg ) );
-STATIC_ASSERT( offsetof( MSI_T, adr ) == offsetof( MSI_ITEM_T, adr ) );
-STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -252,11 +255,11 @@ STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
 STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
-   MSI_T m;
+   MSI_ITEM_T m;
    /*!
     * @todo Use MSI_ITEM_T instead of MSI_T in future!
     */
-   while( irqMsiCopyObjectAndRemoveIfActive( (MSI_ITEM_T*)&m, intNum ) )
+   while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
    {
       switch( GET_LOWER_HALF( m.adr )  )
       {
@@ -264,11 +267,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from SCU- bus.
             */
-          #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
             onScuBusEvent( &m );
-          #else
-            add_msg( &g_aMsg_buf[0], SCUBUS, &m );
-          #endif
             break;
          }
 
@@ -276,7 +275,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Command message from SAFT-lib
             */
-            add_msg( &g_aMsg_buf[0], SWI,    &m );
+            add_msg( &g_aMsg_buf[0], SWI, (MSI_T*)&m );
             break;
          }
 
@@ -285,7 +284,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from MIL-bus respectively device-bus.
             */
-            add_msg( &g_aMsg_buf[0], DEVBUS, &m );
+            add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&m );
             break;
          }
        #endif
@@ -307,9 +306,6 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  */
 ONE_TIME_CALL void initInterrupt( void )
 {
-#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
-   cbReset( &g_aMsg_buf[0], SCUBUS );
-#endif
    cbReset( &g_aMsg_buf[0], SWI );
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    cbReset( &g_aMsg_buf[0], DAQ );
@@ -399,12 +395,6 @@ void scanFgs( void )
    printFgs();
 }
 
-#ifndef __DOXYGEN__
-#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
-STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
-#endif
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Task configuration table.
@@ -421,9 +411,6 @@ STATIC TASK_T g_aTasks[] =
  //!!  { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
  //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
-#endif
-#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
-   { NULL,               ALWAYS, 0, scu_bus_handler },
 #endif
 #ifdef CONFIG_MIL_FG
    { NULL,               ALWAYS, 0, ecaHandler      },
@@ -472,25 +459,6 @@ ONE_TIME_CALL void schedule( void )
    }
 }
 
-#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
-/*! ---------------------------------------------------------------------------
- * @ingroup TASK INTERRUPT
- * @brief task definition of scu_bus_handler
- * called by the scheduler in the main loop
- * decides which action for a scu bus interrupt is suitable
- * @param pThis pointer to the current task object (not used)
- * @see schedule
- */
-STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
-{
-   FG_ASSERT( pThis->pTaskData == NULL );
-
-   MSI_T m;
-   if( getMessageSave( &m, &g_aMsg_buf[0], SCUBUS ) )
-     onScuBusEvent( &m );
-}
-#endif /* ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT */
-
 /*! ---------------------------------------------------------------------------
  * @brief Helper function for printing the CPU-ID and the number of
  *        MSI endpoints.
@@ -531,7 +499,7 @@ void main( void )
   /*
    * Wait for wr deamon to read sdbfs
    */
-   msDelayBig(1500);
+   msDelayBig( 1500 );
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
       mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );

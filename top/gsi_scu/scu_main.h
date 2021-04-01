@@ -227,7 +227,7 @@ typedef struct _TASK_T
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  * @see disable_slave_irq
  */
-void enable_scub_msis( const unsigned int channel );
+void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans for function generators on mil extension and scu bus.

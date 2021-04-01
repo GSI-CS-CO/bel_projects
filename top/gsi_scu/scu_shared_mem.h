@@ -532,9 +532,9 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 
 typedef enum
 {
-   FG_OP_INITIALIZE          = 0,
+   FG_OP_RESET_CHANNEL       = 0,
    FG_OP_MIL_GAP_INTERVAL    = 1, //!<@brief set interval time for MIL gap reading.
-   FG_OP_CONFIGURE           = 2, //!<@brief SWI_ENABLE
+   FG_OP_ENABLE_CHANNEL      = 2, //!<@brief SWI_ENABLE
    FG_OP_DISABLE_CHANNEL     = 3, //!<@brief SWI_DISABLE
    FG_OP_RESCAN              = 4, //!<@brief SWI_SCAN
    FG_OP_CLEAR_HANDLER_STATE = 5,
@@ -549,9 +549,9 @@ STATIC inline const char* fgCommand2String( const FG_OP_CODE_T op )
    #define __FG_COMMAND_CASE( cmd ) case cmd: return #cmd
    switch( op )
    {
-      __FG_COMMAND_CASE( FG_OP_INITIALIZE );
+      __FG_COMMAND_CASE( FG_OP_RESET_CHANNEL );
       __FG_COMMAND_CASE( FG_OP_MIL_GAP_INTERVAL );
-      __FG_COMMAND_CASE( FG_OP_CONFIGURE );
+      __FG_COMMAND_CASE( FG_OP_ENABLE_CHANNEL );
       __FG_COMMAND_CASE( FG_OP_DISABLE_CHANNEL );
       __FG_COMMAND_CASE( FG_OP_RESCAN );
       __FG_COMMAND_CASE( FG_OP_CLEAR_HANDLER_STATE );

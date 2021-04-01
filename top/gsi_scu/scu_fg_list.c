@@ -367,13 +367,14 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
 /*! ---------------------------------------------------------------------------
  * @see scu_function_generator.h
  */
-void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
-                   FG_MACRO_T* fg_macros,
-                   volatile uint16_t* scub_base
-              #ifdef CONFIG_MIL_FG
-                   , volatile unsigned int* devb_base
-              #endif
-                 )
+void fgResetAndInit( FG_CHANNEL_REG_T* cr,
+                     const unsigned int channel,
+                     FG_MACRO_T* fg_macros,
+                     const void* pScuBus
+                   #ifdef CONFIG_MIL_FG
+                   , const void* pMilBus
+                   #endif
+                   )
 {
    if( channel > MAX_FG_CHANNELS )
       return;
@@ -395,32 +396,27 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    const unsigned int socket = fg_macros[macro].socket;
    const unsigned int dev    = fg_macros[macro].device;
 
-   //reset hardware
-   //mprintf("reset fg %d in socked %d\n", device, socked);
-   /* scub slave */
+#ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) )
    {
-      //getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
-      getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.i16 = FG_RESET;
-    //   scuBusEnableSlaveInterrupt( (void*)scub_base, socket );
-    //  *scuBusGetInterruptActiveFlagRegPtr( (void*)scub_base, socket ) = (FG1_IRQ | FG2_IRQ);
-
+#endif
+      getFgRegisterPtr( pScuBus, socket, dev )->cntrl_reg.i16 = FG_RESET;
+#ifdef CONFIG_MIL_FG
       return;
    }
 
-#ifdef CONFIG_MIL_FG
    if( isMilScuBusFg( socket ) )
    {
       const unsigned int slot = getFgSlotNumber( socket );
-      scub_reset_mil( scub_base, slot );
-      scub_write_mil( scub_base, slot, FG_RESET, FC_CNTRL_WR | dev ); // reset fg
+      scub_reset_mil( (unsigned short*)pScuBus, slot );
+      scub_write_mil( (unsigned short*)pScuBus, slot, FG_RESET, FC_CNTRL_WR | dev );
       return;
    }
 
    /* mil extension */
    FG_ASSERT( isMilExtentionFg( socket ) );
-   reset_mil( devb_base );
-   write_mil( devb_base, FG_RESET, FC_CNTRL_WR | dev ); // reset fg
+   reset_mil( (unsigned int*)pMilBus );
+   write_mil( (unsigned int*)pMilBus, FG_RESET, FC_CNTRL_WR | dev );
 #endif
 }
 

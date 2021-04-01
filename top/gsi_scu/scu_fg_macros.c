@@ -293,14 +293,14 @@ void milPrintDeviceError( const int status, const int slot, const char* msg )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Helper function of configure_fg_macro handles the handler state
+ * @brief Helper function of fgEnableChannel handles the handler state
  *        of MIL devices.
- * @see configure_fg_macro
+ * @see fgEnableChannel
  * @param pScuBus Base address of SCU-bus.
  * @param pMilBus Base address of MIL-bus.
  * @param socket Socket number containing location information and FG-typ
- * @retval true leave the function configure_fg_macro
- * @retval false continue the function configure_fg_macro
+ * @retval true leave the function fgEnableChannel
+ * @retval false continue the function fgEnableChannel
  */
 ONE_TIME_CALL bool milHandleClearHandlerState( const void* pScuBus,
                                                const void* pMilBus,
@@ -339,8 +339,8 @@ ONE_TIME_CALL bool milHandleClearHandlerState( const void* pScuBus,
       if( (s_clearIsActive & slaveFlags) == 0 )
       {
          s_clearIsActive |= slaveFlags;
-         clear_handler_state( socket );
-         hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
+         fgMilClearHandlerState( socket );
+         hist_addx( HISTORY_XYZ_MODULE, "fgMilClearHandlerState", socket );
          return true;
       }
    }
@@ -528,7 +528,7 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
  */
-void configure_fg_macro( const unsigned int channel )
+void fgEnableChannel( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
 
@@ -689,7 +689,7 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
  */
-void disable_channel( const unsigned int channel )
+void fgDisableChannel( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
 
@@ -747,7 +747,7 @@ void disable_channel( const unsigned int channel )
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  * @see enable_scub_msis
  */
-void disable_slave_irq( const unsigned int channel )
+void fgDisableInterrupt( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return;

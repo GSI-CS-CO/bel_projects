@@ -106,7 +106,8 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    */
    switch( code )
    {
-      case FG_OP_CONFIGURE:           /* Go immediately to next case. */
+      case FG_OP_RESET_CHANNEL:       /* Go immediately to next case. */
+      case FG_OP_ENABLE_CHANNEL:      /* Go immediately to next case. */
       case FG_OP_DISABLE_CHANNEL:     /* Go immediately to next case. */
       case FG_OP_CLEAR_HANDLER_STATE:
       {
@@ -134,26 +135,25 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
     */
    switch( code )
    {
-      case FG_OP_INITIALIZE:
+      case FG_OP_RESET_CHANNEL:
       {
       #if __GNUC__ >= 9
          #pragma GCC diagnostic push
          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
       #endif
-         init_buffers( &g_shared.fg_regs[0],
-                       m.msg,
-                       &g_shared.fg_macros[0],
-                       g_pScub_base
-                     #ifdef CONFIG_MIL_FG
-                       , g_pScu_mil_base
-                     #endif
-                     );
+         fgResetAndInit( &g_shared.fg_regs[0],
+                         value,
+                         &g_shared.fg_macros[0],
+                         (void*)g_pScub_base
+                        #ifdef CONFIG_MIL_FG
+                         ,(void*)g_pScu_mil_base
+                        #endif
+                       );
       #if __GNUC__ >= 9
          #pragma GCC diagnostic pop
       #endif
       #ifdef CONFIG_USE_SENT_COUNTER
-         for( unsigned int i = 0; i < ARRAY_SIZE( g_aFgChannels ); i++ )
-            g_aFgChannels[i].param_sent = 0;
+         g_aFgChannels[value].param_sent = 0;
       #endif
          break;
       }
@@ -168,12 +168,12 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          break;
       }
 
-      case FG_OP_CONFIGURE:
+      case FG_OP_ENABLE_CHANNEL:
       { /*
          * Start of a function generator.
          */
-         enable_scub_msis( value ); //duration: 0.03 ms
-         configure_fg_macro( value ); //duration: 0.12 ms
+         scuBusEnableMeassageSignaledInterrupts( value ); //duration: 0.03 ms
+         fgEnableChannel( value ); //duration: 0.12 ms
          break;
       }
 
@@ -181,7 +181,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       { /*
          * Stop of a function generator.
          */
-         disable_channel( value );
+         fgDisableChannel( value );
       #ifdef DEBUG_SAFTLIB
          mprintf( "-%d ", value );
       #endif
@@ -199,7 +199,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       case FG_OP_CLEAR_HANDLER_STATE:
       {
        #ifdef CONFIG_MIL_FG
-         clear_handler_state( value );
+         fgMilClearHandlerState( value );
        #else
          mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
        #endif

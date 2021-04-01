@@ -53,14 +53,14 @@ void scan_all_fgs( volatile uint16_t *base_adr,
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS
  */
-void init_buffers( FG_CHANNEL_REG_T* cr,
-                   const unsigned int channel,
-                   FG_MACRO_T* macro,
-                   volatile uint16_t* scub_base
-                 #ifdef CONFIG_MIL_FG
-                   , volatile unsigned int* devb_base
-                 #endif
-                 );
+void fgResetAndInit( FG_CHANNEL_REG_T* cr,
+                     const unsigned int channel,
+                     FG_MACRO_T* macro,
+                     const void* scub_base
+                   #ifdef CONFIG_MIL_FG
+                   , const void* devb_base
+                   #endif
+                   );
 
 #ifdef __cplusplus
 } /* extern "C" */

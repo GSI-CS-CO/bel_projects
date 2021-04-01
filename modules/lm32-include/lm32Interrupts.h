@@ -235,9 +235,25 @@ void irqResetPendingRegister( const uint32_t ip )
 STATIC inline
 uint32_t irqGetAndResetPendingRegister( void )
 {
+#if 0
    const uint32_t pending = irqGetPendingRegister();
    irqResetPendingRegister( pending );
    return pending;
+#else
+   /*
+    * CAUTION! Its absolutely necessary that the interrupt pending register
+    * becomes cleared immediately after reading. That means immediately at the
+    * next CPU cycle.
+    * We don't know exactly how the C/C++-compiler will translate this,
+    * depending on the optimization level, version and so on.
+    * Therefore its better to implement this in assembler.
+    */
+   uint32_t pending;
+   asm volatile ( "rcsr %0, ip\n" \
+                  "wcsr ip, %0\n" \
+                  :"=r"(pending) );
+   return pending;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

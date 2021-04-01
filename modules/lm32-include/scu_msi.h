@@ -54,6 +54,33 @@ extern "C" {
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief 32 bit aligned indexes of MSI control.
+ */
+typedef enum
+{
+   /*!
+    * @brief MSI enable flags.
+    */
+   MSI_ENABLE         =  2,
+
+   /*!
+    * @brief Channel select e.g. slotnumber -1
+    */
+   MSI_CHANNEL_SELECT =  8,
+
+   /*!
+    * @brief Channel number e.g. slotnumber - 1
+    */
+   MSI_SOCKET_NUMBER  =  9,
+
+   /*!
+    * @brief Queue destination address
+    */
+   MSI_DEST_ADDR      = 10
+} MSI_REG_INTEX_T;
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Control registers of Message-Signaled Interrupt (MSI)
  *        wishbone object
  */
@@ -265,10 +292,6 @@ bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
 
    return true;
 }
-
-#ifdef CONFIG_USE_GLOBAL_MSI_OBJECT
-extern MSI_ITEM_T g_currentMSI;
-#endif
 
 #ifdef __cplusplus
 }

@@ -480,7 +480,7 @@ typedef struct
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  * @see enable_scub_msis
  */
-void disable_slave_irq( const unsigned int channel );
+void fgDisableInterrupt( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
  * @brief Send signal REFILL to the SAFTLIB when the fifo level has
@@ -508,7 +508,7 @@ STATIC inline void makeStop( const unsigned int channel )
                              IRQ_DAT_STOP_EMPTY : IRQ_DAT_STOP_NOT_EMPTY;
 
    sendSignal( signal,  channel );
-   disable_slave_irq( channel );
+   fgDisableInterrupt( channel );
    g_shared.fg_regs[channel].state = STATE_STOPPED;
 
 #ifndef CONFIG_LOG_ALL_SIGNALS
@@ -549,13 +549,13 @@ void milPrintDeviceError( const int status, const int slot, const char* msg );
  *  @param channel number of the specified function generator channel from
  *         0 to MAX_FG_CHANNELS-1
  */
-void configure_fg_macro( const unsigned int channel );
+void fgEnableChannel( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
  * @brief disable function generator channel
  * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-void disable_channel( const unsigned int channel );
+void fgDisableChannel( const unsigned int channel );
 
 #ifdef __cplusplus
 }
