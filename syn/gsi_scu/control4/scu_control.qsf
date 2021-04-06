@@ -6,7 +6,7 @@ set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name CVP_CONFDONE_OPEN_DRAIN OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_global_assignment -name DEVICE 10ax027e3f29e2sg
+set_global_assignment -name DEVICE 10AX027E3F29E2SG
 set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
@@ -14,7 +14,7 @@ set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulati
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
-set_global_assignment -name ENABLE_INIT_DONE_OUTPUT ON
+set_global_assignment -name ENABLE_INIT_DONE_OUTPUT OFF
 set_global_assignment -name ENABLE_NCE_PIN OFF
 set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name ENABLE_SIGNALTAP OFF
@@ -703,17 +703,37 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tck
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdi
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdo
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
+set_instance_assignment -name IO_STANDARD "1.8 V" -to bank_block
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_alt_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
+set_instance_assignment -name IO_STANDARD "1.8 V" -to ctl[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_res_i
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_in
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_in[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_in[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_out
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_out[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_out[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_out[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to lemo_out[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nSys_Reset
+set_instance_assignment -name IO_STANDARD "1.8 V" -to rear_in
+set_instance_assignment -name IO_STANDARD "1.8 V" -to rear_in[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to rear_in[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to rear_out[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to ser0_rxd
 set_instance_assignment -name IO_STANDARD "1.8 V" -to ser0_txd
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_in
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_in[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_in[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_out
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_out[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to serial_cb_out[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_los_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod0_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod1_io
@@ -804,6 +824,10 @@ set_location_assignment PIN_A6 -to psram_dq[8]
 set_location_assignment PIN_A7 -to psram_dq[1]
 set_location_assignment PIN_A8 -to psram_a[13]
 set_location_assignment PIN_A9 -to psram_clk
+set_location_assignment PIN_AA11 -to bank_block[1]
+set_location_assignment PIN_AA12 -to bank_block[2]
+set_location_assignment PIN_AA13 -to bank_block[3]
+set_location_assignment PIN_AA14 -to bank_block[4]
 set_location_assignment PIN_AA16 -to "clk_125m_sfpref_alt_i(n)"
 set_location_assignment PIN_AA17 -to uclk
 set_location_assignment PIN_AA1 -to lemo_led[5]
@@ -817,6 +841,9 @@ set_location_assignment PIN_AA7 -to lemo_led[1]
 set_location_assignment PIN_AA8 -to ser1_txd
 set_location_assignment PIN_AA9 -to ext_ch[11]
 set_location_assignment PIN_AB11 -to nPCI_RESET_i
+set_location_assignment PIN_AB13 -to bank_block[7]
+set_location_assignment PIN_AB14 -to bank_block[8]
+set_location_assignment PIN_AB15 -to bank_block[9]
 set_location_assignment PIN_AB16 -to clk_125m_sfpref_alt_i
 set_location_assignment PIN_AB18 -to user_led_0[1]
 set_location_assignment PIN_AB19 -to nSys_Reset
@@ -828,10 +855,13 @@ set_location_assignment PIN_AB4 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AB5 -to ext_ch[9]
 set_location_assignment PIN_AB6 -to wr_dac_sclk_o
 set_location_assignment PIN_AC10 -to altera_reserved_tdi
+set_location_assignment PIN_AC11 -to fastIO_p_o[1]
+set_location_assignment PIN_AC12 -to fastIO_n_o[1]
 set_location_assignment PIN_AC13 -to lemo_out[2]
 set_location_assignment PIN_AC15 -to lemo_out[3]
 set_location_assignment PIN_AC16 -to fastIO_p_i[2]
 set_location_assignment PIN_AC17 -to fastIO_n_i[2]
+set_location_assignment PIN_AC18 -to bank_block[16]
 set_location_assignment PIN_AC1 -to f2f[5]
 set_location_assignment PIN_AC21 -to pa[7]
 set_location_assignment PIN_AC22 -to scu_cb_version[0]
@@ -841,9 +871,12 @@ set_location_assignment PIN_AC3 -to "clk_125m_local_alt_i(n)"
 set_location_assignment PIN_AC5 -to ext_ch[13]
 set_location_assignment PIN_AC6 -to nFPGA_Res_Out
 set_location_assignment PIN_AC7 -to ext_ch[8]
+set_location_assignment PIN_AD12 -to fastIO_p_o[2]
 set_location_assignment PIN_AD13 -to fastIO_p_i[1]
 set_location_assignment PIN_AD14 -to fastIO_n_i[1]
 set_location_assignment PIN_AD15 -to serial_cb_in[0]
+set_location_assignment PIN_AD17 -to bank_block[14]
+set_location_assignment PIN_AD18 -to bank_block[15]
 set_location_assignment PIN_AD19 -to fastIO_n_i[0]
 set_location_assignment PIN_AD20 -to fastIO_p_i[0]
 set_location_assignment PIN_AD22 -to scu_cb_version[1]
@@ -853,10 +886,14 @@ set_location_assignment PIN_AD3 -to clk_125m_local_alt_i
 set_location_assignment PIN_AD4 -to ext_ch[16]
 set_location_assignment PIN_AD5 -to ext_ch[7]
 set_location_assignment PIN_AE11 -to rear_out[1]
+set_location_assignment PIN_AE12 -to fastIO_n_o[2]
 set_location_assignment PIN_AE14 -to serial_cb_out[0]
 set_location_assignment PIN_AE15 -to lemo_out[0]
 set_location_assignment PIN_AE16 -to lemo_in[0]
+set_location_assignment PIN_AE17 -to bank_block[12]
+set_location_assignment PIN_AE19 -to fastIO_n_o[0]
 set_location_assignment PIN_AE1 -to ext_ch[6]
+set_location_assignment PIN_AE20 -to fastIO_p_o[0]
 set_location_assignment PIN_AE21 -to pa[5]
 set_location_assignment PIN_AE22 -to scu_cb_version[2]
 set_location_assignment PIN_AE23 -to user_btn
@@ -866,7 +903,9 @@ set_location_assignment PIN_AE5 -to f2f[2]
 set_location_assignment PIN_AE6 -to f2f[6]
 set_location_assignment PIN_AF11 -to rear_in[1]
 set_location_assignment PIN_AF12 -to rear_in[0]
+set_location_assignment PIN_AF13 -to bank_block[10]
 set_location_assignment PIN_AF14 -to ctl[2]
+set_location_assignment PIN_AF16 -to bank_block[11]
 set_location_assignment PIN_AF17 -to serial_cb_out[1]
 set_location_assignment PIN_AF18 -to serial_cb_in[1]
 set_location_assignment PIN_AF19 -to lemo_in[1]
@@ -885,6 +924,7 @@ set_location_assignment PIN_AG10 -to OneWire_CB_splz
 set_location_assignment PIN_AG11 -to UM_nCSO
 set_location_assignment PIN_AG13 -to fd[3]
 set_location_assignment PIN_AG16 -to lemo_out[1]
+set_location_assignment PIN_AG18 -to bank_block[13]
 set_location_assignment PIN_AG19 -to pa[2]
 set_location_assignment PIN_AG1 -to ext_ch[18]
 set_location_assignment PIN_AG20 -to pa[6]
@@ -1108,6 +1148,8 @@ set_location_assignment PIN_W4 -to user_led_0[0]
 set_location_assignment PIN_W5 -to f2f[7]
 set_location_assignment PIN_W7 -to wr_dac_din_o
 set_location_assignment PIN_W8 -to f2f[0]
+set_location_assignment PIN_Y15 -to bank_block[5]
+set_location_assignment PIN_Y16 -to bank_block[6]
 set_location_assignment PIN_Y17 -to UM_DCLK
 set_location_assignment PIN_Y19 -to ctl[0]
 set_location_assignment PIN_Y1 -to lemo_led[4]
@@ -1117,4 +1159,4 @@ set_location_assignment PIN_Y4 -to ext_ch[5]
 set_location_assignment PIN_Y5 -to ext_ch[1]
 set_location_assignment PIN_Y6 -to ext_ch[4]
 set_location_assignment PIN_Y7 -to ext_ch[15]
-set_location_assignment PIN_Y9 -to altera_reserved_tck
+set_location_assignment PIN_Y9 -to altera_reserved_tcki

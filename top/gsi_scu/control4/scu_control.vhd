@@ -104,8 +104,8 @@ entity scu_control is
     fastIO_n_i : in    std_logic_vector(2 downto 0);
     fastIO_p_o : out   std_logic_vector(2 downto 0);
     fastIO_n_o : out   std_logic_vector(2 downto 0);
-
-	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
+    bank_block : out   std_logic_vector(19 downto 0);
+    lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
 
     -----------------------------------------------------------------------
@@ -271,8 +271,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o              => ser0_rxd,
-      wr_uart_i              => ser0_txd,
+      wr_uart_o               => ser0_rxd,
+      wr_uart_i               => ser0_txd,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
@@ -349,12 +349,13 @@ begin
     fastIO_n_o(i)        <= s_lvds_n_o(i);
   end generate;
 
-  lemo_out <= not s_gpio_o(6 downto 3);
+  bank_block <= (others => 'Z');
 
+  lemo_out <= not s_gpio_o(6 downto 3);
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
-      
+
   --Extension Piggy
   ext_ch(21 downto 19) <= s_lvds_term;
 
