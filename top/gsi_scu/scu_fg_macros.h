@@ -542,6 +542,20 @@ void milPrintDeviceError( const int status, const int slot, const char* msg );
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @brief enables MSI generation for the specified channel.
+ *
+ * Messages from the SCU bus are send to the MSI queue of this CPU with the
+ * offset 0x0. \n
+ * Messages from the MIL extension are send to the MSI queue of this CPU with
+ * the offset 0x20. \n
+ * A hardware macro is used, which generates MSIs from legacy interrupts.
+ *
+ * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ * @see disable_slave_irq
+ */
+void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel );
+
+/*! ---------------------------------------------------------------------------
  * @brief configures each function generator channel.
  *
  *  checks first, if the drq line is inactive, if not the line is cleared

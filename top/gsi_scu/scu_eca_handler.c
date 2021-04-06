@@ -8,6 +8,7 @@
  */
 
 #include "scu_main.h"
+#include "scu_fg_list.h"
 #include "scu_eca_handler.h"
 
 extern volatile unsigned int* g_pScu_mil_base;
@@ -47,6 +48,8 @@ void initEcaQueue( void )
             ESC_NORMAL,
             g_eca.pQueue, g_eca.tag );
 }
+
+#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

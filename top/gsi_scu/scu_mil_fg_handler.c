@@ -11,6 +11,7 @@
   #include "scu_fg_macros.h"
 #endif
 #include "scu_mil_fg_handler.h"
+#include "scu_fg_list.h"
 
 extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
@@ -124,33 +125,27 @@ void dbgPrintMilTaskData( void )
       }
    }
 }
-#endif
+#endif /* ifdef _CONFIG_DBG_MIL_TASK */
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Prints a possible MIL-Bus error.
  */
 STATIC void printMilError( const int status, const int slave_nr )
 {
+   #define __CASE_ITEM( s ) case s: errStr = #s; break
+   char* errStr = '\0';
    switch( status )
    {
-      case RCV_PARITY:
-      {
-         mprintf( ESC_ERROR"parity error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
-      case RCV_TIMEOUT:
-      {
-         mprintf( ESC_ERROR"timeout error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
-      case RCV_ERROR:
-      {
-         mprintf( ESC_ERROR"unknown error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
+      __CASE_ITEM( TRM_NOT_FREE );
+      __CASE_ITEM( RCV_PARITY );
+      __CASE_ITEM( RCV_TIMEOUT );
+      __CASE_ITEM( RCV_ERROR );
+      default: break;
    }
+   #undef __CASE_ITEM
+   mprintf( ESC_ERROR "MIL-Error: \"%s\" %d, slave: %d\n" ESC_NORMAL,
+            errStr, status, slave_nr );
 }
 
 /*! ---------------------------------------------------------------------------

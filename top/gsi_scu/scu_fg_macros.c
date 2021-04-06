@@ -11,6 +11,7 @@
  */
 #include "scu_fg_macros.h"
 #include "scu_fg_handler.h"
+#include "scu_fg_list.h"
 #ifdef CONFIG_MIL_FG
    #include "scu_mil_fg_handler.h"
 #endif
@@ -21,11 +22,23 @@
 #define CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ
 
 extern volatile uint16_t*     g_pScub_base;
+extern volatile uint32_t*     g_pScub_irq_base;
+
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
+extern volatile uint32_t*     g_pMil_irq_base;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( *g_pScu_mil_base ) == sizeof( uint32_t ) );
 #endif
+
+typedef enum
+{
+   MIL_INL = 0x00,
+   MIL_DRY = 0x01,
+   MIL_DRQ = 0x02
+} MIL_T;
+
+
 #endif
 
 #define DAC_FG_MODE   0x0010
@@ -741,11 +754,61 @@ void fgDisableChannel( const unsigned int channel )
 #endif /* ifdef CONFIG_MIL_FG */
 
 /*! ---------------------------------------------------------------------------
+ * @brief enables MSI generation for the specified channel.
+ *
+ * Messages from the SCU bus are send to the MSI queue of this CPU with the
+ * offset 0x0. \n
+ * Messages from the MIL extension are send to the MSI queue of this CPU with
+ * the offset 0x20. \n
+ * A hardware macro is used, which generates MSIs from legacy interrupts.
+ *
+ * @todo Replace this awful naked index-numbers by well documented
+ *       and meaningful constants!
+ *
+ * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ * @see fgDisableInterrupt
+ */
+void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel )
+{
+   const unsigned int socket = getSocket( channel );
+#ifdef CONFIG_MIL_FG
+   if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
+   {
+#endif
+      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
+      const uint16_t slot = getFgSlotNumber( socket ) - 1;
+      ATOMIC_SECTION()
+      {
+         g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;
+         g_pScub_irq_base[MSI_CHANNEL_SELECT] = slot;
+         g_pScub_irq_base[MSI_SOCKET_NUMBER]  = slot;
+         g_pScub_irq_base[MSI_DEST_ADDR]      = (uint32_t)&((MSI_LIST_T*)pMyMsi)[0];
+         g_pScub_irq_base[MSI_ENABLE]         = (1 << slot);
+      }
+#ifdef CONFIG_MIL_FG
+      return;
+   }
+
+   if( !isMilExtentionFg( socket ) )
+      return;
+
+   ATOMIC_SECTION()
+   {
+      g_pMil_irq_base[MSI_CHANNEL_SELECT] = MIL_DRQ;
+      g_pMil_irq_base[MSI_SOCKET_NUMBER]  = MIL_DRQ;
+      //g_pMil_irq_base[MSI_DEST_ADDR]      = (uint32_t)pMyMsi + 0x20;
+      g_pMil_irq_base[MSI_DEST_ADDR]      = (uint32_t)&((MSI_LIST_T*)pMyMsi)[2];
+      g_pMil_irq_base[MSI_ENABLE]         = (1 << MIL_DRQ);
+   }
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
- * @see enable_scub_msis
+ * @see scuBusEnableMeassageSignaledInterrupts
  */
 void fgDisableInterrupt( const unsigned int channel )
 {

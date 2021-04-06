@@ -46,12 +46,6 @@ TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 #endif
 
 
-typedef enum
-{
-   MIL_INL = 0x00,
-   MIL_DRY = 0x01,
-   MIL_DRQ = 0x02
-} MIL_T;
 
 extern ONE_WIRE_T g_oneWireBase;
 
@@ -132,50 +126,6 @@ void tellMailboxSlot( void )
                "Configured slot %d in MsgBox\n"
                ESC_NORMAL , slot );
    g_shared.fg_mb_slot = slot;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief enables MSI generation for the specified channel.
- *
- * Messages from the SCU bus are send to the MSI queue of this CPU with the
- * offset 0x0. \n
- * Messages from the MIL extension are send to the MSI queue of this CPU with
- * the offset 0x20. \n
- * A hardware macro is used, which generates MSIs from legacy interrupts.
- *
- * @todo Replace this awful naked index-numbers by well documented
- *       and meaningful constants!
- *
- * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
- * @see fgDisableInterrupt
- */
-void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel )
-{
-   const unsigned int socket = getSocket( channel );
-#ifdef CONFIG_MIL_FG
-   if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
-   {
-#endif
-      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
-      const uint16_t slot = getFgSlotNumber( socket ) - 1;
-
-      g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;
-      g_pScub_irq_base[MSI_CHANNEL_SELECT]  = slot;
-      g_pScub_irq_base[MSI_SOCKET_NUMBER]   = slot;
-      g_pScub_irq_base[MSI_DEST_ADDR]       = (uint32_t)pMyMsi + 0x0;
-      g_pScub_irq_base[MSI_ENABLE]          = (1 << slot);
-#ifdef CONFIG_MIL_FG
-      return;
-   }
-
-   if( !isMilExtentionFg( socket ) )
-      return;
-
-   g_pMil_irq_base[MSI_CHANNEL_SELECT] = MIL_DRQ;
-   g_pMil_irq_base[MSI_SOCKET_NUMBER]  = MIL_DRQ;
-   g_pMil_irq_base[MSI_DEST_ADDR]      = (uint32_t)pMyMsi + 0x20;
-   g_pMil_irq_base[MSI_ENABLE]         = (1 << MIL_DRQ);
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -489,6 +439,7 @@ void main( void )
             ESC_NORMAL
        #endif
            , pCpuMsiBox, pMyMsi );
+
 #ifdef CONFIG_MIL_FG
    dbgPrintMilTaskData();
 #endif

@@ -52,6 +52,7 @@
 #include "uart.h"
 #include "w1.h"
 #include "scu_shared_mem.h"
+#include "scu_fg_list.h"
 #include "scu_mil.h"
 #include "eca_queue_type.h"
 #include "history.h"
@@ -70,20 +71,6 @@
 extern "C" {
 #endif
 
-#ifdef CONFIG_FG_PEDANTIC_CHECK
-   /* CAUTION:
-    * Assert-macros could be expensive in memory consuming and the
-    * latency time can increase as well!
-    * Especially in embedded systems with small resources.
-    * Therefore use them for bug-fixing or developing purposes only!
-    */
-   #include <scu_assert.h>
-   #define FG_ASSERT SCU_ASSERT
-   #define FG_UNUSED
-#else
-   #define FG_ASSERT(__e)
-   #define FG_UNUSED UNUSED
-#endif
 
 #define INTERVAL_1000MS 1000000000ULL
 #define INTERVAL_2000MS 2000000000ULL
@@ -99,15 +86,13 @@ extern "C" {
 #define ALWAYS          0ULL
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
-#define OFFS(SLOT) ((SLOT) * (1 << 16))
+//#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 /*!
  * @see scu_shared_mem.h
  */
 extern SCU_SHARED_DATA_T g_shared;
 
-#ifdef _CONFIG_NO_DISPATCHER
-#ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
 /*!
  * @brief Number of message queues.
  */
@@ -125,61 +110,10 @@ typedef enum
    DEVSIO = 1, /*!<@brief From MIL-device via SCU-bus */
    SWI    = 2  /*!<@brief From Linux host             */
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   ,DAQ   = 3
+   ,DAQ   = 3  /*!<@brief From ADDAC-DAQ              */
 #endif
-} MSG_T;
+} MSG_ORIGIN_T;
 
-
-#else // ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
-/*!
- * @brief Number of message queues.
- */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-  #define QUEUE_CNT 5
-#else
-  #define QUEUE_CNT 4
-#endif
-/*!
- * @brief Type of message origin
- */
-typedef enum
-{
-   SCUBUS = 0, /*!<@brief From non- MIL- device       */
-   DEVBUS = 1, /*!<@brief From MIL-device.            */
-   DEVSIO = 2, /*!<@brief From MIL-device via SCU-bus */
-   SWI    = 3  /*!<@brief From Linux host             */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   ,DAQ   = 4
-#endif
-} MSG_T;
-
-#endif
-#else // ifdef _CONFIG_NO_DISPATCHER
-/*!
- * @brief Number of message queues.
- */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
- #define QUEUE_CNT 5
-#else
- #define QUEUE_CNT 6
-#endif
-
-/*!
- * @brief Type of message origin
- */
-typedef enum
-{
-   IRQ    = 0, /*!<@brief From interrupt              */
-   SCUBUS = 1, /*!<@brief From non- MIL- device       */
-   DEVBUS = 2, /*!<@brief From MIL-device.            */
-   DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
-   SWI    = 4  /*!<@brief From Linux host             */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   ,DAQ   = 5
-#endif
-} MSG_T;
-
-#endif
 
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
@@ -216,20 +150,6 @@ typedef struct _TASK_T
 
 
 /*! ---------------------------------------------------------------------------
- * @brief enables MSI generation for the specified channel.
- *
- * Messages from the SCU bus are send to the MSI queue of this CPU with the
- * offset 0x0. \n
- * Messages from the MIL extension are send to the MSI queue of this CPU with
- * the offset 0x20. \n
- * A hardware macro is used, which generates MSIs from legacy interrupts.
- *
- * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
- * @see disable_slave_irq
- */
-void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel );
-
-/*! ---------------------------------------------------------------------------
  * @brief Scans for function generators on mil extension and scu bus.
  */
 void scanFgs( void );
@@ -259,65 +179,6 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
    mprintf( ESC_DEBUG "Signal: %s, channel: %d sent\n" ESC_NORMAL,
             signal2String( sig ), channel );
 #endif
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the index number of a FG-macro in the FG-list by the
- *        channel number
- */
-STATIC inline ALWAYS_INLINE
-int getFgMacroIndexFromFgRegister( const unsigned int channel )
-{
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
-   return g_shared.fg_regs[channel].macro_number;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the Function Generator macro of the given channel.
- */
-STATIC inline ALWAYS_INLINE
-FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
-{
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
-   return g_shared.fg_macros[getFgMacroIndexFromFgRegister( channel )];
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns "true" if the function generator of the given channel
- *        present.
- * @see FOR_EACH_FG
- * @see FOR_EACH_FG_CONTINUING
- */
-STATIC inline bool isFgPresent( const unsigned int channel )
-{
-   if( channel >= MAX_FG_CHANNELS )
-      return false;
-   if( getFgMacroIndexFromFgRegister( channel ) < 0 )
-      return false;
-   return getFgMacroViaFgRegister( channel ).outputBits != 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the socked number of the given channel.
- * @note The lower 4 bits of the socket number contains the slot-number
- *       of the SCU-bus which can masked out by SCU_BUS_SLOT_MASK.
- */
-STATIC inline ALWAYS_INLINE
-unsigned int getSocket( const unsigned int channel )
-{
-   FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacroViaFgRegister( channel ).socket;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the device number of the given channel.
- */
-STATIC inline ALWAYS_INLINE
-unsigned int getDevice( const unsigned int channel )
-{
-   FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacroViaFgRegister( channel ).device;
 }
 
 #ifdef __cplusplus
