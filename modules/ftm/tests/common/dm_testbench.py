@@ -191,11 +191,28 @@ class DmTestbench(unittest.TestCase):
       timeSpan = (maxTime-minTime).total_seconds()
       listCounter = sorted(collections.Counter(listParam).items())
       if printTable:
-        print()
-        print(f'{"Value":^20s}  {"Count":>6s}   {"Frequency":>9s}')
+        maxLengthKey = len("Value")
+        maxLengthValue = len("Count")
+        if len(str(line_count)) > maxLengthValue:
+          maxLengthValue = len(str(line_count))
+        alignKeys = False
         for key, value in listCounter:
-          print(f'{key:>20s}: {value:6d} {value/timeSpan:9.3f}Hz')
-        print(f'{"All":>20s}: {line_count:6d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
+          if len(key) > maxLengthKey:
+            maxLengthKey = len(key)
+          if len(str(value)) > maxLengthValue:
+            maxLengthValue = len(str(value))
+          if "!delayed" in key or "!conflict" in key:
+            alignKeys = True
+        print()
+        print(f'{"Value":^{maxLengthKey+1}s}  {"Count":>{maxLengthValue}s}   {"Frequency":>9s}')
+        for key, value in listCounter:
+          keyAligned = key
+          if "!" not in key and alignKeys:
+            keyAligned = key + "         "
+          if "!delayed" in key:
+            keyAligned = key + " "
+          print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d} {value/timeSpan:9.3f}Hz')
+        print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
 
   def deleteFile(self, fileName):
     """

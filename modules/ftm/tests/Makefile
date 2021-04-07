@@ -52,6 +52,9 @@ singleEdgeTest:
 	rm -r dot/
 
 schedules:
+	$(MAKE) -C schedules/
+
+schedules1:
 	dm-cmd $(DATAMASTER) halt
 	dm-sched $(DATAMASTER) clear
 	dm-sched $(DATAMASTER) add schedules/schedule.dot
