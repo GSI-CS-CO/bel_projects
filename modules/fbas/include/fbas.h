@@ -39,7 +39,32 @@ typedef struct {
   uint64_t mac;      // MAC address (prepended with zeros)
 } mpsEventData_t;
 
+// structure for an MPS protocol
+typedef struct mpsProt mpsProt_t;
+struct mpsProt {
+  uint8_t  flag;     // flag (FBAS signal state)
+  uint8_t  grpId;    // group ID
+  uint16_t evtId;    // event ID
+};
+
+// MPS protocol as parameter field in timing message
+typedef union mpsTimParam mpsTimParam_t;
+union mpsTimParam {
+  mpsProt_t prot;    // MPS protocol data
+  uint64_t param;    // parameter field in timing message
+} mpsTimParam;
+
+// iterator used to access available MPS flags
+typedef struct timedItr timedItr_t;
+struct timedItr {
+  uint8_t idx;       // index of current element
+  uint8_t total;     // total number of elements
+  uint64_t last;     // timestamp of last access
+  uint64_t period;   // time period between accesses
+};
+
 #define MPS_PAYLOAD_SIZE sizeof(mpsEventData_t)/sizeof(uint32_t)
+#define N_MPS_CHANNELS   32    // total number of MPS channels
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
@@ -59,6 +84,10 @@ typedef enum {
 #define FBAS_CMD_TOGGLE_LVDS    0x18   // toggle LVDS output
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
+
+// mask bit for MPS-relevant tasks (up to 31)
+#define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
+#define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
 
 // flags
 #define MPS_FLAG_OK        1   // OK
@@ -81,6 +110,14 @@ typedef enum {
 #define FBAS_TM_SID        0x0       // sequence ID, 12-bit
 #define FBAS_TM_BPID       0x0       // beam process ID, 14-bit
 #define FBAS_TM_RES        0x0       // reserved, 6-bit
+
+#define FBAS_TX_FID        0x1       // format ID, 2-bit
+#define FBAS_TX_GID        0xfcbUL   // group ID = 4043, 12-bit
+#define FBAS_TX_EVTNO      0xfcbUL   // event number = 4043, 12-bit
+#define FBAS_TX_FLAGS      0x0       // flags, 4-bit
+#define FBAS_TX_SID        0x0       // sequence ID, 12-bit
+#define FBAS_TX_BPID       0x0       // beam process ID, 14-bit
+#define FBAS_TX_RES        0x0       // reserved, 6-bit
 
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
