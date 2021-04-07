@@ -104,7 +104,6 @@ entity scu_control is
     fastIO_n_i : in    std_logic_vector(2 downto 0);
     fastIO_p_o : out   std_logic_vector(2 downto 0);
     fastIO_n_o : out   std_logic_vector(2 downto 0);
-    bank_block : out   std_logic_vector(19 downto 0);
     lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
 
@@ -348,8 +347,6 @@ begin
     fastIO_p_o(i)        <= s_lvds_p_o(i);
     fastIO_n_o(i)        <= s_lvds_n_o(i);
   end generate;
-
-  bank_block <= (others => 'Z');
 
   lemo_out <= not s_gpio_o(6 downto 3);
 
