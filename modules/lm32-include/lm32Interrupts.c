@@ -39,7 +39,7 @@
  *       the port-function xPortStartScheduler() will reset this counter
  *       to zero.
  */
-volatile unsigned int mg_criticalSectionNestingCount = 1;
+volatile uint32_t mg_criticalSectionNestingCount = 1;
 
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
 /*!
@@ -87,16 +87,7 @@ inline unsigned int irqGetAtomicNestingCount( void )
    return mg_criticalSectionNestingCount;
 }
 
-#ifdef CONFIG_RTOS
-/*! ---------------------------------------------------------------------------
- * @see lm32Interrupts.h
- */
-inline void __irqResetAtomicNestingCounter( void )
-{
-   mg_criticalSectionNestingCount = 0;
-}
-
-#else
+#ifndef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
@@ -137,7 +128,7 @@ uint64_t irqGetTimestamp( void )
 #endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
 
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
-   #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+  #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
 #endif
 
 /*! ---------------------------------------------------------------------------

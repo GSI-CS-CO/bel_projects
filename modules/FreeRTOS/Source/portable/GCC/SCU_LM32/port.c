@@ -196,14 +196,8 @@ portBASE_TYPE xPortStartScheduler( void )
 #endif
 
    /*
-    * The atomic nesting counter becomes reset here, because
-    * the function vStartFirstTask will enable the global within its
-    * assembler routine.
-    */
-   __irqResetAtomicNestingCounter();
-
-   /*
-    * Kick off the first task and enables the global interrupt.
+    * Kick off the first task, resets the critical section nesting counter
+    * and enables the global interrupt.
     */
    vStartFirstTask();
 

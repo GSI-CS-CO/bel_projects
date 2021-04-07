@@ -139,24 +139,14 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
  */
 unsigned int irqGetAtomicNestingCount( void );
 
-#ifdef CONFIG_RTOS
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Resets the atomic nesting counter.
- * @note This function will used by FreeRTOS only within the function
- *       xPortStartScheduler() because the interrupts becomes enabled
- *       in the assembler routine vStartFirstTask() implemented in
- *       port.c.
- */
-void __irqResetAtomicNestingCounter( void );
-
-#else
+#ifndef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Enables the global interrupt.
  * @note This function is only for non FreeRTOS applications available! \n
- *       If a Free-RTOS application used, so the Free-RTOS function
- *       vTaskStartScheduler() will accomplished this.
+ *       If a Free-RTOS application is used, so the Free-RTOS function
+ *       vTaskStartScheduler() respectively the included assembler routine
+ *       vStartFirstTask() implemented in portasm.S will accomplished this.
  */
 void irqEnable( void );
 #endif
@@ -234,13 +224,7 @@ void irqResetPendingRegister( const uint32_t ip )
  */
 STATIC inline
 uint32_t irqGetAndResetPendingRegister( void )
-{
-#if 0
-   const uint32_t pending = irqGetPendingRegister();
-   irqResetPendingRegister( pending );
-   return pending;
-#else
-   /*
+{  /*
     * CAUTION! Its absolutely necessary that the interrupt pending register
     * becomes cleared immediately after reading. That means immediately at the
     * next CPU cycle.
@@ -253,7 +237,6 @@ uint32_t irqGetAndResetPendingRegister( void )
                   "wcsr ip, %0\n" \
                   :"=r"(pending) );
    return pending;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------

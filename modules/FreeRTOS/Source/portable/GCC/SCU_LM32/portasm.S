@@ -24,9 +24,15 @@
  * @see task.c
  */
 #ifdef __DOXYGEN__
-volatile TCB_t* volatile pxCurrentTCB;
+extern TCB_t* volatile pxCurrentTCB;
 #else
 .extern pxCurrentTCB
+#endif
+
+#ifdef __DOXYGEN__
+extern volatile uint32_t mg_criticalSectionNestingCount
+#else
+.extern mg_criticalSectionNestingCount
 #endif
 
 .extern _irq_entry
@@ -213,12 +219,16 @@ void vPortInterruptHandler( void );
 
 #ifdef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
- * @brief Start first task and enable global interrupt
+ * @brief Start first task, resets the global variable
+ *        mg_criticalSectionNestingCount and enable global interrupt
  */
 #ifdef __DOXYGEN__
 void vStartFirstTask( void ) {}
 #else
 vStartFirstTask:
+   mvhi      r1, hi(mg_criticalSectionNestingCount)
+   ori       r1, r1, lo(mg_criticalSectionNestingCount)
+   sw        (r1+0), r0 /* mg_criticalSectionNestingCount = 0; */
    mvi       r1, EIE
    wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
    and       r1, r0, r0

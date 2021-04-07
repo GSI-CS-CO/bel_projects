@@ -36,7 +36,7 @@
 #include "lm32signal.h"
 #include "scu_msi.h"
 #include "eca_queue_type.h"
-
+#include "scu_lm32Timer.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 
@@ -63,6 +63,33 @@ ECA_CONTROL_T* g_pEcaCtl;
  * @brief WB address of ECA queue
  */
 ECA_QUEUE_ITEM_T* g_pEcaQueue;
+
+#if 1
+/*! ---------------------------------------------------------------------------
+ * @brief Reorders the interrupt priority.
+ *
+ * This gives the possibility to reorder the interrupt priority if really
+ * necessary.\n
+ * In this example its just for test purposes.
+ *
+ * @note When this function is implemented, then the default function
+ *       implemented in module lm32interrupts.c will
+ *       overwritten by this function.
+ */
+unsigned int _irqReorderPriority( const unsigned int prio )
+{
+   /*
+    * Here the the interrupt priorities of the timer interrupt and the
+    * ECA-Interrupt becomes exchanged.
+    */
+   switch( prio )
+   {
+      case ECA_INTERRUPT_NUMBER: return TIMER_IRQ;
+      case TIMER_IRQ:            return ECA_INTERRUPT_NUMBER;
+   }
+   return prio;
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Callback function becomes invoked by LM32 when an exception appeared.

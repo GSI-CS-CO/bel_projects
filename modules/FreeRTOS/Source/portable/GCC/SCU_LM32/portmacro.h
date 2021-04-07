@@ -164,21 +164,6 @@ typedef uint32_t       UBaseType_t;
 #endif
 
 
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Port Disable Interrupts
- * @see irqDisable
- */
-//#define portDISABLE_INTERRUPTS() irqDisable()
-#define portDISABLE_INTERRUPTS() criticalSectionEnter()
-
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Port Enable Interrupts
- * @see irqEnable
- */
-//#define portENABLE_INTERRUPTS()  irqEnable()
-#define portENABLE_INTERRUPTS() criticalSectionExit()
 
 /*-----------------------------------------------------------*/
 
@@ -209,6 +194,24 @@ typedef uint32_t       UBaseType_t;
  * @see criticalSectionExit
  */
 #define portEXIT_CRITICAL()  criticalSectionExit()
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Port Disable Interrupts
+ * @see irqDisable
+ */
+//#define portDISABLE_INTERRUPTS() irqDisable()
+#define portDISABLE_INTERRUPTS() criticalSectionEnter()
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Port Enable Interrupts
+ * @see irqEnable
+ */
+//#define portENABLE_INTERRUPTS()  irqEnable()
+#define portENABLE_INTERRUPTS() criticalSectionExit()
+
+
 
 #define portYIELD()          vPortYield()
 
