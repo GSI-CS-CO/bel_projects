@@ -323,7 +323,7 @@ STATIC inline ALWAYS_INLINE void _irqEnable( void )
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
 #ifndef CONFIG_DISABLE_CRITICAL_SECTION
- #ifdef CONFIG_RTOS
+ #ifdef CONFIG_RTOS__
    irqSetEnableRegister( 0 );
  //  volatile const uint32_t im = irqGetMaskRegister();
  //  irqSetMaskRegister( 0 );

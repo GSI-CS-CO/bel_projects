@@ -71,5 +71,34 @@
 #define __RA  spOfs(2)  /*!<@brief Storage position of r29, alias ra */
 #define __EA  spOfs(1)  /*!<@brief Storage position of r30, alias ea */
 
+/*! --------------------------------------------------------------------------
+ * @brief Loads the pointer of a global 32-bit C/C++ variable in a register.
+ * @param reg Register name.
+ * @param var Name of the global variable.
+ */
+#ifdef __DOXYGEN__
+#define LOAD_ADDR( reg, var )
+#else
+.macro LOAD_ADDR reg, var
+   and   \reg,  r0,   r0
+   mvhi  \reg,  hi(\var)
+   ori   \reg,  \reg, lo(\var)
+.endm
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loads the value of a global 32-bit C/C++ variable in a register.
+ * @param reg Register name.
+ * @param var Name of the global variable.
+ */
+#ifdef __DOXYGEN__
+#define LOAD_VAR( reg, var )
+#else
+.macro LOAD_VAR reg, var
+   LOAD_ADDR \reg, \var
+   lw        \reg, (\reg+0)
+.endm
+#endif
+
 #endif /* ifndef _LM32ASSEMBLERMACROS_H */
 /*================================== EOF ====================================*/

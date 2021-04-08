@@ -182,10 +182,7 @@ void vPortInterruptHandler( void );
    /*
     * Save the top of stack value to the Task Control Block (TCB).
     */
-   and       r1, r0, r0
-   mvhi      r1, hi(pxCurrentTCB)
-   ori       r1, r1, lo(pxCurrentTCB)
-   lw        r1, (r1+0)
+   LOAD_VAR  r1, pxCurrentTCB
    sw        (r1+0), sp
 .endm
 #endif
@@ -200,14 +197,11 @@ void vPortInterruptHandler( void );
    /*
     * Loading last stack value from Task Control Block (TCB).
     */
-   and       sp, r0, r0
-   mvhi      sp, hi(pxCurrentTCB)
-   ori       sp, sp, lo(pxCurrentTCB) /* After access, SP (r28) holds address of pointer to actual TCB */
-   lw        sp,(sp+0)                /* After access, SP (r28) holds pointer to actual TCB */
-   mv        r2, sp                   /* Copy SP to R2 */
-   lw        sp, (sp+0)               /* After access, SP (r28) hold stack pointer from actual TCB */
-   addi      r1, sp, SP_CORR          /* Calculate new stack pointer */
-   sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */
+   LOAD_VAR  sp pxCurrentTCB  /* Load the pointer of the task control block in register SP. */
+   mv        r2, sp           /* Copy SP to R2 */
+   lw        sp, (sp+0)       /* After access, SP (r28) hold stack pointer from actual TCB */
+   addi      r1, sp, SP_CORR  /* Calculate new stack pointer */
+   sw        (r2+0), r1       /* Store new Stack pointer in actual TCB */
 
    /*
     * Restoring all register values (except R0, R1 and R28 (SP))
@@ -226,15 +220,11 @@ void vPortInterruptHandler( void );
 void vStartFirstTask( void ) {}
 #else
 vStartFirstTask:
-   mvhi      r1, hi(mg_criticalSectionNestingCount)
-   ori       r1, r1, lo(mg_criticalSectionNestingCount)
+   LOAD_ADDR r1, mg_criticalSectionNestingCount
    sw        (r1+0), r0 /* mg_criticalSectionNestingCount = 0; */
    mvi       r1, EIE
    wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
-   and       r1, r0, r0
-   mvhi      r1, hi(pxCurrentTCB)
-   ori       r1, r1, lo(pxCurrentTCB)
-   lw        r1, (r1+0)
+   LOAD_VAR  r1, pxCurrentTCB /* Load the pointer of the task control block in r1 */
    RESTORE_CONTEXT
    lw        r1, __R1           /* Load Register R1 back */
    addi      sp, sp, SP_CORR    /* Correct Stack pointer */
@@ -252,17 +242,19 @@ vPortYield:
    SAVE_CONTEXT
    sw        __cscf, r0         /* Set the context switch cause flag to zero */
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
-   and       r1, r0, r0
-   mvhi      r1, hi(pxCurrentTCB)
-   ori       r1, r1, lo(pxCurrentTCB)
-   lw        r1, (r1+0)
+   LOAD_VAR  r1, pxCurrentTCB   /* Load the pointer of the task control block in r1 */
    RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context change cause flag in r1 */
    bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused by LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
+#if 1
+   LOAD_VAR  r1, mg_criticalSectionNestingCount
+   bne       r1, r0, L_NOT_ENABLE
+#endif
    mvi       r1, EIE
    wcsr      ie, r1             /* Setting EIE bit enabling the IRQs by "eret"*/
+L_NOT_ENABLE:
    lw        r1, __R1           /* Load register R1 back */
    addi      sp, sp, SP_CORR    /* Correct stack pointer */
    eret                         /* Return-address is stored in EA */
@@ -284,10 +276,7 @@ vPortInterruptHandler:
    sw        __cscf, r1         /* and store it in stack. */
    mvi       r1, SIGINT         /* Argument for C-function _irq_entry (will ignored)*/
    calli     _irq_entry         /* Call this C- callback function */
-   and       r1, r0, r0
-   mvhi      r1, hi(pxCurrentTCB)
-   ori       r1, r1,lo(pxCurrentTCB)
-   lw        r1, (r1+0)
+   LOAD_VAR  r1, pxCurrentTCB   /* Load the pointer of the current task control block */
    RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context switch cause flag in r1 */
    bne       r0, r1, L_RETURN   /* Jump if context change was caused from LM32 exception  */

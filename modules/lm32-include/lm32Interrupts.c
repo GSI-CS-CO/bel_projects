@@ -128,7 +128,7 @@ uint64_t irqGetTimestamp( void )
 #endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
 
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
-  #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+  //#define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -181,14 +181,15 @@ void _irq_entry( void )
       for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {
          const unsigned int intNum = _irqReorderPriority( prio );
+         IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const uint32_t mask = _irqGetPendingMask( intNum );
 
          if( (mask & ip) == 0 ) /* Is this interrupt pending? */
             continue; /* No, go to next possible interrupt. */
+
          /*
           * Handling of detected pending interrupt.
           */
-         IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
          { /*
