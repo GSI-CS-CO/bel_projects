@@ -197,9 +197,9 @@ void vPortInterruptHandler( void );
    /*
     * Loading last stack value from Task Control Block (TCB).
     */
-   LOAD_VAR  sp pxCurrentTCB  /* Load the pointer of the task control block in register SP. */
-   mv        r2, sp           /* Copy SP to R2 */
-   lw        sp, (sp+0)       /* After access, SP (r28) hold stack pointer from actual TCB */
+   LOAD_VAR  r1, pxCurrentTCB /* Load the pointer of the task control block in register R1. */
+   mv        r2, r1           /* Copy R1 to R2 */
+   lw        sp, (r1+0)       /* After access, SP (r28) hold stack pointer from actual TCB */
    addi      r1, sp, SP_CORR  /* Calculate new stack pointer */
    sw        (r2+0), r1       /* Store new Stack pointer in actual TCB */
 
@@ -221,14 +221,13 @@ void vStartFirstTask( void ) {}
 #else
 vStartFirstTask:
    LOAD_ADDR r1, mg_criticalSectionNestingCount
-   sw        (r1+0), r0 /* mg_criticalSectionNestingCount = 0; */
+   sw        (r1+0), r0       /* mg_criticalSectionNestingCount = 0; */
    mvi       r1, EIE
    wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
-   LOAD_VAR  r1, pxCurrentTCB /* Load the pointer of the task control block in r1 */
    RESTORE_CONTEXT
-   lw        r1, __R1           /* Load Register R1 back */
-   addi      sp, sp, SP_CORR    /* Correct Stack pointer */
-   eret                         /* Return-Address is stored in EA */
+   lw        r1, __R1         /* Load Register R1 back */
+   addi      sp, sp, SP_CORR  /* Correct Stack pointer */
+   eret                       /* Return-Address is stored in EA */
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -242,7 +241,6 @@ vPortYield:
    SAVE_CONTEXT
    sw        __cscf, r0         /* Set the context switch cause flag to zero */
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
-   LOAD_VAR  r1, pxCurrentTCB   /* Load the pointer of the task control block in r1 */
    RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context change cause flag in r1 */
    bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused by LM32 exception  */
@@ -276,7 +274,6 @@ vPortInterruptHandler:
    sw        __cscf, r1         /* and store it in stack. */
    mvi       r1, SIGINT         /* Argument for C-function _irq_entry (will ignored)*/
    calli     _irq_entry         /* Call this C- callback function */
-   LOAD_VAR  r1, pxCurrentTCB   /* Load the pointer of the current task control block */
    RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context switch cause flag in r1 */
    bne       r0, r1, L_RETURN   /* Jump if context change was caused from LM32 exception  */
