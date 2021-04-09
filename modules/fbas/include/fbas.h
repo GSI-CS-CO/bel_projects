@@ -52,7 +52,7 @@ typedef union mpsTimParam mpsTimParam_t;
 union mpsTimParam {
   mpsProt_t prot;    // MPS protocol data
   uint64_t param;    // parameter field in timing message
-} mpsTimParam;
+};
 
 // iterator used to access available MPS flags
 typedef struct timedItr timedItr_t;
@@ -64,7 +64,8 @@ struct timedItr {
 };
 
 #define MPS_PAYLOAD_SIZE sizeof(mpsEventData_t)/sizeof(uint32_t)
-#define N_MPS_CHANNELS   32    // total number of MPS channels
+#define N_MPS_CHANNELS       32  // total number of MPS channels
+#define N_EXTRA_MPS_EVENTS   2   // number of MPS event transmissions
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
@@ -84,6 +85,8 @@ typedef enum {
 #define FBAS_CMD_TOGGLE_LVDS    0x18   // toggle LVDS output
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
+#define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
+#define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
@@ -111,13 +114,21 @@ typedef enum {
 #define FBAS_TM_BPID       0x0       // beam process ID, 14-bit
 #define FBAS_TM_RES        0x0       // reserved, 6-bit
 
-#define FBAS_TX_FID        0x1       // format ID, 2-bit
-#define FBAS_TX_GID        0xfcbUL   // group ID = 4043, 12-bit
-#define FBAS_TX_EVTNO      0xfcbUL   // event number = 4043, 12-bit
-#define FBAS_TX_FLAGS      0x0       // flags, 4-bit
-#define FBAS_TX_SID        0x0       // sequence ID, 12-bit
-#define FBAS_TX_BPID       0x0       // beam process ID, 14-bit
-#define FBAS_TX_RES        0x0       // reserved, 6-bit
+#define FBAS_FLG_FID       0x1       // format ID, 2-bit
+#define FBAS_FLG_GID       0xfcbUL   // group ID = 4043, 12-bit
+#define FBAS_FLG_EVTNO     0xfcbUL   // event number = 4043, 12-bit
+#define FBAS_FLG_FLAGS     0x0       // flags, 4-bit
+#define FBAS_FLG_SID       0x0       // sequence ID, 12-bit
+#define FBAS_FLG_BPID      0x0       // beam process ID, 14-bit
+#define FBAS_FLG_RES       0x0       // reserved, 6-bit
+
+#define FBAS_EVT_FID       0x1       // format ID, 2-bit
+#define FBAS_EVT_GID       0xfccUL   // group ID = 4044, 12-bit
+#define FBAS_EVT_EVTNO     0xfccUL   // event number = 4044, 12-bit
+#define FBAS_EVT_FLAGS     0x0       // flags, 4-bit
+#define FBAS_EVT_SID       0x0       // sequence ID, 12-bit
+#define FBAS_EVT_BPID      0x0       // beam process ID, 14-bit
+#define FBAS_EVT_RES       0x0       // reserved, 6-bit
 
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
