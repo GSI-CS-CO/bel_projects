@@ -88,7 +88,7 @@
 ../../../modules/ssd1325/src/hdl/generic_fifo_pkg.vhd
 ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd
 ../../../modules/temp_sens/hdl/temp_sensor_pkg.vhd
-../../../modules/temp_sens/synthesis/temp_sens.vhd
+../../../modules/temp_sens/synthesis/submodules/temp_sens_temp_sense_0.v
 ../../../modules/wb_arria_reset/arria5_reset.vhd
 ../../../modules/wb_arria_reset/arria_reset.vhd
 ../../../modules/wb_mil_scu/mil_pll.vhd
@@ -134,6 +134,7 @@
 ../../../modules/mil/Mil_Enc_Vhdl.vhd
 ../../../modules/mil/Mil_pkg.vhd
 ../../../modules/pll/altera_butis.vhd
+../../../modules/temp_sens/synthesis/temp_sens.vhd
 ../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd
 ../../../ip_cores/etherbone-core/hdl/eb_sim_core/simbridge_pkg.vhd
 ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd

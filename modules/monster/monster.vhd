@@ -2298,6 +2298,16 @@ end generate;
         s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= (others => (others => '0'));
       end generate;
 
+
+      dev_bus_master_i(dev_slaves'pos(devs_tlu))        <= c_DUMMY_WB_SLAVE_OUT;
+      dev_bus_master_i(dev_slaves'pos(devs_eca_tlu))    <= c_DUMMY_WB_SLAVE_OUT;
+      dev_bus_master_i(dev_slaves'pos(devs_eca_ctl))    <= c_DUMMY_WB_SLAVE_OUT;
+      dev_bus_master_i(dev_slaves'pos(devs_eca_aq))     <= c_DUMMY_WB_SLAVE_OUT;
+      dev_bus_master_i(dev_slaves'pos(devs_eca_wbm))    <= c_DUMMY_WB_SLAVE_OUT;
+      dev_bus_master_i(dev_slaves'pos(devs_emb_cpu))    <= c_DUMMY_WB_SLAVE_OUT;
+      dev_msi_slave_i(dev_slaves'pos(devs_tlu))         <= c_DUMMY_WB_MASTER_OUT;
+      dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl))     <= c_DUMMY_WB_MASTER_OUT;
+      top_bus_slave_i(top_my_masters'pos(topm_eca_wbm)) <= c_DUMMY_WB_MASTER_OUT;
    end generate;
 
 

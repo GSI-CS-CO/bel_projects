@@ -7,6 +7,10 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity ftm is
+  generic (
+      g_simulation   : boolean := false;
+      g_en_simbridge : boolean := false
+    );
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -258,6 +262,8 @@ begin
 
   main : monster
     generic map(
+      g_simulation          => g_simulation,
+      g_en_simbridge        => g_en_simbridge,
       g_family              => c_family,
       g_project             => c_project,
       g_flash_bits          => 25,
@@ -277,7 +283,7 @@ begin
       g_lm32_MSIs           => 1,
       g_delay_diagnostics   => true,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
-		  g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
+      g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
       g_en_eca              => false
 		)
     port map(
