@@ -389,26 +389,20 @@ ifndef GENRAMMIF
    endif
 endif
 
-ifndef EB_LOAD
-   EB_LOAD := $(shell which eb-fwload 2>/dev/null)
-   ifeq ($(EB_LOAD), )
-      EB_LOAD := $(REPOSITORY_DIR)/tools/eb-fwload
-   endif
+EB_LOAD := $(shell which lm32-fwload.sh 2>/dev/null)
+ifeq ($(EB_LOAD), )
+   EB_LOAD := $(REPOSITORY_DIR)/tools/scripts/lm32-fwload.sh
 endif
 
-ifndef EB_RESET
-   EB_RESET := $(shell which eb-reset 2>/dev/null)
-   ifeq ($(EB_RESET), )
-      EB_RESET = $(REPOSITORY_DIR)/tools/eb-reset
-   endif
+EB_RESET := $(shell which scu-reset.sh 2>/dev/null)
+ifeq ($(EB_RESET), )
+   EB_RESET := $(REPOSITORY_DIR)/tools/scripts/scu-reset.sh
 endif
 EB_HALT ?= $(EB_RESET)
 
-ifndef EB_INFO
-   EB_INFO := $(shell which eb-info 2>/dev/null)
-   ifeq ($(EB_INFO), )
-      EB_INFO := $(REPOSITORY_DIR)/tools/eb-info
-   endif
+EB_INFO := $(shell which lm32-info.sh 2>/dev/null)
+ifeq ($(EB_INFO), )
+   EB_INFO := $(REPOSITORY_DIR)/tools/scripts/lm32-info.sh
 endif
 
 ifeq ($(V), 1)
@@ -469,12 +463,12 @@ halt: check_scu_url
 	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
-load: $(BIN_FILE) halt
-	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $(BIN_FILE)
+load: $(BIN_FILE)
+	$(EB_LOAD_F) $(BIN_FILE) $(SCU_URL)
 
 .PHONY: info
 info: check_scu_url
-	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
+	$(QUIET)$(EB_INFO) $(SCU_URL)
 
 # ------------ End of Etherbone- Tools ----------------------------------------
 #=================================== EOF ======================================
