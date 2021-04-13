@@ -72,10 +72,14 @@ architecture rtl of eb_commit_len_fifo is
   signal r_len    : unsigned(g_width-2 downto 0);
   signal r_cnt    : unsigned(c_depth downto 0);
   
+  signal aa_i : std_logic_vector(c_depth-1 downto 0);
+  signal ab_i : std_logic_vector(c_depth-1 downto 0);
 begin
 
  
  
+  aa_i <= std_logic_vector(s_w_adr(c_depth-1 downto 0));
+  ab_i <= std_logic_vector(r_idx1(c_depth-1 downto 0));
   ram : generic_simple_dpram
     generic map(
       g_data_width => g_width,
@@ -86,10 +90,10 @@ begin
       clka_i  => clk_i,
       bwea_i  => (others => '1'),
       wea_i   => s_w_push,
-      aa_i    => std_logic_vector(s_w_adr(c_depth-1 downto 0)), 
+      aa_i    => aa_i,
       da_i    => s_w_dat,
       clkb_i  => clk_i,
-      ab_i    => std_logic_vector(r_idx1(c_depth-1 downto 0)),
+      ab_i    => ab_i,
       qb_o    => r_dat_o);
   
   s_w_push <= w_push_i or w_commit_i;

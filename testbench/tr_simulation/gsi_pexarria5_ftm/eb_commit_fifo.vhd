@@ -61,8 +61,12 @@ architecture rtl of eb_commit_fifo is
   constant c_low  : unsigned(c_depth-1 downto 0) := (others => '0');
   constant c_high : unsigned(c_depth   downto 0) := '1' & c_low;
   
+  signal aa_i : std_logic_vector(c_depth-1 downto 0);
+  signal ab_i : std_logic_vector(c_depth-1 downto 0);
 begin
 
+  aa_i <= std_logic_vector(w_idx(c_depth-1 downto 0));
+  ab_i <= std_logic_vector(r_idx1(c_depth-1 downto 0));
   ram : generic_simple_dpram
     generic map(
       g_data_width => g_width,
@@ -73,10 +77,10 @@ begin
       clka_i  => clk_i,
       bwea_i  => (others => '1'),
       wea_i   => w_push_i,
-      aa_i    => std_logic_vector(w_idx(c_depth-1 downto 0)),
+      aa_i    => aa_i,
       da_i    => w_dat_i,
       clkb_i  => clk_i,
-      ab_i    => std_logic_vector(r_idx1(c_depth-1 downto 0)),
+      ab_i    => ab_i,
       qb_o    => r_dat_o);
   
   r_idx1 <= (r_idx+1) when r_pop_i ='1' else r_idx;
