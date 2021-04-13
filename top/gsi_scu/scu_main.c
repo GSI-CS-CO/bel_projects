@@ -45,7 +45,7 @@
 TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 #endif
 
-
+//  #define _CONFIG_NO_INTERRUPT
 
 extern ONE_WIRE_T g_oneWireBase;
 
@@ -264,10 +264,11 @@ ONE_TIME_CALL void initInterrupt( void )
    cbReset( &g_aMsg_buf[0], DEVSIO );
    cbReset( &g_aMsg_buf[0], DEVBUS );
 #endif
-
+#ifndef _CONFIG_NO_INTERRUPT
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
    irqEnable();
    mprintf( "IRQ table configured: 0b%08b\n", irqGetMaskRegister() );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -395,7 +396,10 @@ ONE_TIME_CALL void schedule( void )
    commandHandler();
    addacDaqTask();
 #endif
-
+#ifdef _CONFIG_NO_INTERRUPT
+   #warning "Testversion with no interrupts!!!"
+   onScuMSInterrupt( ECA_INTERRUPT_NUMBER, NULL );
+#endif
    const uint64_t tick = getWrSysTime();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
