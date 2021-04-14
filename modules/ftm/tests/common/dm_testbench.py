@@ -54,13 +54,13 @@ class DmTestbench(unittest.TestCase):
       patterns = False
       for i in range(len(lines)):
         if patterns and len(lines[i]) > 0:
-          # print (f"Pattern: \n{lines[i]} {lines}")
-          process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', lines[i]])
+          # print (f"Pattern: \n{lines[i]} {lines} {lines[i].split()[0]}")
+          process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', lines[i].split()[0]])
           process.wait()
           self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {lines[i]}')
           if onePattern:
             patterns = False
-        if lines[i] == 'Patterns:':
+        if 'Patterns' in lines[i]:
           patterns = True
 
   def startAndCheckSubprocess(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):

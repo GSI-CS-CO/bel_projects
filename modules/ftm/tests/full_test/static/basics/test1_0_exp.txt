@@ -28,9 +28,9 @@ Idx   S/R   Cpu   Name                Hash         Int. Adr     Ext. Adr
   23    0     0   BLOCK_IN1_ListDst   0x808340d1   0x10000de4   0x04120de4
 
 
-Patterns:
-A
-B
-IN0
-IN1
+Patterns Entry     Exit
+A        BLOCK_A   BLOCK_A
+B        BLOCK_B   BLOCK_B
+IN0      BLOCK_IN0 BLOCK_IN0
+IN1      BLOCK_IN1 BLOCK_IN1
 
