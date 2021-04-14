@@ -455,11 +455,11 @@ else
 endif
 
 .PHONY: reset
-reset: check_scu_url
+reset: # check_scu_url
 	$(EB_RESET_F) $(PROTOCOL)/$(SCU_URL) cpureset $(CPU_ID)
 
 .PHONY: halt
-halt: check_scu_url
+halt: # check_scu_url
 	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
@@ -467,7 +467,7 @@ load: $(BIN_FILE)
 	$(EB_LOAD_F) $(BIN_FILE) $(SCU_URL)
 
 .PHONY: info
-info: check_scu_url
+info: # check_scu_url
 	$(QUIET)$(EB_INFO) $(SCU_URL)
 
 # ------------ End of Etherbone- Tools ----------------------------------------

@@ -139,6 +139,9 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
  */
 unsigned int irqGetAtomicNestingCount( void );
 
+void irqPresetAtomicNestingCount( void );
+
+
 #ifndef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT

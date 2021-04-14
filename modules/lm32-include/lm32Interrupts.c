@@ -87,6 +87,12 @@ inline unsigned int irqGetAtomicNestingCount( void )
    return mg_criticalSectionNestingCount;
 }
 
+inline void irqPresetAtomicNestingCount( void )
+{
+   irqSetEnableRegister( 0 );
+   mg_criticalSectionNestingCount = 1;
+}
+
 #ifndef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
@@ -128,7 +134,7 @@ uint64_t irqGetTimestamp( void )
 #endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
 
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
-  //#define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+  #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
 #endif
 
 /*! ---------------------------------------------------------------------------

@@ -269,6 +269,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
+   irqPresetAtomicNestingCount();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
             "FreeRTOS message queue test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"

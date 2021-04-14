@@ -80,7 +80,6 @@
 #define LOAD_ADDR( reg, var )
 #else
 .macro LOAD_ADDR reg, var
-   and   \reg,  r0,   r0
    mvhi  \reg,  hi(\var)
    ori   \reg,  \reg, lo(\var)
 .endm

@@ -201,7 +201,8 @@ typedef uint32_t       UBaseType_t;
  * @see irqDisable
  */
 //#define portDISABLE_INTERRUPTS() irqDisable()
-#define portDISABLE_INTERRUPTS() criticalSectionEnter()
+//#define portDISABLE_INTERRUPTS() criticalSectionEnter()
+#define portDISABLE_INTERRUPTS() irqSetEnableRegister( 0 )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -209,12 +210,8 @@ typedef uint32_t       UBaseType_t;
  * @see irqEnable
  */
 //#define portENABLE_INTERRUPTS()  irqEnable()
-#define portENABLE_INTERRUPTS() criticalSectionExit()
-
-
-
-#define portYIELD()          vPortYield()
-
+//#define portENABLE_INTERRUPTS() criticalSectionExit()
+#define portENABLE_INTERRUPTS() irqSetEnableRegister( irqGetEnableRegister() | IRQ_IE )
 
 /*-----------------------------------------------------------*/
 
@@ -242,6 +239,8 @@ void vStartFirstTask( void );
  * @see portasm.S
  */
 void vPortYield( void );
+
+#define portYIELD()          vPortYield()
 
 #ifdef __cplusplus
 }

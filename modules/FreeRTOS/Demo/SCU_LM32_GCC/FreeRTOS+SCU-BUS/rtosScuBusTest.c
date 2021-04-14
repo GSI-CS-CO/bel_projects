@@ -228,12 +228,14 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
+   irqPresetAtomicNestingCount();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR ESC_NORMAL "FreeRTOS SCU-BUS test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"
             "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"
          #ifdef CONFIG_SCU_ATOMIC_SECTION
             "Using atomic sections.\n"
          #endif
+            "IRQ-nesting count: %d\n", irqGetAtomicNestingCount()
           );
 
    const BaseType_t status = initAndStartRTOS();
