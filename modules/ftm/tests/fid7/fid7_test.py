@@ -44,8 +44,8 @@ class Fid7(dm_testbench.DmTestbench):
             if row[4] == '0x7':
                 test_result = False
                 break
-        print(f'Processed {line_count} lines, test result is {test_result}.', end='', flush=True)
     self.deleteFile(file_name)
+    self.assertTrue(test_result, f'Processed {line_count} lines, test result is {test_result}.')
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:

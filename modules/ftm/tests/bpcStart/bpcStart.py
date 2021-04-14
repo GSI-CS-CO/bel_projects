@@ -45,21 +45,22 @@ class BpcStart(dm_testbench.DmTestbench):
             if test1 and test2:
                 test_result = False
                 break
-        print(f'Snoop: processed {line_count} lines, test result is {test_result}.   ', end='', flush=True)
+        if line_count == 0:
+          test_result = False
     self.deleteFile(file_name)
-    if test_result:
-        file_name = 'd1.dot'
-        process = subprocess.Popen(['dm-sched', self.datamaster, '-o', file_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        with open(file_name, 'r') as reader:
-            lines = reader.readlines()
-        self.deleteFile(file_name)
+    self.assertTrue(test_result, f'Snoop: processed {line_count} lines, test result is {test_result}.   ')
+    file_name = 'd1.dot'
+    process = subprocess.Popen(['dm-sched', self.datamaster, '-o', file_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    with open(file_name, 'r') as reader:
+        lines = reader.readlines()
+    self.deleteFile(file_name)
 #            print(lines)
-        if len(lines) >= 10:
-            test_result = 'bpcstart="1"' in lines[4] and 'bpcstart="1"' in lines[5]
-        else:
-            test_result = False
-            print(f'dm-sched: output too short ({len(lines)} lines), result: {test_result}')
+    if len(lines) >= 10:
+        test_result = 'bpcstart="1"' in lines[4] and 'bpcstart="1"' in lines[5]
+    else:
+        test_result = False
+    self.assertTrue(test_result, f'dm-sched: output too short ({len(lines)} lines), result: {test_result}')
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
