@@ -16,6 +16,7 @@
  *  17-DEC-1998 comments in code, cleaned up, and one bug removed
  *  04-OCT-2020 reuse this retro code, simplified linux version only
  *  14-DEC-2020 GPL licensed
+ *  15-APR-2021 rename variable 'new'
  *
  *  This software helps in creating simple text based user interfaces for programs. 
  *  See ivtpar.h for help.
@@ -54,7 +55,7 @@
 #include <string.h>
 
 
-#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1989-2020 \033[0m"
+#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1989-2021 \033[0m"
 // search escape sequences, https://stackoverflow.com/questions/51024909/how-to-move-cursor-back-in-c-console
 
 // define special keys
@@ -252,7 +253,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
  short  return_;                /* flag for return key          */
  short  lblank;                 /* flag for leading blank       */
  short  bruch;                  /* special flag, used only once */
- short  new;                    /* flag for plotting headerline */
+ short  printHeader;            /* flag for plotting headerline */
  short  fin;                    /* flag for leaving routine     */
  int    k1,ichara,ica,i2,i1,nold,il, /* help variables          */
         line,i,ich,ic=0,ip=0,in,iloop;
@@ -428,10 +429,10 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
   printf("%s\n",buff);
  } /* for il */                           
 
- ipar = 1;
- new  = 1;
- fin  = 0;
- return_ = 0;
+ ipar        = 1;
+ printHeader = 1;
+ fin         = 0;
+ return_     = 0;
 
  /*
    up to now, the text- and parameter file have been read and 
@@ -441,13 +442,13 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
  
  while(!fin){
   if (!return_) {
-   if(error) new=0;
-   if (new) {  /* plot new headerline if just started or after error */
+   if(error) printHeader=0;
+   if (printHeader) {  /* plot new headerline if just started or after error */
     vtpo(1,1);
     printf("%s\n",TOPHEADER);
-    new = 0;
+    printHeader = 0;
    } /* if new */
-   if(error) new=1;
+   if(error) printHeader=1;
    if(error) error=0;
 
    ic=vtp[ipar-1][1];     /* get present position     */
