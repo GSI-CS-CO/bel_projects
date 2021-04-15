@@ -228,7 +228,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-   irqPresetAtomicNestingCount();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR ESC_NORMAL "FreeRTOS SCU-BUS test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"
             "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"

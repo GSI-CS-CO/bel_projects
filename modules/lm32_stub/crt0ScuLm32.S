@@ -19,6 +19,9 @@
 #ifdef CONFIG_RTOS
    .extern vPortInterruptHandler
 #else
+   /*
+    * This function is implemented in module lm32Interrupts.c 
+    */
    .extern _irq_entry
 #endif
 .extern _onException
@@ -26,6 +29,13 @@
 .extern __init
 .extern main
 .extern __exit
+#ifndef __MICO_NO_INTERRUPTS__
+   /*
+    * Nesting counter for atomic sections.
+    * This global variable is declared in module lm32Interrupts.c
+    */
+   .extern mg_criticalSectionNestingCount
+#endif
 
 /*
  * Exception handlers - Must be 32 bytes long respectively 8 instructions.
@@ -118,25 +128,30 @@ _divide_by_zero_handler:
 .type   _interrupt_handler, @function
 _interrupt_handler:
 #ifdef CONFIG_RTOS
-    bi      vPortInterruptHandler
-    nop
-    nop
-    nop
-    nop
+    /*
+     * In the case of using FreeRTOS the interrupt handling will made in module portasm.S.
+     * The in portasm.S implemented function vPortInterruptHandler will invoke the
+     * interrupt main function _irq_entry.
+     */
+    bi      vPortInterruptHandler    /* 1 */
+    nop                              /* 2 */
+    nop                              /* 3 */
+    nop                              /* 4 */
+    nop                              /* 5 */
 #else
-    sw      (sp+0), ra
-    calli   _save_all
-    mvi     r1, SIGINT
+    sw      (sp+0), ra               /* 1 */
+    calli   _save_all                /* 2 */
+    mvi     r1, SIGINT               /* 3 */
  #ifndef __MICO_NO_INTERRUPTS__
-    calli   _irq_entry
+    calli   _irq_entry               /* 4 */
  #else
-    wcsr    IE, r0
+    wcsr    IE, r0                   /* 4 */
  #endif
-    bi      _restore_all_and_return
+    bi      _restore_all_and_return  /* 5 */
 #endif
-    nop
-    nop
-    nop
+    nop                              /* 6 */
+    nop                              /* 7 */
+    nop                              /* 8 */
 .size     _interrupt_handler, .-_interrupt_handler
 .global _system_call_handler
 .type _system_call_handler, @function
@@ -151,6 +166,9 @@ _system_call_handler:
     nop
 .size _system_call_handler, .-_system_call_handler
 
+/* ----------------------------------------------------------------------------
+ * Function _crt0
+ */
 .section    .text, "ax", @progbits
 .global _crt0
 .type   _crt0, @function
@@ -161,23 +179,59 @@ _crt0:
     mvhi    sp, hi(_fstack)
     ori     sp, sp, lo(_fstack)
 
+    /*
+     * Initializing .bss by zero.
+     */
     mvhi    r1, hi(_fbss)
     ori     r1, r1, lo(_fbss)
     mvi     r2, 0
     mvhi    r3, hi(_ebss)
     ori     r3, r3, lo(_ebss)
     sub     r3, r3, r1
-    calli   memset
+    calli   memset      /* memset( _fbss, 0, _ebss - _fbss ); */
+
+#ifndef __MICO_NO_INTERRUPTS__
+    /*
+     * In the case of a unexpected reset event within a atomic section the
+     * atomic nesting counter has to be pre initialized with 1 here!
+     * This makes it possible using atomic sections before the 
+     * interrupts are initialized and enabled.
+     */
+    mvhi    r1,     hi(mg_criticalSectionNestingCount)
+    ori     r1, r1, lo(mg_criticalSectionNestingCount)
+    mvi     r2, 1       /* mg_criticalSectionNestingCount = 1; */
+    sw      (r1+0), r2
+#endif
+
+    /*
+     * The C-function __init() is optional and is implemented in module stubs.c by default. 
+     * It is called BEFORE the main function. 
+     */
     calli   __init
+
+    /*
+     * Calling the C-function main( 0, 0, 0 )
+     */
     mvi     r1, 0
     mvi     r2, 0
     mvi     r3, 0
     calli   main
 
+    /*
+     * The C-function __exit() is optional and is implemented in module stubs.c by default.
+     * It is called AFTER the main function.
+     */
     calli   __exit
+
+    /*
+     * Endless loop!
+     */
 loopf:
     bi loopf
 
+/* ----------------------------------------------------------------------------
+ * Function _save_all
+ */
 .global _save_all
 .type   _save_all, @function
 _save_all:
@@ -237,6 +291,9 @@ _save_all:
     ret
 .size   _save_all, .-_save_all
 
+/* ----------------------------------------------------------------------------
+ * Function _restore_all_and_return
+ */
 .global _restore_all_and_return
 .type   _restore_all_and_return, @function
     /* Restore all registers and return from exception */
