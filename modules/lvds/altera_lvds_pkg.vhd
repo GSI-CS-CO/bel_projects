@@ -2,7 +2,7 @@
 --! @brief LVDS mega-wizard created component definitions
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
---! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --! This combines all the common GSI components together
 --!
@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
@@ -35,10 +35,11 @@ package altera_lvds_pkg is
 
   component altera_lvds is
     generic(
-      g_family    : string;
-      g_inputs    : natural;
-      g_outputs   : natural;
-      g_invert    : boolean := false);
+      g_family   : string;
+      g_inputs   : natural;
+      g_outputs  : natural;
+      g_tx_multi : boolean := false;
+      g_invert   : boolean := false);
     port(
       clk_ref_i    : in  std_logic;
       rstn_ref_i   : in  std_logic;
@@ -53,7 +54,7 @@ package altera_lvds_pkg is
       lvds_n_o     : out std_logic_vector(g_outputs-1 downto 0);
       lvds_o_led_o : out std_logic_vector(g_outputs-1 downto 0));
   end component;
-  
+
   component eca_lvds_channel is
     port(
       clk_i     : in  std_logic;
@@ -61,7 +62,7 @@ package altera_lvds_pkg is
       channel_i : in  t_channel;
       lvds_o    : out t_lvds_byte_array(11 downto 0));
   end component;
-  
+
   component altera_lvds_ibuf is
     generic(
       g_family : string);
@@ -70,7 +71,7 @@ package altera_lvds_pkg is
       datain_b : in  std_logic;
       dataout  : out std_logic);
   end component;
-  
+
   component altera_lvds_obuf is
     generic(
       g_family : string);
@@ -79,7 +80,7 @@ package altera_lvds_pkg is
       dataout          : out std_logic;
       dataout_b        : out std_logic);
   end component;
-  
+
   component altera_lvds_rx is
     generic(
       g_family : string);
@@ -90,7 +91,7 @@ package altera_lvds_pkg is
       rx_in      : in  std_logic;
       rx_out     : out std_logic_vector(7 downto 0));
   end component;
-  
+
   component altera_lvds_tx is
     generic(
       g_family : string);
@@ -101,5 +102,27 @@ package altera_lvds_pkg is
       tx_in      : in  std_logic_vector(7 downto 0);
       tx_out     : out std_logic);
   end component;
-  
+
+  component altera_lvds_tx_multi_scu4 is
+    generic(
+      g_family : string);
+    port(
+      tx_core    : in  std_logic;
+      tx_inclock : in  std_logic;
+      tx_enable  : in  std_logic;
+      tx_in      : in  std_logic_vector(23 downto 0);
+      tx_out     : out std_logic_vector(2 downto 0));
+  end component;
+
+  component altera_lvds_tx_multi_scu4_wrap is
+    generic(
+      g_family : string);
+    port(
+      tx_core    : in  std_logic;
+      tx_inclock : in  std_logic;
+      tx_enable  : in  std_logic;
+      tx_in      : in  std_logic_vector(23 downto 0);
+      tx_out     : out std_logic_vector(2 downto 0));
+  end component;
+
 end package;

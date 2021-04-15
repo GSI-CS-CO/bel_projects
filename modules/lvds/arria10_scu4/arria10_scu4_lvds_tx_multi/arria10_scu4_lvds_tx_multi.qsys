@@ -6,7 +6,7 @@
    version="1.0"
    description=""
    tags="INTERNAL_COMPONENT=true"
-   categories="" />
+   categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
    element lvds_0
@@ -56,13 +56,7 @@
   <port name="ext_loaden" internal="ext_loaden" />
  </interface>
  <interface name="inclock" internal="lvds_0.inclock" />
- <interface
-   name="pll_areset"
-   internal="lvds_0.pll_areset"
-   type="conduit"
-   dir="end">
-  <port name="pll_areset" internal="pll_areset" />
- </interface>
+ <interface name="pll_areset" internal="lvds_0.pll_areset" />
  <interface name="pll_locked" internal="lvds_0.pll_locked" />
  <interface
    name="tx_coreclock"
@@ -94,7 +88,7 @@
   <parameter name="MODE" value="TX" />
   <parameter name="NUM_CHANNELS" value="3" />
   <parameter name="PLL_CORECLOCK_RESOURCE" value="Periphery" />
-  <parameter name="PLL_USE_RESET" value="true" />
+  <parameter name="PLL_USE_RESET" value="false" />
   <parameter name="RX_BITSLIP_ASSERT_MAX" value="false" />
   <parameter name="RX_BITSLIP_USE_RESET" value="false" />
   <parameter name="RX_CDR_SIMULATION_PPM_DRIFT" value="0" />

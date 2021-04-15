@@ -34,10 +34,11 @@ use work.gencores_pkg.all;
 
 entity altera_lvds is
   generic(
-    g_family  : string;
-    g_inputs  : natural;
-    g_outputs : natural;
-    g_invert  : boolean := false);
+    g_family   : string;
+    g_inputs   : natural;
+    g_outputs  : natural;
+    g_tx_multi : boolean := false;
+    g_invert   : boolean := false);
   port(
     clk_ref_i    : in  std_logic;
     rstn_ref_i   : in  std_logic;
@@ -103,6 +104,22 @@ begin
   --    outclk_2    => clk_core);
   --end generate;
 
+  tx_scu4_special_handling : if (g_tx_multi = true and g_family = "Arria 10 GX SCU4") generate
+    lvds : altera_lvds_tx_multi_scu4_wrap
+      generic map(
+        g_family   => g_family)
+      port map(
+        tx_core             => clk_core,
+        tx_inclock          => clk_lvds,
+        tx_enable           => clk_enable,
+        tx_in(7 downto 0)   => s_dat_i(0),
+        tx_in(15 downto 8)  => s_dat_i(1),
+        tx_in(23 downto 16) => s_dat_i(2),
+        tx_out(0)           => lvds_odat(0),
+        tx_out(1)           => lvds_odat(1),
+        tx_out(2)           => lvds_odat(2));
+  end generate;
+
   tx : for i in 0 to g_outputs-1 generate
     led : gc_extend_pulse
       generic map(
@@ -115,15 +132,17 @@ begin
 
     s_dat_i(i) <= dat_i(i) xor c_toggle;
 
-    lvds : altera_lvds_tx
-      generic map(
-        g_family   => g_family)
-      port map(
-        tx_core    => clk_core,
-        tx_inclock => clk_lvds,
-        tx_enable  => clk_enable,
-        tx_in      => s_dat_i(i),
-        tx_out     => lvds_odat(i));
+    lvds_single_out : if g_tx_multi = false generate
+      lvds : altera_lvds_tx
+        generic map(
+          g_family   => g_family)
+        port map(
+          tx_core    => clk_core,
+          tx_inclock => clk_lvds,
+          tx_enable  => clk_enable,
+          tx_in      => s_dat_i(i),
+          tx_out     => lvds_odat(i));
+    end generate;
 
     arria5_arria2_obuf : if not(g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10") generate
     buf : altera_lvds_obuf
@@ -138,7 +157,7 @@ begin
     arria10_obuf : if g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10" generate
      lvds_p_o <= lvds_odat;
     end generate;
-  
+
     --buf : altera_lvds_obuf
     --  generic map(
     --    g_family  => g_family)
@@ -146,7 +165,7 @@ begin
     --    datain    => lvds_odat(i),
     --    dataout   => lvds_p_o(i),
      --   dataout_b => lvds_n_o(i));
-  
+
   end generate;
 
   rx : for i in 0 to g_inputs-1 generate

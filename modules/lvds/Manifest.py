@@ -19,5 +19,6 @@ files = [
   "altera_lvds_rx.vhd",
   "altera_lvds_tx.vhd",
   "arria10_lvds_pkg.vhd",
+  "altera_lvds_tx_multi_scu4_wrap.vhd",
   "eca_lvds_channel.vhd"
   ]

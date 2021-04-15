@@ -40,7 +40,7 @@ package arria10_lvds_pkg is
       lvdsfclk_bot_out : out std_logic;
       loaden_bot_out   : out std_logic);
   end component;
-  
+
   component arria10_scu4_lvds_ibuf is
     port(
       pad_in   : in  std_logic_vector(0 downto 0);
@@ -73,6 +73,16 @@ package arria10_lvds_pkg is
       ext_loaden    : in  std_logic;
       ext_coreclock : in  std_logic);
   end component;
+
+  component arria10_scu4_lvds_tx_multi is
+    port (
+      tx_in         : in  std_logic_vector(23 downto 0);
+      tx_out        : out std_logic_vector(2 downto 0);
+      tx_coreclock  : out std_logic;
+      ext_fclk      : in  std_logic;
+      ext_loaden    : in  std_logic;
+      ext_coreclock : in  std_logic);
+  end component arria10_scu4_lvds_tx_multi;
 
   component arria10_scu4_lvds_pll is
     port (
