@@ -104,7 +104,7 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
           elif 'schedule dump' in lines[i]:
             collect_lines = True
             script.write(f'# entry {entry_no}\n')
-            script.write(f'dm-sched $DM $OPTIONS status {dot_file_name}\n')
+            script.write(f'dm-sched $DM $OPTIONS status -o {dot_file_name}\n')
           elif 'table check result:' in lines[i]:
             collect_lines = False
             script.write(f'# entry {entry_no}, {lines[i]}')

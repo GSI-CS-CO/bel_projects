@@ -1,3 +1,4 @@
 Rewrite command history file GeneratorCommandsHistory_Fri_Feb__5_13.33.22_2021_c.log to script CommandsHistory_Fri_Feb__5_13.33.22_2021_c.sh.
 Schedules written to CommandsHistory_Fri_Feb__5_13.33.22_2021_c/graph-entry-n.dot, where n is the entry number.
-Lines: 3416, dot files: 9, first entry: 2021-02-05 13:36:22, last entry: 2021-02-05 14:07:52.
+First timestamp: 2021-02-05 13:40:00, last timestamp: 2021-02-05 14:50:00
+Lines: 3417, dot files: 10, first entry: 2021-02-05 13:36:22, last entry: 2021-02-05 14:07:52.
