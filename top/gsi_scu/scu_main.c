@@ -47,6 +47,7 @@ TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 
 //  #define _CONFIG_NO_INTERRUPT
 
+
 extern ONE_WIRE_T g_oneWireBase;
 
 /*====================== Begin of shared memory area ========================*/
@@ -436,13 +437,14 @@ void main( void )
    mprintf( ESC_BOLD "Start of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
            "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
+           "Resets: %u\n"
            "Found MsgBox at 0x%p. MSI Path is 0x%p\n"
        #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
             "CAUTION! Time gap reading for MIL FGs activated!\n"
             ESC_NORMAL
        #endif
-           , pCpuMsiBox, pMyMsi );
+           , __reset_count, pCpuMsiBox, pMyMsi );
 
 #ifdef CONFIG_MIL_FG
    dbgPrintMilTaskData();

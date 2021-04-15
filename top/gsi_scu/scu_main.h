@@ -114,6 +114,16 @@ typedef enum
 #endif
 } MSG_ORIGIN_T;
 
+/*!
+ * @brief Reset counter becomes incremented after each LM32-Reset.
+ *
+ * This global variable is implemented and initialized in the assembler module
+ * crt0ScuLm32.S \n
+ * This becomes incremented in the startup-routine _crt0.
+ *
+ * @see crt0ScuLm32.S
+ */
+extern volatile uint32_t __reset_count;
 
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
