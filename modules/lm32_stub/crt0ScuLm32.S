@@ -29,7 +29,7 @@
 .extern __init
 .extern main
 .extern __exit
-#ifndef __MICO_NO_INTERRUPTS__
+#ifndef CONFIG_NO_INTERRUPTS
    /*
     * Nesting counter for atomic sections.
     * This global variable is declared in module lm32Interrupts.c
@@ -37,7 +37,17 @@
    .extern mg_criticalSectionNestingCount
 #endif
 
-/*
+#ifndef CONFIG_NO_RESET_COUNTER
+   .global  __reset_count
+   .section .data
+   .align 4
+   .type __reset_count, @object
+   .size __reset_count, 4
+__reset_count:
+   .long -1    /* Pre-initializing __reset_count with -1 by assembler */
+#endif
+
+/* ----------------------------------------------------------------------------
  * Exception handlers - Must be 32 bytes long respectively 8 instructions.
  * @see LatticeMico32ProcessorReferenceManual39.pdf page 22
  */
@@ -53,7 +63,7 @@ _reset_handler:
     xor     r0, r0, r0
     wcsr    IE, r0
     wcsr    IM, r0
-    mvhi    r1, hi(_reset_handler)
+    mvhi    r1,     hi(_reset_handler)
     ori     r1, r1, lo(_reset_handler)
     wcsr    EBA, r1
     calli   _crt0
@@ -142,7 +152,7 @@ _interrupt_handler:
     sw      (sp+0), ra               /* 1 */
     calli   _save_all                /* 2 */
     mvi     r1, SIGINT               /* 3 */
- #ifndef __MICO_NO_INTERRUPTS__
+ #ifndef CONFIG_NO_INTERRUPTS
     calli   _irq_entry               /* 4 */
  #else
     wcsr    IE, r0                   /* 4 */
@@ -176,21 +186,21 @@ _crt0:
     /* Clear r0 */
     xor     r0, r0, r0
     /* Setup stack and global pointer */
-    mvhi    sp, hi(_fstack)
+    mvhi    sp,     hi(_fstack)
     ori     sp, sp, lo(_fstack)
 
     /*
      * Initializing .bss by zero.
      */
-    mvhi    r1, hi(_fbss)
+    mvhi    r1,     hi(_fbss)
     ori     r1, r1, lo(_fbss)
     mvi     r2, 0
-    mvhi    r3, hi(_ebss)
+    mvhi    r3,     hi(_ebss)
     ori     r3, r3, lo(_ebss)
     sub     r3, r3, r1
     calli   memset      /* memset( _fbss, 0, _ebss - _fbss ); */
 
-#ifndef __MICO_NO_INTERRUPTS__
+#ifndef CONFIG_NO_INTERRUPTS
     /*
      * In the case of a unexpected reset event within a atomic section the
      * atomic nesting counter has to be pre initialized with 1 here!
@@ -202,7 +212,18 @@ _crt0:
     mvi     r2, 1       /* mg_criticalSectionNestingCount = 1; */
     sw      (r1+0), r2
 #endif
-
+#ifndef CONFIG_NO_RESET_COUNTER
+    /*
+     * Incrementing the reset counter: __reset_count
+     */
+    mvhi    r1,     hi(__reset_count)
+    ori     r1, r1, lo(__reset_count)
+    lw      r1, (r1+0)
+    addi    r2, r1, 1
+    mvhi    r1,     hi(__reset_count)
+    ori     r1, r1, lo(__reset_count)
+    sw      (r1+0), r2
+#endif
     /*
      * The C-function __init() is optional and is implemented in module stubs.c by default. 
      * It is called BEFORE the main function. 

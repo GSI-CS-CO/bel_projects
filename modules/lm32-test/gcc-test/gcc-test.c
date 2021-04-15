@@ -10,11 +10,14 @@ extern uint32_t _edata;
 extern uint32_t _fdata;
 
 volatile int global0 = 0;
-volatile int global1 = 1;
+volatile int global1 = -1;
+
+extern volatile uint32_t __reset_count;
 
 void main( void )
 {
    mprintf( ESC_CLR_SCR ESC_XY( "1", "1" ) "%d, %d, IRQ-nesting: %d\n", global0, global1, irqGetAtomicNestingCount() );
+   mprintf( "__reset_count: 0x%X, %d\n", __reset_count, __reset_count );
    global0++;
    global1++;
    mprintf( "%d, %d\n", global0, global1 );
