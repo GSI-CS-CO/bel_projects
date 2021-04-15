@@ -1,0 +1,20 @@
+                                  ECA-IO-Rule
+                                  -----------
+     Comment        : $                                                      
+     Device ('tr0') : $           IO (1..n) : $           active (0/1): $  
+     match til 'n'  : $       
+     '0'         FID: $       
+     '1'         GID: $       
+     '2'       EvtNo: $           
+     '3'       Flags: $      
+     '4'         SID: $       
+     '5'        BPID: $       
+     '6'    reserved: $       
+     
+      length [ns]   : $                        
+      offset [ns]   : $                      [ & Poti            ]
+
+         [ & Apply           ]               [ & Clear           ]
+
+         [ & Help            ]               [ & Return          ] 
+
