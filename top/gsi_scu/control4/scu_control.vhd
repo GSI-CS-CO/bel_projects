@@ -242,6 +242,7 @@ begin
       g_gpio_out         => 7,
       g_lvds_in          => 3,
       g_lvds_out         => 3,
+      g_lvds_tx_multi    => true,
       g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
@@ -344,8 +345,8 @@ begin
   lemos : for i in 0 to 2 generate
     s_lvds_p_i(i)      <= fastIO_p_i(i);
     s_lvds_n_i(i)      <= fastIO_n_i(i);
-    fastIO_p_o(i)        <= s_lvds_p_o(i);
-    fastIO_n_o(i)        <= s_lvds_n_o(i);
+    fastIO_p_o(i)      <= s_lvds_p_o(i);
+    fastIO_n_o(i)      <= s_lvds_n_o(i);
   end generate;
 
   lemo_out <= not s_gpio_o(6 downto 3);
