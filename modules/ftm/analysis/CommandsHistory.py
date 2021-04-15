@@ -26,10 +26,7 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
     createFolder(script_file[:-3])
     prefix = script_file[:-3] + '/graph-entry'
     print(f'Schedules written to {prefix}-n.dot, where n is the entry number.')
-    # Read comand history file
-    lines = []
-    with open(commands_history_file, 'r') as file_h:
-      lines = file_h.readlines()
+    print(f'First timestamp: {dtBegin}, last timestamp: {dtEnd}')
     pattern = re.compile('# log entry ([0-9]+) ------------')
     # Match something like '# Fri_Feb__5_13.36.22_2021'
     timestampPattern = re.compile('# ([FMSTW][a-z]{2}_[A-Z][a-z]{2}_+[0-9]{1,2}_[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}_[0-9]{4})')
@@ -41,9 +38,14 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
     # find the first and the last entry
     dtFirstEntry = dt(2100,1,1)
     dtLastEntry = dt(1970,1,1)
-    # collector for the grapd written to a dot file.
+    # collector for the graph written to a dot file.
     graph_lines = []
     countDotFiles = 0
+    # Read comand history file
+    lines = []
+    with open(commands_history_file, 'r') as file_h:
+      lines = file_h.readlines()
+    lines.append('# log entry 999999 ------------')
     with open(script_file, 'w') as script:
       # Write header of script file
       script.write(f'#! /bin/bash\n\n')
@@ -66,7 +68,9 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
             if len(entry_no) < 6:
               entry_no = '000000'[0:6-len(entry_no)] + entry_no
             dot_file_name = f'{prefix}-{entry_no}.dot'
-            timestampMatch = timestampPattern.match(lines[i+1])
+            timestampMatch = timestampPattern.match("")
+            if i+1 < len(lines):
+              timestampMatch = timestampPattern.match(lines[i+1])
             if timestampMatch:
               testdate = timestampMatch.group(1).replace('__', '_0')
               dtTestdate = dt.strptime(testdate, "%a_%b_%d_%H.%M.%S_%Y")
@@ -77,7 +81,7 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
               recordEntries = (dtBegin < dtTestdate) and (dtTestdate < dtEnd)
             collect_lines = False
             graph_lines = []
-            if verbose:
+            if verbose and i+2 < len(lines):
               print(f'Entry: {entry_no} {timestampMatch.group(1)} {lines[i+2][:-1]}')
         if recordEntries:
           if 'schedule clear' in lines[i]:
@@ -178,7 +182,7 @@ def convertTimestamp(dtString):
       # parse 2021-03-12 12:20:07
       return dt.strptime(dtString, "%Y-%m-%d %H:%M:%S")
     if len(dtString) > 13:
-      # parse 2021-03-12
+      # parse 2021-03-12 11:17
       return dt.strptime(dtString, "%Y-%m-%d %H:%M")
     if len(dtString) > 11:
       # parse 2021-03-12 11
@@ -198,9 +202,9 @@ def main(argv):
   parser.add_argument('--version', action='version', version='%(prog)s 1.0')
   parser.add_argument('--verbose', '-v', help='print each log entry')
   parser.add_argument('log_file_name', help='the name of the datamaster log file')
-  parser.add_argument('begin_date', help='the first date to log')
+  parser.add_argument('begin_date', help='the first date to log (year, month, day all zero-padded)')
   parser.add_argument('begin_time', help='the time part of the first date to log')
-  parser.add_argument('end_date', help='the last date to log')
+  parser.add_argument('end_date', help='the last date to log (year, month, day all zero-padded)')
   parser.add_argument('end_time', help='the time part of the last date to log')
   args = parser.parse_args(argv)
   extractScript(args.log_file_name, convertTimestamp(args.begin_date + " " + args.begin_time), convertTimestamp(args.end_date + " " + args.end_time), args.verbose)
