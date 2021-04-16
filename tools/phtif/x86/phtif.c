@@ -165,7 +165,7 @@ void parfileWriteDefaultRule(char *parname, int rule)
   char comment[MAXLEN];
   char device[MAXLEN];
 
-  sprintf(comment, "rule-%d", rule);
+  sprintf(comment, "rule-%c", 96 + rule);
   sprintf(device, "tr0");
   parfileWriteRule(parname, comment, device, 1, 0, 0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 1000, 0);
 } // parfileWriteDefaultRule
