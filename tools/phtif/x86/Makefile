@@ -11,18 +11,18 @@ INCLUDE     ?=../include
 TARGETS     := phtif
 
 EXTRA_FLAGS ?=
-#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
-#LIBS        ?= -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
-CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I$(INCLUDE) -I../../../modules/common-libs/include
-LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(ASLLIB) -Wl,-rpath,$(PREFIX)/lib -lm 
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I$(INCLUDE)  -I../../../modules/common-libs/include
+LIBS        ?= -L . -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -lm 
+#CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I$(INCLUDE) -I../../../modules/common-libs/include
+#LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(ASLLIB) -Wl,-rpath,$(PREFIX)/lib -lm 
 
 
 
 all: $(TARGETS)
 
 
-phtif: phtif.cpp
-	g++ --std=c++0x $(CFLAGS) -o phtif phtif.cpp ../../../modules/common-libs/x86/ivtpar.c $(LIBS)
+phtif: phtif.c
+	$(CC) $(CFLAGS) -o phtif phtif.c ../../../modules/common-libs/x86/ivtpar.c $(LIBS)
 
 clean:
 	rm -f *.o phtif.o phtif

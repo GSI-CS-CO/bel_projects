@@ -1,7 +1,7 @@
                                   ECA-IO-Rule
                                   -----------
      Comment        : $                                                      
-     Device ('tr0') : $           IO (1..n) : $           active (0/1): $  
+     Device ('tr0') : $           IO (1..n) : $         enable (0/1): $  
      match til 'n'  : $       
      '0'         FID: $       
      '1'         GID: $       
@@ -12,9 +12,9 @@
      '6'    reserved: $       
      
       length [ns]   : $                        
-      offset [ns]   : $                      [ & Poti            ]
+      offset [ns]   : $                      
 
-         [ & Apply           ]               [ & Clear           ]
 
-         [ & Help            ]               [ & Return          ] 
+
+         [ & Set to Default  ]                     [ & Return          ] 
 

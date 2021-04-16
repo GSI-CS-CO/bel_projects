@@ -10,11 +10,11 @@
                [ & m ]     [ & n ]     [ & o ]      [ & p ]
                [ & q ]     [ & r ]     [ & s ]      [ & t ]
                [ & u ]     [ & v ]     [ & w ]      [ & x ]
-               [ & y ]     [ & z ]    
+               [ & y ]     [ & z ]     
 
 
 
-     [ & Apply All Active Rules ]            [ & Clear All Rules        ]
+     [ & (Re)Create IO Conditions ]          [ & Set Rules to Defaults    ]
                        
-                                            [ & Exit                   ]
+     [ & List IO Conditions       ]          [ & Exit                     ]
 
