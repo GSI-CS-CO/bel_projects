@@ -167,6 +167,15 @@ bool isMilFsmInST_WAIT( void );
 void suspendGapReading( void );
 #endif /* defined( CONFIG_READ_MIL_TIME_GAP ) */
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
+ * @ingroup MIL_FSM
+ * @brief Pre-initializing of all MIL- task data.
+ * 
+ * @note This is necessary, especially after a LM32-reset because this
+ *       objects are not in the .bss memory section.
+ */
+void milInitTasks( void );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

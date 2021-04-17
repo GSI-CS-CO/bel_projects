@@ -75,6 +75,29 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
+/*! ----------------------------------------------------------------------------
+ */
+void milInitTasks( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      g_aMilTaskData[i].state             = ST_WAIT;
+      g_aMilTaskData[i].slave_nr          = INVALID_SLAVE_NR;
+      g_aMilTaskData[i].lastChannel       = 0;
+      g_aMilTaskData[i].task_timeout_cnt  = 0;
+      g_aMilTaskData[i].timestamp1        = 0LL;
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+      g_aMilTaskData[i].gapReadingTime    = 0LL;
+   #endif
+      for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
+      {
+         g_aMilTaskData[i].aFgChannels[j].irq_data      = 0;
+         g_aMilTaskData[i].aFgChannels[j].setvalue      = 0;
+         g_aMilTaskData[i].aFgChannels[j].daq_timestamp = 0LL;
+      }
+   }
+}
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Converts the states of the FSM in strings.

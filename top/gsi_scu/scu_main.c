@@ -447,6 +447,7 @@ void main( void )
            , __reset_count, pCpuMsiBox, pMyMsi );
 
 #ifdef CONFIG_MIL_FG
+   milInitTasks();
    dbgPrintMilTaskData();
 #endif
    initializeGlobalPointers();
