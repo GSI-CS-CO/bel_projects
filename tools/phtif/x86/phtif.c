@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Apr-2021
+ *  version : 19-Apr-2021
  *
  *  Poor Humans TIF; this is a quick and dirty hack for the 2021 beam time; configure pulses
  *  for certain Event IDs.
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2021
  *********************************************************************************************/
-#define PHTIF_X86_VERSION 0x000001
+#define PHTIF_X86_VERSION 0x000002
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -58,7 +58,7 @@
 #define  NRULES              26
 
 const char*  program;
-const char*  path;
+char path[MAXLEN];
 
 
 static void die(const char* where, uint32_t  status) {
@@ -70,14 +70,18 @@ static void die(const char* where, uint32_t  status) {
 
 static void help(void)
 {
-  fprintf(stderr, "Usage: %s [OPTION] <path prefix>  \n", program);
+  fprintf(stderr, "Usage: %s [OPTION]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
+  fprintf(stderr, "  -p <path>           specify alternative location for menu settings\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool as quick and dirty hack to configure IOs \n");
   fprintf(stderr, "\n");
+  fprintf(stderr, "IMPORTANT: This tool requires exclusive access to all IOs;\n");
+  fprintf(stderr, "don't use tool in parallel with other programs acting on IOs\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %6x. Licensed under the LGPL v3.\n", PHTIF_X86_VERSION);
+  fprintf(stderr, "Version %06x. Licensed under the LGPL v3.\n", PHTIF_X86_VERSION);
 } //help
 
 
@@ -273,7 +277,7 @@ void cmdCreateCondition(char *parname)
   // configure ECA for rising edge
   // flag for negativ offset
   if (offset < 0) sprintf(negFlag, "-g");
-  else            sprintf(negFlag, "");
+  else            sprintf(negFlag, " ");
 
   sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 1 -u %s", device, io, evtId, mask, abs(offset), negFlag);
   executeCommand(cmd, out);
@@ -285,7 +289,7 @@ void cmdCreateCondition(char *parname)
   // configure ECA for falling edge
   // flag for negativ offset
   if ((offset + length) < 0) sprintf(negFlag, "-g");
-  else                       sprintf(negFlag, "");
+  else                       sprintf(negFlag, " ");
 
   sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 0 -u %s", device, io, evtId, mask, abs(offset+length), negFlag);
   executeCommand(cmd, out);
@@ -401,18 +405,22 @@ int main(int argc, char** argv)
   char   txtname[MAXLEN];
   
   // local variables
-  program = argv[0];    
+  program = argv[0];                      
+  sprintf(path, "/tmp/phtifivt");
 
-  while ((opt = getopt(argc, argv, "h")) != -1) {
+  while ((opt = getopt(argc, argv, "p:h")) != -1) {
     switch (opt) {
-    case 'h':
-      help();
-      return 0;
+      case 'h':
+        help();
+        return 0;
+      case 'p':
+        sprintf(path, "%s", optarg);
+        break;
       case ':':
       case '?':
         error = 1;
-      break;
-    default:
+        break;
+      default:
       return 1;
     } // switch opt
   } // while opt
@@ -422,17 +430,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (optind >= argc) {
-    fprintf(stderr, "%s: expecting one non-optional argument: <path prefix>\n", program);
-    fprintf(stderr, "\n");
-    help();
-    return 1;
-  }
-
-  path = argv[optind];
   sprintf(txtname, "%s/%s", path, MENUTXT_MAIN);
   sprintf(parname, "%s/%s", path, MENUPAR_MAIN);  
-  
 
   // main  menu
   while (1) {
