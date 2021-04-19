@@ -2,6 +2,7 @@
                                   -----------
      Comment        : $                                                      
      Device ('tr0') : $           IO (1..n) : $         enable (0/1): $  
+
      match til 'n'  : $       
      '0'         FID: $       
      '1'         GID: $       
