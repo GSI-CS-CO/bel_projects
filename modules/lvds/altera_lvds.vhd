@@ -38,6 +38,7 @@ entity altera_lvds is
     g_inputs   : natural;
     g_outputs  : natural;
     g_tx_multi : boolean := false;
+    g_rx_multi : boolean := false;
     g_invert   : boolean := false);
   port(
     clk_ref_i    : in  std_logic;
@@ -120,6 +121,22 @@ begin
         tx_out(2)           => lvds_odat(2));
   end generate;
 
+  rx_scu4_special_handling : if (g_rx_multi = true and g_family = "Arria 10 GX SCU4") generate
+    lvds : altera_lvds_rx_multi_scu4_wrap
+      generic map(
+        g_family   => g_family)
+        port map(
+          rx_core              => clk_core,
+          rx_inclock           => clk_lvds,
+          rx_enable            => clk_enable,
+          rx_in(0)             => lvds_idat(0),
+          rx_in(1)             => lvds_idat(1),
+          rx_in(2)             => lvds_idat(2),
+          rx_out(7 downto 0)   => s_dat_o(0),
+          rx_out(15 downto 8)  => s_dat_o(1),
+          rx_out(23 downto 16) => s_dat_o(2));
+  end generate;
+
   tx : for i in 0 to g_outputs-1 generate
     led : gc_extend_pulse
       generic map(
@@ -177,15 +194,17 @@ begin
         datain_b  => lvds_n_i(i),
         dataout   => lvds_idat(i));
 
-    lvds : altera_lvds_rx
-      generic map(
-        g_family   => g_family)
-      port map(
-        rx_core    => clk_core,
-        rx_inclock => clk_lvds,
-        rx_enable  => clk_enable,
-        rx_in      => lvds_idat(i),
-        rx_out     => s_dat_o(i));
+    lvds_single_in : if g_rx_multi = false generate
+      lvds : altera_lvds_rx
+        generic map(
+          g_family   => g_family)
+        port map(
+          rx_core    => clk_core,
+          rx_inclock => clk_lvds,
+          rx_enable  => clk_enable,
+          rx_in      => lvds_idat(i),
+          rx_out     => s_dat_o(i));
+    end generate;
 
     dat_o(i) <= s_dat_o(i) xor c_toggle;
     s_led(i) <= s_dat_o(i)(0) xor c_toggle(0);

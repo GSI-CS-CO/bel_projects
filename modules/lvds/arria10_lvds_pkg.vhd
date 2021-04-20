@@ -84,6 +84,15 @@ package arria10_lvds_pkg is
       ext_coreclock : in  std_logic);
   end component arria10_scu4_lvds_tx_multi;
 
+  component arria10_scu4_lvds_rx_multi is
+    port (
+      rx_in         : in  std_logic_vector(2 downto 0);
+      rx_out        : out std_logic_vector(32 downto 0);
+      ext_fclk      : in  std_logic;
+      ext_loaden    : in  std_logic;
+      ext_coreclock : in  std_logic);
+  end component arria10_scu4_lvds_rx_multi;
+
   component arria10_scu4_lvds_pll is
     port (
       rst      : in  std_logic := '0';

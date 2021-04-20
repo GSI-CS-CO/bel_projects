@@ -39,6 +39,7 @@ package altera_lvds_pkg is
       g_inputs   : natural;
       g_outputs  : natural;
       g_tx_multi : boolean := false;
+      g_rx_multi : boolean := false;
       g_invert   : boolean := false);
     port(
       clk_ref_i    : in  std_logic;
@@ -101,6 +102,28 @@ package altera_lvds_pkg is
       tx_enable  : in  std_logic;
       tx_in      : in  std_logic_vector(7 downto 0);
       tx_out     : out std_logic);
+  end component;
+
+  component altera_lvds_rx_multi_scu4 is
+    generic(
+      g_family : string);
+    port(
+      rx_core    : in  std_logic;
+      rx_inclock : in  std_logic;
+      rx_enable  : in  std_logic;
+      rx_in      : in  std_logic_vector(2 downto 0);
+      rx_out     : out std_logic_vector(23 downto 0));
+  end component;
+
+  component altera_lvds_rx_multi_scu4_wrap is
+    generic(
+      g_family : string);
+    port(
+      rx_core    : in  std_logic;
+      rx_inclock : in  std_logic;
+      rx_enable  : in  std_logic;
+      rx_in      : in  std_logic_vector(2 downto 0);
+      rx_out     : out std_logic_vector(23 downto 0));
   end component;
 
   component altera_lvds_tx_multi_scu4 is
