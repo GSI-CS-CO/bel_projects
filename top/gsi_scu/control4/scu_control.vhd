@@ -243,6 +243,7 @@ begin
       g_lvds_in          => 3,
       g_lvds_out         => 3,
       g_lvds_tx_multi    => true,
+      g_lvds_rx_multi    => true,
       g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
