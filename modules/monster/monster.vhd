@@ -85,6 +85,7 @@ entity monster is
     g_lvds_in              : natural;
     g_lvds_out             : natural;
     g_lvds_tx_multi        : boolean;
+    g_lvds_rx_multi        : boolean;
     g_fixed                : natural;
     g_lvds_invert          : boolean;
     g_en_tlu               : boolean;
@@ -2739,6 +2740,7 @@ end generate;
       g_inputs   => f_sub1(g_lvds_inout+g_lvds_in) +1,
       g_outputs  => f_sub1(g_lvds_inout+g_lvds_out)+1,
       g_tx_multi => g_lvds_tx_multi,
+      g_rx_multi => g_lvds_rx_multi,
       g_invert   => g_lvds_invert)
     port map(
       clk_ref_i    => clk_ref,
