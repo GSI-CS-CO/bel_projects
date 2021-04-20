@@ -53,6 +53,16 @@ void printFgs( void );
 void print_regs( void );
 
 /*! ---------------------------------------------------------------------------
+ * @brief Resets the entire function generator list to zero.
+ *
+ * @note This is necessary after a CPU-reset because this data resides in the
+ *       shared memory area which is not a part of the .bss section.
+ * @param pFgList Start pointer of function generator list in the
+ *                shared memory area
+ */
+void fgListReset( FG_MACRO_T* pFgList );
+
+/*! ---------------------------------------------------------------------------
  */
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 void addAddacToFgList( const void* pScuBusBase,
@@ -64,12 +74,12 @@ void addAddacToFgList( const void* pScuBusBase,
  * @brief Finding of all kinds of function generators connected to
  *        this SCU.
  */
-void scan_all_fgs( volatile uint16_t *base_adr,
-                #ifdef CONFIG_MIL_FG
-                   volatile unsigned int* mil_base,
-                #endif
-                   FG_MACRO_T* fglist,
-                   uint64_t *ext_id );
+void fgListFindAll( volatile uint16_t *base_adr,
+                  #ifdef CONFIG_MIL_FG
+                    volatile unsigned int* mil_base,
+                  #endif
+                    FG_MACRO_T* fglist,
+                    uint64_t *ext_id );
 
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS

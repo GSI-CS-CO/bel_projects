@@ -74,8 +74,22 @@ void print_regs( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see scu_fg_list.h
  */
-STATIC void fgInitMacro( FG_MACRO_T* pMacro,
+void fgListReset( FG_MACRO_T* pFgList )
+{
+   for( unsigned int i = 0; i < MAX_FG_MACROS; i++ )
+   {
+      pFgList[i].socket     = 0;
+      pFgList[i].device     = 0;
+      pFgList[i].version    = 0;
+      pFgList[i].outputBits = 0;
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void fgListInitItem( FG_MACRO_T* pMacro,
                          const uint8_t outputBits,
                          const uint8_t version,
                          const uint8_t device, /* mil extension */
@@ -89,19 +103,19 @@ STATIC void fgInitMacro( FG_MACRO_T* pMacro,
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC int add_to_fglist( const uint8_t socked,
-                          const uint8_t dev,
-                          const uint16_t cid_sys,
-                          const uint16_t cid_group,
-                          const uint8_t fg_ver,
-                          FG_MACRO_T* fglist )
+STATIC int fgListAdd( const uint8_t socked,
+                      const uint8_t dev,
+                      const uint16_t cid_sys,
+                      const uint16_t cid_group,
+                      const uint8_t fg_ver,
+                      FG_MACRO_T* pFgList )
 {
    int count = 0;
 
    /*
     * Climbing to the first free list item.
     */
-   while( (count < MAX_FG_MACROS) && (fglist[count].outputBits != 0) )
+   while( (count < MAX_FG_MACROS) && (pFgList[count].outputBits != 0) )
       count++;
 
    if( !(cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) )
@@ -114,32 +128,32 @@ STATIC int add_to_fglist( const uint8_t socked,
       case GRP_DIOB:
       {  /* two FG */
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 16, fg_ver, 0, socked );
+            fgListInitItem( &pFgList[count++], 16, fg_ver, 0, socked );
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 16, fg_ver, 1, socked );
+            fgListInitItem( &pFgList[count++], 16, fg_ver, 1, socked );
          /* ACU/MFU */
          break;
       }
       case GRP_MFU: /* two FGs */
       {
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 20, fg_ver, 0, socked );
+            fgListInitItem( &pFgList[count++], 20, fg_ver, 0, socked );
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 20, fg_ver, 1, socked );
+            fgListInitItem( &pFgList[count++], 20, fg_ver, 1, socked );
          /* FIB */
          break;
       }
       case GRP_FIB_DDS: /* one FG */
       {
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 32, fg_ver, 0, socked );
+            fgListInitItem( &pFgList[count++], 32, fg_ver, 0, socked );
          /* IFA8 */
          break;
       }
       case GRP_IFA8: /* one FG */
       {
          if( count < MAX_FG_MACROS )
-            fgInitMacro( &fglist[count++], 16, fg_ver, dev, socked );
+            fgListInitItem( &pFgList[count++], 16, fg_ver, dev, socked );
          break;
       }
    }
@@ -153,7 +167,7 @@ STATIC int add_to_fglist( const uint8_t socked,
  *        connected via SCU-bus-to-MIL-adapter
  */
 ONE_TIME_CALL
-void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
+void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
 {
    const SCUBUS_SLAVE_FLAGS_T slotFlags =
                scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO2 )
@@ -203,7 +217,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
          /*
           * All three proves has been passed, so we can add it to the FG-list.
           */
-         add_to_fglist( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist );
+         fgListAdd( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
          //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
       }
    }
@@ -221,7 +235,7 @@ void addAddacToFgList( const void* pScuBusBase,
                        FG_MACRO_T* pFGlist )
 {
    FG_ASSERT( pFGlist != NULL );
-   add_to_fglist( slot,
+   fgListAdd( slot,
                   0,
                   SYS_CSCO,
                   GRP_ADDAC2,
@@ -267,12 +281,12 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
  * @brief Scans the whole SCU-bus for all kinda of function generators.
  */
 ONE_TIME_CALL
-void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
+void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
 {
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   scuDaqInitialize( &g_scuDaqAdmin, fglist );
+   scuDaqInitialize( &g_scuDaqAdmin, pFgList );
 #else
-   scanScuBusFgsDirect( (void*)scub_adr, fglist );
+   scanScuBusFgsDirect( (void*)scub_adr, pFgList );
 #endif
 #ifdef CONFIG_MIL_FG
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
@@ -284,7 +298,7 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
       return;
    }
  #endif
-   scanScuBusFgsViaMil( scub_adr, fglist );
+   scanScuBusFgsViaMil( scub_adr, pFgList );
 #endif
 }
 
@@ -294,7 +308,7 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
  */
 ONE_TIME_CALL
 void scanExtMilFgs( volatile unsigned int *mil_addr,
-                    FG_MACRO_T* fglist, uint64_t *ext_id )
+                    FG_MACRO_T* pFgList, uint64_t *ext_id )
 {
   /*
    * Check only for "ifks", if there is a macro found and a mil extension
@@ -306,10 +320,13 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
       return;
 
    /*
-    * reset all taskslots by reading value back
+    * reset all task-slots by reading value back
     */
    reset_mil( mil_addr );
 
+   /*
+    * Probing of all potential MIL-function-generatirs.
+    */
    for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
    {
       uint16_t ifa_id, ifa_vers, fg_vers;
@@ -335,7 +352,7 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
       /*
        * All three proves has been passed, so we can add it to the FG-list.
        */
-      add_to_fglist( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist );
+      fgListAdd( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
    }
 }
 
@@ -344,32 +361,25 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
 /*! ---------------------------------------------------------------------------
  * @see scu_function_generator.h
  */
-void scan_all_fgs( volatile uint16_t *scub_adr,
+void fgListFindAll( volatile uint16_t *scub_adr,
                #ifdef CONFIG_MIL_FG
                    volatile unsigned int *mil_addr,
                #endif
-                   FG_MACRO_T* fglist, uint64_t *ext_id )
+                   FG_MACRO_T* pFgList, uint64_t *ext_id )
 {
-   for( unsigned int i = 0; i < MAX_FG_MACROS; i++ )
-   {
-      fglist[i].socket     = 0;
-      fglist[i].device     = 0;
-      fglist[i].version    = 0;
-      fglist[i].outputBits = 0;
-   }
-
-   scanScuBusFgs( scub_adr, fglist );
+   fgListReset( pFgList );
+   scanScuBusFgs( scub_adr, pFgList );
 #ifdef CONFIG_MIL_FG
-   scanExtMilFgs( mil_addr, fglist, ext_id );
+   scanExtMilFgs( mil_addr, pFgList, ext_id );
 #endif
 }
 
 /*! ---------------------------------------------------------------------------
- * @see scu_function_generator.h
+ * @see scu_fg_list.h
  */
-void fgResetAndInit( FG_CHANNEL_REG_T* cr,
+void fgResetAndInit( FG_CHANNEL_REG_T* pChannelRegisters,
                      const unsigned int channel,
-                     FG_MACRO_T* fg_macros,
+                     FG_MACRO_T* pFgList,
                      const void* pScuBus
                    #ifdef CONFIG_MIL_FG
                    , const void* pMilBus
@@ -379,22 +389,22 @@ void fgResetAndInit( FG_CHANNEL_REG_T* cr,
    if( channel > MAX_FG_CHANNELS )
       return;
 
-   cr[channel].wr_ptr = 0;
-   cr[channel].rd_ptr = 0;
-   cr[channel].state = STATE_STOPPED;
-   cr[channel].ramp_count = 0;
+   pChannelRegisters[channel].wr_ptr = 0;
+   pChannelRegisters[channel].rd_ptr = 0;
+   pChannelRegisters[channel].state = STATE_STOPPED;
+   pChannelRegisters[channel].ramp_count = 0;
 
    /*
     *  Is a macro assigned to that channel by SAFTLIB?
     *  FunctionGeneratorImpl::acquireChannel
     */
-   const int32_t macro = cr[channel].macro_number;
+   const int32_t macro = pChannelRegisters[channel].macro_number;
    if( macro < 0 )
       return; /* No */
 
 
-   const unsigned int socket = fg_macros[macro].socket;
-   const unsigned int dev    = fg_macros[macro].device;
+   const unsigned int socket = pFgList[macro].socket;
+   const unsigned int dev    = pFgList[macro].device;
 
 #ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) )

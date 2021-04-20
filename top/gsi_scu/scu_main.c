@@ -335,7 +335,7 @@ void scanFgs( void )
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
-   scan_all_fgs( g_pScub_base,
+   fgListFindAll( g_pScub_base,
               #ifdef CONFIG_MIL_FG
                  g_pScu_mil_base,
               #endif
