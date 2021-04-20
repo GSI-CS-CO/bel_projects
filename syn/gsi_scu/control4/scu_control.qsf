@@ -61,6 +61,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_obuf/arria10_scu4_lvds_obuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_pll/arria10_scu4_lvds_pll.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_rx/arria10_scu4_lvds_rx.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_rx_multi/arria10_scu4_lvds_rx_multi.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/arria10_scu4_lvds_tx.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_tx_multi/arria10_scu4_lvds_tx_multi.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10.qsys
@@ -580,6 +581,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/postcode.vhd -li
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx_multi_scu4_wrap.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx_multi_scu4_wrap.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd -library work
