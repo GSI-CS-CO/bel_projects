@@ -165,8 +165,8 @@ private:
    const bool          m_ebAccessSelfCreated;
 
 public:
-   constexpr static uint c_maxSlots  = MAX_SCU_SLAVES;
-   constexpr static uint c_startSlot = SCUBUS_START_SLOT;
+   constexpr static uint c_maxSlots  = Bus::MAX_SCU_SLAVES;
+   constexpr static uint c_startSlot = Bus::SCUBUS_START_SLOT;
 
    /*!
     * @brief Constructor variant for object of type DaqEb::EtherboneConnection
