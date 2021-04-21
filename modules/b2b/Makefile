@@ -4,9 +4,10 @@
 # export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib/pkgconfig/
 # Example usage:
 #   'make clean'                                                 
-#   'make PREFIX= all'                                                (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= all' ;                          don't send kick trigger evts on MIL  (hack: leave PREFIX empty for SCU path)
+#   'make EXTRA_FLAGS='-D USEMIL' PREFIX= all' ;  send kick trigger evts on MIL        (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'       (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64

@@ -41,6 +41,8 @@
 #define B2B_ECADO_B2B_DIAGMATCH    0x80c   // command: optional diagnostic, indicates when phases match
 #define B2B_ECADO_B2B_PDEXT        0x81e   // internal command: perform phase diagnostic (extraction)
 #define B2B_ECADO_B2B_PDINJ        0x81f   // internal command: perform phase diagnostic (injection)
+#define B2B_ECADO_B2B_TRIGGERSIS    0x70   // command: trigger SIS kicker (intended for WR->MIL gateway)
+#define B2B_ECADO_B2B_TRIGGERESR    0xc0   // command: trigger ESR kicker (intended for WR->MIL gateway)
 
 
 // commands from the outside

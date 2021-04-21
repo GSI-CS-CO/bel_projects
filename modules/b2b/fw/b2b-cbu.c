@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Mar-2021
+ *  version :21-Apr-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000237                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000238                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -386,6 +386,30 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 
   return COMMON_STATUS_OK;
 } // calcExtTime
+
+
+// send event for MIL busses; this is intended for the WR->MIL Gateways for the timing groups ESR_RING and SIS18_RING
+void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
+{
+#ifdef USEMIL
+  uint64_t sendEvtId;                               // evtID to send
+  uint32_t evtNo;                                   // evtNo to send
+
+  switch (gid) {
+    case SIS18_RING :
+      evtNo = B2B_ECADO_B2B_TRIGGERSIS;
+      break;
+    case ESR_RING :
+      evtNo = B2B_ECADO_B2B_TRIGGERESR;
+      break;
+    default :
+      return;
+  } // switch gid
+      
+  sendEvtId = fwlib_buildEvtidV1(gid, evtNo, 0, sid, 0, 0); 
+  fwlib_ebmWriteTM(deadline, sendEvtId, 0, 0);
+#endif
+} // sendMilTrigger
 
 
 uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
@@ -824,6 +848,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
+    sendMilTrigger(tTrigExt+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -839,6 +864,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
+    sendMilTrigger(tTrigInj+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ
