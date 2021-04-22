@@ -763,14 +763,11 @@ private:
 class DaqAdministration: public DaqInterface
 {
    friend class DaqChannel;
-   static constexpr std::size_t c_defaultMaxEbCycleDataLen = 10;
-   static constexpr uint        c_defaultBlockReadEbCycleGapTimeUs = 1000;
 
    uint              m_maxChannels;
    DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
    uint              m_receiveCount;
-   std::size_t       m_maxEbCycleDataLen;
-   uint              m_blockReadEbCycleGapTimeUs;
+
 protected:
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    USEC_T            m_elapsedTime;

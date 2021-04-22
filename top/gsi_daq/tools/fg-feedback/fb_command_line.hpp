@@ -89,6 +89,8 @@ class CommandLine: public PARSER
    uint                       m_plotInterval;
    uint                       m_throttleThreshold;
    uint                       m_throttleTimeout;
+   uint                       m_maxEbCycleDataLen;
+   uint                       m_blockReadEbCycleGapTimeUs;
 
    const bool                 m_isRunningOnScu;
 
@@ -103,6 +105,7 @@ class CommandLine: public PARSER
 
    static bool readInteger( uint&, const std::string& );
    static bool readFloat( float&, const std::string& );
+   static void readTwoIntegerParameters( uint& rParam1, uint& rParam2, const std::string& rArgStr );
 
 public:
    CommandLine( int argc, char** ppArgv );

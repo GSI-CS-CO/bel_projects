@@ -164,6 +164,13 @@ private:
    daq::EbRamAccess*   m_poEbAccess;
    const bool          m_ebAccessSelfCreated;
 
+protected:
+   static constexpr std::size_t c_defaultMaxEbCycleDataLen = 10;
+   static constexpr uint        c_defaultBlockReadEbCycleGapTimeUs = 1000;
+
+   std::size_t       m_maxEbCycleDataLen;
+   uint              m_blockReadEbCycleGapTimeUs;
+
 public:
    constexpr static uint c_maxSlots  = Bus::MAX_SCU_SLAVES;
    constexpr static uint c_startSlot = Bus::SCUBUS_START_SLOT;
@@ -220,6 +227,27 @@ public:
    {
       return static_cast<const std::string>("Noch nix");
    }
+
+   void setMaxEbCycleDataLen( const std::size_t len )
+   {
+      m_maxEbCycleDataLen = len;
+   }
+
+   std::size_t getMaxEbCycleDataLen( void ) const
+   {
+      return m_maxEbCycleDataLen;
+   }
+
+   void setBlockReadEbCycleTimeUs( const uint us )
+   {
+      m_blockReadEbCycleGapTimeUs = us;
+   }
+
+   uint getBlockReadEbCycleTimeUs( void ) const
+   {
+      return m_blockReadEbCycleGapTimeUs;
+   }
+
 
    /*!
     * @brief Returns the number of items which are currently in the

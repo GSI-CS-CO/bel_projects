@@ -47,6 +47,13 @@ using namespace Scu;
   #define DEFAULT_THROTTLE_TIMEOUT   10
 #endif
 
+#ifndef DEFAULT_MAX_EB_BLOCK_LEN
+  #define DEFAULT_MAX_EB_BLOCK_LEN    10
+#endif
+#ifndef DEFAULT_EB_CYCLE_GAP_TIME
+   #define DEFAULT_EB_CYCLE_GAP_TIME  100
+#endif
+
 #define FSM_INIT_FSM( state, attr... )      m_state = state
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
@@ -593,6 +600,7 @@ vector<OPTION> CommandLine::c_optList =
          uint ecaTag =     daq::DEFAULT_ECA_SYNC_TAG;
          if( poParser->isOptArgPersent() )
          {
+           #if 0
              string single;
              istringstream input( poParser->getOptArg() );
              for( uint i = 0; getline( input, single, ',' ); i++ )
@@ -614,6 +622,9 @@ vector<OPTION> CommandLine::c_optList =
                 if( readInteger( ecaTag, single ) )
                    ::exit( EXIT_FAILURE );
              }
+          #else
+             readTwoIntegerParameters( timeOffset, ecaTag, poParser->getOptArg() );
+          #endif
          }
          if( static_cast<CommandLine*>(poParser)->m_verbose )
          {
@@ -648,6 +659,35 @@ vector<OPTION> CommandLine::c_optList =
                     ESC_BOLD "-y=,0xDACAFFEE" ESC_NORMAL "  Will send the default offset time of "
                     TO_STRING( __DAQ_DEFAULT_SYNC_TIMEOFFSET__ ) " milliseconds "
                     "and the ECA-tag of 0xDACAFFEE."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         CommandLine* pCmdLine = static_cast<CommandLine*>(poParser);
+         readTwoIntegerParameters( pCmdLine->m_maxEbCycleDataLen,
+                                   pCmdLine->m_blockReadEbCycleGapTimeUs,
+                                   pCmdLine->getOptArg() );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'b',
+      .m_longOpt  = "block",
+      .m_helpText = "PARAM=\"n,t\"\n"
+                    "Adjusting of the maximum etherbone data block length of"
+                    " a ADDAC/ACU-DAQ,\n"
+                    "whereby the length of zero has a special meaning, in this"
+                    " case the maximum data block length will be equal the"
+                    " ADDAC/DAQ block length.\n"
+                    "When the first parameter \"n\" is not equal to zero,"
+                    " then the etherbone block will participated in \"n\""
+                    " smaller etherbone cycles.\nIn this case the second parameter"
+                    " \"t\" is the gap-time in mycroseconds between two data blocks."
+                    " (Time for the SaftLib.)\n"
+                    "The default values are: \"" TO_STRING( DEFAULT_MAX_EB_BLOCK_LEN )
+                    "," TO_STRING( DEFAULT_EB_CYCLE_GAP_TIME ) "\"\n"
+                    "In the case of MIL-DAQs this option is without any effect.\n\n"
+                    "Example 1:\n"
    }
 };
 
@@ -687,6 +727,33 @@ bool CommandLine::readFloat( float& rValue, const string& roStr )
    return false;
 }
 
+/*! ---------------------------------------------------------------------------
+*/
+void CommandLine::readTwoIntegerParameters( uint& rParam1, uint& rParam2, const string& rArgStr )
+{
+   string single;
+   istringstream input( rArgStr );
+   for( uint i = 0; getline( input, single, ',' ); i++ )
+   {
+      if( i >= 2 )
+      {
+         ERROR_MESSAGE( "To much arguments in option!" );
+         ::exit( EXIT_FAILURE );
+      }
+      if( single.empty() )
+         continue;
+
+      if( i == 0 )
+      {
+         if( readInteger( rParam1, single ) )
+            ::exit( EXIT_FAILURE );
+         continue;
+      }
+      if( readInteger( rParam2, single ) )
+        ::exit( EXIT_FAILURE );
+   }
+}
+
 /*-----------------------------------------------------------------------------
  */
 CommandLine::CommandLine( int argc, char** ppArgv )
@@ -708,6 +775,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )
    ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT )
+   ,m_maxEbCycleDataLen( DEFAULT_MAX_EB_BLOCK_LEN )
+   ,m_blockReadEbCycleGapTimeUs( DEFAULT_EB_CYCLE_GAP_TIME )
    ,m_isRunningOnScu( isRunningOnScu() )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )

@@ -201,8 +201,6 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
-   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
-   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
@@ -219,8 +217,6 @@ DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess,
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
-   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
-   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
@@ -446,11 +442,11 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    int ret = EB_OK;
    uint offset = 0;
 
-   assert( m_maxEbCycleDataLen > 0 );
+   const std::size_t maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
 
    while( len > 0 )
    {
-      std::size_t partLen = std::min( len, m_maxEbCycleDataLen );
+      const std::size_t partLen = std::min( len, maxLen );
       ret = getEbAccess()->readDaqDataBlock( &pData[offset], partLen
                                         #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                            , ::ramReadPoll
