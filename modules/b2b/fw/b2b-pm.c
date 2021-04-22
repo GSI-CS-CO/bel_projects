@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000237                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000238                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
