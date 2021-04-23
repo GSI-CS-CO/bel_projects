@@ -34,10 +34,11 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000238                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000239                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -432,6 +433,14 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
 
+  uint64_t ftTExt;                                  // fine tune extraction period
+  uint64_t ftTInj;                                  // fine tune injection period
+  uint64_t ftMatchExt;                              // fine tune match for extraction
+  uint64_t ftMatchInj;                              // fine tune match for injection
+  int64_t ftDt1;                                    // fine tune differences ...
+  int64_t ftDt2;
+  int64_t ftDt3;                                   
+
   uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
   uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
   
@@ -504,7 +513,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
   // check, that tMatch is far enough in the future; if not, add one -> chk --> sufficient beating periods
-  while ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;   // chk, if replace by while
+  while ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat; 
 
   // if the injection ring is larger than the extraction ring
   // we need to align to the injection H=1 group DDS first
@@ -523,6 +532,38 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   nDiff   = (tMatch - tH1ExtAs) / TH1Ext;
   if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
   tMatch  = tH1ExtAs + nDiff * TH1Ext;
+
+  // fine tuning; align to 'common' multiple of TH1
+  // algorithm: compare match for previous, actual and next iteration
+  // calculate common multiples of h=1 for each ring
+  ftTExt = TH1Ext * nHInj;
+  ftTInj = TH1Inj * nHExt;
+
+  // ftMatch extraction
+  ftMatchExt = tMatch;
+
+  // ftMatch injection
+  half   = TH1Inj >> 1;
+  nDiff  = (ftMatchExt - tH1InjAs) / TH1Inj;
+  if (((ftMatchExt - tH1InjAs) % TH1Inj) > half) nDiff++;
+  ftMatchInj  = tH1InjAs + nDiff * TH1Inj;
+  
+  // calc differences
+  ftDt1 = (int64_t)(ftMatchExt - ftTExt) - (int64_t)(ftMatchInj - ftTInj);
+  ftDt2 = (int64_t)(ftMatchExt)          - (int64_t)(ftMatchInj);
+  ftDt3 = (int64_t)(ftMatchExt + ftTExt) - (int64_t)(ftMatchInj + ftTInj);
+
+  // decide which is best
+  if (llabs(ftDt1) < llabs(ftDt2)) tMatch = ftMatchExt - ftTExt;
+  if (llabs(ftDt3) < llabs(ftDt2)) tMatch = ftMatchExt + ftTExt;
+
+  /* 
+  ftDt1 = ftDt1 / 1000000;
+  ftDt2 = ftDt2 / 1000000;
+  ftDt3 = ftDt3 / 1000000;
+
+  pp_printf("dt1 %ld, dt2 %ld, dt3 %ld\n", (int32_t)ftDt1, (int32_t)ftDt2, (int32_t)ftDt3); */
+
   
   // convert back to TAI [ns]
   tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
