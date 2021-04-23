@@ -633,7 +633,7 @@ private:
     * @brief Object for MIL DAQ administration.
     */
    MilDaqAdministration  m_oMilDaqAdmin;
-#endif
+#endif // ifdef CONFIG_MIL_FG
 
    /*!
     * @brief Object triggering software interrupts to LM32-firmware
@@ -741,6 +741,56 @@ public:
    void setThrottleTimeout( const uint throttleTimeout = DEFAULT_THROTTLE_TIMEOUT )
    {
       m_throttleTimeout = throttleTimeout * daq::NANOSECS_PER_MILISEC;
+   }
+
+   /*!
+    * @brief Sets the maximum number of DDR3-RAM payload data base items per etherbone cycle.
+    *
+    * That means the etherbone-cycle will divided in "masLen/len" smaller etherbone cycles.
+    * @note The value of zero has a special meaning, in this case no divisions
+    *       in smaller cycles will made.
+    * @note In the case of MIL-devices this function has no effect.
+    * @see getMaxEbCycleDataLen
+    * @param len Number of smaller cycles, or no divisions if zero.
+    */
+   void setMaxEbCycleDataLen( const std::size_t len = 0 )
+   {
+      m_oAddacDaqAdmin.setMaxEbCycleDataLen( len );
+   }
+
+   /*!
+    * @brief Returns the maximum number of DDR3-RAM payload data base items per etherbone cycle.
+    * Counterpart to setMaxEbCycleDataLen
+    * @see setMaxEbCycleDataLen
+    * @return Number of divided smaller etherbone cycles or zero.
+    */
+   std::size_t getMaxEbCycleDataLen( void ) const
+   {
+      return m_oAddacDaqAdmin.getMaxEbCycleDataLen();
+   }
+
+   /*!
+    * @brief Sets the waiting time between two etherbone partial blocks in
+    *        microseconds.
+    * @note In the case of MIL-devices this function has no effect.
+    * @see setMaxEbCycleDataLen
+    * @see getBlockReadEbCycleTimeUs
+    * @param us Waiting time in microseconds.
+    */
+   void setBlockReadEbCycleTimeUs( const uint us )
+   {
+      m_oAddacDaqAdmin.setBlockReadEbCycleTimeUs( us );
+   }
+
+   /*!
+    * @brief Returns the waiting time in microseconds between two partial blocks in
+    *        microseconds.
+    * @see setBlockReadEbCycleTimeUs
+    * @return Block waiting time in microseconds.
+    */
+   uint getBlockReadEbCycleTimeUs( void ) const
+   {
+      return m_oAddacDaqAdmin.getBlockReadEbCycleTimeUs();
    }
 
    /*!

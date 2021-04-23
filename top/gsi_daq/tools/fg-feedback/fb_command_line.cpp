@@ -600,31 +600,7 @@ vector<OPTION> CommandLine::c_optList =
          uint ecaTag =     daq::DEFAULT_ECA_SYNC_TAG;
          if( poParser->isOptArgPersent() )
          {
-           #if 0
-             string single;
-             istringstream input( poParser->getOptArg() );
-             for( uint i = 0; getline( input, single, ',' ); i++ )
-             {
-                if( i >= 2 )
-                {
-                   ERROR_MESSAGE( "To much arguments in option!" );
-                   ::exit( EXIT_FAILURE );
-                }
-                if( single.empty() )
-                   continue;
-
-                if( i == 0 )
-                {
-                   if( readInteger( timeOffset, single ) )
-                      ::exit( EXIT_FAILURE );
-                   continue;
-                }
-                if( readInteger( ecaTag, single ) )
-                   ::exit( EXIT_FAILURE );
-             }
-          #else
-             readTwoIntegerParameters( timeOffset, ecaTag, poParser->getOptArg() );
-          #endif
+            readTwoIntegerParameters( timeOffset, ecaTag, poParser->getOptArg() );
          }
          if( static_cast<CommandLine*>(poParser)->m_verbose )
          {
@@ -680,14 +656,20 @@ vector<OPTION> CommandLine::c_optList =
                     " case the maximum data block length will be equal the"
                     " ADDAC/DAQ block length.\n"
                     "When the first parameter \"n\" is not equal to zero,"
-                    " then the etherbone block will participated in \"n\""
-                    " smaller etherbone cycles.\nIn this case the second parameter"
+                    " then the etherbone block will divided in partial cycles with \"n\""
+                    " DDR3-payload items per cycle.\nIn this case the second parameter"
                     " \"t\" is the gap-time in mycroseconds between two data blocks."
                     " (Time for the SaftLib.)\n"
                     "The default values are: \"" TO_STRING( DEFAULT_MAX_EB_BLOCK_LEN )
                     "," TO_STRING( DEFAULT_EB_CYCLE_GAP_TIME ) "\"\n"
                     "In the case of MIL-DAQs this option is without any effect.\n\n"
                     "Example 1:\n"
+                    ESC_BOLD "-b5,100" ESC_NORMAL "  Divides a etherbone block to receive"
+                    " in blocks with 5 DDR3-payload items per cycle and a"
+                    " waiting time of 100 microseconds between two etherbone cycles.\n\n"
+                    "Example 2:\n"
+                    ESC_BOLD "-b0" ESC_NORMAL "  Etherbone cycle will not divided in smaller ones.\n"
+
    }
 };
 
@@ -845,6 +827,8 @@ AllDaqAdministration* CommandLine::operator()( void )
    {
       m_poAllDaq->setThrottleThreshold( m_throttleThreshold );
       m_poAllDaq->setThrottleTimeout( m_throttleTimeout );
+      m_poAllDaq->setMaxEbCycleDataLen( m_maxEbCycleDataLen );
+      m_poAllDaq->setBlockReadEbCycleTimeUs( m_blockReadEbCycleGapTimeUs );
       if( m_autoBuilding )
          autoBuild();
       if( m_doClearBuffer )
