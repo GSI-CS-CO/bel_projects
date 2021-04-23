@@ -45,6 +45,8 @@ struct mpsProt {
   uint8_t  flag;     // flag (FBAS signal state)
   uint8_t  grpId;    // group ID
   uint16_t evtId;    // event ID
+  uint8_t  ttl;      // time-to-live (RX)
+  uint8_t  pending;  // pending is set if flag is changed
 };
 
 // MPS protocol as parameter field in timing message
@@ -91,13 +93,23 @@ typedef enum {
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
+#define TSK_TTL_MPS_FLAGS       0x40000000 // monitor lifetime of MPS flags
 
 // flags
 #define MPS_FLAG_OK        1   // OK
 #define MPS_FLAG_NOK       2   // NOK
 #define MPS_FLAG_TEST      3   // TEST
 
+// LEMO signals (signed int)
+enum {
+  MPS_SIGNAL_LOW = 0,   // logical '0'
+  MPS_SIGNAL_HIGH,      // logical '1'
+  MPS_SIGNAL_INVALID    // invalid
+};
+
 // time interval
+#define WR_TIM_1_MS       1000000ULL         // 1 ms
+#define WR_TIM_1000_MS    1000 * WR_TIM_1_MS // 1 second
 #define TIM_2000_MS     2000   // 2000 ms
 #define TIM_10_SEC    100000000   // 1 second
 
@@ -133,7 +145,8 @@ typedef enum {
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
 #define FBAS_TLU_EVT       0x43      // ECA condition tag for TLU event (handled by TX)
-#define FBAS_WR_EVT        0x24      // ECA condition tag for FBAS WR event (handled by RX)
+#define FBAS_WR_EVT        0x24      // ECA condition tag for MPS event via WR (handled by RX)
+#define FBAS_WR_FLG        0x25      // ECA condition tag for MPS flag via WR (handled by RX)
 
 // IO-CTRL register map (ip_cores/saftlib/drivers/io_control_regs.h)
 #define IO_CFG_CHANNEL_GPIO          0

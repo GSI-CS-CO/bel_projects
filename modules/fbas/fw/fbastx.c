@@ -94,7 +94,7 @@ mpsTimParam_t bufMpsFlag[N_MPS_CHANNELS] = {0};   // buffer for MPS flags
 timedItr_t rdItr = {0};                 // iterator used to read MPS flags
 
 // application-specific function prototypes
-static uint32_t pollEcaBlocking(uint32_t usTimeout, mpsTimParam_t** head);
+static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head);
 static void wrConsolePeriodic(uint32_t seconds);
 static void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag);
 static uint32_t setIoOe(uint32_t channel, uint32_t idx);
@@ -105,6 +105,11 @@ static void sendMpsEvent(mpsTimParam_t* buf, uint8_t n);
 static void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
 static void updateItr(timedItr_t* itr, uint64_t now);
 static mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt);
+static mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw);
+static uint32_t driveEffLogOut(mpsTimParam_t* buf);
+static mpsTimParam_t* expireMpsFlag(timedItr_t* itr);
+static void preparePerfMeasurement(uint64_t now, uint64_t deadline);
+static void measurePerformance(uint32_t tag, uint32_t flag, uint64_t now, uint64_t deadline);
 
 // typical init for lm32
 void init()
@@ -120,6 +125,7 @@ void initSharedMem()
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
+  uint64_t *pSharedTs;
   int      i;
   const uint32_t c_Max_Rams = 10;
   sdb_location found_sdb[c_Max_Rams];
@@ -155,9 +161,11 @@ void initSharedMem()
 
   // print application-specific register set (in shared mem)
   pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
-  DBPRINT3("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
-  DBPRINT3("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
 
+  pSharedTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%08x\n", nodeType, pSharedTs);
 } // initSharedMem
 
 
@@ -220,9 +228,9 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         if (u32val < FBAS_NODE_UNDEF) {
           nodeType = u32val;
           *(pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)) = nodeType;
-          DBPRINT3("fbas%d: node type %x\n", nodeType, nodeType);
+          DBPRINT2("fbas%d: node type %x\n", nodeType, nodeType);
         } else {
-          DBPRINT3("fbas%d: invalid node type %x\n", nodeType, u32val);
+          DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
         break;
       case FBAS_CMD_SET_LVDS_OE:
@@ -231,27 +239,29 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_GET_LVDS_OE:
         u32val = getIoOe(IO_CFG_CHANNEL_LVDS);
         if (1) {
-          DBPRINT3("fbas%d: GPIO OE %x\n", nodeType, u32val);
+          DBPRINT2("fbas%d: GPIO OE %x\n", nodeType, u32val);
         }
         break;
       case FBAS_CMD_TOGGLE_LVDS:
         u8val = cntCmd & 0x01;
         u32val = 0;
         driveIo(IO_CFG_CHANNEL_LVDS, u32val, u8val);
-        DBPRINT3("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
+        DBPRINT2("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
         break;
       case FBAS_CMD_EN_MPS_FWD:
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
-        DBPRINT3("fbas%d: enabled MPS %x\n", nodeType, mpsTask);
+        mpsTask |= TSK_TTL_MPS_FLAGS; // enable lifetime monitoring of the MPS flags
+        DBPRINT2("fbas%d: enabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_DIS_MPS_FWD:
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
-        DBPRINT3("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
+        mpsTask &= ~TSK_TTL_MPS_FLAGS; // disable lifetime monitoring of the MPS flags
+        DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       default:
-        DBPRINT3("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
+        DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
         break;
     } // switch
   } // if command
@@ -272,21 +282,31 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
   status = actStatus;
 
-  // MPS event detection and transmission
-  action = pollEcaBlocking(nUSeconds, &buf);   // poll ECA action
-  if (action == FBAS_GEN_EVT) {
+  // action driven by ECA event
+  action = handleEcaEvent(nUSeconds, pMpsTask, pRdItr, &buf);   // handle ECA event
 
-    if (buf) {
-      if (*pMpsTask & TSK_TX_MPS_EVENTS)
-        sendMpsEvent(buf, N_EXTRA_MPS_EVENTS);
-    }
+  switch (nodeType) {
+
+    case FBAS_NODE_TX:
+      // transmit MPS flags (flags are sent in specified period, but events immediately)
+      if (*pMpsTask & TSK_TX_MPS_FLAGS)
+        sendMpsFlag(pRdItr);
+      else
+        wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console
+      break;
+
+    case FBAS_NODE_RX:
+      if (*pMpsTask & TSK_TTL_MPS_FLAGS) {
+        // monitor lifetime of MPS flags periodically and handle expired MPS flag
+        buf = expireMpsFlag(pRdItr);
+        if (buf)
+          driveEffLogOut(buf);
+      }
+      break;
+
+    default:
+      break;
   }
-
-  // transmit MPS flags (flags are sent in specified period, but events immediatelly)
-  if (*pMpsTask & TSK_TX_MPS_FLAGS)
-    sendMpsFlag(pRdItr);
-  else
-    wrConsolePeriodic(nSeconds);        // periodic debug (level 3) output at console
 
   return status;
 } // doActionOperation
@@ -324,7 +344,7 @@ void initMpsData()
   mpsEventData.mac = *pSharedMacHi;
   mpsEventData.mac <<= 32;
   mpsEventData.mac |= *pSharedMacLo;
-  DBPRINT3("fbas%d: MPS protocol (evtId = %llu, mac = %llu)\n", nodeType,
+  DBPRINT2("fbas%d: MPS protocol (evtId = %llu, mac = %llu)\n", nodeType,
       mpsEventData.evtId, mpsEventData.mac);
 
   mpsTask = 0;
@@ -336,9 +356,10 @@ void initMpsData()
 
   // initialize MPS flags
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
-    bufMpsFlag[i].prot.flag  = i;
-    bufMpsFlag[i].prot.grpId = i+1;
-    bufMpsFlag[i].prot.evtId = i+2;
+    bufMpsFlag[i].prot.flag  = MPS_FLAG_TEST;
+    bufMpsFlag[i].prot.grpId = 1;
+    bufMpsFlag[i].prot.evtId = i;
+    bufMpsFlag[i].prot.ttl = -1;
   }
 
   // initialize the read iterator for MPS flags
@@ -377,6 +398,9 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
   uint32_t reg = 0;
   uint32_t outVal = 0;
 
+  if (value == MPS_SIGNAL_INVALID)
+    return;
+
   if (channel == IO_CFG_CHANNEL_GPIO) { // GPIO channel
     reg = IO_GPIO_SET_OUTBEGIN;
     if (value)
@@ -405,7 +429,7 @@ void initAppData()
   initMpsData();          // init the MPS protocol data
   cntMpsSignal = 0;
 
-  DBPRINT3("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
+  DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
   setIoOe(IO_CFG_CHANNEL_LVDS, 0);  // enable output for the IO1 port
 }
 
@@ -415,7 +439,7 @@ void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
   itr->idx = 0;
   itr->total = total;
   itr->last = now;
-  itr->period = 1000000000ULL; // 1 second
+  itr->period = WR_TIM_1000_MS; // 1 second
   if (freq && itr->total) {
     itr->period /=(freq * itr->total); // for 30Hz it's 33312 us (30.0192 Hz)
 
@@ -456,10 +480,10 @@ void sendMpsFlag(timedItr_t* itr)
 /**
  ** \brief send MPS event
  **
- ** Upon flag change to NOK, there shall be 2 extra events within 50 us [MPS_FS_530].
+ ** Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
  **
  ** \param buf pointer to MPS event buffer
- ** \param n number of extra events
+ ** \param n   number of extra events
  **
  **/
 void sendMpsEvent(mpsTimParam_t* buf, uint8_t n)
@@ -501,6 +525,104 @@ mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt)
   buf->prot.flag = flag;
   return buf;
 }
+
+/**
+ ** \brief store recieved MPS flag
+ **
+ ** \param buf pointer to MPS flags buffer
+ ** \param raw raw protocol data (bits 63-56 = flag, 57-48 = grpId, 47-32 = evtId)
+ **
+ ** \ret ptr pointer to the stored MPS flag
+ **/
+mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw)
+{
+  // evaluate MPS channel and its flag
+  uint8_t flag = raw >> 56;
+  uint8_t grpId = raw >> 48;
+  uint16_t evtId = raw >> 32;
+
+  if (evtId >= N_MPS_CHANNELS)
+    return 0;
+
+  // store MPS flag
+  buf += evtId;
+  buf->prot.pending = buf->prot.flag ^ flag;
+  buf->prot.flag = flag;
+  buf->prot.ttl = 10; // die after 10 iterations
+  return buf;
+}
+
+/**
+ ** \brief drive the effective logic output [MPS_FS_640]
+ **
+ ** Drive internal signal based on MPS flag:
+ ** - high if MPS flag is OK
+ ** - low if MPS flag is NOK or TEST
+ **
+ ** Generate error (internal signal), if lifetime of MPS flag is expired.
+ **
+ ** \param buf pointer to MPS flag
+ **
+ ** \ret status
+ **/
+uint32_t driveEffLogOut(mpsTimParam_t* buf)
+{
+  uint8_t ioVal = MPS_SIGNAL_INVALID;
+
+  // handle MPS flag if it's changed or expired
+  if (buf->prot.pending) {
+    buf->prot.pending = 0;
+    DBPRINT3("pend: %x %x %x\n", buf->prot.grpId, buf->prot.evtId, buf->prot.flag);
+    if (buf->prot.flag == MPS_FLAG_OK)
+      ioVal = MPS_SIGNAL_HIGH;
+    else
+      ioVal = MPS_SIGNAL_LOW;
+  } else if (!buf->prot.ttl) {
+    ioVal = MPS_SIGNAL_LOW;
+    DBPRINT3("ttl: %x %x %x\n", buf->prot.grpId, buf->prot.evtId, buf->prot.flag);
+  }
+
+  if (ioVal != MPS_SIGNAL_INVALID)
+    driveIo(IO_CFG_CHANNEL_LVDS, 0, ioVal); // drive the IO1 port
+
+  return COMMON_STATUS_OK;
+}
+
+/**
+ ** \brief alter lifetime of MPS flags [MPS_FS_600]
+ **
+ ** \param itr iterator used to access MPS flags in pre-defined period
+ **
+ ** \ret ptr pointer to expired MPS flag
+ **/
+mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
+{
+  uint64_t now = getSysTime();
+  uint64_t deadline = itr->last + itr->period;
+
+  if (!itr->last)
+    deadline = now;       // initial check
+
+  // check lifetime of next MPS flag
+  if (deadline <= now) {
+
+    // decrement TTL counter
+    if (bufMpsFlag[itr->idx].prot.ttl) {
+      --bufMpsFlag[itr->idx].prot.ttl;
+
+      if (!bufMpsFlag[itr->idx].prot.ttl) {
+        bufMpsFlag[itr->idx].prot.flag = MPS_FLAG_NOK;
+        return &bufMpsFlag[itr->idx];  // expired MPS flag
+      }
+    }
+
+    // update iterator with deadline
+    updateItr(itr, deadline);
+  }
+
+  return 0;
+}
+
 // send MPS protocol
 void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
 {
@@ -513,17 +635,21 @@ void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
 }
 
 /**
- ** \brief poll ECA for configured actions
+ ** \brief handle pending ECA event
  **
- ** On FBAS_GEN_EVT action, corresponding MPS flag is updated and \head returns
+ ** On FBAS_GEN_EVT event the buffer for MPS flag is updated and \head returns
  ** pointer to it. Otherwise, \head is returned with null value.
  **
+ ** On FBAS_WR_EVT or FBAS_WR_FLG event the effective logic output is driven.
+ **
  ** \param usTimeout maximum interval in microseconds to poll ECA
- ** \param head pointer to pointer of the MPS flags buffer
+ ** \param mpsTask   pointer to MPS-relevant task flag
+ ** \param itr       pointer to the read iterator for MPS flags
+ ** \param head      pointer to pointer of the MPS flags buffer
  **
  ** \return ECA action tag
  **/
-uint32_t pollEcaBlocking(uint32_t usTimeout, mpsTimParam_t** head)
+uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -544,42 +670,31 @@ uint32_t pollEcaBlocking(uint32_t usTimeout, mpsTimParam_t** head)
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // update MPS flag
           *head = updateMpsFlag(*head, ecaEvtId);
-          // performance measurements
-          *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 0) = (ecaDeadline >> 32);
-          *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 1) = ecaDeadline;
-          *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 0) = (now >> 32);
-          *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 1) = now;
+
+          if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
+            // send MPS event
+            sendMpsEvent(*head, N_EXTRA_MPS_EVENTS);
+            // prepare performance measurements
+            preparePerfMeasurement(now, ecaDeadline);
+          }
         }
         break;
       case FBAS_TLU_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the TLU events
-
-          // print timestamps
-          poll = now - ecaDeadline;
-          DBPRINT3("fbas%d: TLU evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
-              nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
-
-          ecaDeadline = *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
-          ecaDeadline <<= 32;
-          ecaDeadline |= *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2) + 1);
-          now = *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
-          now <<= 32;
-          now |= *(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2) + 1);
-
-          // print stored timestamps of generator event
-          poll = now - ecaDeadline;
-          DBPRINT3("fbas%d: generator evt timestamps (detect %llu, send %llu, poll %lli)\n",
-              nodeType, ecaDeadline, now, poll);
+          // measure network delay (broadcast MPS events from TX to RX nodes) and
+          // forwarding duration (from MPS event generation at TX to IO event detection at RX)
+          measurePerformance(nextAction, flagIsLate, now, ecaDeadline);
         }
         break;
       case FBAS_WR_EVT:
+      case FBAS_WR_FLG:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
-          uint8_t u8val = (ecaParam >> 56) & 0x01; // cntMpsSignal value
-          driveIo(IO_CFG_CHANNEL_LVDS, 0, u8val); // drive the IO1 port
 
-          poll = now - ecaDeadline;
-          DBPRINT3("fbas%d: ECA action (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
-              nodeType, nextAction, flagIsLate, ecaDeadline, now, poll);
+          // store and handle received MPS flag
+          *head = storeMpsFlag(*head, ecaParam);
+          if (*head) {
+            driveEffLogOut(*head);
+          }
         }
         break;
       default:
@@ -593,11 +708,63 @@ uint32_t pollEcaBlocking(uint32_t usTimeout, mpsTimParam_t** head)
   return nextAction;
 }
 
+/**
+ ** \brief prepare network performance measurement
+ **
+ ** Store actual system time of MPS event transmission and
+ ** timestamp of MPS event detection for later performance measurement.
+ **
+ ** Timestamp of MPS event detection is pointed by pSharedApp + FBAS_SHARED_GET_TS1.
+ ** Timestamp of MPS event transmission is pointed by pSharedApp + FBAS_SHARED_GET_TS2.
+ **
+ ** \param now       actual system time
+ ** \param deadline  timestamp of ECA event
+ **
+ **/
+void preparePerfMeasurement(uint64_t now, uint64_t deadline) {
+  uint64_t *pSharedTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+  *pSharedTs = deadline;
+  *(pSharedTs + (FBAS_SHARED_GET_TS2 >> 2)) = now;
+}
+
+/**
+ ** \brief measure network performance
+ **
+ ** Network delay to transmit MPS events (broadcast frame from TX to RX) and
+ ** time duration to forward MPS signals (from MPS event generation at TX
+ ** to IO event detection at RX) are measured and output as debug msg.
+ **
+ ** Timestamp of MPS event detection is pointed by pSharedApp + FBAS_SHARED_GET_TS1.
+ ** Timestamp of MPS event transmission is pointed by pSharedApp + FBAS_SHARED_GET_TS2.
+ **
+ ** \param tag       ECA condition tag
+ ** \param flag      ECA late event flag
+ ** \param now       actual system time
+ ** \param deadline  timestamp of ECA event
+ **
+ **/
+void measurePerformance(uint32_t tag, uint32_t flag, uint64_t now, uint64_t deadline) {
+  uint64_t *pSharedTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+  uint64_t tmp64 = *(pSharedTs + (FBAS_SHARED_GET_TS2 >> 2));
+
+  int64_t delayNw = deadline - tmp64;     // network delay
+  int64_t durationFwd = now - *pSharedTs; // forward duration
+  DBPRINT2("fbas%d: dly=%lli, fwd=%lli\n", nodeType, delayNw, durationFwd);
+
+  int64_t poll = now - deadline;   // duration to detect TLU (IO) event (RX->TX)
+  DBPRINT3("fbas%d: TLU evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
+      nodeType, tag, flag, deadline, now, poll);
+
+  poll = tmp64 - *pSharedTs;       // duration to send MPS event (TX->RX)
+  DBPRINT3("fbas%d: generator evt timestamps (detect %llu, send %llu, poll %lli)\n",
+      nodeType, *pSharedTs, tmp64, poll);
+}
+
 // write a debug text to the WR console in given period (seconds)
 void wrConsolePeriodic(uint32_t seconds)
 {
-  uint64_t period = seconds * 1000000000ULL;  // period in system time
-  uint64_t soon = tsLast + period;             // next time point for the action
+  uint64_t period = seconds * WR_TIM_1000_MS; // period in system time
+  uint64_t soon = tsLast + period;            // next time point for the action
   uint64_t now = getSysTime();                // get the current time
 
   if (now >= soon) {                          // if the given period is over, then proceed
