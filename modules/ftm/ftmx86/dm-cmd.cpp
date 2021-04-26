@@ -185,7 +185,7 @@ void showRawStatus(const char *netaddress, CarpeDM& cdm) {
   }
 
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
-    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {      
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
       std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
       printf("CPU:%02u,THR:%02u,RUN:%1u\nMSG:%09llu\nPAT:%s,NOD:%s\n", cpuIdx, thrIdx, (cdm.getThrRun(cpuIdx) >> thrIdx) & 1,
@@ -528,14 +528,14 @@ int main(int argc, char* argv[]) {
     // For commands with a target name: check that the target name is valid.
     // Vector of all commands which need a target name.
     std::vector<std::string> commands_with_targetName = {
-      dnt::sCmdNoop, dnt::sCmdFlow, dnt::sSwitch, "relwait", "abswait", dnt::sCmdFlush, 
+      dnt::sCmdNoop, dnt::sCmdFlow, dnt::sSwitch, "relwait", "abswait", dnt::sCmdFlush,
       "staticflush", "lock", "asyncclear", "unlock", "queue", "rawqueue"
     };
     for (std::string s : commands_with_targetName) {
       // if the command needs a target name, check
       if (cmp == s) {
         if ((targetName == NULL) || (targetName == std::string(""))) {
-          std::cerr << program << ": Target node is NULL, target missing." << std::endl; 
+          std::cerr << program << ": Target node is NULL, target missing." << std::endl;
           return -1;
         }
         if(!(cdm.isInHashDict(targetName))) {
@@ -622,7 +622,7 @@ int main(int argc, char* argv[]) {
         uint8_t tmp = strtol(para, NULL, 0) & 0x3;
         wr = (bool)(tmp & BLOCK_CMDQ_DNW_SMSK);
         rd = (bool)(tmp & BLOCK_CMDQ_DNR_SMSK);
-      }  
+      }
 
       try {
           cdm.createLockCtrlCommand(ew, dnt::sCmdLock, targetName, rd, wr);
@@ -646,7 +646,7 @@ int main(int argc, char* argv[]) {
         uint8_t tmp = strtol(para, NULL, 0) & 0x3;
         wr = (bool)(tmp & BLOCK_CMDQ_DNW_SMSK);
         rd = (bool)(tmp & BLOCK_CMDQ_DNR_SMSK);
-      }  
+      }
       try {
           cdm.createLockCtrlCommand(ew, dnt::sCmdUnlock, targetName, rd, wr);
         } catch (std::runtime_error const& err) {
@@ -666,7 +666,7 @@ int main(int argc, char* argv[]) {
 
       return 0;
     }
-    
+
     else if (cmp == "queue") {
         std::string report;
         std::cout << cdm.inspectQueues(targetName, report) << std::endl;
@@ -694,10 +694,14 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "chkrem")  {
-      std::string report;
-      bool isSafe = cdm.isSafeToRemove(targetName, report);
-      cdm.writeTextFile(dirname + "/" + std::string(debugfile), report);
-      std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
+      try {
+        std::string report;
+        bool isSafe = cdm.isSafeToRemove(targetName, report);
+        cdm.writeTextFile(dirname + "/" + std::string(debugfile), report);
+        std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
+      } catch (std::runtime_error const& err) {
+        std::cerr << program << ": " << err.what() << std::endl; return -21;
+      }
       return 0;
     }
     else if (cmp == dnt::sCmdStart)  {
@@ -732,15 +736,15 @@ int main(int argc, char* argv[]) {
     else if (cmp == "stoppattern")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) {
         cdm.stopPattern(targetName);
-      } else { 
-        std::cout << "Missing valid Pattern name" << std::endl; 
+      } else {
+        std::cout << "Missing valid Pattern name" << std::endl;
       }
      }
     else if (cmp == "abortpattern")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) {
         cdm.abortPattern(targetName);
-      } else { 
-        std::cout << "Missing valid Pattern name" << std::endl; 
+      } else {
+        std::cout << "Missing valid Pattern name" << std::endl;
       }
       return 0;
     }
@@ -788,12 +792,12 @@ int main(int argc, char* argv[]) {
     else if (cmp == "starttime")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) { cdm.setThrStartTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
       else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Starttime " << cdm.getThrStartTime(cpuIdx, thrIdx) << std::endl; return 0;}
-      
+
     }
     else if (cmp == "preptime")  {
       if(( targetName != NULL) && ( targetName != std::string(""))) { cdm.setThrPrepTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
       else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Preptime " << cdm.getThrPrepTime(cpuIdx, thrIdx) << std::endl; return 0;}
- 
+
     }
     else if (cmp == "deadline")  {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
@@ -836,7 +840,7 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     }
-    
+
 
 
 
