@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version :21-Apr-2021
+ *  version : 27-Apr-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000239                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000240                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -413,6 +413,54 @@ void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
 } // sendMilTrigger
 
 
+// fine tune for individual h=1 cycles
+void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t *dt)
+{
+  uint64_t half;                                    // helper variable
+  uint64_t nDiff;                                   // # we need project Tdiff into the future
+  
+  uint64_t ftTExt;                                  // fine tune extraction period
+  uint64_t ftTInj;                                  // fine tune injection period
+  uint64_t ftMatchExt;                              // fine tune match for extraction
+  uint64_t ftMatchInj;                              // fine tune match for injection
+  int64_t  ftDt1;                                   // fine tune differences ...
+  int64_t  ftDt2;
+  int64_t  ftDt3;
+
+  // fine tuning; align to 'common' multiple of TH1
+  // algorithm: compare match for previous, actual and next iteration
+  // calculate common multiples of h=1 for each ring
+  ftTExt = TH1Ext * nHInj;
+  ftTInj = TH1Inj * nHExt;
+
+  // ftMatch extraction, use input value as reference
+  half        = TH1Ext >> 1;
+  nDiff       = (*tMatch - tH1ExtAs) / TH1Ext;
+  if (((*tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
+  ftMatchExt  = tH1ExtAs + nDiff * TH1Ext;
+
+  // ftMatch injection; use extraction match as reference
+  half   = TH1Inj >> 1;
+  nDiff  = (ftMatchExt - tH1InjAs) / TH1Inj;
+  if (((ftMatchExt - tH1InjAs) % TH1Inj) > half) nDiff++;
+  ftMatchInj  = tH1InjAs + nDiff * TH1Inj;
+
+  //pp_printf("huhu tMatchExt %lu, tMatchInj %lu\n", (uint32_t)(ftMatchExt / 1000000000), (uint32_t)(ftMatchInj / 1000000000));
+  
+  // calc differences, alignment to extraction
+  ftDt1 = (int64_t)(ftMatchExt - ftTExt) - (int64_t)(ftMatchInj - ftTInj);
+  ftDt2 = (int64_t)(ftMatchExt)          - (int64_t)(ftMatchInj);
+  ftDt3 = (int64_t)(ftMatchExt + ftTExt) - (int64_t)(ftMatchInj + ftTInj);
+
+  // decide which is best
+  *tMatch = ftMatchExt;
+  *dt     = ftDt2;
+  if (llabs(ftDt1) < llabs(ftDt2)) {*tMatch = ftMatchExt - ftTExt; *dt = ftDt1;}
+  if (llabs(ftDt3) < llabs(ftDt2)) {*tMatch = ftMatchExt + ftTExt; *dt = ftDt3;}
+  //pp_printf("fine tune dt1 %ld, dt2 %ld, dt3 %ld\n", (int32_t)(ftDt1/1000000), (int32_t)(ftDt2/1000000), (int32_t)(ftDt3/1000000));
+} // rfFineTune
+
+
 uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' RF signal               [as] // sic! atoseconds
@@ -425,21 +473,16 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tH1InjAs;                                // 0 phase of H=1 signal injection          [as]
   uint64_t Tdiff;                                   // difference of true RF periods            [as]
   uint64_t nDiff;                                   // # we need project Tdiff into the future  
-  uint64_t tMatch;                                  // 0 phase of best match                    [as]
+  uint64_t tMatch, tMatch0, tMatchTmp;              // 0 phase of best match                    [as]
   uint64_t tD0;                                     // tFast - tSlow                            [as]
   uint64_t tMatchNs;                                // 'tMatch' in units of [ns]                [ns]
   uint64_t epoch;                                   // temporary epoch                          [ns] (!)
-  uint64_t tNow;                                    // current time                             [ns] (!
+  uint64_t tNow;                                    // current time                             [ns] (!)
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
 
-  uint64_t ftTExt;                                  // fine tune extraction period
-  uint64_t ftTInj;                                  // fine tune injection period
-  uint64_t ftMatchExt;                              // fine tune match for extraction
-  uint64_t ftMatchInj;                              // fine tune match for injection
-  int64_t ftDt1;                                    // fine tune differences ...
-  int64_t ftDt2;
-  int64_t ftDt3;                                   
+  int      i;
+  int64_t  dt, dtTmp;                               // achieved precision, temporary variable
 
   uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
   uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
@@ -528,34 +571,37 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   // kickers need to trigger on extraction RF: final alignment to extraction ring
   // !!! this only works for the simplified case, if the ratio of circumference 
   // of both rings is an integer number
-  half    = TH1Ext >> 1;
+  /*half    = TH1Ext >> 1;
   nDiff   = (tMatch - tH1ExtAs) / TH1Ext;
   if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
-  tMatch  = tH1ExtAs + nDiff * TH1Ext;
+  tMatch  = tH1ExtAs + nDiff * TH1Ext;*/
 
-  // fine tuning; align to 'common' multiple of TH1
-  // algorithm: compare match for previous, actual and next iteration
-  // calculate common multiples of h=1 for each ring
-  ftTExt = TH1Ext * nHInj;
-  ftTInj = TH1Inj * nHExt;
+  // probe all bunches to see which one is best
+  dt      = 999999999999;
+  tMatch0 = tMatch;
+  for (i=0; i < nHExt * 3; i++) {
+    // advance to next bucket (unless in first iteration)
+    tMatchTmp = tMatch0 + (uint64_t)i * *TBeat;
+    //pp_printf("tMatchdiff1 %ld\n", (int32_t)((tMatchTmp - tMatch0)/1000000));
+    // fine tune and check for improved value
+    //pp_printf("huhu bunch %d, tMatchTmp %lu\n", i, (uint32_t)(tMatchTmp / 1000000000000));
+    rfFineTune(tH1ExtAs, tH1InjAs, &tMatchTmp, &dtTmp);
+    //pp_printf("tMatchdiff2 %ld\n", (int32_t)((tMatchTmp - tMatch0)/1000000));
+    //pp_printf("huhu bunch %d, dt %ld, dtTmp %ld, tMatch %lu\n", i, (int32_t)(dt/1000000), (int32_t)(dtTmp/1000000), (uint32_t)(tMatchTmp / 1000000000000));
+        
+    if (llabs(dtTmp) < llabs(dt)) {
+      tMatch = tMatchTmp;
+      dt     = dtTmp;
+      //pp_printf("better with bunch %d\n", i);
+    } // if dtTmp
 
-  // ftMatch extraction
-  ftMatchExt = tMatch;
-
-  // ftMatch injection
-  half   = TH1Inj >> 1;
-  nDiff  = (ftMatchExt - tH1InjAs) / TH1Inj;
-  if (((ftMatchExt - tH1InjAs) % TH1Inj) > half) nDiff++;
-  ftMatchInj  = tH1InjAs + nDiff * TH1Inj;
-  
-  // calc differences
-  ftDt1 = (int64_t)(ftMatchExt - ftTExt) - (int64_t)(ftMatchInj - ftTInj);
-  ftDt2 = (int64_t)(ftMatchExt)          - (int64_t)(ftMatchInj);
-  ftDt3 = (int64_t)(ftMatchExt + ftTExt) - (int64_t)(ftMatchInj + ftTInj);
-
-  // decide which is best
-  if (llabs(ftDt1) < llabs(ftDt2)) tMatch = ftMatchExt - ftTExt;
-  if (llabs(ftDt3) < llabs(ftDt2)) tMatch = ftMatchExt + ftTExt;
+    /*
+    if ((*TBeat < LIMIT4BUNCHPROBE)            &&    // only do this for very short beating times
+        (dtBunch[0] > (TSlow - TFast) / nHExt) &&    // only do this if the precision is not yet good enough
+        nHExt > 1 ) {                                // only do this for multiple bunches in the extraction ring
+        } // if TBeat*/
+  } // for i
+      
 
   /* 
   ftDt1 = ftDt1 / 1000000;
