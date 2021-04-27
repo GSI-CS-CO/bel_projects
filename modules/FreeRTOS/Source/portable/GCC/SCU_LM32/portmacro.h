@@ -12,7 +12,7 @@
  *
  * @see port.c
  * @see portasm.S
- * @see crt0FreeRTOS.S
+ * @see crt0ScuLm32.S
  */
 #ifndef _PORTMACRO_H
 #define _PORTMACRO_H
@@ -22,7 +22,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "lm32Interrupts.h"
+#include <lm32Interrupts.h>
 
 /* Define to trap errors during development. */
 #ifdef CONFIG_RTOS_PEDANTIC_CHECK

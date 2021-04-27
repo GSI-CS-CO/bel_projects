@@ -77,17 +77,26 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
    for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
    {
       if( g_shared.fg_regs[i].state != STATE_ARMED )
+      { /*
+         * This function generator is not armed, skip and
+         * go to the next function generator channel.
+         */
          continue;
+      }
 
-      const uint8_t socket = getSocket( i );
+      /*
+       * Armed function generator found...
+       */
+      const unsigned int socket = getSocket( i );
       if( isMilExtentionFg( socket ) )
       {
          isMilDevArmed = true;
          continue;
       }
 
-      if( isMilScuBusFg( socket ) && (getFgSlotNumber( socket ) != 0) )
-         active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
+      const unsigned int slot = getFgSlotNumber( socket );
+      if( (slot != 0) && isMilScuBusFg( socket ) )
+         active_sios |= scuBusGetSlaveFlag( slot );
    }
 
    if( isMilDevArmed )
@@ -99,9 +108,13 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
     *       hardware access!
     */
    if( active_sios != 0 )
-   {  // select active sio slaves
+   {  /*
+       * Select active SIO slaves.
+       */
       g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
-      // send broadcast
+      /*
+       * Send broadcast.
+       */
       g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = MIL_BROADCAST;
    }
 }
