@@ -31,15 +31,17 @@
 /*!
  * @ingroup INTERRUPT
  * @brief Nesting counter for critical sections.
- * @note The nesting counter becomes pre-initialized with 1 so it becomes
+ * @note The nesting counter is implemented in the startup module
+ *       crt0ScuLm32.S and becomes pre-initialized with 1 so it becomes
  *       possible to use critical sections before the global interrupt
  *       is enabled. \n
  *       The function irqEnable() for non FreeRTOS applications or
  *       the FreeRTOS function vTaskStartScheduler() respectively
  *       the port-function xPortStartScheduler() will reset this counter
  *       to zero.
+ * @see crt0ScuLm32.S
  */
-volatile uint32_t mg_criticalSectionNestingCount = 1;
+extern volatile uint32_t __atomic_section_nesting_count;
 
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
 /*!
@@ -84,13 +86,13 @@ STATIC ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
  */
 inline unsigned int irqGetAtomicNestingCount( void )
 {
-   return mg_criticalSectionNestingCount;
+   return __atomic_section_nesting_count;
 }
 
 inline void irqPresetAtomicNestingCount( void )
 {
    irqSetEnableRegister( 0 );
-   mg_criticalSectionNestingCount = 1;
+   __atomic_section_nesting_count = 1;
 }
 
 #ifndef CONFIG_RTOS
@@ -99,7 +101,7 @@ inline void irqPresetAtomicNestingCount( void )
  */
 inline void irqEnable( void )
 {
-   mg_criticalSectionNestingCount = 0;
+   __atomic_section_nesting_count = 0;
    _irqEnable();
 }
 #endif
@@ -158,13 +160,13 @@ void _irq_entry( void )
     * Allows using of atomic sections within interrupt context.
     */
 #ifdef CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
-   mg_criticalSectionNestingCount++;
+   __atomic_section_nesting_count++;
  #ifdef CONFIG_INTERRUPT_PEDANTIC_CHECK
-   const volatile uint32_t tempNestingCount = mg_criticalSectionNestingCount;
+   const volatile uint32_t tempNestingCount = __atomic_section_nesting_count;
  #endif
 #else
-   IRQ_ASSERT( mg_criticalSectionNestingCount == 0 );
-   mg_criticalSectionNestingCount = 1;
+   IRQ_ASSERT( __atomic_section_nesting_count == 0 );
+   __atomic_section_nesting_count = 1;
 #endif
 
    /*!
@@ -221,11 +223,11 @@ void _irq_entry( void )
     * Allows using of atomic sections within interrupt context.
     */
 #ifdef CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
-   IRQ_ASSERT( mg_criticalSectionNestingCount == tempNestingCount );
-   mg_criticalSectionNestingCount--;
+   IRQ_ASSERT( __atomic_section_nesting_count == tempNestingCount );
+   __atomic_section_nesting_count--;
 #else
-   IRQ_ASSERT( mg_criticalSectionNestingCount == 1 );
-   mg_criticalSectionNestingCount = 0;
+   IRQ_ASSERT( __atomic_section_nesting_count == 1 );
+   __atomic_section_nesting_count = 0;
 #endif
 }
 
@@ -238,7 +240,7 @@ void _irq_entry( void )
 inline void criticalSectionEnter( void )
 {
    irqDisable();
-   mg_criticalSectionNestingCount++;
+   __atomic_section_nesting_count++;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -249,9 +251,9 @@ inline void criticalSectionEnter( void )
  */
 inline void criticalSectionExit( void )
 {
-   IRQ_ASSERT( mg_criticalSectionNestingCount != 0 );
-   mg_criticalSectionNestingCount--;
-   if( mg_criticalSectionNestingCount == 0 )
+   IRQ_ASSERT( __atomic_section_nesting_count != 0 );
+   __atomic_section_nesting_count--;
+   if( __atomic_section_nesting_count == 0 )
       _irqEnable();
 }
 

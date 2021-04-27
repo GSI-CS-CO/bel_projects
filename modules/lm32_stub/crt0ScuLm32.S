@@ -32,17 +32,24 @@
 #ifndef CONFIG_NO_INTERRUPTS
    /*
     * Nesting counter for atomic sections.
-    * This global variable is declared in module lm32Interrupts.c
+    * This global variable will used in module lm32Interrupts.c and
+    * in the case of using FreeRTOS in module portasm.S.
     */
-   .extern mg_criticalSectionNestingCount
+   .global   __atomic_section_nesting_count
+   .section  .data
+   .align    4
+   .type     __atomic_section_nesting_count, @object
+   .size     __atomic_section_nesting_count, 4
+__atomic_section_nesting_count:
+   .long     1
 #endif
 
 #ifndef CONFIG_NO_RESET_COUNTER
    .global  __reset_count
    .section .data
-   .align 4
-   .type __reset_count, @object
-   .size __reset_count, 4
+   .align    4
+   .type     __reset_count, @object
+   .size     __reset_count, 4
 __reset_count:
    .long -1    /* Pre-initializing __reset_count with -1 by assembler */
 #endif
@@ -61,8 +68,8 @@ _reset_handler:
  */
     rcsr    r0, CFG 
     xor     r0, r0, r0
-    wcsr    IE, r0
-    wcsr    IM, r0
+    wcsr    IE, r0             /* Disable the global interrupts */
+    wcsr    IM, r0             /* Crear interrupt mask register */ 
     mvhi    r1,     hi(_reset_handler)
     ori     r1, r1, lo(_reset_handler)
     wcsr    EBA, r1
@@ -207,9 +214,9 @@ _crt0:
      * This makes it possible using atomic sections before the 
      * interrupts are initialized and enabled.
      */
-    mvhi    r1,     hi(mg_criticalSectionNestingCount)
-    ori     r1, r1, lo(mg_criticalSectionNestingCount)
-    mvi     r2, 1       /* mg_criticalSectionNestingCount = 1; */
+    mvhi    r1,     hi(__atomic_section_nesting_count)
+    ori     r1, r1, lo(__atomic_section_nesting_count)
+    mvi     r2, 1       /* __atomic_section_nesting_count = 1; */
     sw      (r1+0), r2
 #endif
 #ifndef CONFIG_NO_RESET_COUNTER

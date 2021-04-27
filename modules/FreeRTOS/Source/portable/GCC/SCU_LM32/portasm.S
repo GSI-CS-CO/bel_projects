@@ -30,9 +30,13 @@ extern TCB_t* volatile pxCurrentTCB;
 #endif
 
 #ifdef __DOXYGEN__
-extern volatile uint32_t mg_criticalSectionNestingCount
+/*!
+ * The atomic section nesting counter is implemented in the startup module
+ * crt0ScuLm32.S
+ */
+extern volatile uint32_t __atomic_section_nesting_count
 #else
-.extern mg_criticalSectionNestingCount
+.extern __atomic_section_nesting_count
 #endif
 
 .extern _irq_entry
@@ -214,14 +218,14 @@ void vPortInterruptHandler( void );
 #ifdef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @brief Start first task, resets the global variable
- *        mg_criticalSectionNestingCount and enable global interrupt
+ *        __atomic_section_nesting_count and enable global interrupt
  */
 #ifdef __DOXYGEN__
 void vStartFirstTask( void ) {}
 #else
 vStartFirstTask:
-   LOAD_ADDR r1, mg_criticalSectionNestingCount
-   sw        (r1+0), r0       /* mg_criticalSectionNestingCount = 0; */
+   LOAD_ADDR r1, __atomic_section_nesting_count
+   sw        (r1+0), r0       /* __atomic_section_nesting_count = 0; */
    mvi       r1, EIE
    wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
    RESTORE_CONTEXT
@@ -247,7 +251,7 @@ vPortYield:
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
 #if 1
-   LOAD_VAR  r1, mg_criticalSectionNestingCount
+   LOAD_VAR  r1, __atomic_section_nesting_count
    bne       r1, r0, L_NOT_ENABLE
 #endif
    mvi       r1, EIE
