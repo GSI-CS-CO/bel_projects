@@ -31,10 +31,8 @@
 #include <scu_bus_defines.h>
 #include <scu_function_generator.h>
 #include <daqt_messages.hpp>
-
 #include <daq_ring_admin.h>
 #include <daq_fg_allocator.h>
-
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -69,6 +67,12 @@ class DaqBaseDevice
    const uint m_socket;
 
 protected:
+   /*!
+    * @brief Includes the information of the device type:
+    *        ADDAC, ACU, DIOB or MIL.
+    * @see DAQ_DEVICE_TYP_T
+    * @see daq_fg_allocator.h
+    */
    daq::DAQ_DEVICE_TYP_T m_deviceTyp;
 
 public:

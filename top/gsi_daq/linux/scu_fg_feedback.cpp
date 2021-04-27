@@ -27,6 +27,7 @@
 #include <daq_exception.hpp>
 #include <scu_fg_feedback.hpp>
 #include <daqt_messages.hpp>
+#include <string.h>
 
 using namespace Scu;
 
@@ -56,7 +57,7 @@ bool FgFeedbackChannel::Common::Throttle::operator()( const uint64_t timestamp,
    const FgFeedbackAdministration* pAdmin = m_pParent->m_pParent->m_pParent->m_pParent;
    assert( pAdmin != nullptr );
 
-   if( ( static_cast<uint>(::abs( value - m_lastForwardedValue )) < pAdmin->m_throttleThreshold ) &&
+   if( ( static_cast<uint>(::abs( static_cast<int>(value - m_lastForwardedValue) )) < pAdmin->m_throttleThreshold ) &&
        (( timestamp < m_timeThreshold ) || ( pAdmin->m_throttleTimeout == 0 ))
      )
       return false;
