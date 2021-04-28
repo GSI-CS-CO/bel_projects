@@ -22,8 +22,11 @@ extern "C" {
  */
 typedef struct
 {
-   uint32_t                   tag;    //!<@brief ECA-tag
+   const uint32_t             tag;    //!<@brief ECA-tag
    volatile ECA_QUEUE_ITEM_T* pQueue;
+#ifdef _CONFIG_ECA_BY_MSI
+   ECA_CONTROL_T*             pControl;
+#endif
 } ECA_OBJ_T;
 
 extern ECA_OBJ_T g_eca;
@@ -38,7 +41,11 @@ void initEcaQueue( void );
  * @brief Event Condition Action (ECA) handler
  * @see schedule
  */
+#ifdef _CONFIG_ECA_BY_MSI
+void ecaHandler( void );
+#else
 void ecaHandler( register TASK_T* FG_UNUSED );
+#endif
 
 #ifdef __cplusplus
 }

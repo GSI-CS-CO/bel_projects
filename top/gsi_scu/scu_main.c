@@ -47,7 +47,6 @@ TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 
 //  #define _CONFIG_NO_INTERRUPT
 
-
 extern ONE_WIRE_T g_oneWireBase;
 
 /*====================== Begin of shared memory area ========================*/
@@ -160,7 +159,7 @@ STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
  */
 ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
 {
-   const unsigned int slot = pMessage->msg + SCUBUS_START_SLOT;
+   const unsigned int slot = GET_LOWER_HALF( pMessage->msg ) + SCUBUS_START_SLOT;
    uint16_t pendingIrqs;
 
    while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((void*)g_pScub_base, slot )) != 0)
@@ -215,7 +214,17 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
       switch( GET_LOWER_HALF( m.adr )  )
       {
          case ADDR_SCUBUS:
-         { /*
+         { 
+         #if defined( CONFIG_MIL_FG ) && defined( _CONFIG_ECA_BY_MSI )
+            if( (m.msg & ECA_VALID_ACTION) != 0 )
+            { /*
+               * ECA event received
+               */
+               ecaHandler();
+               break;
+            }
+         #endif
+           /*
             * Message from SCU- bus.
             */
             onScuBusEvent( &m );
@@ -230,7 +239,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
             break;
          }
 
-       #ifdef CONFIG_MIL_FG
+     #ifdef CONFIG_MIL_FG
          case ADDR_DEVBUS:
          { /*
             * Message from MIL-bus respectively device-bus.
@@ -238,7 +247,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
             add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&m );
             break;
          }
-       #endif
+     #endif /* ifdef CONFIG_MIL_FG */
 
          default:
          {
@@ -363,9 +372,9 @@ STATIC TASK_T g_aTasks[] =
  //!!  { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
  //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
-#endif
-#ifdef CONFIG_MIL_FG
+ #ifndef _CONFIG_ECA_BY_MSI
    { NULL,               ALWAYS, 0, ecaHandler      },
+ #endif
 #endif
    { NULL,               ALWAYS, 0, commandHandler  }
 };
@@ -451,7 +460,6 @@ void main( void )
    dbgPrintMilTaskData();
 #endif
    initializeGlobalPointers();
-   initInterrupt();
    tellMailboxSlot();
 
   /*
@@ -468,7 +476,7 @@ void main( void )
    * Will need by usleep_init()
    */
    timer_init(1);
-   ATOMIC_SECTION() usleep_init();
+   usleep_init();
 
    printCpuId();
    mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr );
@@ -484,8 +492,9 @@ void main( void )
     * Scanning and initializing all FG's and DAQ's
     */
    initAndScan();
-
    //print_regs();
+
+   initInterrupt();
    while( true )
    {
       check_stack();

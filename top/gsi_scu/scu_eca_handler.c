@@ -23,8 +23,11 @@ extern volatile uint16_t*     g_pScub_base;
  */
 ECA_OBJ_T g_eca =
 {
-  .tag    = 0xdeadbeef, /*!<@brief just define a tag for ECA actions we want to receive */
+  .tag    = 0xDEADBEEF, /*!<@brief just define a tag for ECA actions we want to receive */
   .pQueue = NULL
+#ifdef _CONFIG_ECA_BY_MSI
+  , .pControl = NULL
+#endif
 };
 
 /*! ---------------------------------------------------------------------------
@@ -32,10 +35,25 @@ ECA_OBJ_T g_eca =
  */
 void initEcaQueue( void )
 {
+#ifdef _CONFIG_ECA_BY_MSI
+   #warning ECA by MSI not ready yet!
+   g_eca.pControl = ecaControlGetRegisters();
+   if( g_eca.pControl == NULL )
+   {
+      mprintf( ESC_ERROR "\nERROR: Can't find ECA control register!"
+                         " system stopped!"ESC_NORMAL"\n" );
+      while( true )
+         NOP();
+   }
+ //TODO
+ //  ecaControlSetMsiLM32TargetAddress( pEcaCtl, (void*)pMyMsi, true );
+ //  ecaControlGetAndResetChannelValidCount( pEcaCtl );
+ //  ECA_CONTROL_ACCESS( pEcaCtl, channelNumberSelect );
+#endif
    g_eca.pQueue = ecaGetLM32Queue();
    if( g_eca.pQueue == NULL )
    {
-      mprintf( ESC_ERROR"\nERROR: Can't find ECA queue for LM32,"
+      mprintf( ESC_ERROR "\nERROR: Can't find ECA queue for LM32,"
                         " system stopped!"ESC_NORMAL"\n" );
       while( true )
          NOP();
@@ -51,14 +69,26 @@ void initEcaQueue( void )
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
+#ifdef _CONFIG_ECA_BY_MSI
+  #define ECA_ATOMIC_SECTION() 
+#else
+  #define ECA_ATOMIC_SECTION() ATOMIC_SECTION()
+#endif
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Event Condition Action (ECA) handler
  * @see schedule
  */
-void ecaHandler( register TASK_T* pThis FG_UNUSED )
+inline void ecaHandler
+                    #ifdef _CONFIG_ECA_BY_MSI
+                      ( void )
+                    #else
+                      ( register TASK_T* pThis FG_UNUSED )
+                    #endif
 {
+#ifndef _CONFIG_ECA_BY_MSI
    FG_ASSERT( pThis->pTaskData == NULL );
+#endif
    FG_ASSERT( g_eca.pQueue != NULL );
 
    if( !ecaTestTagAndPop( g_eca.pQueue, g_eca.tag ) )
@@ -74,9 +104,9 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
     * Check if there are armed SCI SIO MIL or extention MIL
     * function generator(s).
     */
-   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.fg_regs); channel++ )
    {
-      if( g_shared.fg_regs[i].state != STATE_ARMED )
+      if( g_shared.fg_regs[channel].state != STATE_ARMED )
       { /*
          * This function generator is not armed, skip and
          * go to the next function generator channel.
@@ -87,7 +117,7 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
       /*
        * Armed function generator found...
        */
-      const unsigned int socket = getSocket( i );
+      const unsigned int socket = getSocket( channel );
       if( isMilExtentionFg( socket ) )
       {
          isMilDevArmed = true;
@@ -107,7 +137,7 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
     * @todo Remove this indexed SCU-bus access by encapsulated
     *       hardware access!
     */
-   if( active_sios != 0 )
+   if( active_sios != 0 ) ECA_ATOMIC_SECTION()
    {  /*
        * Select active SIO slaves.
        */
