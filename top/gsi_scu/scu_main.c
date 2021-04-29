@@ -90,18 +90,47 @@ volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 
 /*===========================================================================*/
 /*! ---------------------------------------------------------------------------
+ * @see scu_main.h
+ */
+void die( const char* pErrorMessage )
+{
+   mprintf( ESC_ERROR "\nERROR: \"%s\"\n+++ LM32 stopped! +++\n" ESC_NORMAL,
+            pErrorMessage );
+#ifndef CONFIG_REINCERNATE
+   while( true );
+#else
+   mprintf( "...continued...\n" );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
  */
 STATIC inline ALWAYS_INLINE
 void initializeGlobalPointers( void )
 {
    initOneWire();
-   /* additional periphery needed for scu */
-   g_pScub_base       = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
-   g_pScub_irq_base   = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);
+
+   /*
+    * Additional periphery needed for SCU.
+    */
+
+   g_pScub_base = (volatile uint16_t*)find_device_adr( GSI, SCU_BUS_MASTER );
+   if( (int)g_pScub_base == ERROR_NOT_FOUND )
+      die( "SCU-bus not found!" );
+
+   g_pScub_irq_base = (volatile uint32_t*)find_device_adr( GSI, SCU_IRQ_CTRL );
+   if( (int)g_pScub_irq_base == ERROR_NOT_FOUND )
+      die( "Interrupt control for SCU-bus not found!" );
+
 #ifdef CONFIG_MIL_FG
-   g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI, SCU_MIL);
-   g_pMil_irq_base    = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);
+   g_pScu_mil_base = (unsigned int*)find_device_adr( GSI, SCU_MIL );
+   if( (int)g_pScu_mil_base == ERROR_NOT_FOUND )
+      die( "MIL-bus not found!" );
+
+   g_pMil_irq_base = (volatile uint32_t*)find_device_adr( GSI, MIL_IRQ_CTRL );
+   if( (int)g_pMil_irq_base == ERROR_NOT_FOUND )
+      die( "Interrupt control for MIL-bus not found!" );
 #endif
 }
 
@@ -120,11 +149,9 @@ void tellMailboxSlot( void )
 {
    const int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
    if( slot == -1 )
-      mprintf( ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n" );
-   else
-      mprintf( ESC_FG_MAGENTA
-               "Configured slot %d in MsgBox\n"
-               ESC_NORMAL , slot );
+      die( "No free slots in MsgBox left!" );
+
+   mprintf( ESC_FG_MAGENTA "Configured slot %d in MsgBox\n" ESC_NORMAL , slot );
    g_shared.fg_mb_slot = slot;
 }
 
@@ -289,8 +316,8 @@ STATIC void initAndScan( void )
    /*
     *  No function generator macros assigned to channels at startup!
     */
-   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
-      g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.fg_regs); channel++ )
+      g_shared.fg_regs[channel].macro_number = SCU_INVALID_VALUE;
 
    /*
     * Update one wire ID and temperatures.
@@ -431,19 +458,17 @@ ONE_TIME_CALL void printCpuId( void )
 {
    unsigned int* cpu_info_base;
    cpu_info_base = (unsigned int*)find_device_adr( GSI, CPU_INFO_ROM );
-   if((int)cpu_info_base == ERROR_NOT_FOUND)
-   {
-      mprintf(ESC_ERROR"no CPU INFO ROM found!"ESC_NORMAL"\n");
-      return;
-   }
-   mprintf("CPU ID: 0x%04X\n", cpu_info_base[0]);
-   mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
+   if( (int)cpu_info_base == ERROR_NOT_FOUND )
+      die( "No CPU INFO ROM found!" );
+
+   mprintf( "CPU ID: 0x%04X\n", cpu_info_base[0] );
+   mprintf( "Number MSI endpoints: %d\n", cpu_info_base[1] );
 }
 
 /*================================ MAIN =====================================*/
 void main( void )
 {
-   mprintf( ESC_BOLD "Start of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
+   mprintf( ESC_BOLD "\nStart of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
            "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Resets: %u\n"
@@ -468,9 +493,8 @@ void main( void )
    msDelayBig( 1500 );
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
-      mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );
-   else
-      mprintf( "SYS_CON found on addr: 0x%p\n", BASE_SYSCON );
+      die( "No SYS_CON found!" );
+   mprintf( "SYS_CON found on addr: 0x%p\n", BASE_SYSCON );
 
   /*!
    * Will need by usleep_init()

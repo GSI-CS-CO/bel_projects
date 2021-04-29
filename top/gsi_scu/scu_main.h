@@ -158,6 +158,12 @@ typedef struct _TASK_T
    void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
 } TASK_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Prints a error-message via UART and stop the LM32 firmware.
+ * @param pErrorMessage String containing a error message.
+ */
+void die( const char* pErrorMessage );
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans for function generators on mil extension and scu bus.

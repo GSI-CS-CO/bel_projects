@@ -39,25 +39,15 @@ void initEcaQueue( void )
    #warning ECA by MSI not ready yet!
    g_eca.pControl = ecaControlGetRegisters();
    if( g_eca.pControl == NULL )
-   {
-      mprintf( ESC_ERROR "\nERROR: Can't find ECA control register!"
-                         " system stopped!"ESC_NORMAL"\n" );
-      while( true )
-         NOP();
-   }
+      die( "Can't find ECA control register!" );
  //TODO
- //  ecaControlSetMsiLM32TargetAddress( pEcaCtl, (void*)pMyMsi, true );
- //  ecaControlGetAndResetChannelValidCount( pEcaCtl );
- //  ECA_CONTROL_ACCESS( pEcaCtl, channelNumberSelect );
+ //  ecaControlSetMsiLM32TargetAddress( g_eca.pControl, (void*)pMyMsi, true );
+ //  ecaControlGetAndResetChannelValidCount( g_eca.pControl );
+ //  ECA_CONTROL_ACCESS( g_eca.pControl, channelNumberSelect );
 #endif
    g_eca.pQueue = ecaGetLM32Queue();
    if( g_eca.pQueue == NULL )
-   {
-      mprintf( ESC_ERROR "\nERROR: Can't find ECA queue for LM32,"
-                        " system stopped!"ESC_NORMAL"\n" );
-      while( true )
-         NOP();
-   }
+      die( "Can't find ECA queue for LM32!" );
    //!@todo Check this story with ECA-tag...
    //g_eca.tag = g_eca.pQueue->tag;
    mprintf( ESC_FG_MAGENTA
