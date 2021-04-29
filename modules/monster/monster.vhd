@@ -477,7 +477,6 @@ architecture rtl of monster is
     devs_eca_aq,
     devs_eca_tlu,
     devs_eca_wbm,
-    devs_emb_cpu,
     devs_serdes_clk_gen,
     devs_control,
     devs_ftm_cluster,
@@ -519,7 +518,6 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
     dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
-    dev_slaves'pos(devs_emb_cpu)        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
     dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
@@ -562,20 +560,22 @@ architecture rtl of monster is
     tops_wr_fast_path,
     tops_wr_aux_fast_path,
     tops_ebm,
-    tops_beam_dump
+    tops_beam_dump,
+    tops_emb_cpu
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (top_slaves'pos(tops_eca_event)        => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
-    top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
-    top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
-    top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
-    top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
-    top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
-    top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
-    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
-    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
+   (top_slaves'pos(tops_eca_event)       => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
+   top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
+   top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
+   top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
+   top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
+   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
+   top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
+   top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -2731,8 +2731,8 @@ end generate;
           a_channel_i => s_channel_o(2),
           q_clk_i     => clk_sys,
           q_rst_n_i   => rstn_sys,
-          q_slave_i   => dev_bus_master_o(dev_slaves'pos(devs_emb_cpu)),
-          q_slave_o   => dev_bus_master_i(dev_slaves'pos(devs_emb_cpu)));
+          q_slave_i   => top_bus_master_o(top_slaves'pos(tops_emb_cpu)),
+          q_slave_o   => top_bus_master_i(top_slaves'pos(tops_emb_cpu)));
 
   end generate;
 
