@@ -196,6 +196,15 @@ _crt0:
     mvhi    sp,     hi(_fstack)
     ori     sp, sp, lo(_fstack)
 
+    /* 
+     * Initializing the stack overflow indicator variable
+     */
+    mvhi    r1,     hi(_endram)
+    ori     r1, r1, lo(_endram)
+    mvhi    r2,     hi(STACK_MAGIC)
+    ori     r2, r2, lo(STACK_MAGIC)
+    sw      (r1+0), r2 /* _endram = STACK_MAGIC; */
+    
     /*
      * Initializing .bss by zero.
      */

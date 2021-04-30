@@ -24,8 +24,6 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-
-#include <stack.h>
 #include "scu_main.h"
 #include "scu_command_handler.h"
 #include <scu_fg_list.h>
@@ -46,6 +44,8 @@ TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 #endif
 
 //  #define _CONFIG_NO_INTERRUPT
+
+
 
 extern ONE_WIRE_T g_oneWireBase;
 
@@ -521,7 +521,8 @@ void main( void )
    initInterrupt();
    while( true )
    {
-      check_stack();
+      if( _endram != STACK_MAGIC )
+         die( "Stack overflow!" );
       schedule();
    }
 }

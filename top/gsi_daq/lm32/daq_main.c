@@ -406,7 +406,6 @@ extern uint32_t _endram;
  */
 int main( void )
 {
-   _endram = STACK_MAGIC;
    discoverPeriphery();
    uart_init_hw();
    gotoxy( 0, 0 );
