@@ -110,7 +110,7 @@ void queueCreate( SW_QUEUE_T* pThis,
  * @param pThis Pointer to the concerned queue object. 
  */
 ALWAYS_INLINE STATIC inline
-void queueReset(  SW_QUEUE_T* pThis )
+void queueReset( SW_QUEUE_T* pThis )
 {
    return ramRingReset( &pThis->indexes );
 }
