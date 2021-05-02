@@ -473,19 +473,26 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tH1InjAs;                                // 0 phase of H=1 signal injection          [as]
   uint64_t Tdiff;                                   // difference of true RF periods            [as]
   uint64_t nDiff;                                   // # we need project Tdiff into the future  
-  uint64_t tMatch, tMatch0, tMatchTmp;              // 0 phase of best match                    [as]
+  uint64_t tMatch;                                  // 0 phase of best match                    [as]
   uint64_t tD0;                                     // tFast - tSlow                            [as]
   uint64_t tMatchNs;                                // 'tMatch' in units of [ns]                [ns]
   uint64_t epoch;                                   // temporary epoch                          [ns] (!)
   uint64_t tNow;                                    // current time                             [ns] (!)
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
-
-  int      i;
-  int64_t  dt, dtTmp;                               // achieved precision, temporary variable
-
   uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
   uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
+
+  // parameters for 'best bunch probing'
+#define LIMITFINETUNE  360                          // do fine tuning if number of h=1 periods within beating is below this number
+#define LIMITMULTIBEAT 120                          // do tuning with multiple beats if number of h=1 periods within beating is below this number
+  uint64_t nH1BeatExt;                              // number of h=1 periods within beating period extraction
+  int      i;
+  int      nProbes;                                 // number of probes
+  int64_t  dt, dtTmp;                               // achieved precision, temporary variable
+  uint64_t tMatch0, tMatchTmp;                      // temporary variables
+  
+
   
 
   // define temporary epoch [ns]
@@ -551,7 +558,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   *TBeat   = (TSlow / Tdiff);                           // beating period
   if ((*TBeat % Tdiff) > half) *TBeat++;
   *TBeat   = *TBeat * TSlow;
-
+  
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
   //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
@@ -568,48 +575,25 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   } // if injection ring is larger
   //pp_printf("TH1Inj %llu, nPeriod %llu, nHInj %u, flagExtSlow %d\n", TH1Inj, nPeriod, nHInj, flagExtSlow);
   
-  // kickers need to trigger on extraction RF: final alignment to extraction ring
-  // !!! this only works for the simplified case, if the ratio of circumference 
-  // of both rings is an integer number
-  /*half    = TH1Ext >> 1;
-  nDiff   = (tMatch - tH1ExtAs) / TH1Ext;
-  if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
-  tMatch  = tH1ExtAs + nDiff * TH1Ext;*/
-
-  // probe all bunches to see which one is best
+  // fine tuning and multi-beat tuning; the following code and parameters are for SIS18->ESR 
   dt      = 999999999999;
   tMatch0 = tMatch;
-  for (i=0; i < nHExt * 3; i++) {
+  nH1BeatExt = *TBeat / TH1Ext;
+  nProbes = 1;                                             // enable fine-tuning
+  if (nH1BeatExt < LIMITFINETUNE)  nProbes = 2;            // enable multi-beat tuning for one ring revolution (chk: hackish h = 2)
+  if (nH1BeatExt < LIMITMULTIBEAT) nProbes = nProbes * 3;  // enable multi-beat tuning (chk: hackish try 3 complete revolutions)
+
+  for (i=0; i < nProbes; i++) {
     // advance to next bucket (unless in first iteration)
     tMatchTmp = tMatch0 + (uint64_t)i * *TBeat;
-    //pp_printf("tMatchdiff1 %ld\n", (int32_t)((tMatchTmp - tMatch0)/1000000));
-    // fine tune and check for improved value
-    //pp_printf("huhu bunch %d, tMatchTmp %lu\n", i, (uint32_t)(tMatchTmp / 1000000000000));
+
+    // fine tune (and align to extraction ring) and check for improved value
     rfFineTune(tH1ExtAs, tH1InjAs, &tMatchTmp, &dtTmp);
-    //pp_printf("tMatchdiff2 %ld\n", (int32_t)((tMatchTmp - tMatch0)/1000000));
-    //pp_printf("huhu bunch %d, dt %ld, dtTmp %ld, tMatch %lu\n", i, (int32_t)(dt/1000000), (int32_t)(dtTmp/1000000), (uint32_t)(tMatchTmp / 1000000000000));
-        
     if (llabs(dtTmp) < llabs(dt)) {
       tMatch = tMatchTmp;
       dt     = dtTmp;
-      //pp_printf("better with bunch %d\n", i);
     } // if dtTmp
-
-    /*
-    if ((*TBeat < LIMIT4BUNCHPROBE)            &&    // only do this for very short beating times
-        (dtBunch[0] > (TSlow - TFast) / nHExt) &&    // only do this if the precision is not yet good enough
-        nHExt > 1 ) {                                // only do this for multiple bunches in the extraction ring
-        } // if TBeat*/
   } // for i
-      
-
-  /* 
-  ftDt1 = ftDt1 / 1000000;
-  ftDt2 = ftDt2 / 1000000;
-  ftDt3 = ftDt3 / 1000000;
-
-  pp_printf("dt1 %ld, dt2 %ld, dt3 %ld\n", (int32_t)ftDt1, (int32_t)ftDt2, (int32_t)ftDt3); */
-
   
   // convert back to TAI [ns]
   tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
