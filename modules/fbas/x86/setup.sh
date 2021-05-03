@@ -150,6 +150,9 @@ function setup_fbastx() {
     echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
     saft-ecpu-ctl fbastx -c 0xffff100000000000 0xffffffff00000000 0 0x43 -d
 
+    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+    saft-ecpu-ctl fbastx -c 0xffffdddd00000000 0xffffffff00000000 0 0x26 -d
+
     echo "show actual ECA conditions"
     saft-ecpu-ctl fbastx -l
 
@@ -224,6 +227,9 @@ function setup_fbasrx() {
     echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x24 and 0x25"
     saft-ecpu-ctl fbasrx -c 0x1fcbfcb000000000 0xffffffff00000000 0 0x24 -d
     saft-ecpu-ctl fbasrx -c 0x1fccfcc000000000 0xffffffff00000000 0 0x25 -d
+
+    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+    saft-ecpu-ctl fbasrx -c 0xffffdddd00000000 0xffffffff00000000 0 0x26 -d
 
     echo "show actual ECA conditions"
     saft-ecpu-ctl fbasrx -l
@@ -322,8 +328,22 @@ function do_test3() {
     #   fbas0: dly=26239, fwd=38552
     #   fbas0: dly=22518, fwd=42128
     #   fbas0: dly=22695, fwd=35096
+
+    echo "Send 'new cycle' in 5 seconds ..."
+    wait_seconds 5
+    saft-ctl fbastx -p inject 0xffffdddd00000000 0x0 1000000
+    saft-ctl fbasrx -p inject 0xffffdddd00000000 0x0 1000000
 }
 
+
+function stop_test3() {
+    echo "Disable MPS"
+    eb-write $FBASTX 0x4060508/4 0x31
+    wait_seconds 1
+
+    eb-write $FBASRX 0x4060508/4 0x31
+    wait_seconds 1
+}
 ##########################################################
 # Test 2: Measure time between a signalling and TLU events (0xffffeeee00000000 and 0xffff100000000000)
 #

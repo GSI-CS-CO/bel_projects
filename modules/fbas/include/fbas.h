@@ -27,7 +27,9 @@
 #define FBAS_SHARED_GET_TS2        (FBAS_SHARED_GET_TS1        + _32b_SIZE_ * 2)   // timestamp2 (generator event polled by TX)
 #define FBAS_SHARED_GET_TS3        (FBAS_SHARED_GET_TS2        + _32b_SIZE_ * 2)   // timestamp3 (IO action event deadline)
 #define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + _32b_SIZE_ * 2)   // timestamp4 (IO action event polled by TX)
-#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_TS4        + _32b_SIZE_ * 2)   // end of the 'get' region
+#define FBAS_SHARED_GET_TS5        (FBAS_SHARED_GET_TS4        + _32b_SIZE_ * 2)   // timestamp5 (measure time period)
+#define FBAS_SHARED_GET_TS6        (FBAS_SHARED_GET_TS5        + _32b_SIZE_ * 2)   // timestamp6 (measure time period)
+#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_TS6        + _32b_SIZE_ * 2)   // end of the 'get' region
 
 // diagnosis: end of used shared memory
 #define FBAS_SHARED_END            (FBAS_SHARED_GET_END)
@@ -109,6 +111,7 @@ enum {
 
 // time interval
 #define WR_TIM_1_MS       1000000ULL         // 1 ms
+#define WR_TIM_52_MS      5200 * WR_TIM_1_MS   // 52 ms
 #define WR_TIM_1000_MS    1000 * WR_TIM_1_MS // 1 second
 #define TIM_2000_MS     2000   // 2000 ms
 #define TIM_10_SEC    100000000   // 1 second
@@ -147,6 +150,7 @@ enum {
 #define FBAS_TLU_EVT       0x43      // ECA condition tag for TLU event (handled by TX)
 #define FBAS_WR_EVT        0x24      // ECA condition tag for MPS event via WR (handled by RX)
 #define FBAS_WR_FLG        0x25      // ECA condition tag for MPS flag via WR (handled by RX)
+#define FBAS_AUX_NEWCYCLE  0x26      // ECA condition tag for MPS auxiliary signal (clear internal errors in TX & RX)
 
 // IO-CTRL register map (ip_cores/saftlib/drivers/io_control_regs.h)
 #define IO_CFG_CHANNEL_GPIO          0

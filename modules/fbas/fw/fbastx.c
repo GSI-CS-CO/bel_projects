@@ -101,15 +101,19 @@ static uint32_t setIoOe(uint32_t channel, uint32_t idx);
 static uint32_t getIoOe(uint32_t channel);
 static void driveIo(uint32_t channel, uint32_t idx, uint8_t value);
 static void sendMpsFlag(timedItr_t* itr);
-static void sendMpsEvent(mpsTimParam_t* buf, uint8_t n);
+static void sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint8_t n);
 static void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
 static void updateItr(timedItr_t* itr, uint64_t now);
+static void clearError(size_t len, mpsTimParam_t* buf);
+static void resetMpsFlag(size_t len, mpsTimParam_t* buf);
 static mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt);
 static mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw);
 static uint32_t driveEffLogOut(mpsTimParam_t* buf);
 static mpsTimParam_t* expireMpsFlag(timedItr_t* itr);
 static void preparePerfMeasurement(uint64_t now, uint64_t deadline);
 static void measurePerformance(uint32_t tag, uint32_t flag, uint64_t now, uint64_t deadline);
+static void storeSystemTime(uint32_t offset, uint64_t now);
+static int64_t measureElapsedTime(uint32_t offset, uint64_t now);
 
 // typical init for lm32
 void init()
@@ -481,14 +485,19 @@ void sendMpsFlag(timedItr_t* itr)
  ** \brief send MPS event
  **
  ** Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
+ ** If the read iterator is blocked by new cycle, then do not send any MPS event. [MPS_FS_630]
  **
+ ** \param itr pointer to read iterator for MPS flag
  ** \param buf pointer to MPS event buffer
  ** \param n   number of extra events
  **
  **/
-void sendMpsEvent(mpsTimParam_t* buf, uint8_t n)
+void sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint8_t n)
 {
   uint64_t now = getSysTime();
+
+  if (itr->last >= now) // blocked by new cycle
+    return;
 
   // send specified MPS event
   fwlib_ebmWriteTM(now, mpsTimMsgEvntId, buf->param, 1);
@@ -499,6 +508,42 @@ void sendMpsEvent(mpsTimParam_t* buf, uint8_t n)
       now = getSysTime();
       fwlib_ebmWriteTM(now, mpsTimMsgEvntId, buf->param, 1);
     }
+  }
+}
+
+/**
+ ** \brief reset MPS flag
+ **
+ ** It is used to reset the CMOS input virtually to high voltage in TX [MPS_FS_620] or
+ ** reset effective logic input to HIGH bit in RX [MPS_FS_630].
+ **
+ ** \param buf pointer to MPS flag buffer
+ **
+ **/
+void resetMpsFlag(size_t len, mpsTimParam_t* buf) {
+
+  uint8_t flag = MPS_FLAG_OK;
+
+  for (size_t i = 0; i < len; ++i) {
+    (buf + i)->prot.pending = (buf + i)->prot.flag ^ flag;
+    (buf + i)->prot.flag  = flag;
+    (buf + i)->prot.ttl = 10; // time-out for 10 iterations
+  }
+}
+
+/**
+ ** \brief clear latched error
+ **
+ ** Errors caused by lost messages or NOK flag are being latched until new cycle.
+ ** [MPS_FS_600]
+ **
+ ** \param buf pointer to MPS flag buffer
+ **
+ **/
+void clearError(size_t len, mpsTimParam_t* buf) {
+
+  for (size_t i = 0; i < len; ++i) {
+    driveEffLogOut(buf + i);
   }
 }
 
@@ -664,8 +709,27 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
   if (nextAction) {
     now = getSysTime();
+    storeSystemTime(FBAS_SHARED_GET_TS5, now);
 
     switch (nextAction) {
+      case FBAS_AUX_NEWCYCLE:
+        if (nodeType == FBAS_NODE_TX) { // it takes 1848/6328 ns for 2/32 MPS channels
+          // reset MPS flags
+          resetMpsFlag(N_MPS_CHANNELS, *head);
+
+          // init the read iterator for MPS flags, so that iteration is delayed for 52 ms [MPS_FS_630]
+          now += WR_TIM_52_MS;
+          initItr(itr, N_MPS_CHANNELS, now, 1);
+
+        } else if (nodeType == FBAS_NODE_RX) { // it takes 2480/31048 ns for 2/32 MPS channels
+          // reset effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
+          resetMpsFlag(N_MPS_CHANNELS, *head);
+          // clear latched errors [MPS_FS_600]
+          clearError(N_MPS_CHANNELS, *head);
+        }
+        now = getSysTime();
+        DBPRINT2("%lli\n", measureElapsedTime(FBAS_SHARED_GET_TS5, now));
+        break;
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // update MPS flag
@@ -673,7 +737,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
             // send MPS event
-            sendMpsEvent(*head, N_EXTRA_MPS_EVENTS);
+            sendMpsEvent(itr, *head, N_EXTRA_MPS_EVENTS);
             // prepare performance measurements
             preparePerfMeasurement(now, ecaDeadline);
           }
@@ -706,6 +770,34 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
     *head = 0;
 
   return nextAction;
+}
+
+/**
+ ** \brief store actual system time
+ **
+ ** \param offset offset to shared memory buffer for storing the actual system time
+ ** \param now    actual system time
+ **
+ **/
+void storeSystemTime(uint32_t offset, uint64_t now) {
+  uint64_t* pSharedTs = (uint64_t *)(pSharedApp + (offset >> 2));
+
+  *pSharedTs = now;
+}
+
+/**
+ ** \brief measure elapsed time
+ **
+ ** \param offset offset to shared memory buffer with timestamp
+ ** \param now    actual system time
+ **
+ ** \ret time     elapsed time in nanosecond since last timestamp
+ **
+ **/
+int64_t measureElapsedTime(uint32_t offset, uint64_t now) {
+  uint64_t* pSharedTs = (uint64_t *)(pSharedApp + (offset >> 2));
+
+  return (now - *pSharedTs);
 }
 
 /**
