@@ -4322,7 +4322,7 @@ PORT MAP
               
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 8	
                                                       AW_SK_Input_Reg(4)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(8) <= AW_SK_Input_Reg(4)(11 downto  6) AND not IOBP_Masken_Reg4(11 downto 6); 
+                                                      IOBP_SK_Output(8) <= AW_Output_Reg(4)(11 downto  6) AND not IOBP_Masken_Reg4(11 downto 6); 
                                                       PIO_OUT_SLOT_8 <= IOBP_SK_Output(8);
                                                       PIO_ENA_SLOT_8 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(8)  <=  IOBP_SK_Output(8); 
@@ -4342,7 +4342,7 @@ PORT MAP
           
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 9	
                                                       AW_SK_Input_Reg(5)(5 downto  0)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(9) <= AW_SK_Input_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0); 
+                                                      IOBP_SK_Output(9) <= AW_Output_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0); 
                                                       PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
                                                       PIO_ENA_SLOT_9 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(9)  <=  IOBP_SK_Output(9); 
@@ -4362,7 +4362,7 @@ PORT MAP
       
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 10	
                                                       AW_SK_Input_Reg(5)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(10) <= AW_SK_Input_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6); 
+                                                      IOBP_SK_Output(10) <= AW_Output_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6); 
                                                       PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
                                                       PIO_ENA_SLOT_10 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(10)  <=  IOBP_SK_Output(10); 
@@ -4382,7 +4382,7 @@ PORT MAP
   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 11	
                                                       AW_SK_Input_Reg(6)(5 downto  0)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(11) <= AW_SK_Input_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0); 
+                                                      IOBP_SK_Output(11) <= AW_Output_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0); 
                                                       PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
                                                       PIO_ENA_SLOT_11 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(11)  <=  IOBP_SK_Output(11); 
@@ -4402,7 +4402,7 @@ PORT MAP
   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12	
                                                       AW_SK_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(12) <= AW_SK_Input_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6); 
+                                                      IOBP_SK_Output(12) <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6); 
                                                       PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
                                                       PIO_ENA_SLOT_12 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(12)  <=  IOBP_SK_Output(12); 
