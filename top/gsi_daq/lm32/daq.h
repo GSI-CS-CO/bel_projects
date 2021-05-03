@@ -455,6 +455,11 @@ typedef struct
    DAQ_DEVICE_TYP_T type;
 
    /*!
+    * @brief Slot number residing this device in SCU-bus. (1 - 12)
+    */
+   unsigned int slot;
+
+   /*!
     * @brief Number of DAQ-channels
     */
    unsigned int maxChannels;
@@ -1693,12 +1698,16 @@ void daqDeviceClearHiResChannelInterrupts( register DAQ_DEVICE_T* pThis )
 STATIC inline int daqDeviceGetSlot( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
+#if 0
    DAQ_ASSERT( pThis->pReg != NULL );
    /*
     * All existing channels of a DAQ have the same slot number
     * therefore its enough to choose the channel 0.
     */
    return daqChannelGetSlot( &pThis->aChannel[0] );
+#else
+   return pThis->slot;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

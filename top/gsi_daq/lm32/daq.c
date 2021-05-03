@@ -874,6 +874,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
          continue;
       }
 
+      pCurrentDaqDevice->slot = slot;
      /*
       * At least one channel was found.
       */

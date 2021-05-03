@@ -384,7 +384,7 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
       if( getMessageSave( &m, &g_aMsg_buf[0], DAQ ) )
       {
          s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs,
-                                                     m.msg + 1 );
+                                                     m.msg + SCUBUS_START_SLOT );
       }
    }
 
