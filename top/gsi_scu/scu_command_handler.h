@@ -11,10 +11,27 @@
 
 #include "scu_main.h"
 
+#ifndef _CONFIG_USE_OLD_CB
+#include <sw_queue.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef _CONFIG_USE_OLD_CB
+extern SW_QUEUE_T g_queueSaftCmd;
+
+typedef uint32_t SAFT_CMD_T;
+
+STATIC inline ALWAYS_INLINE
+void initCommandHandler( void )
+{
+   queueReset( &g_queueSaftCmd );
+}
+
+#endif
+   
 void commandHandler( register TASK_T* pThis FG_UNUSED );
 
 #ifdef __cplusplus

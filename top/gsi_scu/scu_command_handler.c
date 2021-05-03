@@ -29,6 +29,10 @@ extern volatile unsigned int* g_pScu_mil_base;
 
 //#define CONFIG_DEBUG_SWI
 
+#ifndef _CONFIG_USE_OLD_CB
+QUEUE_CREATE_STATIC( g_queueSaftCmd, 64, SAFT_CMD_T );
+#endif
+
 #ifdef CONFIG_DEBUG_SWI
 #warning Function printSwIrqCode() is activated! In this mode the software will not work!
 /*! ---------------------------------------------------------------------------
@@ -67,6 +71,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    TIME_MEASUREMENT_T tm = TIME_MEASUREMENT_INITIALIZER;
 #endif
 
+#ifdef _CONFIG_USE_OLD_CB
    MSI_T m;
    /*
     * Is a message from SATF-LIB for FG present?
@@ -80,16 +85,36 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
 
    FG_ASSERT( m.adr == ADDR_SWI );
 
-#ifdef CONFIG_USE_RESCAN_FLAG
+ #ifdef CONFIG_USE_RESCAN_FLAG
    /*
     * signal busy to saftlib
     */
    g_shared.fg_busy = 1;
-#endif
+ #endif
 
    const unsigned int code  = GET_UPPER_HALF( m.msg );
    const unsigned int value = GET_LOWER_HALF( m.msg );
+#else
+   SAFT_CMD_T cmd;
+  /*
+   * Is a message from SATF-LIB for FG present?
+   */
+   if( !queuePopSave( &g_queueSaftCmd, &cmd ) )
+   { /*
+      * No, leave this function.
+      */
+      return;
+   }
+ #ifdef CONFIG_USE_RESCAN_FLAG
+   /*
+    * signal busy to saftlib
+    */
+   g_shared.fg_busy = 1;
+ #endif
+   const unsigned int code  = GET_UPPER_HALF( cmd );
+   const unsigned int value = GET_LOWER_HALF( cmd );
 
+#endif
   /*
    * When debug mode active only.
    */

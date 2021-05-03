@@ -19,6 +19,8 @@ TARGET         := scu_control
 # DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
  DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 
+ # DEFINES += _CONFIG_USE_OLD_CB
+ 
 # Avoiding of including of scu_control_config.h
 DEFINES += _SCU_CONTROL_CONFIG_H
 
@@ -107,6 +109,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/event_measurement.c
 # SOURCE += $(SCU_DIR)/scu_function_generator.c
 SOURCE += $(SCU_DIR)/scu_fg_list.c
 SOURCE += $(SCU_DIR)/scu_circular_buffer.c
+SOURCE += $(SCU_LIB_SRC_DIR)/sw_queue.c
 
  SOURCE += $(SCU_DIR)/scu_fg_macros.c
 # SOURCE += $(SCU_DIR)/scu_fg_macros120221.c

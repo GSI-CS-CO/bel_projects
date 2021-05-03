@@ -33,6 +33,7 @@ namespace Scu
 {
 #endif
 
+  
 /*! ---------------------------------------------------------------------------
  * @brief Administration object type for a software queue.
  */
@@ -55,6 +56,57 @@ typedef struct
 } SW_QUEUE_T;
 
 /*! ---------------------------------------------------------------------------
+ * @brief Reservation of static memory for the queue containment.
+ * @param memName Name of the memory area to static allocate.
+ * @param maxCapacity Maximum number of payload items.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_ALLOC_STATIC_MEM( memName, maxCapacity, ITEM_TYP ) \
+   uint8_t memName[ maxCapacity * sizeof(ITEM_TYP) ]
+
+/*! ---------------------------------------------------------------------------
+ * @brief Creates a queue object in the .data memory segment.
+ * 
+ * @note CAUTION: This object becomes initialized during compile time. \n
+ *                Therefore after a reset the object keeps the old values! \n
+ *                Therefore don't forget to call the function queueReset()
+ *                before the queue will used.
+ * @see  queueReset
+ * 
+ * Example: Creating a queue with a capacity of 42 payload items.
+ * @code
+ * typedef struct
+ * {
+ *    int a;
+ *    int b;
+ *    int c;
+ * } MY_ITEM_T;
+ * 
+ * QUEUE_CREATE_STATIC( myQueue, 42, MY_ITEM_T );
+ * 
+ * void main( void )
+ * {
+ *    queueReset( &myQueue );
+ *    // Do something with this queue...
+ * }
+ * @endcode 
+ * @param name Name of the queue to create.
+ * @param maxCapacity Maximum number of payload items.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_CREATE_STATIC( name, maxCapacity, ITEM_TYP )                    \
+   QUEUE_ALLOC_STATIC_MEM( name ## _mem, maxCapacity, ITEM_TYP );             \
+   SW_QUEUE_T name =                                                          \
+   {                                                                          \
+      .indexes.offset   = 0,                                                  \
+      .indexes.capacity = maxCapacity,                                        \
+      .indexes.start    = 0,                                                  \
+      .indexes.end      = 0,                                                  \
+      .itemSize         = sizeof(ITEM_TYP),                                   \
+      .pBuffer          = name ## _mem                                        \
+   }
+
+/*! ---------------------------------------------------------------------------
  * @brief Creates and initialized a software queue with a offset in
  *        itemSize- units.
  * @param pThis Pointer to the concerned queue object. 
@@ -71,7 +123,7 @@ void queueCreateOffset( SW_QUEUE_T* pThis,
                         const unsigned int capacity );
 
 /*! ---------------------------------------------------------------------------
- * @brief Creates and initialized a software queue with a offset in
+ * @brief Creates and initialized a software queue with a capacity in
  *        itemSize- units.
  *
  * Example for making a queue with 42 items:
@@ -104,6 +156,10 @@ void queueCreate( SW_QUEUE_T* pThis,
 {
    queueCreateOffset( pThis, pBuffer, 0, itemSize, capacity );
 }
+
+#define QEUE_CREATE( pThis, aBuffer, ITEM_TYP )       \
+   queueCreate( pThis, aBuffer, sizeof(ITEM_TYP),     \
+                sizeof(aBuffer) / sizeof(ITEM_TYP) )
 
 /*! ---------------------------------------------------------------------------
  * @brief Clears the queue.
@@ -154,6 +210,8 @@ bool queuePushSave( SW_QUEUE_T* pThis, const void* pItem );
  * @see queuePush
  * @param pThis Pointer to the concerned queue object. 
  * @param pItem Destination pointer in which will copied.
+ * @retval true Data valid, at least one item was in queue.
+ * @retval false Date invalid, queue was empty.
  */
 bool queuePop( SW_QUEUE_T* pThis, void* pItem );
 
@@ -165,6 +223,8 @@ bool queuePop( SW_QUEUE_T* pThis, void* pItem );
  * @see queuePushSave
  * @param pThis Pointer to the concerned queue object. 
  * @param pItem Destination pointer in which will copied.
+ * @retval true Data valid, at least one item was in queue.
+ * @retval false Date invalid, queue was empty.
  */
 bool queuePopSave( SW_QUEUE_T* pThis, void* pItem );
 #endif

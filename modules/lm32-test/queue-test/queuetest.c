@@ -11,11 +11,7 @@ typedef struct
    int c;
 } ITEM_T;
 
-#define CAPACITY1 3
-
-uint8_t g_Buffer1[CAPACITY1 * sizeof(ITEM_T)];
-
-SW_QUEUE_T g_queue1;
+QUEUE_CREATE_STATIC( g_queue1, 5, ITEM_T );
 
 void printLevel( SW_QUEUE_T* pQueue )
 {
@@ -62,8 +58,9 @@ void main( void )
 {
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "Queue test\n" );
 
-   queueCreate( &g_queue1, g_Buffer1, sizeof(ITEM_T), CAPACITY1 );
-
+   // queueCreate( &g_queue1, g_Buffer1, sizeof(ITEM_T), CAPACITY1 );
+  // QEUE_CREATE( &g_queue1, g_Buffer1, ITEM_T );
+   queueReset( &g_queue1 );
    mprintf( "Queue created\n" );   
 
    fillQueue( &g_queue1 );

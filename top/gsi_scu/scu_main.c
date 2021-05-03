@@ -103,6 +103,16 @@ void die( const char* pErrorMessage )
 #endif
 }
 
+#ifndef _CONFIG_USE_OLD_CB
+void STATIC pushInQueue( SW_QUEUE_T* pThis, const void* pItem )
+{
+   if( queuePush( pThis, pItem ) )
+      return;
+   mprintf( ESC_ERROR "\nERROR: Queue overflow! Capacity: %u\n" ESC_NORMAL,
+            queueGetMaxCapacity( pThis ) );
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
  */
@@ -262,7 +272,12 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Command message from SAFT-lib
             */
+          #ifdef _CONFIG_USE_OLD_CB
             add_msg( &g_aMsg_buf[0], SWI, (MSI_T*)&m );
+          #else
+            STATIC_ASSERT( sizeof( m.msg ) == sizeof( SAFT_CMD_T ) );
+            pushInQueue( &g_queueSaftCmd, &m.msg );
+          #endif
             break;
          }
 
@@ -293,7 +308,11 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  */
 ONE_TIME_CALL void initInterrupt( void )
 {
+#ifdef _CONFIG_USE_OLD_CB
    cbReset( &g_aMsg_buf[0], SWI );
+#else
+   initCommandHandler();
+#endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    cbReset( &g_aMsg_buf[0], DAQ );
 #endif
