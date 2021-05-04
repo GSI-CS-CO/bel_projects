@@ -23,7 +23,7 @@
  */
 #include <string.h>
 #include <sw_queue.h>
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
   #include <lm32Interrupts.h>
 #endif
 
@@ -59,7 +59,7 @@ bool queuePush( SW_QUEUE_T* pThis, const void* pItem )
    return true;
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see sw_queue.h
  */
@@ -91,7 +91,7 @@ bool queuePop( SW_QUEUE_T* pThis, void* pItem )
    return true;
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see sw_queue.h
  */

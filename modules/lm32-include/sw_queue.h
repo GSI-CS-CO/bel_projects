@@ -171,7 +171,7 @@ void queueReset( SW_QUEUE_T* pThis )
    return ramRingReset( &pThis->indexes );
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Clears the queue within a atomic section.
  * @param pThis Pointer to the concerned queue object. 
@@ -190,7 +190,7 @@ void queueResetSave(  SW_QUEUE_T* pThis );
  */
 bool queuePush( SW_QUEUE_T* pThis, const void* pItem );
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Write a item in the queue within a atomic section if there is still
  *        enough space.\n
@@ -215,7 +215,7 @@ bool queuePushSave( SW_QUEUE_T* pThis, const void* pItem );
  */
 bool queuePop( SW_QUEUE_T* pThis, void* pItem );
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Copies the oldest item of the queue, and remove it within a
  *        atomic section.\n
@@ -240,7 +240,7 @@ unsigned int queueGetSize( SW_QUEUE_T* pThis )
    return ramRingGetSize( &pThis->indexes );
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Returns the number of items which are currently in the queue within
  *        a atomic section.
@@ -262,7 +262,7 @@ bool queueIsEmpty( SW_QUEUE_T* pThis )
    return queueGetSize( pThis ) == 0;
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Returns true when the queue is empty within a atomic section.
  * @param pThis Pointer to the concerned queue object.
@@ -287,7 +287,7 @@ unsigned int queueGetRemainingCapacity( SW_QUEUE_T* pThis )
    return ramRingGetRemainingCapacity( &pThis->indexes );
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Returns the number of items that still fit in the queue within
  *        a atomic section.
@@ -320,7 +320,7 @@ bool queueIsFull( SW_QUEUE_T* pThis )
    return queueGetRemainingCapacity( pThis ) == 0;
 }
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Returns true when the queue is full within a atomic section.
  * @param pThis Pointer to the concerned queue object.
