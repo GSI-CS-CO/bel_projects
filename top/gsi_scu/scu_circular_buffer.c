@@ -29,6 +29,8 @@
 #include <scu_circular_buffer.h>
 #include <eb_console_helper.h>
 
+#ifdef _CONFIG_USE_OLD_CB
+
 /** @brief write parameter set to circular buffer
  *  @param cb pointer to the channel buffer
  *  @param cr pointer to the channel register
@@ -72,18 +74,8 @@ void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, con
 
 //#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
-void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
-{
-  const RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
-#ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
-  if( next_head == mb->ring_tail )
-     mprintf( ESC_WARNING"DAQ buffer overflow!\n"ESC_NORMAL );
-#endif
-  mb->ring_data[mb->ring_head] = m;
-  mb->ring_head = next_head;
-}
 
-#ifdef _CONFIG_USE_OLD_CB
+
 /** @brief add a message to a message buffer
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
@@ -122,5 +114,16 @@ MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue )
    return m;
 }
 #endif
+
+void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
+{
+  const RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+#ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
+  if( next_head == mb->ring_tail )
+     mprintf( ESC_WARNING"DAQ buffer overflow!\n"ESC_NORMAL );
+#endif
+  mb->ring_data[mb->ring_head] = m;
+  mb->ring_head = next_head;
+}
 
 /*================================== EOF ====================================*/

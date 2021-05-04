@@ -30,7 +30,7 @@
 #include <scu_function_generator.h>
 #include <stdbool.h>
 
-#if defined( _CONFIG_NO_DISPATCHER ) && defined(__lm32__)
+#if defined(__lm32__)
   #include <lm32Interrupts.h>
 #endif
 
