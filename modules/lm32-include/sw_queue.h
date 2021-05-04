@@ -61,7 +61,7 @@ typedef struct
  * @param maxCapacity Maximum number of payload items.
  * @param ITEM_TYP Data type of payload item.
  */
-#define QUEUE_ALLOC_STATIC_MEM( memName, maxCapacity, ITEM_TYP ) \
+#define QUEUE_ALLOC_STATIC_MEM( memName, maxCapacity, ITEM_TYP )              \
    uint8_t memName[ maxCapacity * sizeof(ITEM_TYP) ]
 
 /*! ---------------------------------------------------------------------------

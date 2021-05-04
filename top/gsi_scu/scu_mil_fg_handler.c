@@ -15,7 +15,6 @@
 
 extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
-//extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
 #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
    unsigned int g_gapReadingTime = DEFAULT_GAP_READING_INTERVAL;
@@ -30,6 +29,11 @@ extern volatile unsigned int* g_pScu_mil_base;
   #define _GAP_TIME_INIT .gapReadingTime = 0LL,
 #else
   #define _GAP_TIME_INIT
+#endif
+
+#ifndef _CONFIG_USE_OLD_CB
+  QUEUE_CREATE_STATIC( g_queueMilSio, MAX_FG_CHANNELS, QUEUE_MIL_SOCKET_T );
+  QUEUE_CREATE_STATIC( g_queueMilBus, MAX_FG_CHANNELS, QUEUE_MIL_SOCKET_T );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -176,6 +180,7 @@ STATIC void printMilError( const int status, const int slave_nr )
  */
 void fgMilClearHandlerState( const unsigned int socket )
 {
+#ifdef _CONFIG_USE_OLD_CB
    MSI_T m;
 
    if( isMilScuBusFg( socket ) )
@@ -199,6 +204,21 @@ void fgMilClearHandlerState( const unsigned int socket )
       */
       ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVBUS, &m );
    }
+#else
+   if( isMilScuBusFg( socket ) )
+   {
+      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
+      const QUEUE_MIL_SOCKET_T slot = getFgSlotNumber( socket );
+      ATOMIC_SECTION() pushInQueue( &g_queueMilSio, &slot );
+      return;
+   }
+
+   if( isMilExtentionFg( socket ) )
+   {
+      const QUEUE_MIL_SOCKET_T slot = 0;
+      ATOMIC_SECTION() pushInQueue( &g_queueMilBus, &slot );
+   }
+#endif
 }
 
 #if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
@@ -757,11 +777,19 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    {
       case ST_WAIT:
       {
+      #ifdef _CONFIG_USE_OLD_CB
          if( hasMessageSave( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
          {
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
+      #else
+         if( !queueIsEmptySave( isScuBus? &g_queueMilSio : &g_queueMilBus ) )
+         {
+            FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
+            break;
+         }
+      #endif
       #ifdef CONFIG_READ_MIL_TIME_GAP
         /*
          * Only a task which has already served a function generator
@@ -1009,8 +1037,13 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          */
          pMilData->gapReadingTime = 0;
       #endif
+      #ifdef _CONFIG_USE_OLD_CB   
          const MSI_T m = popMessageSave( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
-         pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
+         pMilData->slave_nr = isScuBus? (m.msg + SCUBUS_START_SLOT) : 0;
+      #else
+         STATIC_ASSERT( sizeof(pMilData->slave_nr) == sizeof(QUEUE_MIL_SOCKET_T) );
+         queuePopSave( isScuBus? &g_queueMilSio : &g_queueMilBus, &pMilData->slave_nr );
+      #endif
          pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
          break;
       }

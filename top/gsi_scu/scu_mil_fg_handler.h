@@ -22,6 +22,12 @@ extern "C" {
 
 extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
 
+#ifndef _CONFIG_USE_OLD_CB
+ typedef uint32_t QUEUE_MIL_SOCKET_T;
+ extern SW_QUEUE_T g_queueMilSio;
+ extern SW_QUEUE_T g_queueMilBus;
+#endif
+
 #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
  #ifndef CONFIG_READ_MIL_TIME_GAP
   #error CONFIG_READ_MIL_TIME_GAP has to be defined when _CONFIG_VARIABLE_MIL_GAP_READING is defined!

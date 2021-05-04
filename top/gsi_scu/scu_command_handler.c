@@ -30,7 +30,7 @@ extern volatile unsigned int* g_pScu_mil_base;
 //#define CONFIG_DEBUG_SWI
 
 #ifndef _CONFIG_USE_OLD_CB
-QUEUE_CREATE_STATIC( g_queueSaftCmd, 64, SAFT_CMD_T );
+QUEUE_CREATE_STATIC( g_queueSaftCmd, MAX_FG_CHANNELS, SAFT_CMD_T );
 #endif
 
 #ifdef CONFIG_DEBUG_SWI

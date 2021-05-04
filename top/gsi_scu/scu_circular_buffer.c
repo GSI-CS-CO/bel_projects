@@ -83,6 +83,7 @@ void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
   mb->ring_head = next_head;
 }
 
+#ifdef _CONFIG_USE_OLD_CB
 /** @brief add a message to a message buffer
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
@@ -120,5 +121,6 @@ MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue )
    m.adr = -1;
    return m;
 }
+#endif
 
 /*================================== EOF ====================================*/

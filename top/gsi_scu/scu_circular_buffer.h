@@ -162,6 +162,7 @@ bool cbReadSave( volatile FG_CHANNEL_BUFFER_T* pCb,
  #define cbReadSave cbRead
 #endif
 
+#ifdef _CONFIG_USE_OLD_CB
 typedef struct PACKED_SIZE
 {
    uint32_t  msg;
@@ -269,6 +270,8 @@ bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer,
    criticalSectionExit();
    return ret;
 }
+#endif
+
 #endif
 
 #endif /* ifdef __lm32__ */

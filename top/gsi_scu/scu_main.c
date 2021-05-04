@@ -83,10 +83,17 @@ volatile unsigned int* g_pScu_mil_base    = NULL;
 volatile uint32_t*     g_pMil_irq_base    = NULL;
 #endif /* CONFIG_MIL_FG */
 
+#ifdef _CONFIG_USE_OLD_CB
 /*!
  * @brief  Memory space of message queue.
  */
 volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
+#endif
+
+
+#if defined( CONFIG_QUEUE_ALARM ) && !defined( _CONFIG_USE_OLD_CB )
+   QUEUE_CREATE_STATIC( g_queueAlarm, MAX_FG_CHANNELS, SW_QUEUE_T* );
+#endif
 
 /*===========================================================================*/
 /*! ---------------------------------------------------------------------------
@@ -104,13 +111,56 @@ void die( const char* pErrorMessage )
 }
 
 #ifndef _CONFIG_USE_OLD_CB
-void STATIC pushInQueue( SW_QUEUE_T* pThis, const void* pItem )
+#ifdef CONFIG_QUEUE_ALARM
+/*! ---------------------------------------------------------------------------
+ * @brief Put a message in the given queue object.
+ * 
+ * If the concerned queue is full, then a alarm-item will put in the 
+ * alarm-queue which becomes evaluated in the function queuePollAlarm().
+ *
+ * @see queuePollAlarm.
+ * @param pThis Pointer to the queue object.
+ * @param pItem Pointer to the payload object.
+ */
+void pushInQueue( SW_QUEUE_T* pThis, const void* pItem )
 {
    if( queuePush( pThis, pItem ) )
       return;
-   mprintf( ESC_ERROR "\nERROR: Queue overflow! Capacity: %u\n" ESC_NORMAL,
-            queueGetMaxCapacity( pThis ) );
+   queuePush( &g_queueAlarm, &pThis );
 }
+
+/*! ----------------------------------------------------------------------------
+ * @brief Checks whether a possible overflow has been happen in one or more
+ *        of the used message queues. 
+ */
+STATIC inline void queuePollAlarm( void )
+{
+   SW_QUEUE_T* pOverflowedQueue;
+
+   if( !queuePopSave( &g_queueAlarm, &pOverflowedQueue ) )
+      return;
+
+   const char* str = "unknown";
+   #define QEUE2STRING( name ) if( &name == pOverflowedQueue ) str = #name
+
+   QEUE2STRING( g_queueSaftCmd );
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   QEUE2STRING( g_queueAddacDaq );
+#endif
+#ifdef CONFIG_MIL_FG
+   QEUE2STRING( g_queueMilSio );
+   QEUE2STRING( g_queueMilBus );
+#endif
+
+   #undef QEUE2STRING
+
+   mprintf( ESC_ERROR "\nERROR: Queue \"%s\" has overflowed! Capacity: %d\n" ESC_NORMAL,
+            str, queueGetMaxCapacity( pOverflowedQueue ) );
+}
+
+#else
+   #define queuePollAlarm()
+#endif
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -180,6 +230,7 @@ STATIC void msDelayBig( const uint64_t ms )
    }
 }
 
+#ifdef _CONFIG_USE_OLD_CB
 /*
  * Static check of compatibility.
  */
@@ -188,6 +239,7 @@ STATIC_ASSERT( sizeof( MSI_T ) == sizeof( MSI_ITEM_T ) );
 STATIC_ASSERT( offsetof( MSI_T, msg ) == offsetof( MSI_ITEM_T, msg ) );
 STATIC_ASSERT( offsetof( MSI_T, adr ) == offsetof( MSI_ITEM_T, adr ) );
 STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
+#endif
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -214,14 +266,24 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
 #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
+      #ifdef _CONFIG_USE_OLD_CB
          add_msg( &g_aMsg_buf[0], DEVSIO, (MSI_T*)pMessage );
+      #else
+         STATIC_ASSERT( sizeof( slot ) == sizeof(QUEUE_MIL_SOCKET_T) );
+         pushInQueue( &g_queueMilSio, &slot );
+      #endif
       }
 #endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
       if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       {
+      #ifdef _CONFIG_USE_OLD_CB
          add_msg( &g_aMsg_buf[0], DAQ, (MSI_T*)pMessage );
+      #else
+         STATIC_ASSERT( sizeof( slot ) == sizeof( DAQ_QUEUE_SLOT_T ) );
+         pushInQueue( &g_queueAddacDaq, &slot );
+      #endif
       }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
@@ -286,7 +348,12 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from MIL-bus respectively device-bus.
             */
+         #ifdef _CONFIG_USE_OLD_CB
             add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&m );
+         #else
+            STATIC_ASSERT( sizeof( m.msg ) == sizeof( QUEUE_MIL_SOCKET_T ) );
+            pushInQueue( &g_queueMilBus, &m.msg );
+         #endif
             break;
          }
      #endif /* ifdef CONFIG_MIL_FG */
@@ -314,11 +381,23 @@ ONE_TIME_CALL void initInterrupt( void )
    initCommandHandler();
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
+ #ifdef _CONFIG_USE_OLD_CB
    cbReset( &g_aMsg_buf[0], DAQ );
+ #else
+   queueReset( &g_queueAddacDaq );
+ #endif
 #endif
 #ifdef CONFIG_MIL_FG
+ #ifdef _CONFIG_USE_OLD_CB
    cbReset( &g_aMsg_buf[0], DEVSIO );
    cbReset( &g_aMsg_buf[0], DEVBUS );
+ #else
+   queueReset( &g_queueMilSio );
+   queueReset( &g_queueMilBus );
+ #endif
+#endif
+#if defined( CONFIG_QUEUE_ALARM ) && !defined( _CONFIG_USE_OLD_CB )
+   queueReset( &g_queueAlarm );
 #endif
 #ifndef _CONFIG_NO_INTERRUPT
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
@@ -543,6 +622,9 @@ void main( void )
       if( _endram != STACK_MAGIC )
          die( "Stack overflow!" );
       schedule();
+   #ifndef _CONFIG_USE_OLD_CB
+      queuePollAlarm();
+   #endif
    }
 }
 

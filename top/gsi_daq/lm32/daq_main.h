@@ -47,6 +47,10 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_DAQ_SINGLE_APP
+ #ifndef _CONFIG_USE_OLD_CB
+   typedef uint32_t DAQ_QUEUE_SLOT_T;
+   extern SW_QUEUE_T g_queueAddacDaq;
+ #endif
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @ingroup TASK

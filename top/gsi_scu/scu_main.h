@@ -59,6 +59,10 @@
 #include "scu_circular_buffer.h"
 #include "event_measurement.h"
 
+#ifndef _CONFIG_USE_OLD_CB
+#include <sw_queue.h>
+#endif
+
 /*!
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
  */
@@ -93,6 +97,19 @@ extern "C" {
  */
 extern SCU_SHARED_DATA_T g_shared;
 
+
+/*!
+ * @brief Reset counter becomes incremented after each LM32-Reset.
+ *
+ * This global variable is implemented and initialized in the assembler module
+ * crt0ScuLm32.S \n
+ * This becomes incremented in the startup-routine _crt0.
+ *
+ * @see crt0ScuLm32.S
+ */
+extern volatile uint32_t __reset_count;
+
+#ifdef _CONFIG_USE_OLD_CB
 /*!
  * @brief Number of message queues.
  */
@@ -101,6 +118,7 @@ extern SCU_SHARED_DATA_T g_shared;
 #else
   #define QUEUE_CNT 3
 #endif
+
 /*!
  * @brief Type of message origin
  */
@@ -114,18 +132,30 @@ typedef enum
 #endif
 } MSG_ORIGIN_T;
 
-/*!
- * @brief Reset counter becomes incremented after each LM32-Reset.
- *
- * This global variable is implemented and initialized in the assembler module
- * crt0ScuLm32.S \n
- * This becomes incremented in the startup-routine _crt0.
- *
- * @see crt0ScuLm32.S
- */
-extern volatile uint32_t __reset_count;
-
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
+
+#else
+
+#define CONFIG_QUEUE_ALARM
+
+#ifdef CONFIG_QUEUE_ALARM
+/*! ---------------------------------------------------------------------------
+ * @brief Put a message in the given queue object.
+ * 
+ * If the concerned queue is full, then a alarm-item will put in the 
+ * alarm-queue which becomes evaluated in the function queuePollAlarm().
+ *
+ * @see queuePollAlarm.
+ * @param pThis Pointer to the queue object.
+ * @param pItem Pointer to the payload object.
+ */
+void pushInQueue( SW_QUEUE_T* pThis, const void* pItem );
+
+#else
+#define pushInQueue queuePush
+#endif
+
+#endif /* else ifdef _CONFIG_USE_OLD_CB */
 
 #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
 /*!
