@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element gpio_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="10AX066H2F34E2SG" />
+ <parameter name="deviceFamily" value="Arria 10" />
+ <parameter name="deviceSpeedGrade" value="2" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface name="din" internal="gpio_0.din" type="conduit" dir="end">
+  <port name="din" internal="din" />
+ </interface>
+ <interface name="pad_out" internal="gpio_0.pad_out" type="conduit" dir="end">
+  <port name="pad_out" internal="pad_out" />
+ </interface>
+ <interface name="pad_out_b" internal="gpio_0.pad_out_b" type="conduit" dir="end">
+  <port name="pad_out_b" internal="pad_out_b" />
+ </interface>
+ <module
+   name="gpio_0"
+   kind="altera_gpio"
+   version="18.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="AUTO_DEVICE" value="10AX066H2F34E2SG" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
+  <parameter name="EXT_DRIVER_PARAM" value="false" />
+  <parameter name="GENERATE_SDC_FILE" value="false" />
+  <parameter name="IP_MIGRATE_PORT_MAP_FILE">altddio_bidir_port_map.csv</parameter>
+  <parameter name="PIN_TYPE_GUI" value="Output" />
+  <parameter name="SIZE" value="1" />
+  <parameter name="device_family" value="Arria 10" />
+  <parameter name="gui_areset_mode" value="None" />
+  <parameter name="gui_bus_hold" value="false" />
+  <parameter name="gui_diff_buff" value="true" />
+  <parameter name="gui_enable_cke" value="false" />
+  <parameter name="gui_enable_migratable_port_names" value="false" />
+  <parameter name="gui_enable_termination_ports" value="false" />
+  <parameter name="gui_hr_logic" value="false" />
+  <parameter name="gui_io_reg_mode" value="none" />
+  <parameter name="gui_open_drain" value="false" />
+  <parameter name="gui_pseudo_diff" value="true" />
+  <parameter name="gui_separate_io_clks" value="false" />
+  <parameter name="gui_sreset_mode" value="None" />
+  <parameter name="gui_use_oe" value="false" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>
