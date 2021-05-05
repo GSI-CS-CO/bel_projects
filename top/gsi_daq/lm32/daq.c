@@ -471,9 +471,7 @@ void daqDeviceFeedBackReset( register DAQ_DEVICE_T* pThis )
 {
    DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
    FSM_INIT_FSM( FB_READY, label='Reset' );
-   ramRingReset( &pFeedback->aktionBuffer.index );
-   pFeedback->aktionBuffer.index.offset = 0;
-   pFeedback->aktionBuffer.index.capacity = ARRAY_SIZE( pFeedback->aktionBuffer.aAction );
+   QUEUE_INIT_MEMBER( pFeedback, aktionBuffer, DAQ_ACTION_ITEM_T );
 }
 #endif
 
@@ -506,15 +504,8 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
                                         const unsigned int fgNumber
                                       )
 {
-   DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
-   if( ramRingGetRemainingCapacity( &pFeedback->aktionBuffer.index ) > 0 )
-   {
-      const unsigned int i = ramRingGetWriteIndex( &pFeedback->aktionBuffer.index );
-      ramRingIncWriteIndex( &pFeedback->aktionBuffer.index );
-      pFeedback->aktionBuffer.aAction[i].fgNumber = fgNumber;
-      pFeedback->aktionBuffer.aAction[i].action = what;
-   }
-   else
+   const DAQ_ACTION_ITEM_T act = { .action = what, .fgNumber = fgNumber };
+   if( !queuePush( &pThis->feedback.aktionBuffer, &act ) )
    {
       mprintf( ESC_ERROR "Error: DAQ command buffer of slot %u full!\n" ESC_NORMAL,
                daqDeviceGetSlot( pThis ) );
@@ -540,19 +531,18 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
    {
       case FB_READY:
       {
-         if( ramRingGetSize( &pFeedback->aktionBuffer.index ) == 0 )
+         DAQ_ACTION_ITEM_T act;
+         if( !queuePop( &pFeedback->aktionBuffer, &act ) )
          {
             FSM_TRANSITION_SELF( label='No message.' );
             break;
          }
-         const unsigned int i = ramRingGetReadIndex( &pFeedback->aktionBuffer.index );
-         ramRingIncReadIndex( &pFeedback->aktionBuffer.index );
-         pFeedback->fgNumber = pFeedback->aktionBuffer.aAction[i].fgNumber;
+         pFeedback->fgNumber = act.fgNumber;
          DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          pSetChannel->sequenceContinuous = 0;
          pActChannel->sequenceContinuous = 0;
-         if( pFeedback->aktionBuffer.aAction[i].action == FB_OFF )
+         if( act.action == FB_OFF )
          {
             ATOMIC_SECTION()
             {
@@ -564,8 +554,8 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
             FSM_TRANSITION_SELF( label='Switch both channels off\nif stop-message received.' );
             break;
          }
-         DAQ_ASSERT( pFeedback->aktionBuffer.aAction[i].action == FB_ON );
 
+         DAQ_ASSERT( act.action == FB_ON );
          daqChannelSetTriggerDelay( pSetChannel, 10 ); //TODO
         // daqChannelEnableTriggerMode( pSetChannel );
         // daqChannelEnableEventTrigger( pSetChannel );

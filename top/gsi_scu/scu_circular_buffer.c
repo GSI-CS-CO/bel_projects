@@ -72,10 +72,6 @@ void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, con
    }
 }
 
-//#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
-
-
-
 /** @brief add a message to a message buffer
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
@@ -113,14 +109,16 @@ MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue )
    m.adr = -1;
    return m;
 }
-#endif
+#endif //_CONFIG_USE_OLD_CB
+
+//#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
 void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
 {
   const RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
 #ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
   if( next_head == mb->ring_tail )
-     mprintf( ESC_WARNING"DAQ buffer overflow!\n"ESC_NORMAL );
+     mprintf( ESC_WARNING "DAQ buffer overflow!\n" ESC_NORMAL );
 #endif
   mb->ring_data[mb->ring_head] = m;
   mb->ring_head = next_head;

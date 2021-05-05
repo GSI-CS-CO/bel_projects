@@ -56,14 +56,81 @@ typedef struct
 } SW_QUEUE_T;
 
 /*! ---------------------------------------------------------------------------
+ * @brief Generates the memory buffer name from the given queue name.
+ * @param qeueName Name of the queue.
+ */
+#define QUEUE_GET_MEM_NAME( qeueName ) __ ## qeueName ## _mem__
+
+/*! ---------------------------------------------------------------------------
  * @brief Reservation of static memory for the queue containment.
- * @param memName Name of the memory area to static allocate.
+ * @param name Name of the queue.
  * @param maxCapacity Maximum number of payload items.
  * @param ITEM_TYP Data type of payload item.
  */
-#define QUEUE_ALLOC_STATIC_MEM( memName, maxCapacity, ITEM_TYP )              \
-   uint8_t memName[ maxCapacity * sizeof(ITEM_TYP) ]
+#define QUEUE_ALLOC_STATIC_MEM( name, maxCapacity, ITEM_TYP )                 \
+   uint8_t QUEUE_GET_MEM_NAME( name )[ maxCapacity * sizeof(ITEM_TYP) ]
 
+/*! ---------------------------------------------------------------------------
+ * @brief Static initializer for a queue object.
+ * @param name Name of the queue.
+ * @param maxCapacity Maximum number of payload items.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_STATIC_INITIALIZER( name, maxCapacity, ITEM_TYP )               \
+   {                                                                          \
+      .indexes.offset   = 0,                                                  \
+      .indexes.capacity = maxCapacity,                                        \
+      .indexes.start    = 0,                                                  \
+      .indexes.end      = 0,                                                  \
+      .itemSize         = sizeof(ITEM_TYP),                                   \
+      .pBuffer          = QUEUE_GET_MEM_NAME( name )                          \
+   }
+
+/*! ---------------------------------------------------------------------------
+ * @brief Initializer for queues as member object in a structure.
+ * @see QUEUE_IMPLEMENT 
+ * @param name Name of the queue.
+ * @param maxCapacity Maximum number of payload items.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_STATIC_MEMBER_INITIALIZER( name, maxCapacity, ITEM_TYP )        \
+   .name = QUEUE_STATIC_INITIALIZER( name,  maxCapacity, ITEM_TYP )
+
+/*! ---------------------------------------------------------------------------
+ * @brief Implements a queue object as member object of a structure.
+ *
+ * Example: Implementing and initializing a queue as member object of a
+ *          structure with 42 payload items.
+ * @code
+ * typedef struct
+ * {
+ *    int a;
+ *    int b;
+ *    int c;
+ * } MY_ITEM_T;
+ *
+ * typedef struct
+ * {
+ *    QUEUE_IMPLEMENT( myQueue, 42, MY_ITEM_T );
+ *    int some;
+ *    int others;
+ * } MY_STRUCT_WITH_QUEUE_T;
+ * 
+ * MY_STRUCT_WITH_QUEUE_T myStruct = 
+ * {
+ *    QUEUE_STATIC_MEMBER_INITIALIZER( myQueue, 42, ITEM_TYP ),
+ *    some = 4711,
+ *    others = 57 
+ * };
+ * @endcode
+ * @param name Name of the queue to create.
+ * @param maxCapacity Maximum number of payload items.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_IMPLEMENT( name, maxCapacity, ITEM_TYP )                        \
+   QUEUE_ALLOC_STATIC_MEM( name, maxCapacity, ITEM_TYP );                     \
+   SW_QUEUE_T name
+   
 /*! ---------------------------------------------------------------------------
  * @brief Creates a queue object in the .data memory segment.
  * 
@@ -95,16 +162,8 @@ typedef struct
  * @param ITEM_TYP Data type of payload item.
  */
 #define QUEUE_CREATE_STATIC( name, maxCapacity, ITEM_TYP )                    \
-   QUEUE_ALLOC_STATIC_MEM( name ## _mem, maxCapacity, ITEM_TYP );             \
-   SW_QUEUE_T name =                                                          \
-   {                                                                          \
-      .indexes.offset   = 0,                                                  \
-      .indexes.capacity = maxCapacity,                                        \
-      .indexes.start    = 0,                                                  \
-      .indexes.end      = 0,                                                  \
-      .itemSize         = sizeof(ITEM_TYP),                                   \
-      .pBuffer          = name ## _mem                                        \
-   }
+   QUEUE_IMPLEMENT( name, maxCapacity, ITEM_TYP ) =                           \
+      QUEUE_STATIC_INITIALIZER( name, maxCapacity, ITEM_TYP )
 
 /*! ---------------------------------------------------------------------------
  * @brief Creates and initialized a software queue with a offset in
@@ -157,9 +216,22 @@ void queueCreate( SW_QUEUE_T* pThis,
    queueCreateOffset( pThis, pBuffer, 0, itemSize, capacity );
 }
 
-#define QEUE_CREATE( pThis, aBuffer, ITEM_TYP )       \
+#define QUEUE_CREATE( pThis, aBuffer, ITEM_TYP )       \
    queueCreate( pThis, aBuffer, sizeof(ITEM_TYP),     \
                 sizeof(aBuffer) / sizeof(ITEM_TYP) )
+
+/*! ---------------------------------------------------------------------------
+ * @brief Runtime initialization when the queue is a member of a structure.
+ * @param parentPtr Pointer of the parent object which includes the queue.
+ * @param qeueName Name of the queue member variable.
+ * @param ITEM_TYP Data type of payload item.
+ */
+#define QUEUE_INIT_MEMBER( parentPtr, qeueName, ITEM_TYP )                    \
+   queueCreate( &(parentPtr)->qeueName,                                       \
+                 (parentPtr)->QUEUE_GET_MEM_NAME( qeueName ),                 \
+                 sizeof( ITEM_TYP ),                                          \
+                 sizeof( (parentPtr)->QUEUE_GET_MEM_NAME( qeueName )) /       \
+                     sizeof( ITEM_TYP ) )
 
 /*! ---------------------------------------------------------------------------
  * @brief Clears the queue.

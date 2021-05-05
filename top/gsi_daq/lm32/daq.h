@@ -45,14 +45,13 @@
 #endif
 
 #ifndef __DOCFSM__
-#include <stdbool.h>
-#include <scu_bus.h>
-#include <daq_descriptor.h>
-#ifndef CONFIG_DAQ_SINGLE_APP
-// #include  <daq_command_interface.h>
- #include <scu_function_generator.h>
- #include <daq_ring_admin.h>
-#endif
+ #include <stdbool.h>
+ #include <scu_bus.h>
+ #include <daq_descriptor.h>
+ #ifndef CONFIG_DAQ_SINGLE_APP
+  #include <scu_function_generator.h>
+  #include <sw_queue.h>
+ #endif
 #endif
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -389,29 +388,15 @@ typedef struct PACKED_SIZE
    * @brief Operation code.
    * @see DAQ_FEEDBACK_ACTION_T
    */
-   uint8_t action;
+   DAQ_FEEDBACK_ACTION_T action;
 
   /*!
    * @brief Number of function generator.
    */
-   uint8_t fgNumber;
+   unsigned int fgNumber;
 } DAQ_ACTION_ITEM_T;
 
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ_DEVICE
- * @brief DAQ action ring buffer.
- */
-typedef struct PACKED_SIZE
-{ /*!
-   * @brief Action data buffer.
-   */
-   DAQ_ACTION_ITEM_T  aAction[2];
-
-  /*!
-   * @brief Ring buffer indexes administration.
-   */
-   RAM_RING_INDEXES_T index;
-} DAQ_ACTION_BUFFER;
+#define DAQ_ACTION_QUEUE_SIZE 2
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
@@ -438,7 +423,7 @@ typedef struct
   /*!
    * @brief Waiting queue for the next switch actions.
    */
-   DAQ_ACTION_BUFFER     aktionBuffer;
+   QUEUE_IMPLEMENT( aktionBuffer, DAQ_ACTION_QUEUE_SIZE, DAQ_ACTION_ITEM_T );
 } DAQ_FEEDBACK_T;
 
 

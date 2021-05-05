@@ -47,7 +47,6 @@ namespace FG
 {
 #endif
 
-#define RING_SIZE   64
 #define DAQ_RING_SIZE  2048
 //#define DAQ_RING_SIZE 512
 //#define DAQ_RING_SIZE  1024
@@ -83,7 +82,6 @@ RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel 
    return 0;
 }
 
-#ifdef _CONFIG_NO_DISPATCHER
 /*!
  * @brief Thread save version of cbgetCoun
  * @see cbgetCount
@@ -96,9 +94,6 @@ RING_POS_T cbgetCountSave( volatile FG_CHANNEL_REG_T* pCr, const unsigned int ch
    criticalSectionExit();
    return ret;
 }
-#else
- #define cbgetCountSave cbgetCount
-#endif
 
 /** @brief check if a channel buffer is full
  *  @param cr channel register
@@ -142,8 +137,7 @@ bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
    return true;
 }
 
-#ifdef _CONFIG_NO_DISPATCHER
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Thread save version of cbRead
  * @see cbRead
  */
@@ -158,11 +152,8 @@ bool cbReadSave( volatile FG_CHANNEL_BUFFER_T* pCb,
    return ret;
 }
 
-#else
- #define cbReadSave cbRead
-#endif
-
 #ifdef _CONFIG_USE_OLD_CB
+
 typedef struct PACKED_SIZE
 {
    uint32_t  msg;
@@ -225,12 +216,6 @@ bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, cons
    return true;
 }
 
-#ifndef _CONFIG_NO_DISPATCHER
- #define hasMessageSave has_msg
- #define popMessageSave remove_msg
- #define getMessageSave getMessage
-#else
-
 /*! ---------------------------------------------------------------------------
  * @brief Thread save version of has_msg
  * @see has_msg
@@ -270,7 +255,6 @@ bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer,
    criticalSectionExit();
    return ret;
 }
-#endif
 
 #endif
 
