@@ -15,15 +15,7 @@
 /*!
  * @see scu_main.c
  */
-extern volatile uint16_t*           g_pScub_base;
-
-#ifdef _CONFIG_USE_OLD_CB
-/*!
- * @see scu_main.c
- */
-extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
-#endif
-
+extern volatile uint16_t*     g_pScub_base;
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 
 /*! ---------------------------------------------------------------------------

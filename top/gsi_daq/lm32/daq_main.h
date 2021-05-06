@@ -47,10 +47,19 @@ extern "C" {
 #endif
 
 #ifndef CONFIG_DAQ_SINGLE_APP
- #ifndef _CONFIG_USE_OLD_CB
-   typedef uint32_t DAQ_QUEUE_SLOT_T;
-   extern SW_QUEUE_T g_queueAddacDaq;
- #endif
+
+/*!
+ * @ingroup DAQ
+ * @brief Payload data type for the message queue g_queueAddacDaq. 
+ */
+typedef uint32_t DAQ_QUEUE_SLOT_T;
+
+/*!
+ * @ingroup DAQ
+ * @brief Message queue for ADDAC/ACU DAQs
+ */
+extern SW_QUEUE_T g_queueAddacDaq;
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @ingroup TASK

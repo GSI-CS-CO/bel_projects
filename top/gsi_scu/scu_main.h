@@ -59,9 +59,7 @@
 #include "scu_circular_buffer.h"
 #include "event_measurement.h"
 
-#ifndef _CONFIG_USE_OLD_CB
 #include <sw_queue.h>
-#endif
 
 /*!
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
@@ -109,32 +107,24 @@ extern SCU_SHARED_DATA_T g_shared;
  */
 extern volatile uint32_t __reset_count;
 
-#ifdef _CONFIG_USE_OLD_CB
+#ifdef CONFIG_DBG_MEASURE_IRQ_TIME
 /*!
- * @brief Number of message queues.
+ * @brief Holding the time between the last two happened interrupts.
+ * @note For debugging purposes only!
  */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-  #define QUEUE_CNT 4
-#else
-  #define QUEUE_CNT 3
+extern TIME_MEASUREMENT_T g_irqTimeMeasurement;
 #endif
 
+
 /*!
- * @brief Type of message origin
+ * @todo find the related definitions in the source code of SAFTLIB and
+ *       replace it by a common header file!
  */
-typedef enum
-{
-   DEVBUS = 0, /*!<@brief From MIL-device.            */
-   DEVSIO = 1, /*!<@brief From MIL-device via SCU-bus */
-   SWI    = 2  /*!<@brief From Linux host             */
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   ,DAQ   = 3  /*!<@brief From ADDAC-DAQ              */
+#define ADDR_SCUBUS 0x00
+#define ADDR_SWI    0x10
+#ifdef CONFIG_MIL_FG
+  #define ADDR_DEVBUS 0x20
 #endif
-} MSG_ORIGIN_T;
-
-extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
-
-#else
 
 #define CONFIG_QUEUE_ALARM
 
@@ -153,27 +143,6 @@ void pushInQueue( SW_QUEUE_T* pThis, const void* pItem );
 
 #else
 #define pushInQueue queuePush
-#endif
-
-#endif /* else ifdef _CONFIG_USE_OLD_CB */
-
-#ifdef CONFIG_DBG_MEASURE_IRQ_TIME
-/*!
- * @brief Holding the time between the last two happened interrupts.
- * @note For debugging purposes only!
- */
-extern TIME_MEASUREMENT_T g_irqTimeMeasurement;
-#endif
-
-
-/*!
- * @todo find the related definitions in the source code of SAFTLIB and
- *       replace it by a common header file!
- */
-#define ADDR_SCUBUS 0x00
-#define ADDR_SWI    0x10
-#ifdef CONFIG_MIL_FG
-#define ADDR_DEVBUS 0x20
 #endif
 
 /*! ---------------------------------------------------------------------------

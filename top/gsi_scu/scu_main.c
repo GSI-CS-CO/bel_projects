@@ -45,8 +45,6 @@ TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
 
 //  #define _CONFIG_NO_INTERRUPT
 
-
-
 extern ONE_WIRE_T g_oneWireBase;
 
 /*====================== Begin of shared memory area ========================*/
@@ -83,18 +81,6 @@ volatile unsigned int* g_pScu_mil_base    = NULL;
 volatile uint32_t*     g_pMil_irq_base    = NULL;
 #endif /* CONFIG_MIL_FG */
 
-#ifdef _CONFIG_USE_OLD_CB
-/*!
- * @brief  Memory space of message queue.
- */
-volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
-#endif
-
-
-#if defined( CONFIG_QUEUE_ALARM ) && !defined( _CONFIG_USE_OLD_CB )
-   QUEUE_CREATE_STATIC( g_queueAlarm, MAX_FG_CHANNELS, SW_QUEUE_T* );
-#endif
-
 /*===========================================================================*/
 /*! ---------------------------------------------------------------------------
  * @see scu_main.h
@@ -110,8 +96,13 @@ void die( const char* pErrorMessage )
 #endif
 }
 
-#ifndef _CONFIG_USE_OLD_CB
 #ifdef CONFIG_QUEUE_ALARM
+/*
+ * Alarm queue containing the pointer of queues in which has been happend
+ * a overflow.
+ */
+QUEUE_CREATE_STATIC( g_queueAlarm, MAX_FG_CHANNELS, SW_QUEUE_T* );
+
 /*! ---------------------------------------------------------------------------
  * @brief Put a message in the given queue object.
  * 
@@ -154,14 +145,14 @@ STATIC inline void queuePollAlarm( void )
 
    #undef QEUE2STRING
 
-   mprintf( ESC_ERROR "\nERROR: Queue \"%s\" has overflowed! Capacity: %d\n" ESC_NORMAL,
+   mprintf( ESC_ERROR
+            "ERROR: Queue \"%s\" has overflowed! Capacity: %d\n"
+            ESC_NORMAL,
             str, queueGetMaxCapacity( pOverflowedQueue ) );
 }
-
 #else
    #define queuePollAlarm()
-#endif
-#endif
+#endif /* else if CONFIG_QUEUE_ALARM */
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
@@ -230,18 +221,6 @@ STATIC void msDelayBig( const uint64_t ms )
    }
 }
 
-#ifdef _CONFIG_USE_OLD_CB
-/*
- * Static check of compatibility.
- */
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( MSI_T ) == sizeof( MSI_ITEM_T ) );
-STATIC_ASSERT( offsetof( MSI_T, msg ) == offsetof( MSI_ITEM_T, msg ) );
-STATIC_ASSERT( offsetof( MSI_T, adr ) == offsetof( MSI_ITEM_T, adr ) );
-STATIC_ASSERT( offsetof( MSI_T, sel ) == offsetof( MSI_ITEM_T, sel ) );
-#endif
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
@@ -263,30 +242,22 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
          handleAdacFg( slot, FG2_BASE );
       }
 
-#ifdef CONFIG_MIL_FG
+   #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
-      #ifdef _CONFIG_USE_OLD_CB
-         add_msg( &g_aMsg_buf[0], DEVSIO, (MSI_T*)pMessage );
-      #else
          STATIC_ASSERT( sizeof( slot ) == sizeof(QUEUE_MIL_SOCKET_T) );
          pushInQueue( &g_queueMilSio, &slot );
-      #endif
       }
-#endif
+   #endif
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   #ifdef CONFIG_SCU_DAQ_INTEGRATION
       if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       {
-      #ifdef _CONFIG_USE_OLD_CB
-         add_msg( &g_aMsg_buf[0], DAQ, (MSI_T*)pMessage );
-      #else
          STATIC_ASSERT( sizeof( slot ) == sizeof( DAQ_QUEUE_SLOT_T ) );
          pushInQueue( &g_queueAddacDaq, &slot );
-      #endif
       }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
-#endif
+   #endif
    }
 }
 
@@ -334,12 +305,8 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Command message from SAFT-lib
             */
-          #ifdef _CONFIG_USE_OLD_CB
-            add_msg( &g_aMsg_buf[0], SWI, (MSI_T*)&m );
-          #else
             STATIC_ASSERT( sizeof( m.msg ) == sizeof( SAFT_CMD_T ) );
             pushInQueue( &g_queueSaftCmd, &m.msg );
-          #endif
             break;
          }
 
@@ -348,12 +315,8 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from MIL-bus respectively device-bus.
             */
-         #ifdef _CONFIG_USE_OLD_CB
-            add_msg( &g_aMsg_buf[0], DEVBUS, (MSI_T*)&m );
-         #else
             STATIC_ASSERT( sizeof( m.msg ) == sizeof( QUEUE_MIL_SOCKET_T ) );
             pushInQueue( &g_queueMilBus, &m.msg );
-         #endif
             break;
          }
      #endif /* ifdef CONFIG_MIL_FG */
@@ -375,28 +338,15 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  */
 ONE_TIME_CALL void initInterrupt( void )
 {
-#ifdef _CONFIG_USE_OLD_CB
-   cbReset( &g_aMsg_buf[0], SWI );
-#else
    initCommandHandler();
-#endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
- #ifdef _CONFIG_USE_OLD_CB
-   cbReset( &g_aMsg_buf[0], DAQ );
- #else
    queueReset( &g_queueAddacDaq );
- #endif
 #endif
 #ifdef CONFIG_MIL_FG
- #ifdef _CONFIG_USE_OLD_CB
-   cbReset( &g_aMsg_buf[0], DEVSIO );
-   cbReset( &g_aMsg_buf[0], DEVBUS );
- #else
    queueReset( &g_queueMilSio );
    queueReset( &g_queueMilBus );
- #endif
 #endif
-#if defined( CONFIG_QUEUE_ALARM ) && !defined( _CONFIG_USE_OLD_CB )
+#ifdef CONFIG_QUEUE_ALARM
    queueReset( &g_queueAlarm );
 #endif
 #ifndef _CONFIG_NO_INTERRUPT
@@ -473,7 +423,7 @@ void scanFgs( void )
               #ifdef CONFIG_MIL_FG
                  g_pScu_mil_base,
               #endif
-                 &g_shared.fg_macros[0],
+                 g_shared.fg_macros,
                  &g_shared.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
@@ -622,9 +572,7 @@ void main( void )
       if( _endram != STACK_MAGIC )
          die( "Stack overflow!" );
       schedule();
-   #ifndef _CONFIG_USE_OLD_CB
       queuePollAlarm();
-   #endif
    }
 }
 

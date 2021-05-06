@@ -29,7 +29,6 @@
 
 #include <scu_function_generator.h>
 #include <stdbool.h>
-
 #if defined(__lm32__)
   #include <lm32Interrupts.h>
 #endif
@@ -53,11 +52,12 @@ namespace FG
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 
-/** @brief check if a channel buffer is empty
- *  @param cr channel register
- *  @param channel number of the channel
- *  @retval true Buffer is empty.
- *  @retval false Buffer is not empty.
+/*! --------------------------------------------------------------------------
+ * @brief check if a channel buffer is empty
+ * @param cr channel register
+ * @param channel number of the channel
+ * @retval true Buffer is empty.
+ * @retval false Buffer is not empty.
  */
 STATIC inline
 bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
@@ -65,10 +65,11 @@ bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
    return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
 
-/** @brief get the fill level  of a channel buffer
- *  @param cr channel register
- *  @param channel number of the channel
- *  @return Number of items of type FG_CHANNEL_REG_T
+/*! ---------------------------------------------------------------------------
+ * @brief get the fill level  of a channel buffer
+ * @param cr channel register
+ * @param channel number of the channel
+ * @return Number of items of type FG_CHANNEL_REG_T
  */
 STATIC inline
 RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel )
@@ -82,7 +83,7 @@ RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel 
    return 0;
 }
 
-/*!
+/*! ------------------------------------------------------------------------
  * @brief Thread save version of cbgetCoun
  * @see cbgetCount
  */
@@ -95,11 +96,12 @@ RING_POS_T cbgetCountSave( volatile FG_CHANNEL_REG_T* pCr, const unsigned int ch
    return ret;
 }
 
-/** @brief check if a channel buffer is full
- *  @param cr channel register
- *  @param channel number of the channel
- *  @retval true Buffer is full.
- *  @retval false Buffer is not full.
+/*! -------------------------------------------------------------------------
+ * @brief check if a channel buffer is full
+ * @param cr channel register
+ * @param channel number of the channel
+ * @retval true Buffer is full.
+ * @retval false Buffer is not full.
  */
 STATIC inline
 bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
@@ -107,13 +109,14 @@ bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
    return (cr[channel].wr_ptr + 1) % (BUFFER_SIZE) == cr[channel].rd_ptr;
 }
 
-/** @brief read a parameter set from a channel buffer
- *  @param pCb pointer to the first channel buffer
- *  @param pCr pointer to the first channel register
- *  @param channel number of the channel
- *  @param pPset the data from the buffer is written to this address
- *  @retval false Buffer is empty no data read.
- *  @retval true Date successful read.
+/*! ---------------------------------------------------------------------------
+ * @brief read a parameter set from a channel buffer
+ * @param pCb pointer to the first channel buffer
+ * @param pCr pointer to the first channel register
+ * @param channel number of the channel
+ * @param pPset the data from the buffer is written to this address
+ * @retval false Buffer is empty no data read.
+ * @retval true Date successful read.
  */
 STATIC inline
 bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
@@ -152,112 +155,6 @@ bool cbReadSave( volatile FG_CHANNEL_BUFFER_T* pCb,
    return ret;
 }
 
-#ifdef _CONFIG_USE_OLD_CB
-
-typedef struct PACKED_SIZE
-{
-   uint32_t  msg;
-   uint32_t  adr;
-   uint32_t  sel;
-} MSI_T;
-
-typedef struct PACKED_SIZE
-{
-   RING_POS_T ring_head;
-   RING_POS_T ring_tail;
-   MSI_T      ring_data[RING_SIZE];
-} FG_MESSAGE_BUFFER_T;
-
-//#pragma pack(pop)
-
-void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int, FG_PARAM_SET_T*);
-
-void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int num );
-
-int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, const MSI_T* pm );
-
-MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
-
-
-/** @brief test if a queue has any messages
- *  @param mb pointer to the first message buffer
- *  @param queue number of the queue
- */
-STATIC inline
-bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue)
-{
-   return (mb[queue].ring_head != mb[queue].ring_tail);
-}
-
-/*!
- * @brief Resets the message queue
- */
-STATIC inline
-void cbReset( volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue )
-{
-   mb[queue].ring_head = 0;
-   mb[queue].ring_tail = 0;
-}
-
-/*!
- * @brief test if a queue has any messages
- * @param pMessage Target address of message to copy
- * @param pMsgBuffer pointer to the first message buffer
- * @param queue number of the queue
- * @retval false No message read.
- * @retval true Message read.
- */
-STATIC inline
-bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
-{
-   if( !has_msg( pMsgBuffer, queue ) )
-      return false;
-   *pMessage = remove_msg( pMsgBuffer, queue );
-   return true;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Thread save version of has_msg
- * @see has_msg
- */
-STATIC inline
-bool hasMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
-{
-   criticalSectionEnter();
-   const bool ret = has_msg( mb, queue );
-   criticalSectionExit();
-   return ret;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Thread save version of remove_msg
- * @see remove_msg
- */
-STATIC inline
-MSI_T popMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
-{
-   criticalSectionEnter();
-   const MSI_T ret = remove_msg( mb, queue );
-   criticalSectionExit();
-   return ret;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Thread save version of getMessage
- * @see getMessage
- */
-STATIC inline
-bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer,
-                     const unsigned int queue )
-{
-   criticalSectionEnter();
-   const bool ret = getMessage( pMessage, pMsgBuffer, queue );
-   criticalSectionExit();
-   return ret;
-}
-
-#endif
-
 #endif /* ifdef __lm32__ */
 
 #ifdef __cplusplus
@@ -293,13 +190,13 @@ typedef struct PACKED_SIZE
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 
-/*!
+/*! --------------------------------------------------------------------------
  * @brief Adds a MIL-DAQ data item of type MIL_DAQ_OBJ_T
  *        in the ring buffer.
  */
 void add_daq_msg(volatile MIL_DAQ_BUFFER_T* db, MIL_DAQ_OBJ_T d );
 
-/*!
+/*! --------------------------------------------------------------------------
  * @brief Returns true when the MIL-DAQ-buffer is full.
  */
 STATIC inline bool isMilDaqBufferFull( const MIL_DAQ_BUFFER_T* pDaqBuffer )
@@ -307,7 +204,7 @@ STATIC inline bool isMilDaqBufferFull( const MIL_DAQ_BUFFER_T* pDaqBuffer )
    return (pDaqBuffer->ring_tail + 1) % DAQ_RING_SIZE == pDaqBuffer->ring_head;
 }
 
-/*!
+/*! --------------------------------------------------------------------------
  * @brief Removes the oldest item in the MIL-DAQ ring-buffer.
  */
 STATIC inline void removeOldestItem( MIL_DAQ_BUFFER_T* pDaqBuffer )
@@ -317,7 +214,6 @@ STATIC inline void removeOldestItem( MIL_DAQ_BUFFER_T* pDaqBuffer )
 }
 
 #endif /* ifdef __lm32__ */
-
 #endif /* ifndef CONFIG_MIL_DAQ_USE_RAM */
 
 #ifdef __cplusplus

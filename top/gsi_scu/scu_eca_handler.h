@@ -22,10 +22,10 @@ extern "C" {
  */
 typedef struct
 {
-   const uint32_t             tag;    //!<@brief ECA-tag
-   volatile ECA_QUEUE_ITEM_T* pQueue;
+   const uint32_t    tag;    //!<@brief ECA-tag
+   ECA_QUEUE_ITEM_T* pQueue;
 #ifdef _CONFIG_ECA_BY_MSI
-   ECA_CONTROL_T*             pControl;
+   ECA_CONTROL_T*    pControl;
 #endif
 } ECA_OBJ_T;
 

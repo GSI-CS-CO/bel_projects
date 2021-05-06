@@ -9,29 +9,37 @@
 #ifndef _SCU_COMMAND_HANDLER_H
 #define _SCU_COMMAND_HANDLER_H
 
-#include "scu_main.h"
-
-#ifndef _CONFIG_USE_OLD_CB
 #include <sw_queue.h>
-#endif
+#include "scu_main.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef _CONFIG_USE_OLD_CB
+/*!
+ * @brief Data type for the waiting queue which holds the commands form
+ *        SAFT-LIB.
+ * @see g_queueSaftCmd
+ */
+typedef uint32_t SAFT_CMD_T;
+   
+/*!
+ * @brief Waiting queue containing commands sent by SAFT-LIB.
+ */
 extern SW_QUEUE_T g_queueSaftCmd;
 
-typedef uint32_t SAFT_CMD_T;
-
+/*! ---------------------------------------------------------------------------
+ * @brief Initializing of the SAFT-LIB command handler.
+ */
 STATIC inline ALWAYS_INLINE
 void initCommandHandler( void )
 {
    queueReset( &g_queueSaftCmd );
 }
 
-#endif
-   
+/*! ---------------------------------------------------------------------------
+ * @brief Evaluates and executes the commands received by SAFT-LIB.
+ */
 void commandHandler( register TASK_T* pThis FG_UNUSED );
 
 #ifdef __cplusplus

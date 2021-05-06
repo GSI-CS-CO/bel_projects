@@ -29,9 +29,10 @@ extern volatile unsigned int* g_pScu_mil_base;
 
 //#define CONFIG_DEBUG_SWI
 
-#ifndef _CONFIG_USE_OLD_CB
+/*
+ * Creating a message queue for by the interrupt received messages from SAFT-LIB
+ */
 QUEUE_CREATE_STATIC( g_queueSaftCmd, MAX_FG_CHANNELS, SAFT_CMD_T );
-#endif
 
 #ifdef CONFIG_DEBUG_SWI
 #warning Function printSwIrqCode() is activated! In this mode the software will not work!
@@ -71,30 +72,6 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    TIME_MEASUREMENT_T tm = TIME_MEASUREMENT_INITIALIZER;
 #endif
 
-#ifdef _CONFIG_USE_OLD_CB
-   MSI_T m;
-   /*
-    * Is a message from SATF-LIB for FG present?
-    */
-   if( !getMessageSave( &m, &g_aMsg_buf[0], SWI ) )
-   { /*
-      * No, leave this function.
-      */
-      return;
-   }
-
-   FG_ASSERT( m.adr == ADDR_SWI );
-
- #ifdef CONFIG_USE_RESCAN_FLAG
-   /*
-    * signal busy to saftlib
-    */
-   g_shared.fg_busy = 1;
- #endif
-
-   const unsigned int code  = GET_UPPER_HALF( m.msg );
-   const unsigned int value = GET_LOWER_HALF( m.msg );
-#else
    SAFT_CMD_T cmd;
   /*
    * Is a message from SATF-LIB for FG present?
@@ -114,7 +91,6 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    const unsigned int code  = GET_UPPER_HALF( cmd );
    const unsigned int value = GET_LOWER_HALF( cmd );
 
-#endif
   /*
    * When debug mode active only.
    */
@@ -162,22 +138,15 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    {
       case FG_OP_RESET_CHANNEL:
       {
-      #if __GNUC__ >= 9
-         #pragma GCC diagnostic push
-         #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-      #endif
-         fgResetAndInit( &g_shared.fg_regs[0],
+         fgResetAndInit( g_shared.fg_regs,
                          value,
-                         &g_shared.fg_macros[0],
+                         g_shared.fg_macros,
                          (void*)g_pScub_base
                         #ifdef CONFIG_MIL_FG
                          ,(void*)g_pScu_mil_base
                         #endif
                        );
-      #if __GNUC__ >= 9
-         #pragma GCC diagnostic pop
-      #endif
-      #ifdef CONFIG_USE_SENT_COUNTER
+       #ifdef CONFIG_USE_SENT_COUNTER
          g_aFgChannels[value].param_sent = 0;
       #endif
          break;

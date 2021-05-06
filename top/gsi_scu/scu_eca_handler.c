@@ -35,19 +35,28 @@ ECA_OBJ_T g_eca =
  */
 void initEcaQueue( void )
 {
-#ifdef _CONFIG_ECA_BY_MSI
-   #warning ECA by MSI not ready yet!
-   g_eca.pControl = ecaControlGetRegisters();
-   if( g_eca.pControl == NULL )
-      die( "Can't find ECA control register!" );
- //TODO
- //  ecaControlSetMsiLM32TargetAddress( g_eca.pControl, (void*)pMyMsi, true );
- //  ecaControlGetAndResetChannelValidCount( g_eca.pControl );
- //  ECA_CONTROL_ACCESS( g_eca.pControl, channelNumberSelect );
-#endif
    g_eca.pQueue = ecaGetLM32Queue();
    if( g_eca.pQueue == NULL )
       die( "Can't find ECA queue for LM32!" );
+
+#ifdef _CONFIG_ECA_BY_MSI
+   #warning ECA by MSI not tested yet!
+   g_eca.pControl = ecaControlGetRegisters();
+   if( g_eca.pControl == NULL )
+      die( "Can't find ECA control register!" );
+
+   const unsigned int valCnt = ecaControlGetAndResetChannelValidCount( g_eca.pControl );
+   if( valCnt != 0 )
+   {
+      mprintf( ESC_FG_MAGENTA
+               "Pending actions: %d\n"
+               "Cleared actions: %d\n"
+               ESC_NORMAL,
+               valCnt,
+               ecaClearQueue( g_eca.pQueue, valCnt ));
+   }
+   ecaControlSetMsiLM32TargetAddress( g_eca.pControl, (void*)pMyMsi, true );
+#endif
    //!@todo Check this story with ECA-tag...
    //g_eca.tag = g_eca.pQueue->tag;
    mprintf( ESC_FG_MAGENTA

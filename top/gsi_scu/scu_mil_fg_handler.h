@@ -22,11 +22,21 @@ extern "C" {
 
 extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
 
-#ifndef _CONFIG_USE_OLD_CB
- typedef uint32_t QUEUE_MIL_SOCKET_T;
- extern SW_QUEUE_T g_queueMilSio;
- extern SW_QUEUE_T g_queueMilBus;
-#endif
+/*!
+ * @brief Payload data type for the message queus g_queueMilSio and
+ *        g_queueMilBus.
+ */
+typedef uint32_t QUEUE_MIL_SOCKET_T;
+
+/*!
+ * @brief Message queue for MIL devices over SCU-BUS SIO-adapter.
+ */
+extern SW_QUEUE_T g_queueMilSio;
+
+/*!
+ * @brief Message queue for MIL devices over MIL connector.
+ */
+extern SW_QUEUE_T g_queueMilBus;
 
 #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
  #ifndef CONFIG_READ_MIL_TIME_GAP

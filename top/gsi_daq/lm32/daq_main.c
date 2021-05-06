@@ -34,9 +34,8 @@
 
 #ifndef CONFIG_DAQ_SINGLE_APP
  extern volatile uint16_t* g_pScub_base;
-#ifndef _CONFIG_USE_OLD_CB
+ 
  QUEUE_CREATE_STATIC( g_queueAddacDaq, 2 * MAX_FG_CHANNELS, DAQ_QUEUE_SLOT_T );
-#endif
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
@@ -381,17 +380,6 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 
    if( s_pDaqDevice == NULL )
    {
-   #ifdef _CONFIG_USE_OLD_CB   
-      MSI_T m;
-      /*
-       * Did the interrupt put a message in the pipe?
-       */
-      if( getMessageSave( &m, &g_aMsg_buf[0], DAQ ) )
-      {
-         s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs,
-                                                     m.msg + SCUBUS_START_SLOT );
-      }
-   #else
       DAQ_QUEUE_SLOT_T slot;
       /*
        * Did the interrupt put a message in the pipe?
@@ -400,7 +388,6 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
       {
          s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
       }
-   #endif
    }
 
    if( s_pDaqDevice != NULL )
