@@ -202,6 +202,7 @@ void queueCreateOffset( SW_QUEUE_T* pThis,
  * 
  * // Queue is ready to use. 
  * @endcode
+ * @see QUEUE_INIT_MEMBER
  * @param pThis Pointer to the concerned queue object. 
  * @param pBuffer Pointer to the reserved memory area in bytes.
  * @param itemSize Size in bytes for a single queue item.
@@ -222,15 +223,45 @@ void queueCreate( SW_QUEUE_T* pThis,
 
 /*! ---------------------------------------------------------------------------
  * @brief Runtime initialization when the queue is a member of a structure.
+ * 
+ * Macro invokes the function queueCreate by specific parameters.
+ * @see queueCreate \n
+ * Example:
+ * @code
+ * typedef struct
+ * {
+ *    int a;
+ *    int b;
+ *    int c;
+ * } MY_ITEM_T;
+ *
+ * typedef struct
+ * {
+ *    QUEUE_IMPLEMENT( myQueue, 42, MY_ITEM_T );
+ *    int some;
+ *    int others;
+ * } MY_STRUCT_WITH_QUEUE_T;
+ * 
+ * void main( void )
+ * {
+ *    MY_STRUCT_WITH_QUEUE_T myStructWithQueue;
+ * 
+ *    myStructWithQueue.some   = 4711;
+ *    myStructWithQueue.others = -815;
+ *    QUEUE_INIT_MEMBER( &myStructWithQueue, myQueue, MY_ITEM_T );
+ *
+ *    // Do something...
+ * }
+ * @endcode
  * @param parentPtr Pointer of the parent object which includes the queue.
  * @param qeueName Name of the queue member variable.
  * @param ITEM_TYP Data type of payload item.
  */
 #define QUEUE_INIT_MEMBER( parentPtr, qeueName, ITEM_TYP )                    \
-   queueCreate( &(parentPtr)->qeueName,                                       \
-                 (parentPtr)->QUEUE_GET_MEM_NAME( qeueName ),                 \
-                 sizeof( ITEM_TYP ),                                          \
-                 sizeof( (parentPtr)->QUEUE_GET_MEM_NAME( qeueName )) /       \
+   queueCreate( &((parentPtr)->qeueName),                                     \
+                (parentPtr)->QUEUE_GET_MEM_NAME( qeueName ),                  \
+                sizeof( ITEM_TYP ),                                           \
+                sizeof( (parentPtr)->QUEUE_GET_MEM_NAME( qeueName )) /        \
                      sizeof( ITEM_TYP ) )
 
 /*! ---------------------------------------------------------------------------
