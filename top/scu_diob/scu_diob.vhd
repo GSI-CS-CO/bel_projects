@@ -4237,7 +4237,7 @@ PORT MAP
                                               when "00000011" | "00000100" => -- Input Modul in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
                                                       IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
-                                                      IOBP_SK_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(109), PIO_SYNC(111), PIO_SYNC(105), PIO_SYNC(103), PIO_SYNC(89));
+                                                      IOBP_SK_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(91), PIO_SYNC(93), PIO_SYNC(105), PIO_SYNC(103), PIO_SYNC(89));
                                                       IOBP_SK_Output(4) <=  (OTHERS => '0');  
                           
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 4	
@@ -4277,7 +4277,7 @@ PORT MAP
                                                   when "00000011" | "00000100" => -- Input Modul in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
                                                       IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);  
-                                                      IOBP_SK_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(107));
+                                                      IOBP_SK_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(109), PIO_SYNC(111), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(107));
                                                       IOBP_SK_Output(6) <=  (OTHERS => '0');  
                   
                                               when "00000101"  | "00000110" => -- Output Modul in slot 6	
@@ -4317,7 +4317,7 @@ PORT MAP
                                                   when "00000011" | "00000100" => -- Input Modul in slot 8
                                                       AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
                                                       IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);  
-                                                      IOBP_SK_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(125));
+                                                      IOBP_SK_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(141), PIO_SYNC(139), PIO_SYNC(125));
                                                       IOBP_SK_Output(8) <=  (OTHERS => '0');  
               
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 8	
@@ -7468,11 +7468,11 @@ END IF;
 ( PIO_ENA(56),  PIO_ENA(60),  PIO_ENA(62),  PIO_ENA(52),  PIO_ENA(54),  PIO_ENA(58)) <= PIO_ENA_SLOT_1;
 ( PIO_ENA(96),  PIO_ENA(100), PIO_ENA(102), PIO_ENA(92),  PIO_ENA(94),  PIO_ENA(98)) <= PIO_ENA_SLOT_2;
 ( PIO_ENA(73),  PIO_ENA(77),  PIO_ENA(79),  PIO_ENA(69),  PIO_ENA(71),  PIO_ENA(75)) <= PIO_ENA_SLOT_3;
-( PIO_ENA(101), PIO_ENA(109), PIO_ENA(111), PIO_ENA(105), PIO_ENA(103), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
+( PIO_ENA(101), PIO_ENA(91), PIO_ENA(93), PIO_ENA(105), PIO_ENA(103), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
 ( PIO_ENA(53),  PIO_ENA(61),  PIO_ENA(63),  PIO_ENA(57),  PIO_ENA(55),  PIO_ENA(59)) <= PIO_ENA_SLOT_5;
-( PIO_ENA(119), PIO_ENA(127), PIO_ENA(129), PIO_ENA(123), PIO_ENA(121), PIO_ENA(107))<= PIO_ENA_SLOT_6;
+( PIO_ENA(119), PIO_ENA(109), PIO_ENA(111), PIO_ENA(123), PIO_ENA(121), PIO_ENA(107))<= PIO_ENA_SLOT_6;
 ( PIO_ENA(35),  PIO_ENA(43),  PIO_ENA(45),  PIO_ENA(39),  PIO_ENA(37),  PIO_ENA(41)) <= PIO_ENA_SLOT_7;
-( PIO_ENA(137), PIO_ENA(127), PIO_ENA(129), PIO_ENA(123), PIO_ENA(121), PIO_ENA(125))<= PIO_ENA_SLOT_8;
+( PIO_ENA(137), PIO_ENA(127), PIO_ENA(129), PIO_ENA(141), PIO_ENA(139), PIO_ENA(125))<= PIO_ENA_SLOT_8;
 ( PIO_ENA(30),  PIO_ENA(22),  PIO_ENA(20),  PIO_ENA(26),  PIO_ENA(28),  PIO_ENA(24)) <= PIO_ENA_SLOT_9;
 ( PIO_ENA(130), PIO_ENA(138), PIO_ENA(128), PIO_ENA(140), PIO_ENA(126), PIO_ENA(142))<= PIO_ENA_SLOT_10;
 ( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= PIO_ENA_SLOT_11;
@@ -7481,11 +7481,11 @@ END IF;
 ( PIO_OUT(56),  PIO_OUT(60),  PIO_OUT(62),  PIO_OUT(52),  PIO_OUT(54),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
 ( PIO_OUT(96),  PIO_OUT(100), PIO_OUT(102), PIO_OUT(92),  PIO_OUT(94),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
 ( PIO_OUT(73),  PIO_OUT(77),  PIO_OUT(79),  PIO_OUT(69),  PIO_OUT(71),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
-( PIO_OUT(101), PIO_OUT(109), PIO_OUT(111), PIO_OUT(105), PIO_OUT(103), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
+( PIO_OUT(101), PIO_OUT(91), PIO_OUT(93), PIO_OUT(105), PIO_OUT(103), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
 ( PIO_OUT(53),  PIO_OUT(61),  PIO_OUT(63),  PIO_OUT(57),  PIO_OUT(55),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
-( PIO_OUT(119), PIO_OUT(127), PIO_OUT(129), PIO_OUT(123), PIO_OUT(121), PIO_OUT(107))<= PIO_OUT_SLOT_6;
+( PIO_OUT(119), PIO_OUT(109), PIO_OUT(111), PIO_OUT(123), PIO_OUT(121), PIO_OUT(107))<= PIO_OUT_SLOT_6;
 ( PIO_OUT(35),  PIO_OUT(43),  PIO_OUT(45),  PIO_OUT(39),  PIO_OUT(37),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
-( PIO_OUT(137), PIO_OUT(127), PIO_OUT(129), PIO_OUT(123), PIO_OUT(121), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+( PIO_OUT(137), PIO_OUT(127), PIO_OUT(129), PIO_OUT(141), PIO_OUT(139), PIO_OUT(125))<= PIO_OUT_SLOT_8;
 ( PIO_OUT(30),  PIO_OUT(22),  PIO_OUT(20),  PIO_OUT(26),  PIO_OUT(28),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
 ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
 ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
