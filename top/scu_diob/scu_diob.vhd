@@ -4357,7 +4357,7 @@ PORT MAP
                                                   when "00000011" | "00000100" => -- Input Modul in slot 10
                                                       AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6)); 
                                                       IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
-                                                      IOBP_SK_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
+                                                      IOBP_SK_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(140), PIO_SYNC(138), PIO_SYNC(126), PIO_SYNC(128), PIO_SYNC(142));
                                                       IOBP_SK_Output(10) <=  (OTHERS => '0');  
       
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 10	
@@ -4377,7 +4377,7 @@ PORT MAP
                                                   when "00000011" | "00000100" => -- Input Modul in slot 11
                                                       AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0)); 
                                                       IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
-                                                      IOBP_SK_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
+                                                      IOBP_SK_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(40), PIO_SYNC(38), PIO_SYNC(44), PIO_SYNC(46), PIO_SYNC(42));
                                                       IOBP_SK_Output(11) <=  (OTHERS => '0');  
   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 11	
@@ -4397,7 +4397,7 @@ PORT MAP
                                                   when "00000011" | "00000100" => -- Input Modul in slot 12
                                                       AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6)); 
                                                       IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
-                                                      IOBP_SK_Input(12)  <= (PIO_SYNC(112),PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
+                                                      IOBP_SK_Input(12)  <= (PIO_SYNC(112),PIO_SYNC(122), PIO_SYNC(120), PIO_SYNC(108), PIO_SYNC(110), PIO_SYNC(124));
                                                       IOBP_SK_Output(12) <=  (OTHERS => '0');  
   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12	
