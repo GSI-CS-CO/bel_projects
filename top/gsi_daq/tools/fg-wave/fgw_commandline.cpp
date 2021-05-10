@@ -57,7 +57,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                  "The format of the \"wave-file\" is identical like for the"
                  " saft-lib service program \"saft-fg-ctl\".\n"
                  "The calculation of the quadratic polynomial is:\n\t" ESC_BOLD
-                 "f(x) = (coeff_a * 2^shift_a) * x^2 + (coeff_b * 2^shift_b) * x + (coeff_c * 2^32);\n"
+                 "f(x) = (coeff_a * 2^shift_a) / 2 * x^2 + (coeff_b * 2^shift_b) * x + (coeff_c * 2^32);\n"
                  "\t{0 <= x < (250*2^step)}\n"
                  "\t{0 <= step <= 7}\n\n" ESC_NORMAL
                  "Options:\n";

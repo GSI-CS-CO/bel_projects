@@ -78,7 +78,7 @@ double Polynom::calcPolynom( const POLYNOM_T& polynom, const int64_t x )
 
    return daq::calcPolynom( (m_rCommandline.isNoSquareTerm()?
                                ZERO:
-                               (static_cast<int64_t>( polynom.coeff_a ) << polynom.control.bv.shift_a)),
+                               (static_cast<int64_t>( polynom.coeff_a ) << polynom.control.bv.shift_a)) / 2,
                             (m_rCommandline.isNoLinearTerm()?
                                ZERO:
                                (static_cast<int64_t>( polynom.coeff_b ) << polynom.control.bv.shift_b)),
