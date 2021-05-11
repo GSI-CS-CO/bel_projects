@@ -55,7 +55,7 @@ void DaqInterface::init( void )
 {
    uint32_t tmpMagicNumber;
    getEbAccess()->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
-                           offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ) );
+                           offsetof( FG::SCU_SHARED_DATA_T, oFg.fg_magic_number ) );
 
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );

@@ -100,8 +100,8 @@ void fgResetAndInit( FG_CHANNEL_REG_T* cr,
 STATIC inline ALWAYS_INLINE
 int getFgMacroIndexFromFgRegister( const unsigned int channel )
 {
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
-   return g_shared.fg_regs[channel].macro_number;
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.fg_regs ) );
+   return g_shared.oFg.fg_regs[channel].macro_number;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -111,8 +111,8 @@ STATIC inline ALWAYS_INLINE
 FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
 {
    FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
-   return g_shared.fg_macros[getFgMacroIndexFromFgRegister( channel )];
+   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.oFg.fg_macros ));
+   return g_shared.oFg.fg_macros[getFgMacroIndexFromFgRegister( channel )];
 }
 
 /*! ---------------------------------------------------------------------------

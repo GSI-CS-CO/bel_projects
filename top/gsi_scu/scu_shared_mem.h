@@ -193,21 +193,13 @@ STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_temp ) ==
                offsetof( SCU_TEMPERATURE_T, ext_temp ) + sizeof( uint32_t ));
 #endif
 
-
-/*! ---------------------------------------------------------------------------
+/*!
  * @ingroup SHARED_MEMORY
- * @brief Definition of shared memory area for the communication between LM32
- *        and Linux.
- * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
- * @see saftlib/drivers/fg_regs.h
+ * @brief Data type in shared memory for exchanging function generator data
+ *        between SAFT-lib and LM32-firmware.
  */
 typedef struct PACKED_SIZE
 {  /*!
-    * @brief Object including some SCU temperature values.
-    */
-   SCU_TEMPERATURE_T   oTemperatures;
-
-   /*!
     * @brief Magic number for recognizing the LM32 firmware.
     * @see FG_MAGIC_NUMBER in saftlib/drivers/fg_regs.h
     */
@@ -289,6 +281,51 @@ typedef struct PACKED_SIZE
     *      saftlib/drivers/FunctionGeneratorFirmware.cpp
     */
    uint32_t           fg_busy;
+} FG_SHARED_DATA_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_magic_number ) == 0 );
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_version ) ==
+               offsetof( FG_SHARED_DATA_T, fg_magic_number ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_mb_slot ) ==
+               offsetof( FG_SHARED_DATA_T, fg_version ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_num_channels ) ==
+               offsetof( FG_SHARED_DATA_T, fg_mb_slot ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_buffer_size ) ==
+               offsetof( FG_SHARED_DATA_T, fg_num_channels ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_macros ) ==
+               offsetof( FG_SHARED_DATA_T, fg_buffer_size ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_regs ) ==
+               offsetof( FG_SHARED_DATA_T, fg_macros ) +
+               MAX_FG_MACROS * sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_buffer ) ==
+               offsetof( FG_SHARED_DATA_T, fg_regs ) +
+               MAX_FG_CHANNELS * sizeof( FG_CHANNEL_REG_T ));
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Definition of shared memory area for the communication between LM32
+ *        and Linux.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
+ * @see saftlib/drivers/fg_regs.h
+ */
+typedef struct PACKED_SIZE
+{  /*!
+    * @brief Object including some SCU temperature values.
+    */
+   SCU_TEMPERATURE_T   oTemperatures;
+
+   /*!
+    * @brief Object including all function generator data for exchanging
+    *        between SAFT-lib and LM32.
+    */
+   FG_SHARED_DATA_T    oFg;
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    /*!
@@ -317,7 +354,8 @@ typedef struct PACKED_SIZE
  * @brief All member variables under this offset value are known in SAFTLIB.
  * @note Don't move any of it!  
  */
-#define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_busy ) + sizeof( uint32_t ) )
+#define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, oFg ) + sizeof( FG_SHARED_DATA_T ) )
+
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaqRing ) + sizeof( RAM_RING_INDEXES_T ))
@@ -373,29 +411,11 @@ STATIC_ASSERT( offsetof( FG_CHANNEL_REG_T, state ) ==
                offsetof( FG_CHANNEL_REG_T, tag ) + sizeof( uint32_t ));
 STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) ==
                offsetof( FG_CHANNEL_REG_T, state ) + sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_magic_number ) ==
-               offsetof( SCU_SHARED_DATA_T, oTemperatures ) + sizeof( SCU_TEMPERATURE_T ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_version ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_magic_number ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_mb_slot ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_version ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_num_channels ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_mb_slot ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer_size ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_num_channels ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_macros ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_buffer_size ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_regs ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_macros ) +
-               MAX_FG_MACROS * sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_regs ) +
-               MAX_FG_CHANNELS * sizeof( FG_CHANNEL_REG_T ));
+
+
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oFg ) ==
+               offsetof( SCU_SHARED_DATA_T, oTemperatures ) +
+               sizeof( SCU_TEMPERATURE_T ));
 
  #ifdef CONFIG_MIL_DAQ_USE_RAM
   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) == FG_SHM_BASE_SIZE );
@@ -462,23 +482,23 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
  */
-#define SCU_SHARED_DATA_INITIALIZER                      \
-{                                                        \
-   .oTemperatures.board_id         = SCU_INVALID_VALUE,  \
-   .oTemperatures.ext_id           = SCU_INVALID_VALUE,  \
-   .oTemperatures.backplane_id     = SCU_INVALID_VALUE,  \
-   .oTemperatures.board_temp       = SCU_INVALID_VALUE,  \
-   .oTemperatures.ext_temp         = SCU_INVALID_VALUE,  \
-   .oTemperatures.backplane_temp   = SCU_INVALID_VALUE,  \
-   .fg_magic_number                = FG_MAGIC_NUMBER,    \
-   .fg_version                     = FG_VERSION,         \
-   .fg_mb_slot                     = SCU_INVALID_VALUE,  \
-   .fg_num_channels                = MAX_FG_CHANNELS,    \
-   .fg_buffer_size                 = BUFFER_SIZE,        \
-   .fg_macros                      = {{0,0,0,0}},        \
-   .fg_busy                        = 0                   \
-   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                 \
-   __DAQ_SHARAD_MEM_INITIALIZER_ITEM                     \
+#define SCU_SHARED_DATA_INITIALIZER                          \
+{                                                            \
+   .oTemperatures.board_id         = SCU_INVALID_VALUE,      \
+   .oTemperatures.ext_id           = SCU_INVALID_VALUE,      \
+   .oTemperatures.backplane_id     = SCU_INVALID_VALUE,      \
+   .oTemperatures.board_temp       = SCU_INVALID_VALUE,      \
+   .oTemperatures.ext_temp         = SCU_INVALID_VALUE,      \
+   .oTemperatures.backplane_temp   = SCU_INVALID_VALUE,      \
+   .oFg.fg_magic_number            = FG_MAGIC_NUMBER,        \
+   .oFg.fg_version                 = FG_VERSION,             \
+   .oFg.fg_mb_slot                 = SCU_INVALID_VALUE,      \
+   .oFg.fg_num_channels            = MAX_FG_CHANNELS,        \
+   .oFg.fg_buffer_size             = BUFFER_SIZE,            \
+   .oFg.fg_macros                  = {{0,0,0,0}},            \
+   .oFg.fg_busy                    = 0                       \
+   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                     \
+   __DAQ_SHARAD_MEM_INITIALIZER_ITEM                         \
 }
 
 /* ++++++++++ End  Initializer +++++++++++++++++++++++++++++++++++++++++++++ */

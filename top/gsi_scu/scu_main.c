@@ -203,7 +203,7 @@ void tellMailboxSlot( void )
       die( "No free slots in MsgBox left!" );
 
    mprintf( ESC_FG_MAGENTA "Configured slot %d in MsgBox\n" ESC_NORMAL , slot );
-   g_shared.fg_mb_slot = slot;
+   g_shared.oFg.fg_mb_slot = slot;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -364,8 +364,8 @@ STATIC void initAndScan( void )
    /*
     *  No function generator macros assigned to channels at startup!
     */
-   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.fg_regs); channel++ )
-      g_shared.fg_regs[channel].macro_number = SCU_INVALID_VALUE;
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.oFg.fg_regs); channel++ )
+      g_shared.oFg.fg_regs[channel].macro_number = SCU_INVALID_VALUE;
 
    /*
     * Update one wire ID and temperatures.
@@ -423,7 +423,7 @@ void scanFgs( void )
               #ifdef CONFIG_MIL_FG
                  g_pScu_mil_base,
               #endif
-                 g_shared.fg_macros,
+                 g_shared.oFg.fg_macros,
                  &g_shared.oTemperatures.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop

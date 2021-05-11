@@ -84,9 +84,9 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    }
 
    /*
-    * signal busy to saftlib
+    * Signal busy to saftlib.
     */
-   g_shared.fg_busy = 1;
+   g_shared.oFg.fg_busy = 1;
 
    const unsigned int code  = GET_UPPER_HALF( cmd );
    const unsigned int value = GET_LOWER_HALF( cmd );
@@ -138,9 +138,9 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    {
       case FG_OP_RESET_CHANNEL:
       {
-         fgResetAndInit( g_shared.fg_regs,
+         fgResetAndInit( g_shared.oFg.fg_regs,
                          value,
-                         g_shared.fg_macros,
+                         g_shared.oFg.fg_macros,
                          (void*)g_pScub_base
                         #ifdef CONFIG_MIL_FG
                          ,(void*)g_pScu_mil_base
@@ -227,7 +227,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    /*
     * signal done to saftlib
     */
-   g_shared.fg_busy = 0;
+   g_shared.oFg.fg_busy = 0;
 }
 
 /*! ---------------------------------------------------------------------------

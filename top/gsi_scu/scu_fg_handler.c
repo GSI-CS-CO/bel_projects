@@ -33,7 +33,7 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
    /*!
     * @todo Move the FG-buffer into the DDR3-RAM!
     */
-   if( !cbReadSave( &g_shared.fg_buffer[0], &g_shared.fg_regs[0],
+   if( !cbReadSave( &g_shared.oFg.fg_buffer[0], &g_shared.oFg.fg_regs[0],
                 pThis->cntrl_reg.bv.number, &pset ) )
    {
       hist_addx( HISTORY_XYZ_MODULE, "buffer empty, no parameter sent",
@@ -65,7 +65,7 @@ void handleAdacFg( const unsigned int slot,
                                                           slot, fgAddrOffset );
    const unsigned int channel = pFgRegs->cntrl_reg.bv.number;
 
-   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   if( channel >= ARRAY_SIZE( g_shared.oFg.fg_regs ) )
    {
       mprintf( ESC_ERROR"%s: Channel of ADAC FG out of range: %d\n"ESC_NORMAL,
                __func__, channel );
@@ -74,14 +74,14 @@ void handleAdacFg( const unsigned int slot,
 
 #ifndef __DOXYGEN__
    STATIC_ASSERT( sizeof( pFgRegs->ramp_cnt_high ) == sizeof( pFgRegs->ramp_cnt_low ) );
-   STATIC_ASSERT( sizeof( g_shared.fg_regs[0].ramp_count ) >= 2 * sizeof( pFgRegs->ramp_cnt_low ) );
+   STATIC_ASSERT( sizeof( g_shared.oFg.fg_regs[0].ramp_count ) >= 2 * sizeof( pFgRegs->ramp_cnt_low ) );
 #endif
    /*
     * Read the hardware ramp counter respectively polynomial counter
     * from the concerning function generator.
     */
-   g_shared.fg_regs[channel].ramp_count = MERGE_HIGH_LOW( ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_high ),
-                                                          ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_low ));
+   g_shared.oFg.fg_regs[channel].ramp_count = MERGE_HIGH_LOW( ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_high ),
+                                                              ADDAC_FG_ACCESS( pFgRegs, ramp_cnt_low ));
 
    const uint16_t controlReg = ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 );
    /*
