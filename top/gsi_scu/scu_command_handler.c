@@ -82,12 +82,12 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       */
       return;
    }
- #ifdef CONFIG_USE_RESCAN_FLAG
+
    /*
     * signal busy to saftlib
     */
    g_shared.fg_busy = 1;
- #endif
+
    const unsigned int code  = GET_UPPER_HALF( cmd );
    const unsigned int value = GET_LOWER_HALF( cmd );
 
@@ -223,12 +223,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          break;
       }
    }
-#ifdef CONFIG_USE_RESCAN_FLAG
+
    /*
     * signal done to saftlib
     */
    g_shared.fg_busy = 0;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
