@@ -424,7 +424,7 @@ void scanFgs( void )
                  g_pScu_mil_base,
               #endif
                  g_shared.fg_macros,
-                 &g_shared.ext_id );
+                 &g_shared.oTemperatures.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
 #endif

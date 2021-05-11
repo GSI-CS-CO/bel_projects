@@ -48,16 +48,6 @@
 #include <scu_circular_buffer.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
-#if 0
-  #ifdef __cplusplus
-     #define __DAQ_SHARED_IO_T Scu::daq::DAQ_SHARED_IO_T
-  #else
-     /*
-      * @ingroup SHARED_MEMORY
-      */
-     #define __DAQ_SHARED_IO_T DAQ_SHARED_IO_T
-  #endif
-#endif
 #else
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     #include <daq_ramBuffer.h>
@@ -74,9 +64,14 @@ namespace FG
 #endif
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-
+/*!
+ * @brief Data type for set and actual values of MIL-DAQs
+ */
 typedef uint16_t MIL_DAQ_T;
 
+/*!
+ * @brief Data set of a MIL-DAQ in the DDR3-RAM.
+ */
 typedef struct PACKED_SIZE
 {
    uint64_t   timestamp;
@@ -94,7 +89,7 @@ STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, channel ) ==
                offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_T) );
 STATIC_ASSERT( sizeof( MIL_DAQ_RAM_ITEM_T ) ==
                 offsetof( MIL_DAQ_RAM_ITEM_T, channel ) + sizeof(uint32_t) );
-#endif
+#endif /* ifndef __DOXYGEN__ */
 
 /*!
  * @brief Number of required RAM-items per Mil-DAQ item
@@ -109,18 +104,7 @@ typedef union PACKED_SIZE
    MIL_DAQ_RAM_ITEM_T item;
 } MIL_DAQ_RAM_ITEM_PAYLOAD_T;
 
-#else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
-
-#if 0
- #ifdef __cplusplus
-   #define _MIL_DAQ_BUFFER_T Scu::MiLdaq::MIL_DAQ_BUFFER_T
- #else
-   #define _MIL_DAQ_BUFFER_T MIL_DAQ_BUFFER_T
- #endif
-#endif
-#endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
-
-#define CONFIG_USE_RESCAN_FLAG /* A very bad idea!!! :-( */
+#endif /* ifdef CONFIG_MIL_DAQ_USE_RAM */
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -144,16 +128,12 @@ typedef enum
    FG_BUFFER       = 0x4538 /*!<@brief [fg_num_channels] */
 } SHARED_ADDRESS_T;
 
-/*! ---------------------------------------------------------------------------
+/*!
  * @ingroup SHARED_MEMORY
- * @brief Definition of shared memory area for the communication between LM32
- *        and Linux.
- * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
- * @see saftlib/drivers/fg_regs.h
+ * @brief Data type of the temperature object in the shared memory.
  */
 typedef struct PACKED_SIZE
-{
-   /*!
+{  /*!
     * @brief 1Wire ID of the pcb temp sensor
     * @see BOARD_ID in saftlib/drivers/fg_regs.
     * @todo Check if this variable is really necessary in the future.
@@ -194,6 +174,38 @@ typedef struct PACKED_SIZE
     * @todo Check if this variable is really necessary in the future.
     */
    uint32_t            backplane_temp;
+
+} SCU_TEMPERATURE_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, board_id ) == 0 );
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, ext_id ) ==
+               offsetof( SCU_TEMPERATURE_T, board_id ) + sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_id ) ==
+               offsetof( SCU_TEMPERATURE_T, ext_id ) + sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, board_temp ) ==
+               offsetof( SCU_TEMPERATURE_T, backplane_id ) +
+               sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, ext_temp ) ==
+               offsetof( SCU_TEMPERATURE_T, board_temp ) +
+               sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_temp ) ==
+               offsetof( SCU_TEMPERATURE_T, ext_temp ) + sizeof( uint32_t ));
+#endif
+
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Definition of shared memory area for the communication between LM32
+ *        and Linux.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
+ * @see saftlib/drivers/fg_regs.h
+ */
+typedef struct PACKED_SIZE
+{  /*!
+    * @brief Object including some SCU temperature values.
+    */
+   SCU_TEMPERATURE_T   oTemperatures;
 
    /*!
     * @brief Magic number for recognizing the LM32 firmware.
@@ -271,14 +283,13 @@ typedef struct PACKED_SIZE
     */
    FG_CHANNEL_BUFFER_T fg_buffer[MAX_FG_CHANNELS];
 
-#ifndef CONFIG_FW_VERSION_3
    /*!
     * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
     * @see FunctionGeneratorFirmware::firmware_rescan in
     *      saftlib/drivers/FunctionGeneratorFirmware.cpp
     */
    uint32_t           fg_busy;
-#endif
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    /*!
     * @brief MIL-DAQ ring-buffer administration indexes
@@ -288,25 +299,16 @@ typedef struct PACKED_SIZE
 #else
    /*!
     * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
+    * @var daq_buf
     */
-   //_MIL_DAQ_BUFFER_T   daq_buf;
    ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) daq_buf;
- #if defined( CONFIG_USE_RESCAN_FLAG ) && defined( CONFIG_FW_VERSION_3 )
-   /*!
-    * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
-    * @see FunctionGeneratorFirmware::firmware_rescan in
-    *      saftlib/drivers/FunctionGeneratorFirmware.cpp
-    * @todo <b>Remove this f... flag ASAP!!!!</b>
-    */
-   uint32_t            fg_rescan_busy;
- #endif
 #endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    /*!
     * @brief Shared memory objects of non-MIL-DAQs (ADDAC/ACU-DAQ)
+    * @var sDaq
     */
-   //__DAQ_SHARED_IO_T sDaq;
    ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) sDaq;
 #endif
 } SCU_SHARED_DATA_T;
@@ -315,22 +317,14 @@ typedef struct PACKED_SIZE
  * @brief All member variables under this offset value are known in SAFTLIB.
  * @note Don't move any of it!  
  */
-#ifdef CONFIG_FW_VERSION_3
-   #define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_buffer ) +        \
-                              sizeof( FG_CHANNEL_BUFFER_T ) * MAX_FG_CHANNELS )
+#define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_busy ) + sizeof( uint32_t ) )
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+  #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaqRing ) + sizeof( RAM_RING_INDEXES_T ))
 #else
-   #define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, fg_busy ) + sizeof( uint32_t ) )
+  #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) ))
 #endif
 
-#ifdef CONFIG_FW_VERSION_3
-   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, fg_rescan_busy ) + sizeof( uint32_t ) )
-#else
- #ifdef CONFIG_MIL_DAQ_USE_RAM
-   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaqRing ) + sizeof( RAM_RING_INDEXES_T ))
- #else
-   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) ))
- #endif
-#endif
 
 #define GET_SCU_SHM_OFFSET( m ) offsetof( SCU_SHARED_DATA_T, m )
 
@@ -379,23 +373,8 @@ STATIC_ASSERT( offsetof( FG_CHANNEL_REG_T, state ) ==
                offsetof( FG_CHANNEL_REG_T, tag ) + sizeof( uint32_t ));
 STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) ==
                offsetof( FG_CHANNEL_REG_T, state ) + sizeof( uint32_t ));
-
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, board_id ) == 0 );
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ext_id ) ==
-               offsetof( SCU_SHARED_DATA_T, board_id ) + sizeof( uint64_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, backplane_id ) ==
-               offsetof( SCU_SHARED_DATA_T, ext_id ) + sizeof( uint64_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, board_temp ) ==
-               offsetof( SCU_SHARED_DATA_T, backplane_id ) +
-               sizeof( uint64_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ext_temp ) ==
-               offsetof( SCU_SHARED_DATA_T, board_temp ) +
-               sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, backplane_temp ) ==
-               offsetof( SCU_SHARED_DATA_T, ext_temp ) + sizeof( uint32_t ));
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_magic_number ) ==
-               offsetof( SCU_SHARED_DATA_T, backplane_temp ) +
-               sizeof( uint32_t ));
+               offsetof( SCU_SHARED_DATA_T, oTemperatures ) + sizeof( SCU_TEMPERATURE_T ));
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_version ) ==
                offsetof( SCU_SHARED_DATA_T, fg_magic_number ) +
                sizeof( uint32_t ));
@@ -418,46 +397,34 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
                offsetof( SCU_SHARED_DATA_T, fg_regs ) +
                MAX_FG_CHANNELS * sizeof( FG_CHANNEL_REG_T ));
 
-#ifdef CONFIG_MIL_DAQ_USE_RAM
- STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) == FG_SHM_BASE_SIZE );
-#else
- STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) == FG_SHM_BASE_SIZE );
-#endif
- 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
  #ifdef CONFIG_MIL_DAQ_USE_RAM
+  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) == FG_SHM_BASE_SIZE );
+ #else
+  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) == FG_SHM_BASE_SIZE );
+ #endif
+ 
+ #ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #ifdef CONFIG_MIL_DAQ_USE_RAM
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
                   offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
                   sizeof( RAM_RING_INDEXES_T ));
- #else
-  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) == DAQ_SHM_OFFET );
- #endif
- STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                offsetof( SCU_SHARED_DATA_T, sDaq ) +
-                sizeof( ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) ));
-#else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
- #ifdef CONFIG_MIL_DAQ_USE_RAM
-  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                 offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
-                 sizeof( RAM_RING_INDEXES_T ));
- #else
-  #ifdef  CONFIG_USE_RESCAN_FLAG
-   #ifdef CONFIG_FW_VERSION_3
-     STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                    offsetof( SCU_SHARED_DATA_T, fg_rescan_busy ) +
-                    sizeof( uint32_t ));
-   #else
-     STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
-                    offsetof( SCU_SHARED_DATA_T, fg_busy ) +
-                    sizeof( uint32_t ));
-   #endif
   #else
-    STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                   offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-                   sizeof( _MIL_DAQ_BUFFER_T ));
+   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) == DAQ_SHM_OFFET );
   #endif
- #endif
-#endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
+  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                 offsetof( SCU_SHARED_DATA_T, sDaq ) +
+                 sizeof( ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) ));
+ #else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
+  #ifdef CONFIG_MIL_DAQ_USE_RAM
+    STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                   offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
+                   sizeof( RAM_RING_INDEXES_T ));
+  #else
+    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
+                   offsetof( SCU_SHARED_DATA_T, fg_busy ) +
+                   sizeof( uint32_t ));
+  #endif
+ #endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
 #endif /* ifndef __DOXYGEN__ */
 
 /* ++++++++++++++ Initializer ++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -476,61 +443,42 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
   #endif
 #endif
 
-#if (FG_VERSION != 3)
- // #warning "Could be incompatiple to SAFTLIB!"
-#endif
-
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-             , .sDaq = DAQ_SHARAD_MEM_INITIALIZER
+     , .sDaq = DAQ_SHARAD_MEM_INITIALIZER
 #else
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
 
-#ifdef CONFIG_USE_RESCAN_FLAG
- #ifdef CONFIG_FW_VERSION_3
-   #define __RESCAN_BUSY_INITIALIZER_3 , .fg_rescan_busy = 0
-   #define __RESCAN_BUSY_INITIALIZER
- #else
-   #define __RESCAN_BUSY_INITIALIZER_3
-   #define __RESCAN_BUSY_INITIALIZER , .fg_busy = 0
- #endif
-#else
-  #define __RESCAN_BUSY_INITIALIZER_3
-  #define __RESCAN_BUSY_INITIALIZER
-#endif
-
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-     __RESCAN_BUSY_INITIALIZER                  \
      , .mdaqRing = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-     __RESCAN_BUSY_INITIALIZER                  \
-     , .daq_buf = {0}                           \
-     __RESCAN_BUSY_INITIALIZER_3
+     , .daq_buf = {0}
 #endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
  */
-#define SCU_SHARED_DATA_INITIALIZER        \
-{                                          \
-   .board_id         = SCU_INVALID_VALUE,  \
-   .ext_id           = SCU_INVALID_VALUE,  \
-   .backplane_id     = SCU_INVALID_VALUE,  \
-   .board_temp       = SCU_INVALID_VALUE,  \
-   .ext_temp         = SCU_INVALID_VALUE,  \
-   .backplane_temp   = SCU_INVALID_VALUE,  \
-   .fg_magic_number  = FG_MAGIC_NUMBER,    \
-   .fg_version       = FG_VERSION,         \
-   .fg_mb_slot       = SCU_INVALID_VALUE,  \
-   .fg_num_channels  = MAX_FG_CHANNELS,    \
-   .fg_buffer_size   = BUFFER_SIZE,        \
-   .fg_macros        = {{0,0,0,0}}         \
-   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM   \
-   __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
+#define SCU_SHARED_DATA_INITIALIZER                      \
+{                                                        \
+   .oTemperatures.board_id         = SCU_INVALID_VALUE,  \
+   .oTemperatures.ext_id           = SCU_INVALID_VALUE,  \
+   .oTemperatures.backplane_id     = SCU_INVALID_VALUE,  \
+   .oTemperatures.board_temp       = SCU_INVALID_VALUE,  \
+   .oTemperatures.ext_temp         = SCU_INVALID_VALUE,  \
+   .oTemperatures.backplane_temp   = SCU_INVALID_VALUE,  \
+   .fg_magic_number                = FG_MAGIC_NUMBER,    \
+   .fg_version                     = FG_VERSION,         \
+   .fg_mb_slot                     = SCU_INVALID_VALUE,  \
+   .fg_num_channels                = MAX_FG_CHANNELS,    \
+   .fg_buffer_size                 = BUFFER_SIZE,        \
+   .fg_macros                      = {{0,0,0,0}},        \
+   .fg_busy                        = 0                   \
+   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                 \
+   __DAQ_SHARAD_MEM_INITIALIZER_ITEM                     \
 }
 
 /* ++++++++++ End  Initializer +++++++++++++++++++++++++++++++++++++++++++++ */
