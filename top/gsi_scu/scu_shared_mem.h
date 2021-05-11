@@ -48,6 +48,7 @@
 #include <scu_circular_buffer.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
+#if 0
   #ifdef __cplusplus
      #define __DAQ_SHARED_IO_T Scu::daq::DAQ_SHARED_IO_T
   #else
@@ -56,6 +57,7 @@
       */
      #define __DAQ_SHARED_IO_T DAQ_SHARED_IO_T
   #endif
+#endif
 #else
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     #include <daq_ramBuffer.h>
@@ -109,12 +111,13 @@ typedef union PACKED_SIZE
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
 
+#if 0
  #ifdef __cplusplus
    #define _MIL_DAQ_BUFFER_T Scu::MiLdaq::MIL_DAQ_BUFFER_T
  #else
    #define _MIL_DAQ_BUFFER_T MIL_DAQ_BUFFER_T
  #endif
-
+#endif
 #endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
 
 #define CONFIG_USE_RESCAN_FLAG /* A very bad idea!!! :-( */
@@ -286,7 +289,8 @@ typedef struct PACKED_SIZE
    /*!
     * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
     */
-   _MIL_DAQ_BUFFER_T   daq_buf;
+   //_MIL_DAQ_BUFFER_T   daq_buf;
+   ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) daq_buf;
  #if defined( CONFIG_USE_RESCAN_FLAG ) && defined( CONFIG_FW_VERSION_3 )
    /*!
     * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
@@ -300,9 +304,10 @@ typedef struct PACKED_SIZE
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    /*!
-    * @brief Shared memory objects of non-MIL-DAQs
+    * @brief Shared memory objects of non-MIL-DAQs (ADDAC/ACU-DAQ)
     */
-   __DAQ_SHARED_IO_T sDaq;
+   //__DAQ_SHARED_IO_T sDaq;
+   ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) sDaq;
 #endif
 } SCU_SHARED_DATA_T;
 
@@ -323,7 +328,7 @@ typedef struct PACKED_SIZE
  #ifdef CONFIG_MIL_DAQ_USE_RAM
    #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaqRing ) + sizeof( RAM_RING_INDEXES_T ))
  #else
-   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( _MIL_DAQ_BUFFER_T ))
+   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) ))
  #endif
 #endif
 
@@ -429,7 +434,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
  #endif
  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                 offsetof( SCU_SHARED_DATA_T, sDaq ) +
-                sizeof( __DAQ_SHARED_IO_T ));
+                sizeof( ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) ));
 #else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
  #ifdef CONFIG_MIL_DAQ_USE_RAM
   STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
@@ -459,7 +464,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 /*!
  * @brief Magic number for the host to recognize the correct firmware.
  */
-#define FG_MAGIC_NUMBER ((uint32_t)0xdeadbeef)
+#define FG_MAGIC_NUMBER ((uint32_t)0xDEADBEEF)
 
 #define SCU_INVALID_VALUE -1
 
