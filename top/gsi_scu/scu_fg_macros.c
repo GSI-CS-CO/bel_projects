@@ -749,10 +749,6 @@ void fgDisableChannel( const unsigned int channel )
    }
 }
 
-
-#ifdef CONFIG_MIL_FG
-#endif /* ifdef CONFIG_MIL_FG */
-
 /*! ---------------------------------------------------------------------------
  * @brief enables MSI generation for the specified channel.
  *
