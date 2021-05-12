@@ -1,0 +1,105 @@
+\documentclass[12pt,a4paper]{report}
+% Language: English
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\newcommand{\ry}{\rotatebox{90}}
+\begin{document}
+
+\begin{titlepage}
+\vspace{2cm}
+\begin{center}
+\Huge{Documentation Data Master Test System}
+
+\Large{Martin Skorsky}
+
+\Large{Last change: 2021-05-12}
+\end{center}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Hardware}
+\section{SuperMicro fel0069}
+The data master for the test system is hosted on SuperMicro fel0069 with two PEXARIA5d \texttt{(fel0069.acc.gsi.de)}.
+One of these is the data master. The other one is used to analyse the timing messages with snoop.
+The SuperMicro is accessible with \texttt{ssh root@fel0069.acc} via ASL cluster or other hosts.
+The management interface (ILO) is accessible via \texttt{https://fel0069i64.acc}.
+\begin{enumerate}
+\item fel0069.acc.gsi.de
+\begin{itemize}
+\item IP: 140.181.169.146
+\item Location: BG2.009, Rack BG2A.A9, Slot 28
+\end{itemize}
+\item pexaria248t (dev/wbm0), Data master
+\begin{itemize}
+\item IP: 192.168.131.184
+\item MAC: 00:26:7b:00:08:0b
+\item Name: pexaria248t
+\item CID: 55 0113 0012 0
+\item PEXARIA5d, Serie EE
+\end{itemize}
+\item pexaria305t (dev/wbm1), Timing receiver for snoop
+\begin{itemize}
+\item IP: 192.168.131.241
+\item MAC: 00:26:7b:00:08:44
+\item Name: pexaria305t
+\item CID: 55 0113 0069 4
+\item PEXARIA5d, Serie EE
+\end{itemize}
+\end{enumerate}
+After power on, set the IP addresses of the two pexarias. This host has no BootP service.
+
+The SuperMicro is configured for PXE boot and nfsinit with links (follwing
+https://www-acc.gsi.de/wiki/Timing/Intern/TimingSystemHowToHintsForFECS)
+\begin{enumerate}
+\item On ASL cluster links in folder
+\item On ASL cluster links in folder /common/export/nfsinit/fel0069/ for nfsinit.
+
+\end{enumerate}
+
+\section{White Rabbit Switch nwt0473m66}
+Location: BG2.009, Rack BG2A.A9, Slot 29
+blank configuration. Not an access switch or distribution switch
+Access via tsl001, like other switches.
+\chapter{Software}
+\section{Access the Data Master}
+\texttt{dm-cmd tcp/fel0069.acc}
+
+\texttt{dm-sched tcp/fel0069.acc}
+
+\section{Remote Snoop of Timing Messages}
+snoop per remote ssh / set up of ssh without password: use public key.
+\begin{verbatim}
+scp -p your_pub_key.pub user@host:
+ssh user@host
+host$ cat id_dsa.pub >> ~/.ssh/authorized_keys
+\end{verbatim}
+snoop with Python3
+\end{document}
