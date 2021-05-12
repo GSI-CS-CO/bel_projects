@@ -122,10 +122,10 @@ typedef enum
    FG_VERSION_OFS  = 0x528, /*!<@brief version number of the fg macro  8 */
    FG_MB_SLOT      = 0x52C, /*!<@brief mailbox slot for swi from linux     8 */
    FG_NUM_CHANNELS = 0x530, /*!<@brief max number of fg channels   8 */
-   FG_BUFFER_SIZE  = 0x534, /*!<@brief buffersize per channel of fg_buffer     8 */
+   FG_BUFFER_SIZE  = 0x534, /*!<@brief buffersize per channel of aChannelBuffers     8 */
    FG_MACROS       = 0x538, /*!<@brief [256]  hi..lo bytes: slot, device, version, output-bits    8 * 256 */
-   FG_REGS         = 0xD38, /*!<@brief [fg_num_channels]    array of struct channel_regs    8 * 7 * 256 */
-   FG_BUFFER       = 0x4538 /*!<@brief [fg_num_channels] */
+   FG_REGS         = 0xD38, /*!<@brief [maxChannels]    array of struct channel_regs    8 * 7 * 256 */
+   FG_BUFFER       = 0x4538 /*!<@brief [maxChannels] */
 } SHARED_ADDRESS_T;
 
 /*!
@@ -203,14 +203,14 @@ typedef struct PACKED_SIZE
     * @brief Magic number for recognizing the LM32 firmware.
     * @see FG_MAGIC_NUMBER in saftlib/drivers/fg_regs.h
     */
-   uint32_t            fg_magic_number;
+   const uint32_t      magicNumber;
 
    /*!
     * @brief Version of this firmware
     *        0x2 saftlib, 0x3 new msi system with
     * @see FG_VERSION in saftlib/drivers/fg_regs.h
     */
-   uint32_t            fg_version;
+   const uint32_t      version;
 
    /*!
     * @brief Mailbox-slot for host => LM32
@@ -220,7 +220,7 @@ typedef struct PACKED_SIZE
     * @see FunctionGeneratorFirmware::ScanMasterFg() in
     *      saftlib/drivers/FunctionGeneratorFirmware.cpp
     */
-   uint32_t            fg_mb_slot;
+   uint32_t            mailBoxSlot;
 
    /*!
     * @brief Maximum number of function generator channels which can
@@ -230,11 +230,11 @@ typedef struct PACKED_SIZE
     * @see FunctionGeneratorImpl::acquireChannel() in
     *      saftlib/drivers/FunctionGeneratorImpl.cpp
     * @todo Check if this variable is really necessary in the future,
-    *       this information can be obtained by macro ARRAY_SIZE(fg_macros)
+    *       this information can be obtained by macro ARRAY_SIZE(aMacros)
     *       or MAX_FG_CHANNELS. Once this file becomes included in the sources of
     *       SAFTLIB as well.
     */
-   uint32_t            fg_num_channels;
+   const uint32_t       maxChannels;
 
    /*!
     * @brief Maximum size of the data buffer for a single function generator channel.
@@ -245,7 +245,7 @@ typedef struct PACKED_SIZE
     *       Once this file becomes included in the sources of
     *       SAFTLIB as well.
     */
-   uint32_t            fg_buffer_size;
+   const uint32_t      channelBufferSize;
 
    /*!
     * @brief  Array of found function generator channels of
@@ -256,14 +256,14 @@ typedef struct PACKED_SIZE
     * @see scan_all_fgs
     * @see FG_MACROS in saftlib/drivers/fg_regs.h
     */
-   FG_MACRO_T          fg_macros[MAX_FG_MACROS];
+   FG_MACRO_T          aMacros[MAX_FG_MACROS];
 
    /*!
     * @see FG_REGS_BASE_ in saftlib/drivers/fg_regs.h
     * @see FunctionGeneratorImpl::acquireChannel() in
     *      saftlib/drivers/FunctionGeneratorImpl.cpp
     */
-   FG_CHANNEL_REG_T    fg_regs[MAX_FG_CHANNELS];
+   FG_CHANNEL_REG_T    aRegs[MAX_FG_CHANNELS];
 
    /*!
     * @brief Container for all polynomial vectors of all supported
@@ -273,38 +273,38 @@ typedef struct PACKED_SIZE
     * @see FunctionGeneratorImpl::refill()
     *      in saftlib/drivers/FunctionGeneratorImpl.cpp
     */
-   FG_CHANNEL_BUFFER_T fg_buffer[MAX_FG_CHANNELS];
+   FG_CHANNEL_BUFFER_T aChannelBuffers[MAX_FG_CHANNELS];
 
    /*!
     * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
     * @see FunctionGeneratorFirmware::firmware_rescan in
     *      saftlib/drivers/FunctionGeneratorFirmware.cpp
     */
-   uint32_t           fg_busy;
+   uint32_t           busy;
 } FG_SHARED_DATA_T;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_magic_number ) == 0 );
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_version ) ==
-               offsetof( FG_SHARED_DATA_T, fg_magic_number ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, magicNumber ) == 0 );
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, version ) ==
+               offsetof( FG_SHARED_DATA_T, magicNumber ) +
                sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_mb_slot ) ==
-               offsetof( FG_SHARED_DATA_T, fg_version ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, mailBoxSlot ) ==
+               offsetof( FG_SHARED_DATA_T, version ) +
                sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_num_channels ) ==
-               offsetof( FG_SHARED_DATA_T, fg_mb_slot ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, maxChannels ) ==
+               offsetof( FG_SHARED_DATA_T, mailBoxSlot ) +
                sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_buffer_size ) ==
-               offsetof( FG_SHARED_DATA_T, fg_num_channels ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, channelBufferSize ) ==
+               offsetof( FG_SHARED_DATA_T, maxChannels ) +
                sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_macros ) ==
-               offsetof( FG_SHARED_DATA_T, fg_buffer_size ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aMacros ) ==
+               offsetof( FG_SHARED_DATA_T, channelBufferSize ) +
                sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_regs ) ==
-               offsetof( FG_SHARED_DATA_T, fg_macros ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aRegs ) ==
+               offsetof( FG_SHARED_DATA_T, aMacros ) +
                MAX_FG_MACROS * sizeof( uint32_t ));
-STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, fg_buffer ) ==
-               offsetof( FG_SHARED_DATA_T, fg_regs ) +
+STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aChannelBuffers ) ==
+               offsetof( FG_SHARED_DATA_T, aRegs ) +
                MAX_FG_CHANNELS * sizeof( FG_CHANNEL_REG_T ));
 #endif
 
@@ -441,7 +441,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oFg ) ==
                    sizeof( RAM_RING_INDEXES_T ));
   #else
     STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
-                   offsetof( SCU_SHARED_DATA_T, fg_busy ) +
+                   offsetof( SCU_SHARED_DATA_T, busy ) +
                    sizeof( uint32_t ));
   #endif
  #endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
@@ -490,13 +490,13 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oFg ) ==
    .oTemperatures.board_temp       = SCU_INVALID_VALUE,      \
    .oTemperatures.ext_temp         = SCU_INVALID_VALUE,      \
    .oTemperatures.backplane_temp   = SCU_INVALID_VALUE,      \
-   .oFg.fg_magic_number            = FG_MAGIC_NUMBER,        \
-   .oFg.fg_version                 = FG_VERSION,             \
-   .oFg.fg_mb_slot                 = SCU_INVALID_VALUE,      \
-   .oFg.fg_num_channels            = MAX_FG_CHANNELS,        \
-   .oFg.fg_buffer_size             = BUFFER_SIZE,            \
-   .oFg.fg_macros                  = {{0,0,0,0}},            \
-   .oFg.fg_busy                    = 0                       \
+   .oFg.magicNumber                = FG_MAGIC_NUMBER,        \
+   .oFg.version                    = FG_VERSION,             \
+   .oFg.mailBoxSlot                = SCU_INVALID_VALUE,      \
+   .oFg.maxChannels                = MAX_FG_CHANNELS,        \
+   .oFg.channelBufferSize          = BUFFER_SIZE,            \
+   .oFg.aMacros                    = {{0,0,0,0}},            \
+   .oFg.busy                       = 0                       \
    __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                     \
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM                         \
 }

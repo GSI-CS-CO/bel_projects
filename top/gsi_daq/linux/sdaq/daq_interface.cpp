@@ -187,7 +187,7 @@ inline void DaqInterface::probe( void )
     * is loaded.
     */
    getEbAccess()->readLM32( &actMagicNumber, 1,
-                           offsetof( FG::SCU_SHARED_DATA_T, oFg.fg_magic_number ),
+                           offsetof( FG::SCU_SHARED_DATA_T, oFg.magicNumber ),
                            sizeof( actMagicNumber ) );
    if( m_daqLM32Offset != INVALID_OFFSET )
    {/*

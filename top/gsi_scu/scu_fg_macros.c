@@ -557,9 +557,9 @@ void fgEnableChannel( const unsigned int channel )
    {
 #endif
    #ifndef __DOXYGEN__
-      STATIC_ASSERT( sizeof( g_shared.oFg.fg_regs[0].tag ) == sizeof( uint32_t ) );
-      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.oFg.fg_regs[0].tag ) / 2 );
-      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.oFg.fg_regs[0].tag ) / 2 );
+      STATIC_ASSERT( sizeof( g_shared.oFg.aRegs[0].tag ) == sizeof( uint32_t ) );
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.oFg.aRegs[0].tag ) / 2 );
+      STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.oFg.aRegs[0].tag ) / 2 );
    #endif
       /*
        * Note: In the case of ADDAC/ACU-FGs the socket-number is equal
@@ -567,7 +567,7 @@ void fgEnableChannel( const unsigned int channel )
        */
       pAddagFgRegs = addacFgPrepare( (void*)g_pScub_base,
                                      socket, dev,
-                                     g_shared.oFg.fg_regs[channel].tag );
+                                     g_shared.oFg.aRegs[channel].tag );
 #ifdef CONFIG_MIL_FG
    }
    else
@@ -586,7 +586,7 @@ void fgEnableChannel( const unsigned int channel )
   /*
    * Fetch first parameter set from buffer
    */
-   if( cbReadSave( &g_shared.oFg.fg_buffer[0], &g_shared.oFg.fg_regs[0], channel, &pset ) != 0 )
+   if( cbReadSave( &g_shared.oFg.aChannelBuffers[0], &g_shared.oFg.aRegs[0], channel, &pset ) != 0 )
    {
    #ifdef CONFIG_MIL_FG
       if( pAddagFgRegs != NULL )
@@ -704,9 +704,9 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
  */
 void fgDisableChannel( const unsigned int channel )
 {
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.fg_regs ) );
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
 
-   FG_CHANNEL_REG_T* pFgRegs = &g_shared.oFg.fg_regs[channel];
+   FG_CHANNEL_REG_T* pFgRegs = &g_shared.oFg.aRegs[channel];
 
    if( pFgRegs->macro_number == SCU_INVALID_VALUE )
       return;
@@ -844,7 +844,7 @@ void fgDisableInterrupt( const unsigned int channel )
  */
 void sendRefillSignalIfThreshold( const unsigned int channel )
 {
-   if( cbgetCountSave( &g_shared.oFg.fg_regs[0], channel ) == FG_REFILL_THRESHOLD )
+   if( cbgetCountSave( &g_shared.oFg.aRegs[0], channel ) == FG_REFILL_THRESHOLD )
    {
      // mprintf( "*" ); //!!
       sendSignal( IRQ_DAT_REFILL, channel );

@@ -49,9 +49,6 @@ void printSwIrqCode( const unsigned int code, const unsigned int value )
 #define printSwIrqCode( code, value )
 #endif
 
-#ifdef CONFIG_FW_VERSION_3
-  #define fg_busy fg_rescan_busy
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -86,7 +83,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    /*
     * Signal busy to saftlib.
     */
-   g_shared.oFg.fg_busy = 1;
+   g_shared.oFg.busy = 1;
 
    const unsigned int code  = GET_UPPER_HALF( cmd );
    const unsigned int value = GET_LOWER_HALF( cmd );
@@ -124,7 +121,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          /*
           * signal done to saftlib
           */
-         g_shared.fg_busy = 0;
+         g_shared.busy = 0;
       #endif
          return;
       }
@@ -138,9 +135,9 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    {
       case FG_OP_RESET_CHANNEL:
       {
-         fgResetAndInit( g_shared.oFg.fg_regs,
+         fgResetAndInit( g_shared.oFg.aRegs,
                          value,
-                         g_shared.oFg.fg_macros,
+                         g_shared.oFg.aMacros,
                          (void*)g_pScub_base
                         #ifdef CONFIG_MIL_FG
                          ,(void*)g_pScu_mil_base
@@ -227,7 +224,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    /*
     * signal done to saftlib
     */
-   g_shared.oFg.fg_busy = 0;
+   g_shared.oFg.busy = 0;
 }
 
 /*! ---------------------------------------------------------------------------

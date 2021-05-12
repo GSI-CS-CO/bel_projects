@@ -463,7 +463,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
    /*
     * Reading circular buffer with new FG-data.
     */
-   if( !cbRead( &g_shared.oFg.fg_buffer[0], &g_shared.oFg.fg_regs[0], channel, &pset ) )
+   if( !cbRead( &g_shared.oFg.aChannelBuffers[0], &g_shared.oFg.aRegs[0], channel, &pset ) )
    {
       hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
       return;
@@ -523,7 +523,7 @@ void handleMilFg( const unsigned int socket,
    FG_ASSERT( !isAddacFg( socket ) );
    const FG_CTRL_RG_T ctrlReg = { .i16 = irq_act_reg };
    const unsigned int channel = ctrlReg.bv.number;
-   if( channel >= ARRAY_SIZE( g_shared.oFg.fg_regs ) )
+   if( channel >= ARRAY_SIZE( g_shared.oFg.aRegs ) )
    {
       mprintf( ESC_ERROR "%s: Channel out of range: %d\n" ESC_NORMAL,
                __func__, channel );
@@ -540,7 +540,7 @@ void handleMilFg( const unsigned int socket,
     * The hardware of the MIL function generators doesn't have a ramp-counter
     * integrated, so this task will made by the software here.
     */
-   g_shared.oFg.fg_regs[channel].ramp_count++;
+   g_shared.oFg.aRegs[channel].ramp_count++;
 
    if( ctrlReg.bv.devStateIrq )
       makeStart( channel );
