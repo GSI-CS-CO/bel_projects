@@ -551,11 +551,11 @@ void main( void )
    usleep_init();
 
    printCpuId();
-   mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr );
-   mprintf("g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser  );
-   mprintf("g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base );
+   mprintf( "g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr );
+   mprintf( "g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser  );
+   mprintf( "g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base );
 #ifdef CONFIG_MIL_FG
-   mprintf("g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base );
+   mprintf( "g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base );
    initEcaQueue();
 #endif
 
@@ -565,7 +565,13 @@ void main( void )
     */
    initAndScan();
    //print_regs();
-
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.offset );
+   mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );
+#endif
+#if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
+   //TODO Print offset and capacity of MIL-DAQ.
+#endif
    initInterrupt();
    while( true )
    {
