@@ -833,6 +833,33 @@ AllDaqAdministration* CommandLine::operator()( void )
          autoBuild();
       if( m_doClearBuffer )
          m_poAllDaq->clearBuffer();
+      if( m_verbose )
+      {
+         constexpr float MB = 1024.0 * 1024.0;
+         const uint addacOfs = m_poAllDaq->getAddacBufferOffset();
+         const uint addacCap = m_poAllDaq->getAddacBufferCapacity();
+         cout << "Offset of ADDAC-DAQ buffer   : "
+              << addacOfs << " item\t"
+              << addacOfs * sizeof(daq::RAM_DAQ_PAYLOAD_T) << " byte\t"
+              << ((addacOfs * sizeof(daq::RAM_DAQ_PAYLOAD_T)/MB )) << " MB" << endl;
+         cout << "Capacity of ADDAC-DAQ buffer : "
+              << addacCap << " item\t"
+              << addacCap * sizeof(daq::RAM_DAQ_PAYLOAD_T) << " byte\t"
+              << ((addacCap * sizeof(daq::RAM_DAQ_PAYLOAD_T))/MB ) << " MB" << endl;
+      #ifdef CONFIG_MIL_FG
+         const uint milOfs = m_poAllDaq->getMilBufferOffset();
+         const uint milCap = m_poAllDaq->getMilBufferCapacity();
+         cout << "Offset of MIL-DAQ buffer     : "
+              << milOfs << " item\t"
+              << milOfs * sizeof(daq::RAM_DAQ_PAYLOAD_T) << " byte\t"
+              << ((milOfs * sizeof(daq::RAM_DAQ_PAYLOAD_T)/MB )) << " MB" << endl;
+
+         cout << "Capacity of MIL-DAQ buffer   : "
+              << milCap << " item\t"
+              << milCap * sizeof(daq::RAM_DAQ_PAYLOAD_T) << " byte\t"
+              << ((milCap * sizeof(daq::RAM_DAQ_PAYLOAD_T)/MB )) << " MB" << endl;
+      #endif
+      }
       return m_poAllDaq;
    }
 

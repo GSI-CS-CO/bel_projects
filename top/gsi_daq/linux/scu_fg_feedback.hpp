@@ -803,6 +803,44 @@ public:
    }
 
    /*!
+    * @brief Returns the maximum capacity of the ADDAC-DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    */
+   uint getAddacBufferCapacity( void )
+   {
+      return m_oAddacDaqAdmin.getRamCapacity();
+   }
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type for ADDAC-DAQs.
+    */
+   uint getAddacBufferOffset( void )
+   {
+      return m_oAddacDaqAdmin.getRamOffset();
+   }
+
+#ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Returns the maximum capacity of the MIL-DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    */
+   uint getMilBufferCapacity( void )
+   {
+      return m_oMilDaqAdmin.getRamCapacity();
+   }
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type for MIL-DAQs.
+    */
+   uint getMilBufferOffset( void )
+   {
+      return m_oMilDaqAdmin.getRamOffset();
+   }
+#endif
+
+   /*!
     * @brief Triggering a software interrupt in LM32 firmware
     */
    void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )

@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=1.2
+DEFINES += VERSION=1.3
 
 MIAN_MODULE := fg-feedback.cpp
 
@@ -106,7 +106,7 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = scuxl0035 -vy
 
 # CALL_ARGS = scuxl0035 -b11,12
-CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150" -b0
+CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150" -v
 
 # DEBUG = 1
 

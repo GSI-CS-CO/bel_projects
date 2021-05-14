@@ -315,6 +315,24 @@ public:
                                  const uint32_t ecaTag = DEFAULT_ECA_SYNC_TAG ) override;
 
    /*!
+    * @brief Returns the maximum capacity of the ADDAC-DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    */
+   uint getRamCapacity( void ) override
+   {
+      return m_oSharedData.ramIndexes.ringIndexes.capacity;
+   }
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type.
+    */
+   uint getRamOffset( void ) override
+   {
+      return m_oSharedData.ramIndexes.ringIndexes.offset;
+   }
+
+   /*!
     * @brief Returns the number of items which are currently in the
     *        data buffer.
     * @param update If true the indexes in the LM32 shared memory

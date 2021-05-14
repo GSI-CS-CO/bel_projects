@@ -135,6 +135,28 @@ public:
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
+   /*!
+    * @brief Returns the capacity of the ADDAC or MIL DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    * @todo Not implemented yet. Implement this when using DDR3-RAM for
+    *       the MIL data-buffer.
+    */
+   uint getRamCapacity( void ) override
+   {
+      return 0; //TODO return the maximum capacity of MIL-DAQ-buffer
+   }
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type.
+    * @todo Not implemented yet. Implement this when using DDR3-RAM for
+    *       the MIL data-buffer.
+    */
+   uint getRamOffset( void ) override
+   {
+      return 0; //TODO return the offset of MIL-DAQ-buffer
+   }
+
    RING_INDEX_T getHeadRingIndex( void ) const
    {
       return m_oRing.m_head;

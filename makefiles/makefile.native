@@ -64,6 +64,7 @@ run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
 	$(BIN_FILE) $(CALL_ARGS) )
 
+.PHONY: dbg
 ifeq ($(DEBUG), 1)
 
 DEBUG_GUI ?= kdbg
@@ -72,12 +73,15 @@ ifdef CALL_ARGS
 DBG_ARGS = -a "$(CALL_ARGS)"
 endif
 
-.PHONY: dbg
 dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
 	$(DEBUG_GUI) $(BIN_FILE) $(DBG_ARGS))
 
-endif # ifeq ($(DEBUG), 1)
+else # ifeq ($(DEBUG), 1)
+dbg:
+	$(QUIET)echo -e $(ESC_ERROR)"Error: Project wasn't compiled in debug mode! " \
+			"Set variable DEBUG = 1 and rebuild." $(ESC_NORMAL) 1>&2
+endif # else ifeq ($(DEBUG), 1)
 
 else # ifndef IS_LIBRARY
 

@@ -252,6 +252,17 @@ public:
       return m_blockReadEbCycleGapTimeUs;
    }
 
+   /*!
+    * @brief Returns the maximum capacity of the ADDAC or MIL DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    */
+   virtual uint getRamCapacity( void ) = 0;
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type.
+    */
+   virtual uint getRamOffset( void ) = 0;
 
    /*!
     * @brief Returns the number of items which are currently in the
