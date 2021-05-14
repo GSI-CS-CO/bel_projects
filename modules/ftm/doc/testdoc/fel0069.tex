@@ -5,6 +5,7 @@
 \usepackage{changepage}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{xurl}
 
 \lstdefinestyle{dotfiles}{
   escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
@@ -50,7 +51,7 @@
 The data master for the test system is hosted on SuperMicro fel0069 with two PEXARIA5d \texttt{(fel0069.acc.gsi.de)}.
 One of these is the data master. The other one is used to analyse the timing messages with snoop.
 The SuperMicro is accessible with \texttt{ssh root@fel0069.acc} via ASL cluster or other hosts.
-The management interface (ILO) is accessible via \texttt{https://fel0069i64.acc}.
+The management interface (ILO) is accessible via \url{https://fel0069i64.acc}.
 \begin{enumerate}
 \item fel0069.acc.gsi.de
 \begin{itemize}
@@ -77,29 +78,91 @@ The management interface (ILO) is accessible via \texttt{https://fel0069i64.acc}
 After power on, set the IP addresses of the two pexarias. This host has no BootP service.
 
 The SuperMicro is configured for PXE boot and nfsinit with links (follwing
-https://www-acc.gsi.de/wiki/Timing/Intern/TimingSystemHowToHintsForFECS)
+\url{https://www-acc.gsi.de/wiki/Timing/Intern/TimingSystemHowToHintsForFECS}).
 \begin{enumerate}
-\item On ASL cluster links in folder
+\item On ASL cluster links in folder /common/tftp/csco/pxe/pxelinux.cfg for PXE boot:
+8CB5A992 $\to$ fel0069,
+fel0069 $\to$ scuxl.fallout
 \item On ASL cluster links in folder /common/export/nfsinit/fel0069/ for nfsinit.
-
+\item On ASL cluster create folder /common/fesadata/data/fel0069/.
 \end{enumerate}
-
+Connections: network cable to acc network. For management: network cable to acc network.
 \section{White Rabbit Switch nwt0473m66}
-Location: BG2.009, Rack BG2A.A9, Slot 29
-blank configuration. Not an access switch or distribution switch
-Access via tsl001, like other switches.
+Location: BG2.009, Rack BG2A.A9, Slot 29 \raggedright
+\linebreak Configuration: blank. Not an access switch or distribution switch!
+\linebreak Access via tsl001, like other switches.
+\linebreak Name: nwt0473m66.timing.acc.gsi.de,
+\linebreak IP: 192.168.21.219.
+\linebreak Connections: fibre optic cable from wri2 to pexaria248t, fibre optic cable from wri3 to pexaria305t. Network cable to acc network for management.
 \chapter{Software}
+\section{Firmware Images}
+Datamaster: build with \texttt{make ftm} in bel\_projects root folder. Current version:
+\begin{verbatim}
+Project     : ftm
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : fallout-3295
+Build type  : developer preview
+Build date  : Wed Oct 28 16:45:33 CET 2020
+Prepared by : Martin Skorsky <m.skorsky@gsi.de>
+Prepared on : ACOPC042
+OS version  : Linux Mint 19.3 Tricia, kernel 4.15.0-122-generic
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard
+                                                        Edition
+
+  176fccd2 pmc: changed seed
+  d3ab3c45 vetar2a-ee-butis: changed seed
+  5419e84e microtca: changed seed
+  c0d44bd6 Merge pull request #260 from
+                                  GSI-CS-CO/dm-fallout-merge-v2
+  50444f38 scu4: changed seed
+
+Detecting Firmwares ...
+
+Found 4 RAMs, 4 holding a Firmware ID
+
+
+********************
+* RAM @ 0x04120000 *
+********************
+UserLM32
+Stack Status:
+Project     : ftm
+Version     : 7.0.1
+Platform    :
+Build Date  : Wed Oct 28 16:45:19 CET 2020
+Prepared by : martin Martin Skorsky <m.skorsky@gsi.de>
+Prepared on : ACOPC042
+OS Version  : Linux Mint 19.3 Tricia  Linux 4.15.0-122-generic
+                                                         x86_64
+GCC Version : lm32-elf-gcc(GCC)4.5.3 (build 190527-673a32-f3d6)
+IntAdrOffs  : 0x10000000
+SharedOffs  : 0x500
+SharedSize  : 98304
+FW-ID ROM will contain:
+
+   176fccd2 pmc: changed seed
+   d3ab3c45 vetar2a-ee-butis: changed seed
+   5419e84e microtca: changed seed
+   c0d44bd6 Merge pull request #260 from
+                                GSI-CS-CO/dm-fallout-merge-v2
+   50444f38 scu4: changed seed
+*****
+\end{verbatim}
+
+Pexaria for snoop: \url{https://github.com/GSI-CS-CO/bel\_projects/releases/download/fallout-v6.0.1/pexarria5.rpd}
+
 \section{Access the Data Master}
 \texttt{dm-cmd tcp/fel0069.acc}
-
+\linebreak
 \texttt{dm-sched tcp/fel0069.acc}
 
 \section{Remote Snoop of Timing Messages}
-snoop per remote ssh / set up of ssh without password: use public key.
+Snoop per remote ssh: \texttt{}. Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc:~/.ssh/authorized\_keys.
 \begin{verbatim}
-scp -p your_pub_key.pub user@host:
-ssh user@host
-host$ cat id_dsa.pub >> ~/.ssh/authorized_keys
+scp your_pub_key.pub root@fel0069.acc:
+ssh root@fel0069.acc
+root@fel0069.acc$ cat id_dsa.pub >> ~/.ssh/authorized_keys
 \end{verbatim}
 snoop with Python3
 \end{document}
