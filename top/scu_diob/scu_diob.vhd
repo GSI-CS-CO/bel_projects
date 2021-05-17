@@ -806,33 +806,6 @@ COMPONENT hw_interlock
 END COMPONENT hw_interlock;
 
 
-
- COMPONENT qud_trig_matrix 
-
-
-  PORT
-  (
-  clk : in std_logic;
-    nReset: in std_logic;
- 
-    slave1_ID: in std_logic_vector(7 downto 0);
-    slave2_ID: in std_logic_vector(7 downto 0);
-    slave3_ID: in std_logic_vector(7 downto 0);
-    slave4_ID: in std_logic_vector(7 downto 0);
-    slave5_ID: in std_logic_vector(7 downto 0);
-    slave6_ID: in std_logic_vector(7 downto 0);
-    slave7_ID: in std_logic_vector(7 downto 0);
-    slave8_ID: in std_logic_vector(7 downto 0);
-    slave9_ID: in std_logic_vector(7 downto 0);
-    slave10_ID: in std_logic_vector(7 downto 0);
-    slave11_ID: in std_logic_vector(7 downto 0);
-    slave12_ID: in std_logic_vector(7 downto 0);
-    Trigger_matrix_Config:out  std_logic_vector(7 downto 0)
-  );
-
-    END COMPONENT qud_trig_matrix;
-
-
   
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
@@ -1596,10 +1569,6 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
 --  |    §§§              Übergabe-Signale für Anwender-IO: FG902_xxx -- Newe Interlock-Backplane mit 12 Steckplätzen                 |
 --  +============================================================================================================================+
  
-
-signal qud_mtx: std_logic_vector(7 downto 0);
-
-
 
 TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
 signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
@@ -4124,30 +4093,6 @@ Quench_Matrix_Gen:  for J in 1 to 3 generate
 end generate Quench_Matrix_Gen;
 
 
-
-
-  trigger_matrix_config: qud_trig_matrix 
-
-PORT MAP
-(
-  clk => clk_sys,
-  nReset => rstn_sys,
-
-  slave1_ID => IOBP_ID(1), 
-  slave2_ID => IOBP_ID(2), 
-  slave3_ID => IOBP_ID(3), 
-  slave4_ID => IOBP_ID(4), 
-  slave5_ID => IOBP_ID(5), 
-  slave6_ID => IOBP_ID(6), 
-  slave7_ID => IOBP_ID(7), 
-  slave8_ID => IOBP_ID(8), 
-  slave9_ID => IOBP_ID(9), 
-  slave10_ID => IOBP_ID(10), 
-  slave11_ID => IOBP_ID(11), 
-  slave12_ID => IOBP_ID(12), 
-  Trigger_matrix_Config => qud_mtx
-  );
-  
   
   ID_Front_Board_proc: process (clk_sys, rstn_sys)
 
@@ -4733,7 +4678,7 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             AD1_Trigger_Mode, AD1_sw_Trigger, AD1_ext_Trigger, AD1_nCS, AD1_Reset, AD1_ByteSwap, AD1_nCNVST, AD1_Busy, AD1_Out, AD1_ext_Trigger_nLED,
             AD2_Trigger_Mode, AD2_sw_Trigger, AD2_ext_Trigger, AD2_nCS, AD2_Reset, AD2_ByteSwap, AD2_nCNVST, AD2_Busy, AD2_Out, AD2_ext_Trigger_nLED,
             In8Out8_In, In8Out8_Input, In8Out8_Deb_out, In8Out8_nLED_Lemo_In_o, In8Out8_Out, In8Out8_nLED_Lemo_Out_o,
-            IOBP_SK_Output, IOBP_SK_Input, qud_mtx, Deb72_out, Deb72_in, Syn72, AW_SK_Input_Reg, IOBP_SK_Aktiv_LED_i 
+            IOBP_SK_Output, IOBP_SK_Input, Deb72_out, Deb72_in, Syn72, AW_SK_Input_Reg, IOBP_SK_Aktiv_LED_i 
             )
 
 
@@ -7461,33 +7406,34 @@ ELSE --------------------------------------ID read Loop
 END IF;
 
 
-
 -----------------------------------------------------------------------------------------------------------------------------------------
-( PIO_ENA(56),  PIO_ENA(60),  PIO_ENA(62),  PIO_ENA(52),  PIO_ENA(54),  PIO_ENA(58)) <= PIO_ENA_SLOT_1;
-( PIO_ENA(96),  PIO_ENA(100), PIO_ENA(102), PIO_ENA(92),  PIO_ENA(94),  PIO_ENA(98)) <= PIO_ENA_SLOT_2;
-( PIO_ENA(73),  PIO_ENA(77),  PIO_ENA(79),  PIO_ENA(69),  PIO_ENA(71),  PIO_ENA(75)) <= PIO_ENA_SLOT_3;
-( PIO_ENA(101), PIO_ENA(91), PIO_ENA(93), PIO_ENA(105), PIO_ENA(103), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
-( PIO_ENA(53),  PIO_ENA(61),  PIO_ENA(63),  PIO_ENA(57),  PIO_ENA(55),  PIO_ENA(59)) <= PIO_ENA_SLOT_5;
-( PIO_ENA(119), PIO_ENA(109), PIO_ENA(111), PIO_ENA(123), PIO_ENA(121), PIO_ENA(107))<= PIO_ENA_SLOT_6;
-( PIO_ENA(35),  PIO_ENA(43),  PIO_ENA(45),  PIO_ENA(39),  PIO_ENA(37),  PIO_ENA(41)) <= PIO_ENA_SLOT_7;
-( PIO_ENA(137), PIO_ENA(127), PIO_ENA(129), PIO_ENA(141), PIO_ENA(139), PIO_ENA(125))<= PIO_ENA_SLOT_8;
-( PIO_ENA(30),  PIO_ENA(22),  PIO_ENA(20),  PIO_ENA(26),  PIO_ENA(28),  PIO_ENA(24)) <= PIO_ENA_SLOT_9;
+( PIO_ENA(56),  PIO_ENA(62),  PIO_ENA(54),  PIO_ENA(60),  PIO_ENA(52),  PIO_ENA(58)) <= PIO_ENA_SLOT_1;
+( PIO_ENA(96),  PIO_ENA(102), PIO_ENA(94),  PIO_ENA(100), PIO_ENA(92),  PIO_ENA(98)) <= PIO_ENA_SLOT_2;
+( PIO_ENA(73),  PIO_ENA(79),  PIO_ENA(71),  PIO_ENA(77),  PIO_ENA(69),  PIO_ENA(75)) <= PIO_ENA_SLOT_3;
+( PIO_ENA(101), PIO_ENA(93),  PIO_ENA(103), PIO_ENA(91),  PIO_ENA(105), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
+( PIO_ENA(53),  PIO_ENA(63),  PIO_ENA(55),  PIO_ENA(61),  PIO_ENA(57),  PIO_ENA(59)) <= PIO_ENA_SLOT_5;
+( PIO_ENA(119), PIO_ENA(111), PIO_ENA(121), PIO_ENA(109), PIO_ENA(123), PIO_ENA(107))<= PIO_ENA_SLOT_6;
+( PIO_ENA(35),  PIO_ENA(45),  PIO_ENA(37),  PIO_ENA(43),  PIO_ENA(39),  PIO_ENA(41)) <= PIO_ENA_SLOT_7;
+( PIO_ENA(137), PIO_ENA(129), PIO_ENA(139), PIO_ENA(127), PIO_ENA(141), PIO_ENA(125))<= PIO_ENA_SLOT_8;
+( PIO_ENA(30),  PIO_ENA(20),  PIO_ENA(28),  PIO_ENA(22),  PIO_ENA(26),  PIO_ENA(24)) <= PIO_ENA_SLOT_9;
 ( PIO_ENA(130), PIO_ENA(138), PIO_ENA(128), PIO_ENA(140), PIO_ENA(126), PIO_ENA(142))<= PIO_ENA_SLOT_10;
 ( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= PIO_ENA_SLOT_11;
 ( PIO_ENA(112), PIO_ENA(120), PIO_ENA(110), PIO_ENA(122), PIO_ENA(108), PIO_ENA(124))<= PIO_ENA_SLOT_12;
 
-( PIO_OUT(56),  PIO_OUT(60),  PIO_OUT(62),  PIO_OUT(52),  PIO_OUT(54),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
-( PIO_OUT(96),  PIO_OUT(100), PIO_OUT(102), PIO_OUT(92),  PIO_OUT(94),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
-( PIO_OUT(73),  PIO_OUT(77),  PIO_OUT(79),  PIO_OUT(69),  PIO_OUT(71),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
-( PIO_OUT(101), PIO_OUT(91), PIO_OUT(93), PIO_OUT(105), PIO_OUT(103), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
-( PIO_OUT(53),  PIO_OUT(61),  PIO_OUT(63),  PIO_OUT(57),  PIO_OUT(55),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
-( PIO_OUT(119), PIO_OUT(109), PIO_OUT(111), PIO_OUT(123), PIO_OUT(121), PIO_OUT(107))<= PIO_OUT_SLOT_6;
-( PIO_OUT(35),  PIO_OUT(43),  PIO_OUT(45),  PIO_OUT(39),  PIO_OUT(37),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
-( PIO_OUT(137), PIO_OUT(127), PIO_OUT(129), PIO_OUT(141), PIO_OUT(139), PIO_OUT(125))<= PIO_OUT_SLOT_8;
-( PIO_OUT(30),  PIO_OUT(22),  PIO_OUT(20),  PIO_OUT(26),  PIO_OUT(28),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
+
+( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
+( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
+( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
+( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
+( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
+( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
+( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
+( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
 ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
 ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
 ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
+
 
 AW_Input_Reg<= AW_SK_Input_Reg;
 IOBP_Aktiv_LED_i <= IOBP_SK_Aktiv_LED_i; 
