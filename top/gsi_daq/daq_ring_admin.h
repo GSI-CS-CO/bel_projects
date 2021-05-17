@@ -62,16 +62,21 @@ namespace daq
  * @{
  */
 
+/*!
+ * @brief Maximum byffer capacity of ADDAC/ACU and MIL DAQs
+ */
+#define DAQ_MAX_INDEX (DDR3_MAX_INDEX64 / 100)
+
 //#define RAM_SDAQ_MAX_INDEX 2816
 #ifndef RAM_SDAQ_MAX_INDEX
    /*!
     * @brief Maximum value for ring buffer read and write index
     */
    #ifdef CONFIG_MIL_DAQ_USE_RAM
-      #define RAM_SDAQ_MAX_INDEX (DDR3_MAX_INDEX64 / 2)
-      #define RAM_MDAQ_MAX_INDEX DDR3_MAX_INDEX64
+      #define RAM_SDAQ_MAX_INDEX (DAQ_MAX_INDEX / 2)
+      #define RAM_MDAQ_MAX_INDEX DAQ_MAX_INDEX
    #else
-      #define RAM_SDAQ_MAX_INDEX DDR3_MAX_INDEX64
+      #define RAM_SDAQ_MAX_INDEX DAQ_MAX_INDEX
    #endif
 #endif
 
@@ -81,7 +86,7 @@ namespace daq
     */
    #define RAM_SDAQ_MIN_INDEX 0
    #ifdef CONFIG_MIL_DAQ_USE_RAM
-      #define RAM_MDAQ_MIN_INDEX (DDR3_MAX_INDEX64 / 2)
+      #define RAM_MDAQ_MIN_INDEX (DAQ_MAX_INDEX / 2)
    #endif
 #endif
 

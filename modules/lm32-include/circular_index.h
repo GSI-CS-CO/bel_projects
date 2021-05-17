@@ -167,9 +167,18 @@ RAM_RING_INDEX_T ramRingGetReadIndex( register RAM_RING_INDEXES_T* pThis )
  */
 STATIC inline
 RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
-{
+{ /*
+   * Is the buffer full?
+   */
    if( pThis->end == pThis->capacity )
+   { /*
+      * In the case the buffer was full the write index has been set to a
+      * invalid value (maximum capacity) to distinguishing between full
+      * and empty.
+      * But in this case the read index has the correct value.
+      */
       return ramRingGetReadIndex( pThis );
+   }
    return pThis->end + pThis->offset;
 }
 

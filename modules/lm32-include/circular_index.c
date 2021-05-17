@@ -54,7 +54,7 @@ void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
    { /*
       * To distinguish between buffer empty and full,
       * in the case of full the write index will set to a value out of
-      * valid range.
+      * valid range. Here: the maximum capacity.
       */
       pThis->end = pThis->capacity;
    }
@@ -69,8 +69,15 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 
    /* Is ring-buffer full? */
    if( (toAdd != 0) && (pThis->end == pThis->capacity) )
+   { /*
+      * In the case the buffer was full the write index has been set to a
+      * invalid value (maximum capacity) to distinguishing between full
+      * and empty.
+      * Here the buffer is still full and write index will set back to a valid
+      * value.
+      */
       pThis->end = pThis->start;
-
+   }
    pThis->start = (pThis->start + toAdd) % pThis->capacity;
 }
 
