@@ -243,6 +243,8 @@ FgFeedbackChannel::AddacFb::~AddacFb( void )
 {
 }
 
+//#define _CONFIG_COMPARE_SEQUENCE_NR
+
 /*! ---------------------------------------------------------------------------
  * @brief Forwarding of actual- and set- values to the higher software-layer
  *        once both data blocks has been received.
@@ -259,7 +261,8 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
    DEBUG_MESSAGE( "set sequence: " << static_cast<uint>(m_oReceiveSetValue.getSequence()) );
    DEBUG_MESSAGE( "act sequence: " << static_cast<uint>(m_oReceiveActValue.getSequence()) );
-
+#ifdef _CONFIG_COMPARE_SEQUENCE_NR
+   #warning "Synchonizing by sequence-number is deprecated!"
    /*
     * One of both channels has received first, in this case it has to be wait
     * for the second channel.
@@ -274,6 +277,7 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
          * A sequence number deviation of one means that at the moment only one channel has
          * received a new data block, therefore it must be wait for the incoming block
          * of the other channel.
+         * This will happen every second function call in normal operation.
          */
          return;
       }
@@ -286,14 +290,14 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
       return;
    }
+#endif // ifdef _CONFIG_COMPARE_SEQUENCE_NR
 
-   // TODO comparing of both time-stamps here.
    /*
     * Safety check: The data length of both blocks have to be equal!
     */
    if( m_oReceiveSetValue.getBlockLen() != m_oReceiveActValue.getBlockLen() )
    {
-      std::string str = "Different block sizes received: set-data: ";
+      std::string str = "Different block sizes received: set data: ";
       str += std::to_string( m_oReceiveSetValue.getBlockLen() );
       str += " actual data: ";
       str += std::to_string( m_oReceiveActValue.getBlockLen() );
@@ -301,25 +305,62 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
    }
 
    /*
+    * Safety check: The sample interval time of set and actual data have to be equal!
+    */
+   if( m_oReceiveSetValue.getSampleTime() != m_oReceiveActValue.getSampleTime() )
+   {
+      std::string str = "Different sample intervals between set data (";
+      str += std::to_string( m_oReceiveSetValue.getSampleTime() );
+      str += " us) and actual data (";
+      str += std::to_string( m_oReceiveActValue.getSampleTime() );
+      str += " us) received!";
+      throw daq::Exception( str );
+   }
+
+   uint64_t timeStampSetVal = m_oReceiveSetValue.getTimestamp();
+
+#ifndef _CONFIG_COMPARE_SEQUENCE_NR
+   const uint64_t timeStampActVal = m_oReceiveActValue.getTimestamp();
+   const uint diff = ::abs(timeStampActVal - timeStampSetVal);
+   if( diff > (2 * m_oReceiveSetValue.getSampleTime() ) )
+   { /*
+      * Is the time deviation between set- and actual- value-block
+      * greater than a specific value, then it have to be wait for the
+      * incoming block of the other channel.
+      * Therefore this function will be terminated here.
+      * This will happen every second function call in normal operation.
+      */
+      return;
+   }
+ #ifdef _CONFIG_PATCH_PHASE
+   if( diff > m_oReceiveSetValue.getSampleTime() )
+ #else
+   if( diff > 0 )
+ #endif
+   {
+      m_pParent->onActSetTimestampDeviation( timeStampSetVal, timeStampActVal );
+   }
+#endif
+
+   /*
     * Forwarding of set- and actual- values to the higher software layer.
     */
-   uint64_t timeStamp = m_oReceiveSetValue.getTimestamp();
 #ifdef _CONFIG_PATCH_PHASE
    #warning Compiler switch _CONFIG_PATCH_PHASE is active!
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen(); i++ )
    {
-      if( m_expectedTimestamp == timeStamp )
-         evaluate( timeStamp, m_lastValue, m_oReceiveSetValue[i] );
+      if( m_expectedTimestamp == timeStampSetVal )
+         evaluate( timeStampSetVal, m_lastValue, m_oReceiveSetValue[i] );
 
       m_lastValue = m_oReceiveActValue[i];
-      timeStamp += m_oReceiveSetValue.getSampleTime();
-      m_expectedTimestamp = timeStamp;
+      timeStampSetVal += m_oReceiveSetValue.getSampleTime();
+      m_expectedTimestamp = timeStampSetVal;
    }
 #else
    for( std::size_t i = 0; i < m_oReceiveSetValue.getBlockLen();
-        i++, timeStamp += m_oReceiveSetValue.getSampleTime() )
+        i++, timeStampSetVal += m_oReceiveSetValue.getSampleTime() )
    {
-      evaluate( timeStamp, m_oReceiveActValue[i], m_oReceiveSetValue[i] );
+      evaluate( timeStampSetVal, m_oReceiveActValue[i], m_oReceiveSetValue[i] );
    }
 #endif
 }
@@ -421,14 +462,47 @@ FgFeedbackDevice* FgFeedbackChannel::getParent( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see scu_fg_feedback.hpp
+ */
+std::string FgFeedbackChannel::getFgName( void )
+{
+   std::string str = "fg-";
+   str += std::to_string( getSocket() );
+   str += '-';
+   str += std::to_string( getFgNumber() );
+   return str;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_feedback.hpp
  */
 void FgFeedbackChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
 {
-   std::string str = "Deviation of sequence numbers from set value input stream: ";
+   std::string str = "Deviation of sequence numbers of: ";
+   str += getFgName();
+   str += ": from set value input stream: ";
    str += std::to_string( setSequ );
    str += ", and actual value input stream: ";
    str += std::to_string( actSequ );
    str += " are greater than one!";
+   throw daq::Exception( str );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_feedback.hpp
+ */
+void FgFeedbackChannel::onActSetTimestampDeviation( const uint64_t setTimeStamp,
+                                                    const uint64_t actTimestamp )
+{
+   std::string str = "Deviation of time stamps of ";
+   str += getFgName();
+   str += ": set: ";
+   str += std::to_string( setTimeStamp );
+   str += " us; act: ";
+   str += std::to_string( actTimestamp );
+   str += " us; difference: ";
+   str += std::to_string( static_cast<int>(actTimestamp - setTimeStamp) );
+   str += " us;";
    throw daq::Exception( str );
 }
 

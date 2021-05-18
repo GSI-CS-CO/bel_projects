@@ -289,12 +289,25 @@ void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
 
 /*! ---------------------------------------------------------------------------
  */
+void FbChannel::onActSetTimestampDeviation( const uint64_t setTimeStamp,
+                                            const uint64_t actTimestamp )
+{
+   if( getCommandLine()->isExitOnError() )
+      FgFeedbackChannel::onActSetTimestampDeviation( setTimeStamp, actTimestamp );
+
+   WARNING_MESSAGE( "Timestamp deviation of " << getFgName() << " is: "
+                    << static_cast<int>( actTimestamp - setTimeStamp ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void FbChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
 {
    if( getCommandLine()->isExitOnError() )
       FgFeedbackChannel::onActSetBlockDeviation( setSequ, actSequ );
 
-   WARNING_MESSAGE( "Deviation of sequence numbers from set value input stream: "
+   WARNING_MESSAGE( "Deviation of sequence numbers of " << getFgName()
+                    << " from set value input stream: "
                     << setSequ << ", and actual value input stream: "
                     << actSequ << "  are greater than one!" );
 }

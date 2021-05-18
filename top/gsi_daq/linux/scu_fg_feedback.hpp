@@ -278,6 +278,14 @@ public:
     */
    uint getSocket( void );
 
+   /*!
+    * @brief Returns the function generator name.
+    *
+    * E.g.: "fg-4-0"
+    * @return Name of function generator.
+    */
+   std::string getFgName( void );
+
 #ifdef CONFIG_MIL_FG
    /*!
     * @brief Returns true if this object communicates with a MIL-DAQ.
@@ -343,12 +351,22 @@ protected:
                                           std::size_t wordLen ) {}
 
    /*!
-    * @brief Over-writable function becomes invoked if the deviation of sequence-numbers
-    *        of actual- and set -values greater than one.
+    * @brief Over-writable callback function becomes invoked if the deviation
+    *        of sequence-numbers of actual- and set -values greater than one.
     * @param setSequ Sequence number of last received set-value block
     * @param actSequ Sequence number of last received actual-value block
     */
    virtual void onActSetBlockDeviation( const uint setSequ, const uint actSequ );
+
+   /*!
+    * @brief Over-writable callback function becomes invoked if the deviation
+    *        of timestamp of actual- and set -values not equal
+    *        respectively a synchronization isn't possible.
+    * @param setTimeStamp Time stamp of set values.
+    * @param actTimestamp Time stamp of actual values.
+    */
+   virtual void onActSetTimestampDeviation( const uint64_t setTimeStamp,
+                                            const uint64_t actTimestamp );
 
 #ifdef CONFIG_MIL_FG
    /*!

@@ -73,15 +73,13 @@ void Plot::plot( void )
 
    FgFeedbackAdministration* pAdmin = m_pParent->getParent()->getParent();
 
-   *this << "set title \"fg-" << m_pParent->getParent()->getSocket()
-         << '-' << m_pParent->getFgNumber()
+   *this << "set title \"" << m_pParent->getFgName()
          << "  Date: "
          << daq::wrToTimeDateString( m_pParent->getCurrentTime() );
-         if( m_pParent->isSingleShoot() )
-            *this << " Single shoot!";
-         *this << " Throttle: (timeout " << pAdmin->getThrottleTimeout() << " ms"
-               ", threshold " << pAdmin->getThrottleThreshold() << ")" << endl;
-
+   if( m_pParent->isSingleShoot() )
+      *this << " Single shoot!";
+   *this << " Throttle: (timeout " << pAdmin->getThrottleTimeout() << " ms"
+            ", threshold " << pAdmin->getThrottleThreshold() << ")" << endl;
 
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
          << " ns; interval min: " << (m_pParent->m_minTime / MILISECS_PER_NANOSEC)
