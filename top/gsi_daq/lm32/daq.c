@@ -532,11 +532,17 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       case FB_READY:
       {
          DAQ_ACTION_ITEM_T act;
+         /*
+          * Command from  SAFT-LIB received? 
+          */
          if( !queuePop( &pFeedback->aktionBuffer, &act ) )
-         {
+         { /*
+            * No!
+            */
             FSM_TRANSITION_SELF( label='No message.' );
             break;
          }
+
          pFeedback->fgNumber = act.fgNumber;
          DAQ_CANNEL_T* pSetChannel = &pThis->aChannel[daqGetSetDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];

@@ -396,11 +396,10 @@ typedef struct PACKED_SIZE
    unsigned int fgNumber;
 } DAQ_ACTION_ITEM_T;
 
-#define DAQ_ACTION_QUEUE_SIZE 2
-
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
  * @brief Main data type for feedback on/off-switch FSM.
+ * @see daqDeviceDoFeedbackSwitchOnOffFSM
  */
 typedef struct
 { /*!
@@ -417,15 +416,24 @@ typedef struct
 
   /*!
    * @brief Holds the current status of the FSM.
+   * @see daqDeviceDoFeedbackSwitchOnOffFSM
    */
    DAQ_FEEDBACK_STATUS_T status;
 
   /*!
-   * @brief Waiting queue for the next switch actions.
+   * @brief Waiting queue for the next switch actions coming from SAFT-LIB.
+   * 
+   * It is supposed the SAFT-LIB doesn't send more than MAX_FG_PER_SLAVE
+   * commands to the same slave in a short time, therefore the queue has a
+   * maximum capacity of MAX_FG_PER_SLAVE.
+   * @var SW_QUEUE_T aktionBuffer
+   * @see MAX_FG_PER_SLAVE
+   * @see daqDeviceFeedBackReset
+   * @see daqDevicePutFeedbackSwitchCommand
+   * @see daqDeviceDoFeedbackSwitchOnOffFSM
    */
-   QUEUE_IMPLEMENT( aktionBuffer, DAQ_ACTION_QUEUE_SIZE, DAQ_ACTION_ITEM_T );
+   QUEUE_IMPLEMENT( aktionBuffer, MAX_FG_PER_SLAVE, DAQ_ACTION_ITEM_T );
 } DAQ_FEEDBACK_T;
-
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
