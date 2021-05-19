@@ -108,7 +108,7 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 #ifdef CONFIG_SCU_USE_DDR3
   #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
    RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
-   std::size_t lenToEnd = indexes.capacity - ramRingGetReadIndex( &indexes );
+   std::size_t lenToEnd = indexes.capacity - ramRingGetReadIndex( &indexes ); //TODO!! is not correct when offset != 0
    if( lenToEnd < len )
    {
       m_poEb->read( m_pRam->ram.pTrModeBase +
