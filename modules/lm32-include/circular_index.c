@@ -50,7 +50,7 @@ void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 
    pThis->end = (pThis->end + toAdd) % pThis->capacity;
 
-   if( pThis->end == pThis->start ) /* Is buffer full? */
+   if( (pThis->end == pThis->start) && (toAdd != 0) ) /* Is buffer full? */
    { /*
       * To distinguish between buffer empty and full,
       * in the case of full the write index will set to a value out of
