@@ -160,6 +160,47 @@ RAM_RING_INDEX_T ramRingGetReadIndex( register RAM_RING_INDEXES_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns the number of items beginning at the read index until to the
+ *        upper border  of the used memory buffer belonging to this object.
+ *
+ * Value range:  {1 <= return <= max capacity}
+ *
+ * @param pThis Pointer to the ring index object
+ * @return Number of items which can read until the upper border of the buffer.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingGetUpperReadSize( register RAM_RING_INDEXES_T* pThis )
+{
+   RAM_ASSERT( pThis->capacity > 0 );
+   return pThis->capacity - pThis->start;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the number of items beginning at the read index until to the
+ *        upper border  of the used memory buffer belonging to this object.
+ *
+ * Value range:  {1 <= return <= max capacity}
+ *
+ * @param pThis Pointer to the ring index object
+ * @return Number of items which can write until the upper border of the buffer.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingGetUpperWriteSize( register RAM_RING_INDEXES_T* pThis )
+{
+   RAM_ASSERT( pThis->capacity > 0 );
+   if( pThis->end == pThis->capacity )
+   { /*
+      * In the case the buffer was full the write index has been set to a
+      * invalid value (maximum capacity) to distinguishing between full
+      * and empty.
+      * But in this case the read index has the correct value.
+      */
+      return ramRingGetUpperReadSize( pThis );
+   }
+   return pThis->capacity - pThis->end;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Returns the current absolute write-index for a write access to the
  *        physical memory.
  * @param pThis Pointer to the ring index object
