@@ -82,6 +82,13 @@ typedef enum {
   FBAS_NODE_UNDEF     // undefined
 } nodeType_t;
 
+// operation mode
+typedef enum {
+  FBAS_OPMODE_DEF = 0, // default mode
+  FBAS_OPMODE_TEST,    // test mode
+  FBAS_OPMODE_INVALID  // invalid
+} opMode_t;
+
 // application-specific commands
 #define FBAS_CMD_SET_NODETYPE   0x15   // set the node type
 #define FBAS_CMD_SET_LVDS_OE    0x16   // set LVDS output enable
@@ -151,6 +158,7 @@ enum {
 #define FBAS_WR_EVT        0x24      // ECA condition tag for MPS event via WR (handled by RX)
 #define FBAS_WR_FLG        0x25      // ECA condition tag for MPS flag via WR (handled by RX)
 #define FBAS_AUX_NEWCYCLE  0x26      // ECA condition tag for MPS auxiliary signal (clear internal errors in TX & RX)
+#define FBAS_AUX_OPMODE    0x27      // ECA condition tag for MPS auxiliary signal (specify operation mode for TX & RX)
 
 // IO-CTRL register map (ip_cores/saftlib/drivers/io_control_regs.h)
 #define IO_CFG_CHANNEL_GPIO          0

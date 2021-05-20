@@ -86,6 +86,7 @@ mpsEventData_t mpsEventData;            // data for the MPS event message
 uint64_t tsLast = 0;                    // last timestamp of system time
 uint32_t cntMpsSignal = 0;              // counter for MPS signals
 nodeType_t nodeType = FBAS_NODE_TX;     // default node type
+opMode_t opMode = FBAS_OPMODE_DEF;      // default operation mode
 uint32_t cntCmd = 0;                    // counter for user commands
 uint32_t mpsTask = 0;                   // MPS-relevant tasks
 uint64_t mpsTimMsgFlagId = 0;           // timing message ID for MPS flags
@@ -110,6 +111,9 @@ static mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt);
 static mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw);
 static uint32_t driveEffLogOut(mpsTimParam_t* buf);
 static mpsTimParam_t* expireMpsFlag(timedItr_t* itr);
+static void setOpMode(uint64_t mode);
+static void qualifyInput(size_t len, mpsTimParam_t* buf);
+static void testOutput(size_t len, mpsTimParam_t* buf);
 static void preparePerfMeasurement(uint64_t now, uint64_t deadline);
 static void measurePerformance(uint32_t tag, uint32_t flag, uint64_t now, uint64_t deadline);
 static void storeSystemTime(uint32_t offset, uint64_t now);
@@ -668,6 +672,25 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
   return 0;
 }
 
+/**
+ ** \brief set operation mode
+ **
+ ** \param mode raw data with operation mode
+ **
+ **/
+void setOpMode(uint64_t mode) {
+  if (mode)
+    opMode = FBAS_OPMODE_TEST;
+  else
+    opMode = FBAS_OPMODE_DEF;
+}
+
+void qualifyInput(size_t len, mpsTimParam_t* buf) {
+}
+
+void testOutput(size_t len, mpsTimParam_t* buf) {
+}
+
 // send MPS protocol
 void sendMpsProtocol(uint64_t deadline, uint8_t mpsFlag)
 {
@@ -730,6 +753,24 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
         now = getSysTime();
         DBPRINT2("%lli\n", measureElapsedTime(FBAS_SHARED_GET_TS5, now));
         break;
+
+      case FBAS_AUX_OPMODE:
+        setOpMode(ecaParam);
+
+        if (nodeType == FBAS_NODE_TX) { // TODO: measure elapsed time
+          // each gate shall be fully qualifed [MPS_FS_740]
+          // no variable besides deliberate exceptions shall be unmasked [MPS_FS_740]
+          // flag change suppressed 0,5 us after test begin or end [MPS_FS_550]
+          qualifyInput(N_MPS_CHANNELS, *head);
+
+        } else if (nodeType == FBAS_NODE_RX) {
+          // invert output
+          testOutput(N_MPS_CHANNELS, *head);
+        }
+        now = getSysTime();
+        DBPRINT2("%lli\n", measureElapsedTime(FBAS_SHARED_GET_TS5, now));
+        break;
+
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // update MPS flag
