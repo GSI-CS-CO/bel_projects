@@ -9,9 +9,9 @@
 
 #ifndef __DOCFSM__
   #include "scu_fg_macros.h"
+  #include "scu_mil_fg_handler.h"
+  #include "scu_fg_list.h"
 #endif
-#include "scu_mil_fg_handler.h"
-#include "scu_fg_list.h"
 
 extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
