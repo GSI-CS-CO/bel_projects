@@ -1,49 +1,32 @@
-#! /usr/bin/env python3
-
-import unittest
-import subprocess
-import sys
 import dm_testbench
-
-global test_binary
-global data_master
 
 """
 Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
 
-Usage: python <binary of dm-cmd> <datamaster>
-Prerequisite: datamaster must have a node with name B_PPS.
+Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
 """
 class TestDmCmd(dm_testbench.DmTestbench):
-
-  def setUp(self):
+  @classmethod
+  def setUpClass(self):
     """
     Set up for all test cases: store the arguments in class variables.
     """
-    self.binary = test_binary
-    self.data_master = data_master
-
-  def t1est_print_args(self):
-    print(f'Binary: {self.binary}, data master: {self.data_master}')
+    self.datamaster = os.environ['DATAMASTER']
+    self.startPattern(self.datamaster, 'pps.dot')
 
   def targetName_missing(self, command):
     """
-    Common method for test cases with missing target name. 
+    Common method for test cases with missing target name.
     Start dm-cmd with the command and check the output on stderr.
     """
-    # pass cmd and args to the function
-    process = subprocess.Popen([self.binary, self.data_master, command], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    # get command output and error
-    stdout, stderr = process.communicate()
-    lines = stderr.decode('utf-8').splitlines()
-#    print(f'Lines:\n{lines}')
+    lines = self.startAndGetSubprocessOutput([self.binary, self.datamaster, command],
+         expectedReturnCode=255, linesCout=0, linesCerr=1)[1]
     test_result = False
     for line in lines:
       if 'Target node is NULL, target missing.' in line:
         test_result = True
     self.assertTrue(test_result, f'stderr: {lines}')
-    self.assertEqual(len(lines), 1)
 
   def test_abswait_missing(self):
     self.targetName_missing('abswait')
@@ -81,20 +64,14 @@ class TestDmCmd(dm_testbench.DmTestbench):
   def test_unlock_missing(self):
     self.targetName_missing('unlock')
 
-  def targetName(self, command, count_out=0, count_err=0, options=''):
+  def targetName(self, command, expectedReturnCode=0, count_out=0, count_err=0, options=''):
     """
     Common method for commands with target name.
     Start dm-cmd with the command and check the output on stdout and stderr.
     The checks check only the number of lines of the output, not the content.
     """
-    process = subprocess.Popen([self.binary, self.data_master, command, 'B_PPS', options], stderr=subprocess.PIPE, stdout=subprocess.PIPE)   # pass cmd and args to the function
-    stdout, stderr = process.communicate()   # get command output and error
-    lines = stdout.decode('utf-8').splitlines()
-#    print(f'Lines:\n{lines}')
-    self.assertEqual(len(lines), count_out, f'stdout, Number of lines {len(lines)}')
-    lines = stderr.decode('utf-8').splitlines()
-#    print(f'Lines:\n{lines}')
-    self.assertEqual(len(lines), count_err, f'stderr, Number of lines {len(lines)}')
+    lines, lineErr = self.startAndGetSubprocessOutput([self.binary, self.datamaster, command, 'B_PPS', options],
+         expectedReturnCode, linesCout=count_out, linesCerr=count_err)
 
   def test_abswait(self):
     self.targetName('abswait', options='100')
@@ -103,10 +80,10 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('asyncclear')
 
   def test_flow(self):
-    self.targetName('flow', count_err=1, options='x')
+    self.targetName('flow', 255, count_err=1, options='x')
 
   def test_flush(self):
-    self.targetName('flush', count_err=1)
+    self.targetName('flush', 255, count_err=1)
 
   def test_lock(self):
     self.targetName('lock')
@@ -124,20 +101,10 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('relwait', options='100')
 
   def test_staticflush(self):
-    self.targetName('staticflush', count_err=1)
+    self.targetName('staticflush', 255, count_err=1)
 
   def test_switch(self):
-    self.targetName('switch', count_err=1, options='x')
+    self.targetName('switch', 255, count_err=1, options='x')
 
   def test_unlock(self):
     self.targetName('unlock')
-
-if __name__ == '__main__':
-  if len(sys.argv) > 2:
-#    print(f"Arguments: {sys.argv}")
-    data_master = sys.argv.pop()
-    test_binary = sys.argv.pop()
-#    print(f"Arguments: {sys.argv}, {len(sys.argv)}")
-    unittest.main(verbosity=2)
-  else:
-    print("Required argument missing", sys.argv)

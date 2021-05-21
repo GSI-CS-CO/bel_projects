@@ -3,8 +3,8 @@ DOT_FILE ?= pps-all-threads.dot
 PROTOCOL_FILE ?= pps-threads.log
 DURATION ?= 5
 SNOOP_FILE ?= pps-snoop.txt
-# since timeout terminates saft-ctl, we need echo to gat a status code of 0. Otherwise, make would stop.
-SNOOP ?= timeout --preserve-status $(DURATION) saft-ctl x -fvx snoop 0 0 0 >> $(SNOOP_FILE) || echo "timeout: $$?"
+# since timeout terminates saft-ctl, we need echo to get a status code of 0. Otherwise, make would stop.
+SNOOP_AND_LOG ?= $(SNOOP) $(DURATION) >> $(SNOOP_FILE)
 DUMP = eb-get -v $(DATAMASTER) 0x4120000/0x20000
 
 test1:
@@ -14,35 +14,35 @@ test1:
 	dm-cmd $(DATAMASTER) -v > $(PROTOCOL_FILE)
 	$(DUMP) cpu0-dump-0.txt
 	dm-cmd $(DATAMASTER) startpattern PPS0a -t 0
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-a.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0b -t 1
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-b.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0c -t 2
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-c.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0d -t 3
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-d.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0e -t 4
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-e.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0f -t 5
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-f.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0g -t 6
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-g.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0h -t 7
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-h.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 
@@ -76,19 +76,19 @@ four-threads:
 	dm-cmd $(DATAMASTER) -v > $(PROTOCOL_FILE)
 	$(DUMP) cpu0-dump-0.txt
 	dm-cmd $(DATAMASTER) startpattern PPS0a -t 0
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-a.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0b -t 1
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-b.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0c -t 2
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-c.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 	dm-cmd $(DATAMASTER) startpattern PPS0d -t 3
-	$(SNOOP)
+	$(SNOOP_AND_LOG)
 	$(DUMP) cpu0-dump-d.txt
 	dm-cmd $(DATAMASTER) -v >> $(PROTOCOL_FILE)
 

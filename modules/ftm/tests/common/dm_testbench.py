@@ -2,16 +2,27 @@ import subprocess  # used in startAllPatterns
 import unittest    # contains super class
 import difflib     # used in compareExpectedResult
 import os
+import sys
 import pathlib
 import csv         # used in analyseFrequencyFromCsv
 import contextlib
 import datetime    # used in analyseFrequencyFromCsv
 import collections # used in analyseFrequencyFromCsv
+import threading
 
 """
 Module dm_testbench collects functions to handle patterns for the data master testbench.
 """
 class DmTestbench(unittest.TestCase):
+  @classmethod
+  def setUpClass(self):
+    """
+    Set up for all test cases: store the arguments in class variables.
+    """
+    self.binary = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
+    self.datamaster = os.environ['DATAMASTER']
+    self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
+    self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
 
   def addSchedule(self, data_master, schedule_file):
     """Connect to the given data master and load the schedule file (dot format).
@@ -31,6 +42,7 @@ class DmTestbench(unittest.TestCase):
     The data master is halted, cleared, and statistics is reset.
     Search for all pattern in the data master with 'dm-sched' and start these.
     """
+    schedule_file = self.schedules_folder + schedule_file
     print (f"Connect to device '{data_master}', schedule file '{schedule_file}'.   ", end='', flush=True)
     process = subprocess.Popen(['dm-cmd', data_master, 'halt'])
     process.wait()
@@ -82,25 +94,28 @@ class DmTestbench(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
 
-  def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+  def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=0, linesCout=-1, linesCerr=-1):
+    return self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)[0]
+
+  def startAndGetSubprocessOutput(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
     """
     Common method to start a subprocess and check the return code.
     The <argumentsList> contains the binary to execute and all arguments in one list.
     Start the binary for the test step with the arguments and check the output on stdout and stderr and the return code as well.
+    Return both stdout, stderr as list of lines.
     """
     # pass cmd and args to the function
     process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
     stdout, stderr = process.communicate()
-    if expectedReturnCode > -1:
-      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
     if linesCout > -1:
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
-    return stdout.decode("utf-8").splitlines()
+    return [stdout.decode("utf-8").splitlines(), stderr.decode("utf-8").splitlines()]
 
   def removePaintedFlags(self, dot_lines):
     """Remove flags and fillcolors of painted nodes from dot string (parameter dot_lines).
@@ -134,38 +149,37 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {file_expected}\n{diffLines}')
 
-  def snoopToCsv(self, csv_file_name, duration=1.0):
-    """Snoop timing messages with saft-ctl for <duration> seconds (default = 1.0) and write the messages to <csv_file_name>.
-    Details: start saft-ctl with Popen, wait for <duration> seconds.
-    When the TimeoutExpired exception pops up, kill saft-ctl and wait for at most 5 seconds.
-    At least assert the return code -9 of saft-ctl.
-    """
-    with open(csv_file_name, 'wb') as file1:
-      try:
-        process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stdout=file1)
-        process.wait(duration)
-      except subprocess.TimeoutExpired as excep:
-        process.kill()
-        process.wait(5)
-        self.assertEqual(process.returncode, -9, f'Returncode: {process.returncode}')
+  def getSnoopCommand(self, duration):
+    snoop_command1 = self.snoop_command + ' ' + str(duration)
+    if self.snoop_command[len(self.snoop_command)-1:] == "'":
+      snoop_command1 = self.snoop_command[:-1] + ' ' + str(duration) + "'"
+    # ~ print(f'getSnoopCommand: {snoop_command1}')
+    return snoop_command1
 
-  def snoopToCsvWithAction(self, csv_file_name, action, duration=1.0):
-    """
-    Snoop timing messages with saft-ctl for <duration> seconds (default = 1.0).
-    Write the messages to <csv_file_name>.
-    Details: start saft-ctl with Popen, wait for <duration> seconds.
-    When the TimeoutExpired exception pops up, kill saft-ctl and wait for at most 5 seconds.
-    At least assert the return code -9 of saft-ctl.
+  def snoopToCsv(self, csv_file_name, duration=1):
+    """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csv_file_name>.
+    Details: start saft-ctl with Popen, run it for <duration> seconds.
     """
     with open(csv_file_name, 'wb') as file1:
-      try:
-        process = subprocess.Popen(['saft-ctl', 'x', '-fvx', 'snoop', '0', '0', '0'], stdout=file1)
-        action()
-        process.wait(duration)
-      except subprocess.TimeoutExpired as excep:
-        process.kill()
-        process.wait(5)
-        self.assertEqual(process.returncode, -9, f'Returncode: {process.returncode}')
+      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+
+  def threadSnoop(self, file_name, duration):
+    with open(file_name, 'wb') as file1:
+      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+
+  def snoopToCsvWithAction(self, csv_file_name, action, duration=1):
+    """
+    Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
+    Write the messages to <csv_file_name>.
+    Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
+    action should end before snoop.
+    """
+    snoop = threading.Thread(target=self.threadSnoop, args=(csv_file_name, duration))
+    snoop.start()
+    action()
+    snoop.join()
 
   def analyseFrequencyFromCsv(self, csv_file_name, column=20, printTable=True):
     """
