@@ -104,7 +104,6 @@ void EbRamAccess::readRam( RAM_DAQ_PAYLOAD_T* pData, std::size_t len,
       ramRingAddToReadIndex( &indexes, lenToEnd );
       len   -= lenToEnd;
       pData += lenToEnd;
-      std::cout << "---" << std::endl;
    }
    readRam( pData, len, ramRingGetReadIndex( &indexes ) );
    ramRingAddToReadIndex( &indexes, len );
