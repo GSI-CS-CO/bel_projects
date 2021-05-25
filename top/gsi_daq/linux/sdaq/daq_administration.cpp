@@ -439,30 +439,20 @@ inline bool DaqAdministration::dataBlocksPresent( void )
 int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                                          std::size_t len )
 {
-   int ret = EB_OK;
-   uint offset = 0;
-
    const std::size_t maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
-
-   while( len > 0 )
+   while( true )
    {
       const std::size_t partLen = std::min( len, maxLen );
-      ret = getEbAccess()->readDaqDataBlock( &pData[offset], partLen
-                                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                                           , ::ramReadPoll
-                                        #endif
-                                          );
-      if( ret != EB_OK )
-         return ret;
-
-      len    -= partLen;
-      offset += partLen;
-
+      readRam( pData, partLen );
+      len -= partLen;
+      if( len == 0 )
+         break;
+      pData += partLen;
       if( m_blockReadEbCycleGapTimeUs != 0 )
          ::usleep( m_blockReadEbCycleGapTimeUs );
    }
 
-   return ret;
+   return EB_OK;
 }
 
 /*! ---------------------------------------------------------------------------

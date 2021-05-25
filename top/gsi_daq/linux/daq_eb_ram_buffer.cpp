@@ -29,17 +29,24 @@
 #include <daq_eb_ram_buffer.hpp>
 #include <generated/shared_mmap.h>
 #include <dbg.h>
+#include <iostream>
 using namespace Scu;
 using namespace daq;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
  */
 EbRamAccess::EbRamAccess( DaqEb::EtherboneConnection* poEb )
    :m_poEb( poEb )
    ,m_connectedBySelf( false )
 #ifndef CONFIG_NO_SCU_RAM
-   ,m_pRam( nullptr )
+  #ifdef CONFIG_SCU_USE_DDR3
+   ,m_ddr3TrModeBase( 0 )
+   #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+   ,m_ddr3BurstModeBase( 0 )
+   #endif
+  #endif
 #endif
 {
    if( !m_poEb->isConnected() )
@@ -56,9 +63,20 @@ EbRamAccess::EbRamAccess( DaqEb::EtherboneConnection* poEb )
     * LM32 binary.
     */
    m_lm32SharedMemAddr += SHARED_OFFS;
+
+#ifndef CONFIG_NO_SCU_RAM
+ #ifdef CONFIG_SCU_USE_DDR3
+   m_ddr3TrModeBase = m_poEb->findDeviceBaseAddress( DaqEb::gsiId, DaqEb::wb_ddr3ram );
+  #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+   m_ddr3BurstModeBase = m_poEb->findDeviceBaseAddress( DaqEb::gsiId, DaqEb::wb_ddr3ram2 );
+  #endif
+ #endif
+#endif
+
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
  */
 EbRamAccess::~EbRamAccess( void )
 {
@@ -68,76 +86,33 @@ EbRamAccess::~EbRamAccess( void )
 
 #ifndef CONFIG_NO_SCU_RAM
 /*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
  */
-void EbRamAccess::ramInit( RAM_SCU_T* pRam,
-                                         RAM_RING_SHARED_OBJECT_T* pSharedObj )
+void EbRamAccess::readRam( RAM_DAQ_PAYLOAD_T* pData, std::size_t len,
+                           RAM_RING_INDEXES_T& rIndexes
+                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                           , RAM_DAQ_POLL_FT poll
+                        #endif
+                         )
 {
-   SCU_ASSERT( m_poEb->isConnected() );
-   SCU_ASSERT( m_pRam == nullptr );
-
-   m_pRam = pRam;
-   m_pRam->pSharedObj = pSharedObj;
-   ramRingReset( &m_pRam->pSharedObj->ringIndexes );
-#ifdef CONFIG_SCU_USE_DDR3
-   m_pRam->ram.pTrModeBase = m_poEb->findDeviceBaseAddress( DaqEb::gsiId,
-                                                           DaqEb::wb_ddr3ram );
-   DBPRINT1( "DBG: INFO: Found DDR3 tr-modbase at addr: 0x%08X\n",
-             m_pRam->ram.pTrModeBase );
- #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-   m_pRam->ram.pBurstModeBase m_poEb->findDeviceBaseAddress( DaqEb::gsiId,
-                                                          DaqEb::wb_ddr3ram2 );
-   DBPRINT1( "DBG: INFO: Found DDR3 burst-modbase at addr: 0x%08X\n",
-             m_pRam->ram.pBurstModeBase );
-
- #endif
-#else
-   #error Nothing implemented in function ramRreadItem()!
-#endif
-}
-
-/*! ---------------------------------------------------------------------------
- */
-int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
-                                   std::size_t len
-                                 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                                   , RAM_DAQ_POLL_FT poll
-                                 #endif
-                                 )
-{
-   SCU_ASSERT( m_pRam != nullptr );
-#ifdef CONFIG_SCU_USE_DDR3
-  #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
-   RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
+ #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
+   RAM_RING_INDEXES_T indexes = rIndexes;
    const std::size_t lenToEnd = ramRingGetUpperReadSize( &indexes );
    if( lenToEnd < len )
    {
-      m_poEb->read( m_pRam->ram.pTrModeBase +
-                      ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
-                    pData,
-                    sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
-                    lenToEnd * ARRAY_SIZE( pData->ad32 ) );
+      readRam( pData, lenToEnd, ramRingGetReadIndex( &indexes ) );
       ramRingAddToReadIndex( &indexes, lenToEnd );
       len   -= lenToEnd;
       pData += lenToEnd;
+      std::cout << "---" << std::endl;
    }
-
-   m_poEb->read( m_pRam->ram.pTrModeBase +
-                   ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
-                 pData,
-                 sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
-                 len * ARRAY_SIZE( pData->ad32 ) );
-
+   readRam( pData, len, ramRingGetReadIndex( &indexes ) );
    ramRingAddToReadIndex( &indexes, len );
-
-   m_pRam->pSharedObj->ringIndexes = indexes;
-
-   return EB_OK;
-  #else // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+   rIndexes = indexes;
+ #else
    #warning At the moment the burst mode is slow!
-   int ret;
-   RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
+   RAM_RING_INDEXES_T indexes = rIndexes;
    const uint = lenToEnd = ramRingGetUpperReadSize( &indexes );
-
    if( lenToEnd < len )
    {
       //TODO
@@ -155,15 +130,8 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    if( ret != EB_OK )
       return ret;
    ramRingAddToReadIndex( &indexes, len );
-   m_pRam->pSharedObj->ringIndexes = indexes;
-
-   return EB_OK;
-  #endif
-#else
-   #error Unknown memory type for function: EbRamAccess::readDaqDataBlock()
-#endif
+   rIndexes = indexes;
+ #endif
 }
-#endif //ifnedf CONFIG_NO_SCU_RAM
-
-
+#endif /* #ifndef CONFIG_NO_SCU_RAM */
 //================================== EOF =======================================

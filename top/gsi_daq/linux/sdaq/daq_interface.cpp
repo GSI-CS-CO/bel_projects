@@ -153,7 +153,6 @@ void DaqInterface::init( void )
    if( !isAddacDaqSupport() )
       return;
 
-   getEbAccess()->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
    sendReset();

@@ -59,18 +59,34 @@ class EbRamAccess
    DaqEb::EtherboneConnection* m_poEb;
    bool                        m_connectedBySelf;
    uint                        m_lm32SharedMemAddr;
+
 #ifndef CONFIG_NO_SCU_RAM
-   RAM_SCU_T*                  m_pRam;
+ #ifdef CONFIG_SCU_USE_DDR3
+   uint                        m_ddr3TrModeBase;
+ #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+   uint                        m_ddr3BurstModeBase;
+ #endif
+ #endif
 #endif
+
 public:
+   /*!
+    * @brief Constructor establishes the etherbone connection if it's not
+    *        already been done outside.
+    * @param poEb Pointer to the object of type EtherboneConnection.
+    */
    EbRamAccess( DaqEb::EtherboneConnection* poEb );
 
+   /*!
+    * @brief Destructor terminates the ehtherbone connection if the connection was made
+    *        by this object.
+    */
    ~EbRamAccess( void );
 
-#ifndef CONFIG_NO_SCU_RAM
-   void ramInit( RAM_SCU_T* pRam, RAM_RING_SHARED_OBJECT_T* pSharedObj );
-#endif
-
+   /*!
+    * @brief Returns the pointer of the etherbone connection object of type:
+    *        EtherboneConnection:
+    */
    DaqEb::EtherboneConnection* getEbPtr( void )
    {
       return m_poEb;
@@ -86,24 +102,52 @@ public:
       return m_poEb->getNetAddress();
    }
 
+   /*!
+    * @brief Returns the IP address or - when it runs inside of a SCU - the
+    *        wishbone name without the prefix "tcp/" or "dev/"
+    */
    const std::string getScuDomainName( void )
    {
       return getNetAddress().substr( getNetAddress().find_first_of( '/' ) + 1 );
    }
 
+   /*!
+    * @brief Returns "true" when the etherbone/wishbone conection has been
+    *        established.
+    */
    bool isConnected( void ) const
    {
       return m_poEb->isConnected();
    }
 
 #ifndef CONFIG_NO_SCU_RAM
-   int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
-                         std::size_t  len
-                       #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                         , RAM_DAQ_POLL_FT poll
-                       #endif
-                       );
-#endif
+   /*!
+    * @brief Reads data from the SCU-RAM.
+    * @note At the time it's the DDR3-RAM yet!
+    * @param pData Pointer to the destination buffer of type RAM_DAQ_PAYLOAD_T.
+    * @param len Number of RAM-items of type RAM_DAQ_PAYLOAD_T to read.
+    * @param offset Offset in RAM_DAQ_PAYLOAD_T units.
+    */
+   void readRam( RAM_DAQ_PAYLOAD_T* pData, const std::size_t len, const uint offset )
+   {
+      SCU_ASSERT( m_poEb->isConnected() );
+      SCU_ASSERT( m_ddr3TrModeBase != 0 );
+      m_poEb->read( m_ddr3TrModeBase + offset * sizeof(RAM_DAQ_PAYLOAD_T),
+                    pData,
+                    sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
+                    len * ARRAY_SIZE( pData->ad32 ) );
+   }
+
+   /*!
+    * @brief Reads circular administrated data from the SCU-RAM.
+    * @note At the time it's the DDR3-RAM yet!
+    * @param pData Pointer to the destination buffer of type RAM_DAQ_PAYLOAD_T.
+    * @param len Number of RAM-items of type RAM_DAQ_PAYLOAD_T to read.
+    * @param rIndexes Ring buffer administrator object.
+    */
+   void readRam( RAM_DAQ_PAYLOAD_T* pData, std::size_t len, RAM_RING_INDEXES_T& rIndexes );
+
+#endif /* ifndef CONFIG_NO_SCU_RAM */
 
    /*!
     * @brief Reads data from the LM32 shared memory area.
