@@ -11,6 +11,9 @@
   #include "scu_fg_macros.h"
   #include "scu_mil_fg_handler.h"
   #include "scu_fg_list.h"
+  #ifdef CONFIG_MIL_DAQ_USE_RAM
+    #include <daq_ramBuffer.h>
+  #endif
 #endif
 
 extern volatile uint16_t*     g_pScub_base;
