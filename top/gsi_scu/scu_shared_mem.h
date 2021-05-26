@@ -59,11 +59,13 @@ extern "C"
 {
 namespace Scu
 {
-namespace FG
-{
 #endif
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
+#ifdef __cplusplus
+namespace MiLdaq
+{
+#endif
 /*!
  * @brief Data type for set and actual values of MIL-DAQs
  */
@@ -73,10 +75,25 @@ typedef uint16_t MIL_DAQ_T;
  * @brief Data set of a MIL-DAQ in the DDR3-RAM.
  */
 typedef struct PACKED_SIZE
-{
+{ /*!
+   * @brief White rabbit time-stamp;
+   */
    uint64_t   timestamp;
+
+   /*!
+    * @brief Set value (feedback from MIL function generator).\n
+    *        It is the C-coefficient of the polynomial.
+    */
    MIL_DAQ_T  setValue;
+
+   /*!
+    * @brief Actual value (value of the ADC).
+    */
    MIL_DAQ_T  actValue;
+
+   /*!
+    * @brief Object contains information about channel number and socket.
+    */
    FG_MACRO_T fgMacro;
 } MIL_DAQ_RAM_ITEM_T;
 
@@ -85,10 +102,8 @@ STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, timestamp ) == 0 );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) == sizeof(uint64_t) );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) ==
                offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) + sizeof(MIL_DAQ_T) );
-STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, channel ) ==
+STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, fgMacro ) ==
                offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_T) );
-STATIC_ASSERT( sizeof( MIL_DAQ_RAM_ITEM_T ) ==
-                offsetof( MIL_DAQ_RAM_ITEM_T, channel ) + sizeof(uint32_t) );
 #endif /* ifndef __DOXYGEN__ */
 
 /*!
@@ -98,13 +113,56 @@ STATIC_ASSERT( sizeof( MIL_DAQ_RAM_ITEM_T ) ==
    (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( RAM_DAQ_PAYLOAD_T ) +    \
     !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( RAM_DAQ_PAYLOAD_T )))
 
+/*!
+ * @brief Hybrid type simplifying the storing of MIL-DAQ data in the SCU-RAM
+ * @note At the time it is the DDR3 RAM yet.
+ */
 typedef union PACKED_SIZE
 {
    RAM_DAQ_PAYLOAD_T  ramPayload[RAM_ITEM_PER_MIL_DAQ_ITEM];
    MIL_DAQ_RAM_ITEM_T item;
 } MIL_DAQ_RAM_ITEM_PAYLOAD_T;
 
+/*!
+ * @brief Magic number for recognizing that the LM32 firmware
+ *        stores the MIL-DAQ data in the SCU-RAM.
+ */
+#define MIL_DAQ_MAGIC_NUMBER ((uint32_t)0xDABADABA
+
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Administration type for MIL-DAQ in shared memory
+ */
+typedef struct PACKET_SIZE
+{  /*!
+    * @brief Magic number for recognizing the LM32 firmware manages
+    *        the MIL-DAQ date in the DDR3 RAM-
+    */
+   uint32_t           magicNumber;
+
+   /*!
+    * @brief Administration of memory offset, write and read index.
+    */
+   RAM_RING_INDEXES_T indexes;
+} MIL_DAQ_ADMIN_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, magicNumber ) == 0);
+STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, indexes ) ==
+               (offsetof( MIL_DAQ_ADMIN_T, magicNumber ) + sizeof( uint32_t ) ));
+STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
+               (sizeof( uint32_t ) + sizeof(RAM_RING_INDEXES_T)) );
+#endif
+
+#ifdef __cplusplus
+} /* namespace MiLdaq */
+#endif
 #endif /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+
+#ifdef __cplusplus
+namespace FG
+{
+#endif
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -331,8 +389,9 @@ typedef struct PACKED_SIZE
    /*!
     * @brief MIL-DAQ ring-buffer administration indexes
     *        for DDR3-RAM.
+    * @var mdaq
     */
-   RAM_RING_INDEXES_T  mdaqRing;
+   ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) mdaq;
 #else
    /*!
     * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
@@ -358,7 +417,7 @@ typedef struct PACKED_SIZE
 
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-  #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaqRing ) + sizeof( RAM_RING_INDEXES_T ))
+  #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaq ) + sizeof( MIL_DAQ_ADMIN_T ))
 #else
   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_BUFFER_T ) ))
 #endif
