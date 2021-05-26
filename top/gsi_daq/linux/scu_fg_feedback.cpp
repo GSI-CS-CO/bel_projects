@@ -321,7 +321,7 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
 #ifndef _CONFIG_COMPARE_SEQUENCE_NR
    const uint64_t timeStampActVal = m_oReceiveActValue.getTimestamp();
-   const uint diff = ::abs(timeStampActVal - timeStampSetVal);
+   const uint diff = ::abs( static_cast<int64_t>(timeStampActVal - timeStampSetVal));
    if( diff > (2 * m_oReceiveSetValue.getSampleTime() ) )
    { /*
       * Is the time deviation between set- and actual- value-block
