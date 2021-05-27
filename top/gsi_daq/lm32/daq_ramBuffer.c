@@ -211,20 +211,6 @@ void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 }
 
 /*! ---------------------------------------------------------------------------
- */
-STATIC inline ALWAYS_INLINE
-void ramWriteItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
-                   RAM_DAQ_PAYLOAD_T* pItem )
-{
-#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
-   ddr3write64( &pThis->ram, index, pItem );
-#else
-   #error Nothing implemented in function ramWriteItem()!
-#endif
-}
-
-
-/*! ---------------------------------------------------------------------------
  * @brief Helper function for ramWriteDaqData
  */
 STATIC inline ALWAYS_INLINE

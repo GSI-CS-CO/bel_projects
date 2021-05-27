@@ -41,7 +41,6 @@
  * @defgroup SHARED_MEMORY Sheard memory for communication between
  *                         LM32 and Linux.
  */
-
 #include <helper_macros.h>
 #include <scu_mailbox.h>
 #include <scu_function_generator.h>
@@ -49,7 +48,7 @@
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
 #else
-  #ifdef CONFIG_MIL_DAQ_USE_RAM
+  #if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__)
     #include <daq_ramBuffer.h>
   #endif
 #endif
@@ -61,7 +60,7 @@ namespace Scu
 {
 #endif
 
-#ifdef CONFIG_MIL_DAQ_USE_RAM
+#if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__)
 #ifdef __cplusplus
 namespace MiLdaq
 {
@@ -69,7 +68,7 @@ namespace MiLdaq
 /*!
  * @brief Data type for set and actual values of MIL-DAQs
  */
-typedef uint16_t MIL_DAQ_T;
+typedef uint16_t MIL_DAQ_VAL_T;
 
 /*!
  * @brief Data set of a MIL-DAQ in the DDR3-RAM.
@@ -84,12 +83,12 @@ typedef struct PACKED_SIZE
     * @brief Set value (feedback from MIL function generator).\n
     *        It is the C-coefficient of the polynomial.
     */
-   MIL_DAQ_T  setValue;
+   MIL_DAQ_VAL_T  setValue;
 
    /*!
     * @brief Actual value (value of the ADC).
     */
-   MIL_DAQ_T  actValue;
+   MIL_DAQ_VAL_T  actValue;
 
    /*!
     * @brief Object contains information about channel number and socket.
@@ -101,33 +100,33 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, timestamp ) == 0 );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) == sizeof(uint64_t) );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) ==
-               offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) + sizeof(MIL_DAQ_T) );
+               offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) + sizeof(MIL_DAQ_VAL_T) );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, fgMacro ) ==
-               offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_T) );
+               offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_VAL_T) );
 #endif /* ifndef __DOXYGEN__ */
 
 /*!
  * @brief Number of required RAM-items per Mil-DAQ item
  */
-#define RAM_ITEM_PER_MIL_DAQ_ITEM                                   \
-   (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( RAM_DAQ_PAYLOAD_T ) +    \
-    !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( RAM_DAQ_PAYLOAD_T )))
+#define RAM_ITEM_PER_MIL_DAQ_ITEM                                                         \
+   (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) ) +    \
+    !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) )))
 
 /*!
  * @brief Hybrid type simplifying the storing of MIL-DAQ data in the SCU-RAM
  * @note At the time it is the DDR3 RAM yet.
  */
-typedef union PACKED_SIZE
+typedef union
 {
-   RAM_DAQ_PAYLOAD_T  ramPayload[RAM_ITEM_PER_MIL_DAQ_ITEM];
-   MIL_DAQ_RAM_ITEM_T item;
+   ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T )  ramPayload[RAM_ITEM_PER_MIL_DAQ_ITEM];
+   MIL_DAQ_RAM_ITEM_T                       item;
 } MIL_DAQ_RAM_ITEM_PAYLOAD_T;
 
 /*!
  * @brief Magic number for recognizing that the LM32 firmware
  *        stores the MIL-DAQ data in the SCU-RAM.
  */
-#define MIL_DAQ_MAGIC_NUMBER ((uint32_t)0xDABADABA
+#define MIL_DAQ_MAGIC_NUMBER ((uint32_t)0xDABADABA)
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -157,7 +156,7 @@ STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
 #ifdef __cplusplus
 } /* namespace MiLdaq */
 #endif
-#endif /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+#endif /* if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__) */
 
 #ifdef __cplusplus
 namespace FG
@@ -493,7 +492,7 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) ==
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 
  #ifdef CONFIG_MIL_DAQ_USE_RAM
-  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) == FG_SHM_BASE_SIZE );
+  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq )  ) == FG_SHM_BASE_SIZE );
  #else
   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) == FG_SHM_BASE_SIZE );
  #endif
@@ -501,8 +500,8 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #ifdef CONFIG_MIL_DAQ_USE_RAM
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
-                  offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
-                  sizeof( RAM_RING_INDEXES_T ));
+                  offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq ) ) +
+                  sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) ));
   #else
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) == DAQ_SHM_OFFET );
   #endif
@@ -512,8 +511,8 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
  #else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                   offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
-                   sizeof( RAM_RING_INDEXES_T ));
+                   offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq ) ) +
+                   sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) ));
   #else
     STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
                    offsetof( SCU_SHARED_DATA_T, busy ) +
@@ -546,8 +545,9 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 #endif
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-  #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-     , .mdaqRing = RAM_RING_INDEXES_MDAQ_INITIALIZER
+  #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM           \
+     , .mdaq.magicNumber = MIL_DAQ_MAGIC_NUMBER           \
+     , .mdaq.indexes = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
      , .daq_buf = {0}
@@ -685,10 +685,11 @@ unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
    return fgMacro.outputBits;
 }
 
+#ifndef __lm32__
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqDevice( const register MIL_DAQ_OBJ_T* pMilDaq )
+unsigned int getMilDaqDeviceOld( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDeviceByFgMacro( pMilDaq->fgMacro );
 }
@@ -696,10 +697,11 @@ unsigned int getMilDaqDevice( const register MIL_DAQ_OBJ_T* pMilDaq )
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqSocket( const register MIL_DAQ_OBJ_T* pMilDaq )
+unsigned int getMilDaqSocketOld( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getSocketByFgMacro( pMilDaq->fgMacro );
 }
+#endif
 
 /*! ---------------------------------------------------------------------------
  */
@@ -717,21 +719,23 @@ unsigned int getDaqMilExtentionBySocket( const unsigned int socket )
    return socket >> 4;
 }
 
+#ifndef __lm32__
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqScuBusSlot( const register MIL_DAQ_OBJ_T* pMilDaq )
+unsigned int getMilDaqScuBusSlotOld( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
-   return getDaqMilScuBusSlotbySocket( getMilDaqSocket( pMilDaq ));
+   return getDaqMilScuBusSlotbySocket( getMilDaqSocketOld( pMilDaq ));
 }
 
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqScuMilExtention( const register MIL_DAQ_OBJ_T* pMilDaq )
+unsigned int getMilDaqScuMilExtentionOld( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
-   return getDaqMilExtentionBySocket( getMilDaqSocket( pMilDaq ) );
+   return getDaqMilExtentionBySocket( getMilDaqSocketOld( pMilDaq ) );
 }
+#endif
 #ifdef __cplusplus
 } // namespace MiLdaq
 } // namespace Scu

@@ -29,6 +29,10 @@
 
 //#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+ #error "Obsolete module when CONFIG_MIL_DAQ_USE_RAM is defined!"
+#endif
+
 void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
 {
   const RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;

@@ -12,8 +12,12 @@
   #include "scu_mil_fg_handler.h"
   #include "scu_fg_list.h"
   #ifdef CONFIG_MIL_DAQ_USE_RAM
-    #include <daq_ramBuffer.h>
+    #include <daq_main.h>
   #endif
+#endif
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+extern DAQ_ADMIN_T g_scuDaqAdmin;
 #endif
 
 extern volatile uint16_t*     g_pScub_base;
@@ -101,6 +105,9 @@ void milInitTasks( void )
          g_aMilTaskData[i].aFgChannels[j].daq_timestamp = 0LL;
       }
    }
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   ramRingReset( &g_shared.mdaq.indexes );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -286,43 +293,48 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
 #endif
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-#error Extern RAM for MIL-DAQ not implemented yet!
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
+
    pl.item.timestamp = timestamp;
-   pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
+   pl.item.setValue = GET_UPPER_HALF( setValue );
    pl.item.actValue = actValue;
    pl.item.fgMacro = fgMacro;
  #ifdef CONFIG_READ_MIL_TIME_GAP
-   pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+   if( setValueInvalid )
+     pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
+   RAM_RING_INDEXES_T indexes = g_shared.mdaq.indexes;
+   /*
+    * Is the circular buffer full?
+    */
+   if( ramRingGetRemainingCapacity( &indexes ) < ARRAY_SIZE(pl.ramPayload) )
+   { /*
+      * Yes, removing the oldest item;
+      */
+      ramRingAddToReadIndex( &indexes, ARRAY_SIZE(pl.ramPayload) );
+   }
+   
+   for( unsigned int i = 0; i < ARRAY_SIZE(pl.ramPayload); i++ )
+   {
+      ramWriteItem( &g_scuDaqAdmin.oRam, ramRingGetWriteIndex( &indexes ), &pl.ramPayload[i] );
+      ramRingIncWriteIndex( &indexes );
+   }
+   
+   g_shared.mdaq.indexes = indexes;
+
 #else
    MIL_DAQ_OBJ_T d;
 
    d.actvalue = actValue;
-   d.tmstmp_l = timestamp & 0xffffffff;
-   d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
+   d.tmstmp_l = GET_LOWER_HALF( timestamp );
+   d.tmstmp_h = GET_UPPER_HALF( timestamp );
    d.fgMacro  = fgMacro;
  #ifdef CONFIG_READ_MIL_TIME_GAP
    if( setValueInvalid )
       d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
    d.setvalue = setValue;
-#if 0
-   #ifdef CONFIG_READ_MIL_TIME_GAP
-   #warning This will make a race-condition in the currently MIL-DAQ-circular buffer!
-   #endif
-   if( isMilDaqBufferFull( &g_shared.daq_buf ) )
-      removeOldestItem( &g_shared.daq_buf );
-#endif
    add_daq_msg( &g_shared.daq_buf, d );
-#endif
-#if 0
-#ifdef CONFIG_SMALL_HISTORY_VALUE
-   hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
-   hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
-#else
-   hist_addx(HISTORY_XYZ_MODULE, "MIL-daq actual value", actValue );
-#endif
 #endif
 }
 

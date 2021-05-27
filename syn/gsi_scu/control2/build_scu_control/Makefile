@@ -13,6 +13,19 @@ TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 
+ SCU_MIL := 1
+ MIL_GAP := 1
+ # MIL_DAQ_USE_DDR3 := 1
+ ADDAC_DAQ := 1
+# USE_LINUX_PRINTF := 1
+# DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
+
+# DEFINES += _CONFIG_DBG_MIL_TASK
+
+BASE_VERSION = 4
+
+
+
  DEFINES += CONFIG_DBG_MEASURE_IRQ_TIME
 # DEFINES += CONFIG_FG_PEDANTIC_CHECK
 # DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
@@ -30,16 +43,6 @@ DEFINES += _SCU_CONTROL_CONFIG_H
 
 # DEFINES += CONFIG_IRQ_RESET_IP_AFTER
 
- SCU_MIL := 1
- MIL_GAP := 1
-# MIL_DAQ_USE_DDR3 := 1
- ADDAC_DAQ := 1
-# USE_LINUX_PRINTF := 1
-# DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
-
-# DEFINES += _CONFIG_DBG_MIL_TASK
-
-BASE_VERSION = 4
 
  DEFINES += _CONFIG_NEW
 
@@ -55,9 +58,6 @@ DEFINES += MAX_LM32_INTERRUPTS=1
  USE_HISTORY=1
 # DEFINES += DEBUGLEVEL
 MIAN_MODULE    = $(SCU_DIR)/scu_main.c
-#MIAN_MODULE    = $(SCU_DIR)/scu_main_old_task.c
-
-
 
 ifdef MIL_DAQ_USE_DDR3
    DEFINES += CONFIG_MIL_DAQ_USE_RAM
@@ -103,15 +103,13 @@ SOURCE += $(SCU_LIB_SRC_DIR)/scu_mailbox.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_bus.c
 SOURCE += $(SCU_LIB_SRC_DIR)/event_measurement.c
-# SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
-# SOURCE += $(SCU_DIR)/scu_function_generator.c
-SOURCE += $(SCU_DIR)/scu_fg_list.c
-SOURCE += $(SCU_DIR)/scu_circular_buffer.c
 SOURCE += $(SCU_LIB_SRC_DIR)/sw_queue.c
-
- SOURCE += $(SCU_DIR)/scu_fg_macros.c
-# SOURCE += $(SCU_DIR)/scu_fg_macros120221.c
-
+# SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
+SOURCE += $(SCU_DIR)/scu_fg_list.c
+ifndef MIL_DAQ_USE_DDR3
+   SOURCE += $(SCU_DIR)/scu_circular_buffer.c
+endif
+SOURCE += $(SCU_DIR)/scu_fg_macros.c
 SOURCE += $(SCU_DIR)/scu_fg_handler.c
 SOURCE += $(SCU_DIR)/scu_command_handler.c
 SOURCE += $(SCU_DIR)/scu_temperature.c
