@@ -17,7 +17,7 @@ class DmTestbench(unittest.TestCase):
   @classmethod
   def setUpClass(self):
     """
-    Set up for all test cases: store the arguments in class variables.
+    Set up for all test cases: store the environment variables in variables.
     """
     self.binary = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
     self.datamaster = os.environ['DATAMASTER']

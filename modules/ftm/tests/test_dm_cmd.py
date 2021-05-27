@@ -7,12 +7,9 @@ First section: all commands which need a target name. Test case names: test_<com
 Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
 """
 class TestDmCmd(dm_testbench.DmTestbench):
-  @classmethod
-  def setUpClass(self):
+  def setUp(self):
+    """Set up for all test cases in this class: start pps pattern.
     """
-    Set up for all test cases: store the arguments in class variables.
-    """
-    self.datamaster = os.environ['DATAMASTER']
     self.startPattern(self.datamaster, 'pps.dot')
 
   def targetName_missing(self, command):

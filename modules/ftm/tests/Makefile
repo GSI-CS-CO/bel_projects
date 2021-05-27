@@ -46,7 +46,8 @@ parallelBranch:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C parallelBranch/
 
 pps:
-	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common python dmpps2.py "$(DATAMASTER)"
+	DATAMASTER="$(DATAMASTER)" PYTHONPATH=common/ pytest -k pps
+#	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common python dmpps2.py "$(DATAMASTER)"
 
 safe2remove:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C safe2remove/
