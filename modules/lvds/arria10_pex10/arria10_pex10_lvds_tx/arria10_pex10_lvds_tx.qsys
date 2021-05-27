@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element lvds_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="10AX027H2F34E2SG" />
+ <parameter name="deviceFamily" value="Arria 10" />
+ <parameter name="deviceSpeedGrade" value="2" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface
+   name="ext_coreclock"
+   internal="lvds_0.ext_coreclock"
+   type="conduit"
+   dir="end">
+  <port name="ext_coreclock" internal="ext_coreclock" />
+ </interface>
+ <interface name="ext_fclk" internal="lvds_0.ext_fclk" type="conduit" dir="end">
+  <port name="ext_fclk" internal="ext_fclk" />
+ </interface>
+ <interface
+   name="ext_loaden"
+   internal="lvds_0.ext_loaden"
+   type="conduit"
+   dir="end">
+  <port name="ext_loaden" internal="ext_loaden" />
+ </interface>
+ <interface name="inclock" internal="lvds_0.inclock" />
+ <interface name="pll_areset" internal="lvds_0.pll_areset" />
+ <interface name="pll_locked" internal="lvds_0.pll_locked" />
+ <interface
+   name="tx_coreclock"
+   internal="lvds_0.tx_coreclock"
+   type="conduit"
+   dir="end">
+  <port name="tx_coreclock" internal="tx_coreclock" />
+ </interface>
+ <interface name="tx_in" internal="lvds_0.tx_in" type="conduit" dir="end">
+  <port name="tx_in" internal="tx_in" />
+ </interface>
+ <interface name="tx_out" internal="lvds_0.tx_out" type="conduit" dir="end">
+  <port name="tx_out" internal="tx_out" />
+ </interface>
+ <interface name="tx_outclock" internal="lvds_0.tx_outclock" />
+ <module
+   name="lvds_0"
+   kind="altera_lvds"
+   version="18.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="CPA_ENABLED" value="false" />
+  <parameter name="DATA_RATE" value="1000.0" />
+  <parameter name="ENABLE_DIV_RECONFIG" value="false" />
+  <parameter name="ENABLE_MIGRATABLE_PORT_MAPPINGS" value="false" />
+  <parameter name="GENERATE_SDC_FILE" value="true" />
+  <parameter name="INCLOCK_FREQUENCY" value="125.0" />
+  <parameter name="J_FACTOR" value="8" />
+  <parameter name="MODE" value="TX" />
+  <parameter name="NUM_CHANNELS" value="1" />
+  <parameter name="PLL_CORECLOCK_RESOURCE" value="Periphery" />
+  <parameter name="PLL_USE_RESET" value="false" />
+  <parameter name="RX_BITSLIP_ASSERT_MAX" value="false" />
+  <parameter name="RX_BITSLIP_USE_RESET" value="false" />
+  <parameter name="RX_CDR_SIMULATION_PPM_DRIFT" value="0" />
+  <parameter name="RX_DPA_ALIGN_TO_RISING_EDGE_ONLY" value="false" />
+  <parameter name="RX_DPA_LOSE_LOCK_ON_ONE_CHANGE" value="false" />
+  <parameter name="RX_DPA_USE_HOLD" value="false" />
+  <parameter name="RX_DPA_USE_RESET" value="false" />
+  <parameter name="RX_FIFO_USE_RESET" value="false" />
+  <parameter name="RX_INCLOCK_PHASE_SHIFT" value="0" />
+  <parameter name="RX_RCCS_VAL" value="0.0" />
+  <parameter name="RX_USE_BITSLIP" value="false" />
+  <parameter name="SYS_INFO_DEVICE" value="10AX027H2F34E2SG" />
+  <parameter name="SYS_INFO_DEVICE_FAMILY" value="Arria 10" />
+  <parameter name="SYS_INFO_DEVICE_SPEEDGRADE" value="2" />
+  <parameter name="TX_EXPORT_CORECLOCK" value="true" />
+  <parameter name="TX_OUTCLOCK_DIVISION" value="2" />
+  <parameter name="TX_OUTCLOCK_PHASE_SHIFT" value="0" />
+  <parameter name="TX_REGISTER_CLOCK" value="tx_coreclock" />
+  <parameter name="TX_USE_OUTCLOCK" value="false" />
+  <parameter name="USE_CLOCK_PIN" value="false" />
+  <parameter name="USE_EXTERNAL_PLL" value="true" />
+  <parameter name="gui_actual_outclk_duty_cycle_5" value="50.0" />
+  <parameter name="gui_actual_outclk_duty_cycle_6" value="50.0" />
+  <parameter name="gui_actual_outclk_duty_cycle_7" value="50.0" />
+  <parameter name="gui_actual_outclk_duty_cycle_8" value="50.0" />
+  <parameter name="gui_actual_outclk_frequency_5" value="100.0" />
+  <parameter name="gui_actual_outclk_frequency_6" value="100.0" />
+  <parameter name="gui_actual_outclk_frequency_7" value="100.0" />
+  <parameter name="gui_actual_outclk_frequency_8" value="100.0" />
+  <parameter name="gui_desired_outclk_duty_cycle_5" value="50.0" />
+  <parameter name="gui_desired_outclk_duty_cycle_6" value="50.0" />
+  <parameter name="gui_desired_outclk_duty_cycle_7" value="50.0" />
+  <parameter name="gui_desired_outclk_duty_cycle_8" value="50.0" />
+  <parameter name="gui_desired_outclk_frequency_5" value="100.0" />
+  <parameter name="gui_desired_outclk_frequency_6" value="100.0" />
+  <parameter name="gui_desired_outclk_frequency_7" value="100.0" />
+  <parameter name="gui_desired_outclk_frequency_8" value="100.0" />
+  <parameter name="gui_enable_advanced_mode" value="0" />
+  <parameter name="gui_number_of_pll_output_clocks" value="0" />
+  <parameter name="gui_outclk_actual_phase_shift_deg_5" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_deg_6" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_deg_7" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_deg_8" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_ps_5" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_ps_6" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_ps_7" value="0.0" />
+  <parameter name="gui_outclk_actual_phase_shift_ps_8" value="0.0" />
+  <parameter name="gui_outclk_desired_phase_shift_5" value="0.0" />
+  <parameter name="gui_outclk_desired_phase_shift_6" value="0.0" />
+  <parameter name="gui_outclk_desired_phase_shift_7" value="0.0" />
+  <parameter name="gui_outclk_desired_phase_shift_8" value="0.0" />
+  <parameter name="gui_outclk_phase_shift_unit_0" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_1" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_2" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_3" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_4" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_5" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_6" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_7" value="0" />
+  <parameter name="gui_outclk_phase_shift_unit_8" value="0" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>
