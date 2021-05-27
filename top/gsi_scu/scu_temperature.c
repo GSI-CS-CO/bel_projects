@@ -85,14 +85,14 @@ void updateTemperature( void )
    #pragma GCC diagnostic push
    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
-   readTemperatureFromDevices( 0, &g_shared.oTemperatures.board_id,
-                                  &g_shared.oTemperatures.board_temp );
+   readTemperatureFromDevices( 0, &g_shared.oSaftLib.oTemperatures.board_id,
+                                  &g_shared.oSaftLib.oTemperatures.board_temp );
    BASE_ONEWIRE = g_oneWireBase.pUser;
    wrpc_w1_init();
-   readTemperatureFromDevices( 0, &g_shared.oTemperatures.ext_id,
-                                  &g_shared.oTemperatures.ext_temp );
-   readTemperatureFromDevices( 1, &g_shared.oTemperatures.backplane_id,
-                                  &g_shared.oTemperatures.backplane_temp );
+   readTemperatureFromDevices( 0, &g_shared.oSaftLib.oTemperatures.ext_id,
+                                  &g_shared.oSaftLib.oTemperatures.ext_temp );
+   readTemperatureFromDevices( 1, &g_shared.oSaftLib.oTemperatures.backplane_id,
+                                  &g_shared.oSaftLib.oTemperatures.backplane_temp );
 #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
 #endif

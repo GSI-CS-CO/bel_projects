@@ -183,7 +183,7 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
 
    ATOMIC_SECTION()
-      MSI_BOX_SLOT_ACCESS( g_shared.oFg.aRegs[channel].mbx_slot, signal ) = sig;
+      MSI_BOX_SLOT_ACCESS( g_shared.oSaftLib.oFg.aRegs[channel].mbx_slot, signal ) = sig;
 
 #ifdef CONFIG_LOG_ALL_SIGNALS
    hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );

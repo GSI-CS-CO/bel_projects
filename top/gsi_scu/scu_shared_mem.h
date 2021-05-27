@@ -368,8 +368,7 @@ STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aChannelBuffers ) ==
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
- * @brief Definition of shared memory area for the communication between LM32
- *        and Linux.
+ * @brief Definition of memory area which is known to the SAFT-LIB.
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
  * @see saftlib/drivers/fg_regs.h
  */
@@ -384,6 +383,32 @@ typedef struct PACKED_SIZE
     *        between SAFT-lib and LM32.
     */
    FG_SHARED_DATA_T    oFg;
+} SAFT_LIB_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( SAFT_LIB_T, oTemperatures ) == 0 );
+STATIC_ASSERT( offsetof( SAFT_LIB_T, oFg ) == sizeof( SCU_TEMPERATURE_T ) );
+#endif
+
+/*!
+ * @brief All member variables under this offset value are known in SAFTLIB.
+ * @note Don't move any of it!  
+ */
+#define FG_SHM_BASE_SIZE sizeof( SAFT_LIB_T )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Definition of shared memory area for the communication between LM32
+ *        and Linux.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
+ * @see saftlib/drivers/fg_regs.h
+ */
+typedef struct PACKED_SIZE
+{  /*!
+    * @brief Shared memory area which is known to the SAFT-LIB.
+    * @note  CAUTION: Don't move this member!
+    */
+   SAFT_LIB_T  oSaftLib;
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    /*!
@@ -408,12 +433,6 @@ typedef struct PACKED_SIZE
    ADD_NAMESPACE( Scu::daq, DAQ_SHARED_IO_T ) sDaq;
 #endif
 } SCU_SHARED_DATA_T;
-
-/*!
- * @brief All member variables under this offset value are known in SAFTLIB.
- * @note Don't move any of it!  
- */
-#define FG_SHM_BASE_SIZE ( offsetof( SCU_SHARED_DATA_T, oFg ) + sizeof( FG_SHARED_DATA_T ) )
 
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
@@ -471,10 +490,7 @@ STATIC_ASSERT( offsetof( FG_CHANNEL_REG_T, state ) ==
 STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) ==
                offsetof( FG_CHANNEL_REG_T, state ) + sizeof( uint32_t ));
 
-
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oFg ) ==
-               offsetof( SCU_SHARED_DATA_T, oTemperatures ) +
-               sizeof( SCU_TEMPERATURE_T ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 
  #ifdef CONFIG_MIL_DAQ_USE_RAM
   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) == FG_SHM_BASE_SIZE );
@@ -541,23 +557,23 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oFg ) ==
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
  */
-#define SCU_SHARED_DATA_INITIALIZER                          \
-{                                                            \
-   .oTemperatures.board_id         = SCU_INVALID_VALUE,      \
-   .oTemperatures.ext_id           = SCU_INVALID_VALUE,      \
-   .oTemperatures.backplane_id     = SCU_INVALID_VALUE,      \
-   .oTemperatures.board_temp       = SCU_INVALID_VALUE,      \
-   .oTemperatures.ext_temp         = SCU_INVALID_VALUE,      \
-   .oTemperatures.backplane_temp   = SCU_INVALID_VALUE,      \
-   .oFg.magicNumber                = FG_MAGIC_NUMBER,        \
-   .oFg.version                    = FG_VERSION,             \
-   .oFg.mailBoxSlot                = SCU_INVALID_VALUE,      \
-   .oFg.maxChannels                = MAX_FG_CHANNELS,        \
-   .oFg.channelBufferSize          = BUFFER_SIZE,            \
-   .oFg.aMacros                    = {{0,0,0,0}},            \
-   .oFg.busy                       = 0                       \
-   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                     \
-   __DAQ_SHARAD_MEM_INITIALIZER_ITEM                         \
+#define SCU_SHARED_DATA_INITIALIZER                                   \
+{                                                                     \
+   .oSaftLib.oTemperatures.board_id         = SCU_INVALID_VALUE,      \
+   .oSaftLib.oTemperatures.ext_id           = SCU_INVALID_VALUE,      \
+   .oSaftLib.oTemperatures.backplane_id     = SCU_INVALID_VALUE,      \
+   .oSaftLib.oTemperatures.board_temp       = SCU_INVALID_VALUE,      \
+   .oSaftLib.oTemperatures.ext_temp         = SCU_INVALID_VALUE,      \
+   .oSaftLib.oTemperatures.backplane_temp   = SCU_INVALID_VALUE,      \
+   .oSaftLib.oFg.magicNumber                = FG_MAGIC_NUMBER,        \
+   .oSaftLib.oFg.version                    = FG_VERSION,             \
+   .oSaftLib.oFg.mailBoxSlot                = SCU_INVALID_VALUE,      \
+   .oSaftLib.oFg.maxChannels                = MAX_FG_CHANNELS,        \
+   .oSaftLib.oFg.channelBufferSize          = BUFFER_SIZE,            \
+   .oSaftLib.oFg.aMacros                    = {{0,0,0,0}},            \
+   .oSaftLib.oFg.busy                       = 0                       \
+   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM                              \
+   __DAQ_SHARAD_MEM_INITIALIZER_ITEM                                  \
 }
 
 /* ++++++++++ End  Initializer +++++++++++++++++++++++++++++++++++++++++++++ */

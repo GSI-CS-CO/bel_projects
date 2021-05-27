@@ -34,9 +34,9 @@
  */
 void printFgs( void )
 {
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oFg.aMacros ); i++ )
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oSaftLib.oFg.aMacros ); i++ )
    {
-      FG_MACRO_T* pFgMacro = &g_shared.oFg.aMacros[i];
+      FG_MACRO_T* pFgMacro = &g_shared.oSaftLib.oFg.aMacros[i];
 
       /*
        * Is the end of list been reached?
@@ -59,9 +59,9 @@ void printFgs( void )
  */
 void print_regs( void )
 {
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oFg.aRegs ); i++ )
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ); i++ )
    {
-      FG_CHANNEL_REG_T* pFgReg = &g_shared.oFg.aRegs[i];
+      FG_CHANNEL_REG_T* pFgReg = &g_shared.oSaftLib.oFg.aRegs[i];
       mprintf("Registers of channel %d:\n", i );
       mprintf("\twr_ptr:\t%d\n",       pFgReg->wr_ptr );
       mprintf("\trd_ptr:\t%d\n",       pFgReg->rd_ptr );

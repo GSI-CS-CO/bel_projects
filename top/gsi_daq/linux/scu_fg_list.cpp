@@ -74,7 +74,7 @@ void FgList::scan( Lm32Swi* poSwi )
    //     been implemented in LM32.
    uint32_t tmpLm32SwVersion;
    poSwi->getEbRamAcess()->readLM32( &tmpLm32SwVersion, sizeof( tmpLm32SwVersion ),
-                           offsetof( FG::SCU_SHARED_DATA_T, oFg.version ) );
+                           offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.version ) );
 
    m_lm32SoftwareVersion = gsi::convertByteEndian( tmpLm32SwVersion );
    if( m_lm32SoftwareVersion != _FG_VERSION_ )
@@ -89,7 +89,7 @@ void FgList::scan( Lm32Swi* poSwi )
 
    uint32_t scanBusy = 1;
    poSwi->getEbRamAcess()->writeLM32( &scanBusy, sizeof( uint32_t ),
-                         offsetof( FG::SCU_SHARED_DATA_T, oFg.busy ) );
+                         offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.busy ) );
 
 
    /*
@@ -104,7 +104,7 @@ void FgList::scan( Lm32Swi* poSwi )
    do
    {
       poSwi->getEbRamAcess()->readLM32( &scanBusy, sizeof( scanBusy ),
-                           offsetof( FG::SCU_SHARED_DATA_T, oFg.busy ) );
+                           offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.busy ) );
       if( getSysMicrosecs() > timeout )
       {
          throw Exception( "Timeout while FG scanning!" );
@@ -143,7 +143,7 @@ void FgList::sync( daq::EbRamAccess* pEbAccess )
    for( uint i = 0; i < (c_maxFgMacros / ARRAY_SIZE(tmpBuffer)); i++ )
    {
       pEbAccess->readLM32( tmpBuffer, sizeof( tmpBuffer ),
-                               offsetof( FG::SCU_SHARED_DATA_T, oFg.aMacros ) +
+                               offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.aMacros ) +
                                  i * sizeof( tmpBuffer ) );
 
       for( uint j = 0; j < ARRAY_SIZE(tmpBuffer); j++ )

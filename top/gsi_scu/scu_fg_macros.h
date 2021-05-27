@@ -494,7 +494,7 @@ void sendRefillSignalIfThreshold( const unsigned int channel );
  */
 STATIC inline void sendSignalArmed( const unsigned int channel )
 {
-   g_shared.oFg.aRegs[channel].state = STATE_ARMED;
+   g_shared.oSaftLib.oFg.aRegs[channel].state = STATE_ARMED;
    sendSignal( IRQ_DAT_ARMED, channel );
 }
 
@@ -504,12 +504,12 @@ STATIC inline void sendSignalArmed( const unsigned int channel )
  */
 STATIC inline void makeStop( const unsigned int channel )
 {
-   const SIGNAL_T signal = cbisEmpty( &g_shared.oFg.aRegs[0], channel )?
+   const SIGNAL_T signal = cbisEmpty( &g_shared.oSaftLib.oFg.aRegs[0], channel )?
                              IRQ_DAT_STOP_EMPTY : IRQ_DAT_STOP_NOT_EMPTY;
 
    sendSignal( signal,  channel );
    fgDisableInterrupt( channel );
-   g_shared.oFg.aRegs[channel].state = STATE_STOPPED;
+   g_shared.oSaftLib.oFg.aRegs[channel].state = STATE_STOPPED;
 
 #ifndef CONFIG_LOG_ALL_SIGNALS
    hist_addx( HISTORY_XYZ_MODULE, signal2String( signal ), channel );
@@ -525,7 +525,7 @@ STATIC inline void makeStop( const unsigned int channel )
  */
 STATIC inline void makeStart( const unsigned int channel )
 {
-   g_shared.oFg.aRegs[channel].state = STATE_ACTIVE;
+   g_shared.oSaftLib.oFg.aRegs[channel].state = STATE_ACTIVE;
    sendSignal( IRQ_DAT_START, channel );
 }
 

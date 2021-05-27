@@ -38,7 +38,7 @@ Lm32Swi::Lm32Swi( daq::EbRamAccess* pEbAccess )
 {
    uint32_t tmpLm32MailboxSlot;
   m_pEbAccess->readLM32( &tmpLm32MailboxSlot, sizeof( tmpLm32MailboxSlot ),
-                         offsetof( FG::SCU_SHARED_DATA_T, oFg.mailBoxSlot ) );
+                         offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.mailBoxSlot ) );
 
    /*!
     * @todo Using of mailbox-slots respectively software interrupts

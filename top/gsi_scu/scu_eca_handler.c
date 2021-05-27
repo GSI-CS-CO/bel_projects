@@ -103,9 +103,9 @@ inline void ecaHandler
     * Check if there are armed SCI SIO MIL or extention MIL
     * function generator(s).
     */
-   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.oFg.aRegs); channel++ )
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(g_shared.oSaftLib.oFg.aRegs); channel++ )
    {
-      if( g_shared.oFg.aRegs[channel].state != STATE_ARMED )
+      if( g_shared.oSaftLib.oFg.aRegs[channel].state != STATE_ARMED )
       { /*
          * This function generator is not armed, skip and
          * go to the next function generator channel.

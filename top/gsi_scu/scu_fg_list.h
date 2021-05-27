@@ -101,7 +101,7 @@ STATIC inline ALWAYS_INLINE
 int getFgMacroIndexFromFgRegister( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
-   return g_shared.oFg.aRegs[channel].macro_number;
+   return g_shared.oSaftLib.oFg.aRegs[channel].macro_number;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -111,8 +111,8 @@ STATIC inline ALWAYS_INLINE
 FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
 {
    FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.oFg.aMacros ));
-   return g_shared.oFg.aMacros[getFgMacroIndexFromFgRegister( channel )];
+   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.oSaftLib.oFg.aMacros ));
+   return g_shared.oSaftLib.oFg.aMacros[getFgMacroIndexFromFgRegister( channel )];
 }
 
 /*! ---------------------------------------------------------------------------
