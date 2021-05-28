@@ -48,11 +48,11 @@
  *  Used to get the node with earliest deadline plus its working thread and update deadline afterwards in main EDF loop
  */
 //@{ 
-#define pDL(x)  (uint64_t*)(x + (T_TD_DEADLINE >> 2))     ///< ptr to deadline of thread at heap element x
+#define pDL(x)  (volatile uint64_t*)(x + (T_TD_DEADLINE >> 2))     ///< ptr to deadline of thread at heap element x
 #define DL(x)   *(pDL(x))                                 ///< deadline of of thread at heap element x
-#define pT(x)   (uint32_t*)(*x)                           ///< ptr to thread at heap element x
-#define pncN(x) (uint32_t*)(pT(x) + (T_TD_NODE_PTR >> 2)) ///< auxiliary (pN does not compile everywhere, don't ask why. Need to use *pncN instead)
-#define pN(x)   (uint32_t*)*pncN(x)                       ///< ptr to node at the cursor of the thread of heap element x
+#define pT(x)   (volatile uint32_t*)(*x)                           ///< ptr to thread at heap element x
+#define pncN(x) (volatile uint32_t*)(pT(x) + (T_TD_NODE_PTR >> 2)) ///< auxiliary (pN does not compile everywhere, don't ask why. Need to use *pncN instead)
+#define pN(x)   (volatile uint32_t*)*pncN(x)                       ///< ptr to node at the cursor of the thread of heap element x
 //@}
 
 /** @name Hardware CPU Attributes
@@ -67,18 +67,18 @@ extern uint8_t cpuQty; ///< total number of cpus on the DM
  *  Provides a shorthand to the start and end of the shared memory area used for host/inter cpu communication
  */
 //@{ 
-extern uint32_t* const _startshared[]; ///< ptr to start of shared memory area
-extern uint32_t* const _endshared[];   ///< ptr to end of shared memory area
-extern uint32_t* const p;              ///< the short shortcut to the start of shared memory area, basis for most ptr arithmetic
+extern volatile uint32_t* const _startshared[]; ///< ptr to start of shared memory area
+extern volatile uint32_t* const _endshared[];   ///< ptr to end of shared memory area
+extern volatile uint32_t* const p;              ///< the short shortcut to the start of shared memory area, basis for most ptr arithmetic
 //@}
 
 /** @name Function ptr arrays to node/deadline/action handlers
  *  Provides a shorthand to the handler functions for different node types, next deadline calculation and command action execution
  */
 //@{ 
-typedef uint64_t  (*deadlineFuncPtr) ( uint32_t*, uint32_t* );
-typedef uint32_t* (*nodeFuncPtr)  ( uint32_t*, uint32_t* );
-typedef uint32_t* (*actionFuncPtr)( uint32_t*, uint32_t*, uint32_t* );
+typedef uint64_t  (*deadlineFuncPtr) ( volatile uint32_t*, volatile uint32_t* );
+typedef uint32_t* (*nodeFuncPtr)  ( volatile uint32_t*, volatile uint32_t* );
+typedef uint32_t* (*actionFuncPtr)( volatile uint32_t*, volatile uint32_t*, volatile uint32_t* );
 extern deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];  ///< Function pointer array to deadline generating Functions
 extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];  ///< Function pointer array to node handler functions
 extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];   ///< Function pointer array to command action handler functions
@@ -89,19 +89,19 @@ extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];   ///< Function pointer ar
  *  Provides a shorthand to the diagnostic buffers for msg count, dispatch delta, late warnings, backlog etc
  */
 //@{ 
-extern uint32_t* const status;          ///< ptr to status register
-extern uint64_t* const count;           ///< ptr to global message count register        
-extern uint64_t* const boottime;        ///< ptr to bootime registers
+extern volatile uint32_t* const status;          ///< ptr to status register
+extern volatile uint64_t* const count;           ///< ptr to global message count register        
+extern volatile uint64_t* const boottime;        ///< ptr to bootime registers
 //#ifdef DIAGNOSTICS
-extern int64_t*  const diffsum;         ///< ptr to dispatch delta sum
-extern int64_t*  const diffmax;         ///< ptr to dispatch delta max
-extern int64_t*  const diffmin;         ///< ptr to dispatch delta min        
-extern int64_t*  const diffwth;         ///< ptr to dispatch delta warning threshold
-extern uint32_t* const diffwcnt;        ///< ptr to dispatch delta warning count
-extern uint32_t* const diffwhash;       ///< ptr to dispatch delta warning node hash of 1st occurrence
-extern uint64_t* const diffwts;         ///< ptr to dispatch delta warning timestamp of 1st occurrence
-extern uint32_t* const bcklogmax;       ///< ptr to backlog max
-extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
+extern volatile int64_t*  const diffsum;         ///< ptr to dispatch delta sum
+extern volatile int64_t*  const diffmax;         ///< ptr to dispatch delta max
+extern volatile int64_t*  const diffmin;         ///< ptr to dispatch delta min        
+extern volatile int64_t*  const diffwth;         ///< ptr to dispatch delta warning threshold
+extern volatile uint32_t* const diffwcnt;        ///< ptr to dispatch delta warning count
+extern volatile uint32_t* const diffwhash;       ///< ptr to dispatch delta warning node hash of 1st occurrence
+extern volatile uint64_t* const diffwts;         ///< ptr to dispatch delta warning timestamp of 1st occurrence
+extern volatile uint32_t* const bcklogmax;       ///< ptr to backlog max
+extern volatile uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
 //#endif
 //@}
 
@@ -109,10 +109,10 @@ extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
  *  Provides a shorthand to the scheduler's start, running and abort registers used for thread control
  */
 //@{ 
-extern uint32_t* const start;           ///< ptr to thread control - start bits
-extern uint32_t* const running;         ///< ptr to thread control - running bits
-extern uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
-extern uint32_t** const hp;             ///< ptr array of EDF scheduler heap
+extern volatile uint32_t* const start;           ///< ptr to thread control - start bits
+extern volatile uint32_t* const running;         ///< ptr to thread control - running bits
+extern volatile uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
+extern volatile uint32_t** const hp;             ///< ptr array of EDF scheduler heap
 //@}
 
 /** @name Auxiliary functions
@@ -199,7 +199,7 @@ void dmInit();
   * @param node Pointer to the data node whose type is to be determined
   * @return type field of node if valid, type NULL if node is a null ptr or type UNKNOWN if type is not listed
   */
-uint8_t getNodeType(uint32_t* node);
+uint8_t getNodeType(volatile uint32_t* node);
 
 /// Calculates next deadline for a node of basetype event (tmsg, cmd, switch)
 /** Returns the 64 bit deadline for this event node by adding its offset to the thread time sum
@@ -207,7 +207,7 @@ uint8_t getNodeType(uint32_t* node);
   * @param thrData Pointer to the associated thread's metadata
   * @return 64b TAI timestamp with new deadline
  */
-uint64_t dlEvt(uint32_t* node, uint32_t* thrData);
+uint64_t dlEvt(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Calculates next deadline for a node of basetype block
 /** Returns the 64 bit deadline for this block node which is the thread time sum 
@@ -215,7 +215,7 @@ uint64_t dlEvt(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return 64b TAI timestamp with new deadline
   */
-uint64_t dlBlock(uint32_t* node, uint32_t* thrData);
+uint64_t dlBlock(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Executes a command action of type Noop
 /** Noops only effect is the return of the target blocks' default successor as next node to process
@@ -224,7 +224,7 @@ uint64_t dlBlock(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node
 */
-uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
+uint32_t* execNoop(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData);
 
 /// Executes a command action of type Flow
 /** Returns the destination of the flow command as next node to process. If action is permanent, destination also overwrites to target blocks' default successor
@@ -233,7 +233,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to hosting block's default successor node
 */
-uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
+uint32_t* execFlow(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData);
 
 /// Executes a command action of type Flush
 /** Clears zero or more queues of target block. Returns target's default successor  as next node to process
@@ -242,7 +242,7 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to flow destination (block's default successor node or one from its alternative destinations list)
 */
-uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
+uint32_t* execFlush(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData);
 
 /// Executes a command action of type Wait
 /** If relative, wait extends target block's period by its own value. If absolute, wait extends target block's period until its own timestamp is reached. Returns target's default successor as next node to process
@@ -251,7 +251,7 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to hosting block's default successor node or overrride destination if sppecified
 */
-uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
+uint32_t* execWait(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData);
 
 /// Dispatches the action of command node in the schedule to its target
 /** Writes action (noop, flush, flow ...) of a command node to its target node (can be on a different CPU). For this, the current buffer element must be selected
@@ -259,7 +259,7 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to hosting block's default successor node
 */
-uint32_t* cmd(uint32_t* node, uint32_t* thrData);
+uint32_t* cmd(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Processes a switch node, changing a target's successor
 /** Overwrites target's successor. No queueing involved, effect is immediate.
@@ -267,7 +267,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node
 */
-uint32_t* cswitch(uint32_t* node, uint32_t* thrData);
+uint32_t* cswitch(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Generates a timing message and dispatches it to priority queue
 /** Reformats timing node content and generates a timing message. 
@@ -278,7 +278,7 @@ uint32_t* cswitch(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node  
 */
-uint32_t* tmsg(uint32_t* node, uint32_t* thrData);
+uint32_t* tmsg(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Processes a block node. Updates thread time sum and executes an available action from the command queues.
 /** Block node is evaluated, thread time sum is increased by block period. 
@@ -289,7 +289,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node (block's default successor or one from its alternative destinations list)
   */  
-uint32_t* block(uint32_t* node, uint32_t* thrData);
+uint32_t* block(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Calls block node handler with fixed period (default)
 /** Default block node processing, see block()
@@ -297,7 +297,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node (block's default successor or one from its alternative destinations list)
   */ 
-uint32_t* blockFixed(uint32_t* node, uint32_t* thrData);
+uint32_t* blockFixed(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Calls block node handler with a self aligning period
 /** Block node period is dynamically elongated so the block ends aligned to a global time grid (currently 10µs starting at time 0)
@@ -305,7 +305,7 @@ uint32_t* blockFixed(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return Ptr to successor node (block's default successor or one from its alternative destinations list)
   */ 
-uint32_t* blockAlign(uint32_t* node, uint32_t* thrData);
+uint32_t* blockAlign(volatile uint32_t* node, volatile uint32_t* thrData);
 
 /** @name Default node, deadline and action handlers
  *  Used to handle invalid data, ie. nodes and actions of bad/unknown types 
@@ -317,7 +317,7 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return null
   */ 
-uint32_t* nodeNull (uint32_t* node, uint32_t* thrData);
+uint32_t* nodeNull (volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Returns the deadline for a null node (idle)
 /** The returned deadline will be MAX_INT, so the thread is not called again
@@ -325,7 +325,7 @@ uint32_t* nodeNull (uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return 64b TAI timestamp with new deadline (MAX_INT)
 */
-uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData);
+uint64_t  deadlineNull (volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Dummy node function, used to catch bad node types
 /** Reports bad/unknown node type to error register and calls the handler for a null node  
@@ -333,7 +333,7 @@ uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return null
   */ 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
+uint32_t* dummyNodeFunc (volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Dummy deadline function, used to catch bad node types
 /** Reports bad/unknown node type to error register and calls the handler for a null node deadline
@@ -341,7 +341,7 @@ uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
   * @param thrData Pointer to the associated thread's metadata
   * @return 64b TAI timestamp with new deadline (MAX_INT)
 */
-uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData);
+uint64_t  dummyDeadlineFunc (volatile uint32_t* node, volatile uint32_t* thrData);
 
 /// Dummy action function, used to catch bad action types
 /** Reports bad/unknown command action type to error register and returns a nulll node as successor
@@ -349,7 +349,7 @@ uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData);
   * @param cmd Pointer to the command to be executed within current block's queues
   * @param thrData Pointer to the associated thread's metadata
 */
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData);
+uint32_t* dummyActionFunc (volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData);
 //@}
 
 /** @name Heap sort routines

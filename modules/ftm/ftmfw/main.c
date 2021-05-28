@@ -236,19 +236,19 @@ void main(void) {
           if (*start & (1<<i)) {
 
             //current thread base pointers
-            uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
-            uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
+            volatile uint8_t* thrStart  = (volatile uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
+            volatile uint8_t* thrData   = (volatile uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
 
 	    //pointers to start fields
-            uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
-            uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
-            uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
+            volatile uint64_t* startTime = (volatile uint64_t*)&thrStart[T_TS_STARTTIME];
+            volatile uint64_t* prepTime  = (volatile uint64_t*)&thrStart[T_TS_PREPTIME];
+            volatile uint32_t* origin    = (volatile uint32_t*)&thrStart[T_TS_NODE_PTR];
             
 	    //pointers to data fields
-	    uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
-            uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
-            uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
-            uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
+	          volatile uint64_t* currTime  = (volatile uint64_t*)&thrData[T_TD_CURRTIME];
+            volatile uint64_t* deadline  = (volatile uint64_t*)&thrData[T_TD_DEADLINE];
+            volatile uint32_t* cursor    = (volatile uint32_t*)&thrData[T_TD_NODE_PTR];
+            volatile uint32_t* msgcnt    = (volatile uint32_t*)&thrData[T_TD_MSG_CNT];
 
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 

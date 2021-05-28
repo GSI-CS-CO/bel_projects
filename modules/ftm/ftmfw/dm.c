@@ -21,25 +21,25 @@ nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];
 actionFuncPtr   actionFuncs[_ACT_TYPE_END_];    
 
 // Assigning pointer shortcuts into shared memory area
-uint32_t* const p         = (uint32_t*)&_startshared;                                             
-uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];                          
-uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];       
-uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];       
+volatile uint32_t*  const p         = (volatile uint32_t*)&_startshared;                                             
+volatile uint32_t*  const status    = (volatile uint32_t*)&_startshared[SHCTL_STATUS >> 2];                          
+volatile uint64_t*  const count     = (volatile uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];       
+volatile uint64_t*  const boottime  = (volatile uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];       
 #ifdef DIAGNOSTICS      
-int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];       
-int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];       
-int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];       
-int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];       
-uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       
-uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  
-uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    
-uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
-uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
+volatile int64_t* const diffsum    = (volatile int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];       
+volatile int64_t* const diffmax    = (volatile int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];       
+volatile int64_t* const diffmin    = (volatile int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];       
+volatile int64_t* const diffwth    = (volatile int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];       
+volatile uint32_t* const diffwcnt  = (volatile uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       
+volatile uint32_t* const diffwhash = (volatile uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  
+volatile uint64_t* const diffwts   = (volatile uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    
+volatile uint32_t* const bcklogmax = (volatile uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
+volatile uint32_t* const badwaitcnt = (volatile uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
-uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
-uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
-uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
-uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
+volatile uint32_t* const start   = (volatile uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
+volatile uint32_t* const running = (volatile uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
+volatile uint32_t* const abort1  = (volatile uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
+volatile uint32_t** const hp     = (volatile uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
 
 
 void prioQueueInit()
@@ -140,23 +140,23 @@ uint8_t wrTimeValid() {
 
 }
 
-uint32_t* nodeNull (uint32_t* node, uint32_t* thrData)                        { return LM32_NULL_PTR;}
+uint32_t* nodeNull (volatile uint32_t* node, volatile uint32_t* thrData)                        { return LM32_NULL_PTR;}
 
-uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData)                    { return -1ULL; } //return infinity
+uint64_t  deadlineNull (volatile uint32_t* node, volatile uint32_t* thrData)                    { return -1ULL; } //return infinity
 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return nodeNull(node, thrData); }
+uint32_t* dummyNodeFunc (volatile uint32_t* node, volatile uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return nodeNull(node, thrData); }
 
-uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return deadlineNull(node, thrData); } //return infinity
+uint64_t  dummyDeadlineFunc (volatile uint32_t* node, volatile uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return deadlineNull(node, thrData); } //return infinity
 
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
+uint32_t* dummyActionFunc (volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
 
-uint8_t getNodeType(uint32_t* node) {
+uint8_t getNodeType(volatile uint32_t* node) {
   uint32_t* tmpType;
   uint32_t msk;
   uint32_t type = NODE_TYPE_UNKNOWN;
 
   if (node != LM32_NULL_PTR) {
-    tmpType   = node + (NODE_FLAGS >> 2);
+    tmpType   = (uint32_t*)(node + (NODE_FLAGS >> 2));
     type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
     DBPRINT2("#%02u: Node Type b4 boundary check: %u\n", cpuId, type);
     msk       = -(type < _NODE_TYPE_END_);
@@ -169,19 +169,19 @@ uint8_t getNodeType(uint32_t* node) {
   return type;
 }
 
-uint64_t dlEvt(uint32_t* node, uint32_t* thrData) {
+uint64_t dlEvt(volatile uint32_t* node, volatile uint32_t* thrData) {
   return *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] + *(uint64_t*)&node[EVT_OFFS_TIME >> 2];
 }
 
-uint64_t dlBlock(uint32_t* node, uint32_t* thrData) {
+uint64_t dlBlock(volatile uint32_t* node, volatile uint32_t* thrData) {
   return *(uint64_t*)&thrData[T_TD_DEADLINE >> 2];
 }
 
-uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
+uint32_t* execNoop(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
+uint32_t* execFlow(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2];
   DBPRINT3("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
   //permanent change?
@@ -190,7 +190,7 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
+uint32_t* execFlush(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData) {
   uint32_t action     = cmd[T_CMD_ACT >> 2];  // command action field
   uint8_t  flushees   =         (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // mask of flushee (target queue) priorities
   uint8_t  flusher    =  1 <<  ((action >> ACT_PRIO_POS)       & ACT_PRIO_MSK);       // mask of flusher (current command) priority
@@ -223,7 +223,7 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
+uint32_t* execWait(volatile uint32_t* node, volatile uint32_t* cmd, volatile uint32_t* thrData) {
 
   // the block period is added in blockFixed or blockAligned.
   // we must therefore subtract it here if we modify current time, as execWait is optional
@@ -245,7 +245,7 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
+uint32_t* cmd(volatile uint32_t* node, volatile uint32_t* thrData) {
         uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2]; // ptr to successor node
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK; // action priority, ie. which queue it is to be delivered to
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2]; // ptr to target block
@@ -325,7 +325,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-uint32_t* cswitch(uint32_t* node, uint32_t* thrData) {
+uint32_t* cswitch(volatile uint32_t* node, volatile uint32_t* thrData) {
         uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
         node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   
@@ -347,7 +347,7 @@ uint32_t* cswitch(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
+uint32_t* tmsg(volatile uint32_t* node, volatile uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   DBPRINT2("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
 
@@ -402,14 +402,14 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-uint32_t* block(uint32_t* node, uint32_t* thrData) {
+uint32_t* block(volatile uint32_t* node, volatile uint32_t* thrData) {
   DBPRINT2("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
   uint8_t  *rdIdx,*wrIdx;
   uint8_t skipOne = 0;
 
-  uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
+  uint32_t *ardOffs = (uint32_t*)(node + (BLOCK_CMDQ_RD_IDXS >> 2)), *awrOffs = (uint32_t*)(node + (BLOCK_CMDQ_WR_IDXS >> 2));
   uint32_t bufOffs, elOffs, prio, actTmp, atype, qFlags = *((uint32_t*)(node + (BLOCK_CMDQ_FLAGS >> 2)));
   uint32_t qty;
 
@@ -462,7 +462,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
     if( skipOne && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
       DBPRINT2("#%02u: Found more pending commands, skip deactivated cmd and process next cmd\n" );
-      return node;
+      return (uint32_t*)node;
     }
 
     if (qty==0) DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);
@@ -476,7 +476,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 }
 
 
-uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
+uint32_t* blockFixed(volatile uint32_t* node, volatile uint32_t* thrData) {
   uint32_t* ret = block(node, thrData);
 
   *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];     // increment current time sum by block period
@@ -485,7 +485,7 @@ uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
+uint32_t* blockAlign(volatile uint32_t* node, volatile uint32_t* thrData) {
   uint32_t     *ret = block(node, thrData);
   uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current time
   uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD >> 2];     // block duration
@@ -511,7 +511,7 @@ void heapify() {
 
 void heapReplace(uint32_t src) {
   uint32_t  dst = src, cl = 1, cr = 1, mask, lLEr, mGr, mGl, l, r;
-  uint32_t* mov = hp[dst];
+  volatile uint32_t* mov = hp[dst];
   int j;
   //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
 
