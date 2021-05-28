@@ -48,7 +48,7 @@
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
 #else
-  #if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__)
+  #if defined( CONFIG_MIL_DAQ_USE_RAM ) || defined(__linux__)
     #include <daq_ramBuffer.h>
   #endif
 #endif
@@ -60,7 +60,7 @@ namespace Scu
 {
 #endif
 
-#if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__)
+#if defined( CONFIG_MIL_DAQ_USE_RAM ) || defined(__linux__) || defined(__DOXYGEN__)
 #ifdef __cplusplus
 namespace MiLdaq
 {
@@ -111,7 +111,7 @@ STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, fgMacro ) ==
 #define RAM_ITEM_PER_MIL_DAQ_ITEM                                                         \
    (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) ) +    \
     !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) )))
-
+ 
 /*!
  * @brief Hybrid type simplifying the storing of MIL-DAQ data in the SCU-RAM
  * @note At the time it is the DDR3 RAM yet.
@@ -156,7 +156,7 @@ STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
 #ifdef __cplusplus
 } /* namespace MiLdaq */
 #endif
-#endif /* if defined( CONFIG_MIL_DAQ_USE_RAM ) || !defined(__lm32__) */
+#endif /* if defined( CONFIG_MIL_DAQ_USE_RAM ) || defined(__linux__) || defined(__DOXYGEN__) */
 
 #ifdef __cplusplus
 namespace FG
@@ -685,24 +685,6 @@ unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
    return fgMacro.outputBits;
 }
 
-#ifndef __lm32__
-/*! ---------------------------------------------------------------------------
- */
-STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqDeviceOld( const register MIL_DAQ_OBJ_T* pMilDaq )
-{
-   return getDeviceByFgMacro( pMilDaq->fgMacro );
-}
-
-/*! ---------------------------------------------------------------------------
- */
-STATIC inline ALWAYS_INLINE
-unsigned int getMilDaqSocketOld( const register MIL_DAQ_OBJ_T* pMilDaq )
-{
-   return getSocketByFgMacro( pMilDaq->fgMacro );
-}
-#endif
-
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
@@ -719,7 +701,39 @@ unsigned int getDaqMilExtentionBySocket( const unsigned int socket )
    return socket >> 4;
 }
 
-#ifndef __lm32__
+#if defined(__linux__) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqDeviceOld( const register MIL_DAQ_OBJ_T* pMilDaq )
+{
+   return getDeviceByFgMacro( pMilDaq->fgMacro );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqSocketOld( const register MIL_DAQ_OBJ_T* pMilDaq )
+{
+   return getSocketByFgMacro( pMilDaq->fgMacro );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqDevice( const register MIL_DAQ_RAM_ITEM_T* pMilDaq )
+{
+   return getDeviceByFgMacro( pMilDaq->fgMacro );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqSocket( const register MIL_DAQ_RAM_ITEM_T* pMilDaq )
+{
+   return getSocketByFgMacro( pMilDaq->fgMacro );
+}
+
 /*! ---------------------------------------------------------------------------
  */
 STATIC inline ALWAYS_INLINE
@@ -735,7 +749,24 @@ unsigned int getMilDaqScuMilExtentionOld( const register MIL_DAQ_OBJ_T* pMilDaq 
 {
    return getDaqMilExtentionBySocket( getMilDaqSocketOld( pMilDaq ) );
 }
-#endif
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqScuBusSlot( const register MIL_DAQ_RAM_ITEM_T* pMilDaq )
+{
+   return getDaqMilScuBusSlotbySocket( getMilDaqSocket( pMilDaq ));
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline ALWAYS_INLINE
+unsigned int getMilDaqScuMilExtention( const register MIL_DAQ_RAM_ITEM_T* pMilDaq )
+{
+   return getDaqMilExtentionBySocket( getMilDaqSocket( pMilDaq ) );
+}
+
+#endif /* if defined(__linux__) || defined(__DOXYGEN__) */
 #ifdef __cplusplus
 } // namespace MiLdaq
 } // namespace Scu
