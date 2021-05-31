@@ -55,6 +55,7 @@ public:
   // constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
+#ifdef CONFIG_BACKWARD_COMPATIBLE
    using RING_INDEX_T = RING_POS_T;
    using RING_ITEM_T = MIL_DAQ_OBJ_T;
 
@@ -114,8 +115,59 @@ public:
    };
 
    static constexpr RING_INDEX_T c_ringBufferCapacity = DAQ_RING_SIZE;
+#endif /* CONFIG_BACKWARD_COMPATIBLE */
+   
+   class BufferItem: public MIL_DAQ_RAM_ITEM_T
+   {
+   public:
+      uint64_t getTimestamp( void ) const
+      {
+         return timestamp;
+      }
+   
+      uint getSetValue( void ) const
+      {
+         return setValue;
+      }
+      
+      uint getSetValue32( void ) const
+      {
+         return setValue << BIT_SIZEOF(uint16_t);
+      }
+      
+      uint getActValue( void ) const
+      {
+         return actValue;
+      }
 
+      uint getActValue32( void ) const
+      {
+         return actValue << BIT_SIZEOF(uint16_t);
+      }
+      
+      FG_MACRO_T getChannel( void ) const
+      {
+         return fgMacro;
+      }
+
+      uint getMilDaqLocation( void ) const
+      {
+         return ::Scu::MiLdaq::getMilDaqSocket( this );
+      }
+
+      uint getMilDaqScuBusSlot( void ) const
+      {
+         return ::Scu::MiLdaq::getMilDaqScuBusSlot( this );
+      }
+
+      uint getMilDaqScuMilExtention( void ) const
+      {
+         return ::Scu::MiLdaq::getMilDaqScuMilExtention( this );
+      }
+   };
+   
 private:
+#ifdef CONFIG_BACKWARD_COMPATIBLE
    struct DAQ_RING_T
    {
       RING_INDEX_T  m_head;
@@ -129,7 +181,7 @@ private:
    DAQ_RING_T         m_oRing;
 
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
-
+#endif /* CONFIG_BACKWARD_COMPATIBLE */
 public:
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone );
    DaqInterface( daq::EbRamAccess* poEbAccess );

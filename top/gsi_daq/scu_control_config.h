@@ -18,6 +18,13 @@
  */
 #define _CONFIG_PATCH_PHASE
 
+/*!
+ * @brief MIL-DAQ-buffer-handlong is backward compatible to the old
+ *        LM32-firmware
+ */
+#define CONFIG_BACKWARD_COMPATIBLE
+
+
 #ifdef __cplusplus
 #if 1
   #ifndef _BSD_SOURCE
