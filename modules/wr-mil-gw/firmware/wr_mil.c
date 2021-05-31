@@ -197,11 +197,8 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
 }
 
 
-uint32_t inhibit_fill_events = 0; // this is a counter to block any sending of fill events for some cycles after a real event was sent
-
 #define MIL_PIGGY_SEND_LATENCY 25000      // nanoseconds from pushing to mil piggy queue to last transition on the mil bus
 #define MICROSECONDS           1000       // so many nanoseconds per microsecond
-#define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
 #define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
@@ -248,22 +245,15 @@ void eventHandler(volatile uint32_t    *eca_queue,
       }
       // a mil event was just sent, any pending send-fill request it is invalidated
       config->request_fill_evt = 0;
-      inhibit_fill_events = RESET_INHIBIT_COUNTER;
     }
   }
   // take care of sending fill events when it is appropriate
-  if (inhibit_fill_events) {
-    --inhibit_fill_events;
-  }
   if (config->request_fill_evt) 
   {
-    // there was a request and the last mil event is so far in the past that the inhibit counter is zero
-    //  so lets send the fill event, clear the request and reset inhibit counter
     mil_piggy_write_event(mil_piggy, MIL_EVT_FILL); 
     ++config->mil_histogram[MIL_EVT_FILL & 0xff];
     //++config->num_events.value; // fill events don't count as mil events
     config->request_fill_evt = 0;
-    inhibit_fill_events = RESET_INHIBIT_COUNTER;
   }
 }
 
