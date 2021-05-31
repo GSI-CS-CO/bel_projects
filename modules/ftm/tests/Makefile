@@ -4,25 +4,18 @@ DATAMASTER ?= $$DM
 SNOOP ?= saft-ctl tr0 -xv snoop 0 0 0
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
+# folders to ignore (no tests inside)
+IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=full_test/ --ignore=schedules/
+# pass the command line arguments to pytest
+OPTIONS ?=
 
 test:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ PYTHONPATH=common/ pytest
+	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ pytest $(IGNORE) $(OPTIONS)
 
-test1:
-	DATAMASTER="$(DATAMASTER)" PYTHONPATH=common/ pytest
+test-default:
+	DATAMASTER="$(DATAMASTER)" pytest $(IGNORE) $(OPTIONS)
 
-all: addDownloadCompare bpcStart dmCmd dmThreads fid7 full_test parallelBranch \
-pps safe2remove singleEdgeTest schedules
-
-addDownloadCompare:
-	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C addDownloadCompare/
-
-bpcStart:
-	cd bpcStart; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python bpcStart.py "$(DATAMASTER)" "$(SNOOP)"
-
-dmCmd:
-	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python dmpps2.py "$(DATAMASTER)"
-	cd dmCmd; PYTHONPATH=../common/ python test_dm_cmd.py ../../ftmx86/dm-cmd "$(DATAMASTER)"
+all: dmPerformance dmThreads full_test pps singleEdgeTest
 
 dmPerformance:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmPerformance/ test0
@@ -32,9 +25,6 @@ dmPerformance:
 dmThreads:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmThreads/ four-threads
 
-fid7:
-	cd fid7; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common/ python fid7_test.py "$(DATAMASTER)" "$(SNOOP)"
-
 full_test:
 	LD_LIBRARY_PATH=$(CARPEDM_PATH) python full_test/dm_testman.py "$(DATAMASTER)"
 	rm download.dot
@@ -42,15 +32,8 @@ full_test:
 #messageCounter:
 #	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python messageCounter/messageCounter.py $(DATAMASTER)
 
-parallelBranch:
-	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C parallelBranch/
-
 pps:
-	DATAMASTER="$(DATAMASTER)" PYTHONPATH=common/ pytest -k pps
-#	cd pps; LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=../common python dmpps2.py "$(DATAMASTER)"
-
-safe2remove:
-	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C safe2remove/
+	DATAMASTER="$(DATAMASTER)" pytest -k pps $(IGNORE) $(OPTIONS)
 
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
@@ -60,19 +43,9 @@ singleEdgeTest:
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/
 
-schedules:
-	$(MAKE) -C schedules/
-
-schedules1:
-	dm-cmd $(DATAMASTER) halt
-	dm-sched $(DATAMASTER) clear
-	dm-sched $(DATAMASTER) add schedules/schedule.dot
-	./schedules/startAllPattern.sh
-
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: addDownloadCompare bpcStart dmCmd dmPerformance dmThreads fid7 full_test messageCounter parallelBranch \
-pps safe2remove singleEdgeTest schedules test test1
+.PHONY: dmPerformance dmThreads full_test messageCounter pps singleEdgeTest schedules test test-default
