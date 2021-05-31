@@ -294,6 +294,7 @@ begin
       wr_sfp_det_i           => sfp4_mod0,
       wr_sfp_tx_o            => sfp4_txp_o,
       wr_sfp_rx_i            => sfp4_rxp_i,
+      wbar_phy_dis_o         => sfp4_tx_disable_o,
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
@@ -339,7 +340,6 @@ begin
   sfp1_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
   sfp3_tx_disable_o <= '1';
-  sfp4_tx_disable_o <= '0';
 
   -- Link LEDs
   wrdis <= '0';
