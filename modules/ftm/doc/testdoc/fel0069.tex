@@ -158,11 +158,25 @@ Pexaria for snoop: \url{https://github.com/GSI-CS-CO/bel\_projects/releases/down
 \texttt{dm-sched tcp/fel0069.acc}
 
 \section{Remote Snoop of Timing Messages}
-Snoop per remote ssh: \texttt{}. Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc:~/.ssh/authorized\_keys.
-\begin{verbatim}
-scp your_pub_key.pub root@fel0069.acc:
-ssh root@fel0069.acc
-root@fel0069.acc$ cat id_dsa.pub >> ~/.ssh/authorized_keys
-\end{verbatim}
-snoop with Python3
+Snoop per remote ssh: Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc:~/.ssh/authorized\_keys with \texttt{ssh-copy-id}.
+Snoop with Python3: the tests using python3 / pytest read the command for snooping from environment variable SNOOP.
+\begin{itemize}
+\item Example for local environment: saft-ctl tr0 -xv snoop 0 0 0
+\item Example for remote environment on fel0069.acc: ssh -t root@fel0069.acc 'saft-ctl tr1 -xv snoop 0 0 0' \linebreak
+saftd on fel0069.acc monitors dev/wbm1 as tr1.
+\end{itemize}
+The tests add an additional parameter for the number of seconds to snoop.
+
+\section{Modified variant of saft-ctl}
+The tests use a modified variant of saft-ctl. This snoops for a given number of seconds. This variant is avaliable in branch origin/fallout, folder ip\_cores/saftlib.
+
+Until the modified variant is part of a release, copy it each time to fel0069.acc after reboot. The binary is build on ASL cluster with settings:
+\begin{itemize}
+\item export PKG\_CONFIG\_PATH=\$PWD/staging/usr/lib/pkgconfig
+\item export PREFIX=\$PWD/staging/usr
+\end{itemize}
+
+Permanent way: use a modified RTE, build as described in
+\url{https://github.com/GSI-CS-CO/ci\_cd/blob/master/scripts/deployment/RTE\_Timing/build-rte.sh}.
+
 \end{document}
