@@ -773,6 +773,9 @@ public:
     */
    void setMaxEbCycleDataLen( const std::size_t len = 0 )
    {
+    #ifdef CONFIG_MIL_FG
+      m_oMilDaqAdmin.setMaxEbCycleDataLen( len );
+    #endif
       m_oAddacDaqAdmin.setMaxEbCycleDataLen( len );
    }
 
@@ -797,6 +800,9 @@ public:
     */
    void setBlockReadEbCycleTimeUs( const uint us )
    {
+    #ifdef CONFIG_MIL_FG
+      m_oMilDaqAdmin.setBlockReadEbCycleTimeUs( us );
+    #endif
       m_oAddacDaqAdmin.setBlockReadEbCycleTimeUs( us );
    }
 

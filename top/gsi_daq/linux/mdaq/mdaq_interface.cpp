@@ -24,6 +24,7 @@
  */
 #include <mdaq_interface.hpp>
 #include <byteswap.h>
+#include <unistd.h>
 
 using namespace Scu::MiLdaq;
 using namespace std;
@@ -140,12 +141,32 @@ void DaqInterface::clearBuffer( bool update )
 inline
 void DaqInterface::readRingData( RING_ITEM_T* ptr, uint len, uint offset )
 {
+#if 1
+   const uint maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
+   while( true )
+   {
+      const uint partLen = std::min( len, maxLen );
+      getEbAccess()->readLM32( ptr,
+                               partLen * sizeof( RING_ITEM_T ),
+                               offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) +
+                                        offset * sizeof( RING_ITEM_T )
+                             );
+      len -= partLen;
+      if( len == 0 )
+         break;
+      ptr    += partLen;
+      offset += partLen;
+      if( m_blockReadEbCycleGapTimeUs != 0 )
+         ::usleep( m_blockReadEbCycleGapTimeUs );
+   }
+#else
    getEbAccess()->readLM32( ptr,
                            len * sizeof( RING_ITEM_T ),
                            offsetof( FG::SCU_SHARED_DATA_T,
                                      daq_buf.ring_data ) +
                            offset * sizeof( RING_ITEM_T )
                          );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

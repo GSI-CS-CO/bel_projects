@@ -432,7 +432,7 @@ typedef struct
    * @see daqDevicePutFeedbackSwitchCommand
    * @see daqDeviceDoFeedbackSwitchOnOffFSM
    */
-   QUEUE_IMPLEMENT( aktionBuffer, MAX_FG_PER_SLAVE, DAQ_ACTION_ITEM_T );
+   QUEUE_IMPLEMENT( aktionBuffer, 2 * MAX_FG_PER_SLAVE, DAQ_ACTION_ITEM_T );
 } DAQ_FEEDBACK_T;
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
