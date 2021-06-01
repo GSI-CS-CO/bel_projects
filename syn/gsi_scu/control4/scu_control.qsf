@@ -1,3 +1,4 @@
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -759,15 +760,10 @@ set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_sfpref_i
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i[0]
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_i[1]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_n_o[1]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_o
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i[0]
 set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_i[1]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o[0]
-set_instance_assignment -name IO_STANDARD LVDS -to lemo_p_o[1]
 set_instance_assignment -name IO_STANDARD LVDS -to pcie_refclk_i
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
@@ -843,8 +839,8 @@ set_location_assignment PIN_AD13 -to lemo_p_i[1]
 set_location_assignment PIN_AD14 -to lemo_n_i[1]
 set_location_assignment PIN_AD15 -to serial_cb_in[0]
 set_location_assignment PIN_AD18 -to lemo_p_i[0]
-set_location_assignment PIN_AD19 -to lemo_n_o[0]
-set_location_assignment PIN_AD20 -to lemo_p_o[0]
+set_location_assignment PIN_AD19 -to "lemo_o[0](n)"
+set_location_assignment PIN_AD20 -to lemo_o[0]
 set_location_assignment PIN_AD22 -to scu_cb_version[1]
 set_location_assignment PIN_AD23 -to fd[2]
 set_location_assignment PIN_AD2 -to ext_ch[14]
@@ -855,9 +851,9 @@ set_location_assignment PIN_AE11 -to rear_out[1]
 set_location_assignment PIN_AE14 -to serial_cb_out[0]
 set_location_assignment PIN_AE15 -to lemo_out[0]
 set_location_assignment PIN_AE16 -to lemo_in[0]
-set_location_assignment PIN_AE19 -to lemo_p_o[1]
+set_location_assignment PIN_AE19 -to lemo_o[1]
 set_location_assignment PIN_AE1 -to ext_ch[6]
-set_location_assignment PIN_AE20 -to lemo_n_o[1]
+set_location_assignment PIN_AE20 -to "lemo_o[1](n)"
 set_location_assignment PIN_AE21 -to pa[5]
 set_location_assignment PIN_AE22 -to scu_cb_version[2]
 set_location_assignment PIN_AE23 -to user_btn
