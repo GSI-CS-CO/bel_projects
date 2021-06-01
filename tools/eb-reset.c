@@ -1,12 +1,12 @@
 /******************************************************************************
- *  eb-reset.c 
+ *  eb-reset.c
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 26-March-2021
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
- * in the local flash of the timing receiver. 
+ * in the local flash of the timing receiver.
  * This tool also helps in configuring the watchdog
  *
  * -------------------------------------------------------------------------------------------
@@ -29,14 +29,14 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.2.1"
+#define EBRESET_VERSION "1.3.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -47,17 +47,17 @@
 #include <time.h>
 #include <sys/time.h>
 
-// Etherbone 
+// Etherbone
 #include <etherbone.h>
 
-// Wishbone api 
+// Wishbone api
 #include <wb_api.h>
 #include <wb_slaves.h>
 
 const char* program;
 static int verbose=0;
-eb_device_t device;        // needs to be global for 1-wire stuff 
-eb_device_t deviceOther;   // other EB device for comparing timestamps 
+eb_device_t device;        // needs to be global for 1-wire stuff
+eb_device_t deviceOther;   // other EB device for comparing timestamps
 
 
 static void die(const char* where, eb_status_t status) {
@@ -77,6 +77,8 @@ static void help(void) {
   fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after 'some time')\n");
   fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset for 'some time')\n");
   fprintf(stderr, "  wdstatus         gets the status of the watchdog; '1': enabled, '0': disabled\n");
+  fprintf(stderr, "  phyreset         resets the PHY (recommended for experts and developers)\n");
+  fprintf(stderr, "  sfpreset         resets the SFP (recommended for users)\n");
   fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
@@ -142,14 +144,14 @@ int main(int argc, char** argv) {
     default:
       fprintf(stderr, "%s: bad getopt result\n", program);
       return 1;
-    } // switch opt 
-  } // while opt 
+    } // switch opt
+  } // while opt
 
   if (error) {
     help();
     return 1;
   }
-  
+
   if (optind >= argc) {
     fprintf(stderr, "%s: expecting one non-optional argument: <etherbone-device>\n", program);
     fprintf(stderr, "\n");
@@ -162,7 +164,7 @@ int main(int argc, char** argv) {
 
   if (optind+1 < argc)  command = argv[++optind];
   else                  command = NULL;
-  
+
   if (getEBVersion) {
     if (verbose) fprintf(stdout, "EB version / EB source: ");
     fprintf(stdout, "%s / %s\n", eb_source_version(), eb_build_info());
@@ -170,30 +172,30 @@ int main(int argc, char** argv) {
 
 
   if (command) {
-    // open Etherbone device and socket 
+    // open Etherbone device and socket
     if ((status = wb_open(devName, &device, &socket)) != EB_OK) {
       fprintf(stderr, "can't open connection to device %s \n", devName);
       return (1);
     }
-    
+
     // prior reset, probe device by gettings its IP
     if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("eb-reset: can't to connect to device", status);
 
     // FPGA reset
     if (!strcasecmp(command, "fpgareset")) {
       cmdExecuted = 1;
-      
+
       // depending on the device, the etherbone cycle either completes or times out
       status = wb_wr_reset(device, devIndex, 0xdeadbeef);
       if ((status != EB_TIMEOUT) && (status != EB_OK)) die("RESET FPGA", status);
-      
+
       if (probeAfterReset) {
         //close, wait and reopen socket, try to read a property (here: ip) from the device
-        
+
         if ((status = wb_close(device, socket)) != EB_OK) die ("Probe FPGA", status);
         sleep(waitTime);
         if ((status = wb_open(devName, &device, &socket)) != EB_OK) die("Probe FPGA", status);
-        
+
         if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("Probe FPGA", status);
       } // probe after reset
     } // fpga reset
@@ -221,7 +223,7 @@ int main(int argc, char** argv) {
       status = wb_wr_watchdog_retrigger(device, devIndex);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // watchdog retrigger
-    
+
     // watchdog status
     if (!strcasecmp(command, "wdstatus")) {
       cmdExecuted = 1;
@@ -230,6 +232,21 @@ int main(int argc, char** argv) {
       printf("%d\n", flagEnabled);
     } // get watchdog 'enabled' status
 
+    // reset PHY
+    if (!strcasecmp(command, "phyreset")) {
+      cmdExecuted = 1;
+
+      status = wb_wr_phy_reset(device, devIndex);
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // reset PHY
+
+    // reset SFP
+    if (!strcasecmp(command, "sfpreset")) {
+      cmdExecuted = 1;
+
+      status = wb_wr_sfp_reset(device, devIndex);
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // reset SFP
 
     // halt user CPU
     if (!strcasecmp(command, "cpuhalt")) {
@@ -253,7 +270,7 @@ int main(int argc, char** argv) {
       if (status != EB_OK)  die("eb-reset: ", status);
 
       usleep(1000); // probably not required, but its better to be on the safe side
-      
+
       status = wb_cpu_resume(device, devIndex, nCPU);
       if (status == EB_OOM) {printf("eb-reset: illegal value for <cpu>\n"); return 1;}
       if (status != EB_OK)  die("eb-reset: ", status);
@@ -275,6 +292,6 @@ int main(int argc, char** argv) {
     if (!cmdExecuted) printf("eb-reset: unknonwn command %s\n", command);
   } // if command
   else printf("eb-reset: no action on FPGA or lm32, use option '-h' to learn about commands\n");
-  
+
   return exitCode;
 } // main

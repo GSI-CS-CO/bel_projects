@@ -11,15 +11,15 @@
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
 //  version : 26-Mar-2021
 //
-#define WB_API_VERSION "0.14.3"
+#define WB_API_VERSION "0.15.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
-// 
+//
 //
 // requires:
 //  - etherbone
 //  - wb_slaves.h
-//  - 1-wire 
+//  - 1-wire
 //
 // example of usage: see monitoring/eb-mon.c
 //
@@ -118,7 +118,7 @@ eb_status_t wb_wr_get_uptime(eb_device_t device,               // EB device
                              uint32_t *uptime                  // uptime of WR lm32 [s]
                              );
 
-// gets lock statistics about WR 
+// gets lock statistics about WR
 eb_status_t wb_wr_stats_get_lock(eb_device_t device,           // EB device
                                  int devIndex,                 // 0,1,2... - there may be more than 1 device on the WB bus
                                  uint64_t *lockLossTS,         // WR lock: timestamp of last lost lock
@@ -126,7 +126,7 @@ eb_status_t wb_wr_stats_get_lock(eb_device_t device,           // EB device
                                  uint32_t *lockNAcq            // WR lock: number of successful acquired locks
                                  );
 
-// gets time continuity statistics about WR 
+// gets time continuity statistics about WR
 eb_status_t wb_wr_stats_get_continuity(eb_device_t device,     // EB device
                                        int devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
                                        uint64_t *contObsT,     // WR time continuity: observation intervall
@@ -169,7 +169,7 @@ eb_status_t wb_eca_stats_clear(eb_device_t device,             // EB device
 // enables/disables capture of statistics about ECA
 eb_status_t wb_eca_stats_enable(eb_device_t device,            // EB device
                                 int devIndex,                  // 0,1,2... - there may be more than 1 device on the WB bus
-                                uint32_t enableFlag            // 1: enables capture; 0: disables capture            
+                                uint32_t enableFlag            // 1: enables capture; 0: disables capture
                                );
 
 // gets statistics about ECA
@@ -179,10 +179,10 @@ eb_status_t wb_eca_stats_get(eb_device_t device,               // EB device
                              int64_t  *dtSum,                  // accumulated differences (deadline - timestamp)
                              int64_t  *dtMin,                  // minimum difference (deadline - timestamp)
                              int64_t  *dtMax,                  // maximum difference (deadline - timestamp)
-                             uint32_t *nLate,                  // # of late messages 
+                             uint32_t *nLate,                  // # of late messages
                              int32_t  *lateOffset              // offset for late events
                              );
-                             
+
 // get ID of the 1st 1-wire sensor found on the specified bus
 eb_status_t wb_1wire_get_id(eb_device_t device,                // EB device
                             int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
@@ -210,7 +210,7 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
 // disable or enable the watchdog for automated FPGA reset
 eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
-                           int flagEnable                      // 0: disable watchdog, 1: enable watchdog 
+                           int flagEnable                      // 0: disable watchdog, 1: enable watchdog
                            );
 
 // retrigger an enabled  watchdog to prevent automated FPGA reset; if the watchdog is enabled, it must be retriggered regularly
@@ -224,28 +224,38 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device,          // EB device
                                   int *flagEnabled             // 1: watchdog is enabled, 0: watchdog is disabled
                                   );
 
+// reset the SFP
+eb_status_t wb_wr_sfp_reset(eb_device_t device,                 // EB device
+                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+                            );
+
+// reset the PHY
+eb_status_t wb_wr_phy_reset(eb_device_t device,                 // EB device
+                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+                            );
+
 // put user lm32 into reset state
 eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device
                         int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
-                        uint32_t value                         // number 0..31 of a single cpu, 0xff for all 
+                        uint32_t value                         // number 0..31 of a single cpu, 0xff for all
                         );
 
 // release user lm32 from reset state
 eb_status_t wb_cpu_resume(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
-                          uint32_t value                       // number 0..31 of a single cpu, 0xff for all 
+                          uint32_t value                       // number 0..31 of a single cpu, 0xff for all
                           );
 
-// get reset state of all lm32 
+// get reset state of all lm32
 eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
                           uint32_t *value                      // one bit per CPU; CPU 0 is rightmost bit
                           );
 
-// get gateware build type 
+// get gateware build type
 eb_status_t wb_get_build_type(eb_device_t device,              // EB device
                               int size,                        // array size of builtType
-                              char *buildType                  // build Type 
+                              char *buildType                  // build Type
                               );
 
 #endif // wb_api.h
