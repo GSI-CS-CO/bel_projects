@@ -155,6 +155,8 @@ entity monster is
     wr_aux_sfp_det_i       : in    std_logic;
     wr_aux_sfp_tx_o        : out   std_logic;
     wr_aux_sfp_rx_i        : in    std_logic;
+    wbar_phy_dis_o         : out   std_logic;
+    wbar_phy_aux_dis_o     : out   std_logic;
     -- Optional WR features
     wr_ext_clk_i           : in    std_logic; -- 10MHz
     wr_ext_pps_i           : in    std_logic;
@@ -769,6 +771,11 @@ architecture rtl of monster is
   signal tm_valid_aux  : std_logic;
 
   signal ref_tai8ns : std_logic_vector(63 downto 0);
+
+  signal wbar_phy_rst     : std_logic;
+  signal wbar_phy_aux_rst : std_logic;
+  signal wbar_phy_dis     : std_logic;
+  signal wbar_phy_aux_dis : std_logic;
 
   signal owr_pwren : std_logic_vector(1 downto 0);
   signal owr_en    : std_logic_vector(1 downto 0);
@@ -1997,7 +2004,7 @@ end generate;
         rst_i          => pll_rst,
         locked_o       => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_i       => clk_ref,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k(0),
@@ -2023,7 +2030,7 @@ end generate;
         clk_phy_i      => phy_clk,
         ready_o        => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_o       => open,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
@@ -2065,7 +2072,7 @@ end generate;
         reconfig_clk_i(0)      => clk_sys,
         reconfig_reset_i(0)    => not(rstn_sys),
         ready_o                => phy_ready,
-        drop_link_i            => phy_rst,
+        drop_link_i            => (phy_rst or wbar_phy_rst),
         loopen_i               => phy_loopen,
         sfp_los_i              => sfp_los_i,
         tx_clk_o               => phy_tx_clk,
@@ -2263,14 +2270,21 @@ end generate;
       clk_in_hz    => 62_500_000,
       en_wd_tmr    => g_en_wd_tmr)
     port map(
-      clk_sys_i  => clk_sys,
-      rstn_sys_i => rstn_sys,
-      clk_upd_i  => clk_update,
-      rstn_upd_i => rstn_update,
-      hw_version => hw_version,
-      slave_o    => dev_bus_master_i(dev_slaves'pos(devs_reset)),
-      slave_i    => dev_bus_master_o(dev_slaves'pos(devs_reset)),
-      rstn_o     => s_lm32_rstn);
+      clk_sys_i     => clk_sys,
+      rstn_sys_i    => rstn_sys,
+      clk_upd_i     => clk_update,
+      rstn_upd_i    => rstn_update,
+      hw_version    => hw_version,
+      slave_o       => dev_bus_master_i(dev_slaves'pos(devs_reset)),
+      slave_i       => dev_bus_master_o(dev_slaves'pos(devs_reset)),
+      phy_rst_o     => wbar_phy_rst,
+      phy_aux_rst_o => wbar_phy_aux_rst,
+      phy_dis_o     => wbar_phy_dis,
+      phy_aux_dis_o => wbar_phy_aux_dis,
+      rstn_o        => s_lm32_rstn);
+
+      wbar_phy_dis_o     <= wbar_phy_dis;
+      wbar_phy_aux_dis_o <= wbar_phy_aux_dis;
 
   iocontrol : io_control
     generic map(
@@ -3127,4 +3141,3 @@ end generate;
   ----------------------------------------------------------------------------------
 
 end rtl;
-
