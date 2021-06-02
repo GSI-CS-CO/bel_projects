@@ -2,6 +2,7 @@
 DATAMASTER ?= $$DM
 # Command for saft-ctl snoop. May be different for remote execution.
 SNOOP ?= saft-ctl tr0 -xv snoop 0 0 0
+SNOOP_FEL0069 ?= ssh -t root@fel0069.acc 'saft-ctl tr1 -xv snoop 0 0 0'
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
 # folders to ignore (no tests inside)
@@ -11,6 +12,9 @@ OPTIONS ?=
 
 test:
 	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ pytest $(IGNORE) $(OPTIONS)
+
+remote:
+	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc" TEST_SCHEDULES=schedules/ pytest $(IGNORE) $(OPTIONS)
 
 test-default:
 	DATAMASTER="$(DATAMASTER)" pytest $(IGNORE) $(OPTIONS)
