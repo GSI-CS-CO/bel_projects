@@ -102,8 +102,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     fastIO_p_i : in    std_logic_vector(2 downto 0);
     fastIO_n_i : in    std_logic_vector(2 downto 0);
-    fastIO_p_o : out   std_logic_vector(2 downto 0);
-    fastIO_n_o : out   std_logic_vector(2 downto 0);
+    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues 
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
@@ -193,7 +192,6 @@ architecture rtl of scu_control is
   signal s_lvds_p_i     : std_logic_vector(2 downto 0);
   signal s_lvds_n_i     : std_logic_vector(2 downto 0);
   signal s_lvds_p_o     : std_logic_vector(2 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(2 downto 0);
   signal s_lvds_term    : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
@@ -281,7 +279,6 @@ begin
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
-      lvds_n_o                => s_lvds_n_o,
       lvds_term_o             => s_lvds_term,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
@@ -346,7 +343,6 @@ begin
     s_lvds_p_i(i)      <= fastIO_p_i(i);
     s_lvds_n_i(i)      <= fastIO_n_i(i);
     fastIO_p_o(i)        <= s_lvds_p_o(i);
-    fastIO_n_o(i)        <= s_lvds_n_o(i);
   end generate;
 
   lemo_out <= not s_gpio_o(6 downto 3);
