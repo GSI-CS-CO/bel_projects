@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-March-2021
+ *  version : 02-Jun-2021
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
