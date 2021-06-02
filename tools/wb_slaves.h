@@ -4,7 +4,7 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 26-Sep-2019
+//  version : 02-Jun-2021
 //
 #define WB_SLAVES_VERSION "0.08.0"
 //

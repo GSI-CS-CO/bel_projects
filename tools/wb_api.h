@@ -9,7 +9,7 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 26-Mar-2021
+//  version : 02-Jun-2021
 //
 #define WB_API_VERSION "0.15.0"
 //
