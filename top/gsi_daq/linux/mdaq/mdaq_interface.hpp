@@ -55,7 +55,7 @@ public:
   // constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
-#ifdef CONFIG_BACKWARD_COMPATIBLE
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    using RING_INDEX_T = RING_POS_T;
    using RING_ITEM_T = MIL_DAQ_OBJ_T;
 
@@ -115,7 +115,7 @@ public:
    };
 
    static constexpr RING_INDEX_T c_ringBufferCapacity = DAQ_RING_SIZE;
-#endif /* CONFIG_BACKWARD_COMPATIBLE */
+#endif /* CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
    
    class BufferItem: public MIL_DAQ_RAM_ITEM_T
    {
@@ -167,7 +167,7 @@ public:
    };
    
 private:
-#ifdef CONFIG_BACKWARD_COMPATIBLE
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    struct DAQ_RING_T
    {
       RING_INDEX_T  m_head;
@@ -181,10 +181,10 @@ private:
    DAQ_RING_T         m_oRing;
 
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
-#endif /* CONFIG_BACKWARD_COMPATIBLE */
+#endif /* CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
 public:
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone );
-   DaqInterface( daq::EbRamAccess* poEbAccess );
+   DaqInterface( DaqAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
    /*!
@@ -243,7 +243,18 @@ protected:
 #endif
    }
 
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    uint readRingItems( RingItem* pItems, uint size );
+
+   /*!
+    * @brief Returns "true" if the LM32-firmware is a old one storing
+    * the MIL-DAQ data in LM32 shared memory.
+    */
+   bool isMilDataInLm32Mem( void ) const
+   {
+      return getEbAccess()->isMilDataInLm32Mem();
+   }
+#endif
 
 private:
    void init( void );

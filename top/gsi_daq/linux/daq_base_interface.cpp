@@ -53,7 +53,7 @@ const std::string Scu::daq::deviceType2String( const DAQ_DEVICE_TYP_T typ )
 /*! --------------------------------------------------------------------------
  */
 DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
-   :m_poEbAccess( new daq::EbRamAccess( poEtherbone ) )
+   :m_poEbAccess( new DaqAccess( poEtherbone ) )
    ,m_ebAccessSelfCreated( true )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
    ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
@@ -63,7 +63,7 @@ DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
 
 /*! --------------------------------------------------------------------------
  */
-DaqBaseInterface::DaqBaseInterface( daq::EbRamAccess* poEbAccess )
+DaqBaseInterface::DaqBaseInterface( DaqAccess* poEbAccess )
    :m_poEbAccess( poEbAccess )
    ,m_ebAccessSelfCreated( false )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )

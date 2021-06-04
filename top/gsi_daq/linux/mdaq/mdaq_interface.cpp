@@ -38,7 +38,7 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone )
    init();
 }
 
-DaqInterface::DaqInterface( daq::EbRamAccess* poEbAccess )
+DaqInterface::DaqInterface( DaqAccess* poEbAccess )
    :DaqBaseInterface( poEbAccess )
 {
    init();

@@ -266,7 +266,7 @@ protected:
 
 public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone );
-   DaqAdministration( daq::EbRamAccess* poEbAccess );
+   DaqAdministration( DaqAccess* poEbAccess );
    virtual ~DaqAdministration( void );
 
    /*!
@@ -355,7 +355,7 @@ protected:
 public:
    DaqAdministrationFgList( DaqEb::EtherboneConnection* poEtherbone );
 
-   DaqAdministrationFgList( daq::EbRamAccess* poEbAccess );
+   DaqAdministrationFgList( DaqAccess* poEbAccess );
 
    virtual ~DaqAdministrationFgList( void );
 

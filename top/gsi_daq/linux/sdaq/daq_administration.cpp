@@ -209,7 +209,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess,
+DaqAdministration::DaqAdministration( DaqAccess* poEbAccess,
                                       const bool doReset,
                                       const bool doSendCommand
                                     )

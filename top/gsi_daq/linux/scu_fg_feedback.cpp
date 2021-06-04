@@ -735,7 +735,7 @@ FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* 
 
 /*! ---------------------------------------------------------------------------
  */
-FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess,
+FgFeedbackAdministration::FgFeedbackAdministration( DaqAccess* poEbAccess,
                                                     const bool doRescan )
    :m_oAddacDaqAdmin( this, poEbAccess )
 #ifdef CONFIG_MIL_FG

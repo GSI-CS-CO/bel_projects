@@ -111,8 +111,6 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class DaqInterface: public DaqBaseInterface
 {
-   constexpr static uint        INVALID_OFFSET = static_cast<uint>(~0);
-
 public:
    using SLOT_FLAGS_T  = Bus::SCUBUS_SLAVE_FLAGS_T;
    using RETURN_CODE_T = DAQ_RETURN_CODE_T;
@@ -124,7 +122,6 @@ private:
    DAQ_LAST_STATUS_T            m_lastStatus;
    const bool                   m_doReset;
    const bool                   m_doSendCommand;
-   uint                         m_daqLM32Offset;
 
 protected:
    RAM_SCU_T                    m_oScuRam;
@@ -156,7 +153,7 @@ public:
                  const bool doSendCommand = true
                );
 
-   DaqInterface( EbRamAccess* poEbAccess,
+   DaqInterface( DaqAccess* poEbAccess,
                  const bool doReset = true,
                  const bool doSendCommand = true
                );
@@ -168,7 +165,7 @@ public:
     */
    bool isAddacDaqSupport( void ) const
    {
-      return m_daqLM32Offset != INVALID_OFFSET;
+      return getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET;
    }
 
    /*!
@@ -364,8 +361,8 @@ protected:
                   const etherbone::format_t format = EB_DATA8
                 )
    {
-      assert( m_daqLM32Offset != INVALID_OFFSET );
-      getEbAccess()->readLM32( pData, len, offset + m_daqLM32Offset, format );
+      assert( getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET );
+      getEbAccess()->readLM32( pData, len, offset + getEbAccess()->getAddacDaqOffset(), format );
    }
 
    void writeLM32( const eb_user_data_t pData,
@@ -373,8 +370,8 @@ protected:
                    const std::size_t offset = 0,
                    const etherbone::format_t format = EB_DATA8 )
    {
-      assert( m_daqLM32Offset != INVALID_OFFSET );
-      getEbAccess()->writeLM32( pData, len, offset + m_daqLM32Offset, format );
+      assert( getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET );
+      getEbAccess()->writeLM32( pData, len, offset + getEbAccess()->getAddacDaqOffset(), format );
    }
 
 
@@ -409,7 +406,6 @@ protected:
 
 private:
    void init( void );
-   void probe( void );
    bool cmdReadyWait( void );
    void readSharedTotal( void );
    bool permitCommand( DAQ_OPERATION_CODE_T );

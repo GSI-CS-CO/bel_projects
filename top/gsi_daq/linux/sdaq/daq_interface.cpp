@@ -123,12 +123,12 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
    ,m_doSendCommand( doSendCommand )
-   ,m_daqLM32Offset( INVALID_OFFSET )
+   //,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
 
-DaqInterface::DaqInterface( EbRamAccess* poEbAccess,
+DaqInterface::DaqInterface( DaqAccess* poEbAccess,
                             const bool doReset,
                             const bool doSendCommand
                           )
@@ -137,7 +137,7 @@ DaqInterface::DaqInterface( EbRamAccess* poEbAccess,
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
    ,m_doSendCommand( doSendCommand )
-   ,m_daqLM32Offset( INVALID_OFFSET )
+//   ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
@@ -148,8 +148,6 @@ void DaqInterface::init( void )
 {
    SCU_ASSERT( getEbAccess() != nullptr );
 
-   probe();
-
    if( !isAddacDaqSupport() )
       return;
 
@@ -157,75 +155,6 @@ void DaqInterface::init( void )
    sendUnlockRamAccess();
    sendReset();
    readSlotStatus();
-}
-
-/*! ---------------------------------------------------------------------------
- */
-inline void DaqInterface::probe( void )
-{
-   m_daqLM32Offset = INVALID_OFFSET;
-
-   uint32_t actMagicNumber;
-
-   /*
-    * First step: Investigation whether the single DAQ LM32
-    * application is loaded.
-    */
-   getEbAccess()->readLM32( &actMagicNumber, 1,
-                           offsetof( DAQ_SHARED_IO_T, magicNumber ),
-                           sizeof( actMagicNumber ) );
-   if( actMagicNumber == DAQ_MAGIC_NUMBER )
-   {/*
-     * DAQ-LM32 single application found. But...
-     */
-      m_daqLM32Offset = offsetof( DAQ_SHARED_IO_T, magicNumber );
-   }
-
-   /*
-    * Second step: Investigation whether the FG-LM32 application
-    * is loaded.
-    */
-   getEbAccess()->readLM32( &actMagicNumber, 1,
-                           offsetof( FG::SCU_SHARED_DATA_T, oSaftLib.oFg.magicNumber ),
-                           sizeof( actMagicNumber ) );
-   if( m_daqLM32Offset != INVALID_OFFSET )
-   {/*
-     * Check whether the DAQ-magic number is not a random number
-     * of SCU_SHARED_DATA_T::board_id.
-     */
-      if( actMagicNumber == FG_MAGIC_NUMBER )
-      {
-         m_daqLM32Offset = INVALID_OFFSET;
-      }
-   }
-
-   if( m_daqLM32Offset != INVALID_OFFSET )
-   {
-      return;
-   }
-
-   if( actMagicNumber != FG_MAGIC_NUMBER )
-   {
-      throw DaqException( "Neither DAQ-application nor FG-application "
-                          "in LM32 found!" );
-
-   }
-
-   /*
-    * FG-application is loaded.
-    * Third step: Investigation whether the FG+DAQ-LM32 application
-    * is loaded.
-    */
-   getEbAccess()->readLM32( &actMagicNumber, 1,
-                           offsetof( FG::SCU_SHARED_DATA_T, sDaq.magicNumber ),
-                           sizeof( actMagicNumber ) );
-   if( actMagicNumber == DAQ_MAGIC_NUMBER )
-   {
-      m_daqLM32Offset = offsetof( FG::SCU_SHARED_DATA_T, sDaq );
-      return;
-   }
-
-   m_daqLM32Offset = INVALID_OFFSET;
 }
 
 /*----------------------------------------------------------------------------
@@ -255,10 +184,10 @@ const std::string DaqInterface::getLastReturnCodeString( void )
  */
 bool DaqInterface::isFgIntegrated( void ) const
 {
-   if( m_daqLM32Offset == INVALID_OFFSET )
+   if( getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET )
       throw( "Neither DAQ-application nor FG-application running!" );
 
-   return m_daqLM32Offset == offsetof( FG::SCU_SHARED_DATA_T, sDaq );
+   return getEbAccess()->getAddacDaqOffset() > 0;
 }
 
 

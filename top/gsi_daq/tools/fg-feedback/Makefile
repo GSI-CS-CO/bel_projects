@@ -32,6 +32,7 @@ SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
@@ -108,7 +109,7 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 # CALL_ARGS = scuxl0035 -b11,12
 CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
 
-# DEBUG = 1
+ DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 

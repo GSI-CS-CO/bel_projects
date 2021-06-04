@@ -24,6 +24,7 @@ SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp

@@ -23,6 +23,7 @@ INCLUDE_DIRS += $(DAQ_DIR)/tools
 SOURCE =  $(SDAQ_LINUX_DIR)/daq_administration.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 

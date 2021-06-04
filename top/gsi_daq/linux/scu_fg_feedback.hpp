@@ -609,7 +609,7 @@ private:
       {
       }
 
-      AddacAdministration( FgFeedbackAdministration* pParent, daq::EbRamAccess* poEbAccess )
+      AddacAdministration( FgFeedbackAdministration* pParent, DaqAccess* poEbAccess )
         :daq::DaqAdministration( poEbAccess, false, false )
         ,m_pParent( pParent )
       {
@@ -628,7 +628,7 @@ private:
    {
       FgFeedbackAdministration* m_pParent;
    public:
-      MilDaqAdministration( FgFeedbackAdministration* pParent, daq::EbRamAccess* poEbAccess )
+      MilDaqAdministration( FgFeedbackAdministration* pParent, DaqAccess* poEbAccess )
         :MiLdaq::DaqAdministration( poEbAccess )
         ,m_pParent( pParent )
       {
@@ -684,11 +684,11 @@ public:
 
    /*!
     * @brief Second constructor variant:
-    * @param poEbAccess Pointer to a object of type daq::EbRamAccess
+    * @param poEbAccess Pointer to a object of type DaqAccess
     * @param doRescan If true then a rescan command will send to the
     *                 LM32 -application.
     */
-   FgFeedbackAdministration( daq::EbRamAccess* poEbAccess, const bool doRescan = false );
+   FgFeedbackAdministration( DaqAccess* poEbAccess, const bool doRescan = false );
 
    /*!
     * @brief Destructor:

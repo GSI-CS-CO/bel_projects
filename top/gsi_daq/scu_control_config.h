@@ -22,7 +22,7 @@
  * @brief MIL-DAQ-buffer-handlong is backward compatible to the old
  *        LM32-firmware
  */
-#define CONFIG_BACKWARD_COMPATIBLE
+#define CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 
 
 #ifdef __cplusplus

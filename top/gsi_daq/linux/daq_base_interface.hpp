@@ -27,7 +27,7 @@
 
 #include <scu_control_config.h>
 #include <daq_exception.hpp>
-#include <daq_eb_ram_buffer.hpp>
+#include <daq_access.hpp>
 #include <scu_bus_defines.h>
 #include <scu_function_generator.h>
 #include <daqt_messages.hpp>
@@ -165,7 +165,7 @@ protected:
    using EB_STATUS_T  = eb_status_t;
 
 private:
-   daq::EbRamAccess*   m_poEbAccess;
+   DaqAccess*   m_poEbAccess;
    const bool          m_ebAccessSelfCreated;
 
 protected:
@@ -185,9 +185,9 @@ public:
    DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone );
 
    /*!
-    * @brief Constructor variant for object of type daq::EbRamAccess
+    * @brief Constructor variant for object of type DaqAccess
     */
-   DaqBaseInterface( daq::EbRamAccess* poEbAccess );
+   DaqBaseInterface( DaqAccess* poEbAccess );
 
    /*!
     * @brief Destructor
@@ -203,9 +203,9 @@ public:
    }
 
    /*!
-    * @brief returns a pointer to an object of type daq::EbRamAccess
+    * @brief returns a pointer to an object of type DaqAccess
     */
-   daq::EbRamAccess* getEbAccess( void ) const
+   DaqAccess* getEbAccess( void ) const
    {
       return m_poEbAccess;
    }

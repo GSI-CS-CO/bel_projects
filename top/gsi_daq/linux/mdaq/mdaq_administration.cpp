@@ -144,7 +144,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
 {
 }
 
-DaqAdministration::DaqAdministration( daq::EbRamAccess* poEbAccess )
+DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
   :DaqInterface( poEbAccess )
 {
 }
@@ -281,7 +281,7 @@ DaqAdministrationFgList::DaqAdministrationFgList( DaqEb::EtherboneConnection* po
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdministrationFgList::DaqAdministrationFgList( daq::EbRamAccess* poEbAccess )
+DaqAdministrationFgList::DaqAdministrationFgList( DaqAccess* poEbAccess )
    :DaqAdministration( poEbAccess )
 {
   /*

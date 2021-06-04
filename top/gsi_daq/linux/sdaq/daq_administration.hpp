@@ -783,7 +783,7 @@ public:
                       const bool doSendCommand = true
                     );
 
-   DaqAdministration( EbRamAccess* poEbAccess,
+   DaqAdministration( DaqAccess* poEbAccess,
                       const bool doReset = true,
                       const bool doSendCommand = true
                     );
