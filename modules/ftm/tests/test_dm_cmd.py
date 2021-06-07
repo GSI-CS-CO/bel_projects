@@ -1,4 +1,5 @@
 import dm_testbench
+import os
 
 """
 Class collects unit tests for the command line of dm-cmd.
@@ -7,10 +8,17 @@ First section: all commands which need a target name. Test case names: test_<com
 Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
 """
 class TestDmCmd(dm_testbench.DmTestbench):
+  @classmethod
+  def setUpClass(cls):
+    super().setUpClass()
+    TestDmCmd.ppsPatternStarted = False
+
   def setUp(self):
     """Set up for all test cases in this class: start pps pattern.
     """
-    self.startPattern(self.datamaster, 'pps.dot')
+    if not TestDmCmd.ppsPatternStarted:
+      self.startPattern(self.datamaster, 'pps.dot')
+      TestDmCmd.ppsPatternStarted = True
 
   def targetName_missing(self, command):
     """
@@ -18,7 +26,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     Start dm-cmd with the command and check the output on stderr.
     """
     lines = self.startAndGetSubprocessOutput([self.binary, self.datamaster, command],
-         expectedReturnCode=255, linesCout=0, linesCerr=1)[1]
+         expectedReturnCode=[255], linesCout=0, linesCerr=1)[1]
     test_result = False
     for line in lines:
       if 'Target node is NULL, target missing.' in line:
@@ -61,7 +69,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
   def test_unlock_missing(self):
     self.targetName_missing('unlock')
 
-  def targetName(self, command, expectedReturnCode=0, count_out=0, count_err=0, options=''):
+  def targetName(self, command, expectedReturnCode=[0], count_out=0, count_err=0, options=''):
     """
     Common method for commands with target name.
     Start dm-cmd with the command and check the output on stdout and stderr.
@@ -77,10 +85,10 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('asyncclear')
 
   def test_flow(self):
-    self.targetName('flow', 255, count_err=1, options='x')
+    self.targetName('flow', [255], count_err=1, options='x')
 
   def test_flush(self):
-    self.targetName('flush', 255, count_err=1)
+    self.targetName('flush', [255], count_err=1)
 
   def test_lock(self):
     self.targetName('lock')
@@ -98,10 +106,10 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('relwait', options='100')
 
   def test_staticflush(self):
-    self.targetName('staticflush', 255, count_err=1)
+    self.targetName('staticflush', [255], count_err=1)
 
   def test_switch(self):
-    self.targetName('switch', 255, count_err=1, options='x')
+    self.targetName('switch', [255], count_err=1, options='x')
 
   def test_unlock(self):
     self.targetName('unlock')
