@@ -1,14 +1,15 @@
-import subprocess  # used in startAllPatterns
-import unittest    # contains super class
+import collections # used in analyseFrequencyFromCsv
+import contextlib
+import csv         # used in analyseFrequencyFromCsv
+import datetime    # used in analyseFrequencyFromCsv
 import difflib     # used in compareExpectedResult
 import os
-import sys
 import pathlib
-import csv         # used in analyseFrequencyFromCsv
-import contextlib
-import datetime    # used in analyseFrequencyFromCsv
-import collections # used in analyseFrequencyFromCsv
+import subprocess  # used in startAllPatterns
+import sys
 import threading
+import time
+import unittest    # contains super class
 
 """
 Module dm_testbench collects functions to handle patterns for the data master testbench.
@@ -23,6 +24,7 @@ class DmTestbench(unittest.TestCase):
     self.datamaster = os.environ['DATAMASTER']
     self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
+    self.patternStarted = False
 
   def addSchedule(self, data_master, schedule_file):
     """Connect to the given data master and load the schedule file (dot format).
@@ -75,7 +77,7 @@ class DmTestbench(unittest.TestCase):
         if 'Patterns' in lines[i]:
           patterns = True
 
-  def startAndCheckSubprocess(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+  def startAndCheckSubprocess(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1):
     """
     Common method to start a subprocess and check the return code.
     The <argumentsList> contains the binary to execute and all arguments in one list.
@@ -85,8 +87,8 @@ class DmTestbench(unittest.TestCase):
     process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
     stdout, stderr = process.communicate()
-    if expectedReturnCode > -1:
-      self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    self.assertTrue(process.returncode in expectedReturnCode, f'wrong return code {process.returncode}, expected: {expectedReturnCode}, '
+          + f'Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
@@ -94,21 +96,23 @@ class DmTestbench(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
 
-  def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=0, linesCout=-1, linesCerr=-1):
+  def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1):
     return self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)[0]
 
-  def startAndGetSubprocessOutput(self, argumentsList, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+  def startAndGetSubprocessOutput(self, argumentsList, expectedReturnCode=[-1], linesCout=-1, linesCerr=-1):
     """
     Common method to start a subprocess and check the return code.
     The <argumentsList> contains the binary to execute and all arguments in one list.
-    Start the binary for the test step with the arguments and check the output on stdout and stderr and the return code as well.
+    Start the binary for the test step with the arguments and check the number of lines for stdout and stderr.
+    Check that the return code is in a list of allowed return codes.
     Return both stdout, stderr as list of lines.
     """
     # pass cmd and args to the function
     process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
     stdout, stderr = process.communicate()
-    self.assertEqual(process.returncode, expectedReturnCode, f'wrong return code {process.returncode}, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    self.assertTrue(process.returncode in expectedReturnCode, f'wrong return code {process.returncode}, expected: {expectedReturnCode}, '
+          + f'Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
@@ -164,11 +168,6 @@ class DmTestbench(unittest.TestCase):
       process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
       self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
 
-  def threadSnoop(self, file_name, duration):
-    with open(file_name, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
-      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
-
   def snoopToCsvWithAction(self, csv_file_name, action, duration=1):
     """
     Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
@@ -176,7 +175,7 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.threadSnoop, args=(csv_file_name, duration))
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csv_file_name, duration))
     snoop.start()
     action()
     snoop.join()
@@ -227,6 +226,9 @@ class DmTestbench(unittest.TestCase):
             keyAligned = key + " "
           print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d} {value/timeSpan:9.3f}Hz')
         print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
+
+  def delay(self, duration):
+    time.sleep(duration)
 
   def deleteFile(self, fileName):
     """
