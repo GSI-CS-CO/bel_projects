@@ -256,8 +256,23 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Container of registered MIL-DAQ-devices.
+ *
+ * Handles the communication between LM32-Firmware for MIL-DAQs
+ * and all registered MIL-DAQ devices
+ */
 class DaqAdministration: public Scu::MiLdaq::DaqInterface
 {
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+   /*!
+    * @brief Keeps the function-pointer for reading out MIL-DAQ-data
+    *        form LM32-shared memory or the DDR3-buffer.
+    * It becomes invoked by distributeData().
+    */
+   uint (*m_pfPollDaqData)( void );
+#endif
+
 protected:
 
    #define MIL_DEVICE_LIST_BASE std::list
