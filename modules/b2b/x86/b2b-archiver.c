@@ -244,7 +244,6 @@ void dicSubscribeServices(char *prefix)
 int main(int argc, char** argv) {
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
   char *tmp;
 
   int      getVersion;

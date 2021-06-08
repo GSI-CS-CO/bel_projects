@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-February-2021
+ *  version : 09-June-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000237
+#define B2B_VIEWER_VERSION 0x000241
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -389,7 +389,7 @@ int printDiag(uint32_t sid)
       else  printf("ext: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: 'diff bDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("inj: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
       else  printf("b2b: 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
@@ -556,8 +556,6 @@ void printData(int flagOnce, uint32_t sid, char *name)
 {
   int i;
   int nLines = 0;
-  char   cTransfer[10];
-  char   cStatus[17];
   char   tLocal[100];
   time_t time_date;
   char   modeStr[50];

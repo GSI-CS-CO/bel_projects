@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2021
+ *  version : 08-June-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000237
+#define B2B_ANALYZER_VERSION 0x000241
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -787,39 +787,23 @@ void disAddServices(char *prefix)
   } // for i
 } // disAddServices
 
-// send 'clear diag' command to server
-void dicCmdClearDiag(char *prefix, uint32_t indexServer)
-{
-  char name[DIMMAXSIZE];
-
-  //sprintf(name, "%s_%s_cmd_cleardiag", prefix, sysShortNames[indexServer]);
-  //dic_cmnd_service(name, 0, 0);
-} // dicCmdClearDiag
-
 
 int main(int argc, char** argv) {
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
 
   int      getVersion;
   int      subscribe;
-  int      once;
 
-  char     userInput;
-  int      quit;
 
   char     prefix[DIMMAXSIZE];
   char     disName[DIMMAXSIZE];
-  uint32_t sid;                             // sequence ID
   int      i;
 
 
   program       = argv[0];
   getVersion    = 0;
   subscribe     = 1;
-  once          = 0;
-  quit          = 0;
 
   while ((opt = getopt(argc, argv, "s:eh")) != -1) {
     switch (opt) {

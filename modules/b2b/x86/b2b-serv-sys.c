@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-January-2021
+ *  version : 08-June-2021
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -139,7 +139,6 @@ int main(int argc, char** argv) {
 
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
 
   int      getVersion;
   int      snoop;
