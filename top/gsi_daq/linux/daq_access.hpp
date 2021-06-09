@@ -75,10 +75,15 @@ public:
     */
    bool isMilDataInLm32Mem( void ) const
    {
+      SCU_ASSERT( m_addacDaqLM32Offset != INVALID_OFFSET );
       return m_addacDaqLM32Offset == OLD_ADDAC_DAQ_OFFSET;
    }
 #endif
 
+   /*!
+    * @brief Checks which kind of LM32 firmware is loaded and calculates
+    *        the offsets in the shared memory for ADDAC-DAQ and MIL-DAQ.
+    */
    void probe( void );
 
    uint getAddacDaqOffset( void ) const

@@ -270,7 +270,7 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
     *        form LM32-shared memory or the DDR3-buffer.
     * It becomes invoked by distributeData().
     */
-   uint (*m_pfPollDaqData)( void );
+   uint (DaqAdministration::*m_pfPollDaqData)( void );
 #endif
 
 protected:
@@ -345,10 +345,18 @@ public:
    void reset( void );
 
 protected:
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    virtual void onUnregistered( RingItem* pUnknownItem ) {}
+#endif
 
 private:
    DaqCompare* findDaqCompare( const FG_MACRO_T macro );
+
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+   void initPtr( void );
+   uint distributeDataNew( void );
+   uint distributeDataOld( void );
+#endif
 
 };
 

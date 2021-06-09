@@ -209,6 +209,7 @@ public:
       return 0; //TODO return the offset of MIL-DAQ-buffer
    }
 
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    RING_INDEX_T getHeadRingIndex( void ) const
    {
       return m_oRing.m_head;
@@ -223,12 +224,13 @@ public:
    {
       return getHeadRingIndex() != getTailRingIndex();
    }
-
+#endif
    uint getBufferSize( void );
 
    void clearBuffer( bool update = true ) override;
 
 protected:
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    bool readRingPosition( void );
    void updateRingTail( void );
 
@@ -243,7 +245,7 @@ protected:
 #endif
    }
 
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+
    uint readRingItems( RingItem* pItems, uint size );
 
    /*!

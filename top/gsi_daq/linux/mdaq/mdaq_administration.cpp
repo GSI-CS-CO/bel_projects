@@ -145,6 +145,9 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
   ,m_pfPollDaqData( nullptr )
 #endif
 {
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+   initPtr();
+#endif
 }
 
 DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
@@ -153,6 +156,9 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
   ,m_pfPollDaqData( nullptr )
 #endif
 {
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+   initPtr();
+#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -162,6 +168,21 @@ DaqAdministration::~DaqAdministration( void )
    for( const auto& i: m_devicePtrList )
       i->m_pParent = nullptr;
 }
+
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+/*-----------------------------------------------------------------------------
+ */
+void DaqAdministration::initPtr( void )
+{
+   if( m_pfPollDaqData != nullptr )
+      return;
+
+   if( getEbAccess()->isMilDataInLm32Mem() )
+      m_pfPollDaqData = &DaqAdministration::distributeDataOld;
+   else
+      m_pfPollDaqData = &DaqAdministration::distributeDataNew;
+}
+#endif
 
 /*-----------------------------------------------------------------------------
  */
@@ -236,9 +257,27 @@ DaqCompare* DaqAdministration::findDaqCompare( FG_MACRO_T macro )
    return pDaqDevice->getDaqCompare( getDeviceByFgMacro( macro ) );
 }
 
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 /*-----------------------------------------------------------------------------
  */
 uint DaqAdministration::distributeData( void )
+{
+#ifdef __DOXYGEN__
+   distributeDataOld();
+   distributeDataNew();
+#endif
+   assert( m_pfPollDaqData != nullptr );
+   /*
+    * Invoking of distributeDataOld() or distributeDataNew() depending on
+    * the detected LM32-firmware.
+    */
+   return (this->*m_pfPollDaqData)();
+}
+
+/*!----------------------------------------------------------------------------
+ * @brief Access function for MIL-DAQ data when a old LM32-firmware is running.
+ */
+uint DaqAdministration::distributeDataOld( void )
 {
    if( !readRingPosition() ) // WB-access
       return 0;
@@ -270,6 +309,21 @@ uint DaqAdministration::distributeData( void )
                         pItem->getSetValue32() );
    }
    return size;
+}
+#endif // ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+
+
+/*-----------------------------------------------------------------------------
+ */
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+uint DaqAdministration::distributeDataNew( void )
+#else
+uint DaqAdministration::distributeData( void )
+#endif
+{
+   //TODO
+   #warning MIL-distributeData for DDR3 not implenented yet!
+   return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
