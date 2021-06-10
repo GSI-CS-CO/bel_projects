@@ -634,11 +634,13 @@ private:
       {
       }
       virtual ~MilDaqAdministration( void ) {}
-
+ 
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
       void onUnregistered( RingItem* pUnknownItem )  override
       {
          //TODO
       }
+#endif
 
       RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
       {

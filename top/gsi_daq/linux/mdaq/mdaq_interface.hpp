@@ -116,7 +116,7 @@ public:
 
    static constexpr RING_INDEX_T c_ringBufferCapacity = DAQ_RING_SIZE;
 #endif /* CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
-   
+
    class BufferItem: public MIL_DAQ_RAM_ITEM_T
    {
    public:
@@ -124,17 +124,17 @@ public:
       {
          return timestamp;
       }
-   
+
       uint getSetValue( void ) const
       {
          return setValue;
       }
-      
+
       uint getSetValue32( void ) const
       {
          return setValue << BIT_SIZEOF(uint16_t);
       }
-      
+
       uint getActValue( void ) const
       {
          return actValue;
@@ -144,7 +144,7 @@ public:
       {
          return actValue << BIT_SIZEOF(uint16_t);
       }
-      
+
       FG_MACRO_T getChannel( void ) const
       {
          return fgMacro;
@@ -165,7 +165,20 @@ public:
          return ::Scu::MiLdaq::getMilDaqScuMilExtention( this );
       }
    };
-   
+
+   class BufferAdmin: public MIL_DAQ_ADMIN_T
+   {
+   public:
+      BufferAdmin( void )
+      {
+         magicNumber = 0;
+         indexes.offset = 0;
+         indexes.capacity = 0;
+         indexes.start = 0;
+         indexes.end = 0;
+      }
+   };
+
 private:
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    struct DAQ_RING_T
@@ -178,13 +191,34 @@ private:
    static_assert( offsetof( DAQ_RING_T, m_tail ) ==
                   offsetof( MIL_DAQ_BUFFER_T, ring_tail ), "Offset-error!" );
 
+   /*!
+    * @brief Object contains the write and read index when a old LM32-firmware
+    *        runs where the DAQ-buffer is in the LM32 shared memory
+    */
    DAQ_RING_T         m_oRing;
 
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
 #endif /* CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
+
+   /*!
+    * @brief Object contains the write and read index of the RAM buffer
+    */
+   BufferAdmin m_oBufferAdmin;
+
 public:
+   /*!
+    * @brief Constructor variant for a object of type EtherboneConnection
+    */
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone );
+
+   /*!
+    * @brief Constructor variant for a object of type DaqAccess
+    */
    DaqInterface( DaqAccess* poEbAccess );
+
+   /*!
+    * @brief Destructor
+    */
    virtual ~DaqInterface( void );
 
    /*!
@@ -230,6 +264,26 @@ public:
    void clearBuffer( bool update = true ) override;
 
 protected:
+
+   void readLM32( eb_user_data_t pData,
+                  const std::size_t len,
+                  const std::size_t offset = 0,
+                  const etherbone::format_t format = EB_DATA8
+                )
+   {
+      SCU_ASSERT( getEbAccess()->getMilDaqOffset() != DaqAccess::INVALID_OFFSET );
+      getEbAccess()->readLM32( pData, len, offset + getEbAccess()->getMilDaqOffset(), format );
+   }
+
+   void writeLM32( const eb_user_data_t pData,
+                   const std::size_t len,
+                   const std::size_t offset = 0,
+                   const etherbone::format_t format = EB_DATA8 )
+   {
+      SCU_ASSERT( getEbAccess()->getMilDaqOffset() != DaqAccess::INVALID_OFFSET );
+      getEbAccess()->writeLM32( pData, len, offset + getEbAccess()->getMilDaqOffset(), format );
+   }
+
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    bool readRingPosition( void );
    void updateRingTail( void );
@@ -259,6 +313,7 @@ protected:
 #endif
 
 private:
+   void readBufferAdmin( void );
    void init( void );
 };
 

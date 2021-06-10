@@ -333,7 +333,7 @@ DaqAdministrationFgList::DaqAdministrationFgList( DaqEb::EtherboneConnection* po
    :DaqAdministration( poEtherbone )
 {
    /*
-    * Synchronizing the FG -lit from lm32 shared memory only no active
+    * Synchronizing the FG -list from lm32 shared memory only no active
     * scanning!
     */
    m_oFgList.sync( getEbAccess() );

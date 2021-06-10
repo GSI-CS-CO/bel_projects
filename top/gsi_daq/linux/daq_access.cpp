@@ -59,7 +59,7 @@ void DaqAccess::probe( void )
 #ifdef CONFIG_MIL_FG
    m_milDaqLm32Offset = INVALID_OFFSET;
 #endif
-#if 1
+
   /*
    * First step: Investigation whether the single ADDAC-DAQ LM32
    * application is loaded.
@@ -106,6 +106,10 @@ void DaqAccess::probe( void )
 
    }
 
+#ifdef CONFIG_MIL_FG
+   m_milDaqLm32Offset = sizeof( FG::SAFT_LIB_T );
+#endif
+
   /*
    * FG-application is loaded.
    * Third step: Investigation whether the FG+DAQ-LM32 application
@@ -146,7 +150,7 @@ void DaqAccess::probe( void )
       return;
    }
    m_addacDaqLM32Offset = INVALID_OFFSET;
-#endif
+
 }
 
 //================================== EOF ======================================

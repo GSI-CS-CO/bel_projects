@@ -60,17 +60,13 @@ void DaqInterface::init( void )
 
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
-#if 0
-   /*
-    * Synchronizing the FG -lit from lm32 shared memory only no active
-    * scanning!
-    */
-   m_oFgList.sync( getEbAccess() );
-#endif
+
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
-   readRingPosition();
+   if( isMilDataInLm32Mem() )
+      readRingPosition();
+   else
 #endif
-   //TODO
+      readBufferAdmin();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -78,25 +74,41 @@ void DaqInterface::init( void )
 void DaqInterface::clearBuffer( bool update )
 {
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
-   m_oRing.m_tail = m_oRing.m_head = 0;
-   if( !update )
-      return;
+   if( isMilDataInLm32Mem() )
+   {
+      m_oRing.m_tail = m_oRing.m_head = 0;
+      if( !update )
+         return;
 
-   DAQ_RING_T tmp;
-   tmp.m_head = gsi::convertByteEndian( m_oRing.m_head );
-   tmp.m_tail = gsi::convertByteEndian( m_oRing.m_tail );
-   getEbAccess()->writeLM32( &tmp, sizeof( tmp ),
+      DAQ_RING_T tmp;
+      tmp.m_head = gsi::convertByteEndian( m_oRing.m_head );
+      tmp.m_tail = gsi::convertByteEndian( m_oRing.m_tail );
+      getEbAccess()->writeLM32( &tmp, sizeof( tmp ),
                                   offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
+      return;
+   }
 #endif
    //TODO
 #ifndef CONFIG_MIL_DAQ_USE_RAM
 //#error CONFIG_MIL_DAQ_USE_RAM not defined
 #endif
 #warning clearBuffer for DDR3 not implemented yet
+   std::cout << "DaqInterface::clearBuffer" << std::endl;
 }
 
-
-
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::readBufferAdmin( void )
+{
+   SCU_ASSERT( !isMilDataInLm32Mem() );
+   MIL_DAQ_ADMIN_T temp;
+   readLM32( &temp, sizeof( temp ) );
+   m_oBufferAdmin.magicNumber      = gsi::convertByteEndian( temp.magicNumber );
+   m_oBufferAdmin.indexes.offset   = gsi::convertByteEndian( temp.indexes.offset );
+   m_oBufferAdmin.indexes.capacity = gsi::convertByteEndian( temp.indexes.capacity );
+   m_oBufferAdmin.indexes.start    = gsi::convertByteEndian( temp.indexes.start );
+   m_oBufferAdmin.indexes.end      = gsi::convertByteEndian( temp.indexes.end );
+}
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 /*! ---------------------------------------------------------------------------
