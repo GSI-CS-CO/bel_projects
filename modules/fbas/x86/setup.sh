@@ -89,10 +89,16 @@ function start_saftd() {
     check_fbastx
     check_fbasrx
 
-    echo "launch the SAFT daemon"
-    sudo killall saftd > /dev/null
+    echo "terminate SAFT daemon if it's running"
+    sudo killall saftd
 
-    wait_seconds 5
+    if [ $? -eq 0 ]; then
+        echo "wait until SAFT daemon terminates"
+        for i in $(seq 1 10); do
+            echo -ne "time left (seconds): $[ 10 - $i ]\r"
+            wait_seconds 1
+        done
+    fi
 
     echo "attach fbastx:$FBASTX and fbasrx:$FBASRX'"
     sudo saftd fbastx:$FBASTX fbasrx:$FBASRX
@@ -110,7 +116,7 @@ function setup_fbastx() {
     check_fbastx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASTX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbastx.bin
+    eb-fwload $FBASTX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
     wait_seconds 1
 
     # wrc output:
@@ -178,7 +184,7 @@ function setup_fbasrx() {
     check_fbasrx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASRX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbastx.bin
+    eb-fwload $FBASRX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
     wait_seconds 1
 
     # wrc output:
@@ -265,7 +271,7 @@ function dont_call_open_wr_console() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function do_test3() {
+function start_test3() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
     echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"

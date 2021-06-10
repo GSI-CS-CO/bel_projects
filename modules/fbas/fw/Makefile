@@ -1,10 +1,10 @@
-TARGET		?= fbastx
+TARGET		?= fbas
 
 ifeq ($(strip $(TARGET)),)
   $(error empty TARGET)
 endif
 
-ifeq ($(TARGET), fbastx)
+ifeq ($(TARGET), fbas)
   PLATFPATH = ../../../syn/gsi_pexarria5/control
 else ifeq ($(TARGET), sb_scan)
   PLATFPATH = ../../../syn/gsi_scu/control3
@@ -29,7 +29,10 @@ VERSION  	= 00.01.00
 PATHFW 	        = .
 DEBUGLVL    	= 2
 EXTRA_FLAGS	?=
-CFLAGS 	    	= -I../include -I../../common-libs/include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+CFLAGS 	    	= -I../include -I../../common-libs/include -I../../wb_timer -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+SRC_FILES     = $(PATHFW)/$(TARGET).c $(PATHFW)/tmessage.c  \
+								$(PATHFW)/ioctl.c $(PATHFW)/measure.c       \
+								$(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
 $(info    >>>>)
 $(info    building is done by importing the following data from $(PLATFMAKEFILE):)
@@ -51,7 +54,7 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin
 
-$(TARGET).elf: $(PATHFW)/$(TARGET).c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+$(TARGET).elf: $(SRC_FILES)
 #b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 #b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
