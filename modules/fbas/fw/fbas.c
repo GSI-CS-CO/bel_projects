@@ -59,6 +59,7 @@
 #include "fbas.h"                       // application header
 #include "tmessage.h"                   // MPS flag transmission and receptions
 #include "ioctl.h"                      // IO functions
+#include "timer.h"                      // timer functions
 #include "measure.h"                    // measurement of elapsed time, delays
 
 // stuff required for environment
@@ -90,16 +91,20 @@ uint32_t cntCmd = 0;                    // counter for user commands
 uint32_t mpsTask = 0;                   // MPS-relevant tasks
 uint64_t mpsTimMsgFlagId = 0;           // timing message ID for MPS flags
 uint64_t mpsTimMsgEvntId = 0;           // timing message ID for MPS events
+volatile uint64_t tsCpu = 0;            // lm32 uptime
+volatile int64_t  prdTimer;             // timer period
 
 // application-specific function prototypes
 static void init();
 static void initSharedMem();
 static void initMpsData();
+static void initIrqTable();
 static void printSrcAddr();
 static status_t setDstAddr(uint64_t dstMac, uint32_t dstIp);
 static void clearError(size_t len, mpsTimParam_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
+static void timerHandler();
 static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head);
 static void wrConsolePeriodic(uint32_t seconds);
 
@@ -197,10 +202,21 @@ void initMpsData()
 }
 
 /**
+ * \brief initialize IRQ table
  *
+ * Configure the WB timer
  *
+ * \param none
+ * \ret none
  **/
+void initIrqTable()
 {
+  isr_table_clr();                               // clear table
+  // isr_ptr_table[0] = &irq_handler;            // 0: hard-wired MSI; don't use here
+  isr_ptr_table[1] = &timerHandler;              // 1: hard-wired timer
+  irq_set_mask(0x02);                            // only use timer
+  irq_enable();                                  // enable IRQs
+  DBPRINT2("Configured IRQ table.\n");
 }
 
 /**
@@ -407,6 +423,12 @@ void wrConsolePeriodic(uint32_t seconds)
     DBPRINT3("fbas%d: now %llu, elap %lli\n", nodeType, now, now - tsLast);
     tsLast = now;
   }
+
+  // lm32 cpu time, timer interval and period
+  if (tsCpu) {
+    DBPRINT2("cpu %llu [ns], ival %lli [ns], prd %lli [ns]\n", tsCpu, getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS3, tsCpu), prdTimer);
+    tsCpu = 0;
+  }
 }
 
 
@@ -438,6 +460,12 @@ uint32_t extern_entryActionConfigured()
 
   status = setDstAddr(BROADCAST_MAC, BROADCAST_IP); // set the destination broadcast MAC/IP address of the Endpoint WB device
   if (status != COMMON_STATUS_OK) return status;
+
+  if ((uint32_t)pCpuWbTimer != ERROR_NOT_FOUND) {
+    setupTimer(TIM_1_MS);
+    initIrqTable();
+    startTimer();
+  }
 
   return status;
 } // entryActionConfigured
@@ -520,6 +548,29 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
     } // switch
   } // if command
 } // cmdHandler
+
+/**
+ * \brief timer interrupt handler
+ *
+ * Callback routine for timer interrupt
+ *
+ * \param none
+ *
+ * \ret none
+ **/
+void timerHandler()
+{
+  static uint32_t prescaler = 0;
+
+  uint64_t cputime = getCpuTime();
+  prdTimer = getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS6, cputime);
+
+  ++prescaler;
+  if (prescaler == PSCR_1S_TIM_1MS) {
+    prescaler = 0;
+    tsCpu = cputime;
+  }
+}
 
 // do action state 'op ready' - this is the main code of this FW
 uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks

@@ -14,6 +14,9 @@ typedef uint32_t status_t;
 #define TIM_1000_MS    TIM_1_MS * 1000ULL   // 1 second
 #define TIM_2000_MS    TIM_1_MS * 2000ULL   // 2 seconds
 
+// timer prescaler
+#define PSCR_1S_TIM_1MS    1000  // prescaler for 1 second (at 1ms timer period)
+
 // MPS definitions
 #define N_MPS_CHANNELS     32  // total number of MPS channels
 #define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
