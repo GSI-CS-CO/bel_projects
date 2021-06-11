@@ -229,7 +229,7 @@ public:
     */
    uint getRamCapacity( void ) override
    {
-      return 0; //TODO return the maximum capacity of MIL-DAQ-buffer
+      return m_oBufferAdmin.indexes.capacity; //TODO return the maximum capacity of MIL-DAQ-buffer
    }
 
    /*!
@@ -240,7 +240,23 @@ public:
     */
    uint getRamOffset( void ) override
    {
-      return 0; //TODO return the offset of MIL-DAQ-buffer
+      return m_oBufferAdmin.indexes.offset; //TODO return the offset of MIL-DAQ-buffer
+   }
+
+protected:
+   void readIndexes( void );
+   void writeIndexes( void );
+
+public:
+   /*!
+    *  @brief Returns the currently number of data items which are not read yet
+    *         in the DDR3-RAM
+    */
+   uint getCurrentNumberOfData( const bool doUpdate = true )
+   {
+      if( doUpdate )
+         readIndexes();
+      return ramRingGetSize( &m_oBufferAdmin.indexes );
    }
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
@@ -292,13 +308,7 @@ protected:
    {
       m_oRing.m_tail++;
       m_oRing.m_tail %= c_ringBufferCapacity;
-#if 0
-      static int count = 0;
-      if( m_oRing.m_tail == 0 )
-         std::cerr << "new: " << count++ << std::endl;
-#endif
    }
-
 
    uint readRingItems( RingItem* pItems, uint size );
 

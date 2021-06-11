@@ -262,13 +262,13 @@ ONE_TIME_CALL void addacFgDisable( const void* pScuBus,
     */
    *scuBusGetSlaveRegisterPtr16( pAbsSlaveAddr, pAddacObj->dacControl ) &= ~DAC_FG_MODE;
 
-#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
+//#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DISABLE_FEEDBACK_IN_DISABLE_IRQ )
   /*
    * Disabling of both daq-channels for the feedback of set- and actual values
    * for this function generator channel.
    */
    daqDisableFgFeedback( slot, dev );
-#endif
+//#endif
 }
 
 

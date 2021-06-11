@@ -86,7 +86,7 @@ HOST ?= tcp/$(SCU_URL)
 
 #CALL_ARGS         ?=  $(HOST)
 
-#CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
+#CALL_ARGS = tcp/scuxl0107 -v 39 130 39 129 39 1
 #CALL_ARGS = -cv tcp/scuxl0107 39 130 39 129
 #CALL_ARGS = -c tcp/scuxl0107
 #CALL_ARGS = tcp/scuxl0107 39 130 -c
@@ -107,8 +107,8 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = scuxl0035 -vy
 
 # CALL_ARGS = scuxl0035 -b11,12
-CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
-
+ CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
+# CALL_ARGS = scuxl0107 -azdt1 -T"X11 size 800,150"
  DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"

@@ -570,7 +570,8 @@ void main( void )
    mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );
 #endif
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
-   //TODO Print offset and capacity of MIL-DAQ.
+   mprintf( "MIL-DAQ buffer offset:     %u item\n", g_shared.mDaq.indexes.offset );
+   mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.indexes.capacity );
 #endif
    initInterrupt();
    while( true )

@@ -775,7 +775,11 @@ void FgFeedbackAdministration::scan( const bool doRescan )
       m_vPollList.push_back( &m_oMilDaqAdmin );
 #endif
 
-   if( getNumOfFoundNonMilFg() != 0 )
+   if( (getNumOfFoundNonMilFg() != 0)
+    #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+       && m_oAddacDaqAdmin.isAddacDaqSupport()
+    #endif
+     )
       m_vPollList.push_back( &m_oAddacDaqAdmin );
 
    m_vPollList.shrink_to_fit();

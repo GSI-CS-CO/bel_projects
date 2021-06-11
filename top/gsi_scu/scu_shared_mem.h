@@ -415,7 +415,7 @@ typedef struct PACKED_SIZE
     *        for DDR3-RAM.
     * @var mdaq
     */
-   ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) mdaq;
+   ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) mDaq;
 #else
    /*!
     * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
@@ -492,7 +492,7 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) ==
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 
  #ifdef CONFIG_MIL_DAQ_USE_RAM
-  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq )  ) == FG_SHM_BASE_SIZE );
+  STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mDaq )  ) == FG_SHM_BASE_SIZE );
  #else
   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) == FG_SHM_BASE_SIZE );
  #endif
@@ -500,7 +500,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #ifdef CONFIG_MIL_DAQ_USE_RAM
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
-                  offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq ) ) +
+                  offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mDaq ) ) +
                   sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) ));
   #else
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) == DAQ_SHM_OFFET );
@@ -511,7 +511,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
  #else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                   offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mdaq ) ) +
+                   offsetof( SCU_SHARED_DATA_T, ADD_NAMESPACE( Scu::MiLdaq, mDaq ) ) +
                    sizeof( ADD_NAMESPACE( Scu::MiLdaq, MIL_DAQ_ADMIN_T ) ));
   #else
     STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
@@ -546,8 +546,8 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM           \
-     , .mdaq.magicNumber = MIL_DAQ_MAGIC_NUMBER           \
-     , .mdaq.indexes = RAM_RING_INDEXES_MDAQ_INITIALIZER
+     , .mDaq.magicNumber = MIL_DAQ_MAGIC_NUMBER           \
+     , .mDaq.indexes = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
      , .daq_buf = {0}

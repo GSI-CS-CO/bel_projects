@@ -110,6 +110,44 @@ void DaqInterface::readBufferAdmin( void )
    m_oBufferAdmin.indexes.end      = gsi::convertByteEndian( temp.indexes.end );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::readIndexes( void )
+{
+   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
+   MIL_DAQ_ADMIN_T temp;
+
+   static_assert( offsetof( MIL_DAQ_ADMIN_T, indexes.end ) ==
+                  offsetof( MIL_DAQ_ADMIN_T, indexes.start ) +
+                  sizeof( temp.indexes.start ), "" );
+
+
+   readLM32( &temp.indexes.start,
+             sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ),
+             offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
+
+   m_oBufferAdmin.indexes.start = gsi::convertByteEndian( temp.indexes.start );
+   m_oBufferAdmin.indexes.end   = gsi::convertByteEndian( temp.indexes.end );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::writeIndexes( void )
+{
+   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
+   MIL_DAQ_ADMIN_T temp;
+
+   static_assert( offsetof( MIL_DAQ_ADMIN_T, indexes.end ) ==
+                  offsetof( MIL_DAQ_ADMIN_T, indexes.start ) +
+                  sizeof( temp.indexes.start ), "" );
+
+   temp.indexes.start = gsi::convertByteEndian( m_oBufferAdmin.indexes.start );
+   temp.indexes.end   = gsi::convertByteEndian( m_oBufferAdmin.indexes.end );
+   writeLM32( &temp.indexes.start,
+              sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ),
+              offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
+}
+
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 /*! ---------------------------------------------------------------------------
  */

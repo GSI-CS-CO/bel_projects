@@ -106,7 +106,7 @@ void milInitTasks( void )
       }
    }
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-   ramRingReset( &g_shared.mdaq.indexes );
+   ramRingReset( &g_shared.mDaq.indexes );
 #endif
 }
 
@@ -303,7 +303,7 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
    if( setValueInvalid )
      pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
-   RAM_RING_INDEXES_T indexes = g_shared.mdaq.indexes;
+   RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
    /*
     * Is the circular buffer full?
     */
@@ -320,7 +320,7 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
       ramRingIncWriteIndex( &indexes );
    }
    
-   g_shared.mdaq.indexes = indexes;
+   g_shared.mDaq.indexes = indexes;
 
 #else
    MIL_DAQ_OBJ_T d;

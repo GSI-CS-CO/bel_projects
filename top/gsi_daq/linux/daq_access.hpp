@@ -41,12 +41,32 @@ namespace Scu
 class DaqAccess: public daq::EbRamAccess
 {
 public:
+   /*!
+    * @brief Value when the offset is invalid.
+    */
    constexpr static uint INVALID_OFFSET       = static_cast<uint>(~0);
+
 #ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Value for the relative offset in the LM32-shared-memory for
+    *        MIL-DAQ administration object.
+    */
    constexpr static uint MIL_DAQ_OFFSET       = sizeof( FG::SAFT_LIB_T );
 #endif
+
+   /*!
+    * @brief Value for the relative offset in the LM32-shared-memory
+    *        for the ADDAC-DAQ administration object when the
+    *        MIL-DAQ-buffer is in the LM32-shared memory.
+    */
    constexpr static uint OLD_ADDAC_DAQ_OFFSET = sizeof( FG::SAFT_LIB_T )
                                               + sizeof( MiLdaq::MIL_DAQ_BUFFER_T );
+
+   /*!
+    * @brief Value for the relative offset in the LM32-shared-memory
+    *        for the the ADDAC-DAQ administration object when the
+    *        MIL-DAQ-buffer is in the DDR3-RAM.
+    */
    constexpr static uint ADDAC_DAQ_OFFSET     = sizeof( FG::SAFT_LIB_T )
                                               + sizeof( MiLdaq::MIL_DAQ_ADMIN_T );
 private:
@@ -68,6 +88,12 @@ public:
     */
    ~DaqAccess( void );
 
+   /*!
+    * @brief Checks which kind of LM32 firmware is loaded and calculates
+    *        the offsets in the shared memory for ADDAC-DAQ and MIL-DAQ.
+    */
+   void probe( void );
+
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    /*!
     * @brief Returns "true" if the LM32-firmware is a old one storing
@@ -75,24 +101,33 @@ public:
     */
    bool isMilDataInLm32Mem( void ) const
    {
-      SCU_ASSERT( m_addacDaqLM32Offset != INVALID_OFFSET );
-      return m_addacDaqLM32Offset == OLD_ADDAC_DAQ_OFFSET;
+      return m_addacDaqLM32Offset != ADDAC_DAQ_OFFSET;
    }
 #endif
 
    /*!
-    * @brief Checks which kind of LM32 firmware is loaded and calculates
-    *        the offsets in the shared memory for ADDAC-DAQ and MIL-DAQ.
+    * @brief Returns the relative offset for the ADDAC/ACU-DAQ-object in
+    *        the LM32- shared memory after function probe() was running.
     */
-   void probe( void );
-
    uint getAddacDaqOffset( void ) const
    {
       return m_addacDaqLM32Offset;
    }
 
+   /*!
+    * @brief Returns "true" if the LM32 firmware supports ADDAC/ACU DAQs.
+    */
+   bool isAddacDaqSupport( void ) const
+   {
+      return m_addacDaqLM32Offset != INVALID_OFFSET;
+   }
+
 #ifdef CONFIG_MIL_FG
-   uint getMilDaqOffset( void )
+   /*!
+    * @brief Returns the relative offset for the MIL-DAQ-object in
+    *        the LM32- shared memory after function probe() was running.
+    */
+   uint getMilDaqOffset( void ) const
    {
       return m_milDaqLm32Offset;
    }

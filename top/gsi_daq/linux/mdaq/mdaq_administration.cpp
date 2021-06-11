@@ -177,7 +177,7 @@ void DaqAdministration::initPtr( void )
    if( m_pfPollDaqData != nullptr )
       return;
 
-   if( getEbAccess()->isMilDataInLm32Mem() )
+   if( isMilDataInLm32Mem() )
       m_pfPollDaqData = &DaqAdministration::distributeDataOld;
    else
       m_pfPollDaqData = &DaqAdministration::distributeDataNew;
@@ -323,7 +323,11 @@ uint DaqAdministration::distributeData( void )
 {
    //TODO
    #warning MIL-distributeData for DDR3 not implenented yet!
-   return 0;
+   uint toRead = getCurrentNumberOfData();
+   if( toRead == 0 )
+      return 0;
+
+   return toRead;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

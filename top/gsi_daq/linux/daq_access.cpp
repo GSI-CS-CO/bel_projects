@@ -107,7 +107,7 @@ void DaqAccess::probe( void )
    }
 
 #ifdef CONFIG_MIL_FG
-   m_milDaqLm32Offset = sizeof( FG::SAFT_LIB_T );
+   m_milDaqLm32Offset = MIL_DAQ_OFFSET;
 #endif
 
   /*
@@ -126,7 +126,7 @@ void DaqAccess::probe( void )
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
    { /*
       * A old LM32-firmware has been detected.
-      * MIL_-DAQ-data becomes stored in LM32- shared memory area.
+      * MIL-DAQ-data becomes stored in LM32- shared memory area.
       */
       m_addacDaqLM32Offset = OLD_ADDAC_DAQ_OFFSET;
       return;
@@ -134,23 +134,24 @@ void DaqAccess::probe( void )
 #endif
 
    readLM32( &actMagicNumber, 1,
-             sizeof( FG::SAFT_LIB_T ) + offsetof( MiLdaq::MIL_DAQ_ADMIN_T, magicNumber ),
+             MIL_DAQ_OFFSET + offsetof( MiLdaq::MIL_DAQ_ADMIN_T, magicNumber ),
              sizeof( actMagicNumber ) );
    if( actMagicNumber != MIL_DAQ_MAGIC_NUMBER )
-   {
-      throw daq::Exception( "Cant find MIL-DAQ in LM32 application!" );
+   { /*
+      * Old LM32-firmware without ADDAC-DAQ-support is running.
+      */
+      return;
    }
 
    readLM32( &actMagicNumber, 1,
              ADDAC_DAQ_OFFSET + offsetof( daq::DAQ_SHARED_IO_T, magicNumber ),
              sizeof( actMagicNumber ) );
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
-   {
+   { /*
+      * LM32-firmware with MIL-DAQ-data in DDR3-RAM is running.
+      */
       m_addacDaqLM32Offset = ADDAC_DAQ_OFFSET;
-      return;
    }
-   m_addacDaqLM32Offset = INVALID_OFFSET;
-
 }
 
 //================================== EOF ======================================
