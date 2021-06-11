@@ -44,11 +44,11 @@ ARCHITECTURE arch_Loader_MB OF Loader_MB IS
 	
 	SIGNAL		S_Dtack_Loader_Reg	: STD_LOGIC;
 
-	SIGNAL		S_Sub_Adr_La		: STD_LOGIC_VECTOR(7 DOWNTO 1);		-- Das 'Sub_Adr_La' im Modul_Bus_Macro wird höher getaktet,
+	SIGNAL		S_Sub_Adr_La		: STD_LOGIC_VECTOR(7 DOWNTO 1);		-- Das 'Sub_Adr_La' im Modul_Bus_Macro wird hoeher getaktet,
 																		-- deshalb 'S_Sub_Adr_La'. Synchronisiert werden nur die
 																		-- Signale 'Extern_Wr_Activ', 'Extern_Rd_Activ' gleichzeitg
-																		-- werden die mehrere Takte langen Signale auf die Länge von
-																		-- einem Takt verkürzt.
+																		-- werden die mehrere Takte langen Signale auf die Laenge von
+																		-- einem Takt verkuerzt.
 	SIGNAL		S_Data_In			: STD_LOGIC_VECTOR(15 DOWNTO 0);	-- s. o.
 	SIGNAL		S_Sync_Extern_Wr_Activ	: STD_LOGIC_VECTOR(2 DOWNTO 0);	-- Zur Synchronisation und Pulsgenerierung.
 	SIGNAL		S_Sync_Extern_Rd_Activ	: STD_LOGIC_VECTOR(2 DOWNTO 0);	-- Zur Synchronisation und Pulsgenerierung.

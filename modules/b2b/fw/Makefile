@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.01.00
+VERSION  	= 00.02.41
 
 .DEFAULT_GOAL	:= fwbin
 
@@ -41,6 +41,7 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 # $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
+b2bkd.elf:  $(PATHFW)/b2b-kd.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 

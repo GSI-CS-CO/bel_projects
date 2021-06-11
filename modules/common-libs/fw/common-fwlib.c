@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-August-2020
+ *  version : 23-January-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -193,8 +193,8 @@ uint32_t findOLED() //find WB address of OLED
   // get Wishbone address for OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
-  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return COMMON_STATUS_ERROR;}
-  else                                                  return COMMON_STATUS_OK;
+  if (!pOLED) {DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;}
+  else                                                      return COMMON_STATUS_OK;
 } // findOLED
 
 
@@ -206,6 +206,31 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
+uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
+{
+  uint64_t dtns;                // approximate time interval to advance [ns]
+  uint64_t dtas;                // approximate time interval to advance [as]
+  uint64_t nPeriods;            // # of periods
+  uint64_t intervalAs;          // interval [as]
+  uint64_t intervalNs;          // interval [ns]
+  uint64_t tAdvanced;           // result
+  uint64_t nineO = 1000000000;  // nine order of magnitude
+
+  if (Tas == 0)          return 0;
+  if (t2 < t1)           return 0;               // order ok ?
+  if ((t2 - t1) > nineO) return 0;               // not more than 1s! (~18 s max!)
+
+  dtns       = t2 - t1;
+  dtas       = dtns * nineO;
+  nPeriods   = (uint64_t)((double)dtas / (double)Tas) + 1;
+  intervalAs = nPeriods * Tas;
+  intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
+  tAdvanced  = t1 + intervalNs;
+
+  return tAdvanced;
+} //fwlib_advanceTime
+
+
 uint64_t fwlib_wrGetMac()  // get my own MAC
 {
   uint32_t macHi, macLo;
@@ -305,7 +330,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
     if (pSharedData4EB[handshakeIdx] != COMMON_EB_HACKISH) {                                         // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
-      // dbg mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
+      // dbg mprintf("fwlib: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
       return COMMON_STATUS_OK;
     }
   } //while not timed out
@@ -314,12 +339,38 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
 } //fwlib_ebmReadN
 
 
-uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
+uint64_t fwlib_buildEvtidV1(uint32_t gid, uint32_t evtno, uint32_t flags, uint32_t sid, uint32_t bpid, uint32_t reserved)
 {
-  uint32_t res, tef;
+  uint64_t evtId;
+
+  evtId    = 0x1000000000000000;                               //  1 bit
+  evtId    = evtId | ((uint64_t)(gid      & 0x0fff) << 48);    // 12 bit
+  evtId    = evtId | ((uint64_t)(evtno    & 0x0fff) << 36);    // 12 bit
+  evtId    = evtId | ((uint64_t)(flags    & 0x000f) << 32);    //  4 bit
+  evtId    = evtId | ((uint64_t)(sid      & 0x0fff) << 20);    // 12 bit
+  evtId    = evtId | ((uint64_t)(bpid     & 0x3fff) <<  6);    // 14 bit
+  evtId    = evtId | ((uint64_t)(reserved & 0x003f)      );    //  6 bit
+
+  return evtId;
+}
+// fwlib_buildEvtidV1
+
+
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+{
+  uint32_t res, tef;                   // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
+  
+  uint32_t status;                     // return value
+
+  // check deadline
+  if ((deadline < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) && !flagForceLate) {
+    deadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    status   = COMMON_STATUS_OUTOFRANGE;
+  } // if deadline
+  else status = COMMON_STATUS_OK;
 
   // set high bits for EB master
   ebm_hi(COMMON_ECA_ADDRESS);
@@ -349,7 +400,7 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   // send timing message
   ebm_flush();
           
-  return COMMON_STATUS_OK;
+  return status;
 } //fwlib_bmWriteTM
 
 
@@ -431,8 +482,6 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
 } // fwlib_init
 
 
-
-
 void fwlib_printOLED(char *chars)
 {
   uint32_t i;
@@ -451,7 +500,7 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -467,7 +516,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *e
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000 + (uint64_t)1000; 
+  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000 + (uint64_t)1000; 
   
   while (getSysTime() < timeoutT) {
     if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
@@ -497,12 +546,18 @@ uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *e
     } // if data is valid
   } // while not timed out
 
+  *deadline = 0x0;
+  *evtId    = 0x0;
+  *param    = 0x0;
+  *tef      = 0x0;
+  *isLate   = 0x0;
+  
   return COMMON_ECADO_TIMEOUT;
 } // fwlib_wait4ECAEvent
 
 
 // wait for MIL event or timeout
-uint32_t fwlib_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
+uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -512,7 +567,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *ev
   int      valid;              // evt is valid
   int      i;                
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
+  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000;
   *virtAcc    = 0xffff;           
   *evtData    = 0xffff;
   *evtCode    = 0xffff;

@@ -1,4 +1,4 @@
---TITLE "'Piggy_IO' => Piggy-Stecker-IO für IFA8 , Autor: R. Hartmann, Stand: 11.06.2012, Vers: V05";
+--TITLE "'Piggy_IO' => Piggy-Stecker-IO fuer IFA8 , Autor: R. Hartmann, Stand: 11.06.2012, Vers: V05";
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
@@ -42,7 +42,7 @@ ARCHITECTURE Arch_Piggy_IO OF Piggy_IO IS
 	END COMPONENT;
 
 -- +-----------------------------------------------------------------+
--- |     Output's des LED-Multiplexer zu den "LED-Mono" Eingängen    |
+-- |     Output's des LED-Multiplexer zu den "LED-Mono" Eingaengen    |
 -- +-----------------------------------------------------------------+
 	SIGNAL		S_Mux_LED			: STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL		S_Mux_LED_BU_IN1	: STD_LOGIC;
@@ -62,7 +62,7 @@ ARCHITECTURE Arch_Piggy_IO OF Piggy_IO IS
                                   
 --
 -- +--------------------------------------------------------+
--- |          "LED-Mono" Ausgänge zu den LED-Output's       |
+-- |          "LED-Mono" Ausgaenge zu den LED-Output's       |
 -- +--------------------------------------------------------+
 	SIGNAL		S_nLED			: STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL		S_nLED_BU_IN1	: STD_LOGIC;
