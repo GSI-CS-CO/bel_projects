@@ -273,6 +273,12 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
    uint (DaqAdministration::*m_pfPollDaqData)( void );
 #endif
 
+   /*!
+    * @brief Temporary memory space for all received MIL raw data.
+    */
+   BufferItem* m_pMiddleBufferData;
+   uint        m_pMiddleBufferSize;
+
 protected:
 
    #define MIL_DEVICE_LIST_BASE std::list
@@ -352,8 +358,9 @@ protected:
 private:
    DaqCompare* findDaqCompare( const FG_MACRO_T macro );
 
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    void initPtr( void );
+
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    uint distributeDataNew( void );
    uint distributeDataOld( void );
 #endif

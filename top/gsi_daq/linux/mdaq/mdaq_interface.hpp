@@ -28,6 +28,7 @@
 #include <string>
 #include <daq_base_interface.hpp>
 #include <scu_fg_list.hpp>
+#include <daq_ramBuffer.h>
 
 namespace Scu
 {
@@ -51,8 +52,6 @@ class DaqInterface: public DaqBaseInterface
 public:
    // TODO Replace these naked numbers asap!!!
    constexpr static uint         c_maxDevices        = 40;
-   //constexpr static uint         c_maxSlots          = 12;
-  // constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
@@ -298,6 +297,11 @@ protected:
    {
       SCU_ASSERT( getEbAccess()->getMilDaqOffset() != DaqAccess::INVALID_OFFSET );
       getEbAccess()->writeLM32( pData, len, offset + getEbAccess()->getMilDaqOffset(), format );
+   }
+
+   void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
+   {
+      getEbAccess()->readRam( pData, len, m_oBufferAdmin.indexes );
    }
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE

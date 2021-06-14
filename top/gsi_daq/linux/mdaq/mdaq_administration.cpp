@@ -144,10 +144,10 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
   ,m_pfPollDaqData( nullptr )
 #endif
+  ,m_pMiddleBufferData( nullptr )
+  ,m_pMiddleBufferSize( 0 )
 {
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    initPtr();
-#endif
 }
 
 DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
@@ -155,10 +155,10 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
   ,m_pfPollDaqData( nullptr )
 #endif
+  ,m_pMiddleBufferData( nullptr )
+  ,m_pMiddleBufferSize( 0 )
 {
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    initPtr();
-#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -167,13 +167,20 @@ DaqAdministration::~DaqAdministration( void )
 {
    for( const auto& i: m_devicePtrList )
       i->m_pParent = nullptr;
+
+   if( m_pMiddleBufferData != nullptr )
+      delete [] m_pMiddleBufferData;
 }
 
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+
 /*-----------------------------------------------------------------------------
  */
 void DaqAdministration::initPtr( void )
 {
+   if( m_pMiddleBufferSize == 0 )
+         m_pMiddleBufferSize = getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM;
+   cout << m_pMiddleBufferSize << endl; //!!
+#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    if( m_pfPollDaqData != nullptr )
       return;
 
@@ -181,8 +188,9 @@ void DaqAdministration::initPtr( void )
       m_pfPollDaqData = &DaqAdministration::distributeDataOld;
    else
       m_pfPollDaqData = &DaqAdministration::distributeDataNew;
-}
 #endif
+}
+
 
 /*-----------------------------------------------------------------------------
  */
@@ -321,11 +329,34 @@ uint DaqAdministration::distributeDataNew( void )
 uint DaqAdministration::distributeData( void )
 #endif
 {
-   //TODO
+   if( m_pMiddleBufferData == nullptr )
+   {
+      m_pMiddleBufferData = new BufferItem[m_pMiddleBufferSize];
+   }
+
    #warning MIL-distributeData for DDR3 not implenented yet!
-   uint toRead = getCurrentNumberOfData();
+   const uint toRead = getCurrentNumberOfData();
    if( toRead == 0 )
       return 0;
+   //TODO
+
+   for( uint i = 0; i < toRead; i++ )
+   {
+      const BufferItem* pCurrentItem = &m_pMiddleBufferData[i];
+      DaqCompare* pCurrent = findDaqCompare( pCurrentItem->getChannel() );
+      if( pCurrent == nullptr )
+      {
+         //onUnregistered( pItem ); //TODO
+         continue;
+      }
+
+      pCurrent->m_setValueInvalid =
+            (pCurrentItem->getChannel().outputBits & SET_VALUE_NOT_VALID_MASK) != 0;
+
+      pCurrent->onData( pCurrentItem->getTimestamp(),
+                        pCurrentItem->getActValue32(),
+                        pCurrentItem->getSetValue32() );
+   }
 
    return toRead;
 }
