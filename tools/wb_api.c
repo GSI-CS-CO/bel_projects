@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 16-Jan-2020
+//  version : 02-Jun-2021
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -113,7 +113,7 @@ uint8_t wire1_crc8(uint8_t *addr, uint8_t len, uint8_t family )
     crc = addr[len];       // len as index is ok, len is number of least significant bytes the CRC is calculated on. For 8 byte data, the highest byte containes CRC and len == 7
     return crc;
   } // family 28
-  
+
   for (i=0; i<len;i++) {
     inbyte = addr[i];
     for (j=0;j<8;j++) {
@@ -121,7 +121,7 @@ uint8_t wire1_crc8(uint8_t *addr, uint8_t len, uint8_t family )
       crc >>= 1;
       if (mix)
         crc ^= 0x8C;
-      
+
       inbyte >>= 1;
     } // for j
   } // for i
@@ -135,7 +135,7 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
   char        udpLProto[] = "udp/";
   char        udpHProto[] = "UDP/";
   short       isUdp;
-  
+
 
 #ifdef WB_SIMULATE
   *device = EB_NULL;
@@ -260,7 +260,7 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
   return EB_OK;
 #endif
 
-  // get time from ECA 
+  // get time from ECA
   *nsecs = 0;
   if ((status = wb_check_device(device, ECA_CTRL_VENDOR, ECA_CTRL_PRODUCT, ECA_CTRL_VMAJOR, ECA_CTRL_VMINOR, devIndex, &eca_addr)) != EB_OK) return status;
   do {
@@ -271,12 +271,12 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
     if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
   } while (data1 != data3);
 
-  // time 
+  // time
   *nsecs = (uint64_t)data1 << 32;
   *nsecs = *nsecs + (uint64_t)data2;
 
   return (status);
-} // wb_wr_get_time 
+} // wb_wr_get_time
 
 
 eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
@@ -297,7 +297,7 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 
   address = endpoint_addr + WR_ENDPOINT_MACHI;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &hidata, 0, eb_block)) != EB_OK) return status;
-  hidata = WR_ENDPOINT_MACHI_MASK & hidata; // mask highest bytes 
+  hidata = WR_ENDPOINT_MACHI_MASK & hidata; // mask highest bytes
 
   address = endpoint_addr + WR_ENDPOINT_MACLO;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
@@ -307,7 +307,7 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
   *mac = *mac + lodata;
 
   return status;
-} // wb_wr_get_mac 
+} // wb_wr_get_mac
 
 
 eb_status_t wb_wr_get_link(eb_device_t device, int devIndex, int *link )
@@ -331,7 +331,7 @@ eb_status_t wb_wr_get_link(eb_device_t device, int devIndex, int *link )
   *link = (data == WR_ENDPOINT_LINK_MASK);
 
   return status;\
-} // wb_wr_get_link 
+} // wb_wr_get_link
 
 
 eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
@@ -355,7 +355,7 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
   *ip = data;
 
   return status;
-} // wb_wr_get_ip 
+} // wb_wr_get_ip
 
 
 eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncState )
@@ -376,10 +376,10 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
 
   address = pps_addr + WR_PPS_GEN_ESCR;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
-  *syncState  = data & WR_PPS_GEN_ESCR_MASK; // need to mask relevant bits 
+  *syncState  = data & WR_PPS_GEN_ESCR_MASK; // need to mask relevant bits
 
   return status;
-} // wb_wr_get_sync_state 
+} // wb_wr_get_sync_state
 
 
 eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
@@ -455,11 +455,11 @@ eb_status_t wb_wr_stats_get_lock(eb_device_t device, int devIndex, uint64_t *loc
   }
 
   return status;
-} // wb_wr_get_lock_stats  
+} // wb_wr_get_lock_stats
 
 
 eb_status_t wb_wr_stats_get_continuity(eb_device_t device, int devIndex, uint64_t *contObsT, int64_t  *contMaxPosDT, uint64_t *contMaxPosTS, int64_t  *contMaxNegDT, uint64_t *contMaxNegTS)
-{ 
+{
   eb_cycle_t   cycle;
   eb_data_t    data0, data1, data2, data3, data4, data5, data6, data7, data8, data9;
   eb_status_t  status;
@@ -528,7 +528,7 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t sta
 #endif
 
   *stallObsT      = 0xffffffffffffffff;
-  *stallMax       = 0xffffffff; 
+  *stallMax       = 0xffffffff;
   *stallAct       = 0xffffffff;
   *stallTS        = 0xffffffffffffffff;
 
@@ -554,7 +554,7 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t sta
   *stallAct       = (uint32_t)data2;
   *stallTS        = (uint64_t)data4 << 32;
   *stallTS        = *stallTS + (uint64_t)data3;
-  
+
   return status;
 } // wb_wr_stats_get_stall
 
@@ -569,7 +569,7 @@ eb_status_t wb_wr_stats_reset(eb_device_t device, int devIndex, uint64_t contObs
   contObsTLo = (uint32_t)(contObsT & 0xffffffff);
 
   if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
-  
+
   // set intervals
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)contObsTHi);
@@ -578,10 +578,10 @@ eb_status_t wb_wr_stats_reset(eb_device_t device, int devIndex, uint64_t contObs
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
 
   // reset
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, dm_diag_addr + DM_DIAG_RESET_OWR,                      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
-  
+
   return status;
 } // wb_wr_stats_reset
 
@@ -593,8 +593,8 @@ eb_status_t wb_eca_stats_reset(eb_device_t device, int devIndex, int32_t lateOff
 
   if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
 
-  // reset 
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  // reset
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_RESET_OWR, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
 
@@ -603,8 +603,8 @@ eb_status_t wb_eca_stats_reset(eb_device_t device, int devIndex, int32_t lateOff
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_OFFSET_LATE_RW, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)lateOffset);
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CLEAR_OWR,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
-  
-  return status;  
+
+  return status;
 } // wb_eca_stats_reset
 
 
@@ -615,11 +615,11 @@ eb_status_t wb_eca_stats_clear(eb_device_t device, int devIndex, uint32_t clearF
 
   if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
 
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CLEAR_OWR, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)clearFlag);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
-  
-  return status;  
+
+  return status;
 } // wb_wr_stats_clear
 
 
@@ -630,11 +630,11 @@ eb_status_t wb_eca_stats_enable(eb_device_t device, int devIndex, uint32_t enabl
 
   if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
 
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_CAPTURE_RW, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)enableFlag);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
-  
-  return status;  
+
+  return status;
 } // wb_eca_stats_enable
 
 
@@ -693,7 +693,7 @@ eb_status_t wb_eca_stats_get(eb_device_t device, int devIndex, uint64_t *nMessag
   *dtMax        = *dtMax + (uint64_t)data6;
   *nLate        = (uint32_t)data8;
   *lateOffset   = (int32_t)data9;
-  
+
   return status;
 } // wb_eca_stats_get
 
@@ -715,10 +715,10 @@ eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIn
 #endif
 
   *id     = 0x0;
-  
+
   len4CRC = 7;    // use 7 least significant bytes to calculate CRC
   CRC     = 0;
-  
+
 
   if (isUserFlag) {
     if ((status = wb_check_device(device, USER_1WIRE_VENDOR, USER_1WIRE_PRODUCT, USER_1WIRE_VMAJOR, USER_1WIRE_VMINOR, devIndex, &user_1wire)) != EB_OK) return status;
@@ -739,12 +739,12 @@ eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIn
       CRC = wire1_crc8((uint8_t*)id, len4CRC, family);
       if (!CRC)                     return EB_ADDRESS; // CRC == 0 is illegal
       if (CRC == ((uint8_t*)id)[7]) return status;     // CRC ok
-      else                          return EB_ADDRESS; // CRC failed 
-    } // if d->rom ... 
-  } // for i 
-  
+      else                          return EB_ADDRESS; // CRC failed
+    } // if d->rom ...
+  } // for i
+
   return EB_OOM;
-} // wb_1wire_get_id 
+} // wb_1wire_get_id
 
 
 eb_status_t wb_1wire_get_temp(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, double *temp)
@@ -784,11 +784,11 @@ eb_status_t wb_1wire_get_temp(eb_device_t device, int devIndex, unsigned int bus
       tmpT = w1_read_temp(wrpc_w1_bus.devs + i, 0);
       *temp = (tmpT >> 16) + ((int)((tmpT & 0xffff) * 10 * 1000 >> 16))/10000.0;
       return status;
-    } // if d->rom ... 
-  } // for i 
-  
-  return EB_OOM; // no 1-wire temperature sensor at specified WB device and specified 1-wire bus ... 
-} // wb_1wire_get_temp 
+    } // if d->rom ...
+  } // for i
+
+  return EB_OOM; // no 1-wire temperature sensor at specified WB device and specified 1-wire bus ...
+} // wb_1wire_get_temp
 
 
 eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
@@ -813,7 +813,7 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
 } // wb_wr_reset
 
 
-eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex)
+eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)
 {
   eb_data_t    data;
   eb_address_t address;
@@ -827,13 +827,104 @@ eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex)
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_WATCHDOG_DISABLE;
-  data    = (eb_data_t)0xcafebabe;
+  if (enable) data = (eb_data_t)0xcafebab0;
+  else        data = (eb_data_t)0xcafebabe;
 
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
 
   return status;
 } // wb_wr_watchdog
 
+
+eb_status_t wb_wr_watchdog_retrigger(eb_device_t device, int devIndex)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_WATCHDOG_TRG;
+  data = (eb_data_t)0xcafebabe;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_watchdog_retrigger
+
+
+eb_status_t wb_wr_watchdog_status(eb_device_t device, int devIndex, int *flagEnabled)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  *value = 0x0;
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address      = reset_addr + FPGA_RESET_WATCHDOG_STAT;
+
+  status       = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
+  *flagEnabled = (uint32_t)data & 0x1;
+
+  return status;
+} // wb_wr_watchdog_status
+
+// reset the SFP
+eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex)
+{
+  eb_address_t address;
+  eb_status_t  status;
+
+#ifdef WB_SIMULATE
+  *value = 0x0;
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  // get address of RESET controller
+  address      = reset_addr + FPGA_RESET_PHY_RESET;
+
+  // turn SFP off and on
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_SFP_DIS_WR, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+
+ return status;
+} // wb_wr_sfp_reset
+
+// reset the PHY
+eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex)
+{
+  eb_address_t address;
+  eb_status_t  status;
+
+#ifdef WB_SIMULATE
+  *value = 0x0;
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  // get address of RESET controller
+  address      = reset_addr + FPGA_RESET_PHY_RESET;
+
+  // reset PHY and PLLs
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_DROP_LINK_WR, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+
+ return status;
+} // wb_wr_phy_reset
 
 eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)
 {
@@ -857,7 +948,7 @@ eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)
   // reset individual lm32 or all lm32?
   switch (value) {
   case 0 ... 31 :
-    if (value >= nLM32) return EB_OOM; // request CPU does not exist 
+    if (value >= nLM32) return EB_OOM; // request CPU does not exist
     data = (eb_data_t)(1 << value);
     break;
   case 0xff :
@@ -866,7 +957,7 @@ eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)
   default :
     return (EB_OOM);
   } // switch value
-  
+
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
 
   return status;
@@ -897,7 +988,7 @@ eb_status_t wb_cpu_resume(eb_device_t device, int devIndex, uint32_t value)
   default :
     return (EB_OOM);
   } // switch value
-  
+
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
 
   return status;
@@ -919,10 +1010,10 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_USERLM32_GET;
-  
+
   status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
   *value = (uint32_t)data;
-  
+
   return status;
 } // wb_cpu_status
 
@@ -953,7 +1044,7 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
     for (i = 0; i < datalen; ++i) eb_cycle_read(cycle, brom_addr + i*4, EB_DATA32|EB_BIG_ENDIAN, &data[i]);
   } // if cycle open
   eb_cycle_close(cycle);
-  
+
   textlen = datalen * 4 * sizeof(eb_data_t);
   if ((text = malloc(textlen)) == 0) return EB_OOM;
 
@@ -966,17 +1057,17 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
   }
   text[j+1] = '\0';
 
-  ptr = strstr(text, "Build type  : "); 
+  ptr = strstr(text, "Build type  : ");
   if (ptr != NULL) ptr = &(ptr[strlen("Build type  : ")]);
   //if (ptr != NULL) ptr = strstr(ptr, "-v");
   //if (ptr != NULL) ptr = &(ptr[strlen("-v")]);
   if (ptr != NULL) ptr = strtok(ptr, "\n");
   if ((ptr != NULL) && (strlen(ptr) < size)) sprintf(buildType, "%s", ptr);
   else                                       buildType[0] = '\0';
- 
+
   if (data != NULL) free(data);
   free(text);
 
   return EB_OK;
-  
+
 } // wb_build_type

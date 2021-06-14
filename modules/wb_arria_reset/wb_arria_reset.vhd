@@ -68,17 +68,22 @@ entity wb_arria_reset is
     en_wd_tmr    : boolean
   );
   port (
-    clk_sys_i  : in std_logic;
-    rstn_sys_i : in std_logic;
-    clk_upd_i  : in std_logic;
-    rstn_upd_i : in std_logic;
+    clk_sys_i     : in std_logic;
+    rstn_sys_i    : in std_logic;
+    clk_upd_i     : in std_logic;
+    rstn_upd_i    : in std_logic;
 
-    hw_version : in std_logic_vector(31 downto 0);
+    hw_version    : in std_logic_vector(31 downto 0);
 
-    slave_o    : out t_wishbone_slave_out;
-    slave_i    : in t_wishbone_slave_in;
+    slave_o       : out t_wishbone_slave_out;
+    slave_i       : in t_wishbone_slave_in;
 
-    rstn_o     : out std_logic_vector(rst_channels-1 downto 0)
+    phy_rst_o     : out std_logic;
+    phy_aux_rst_o : out std_logic;
+    phy_dis_o     : out std_logic;
+    phy_aux_dis_o : out std_logic;
+
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0)
   );
 end entity;
 
@@ -88,7 +93,12 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal reset            : std_logic;
   signal en_1ms           : std_logic;
   signal trigger_reconfig : std_logic;
-  signal halt_wd          : std_logic;
+  signal disable_wd       : std_logic;
+  signal retrg_wd         : std_logic;
+  signal phy_rst          : std_logic;
+  signal phy_aux_rst      : std_logic;
+  signal phy_dis          : std_logic;
+  signal phy_aux_dis      : std_logic;
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
@@ -136,8 +146,10 @@ begin
       variable cnt : unsigned(cnt_width-1 downto 0) := to_unsigned(cnt_value, cnt_width);
     begin
       if rising_edge(clk_sys_i) then
-        if en_1ms = '1' and halt_wd = '0' then
+        if en_1ms = '1' and disable_wd = '0' then
           cnt := cnt - 1;
+        elsif retrg_wd = '1' then
+          cnt := to_unsigned(cnt_value, cnt_width);
         end if;
         if cnt(cnt'high) = '1' then
           trigger_reconfig <= '1';
@@ -154,8 +166,13 @@ begin
     trigger_reconfig <= '0';
   end generate;
 
-  slave_o.err <= '0';
+  slave_o.err   <= '0';
   slave_o.stall <= '0';
+
+  phy_rst_o     <= phy_rst;
+  phy_aux_rst_o <= phy_aux_rst;
+  phy_dis_o     <= phy_dis;
+  phy_aux_dis_o <= phy_aux_dis;
 
   wb_reg: process(clk_sys_i)
   begin
@@ -164,30 +181,51 @@ begin
       slave_o.dat <= (others => '0');
 
       if rstn_sys_i = '0' then
-        reset_reg <= (others => '0');
+        disable_wd  <= '0';
+        retrg_wd    <= '0';
+        phy_rst     <= '0';
+        phy_aux_rst <= '0';
+        phy_dis     <= '0';
+        phy_aux_dis <= '0';
+        reset_reg   <= (others => '0');
       else
+        retrg_wd <= '0';
         -- Detect a write to the register byte
         if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.sel(0) = '1' then
           if(slave_i.we = '1') then
-            case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+            case to_integer(unsigned(slave_i.adr(7 downto 2))) is
               when 0 =>
                 if(slave_i.dat = x"DEADBEEF") then
                   reset_reg(0) <= '1';
                 end if;
 
               when 1 =>
-                -- disable the watchdog
+                -- dis-/enable the watchdog
                 if(slave_i.dat = x"CAFEBABE") then
-                  halt_wd <= '1';
+                  disable_wd <= '1';
+                elsif(slave_i.dat = x"CAFEBAB0") then
+                  disable_wd <= '0';
                 end if;
               when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
               when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
+              when 4 =>
+                -- retrigger the watchdog
+                if(slave_i.dat = x"CAFEBABE") then
+                  retrg_wd <= '1';
+                end if;
+              when 5 =>
+                phy_rst     <= slave_i.dat(0);
+                phy_aux_rst <= slave_i.dat(1);
+                phy_dis     <= slave_i.dat(2);
+                phy_aux_dis <= slave_i.dat(3);
               when others => null;
             end case;
           else -- read
-            case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+            case to_integer(unsigned(slave_i.adr(7 downto 2))) is
               when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1);
               when 2 => slave_o.dat <= hw_version;
+              when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
+              when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
               when others => null;
             end case;
           end if;

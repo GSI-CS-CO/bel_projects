@@ -12,6 +12,7 @@ use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
+use work.daq_pkg.all;
 
 
 
@@ -20,7 +21,7 @@ entity scu_addac is
     g_cid_group: integer := 3;
     g_card_type: string := "addac";
     g_firmware_version: integer := 4;
-    g_firmware_release: integer := 1
+    g_firmware_release: integer := 2
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
@@ -130,6 +131,8 @@ constant c_adc_base:                    unsigned := x"0230";
 constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
+constant c_daq_base:                    unsigned := x"2000";  --scu_sio3 event filter ends at x1fff
+constant daq_ch_num:                    integer  := 4;
 
 component IO_4x8
   generic (
@@ -275,6 +278,20 @@ component IO_4x8
   signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
 
   constant c_is_arria5: boolean := false;
+  signal daq_dat_i              : t_daq_dat(1 to daq_ch_num);
+  signal daq_ext_trig_i         : t_daq_ctl(1 to daq_ch_num);
+
+  signal daq_rd_active          : std_logic;
+  signal daq_rd_data_to_SCUB    : std_logic_vector(15 downto 0);
+  signal daq_dtack              : std_logic;
+  signal timestamp              : std_logic_vector(63 downto 0) := (others =>'0'); -- WR Timestamp
+  signal diob_extension_id      : std_logic_vector(15 downto 0) := (others =>'0'); -- hard-coded ID Value
+
+  signal DAC_channel_1          : std_logic_vector(15 downto 0);
+  signal DAC_channel_2          : std_logic_vector(15 downto 0);
+
+  signal daq_irq                : std_logic;
+  signal HiRes_irq              : std_logic;
 
   begin
 
@@ -333,6 +350,49 @@ component IO_4x8
       rstn_o(3)     => rstn_flash);
 
 
+  daq_inst : daq
+    generic map (
+      Base_addr       => c_daq_base,
+      CLK_sys_in_Hz   => clk_sys_in_Hz,               -- needed to adjust sample rates
+      ch_num          => daq_ch_num                       -- allowed in range of 1 to 16
+      )
+
+    port map    (
+      -- SCUB interface
+      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,    -- latched address from SCU_Bus
+      Data_from_SCUB_LA       => Data_from_SCUB_LA,   -- latched data from SCU_Bus
+      Ext_Adr_Val             => Ext_Adr_Val,         -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active           => Ext_Rd_active,       -- '1' => Rd-Cycle is active
+      Ext_Wr_active           => Ext_Wr_active,       -- '1' => Wr-Cycle is active
+      clk_i                   => clk_sys,             -- should be the same sysclk as used by SCU_Bus_Slave Macro
+      nReset                  => nPowerup_Res,
+
+
+      diob_extension_id       => (others => '0'),     -- hard-coded ID Value, used for Header in daq, here nulled for addac
+
+      user_rd_active          => daq_rd_active,
+      Rd_Port                 => daq_rd_data_to_SCUB, -- Data to SCU Bus Macro
+      Dtack                   => daq_dtack,           -- Dtack to SCU Bus Macro
+      daq_srq                 => daq_irq,             -- consolidated irq lines from n daq channels for "channel fifo full"
+      HiRes_srq               => hires_irq,           -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
+      Timing_Pattern_LA       => Timing_Pattern_LA,   -- latched data from SCU_Bus
+      Timing_Pattern_RCV      => Timing_Pattern_RCV,  -- timing pattern received
+
+      --daq input channels
+      daq_dat_i               => daq_dat_i,           -- := (others => dummy_daq_dat_in);
+      daq_ext_trig            => daq_ext_trig_i       -- := (others => dummy_daq_ctl_in)
+    );--daq_inst
+
+
+
+      daq_dat_i    (1)   <= ADC_channel_1;
+      daq_ext_trig_i (1) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on
+      daq_dat_i    (2)   <= ADC_channel_2;
+      daq_ext_trig_i (2) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on
+      daq_dat_i(3)       <= DAC_channel_1;
+      daq_ext_trig_i (3) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on
+      daq_dat_i(4)       <= DAC_channel_2;
+      daq_ext_trig_i (4) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on
 
   -- open drain buffer for one wire
     owr_i(0) <= A_OneWire;
@@ -341,16 +401,16 @@ component IO_4x8
     A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
 
 
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
-                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
+    Dtack_to_SCUB    <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or daq_dtack
+                        or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
 
 clk_switch_intr <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
 SCU_Slave: SCU_Bus_Slave
   generic map (
     CLK_in_Hz           => clk_sys_in_Hz,
-    Firmware_Release    => 0,
-    Firmware_Version    => 2,
+    Firmware_Release    => g_firmware_release,
+    Firmware_Version    => g_firmware_version,
     CID_System          => 55,                    -- important: 55 => CSCOHW
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
@@ -364,13 +424,12 @@ SCU_Slave: SCU_Bus_Slave
     nSCUB_Reset_in      => A_nReset,            -- in,    SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB        => Data_to_SCUB,        -- in,    connect read sources from external user functions
     Dtack_to_SCUB       => Dtack_to_SCUB,       -- in,    connect Dtack from from external user functions
-    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & '0'  -- intrrupt 15..12
-                          & x"0"                                  -- intrrupt 11..8
-                          & x"0"                                  -- intrrupt 7..4
-                          & '0' & '0' &  clk_switch_intr,         -- intrrupt 3..1, (interrupt 0 is internal generated)
+    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & daq_irq  -- interrupt 15..12
+                          & hires_irq & b"000"                        -- interrupt 11..8
+                          & x"0"                                      -- interrupt 7..4
+                          & '0' & '0' &  clk_switch_intr,             -- interrupt 3..1, (interrupt 0 is internally generated)
     User_Ready          => '1',
-    CID_Group           =>  g_cid_group,        --must be defined as global parameter in project file xyz.qsf (scu_addac1 = 03, scu_addac2 = 38)
-
+    CID_GROUP           => g_cid_group,
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA    => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
     Timing_Pattern_LA   => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
@@ -457,6 +516,7 @@ dac_1: dac714
     nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
     nLD_DAC           => nDAC1_A1,              -- out, '0' copy shift register to output latch of DAC1
     nCLR_DAC          => nDAC1_CLR,             -- out, '0' set DAC1 to zero (pulse width min 200 ns)
+    dac_data_o        => DAC_channel_1,         -- out, latched value of the data word for the dac714 converter
     ext_trig_valid    => dac_1_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
     DAC_convert_o     => dac1_convert,          -- out, '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port           => dac1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
@@ -487,6 +547,7 @@ dac_2: dac714
     nCS_DAC           => nDAC2_A0,              -- out, '0' enable shift of internal shift register of DAC2
     nLD_DAC           => nDAC2_A1,              -- out, '0' copy shift register to output latch of DAC2
     nCLR_DAC          => nDAC2_CLR,             -- out, '0' set DAC2 to zero (pulse width min 200 ns)
+    dac_data_o        => DAC_channel_2,         -- out, latched value of the data word for the dac714 converter
     ext_trig_valid    => dac_2_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
     DAC_convert_o     => dac2_convert,          -- out, '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port           => dac2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
@@ -530,7 +591,6 @@ adc: adc_scu_bus
     nrst          => rstn_sys,
     tag_i         => Timing_Pattern_LA,
     tag_valid     => Timing_Pattern_RCV,
-
 
     db            => ADC_DB(13 downto 0),
     db14_hben     => ADC_DB(14),
@@ -768,11 +828,13 @@ p_read_mux: process (
     fg_2_rd_active,     fg_2_data_to_SCUB,
     tmr_rd_active,      tmr_data_to_SCUB,
     wb_scu_rd_active,   wb_scu_data_to_SCUB,
+    daq_rd_active,        daq_rd_data_to_SCUB,
     clk_switch_rd_active, clk_switch_rd_data
     )
-  variable sel: unsigned(8 downto 0);
+  variable sel: unsigned(9 downto 0);
   begin
     sel := clk_switch_rd_active
+         & daq_rd_active
          & wb_scu_rd_active
          & tmr_rd_active
          & fg_2_rd_active
@@ -782,15 +844,16 @@ p_read_mux: process (
          & dac1_rd_active
          & io_port_rd_active;
     case sel IS
-      when "000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "000001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "100000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "0000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "0000001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "0000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "0000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "0001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0100000000" => Data_to_SCUB <= daq_rd_data_to_SCUB;
+      when "1000000000" => Data_to_SCUB <= clk_switch_rd_data;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;

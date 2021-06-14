@@ -42,7 +42,6 @@ set_global_assignment -name TOP_LEVEL_ENTITY top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 18.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:28:52  NOVEMBER 06, 2019"
 set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
-set_global_assignment -name VHDL_FILE top.vhd
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -86,7 +85,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_out
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPCI_rst_out
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPfail
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSCUext_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSTATUS
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSYS_rst
@@ -125,15 +123,59 @@ set_location_assignment PIN_M4 -to pGood[2]
 set_location_assignment PIN_J5 -to pGood[3]
 set_location_assignment PIN_M10 -to nPB_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nFPGA_rst_in
-set_location_assignment PIN_A8 -to nPfail
 set_location_assignment PIN_A6 -to nPCI_rst_out
 set_location_assignment PIN_K6 -to nSCUext_rst_in
 set_location_assignment PIN_M7 -to nCB_rst
 set_location_assignment PIN_L3 -to CONF_DONE
 set_location_assignment PIN_K2 -to INIT_DONE
 set_location_assignment PIN_M3 -to nSTATUS
-set_location_assignment PIN_H2 -to jtag_present
+set_location_assignment PIN_J1 -to jtag_present
 set_location_assignment PIN_J12 -to pwr_ok
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to jtag_present
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pwr_ok
+set_location_assignment PIN_K1 -to nPB_user_out
+set_location_assignment PIN_M11 -to nPB_user_in
+set_location_assignment PIN_H4 -to fx2_clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_user_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_user_out
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fx2_clk
+set_location_assignment PIN_N7 -to wdt
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to wdt
+set_global_assignment -name ENABLE_OCT_DONE OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to smb_scl
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to smb_sda
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to wake
+set_location_assignment PIN_L10 -to wake
+set_location_assignment PIN_K7 -to smb_scl
+set_location_assignment PIN_M13 -to smb_sda
+set_global_assignment -name VCCA_USER_VOLTAGE 3.3V
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 3.3V
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
+set_location_assignment PIN_C9 -to nLPC_FRAME
+set_location_assignment PIN_A9 -to LPC_SERIRQ
+set_location_assignment PIN_B10 -to LPC_FPGA_CLK
+set_location_assignment PIN_B9 -to LPC_AD[0]
+set_location_assignment PIN_A10 -to LPC_AD[1]
+set_location_assignment PIN_A11 -to LPC_AD[2]
+set_location_assignment PIN_D8 -to LPC_AD[3]
+set_instance_assignment -name IO_STANDARD "3.3 V SCHMITT TRIGGER" -to rtc_voltage
+set_location_assignment PIN_N3 -to rtc_voltage
+set_location_assignment PIN_B3 -to uart_rx
+set_location_assignment PIN_B4 -to uart_tx
+set_location_assignment PIN_A8 -to nArria_rst
+set_global_assignment -name VHDL_FILE debounce.vhd
+set_global_assignment -name VHDL_FILE adc_control.vhd
+set_global_assignment -name QSYS_FILE adc.qsys
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Zeitbasis.vhd
+set_global_assignment -name VHDL_FILE top.vhd
+set_global_assignment -name QIP_FILE main_pll.qip
+set_global_assignment -name SOURCE_FILE "db/control4_sys-ctl.cmp.rdb"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -101,6 +101,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
     g_en_beam_dump         : boolean;
+    g_dual_port_wr         : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
     g_a10_use_sys_fpll     : boolean;
@@ -148,6 +149,14 @@ entity monster is
     wr_dac_sclk_o          : out   std_logic;
     wr_dac_din_o           : out   std_logic;
     wr_ndac_cs_o           : out   std_logic_vector(2 downto 1);
+    wr_aux_onewire_io      : inout std_logic;
+    wr_aux_sfp_sda_io      : inout std_logic;
+    wr_aux_sfp_scl_io      : inout std_logic;
+    wr_aux_sfp_det_i       : in    std_logic;
+    wr_aux_sfp_tx_o        : out   std_logic;
+    wr_aux_sfp_rx_i        : in    std_logic;
+    wbar_phy_dis_o         : out   std_logic;
+    wbar_phy_aux_dis_o     : out   std_logic;
     -- Optional WR features
     wr_ext_clk_i           : in    std_logic; -- 10MHz
     wr_ext_pps_i           : in    std_logic;
@@ -157,8 +166,13 @@ entity monster is
     sfp_tx_disable_o       : out   std_logic;
     sfp_tx_fault_i         : in    std_logic;
     sfp_los_i              : in    std_logic;
+    sfp_aux_tx_disable_o   : out   std_logic;
+    sfp_aux_tx_fault_i     : in    std_logic;
+    sfp_aux_los_i          : in    std_logic;
     phy_rx_ready_o         : out   std_logic;
     phy_tx_ready_o         : out   std_logic;
+    phy_aux_rx_ready_o     : out   std_logic;
+    phy_aux_tx_ready_o     : out   std_logic;
     phy_debug_o            : out   std_logic;
     phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
     -- GPIO for the board
@@ -184,6 +198,10 @@ entity monster is
     led_link_act_o         : out   std_logic;
     led_track_o            : out   std_logic;
     led_pps_o              : out   std_logic;
+    led_aux_link_up_o      : out   std_logic;
+    led_aux_link_act_o     : out   std_logic;
+    led_aux_track_o        : out   std_logic;
+    led_aux_pps_o          : out   std_logic;
     -- g_en_pcie
     pcie_refclk_i          : in    std_logic;
     pcie_rstn_i            : in    std_logic;
@@ -272,7 +290,6 @@ entity monster is
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -367,13 +384,15 @@ end monster;
 
 architecture rtl of monster is
 
-  constant c_is_arria10sx      : boolean := g_family = "Arria 10 SX";
-  constant c_is_arria10gx      : boolean := g_family = "Arria 10 GX";
-  constant c_is_arria10gx_e3p1 : boolean := g_family = "Arria 10 GX E3P1";
-  constant c_is_arria10gx_scu4 : boolean := g_family = "Arria 10 GX SCU4";
-  constant c_is_arria10        : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4;
-  constant c_is_arria5         : boolean := g_family = "Arria V";
-  constant c_is_arria2         : boolean := g_family = "Arria II";
+  constant c_is_arria10sx       : boolean := g_family = "Arria 10 SX";
+  constant c_is_arria10gx       : boolean := g_family = "Arria 10 GX";
+  constant c_is_arria10gx_e3p1  : boolean := g_family = "Arria 10 GX E3P1";
+  constant c_is_arria10gx_scu4  : boolean := g_family = "Arria 10 GX SCU4";
+  constant c_is_arria10gx_pex10 : boolean := g_family = "Arria 10 GX PEX10";
+  constant c_is_arria10gx_ftm10 : boolean := g_family = "Arria 10 GX FTM10";
+  constant c_is_arria10         : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_pex10 or c_is_arria10gx_ftm10;
+  constant c_is_arria5          : boolean := g_family = "Arria V";
+  constant c_is_arria2          : boolean := g_family = "Arria II";
 
   constant c_zero_master : t_wishbone_master_out := (
     cyc => '0',
@@ -404,7 +423,7 @@ architecture rtl of monster is
     top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb), 
+    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
     top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
@@ -442,7 +461,7 @@ architecture rtl of monster is
   signal sdb_dummy_dev            : std_logic := '0';
   attribute keep of sdb_dummy_top : signal is true;
   attribute keep of sdb_dummy_dev : signal is true;
- 
+
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -458,7 +477,6 @@ architecture rtl of monster is
     devs_eca_aq,
     devs_eca_tlu,
     devs_eca_wbm,
-    devs_emb_cpu,
     devs_serdes_clk_gen,
     devs_control,
     devs_ftm_cluster,
@@ -481,12 +499,13 @@ architecture rtl of monster is
     devs_eca_tap
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
-  
+
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
 
   -- We have to specify the values for WRC as they provide no function for this
-  constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
+  constant c_wrcore_bridge_sdb     : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
+  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0004ffff", x"00040000");
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
@@ -499,7 +518,6 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
     dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
-    dev_slaves'pos(devs_emb_cpu)        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
     dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
@@ -540,20 +558,24 @@ architecture rtl of monster is
     tops_dev,
     tops_mil,
     tops_wr_fast_path,
+    tops_wr_aux_fast_path,
     tops_ebm,
-    tops_beam_dump
+    tops_beam_dump,
+    tops_emb_cpu
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (top_slaves'pos(tops_eca_event)    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
-    top_slaves'pos(tops_scubus)       => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
-    top_slaves'pos(tops_mbox)         => f_sdb_auto_device(c_mbox_sdb,                        true),
-    top_slaves'pos(tops_dev)          => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
-    top_slaves'pos(tops_mil)          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
-    top_slaves'pos(tops_wr_fast_path) => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
-    top_slaves'pos(tops_ebm)          => f_sdb_auto_device(c_ebm_sdb,                         true),
-    top_slaves'pos(tops_beam_dump)    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
+   (top_slaves'pos(tops_eca_event)       => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
+   top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
+   top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
+   top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
+   top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
+   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
+   top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
+   top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -644,12 +666,14 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- Master signals ----------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  signal wrc_slave_i   : t_wishbone_slave_in;
-  signal wrc_slave_o   : t_wishbone_slave_out;
-  signal wrc_master_i  : t_wishbone_master_in;
-  signal wrc_master_o  : t_wishbone_master_out;
-  signal s_eca_evt_m_i  : t_wishbone_master_in;
-  signal s_eca_evt_m_o  : t_wishbone_master_out;
+  signal wrc_slave_i     : t_wishbone_slave_in;
+  signal wrc_slave_o     : t_wishbone_slave_out;
+  signal wrc_aux_slave_i : t_wishbone_slave_in;
+  signal wrc_aux_slave_o : t_wishbone_slave_out;
+  signal wrc_master_i    : t_wishbone_master_in;
+  signal wrc_master_o    : t_wishbone_master_out;
+  signal s_eca_evt_m_i   : t_wishbone_master_in;
+  signal s_eca_evt_m_o   : t_wishbone_master_out;
 
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
@@ -659,6 +683,9 @@ architecture rtl of monster is
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
   signal uart_wrc : std_logic; -- from wrc
+
+  signal uart_aux_mux : std_logic;
+  signal uart_aux_wrc : std_logic;
 
   signal s_usb_fd_o   : std_logic_vector(7 downto 0);
   signal s_usb_fd_oen : std_logic;
@@ -678,6 +705,11 @@ architecture rtl of monster is
   signal  phy16_o         : t_phy_16bits_to_wrc;
   signal  phy16_i         : t_phy_16bits_from_wrc := c_dummy_phy16_from_wrc;
 
+  signal  phy8_aux_o          : t_phy_8bits_to_wrc;
+  signal  phy8_aux_i          : t_phy_8bits_from_wrc  := c_dummy_phy8_from_wrc;
+  signal  phy16_aux_o         : t_phy_16bits_to_wrc;
+  signal  phy16_aux_i         : t_phy_16bits_from_wrc := c_dummy_phy16_from_wrc;
+
   signal s_link_ok        : std_logic;
 
   signal dac_hpll_load_p1 : std_logic;
@@ -685,9 +717,14 @@ architecture rtl of monster is
   signal dac_hpll_data    : std_logic_vector(15 downto 0);
   signal dac_dpll_data    : std_logic_vector(15 downto 0);
 
+  signal dac_hpll_load_p1_aux : std_logic;
+  signal dac_dpll_load_p1_aux : std_logic;
+  signal dac_hpll_data_aux    : std_logic_vector(15 downto 0);
+  signal dac_dpll_data_aux    : std_logic_vector(15 downto 0);
+
   signal phy_clk          : std_logic;
 
-  signal phy_ready       : std_logic;
+  signal phy_ready        : std_logic;
   signal phy_loopen       : std_logic;
   signal phy_rst          : std_logic;
 
@@ -702,22 +739,51 @@ architecture rtl of monster is
   signal phy_rx_enc_err   : std_logic;
   signal phy_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
 
+  signal phy_aux_ready        : std_logic;
+  signal phy_aux_loopen       : std_logic;
+  signal phy_aux_rst          : std_logic;
+
+  signal phy_aux_tx_clk       : std_logic;
+  signal phy_aux_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal phy_aux_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal phy_aux_tx_disparity : std_logic;
+  signal phy_aux_tx_enc_err   : std_logic;
+  signal phy_aux_rx_rbclk     : std_logic;
+  signal phy_aux_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal phy_aux_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal phy_aux_rx_enc_err   : std_logic;
+  signal phy_aux_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
+
   signal link_act : std_logic;
   signal link_up  : std_logic;
   signal pps      : std_logic;
   signal ext_pps  : std_logic;
 
+  signal link_act_aux : std_logic;
+  signal link_up_aux  : std_logic;
+  signal pps_aux      : std_logic;
+  signal ext_pps_aux  : std_logic;
+
   signal tm_valid  : std_logic;
   signal tm_tai    : std_logic_vector(39 downto 0);
   signal tm_cycles : std_logic_vector(27 downto 0);
 
+  signal tm_valid_aux  : std_logic;
+
   signal ref_tai8ns : std_logic_vector(63 downto 0);
+
+  signal wbar_phy_rst     : std_logic;
+  signal wbar_phy_aux_rst : std_logic;
+  signal wbar_phy_dis     : std_logic;
+  signal wbar_phy_aux_dis : std_logic;
 
   signal owr_pwren : std_logic_vector(1 downto 0);
   signal owr_en    : std_logic_vector(1 downto 0);
 
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
+  signal sfp_aux_scl_o : std_logic;
+  signal sfp_aux_sda_o : std_logic;
   signal s_records_for_phy : boolean := FALSE;
 
   constant c_loc_linux        : natural := 0;
@@ -1236,6 +1302,17 @@ begin
       slave_o       => top_bus_master_i(top_slaves'pos(tops_wr_fast_path)),
       master_i      => wrc_slave_o,
       master_o      => wrc_slave_i);
+
+  top2wrc_aux_bus : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_bus_master_o(top_slaves'pos(tops_wr_aux_fast_path)),
+      slave_o       => top_bus_master_i(top_slaves'pos(tops_wr_aux_fast_path)),
+      master_i      => wrc_aux_slave_o,
+      master_o      => wrc_aux_slave_i);
 
   -- END OF Wishbone crossbars
   ----------------------------------------------------------------------------------
@@ -1809,6 +1886,97 @@ end generate;
       link_ok_o            => s_link_ok);
   end generate;
 
+  dual_port_wr_core : if g_dual_port_wr generate
+    wr_a10 : if c_is_arria10 generate
+    U_WR_CORE : xwr_core
+
+      generic map (
+        g_simulation                => 0,
+        g_with_external_clock_input => FALSE,
+        g_phys_uart                 => TRUE,
+        g_virtual_uart              => TRUE,
+        g_aux_clks                  => 0,
+        g_ep_rxbuf_size             => 1024,
+        g_tx_runt_padding           => TRUE,
+        g_records_for_phy           => FALSE,
+        g_pcs_16bit                 => FALSE,
+        g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
+        g_dpram_size                => 131072/4,
+        g_interface_mode            => PIPELINED,
+        g_address_granularity       => BYTE,
+        g_aux_sdb                   => c_etherbone_sdb,
+        g_softpll_enable_debugger   => FALSE)
+
+      port map (
+        clk_sys_i            => clk_sys,
+        clk_dmtd_i           => clk_dmtd,
+        clk_ref_i            => clk_ref,
+        clk_aux_i            => (others => '0'),
+        pps_ext_i            => wr_ext_pps_i,
+        rst_n_i              => rstn_sys,
+        dac_hpll_load_p1_o   => dac_hpll_load_p1_aux,
+        dac_hpll_data_o      => dac_hpll_data_aux,
+        dac_dpll_load_p1_o   => dac_dpll_load_p1_aux,
+        dac_dpll_data_o      => dac_dpll_data_aux,
+        phy_rdy_i            => '1',
+        phy_loopen_vec_o     => open,
+        phy_sfp_tx_fault_i   => '0',
+        phy_tx_prbs_sel_o    => open,
+        phy_sfp_los_i        => '0',
+        phy_sfp_tx_disable_o => open,
+        phy_ref_clk_i        => phy_aux_tx_clk,
+        phy_tx_data_o        => phy_aux_tx_data,
+        phy_tx_k_o           => phy_aux_tx_k,
+        phy_tx_disparity_i   => phy_aux_tx_disparity,
+        phy_tx_enc_err_i     => phy_aux_tx_enc_err,
+        phy_rx_data_i        => phy_aux_rx_data,
+        phy_rx_rbclk_i       => phy_aux_rx_rbclk,
+        phy_rx_k_i           => phy_aux_rx_k,
+        phy_rx_enc_err_i     => phy_aux_rx_enc_err,
+        phy_rx_bitslide_i    => phy_aux_rx_bitslide,
+        phy_rst_o            => phy_aux_rst,
+        phy_loopen_o         => phy_aux_loopen,
+        phy8_o               => phy8_aux_i,
+        phy8_i               => phy8_aux_o,
+        phy16_o              => phy16_aux_i,
+        phy16_i              => phy16_aux_o,
+        led_act_o            => link_act_aux,
+        led_link_o           => link_up_aux,
+        sfp_scl_i            => wr_sfp_scl_io,
+        sfp_sda_i            => wr_sfp_sda_io,
+        sfp_scl_o            => sfp_aux_scl_o,
+        sfp_sda_o            => sfp_aux_sda_o,
+        sfp_det_i            => wr_aux_sfp_det_i,
+        btn1_i               => '0',
+        btn2_i               => '0',
+        uart_rxd_i           => uart_aux_mux,
+        uart_txd_o           => uart_aux_wrc,
+        --owr_pwren_o          => owr_pwren,
+        --owr_en_o             => owr_en,
+        --owr_i(0)             => wr_onewire_io,
+        --owr_i(1)             => '0',
+        --slave_i              => wrc_slave_i,
+        --slave_o              => wrc_slave_o,
+        --aux_master_o         => wrc_master_o,
+        --aux_master_i         => wrc_master_i,
+        --wrf_src_o            => eb_snk_in,
+        --wrf_src_i            => eb_snk_out,
+        --wrf_snk_o            => eb_src_in,
+        --wrf_snk_i            => eb_src_out,
+        tm_link_up_o         => open,
+        tm_dac_value_o       => open,
+        tm_dac_wr_o          => open,
+        tm_clk_aux_lock_en_i => (others => '0'),
+        tm_clk_aux_locked_o  => open,
+        tm_time_valid_o      => open,
+        tm_tai_o             => open,
+        tm_cycles_o          => open,
+        pps_p_o              => pps_aux,
+        rst_aux_n_o          => open,
+        link_ok_o            => s_link_ok);
+    end generate;
+end generate;
+
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
       g_invert_sclk    => false,
@@ -1836,7 +2004,7 @@ end generate;
         rst_i          => pll_rst,
         locked_o       => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_i       => clk_ref,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k(0),
@@ -1862,7 +2030,7 @@ end generate;
         clk_phy_i      => phy_clk,
         ready_o        => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_o       => open,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
@@ -1875,7 +2043,7 @@ end generate;
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
-        
+
         phy_tx_clk <= clk_ref;
   end generate phy_a5;
 
@@ -1904,7 +2072,7 @@ end generate;
         reconfig_clk_i(0)      => clk_sys,
         reconfig_reset_i(0)    => not(rstn_sys),
         ready_o                => phy_ready,
-        drop_link_i            => phy_rst,
+        drop_link_i            => (phy_rst or wbar_phy_rst),
         loopen_i               => phy_loopen,
         sfp_los_i              => sfp_los_i,
         tx_clk_o               => phy_tx_clk,
@@ -1924,6 +2092,52 @@ end generate;
         phy_rx_ready_o <= phy_ready;
         phy_tx_ready_o <= phy_ready and not(phy_tx_enc_err);
   end generate phy_a10;
+
+  dual_port_wr : if g_dual_port_wr generate
+    phy_aux_a10 : if c_is_arria10 generate
+      phy_aux : wr_arria10_transceiver
+        generic map (
+          g_family               => g_family,
+          g_use_atx_pll          => false,
+          g_use_cmu_pll          => true,
+          g_use_simple_wa        => true,
+          g_use_det_phy          => true,
+          g_use_sfp_los_rst      => true,
+          g_use_tx_lcr_dbg       => false,
+          g_use_rx_lcr_dbg       => false,
+          g_use_ext_loop         => true,
+          g_use_ext_rst          => true)
+        port map (
+          clk_ref_i              => clk_ref,
+          clk_phy_i              => phy_clk,
+          reconfig_write_i       => (others => '0'),
+          reconfig_read_i        => (others => '0'),
+          reconfig_address_i     => (others => '0'),
+          reconfig_writedata_i   => (others => '0'),
+          reconfig_readdata_o    => open,
+          reconfig_waitrequest_o => open,
+          reconfig_clk_i(0)      => clk_sys,
+          reconfig_reset_i(0)    => not(rstn_sys),
+          ready_o                => phy_aux_ready,
+          drop_link_i            => phy_aux_rst,
+          loopen_i               => phy_aux_loopen,
+          sfp_los_i              => sfp_aux_los_i,
+          tx_clk_o               => phy_aux_tx_clk,
+          tx_data_i              => phy_aux_tx_data,
+          tx_disparity_o         => phy_aux_tx_disparity,
+          tx_enc_err_o           => phy_aux_tx_enc_err,
+          tx_data_k_i            => phy_aux_tx_k(0),
+          rx_clk_o               => phy_aux_rx_rbclk,
+          rx_data_o              => phy_aux_rx_data,
+          rx_data_k_o            => phy_aux_rx_k(0),
+          rx_enc_err_o           => phy_aux_rx_enc_err,
+          rx_bitslide_o          => phy_aux_rx_bitslide,
+          pad_txp_o              => wr_aux_sfp_tx_o,
+          pad_rxp_i              => wr_aux_sfp_rx_i);
+        phy_aux_rx_ready_o <= phy_aux_ready;
+        phy_aux_tx_ready_o <= phy_aux_ready and not(phy_aux_tx_enc_err);
+    end generate phy_aux_a10;
+  end generate dual_port_wr;
 
   phy_clk <= core_clk_125m_sfpref_i;
   phy16_o <= c_dummy_phy16_to_wrc;
@@ -1966,10 +2180,18 @@ end generate;
   wr_sfp_scl_io <= '0' when sfp_scl_o = '0' else 'Z';
   wr_sfp_sda_io <= '0' when sfp_sda_o = '0' else 'Z';
 
+  wr_aux_sfp_scl_io <= '0' when sfp_aux_scl_o = '0' else 'Z';
+  wr_aux_sfp_sda_io <= '0' when sfp_aux_sda_o = '0' else 'Z';
+
   led_link_up_o  <= link_up;
   led_link_act_o <= link_act;
   led_track_o    <= tm_valid;
   led_pps_o      <= ext_pps;
+
+  led_aux_link_up_o  <= link_up_aux;
+  led_aux_link_act_o <= link_act_aux;
+  led_aux_track_o    <= tm_valid_aux;
+  led_aux_pps_o      <= ext_pps_aux;
 
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -2048,14 +2270,21 @@ end generate;
       clk_in_hz    => 62_500_000,
       en_wd_tmr    => g_en_wd_tmr)
     port map(
-      clk_sys_i  => clk_sys,
-      rstn_sys_i => rstn_sys,
-      clk_upd_i  => clk_update,
-      rstn_upd_i => rstn_update,
-      hw_version => hw_version,
-      slave_o    => dev_bus_master_i(dev_slaves'pos(devs_reset)),
-      slave_i    => dev_bus_master_o(dev_slaves'pos(devs_reset)),
-      rstn_o     => s_lm32_rstn);
+      clk_sys_i     => clk_sys,
+      rstn_sys_i    => rstn_sys,
+      clk_upd_i     => clk_update,
+      rstn_upd_i    => rstn_update,
+      hw_version    => hw_version,
+      slave_o       => dev_bus_master_i(dev_slaves'pos(devs_reset)),
+      slave_i       => dev_bus_master_o(dev_slaves'pos(devs_reset)),
+      phy_rst_o     => wbar_phy_rst,
+      phy_aux_rst_o => wbar_phy_aux_rst,
+      phy_dis_o     => wbar_phy_dis,
+      phy_aux_dis_o => wbar_phy_aux_dis,
+      rstn_o        => s_lm32_rstn);
+
+      wbar_phy_dis_o     <= wbar_phy_dis;
+      wbar_phy_aux_dis_o <= wbar_phy_aux_dis;
 
   iocontrol : io_control
     generic map(
@@ -2502,8 +2731,8 @@ end generate;
           a_channel_i => s_channel_o(2),
           q_clk_i     => clk_sys,
           q_rst_n_i   => rstn_sys,
-          q_slave_i   => dev_bus_master_o(dev_slaves'pos(devs_emb_cpu)),
-          q_slave_o   => dev_bus_master_i(dev_slaves'pos(devs_emb_cpu)));
+          q_slave_i   => top_bus_master_o(top_slaves'pos(tops_emb_cpu)),
+          q_slave_o   => top_bus_master_i(top_slaves'pos(tops_emb_cpu)));
 
   end generate;
 
