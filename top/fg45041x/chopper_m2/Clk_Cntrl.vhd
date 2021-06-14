@@ -81,7 +81,7 @@ P_Clk_Sel:	PROCESS (Logic, Skal_Okay)
 					nSlave_Clk_Ena		<= '1';
 					nIndenpend_Clk_Ena	<= '0';
 				END IF;
-			WHEN OTHERS =>						-- Allen anderen Fällen interne Clock
+			WHEN OTHERS =>						-- Allen anderen Faellen interne Clock
 					nMaster_Clk_Ena		<= '1';
 					nSlave_Clk_Ena		<= '1';
 					nIndenpend_Clk_Ena	<= '0';

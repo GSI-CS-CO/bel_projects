@@ -43,4 +43,20 @@ begin
         pad_out_b(0)     => dataout_b);
   end generate;
 
+  arria10_pex10 : if g_family = "Arria 10 GX PEX10" generate
+    obuf : arria10_pex10_lvds_obuf
+      port map(
+        din(0)           => datain,
+        pad_out(0)       => dataout,
+        pad_out_b(0)     => dataout_b);
+  end generate;
+
+  arria10_ftm10 : if g_family = "Arria 10 GX FTM10" generate
+    obuf : arria10_ftm10_lvds_obuf
+      port map(
+        din(0)           => datain,
+        pad_out(0)       => dataout,
+        pad_out_b(0)     => dataout_b);
+  end generate;
+
 end rtl;

@@ -1,0 +1,6 @@
+qsys-generate arria10_pex10_lvds_ibuf
+qsys-generate arria10_pex10_lvds_obuf
+qsys-generate arria10_pex10_lvds_pll
+qsys-generate arria10_pex10_lvds_rx
+qsys-generate arria10_pex10_lvds_tx
+

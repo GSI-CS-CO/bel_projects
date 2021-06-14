@@ -1,0 +1,21 @@
+                               Transfer from ESR
+                               -----------------
+
+
+
+     Comment          : $                                                      
+     Increment        : $               
+     Value            : $                        
+
+
+
+
+
+
+
+
+
+   [ & Increase + Submit <page up>   ]       [ & Decrease + Submit <page down> ]
+
+   [ & Help                          ]       [ & Return                    (4) ]
+

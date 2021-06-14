@@ -1,4 +1,4 @@
--- "'pos_or_neg_dly' Delay für pos.-neg. Flanke, A.Franke/W.Panschow,
+-- "'pos_or_neg_dly' Delay fuer pos.-neg. Flanke, A.Franke/W.Panschow,
 --	 Vers V01, d. 08.03.01";
 
 library IEEE;

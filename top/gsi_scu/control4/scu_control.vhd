@@ -83,9 +83,9 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nres_i        : in      std_logic;
+    nSys_Reset    : in      std_logic;  -- Reset From ComX
     user_btn      : in      std_logic;  --User Button
-    max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
+    f2f           : inout   std_logic_vector (7 downto 0);  -- Connection to MAX10 FPGA
     serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
     serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
     rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
@@ -100,19 +100,12 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(1 downto 0);
-    lemo_n_i : in    std_logic_vector(1 downto 0);
-    lemo_p_o : out   std_logic_vector(1 downto 0);
-    lemo_n_o : out   std_logic_vector(1 downto 0);
+    fastIO_p_i : in    std_logic_vector(2 downto 0);
+    fastIO_n_i : in    std_logic_vector(2 downto 0);
+    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues 
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
-
-    -----------------------------------------------------------------------
-    -- LA port (Logic Analyzer HDMI Port)
-    -----------------------------------------------------------------------
-    la_ch           : out std_logic_vector(15 downto 0);
-    la_clk          : out std_logic;
 
     -----------------------------------------------------------------------
     -- Extension Connector
@@ -134,9 +127,9 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o   : out std_logic_vector(1 downto 0) := (others => '1');
+    wr_led_pps  : out std_logic := '1';
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
-    user_led_1  : out std_logic_vector(2 downto 0) := (others => '1');
+    wr_rgb_led  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
 
 	 -----------------------------------------------------------------------
@@ -150,8 +143,8 @@ entity scu_control is
     psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
     psram_oen          : out   std_logic := 'Z';
     psram_wen          : out   std_logic := 'Z';
-    psram_be0          : out   std_logic := 'Z';
-    psram_be1          : out   std_logic := 'Z';
+    psram_ubn          : out   std_logic := 'Z';
+    psram_lbn          : out   std_logic := 'Z';
     psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
@@ -165,11 +158,18 @@ entity scu_control is
      sram_lbn          : out   std_logic := 'Z';
      sram_ubn          : out   std_logic := 'Z';
 
+     -----------------------------------------------------------------------
+     -- SPI Flash User Mode
+     -----------------------------------------------------------------------
+     UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+     UM_nCSO           : out   std_logic := 'Z';
+     UM_DCLK           : out   std_logic := 'Z';
+
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
-    sfp_led_fpg_o    : out   std_logic;
-    sfp_led_fpr_o    : out   std_logic;
+    --sfp_led_fpg_o    : out   std_logic;
+    --sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic := '0';
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -188,11 +188,11 @@ architecture rtl of scu_control is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(9 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(1 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(1 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(1 downto 0);
+  signal s_gpio_o       : std_logic_vector(6 downto 0);
+  signal s_lvds_p_i     : std_logic_vector(2 downto 0);
+  signal s_lvds_n_i     : std_logic_vector(2 downto 0);
+  signal s_lvds_p_o     : std_logic_vector(2 downto 0);
+  signal s_lvds_term    : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -202,7 +202,7 @@ architecture rtl of scu_control is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 13) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -210,15 +210,16 @@ architecture rtl of scu_control is
     ("USER_LED0_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_R",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_G",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USER_LED1_B",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_0 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("FAST_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
+    ("LEMO_OUT_0 ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
+    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS)
   );
 
   constant c_family        : string := "Arria 10 GX SCU4";
@@ -237,8 +238,9 @@ begin
       g_flash_bits       => 25, -- !!! TODO: Check this
       g_psram_bits       => c_psram_bits,
       g_gpio_in          => 2,
-      g_gpio_out         => 10,
-      g_lvds_inout       => 2,
+      g_gpio_out         => 7,
+      g_lvds_in          => 3,
+      g_lvds_out         => 3,
       g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
@@ -277,7 +279,7 @@ begin
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
-      lvds_n_o                => s_lvds_n_o,
+      lvds_term_o             => s_lvds_term,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -316,8 +318,8 @@ begin
       ps_clk                 => psram_clk,
       ps_addr                => psram_a,
       ps_data                => psram_dq,
-      ps_seln(0)             => psram_be0,
-      ps_seln(1)             => psram_be1,
+      ps_seln(0)             => psram_ubn,
+      ps_seln(1)             => psram_lbn,
       ps_cen                 => psram_cen (0),
       ps_oen                 => psram_oen,
       ps_wen                 => psram_wen,
@@ -330,25 +332,26 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
-  sfp_led_fpr_o         <= not s_led_link_act;
-  user_led_0            <= not s_gpio_o(2 downto 0);
-  user_led_1            <= not s_gpio_o(5 downto 3);
+  wr_led_pps              <= not s_led_pps;                            -- white = PPS
+  wr_rgb_led(0)           <= not s_led_link_act;                       -- WR-RGB Red
+  wr_rgb_led(1)           <= not s_led_track;                          -- WR-RGB Green
+  wr_rgb_led(2)           <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
+  user_led_0              <= not s_gpio_o(2 downto 0);
 
   -- LEMOs
-  lemos : for i in 0 to 1 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
+  lemos : for i in 0 to 2 generate
+    s_lvds_p_i(i)      <= fastIO_p_i(i);
+    s_lvds_n_i(i)      <= fastIO_n_i(i);
+    fastIO_p_o(i)        <= s_lvds_p_o(i);
   end generate;
 
-  lemo_out <= not s_gpio_o(9 downto 6);
+  lemo_out <= not s_gpio_o(6 downto 3);
 
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
+      
+  --Extension Piggy
+  ext_ch(21 downto 19) <= s_lvds_term;
 
 end rtl;

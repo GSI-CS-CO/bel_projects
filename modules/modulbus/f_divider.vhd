@@ -71,7 +71,7 @@ p_f_divider:	PROCESS (clk)
 			ELSIF s_counter(s_counter'high) = '1' THEN
 				s_counter <= conv_std_logic_vector(c_ld_value, s_counter'length);
 			ELSIF ena_cnt = '1' THEN
-				IF s_counter(s_counter'high) = '0' THEN		-- nur wenn MSB gelöscht ist, wird gezaehlt
+				IF s_counter(s_counter'high) = '0' THEN		-- nur wenn MSB geloescht ist, wird gezaehlt
 					s_counter <= s_counter - 1;				-- count down
 				END IF;
 			END IF;

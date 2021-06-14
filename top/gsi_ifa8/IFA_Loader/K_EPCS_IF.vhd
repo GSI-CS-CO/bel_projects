@@ -22,7 +22,7 @@
 -- VERSION "Version 4.1 Build 208 09/10/2004 Service Pack 2 SJ Full Version"
 
 
--- Vers 1.1	19.02.2008 W.P. Generic "Loader_CLK_in_Hz" eingefügt, wird nach
+-- Vers 1.1	19.02.2008 W.P. Generic "Loader_CLK_in_Hz" eingefuegt, wird nach
 --							"b2v_imodulif : modul2spi" weitergereicht, damit
 --							dort die SPI-Clk immer richtig generiert wird. 
 LIBRARY ieee;

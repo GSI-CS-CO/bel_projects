@@ -57,4 +57,24 @@ begin
         rx_out        => raw);
   end generate;
 
+  arria10_pex10 : if g_family = "Arria 10 GX PEX10" generate
+    rx : arria10_pex10_lvds_rx
+      port map(
+        ext_fclk      => rx_inclock,
+        ext_loaden    => rx_enable,
+        ext_coreclock => rx_core,
+        rx_in(0)      => rx_in,
+        rx_out        => raw);
+  end generate;
+
+  arria10_ftm10 : if g_family = "Arria 10 GX FTM10" generate
+    rx : arria10_ftm10_lvds_rx
+      port map(
+        ext_fclk      => rx_inclock,
+        ext_loaden    => rx_enable,
+        ext_coreclock => rx_core,
+        rx_in(0)      => rx_in,
+        rx_out        => raw);
+  end generate;
+
 end rtl;

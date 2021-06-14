@@ -1,4 +1,4 @@
---TITLE "chop_m2_vers sollte alle Änderungsbemerkungen des 'Chopper_Macro2' enthalten.";
+--TITLE "chop_m2_vers sollte alle Aenderungsbemerkungen des 'Chopper_Macro2' enthalten.";
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
