@@ -155,6 +155,8 @@ entity monster is
     wr_aux_sfp_det_i       : in    std_logic;
     wr_aux_sfp_tx_o        : out   std_logic;
     wr_aux_sfp_rx_i        : in    std_logic;
+    wbar_phy_dis_o         : out   std_logic;
+    wbar_phy_aux_dis_o     : out   std_logic;
     -- Optional WR features
     wr_ext_clk_i           : in    std_logic; -- 10MHz
     wr_ext_pps_i           : in    std_logic;
@@ -475,7 +477,6 @@ architecture rtl of monster is
     devs_eca_aq,
     devs_eca_tlu,
     devs_eca_wbm,
-    devs_emb_cpu,
     devs_serdes_clk_gen,
     devs_control,
     devs_ftm_cluster,
@@ -517,7 +518,6 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
     dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
-    dev_slaves'pos(devs_emb_cpu)        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
     dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
@@ -560,20 +560,22 @@ architecture rtl of monster is
     tops_wr_fast_path,
     tops_wr_aux_fast_path,
     tops_ebm,
-    tops_beam_dump
+    tops_beam_dump,
+    tops_emb_cpu
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (top_slaves'pos(tops_eca_event)        => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
-    top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
-    top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
-    top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
-    top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
-    top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
-    top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
-    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
-    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
+   (top_slaves'pos(tops_eca_event)       => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
+   top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
+   top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
+   top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
+   top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
+   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
+   top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
+   top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -769,6 +771,11 @@ architecture rtl of monster is
   signal tm_valid_aux  : std_logic;
 
   signal ref_tai8ns : std_logic_vector(63 downto 0);
+
+  signal wbar_phy_rst     : std_logic;
+  signal wbar_phy_aux_rst : std_logic;
+  signal wbar_phy_dis     : std_logic;
+  signal wbar_phy_aux_dis : std_logic;
 
   signal owr_pwren : std_logic_vector(1 downto 0);
   signal owr_en    : std_logic_vector(1 downto 0);
@@ -1997,7 +2004,7 @@ end generate;
         rst_i          => pll_rst,
         locked_o       => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_i       => clk_ref,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k(0),
@@ -2023,7 +2030,7 @@ end generate;
         clk_phy_i      => phy_clk,
         ready_o        => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => phy_rst,
+        drop_link_i    => (phy_rst or wbar_phy_rst),
         tx_clk_o       => open,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
@@ -2065,7 +2072,7 @@ end generate;
         reconfig_clk_i(0)      => clk_sys,
         reconfig_reset_i(0)    => not(rstn_sys),
         ready_o                => phy_ready,
-        drop_link_i            => phy_rst,
+        drop_link_i            => (phy_rst or wbar_phy_rst),
         loopen_i               => phy_loopen,
         sfp_los_i              => sfp_los_i,
         tx_clk_o               => phy_tx_clk,
@@ -2263,14 +2270,21 @@ end generate;
       clk_in_hz    => 62_500_000,
       en_wd_tmr    => g_en_wd_tmr)
     port map(
-      clk_sys_i  => clk_sys,
-      rstn_sys_i => rstn_sys,
-      clk_upd_i  => clk_update,
-      rstn_upd_i => rstn_update,
-      hw_version => hw_version,
-      slave_o    => dev_bus_master_i(dev_slaves'pos(devs_reset)),
-      slave_i    => dev_bus_master_o(dev_slaves'pos(devs_reset)),
-      rstn_o     => s_lm32_rstn);
+      clk_sys_i     => clk_sys,
+      rstn_sys_i    => rstn_sys,
+      clk_upd_i     => clk_update,
+      rstn_upd_i    => rstn_update,
+      hw_version    => hw_version,
+      slave_o       => dev_bus_master_i(dev_slaves'pos(devs_reset)),
+      slave_i       => dev_bus_master_o(dev_slaves'pos(devs_reset)),
+      phy_rst_o     => wbar_phy_rst,
+      phy_aux_rst_o => wbar_phy_aux_rst,
+      phy_dis_o     => wbar_phy_dis,
+      phy_aux_dis_o => wbar_phy_aux_dis,
+      rstn_o        => s_lm32_rstn);
+
+      wbar_phy_dis_o     <= wbar_phy_dis;
+      wbar_phy_aux_dis_o <= wbar_phy_aux_dis;
 
   iocontrol : io_control
     generic map(
@@ -2717,8 +2731,8 @@ end generate;
           a_channel_i => s_channel_o(2),
           q_clk_i     => clk_sys,
           q_rst_n_i   => rstn_sys,
-          q_slave_i   => dev_bus_master_o(dev_slaves'pos(devs_emb_cpu)),
-          q_slave_o   => dev_bus_master_i(dev_slaves'pos(devs_emb_cpu)));
+          q_slave_i   => top_bus_master_o(top_slaves'pos(tops_emb_cpu)),
+          q_slave_o   => top_bus_master_i(top_slaves'pos(tops_emb_cpu)));
 
   end generate;
 
@@ -3127,4 +3141,3 @@ end generate;
   ----------------------------------------------------------------------------------
 
 end rtl;
-

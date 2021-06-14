@@ -10,6 +10,8 @@ export TRTRIG=dev/wbm0
 export SDTRIG=tr0
 ###########################################
 # setting for development
+# ! don't forget to (un)comment test pulses
+# at the end of this file
 # KD : dev/ttyUSB0, tr2
 #export TRTRIG=$(saft-eb-fwd tr2)
 #export SDTRIG=tr2

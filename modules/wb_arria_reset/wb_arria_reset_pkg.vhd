@@ -43,14 +43,18 @@ component wb_arria_reset is
             en_wd_tmr    : boolean               := false
           );
   port (
-    clk_sys_i  : in std_logic;
-    rstn_sys_i : in std_logic;
-    clk_upd_i  : in std_logic;
-    rstn_upd_i : in std_logic;
-    hw_version : in std_logic_vector(31 downto 0);
-    slave_o    : out t_wishbone_slave_out;
-    slave_i    : in t_wishbone_slave_in;
-    rstn_o     : out std_logic_vector(rst_channels-1 downto 0));
+    clk_sys_i     : in std_logic;
+    rstn_sys_i    : in std_logic;
+    clk_upd_i     : in std_logic;
+    rstn_upd_i    : in std_logic;
+    hw_version    : in std_logic_vector(31 downto 0);
+    slave_o       : out t_wishbone_slave_out;
+    slave_i       : in t_wishbone_slave_in;
+    phy_rst_o     : out std_logic;
+    phy_aux_rst_o : out std_logic;
+    phy_dis_o     : out std_logic;
+    phy_aux_dis_o : out std_logic;
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0));
 end component;
 
 constant c_arria_reset : t_sdb_device := (

@@ -176,6 +176,8 @@ package monster_pkg is
       sfp_aux_tx_disable_o   : out   std_logic := '0';
       sfp_aux_tx_fault_i     : in    std_logic := '1';
       sfp_aux_los_i          : in    std_logic := '1';
+      wbar_phy_dis_o         : out   std_logic := '0';
+      wbar_phy_aux_dis_o     : out   std_logic := '0';
       phy_rx_ready_o         : out   std_logic;
       phy_tx_ready_o         : out   std_logic;
       phy_aux_rx_ready_o     : out   std_logic;
@@ -587,4 +589,3 @@ package body monster_pkg is
   end f_report_wishbone_address;
 
 end monster_pkg;
-

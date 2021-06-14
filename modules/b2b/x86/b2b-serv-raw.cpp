@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-February-2021
+ *  version : 18-Feb-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000229
+#define B2B_SERV_RAW_VERSION 0x000237
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -69,26 +69,6 @@
 
 using namespace std;
 
-// GID
-#define SIS182EXT    0x3a0              // B2B18 SIS to extraction
-#define SIS182ESR    0x3a1              // B2B18 SIS to ESR
-#define SIS18        0x12c              // SIS18_RING
-#define ESR          0x154              // ESR_RING
-#define CRYRING      0x0d2              // CRYRING_RING
-
-// EVTNO
-#define KICKSTART1   0x031              // event numbers used by B2B...
-#define KICKSTART2   0x045
-#define PMEXT 	     0x800
-#define PMINJ 	     0x801
-#define PREXT 	     0x802
-#define PRINJ 	     0x803
-#define TRIGGEREXT   0x804
-#define TRIGGERINJ   0x805
-#define DIAGKICKEXT  0x806
-#define DIAGKICKINJ  0x807
-#define DIAGEXT      0x808
-#define DIAGINJ      0x809
 
 #define FID          0x1                // format ID of timing messages
 #define EKSOFFSET    -500000            // offset for EVT_KICK_START
@@ -272,7 +252,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
     case tagKde     :
       getval.ext_dKickProb = ((param & 0x00000000ffffffff));
       getval.ext_dKickMon  = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffc;
+      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
       if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
       flagErr              = ((id & B2B_ERRFLAG_KDEXT) != 0);
       getval.flagEvtErr   |= flagErr << tag;
@@ -361,13 +341,13 @@ using namespace std;
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            species extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
+  std::cerr << "  -e<index>            specify extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
-  std::cerr << "Example1: '" << program << " tr1 -e0 sis18'" << std::endl;
+  std::cerr << "Example1: '" << program << " tr1 -e0'" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
@@ -379,33 +359,25 @@ int main(int argc, char** argv)
   // variables and flags for command line parsing
   int  opt;
   bool useFirstDev    = false;
-  char *value_end;
   char *tail;
 
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
-  uint64_t snoopMask   = 0x0;
-  int64_t  snoopOffset = 0x0;
+  int      nCondition  = 0;
 
   char tmp[128];
   int i;
 
-  // variables inject event
-  saftlib::Time eventTime;     // time for next event in PTP time
-  saftlib::Time ppsNext;       // time for next PPS 
-  saftlib::Time wrTime;        // current WR time  
-
   // variables attach, remove
   char    *deviceName = NULL;
-  char    *serverName = NULL;
 
+  char     ringName[DIMMAXSIZE];
   char     prefix[DIMMAXSIZE];
   char     disName[DIMMAXSIZE];
 
-  int  nCondition;
 
-  reqExtRing  = SIS18;
+  reqExtRing  = SIS18_RING;
 
 
   // parse for options
@@ -414,13 +386,15 @@ int main(int argc, char** argv)
     switch (opt) {
       case 'e' :
         switch (strtol(optarg, &tail, 0)) {
-          case 0 : reqExtRing = SIS18; break;
-          case 1 : reqExtRing = ESR;   break;
-          default: ;
+          case 0 : reqExtRing = SIS18_RING; break;
+          case 1 : reqExtRing = ESR_RING;   break;
+          default:
+            std::cerr << "option -e: parameter out of range" << std::endl;
+            return 1;
         } // switch optarg
         if (*tail != 0) {
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
-          exit(1);
+          return 1;
         } // if *tail
         break;
       case 'f' :
@@ -448,11 +422,26 @@ int main(int argc, char** argv)
   } // if optind
 
   deviceName = argv[optind];
-  serverName = argv[optind+1];
   gethostname(disHostname, 32);
+
+  switch(reqExtRing) {
+    case SIS18_RING :
+      nCondition = 15;
+      sprintf(ringName, "sis18");
+      break;
+    case ESR_RING :
+      nCondition = 7;
+      sprintf(ringName, "esr");
+      break;
+    default :
+        std::cerr << "Ring '"<< reqExtRing << "' does not exist" << std::endl;
+        return -1;;
+  } // switch extRing
   
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s", argv[++optind]);
-  else                 sprintf(prefix, "b2b_%s", disHostname);
+
+  
+  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", ringName, argv[++optind]);
+  else                 sprintf(prefix, "b2b_%s", ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);
 
@@ -484,90 +473,126 @@ int main(int argc, char** argv)
 
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-
-    nCondition = 15;;
     std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
     uint32_t tag[nCondition];
-        
+
     // define conditions (ECA filter rules)
     switch (reqExtRing) {
-      case SIS18 : 
+      case SIS18_RING : 
 
-        // SIS18, EVT_KICK_START, EKSOFFSET, signals start of data collecation
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18 << 48) | ((uint64_t)KICKSTART1 << 36);
+        // SIS18, EVT_KICK_START, EKSOFFSET, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
         condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
         tag[0]        = tagStart;
         
         // SIS18, EVT_KICK_START, +100ms (!), signals stop of data collection 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18 << 48) | ((uint64_t)KICKSTART1 << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
         condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
         tag[1]        = tagStop;
         
         // SIS18 to extraction, PMEXT, 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182EXT << 48) | ((uint64_t)PMEXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
         condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[2]        = tagPme;
 
         // SIS18 to extraction, PREXT
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182EXT << 48) | ((uint64_t)PREXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
         condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[3]        = tagPre;
 
         // SIS18 to extraction, DIAGEXT
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182EXT << 48) | ((uint64_t)DIAGEXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
         condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[4]        = tagPde;
 
         // SIS18 to ESR, PMEXT
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)PMEXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
         condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[5]        = tagPme;
 
         // SIS18 to ESR, PMINJ
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)PMINJ << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMINJ << 36);
         condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[6]        = tagPmi;
 
         // SIS18 to ESR, PREXT
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)PREXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
         condition[7]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[7]        = tagPre;
 
         // SIS18 to ESR, PRINJ
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)PRINJ << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);
         condition[8]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[8]        = tagPri;
    
         // SIS18 to ESR, DIAGEXT
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)DIAGEXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
         condition[9]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[9]        = tagPde;
 
         // SIS18 to ESR, DIAGINJ
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS182ESR << 48) | ((uint64_t)DIAGINJ << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGINJ << 36);
         condition[10] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[10]       = tagPdi;
         
         // SIS18 extraction kicker trigger
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18 << 48) | ((uint64_t)TRIGGEREXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
         condition[11] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[11]       = tagKte;
         
         // SIS18 extraction kicker diagnostic
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18 << 48) | ((uint64_t)DIAGKICKEXT << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
         condition[12] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[12]       = tagKde;
         
         // ESR injection kicker trigger
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR << 48) | ((uint64_t)TRIGGERINJ << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);
         condition[13] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[13]       = tagKti;
         
         // ESR injection kicker diagnostic
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR << 48) | ((uint64_t)DIAGKICKINJ << 36);
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
         condition[14] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[14]       = tagKdi;
         
+        break;
+      case ESR_RING : 
+
+        // ESR, EVT_KICK_START, EKSOFFSET, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
+        tag[0]        = tagStart;
+        
+        // ESR, EVT_KICK_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
+        condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
+        tag[1]        = tagStop;
+        
+        // ESR to extraction, PMEXT, 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[2]        = tagPme;
+
+        // ESR to extraction, PREXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[3]        = tagPre;
+
+        // ESR to extraction, DIAGEXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[4]        = tagPde;
+       
+        // ESR extraction kicker trigger
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[5]        = tagKte;
+        
+        // ESR extraction kicker diagnostic
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
+        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[6]        = tagKde;
+
         break;
       default :
         std::cerr << "Extraction ring " << reqExtRing << " does not exit" << std::endl;

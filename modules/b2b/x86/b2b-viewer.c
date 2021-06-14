@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-February-2021
+ *  version : 09-June-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000230
+#define B2B_VIEWER_VERSION 0x000241
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -332,7 +332,7 @@ int printSet(uint32_t sid)
   } // switch mode
 
   strftime(tEKS, 19, "%H:%M:%S", gmtime(&set_secs));
-  printf("--- set values ---\n");
+  printf("--- set values ---                                                     v%8s\n", b2b_version_text(B2B_VIEWER_VERSION));
   switch (set_mode) {
     case 0 :
       printf("ext: %s\n", TXTNA);
@@ -389,7 +389,7 @@ int printDiag(uint32_t sid)
       else  printf("ext: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: 'diff bDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("inj: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
       else  printf("b2b: 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
@@ -405,41 +405,36 @@ int printDiag(uint32_t sid)
 // print kicker info
 int printKick(uint32_t sid)
 {
-  uint32_t remainder;
-  
-  printf("--- kicker --- \n");
+  printf("--- kicker ---                                           #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
 
   // extraction kicker
   if (set_mode == 0) printf("ext: %s\n\n", TXTNA);
   else {
     if ((dicGetval.flag_nok >> 1) & 0x1)  printf("ext: %s\n\n", TXTERROR);
     else {
-      if (set_extT != 0) remainder = dicGetval.ext_dKickMon % (int32_t)set_extT;
-      else               remainder = 0;
-      printf("ext: 'mn delay [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.ext_monOffAct, dicDiagstat.ext_monOffAve, dicDiagstat.ext_monOffSdev,
-             dicDiagstat.ext_monOffMin, dicDiagstat.ext_monOffMax);
-      printf("     'h=1 remn [ns]' act %4d", remainder);
+      printf("ext: monitor delay [ns] %5d", dicGetval.ext_dKickMon);
       if ((dicGetval.flag_nok >> 2) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
-      else                                  printf(", probe dealy [ns] %5d\n", dicGetval.ext_dKickProb);
+      else                                  printf(", probe delay [ns] %5d\n", dicGetval.ext_dKickProb);
+      printf("     mon h=1 ph [ns] act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
+             dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
     } // else flag_nok
   } // else mode == 0
 
   // injection kicker
   if (set_mode < 3) printf("inj: %s\n\n", TXTNA);
   else {
-    if ((dicGetval.flag_nok >> 6) & 0x1) printf("inj: %s\n\n", TXTERROR);
+    if ((dicGetval.flag_nok >> 6) & 0x1)  printf("inj: %s\n\n", TXTERROR);
     else {
-      if (set_extT != 0) remainder = dicGetval.inj_dKickMon % (int32_t)set_extT;
-      else               remainder = 0;
-      printf("inj: 'mn delay [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.inj_monOffAct, dicDiagstat.inj_monOffAve, dicDiagstat.inj_monOffSdev,
-             dicDiagstat.inj_monOffMin, dicDiagstat.inj_monOffMax);
-      printf("     'h=1 remn [ns]' act %4d", remainder);
-      if ((dicGetval.flag_nok >> 2) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
-      else                                  printf(", probe dealy [ns] %5d\n", dicGetval.inj_dKickProb);
+      printf("inj: monitor delay [ns] %5d", dicGetval.inj_dKickMon);
+      if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %5s", TXTUNKWN);
+      else                                  printf(", probe delay [ns] %5d", dicGetval.inj_dKickProb);
+      printf(", diff mon. [ns] %d\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
+      printf("     mon h=1 ph [ns] act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
+             dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
     } // else flag_nok
-  } // else mode == 0
+  } // else mode < 3
 
-  return 3;                                                 // 3 lines
+  return 5;                                                 // 5 lines
 } // printKick
 
 // print status info
@@ -561,8 +556,6 @@ void printData(int flagOnce, uint32_t sid, char *name)
 {
   int i;
   int nLines = 0;
-  char   cTransfer[10];
-  char   cStatus[17];
   char   tLocal[100];
   time_t time_date;
   char   modeStr[50];
@@ -606,7 +599,7 @@ void printData(int flagOnce, uint32_t sid, char *name)
   if (flagPrintStat) nLines += printStatus(sid);
   
   if (!flagOnce) {
-    if (nLines < 24) for (i=0; i < (24 - nLines); i++) printf("\n");
+    if (nLines < 21) for (i=0; i < (21 - nLines); i++) printf("\n");
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <s>tatus              %s\033[0m\n", tLocal);
   } // if not once
@@ -736,7 +729,7 @@ int main(int argc, char** argv) {
             quit = 1;
             break;
           default          :
-            usleep(500000);
+            usleep(1000000);
         } // switch
       } // if !once
     } // while

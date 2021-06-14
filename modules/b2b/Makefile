@@ -4,9 +4,10 @@
 # export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib/pkgconfig/
 # Example usage:
 #   'make clean'                                                 
-#   'make PREFIX= all'                                                (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= all' ;                          don't send kick trigger evts on MIL  (hack: leave PREFIX empty for SCU path)
+#   'make EXTRA_FLAGS='-D USEMIL' PREFIX= all' ;  send kick trigger evts on MIL        (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'       (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -50,6 +51,7 @@ deploy:
 	cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR
 	cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
 	cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
+	cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
 	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18
 	cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18

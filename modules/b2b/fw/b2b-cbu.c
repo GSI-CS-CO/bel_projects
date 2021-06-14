@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-January-2021
+ *  version : 27-Apr-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,13 +34,15 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000229                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000241                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <math.h>
 
 /* includes specific for bel_projects */
 #include "dbg.h"
@@ -387,6 +389,78 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 } // calcExtTime
 
 
+// send event for MIL busses; this is intended for the WR->MIL Gateways for the timing groups ESR_RING and SIS18_RING
+void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
+{
+#ifdef USEMIL
+  uint64_t sendEvtId;                               // evtID to send
+  uint32_t evtNo;                                   // evtNo to send
+
+  switch (gid) {
+    case SIS18_RING :
+      evtNo = B2B_ECADO_B2B_TRIGGERSIS;
+      break;
+    case ESR_RING :
+      evtNo = B2B_ECADO_B2B_TRIGGERESR;
+      break;
+    default :
+      return;
+  } // switch gid
+      
+  sendEvtId = fwlib_buildEvtidV1(gid, evtNo, 0, sid, 0, 0); 
+  fwlib_ebmWriteTM(deadline, sendEvtId, 0, 0);
+#endif
+} // sendMilTrigger
+
+
+// fine tune for individual h=1 cycles
+void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t *dt)
+{
+  uint64_t half;                                    // helper variable
+  uint64_t nDiff;                                   // # we need project Tdiff into the future
+  
+  uint64_t ftTExt;                                  // fine tune extraction period
+  uint64_t ftTInj;                                  // fine tune injection period
+  uint64_t ftMatchExt;                              // fine tune match for extraction
+  uint64_t ftMatchInj;                              // fine tune match for injection
+  int64_t  ftDt1;                                   // fine tune differences ...
+  int64_t  ftDt2;
+  int64_t  ftDt3;
+
+  // fine tuning; align to 'common' multiple of TH1
+  // algorithm: compare match for previous, actual and next iteration
+  // calculate common multiples of h=1 for each ring
+  ftTExt = TH1Ext * nHInj;
+  ftTInj = TH1Inj * nHExt;
+
+  // ftMatch extraction, use input value as reference
+  half        = TH1Ext >> 1;
+  nDiff       = (*tMatch - tH1ExtAs) / TH1Ext;
+  if (((*tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
+  ftMatchExt  = tH1ExtAs + nDiff * TH1Ext;
+
+  // ftMatch injection; use extraction match as reference
+  half   = TH1Inj >> 1;
+  nDiff  = (ftMatchExt - tH1InjAs) / TH1Inj;
+  if (((ftMatchExt - tH1InjAs) % TH1Inj) > half) nDiff++;
+  ftMatchInj  = tH1InjAs + nDiff * TH1Inj;
+
+  //pp_printf("huhu tMatchExt %lu, tMatchInj %lu\n", (uint32_t)(ftMatchExt / 1000000000), (uint32_t)(ftMatchInj / 1000000000));
+  
+  // calc differences, alignment to extraction
+  ftDt1 = (int64_t)(ftMatchExt - ftTExt) - (int64_t)(ftMatchInj - ftTInj);
+  ftDt2 = (int64_t)(ftMatchExt)          - (int64_t)(ftMatchInj);
+  ftDt3 = (int64_t)(ftMatchExt + ftTExt) - (int64_t)(ftMatchInj + ftTInj);
+
+  // decide which is best
+  *tMatch = ftMatchExt;
+  *dt     = ftDt2;
+  if (llabs(ftDt1) < llabs(ftDt2)) {*tMatch = ftMatchExt - ftTExt; *dt = ftDt1;}
+  if (llabs(ftDt3) < llabs(ftDt2)) {*tMatch = ftMatchExt + ftTExt; *dt = ftDt3;}
+  //pp_printf("fine tune dt1 %ld, dt2 %ld, dt3 %ld\n", (int32_t)(ftDt1/1000000), (int32_t)(ftDt2/1000000), (int32_t)(ftDt3/1000000));
+} // rfFineTune
+
+
 uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' RF signal               [as] // sic! atoseconds
@@ -403,10 +477,24 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tD0;                                     // tFast - tSlow                            [as]
   uint64_t tMatchNs;                                // 'tMatch' in units of [ns]                [ns]
   uint64_t epoch;                                   // temporary epoch                          [ns] (!)
-  uint64_t tNow;                                    // current time                             [ns] (!
+  uint64_t tNow;                                    // current time                             [ns] (!)
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
+  uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
+  uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
+
+  // parameters for 'best bunch probing'
+#define LIMITFINETUNE  360                          // do fine tuning if number of h=1 periods within beating is below this number
+#define LIMITMULTIBEAT 120                          // do tuning with multiple beats if number of h=1 periods within beating is below this number
+  uint64_t nH1BeatExt;                              // number of h=1 periods within beating period extraction
+  int      i;
+  int      nProbes;                                 // number of probes
+  int64_t  dt, dtTmp;                               // achieved precision, temporary variable
+  uint64_t tMatch0, tMatchTmp;                      // temporary variables
   
+
+  
+
   // define temporary epoch [ns]
   tNow    = getSysTime();
   epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
@@ -429,7 +517,14 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
 
   tH1ExtAs  = (tH1Ext - epoch) * nineO;
   tH1InjAs  = (tH1Inj - epoch) * nineO;
-  
+
+  // advance measured phase to approximate time of kick
+  // this should prevent adding additional beating times in case of short beating periods
+  nExtAdv   = 1000000000.0 * (tMin - tH1Ext) / TH1Ext;
+  nInjAdv   = 1000000000.0 * (tMin - tH1Inj) / TH1Inj;
+  tH1ExtAs += nExtAdv * TH1Ext;
+  tH1InjAs += nInjAdv * TH1Inj;
+
   // assign local values and convert times 't' to [as], periods 'T' are already in [as])
   if (TRfExt > TRfInj) {
     TSlow   = TRfExt;
@@ -443,7 +538,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
     tSlow   = tH1InjAs;
 
     TFast   = TRfExt;
-    tFast   = tH1ExtAs;;
+    tFast   = tH1ExtAs;
   } // if etraction has higher frequency
 
   // make sure tSlow is earlier than tFast; this is a must for the formula below
@@ -463,12 +558,12 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   *TBeat   = (TSlow / Tdiff);                           // beating period
   if ((*TBeat % Tdiff) > half) *TBeat++;
   *TBeat   = *TBeat * TSlow;
-
+  
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
   //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
-  // check, that tMatch is far enough in the future; if not, add one beating period
-  if ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat;
+  // check, that tMatch is far enough in the future; if not, add one -> chk --> sufficient beating periods
+  while ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat; 
 
   // if the injection ring is larger than the extraction ring
   // we need to align to the injection H=1 group DDS first
@@ -480,13 +575,25 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   } // if injection ring is larger
   //pp_printf("TH1Inj %llu, nPeriod %llu, nHInj %u, flagExtSlow %d\n", TH1Inj, nPeriod, nHInj, flagExtSlow);
   
-  // kickers need to trigger on extraction RF: final alignment to extraction ring
-  // !!! this only works for the simplified case, if the ratio of circumference 
-  // of both rings is an integer number
-  half    = TH1Ext >> 1;
-  nDiff   = (tMatch - tH1ExtAs) / TH1Ext;
-  if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
-  tMatch  = tH1ExtAs + nDiff * TH1Ext;
+  // fine tuning and multi-beat tuning; the following code and parameters are for SIS18->ESR 
+  dt      = 999999999999;
+  tMatch0 = tMatch;
+  nH1BeatExt = *TBeat / TH1Ext;
+  nProbes = 1;                                             // enable fine-tuning
+  if (nH1BeatExt < LIMITFINETUNE)  nProbes = 2;            // enable multi-beat tuning for one ring revolution (chk: hackish h = 2)
+  if (nH1BeatExt < LIMITMULTIBEAT) nProbes = nProbes * 3;  // enable multi-beat tuning (chk: hackish try 3 complete revolutions)
+
+  for (i=0; i < nProbes; i++) {
+    // advance to next bucket (unless in first iteration)
+    tMatchTmp = tMatch0 + (uint64_t)i * *TBeat;
+
+    // fine tune (and align to extraction ring) and check for improved value
+    rfFineTune(tH1ExtAs, tH1InjAs, &tMatchTmp, &dtTmp);
+    if (llabs(dtTmp) < llabs(dt)) {
+      tMatch = tMatchTmp;
+      dt     = dtTmp;
+    } // if dtTmp
+  } // for i
   
   // convert back to TAI [ns]
   tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
@@ -674,9 +781,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid        = setGid[sid]; 
-      bpid       = 0x2000;                                    // bit    13: indicate 'b2b' (bit 12: reserved)
-      bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
-      bpid      |= nTransfer & 0xf;                           // bit 0..3 : 4 bit counter of transfers
+      /*bpid       = 0x2000;        chk                            // bit    13: indicate 'b2b' (bit 12: reserved)
+      /bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
+      bpid      |= nTransfer & 0xf;                       */    // bit 0..3 : 4 bit counter of transfers
       mode       = setMode[sid];
       TH1Ext     = setTH1Ext[sid];
       nHExt      = setNHExt[sid];
@@ -812,6 +919,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
+    sendMilTrigger(tTrigExt+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -827,6 +935,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
+    sendMilTrigger(tTrigInj+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ

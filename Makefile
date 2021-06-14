@@ -79,7 +79,7 @@ gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtc
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -407,6 +407,16 @@ ifa8:		firmware
 
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
+
+# #################################################################################################
+# LM32 firmware
+# #################################################################################################
+
+bg: toolchain
+	$(MAKE) -C modules/burst_generator
+
+bg-clean::
+	$(MAKE) -C modules/burst_generator clean
 
 # #################################################################################################
 # Legacy and unmaintained devices

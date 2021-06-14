@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2021
+ *  version : 16-Feb-2021
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000102
+#define B2BLIB_VERSION 0x000103
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -104,8 +104,8 @@ extern "C" {
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tEKS;                                     // EKS deadline
     int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
-    int32_t  preOff;                                   // offset from EKS to meausured extraction phasee
-    int32_t  priOff;                                   // offset from EKS to meausured injection phasee
+    int32_t  preOff;                                   // offset from EKS to measured extraction phase
+    int32_t  priOff;                                   // offset from EKS to measured injection phase
     int32_t  kteOff;                                   // offset from EKS to KTE deadline
     int32_t  ktiOff;                                   // offset from EKS to KTI deadline
   } getval_t;
@@ -129,24 +129,24 @@ extern "C" {
     double   phaseOffSdev;
     int32_t  phaseOffMin;
     int32_t  phaseOffMax;
-    int32_t  ext_rfOffAct;                            // extraction, measured rf offsety
+    int32_t  ext_rfOffAct;                             // extraction, measured rf offset
     uint32_t ext_rfOffN;
     double   ext_rfOffAve;
     double   ext_rfOffSdev;
     int32_t  ext_rfOffMin;
     int32_t  ext_rfOffMax;
-    int32_t  inj_rfOffAct;                            // injection, measured rf offset
+    int32_t  inj_rfOffAct;                             // injection, measured rf offset
     uint32_t inj_rfOffN;
     double   inj_rfOffAve;
     double   inj_rfOffSdev;
     int32_t  inj_rfOffMin;
     int32_t  inj_rfOffMax;
-    uint32_t ext_rfNueN;                              // extraction, measured rf frequency
+    uint32_t ext_rfNueN;                               // extraction, measured rf frequency
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
     double   ext_rfNueEst;
-    uint32_t inj_rfNueN;                             // injection, measured rf frequency
+    uint32_t inj_rfNueN;                               // injection, measured rf frequency
     double   inj_rfNueAve;
     double   inj_rfNueSdev;
     double   inj_rfNueDiff;
@@ -154,48 +154,48 @@ extern "C" {
   } diagval_t;
 
   typedef struct {    
-    int32_t  eks_doneOffAct;                         // offset from EKS deadline to time when we are done
+    int32_t  eks_doneOffAct;                           // offset from EKS deadline to time when we are done
     uint32_t eks_doneOffN;
     double   eks_doneOffAve;
     double   eks_doneOffSdev;
     int32_t  eks_doneOffMin;
     int32_t  eks_doneOffMax;
-    int32_t  eks_preOffAct;                          // offset from EKS to measured extraction phase
+    int32_t  eks_preOffAct;                            // offset from EKS to measured extraction phase
     uint32_t eks_preOffN;
     double   eks_preOffAve;
     double   eks_preOffSdev;
     int32_t  eks_preOffMin;
     int32_t  eks_preOffMax;
-    int32_t  eks_priOffAct;                          // offset from EKS to measured injection phase
+    int32_t  eks_priOffAct;                            // offset from EKS to measured injection phase
     uint32_t eks_priOffN;
     double   eks_priOffAve;
     double   eks_priOffSdev;
     int32_t  eks_priOffMin;
     int32_t  eks_priOffMax;
-    int32_t  eks_kteOffAct;                          // offset from EKS to KTE
+    int32_t  eks_kteOffAct;                            // offset from EKS to KTE
     uint32_t eks_kteOffN;
     double   eks_kteOffAve;
     double   eks_kteOffSdev;
     int32_t  eks_kteOffMin;
     int32_t  eks_kteOffMax;
-    int32_t  eks_ktiOffAct;                          // offset from EKS to KTE
+    int32_t  eks_ktiOffAct;                            // offset from EKS to KTE
     uint32_t eks_ktiOffN;
     double   eks_ktiOffAve;
     double   eks_ktiOffSdev;
     int32_t  eks_ktiOffMin;
     int32_t  eks_ktiOffMax;
-    int32_t  ext_monOffAct;                          // offset electronics monitor to KTE
-    uint32_t ext_monOffN;
-    double   ext_monOffAve;
-    double   ext_monOffSdev;
-    int32_t  ext_monOffMin;
-    int32_t  ext_monOffMax;
-    int32_t  inj_monOffAct;                          // offset electronics monitor to KTE
-    uint32_t inj_monOffN;
-    double   inj_monOffAve;
-    double   inj_monOffSdev;
-    int32_t  inj_monOffMin;
-    int32_t  inj_monOffMax;
+    int32_t  ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    uint32_t ext_monRemN;
+    double   ext_monRemAve;
+    double   ext_monRemSdev;
+    int32_t  ext_monRemMin;
+    int32_t  ext_monRemMax;
+    int32_t  inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    uint32_t inj_monRemN;
+    double   inj_monRemAve;
+    double   inj_monRemSdev;
+    int32_t  inj_monRemMin;
+    int32_t  inj_monRemMax;
   } diagstat_t;
     
   // ---------------------------------

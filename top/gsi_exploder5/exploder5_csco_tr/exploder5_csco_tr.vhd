@@ -312,6 +312,7 @@ begin
       wr_sfp_det_i           => sfp4_mod0,
       wr_sfp_tx_o            => sfp4_txp_o,
       wr_sfp_rx_i            => sfp4_rxp_i,
+      wbar_phy_dis_o         => sfp4_tx_disable_o,
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
@@ -382,7 +383,6 @@ begin
   sfp1_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
   sfp3_tx_disable_o <= '1';
-  sfp4_tx_disable_o <= '0';
 
   -- Base board LEDs (2.5V outputs, with 2.5V pull-up)
   led_o(1) <= '0' when (led_link_act and led_link_up)='1' else 'Z'; -- red   = traffic/no-link

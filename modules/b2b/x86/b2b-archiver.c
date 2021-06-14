@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Feb-2021
+ *  version : 18-Feb-2021
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000231
+#define B2B_ARCHIVER_VERSION 0x000237
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -244,7 +244,6 @@ void dicSubscribeServices(char *prefix)
 int main(int argc, char** argv) {
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
   char *tmp;
 
   int      getVersion;
