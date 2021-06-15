@@ -448,8 +448,7 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
       if( len == 0 )
          break;
       pData += partLen;
-      if( m_blockReadEbCycleGapTimeUs != 0 )
-         ::usleep( m_blockReadEbCycleGapTimeUs );
+      onDataReadingPause();
    }
 
    return EB_OK;

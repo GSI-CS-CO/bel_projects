@@ -144,7 +144,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
   ,m_pfPollDaqData( nullptr )
 #endif
-  ,m_pMiddleBufferData( nullptr )
+  ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
 {
    initPtr();
@@ -155,7 +155,7 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
   ,m_pfPollDaqData( nullptr )
 #endif
-  ,m_pMiddleBufferData( nullptr )
+  ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
 {
    initPtr();
@@ -168,8 +168,8 @@ DaqAdministration::~DaqAdministration( void )
    for( const auto& i: m_devicePtrList )
       i->m_pParent = nullptr;
 
-   if( m_pMiddleBufferData != nullptr )
-      delete [] m_pMiddleBufferData;
+   if( m_pMiddleBufferMem != nullptr )
+      delete [] m_pMiddleBufferMem;
 }
 
 
@@ -320,6 +320,31 @@ uint DaqAdministration::distributeDataOld( void )
 }
 #endif // ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 
+/*! ---------------------------------------------------------------------------
+ * @brief Function performs a block reading divided in smaller sub-blocks to
+ *        reduce the maximum EB-cycle open time.
+ *
+ * That makes time gaps for making occasions for other EB-access devices
+ * e.g.: SAFTLIB
+ */
+inline
+void DaqAdministration::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
+                                     std::size_t len )
+{
+   const std::size_t maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
+   while( true )
+   {
+      const std::size_t partLen = std::min( len, maxLen );
+      readRam( pData, partLen );
+      addToReadIndex( partLen );
+      writeIndexes();
+      len -= partLen;
+      if( len == 0 )
+         break;
+      pData += partLen;
+      onDataReadingPause();
+   }
+}
 
 /*-----------------------------------------------------------------------------
  */
@@ -329,20 +354,21 @@ uint DaqAdministration::distributeDataNew( void )
 uint DaqAdministration::distributeData( void )
 #endif
 {
-   if( m_pMiddleBufferData == nullptr )
-   {
-      m_pMiddleBufferData = new BufferItem[m_pMiddleBufferSize];
-   }
-
-   #warning MIL-distributeData for DDR3 not implenented yet!
-   const uint toRead = getCurrentNumberOfData();
+   #warning MIL-distributeData for DDR3 not tested yet!
+   const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
    if( toRead == 0 )
       return 0;
-   //TODO
+
+   if( m_pMiddleBufferMem == nullptr )
+   {
+      m_pMiddleBufferMem = new MIDDLE_BUFFER_T[m_pMiddleBufferSize];
+   }
+
+   readDaqData( m_pMiddleBufferMem->aPayload, toRead );
 
    for( uint i = 0; i < toRead; i++ )
    {
-      const BufferItem* pCurrentItem = &m_pMiddleBufferData[i];
+      const BufferItem* pCurrentItem = &m_pMiddleBufferMem[i].oData;
       DaqCompare* pCurrent = findDaqCompare( pCurrentItem->getChannel() );
       if( pCurrent == nullptr )
       {
@@ -352,6 +378,7 @@ uint DaqAdministration::distributeData( void )
 
       pCurrent->m_setValueInvalid =
             (pCurrentItem->getChannel().outputBits & SET_VALUE_NOT_VALID_MASK) != 0;
+
 
       pCurrent->onData( pCurrentItem->getTimestamp(),
                         pCurrentItem->getActValue32(),

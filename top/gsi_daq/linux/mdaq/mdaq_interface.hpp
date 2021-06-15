@@ -118,30 +118,33 @@ public:
 
    class BufferItem: public MIL_DAQ_RAM_ITEM_T
    {
+      static_assert( sizeof( uint32_t ) >= sizeof( MIL_DAQ_VAL_T ), "" );
+      constexpr static uint SHIFT = BIT_SIZEOF( uint32_t ) - BIT_SIZEOF( MIL_DAQ_VAL_T );
+
    public:
       uint64_t getTimestamp( void ) const
       {
-         return timestamp;
+         return gsi::convertByteEndian( timestamp );
       }
 
-      uint getSetValue( void ) const
+      MIL_DAQ_VAL_T getSetValue( void ) const
       {
-         return setValue;
+         return gsi::convertByteEndian( setValue );
       }
 
-      uint getSetValue32( void ) const
+      uint32_t getSetValue32( void ) const
       {
-         return setValue << BIT_SIZEOF(uint16_t);
+         return gsi::convertByteEndian( setValue ) << SHIFT;
       }
 
-      uint getActValue( void ) const
+      MIL_DAQ_VAL_T getActValue( void ) const
       {
-         return actValue;
+         return gsi::convertByteEndian( actValue );
       }
 
-      uint getActValue32( void ) const
+      uint32_t getActValue32( void ) const
       {
-         return actValue << BIT_SIZEOF(uint16_t);
+         return gsi::convertByteEndian( actValue ) << SHIFT;
       }
 
       FG_MACRO_T getChannel( void ) const
@@ -165,6 +168,17 @@ public:
       }
    };
 
+   static_assert( sizeof( BufferItem ) == sizeof( MIL_DAQ_RAM_ITEM_T ), ":-(" );
+
+   union MIDDLE_BUFFER_T
+   {
+      BufferItem             oData;
+      daq::RAM_DAQ_PAYLOAD_T aPayload[RAM_ITEM_PER_MIL_DAQ_ITEM];
+   };
+
+   static_assert( sizeof( MIDDLE_BUFFER_T ) == sizeof( MIL_DAQ_RAM_ITEM_T ) +
+                  !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( daq::RAM_DAQ_PAYLOAD_T )), ":-O" );
+
    class BufferAdmin: public MIL_DAQ_ADMIN_T
    {
    public:
@@ -177,6 +191,8 @@ public:
          indexes.end = 0;
       }
    };
+
+   static_assert( sizeof( BufferAdmin ) == sizeof( MIL_DAQ_ADMIN_T ), ":-|" );
 
 private:
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
@@ -245,6 +261,10 @@ public:
 protected:
    void readIndexes( void );
    void writeIndexes( void );
+   void addToReadIndex( const uint toAdd )
+   {
+      ramRingAddToReadIndex( &m_oBufferAdmin.indexes, toAdd );
+   }
 
 public:
    /*!

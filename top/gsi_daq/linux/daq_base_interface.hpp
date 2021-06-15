@@ -302,6 +302,15 @@ public:
       return 0;
    }
 
+   /*!
+    * @brief The function is called between divided data blocks for
+    *        reading MIL and/or ADDAC DAQ data.
+    *
+    * When this callback function will not overwritten then a
+    * default function will used which invokes the POSIX function
+    * usleep() by the parameter m_blockReadEbCycleGapTimeUs,
+    */
+   virtual void onDataReadingPause( void );
 };
 
 } // namespace Scu

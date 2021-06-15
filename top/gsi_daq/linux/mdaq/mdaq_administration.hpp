@@ -276,8 +276,8 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
    /*!
     * @brief Temporary memory space for all received MIL raw data.
     */
-   BufferItem* m_pMiddleBufferData;
-   uint        m_pMiddleBufferSize;
+   MIDDLE_BUFFER_T* m_pMiddleBufferMem;
+   uint             m_pMiddleBufferSize;
 
 protected:
 
@@ -359,6 +359,8 @@ private:
    DaqCompare* findDaqCompare( const FG_MACRO_T macro );
 
    void initPtr( void );
+
+   void readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData, std::size_t len );
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    uint distributeDataNew( void );

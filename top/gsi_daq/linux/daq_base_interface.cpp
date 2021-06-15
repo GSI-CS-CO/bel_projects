@@ -24,6 +24,7 @@
  */
 #include <string>
 #include <daq_base_interface.hpp>
+#include <unistd.h>
 
 using namespace Scu;
 
@@ -78,6 +79,14 @@ DaqBaseInterface::~DaqBaseInterface( void )
 {
    if( m_ebAccessSelfCreated )
       delete m_poEbAccess;
+}
+
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::onDataReadingPause( void )
+{
+   if( m_blockReadEbCycleGapTimeUs != 0 )
+     ::usleep( m_blockReadEbCycleGapTimeUs );
 }
 
 //================================== EOF ======================================

@@ -227,7 +227,7 @@ FgFeedbackChannel::AddacFb::Receive::operator[]( const std::size_t i ) const
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackChannel::AddacFb::AddacFb( FgFeedbackChannel* pParent,
-                                     daq::DAQ_DEVICE_TYP_T type )
+                                     const daq::DAQ_DEVICE_TYP_T type )
    :Common( pParent )
    ,m_oReceiveSetValue( this, 1 + daq::daqGetSetDaqNumberOfFg( pParent->getFgNumber(), type ) )
    ,m_oReceiveActValue( this, 1 + daq::daqGetActualDaqNumberOfFg( pParent->getFgNumber(), type ) )
@@ -919,6 +919,20 @@ void FgFeedbackAdministration::reset( void )
 
    for( const auto& poDaqAdmin: m_vPollList )
       poDaqAdmin->reset();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::onDataReadingPause( const bool isMil )
+{
+#ifdef CONFIG_MIL_FG
+   if( isMil )
+   {
+      m_oMilDaqAdmin.MiLdaq::DaqAdministration::onDataReadingPause();
+      return;
+   }
+#endif
+   m_oAddacDaqAdmin.daq::DaqAdministration::onDataReadingPause();
 }
 
 //================================== EOF ======================================

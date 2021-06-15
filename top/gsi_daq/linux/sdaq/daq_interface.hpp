@@ -165,7 +165,7 @@ public:
     */
    bool isAddacDaqSupport( void ) const
    {
-      return getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET;
+      return getEbAccess()->isAddacDaqSupport();
    }
 
    /*!

@@ -193,7 +193,7 @@ private:
       DAQ_T    m_lastValue;
    #endif
    public:
-      AddacFb( FgFeedbackChannel* pParent, daq::DAQ_DEVICE_TYP_T type );
+      AddacFb( FgFeedbackChannel* pParent, const daq::DAQ_DEVICE_TYP_T type );
       virtual ~AddacFb( void );
 
    private:
@@ -614,6 +614,8 @@ private:
         ,m_pParent( pParent )
       {
       }
+
+      void onDataReadingPause( void ) override;
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -647,6 +649,7 @@ private:
          return 0;
       }
 
+      void onDataReadingPause( void ) override;
    }; // class MilDaqAdministration
 
    /*!
@@ -1030,7 +1033,39 @@ public:
    void clearBuffer( const bool update = true );
 
    void reset( void );
+
+protected:
+   /*!
+    * @brief The function is called between divided data blocks for
+    *        reading MIL and/or ADDAC DAQ data.
+    *
+    * When this callback function will not overwritten then a
+    * default function will used which invokes the POSIX function
+    * usleep() by the parameter m_blockReadEbCycleGapTimeUs,
+    * @param isMil If true then the function has been invoked by a
+    *              MIL data-transfer.
+    */
+   virtual void onDataReadingPause( const bool isMil );
+
 }; // class FgFeedbackAdministration
+
+/*! ---------------------------------------------------------------------------
+ */
+inline
+void FgFeedbackAdministration::AddacAdministration::onDataReadingPause( void )
+{
+   m_pParent->onDataReadingPause( false );
+}
+
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ */
+inline
+void FgFeedbackAdministration::MilDaqAdministration::onDataReadingPause( void )
+{
+   m_pParent->onDataReadingPause( true );
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
