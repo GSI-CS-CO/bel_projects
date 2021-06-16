@@ -4136,7 +4136,7 @@ end generate Quench_Matrix_Gen;
                                                       AW_SK_Input_Reg(1)(5) <='0';
                                                       IOBP_SK_Aktiv_LED_i(1)  <=  (IOBP_SK_Output(1)(5)    &  Deb72_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
                                                       IOBP_SK_Input(1) (4 downto 0) <= ( PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));  
-                                                      IOBP_SK_Output(1)(0)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
+                                                      IOBP_SK_Output(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
                                                       PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
                                                       PIO_ENA_SLOT_1 <= std_logic_vector'("100000");
                                                       IOBP_SK_Sel_LED(1) <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
