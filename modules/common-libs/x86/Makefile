@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := example-ctl 
+TARGETS     := example-ctl example-ivtpar 
 
 
 EXTRA_FLAGS ?=
@@ -22,11 +22,14 @@ all: $(TARGETS)
 example-ctl: example-ctl.c
 	$(CC) $(CFLAGS) common-lib.c -o example-ctl example-ctl.c $(LIBS)
 
+example-ivtpar: example-ivtpar.c
+	$(CC) $(CFLAGS) common-lib.c ivtpar.c -o example-ivtpar example-ivtpar.c $(LIBS)
+
 clean:
 	rm -f *.o $(TARGETS)
 
 deploy:
-	 mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin
+	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin	
 
 .PHONY: all clean

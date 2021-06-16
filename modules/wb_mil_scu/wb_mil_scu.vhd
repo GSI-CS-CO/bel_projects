@@ -916,7 +916,7 @@ BEGIN
     END IF;
 
     hw6408_rdy_sync          <= hw6408_rdy;
-    slave_i_stb_dly          <= slave_i.stb;
+    slave_i_stb_dly          <= slave_i.stb and slave_i.cyc;
     slave_i_stb_dly2         <= slave_i_stb_dly;
     slave_i_we_del           <= slave_i.we;
     mil_trm_start_dly        <= mil_trm_start;
