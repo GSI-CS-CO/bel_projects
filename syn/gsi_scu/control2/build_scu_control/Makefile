@@ -183,6 +183,7 @@ endif
  # ACU-test
 
 DOX_EXTRACT_STATIC         = "YES"
+DOX_EXTRACT_PRIVATE = "YES"
 # DOX_EXTRACT_ALL            = "YES"
 DOX_MACRO_EXPANSION        = "YES"
 DOX_EXPAND_ONLY_PREDEF     = "YES"
