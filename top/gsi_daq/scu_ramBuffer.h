@@ -230,21 +230,7 @@ typedef uint32_t RAM_RING_INDEX_T;
    (sizeof(_DAQ_CHANNEL_CONTROL) / sizeof(RAM_DAQ_PAYLOAD_T)) + \
    !!(sizeof(_DAQ_CHANNEL_CONTROL) % sizeof(RAM_DAQ_PAYLOAD_T)) \
 )
-
-/*! ---------------------------------------------------------------------------
- * @brief Data type of ring buffer indexes.
- */
-typedef struct PACKED_SIZE
-{
-   RAM_RING_INDEX_T offset;   /*!<@brief offset in alignment units of physical memory */
-   RAM_RING_INDEX_T capacity; /*!<@brief Maximum capacity of ring- buffer */
-   RAM_RING_INDEX_T start;    /*!<@brief Start index of ring buffer */
-   RAM_RING_INDEX_T end;      /*!<@brief End- index of ring buffer */
-} RAM_RING_INDEXES_T;
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
-#endif
-
+//#endif
 /*!
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */

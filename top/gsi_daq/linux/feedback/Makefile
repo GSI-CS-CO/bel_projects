@@ -34,7 +34,7 @@ SOURCE += $(DAQ_DIR)/daq_fg_allocator.c
 
 # NO_LTO = 1
 
-DOX_INPUT += $(DAQ_DIR)/scu_ramBuffer.h
+# DOX_INPUT += $(DAQ_DIR)/scu_ramBuffer.h
 DOX_INPUT += $(DAQ_DIR)/scu_ddr3.h
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
