@@ -46,13 +46,14 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/sdb_ids.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
 DOX_INPUT += $(DAQ_DIR)/scu_control_config.h
-
+DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq
 endif
 
 DOX_EXAMPLE_PATH = $(DAQ_LINUX_DIR)/../example/feedback/
+DOX_EXTRACT_PRIVATE = "YES"
 
 DOX_INPUT += $(DAQ_LINUX_DIR)/feedback/scu_feedback.md
 DOX_FILE_PATTERNS += *.md

@@ -233,9 +233,26 @@ private:
    }; // class MilFb
 #endif // ifdef CONFIG_MIL_FG
 
+   /*!
+    * @brief Number of function-generator
+    */
    const uint         m_fgNumber;
+   
+   /*!
+    * @brief Pointer to the parent object in which this object becomes
+    *        registered.
+    */
    FgFeedbackDevice*  m_pParent;
+
+   /*!
+    * @brief Pointer keeps either the address of a object of type AddacFb
+    *        or MilFb.
+    */
    Common*            m_pCommon;
+
+   /*!
+    * @brief Last received timestamp.
+    */
    uint64_t           m_lastTimestamp;
 
 public:
