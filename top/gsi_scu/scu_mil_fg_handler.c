@@ -274,8 +274,10 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
  * @todo Storing the MIL-DAQ data in the DDR3-RAM instead wasting of
  *       shared memory.
  */
-STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
-                         const uint16_t actValue, const uint32_t setValue
+STATIC void pushDaqData( const FG_MACRO_T fgMacro,
+                         const uint64_t timestamp,
+                         const uint16_t actValue,
+                         const uint32_t setValue
                       #ifdef CONFIG_READ_MIL_TIME_GAP
                          , const bool setValueInvalid
                       #endif
@@ -313,13 +315,13 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
       */
       ramRingAddToReadIndex( &indexes, ARRAY_SIZE(pl.ramPayload) );
    }
-   
+
    for( unsigned int i = 0; i < ARRAY_SIZE(pl.ramPayload); i++ )
    {
       ramWriteItem( &g_scuDaqAdmin.oRam, ramRingGetWriteIndex( &indexes ), &pl.ramPayload[i] );
       ramRingIncWriteIndex( &indexes );
    }
-   
+
    g_shared.mDaq.indexes = indexes;
 
 #else
