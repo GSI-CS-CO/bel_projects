@@ -276,9 +276,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
    MSI_ITEM_T m;
-   /*!
-    * @todo Use MSI_ITEM_T instead of MSI_T in future!
-    */
+
    while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
    {
       switch( GET_LOWER_HALF( m.adr )  )
