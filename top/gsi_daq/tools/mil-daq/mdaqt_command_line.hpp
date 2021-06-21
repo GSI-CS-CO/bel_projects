@@ -29,6 +29,7 @@
  #include "parse_opts.hpp"
  #include "mdaqt.hpp"
  #include "gnuplotstream.hpp"
+ #include <string.h>
 #endif
 
 using namespace CLOP;

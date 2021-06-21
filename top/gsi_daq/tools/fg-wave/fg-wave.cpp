@@ -36,6 +36,14 @@ using namespace fgw;
 
 /*! ---------------------------------------------------------------------------
  */
+void onUexpectedException( void )
+{
+  ERROR_MESSAGE( "Unexpected exception occurred!" );
+  throw 0;     // throws int (in exception-specification)
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void static printPolynomVect( const POLYMOM_VECT_T& rVect )
 {
    for( const auto& polynom: rVect )
@@ -136,6 +144,7 @@ int static printInfo( const POLYMOM_VECT_T& rVect, const bool beVerbose )
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** ppArgv )
 {
+   set_unexpected( onUexpectedException );
    try
    {
       CommandLine oCmdLine( argc, ppArgv );
@@ -184,7 +193,11 @@ int main( int argc, char** ppArgv )
       ERROR_MESSAGE( "Exception occurred: \"" << e.what() << '"' );
       return EXIT_FAILURE;
    }
-   
+   catch( ... )
+   {
+      ERROR_MESSAGE( "Undefined exception occurred!" );
+   }
+
    return EXIT_SUCCESS;
 }
 

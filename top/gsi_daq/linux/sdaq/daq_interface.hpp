@@ -25,7 +25,7 @@
 #ifndef _DAQ_INTERFACE_HPP
 #define _DAQ_INTERFACE_HPP
 
-//#include <string.h>
+#include <string.h>
 #include <daq_base_interface.hpp>
 
 #include <daq_command_interface.h>

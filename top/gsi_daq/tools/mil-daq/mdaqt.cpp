@@ -67,6 +67,14 @@ using namespace MiLdaqt;
 
 #define FSM_TRANSITION_SELF( attr... ) break
 
+/*! ---------------------------------------------------------------------------
+ */
+void onUexpectedException( void )
+{
+  ERROR_MESSAGE( "Unexpected exception occurred!" );
+  throw 0;     // throws int (in exception-specification)
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -389,6 +397,7 @@ int mdaqtMain( int argc, char** ppArgv )
  */
 int main( int argc, char** ppArgv )
 {
+   set_unexpected( onUexpectedException );
    try
    {
       return mdaqtMain( argc, ppArgv );
