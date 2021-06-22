@@ -18,6 +18,7 @@ INCLUDE_DIRS += $(DAQ_DIR)/feSupport/scu/etherbone
 INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
 INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 INCLUDE_DIRS += $(DAQ_DIR)/tools
+INCLUDE_DIRS += $(SCU_DIR)/generated
 
 SOURCE =  $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
@@ -47,6 +48,9 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
 DOX_INPUT += $(DAQ_DIR)/feSupport/scu/etherbone/EtherboneConnection.hpp
 DOX_INPUT += $(DAQ_DIR)/scu_control_config.h
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
+DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
+DOX_INPUT += $(SCU_DIR)/scu_mailbox.h
+DOX_INPUT += $(SCU_DIR)/scu_circular_buffer.h
 
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq

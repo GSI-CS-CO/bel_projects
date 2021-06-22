@@ -141,9 +141,6 @@ ifdef CPLUSPLUS_MODULE_PRESENT
    DEFINES += CONFIG_CPLUSPLUS_MODULE_PRESENT
 endif
 
-OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
-OPT_DEFINES := $(addprefix -D,$(DEFINES) )
-OPT_DEFINES += -DGIT_REVISION="$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
 
 ifdef LIBS
    ARG_LIBS := $(addprefix -l,$(LIBS) )
@@ -154,9 +151,14 @@ endif
 
 
 GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
+INCLUDE_DIRS  += $(GENERATED_DIR)
 DEPLOY_DIR    ?= ./deploy_$(CPU)
 WORK_DIR      ?= $(DEPLOY_DIR)/work
 TARGET_DIR    ?= $(DEPLOY_DIR)/result
+
+OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
+OPT_DEFINES := $(addprefix -D,$(DEFINES) )
+OPT_DEFINES += -DGIT_REVISION="$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
 
 OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
 DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep
