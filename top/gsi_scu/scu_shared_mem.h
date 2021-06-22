@@ -53,6 +53,8 @@
   #endif
 #endif
 
+//#include <shared_mmap.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -111,7 +113,16 @@ STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, fgMacro ) ==
 #define RAM_ITEM_PER_MIL_DAQ_ITEM                                                         \
    (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) ) +    \
     !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( ADD_NAMESPACE( daq, RAM_DAQ_PAYLOAD_T ) )))
- 
+
+#if !defined( __DOXYGEN__ ) && defined(__lm32__)
+/* 
+ * CAUTION: When this static assertion has been triggered then you have to
+ *          change the value of the macro RAM_MDAQ_MAX_CAPACITY defined in
+ *          daq_ring_admin.h. 
+ */
+STATIC_ASSERT( RAM_MDAQ_MAX_CAPACITY % RAM_ITEM_PER_MIL_DAQ_ITEM == 0 ); 
+#endif   
+
 /*!
  * @brief Hybrid type simplifying the storing of MIL-DAQ data in the SCU-RAM
  * @note At the time it is the DDR3 RAM yet.
@@ -188,6 +199,8 @@ typedef enum
 /*!
  * @ingroup SHARED_MEMORY
  * @brief Data type of the temperature object in the shared memory.
+ * @note CAUTION: Don't move the size of this data type because the SAFT-LIB
+ *       use this as offset for the object of type  FG_SHARED_DATA_T!
  */
 typedef struct PACKED_SIZE
 {  /*!
@@ -235,6 +248,7 @@ typedef struct PACKED_SIZE
 } SCU_TEMPERATURE_T;
 
 #ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( SCU_TEMPERATURE_T ) == 3 * (sizeof(uint64_t) + sizeof(uint32_t)));
 STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, board_id ) == 0 );
 STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, ext_id ) ==
                offsetof( SCU_TEMPERATURE_T, board_id ) + sizeof( uint64_t ));
@@ -254,6 +268,10 @@ STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_temp ) ==
  * @ingroup SHARED_MEMORY
  * @brief Data type in shared memory for exchanging function generator data
  *        between SAFT-lib and LM32-firmware.
+ * @see saftlib/drivers/fg_regs.h
+ * @note CAUTION: Don't move the position and/or change the data type
+ *       of any of the member variables, because the SAFT-LIB expect this order! 
+
  */
 typedef struct PACKED_SIZE
 {  /*!
@@ -370,6 +388,8 @@ STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aChannelBuffers ) ==
  * @brief Definition of memory area which is known to the SAFT-LIB.
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
  * @see saftlib/drivers/fg_regs.h
+ * @note CAUTION: Don't move the position and/or change the data type
+ *       of any of the member variables, because the SAFT-LIB expect this order! 
  */
 typedef struct PACKED_SIZE
 {  /*!
@@ -405,7 +425,8 @@ STATIC_ASSERT( offsetof( SAFT_LIB_T, oFg ) == sizeof( SCU_TEMPERATURE_T ) );
 typedef struct PACKED_SIZE
 {  /*!
     * @brief Shared memory area which is known to the SAFT-LIB.
-    * @note  CAUTION: Don't move this member!
+    * @note CAUTION: Don't move the position and/or change the data type
+    *       of this member object, because the SAFT-LIB expect this order!
     */
    SAFT_LIB_T  oSaftLib;
 
@@ -433,6 +454,9 @@ typedef struct PACKED_SIZE
 #endif
 } SCU_SHARED_DATA_T;
 
+#ifndef __DOXYGEN__
+STATIC_ASSERT( SHARED_SIZE >= sizeof( SCU_SHARED_DATA_T ) );
+#endif
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define DAQ_SHM_OFFET (offsetof( SCU_SHARED_DATA_T, mdaq ) + sizeof( MIL_DAQ_ADMIN_T ))
