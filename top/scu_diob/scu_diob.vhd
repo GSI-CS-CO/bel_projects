@@ -780,8 +780,8 @@ component quench_detection is
            nReset : in STD_LOGIC;
            time_pulse : in STD_LOGIC;
            delay : in STD_LOGIC;
-           QuDIn: in STD_LOGIC_VECTOR (24 downto 0);
-           mute: in STD_LOGIC_VECTOR (24 downto 0);
+           QuDIn: in STD_LOGIC_VECTOR (29 downto 0);
+           mute: in STD_LOGIC_VECTOR (29 downto 0);
            QuDOut : out STD_LOGIC);
 end component;
 
@@ -1547,7 +1547,7 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
   signal IOBP_hw_il_Dtack:           std_logic;
   signal IOBP_hw_il_data_to_SCUB:    std_logic_vector(15 downto 0);
 
-  TYPE   t_quench_array     is array (0 to 4) of std_logic_vector(24 downto 0);
+  TYPE   t_quench_array     is array (0 to 4) of std_logic_vector(29 downto 0);
   signal quench_enable_signal: t_quench_array := (others=>(others=>'0'));
   TYPE   t_quench_reg_array     is array (0 to 7) of std_logic_vector(15 downto 0);
   signal quench_reg: t_quench_reg_array := (others=>(others=>'0'));
@@ -4078,20 +4078,20 @@ quench_test_all : quench_detection
               nReset => rstn_sys,
               time_pulse => Ena_Every_1us,
               delay => AW_Config1(0),
-              QuDIn => Deb60_in(24 downto 0),
+              QuDIn => Deb60_in(29 downto 0),
               --mute => "1"&X"FFFFFC",
-              mute => IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0) ,
+              mute => IOBP_Masken_Reg2 (14 downto 0) & IOBP_Masken_Reg1 (14 downto 0) ,
               QuDOut => quench_out(0));
 
-Quench_Matrix_Gen:  for J in 1 to 3 generate
+Quench_Matrix_Gen:  for J in 1 to 4 generate
     quench_test : quench_detection
         Port map( clk => clk_sys,
                   nReset => rstn_sys,
                   time_pulse => Ena_Every_1us,
                   delay => AW_Config1(J),
-                  QuDIn => Deb60_in(24 downto 0),
+                  QuDIn => Deb60_in(29 downto 0),
                   --mute => "1"&X"FFFFFC",
-                  mute => (IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0)) or not (quench_enable_signal(J) ) ,
+                  mute => (IOBP_Masken_Reg2 (14 downto 0) & IOBP_Masken_Reg1 (14 downto 0)) or not (quench_enable_signal(J) ) ,
                   QuDOut => quench_out(J));
 end generate Quench_Matrix_Gen;
 
@@ -7421,10 +7421,10 @@ BEGIN
 
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
-      quench_enable_signal(1) <= quench_reg (1) (9 downto 0) &  quench_reg (0) (14 downto 0);
-      quench_enable_signal(2) <= quench_reg (3) (9 downto 0) &  quench_reg (2) (14 downto 0);
-      quench_enable_signal(3) <= quench_reg (5) (9 downto 0) &  quench_reg (4) (14 downto 0);
-      quench_enable_signal(4) <= quench_reg (7) (9 downto 0) &  quench_reg (6) (14 downto 0);
+      quench_enable_signal(1) <= quench_reg (1) (14 downto 0) &  quench_reg (0) (14 downto 0);
+      quench_enable_signal(2) <= quench_reg (3) (14 downto 0) &  quench_reg (2) (14 downto 0);
+      quench_enable_signal(3) <= quench_reg (5) (14 downto 0) &  quench_reg (4) (14 downto 0);
+      quench_enable_signal(4) <= quench_reg (7) (14 downto 0) &  quench_reg (6) (14 downto 0);
 
     when OTHERS =>
     --  STANDARD OUTPUT OUTREG
