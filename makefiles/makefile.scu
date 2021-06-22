@@ -280,6 +280,10 @@ CBR += "\#include <FreeRTOS.h>\n"
 CBR += "\#include <task.h>\n\n"
 CBR += "\#define TASK_TICK_RATE_STR TO_STRING( configTICK_RATE_HZ ) \" Hz\"\n"
 endif
+ifdef ADDITIONAL_HEADDER_IN_BUILD_ID
+CBR += "\#define __IN_BUILD_ID__\n"
+CBR += "\#include <$(notdir $(ADDITIONAL_HEADDER_IN_BUILD_ID))>\n\n"
+endif
 CBR += "\#define BUILDID __attribute__((section(\".$(BUILDID_NAME)\"))) "'\\'"\n"
 CBR += "                __attribute__((used))\n\n"
 CBR += "const char BUILDID build_id_rom[] = \""'\\'"\n"

@@ -145,6 +145,8 @@ endif
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
 
+# ADDITIONAL_HEADDER_IN_BUILD_ID = $(SCU_DIR)/scu_shared_mem.h
+
 # For DOXYGEN only, header files which doesn't have a appropriate C-file.
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
@@ -161,7 +163,12 @@ DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 # NO_LTO := 1
 
 ifdef ADDAC_DAQ
-   SHARED_SIZE = 81968
+   #SHARED_SIZE = 81968
+   ifdef MIL_DAQ_USE_DDR3
+     SHARED_SIZE = 24832
+   else
+     SHARED_SIZE = 65780
+   endif
    ifdef USE_HISTORY
       STACK_SIZE  =  4096
       # STACK_SIZE = 5104
@@ -174,7 +181,7 @@ endif
  STACK_SIZE  =  4096
 
 # SCU_URL = scuxl0118
- SCU_URL = scuxl0107
+# SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
 # SCU_URL = scuxl0212

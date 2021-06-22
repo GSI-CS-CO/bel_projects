@@ -519,12 +519,17 @@ void main( void )
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Resets: %u\n"
            "Found MsgBox at 0x%p. MSI Path is 0x%p\n"
+           "Shared memory size: %u bytes\n"
        #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
             "CAUTION! Time gap reading for MIL FGs activated!\n"
             ESC_NORMAL
        #endif
-           , __reset_count, pCpuMsiBox, pMyMsi );
+           , __reset_count,
+             pCpuMsiBox,
+             pMyMsi,
+             sizeof( SCU_SHARED_DATA_T )
+          );
 
 #ifdef CONFIG_MIL_FG
    milInitTasks();
