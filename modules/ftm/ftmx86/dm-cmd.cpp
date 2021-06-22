@@ -89,6 +89,13 @@ static void help(const char *program) {
 
 }
 
+std::string formatTime(uint64_t t) {
+  std::string temp = nsTimeToDate(t);
+  int length = temp.length();
+  //~ std::cout << temp << ", " << length << ", " << temp.substr(0,length-1) << std::endl;
+  return temp.substr(0,length-1);
+}
+
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showMemSpace();
@@ -118,7 +125,6 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
     }
   }
 
-
   const uint16_t width = 149;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
@@ -126,7 +132,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint64_t timeWrNs = cdm.getDmWrTime();
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-80s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, nsTimeToDate(timeWrNs).c_str() );
+  printf("\u2551 DataMaster: %-80s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, formatTime(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
@@ -197,7 +203,6 @@ void showRawStatus(const char *netaddress, CarpeDM& cdm) {
   }
 }
 
-
 void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   uint8_t cpuQty = cdm.getCpuQty();
@@ -215,7 +220,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
-
+  std::string tsFormat = "%-31s"; // format of timestamps with nanoseconds, left-justified
 
   uint64_t timeWr = cdm.getDmWrTime();
 
@@ -225,79 +230,89 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
   printf("\u2551 DataMaster: %30s %40s", netaddress, "\u2551\n");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 ECA-Time: 0x%08x%08x \u2502 %.19s %31s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, nsTimeToDate(timeWr).c_str(), "\u2551");
+  printf((std::string("\u2551 ECA-Time: 0x%08x%08x          \u2502 ") + tsFormat + std::string(" %10s\n")).c_str(),
+          (uint32_t)(timeWr>>32), (uint32_t)timeWr, formatTime(timeWr).c_str(), "\u2551");
 
 
   // Boot Time and Msg Count
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %10s \u2502 %20s %2s\n",
-      "Cpu", "BootTime", "CPU Msg Cnt", "State", "Bad Wait-Time Cnt", "\u2551");
+  printf((std::string("\u2551 %3s \u2502 ") + tsFormat + std::string(" \u2502 %14s \u2502 %10s \u2502%10s\n")).c_str(),
+      "Cpu", "BootTime", "CPU Msg Cnt", "State", "Bad W-Time\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 0x%08x \u2502 %20u %2s\n", hr[i].cpu, nsTimeToDate(hr[i].bootTime).c_str(), (long long unsigned int)hr[i].msgCnt, hr[i].stat, hr[i].badWaitCnt, "\u2551");
+    printf((std::string("\u2551 %3u \u2502 ") + tsFormat + std::string(" \u2502 %14llu \u2502 0x%08x \u2502 %8u %2s\n")).c_str(),
+            hr[i].cpu, formatTime(hr[i].bootTime).c_str(), (long long unsigned int)hr[i].msgCnt, hr[i].stat, hr[i].badWaitCnt, "\u2551");
   }
 
   // Most recent schedule modification (time, issuer, type of operation)
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf((std::string("\u2551 %3s \u2502 ") + tsFormat + std::string(" \u2502 %8s \u2502 %8s \u2502 %16s %1s\n")).c_str(),
+          "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].smodTime).c_str(), hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
+    printf((std::string("\u2551 %3u \u2502 ") + tsFormat + std::string(" \u2502 %8s \u2502 %8s \u2502 %16s %1s\n")).c_str(),
+            hr[i].cpu, formatTime(hr[i].smodTime).c_str(), hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
   }
 
   // Most recent command (time, issuer, type of operation)
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf((std::string("\u2551 %3s \u2502 ") + tsFormat + std::string(" \u2502 %8s \u2502 %8s \u2502 %16s %1s\n")).c_str(),
+          "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].cmodTime).c_str(), hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
+    printf((std::string("\u2551 %3u \u2502 ") + tsFormat + std::string(" \u2502 %8s \u2502 %8s \u2502 %16s \u2551\n")).c_str(),
+            hr[i].cpu, formatTime(hr[i].cmodTime).c_str(), hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str());
   }
 
   //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s %4s\n",
-      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "Warnings", "Max Backlog", "\u2551");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %12s \u2551\n",
+      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "Warnings", "Max Backlog");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 %9u %6s\n",
+    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 %12u \u2551\n",
       hr[i].cpu,
       (int)hr[i].minTimeDiff,
       (int)hr[i].maxTimeDiff,
       (int)hr[i].avgTimeDiff,
       (int)hr[i].warningThreshold,
       hr[i].warningCnt,
-      hr[i].maxBacklog,
-      "\u2551");
+      hr[i].maxBacklog);
   }
   //
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %50s %3s\n", "Cpu",  "1st Warning", "Location", "\u2551");
+  printf((std::string("\u2551 %3s \u2502 ") + tsFormat + std::string(" \u2502 %-38s \u2551\n")).c_str(), "Cpu",  "1st Warning", "Location");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
 
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, nsTimeToDate(hr[i].warningTime).c_str(), hr[i].warningNode.c_str(), "\u2551");
+    printf((std::string("\u2551 %3u \u2502 ") + tsFormat + std::string(" \u2502 %38s \u2551\n")).c_str(),
+            hr[i].cpu, formatTime(hr[i].warningTime).c_str(), hr[i].warningNode.c_str());
   }
 
+  const std::string filler = std::string("                       \u2551\n");
   // Hardware Delay Report
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %10s \u2502 %9s \u2502 %19s \u2502 %9s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
+  printf((std::string("\u2551 %10s \u2502 %9s \u2502 ") + tsFormat + filler).c_str(), "T observ",  "maxPosDif", "MaxPosUpdate");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %10llu \u2502 %9lld \u2502 %19s \u2502 %9lld \u2502 %19s %3s\n",
-    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, nsTimeToDate(hwdr.timeMaxPosUDts).c_str(),
-    (signed long long)hwdr.timeMinNegDif, nsTimeToDate(hwdr.timeMinNegUDts).c_str(), "\u2551");
+  printf((std::string("\u2551 %10llu \u2502 %9lld \u2502 ") + tsFormat + filler).c_str(),
+    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, formatTime(hwdr.timeMaxPosUDts).c_str());
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf((std::string("\u2551 %10s \u2502 %9s \u2502 ") + tsFormat + filler).c_str(), "T observ", "minNegDif", "minNegUpdate");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf((std::string("\u2551 %10llu \u2502 %9lld \u2502 ") + tsFormat + filler).c_str(),
+    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMinNegDif, formatTime(hwdr.timeMinNegUDts).c_str());
 
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %19s \u2502 %18s\n",
-      "Cpu", "STL obs.", "MaxStreak",  "Current", "MaxStreakUpdate", "\u2551");
+  printf((std::string("\u2551 %3s \u2502 %10s \u2502 %10s \u2502 %10s \u2502 ") + tsFormat + std::string("   \u2551\n")).c_str(),
+      "Cpu", "STL obs.", "MaxStreak",  "Current", "MaxStreakUpdate", "");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %9u \u2502 %9u \u2502 %9u \u2502 %19s \u2502 %18s\n",
+    printf((std::string("\u2551 %3u \u2502 %10u \u2502 %10u \u2502 %10u \u2502 ") + tsFormat + std::string("   \u2551\n")).c_str(),
       (int)i,
       hwdr.stallObservIntvl,
       hwdr.sdr[i].stallStreakMax,
       hwdr.sdr[i].stallStreakCurrent,
-      nsTimeToDate(hwdr.sdr[i].stallStreakMaxUDts).c_str(),
-      "\u2551");
+      formatTime(hwdr.sdr[i].stallStreakMaxUDts).c_str());
   }
 
 
