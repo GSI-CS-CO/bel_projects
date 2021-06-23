@@ -1081,8 +1081,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
       if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
         *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
-        if ((milStatus = fwlib_wait4MILEvent(uniTimeout, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
-          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagIsLate); // wait for event from ECA (hoping this is MIL Event -> TLU)
+        if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
+          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagIsLate);        // wait for event from ECA (hoping this is MIL Event -> TLU)
           switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
             {                                                                      
             case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
