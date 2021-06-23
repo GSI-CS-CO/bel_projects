@@ -1572,7 +1572,7 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
 
 
 TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
-signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
+signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  
 signal IOBP_SK_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
 signal IOBP_Masken_Reg6:        std_logic_vector(15 downto 0);
 signal IOBP_Masken_Reg7:        std_logic_vector(15 downto 0);
@@ -7420,7 +7420,7 @@ BEGIN
       UIO_ENA(1 downto 0)    <=  (others => '1');                  -- Output-Enable
 
     when x"DEDE" => --Quench Detection Development
-      IOBP_Output <= "0000000000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
+      IOBP_Output <= "000000000000"&quench_out(4) & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
       quench_enable_signal(1) <= quench_reg (1) (14 downto 0) &  quench_reg (0) (14 downto 0);
       quench_enable_signal(2) <= quench_reg (3) (14 downto 0) &  quench_reg (2) (14 downto 0);
       quench_enable_signal(3) <= quench_reg (5) (14 downto 0) &  quench_reg (4) (14 downto 0);
@@ -7472,7 +7472,7 @@ WHEN  c_AW_INLB12S1.ID  =>
 --########################################################################################
 --########################################################################################
 --####                                                                                 ###
---####      Anwender-IO: FG902_0xx -- Newe Interlock-Backplane mit 12 Steckplätzen     ###
+--####      Anwender-IO: FG902_050 -- Newe Interlock-Backplane mit 12 Steckplätzen     ###
 --####                                                                                 ###
 --########################################################################################
 --########################################################################################
@@ -7579,7 +7579,6 @@ END IF;
 
 
 ( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
-( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
 ( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
 ( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
 ( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
