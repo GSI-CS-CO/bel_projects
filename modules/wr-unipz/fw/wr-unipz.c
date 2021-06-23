@@ -600,7 +600,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   status = actStatus;
 
   // wait for MIL event
-  milStatus = fwlib_wait4MILEvent(COMMON_MILTIMEOUT, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
+  milStatus = fwlib_wait4MILEvent(COMMON_MILTIMEOUT * 1000, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
   if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
   if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other MIL error
 
