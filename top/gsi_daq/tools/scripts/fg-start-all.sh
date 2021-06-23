@@ -57,11 +57,31 @@ then
    die "Program saft-fg-ctl not found!"
 fi
 
+LM32_CTL=$(which saft-ecpu-ctl)
+if [ ! -x "$LM32_CTL" ]
+then
+   die "Program saft-ecpu-ctl not found!"
+fi
+
+IO_CTL=$(which saft-io-ctl)
+if [ ! -x "$IO_CTL" ]
+then
+   die "Program saft-io-ctl not found!"
+fi
+
+LM32_CTL="$LM32_CTL tr0"
+IO_CTL="$IO_CTL tr0"
 
 killall daemon 2>/dev/null
 killall $(basename $FG_CTL) 2>/dev/null
 
-FG_LIST=$( $FG_CTL -si 2>/dev/null | egrep 'fg-[0-9]{1,3}-[0-1]' | awk '{printf $1; printf "\n"}')
+FG_LIST=$( $FG_CTL -si 2>/dev/null | egrep 'fg-[0-9]{1,3}-[0-9]{1,3}' | awk '{printf $1; printf "\n"}')
+if [ ! -n "$FG_LIST" ]
+then
+   die "No function generator(s) found!"
+fi
+
+
 sleep 0.5
 
 if [ -n "$2" ]
@@ -75,9 +95,14 @@ n=1
 for i in $FG_LIST
 do
   slot=$(echo $i | tr '-' ' ' | awk '{printf $2}')
+  dev=$(echo $i | tr '-' ' ' | awk '{printf $3}')
   if [ "$slot" -gt "0" ] && [ "$slot" -le "12" ]
   then
-     echo -e ${ESC_FG_CYAN}"${n}: activating on slot ${slot}: $i"${ESC_NORMAL}
+     if [ "$dev" -gt "1" ]
+     then
+        die "Invalid device number $dev for ADDAC-FG on slot $slot !"  
+     fi
+     echo -e ${ESC_FG_CYAN}"${n}: activating ADDAC-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
      $FG_CTL -rf $i -g <$1 &
      sleep 0.5
      let n+=1
