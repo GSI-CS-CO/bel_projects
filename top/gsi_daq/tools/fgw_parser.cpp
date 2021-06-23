@@ -95,10 +95,10 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
       FSM_INIT_FSM( READ_COEFF_A );
       do
       {
-         int number;
+         long number;
          try
          {
-            number = stoi( oLine, &pos );
+            number = stol( oLine, &pos );
          }
          catch( ... )
          {
@@ -118,7 +118,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             case READ_COEFF_A: // No break here.
             case READ_COEFF_B:
             {
-               if( !gsi::isInRange( number, SHRT_MIN, SHRT_MAX ) )
+               if( !gsi::isInRange( number, static_cast<long>(SHRT_MIN), static_cast<long>(SHRT_MAX) ) )
                   throwStateMessage( state, i );
                break;
             }
@@ -126,14 +126,14 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             case READ_SHIFT_A: // No break here.
             case READ_SHIFT_B:
             {
-               if( !gsi::isInRange( number, 0,  static_cast<int>(BIT_SIZEOF(uint64_t)-BIT_SIZEOF(uint16_t))) )
+               if( !gsi::isInRange( number, 0L,  static_cast<long>(BIT_SIZEOF(uint64_t)-BIT_SIZEOF(uint16_t))) )
                   throwStateMessage( state, i );
                break;
             }
 
             case READ_COEFF_C:
             {
-               if( !gsi::isInRange( number, INT_MIN, INT_MAX ) )
+               if( !gsi::isInRange( number, static_cast<long>(LONG_MIN), static_cast<long>(LONG_MAX) ) )
                   throwStateMessage( state, i );
                break;
             }
@@ -143,7 +143,7 @@ int parseInStream( POLYMOM_VECT_T& rVect, istream& rInput )
             { /*
                * The value shall not exceed the size of 3 bits!
                */
-               if( !gsi::isInRange( number, 0, 7 ) )
+               if( !gsi::isInRange( number, 0L, 7L ) )
                   throwStateMessage( state, i );
                break;
             }

@@ -50,12 +50,14 @@ LIBS += stdc++
 
 # CALL_ARGS = ../../../gsi_scu/sinus-test.txt
 #CALL_ARGS = sinus-test500.fgw -c
-CALL_ARGS = gs11mu2-volt-raw-all.fgw -c
+CALL_ARGS = ramp_ifa_scu.fgw -c
+#CALL_ARGS = gs11mu2-volt-raw-all.fgw -c
 # CALL_ARGS = -r3 sinus.fgw
 # CALL_ARGS = -z gs11mu2-curr-raw-p1.fgw 
 #CALL_ARGS = -zd100 q.fgw
 #CALL_ARGS = -zd100 q.fgw
 #  DEBUG = 1
+
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
