@@ -26,7 +26,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              );
 
 // wait for MIL event or timeout, returns (error) status
-uint32_t fwlib_wait4MILEvent(uint32_t msTimeout,      // timeout [ms]
+uint32_t fwlib_wait4MILEvent(uint32_t usTimeout,      // timeout [us]
                              uint32_t *evtData,       // data received with event (4 relevant bits)
                              uint32_t *evtCode,       // event code (8 relevant bits)
                              uint32_t *virtAcc,       // virtual accelerator (4 relevant bits)
