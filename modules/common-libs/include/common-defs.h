@@ -15,8 +15,8 @@
 #define  COMMON_US_ASMNOP        31           // # of asm("nop") operations per microsecond
 #define  COMMON_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond
 #define  COMMON_DEFAULT_TIMEOUT  100          // default timeout used by main loop [ms]
-#define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action
-#define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events
+#define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action [ms]
+#define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events [ms]
 #define  COMMON_AHEADT           500000       // ahead interval for sending timing messages [ns]
 #define  COMMON_LATELIMIT        250000       // if below this limit, messages are considered to be delivered 'late'
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
