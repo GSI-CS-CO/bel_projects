@@ -69,8 +69,38 @@ then
    die "Program saft-io-ctl not found!"
 fi
 
-LM32_CTL="$LM32_CTL tr0"
-IO_CTL="$IO_CTL tr0"
+WB_WRITE=$(which eb-write)
+if [ ! -x "$WB_WRITE" ]
+then
+   die "Program eb-write not found!"
+fi
+
+SAFT_CTL=$(which saft-ctl)
+if [ ! -x "$SAFT_CTL" ]
+then
+   die "Program saft-ctl not found!"
+fi
+
+
+OUT="tr0"
+
+LM32_CTL="$LM32_CTL $OUT"
+IO_CTL="$IO_CTL $OUT"
+SAFT_CTL="$SAFT_CTL $OUT"
+WB_WRITE="$WB_WRITE dev/wbm0"
+
+if [ -n "$(pidof daemon)" ]
+then
+   echo "CAUTION: FESA daemon is running! If you will run this script then the FESA-daemon will terminate!"
+   read -r -p "Are you sure? [y/N] " response
+   case "$response" in
+      [yY][eE][sS]|[yY]) 
+   ;;
+      *)
+         exit 0
+   ;;
+   esac    
+fi
 
 killall daemon 2>/dev/null
 killall $(basename $FG_CTL) 2>/dev/null
@@ -81,7 +111,6 @@ then
    die "No function generator(s) found!"
 fi
 
-
 sleep 0.5
 
 if [ -n "$2" ]
@@ -91,12 +120,15 @@ else
    m=1
 fi
 
+IS_MIL=false
 n=1
+lastSlot=-1
 for i in $FG_LIST
 do
-  slot=$(echo $i | tr '-' ' ' | awk '{printf $2}')
+  socket=$(echo $i | tr '-' ' ' | awk '{printf $2}')
+  slot=$(( socket & 0x000F ))
   dev=$(echo $i | tr '-' ' ' | awk '{printf $3}')
-  if [ "$slot" -gt "0" ] && [ "$slot" -le "12" ]
+  if [ "$slot" -eq "$socket" ]
   then
      if [ "$dev" -gt "1" ]
      then
@@ -104,18 +136,64 @@ do
      fi
      echo -e ${ESC_FG_CYAN}"${n}: activating ADDAC-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
      $FG_CTL -rf $i -g <$1 &
-     sleep 0.5
-     let n+=1
-     [ "$n" -gt "$m" ] && break
   else
-     echo -e ${ESC_FG_BLUE}"omitting $i"${ESC_NORMAL}
+     if [ "$slot" -ge "1" ]
+     then
+        if [ "$lastSlot" -ne "$slot" ]
+        then
+           echo -e ${ESC_FG_BLUE}"Sending broadcast and clearing power up bit of SIO on slot ${slot}."${ESC_NORMAL}
+           slaveBase=$((slot*0x20000+0x400800))
+           $WB_WRITE $(printf "0x%X/2" $slaveBase) 0x100
+           $WB_WRITE $(printf "0x%X/2" $((slaveBase+2))) 0x12FF
+        fi
+        echo -e ${ESC_FG_CYAN}"${n}: activating SIO-MIL-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
+     else
+        if [ "$lastSlot" -ne "$slot" ]
+        then
+           echo -e ${ESC_FG_BLUE}"Sending broadcast and clearing power up bit of MIL-extention."${ESC_NORMAL}
+           $WB_WRITE 0x9000/4 0x100
+           $WB_WRITE 0x9004/4 0x12FF
+        fi
+        echo -e ${ESC_FG_CYAN}"${n}: activating extention-MIL-FG ${dev} on socket ${socket}: $i"${ESC_NORMAL}
+     fi
+     lastSlot=$slot
+     IS_MIL=true
+     $FG_CTL -rf $i -g <$1 &
   fi
+  sleep 0.5
+  let n+=1
+  [ "$n" -gt "$m" ] && break
 done
 
-echo -e "\n\n*** Press enter to terminate all running function-generators ***"
-read key
+if [ "$IS_MIL" == true ]
+then
+   echo -e ${ESC_FG_BLUE}"At least one MIL fg found. Creating action for LM32."${ESC_NORMAL}
+   $LM32_CTL -x
+   $LM32_CTL -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFF 0x0 0xDEADBEEF -d
+   
+   echo -e ${ESC_FG_BLUE}"Generating 10 us trigger strobe on LEMO."${ESC_NORMAL}
+   $IO_CTL -x
+   $IO_CTL -n B1 -o1
+   $IO_CTL -n B1 -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFFFFFF 0 0x0 0x1 -u
+   $IO_CTL -n B1 -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFFFFFF 10000 0x0 0x0 -u
 
+   $SAFT_CTL inject 0xCAFEBABE 0xFFFFFFFFFFFFFFFF 10000 -p
+fi
+
+echo
+echo
+read -p "$(echo -e "*** Press enter to terminate all running function-generators ***\n\n")"
+
+echo -e ${ESC_FG_BLUE}"Terminating all running function generators."${ESC_NORMAL}
 killall $(basename $FG_CTL) 2>/dev/null
+
+if [ "$IS_MIL" == true ]
+then
+   echo -e ${ESC_FG_BLUE}"Clearing action for LM32."${ESC_NORMAL} 
+   $LM32_CTL -x
+   $IO_CTL -x
+fi
+
 echo "done"
 
 #=================================== EOF ======================================
