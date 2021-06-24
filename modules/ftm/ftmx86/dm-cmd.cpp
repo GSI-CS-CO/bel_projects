@@ -92,8 +92,12 @@ static void help(const char *program) {
 std::string formatTime(uint64_t t) {
   std::string temp = nsTimeToDate(t);
   int length = temp.length();
-  //~ std::cout << temp << ", " << length << ", " << temp.substr(0,length-1) << std::endl;
-  return temp.substr(0,length-1);
+  std::string zeros = ".000000000";
+  // Use the timestamp part (first 19 characters), add a dot and leading zeros
+  // for the nanoseconds and the digits for the nanoseconds.
+  std::string temp1 = temp.substr(0,19) + zeros.substr(0, 10 - (length - 23)) + temp.substr(20, length - 23);
+  //~ std::cout << temp << ", " << length << ", " << temp1 << std::endl;
+  return temp1;
 }
 
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
