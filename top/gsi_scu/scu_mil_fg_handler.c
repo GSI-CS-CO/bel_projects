@@ -504,20 +504,22 @@ STATIC inline void feedMilFg( const unsigned int socket,
    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
  #endif
    if( isMilExtentionFg( socket ) )
-   {
+   { /*
+      * Send FG-data via MIL-extention adapter.
+      */
       status = write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
                               FC_BLK_WR | devNum );
    }
    else
-   {  /*
-       * Send FG-data via SCU-bus-slave MIL adapter "SIO"
-       */
+   { /*
+      * Send FG-data via SCU-bus-slave MIL adapter "SIO"
+      */
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
-#if __GNUC__ >= 9
+ #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
-#endif
+ #endif
    if( status != OKAY )
    {
       milPrintDeviceError( status, getFgSlotNumber( socket ), __func__ );
@@ -549,7 +551,9 @@ void handleMilFg( const unsigned int socket,
    }
 
    if( !ctrlReg.bv.isRunning )
-   {
+   { /*
+      * Send signal to SAFT-lib
+      */
       makeStop( channel );
       return;
    }
@@ -561,11 +565,21 @@ void handleMilFg( const unsigned int socket,
    g_shared.oSaftLib.oFg.aRegs[channel].ramp_count++;
 
    if( ctrlReg.bv.devStateIrq )
+   { /*
+      * Send signal to SAFT-lib
+      */
       makeStart( channel );
+   }
 
    if( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq )
-   {
+   { /*
+      * Send signal to SAFT-lib.
+      */
       sendRefillSignalIfThreshold( channel );
+
+     /*
+      * Send data via MIL-bis to function generator.
+      */
       feedMilFg( socket, devNum, ctrlReg, pSetvalue );
    }
 }

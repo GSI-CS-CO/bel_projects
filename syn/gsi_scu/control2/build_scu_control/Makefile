@@ -15,7 +15,7 @@ TARGET         := scu_control
 
  SCU_MIL := 1
  MIL_GAP := 1
-  MIL_DAQ_USE_DDR3 := 1
+#  MIL_DAQ_USE_DDR3 := 1
  ADDAC_DAQ := 1
 # USE_LINUX_PRINTF := 1
 # DEFINES +=  CONFIG_DISABLE_CRITICAL_SECTION
@@ -181,7 +181,7 @@ endif
  STACK_SIZE  =  4096
 
 # SCU_URL = scuxl0118
-# SCU_URL = scuxl0107
+ SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
