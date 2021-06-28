@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/bash
 # Get arguments
 device=$1
 gateware=$2
