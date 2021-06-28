@@ -178,8 +178,8 @@ DaqAdministration::~DaqAdministration( void )
 void DaqAdministration::initPtr( void )
 {
    if( m_pMiddleBufferSize == 0 )
-         m_pMiddleBufferSize = getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM;
-   cout << m_pMiddleBufferSize << endl; //!!
+      m_pMiddleBufferSize = std::min( getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM, 100UL );
+
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    if( m_pfPollDaqData != nullptr )
       return;

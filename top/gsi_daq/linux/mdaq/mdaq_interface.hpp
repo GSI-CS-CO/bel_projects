@@ -94,22 +94,22 @@ public:
 
       uint getMilDaqAddress( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqDeviceOld( this );
+         return getMilDaqDeviceOld( this );
       }
 
       uint getMilDaqLocation( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqSocketOld( this );
+         return getMilDaqSocketOld( this );
       }
 
       uint getMilDaqScuBusSlot( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqScuBusSlotOld( this );
+         return getMilDaqScuBusSlotOld( this );
       }
 
       uint getMilDaqScuMilExtention( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqScuMilExtentionOld( this );
+         return getMilDaqScuMilExtentionOld( this );
       }
    };
 
@@ -124,7 +124,8 @@ public:
    public:
       uint64_t getTimestamp( void ) const
       {
-         return gsi::convertByteEndian( timestamp );
+         //return gsi::convertByteEndian( timestamp );
+         return MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), uint32_t(GET_LOWER_HALF( timestamp)) );
       }
 
       MIL_DAQ_VAL_T getSetValue( void ) const
@@ -147,24 +148,26 @@ public:
          return gsi::convertByteEndian( actValue ) << SHIFT;
       }
 
+      static_assert( sizeof( fgMacro ) == sizeof( uint32_t ), "" );
+
       FG_MACRO_T getChannel( void ) const
       {
-         return fgMacro;
+         return gsi::convertByteEndian( fgMacro );
       }
 
       uint getMilDaqLocation( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqSocket( this );
+         return getMilDaqSocket( this );
       }
 
       uint getMilDaqScuBusSlot( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqScuBusSlot( this );
+         return MiLdaq::getMilDaqScuBusSlot( this );
       }
 
       uint getMilDaqScuMilExtention( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqScuMilExtention( this );
+         return MiLdaq::getMilDaqScuMilExtention( this );
       }
    };
 
