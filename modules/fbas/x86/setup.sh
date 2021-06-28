@@ -288,12 +288,8 @@ function start_test3() {
 
     echo "Step 2: enable MPS processing for TX and RX"
     echo "for TX: enable sending MPS flags and events, you will see EB frames in wireshark, verify their event ID, MPS flag etc"
-    eb-write $FBASTX 0x4060508/4 0x30
-    wait_seconds 1
-
     echo "for RX: enable monitoring lifetime of received MPS flags"
-    eb-write $FBASRX 0x4060508/4 0x30
-    wait_seconds 1
+    enable_mps
 
     echo "Step 3: inject a timing event locally to generate MPS event"
     echo "OK(1) flag, grpID=1, evtID=0"
@@ -341,15 +337,31 @@ function start_test3() {
     saft-ctl fbasrx -p inject 0xffffdddd00000000 0x0 1000000
 }
 
-
-function stop_test3() {
-    echo "Disable MPS"
-    eb-write $FBASTX 0x4060508/4 0x31
-    wait_seconds 1
-
-    eb-write $FBASRX 0x4060508/4 0x31
+function stop_mps() {
+    echo "Stop MPS on $1"
+    eb-write $1 0x4060508/4 0x31
     wait_seconds 1
 }
+
+function start_mps() {
+    echo "Start MPS on $1"
+    eb-write $1 0x4060508/4 0x30
+    wait_seconds 1
+}
+
+function disable_mps() {
+    echo "Disable MPS"
+    stop_mps $FBASTX
+    stop_mps $FBASRX
+}
+
+
+function enable_mps() {
+    echo "Enable MPS"
+    start_mps $FBASRX
+    start_mps $FBASTX
+}
+
 ##########################################################
 # Test 2: Measure time between a signalling and TLU events (0xffffeeee00000000 and 0xffff100000000000)
 #

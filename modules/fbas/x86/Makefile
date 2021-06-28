@@ -1,7 +1,11 @@
 # If expandtab is set in vi, then press CTRL+v and tab to insert tab.
 # expandtab is used to convert tab to spaces.
 
-.PHONY: mytest saftd setup_nodes setup_fbastx setup_fbasrx start_test3 stop_test3
+.PHONY: mytest \
+	saftd setup_nodes setup_fbastx setup_fbasrx \
+	start_test3 \
+	disable_mps enable_mps \
+	stop_mps_tx stop_mps_rx
 
 SHELL=/bin/bash
 
@@ -23,5 +27,14 @@ setup_fbasrx:
 start_test3:
 	source setup.sh && start_test3
 
-stop_test3:
-	source setup.sh && stop_test3
+stop_mps_tx:
+	source setup.sh && stop_mps ${FBASTX}
+
+stop_mps_rx:
+	source setup.sh && stop_mps ${FBASRX}
+
+disable_mps:
+	source setup.sh && disable_mps
+
+enable_mps:
+	source setup.sh && enable_mps
