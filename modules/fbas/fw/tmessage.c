@@ -94,9 +94,9 @@ void resetItr(timedItr_t* itr, uint64_t now)
  * \param itr   read-access iterator that specifies next flag to send
  * \param evtid event ID used to send a timing message
  *
- * \ret none
+ * \ret status
  **/
-void sendMpsFlag(timedItr_t* itr, uint64_t evtid)
+status_t sendMpsFlag(timedItr_t* itr, uint64_t evtid)
 {
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
@@ -112,6 +112,10 @@ void sendMpsFlag(timedItr_t* itr, uint64_t evtid)
     // update iterator with deadline
     resetItr(itr, deadline);
   }
+  else
+    return COMMON_STATUS_ERROR;
+
+  return COMMON_STATUS_OK;
 }
 
 /**
@@ -125,14 +129,14 @@ void sendMpsFlag(timedItr_t* itr, uint64_t evtid)
  * \param evtid event ID used to send a timing message
  * \param extra number of extra events
  *
- * \ret none
+ * \ret status
  **/
-void sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t extra)
+status_t sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t extra)
 {
   uint64_t now = getSysTime();
 
   if (itr->last >= now) // delayed by a new cycle
-    return;
+    return COMMON_STATUS_ERROR;
 
   // send specified MPS event
   fwlib_ebmWriteTM(now, evtid, buf->param, 1);
@@ -144,6 +148,8 @@ void sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t e
       fwlib_ebmWriteTM(now, evtid, buf->param, 1);
     }
   }
+
+  return COMMON_STATUS_OK;
 }
 
 /**

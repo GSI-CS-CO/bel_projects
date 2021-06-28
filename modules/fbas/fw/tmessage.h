@@ -6,6 +6,7 @@
 
 #include "aux.h"
 #include "common-fwlib.h"
+#include "common-defs.h"
 #include "fbas_common.h"
 
 extern mpsTimParam_t bufMpsFlag[N_MPS_CHANNELS];   // buffer for MPS flags
@@ -13,8 +14,8 @@ extern timedItr_t rdItr;                           // read-access iterator for M
 
 void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
 void resetItr(timedItr_t* itr, uint64_t now);
-void sendMpsFlag(timedItr_t* itr, uint64_t evtid);
-void sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t extra);
+status_t sendMpsFlag(timedItr_t* itr, uint64_t evtid);
+status_t sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t extra);
 mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt);
 mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw);
 mpsTimParam_t* expireMpsFlag(timedItr_t* itr);
