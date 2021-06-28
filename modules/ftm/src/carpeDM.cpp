@@ -102,9 +102,9 @@ void CarpeDM::forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx)                    
 
 vEbwrs& CarpeDM::startThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx)                                           { return impl_->startThr(ew, cpuIdx, thrIdx);} //Requests Thread to start
 vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx)                          { return impl_->startPattern(ew, sPattern, thrIdx);} //Requests Pattern to start
-vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern)                                          { return impl_->startPattern(ew, sPattern);} //Requests Pattern to start on first free thread
+//vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern)                                          { return impl_->startPattern(ew, sPattern);} //Requests Pattern to start on first free thread
 vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx)                          { return impl_->startNodeOrigin(ew, sNode, thrIdx);} //Requests thread <thrIdx> to start at node <sNode>
-vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode)                                          { return impl_->startNodeOrigin(ew, sNode);} //Requests a start at node <sNode>
+//vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode)                                          { return impl_->startNodeOrigin(ew, sNode);} //Requests a start at node <sNode>
 vEbwrs& CarpeDM::stopPattern(vEbwrs& ew, const std::string& sPattern)                                           { return impl_->stopPattern(ew, sPattern);} //Requests Pattern to stop
 vEbwrs& CarpeDM::stopNodeOrigin(vEbwrs& ew, const std::string& sNode)                                           { return impl_->stopNodeOrigin(ew, sNode);} //Requests stop at node <sNode> (vEbwrs& ew, flow to idle)
 vEbwrs& CarpeDM::abortPattern(vEbwrs& ew, const std::string& sPattern)                                          { return impl_->abortPattern(ew, sPattern);} //Immediately aborts a Pattern
@@ -121,15 +121,15 @@ vEbwrs& CarpeDM::clearHealth(vEbwrs& ew)                                        
 vEbwrs& CarpeDM::resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx)                                     { return impl_->resetThrMsgCnt(ew, cpuIdx, thrIdx);}
 vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget)                                  { return impl_->blockAsyncClearQueues(ew, sTarget);}
 vEbwrs& CarpeDM::switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst)                     { return impl_->switching(ew, sTarget, sDst);}
-vEbwrs& CarpeDM::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target)              { return impl_->createNonQCommand(ew, type,  target);}
+vEbwrs& CarpeDM::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdThr)              { return impl_->createNonQCommand(ew, type,  target, cmdThr);}
             
 
 
 vEbwrs& CarpeDM::createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr )
 { return impl_->createLockCtrlCommand(ew, type, target, lockRd, lockWr );}
 
-vEbwrs& CarpeDM::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid)
-{ return impl_->createQCommand(ew, type, target, cmdPrio, cmdQty, vabs, cmdTvalid);}
+vEbwrs& CarpeDM::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint8_t cmdThr)
+{ return impl_->createQCommand(ew, type, target, cmdPrio, cmdQty, vabs, cmdTvalid, cmdThr);}
 
 vEbwrs& CarpeDM::createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait )
 { return impl_->createWaitCommand(ew, type, target, cmdPrio, cmdQty, vabs, cmdTvalid, cmdTwait, abswait );}
@@ -140,11 +140,11 @@ vEbwrs& CarpeDM::createFlowCommand(vEbwrs& ew, const std::string& type, const st
 vEbwrs& CarpeDM::createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo)
 { return impl_->createFlushCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, qIl, qHi, qLo);}
 
-vEbwrs& CarpeDM::createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr)
-{ return impl_->createFullCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr);}
+vEbwrs& CarpeDM::createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr)
+{ return impl_->createFullCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr, cmdThr);}
 
-vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr )
-{ return impl_->createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma,qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr );}
+vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr)
+{ return impl_->createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma,qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr, cmdThr );}
                 
 
                 int CarpeDM::send(vEbwrs& ew) {return impl_->send(ew);}
@@ -153,7 +153,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
             int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                               {return impl_->startThr(cpuIdx, thrIdx);}
             int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)              {return impl_->startPattern(sPattern, thrIdx);}
             int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)              {return impl_->startNodeOrigin(sNode, thrIdx);}
-            int CarpeDM::startNodeOrigin(const std::string& sNode)                              {return impl_->startNodeOrigin(sNode);}
+            //int CarpeDM::startNodeOrigin(const std::string& sNode)                              {return impl_->startNodeOrigin(sNode);}
             int CarpeDM::stopPattern(const std::string& sPattern)                               {return impl_->stopPattern(sPattern);}
             int CarpeDM::stopNodeOrigin(const std::string& sNode)                               {return impl_->stopNodeOrigin(sNode);}
             int CarpeDM::abortPattern(const std::string& sPattern)                              {return impl_->abortPattern(sPattern);}

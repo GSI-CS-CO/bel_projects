@@ -204,6 +204,7 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_ORIGIN       : g[v].np = (node_ptr) new     Origin(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sOrigin;     g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;

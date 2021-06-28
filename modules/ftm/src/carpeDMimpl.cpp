@@ -152,6 +152,8 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,     g));
     dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat,  g));
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,   g));
+    dp.property(dnp::Cmd::sDstThr,              boost::get(&myVertex::cmdDestThr,   g));
+    
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,      g));
 
     return (const boost::dynamic_properties)dp;
@@ -428,7 +430,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   int CarpeDM::CarpeDMimpl::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; startThr(ew, cpuIdx, thrIdx );           return send(ew);}
   int CarpeDM::CarpeDMimpl::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; startPattern(ew, sPattern, thrIdx);      return send(ew);}
   int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; startNodeOrigin(ew, sNode, thrIdx );     return send(ew);}
-  int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
+  //int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
   int CarpeDM::CarpeDMimpl::stopPattern(const std::string& sPattern)                              { vEbwrs ew; stopPattern(ew, sPattern  );             return send(ew);}
   int CarpeDM::CarpeDMimpl::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; stopNodeOrigin(ew, sNode);               return send(ew);}
   int CarpeDM::CarpeDMimpl::abortPattern(const std::string& sPattern)                             { vEbwrs ew; abortPattern(ew, sPattern);              return send(ew);}

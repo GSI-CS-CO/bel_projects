@@ -529,7 +529,7 @@ int main(int argc, char* argv[]) {
 
     if      (cmp == dnt::sCmdNoop)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-      cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0);
+      cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, thrIdx);
     }
     else if (cmp == "status")  {
       showStatus(netaddress, cdm, verbose);
@@ -567,14 +567,14 @@ int main(int argc, char* argv[]) {
       std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
 
       if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) {
-        cdm.createCommand(ew, dnt::sSwitch, fromNode, toNode, 0, 0, false, 0, false, false, false, false, false, false, false, false);
+        cdm.createCommand(ew, dnt::sSwitch, fromNode, toNode, 0, 0, false, 0, false, false, false, false, false, false, false, false, thrIdx);
       } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
       targetName = fromNode.c_str();
     }
     else if (cmp == dnt::sSwitch)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (( ((para != NULL) && ( para != std::string("")))) && (((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para)))) {
-        cdm.createCommand(ew, dnt::sSwitch, targetName,        para, 0,            0, false,        0, false, false, false, false, false, false, false, false);
+        cdm.createCommand(ew, dnt::sSwitch, targetName,        para, 0,            0, false,        0, false, false, false, false, false, false, false, false, thrIdx);
       } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
@@ -625,7 +625,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "asyncclear") {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
-          cdm.createNonQCommand(ew, dnt::sCmdAsyncClear, targetName);
+          cdm.createNonQCommand(ew, dnt::sCmdAsyncClear, targetName, thrIdx);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not clear block " << targetName << "'s queues. Cause: " << err.what() << std::endl;
         }

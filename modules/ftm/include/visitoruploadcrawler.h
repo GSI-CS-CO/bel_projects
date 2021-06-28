@@ -16,6 +16,7 @@ class Noop;
 class TimingMsg;
 class Flow;
 class Switch;
+class Origin;
 class Flush;
 class Wait;
 
@@ -45,6 +46,7 @@ class VisitorUploadCrawler {
     vAdr getSwitchTarget(void) const;
     vAdr getFlowDst(void)   const;
     vAdr getSwitchDst(void)   const;
+    vAdr getOriginDst(void)   const;
     vAdr getFlushOvr(void)  const;
     vAdr getListDst(void)   const;
     static const std::string exIntro;
@@ -58,6 +60,7 @@ class VisitorUploadCrawler {
     virtual void visit(const TimingMsg& el) const;
     virtual void visit(const Flow& el) const;
     virtual void visit(const Switch& el) const;
+    virtual void visit(const Origin& el) const;
     virtual void visit(const Flush& el) const;
     virtual void visit(const Noop& el) const;
     virtual void visit(const Wait& el) const;

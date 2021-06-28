@@ -53,6 +53,20 @@ void Switch::deserialise(uint8_t* b) {
   Event::deserialise(b);
 }
 
+void Origin::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST,   va[ADR_ORIGIN_DEST]);
+  writeLeNumberToBeBytes(b + (uint8_t)ORIGIN_CPU,      va[ADR_ORIGIN_CPU]);
+  writeLeNumberToBeBytes(b + (uint8_t)ORIGIN_THR, this->thread);
+}
+
+
+
+void Origin::deserialise(uint8_t* b) {
+  Event::deserialise(b);
+  this->thread  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[ORIGIN_THR]);
+}
+
 void Command::deserialise(uint8_t* b)   {
   Event::deserialise(b);
   this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
@@ -146,7 +160,20 @@ void Switch::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Switch @ %llu, ", p, (long long unsigned int)this->tOffs);
-}  
+}
+
+
+void Origin::show(void) const {
+  Origin::show(0, "");
+}
+
+void Origin::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+  printf("%s*** Origin @ %llu, ", p, (long long unsigned int)this->tOffs);
+}    
 
 void Command::show(void) const {
   Command::show(0, "");

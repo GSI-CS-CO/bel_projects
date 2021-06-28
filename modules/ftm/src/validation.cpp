@@ -32,6 +32,8 @@ void init() {
         cRules.insert(ConstellationRule(n::sSwitch,      e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst, cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sOrigin,      e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sOrigin,      e::sOriginDst, cNonMeta, 1, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdFlushOvr, cNonMeta, 0, 1  ));

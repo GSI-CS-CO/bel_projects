@@ -48,6 +48,7 @@ namespace DotStr {
       const std::string sCmdTarget    = "target";     // Links to Command's Target Block
       const std::string sSwitchTarget = "target";     // Links to Switch's Target 
       const std::string sSwitchDst    = "switchdst";     // Links to Switch's Target Block
+      const std::string sOriginDst    = "origindst";     // Links to Switch's Target Block
       const std::string sCmdFlowDst   = "flowdst";    // Links to Flow Command's destination node
       const std::string sCmdFlushOvr  = "flushovr";   // Links to Flush Command's destination overrride
       const std::string sDynId        = "dynid";      // Links to Source for dynamic ID field in Tmsg nodes
@@ -124,6 +125,7 @@ namespace DotStr {
         const std::string sDst         = "dest";          // a flow command's destination node. only used in cmd dots, schedules use edges instead
         const std::string sDstPattern  = "destpattern";   // a flow command's destination pattern. only used in cmd dots, schedules use edges instead
         const std::string sDstBeamproc = "destbeamproc";  // a flow command's destination beam proccess. only used in cmd dots, schedules use edges instead
+        const std::string sDstThr      = "destThr";       // a commands destination thread. Used in start / startpattern / origin commands.
         const std::string sPermanent   = "permanent";     // specifies if changes by this command are permanent
       }
     }
@@ -147,6 +149,7 @@ namespace DotStr {
       const std::string sCmdNoop       = "noop";        // no operation command (dummy/padding)
       const std::string sCmdFlow       = "flow";        // flow command (changes path through schedule)
       const std::string sSwitch        = "switch";      // switch command (instantaneously switch defdest of a block. Like permanent flow with no queue )
+      const std::string sOrigin        = "origin";      // origin
       const std::string sCmdFlush      = "flush";       // flush command (clears a command queue)
       const std::string sCmdWait       = "wait";        // wait command (relative prolongs block duration, abs waits til given time is reached )
       const std::string sCmdStart      = "start";       // For cmd dots, starts a thread (by cpu/thread, patternname or node name)
@@ -220,6 +223,10 @@ namespace DotStr {
 
       namespace Switch {
         const std::string sLookDef       = "shape     = \"pentagon\"";
+      }
+
+      namespace Origin {
+        const std::string sLookDef       = "shape     = \"octagon\", color  = \"cyan\"";
       }
 
       namespace Meta {

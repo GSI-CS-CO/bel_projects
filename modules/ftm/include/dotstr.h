@@ -47,6 +47,7 @@ namespace DotStr {
       extern const std::string sCmdTarget;
       extern const std::string sSwitchTarget;     // Links to Switch's Target 
       extern const std::string sSwitchDst;     // Links to Switch's Target Block
+      extern const std::string sOriginDst;     // Links to Switch's Target Block
       extern const std::string sCmdFlowDst;
       extern const std::string sCmdFlushOvr;
       extern const std::string sDynId;
@@ -122,6 +123,7 @@ namespace DotStr {
         extern const std::string sDst;
         extern const std::string sDstPattern;
         extern const std::string sDstBeamproc;
+        extern const std::string sDstThr;
         extern const std::string sPermanent;
 
 
@@ -148,6 +150,7 @@ namespace DotStr {
       extern const std::string sCmdNoop;
       extern const std::string sCmdFlow;
       extern const std::string sSwitch;
+      extern const std::string sOrigin;
       extern const std::string sCmdFlush;
       extern const std::string sCmdWait;
       extern const std::string sCmdStart;
@@ -217,6 +220,11 @@ namespace DotStr {
 
       }
       namespace Switch {
+        extern const std::string sLookDef;
+
+      }
+
+      namespace Origin {
         extern const std::string sLookDef;
 
       }

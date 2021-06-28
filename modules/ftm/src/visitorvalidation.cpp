@@ -28,6 +28,13 @@ void VisitorValidation::visit(const Switch& el) const  {
   //destcheck
 }
 
+void VisitorValidation::visit(const Origin& el) const  {
+  eventSequenceCheck();
+  //targetcheck
+  //destcheck
+}
+
+
 void VisitorValidation::visit(const Flush& el) const {
   eventSequenceCheck();
   //targetcheck

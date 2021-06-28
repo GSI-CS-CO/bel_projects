@@ -81,6 +81,6 @@ myVertex::myVertex(myVertex const &src) {
   this->cmdDest     = src.cmdDest;
   this->cmdDestBp   = src.cmdDestBp;
   this->cmdDestPat  = src.cmdDestPat;
-
+  this->cmdDestThr  = src.cmdDestThr;
 
 }

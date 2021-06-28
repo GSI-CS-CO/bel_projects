@@ -98,6 +98,7 @@ public:
   std::string cmdDest     = sUndefined;
   std::string cmdDestBp   = sUndefined;
   std::string cmdDestPat  = sUndefined;
+  std::string cmdDestThr  = sUndefined;
 
   myVertex() {}
 
