@@ -580,19 +580,20 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 {
   uint32_t status;                                            // status returned by routines
   uint32_t nSeconds = 15;                                     // time period in secondes
-  uint32_t nUSeconds = 100 * COMMON_ECATIMEOUT;               // time period in microseconds
+  uint32_t nUSeconds = 100;                                   // time period in microseconds
   uint32_t action;                                            // ECA action tag
   mpsTimParam_t* buf = pBufMpsFlag;                           // pointer to MPS flags buffer
 
   status = actStatus;
 
-  // action driven by ECA event
+  // action driven by ECA event, polls for nUSeconds [us]
   action = handleEcaEvent(nUSeconds, pMpsTask, pRdItr, &buf);   // handle ECA event
 
   switch (nodeType) {
 
     case FBAS_NODE_TX:
       // transmit MPS flags (flags are sent in specified period, but events immediately)
+      // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS)
         sendMpsFlag(pRdItr, mpsTimMsgFlagId);
       else
