@@ -88,12 +88,9 @@ void DaqInterface::clearBuffer( bool update )
       return;
    }
 #endif
-   //TODO
-#ifndef CONFIG_MIL_DAQ_USE_RAM
-//#error CONFIG_MIL_DAQ_USE_RAM not defined
-#endif
-#warning clearBuffer for DDR3 not implemented yet
-   std::cout << "DaqInterface::clearBuffer" << std::endl;
+   ramRingReset( &m_oBufferAdmin.indexes );
+   if( update )
+      writeIndexes();
 }
 
 /*! ---------------------------------------------------------------------------

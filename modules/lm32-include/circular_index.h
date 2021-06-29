@@ -70,12 +70,12 @@ typedef struct PACKED_SIZE
    RAM_RING_INDEX_T capacity;
 
    /*!
-    * @brief Start index of ring buffer
+    * @brief Read- index of ring buffer
     */
    RAM_RING_INDEX_T start;
 
    /*!
-    * @brief End- index of ring buffer
+    * @brief Write- index of ring buffer
     */
    RAM_RING_INDEX_T end;
 } RAM_RING_INDEXES_T;

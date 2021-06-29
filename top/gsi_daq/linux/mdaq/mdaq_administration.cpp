@@ -336,7 +336,6 @@ void DaqAdministration::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
    {
       const std::size_t partLen = std::min( len, maxLen );
       readRam( pData, partLen );
-      addToReadIndex( partLen );
       writeIndexes();
       len -= partLen;
       if( len == 0 )

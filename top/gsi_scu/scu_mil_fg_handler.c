@@ -260,6 +260,10 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
 
 
 //#define CONFIG_LAGE_TIME_DETECT
+#if defined( CONFIG_MIL_DAQ_USE_RAM ) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof(uint32_t) );
+  IMPLEMENT_CONVERT_BYTE_ENDIAN( FG_MACRO_T )
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -274,7 +278,7 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
  * @todo Storing the MIL-DAQ data in the DDR3-RAM instead wasting of
  *       shared memory.
  */
-STATIC void pushDaqData( const FG_MACRO_T fgMacro,
+STATIC void pushDaqData( FG_MACRO_T fgMacro,
                          const uint64_t timestamp,
                          const uint16_t actValue,
                          const uint32_t setValue
@@ -296,15 +300,24 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro,
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
-
+ #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+   pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)(GET_UPPER_HALF( timestamp )) );
+ #else
    pl.item.timestamp = timestamp;
+ #endif
    pl.item.setValue = GET_UPPER_HALF( setValue );
    pl.item.actValue = actValue;
-   pl.item.fgMacro = fgMacro;
  #ifdef CONFIG_READ_MIL_TIME_GAP
    if( setValueInvalid )
-     pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+     fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
+
+ #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+   pl.item.fgMacro = convertByteEndian_FG_MACRO_T( fgMacro );
+ #else
+   pl.item.fgMacro = fgMacro;
+ #endif
+
    RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
    /*
     * Is the circular buffer full?

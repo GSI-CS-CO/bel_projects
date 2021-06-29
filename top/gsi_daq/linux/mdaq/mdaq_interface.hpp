@@ -124,35 +124,32 @@ public:
    public:
       uint64_t getTimestamp( void ) const
       {
-         //return gsi::convertByteEndian( timestamp );
-         return MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), uint32_t(GET_LOWER_HALF( timestamp)) );
+         return timestamp;
       }
 
       MIL_DAQ_VAL_T getSetValue( void ) const
       {
-         return gsi::convertByteEndian( setValue );
+         return setValue;
       }
 
       uint32_t getSetValue32( void ) const
       {
-         return gsi::convertByteEndian( setValue ) << SHIFT;
+         return setValue << SHIFT;
       }
 
       MIL_DAQ_VAL_T getActValue( void ) const
       {
-         return gsi::convertByteEndian( actValue );
+         return actValue;
       }
 
       uint32_t getActValue32( void ) const
       {
-         return gsi::convertByteEndian( actValue ) << SHIFT;
+         return actValue << SHIFT;
       }
-
-      static_assert( sizeof( fgMacro ) == sizeof( uint32_t ), "" );
 
       FG_MACRO_T getChannel( void ) const
       {
-         return gsi::convertByteEndian( fgMacro );
+         return fgMacro;
       }
 
       uint getMilDaqLocation( void ) const

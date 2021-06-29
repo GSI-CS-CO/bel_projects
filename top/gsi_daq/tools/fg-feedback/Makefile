@@ -108,8 +108,8 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = scuxl0035 -vy
 
 # CALL_ARGS = scuxl0035 -b11,12
- CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
-# CALL_ARGS = scuxl0107 -azdt1 -T"X11 size 800,150"
+# CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
+ CALL_ARGS = scuxl0107 -azdt1 -T"X11 size 800,150"
  DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
