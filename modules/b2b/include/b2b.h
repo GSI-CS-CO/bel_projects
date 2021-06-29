@@ -44,7 +44,6 @@
 #define B2B_ECADO_B2B_TRIGGERSIS    0x70   // command: trigger SIS kicker (intended for WR->MIL gateway)
 #define B2B_ECADO_B2B_TRIGGERESR    0xc0   // command: trigger ESR kicker (intended for WR->MIL gateway)
 
-
 // commands from the outside
 #define B2B_CMD_CONFSUBMIT            11   // submit data written to DP RAM
 #define B2B_CMD_CONFCLEAR             12   // this will clear all event tables
@@ -102,23 +101,32 @@
 // ****************************************************************************************
 
 // offsets
-// set values for data supply
-#define B2B_SHARED_SET_GID        (COMMON_SHARED_END         + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define B2B_SHARED_SET_SID        (B2B_SHARED_SET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer 
-#define B2B_SHARED_SET_MODE       (B2B_SHARED_SET_SID        + _32b_SIZE_)       // mode of B2B transfer
+// set values for data supply (extraction ring)
+#define B2B_SHARED_SET_SIDEEXT    (COMMON_SHARED_END         + _32b_SIZE_)       // sequence ID for B2B transfer at extraction
+#define B2B_SHARED_SET_GIDEXT     (B2B_SHARED_SET_SIDEEXT    + _32b_SIZE_)       // b2b GID of extraction ring
+#define B2B_SHARED_SET_MODE       (B2B_SHARED_SET_GIDEXT     + _32b_SIZE_)       // mode of B2B transfer
 #define B2B_SHARED_SET_TH1EXTHI   (B2B_SHARED_SET_MODE       + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
 #define B2B_SHARED_SET_TH1EXTLO   (B2B_SHARED_SET_TH1EXTHI   + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2B_SHARED_SET_NHEXT      (B2B_SHARED_SET_TH1EXTLO   + _32b_SIZE_)       // harmonic number of extraction RF
-#define B2B_SHARED_SET_TH1INJHI   (B2B_SHARED_SET_NHEXT      + _32b_SIZE_)       // period [as] of h=1 injection, high bits
+#define B2B_SHARED_SET_CTRIGEXT   (B2B_SHARED_SET_NHEXT      + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
+#define B2B_SHARED_SET_NBUCKEXT   (B2B_SHARED_SET_CTRIGEXT   + _32b_SIZE_)       // bucket number of extraction
+#define B2B_SHARED_SET_CPHASE     (B2B_SHARED_SET_NBUCKEXT   + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
+#define B2B_SHARED_SET_FFINTUNE   (B2B_SHARED_SET_CPHASE     + _32b_SIZE_)       // flag: use fine tune
+#define B2B_SHARED_SET_FMBTUNE    (B2B_SHARED_SET_FFINTUNE   + _32b_SIZE_)       // flag: use multi-beat tune
+
+// set values for data supply (injection ring)
+#define B2B_SHARED_SET_SIDEINJ    (B2B_SHARED_SET_FMBTUNE    + _32b_SIZE_)       // sequence ID for B2B transfer at extraction (!) ring (required for joining the data)
+#define B2B_SHARED_SET_GIDINJ     (B2B_SHARED_SET_SIDEINJ    + _32b_SIZE_)       // b2b GID offset of injection ring
+#define B2B_SHARED_SET_TH1INJHI   (B2B_SHARED_SET_GIDINJ     + _32b_SIZE_)       // period [as] of h=1 injection, high bits
 #define B2B_SHARED_SET_TH1INJLO   (B2B_SHARED_SET_TH1INJHI   + _32b_SIZE_)       // period of h=1 injection, low bits
 #define B2B_SHARED_SET_NHINJ      (B2B_SHARED_SET_TH1INJLO   + _32b_SIZE_)       // harmonic number of injection RF
-#define B2B_SHARED_SET_CPHASE     (B2B_SHARED_SET_NHINJ      + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
-#define B2B_SHARED_SET_CTRIGEXT   (B2B_SHARED_SET_CPHASE     + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
-#define B2B_SHARED_SET_CTRIGINJ   (B2B_SHARED_SET_CTRIGEXT   + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_SET_CTRIGINJ   (B2B_SHARED_SET_NHINJ      + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_SET_NBUCKINJ   (B2B_SHARED_SET_CTRIGINJ   + _32b_SIZE_)       // bucket number of injection
+
 //get values
-#define B2B_SHARED_GET_GID        (B2B_SHARED_SET_CTRIGINJ   + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define B2B_SHARED_GET_SID        (B2B_SHARED_GET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer 
-#define B2B_SHARED_GET_MODE       (B2B_SHARED_GET_SID        + _32b_SIZE_)       // mode of B2B transfer
+#define B2B_SHARED_GET_SID        (B2B_SHARED_SET_NBUCKINJ   + _32b_SIZE_)       // sequence ID for B2B transfer 
+#define B2B_SHARED_GET_GID        (B2B_SHARED_GET_SID        + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
+#define B2B_SHARED_GET_MODE       (B2B_SHARED_GET_GID        + _32b_SIZE_)       // mode of B2B transfer
 #define B2B_SHARED_GET_TH1EXTHI   (B2B_SHARED_GET_MODE       + _32b_SIZE_)       // period [as] of h=1 extraction, high bits
 #define B2B_SHARED_GET_TH1EXTLO   (B2B_SHARED_GET_TH1EXTHI   + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2B_SHARED_GET_NHEXT      (B2B_SHARED_GET_TH1EXTLO   + _32b_SIZE_)       // harmonic number of extraction RF
