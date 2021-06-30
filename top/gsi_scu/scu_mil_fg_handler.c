@@ -270,6 +270,8 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
  * @ingroup TASK
  * @brief Writes the data set coming from one of the MIL-DAQs in the
  *        ring-buffer.
+ * @see daq_eb_ram_buffer.hpp
+ * @see daq_eb_ram_buffer.cpp
  * @param channel DAQ-channel where the data come from.
  * @param timestamp White-Rabbit time-stamp.
  * @param actValue Actual value.
@@ -298,24 +300,34 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    lastTime = timestamp;
 #endif
 
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   if( setValueInvalid )
+      fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+#endif
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
  #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+   /*
+    * In this case the LM32-server and Linux-client doesn't have the same
+    * byte order.
+    * The Linux library "libetherbone" will made a byte swapping of 32-bit
+    * segments during reading out the DDR3-RAM.
+    * Therefore the appropriate byte order has to be prepared here.
+    * E.g. the 16 bit set- and actual values are reversed, that is correct.
+    * See also daq_eb_ram_buffer.hpp and daq_eb_ram_buffer.cpp.
+    */
    pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)(GET_UPPER_HALF( timestamp )) );
+   pl.item.setValue  = actValue;
+   pl.item.actValue  = GET_UPPER_HALF( setValue );
+   pl.item.fgMacro   = convertByteEndian_FG_MACRO_T( fgMacro );
  #else
+   /*
+    * In this case the server and client have the same byte order.
+    */
    pl.item.timestamp = timestamp;
- #endif
-   pl.item.setValue = GET_UPPER_HALF( setValue );
-   pl.item.actValue = actValue;
- #ifdef CONFIG_READ_MIL_TIME_GAP
-   if( setValueInvalid )
-     fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
- #endif
-
- #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   pl.item.fgMacro = convertByteEndian_FG_MACRO_T( fgMacro );
- #else
-   pl.item.fgMacro = fgMacro;
+   pl.item.setValue  = GET_UPPER_HALF( setValue );
+   pl.item.actValue  = actValue;
+   pl.item.fgMacro   = fgMacro;
  #endif
 
    RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
@@ -329,6 +341,10 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
       ramRingAddToReadIndex( &indexes, ARRAY_SIZE(pl.ramPayload) );
    }
 
+   /*
+    * Writing the prepared data set into the DDR3-RAM organized
+    * as circular buffer.
+    */
    for( unsigned int i = 0; i < ARRAY_SIZE(pl.ramPayload); i++ )
    {
       ramWriteItem( &g_scuDaqAdmin.oRam, ramRingGetWriteIndex( &indexes ), &pl.ramPayload[i] );
@@ -337,20 +353,17 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
 
    g_shared.mDaq.indexes = indexes;
 
-#else
+#else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+   #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!
    MIL_DAQ_OBJ_T d;
 
    d.actvalue = actValue;
    d.tmstmp_l = GET_LOWER_HALF( timestamp );
    d.tmstmp_h = GET_UPPER_HALF( timestamp );
    d.fgMacro  = fgMacro;
- #ifdef CONFIG_READ_MIL_TIME_GAP
-   if( setValueInvalid )
-      d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
- #endif
    d.setvalue = setValue;
    add_daq_msg( &g_shared.daq_buf, d );
-#endif
+#endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
 }
 
 /*! ---------------------------------------------------------------------------
