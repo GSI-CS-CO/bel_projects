@@ -136,8 +136,8 @@ int32_t  cTrigExt;                      // correction for extraction trigger
 int32_t  cTrigInj;                      // correction for injection trigger
 int32_t  nBucketExt;                    // number of bucket for extraction
 int32_t  nBucketInj;                    // number of bucket for injection
-int      flagFineTune;                  // flag: use fine tuning
-int      flagMultiBeatTune;             // flag: use multi-beat tuning
+int      fFineTune;                     // flag: use fine tuning
+int      fMBTune;                       // flag: use multi-beat tuning
 uint64_t tEKS;                          // deadline of EVT_KICK_START
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
@@ -820,7 +820,14 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase     = 0x0;
       cTrigExt   = 0x0;
       cTrigInj   = 0x0;
+      nBucketExt = 0x0;
+      nBucketInj = 0x0;
+      fFineTune  = 0x0;
+      fMBTune    = 0x0;
+      tEKS       = 0x0;
+
       transStat  = 0x0;
+
       
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
@@ -836,6 +843,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase     = setCPhase[sid];
       cTrigExt   = setCTrigExt[sid];
       cTrigInj   = setCTrigInj[sid];
+      nBucketExt = setNBuckExt[sid];
+      nBucketInj = setNBuckInj[sid];
+      fFineTune  = setFFinTune[sid];
+      fMBTune    = setFMBTune[sid];
 
       tEKS       = reqDeadline;
       nTransfer++;
