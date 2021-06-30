@@ -131,7 +131,6 @@ void initSharedMem()
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
-  uint64_t *pSharedTs;
   int      i;
   const uint32_t c_Max_Rams = 10;
   sdb_location found_sdb[c_Max_Rams];
@@ -169,9 +168,11 @@ void initSharedMem()
   pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
   DBPRINT2("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
   DBPRINT2("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_TS1 >> 2)));
 
-  pSharedTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
-  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%08x\n", nodeType, pSharedTs);
+  // reset event counter
+  *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(false, 0);
+  DBPRINT2("fbas%d: SHARED_GET_CNT 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)));
 } // initSharedMem
 
 /**
@@ -367,7 +368,14 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
             // send MPS event
-            sendMpsEvent(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK);
+            if (sendMpsEvent(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
+              // count sent timing messages with MPS event
+              *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, 1);
+              if ((*head)->prot.flag == MPS_FLAG_NOK) {
+                *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, N_EXTRA_MPS_NOK);
+              }
+            }
+
             // store timestamps to measure delays
             storeTsMeasureDelays(pSharedApp, FBAS_SHARED_GET_TS1, now, ecaDeadline);
           }
@@ -383,6 +391,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
       case FBAS_WR_EVT:
       case FBAS_WR_FLG:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
+
+          // count received timing messages with MPS flag or MPS event
+          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, 1);
 
           // store and handle received MPS flag
           *head = storeMpsFlag(*head, ecaParam);
@@ -594,8 +605,11 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
     case FBAS_NODE_TX:
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
-      if (*pMpsTask & TSK_TX_MPS_FLAGS)
-        sendMpsFlag(pRdItr, mpsTimMsgFlagId);
+      if (*pMpsTask & TSK_TX_MPS_FLAGS) {
+        if (sendMpsFlag(pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
+          // count sent timing messages with MPS flag
+          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, 1);
+      }
       else
         wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console
       break;

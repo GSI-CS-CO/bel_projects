@@ -142,3 +142,23 @@ void measureDelays(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
       *pSharedTs, tmp64, poll);
 }
 
+/**
+ * \brief count events
+ *
+ * \param enable indicates if the counter is incremented (=true) or initialized with a given value
+ * \param value  used to increment/initialize the counter
+ *
+ * \ret counter value
+ **/
+uint32_t doCnt(bool enable, uint32_t value)
+{
+  static msrCnt_t cnt = {0};
+
+  if (enable) {
+    cnt.val += value;
+  } else {
+    cnt.val = value;
+  }
+
+  return cnt.val;
+}

@@ -23,7 +23,8 @@
 #define FBAS_SHARED_GET_SBSTSUSER  (FBAS_SHARED_GET_SBCFGUSER  + 2 * _32b_SIZE_)   // USER status
 #define FBAS_SHARED_GET_SBOUTUSER  (FBAS_SHARED_GET_SBSTSUSER  + 2 * _32b_SIZE_)   // USER output
 #define FBAS_SHARED_GET_SBINUSER   (FBAS_SHARED_GET_SBOUTUSER  + 3 * _32b_SIZE_)   // USER input
-#define FBAS_SHARED_GET_TS1        (FBAS_SHARED_GET_SBINUSER   + _32b_SIZE_)       // timestamp1 (generator event deadline)
+#define FBAS_SHARED_GET_CNT        (FBAS_SHARED_GET_SBINUSER   + 3 * _32b_SIZE_)   // event counter
+#define FBAS_SHARED_GET_TS1        (FBAS_SHARED_GET_CNT        + _32b_SIZE_)       // timestamp1 (generator event deadline)
 #define FBAS_SHARED_GET_TS2        (FBAS_SHARED_GET_TS1        + _32b_SIZE_ * 2)   // timestamp2 (generator event polled by TX)
 #define FBAS_SHARED_GET_TS3        (FBAS_SHARED_GET_TS2        + _32b_SIZE_ * 2)   // timestamp3 (IO action event deadline)
 #define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + _32b_SIZE_ * 2)   // timestamp4 (IO action event polled by TX)

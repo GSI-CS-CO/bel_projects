@@ -14,6 +14,7 @@
 
 export FBASTX="dev/wbm0"
 export FBASRX="dev/wbm2"
+export addr_cnt1="0x04060934/4"  # shared memory location for received frames counter
 
 function user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -27,6 +28,23 @@ function user_approval() {
 function wait_seconds() {
     #echo "wait $1 seconds ..."
     sleep $1
+}
+
+function wait_print_seconds() {
+    # $1 - wait period in seconds
+
+    if [ "$1" == "" ]; then
+        return
+    fi
+
+    for i in $(seq 1 $1); do
+        #echo -ne "time left (seconds): $[ $1 - $i ]\r"
+        v=$[ $1 - $i ]
+        v=$(printf "%*d\r" "8" $v)          # print numbers in 8 digits leading with spaces
+        echo -ne "time left (seconds): $v"  # overwrite previous output
+        wait_seconds 1
+    done
+
 }
 
 function check_fbastx() {
@@ -77,6 +95,21 @@ function list_dev_ram() {
     # 12.14.5        0000000000000651:54111351           4060000  LM32-RAM-User
 }
 
+function read_shared_mem() {
+    # $1 - device
+    # $2 - memory address
+
+    eb-read $1 $2
+}
+
+function write_shared_mem() {
+    # $1 - device
+    # $2 - memory address
+    # $3 - value
+
+    eb-write $1 $2 $3
+}
+
 function dont_call_set_ip() {
     echo "assign static IP addresses to the timing receivers: 192.168.131.30 for wbm0, 192.168.131.40 for wbm2"
     echo "set IP address (wrc): ip set 192.168.131.30"
@@ -116,7 +149,7 @@ function setup_fbastx() {
     check_fbastx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASTX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
+    eb-fwload $FBASTX u 0x0 $HOME/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
     wait_seconds 1
 
     # wrc output:
@@ -184,7 +217,7 @@ function setup_fbasrx() {
     check_fbasrx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASRX u 0x0 ~/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
+    eb-fwload $FBASRX u 0x0 $HOME/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
     wait_seconds 1
 
     # wrc output:
@@ -271,7 +304,7 @@ function dont_call_open_wr_console() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function start_test3() {
+function do_test3() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
     echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"
@@ -286,30 +319,30 @@ function start_test3() {
 
     echo "if on 1st terminal some events like 'tDeadline: 2020-11-02 17:24:49.591537414 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 8186 ns)' is displayed, then it's ready for next step"
 
-    echo "Step 2: enable MPS processing for TX and RX"
+    echo "Step 2: enable MPS task on RX and TX nodes"
     echo "for TX: enable sending MPS flags and events, you will see EB frames in wireshark, verify their event ID, MPS flag etc"
     echo "for RX: enable monitoring lifetime of received MPS flags"
-    enable_mps
+    enable_mps_all
 
-    echo "Step 3: inject a timing event locally to generate MPS event"
-    echo "OK(1) flag, grpID=1, evtID=0"
+    echo "Step 3: inject timing events locally to generate MPS event"
+    echo "OK(1) flag, grpID=1, evtID=0  -> 1x MPS event (1x transmission)"
     saft-ctl fbastx -p inject 0xffffeeee01010000 0x0 1000000
     wait_seconds 1
 
-    echo "NOK(2) flag, grpID=1, evtID=0"
+    echo "NOK(2) flag, grpID=1, evtID=0 -> 1x MPS event (3x transmissions)"
     saft-ctl fbastx -p inject 0xffffeeee02010000 0x0 1000000
     wait_seconds 1
 
-    echo "If you see IO events in the snooper output each time flag is changed in MPS event, then basically all works."
-
-    echo "repeat sending OK and NOK several times (3x)"
-    for i in seq 1 3; do
+    echo "send OK and NOK each 5x times -> 10x MPS events (20x transmissions)"
+    for i in seq 1 5; do
         saft-ctl fbastx -p inject 0xffffeeee01010000 0x0 1000000
         wait_seconds 1
 
         saft-ctl fbastx -p inject 0xffffeeee02010000 0x0 1000000
         wait_seconds 1
     done
+
+    echo "If you see 12x IO events in the snooper output, then basically all works."
 
     # snooper output (saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0)
     #   tDeadline: 2020-11-02 13:55:53.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe01010000 Param: 0x0000000000000000
@@ -335,31 +368,40 @@ function start_test3() {
     wait_seconds 5
     saft-ctl fbastx -p inject 0xffffdddd00000000 0x0 1000000
     saft-ctl fbasrx -p inject 0xffffdddd00000000 0x0 1000000
+
+    echo "Disable MPS task on TX and RX nodes"
+    disable_mps_all
+
+    echo "Print counter value of TX"
+    eb-read $FBASTX $addr_cnt1
+
+    echo "Print counter value of RX"
+    eb-read $FBASRX $addr_cnt1
 }
 
-function stop_mps() {
+function disable_mps() {
     echo "Stop MPS on $1"
     eb-write $1 0x4060508/4 0x31
     wait_seconds 1
 }
 
-function start_mps() {
+function enable_mps() {
     echo "Start MPS on $1"
     eb-write $1 0x4060508/4 0x30
     wait_seconds 1
 }
 
-function disable_mps() {
+function disable_mps_all() {
     echo "Disable MPS"
-    stop_mps $FBASTX
-    stop_mps $FBASRX
+    disable_mps $FBASTX
+    disable_mps $FBASRX
 }
 
 
-function enable_mps() {
+function enable_mps_all() {
     echo "Enable MPS"
-    start_mps $FBASRX
-    start_mps $FBASTX
+    enable_mps $FBASRX
+    enable_mps $FBASTX
 }
 
 ##########################################################

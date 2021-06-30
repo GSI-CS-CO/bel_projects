@@ -1,0 +1,13 @@
+digraph G {
+name="16u_alternate"
+graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [cpu="0", pattern=PatLoop, patentry=0, patexit=0,  style     = "filled", fillcolor = "white", color = "black"];
+edge [type="defdst"];
+
+// par="aabbccccdddddddd", where aa=flag (1=OK, 2=NOK, 3=TEST), bb=grpId, cccc=evtId, dddddddd=reserved
+M_A0 [type="tmsg",  patentry=1, toffs=0,        fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x01010000ff000000"];
+M_A1 [type="tmsg",              toffs=100000,   fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x01010001ff000000"];
+B_A2 [type="block", patexit=1,  tperiod=200000, qlo="true"];
+
+M_A0 -> M_A1 -> B_A2 -> M_A0;
+}
