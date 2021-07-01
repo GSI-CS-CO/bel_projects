@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 5-February-2021
+ *  version : 1-Jul-2021
  *
  * library for b2b
  *
@@ -64,20 +64,25 @@ eb_address_t b2b_state;                 // state of state machine
 
 // application specific stuff
 // set values
-eb_address_t b2b_set_gid;               // GID for transfer
-eb_address_t b2b_set_sid;               // SID for transfer    
+eb_address_t b2b_set_sidExt;            // SID for transfer    
+eb_address_t b2b_set_gidExt;            // b2b GID of extraction ring
 eb_address_t b2b_set_mode;              // mode of B2B transfer
 eb_address_t b2b_set_TH1ExtHi;          // period of h=1 extraction, high bits
 eb_address_t b2b_set_TH1ExtLo;          // period of h=1 extraction, low bits
 eb_address_t b2b_set_nHExt;             // harmonic number of extraction RF
+eb_address_t b2b_set_cTrigExt;          // kicker correction extraction
+eb_address_t b2b_set_nBuckExt;          // bucket number extraction
+eb_address_t b2b_set_cPhase;            // phase correction
+eb_address_t b2b_set_fFinTune;          // flag: use fine tune
+eb_address_t b2b_set_fMBTune;           // flag: use multi-beat tune
+eb_address_t b2b_set_sidEInj;           // SID for transfer; value must equal sidExt    
+eb_address_t b2b_set_gidInj;            // b2b GID offset of injection ring
 eb_address_t b2b_set_TH1InjHi;          // period of h=1 injection, high bits
 eb_address_t b2b_set_TH1InjLo;          // period of h=1 injection, low bits
 eb_address_t b2b_set_nHInj;             // harmonic number of injection RF
-eb_address_t b2b_set_cPhase;            // phase correction
-eb_address_t b2b_set_cTrigExt;          // kicker correction extraction
 eb_address_t b2b_set_cTrigInj;          // kicker correction injection
+eb_address_t b2b_set_nBuckInj;          // bucket number injection
 eb_address_t b2b_cmd;                   // command, write
-
 
 // get values
 eb_address_t b2b_get_gid;               // GID for transfer
@@ -107,19 +112,19 @@ uint64_t b2b_getSysTime()
 } // b2b_getSysTime()
 
 
-const char* b2b_status_text(uint32_t bit)
+const char* b2b_status_text(uint32_t code)
 {  
   static char message[256];
   
-  switch (bit) {
-    case B2B_STATUS_PHASEFAILED          : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;                            
-    case B2B_STATUS_TRANSFER             : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
-    case B2B_STATUS_SAFETYMARGIN         : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
-    case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s",    bit, "no RF signal detected"); break;
-    case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s",    bit, "late timing message received"); break;
-    case  B2B_STATUS_NOKICK              : sprintf(message, "error %d, %s",    bit, "no kicker signal detected"); break;
-    default                              : sprintf(message, "%s", comlib_statusText(bit)); break;
-  } // switch bit
+  switch (code) {
+    case B2B_STATUS_PHASEFAILED          : sprintf(message, "error %d, %s", code, "phase measurement failed"); break;                            
+    case B2B_STATUS_TRANSFER             : sprintf(message, "error %d, %s", code, "transfer failed"); break;
+    case B2B_STATUS_SAFETYMARGIN         : sprintf(message, "error %d, %s", code, "violation of safety margin for data master and timing network"); break;
+    case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s", code, "no RF signal detected"); break;
+    case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
+    case B2B_STATUS_NOKICK               : sprintf(message, "error %d, %s", code, "no kicker signal detected"); break;
+    default                              : sprintf(message, "%s", comlib_statusText(code)); break;
+  } // switch code
   
   return message;
 } // b2b_status_text
@@ -187,18 +192,26 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
 
   comlib_initShared(lm32_base, SHARED_OFFS);
   b2b_cmd              = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
-  b2b_set_gid          = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GID;     
-  b2b_set_sid          = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SID;     
+  b2b_set_sidExt       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SIDEEXT;     
+  b2b_set_gidExt       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDEXT;     
   b2b_set_mode         = lm32_base + SHARED_OFFS + B2B_SHARED_SET_MODE;;   
   b2b_set_TH1ExtHi     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1EXTHI;
   b2b_set_TH1ExtLo     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1EXTLO;
-  b2b_set_nHExt        = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHEXT;   
+  b2b_set_nHExt        = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHEXT;
+  b2b_set_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGEXT;
+  b2b_set_nBuckExt     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NBUCKEXT;
+  b2b_set_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CPHASE;  
+  b2b_set_nBuckExt     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NBUCKEXT;
+  b2b_set_fFinTune     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FFINTUNE;
+  b2b_set_fMBTune      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FMBTUNE;
+  b2b_set_sidEInj      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SIDEINJ;     
+  b2b_set_gidInj       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDINJ;     
   b2b_set_TH1InjHi     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJHI;
   b2b_set_TH1InjLo     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJLO;
   b2b_set_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHINJ;
-  b2b_set_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CPHASE;  
-  b2b_set_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGEXT;
-  b2b_set_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGINJ;                   
+  b2b_set_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_CTRIGINJ;
+  b2b_set_nBuckInj     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NBUCKINJ;
+  
   b2b_get_gid          = lm32_base + SHARED_OFFS + B2B_SHARED_GET_GID;
   b2b_get_sid          = lm32_base + SHARED_OFFS + B2B_SHARED_GET_SID;
   b2b_get_mode         = lm32_base + SHARED_OFFS + B2B_SHARED_GET_MODE;;
@@ -348,43 +361,86 @@ uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *sta
 } // b2b_status_read
   
 
-uint32_t b2b_context_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj,
-                            int32_t  cPhase, int32_t  cTrigExt, int32_t  cTrigInj)
+uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1, uint32_t nH, 
+                                int32_t  cTrig, int32_t nBucket, int32_t  cPhase, uint32_t  fFineTune, uint32_t fMBTune)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
+  uint32_t     gidExt;
   
   if (!ebDevice) return COMMON_STATUS_EB;
+
+  // convert GID of extraction ring to GID of B2B transfer (assuming simple extraction)
+  switch(gid) {
+    case SIS18_RING   :
+      gidExt = SIS18_B2B_EXTRACT;
+      break;
+    case ESR_RING     :
+      gidExt = ESR_B2B_EXTRACT;
+      break;
+    case CRYRING_RING :
+      gidExt =  CRYRING_B2B_EXTRACT;
+      break;
+    default           :
+      gidExt = GID_INVALID;
+      break;
+  } // switch gid
+  if (gidExt == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
-  eb_cycle_write(eb_cycle, b2b_set_sid,           EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sid);
-  eb_cycle_write(eb_cycle, b2b_set_gid,           EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gid);
+  eb_cycle_write(eb_cycle, b2b_set_sidExt,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sid);
+  eb_cycle_write(eb_cycle, b2b_set_gidExt,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gidExt);
   eb_cycle_write(eb_cycle, b2b_set_mode,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)mode);
-  eb_cycle_write(eb_cycle, b2b_set_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32));
-  eb_cycle_write(eb_cycle, b2b_set_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff));
-  eb_cycle_write(eb_cycle, b2b_set_nHExt,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt);
-  eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32));
-  eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff));
-  eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHInj);
+  eb_cycle_write(eb_cycle, b2b_set_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
+  eb_cycle_write(eb_cycle, b2b_set_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
+  eb_cycle_write(eb_cycle, b2b_set_nHExt,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
+  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  eb_cycle_write(eb_cycle, b2b_set_nBuckExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   eb_cycle_write(eb_cycle, b2b_set_cPhase,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cPhase));
-  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrigExt));
-  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrigInj));
-  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("eb-status %d\n", eb_status); getchar(); return COMMON_STATUS_EB;};
-
-  b2b_cmd_submit(ebDevice);
+  eb_cycle_write(eb_cycle, b2b_set_fFinTune,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fFineTune);
+  eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
-} // b2b_table_upload
+} // b2b_context_ext_upload
 
-uint32_t b2b_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t *nData)
+
+uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid, uint64_t TH1, uint32_t nH, int32_t  cTrig, int32_t nBucket)
 {
+  eb_cycle_t   eb_cycle;
+  eb_status_t  eb_status;
+  uint32_t     gidInj;
+  
   if (!ebDevice) return COMMON_STATUS_EB;
 
-  /* to be implemented */
-  
+  // convert GID of injection ring to GID 'offset' of B2B transfer (assuming transfer ring-ring)
+  switch(gid) {
+    case ESR_RING     :
+      gidInj = SIS18_B2B_ESR - SIS18_B2B_EXTRACT;
+      break;
+    case CRYRING_RING :
+      gidInj = ESR_B2B_CRYRING - ESR_B2B_EXTRACT;
+      break;
+    default           :
+      gidInj = GID_INVALID;
+      break;
+  } // switch gid
+  if (gidInj == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
+
+  // EB cycle
+  if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
+  eb_cycle_write(eb_cycle, b2b_set_sidEInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sidExt);               // this looks funny but writing sidExt to the sidEInj register is not a bug
+  eb_cycle_write(eb_cycle, b2b_set_gidInj,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gidInj);
+  eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
+  eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
+  eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
+  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
+
   return COMMON_STATUS_OK;
-} // b2b_table_download
+} // b2b_context_inj_upload
 
 
 void b2b_cmd_configure(uint64_t ebDevice)

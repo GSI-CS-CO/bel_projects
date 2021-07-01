@@ -85,7 +85,7 @@
 #define ESR_B2B_EXTRACT            0x3a5   // GID: ESR simple extraction
 #define ESR_B2B_CRYRING            0x3a6   // GID: ESR to CRYRING
 #define CRYRING_B2B_EXTRACT        0x3aa   // GID: CRYRING simple extraction
-#define SIS100_B2B_EXTRACT         0x3b0   // GID: CRYRING simple extraction
+#define SIS100_B2B_EXTRACT         0x3b0   // GID: SIS100 simple extraction
 
 // specialities
 #define B2B_PRETRIGGERPM          450000    // offset [ns] used as pre-trigger on the PMINJ/PMEXT event 

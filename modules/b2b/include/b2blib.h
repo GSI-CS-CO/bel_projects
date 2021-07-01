@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2021
+ *  version : 01-Jul-2021
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000103
+#define B2BLIB_VERSION 0x000300
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -252,9 +252,9 @@ extern "C" {
                          uint32_t *sid,                        // SID
                          uint32_t *gid,                        // GID
                          uint32_t *mode,                       // mode
-                         uint64_t *TH1Ext,                     // period of H=1 extraction [as]
+                         uint64_t *TH1Ext,                     // period of h=1 extraction [as]
                          uint32_t *nHExt,                      // harmonic number extraction
-                         uint64_t *TH1Inj,                     // period of H=1 injection [as]
+                         uint64_t *TH1Inj,                     // period of h=1 injection [as]
                          uint32_t *nHInj,                      // harmonic number injection
                          uint64_t *TBeat,                      // period of beating signal [as]
                          int32_t *cPhase,                      // correction of phase [ns]
@@ -275,33 +275,29 @@ extern "C" {
                            int      printDiag                  // prints info on common firmware properties to stdout
                            );
   
-  // uploads configuration for a SID, returns error code
-  uint32_t b2b_context_upload(uint64_t ebDevice,               // EB device
-                              uint32_t sid,                    // SID
-                              uint32_t gid,                    // GID
-                              uint32_t mode,                   // mode
-                              uint64_t TH1Ext,                 // h=1 period [as] of extraction machine
-                              uint32_t nHExt,                  // harmonic number extraction machine
-                              uint64_t TH1Inj,                 // h=1 period [as] of injection machine
-                              uint32_t nHInj,                  // harmonic number injection machine
-                              int32_t  cPhase,                 // phase correction [ns]
-                              int32_t  cTrigExt,               // trigger correction extraction
-                              int32_t  cTrigInj                // trigger correction injection
-                              );
+  // uploads configuration for the extraction machine, returns error code
+  uint32_t b2b_context_ext_upload(uint64_t ebDevice,           // EB device
+                                  uint32_t sid,                // SID
+                                  uint32_t gid,                // GID of ring machine
+                                  uint32_t mode,               // mode
+                                  uint64_t TH1,                // h=1 period [as] of machine
+                                  uint32_t nH,                 // harmonic number machine
+                                  int32_t  cTrig,              // trigger correction
+                                  int32_t  nBucket,            // bucket number
+                                  int32_t  cPhase,             // phase correction [ns]
+                                  uint32_t fFineTune,          // flag: use fine tune
+                                  uint32_t fMBTune             // flag: use multi-beat tune
+                                  );
 
-  // downloads configuration for a SID, returns error code
-  uint32_t b2b_context_download(uint64_t ebDevice,             // EB device
-                                uint32_t sid,                  // SID
-                                uint32_t *gid,                 // GID
-                                uint32_t *mode,                // mode
-                                uint64_t *TH1Ext,              // h=1 period [as] of extraction machine
-                                uint32_t *nHExt,               // harmonic number extraction machine
-                                uint64_t *TH1Inj,              // h=1 period [as] of injection machine
-                                uint32_t *nHInj,               // harmonic number injection machine
-                                int32_t  *cPhase,              // phase correction [ns]
-                                int32_t  *cTrigExt,            // trigger correction extraction
-                                int32_t  *cTrigInj             // trigger correction injection
-                                );
+  // uploads configuration for a injection machine, returns error code
+  uint32_t b2b_context_inj_upload(uint64_t ebDevice,           // EB device
+                                  uint32_t sidExt,             // SID; NB: this is the SID of the extraction machine!!!
+                                  uint32_t gid,                // GID of ring machine
+                                  uint64_t TH1,                // h=1 period [as] of injection machine
+                                  uint32_t nH,                 // harmonic number injection machine
+                                  int32_t  cTrig,              // trigger correction injection
+                                  int32_t  nBucket             // bucket number
+                                  );
 
   // commands requesting state transitions
   void b2b_cmd_configure(uint64_t ebDevice);                   // to state 'configured'
