@@ -14,6 +14,8 @@ source setup.sh
 
 export fbasdm="dev/wbm1"
 export patt_loc="$HOME/gsi_prj/bel_projects/modules/fbas/x86"
+export reg_maxmsg="0x41000a4/4"
+export cmd_file="start_synchron.dot"
 
 function check_fbasdm() {
     if [ -z "$fbasdm" ]; then
@@ -103,3 +105,24 @@ function start_dm_patt() {
     dm-cmd $fbasdm startpattern $1
 }
 
+######################
+## Set max msg
+######################
+
+function set_dm_maxmsg() {
+
+    check_fbasdm
+
+    eb-write $fbasdm $reg_maxmsg 0x1
+}
+
+######################
+## Start patterns synchronuous
+######################
+
+function start_dm_synchron() {
+
+    check_fbasdm
+
+    dm-cmd $fbasdm -i $cmd_file
+}

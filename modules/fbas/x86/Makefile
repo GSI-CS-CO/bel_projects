@@ -16,6 +16,11 @@
 #  make saftd            # load saft daemon
 #  make setup_fbasrx     # load fw, set ECA rules only for RX node
 #  make restart_fbasdm_finite OR make restart_fbasdm_loop
+#
+# 2.1 Measure message transmission (multi pattern)
+#  make saftd                     # load saftd
+#  make setup_fbasrx              # load fw binary, set ECA rules
+#  make restart_fbasdm_multi_loop # start multiple patterns
 
 .PHONY: mytest \
 	saftd setup_nodes setup_fbastx setup_fbasrx \
@@ -77,6 +82,25 @@ restart_fbasdm_loop:
 	source dm.sh && load_dm_patt my_mps_loop.dot && start_dm_patt PatLoop
 	echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	source dm.sh && stop_dm_patt PatLoop
+	source dm.sh && print_dm_diag
+	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+
+restart_fbasdm_multi_loop:
+	source setup.sh && setup_fbasrx
+	source dm.sh && clear_dm_diag
+	source dm.sh && clear_dm_patt
+	source dm.sh && load_dm_patt my_mps_loop.dot
+	source dm.sh && load_dm_patt my_mps_loop1.dot
+	source dm.sh && load_dm_patt my_mps_loop2.dot
+	source dm.sh && load_dm_patt my_mps_loop3.dot
+	source dm.sh && print_dm_patt
+	source dm.sh && set_dm_maxmsg # to restore default: eb-write $fbasdm 0x41000a4/4 0x28
+	source dm.sh && start_dm_synchron
+	echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
+	source dm.sh && stop_dm_patt PatLoop
+	source dm.sh && stop_dm_patt PatLoop1
+	source dm.sh && stop_dm_patt PatLoop2
+	source dm.sh && stop_dm_patt PatLoop3
 	source dm.sh && print_dm_diag
 	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
 
