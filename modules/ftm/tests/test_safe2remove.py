@@ -55,7 +55,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   @pytest.mark.slow
   def test_safe2remove_group_1_9_1(self):
-    self.safe2removeTestcasePerformance('groups_1_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=2.6))
+    self.safe2removeTestcasePerformance('groups_1_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=2.8))
 
   @pytest.mark.slow
   def test_safe2remove_group_1_9_10(self):
