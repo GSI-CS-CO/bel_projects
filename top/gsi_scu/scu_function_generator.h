@@ -300,7 +300,7 @@ STATIC_ASSERT( sizeof( __FG_CONTROL_REG_T ) == sizeof(uint32_t) );
  * @see configure_fg_macro
  *
  * Meaning of the polynomial coefficients:\n
- * @f$ f(x) = coeff\_a \times 2^{shift\_a} \times x^2
+ * @f$ f(x) = coeff\_a \times 2^{shift\_a - 1} \times x^2
  *          + coeff\_b \times 2^{shift\_b} \times x
  *          + coeff\_c \times 2^{32} @f$
  */

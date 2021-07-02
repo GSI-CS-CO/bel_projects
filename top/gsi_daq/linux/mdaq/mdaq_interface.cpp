@@ -105,6 +105,7 @@ void DaqInterface::readBufferAdmin( void )
    m_oBufferAdmin.indexes.capacity = gsi::convertByteEndian( temp.indexes.capacity );
    m_oBufferAdmin.indexes.start    = gsi::convertByteEndian( temp.indexes.start );
    m_oBufferAdmin.indexes.end      = gsi::convertByteEndian( temp.indexes.end );
+   m_oBufferAdmin.wasRead          = gsi::convertByteEndian( temp.wasRead );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -119,12 +120,16 @@ void DaqInterface::readIndexes( void )
                   sizeof( temp.indexes.start ), "" );
 
 
+   static_assert( offsetof( MIL_DAQ_ADMIN_T, wasRead ) ==
+                  offsetof( MIL_DAQ_ADMIN_T, indexes ) + sizeof( RAM_RING_INDEXES_T ), "" );
+
    readLM32( &temp.indexes.start,
-             sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ),
+             sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ) + sizeof( temp.wasRead ),
              offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
 
    m_oBufferAdmin.indexes.start = gsi::convertByteEndian( temp.indexes.start );
    m_oBufferAdmin.indexes.end   = gsi::convertByteEndian( temp.indexes.end );
+   m_oBufferAdmin.wasRead       = gsi::convertByteEndian( temp.wasRead );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -141,7 +146,7 @@ void DaqInterface::writeIndexes( void )
    temp.indexes.start = gsi::convertByteEndian( m_oBufferAdmin.indexes.start );
    temp.indexes.end   = gsi::convertByteEndian( m_oBufferAdmin.indexes.end );
    writeLM32( &temp.indexes.start,
-              sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ),
+              sizeof( temp.indexes.start ), //!! + sizeof( temp.indexes.end ),
               offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
 }
 

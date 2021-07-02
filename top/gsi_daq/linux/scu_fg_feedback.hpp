@@ -230,6 +230,10 @@ private:
    public:
       MilFb( FgFeedbackChannel* pParent );
       virtual ~MilFb( void );
+      bool isSetValueInvalid( void )
+      {
+         return m_oReceive.isSetValueInvalid();
+      }
    }; // class MilFb
 #endif // ifdef CONFIG_MIL_FG
 
@@ -237,7 +241,7 @@ private:
     * @brief Number of function-generator
     */
    const uint         m_fgNumber;
-   
+
    /*!
     * @brief Pointer to the parent object in which this object becomes
     *        registered.
@@ -309,6 +313,17 @@ public:
     */
    bool isMil( void );
 #endif
+
+   /*!
+    * @brief Returns "true" in the case of gap-reading when the last received
+    *        set-value was invalid.
+    * @note This function can be used within the the callback function "onData"
+    *       to distinguish the actual data item is within a gap or not.
+    * @retval false Set value is valid, data-item is outside of the gap.
+    * @retval true  Set value is the last valid received set value,
+    *               data item is inside of a gap
+    */
+   bool isSetValueInvalid( void );
 
    /*!
     * @brief Returns the time-stamp of the last data tuple independently

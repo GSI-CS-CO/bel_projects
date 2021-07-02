@@ -146,6 +146,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
 #endif
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
+  ,m_nextReadOutTime( 0 )
 {
    initPtr();
 }
@@ -157,6 +158,7 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
 #endif
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
+  ,m_nextReadOutTime( 0 )
 {
    initPtr();
 }
@@ -354,9 +356,20 @@ uint DaqAdministration::distributeData( void )
 #endif
 {
    #warning MIL-distributeData for DDR3 not tested yet!
+#if 0
+   const uint toRead = getCurrentNumberOfData();
+   cout << "toRead: " << toRead << endl;
+   //addToReadIndex( toRead );
+   writeIndexes();
+   return 0;
+#else
+   if( m_nextReadOutTime > daq::getSysMicrosecs() )
+      return 0;
+
    const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
    if( toRead == 0 )
-      return 0;
+      return toRead;
+
 
    if( m_pMiddleBufferMem == nullptr )
    {
@@ -382,9 +395,14 @@ uint DaqAdministration::distributeData( void )
       pCurrent->onData( pCurrentItem->getTimestamp(),
                         pCurrentItem->getActValue32(),
                         pCurrentItem->getSetValue32() );
+
+      pCurrent->m_setValueInvalid = true;
    }
 
+   m_nextReadOutTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC / 8;
+
    return toRead;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

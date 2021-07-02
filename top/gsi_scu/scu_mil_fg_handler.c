@@ -107,6 +107,7 @@ void milInitTasks( void )
    }
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    ramRingReset( &g_shared.mDaq.indexes );
+   g_shared.mDaq.wasRead = 0;
 #endif
 }
 
@@ -331,6 +332,10 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
  #endif
 
    RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
+
+   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
+   g_shared.mDaq.wasRead = 0;
+
    /*
     * Is the circular buffer full?
     */

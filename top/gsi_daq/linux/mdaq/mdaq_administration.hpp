@@ -93,7 +93,6 @@ public:
       return m_pParent;
    }
 
-protected:
    /*!
     * @brief Returns "true" in the case of gap-reading when the last received
     *        set-value was invalid.
@@ -108,7 +107,7 @@ protected:
       return m_setValueInvalid;
    }
 
-
+protected:
    /*!
     * @brief Callback function becomes invoked for each incoming data item which
     *        belongs to this object.
@@ -264,6 +263,7 @@ protected:
  */
 class DaqAdministration: public Scu::MiLdaq::DaqInterface
 {
+   using USEC_T = daq::USEC_T;
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    /*!
     * @brief Keeps the function-pointer for reading out MIL-DAQ-data
@@ -278,6 +278,8 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
     */
    MIDDLE_BUFFER_T* m_pMiddleBufferMem;
    uint             m_pMiddleBufferSize;
+
+   USEC_T           m_nextReadOutTime;
 
 protected:
 

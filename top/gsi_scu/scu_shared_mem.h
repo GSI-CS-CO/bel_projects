@@ -158,14 +158,21 @@ typedef struct PACKET_SIZE
     * @brief Administration of memory offset, write and read index.
     */
    RAM_RING_INDEXES_T indexes;
+
+   /*!
+    * @brief Number of items which the Linux-client has been read.
+    */
+   RAM_RING_INDEX_T   wasRead;
 } MIL_DAQ_ADMIN_T;
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, magicNumber ) == 0);
 STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, indexes ) ==
                (offsetof( MIL_DAQ_ADMIN_T, magicNumber ) + sizeof( uint32_t ) ));
+STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, wasRead ) ==
+               offsetof( MIL_DAQ_ADMIN_T, indexes ) + sizeof( RAM_RING_INDEXES_T ));
 STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
-               (sizeof( uint32_t ) + sizeof(RAM_RING_INDEXES_T)) );
+               (sizeof( uint32_t ) + sizeof(RAM_RING_INDEXES_T)) + sizeof(RAM_RING_INDEX_T) );
 #endif
 
 #ifdef __cplusplus

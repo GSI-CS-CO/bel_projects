@@ -476,6 +476,33 @@ std::string FgFeedbackChannel::getFgName( void )
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_feedback.hpp
  */
+bool FgFeedbackChannel::isSetValueInvalid( void )
+{
+   if( m_pCommon == nullptr )
+   { /*
+      * This channel has not been registered yet, therefore
+      * the set value is always invalid.
+      */
+      return true;
+   }
+#ifdef CONFIG_MIL_FG
+   if( dynamic_cast<MilFb*>(m_pCommon) != nullptr )
+   { /*
+      * In the case of MIL-DAQ the set value could be invalid during
+      * read back within a gap.
+      */
+      return static_cast<MilFb*>(m_pCommon)->isSetValueInvalid();
+   }
+#endif
+   /*
+    * In the case of ADDAC-DAQ the set value is always valid.
+    */
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_feedback.hpp
+ */
 void FgFeedbackChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
 {
    std::string str = "Deviation of sequence numbers of: ";

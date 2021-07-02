@@ -189,6 +189,7 @@ public:
          indexes.capacity = 0;
          indexes.start = 0;
          indexes.end = 0;
+         wasRead = 0;
       }
    };
 
@@ -215,6 +216,7 @@ private:
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
 #endif /* CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
 
+protected:
    /*!
     * @brief Object contains the write and read index of the RAM buffer
     */

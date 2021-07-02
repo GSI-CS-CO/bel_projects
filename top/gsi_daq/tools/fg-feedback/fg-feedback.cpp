@@ -188,8 +188,9 @@ void FbChannel::onMilData( const uint64_t timestamp,
       return;
 
    cout << "MIL value: fg-" << getSocket() << '-' << getFgNumber();
-   cout << "timestamp: " << daq::wrToTimeDateString( timestamp );
-   cout << ", " << timestamp << endl;
+   cout << ", timestamp: " << daq::wrToTimeDateString( timestamp );
+   cout << ", " << timestamp << ", set value: " << setValue
+        << ", act value: " << actlValue << endl;
 }
 
 /*! ---------------------------------------------------------------------------
