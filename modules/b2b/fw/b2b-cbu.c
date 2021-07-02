@@ -277,8 +277,9 @@ uint32_t setSubmit()
 
   setFlagValid[sid]    = 0;
 
-  setGid[sid]          = *pSharedSetGidExt + *pSharedSetGidInj;
   setMode[sid]         = *pSharedSetMode;    
+  setGid[sid]          = *pSharedSetGidExt;
+  if ((setMode[sid] == 3) || (setMode[sid] == 4)) setGid[sid] += *pSharedSetGidInj;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtLo) | setTH1Ext[sid];
   setNHExt[sid]        = *pSharedSetNHExt;   

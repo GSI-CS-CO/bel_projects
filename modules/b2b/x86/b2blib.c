@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 1-Jul-2021
+ *  version : 2-July-2021
  *
  * library for b2b
  *
@@ -361,12 +361,13 @@ uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *sta
 } // b2b_status_read
   
 
-uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1, uint32_t nH, 
+uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint32_t mode, double nueH1, uint32_t fNueConv, uint32_t nH, 
                                 int32_t  cTrig, int32_t nBucket, int32_t  cPhase, uint32_t  fFineTune, uint32_t fMBTune)
 {
-  eb_cycle_t   eb_cycle;
-  eb_status_t  eb_status;
-  uint32_t     gidExt;
+  eb_cycle_t   eb_cycle;     // eb cycle
+  eb_status_t  eb_status;    // eb status
+  uint32_t     gidExt;       // b2b group ID
+  uint64_t     TH1;          // revolution period [as]
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -379,13 +380,19 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
       gidExt = ESR_B2B_EXTRACT;
       break;
     case CRYRING_RING :
-      gidExt =  CRYRING_B2B_EXTRACT;
+      gidExt = CRYRING_B2B_EXTRACT;
       break;
     default           :
       gidExt = GID_INVALID;
       break;
   } // switch gid
   if (gidExt == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
+
+  /* chk more range checking */
+
+  // convert frequency [Hz] to period [as]
+  if (fNueConv) TH1 = (double)1000000000000000000.0 / b2b_flsa2fdds(nueH1);
+  else          TH1 = (double)1000000000000000000.0 / nueH1;
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
@@ -406,11 +413,12 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
 } // b2b_context_ext_upload
 
 
-uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid, uint64_t TH1, uint32_t nH, int32_t  cTrig, int32_t nBucket)
+uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid, double nueH1, uint32_t fNueConv, uint32_t nH, int32_t  cTrig, int32_t nBucket)
 {
-  eb_cycle_t   eb_cycle;
-  eb_status_t  eb_status;
-  uint32_t     gidInj;
+  eb_cycle_t   eb_cycle;     // eb cycle
+  eb_status_t  eb_status;    // eb status
+  uint32_t     gidInj;       // b2b group ID
+  uint64_t     TH1;          // revolution period [as]
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -427,6 +435,12 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
       break;
   } // switch gid
   if (gidInj == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
+
+  /* chk more range checking */
+
+  // convert frequency [Hz] to period [as]
+  if (fNueConv) TH1 = (double)1000000000000000000.0 / b2b_flsa2fdds(nueH1);
+  else          TH1 = (double)1000000000000000000.0 / nueH1;
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
