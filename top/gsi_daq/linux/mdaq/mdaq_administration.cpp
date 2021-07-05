@@ -356,11 +356,17 @@ uint DaqAdministration::distributeData( void )
 #endif
 {
    #warning MIL-distributeData for DDR3 not tested yet!
-#if 0
-   const uint toRead = getCurrentNumberOfData();
-   cout << "toRead: " << toRead << endl;
-   //addToReadIndex( toRead );
-   writeIndexes();
+   updateMemAdmin();
+#if 1
+   if( getWasRead() != 0 )
+      return 0;
+
+   const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
+   cout << "toRead: " << toRead <<
+           "\nWrite-index: " << getWriteIndex() <<
+           "\nRead-index:  " << getReadIndex() << endl;
+
+   sendWasRead( toRead );
    return 0;
 #else
    if( m_nextReadOutTime > daq::getSysMicrosecs() )

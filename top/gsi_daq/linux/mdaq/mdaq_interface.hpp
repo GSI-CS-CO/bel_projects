@@ -241,8 +241,6 @@ public:
    /*!
     * @brief Returns the capacity of the ADDAC or MIL DAQ data-buffer
     *        in minimum addressable payload units of the used RAM-type.
-    * @todo Not implemented yet. Implement this when using DDR3-RAM for
-    *       the MIL data-buffer.
     */
    uint getRamCapacity( void ) override
    {
@@ -252,8 +250,6 @@ public:
    /*!
     * @brief Returns the offset in minimum addressable payload units of the
     *        used RAM type.
-    * @todo Not implemented yet. Implement this when using DDR3-RAM for
-    *       the MIL data-buffer.
     */
    uint getRamOffset( void ) override
    {
@@ -261,24 +257,70 @@ public:
    }
 
 protected:
-   void readIndexes( void );
+   /*!
+    * @brief Updates all member variables which has been probably modified
+    *        by LM32.
+    */
+   void updateMemAdmin( void );
+
+   /*!
+    * @brief Sends the number DDR3-items back to the LM32.
+    */
+   void sendWasRead( const RAM_RING_INDEX_T );
+
    void writeIndexes( void );
+
    void addToReadIndex( const uint toAdd )
    {
       ramRingAddToReadIndex( &m_oBufferAdmin.indexes, toAdd );
    }
 
 public:
+
    /*!
-    *  @brief Returns the currently number of data items which are not read yet
+    * @brief Returns the currently number of data items which are not read yet
     *         in the DDR3-RAM
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
     */
-   uint getCurrentNumberOfData( const bool doUpdate = true )
+   uint getCurrentNumberOfData( void )
    {
-      if( doUpdate )
-         readIndexes();
       return ramRingGetSize( &m_oBufferAdmin.indexes );
    }
+
+   /*!
+    * @brief Returns the number of data items which has been read by
+    *        the last iteration step, but not handled by LM32 yet.
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getWasRead( void ) const
+   {
+      return m_oBufferAdmin.wasRead;
+   }
+
+   /*!
+    * @brief Returns the raw write index of the DDR3 RAM.
+    * @note For debug purposes only.
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getWriteIndex( void )
+   {
+      return m_oBufferAdmin.indexes.end;
+   }
+
+   /*!
+    * @brief Returns the raw read index of the DDR3 RAM.
+    * @note For debug purposes only!
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getReadIndex( void )
+   {
+      return m_oBufferAdmin.indexes.start;
+   }
+
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    RING_INDEX_T getHeadRingIndex( void ) const

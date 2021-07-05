@@ -305,6 +305,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    if( setValueInvalid )
       fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
 #endif
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
  #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
@@ -333,8 +334,10 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
 
    RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
 
+   /*
+    * Removing old data which has been possibly read by the Linux client.
+    */
    ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
-   g_shared.mDaq.wasRead = 0;
 
    /*
     * Is the circular buffer full?
@@ -357,6 +360,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    }
 
    g_shared.mDaq.indexes = indexes;
+   g_shared.mDaq.wasRead = 0;
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
    #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!

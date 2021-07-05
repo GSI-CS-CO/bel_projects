@@ -110,7 +110,7 @@ void DaqInterface::readBufferAdmin( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::readIndexes( void )
+void DaqInterface::updateMemAdmin( void )
 {
    SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
    MIL_DAQ_ADMIN_T temp;
@@ -130,6 +130,16 @@ void DaqInterface::readIndexes( void )
    m_oBufferAdmin.indexes.start = gsi::convertByteEndian( temp.indexes.start );
    m_oBufferAdmin.indexes.end   = gsi::convertByteEndian( temp.indexes.end );
    m_oBufferAdmin.wasRead       = gsi::convertByteEndian( temp.wasRead );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::sendWasRead( const RAM_RING_INDEX_T wasRead )
+{
+   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
+   m_oBufferAdmin.wasRead = wasRead;
+   RAM_RING_INDEX_T wasReadBe = gsi::convertByteEndian( m_oBufferAdmin.wasRead );
+   writeLM32( &wasReadBe, sizeof( wasReadBe ), offsetof( MIL_DAQ_ADMIN_T, wasRead ));
 }
 
 /*! ---------------------------------------------------------------------------
