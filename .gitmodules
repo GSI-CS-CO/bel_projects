@@ -13,9 +13,6 @@
 [submodule "ip_cores/wrpc-sw"]
 	path = ip_cores/wrpc-sw
 	url = https://ohwr.org/project/wrpc-sw.git
-[submodule "ip_cores/hdl-make"]
-	path = ip_cores/hdl-make
-	url = https://ohwr.org/project/hdl-make.git
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
 	url = https://ohwr.org/project/pci-core.git
