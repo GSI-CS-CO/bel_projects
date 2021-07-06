@@ -22,3 +22,6 @@
 [submodule "ip_cores/mtca_mmc_firmware"]
 	path = ip_cores/mtca_mmc_firmware
 	url = https://github.com/GSI-CS-CO/mtca_mmc_firmware.git
+[submodule "ip_cores/hdlmake"]
+	path = ip_cores/hdlmake
+	url = https://ohwr.org/project/hdl-make.git
