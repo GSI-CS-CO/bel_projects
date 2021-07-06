@@ -3,6 +3,9 @@
 
 typedef uint32_t status_t;
 
+// timing message
+#define N_MAX_TIMMSG   8 // maximum number of timing messages in an Ethernet frame
+
 // broadcast MAC and IP addresses
 #define BROADCAST_MAC 0xffffffffffff // broadcast MAC
 #define BROADCAST_IP      0xffffffff // broadcast IP
@@ -19,6 +22,7 @@ typedef uint32_t status_t;
 
 // MPS definitions
 #define N_MPS_CHANNELS     40//32  // total number of MPS channels
+#define N_MPS_FLAGS        1   // MPS flags in an Ethernet frame
 #define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
 #define F_MPS_BCAST        200//30  // frequency to broadcast MPS flags [MPS_FS_530]
 

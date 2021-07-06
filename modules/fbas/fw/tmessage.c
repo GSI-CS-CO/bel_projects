@@ -87,6 +87,78 @@ void resetItr(timedItr_t* itr, uint64_t now)
 }
 
 /**
+ * \brief send a block of MPS flags
+ *
+ * Send a specified number of the MPS flags
+ *
+ * \param len   block length
+ * \param itr   read-access iterator that specifies next MPS flag to send
+ * \param evtId event ID for timing messages
+ *
+ * \ret status
+ **/
+status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
+{
+  uint32_t res, tef;                // temporary variables for bit shifting etc
+  uint32_t deadlineLo, deadlineHi;
+  uint32_t idLo, idHi;
+  uint32_t paramLo, paramHi;
+
+  uint64_t now = getSysTime();
+  uint64_t deadline = itr->last + itr->period;
+
+  if (len > N_MAX_TIMMSG)
+    return COMMON_STATUS_OUTOFRANGE;
+
+  if (!itr->last)
+    deadline = now;  // initial transmission
+
+  // send timing messages if deadline is over
+  if (deadline <= now) {
+    // pack Ethernet frame with messages
+    idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
+    idLo       = (uint32_t)(evtId            & 0xffffffff);
+    tef        = 0x00000000;
+    res        = 0x00000000;
+    deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+    deadlineLo = (uint32_t)(deadline         & 0xffffffff);
+
+    // start EB operation
+    ebm_hi(COMMON_ECA_ADDRESS);
+
+    // send a block of MPS flags
+    atomic_on();
+    for (size_t i = 0; i < len; ++i) {
+      // get MPS flag
+      paramHi  = (uint32_t)((bufMpsFlag[itr->idx].param >> 32) & 0xffffffff);
+      paramLo  = (uint32_t)(bufMpsFlag[itr->idx].param         & 0xffffffff);
+
+      // update iterator
+      resetItr(itr, deadline);
+
+      // build a timing message
+      ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+      ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+
+    }
+    atomic_off();
+
+    // send timing messages
+    ebm_flush();
+  }
+  else
+    return COMMON_STATUS_ERROR;
+
+  return COMMON_STATUS_OK;
+}
+
+/**
  * \brief send an MPS flag
  *
  * MPS flags are sent at specified period. [MPS_FS_530]

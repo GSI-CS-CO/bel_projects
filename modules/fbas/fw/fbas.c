@@ -305,7 +305,7 @@ void setOpMode(uint64_t mode) {
  * \param itr       pointer to the read iterator for MPS flags
  * \param head      pointer to pointer of the MPS flags buffer
  *
- * \return ECA action tag
+ * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
 uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head)
 {
@@ -606,9 +606,9 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        if (sendMpsFlag(pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
+        if (sendMpsFlagBlock(N_MPS_FLAGS, pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
           // count sent timing messages with MPS flag
-          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, 1);
+          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, N_MPS_FLAGS);
       }
       else
         wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console
