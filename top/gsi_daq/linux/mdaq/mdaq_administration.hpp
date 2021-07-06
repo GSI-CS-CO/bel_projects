@@ -281,10 +281,20 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
 
    USEC_T           m_nextReadOutTime;
 
+   /*!
+    * @brief Last received time stamp:
+    */
+   uint64_t         m_lastTimestamp;
+
 protected:
 
    #define MIL_DEVICE_LIST_BASE std::list
    using DEVICE_LIST_T = MIL_DEVICE_LIST_BASE<DaqDevice*>;
+
+   /*!
+    * @brief List stores the pointer of the registered devices of type
+    *        DaqDevice
+    */
    DEVICE_LIST_T  m_devicePtrList;
 
 public:

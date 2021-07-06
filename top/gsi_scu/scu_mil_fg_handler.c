@@ -337,7 +337,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    /*
     * Removing old data which has been possibly read by the Linux client.
     */
-   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
+//!!   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
 
    /*
     * Is the circular buffer full?
@@ -360,7 +360,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    }
 
    g_shared.mDaq.indexes = indexes;
-   g_shared.mDaq.wasRead = 0;
+ //!!  g_shared.mDaq.wasRead = 0;
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
    #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!
@@ -813,6 +813,14 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     */
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
 
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   /*
+    * Removing old data which has been possibly read by the Linux client.
+    * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
+    */
+   ramRingAddToReadIndex( &g_shared.mDaq.indexes, g_shared.mDaq.wasRead );
+#endif
+
    const FG_STATE_T lastState = pMilData->state;
 
   /*
@@ -822,8 +830,18 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    {
       case ST_WAIT:
       {
-         if( !queueIsEmptySave( isScuBus? &g_queueMilSio : &g_queueMilBus ) )
+         STATIC_ASSERT( sizeof(pMilData->slave_nr) == sizeof(QUEUE_MIL_SOCKET_T) );
+         if( queuePopSave( isScuBus? &g_queueMilSio : &g_queueMilBus, &pMilData->slave_nr ) )
          {
+         #ifdef CONFIG_READ_MIL_TIME_GAP
+           /*
+            * Sets the gap reading time to zero this will signal the host that
+            * the next data aren't from gap reading.
+            * Refer state ST_FETCH_DATA at function call pushDaqData().
+            */
+            pMilData->gapReadingTime = 0;
+         #endif
+            pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
@@ -1034,6 +1052,15 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
    } /* End of state-do activities */
 
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   /*
+    * Signaling to the Linux client that MIL-data buffer was handled by clearing
+    * the number of items, which has been read by the client.
+    * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
+    */
+   g_shared.mDaq.wasRead = 0;
+#endif
+
    /*
     * Has the FSM-state changed?
     */
@@ -1063,22 +1090,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          break;
       }
    #endif
-
-      case ST_PREPARE:
-      {
-      #ifdef CONFIG_READ_MIL_TIME_GAP
-        /*
-         * Sets the gap reading time to zero this will signal the host that
-         * the next data aren't from gap reading.
-         * Refer state ST_FETCH_DATA at function call pushDaqData().
-         */
-         pMilData->gapReadingTime = 0;
-      #endif
-         STATIC_ASSERT( sizeof(pMilData->slave_nr) == sizeof(QUEUE_MIL_SOCKET_T) );
-         queuePopSave( isScuBus? &g_queueMilSio : &g_queueMilBus, &pMilData->slave_nr );
-         pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
-         break;
-      }
 
       case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:

@@ -23,7 +23,8 @@
  ******************************************************************************
  */
 #include <mdaq_administration.hpp>
-
+#include <string.h>
+#include <assert.h>
 using namespace Scu::MiLdaq;
 
 
@@ -147,6 +148,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
+  ,m_lastTimestamp( 0 )
 {
    initPtr();
 }
@@ -159,6 +161,7 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
+  ,m_lastTimestamp( 0 )
 {
    initPtr();
 }
@@ -181,6 +184,8 @@ void DaqAdministration::initPtr( void )
 {
    if( m_pMiddleBufferSize == 0 )
       m_pMiddleBufferSize = std::min( getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM, 100UL );
+
+   assert( (m_pMiddleBufferSize % RAM_ITEM_PER_MIL_DAQ_ITEM) == 0 );
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    if( m_pfPollDaqData != nullptr )
@@ -338,7 +343,7 @@ void DaqAdministration::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
    {
       const std::size_t partLen = std::min( len, maxLen );
       readRam( pData, partLen );
-      writeIndexes();
+    //  writeIndexes();
       len -= partLen;
       if( len == 0 )
          break;
@@ -355,27 +360,17 @@ uint DaqAdministration::distributeDataNew( void )
 uint DaqAdministration::distributeData( void )
 #endif
 {
-   #warning MIL-distributeData for DDR3 not tested yet!
+//   if( m_nextReadOutTime > daq::getSysMicrosecs() )
+//      return 0;
+
    updateMemAdmin();
-#if 1
+
    if( getWasRead() != 0 )
       return 0;
 
    const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
-   cout << "toRead: " << toRead <<
-           "\nWrite-index: " << getWriteIndex() <<
-           "\nRead-index:  " << getReadIndex() << endl;
-
-   sendWasRead( toRead );
-   return 0;
-#else
-   if( m_nextReadOutTime > daq::getSysMicrosecs() )
-      return 0;
-
-   const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
-   if( toRead == 0 )
+   if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
       return toRead;
-
 
    if( m_pMiddleBufferMem == nullptr )
    {
@@ -383,32 +378,42 @@ uint DaqAdministration::distributeData( void )
    }
 
    readDaqData( m_pMiddleBufferMem->aPayload, toRead );
+   sendWasRead( toRead );
+#if 1
+   cout << "toRead: " << toRead <<
+           "\nWrite-index: " << getWriteIndex() <<
+           "\nRead-index:  " << getReadIndex() << endl;
+#endif
 
-   for( uint i = 0; i < toRead; i++ )
+   const uint itemsToHandling = toRead / RAM_ITEM_PER_MIL_DAQ_ITEM;
+   for( uint i = 0; i < itemsToHandling; i++ )
    {
       const BufferItem* pCurrentItem = &m_pMiddleBufferMem[i].oData;
+      if( m_lastTimestamp > pCurrentItem->getTimestamp() )
+         continue;
+      m_lastTimestamp = pCurrentItem->getTimestamp();
+
       DaqCompare* pCurrent = findDaqCompare( pCurrentItem->getChannel() );
       if( pCurrent == nullptr )
       {
-         //onUnregistered( pItem ); //TODO
+         //onUnregistered( pCurrentItem->getChannel() ); //TODO
          continue;
       }
 
       pCurrent->m_setValueInvalid =
             (pCurrentItem->getChannel().outputBits & SET_VALUE_NOT_VALID_MASK) != 0;
 
-
       pCurrent->onData( pCurrentItem->getTimestamp(),
                         pCurrentItem->getActValue32(),
                         pCurrentItem->getSetValue32() );
 
       pCurrent->m_setValueInvalid = true;
+
    }
 
    m_nextReadOutTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC / 8;
 
    return toRead;
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
