@@ -461,12 +461,9 @@ Makefile: prereq-rule
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules"; ./fix-git.sh)
-	@test -d lib/python2.7/site-packages || \
-		(echo "Installing hdlmake"; ./install-hdlmake.sh)
 
 git_submodules_update:
 	@git submodule update --recursive
 
 git_submodules_init:
 	@./fix-git.sh
-
