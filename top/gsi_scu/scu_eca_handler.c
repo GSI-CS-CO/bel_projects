@@ -93,9 +93,6 @@ inline void ecaHandler
    if( !ecaTestTagAndPop( g_eca.pQueue, g_eca.tag ) )
       return;
 
-#ifdef DEBUG_SAFTLIB
-   mprintf( "* " );
-#endif
    bool                 isMilDevArmed = false;
    SCUBUS_SLAVE_FLAGS_T active_sios   = 0; /* bitmap with active sios */
 
@@ -146,6 +143,8 @@ inline void ecaHandler
        */
       g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = MIL_BROADCAST;
    }
+
+  // mprintf( "SIO: %08b\n", active_sios );
 }
 
 /* ================================= EOF ====================================*/
