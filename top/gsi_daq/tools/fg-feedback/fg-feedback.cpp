@@ -211,7 +211,7 @@ void FbChannel::addItem( const uint64_t time,
 }
 
 /*! ---------------------------------------------------------------------------
- * @dotfile mdaqt.gv
+ * @dotfile fg-feedback.gv
  */
 void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
                                               MiLdaq::MIL_DAQ_T setValue )
