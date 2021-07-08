@@ -157,6 +157,7 @@ DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
 
 # CODE_OPTIMIZATION = 2
  CODE_OPTIMIZATION = s
+# CODE_OPTIMIZATION = 0
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 # TOOLCHAIN_DIR = /home/bel/ubecker/lnx/src/extern/gcc-toolchain-builder/TEST93/bin/
 # RAM_SIZE    = 147456

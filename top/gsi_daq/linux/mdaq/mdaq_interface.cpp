@@ -121,7 +121,7 @@ void DaqInterface::updateMemAdmin( void )
 
 
    static_assert( offsetof( MIL_DAQ_ADMIN_T, wasRead ) ==
-                  offsetof( MIL_DAQ_ADMIN_T, indexes ) + sizeof( RAM_RING_INDEXES_T ), "" );
+                  offsetof( MIL_DAQ_ADMIN_T, indexes.end ) + sizeof( temp.indexes.end ), "" );
 
    readLM32( &temp.indexes.start,
              sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ) + sizeof( temp.wasRead ),

@@ -183,6 +183,8 @@ private:
    void onMilData( const uint64_t timestamp,
                    MiLdaq::MIL_DAQ_T actlValue,
                    MiLdaq::MIL_DAQ_T setValue ) override;
+
+   void onTimestampError( const uint64_t tinestamp ) override;
 };
 
 

@@ -84,6 +84,13 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
+#define _CONFIG_DBG_TIMESTAMP
+
+#ifdef _CONFIG_DBG_TIMESTAMP
+#warning Debug of MIL-Timestamps is active!
+volatile uint64_t g_aLastTimestamps[ ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ) ];
+#endif
+
 /*! ----------------------------------------------------------------------------
  */
 void milInitTasks( void )
@@ -108,6 +115,10 @@ void milInitTasks( void )
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    ramRingReset( &g_shared.mDaq.indexes );
    g_shared.mDaq.wasRead = 0;
+#endif
+#ifdef _CONFIG_DBG_TIMESTAMP
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aLastTimestamps ); i++ )
+      g_aLastTimestamps[i] = 0LL;
 #endif
 }
 
@@ -819,6 +830,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
     */
    ramRingAddToReadIndex( &g_shared.mDaq.indexes, g_shared.mDaq.wasRead );
+   g_shared.mDaq.wasRead = 0;
 #endif
 
    const FG_STATE_T lastState = pMilData->state;
@@ -963,7 +975,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             /*
              * Store the sample timestamp of DAQ.
              */
-            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime();
+            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTimeSafe(); //getWrSysTime();
 
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
@@ -1024,6 +1036,12 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                          , pMilData->gapReadingTime != 0
                       #endif
                        );
+         #ifdef _CONFIG_DBG_TIMESTAMP
+            if( g_aLastTimestamps[channel] < pMilData->aFgChannels[channel].daq_timestamp )
+               g_aLastTimestamps[channel] = pMilData->aFgChannels[channel].daq_timestamp;
+            else
+               mprintf( "*\n" );
+         #endif
             /*
              * save the setvalue from the tuple sent for the next drq handling
              */
@@ -1058,7 +1076,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     * the number of items, which has been read by the client.
     * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
     */
-   g_shared.mDaq.wasRead = 0;
+   //g_shared.mDaq.wasRead = 0;
 #endif
 
    /*

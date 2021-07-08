@@ -148,7 +148,6 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
-  ,m_lastTimestamp( 0 )
 {
    initPtr();
 }
@@ -161,7 +160,6 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
-  ,m_lastTimestamp( 0 )
 {
    initPtr();
 }
@@ -379,19 +377,15 @@ uint DaqAdministration::distributeData( void )
 
    readDaqData( m_pMiddleBufferMem->aPayload, toRead );
    sendWasRead( toRead );
-#if 1
-   cout << "toRead: " << toRead <<
-           "\nWrite-index: " << getWriteIndex() <<
-           "\nRead-index:  " << getReadIndex() << endl;
-#endif
+
+   DEBUG_MESSAGE( "toRead: " << toRead <<
+                "\nWrite-index: " << getWriteIndex() <<
+                "\nRead-index:  " << getReadIndex() );
 
    const uint itemsToHandling = toRead / RAM_ITEM_PER_MIL_DAQ_ITEM;
    for( uint i = 0; i < itemsToHandling; i++ )
    {
       const BufferItem* pCurrentItem = &m_pMiddleBufferMem[i].oData;
-      if( m_lastTimestamp > pCurrentItem->getTimestamp() )
-         continue;
-      m_lastTimestamp = pCurrentItem->getTimestamp();
 
       DaqCompare* pCurrent = findDaqCompare( pCurrentItem->getChannel() );
       if( pCurrent == nullptr )

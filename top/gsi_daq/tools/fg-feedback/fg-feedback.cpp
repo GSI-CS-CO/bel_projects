@@ -195,6 +195,17 @@ void FbChannel::onMilData( const uint64_t timestamp,
 
 /*! ---------------------------------------------------------------------------
  */
+void FbChannel::onTimestampError( const uint64_t timestamp )
+{
+   if( !getCommandLine()->isVerbose() )
+      return;
+   WARNING_MESSAGE( "Timestamp error of fg-" << getSocket() << '-' << getFgNumber()
+        << ": timestamp: " << daq::wrToTimeDateString( timestamp ) << " -> "
+        << timestamp );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void FbChannel::addItem( const uint64_t time,
                          const MiLdaq::MIL_DAQ_T actValue,
                          const MiLdaq::MIL_DAQ_T setValue,
@@ -250,7 +261,7 @@ void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
             m_startTime = m_currentTime;
             if( getCommandLine()->isContinuePlottingEnabled() )
                m_timeToPlot = m_currentTime + getPlotIntervalTime();
-            addItem( 0, actValue, setValue, true ); //!!!isSetValueInvalid() );
+            addItem( 0, actValue, setValue, !isSetValueInvalid() );
             m_minTime = static_cast<uint64_t>(~0);
             m_maxTime = 0;
             m_callCount++;
@@ -264,7 +275,7 @@ void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
             {
                FSM_TRANSITION_NEXT( PLOT, color = green );
             }
-            addItem( plotTime, actValue, setValue, true ); //!!!isSetValueInvalid() );
+            addItem( plotTime, actValue, setValue, !isSetValueInvalid() );
             if( getCommandLine()->isContinuePlottingEnabled() &&
                 (m_currentTime >= m_timeToPlot) )
             {
