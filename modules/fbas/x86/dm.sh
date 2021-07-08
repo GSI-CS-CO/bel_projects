@@ -15,7 +15,8 @@ source setup.sh
 export fbasdm="dev/wbm1"
 export patt_loc="$HOME/gsi_prj/bel_projects/modules/fbas/x86"
 export reg_maxmsg="0x41000a4/4"
-export cmd_file="start_synchron.dot"
+export cmd_file_start_loop="start_synchron.dot"
+export cmd_file_start_finite="start_synchron_finite.dot"
 
 function check_fbasdm() {
     if [ -z "$fbasdm" ]; then
@@ -55,7 +56,6 @@ function clear_dm_diag() {
     check_fbasdm
 
     dm-cmd $fbasdm cleardiag
-    dm-cmd $fbasdm status -v
 }
 
 ######################
@@ -110,10 +110,11 @@ function start_dm_patt() {
 ######################
 
 function set_dm_maxmsg() {
+    # $1 - maximum msgs in a frame (default 0x28)
 
     check_fbasdm
 
-    eb-write $fbasdm $reg_maxmsg 0x1
+    eb-write $fbasdm $reg_maxmsg $1
 }
 
 ######################
@@ -121,8 +122,9 @@ function set_dm_maxmsg() {
 ######################
 
 function start_dm_synchron() {
+    # $1 - file path with start command
 
     check_fbasdm
 
-    dm-cmd $fbasdm -i $cmd_file
+    dm-cmd $fbasdm -i $1
 }

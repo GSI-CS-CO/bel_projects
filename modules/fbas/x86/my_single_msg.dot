@@ -1,0 +1,18 @@
+digraph G {
+
+//dm-sched dev/wbm1 add ../../ftm/ftmx86/my_single_msg.dot # load pattern
+//dm-cmd dev/wbm1 startpattern PatSingle                   # start pattern
+//dm-cmd dev/wbm1 status -v                                # show sent message counts
+//dm-cmd dev/wbm1 cleardiag                                # clear diagnostics
+
+name="1000x16u_alternate"
+graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [cpu="0", pattern=PatSingle, patentry=0, patexit=0,  style     = "filled", fillcolor = "white", color = "black"];
+edge [type="defdst"];
+
+M_A1 [type="tmsg",  patentry=1, toffs=0,       fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x010100000a000000"];
+B_A3 [type="block", patexit=1,  tperiod=110000, qlo="true"];
+
+M_A1 -> B_A3;
+
+}
