@@ -312,7 +312,7 @@ uint DaqAdministration::distributeDataOld( void )
 
       if( pCurrent == nullptr )
       {
-         onUnregistered( pItem );
+         onUnregistered( pItem->getChannel() );
          continue;
       }
 
@@ -406,7 +406,7 @@ uint DaqAdministration::distributeData( void )
       DaqCompare* pCurrent = findDaqCompare( pCurrentItem->getChannel() );
       if( pCurrent == nullptr )
       {
-         //onUnregistered( pCurrentItem->getChannel() ); //TODO
+         onUnregistered( pCurrentItem->getChannel() );
          continue;
       }
 

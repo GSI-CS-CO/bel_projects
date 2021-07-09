@@ -678,17 +678,15 @@ private:
       {
       }
       virtual ~MilDaqAdministration( void ) {}
- 
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
-      void onUnregistered( RingItem* pUnknownItem )  override
+
+      void onUnregistered( const FG_MACRO_T fg )  override
       {
          //TODO
       }
-#endif
 
       RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
       {
-         return 0;
+         return 0; //TODO
       }
 
       void onDataReadingPause( void ) override;

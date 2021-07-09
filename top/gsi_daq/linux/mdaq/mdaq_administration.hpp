@@ -359,9 +359,7 @@ public:
    void reset( void );
 
 protected:
-#ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
-   virtual void onUnregistered( RingItem* pUnknownItem ) {}
-#endif
+   virtual void onUnregistered( const FG_MACRO_T fg ) {}
 
 private:
    DaqCompare* findDaqCompare( const FG_MACRO_T macro );
