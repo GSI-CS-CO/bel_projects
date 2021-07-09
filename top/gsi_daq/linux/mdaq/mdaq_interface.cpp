@@ -69,6 +69,9 @@ void DaqInterface::init( void )
       readBufferAdmin();
 }
 
+#define BYTE_SWAP( target, origin, member ) \
+  target.member = gsi::convertByteEndian( origin.member )
+
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::clearBuffer( bool update )
@@ -81,14 +84,15 @@ void DaqInterface::clearBuffer( bool update )
          return;
 
       DAQ_RING_T tmp;
-      tmp.m_head = gsi::convertByteEndian( m_oRing.m_head );
-      tmp.m_tail = gsi::convertByteEndian( m_oRing.m_tail );
+      BYTE_SWAP( tmp, m_oRing, m_head );
+      BYTE_SWAP( tmp, m_oRing, m_tail );
       getEbAccess()->writeLM32( &tmp, sizeof( tmp ),
                                   offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
       return;
    }
 #endif
    ramRingReset( &m_oBufferAdmin.indexes );
+   m_oBufferAdmin.wasRead = 0;
    if( update )
       writeIndexes();
 }
@@ -100,12 +104,12 @@ void DaqInterface::readBufferAdmin( void )
    SCU_ASSERT( !isMilDataInLm32Mem() );
    MIL_DAQ_ADMIN_T temp;
    readLM32( &temp, sizeof( temp ) );
-   m_oBufferAdmin.magicNumber      = gsi::convertByteEndian( temp.magicNumber );
-   m_oBufferAdmin.indexes.offset   = gsi::convertByteEndian( temp.indexes.offset );
-   m_oBufferAdmin.indexes.capacity = gsi::convertByteEndian( temp.indexes.capacity );
-   m_oBufferAdmin.indexes.start    = gsi::convertByteEndian( temp.indexes.start );
-   m_oBufferAdmin.indexes.end      = gsi::convertByteEndian( temp.indexes.end );
-   m_oBufferAdmin.wasRead          = gsi::convertByteEndian( temp.wasRead );
+   BYTE_SWAP( m_oBufferAdmin, temp, magicNumber );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.offset );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.capacity );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.start );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.end );
+   BYTE_SWAP( m_oBufferAdmin, temp, wasRead );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -121,15 +125,18 @@ void DaqInterface::updateMemAdmin( void )
 
 
    static_assert( offsetof( MIL_DAQ_ADMIN_T, wasRead ) ==
-                  offsetof( MIL_DAQ_ADMIN_T, indexes.end ) + sizeof( temp.indexes.end ), "" );
+                  offsetof( MIL_DAQ_ADMIN_T, indexes.end ) +
+                  sizeof( temp.indexes.end ), "" );
 
    readLM32( &temp.indexes.start,
-             sizeof( temp.indexes.start ) + sizeof( temp.indexes.end ) + sizeof( temp.wasRead ),
+             sizeof( temp.indexes.start )
+             + sizeof( temp.indexes.end )
+             + sizeof( temp.wasRead ),
              offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
 
-   m_oBufferAdmin.indexes.start = gsi::convertByteEndian( temp.indexes.start );
-   m_oBufferAdmin.indexes.end   = gsi::convertByteEndian( temp.indexes.end );
-   m_oBufferAdmin.wasRead       = gsi::convertByteEndian( temp.wasRead );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.start );
+   BYTE_SWAP( m_oBufferAdmin, temp, indexes.end );
+   BYTE_SWAP( m_oBufferAdmin, temp, wasRead );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -153,8 +160,8 @@ void DaqInterface::writeIndexes( void )
                   offsetof( MIL_DAQ_ADMIN_T, indexes.start ) +
                   sizeof( temp.indexes.start ), "" );
 
-   temp.indexes.start = gsi::convertByteEndian( m_oBufferAdmin.indexes.start );
-   temp.indexes.end   = gsi::convertByteEndian( m_oBufferAdmin.indexes.end );
+   BYTE_SWAP( temp, m_oBufferAdmin, indexes.start );
+   BYTE_SWAP( temp, m_oBufferAdmin, indexes.end );
    writeLM32( &temp.indexes.start,
               sizeof( temp.indexes.start ), //!! + sizeof( temp.indexes.end ),
               offsetof( MIL_DAQ_ADMIN_T, indexes.start ) );
@@ -170,11 +177,11 @@ bool DaqInterface::readRingPosition( void )
    getEbAccess()->readLM32( &tmp, sizeof( tmp ),
                                  offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
 
-   m_oRing.m_head = gsi::convertByteEndian( tmp.m_head );
+   BYTE_SWAP( m_oRing, tmp, m_head );
    if( m_oRing.m_head >= c_ringBufferCapacity )
       throw Exception( "Head-index of ring buffer is corrupt!" );
 
-   m_oRing.m_tail = gsi::convertByteEndian( tmp.m_tail );
+   BYTE_SWAP( m_oRing, tmp, m_tail );
    if( m_oRing.m_tail >= c_ringBufferCapacity )
       throw Exception( "Tail-index of ring buffer is corrupt!" );
 

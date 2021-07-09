@@ -184,7 +184,8 @@ private:
                    MiLdaq::MIL_DAQ_T actlValue,
                    MiLdaq::MIL_DAQ_T setValue ) override;
 
-   void onTimestampError( const uint64_t tinestamp ) override;
+   void onTimestampError( const uint64_t tinestamp, DAQ_T actlValue,
+                        DAQ_T setValue ) override;
 };
 
 

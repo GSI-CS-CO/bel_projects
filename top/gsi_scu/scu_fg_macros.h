@@ -529,6 +529,14 @@ STATIC inline void makeStart( const unsigned int channel )
    sendSignal( IRQ_DAT_START, channel );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns "true" if the function generator of this channel is active.
+ */
+STATIC inline bool fgIsStarted( const unsigned int channel )
+{
+   return g_shared.oSaftLib.oFg.aRegs[channel].state == STATE_ACTIVE;
+}
+
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  * @brief Prints a error message happened in the device-bus respectively

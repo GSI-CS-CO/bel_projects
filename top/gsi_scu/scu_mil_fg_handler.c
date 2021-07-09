@@ -348,7 +348,8 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    /*
     * Removing old data which has been possibly read by the Linux client.
     */
-//!!   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
+   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
+g_shared.mDaq.wasRead = 0;
 
    /*
     * Is the circular buffer full?

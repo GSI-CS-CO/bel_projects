@@ -400,6 +400,16 @@ protected:
    virtual void onActSetTimestampDeviation( const uint64_t setTimeStamp,
                                             const uint64_t actTimestamp );
 
+   /*!
+    * @brief Optional qver-writable callback function becomes invoked in the
+    *        case if a time stamp error has been detected.
+    * @note For debug purposes.
+    * @param timestamp Possibly wrong time stamp.
+    */
+   virtual void onTimestampError( const uint64_t timestamp,
+                                  DAQ_T actlValue,
+                                  DAQ_T setValue ) {}
+
 #ifdef CONFIG_MIL_FG
    /*!
     * @brief Optional callback function for debug purposes becomes

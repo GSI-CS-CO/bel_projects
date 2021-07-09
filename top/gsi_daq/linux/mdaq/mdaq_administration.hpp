@@ -261,7 +261,7 @@ protected:
  * Handles the communication between LM32-Firmware for MIL-DAQs
  * and all registered MIL-DAQ devices
  */
-class DaqAdministration: public Scu::MiLdaq::DaqInterface
+class DaqAdministration: public DaqInterface
 {
    using USEC_T = daq::USEC_T;
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
@@ -279,6 +279,7 @@ class DaqAdministration: public Scu::MiLdaq::DaqInterface
    MIDDLE_BUFFER_T* m_pMiddleBufferMem;
    uint             m_pMiddleBufferSize;
 
+   uint             m_lastReadIndex;
    USEC_T           m_nextReadOutTime;
 
 protected:

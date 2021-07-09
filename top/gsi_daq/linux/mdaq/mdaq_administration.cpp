@@ -147,6 +147,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
 #endif
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
+  ,m_lastReadIndex( 0 )
   ,m_nextReadOutTime( 0 )
 {
    initPtr();
@@ -159,6 +160,7 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
 #endif
   ,m_pMiddleBufferMem( nullptr )
   ,m_pMiddleBufferSize( 0 )
+  ,m_lastReadIndex( 0 )
   ,m_nextReadOutTime( 0 )
 {
    initPtr();
@@ -341,7 +343,6 @@ void DaqAdministration::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
    {
       const std::size_t partLen = std::min( len, maxLen );
       readRam( pData, partLen );
-    //  writeIndexes();
       len -= partLen;
       if( len == 0 )
          break;
@@ -361,6 +362,8 @@ uint DaqAdministration::distributeData( void )
 //   if( m_nextReadOutTime > daq::getSysMicrosecs() )
 //      return 0;
 
+   const uint lastWasToRead = getWasRead();
+
    updateMemAdmin();
 
    if( getWasRead() != 0 )
@@ -370,15 +373,28 @@ uint DaqAdministration::distributeData( void )
    if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
       return toRead;
 
+   if( m_lastReadIndex == getReadIndex() )
+   {
+      sendWasRead( lastWasToRead );
+      DEBUG_MESSAGE( "Second sendWasRead( " << lastWasToRead << " );" );
+      return 0;
+   }
+   m_lastReadIndex = getReadIndex();
+
    if( m_pMiddleBufferMem == nullptr )
    {
       m_pMiddleBufferMem = new MIDDLE_BUFFER_T[m_pMiddleBufferSize];
    }
 
+   DEBUG_MESSAGE( "Before\ntoRead: " << toRead <<
+                "\nWrite-index: " << getWriteIndex() <<
+                "\nRead-index:  " << getReadIndex() );
+
+
    readDaqData( m_pMiddleBufferMem->aPayload, toRead );
    sendWasRead( toRead );
 
-   DEBUG_MESSAGE( "toRead: " << toRead <<
+   DEBUG_MESSAGE( "After\ntoRead: " << toRead <<
                 "\nWrite-index: " << getWriteIndex() <<
                 "\nRead-index:  " << getReadIndex() );
 

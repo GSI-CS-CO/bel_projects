@@ -387,11 +387,19 @@ void FgFeedbackChannel::MilFb::Receive::onData( uint64_t wrTimeStampTAI,
                                                 MiLdaq::MIL_DAQ_T actlValue,
                                                 MiLdaq::MIL_DAQ_T setValue )
 {
-   /*
-    * Just forwarding, that's all.
-    */
-   m_pParent->m_pParent->onMilData( wrTimeStampTAI, actlValue, actlValue );
-   m_pParent->evaluate( wrTimeStampTAI, actlValue, setValue );
+   if( m_pParent->m_pParent->m_lastTimestamp < wrTimeStampTAI )
+   {
+      m_pParent->m_pParent->onMilData( wrTimeStampTAI, actlValue, setValue );
+
+     /*
+      * Just forwarding, that's all.
+      */
+      m_pParent->evaluate( wrTimeStampTAI, actlValue, setValue );
+   }
+   else
+   {
+      m_pParent->m_pParent->onTimestampError( wrTimeStampTAI, actlValue, setValue );
+   }
 }
 
 /*! ---------------------------------------------------------------------------

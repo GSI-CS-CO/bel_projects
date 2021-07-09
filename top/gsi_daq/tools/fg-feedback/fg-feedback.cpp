@@ -195,13 +195,17 @@ void FbChannel::onMilData( const uint64_t timestamp,
 
 /*! ---------------------------------------------------------------------------
  */
-void FbChannel::onTimestampError( const uint64_t timestamp )
+void FbChannel::onTimestampError( const uint64_t timestamp,
+                                  DAQ_T actlValue,
+                                  DAQ_T setValue )
 {
    if( !getCommandLine()->isVerbose() )
       return;
    WARNING_MESSAGE( "Timestamp error of fg-" << getSocket() << '-' << getFgNumber()
         << ": timestamp: " << daq::wrToTimeDateString( timestamp ) << " -> "
-        << timestamp );
+        << timestamp
+        << "; set-value: " << setValue
+        << ", act-value: " << actlValue );
 }
 
 /*! ---------------------------------------------------------------------------
