@@ -348,8 +348,8 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
    /*
     * Removing old data which has been possibly read by the Linux client.
     */
-   ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
-g_shared.mDaq.wasRead = 0;
+ //  ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
+ //  g_shared.mDaq.wasRead = 0;
 
    /*
     * Is the circular buffer full?
@@ -372,7 +372,6 @@ g_shared.mDaq.wasRead = 0;
    }
 
    g_shared.mDaq.indexes = indexes;
- //!!  g_shared.mDaq.wasRead = 0;
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
    #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!
@@ -446,9 +445,9 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
                      const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const uint8_t      socket     = getSocket( channel );
+   const unsigned int      socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
-   const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
+   const unsigned int milTaskNo = getMilTaskNumber( pMilTaskData, channel );
    pMilTaskData->aFgChannels[channel].irq_data = 0; // clear old irq data
    /* test only if as connected to sio */
    if( isScuBus )
