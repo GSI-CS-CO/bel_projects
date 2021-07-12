@@ -373,7 +373,7 @@ uint DaqAdministration::distributeData( void )
    if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
       return toRead;
 
-   if( m_lastReadIndex == getReadIndex() )
+   if( (m_lastReadIndex == getReadIndex()) && (lastWasToRead != 0) )
    {
       sendWasRead( lastWasToRead );
       DEBUG_MESSAGE( "Second sendWasRead( " << lastWasToRead << " );" );
