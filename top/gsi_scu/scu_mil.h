@@ -45,7 +45,7 @@
  ***********************************************************/
 
 
-extern int usleep(useconds_t usec);
+//extern int usleep(useconds_t usec);
 
 /*!
  * @defgroup MIL_INTERFACE Functions and constants for MIL-bus.
