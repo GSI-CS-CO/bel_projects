@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=1.4
+DEFINES += VERSION=2.0
 
 MIAN_MODULE := fg-feedback.cpp
 
@@ -53,7 +53,7 @@ DEFINES += _POSIX_C_SOURCE
 # DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
- DEFINES += DEBUGLEVEL
+# DEFINES += DEBUGLEVEL
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
 # DEFINES += CONFIG_NO_SCU_RAM
@@ -110,7 +110,7 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 # CALL_ARGS = scuxl0035 -b11,12
 # CALL_ARGS = scuxl0035 -azdt1 -T"X11 size 800,150"
  CALL_ARGS = scuxl0107 -azdt1 -T"X11 size 800,150"
- DEBUG = 1
+# DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
