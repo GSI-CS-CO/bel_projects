@@ -416,8 +416,8 @@ protected:
     *        invoked for all incoming MIL data tuples.
     */
    virtual void onMilData( const uint64_t timestamp,
-                           MiLdaq::MIL_DAQ_T actlValue,
-                           MiLdaq::MIL_DAQ_T setValue ) {}
+                           DAQ_T actlValue,
+                           DAQ_T setValue ) {}
 #endif
 }; // class FgFeedbackChannel
 

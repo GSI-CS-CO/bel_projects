@@ -392,6 +392,7 @@ protected:
 
 private:
    void readBufferAdmin( void );
+   void checkIntegrity( void );
    void init( void );
 };
 

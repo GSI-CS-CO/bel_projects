@@ -181,8 +181,8 @@ void FbChannel::onAddacDataBlock( const bool isSetData,
 /*! ---------------------------------------------------------------------------
  */
 void FbChannel::onMilData( const uint64_t timestamp,
-                           MiLdaq::MIL_DAQ_T actlValue,
-                           MiLdaq::MIL_DAQ_T setValue )
+                           DAQ_T actlValue,
+                           DAQ_T setValue )
 {
    if( !getCommandLine()->isVerbose() )
       return;
@@ -199,8 +199,6 @@ void FbChannel::onTimestampError( const uint64_t timestamp,
                                   DAQ_T actlValue,
                                   DAQ_T setValue )
 {
-   if( !getCommandLine()->isVerbose() )
-      return;
    WARNING_MESSAGE( "Timestamp error of fg-" << getSocket() << '-' << getFgNumber()
         << ": timestamp: " << daq::wrToTimeDateString( timestamp ) << " -> "
         << timestamp
@@ -211,8 +209,8 @@ void FbChannel::onTimestampError( const uint64_t timestamp,
 /*! ---------------------------------------------------------------------------
  */
 void FbChannel::addItem( const uint64_t time,
-                         const MiLdaq::MIL_DAQ_T actValue,
-                         const MiLdaq::MIL_DAQ_T setValue,
+                         const DAQ_T actValue,
+                         const DAQ_T setValue,
                          const bool setValueValid )
 {
    m_aPlotList.push_back(
@@ -228,8 +226,8 @@ void FbChannel::addItem( const uint64_t time,
 /*! ---------------------------------------------------------------------------
  * @dotfile fg-feedback.gv
  */
-void FbChannel::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
-                                              MiLdaq::MIL_DAQ_T setValue )
+void FbChannel::onData( uint64_t wrTimeStamp, DAQ_T actValue,
+                                              DAQ_T setValue )
 {
    if( m_pPlot == nullptr )
       return;

@@ -108,7 +108,7 @@ RAM_RING_INDEX_T ramRingGetRemainingCapacity( const RAM_RING_INDEXES_T* pThis )
  * @param pThis Pointer to the ring index object
  * @param value to add to the write index.
  */
-void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
+void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd );
 
 /*!----------------------------------------------------------------------------
  * @brief Increments the write-index.
@@ -125,7 +125,7 @@ void ramRingIncWriteIndex( RAM_RING_INDEXES_T* pThis )
  * @param pThis Pointer to the ring index object
  * @param value to add to the read index.
  */
-void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
+void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd );
 
 /*! ---------------------------------------------------------------------------
  * @brief Increments the read-index.

@@ -164,12 +164,12 @@ private:
    void onActSetTimestampDeviation( const uint64_t setTimeStamp,
                                     const uint64_t actTimestamp ) override;
 
-   void onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actValue,
-                                      MiLdaq::MIL_DAQ_T setValue ) override;
+   void onData( uint64_t wrTimeStamp, DAQ_T actValue,
+                                      DAQ_T setValue ) override;
 
    void addItem( const uint64_t time,
-                 const MiLdaq::MIL_DAQ_T actValue,
-                 const MiLdaq::MIL_DAQ_T setValue,
+                 const DAQ_T actValue,
+                 const DAQ_T setValue,
                  const bool setValueValid );
 
    void onInit( void ) override;
@@ -181,11 +181,12 @@ private:
                           std::size_t wordLen ) override;
 
    void onMilData( const uint64_t timestamp,
-                   MiLdaq::MIL_DAQ_T actlValue,
-                   MiLdaq::MIL_DAQ_T setValue ) override;
+                   DAQ_T actlValue,
+                   DAQ_T setValue ) override;
 
-   void onTimestampError( const uint64_t tinestamp, DAQ_T actlValue,
-                        DAQ_T setValue ) override;
+   void onTimestampError( const uint64_t tinestamp,
+                          DAQ_T actlValue,
+                          DAQ_T setValue ) override;
 };
 
 

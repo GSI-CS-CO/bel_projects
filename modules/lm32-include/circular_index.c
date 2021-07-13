@@ -43,14 +43,17 @@ RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @see circular_index.h
  */
-void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
+void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd )
 {
    RAM_ASSERT( ramRingGetRemainingCapacity( pThis ) >= toAdd );
    RAM_ASSERT( pThis->end < pThis->capacity );
 
+   if( toAdd == 0 )
+      return;
+
    pThis->end = (pThis->end + toAdd) % pThis->capacity;
 
-   if( (pThis->end == pThis->start) && (toAdd != 0) ) /* Is buffer full? */
+   if( pThis->end == pThis->start ) /* Is buffer full? */
    { /*
       * To distinguish between buffer empty and full,
       * in the case of full the write index will set to a value out of
@@ -63,12 +66,15 @@ void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 /*! ---------------------------------------------------------------------------
  * @see circular_index.h
  */
-void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
+void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd )
 {
    RAM_ASSERT( ramRingGetSize( pThis ) >= toAdd );
 
-   /* Is ring-buffer full? */
-   if( (toAdd != 0) && (pThis->end == pThis->capacity) )
+   if( toAdd == 0 )
+      return;
+
+   /* Was ring-buffer full? */
+   if( pThis->end == pThis->capacity )
    { /*
       * In the case the buffer was full the write index has been set to a
       * invalid value (maximum capacity) to distinguishing between full

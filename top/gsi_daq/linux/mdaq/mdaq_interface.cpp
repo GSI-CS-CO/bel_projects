@@ -99,6 +99,17 @@ void DaqInterface::clearBuffer( bool update )
 
 /*! ---------------------------------------------------------------------------
  */
+void DaqInterface::checkIntegrity( void )
+{
+   if( m_oBufferAdmin.indexes.start >= m_oBufferAdmin.indexes.capacity )
+      throw Exception( "Read index of MIL-buffer is corrupt!" );
+
+   if( m_oBufferAdmin.indexes.end > m_oBufferAdmin.indexes.capacity )
+      throw Exception( "Write index of MIL-buffer is corrupt!" );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void DaqInterface::readBufferAdmin( void )
 {
    SCU_ASSERT( !isMilDataInLm32Mem() );
@@ -110,6 +121,7 @@ void DaqInterface::readBufferAdmin( void )
    BYTE_SWAP( m_oBufferAdmin, temp, indexes.start );
    BYTE_SWAP( m_oBufferAdmin, temp, indexes.end );
    BYTE_SWAP( m_oBufferAdmin, temp, wasRead );
+   checkIntegrity();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -137,6 +149,7 @@ void DaqInterface::updateMemAdmin( void )
    BYTE_SWAP( m_oBufferAdmin, temp, indexes.start );
    BYTE_SWAP( m_oBufferAdmin, temp, indexes.end );
    BYTE_SWAP( m_oBufferAdmin, temp, wasRead );
+   checkIntegrity();
 }
 
 /*! ---------------------------------------------------------------------------
