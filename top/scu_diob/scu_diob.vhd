@@ -1476,12 +1476,11 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
 
   signal IOBP_Output: std_logic_vector(18 downto 1); -- Data_Output "Slave-Karten 1-12"
 
-  TYPE   t_input_array      is array (1 to 12) of std_logic_vector(5 downto 1);
+  
   signal IOBP_Input:        t_input_array;    -- Inputs der "Slave-Karten"
-
-  TYPE   t_id_array         is array (1 to 12) of std_logic_vector(7 downto 0);
+ 
   signal IOBP_ID:           t_id_array;     -- ID's der "Slave-Karten"
-  TYPE   t_led_array        is array (1 to 12) of std_logic_vector(6 downto 1);
+
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
 
   signal IOBP_Aktiv_LED_i:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
@@ -4148,7 +4147,7 @@ end generate Quench_Matrix_Gen_b12s1;
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=  (OTHERS => '0');
-                                                      IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg5( 5 downto 0));
+                                                      IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg1( 5 downto 0));
                                                       PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
                                                       PIO_ENA_SLOT_1 <= std_logic_vector'("111111");
                                                       IOBP_SK_Aktiv_LED_i(1)  <=  IOBP_SK_Output(1);
@@ -4163,7 +4162,7 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       PIO_ENA_SLOT_1 <= std_logic_vector'("100000");
                                                       IOBP_SK_Sel_LED(1) <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
                                                       if  (AW_Config2 = x"DEDE") then      
-                                                        IOBP_SK_Output(1)(5)  <= quench_out(quench_det_cnt);
+                                                        IOBP_SK_Output(1)(5)  <= quench_sk_out(quench_det_cnt); --0
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
                                                         IOBP_SK_Output(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
@@ -4202,7 +4201,7 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       PIO_ENA_SLOT_2 <= std_logic_vector'("100000");
                                                       IOBP_SK_Sel_LED(2)<=    not ( IOBP_Masken_Reg7( 1) & IOBP_Masken_Reg1( 10 downto  6) );  -- Register für Sel-LED's vom Slave 2
                                                       if  (AW_Config2 = x"DEDE") then      
-                                                        IOBP_SK_Output(2)(5)  <= quench_out(quench_det_cnt);
+                                                        IOBP_SK_Output(2)(5)  <= quench_sk_out(quench_det_cnt); --0 1
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
                                                        IOBP_SK_Output(2)(5)  <= (AW_Output_Reg(1)( 11) AND not IOBP_Masken_Reg7(1));
@@ -4241,7 +4240,7 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       PIO_ENA_SLOT_3 <= std_logic_vector'("100000");
                                                       IOBP_SK_Sel_LED(3) <=  not ( IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 3
                                                       if  (AW_Config2 = x"DEDE") then      
-                                                        IOBP_SK_Output(3)(5)  <= quench_out(quench_det_cnt); --2
+                                                        IOBP_SK_Output(3)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
                                                         IOBP_SK_Output(3)(5)  <= (AW_Output_Reg(2)( 5) AND not IOBP_Masken_Reg7( 2));
@@ -4281,9 +4280,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(4) <=  not ( IOBP_Masken_Reg7( 3) & IOBP_Masken_Reg2( 10 downto  6) );  -- Register für Sel-LED's vom Slave 4
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(4)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(4)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(4)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(4)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2  
                                                         end if;
                                                       quench_det_cnt <= quench_det_cnt+1;
                                                     else 
@@ -4324,18 +4323,14 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(5) <=  not ( IOBP_Masken_Reg7( 4) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 5
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(5)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(5)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(5)(5)  <= quench_out(quench_det_cnt); --0  
-                                                        end if;
-                                                        if quench_det_cnt =4 then 
-                                                          quench_det_cnt <=0;
-                                                        else
-                                                          quench_det_cnt <= quench_det_cnt+1;
-                                                        end if;
-                                                    else 
-                                                      IOBP_SK_Output(5)(5)  <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
-                                                    end if;
+                                                          IOBP_SK_Output(5)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3
+                                                        end if;                    
+                                                          quench_det_cnt <= quench_det_cnt+1;          
+                                                      else 
+                                                       IOBP_SK_Output(5)(5)  <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
+                                                      end if;
                                                       IOBP_SK_Aktiv_LED_i(5)  <=  (IOBP_SK_Output(5)(5)    &  Deb72_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
                                                       PIO_OUT_SLOT_5 <= IOBP_SK_Output(5);
                                                      
@@ -4372,9 +4367,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(6)<=  not ( IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3( 10 downto  6) );  -- Register für Sel-LED's vom Slave 6
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(6)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(6)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(6)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(6)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                           quench_det_cnt <=0;
@@ -4418,9 +4413,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(7) <=  not ( IOBP_Masken_Reg7( 6) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(7)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(7)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(7)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(7)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4  
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                           quench_det_cnt <=0;
@@ -4464,9 +4459,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(8) <=  not ( IOBP_Masken_Reg7( 7) & IOBP_Masken_Reg4( 10 downto  6) );  -- Register für Sel-LED's vom Slave 8
                                                       if  (AW_Config2 = x"DEDE") then      
                                                       if quench_det_cnt = 2 then
-                                                        IOBP_SK_Output(8)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                        IOBP_SK_Output(8)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                       else
-                                                        IOBP_SK_Output(8)(5)  <= quench_out(quench_det_cnt); --0  
+                                                        IOBP_SK_Output(8)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4
                                                       end if;
                                                       if quench_det_cnt =4 then 
                                                         quench_det_cnt <=0;
@@ -4510,9 +4505,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Input(9) (4 downto 0) <= ( PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(9)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(9)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(9)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(9)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                           quench_det_cnt <=0;
@@ -4556,9 +4551,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(10) <=  not ( IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6) );  -- Register für Sel-LED's vom Slave 10
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(10)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(10)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(10)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(10)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4 
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                           quench_det_cnt <=0;
@@ -4602,9 +4597,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(11) <=  not ( IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) );  -- Register für Sel-LED's vom Slave 11
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(11)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(11)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(11)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(11)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4 
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                           quench_det_cnt <=0;
@@ -4648,9 +4643,9 @@ end generate Quench_Matrix_Gen_b12s1;
                                                       IOBP_SK_Sel_LED(12) <=  not ( IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6( 10 downto  6) );  -- Register für Sel-LED's vom Slave 12
                                                       if  (AW_Config2 = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
-                                                          IOBP_SK_Output(12)(5)  <= quench_out(quench_det_cnt-2); --0
+                                                          IOBP_SK_Output(12)(5)  <= quench_sk_out(quench_det_cnt-2); --0
                                                         else
-                                                          IOBP_SK_Output(12)(5)  <= quench_out(quench_det_cnt); --0  
+                                                          IOBP_SK_Output(12)(5)  <= quench_sk_out(quench_det_cnt); --0 1 2 3 4 
                                                         end if;
                                                         if quench_det_cnt =4 then 
                                                             quench_det_cnt <=0;
