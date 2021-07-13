@@ -84,7 +84,7 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
-#define _CONFIG_DBG_TIMESTAMP
+//#define _CONFIG_DBG_TIMESTAMP
 
 #ifdef _CONFIG_DBG_TIMESTAMP
 #warning Debug of MIL-Timestamps is active!
@@ -329,7 +329,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
     * E.g. the 16 bit set- and actual values are reversed, that is correct.
     * See also daq_eb_ram_buffer.hpp and daq_eb_ram_buffer.cpp.
     */
-   pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)(GET_UPPER_HALF( timestamp )) );
+   pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)GET_UPPER_HALF( timestamp ) );
    pl.item.setValue  = actValue;
    pl.item.actValue  = GET_UPPER_HALF( setValue );
    pl.item.fgMacro   = convertByteEndian_FG_MACRO_T( fgMacro );
@@ -344,12 +344,6 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
  #endif
 
    RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
-
-   /*
-    * Removing old data which has been possibly read by the Linux client.
-    */
- //  ramRingAddToReadIndex( &indexes, g_shared.mDaq.wasRead );
- //  g_shared.mDaq.wasRead = 0;
 
    /*
     * Is the circular buffer full?
@@ -445,9 +439,9 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
                      const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const unsigned int      socket     = getSocket( channel );
+   const unsigned int socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
-   const unsigned int milTaskNo = getMilTaskNumber( pMilTaskData, channel );
+   const unsigned int milTaskNo  = getMilTaskNumber( pMilTaskData, channel );
    pMilTaskData->aFgChannels[channel].irq_data = 0; // clear old irq data
    /* test only if as connected to sio */
    if( isScuBus )
@@ -483,7 +477,7 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const uint8_t socket = getSocket( channel );
+   const unsigned int  socket = getSocket( channel );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
     /* test only if as connected to sio */
    if( isScuBus )
@@ -499,7 +493,6 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
 
    if( !isMilExtentionFg( socket ) )
       return OKAY;
-
    return get_task_mil( g_pScu_mil_base, milTaskNo,
                                 &pMilTaskData->aFgChannels[channel].irq_data );
 }
@@ -652,7 +645,6 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
                 dev,
                 pMilTaskData->aFgChannels[channel].irq_data,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
-
    /*
     * clear irq pending and end block transfer
     */
@@ -1069,15 +1061,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          break;
       }
    } /* End of state-do activities */
-
-#ifdef CONFIG_MIL_DAQ_USE_RAM
-   /*
-    * Signaling to the Linux client that MIL-data buffer was handled by clearing
-    * the number of items, which has been read by the client.
-    * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
-    */
-   //g_shared.mDaq.wasRead = 0;
-#endif
 
    /*
     * Has the FSM-state changed?
