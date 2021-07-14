@@ -7,29 +7,60 @@
  * Outsourced from scu_main.c
  */
 
-#include "scu_fg_macros.h"
-#include "scu_mil_fg_handler.h"
+#ifndef __DOCFSM__
+  #include "scu_fg_macros.h"
+  #include "scu_mil_fg_handler.h"
+  #include "scu_fg_list.h"
+  #ifdef CONFIG_MIL_DAQ_USE_RAM
+    #include <daq_main.h>
+  #endif
+#endif
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+extern DAQ_ADMIN_T g_scuDaqAdmin;
+#endif
 
 extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
-extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
+
+#ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+   unsigned int g_gapReadingTime = DEFAULT_GAP_READING_INTERVAL;
+#endif
 
 /*!
  * @brief Slot-value when no slave selected yet.
  */
 #define INVALID_SLAVE_NR ((unsigned int)~0)
 
+#ifdef CONFIG_READ_MIL_TIME_GAP
+  #define _GAP_TIME_INIT .gapReadingTime = 0LL,
+#else
+  #define _GAP_TIME_INIT
+#endif
+
+QUEUE_CREATE_STATIC( g_queueMilSio, MAX_FG_CHANNELS, QUEUE_MIL_SOCKET_T );
+QUEUE_CREATE_STATIC( g_queueMilBus, MAX_FG_CHANNELS, QUEUE_MIL_SOCKET_T );
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Initializer of a single MIL task
+ * @see g_aMilTaskData
  */
-#ifdef CONFIG_READ_MIL_TIME_GAP
-  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
-                                           0, 0, 0, 0, {{0, 0, 0}} }
-#else
-  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
-                                           0, 0, 0, {{0, 0, 0}} }
-#endif
+#define MIL_TASK_DATA_ITEM_INITIALIZER      \
+{                                           \
+   .state            = ST_WAIT,             \
+   .slave_nr         = INVALID_SLAVE_NR,    \
+   .lastChannel      = 0,                   \
+   .task_timeout_cnt = 0,                   \
+   .timestamp1       = 0LL,                 \
+   _GAP_TIME_INIT                           \
+   .aFgChannels =                           \
+   {{                                       \
+      .irq_data         = 0,                \
+      .setvalue         = 0,                \
+      .daq_timestamp    = 0LL               \
+   }}                                       \
+}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -53,30 +84,140 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
+//#define _CONFIG_DBG_TIMESTAMP
+
+#ifdef _CONFIG_DBG_TIMESTAMP
+#warning Debug of MIL-Timestamps is active!
+volatile uint64_t g_aLastTimestamps[ ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ) ];
+#endif
+
+/*! ----------------------------------------------------------------------------
+ */
+void milInitTasks( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      g_aMilTaskData[i].state             = ST_WAIT;
+      g_aMilTaskData[i].slave_nr          = INVALID_SLAVE_NR;
+      g_aMilTaskData[i].lastChannel       = 0;
+      g_aMilTaskData[i].task_timeout_cnt  = 0;
+      g_aMilTaskData[i].timestamp1        = 0LL;
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+      g_aMilTaskData[i].gapReadingTime    = 0LL;
+   #endif
+      for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
+      {
+         g_aMilTaskData[i].aFgChannels[j].irq_data      = 0;
+         g_aMilTaskData[i].aFgChannels[j].setvalue      = 0;
+         g_aMilTaskData[i].aFgChannels[j].daq_timestamp = 0LL;
+      }
+   }
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   ramRingReset( &g_shared.mDaq.indexes );
+   g_shared.mDaq.wasRead = 0;
+#endif
+#ifdef _CONFIG_DBG_TIMESTAMP
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aLastTimestamps ); i++ )
+      g_aLastTimestamps[i] = 0LL;
+#endif
+}
+
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Converts the states of the FSM in strings.
+ * @note For debug purposes only!
+ */
+STATIC const char* state2string( const FG_STATE_T state )
+{
+   #define __CASE_RETURN( s ) case s: return #s
+   switch( state )
+   {
+      __CASE_RETURN( ST_WAIT );
+      __CASE_RETURN( ST_PREPARE );
+      __CASE_RETURN( ST_FETCH_STATUS );
+      __CASE_RETURN( ST_HANDLE_IRQS );
+      __CASE_RETURN( ST_DATA_AQUISITION );
+      __CASE_RETURN( ST_FETCH_DATA );
+   }
+   return "unknown";
+   #undef __CASE_RETURN
+}
+
+
+#ifdef _CONFIG_DBG_MIL_TASK
+/*! ---------------------------------------------------------------------------
+ * @brief For debug purposes only!
+ */
+void dbgPrintMilTaskData( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      mprintf( "FSM-state[%u]: %s\n",          i, state2string( g_aMilTaskData[i].state ));
+      mprintf( "slave_nr[%u]: 0x%08X\n",       i, g_aMilTaskData[i].slave_nr );
+      mprintf( "lastChannel[%u]: %u\n",        i, g_aMilTaskData[i].lastChannel );
+      mprintf( "task_timeout_cnt[%u]: %u\n",   i, g_aMilTaskData[i].task_timeout_cnt );
+      mprintf( "timestamp1[%u]: 0x%08X%08X\n", i, (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].timestamp1),
+                                                  (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].timestamp1) );
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+      mprintf( "gapReadingTime[%u]: %08X%08X\n", i, (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].gapReadingTime),
+                                                    (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].gapReadingTime) );
+   #endif
+      for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
+      {
+         mprintf( "\tirq_data[%u][%u]: 0x%04X\n", i, j, g_aMilTaskData[i].aFgChannels[j].irq_data );
+         mprintf( "\tsetvalue[%u][%u]: %u\n", i, j, g_aMilTaskData[i].aFgChannels[j].setvalue );
+         mprintf( "\tdaq_timestamp[%u][%u]: 0x%08X%08X\n", i, j,
+                   (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp),
+                   (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp) );
+      }
+   }
+}
+#endif /* ifdef _CONFIG_DBG_MIL_TASK */
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Prints a possible MIL-Bus error.
  */
 STATIC void printMilError( const int status, const int slave_nr )
 {
+   #define __CASE_ITEM( s ) case s: errStr = #s; break
+   char* errStr = '\0';
    switch( status )
    {
-      case RCV_PARITY:
-      {
-         mprintf( ESC_ERROR"parity error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
-      case RCV_TIMEOUT:
-      {
-         mprintf( ESC_ERROR"timeout error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
-      case RCV_ERROR:
-      {
-         mprintf( ESC_ERROR"unknown error when reading task %d"ESC_NORMAL"\n",
-                  slave_nr );
-         break;
-      }
+      __CASE_ITEM( TRM_NOT_FREE );
+      __CASE_ITEM( RCV_PARITY );
+      __CASE_ITEM( RCV_TIMEOUT );
+      __CASE_ITEM( RCV_ERROR );
+      default: break;
+   }
+   #undef __CASE_ITEM
+   mprintf( ESC_ERROR "MIL-Error: \"%s\" %d, slave: %d\n" ESC_NORMAL,
+            errStr, status, slave_nr );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+void fgMilClearHandlerState( const unsigned int socket )
+{
+   if( isMilScuBusFg( socket ) )
+   {
+      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
+      const QUEUE_MIL_SOCKET_T slot = getFgSlotNumber( socket );
+     /*
+      * Triggering of a software pseudo interrupt.
+      */
+      ATOMIC_SECTION() pushInQueue( &g_queueMilSio, &slot );
+      return;
+   }
+
+   if( isMilExtentionFg( socket ) )
+   {
+      const QUEUE_MIL_SOCKET_T slot = 0;
+     /*
+      * Triggering of a software pseudo interrupt.
+      */
+      ATOMIC_SECTION() pushInQueue( &g_queueMilBus, &slot );
    }
 }
 
@@ -118,6 +259,7 @@ inline STATIC unsigned int getMilTaskId( const MIL_TASK_DATA_T* pMilTaskData )
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Returns the task number of a mil device.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData Pointer to the currently running system task.
  * @param channel Channel number
  */
@@ -128,33 +270,20 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
    return TASKMIN + channel + getMilTaskId( pMilTaskData );
 }
 
-/*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Converts the states of the FSM in strings.
- * @note For debug purposes only!
- */
-STATIC const char* state2string( const FG_STATE_T state )
-{
-   #define __CASE_RETURN( s ) case s: return #s
-   switch( state )
-   {
-      __CASE_RETURN( ST_WAIT );
-      __CASE_RETURN( ST_PREPARE );
-      __CASE_RETURN( ST_FETCH_STATUS );
-      __CASE_RETURN( ST_HANDLE_IRQS );
-      __CASE_RETURN( ST_DATA_AQUISITION );
-      __CASE_RETURN( ST_FETCH_DATA );
-   }
-   return "unknown";
-   #undef __CASE_RETURN
-}
-#define CONFIG_LAGE_TIME_DETECT
+
+//#define CONFIG_LAGE_TIME_DETECT
+#if defined( CONFIG_MIL_DAQ_USE_RAM ) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof(uint32_t) );
+  IMPLEMENT_CONVERT_BYTE_ENDIAN( FG_MACRO_T )
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @ingroup TASK
  * @brief Writes the data set coming from one of the MIL-DAQs in the
  *        ring-buffer.
+ * @see daq_eb_ram_buffer.hpp
+ * @see daq_eb_ram_buffer.cpp
  * @param channel DAQ-channel where the data come from.
  * @param timestamp White-Rabbit time-stamp.
  * @param actValue Actual value.
@@ -163,8 +292,10 @@ STATIC const char* state2string( const FG_STATE_T state )
  * @todo Storing the MIL-DAQ data in the DDR3-RAM instead wasting of
  *       shared memory.
  */
-STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
-                         const uint16_t actValue, const uint32_t setValue
+STATIC void pushDaqData( FG_MACRO_T fgMacro,
+                         const uint64_t timestamp,
+                         const uint16_t actValue,
+                         const uint32_t setValue
                       #ifdef CONFIG_READ_MIL_TIME_GAP
                          , const bool setValueInvalid
                       #endif
@@ -176,44 +307,77 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
    if( lastTime > 0 )
    {
       if( (timestamp - lastTime) > 100000000ULL )
-         mprintf( ESC_WARNING"Time-gap: %d"ESC_NORMAL"\n", count++ );
+         mprintf( ESC_WARNING "Time-gap: %d" ESC_NORMAL "\n", count++ );
    }
    lastTime = timestamp;
 #endif
 
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   if( setValueInvalid )
+      fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+#endif
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-#error Extern RAM for MIL-DAQ not implemented yet!
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
+ #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+   /*
+    * In this case the LM32-server and Linux-client doesn't have the same
+    * byte order.
+    * The Linux library "libetherbone" will made a byte swapping of 32-bit
+    * segments during reading out the DDR3-RAM.
+    * Therefore the appropriate byte order has to be prepared here.
+    * E.g. the 16 bit set- and actual values are reversed, that is correct.
+    * See also daq_eb_ram_buffer.hpp and daq_eb_ram_buffer.cpp.
+    */
+   pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)GET_UPPER_HALF( timestamp ) );
+   pl.item.setValue  = actValue;
+   pl.item.actValue  = GET_UPPER_HALF( setValue );
+   pl.item.fgMacro   = convertByteEndian_FG_MACRO_T( fgMacro );
+ #else
+   /*
+    * In this case the server and client have the same byte order.
+    */
    pl.item.timestamp = timestamp;
-   pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
-   pl.item.actValue = actValue;
-   pl.item.fgMacro = fgMacro;
- #ifdef CONFIG_READ_MIL_TIME_GAP
-   pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+   pl.item.setValue  = GET_UPPER_HALF( setValue );
+   pl.item.actValue  = actValue;
+   pl.item.fgMacro   = fgMacro;
  #endif
-#else
+
+   RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
+
+   /*
+    * Is the circular buffer full?
+    */
+   if( ramRingGetRemainingCapacity( &indexes ) < ARRAY_SIZE(pl.ramPayload) )
+   { /*
+      * Yes, removing the oldest item;
+      */
+      ramRingAddToReadIndex( &indexes, ARRAY_SIZE(pl.ramPayload) );
+   }
+
+   /*
+    * Writing the prepared data set into the DDR3-RAM organized
+    * as circular buffer.
+    */
+   for( unsigned int i = 0; i < ARRAY_SIZE(pl.ramPayload); i++ )
+   {
+      ramWriteItem( &g_scuDaqAdmin.oRam, ramRingGetWriteIndex( &indexes ), &pl.ramPayload[i] );
+      ramRingIncWriteIndex( &indexes );
+   }
+
+   g_shared.mDaq.indexes = indexes;
+
+#else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+   #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!
    MIL_DAQ_OBJ_T d;
 
    d.actvalue = actValue;
-   d.tmstmp_l = timestamp & 0xffffffff;
-   d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
+   d.tmstmp_l = GET_LOWER_HALF( timestamp );
+   d.tmstmp_h = GET_UPPER_HALF( timestamp );
    d.fgMacro  = fgMacro;
- #ifdef CONFIG_READ_MIL_TIME_GAP
-   if( setValueInvalid )
-      d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
- #endif
    d.setvalue = setValue;
-#if 0
-   #ifdef CONFIG_READ_MIL_TIME_GAP
-   #warning This will make a race-condition in the currently MIL-DAQ-circular buffer!
-   #endif
-   if( isMilDaqBufferFull( &g_shared.daq_buf ) )
-      removeOldestItem( &g_shared.daq_buf );
-#endif
    add_daq_msg( &g_shared.daq_buf, d );
-#endif
-   hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
-   hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
+#endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
 }
 
 /*! ---------------------------------------------------------------------------
@@ -223,7 +387,7 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
 STATIC void printTimeoutMessage( register MIL_TASK_DATA_T* pMilTaskData,
                                  const bool isScuBus )
 {
-   mprintf( ESC_WARNING"timeout %s: state %s, taskid %d index %d"ESC_NORMAL"\n",
+   mprintf( ESC_WARNING "timeout %s: state %s, taskid %d index %d" ESC_NORMAL"\n",
             isScuBus? "dev_bus_handler" : "dev_sio_handler",
             state2string( pMilTaskData->state ),
             getMilTaskId( pMilTaskData ),
@@ -262,6 +426,7 @@ bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Requests the current status of the MIL device.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -269,13 +434,14 @@ bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
  * @see milDeviceHandler
  */
 STATIC inline
-int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
-                                                  const unsigned int channel )
+int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
+                     const bool isScuBus,
+                     const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const uint8_t      socket     = getSocket( channel );
+   const unsigned int socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
-   const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
+   const unsigned int milTaskNo  = getMilTaskNumber( pMilTaskData, channel );
    pMilTaskData->aFgChannels[channel].irq_data = 0; // clear old irq data
    /* test only if as connected to sio */
    if( isScuBus )
@@ -299,6 +465,7 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Reads the currently status of the MIL device back.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -310,7 +477,7 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const uint8_t socket = getSocket( channel );
+   const unsigned int  socket = getSocket( channel );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
     /* test only if as connected to sio */
    if( isScuBus )
@@ -326,7 +493,6 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
 
    if( !isMilExtentionFg( socket ) )
       return OKAY;
-
    return get_task_mil( g_pScu_mil_base, milTaskNo,
                                 &pMilTaskData->aFgChannels[channel].irq_data );
 }
@@ -344,7 +510,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
 
    if( channel >= ARRAY_SIZE( g_aFgChannels ) )
    {
-      mprintf( ESC_ERROR"%s: FG-number %d out of range!"ESC_NORMAL"\n",
+      mprintf( ESC_ERROR "%s: FG-number %d out of range!" ESC_NORMAL "\n",
                __func__, channel );
       return;
    }
@@ -353,7 +519,8 @@ STATIC inline void feedMilFg( const unsigned int socket,
    /*
     * Reading circular buffer with new FG-data.
     */
-   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) )
+   if( !cbRead( &g_shared.oSaftLib.oFg.aChannelBuffers[0],
+                &g_shared.oSaftLib.oFg.aRegs[0], channel, &pset ) )
    {
       hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
       return;
@@ -368,45 +535,43 @@ STATIC inline void feedMilFg( const unsigned int socket,
    /*
     * clear freq, step select, fg_running and fg_enabled
     */
-   milFgRegs.cntrl_reg.i16    = (cntrl_reg.i16 & ~(0xfc07))   |
-                                ((pset.control & 0x38) << 10) |
-                                ((pset.control & 0x7)  << 10);
-   milFgRegs.coeff_a_reg      = pset.coeff_a;
-   milFgRegs.coeff_b_reg      = pset.coeff_b;
-   milFgRegs.shift_reg        = (pset.control & 0x3ffc0) >> 6;
-   milFgRegs.coeff_c_low_reg  = pset.coeff_c & 0xffff;
-   milFgRegs.coeff_c_high_reg = pset.coeff_c >> BIT_SIZEOF(int16_t);
-
+   setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
+                                    (pset.control.i32 & 0x3F) << 10) ;
    int status;
-   #if __GNUC__ >= 9
-     #pragma GCC diagnostic push
-     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-   #endif
+ #if __GNUC__ >= 9
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+ #endif
    if( isMilExtentionFg( socket ) )
-   {
+   { /*
+      * Send FG-data via MIL-extention adapter.
+      */
       status = write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
                               FC_BLK_WR | devNum );
    }
    else
-   {  /*
-       * Send FG-data via SCU-bus-slave MIL adapter "SIO"
-       */
+   { /*
+      * Send FG-data via SCU-bus-slave MIL adapter "SIO"
+      */
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
-   #if __GNUC__ >= 9
-     #pragma GCC diagnostic pop
-   #endif
+ #if __GNUC__ >= 9
+   #pragma GCC diagnostic pop
+ #endif
    if( status != OKAY )
    {
-      printDeviceError( status, getFgSlotNumber( socket ), __func__ );
+      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__ );
       return;
    }
+#ifdef CONFIG_USE_SENT_COUNTER
    g_aFgChannels[channel].param_sent++;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Handling of a MIL function generator.
+ * @see handleAdacFg
  */
 STATIC inline
 void handleMilFg( const unsigned int socket,
@@ -414,18 +579,20 @@ void handleMilFg( const unsigned int socket,
                   const uint16_t irq_act_reg,
                   signed int* pSetvalue )
 {
-   FG_ASSERT( !isNonMilFg( socket ) );
+   FG_ASSERT( !isAddacFg( socket ) );
    const FG_CTRL_RG_T ctrlReg = { .i16 = irq_act_reg };
    const unsigned int channel = ctrlReg.bv.number;
-   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
-      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL,
+      mprintf( ESC_ERROR "%s: Channel out of range: %d\n" ESC_NORMAL,
                __func__, channel );
       return;
    }
 
    if( !ctrlReg.bv.isRunning )
-   {
+   { /*
+      * Send signal to SAFT-lib
+      */
       makeStop( channel );
       return;
    }
@@ -434,14 +601,24 @@ void handleMilFg( const unsigned int socket,
     * The hardware of the MIL function generators doesn't have a ramp-counter
     * integrated, so this task will made by the software here.
     */
-   g_shared.fg_regs[channel].ramp_count++;
+   g_shared.oSaftLib.oFg.aRegs[channel].ramp_count++;
 
    if( ctrlReg.bv.devStateIrq )
+   { /*
+      * Send signal to SAFT-lib
+      */
       makeStart( channel );
+   }
 
    if( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq )
-   {
+   { /*
+      * Send signal to SAFT-lib.
+      */
       sendRefillSignalIfThreshold( channel );
+
+     /*
+      * Send data via MIL-bis to function generator.
+      */
       feedMilFg( socket, devNum, ctrlReg, pSetvalue );
    }
 }
@@ -468,7 +645,6 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
                 dev,
                 pMilTaskData->aFgChannels[channel].irq_data,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
-
    /*
     * clear irq pending and end block transfer
     */
@@ -483,6 +659,7 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Set the read task of the MIL device
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -511,6 +688,7 @@ STATIC_ASSERT( sizeof(short) == sizeof(int16_t) );
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Reads the actual ADC value from MIL-device
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  * @param pMilTaskData pointer to the current MIL-task-data object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
@@ -540,6 +718,16 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  * @see https://github.com/UlrichBecker/DocFsm
  */
 #define FSM_TRANSITION( newState, attr... ) pMilData->state = newState
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Macro documenting a FSM transition to the same state. \n
+ *        Helper dummy macro for documenting the FSM by the FSM-visualizer
+ *        DOCFSM.
+ * @see milDeviceHandler
+ * @see https://github.com/UlrichBecker/DocFsm
+ */
+#define FSM_TRANSITION_SELF( attr... )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -589,6 +777,7 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter called SCU_SIO.
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
  *
  * @dotfile scu_mil_fg_handler.gv State graph for this function
  * @see https://github.com/UlrichBecker/DocFsm
@@ -601,83 +790,118 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
-#ifdef CONFIG_READ_MIL_TIME_GAP
-  // static uint64_t gapReadingTime = 0;
-#endif
+   /*!
+    * @brief Currently channel number for loop-macros FOR_EACH_FG and
+    *        FOR_EACH_FG_CONTINUING
+    * @see FOR_EACH_FG
+    * @see FOR_EACH_FG_CONTINUING
+    */
    unsigned int channel;
+
+   /*!
+    * @brief Return value of the MIL-access functions.
+    */
    int status = OKAY;
 
-   /*
-    * Checking integrity of pointer when macro FG_ASSERT is activated, that means
-    * CONFIG_FG_PEDANTIC_CHECK is defined.
-    */
+  /*
+   * Checking integrity of pointer when macro FG_ASSERT is activated, that means
+   * CONFIG_FG_PEDANTIC_CHECK is defined.
+   */
    FG_ASSERT( pThis->pTaskData != NULL );
    FG_ASSERT( (unsigned int)pThis->pTaskData >= (unsigned int)&g_aMilTaskData[0] );
    FG_ASSERT( (unsigned int)pThis->pTaskData <= (unsigned int)&g_aMilTaskData[ARRAY_SIZE(g_aMilTaskData)-1] );
 
+   /*!
+    * @brief Pointer to the currently MIL-task.
+    */
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   /*
+    * Removing old data which has been possibly read by the Linux client.
+    * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
+    */
+   ramRingAddToReadIndex( &g_shared.mDaq.indexes, g_shared.mDaq.wasRead );
+   g_shared.mDaq.wasRead = 0;
+#endif
 
    const FG_STATE_T lastState = pMilData->state;
 
-   /*
-    * Performing the FSM state-do activities.
-    */
+  /*
+   * Performing the FSM state-do activities.
+   */
    switch( lastState )
    {
       case ST_WAIT:
       {
-         if( has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
+         STATIC_ASSERT( sizeof(pMilData->slave_nr) == sizeof(QUEUE_MIL_SOCKET_T) );
+         if( queuePopSave( isScuBus? &g_queueMilSio : &g_queueMilBus, &pMilData->slave_nr ) )
          {
+         #ifdef CONFIG_READ_MIL_TIME_GAP
+           /*
+            * Sets the gap reading time to zero this will signal the host that
+            * the next data aren't from gap reading.
+            * Refer state ST_FETCH_DATA at function call pushDaqData().
+            */
+            pMilData->gapReadingTime = 0;
+         #endif
+            pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
       #ifdef CONFIG_READ_MIL_TIME_GAP
-         /*
-          * Only a task which has already served a function generator
-          * can read a time-gap. That means its slave number has to be valid.
-          */
-         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getWrSysTime() >= pMilData->gapReadingTime) )
+        /*
+         * Only a task which has already served a function generator
+         * can read a time-gap. That means its slave number has to be valid.
+         */
+         if(
+           #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+             ( g_gapReadingTime != 0 ) &&
+           #endif
+             ( pMilData->slave_nr != INVALID_SLAVE_NR ) &&
+             ( getWrSysTime() >= pMilData->gapReadingTime )
+           )
          {
             FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
             break;
          }
-      #endif
-      #ifdef __DOCFSM__
-         FSM_TRANSITION( ST_WAIT, label='No message', color=blue );
-      #endif
+      #endif /* ifdef CONFIG_READ_MIL_TIME_GAP */
+         FSM_TRANSITION_SELF( label='No message', color=blue );
          break;
-      } // end case ST_WAIT
+      } /* end case ST_WAIT */
 
       case ST_PREPARE:
-      {
-         // wait for 200 us
+      { /*
+         * wait for 200 us
+         */
          if( getWrSysTime() < pMilData->timestamp1 )
          {
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='200 us not expired', color=blue );
             break;
          }
-         /* poll all pending regs on the dev bus; non blocking read operation */
+         /*
+          * poll all pending regs on the dev bus; non blocking read operation
+          */
          FOR_EACH_FG( channel )
          {
             status = milReqestStatus( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError( status, 20, "dev_sio set task" );
+               milPrintDeviceError( status, 20, "dev_sio set task" );
          }
          FSM_TRANSITION( ST_FETCH_STATUS, color=green );
          break;
       }
 
       case ST_FETCH_STATUS:
-      {
-         /* if timeout reached, proceed with next task */
+      { /*
+         * if timeout reached, proceed with next task
+         */
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
-            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached',
                                      color=red );
             break;
          #else
@@ -688,12 +912,14 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->task_timeout_cnt = 0;
          #endif
          }
-         /* fetch status from dev bus controller; */
+         /*
+          * fetch status from dev bus controller;
+          */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
             status = milGetStatus( pMilData, isScuBus, channel );
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG_CONTINUING loop
+               break; /* break from FOR_EACH_FG_CONTINUING loop */
             if( status != OKAY )
                printMilError( status, pMilData->slave_nr );
          }
@@ -701,55 +927,65 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             pMilData->lastChannel = channel; // start next time from channel
             pMilData->task_timeout_cnt++;
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_STATUS, label='Receiving busy', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
          FSM_TRANSITION( ST_HANDLE_IRQS, color=green );
          break;
-      } // end case ST_FETCH_STATUS
+      } /* end case ST_FETCH_STATUS*/
 
       case ST_HANDLE_IRQS:
-      {  /*
-          * handle irqs for ifas with active pending regs; non blocking write
-          */
+      { /*
+         * handle irqs for ifas with active pending regs; non blocking write
+         */
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
-
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
             status = milHandleAndWrite( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError(status, 22, "dev_sio end handle");
+               milPrintDeviceError( status, 22, "dev_sio end handle");
          }
          FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
-      } // end case ST_HANDLE_IRQS
+      } /* end case ST_HANDLE_IRQS */
 
       case ST_DATA_AQUISITION:
-      {  /* data aquisition */
+      {
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
-            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime(); // store the sample timestamp of daq
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
+            /*
+             * Store the sample timestamp of DAQ.
+             */
+            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTimeSafe(); //getWrSysTime();
+
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
-               printDeviceError( status, 23, "dev_sio read daq" );
+               milPrintDeviceError( status, 23, "dev_sio read daq" );
          }
          FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;
-      } // end case ST_DATA_AQUISITION
+      } /* end case ST_DATA_AQUISITION */
 
       case ST_FETCH_DATA:
-      {
-         /* if timeout reached, proceed with next task */
+      { /*
+         * if timeout reached, proceed with next task
+         */
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
-            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached',
                                      color=blue );
             break;
          #else
@@ -760,21 +996,29 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->task_timeout_cnt = 0;
          #endif
          }
-         /* fetch daq data */
+        /*
+         * fetch DAQ data
+         */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
             if( isNoIrqPending( pMilData, channel ) )
-               continue; // Handle next channel...
-
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
             int16_t actAdcValue;
             status = milGetTask( pMilData, isScuBus, channel, &actAdcValue );
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG_CONTINUING loop
+               break; /* break from FOR_EACH_FG_CONTINUING loop */
 
             if( status != OKAY )
             {
                printMilError( status, pMilData->slave_nr );
-               continue; // Handle next channel...
+              /*
+               * Handle next channel...
+               */
+               continue;
             }
             pushDaqData( getFgMacroViaFgRegister( channel ),
                          pMilData->aFgChannels[channel].daq_timestamp,
@@ -784,26 +1028,34 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                          , pMilData->gapReadingTime != 0
                       #endif
                        );
-            // save the setvalue from the tuple sent for the next drq handling
+         #ifdef _CONFIG_DBG_TIMESTAMP
+            if( g_aLastTimestamps[channel] < pMilData->aFgChannels[channel].daq_timestamp )
+               g_aLastTimestamps[channel] = pMilData->aFgChannels[channel].daq_timestamp;
+            else
+               mprintf( "*\n" );
+         #endif
+            /*
+             * save the setvalue from the tuple sent for the next drq handling
+             */
             g_aFgChannels[channel].last_c_coeff = pMilData->aFgChannels[channel].setvalue;
-         } // end FOR_EACH_FG_CONTINUING
+         } /* end FOR_EACH_FG_CONTINUING */
 
          if( status == RCV_TASK_BSY )
-         {
-            pMilData->lastChannel = channel; // start next time from channel
+         { /*
+            * Start next time from channel
+            */
+            pMilData->lastChannel = channel;
             pMilData->task_timeout_cnt++;
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy', color=blue );
-         #endif
+            FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
          FSM_TRANSITION( ST_WAIT, color=green );
          break;
-      } // end case ST_FETCH_DATA
+      } /* end case ST_FETCH_DATA */
 
       default: /* Should never be reached! */
       {
-         mprintf( ESC_ERROR"Unknown FSM-state of %s(): %d !"ESC_NORMAL"\n",
+         mprintf( ESC_ERROR "Unknown FSM-state of %s(): %d !\n" ESC_NORMAL,
                   __func__, pMilData->state );
          FSM_INIT_FSM( ST_WAIT, label='Initializing', color=blue );
          break;
@@ -814,7 +1066,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     * Has the FSM-state changed?
     */
    if( lastState == pMilData->state )
-      return; /* No, there is nothing more to do. */
+   { /*
+      * No, there is nothing more to do, leave this function.
+      */
+      return;
+   }
 
    /*
     *    *** The FSM-state has changed! ***
@@ -827,30 +1083,28 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    #ifdef CONFIG_READ_MIL_TIME_GAP
       case ST_WAIT:
       {
+      #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+         pMilData->gapReadingTime = getWrSysTime() + INTERVAL_1MS * g_gapReadingTime;
+      #else
          pMilData->gapReadingTime = getWrSysTime() + INTERVAL_10MS;
+      #endif
          break;
       }
    #endif
-      case ST_PREPARE:
-      {
-      #ifdef CONFIG_READ_MIL_TIME_GAP
-         pMilData->gapReadingTime = 0;
-      #endif
-         const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
-         pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
-         pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
-         break;
-      }
+
       case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:
-      {
-         pMilData->lastChannel = 0; // start next time from channel 0
+      { /*
+         * start next time from channel 0
+         */
+         pMilData->lastChannel = 0;
          pMilData->task_timeout_cnt = 0;
          break;
       }
+
       default: break;
    } /* End of state entry activities */
-} // end function milDeviceHandler
+} /* End function milDeviceHandler */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

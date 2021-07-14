@@ -139,8 +139,7 @@ STATIC inline void queuePollAlarm( void )
    QEUE2STRING( g_queueAddacDaq );
 #endif
 #ifdef CONFIG_MIL_FG
-   QEUE2STRING( g_queueMilSio );
-   QEUE2STRING( g_queueMilBus );
+   QEUE2STRING( g_queueMilFg );
 #endif
 
    #undef QEUE2STRING
@@ -245,15 +244,21 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
    #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
-         STATIC_ASSERT( sizeof( slot ) == sizeof(QUEUE_MIL_SOCKET_T) );
-         pushInQueue( &g_queueMilSio, &slot );
+         MIL_QEUE_T milMsg = { .slot = slot };
+
+        /*!
+         * @see milDeviceHandler
+         */
+         pushInQueue( &g_queueMilFg, &milMsg );
       }
    #endif
 
    #ifdef CONFIG_SCU_DAQ_INTEGRATION
       if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       {
+       #ifndef __DOXYGEN__
          STATIC_ASSERT( sizeof( slot ) == sizeof( DAQ_QUEUE_SLOT_T ) );
+       #endif
          pushInQueue( &g_queueAddacDaq, &slot );
       }
    //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
@@ -303,6 +308,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Command message from SAFT-lib
             */
+
             STATIC_ASSERT( sizeof( m.msg ) == sizeof( SAFT_CMD_T ) );
             pushInQueue( &g_queueSaftCmd, &m.msg );
             break;
@@ -313,8 +319,12 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from MIL-bus respectively device-bus.
             */
-            STATIC_ASSERT( sizeof( m.msg ) == sizeof( QUEUE_MIL_SOCKET_T ) );
-            pushInQueue( &g_queueMilBus, &m.msg );
+            const MIL_QEUE_T milMsg = { .slot = 0 };
+
+           /*!
+            * @see milDeviceHandler
+            */
+            pushInQueue( &g_queueMilFg, &milMsg );
             break;
          }
      #endif /* ifdef CONFIG_MIL_FG */
@@ -341,8 +351,7 @@ ONE_TIME_CALL void initInterrupt( void )
    queueReset( &g_queueAddacDaq );
 #endif
 #ifdef CONFIG_MIL_FG
-   queueReset( &g_queueMilSio );
-   queueReset( &g_queueMilBus );
+   queueReset( &g_queueMilFg );
 #endif
 #ifdef CONFIG_QUEUE_ALARM
    queueReset( &g_queueAlarm );
@@ -440,11 +449,11 @@ STATIC TASK_T g_aTasks[] =
    { NULL,               ALWAYS, 0, addacDaqTask   },
 #endif
 #ifdef CONFIG_MIL_FG
-   { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
- //!!  { &g_aMilTaskData[1], ALWAYS, 0, dev_sio_handler }, // sio task 2
- //!!  { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
- //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
-   { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
+   { &g_aMilTaskData[0], ALWAYS, 0, milDeviceHandler },
+ //!!  { &g_aMilTaskData[1], ALWAYS, 0, milDeviceHandler },
+ //!!  { &g_aMilTaskData[2], ALWAYS, 0, milDeviceHandler },
+ //!!  { &g_aMilTaskData[3], ALWAYS, 0, milDeviceHandler },
+ //!!  { &g_aMilTaskData[4], ALWAYS, 0, milDeviceHandler },
  #ifndef _CONFIG_ECA_BY_MSI
    { NULL,               ALWAYS, 0, ecaHandler      },
  #endif
@@ -458,12 +467,10 @@ STATIC TASK_T g_aTasks[] =
  *        Performing of a cooperative multitasking.
  * @see TASK_T
  * @see g_aTasks
- * @see dev_sio_handler
- * @see dev_bus_handler
- * @see scu_bus_handler
+ * @see milDeviceHandler
  * @see ecaHandler
  * @see commandHandler
- * @see scuBusDaqTask
+ * @see addacDaqTask
  */
 ONE_TIME_CALL void schedule( void )
 {
@@ -472,9 +479,7 @@ ONE_TIME_CALL void schedule( void )
    /*
     * For Doxygen only, making visible in caller graph.
     */
-   dev_sio_handler();
-   dev_bus_handler();
-   scu_bus_handler();
+   milDeviceHandler();
    ecaHandler();
    commandHandler();
    addacDaqTask();
