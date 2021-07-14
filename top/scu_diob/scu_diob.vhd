@@ -1570,7 +1570,7 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
 --  +============================================================================================================================+
 
 
-TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
+-- TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
 signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  
 signal IOBP_SK_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
 signal IOBP_Masken_Reg6:        std_logic_vector(15 downto 0);
