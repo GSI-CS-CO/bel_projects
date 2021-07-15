@@ -12,6 +12,6 @@ package scu_diob_pkg is
   TYPE   t_input_array      is array (1 to 12) of std_logic_vector(5 downto 1);
   TYPE   t_id_array         is array (1 to 12) of std_logic_vector(7 downto 0);
   TYPE   t_led_array        is array (1 to 12) of std_logic_vector(6 downto 1);
-  TYPE   t_slot_array       is array (1 to 12) of std_logic_vector(6 downto 0);
+
   TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
 end scu_diob_pkg;
