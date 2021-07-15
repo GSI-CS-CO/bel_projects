@@ -61,6 +61,7 @@
 #include "ioctl.h"                      // IO functions
 #include "timer.h"                      // timer functions
 #include "measure.h"                    // measurement of elapsed time, delays
+#include "fwlib.h"                      // extension to fwlib
 
 // stuff required for environment
 extern uint32_t* _startshared[];
@@ -200,6 +201,12 @@ void initMpsData()
 
   // initialize the read iterator for MPS flags
   initItr(&rdItr, N_MPS_CHANNELS, 0, F_MPS_BCAST);
+
+  //TODO: include function call below in fwlib_doActionS0()
+  // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  if (findEcaCtl() != COMMON_STATUS_OK) {
+    DBPRINT1("ECA ctl not found!");
+  }
 }
 
 /**
@@ -317,6 +324,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
   uint32_t flagIsLate;    // flag indicates that received ECA event is 'late'
   uint64_t now;           // actual timestamp of the system time
   int64_t  poll;          // elapsed time to poll a pending ECA event
+  uint32_t actions;
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
 
@@ -392,8 +400,10 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
       case FBAS_WR_FLG:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
 
+          actions = fwlib_getEcaValidCnt();
+
           // count received timing messages with MPS flag or MPS event
-          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, 1);
+          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, actions);
 
           // store and handle received MPS flag
           *head = storeMpsFlag(*head, ecaParam);
