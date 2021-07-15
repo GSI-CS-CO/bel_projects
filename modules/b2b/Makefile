@@ -16,6 +16,7 @@ ARCH        ?= /x86_64
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
+INC         ?= include
 DIM         ?= /common/usr/timing/b2b/dim_v20r29
 #TARGETS     := firmware software
 
@@ -40,9 +41,11 @@ clean:
 deploy: 
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                         # '/usr' is a hack
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib                         # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include                     # '/usr' is a hack
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt                      # needed for ivtpar
 	mkdir -p $(STAGING)/firmware
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
+# NFS init scripts
 	cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18 RF room
 	cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
 	cp $(ASL)/b2b-sis18-kick.sh $(STAGING)                              # nfs init script SIS18 kicker room
@@ -55,27 +58,34 @@ deploy:
 	cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-sis18-bg2.sh $(STAGING)                               # nfs init script SIS18 BG2 electronic room (for INT)
 	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
+# FEC configuration scripts
 	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18 RF room
 	cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18 RF room
 	cp $(SW)/b2b-esr-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # FEC init script ESR RF room
 	cp $(SW)/b2b-esr-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script ESR RF foom
 	cp $(SW)/b2b-sis18-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script SIS18 BG2 electronic room
+# FEC x86 binaries 
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(SW)/saft-b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
 	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
 	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
 	cp $(SW)/b2b-ui $(STAGING)$(ARCH)$(PREFIX)/usr/bin                  # '/usr' is a hack
 	cp $(SW)/b2bivt/*.txt $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt         # needed for ivtpar
+# FEC lm32 firmware
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
 	cp $(FW)/b2bkd.bin $(STAGING)/firmware
+# DAQ
 	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-client-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack 
 	cp $(SW)/b2b-serv-raw $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-analyzer $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-viewer $(STAGING)$(ARCH)$(PREFIX)/usr/bin              # '/usr' is a hack 
-	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
+	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
+	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack 
+# FESA @ ASL
+	cp $(INC)/b2blib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include           # '/usr' is a hack	
 
 .PHONY: all clean
 
