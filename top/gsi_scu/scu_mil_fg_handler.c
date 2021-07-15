@@ -50,14 +50,14 @@ QUEUE_CREATE_STATIC( g_queueMilFg,  MAX_FG_CHANNELS, MIL_QEUE_T );
    .state            = ST_WAIT,             \
    .lastMessage.slot = INVALID_SLAVE_NR,    \
    .lastChannel      = 0,                   \
-   .task_timeout_cnt = 0,                   \
+   .timeoutCounter   = 0,                   \
    .waitingTime      = 0LL,                 \
    _GAP_TIME_INIT                           \
    .aFgChannels =                           \
    {{                                       \
-      .irq_data         = 0,                \
+      .irqFlags         = 0,                \
       .setvalue         = 0,                \
-      .daq_timestamp    = 0LL               \
+      .daqTimestamp     = 0LL               \
    }}                                       \
 }
 
@@ -98,17 +98,19 @@ void milInitTasks( void )
    {
       g_aMilTaskData[i].state             = ST_WAIT;
       g_aMilTaskData[i].lastMessage.slot  = INVALID_SLAVE_NR;
+      g_aMilTaskData[i].lastMessage.time  = 0LL;
       g_aMilTaskData[i].lastChannel       = 0;
-      g_aMilTaskData[i].task_timeout_cnt  = 0;
+      g_aMilTaskData[i].timeoutCounter    = 0;
       g_aMilTaskData[i].waitingTime       = 0LL;
    #ifdef CONFIG_READ_MIL_TIME_GAP
       g_aMilTaskData[i].gapReadingTime    = 0LL;
+      g_aMilTaskData[i].isInGap           = false;
    #endif
       for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
       {
-         g_aMilTaskData[i].aFgChannels[j].irq_data      = 0;
-         g_aMilTaskData[i].aFgChannels[j].setvalue      = 0;
-         g_aMilTaskData[i].aFgChannels[j].daq_timestamp = 0LL;
+         g_aMilTaskData[i].aFgChannels[j].irqFlags     = 0;
+         g_aMilTaskData[i].aFgChannels[j].setvalue     = 0;
+         g_aMilTaskData[i].aFgChannels[j].daqTimestamp = 0LL;
       }
    }
 #ifdef CONFIG_MIL_DAQ_USE_RAM
@@ -154,7 +156,7 @@ void dbgPrintMilTaskData( void )
       mprintf( "FSM-state[%u]: %s\n",          i, state2string( g_aMilTaskData[i].state ));
       mprintf( "slave_nr[%u]: 0x%08X\n",       i, g_aMilTaskData[i].slave_nr );
       mprintf( "lastChannel[%u]: %u\n",        i, g_aMilTaskData[i].lastChannel );
-      mprintf( "task_timeout_cnt[%u]: %u\n",   i, g_aMilTaskData[i].task_timeout_cnt );
+      mprintf( "timeoutCounter[%u]: %u\n",   i, g_aMilTaskData[i].timeoutCounter );
       mprintf( "waitingTime[%u]: 0x%08X%08X\n", i, (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].waitingTime),
                                                   (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].waitingTime) );
    #ifdef CONFIG_READ_MIL_TIME_GAP
@@ -163,11 +165,11 @@ void dbgPrintMilTaskData( void )
    #endif
       for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
       {
-         mprintf( "\tirq_data[%u][%u]: 0x%04X\n", i, j, g_aMilTaskData[i].aFgChannels[j].irq_data );
+         mprintf( "\tirqFlags[%u][%u]: 0x%04X\n", i, j, g_aMilTaskData[i].aFgChannels[j].irqFlags );
          mprintf( "\tsetvalue[%u][%u]: %u\n", i, j, g_aMilTaskData[i].aFgChannels[j].setvalue );
-         mprintf( "\tdaq_timestamp[%u][%u]: 0x%08X%08X\n", i, j,
-                   (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp),
-                   (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].aFgChannels[j].daq_timestamp) );
+         mprintf( "\tdaqTimestamp[%u][%u]: 0x%08X%08X\n", i, j,
+                   (uint32_t)GET_UPPER_HALF(g_aMilTaskData[i].aFgChannels[j].daqTimestamp),
+                   (uint32_t)GET_LOWER_HALF(g_aMilTaskData[i].aFgChannels[j].daqTimestamp) );
       }
    }
 }
@@ -202,7 +204,11 @@ void fgMilClearHandlerState( const unsigned int socket )
    if( isMilScuBusFg( socket ) )
    {
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
-      const MIL_QEUE_T milMsg = { .slot = getFgSlotNumber( socket ) };
+      const MIL_QEUE_T milMsg = 
+      { 
+         .slot = getFgSlotNumber( socket ),
+         .time = getWrSysTimeSafe()
+      };
      /*
       * Triggering of a software pseudo interrupt.
       */
@@ -212,7 +218,11 @@ void fgMilClearHandlerState( const unsigned int socket )
 
    if( isMilExtentionFg( socket ) )
    {
-      const MIL_QEUE_T milMsg = { .slot = 0 };
+      const MIL_QEUE_T milMsg =
+      {
+         .slot = 0,
+         .time = getWrSysTimeSafe()
+      };
      /*
       * Triggering of a software pseudo interrupt.
       */
@@ -418,7 +428,7 @@ bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
                                                  const unsigned int channel )
 {
    return
-   (pMilTaskData->aFgChannels[channel].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0;
+   (pMilTaskData->aFgChannels[channel].irqFlags & (DEV_STATE_IRQ | DEV_DRQ)) == 0;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -438,8 +448,15 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
    const unsigned int socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
    const unsigned int milTaskNo  = getMilTaskNumber( pMilTaskData, channel );
-   pMilTaskData->aFgChannels[channel].irq_data = 0; // clear old irq data
-   /* test only if as connected to sio */
+
+   /*
+    * Reset old IRQ-flags
+    */
+   pMilTaskData->aFgChannels[channel].irqFlags = 0;
+   
+   /*
+    * Is trades as a SIO device? 
+    */
    if( pMilTaskData->lastMessage.slot != 0 )
    {
       if( getFgSlotNumber( socket ) != pMilTaskData->lastMessage.slot )
@@ -483,13 +500,13 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData,
          return OKAY;
 
       return scub_get_task_mil( g_pScub_base, pMilTaskData->lastMessage.slot,  milTaskNo,
-                                &pMilTaskData->aFgChannels[channel].irq_data );
+                                &pMilTaskData->aFgChannels[channel].irqFlags );
    }
 
    if( !isMilExtentionFg( socket ) )
       return OKAY;
    return get_task_mil( g_pScu_mil_base, milTaskNo,
-                                &pMilTaskData->aFgChannels[channel].irq_data );
+                                &pMilTaskData->aFgChannels[channel].irqFlags );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -571,11 +588,11 @@ STATIC inline void feedMilFg( const unsigned int socket,
 STATIC inline
 void handleMilFg( const unsigned int socket,
                   const unsigned int devNum,
-                  const uint16_t irq_act_reg,
+                  const uint16_t irqFlags,
                   signed int* pSetvalue )
 {
    FG_ASSERT( !isAddacFg( socket ) );
-   const FG_CTRL_RG_T ctrlReg = { .i16 = irq_act_reg };
+   const FG_CTRL_RG_T ctrlReg = { .i16 = irqFlags };
    const unsigned int channel = ctrlReg.bv.number;
    if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
@@ -636,7 +653,7 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
 
    handleMilFg( getSocket( channel ),
                 dev,
-                pMilTaskData->aFgChannels[channel].irq_data,
+                pMilTaskData->aFgChannels[channel].irqFlags,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
    /*
     * clear irq pending and end block transfer
@@ -820,8 +837,10 @@ void milDeviceHandler( register TASK_T* pThis )
             * Refer state ST_FETCH_DATA at function call pushDaqData().
             */
             pMilData->gapReadingTime = 0;
+            pMilData->isInGap = false;
          #endif
-            pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
+            //pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
+            pMilData->waitingTime = pMilData->lastMessage.time + INTERVAL_200US;
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
@@ -838,6 +857,7 @@ void milDeviceHandler( register TASK_T* pThis )
              ( getWrSysTimeSafe() >= pMilData->gapReadingTime )
            )
          {
+            pMilData->isInGap = true;
             FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
             break;
@@ -873,7 +893,7 @@ void milDeviceHandler( register TASK_T* pThis )
       { /*
          * if timeout reached, proceed with next task
          */
-         if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
+         if( pMilData->timeoutCounter > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
@@ -885,7 +905,7 @@ void milDeviceHandler( register TASK_T* pThis )
              * skipping the faulty channel
              */
             pMilData->lastChannel++;
-            pMilData->task_timeout_cnt = 0;
+            pMilData->timeoutCounter = 0;
          #endif
          }
          /*
@@ -900,9 +920,11 @@ void milDeviceHandler( register TASK_T* pThis )
                printMilError( status, pMilData->lastMessage.slot );
          }
          if( status == RCV_TASK_BSY )
-         {
-            pMilData->lastChannel = channel; // start next time from channel
-            pMilData->task_timeout_cnt++;
+         { /*
+            * Start next time from this channel.
+            */
+            pMilData->lastChannel = channel; 
+            pMilData->timeoutCounter++;
             FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
@@ -943,8 +965,13 @@ void milDeviceHandler( register TASK_T* pThis )
             /*
              * Store the sample timestamp of DAQ.
              */
-            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTimeSafe(); //getWrSysTime();
-
+         #ifdef CONFIG_READ_MIL_TIME_GAP
+            if( pMilData->isInGap )
+               pMilData->aFgChannels[channel].daqTimestamp = getWrSysTimeSafe();
+            else
+         #endif
+               pMilData->aFgChannels[channel].daqTimestamp = pMilData->lastMessage.time;
+            
             status = milSetTask( pMilData, channel );
             if( status != OKAY )
                milPrintDeviceError( status, 23, "dev_sio read daq" );
@@ -957,7 +984,7 @@ void milDeviceHandler( register TASK_T* pThis )
       { /*
          * if timeout reached, proceed with next task
          */
-         if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
+         if( pMilData->timeoutCounter > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
@@ -969,7 +996,7 @@ void milDeviceHandler( register TASK_T* pThis )
              * skipping the faulty channel
              */
             pMilData->lastChannel++;
-            pMilData->task_timeout_cnt = 0;
+            pMilData->timeoutCounter = 0;
          #endif
          }
         /*
@@ -997,7 +1024,7 @@ void milDeviceHandler( register TASK_T* pThis )
                continue;
             }
             pushDaqData( getFgMacroViaFgRegister( channel ),
-                         pMilData->aFgChannels[channel].daq_timestamp,
+                         pMilData->aFgChannels[channel].daqTimestamp,
                          actAdcValue,
                          g_aFgChannels[channel].last_c_coeff
                       #ifdef CONFIG_READ_MIL_TIME_GAP
@@ -1005,8 +1032,8 @@ void milDeviceHandler( register TASK_T* pThis )
                       #endif
                        );
          #ifdef _CONFIG_DBG_TIMESTAMP
-            if( g_aLastTimestamps[channel] < pMilData->aFgChannels[channel].daq_timestamp )
-               g_aLastTimestamps[channel] = pMilData->aFgChannels[channel].daq_timestamp;
+            if( g_aLastTimestamps[channel] < pMilData->aFgChannels[channel].daqTimestamp )
+               g_aLastTimestamps[channel] = pMilData->aFgChannels[channel].daqTimestamp;
             else
                mprintf( "*\n" );
          #endif
@@ -1021,7 +1048,7 @@ void milDeviceHandler( register TASK_T* pThis )
             * Start next time from channel
             */
             pMilData->lastChannel = channel;
-            pMilData->task_timeout_cnt++;
+            pMilData->timeoutCounter++;
             FSM_TRANSITION_SELF( label='Receiving busy', color=blue );
             break;
          }
@@ -1074,7 +1101,7 @@ void milDeviceHandler( register TASK_T* pThis )
          * start next time from channel 0
          */
          pMilData->lastChannel = 0;
-         pMilData->task_timeout_cnt = 0;
+         pMilData->timeoutCounter = 0;
          break;
       }
 

@@ -98,7 +98,7 @@ typedef struct
     * @see scub_get_task_mil
     * @see get_task_mil
     */
-   int16_t   irq_data;
+   int16_t   irqFlags;
 
    /*!
     * @brief Setvalue from the tuple sent
@@ -106,9 +106,9 @@ typedef struct
    int       setvalue;
 
    /*!
-    * @brief Timestamp of daq sampling.
+    * @brief Timestamp of DAQ sampling.
     */
-   uint64_t  daq_timestamp;
+   uint64_t  daqTimestamp;
 } FG_CHANNEL_TASK_T;
 
 /*! -------------------------------------------------------------------------
@@ -121,6 +121,11 @@ typedef struct
    *        when value > 0. When 0 then the the MIL extention is concerned.
    */
    unsigned int  slot;
+   
+   /*!
+    * @brief Moment of interrupt which fills the queue of this object.
+    */
+   uint64_t      time;
 } MIL_QEUE_T;
 
 /*! --------------------------------------------------------------------------
@@ -148,7 +153,7 @@ typedef struct
    /*!
     * @brief timeout counter
     */
-   unsigned int      task_timeout_cnt;
+   unsigned int      timeoutCounter;
 
    /*!
     * @brief Waiting time after interrupt.
@@ -157,6 +162,8 @@ typedef struct
 #ifdef CONFIG_READ_MIL_TIME_GAP
    // Workaround!!! Move this in FG_CHANNEL_T resp. g_aFgChannels!!!
    uint64_t          gapReadingTime;
+   
+   bool              isInGap;
 #endif
 
     /*!

@@ -244,7 +244,11 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
    #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
       {
-         MIL_QEUE_T milMsg = { .slot = slot };
+         const MIL_QEUE_T milMsg =
+         { 
+            .slot = slot,
+            .time = getWrSysTime()
+         };
 
         /*!
          * @see milDeviceHandler
@@ -319,7 +323,11 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          { /*
             * Message from MIL-bus respectively device-bus.
             */
-            const MIL_QEUE_T milMsg = { .slot = 0 };
+            const MIL_QEUE_T milMsg =
+            {
+               .slot = 0,
+               .time = getWrSysTime()
+            };
 
            /*!
             * @see milDeviceHandler
