@@ -15,7 +15,7 @@ export SDCBU=tr0
 #export SDCBU=tr1
 ###########################################
 
-echo -e B2B start script for SIS18 rf room
+echo -e B2B start script for SIS18 located at bg2 room
 
 ###########################################
 # clean up stuff

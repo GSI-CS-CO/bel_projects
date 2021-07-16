@@ -57,6 +57,7 @@ deploy:
 	cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
 	cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
 	cp $(ASL)/b2b-sis18-bg2.sh $(STAGING)                               # nfs init script SIS18 BG2 electronic room (for INT)
+	cp $(ASL)/b2b-pmstub-bg2.sh $(STAGING)                              # nfs init script PM stub in BG2 electronic room (for INT)
 	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
 # FEC configuration scripts
 	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18 RF room
@@ -64,6 +65,7 @@ deploy:
 	cp $(SW)/b2b-esr-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # FEC init script ESR RF room
 	cp $(SW)/b2b-esr-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script ESR RF foom
 	cp $(SW)/b2b-sis18-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script SIS18 BG2 electronic room
+	cp $(SW)/b2b-pmstub-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script PM stub BG2 electronic room
 # FEC x86 binaries 
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(SW)/saft-b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
@@ -75,6 +77,7 @@ deploy:
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
 	cp $(FW)/b2bkd.bin $(STAGING)/firmware
+	cp $(FW)/b2bpmstub.bin $(STAGING)/firmware
 # DAQ
 	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
