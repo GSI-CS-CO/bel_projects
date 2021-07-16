@@ -192,7 +192,12 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
        * MIL-bus adapter was in the current slot found.
        * Proofing whether MIL function generators connected to this adapter.
        */
+      
+      /*
+       * Resetting all task-slots of this SCU-bis slave.
+       */
       scub_reset_mil( scub_adr, slot );
+
       for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
       {
          uint16_t ifa_id, ifa_vers, fg_vers;

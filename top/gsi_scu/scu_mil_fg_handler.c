@@ -33,9 +33,13 @@ extern volatile unsigned int* g_pScu_mil_base;
 #define INVALID_SLAVE_NR ((unsigned int)~0)
 
 #ifdef CONFIG_READ_MIL_TIME_GAP
-  #define _GAP_TIME_INIT .gapReadingTime = 0LL,
-#else
-  #define _GAP_TIME_INIT
+  typedef struct
+  {
+     uint64_t         timeInterval;
+     MIL_TASK_DATA_T* pTask;
+  } MIL_GAP_READ_T;
+  
+  MIL_GAP_READ_T mg_aReadGap[ ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ) ];
 #endif
 
 QUEUE_CREATE_STATIC( g_queueMilFg,  MAX_FG_CHANNELS, MIL_QEUE_T );
@@ -52,7 +56,6 @@ QUEUE_CREATE_STATIC( g_queueMilFg,  MAX_FG_CHANNELS, MIL_QEUE_T );
    .lastChannel      = 0,                   \
    .timeoutCounter   = 0,                   \
    .waitingTime      = 0LL,                 \
-   _GAP_TIME_INIT                           \
    .aFgChannels =                           \
    {{                                       \
       .irqFlags         = 0,                \
@@ -83,13 +86,6 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
-//#define _CONFIG_DBG_TIMESTAMP
-
-#ifdef _CONFIG_DBG_TIMESTAMP
-#warning Debug of MIL-Timestamps is active!
-volatile uint64_t g_aLastTimestamps[ ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ) ];
-#endif
-
 /*! ----------------------------------------------------------------------------
  */
 void milInitTasks( void )
@@ -102,10 +98,6 @@ void milInitTasks( void )
       g_aMilTaskData[i].lastChannel       = 0;
       g_aMilTaskData[i].timeoutCounter    = 0;
       g_aMilTaskData[i].waitingTime       = 0LL;
-   #ifdef CONFIG_READ_MIL_TIME_GAP
-      g_aMilTaskData[i].gapReadingTime    = 0LL;
-      g_aMilTaskData[i].isInGap           = false;
-   #endif
       for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
       {
          g_aMilTaskData[i].aFgChannels[j].irqFlags     = 0;
@@ -117,9 +109,12 @@ void milInitTasks( void )
    ramRingReset( &g_shared.mDaq.indexes );
    g_shared.mDaq.wasRead = 0;
 #endif
-#ifdef _CONFIG_DBG_TIMESTAMP
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_aLastTimestamps ); i++ )
-      g_aLastTimestamps[i] = 0LL;
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   for( unsigned int i = 0; i < ARRAY_SIZE( mg_aReadGap ); i++ )
+   {
+      mg_aReadGap[i].timeInterval = 0LL;
+      mg_aReadGap[i].pTask        = NULL;
+   }
 #endif
 }
 
@@ -272,11 +267,15 @@ inline STATIC unsigned int getMilTaskId( const MIL_TASK_DATA_T* pMilTaskData )
  * @param pMilTaskData Pointer to the currently running system task.
  * @param channel Channel number
  */
-inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskData,
-                                              const unsigned int channel )
+inline STATIC 
+unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskData,
+                                const unsigned int channel )
 {
-   //!!return TASKMIN + getFgMacroIndexFromFgRegister( channel );
-   return TASKMIN + channel + getMilTaskId( pMilTaskData );
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( (TASKMIN + ARRAY_SIZE( g_aMilTaskData ) * ARRAY_SIZE( g_aMilTaskData[0].aFgChannels )) <= TASKMAX );
+#endif
+  // return TASKMIN + channel + getMilTaskId( pMilTaskData );
+   return TASKMIN + channel + getMilTaskId( pMilTaskData ) * ARRAY_SIZE( g_aMilTaskData[0].aFgChannels );
 }
 
 
@@ -830,15 +829,6 @@ void milDeviceHandler( register TASK_T* pThis )
       {
          if( queuePopSave( &g_queueMilFg, &pMilData->lastMessage ) )
          {
-         #ifdef CONFIG_READ_MIL_TIME_GAP
-           /*
-            * Sets the gap reading time to zero this will signal the host that
-            * the next data aren't from gap reading.
-            * Refer state ST_FETCH_DATA at function call pushDaqData().
-            */
-            pMilData->gapReadingTime = 0;
-            pMilData->isInGap = false;
-         #endif
             //pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
             pMilData->waitingTime = pMilData->lastMessage.time + INTERVAL_200US;
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
@@ -853,14 +843,31 @@ void milDeviceHandler( register TASK_T* pThis )
            #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
              ( g_gapReadingTime != 0 ) &&
            #endif
-             ( pMilData->lastMessage.slot != INVALID_SLAVE_NR ) &&
-             ( getWrSysTimeSafe() >= pMilData->gapReadingTime )
+             ( pMilData->lastMessage.slot != INVALID_SLAVE_NR )
            )
          {
-            pMilData->isInGap = true;
-            FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
+            const uint64_t time = getWrSysTimeSafe();
+            bool isInGap = false;
+            FOR_EACH_FG( channel )
+            {
+               if( g_shared.oSaftLib.oFg.aRegs[channel].state != STATE_ACTIVE )
+                  continue;
+               if( mg_aReadGap[channel].pTask != NULL )
+                  continue;
+               if( mg_aReadGap[channel].timeInterval == 0LL )
+                  continue;
+               if( mg_aReadGap[channel].timeInterval > time )
+                  continue;
+               
+               mg_aReadGap[channel].pTask = pMilData;
+               isInGap = true;
+            }
+            if( isInGap )
+            {
+               FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
-            break;
+               break;
+            }
          }
       #endif /* ifdef CONFIG_READ_MIL_TIME_GAP */
          FSM_TRANSITION_SELF( label='No message', color=blue );
@@ -966,7 +973,7 @@ void milDeviceHandler( register TASK_T* pThis )
              * Store the sample timestamp of DAQ.
              */
          #ifdef CONFIG_READ_MIL_TIME_GAP
-            if( pMilData->isInGap )
+            if( mg_aReadGap[channel].pTask == pMilData )
                pMilData->aFgChannels[channel].daqTimestamp = getWrSysTimeSafe();
             else
          #endif
@@ -1028,15 +1035,9 @@ void milDeviceHandler( register TASK_T* pThis )
                          actAdcValue,
                          g_aFgChannels[channel].last_c_coeff
                       #ifdef CONFIG_READ_MIL_TIME_GAP
-                         , pMilData->gapReadingTime != 0
+                         , mg_aReadGap[channel].pTask == pMilData
                       #endif
                        );
-         #ifdef _CONFIG_DBG_TIMESTAMP
-            if( g_aLastTimestamps[channel] < pMilData->aFgChannels[channel].daqTimestamp )
-               g_aLastTimestamps[channel] = pMilData->aFgChannels[channel].daqTimestamp;
-            else
-               mprintf( "*\n" );
-         #endif
             /*
              * save the setvalue from the tuple sent for the next drq handling
              */
@@ -1087,10 +1088,23 @@ void milDeviceHandler( register TASK_T* pThis )
       case ST_WAIT:
       {
       #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
-         pMilData->gapReadingTime = getWrSysTime() + INTERVAL_1MS * g_gapReadingTime;
-      #else
-         pMilData->gapReadingTime = getWrSysTime() + INTERVAL_10MS;
+         if( g_gapReadingTime == 0 )
+            break;
       #endif
+         FOR_EACH_FG( channel )
+         {
+            if( (mg_aReadGap[channel].pTask != pMilData) && isNoIrqPending( pMilData, channel ))
+               continue;
+            
+            mg_aReadGap[channel].pTask = NULL;
+               
+            mg_aReadGap[channel].timeInterval = pMilData->aFgChannels[channel].daqTimestamp +
+         #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
+            INTERVAL_1MS * g_gapReadingTime;
+         #else
+            INTERVAL_10MS;
+         #endif
+         }
          break;
       }
    #endif

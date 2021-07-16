@@ -159,16 +159,10 @@ typedef struct
     * @brief Waiting time after interrupt.
     */
    uint64_t          waitingTime;
-#ifdef CONFIG_READ_MIL_TIME_GAP
-   // Workaround!!! Move this in FG_CHANNEL_T resp. g_aFgChannels!!!
-   uint64_t          gapReadingTime;
-   
-   bool              isInGap;
-#endif
 
-    /*!
-     * @see FG_CHANNEL_TASK_T
-     */
+   /*!
+    * @see FG_CHANNEL_TASK_T
+    */
    FG_CHANNEL_TASK_T aFgChannels[ARRAY_SIZE(g_aFgChannels)];
 } MIL_TASK_DATA_T;
 

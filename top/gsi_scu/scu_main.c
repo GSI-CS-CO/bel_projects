@@ -458,10 +458,10 @@ STATIC TASK_T g_aTasks[] =
 #endif
 #ifdef CONFIG_MIL_FG
    { &g_aMilTaskData[0], ALWAYS, 0, milDeviceHandler },
- //!!  { &g_aMilTaskData[1], ALWAYS, 0, milDeviceHandler },
- //!!  { &g_aMilTaskData[2], ALWAYS, 0, milDeviceHandler },
- //!!  { &g_aMilTaskData[3], ALWAYS, 0, milDeviceHandler },
- //!!  { &g_aMilTaskData[4], ALWAYS, 0, milDeviceHandler },
+   { &g_aMilTaskData[1], ALWAYS, 0, milDeviceHandler },
+   { &g_aMilTaskData[2], ALWAYS, 0, milDeviceHandler },
+   { &g_aMilTaskData[3], ALWAYS, 0, milDeviceHandler },
+   { &g_aMilTaskData[4], ALWAYS, 0, milDeviceHandler },
  #ifndef _CONFIG_ECA_BY_MSI
    { NULL,               ALWAYS, 0, ecaHandler      },
  #endif
@@ -496,7 +496,7 @@ ONE_TIME_CALL void schedule( void )
    #warning "Testversion with no interrupts!!!"
    onScuMSInterrupt( ECA_INTERRUPT_NUMBER, NULL );
 #endif
-   const uint64_t tick = getWrSysTime();
+   const uint64_t tick = getWrSysTimeSafe();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
       TASK_T* pCurrent = &g_aTasks[i];
