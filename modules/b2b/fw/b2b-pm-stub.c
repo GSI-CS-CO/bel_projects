@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-July-2021
+ *  version : 16-Jul-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -121,17 +121,17 @@ void initSharedMem(uint32_t *reqState)
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
   if (idx == 0) {
     *reqState = COMMON_STATE_FATAL;
-    DBPRINT1("dm-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+    DBPRINT1("b2b-pmstub: fatal error - did not find LM32-CB-CLUSTER!\n");
   } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if (idx == 0) {
     *reqState = COMMON_STATE_FATAL;
-    DBPRINT1("dm-unipz: fatal error - did not find THIS CPU!\n");
+    DBPRINT1("b2b-pmstub: fatal error - did not find THIS CPU!\n");
   } // if idx
   else cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("b2b-pm: CPU RAM External 0x%08x, begin shared 0x%08x\n", (unsigned int)cpuRamExternal, (unsigned int)SHARED_OFFS);
+  DBPRINT2("b2b-pmstub: CPU RAM External 0x%08x, begin shared 0x%08x\n", (unsigned int)cpuRamExternal, (unsigned int)SHARED_OFFS);
 
   // clear shared mem
   i = 0;
@@ -141,7 +141,7 @@ void initSharedMem(uint32_t *reqState)
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-pm: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
+  DBPRINT2("b2b-pmstub: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
   fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
 } // initSharedMem 
 
@@ -161,12 +161,9 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  // disable input gate 
-  fwlib_ioCtrlSetGate(0, 2);
-
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("b2b-pm: ERROR - init of EB master failed! %u\n", (unsigned int)status);
+    DBPRINT1("b2b-pmstub: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -193,7 +190,7 @@ uint32_t extern_entryActionOperation()
   // flush ECA queue for lm32
   i = 0;
   while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
-  DBPRINT1("b2b-pm: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+  DBPRINT1("b2b-pmstub: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init get values
   *pSharedGetTH1Hi       = 0x0;
@@ -485,7 +482,7 @@ int main(void) {
   nTransfer      = 0;
 
   init();                                                                     // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-pm", B2BPMSTUB_FW_VERSION); // init common stuff
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-pmstub", B2BPMSTUB_FW_VERSION); // init common stuff
   initSharedMem(&reqState);                                                   // initialize shared memory
   fwlib_clearDiag();                                                          // clear common diagnostics data
   
