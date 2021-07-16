@@ -31,8 +31,9 @@ software::
 
 firmware:
 	$(MAKE) TARGET=b2bcbu -C $(FW)
-	$(MAKE) TARGET=b2bpm -C $(FW)	
-	$(MAKE) TARGET=b2bkd -C $(FW)	
+	$(MAKE) TARGET=b2bpm -C $(FW)
+	$(MAKE) TARGET=b2bkd -C $(FW)
+	$(MAKE) TARGET=b2bpmstub -C $(FW)
 
 clean:
 	$(MAKE) -C $(SW) clean
