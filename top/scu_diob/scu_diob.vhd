@@ -811,8 +811,8 @@ COMPONENT front_board_id
 
 Port ( clk : in STD_LOGIC;
        nReset : in STD_LOGIC;
-       Deb_Sync72 : in STD_LOGIC_VECTOR(71 downto 0);
-       Deb72_out   :in STD_LOGIC_VECTOR(71 downto 0);
+       Deb_Sync : in STD_LOGIC_VECTOR(71 downto 0);
+       Deb_out   :in STD_LOGIC_VECTOR(71 downto 0);
 
        IOBP_Masken_Reg1 : in STD_LOGIC_VECTOR(15 downto 0);
        IOBP_Masken_Reg2 : in STD_LOGIC_VECTOR(15 downto 0);
@@ -1598,8 +1598,6 @@ signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
 --  |    §§§              Übergabe-Signale für Anwender-IO: FG902_xxx -- Newe Interlock-Backplane mit 12 Steckplätzen                 |
 --  +============================================================================================================================+
 
-
--- TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
 signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  
 signal IOBP_SK_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
 signal IOBP_Masken_Reg6:        std_logic_vector(15 downto 0);
@@ -1612,14 +1610,11 @@ signal    Deb72_out:    std_logic_vector(71 downto 0);
 
 signal    Syn72:        std_logic_vector(71 downto 0);
 signal    Deb_Sync72:   std_logic_vector(71 downto 0);
-type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
-signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
 type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
 signal conf_reg:           t_reg_array;
 signal AW_SK_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register von den Piggy's
 signal IOBP_SK_Aktiv_LED_i:  t_led_array;
 signal PIO_ENA_SLOT:  t_IOBP_array:= (OTHERS => (OTHERS => '0'));
-
 signal PIO_OUT_SLOT :t_IOBP_array := (OTHERS => (OTHERS => '0'));
 signal quench_sk_out:              std_logic_vector (4 downto 0);
 
@@ -4127,8 +4122,8 @@ front_board_id_component: front_board_id
 
 Port map( clk => clk_sys,
        nReset => rstn_sys,
-       Deb_Sync72 => Deb_Sync72,
-       Deb72_out   =>Deb72_out,
+       Deb_Sync => Deb_Sync72,
+       Deb_out   =>Deb72_out,
        IOBP_Masken_Reg1 => IOBP_Masken_Reg1,
        IOBP_Masken_Reg2 => IOBP_Masken_Reg2,
        IOBP_Masken_Reg3 => IOBP_Masken_Reg3,
