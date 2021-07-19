@@ -19,14 +19,16 @@
 #
 # 2.1 Measure message transmission (set of timing messages with the same deadline, 1 msg in 1 frame)
 #  make saftd                     # load saftd
-#  make setup_fbasrx              # load fw binary, set ECA rules
 #  make restart_fbasdm_multi_msg  # start the test
 #
 # 2.2 Measure message transmission (set of timing messages with the same deadline, many msgs in 1 frame)
 #  make saftd                     # load saftd
-#  make setup_fbasrx              # load fw binary, set ECA rules
 #  make restart_fbasdm_multi_max_msg  # start the test
 #
+# During the test with multiple messages, which is done by 'restart_fbasdm_multi_max_msg' Makefile target, FBASRX looses a few timing messages.
+# The problem was caused by old gateware (dm-enigma-merge-v3-2631) of datamaster and solved in newer version (dm-fallout-merge-v2-3297).
+# For more details refer to [dm_bad_evtid_20210714] in the FBAS project folder.
+
 # 3. Send a single timing message by datamaster
 #  make saftd
 #  make restart_fbasdm_single_msg   # restart the test
