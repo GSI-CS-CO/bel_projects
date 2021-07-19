@@ -34,6 +34,14 @@
 #  make restart_fbasdm_single_msg   # restart the test
 #  make continue_fbasdm_single_msg  # continue the test
 
+# 4. Test with 2 senders and 1 receivers
+#  senders: datamaster and FBASTX node
+#  note: LEMO cable connection between FBASTX and FBASRX nodes is not required
+#
+#  make saftd
+#  make restart_two_senders_multi_loop or
+#  make restart_two_senders_multi_finite
+
 .PHONY: mytest \
 	saftd setup_nodes setup_fbastx setup_fbasrx \
 	do_test3 \
@@ -41,7 +49,9 @@
 	restart_fbasdm_finite restart_fbasdm_loop \
 	restart_fbasdm_multi_msg restart_fbasdm_multi_max_msg \
 	restart_fbasdm_single_msg continue_fbasdm_single_msg \
-	print_fbasdm_status
+	print_fbasdm_status \
+	clear_fbasdm load_fbasdm_loop_patterns load_fbasdm_finite_patterns \
+	restart_two_senders_multi_finite restart_two_senders_multi_loop
 
 SHELL=/bin/bash
 sleep_period=20    # seconds
@@ -156,6 +166,10 @@ restart_fbasdm_multi_msg: set_single_msg_per_frame restart_fbasdm_multi_finite
 # multiple patterns can be packed in single Ethernet frame.
 restart_fbasdm_multi_max_msg: set_multi_msgs_per_frame restart_fbasdm_multi_finite
 
+# Datamaster sends a set of patterns (timing messages) with the same deadline,
+# multiple patterns can be packed in single Ethernet frame.
+restart_fbasdm_multi_max_loop_msg: set_multi_msgs_per_frame restart_fbasdm_multi_loop
+
 # Datamaster sends a single timing message
 restart_fbasdm_single_msg:
 	source setup.sh && setup_fbasrx
@@ -172,3 +186,64 @@ continue_fbasdm_single_msg:
 
 print_fbasdm_status:
 	source dm.sh && print_dm_diag
+
+# Targets used to test with 2 senders (datamaster and FBASTX)
+clear_fbasdm:
+	source dm.sh && clear_dm_patt
+	source dm.sh && clear_dm_diag
+
+load_fbasdm_loop_patterns:
+	source dm.sh && load_dm_patt my_mps_loop.dot
+	source dm.sh && load_dm_patt my_mps_loop1.dot
+	source dm.sh && load_dm_patt my_mps_loop2.dot
+	source dm.sh && load_dm_patt my_mps_loop3.dot
+
+load_fbasdm_finite_patterns:
+	source dm.sh && load_dm_patt my_mps_pata.dot
+	source dm.sh && load_dm_patt my_mps_patb.dot
+	source dm.sh && load_dm_patt my_mps_patc.dot
+	source dm.sh && load_dm_patt my_mps_patd.dot
+
+# Simple test: 2 senders, each EB frame with single timing message
+#
+# To evaluate result add the number of messages sent by the datamaster (decimal
+# numbers given in a table) and FBASTX (hexadecimal number) and compare the sum
+# with the number of messages received by FBASRX (last hexadecimal output).
+# If they match, then test is passed, otherwise test is failed.
+restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
+	source dm.sh && load_dm_patt my_mps_loop3.dot
+	source setup.sh && setup_fbastx && setup_fbasrx
+	source setup.sh && enable_mps_all
+	source dm.sh && start_dm_patt PatLoop3
+	@echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
+	source dm.sh && stop_dm_patt PatLoop3
+	source setup.sh && disable_mps_all
+	source dm.sh && print_dm_diag
+	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+
+# datamaster sends EB frame with multiple timing messages
+# FBASRX is getting started to loose timing messages at transmission period of 180us
+restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_loop_patterns
+	source setup.sh && setup_fbastx && setup_fbasrx
+	source setup.sh && enable_mps_all
+	source dm.sh && start_dm_synchron $$cmd_file_start_loop
+	@echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
+	source dm.sh && stop_dm_patt PatLoop
+	source dm.sh && stop_dm_patt PatLoop1
+	source dm.sh && stop_dm_patt PatLoop2
+	source dm.sh && stop_dm_patt PatLoop3
+	source setup.sh && disable_mps_all
+	source dm.sh && print_dm_diag
+	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+
+restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_finite_patterns
+	source setup.sh && setup_fbastx && setup_fbasrx
+	source setup.sh && enable_mps_all
+	source dm.sh && start_dm_synchron $$cmd_file_start_finite
+	@echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
+	source setup.sh && disable_mps_all
+	source dm.sh && print_dm_diag
+	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
