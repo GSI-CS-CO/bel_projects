@@ -30,8 +30,8 @@ static void help(const char *program) {
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
   fprintf(stderr, "  clearstats                Clear all status and statistics info\n");
-  fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
-  fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
+  fprintf(stderr, "  gathertime <Time / ns>    Set msg gathering time for priority queue\n");
+  fprintf(stderr, "  maxmsg <Message Quantity> Set maximum messages in a packet for priority queue\n");
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
   fprintf(stderr, "  heap                      Show current scheduler heap\n");
   fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
@@ -826,7 +826,24 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     }
-    
+    else if (cmp == "gathertime") {
+      if((targetName != NULL) && ( targetName != std::string(""))) {
+        //setPqTgather(strtoll(targetName, NULL, 0));
+      } else {
+        //uint64_t tGather = getPqTgather();
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+      }
+      return 0;
+    }
+    else if (cmp == "maxmsg") {
+      if((targetName != NULL) && ( targetName != std::string(""))) {
+        //uint64_t maxMsg = getPqMaxMsg();
+      } else {
+        //setPqPqMaxMsg(strtoll(targetName, NULL, 0));
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+      }
+      return 0;
+    }  
 
 
 

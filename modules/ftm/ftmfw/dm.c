@@ -73,7 +73,7 @@ void dmInit() {
   nodeFuncs[NODE_TYPE_QBUF]             = dummyNodeFunc;
   nodeFuncs[NODE_TYPE_SHARE]            = dummyNodeFunc;
   nodeFuncs[NODE_TYPE_ALTDST]           = dummyNodeFunc;
-  nodeFuncs[NODE_TYPE_SYNC]             = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_ORIGIN]           = origin;
   nodeFuncs[NODE_TYPE_NULL]             = nodeNull;
 
   //deadline updater. Return infinity (-1) if no or unsupported node was given
@@ -91,7 +91,7 @@ void dmInit() {
   deadlineFuncs[NODE_TYPE_QBUF]         = dummyDeadlineFunc;
   deadlineFuncs[NODE_TYPE_SHARE]        = dummyDeadlineFunc;
   deadlineFuncs[NODE_TYPE_ALTDST]       = dummyDeadlineFunc;
-  deadlineFuncs[NODE_TYPE_SYNC]         = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_ORIGIN]       = dlEvt;
   deadlineFuncs[NODE_TYPE_NULL]         = deadlineNull;
 
 
@@ -501,6 +501,24 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
 
   return ret;
 }
+
+uint32_t* origin(uint32_t* node, uint32_t* thrData) {
+  uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+  uint32_t newOrigin = *(uint32_t*)&node[ORIGIN_DEST >> 2];
+  uint32_t targetAux = *(uint32_t*)&node[ORIGIN_MGMT >> 2];
+  uint8_t targetCpu = (targetAux >> 8) & 0xff;
+  uint8_t targetThr = targetAux & 0xff;
+
+  //FIXME black magic ahead! RAM sizes are assumed to be equal, _startshared adr is assumed to be the same everywhere
+  uint8_t* targetBaseP = (uint8_t*)((newOrigin & PEER_ADR_MSK) + (uint8_t*)&_startshared);
+  uint32_t* targetOrigin = (uint32_t*)&targetBaseP[( SHCTL_THR_STA + targetThr * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2]; 
+  *targetOrigin = newOrigin;
+  
+  mprintf("#%02u: Origin node, target 0x%08x, cpu %u, thr %u, new origin 0x%08x\n", cpuId, (uint32_t)&targetOrigin, targetCpu, targetThr, newOrigin);
+  //uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
+  return ret;
+}
+
 
 
 void heapify() {

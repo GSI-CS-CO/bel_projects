@@ -123,20 +123,12 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Global Commands (not targeted at cmd queues of individual blocks)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Origin 
-    if (type == dnt::sCmdOrigin)   {
-      if (hm.lookup(destination)) {
-        sLog << " Setting Origin to <" << destination << ">" << std::endl; 
-        uint8_t cpuIdx    = getNodeCpu(destination, TransferDir::DOWNLOAD); // a node can only run on the cpu it resides
-        setThrOrigin(ew, cpuIdx, cmdThr, destination); //configure thread and run it
-      }
-      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
-      return ew;
-    }
+ 
 
 
     //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
-    if (type == dnt::sCmdStart)   {
+    if (type == dnt::sCmdStart)   { 
+      sLog << "Yep, its a start allright" << std::endl;
       if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination, cmdThr, cmdTvalid);  }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
@@ -155,11 +147,14 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     //FIMXE hack to test compile
     uint8_t thr = 0;
 
+    //Origin 
     if (type == dnt::sCmdOrigin)   {
-      //Leave out for now and autocorrect cpu
-      try { setThrOrigin(ew, getNodeCpu(target, TransferDir::DOWNLOAD), thr, target); } catch (std::runtime_error const& err) {
-        throw std::runtime_error("Cannot execute command '" + type + "', " + std::string(err.what()));
+      if (hm.lookup(destination)) {
+        sLog << " Setting Origin to <" << destination << ">" << std::endl; 
+        uint8_t cpuIdx    = getNodeCpu(destination, TransferDir::DOWNLOAD); // a node can only run on the cpu it resides
+        setThrOrigin(ew, cpuIdx, cmdThr, destination); //configure thread and run it
       }
+      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
     }
 

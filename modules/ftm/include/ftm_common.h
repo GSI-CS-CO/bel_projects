@@ -305,7 +305,7 @@
 #define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
 //@}
 
-/** @name Sync node layout definition NOT IMPLEMENTED*/
+/** @name Origin node layout definition.*/
 //@{
 #define ORIGIN_ARRAY              (NODE_BEGIN)
 //@}
@@ -341,6 +341,7 @@
 /** @name Switch node layout definitions*/
 //@{
 #define ORIGIN_DEST           (EVT_HDR_END) ///< origin dst 
+#define ORIGIN_MGMT           (ORIGIN_DEST + _PTR_SIZE_) //32b cpu & thr word
 #define ORIGIN_RES            (ORIGIN_DEST + _PTR_SIZE_) //reserved 16b
 #define ORIGIN_CPU            (ORIGIN_RES  + _16b_SIZE_) // destination CPU
 #define ORIGIN_THR            (ORIGIN_CPU  + _8b_SIZE_) // destination thread

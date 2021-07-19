@@ -269,6 +269,16 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData);
 */
 uint32_t* cswitch(uint32_t* node, uint32_t* thrData);
 
+
+/// Processes an origin node, changing the origin of a given cpu/thr combo to given node adr
+/** Overwrites target's successor. No queueing involved, effect is immediate.
+  * @param node Pointer to current node of basetype origin
+  * @param thrData Pointer to the associated thread's metadata
+  * @return Ptr to successor node
+*/
+uint32_t* origin(uint32_t* node, uint32_t* thrData);
+
+
 /// Generates a timing message and dispatches it to priority queue
 /** Reformats timing node content and generates a timing message. 
     Replaces relative offset with absolute deadline from controlling thread
