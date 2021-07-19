@@ -535,7 +535,7 @@ void main( void )
            "Shared memory size: %u bytes\n"
        #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
-            "CAUTION! Time gap reading for MIL FGs activated!\n"
+            "CAUTION! Time gap reading for MIL FGs implemented!\n"
             ESC_NORMAL
        #endif
            , __reset_count,

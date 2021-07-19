@@ -510,7 +510,7 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData,
 
 /*! ---------------------------------------------------------------------------
  * @brief Supplies the by "devNum" and "socket" addressed MIL function
- *        generator with new data.
+ *        generator with new polynomial data.
  */
 STATIC inline void feedMilFg( const unsigned int socket,
                               const unsigned int devNum,
@@ -628,7 +628,7 @@ void handleMilFg( const unsigned int socket,
       sendRefillSignalIfThreshold( channel );
 
      /*
-      * Send data via MIL-bis to function generator.
+      * Send next polynomial data via MIL-bus to function generator.
       */
       feedMilFg( socket, devNum, ctrlReg, pSetvalue );
    }
@@ -829,8 +829,6 @@ void milDeviceHandler( register TASK_T* pThis )
       {
          if( queuePopSave( &g_queueMilFg, &pMilData->lastMessage ) )
          {
-            //pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
-            pMilData->waitingTime = pMilData->lastMessage.time + INTERVAL_200US;
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
@@ -850,7 +848,7 @@ void milDeviceHandler( register TASK_T* pThis )
             bool isInGap = false;
             FOR_EACH_FG( channel )
             {
-               if( g_shared.oSaftLib.oFg.aRegs[channel].state != STATE_ACTIVE )
+               if( !fgIsStarted( channel ) )
                   continue;
                if( mg_aReadGap[channel].pTask != NULL )
                   continue;
@@ -884,10 +882,13 @@ void milDeviceHandler( register TASK_T* pThis )
             break;
          }
          /*
-          * poll all pending regs on the dev bus; non blocking read operation
+          * Requesting of all IRQ-pending registers.
           */
          FOR_EACH_FG( channel )
          {
+            if( fgIsStopped( channel ) )
+               continue;
+
             status = milReqestStatus( pMilData, channel );
             if( status != OKAY )
                milPrintDeviceError( status, 20, "dev_sio set task" );
@@ -919,7 +920,14 @@ void milDeviceHandler( register TASK_T* pThis )
           * fetch status from dev bus controller;
           */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
-         {
+         { /*
+            * Reset old IRQ-flags
+            */
+            pMilData->aFgChannels[channel].irqFlags = 0;
+
+            if( fgIsStopped( channel ) )
+               continue;
+
             status = milGetStatus( pMilData, channel );
             if( status == RCV_TASK_BSY )
                break; /* break from FOR_EACH_FG_CONTINUING loop */
@@ -1108,6 +1116,13 @@ void milDeviceHandler( register TASK_T* pThis )
          break;
       }
    #endif
+
+      case ST_PREPARE:
+      {
+         //pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
+         pMilData->waitingTime = pMilData->lastMessage.time + INTERVAL_200US;
+         break;
+      }
 
       case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:
