@@ -91,6 +91,7 @@ class CommandLine: public PARSER
    uint                       m_throttleTimeout;
    uint                       m_maxEbCycleDataLen;
    uint                       m_blockReadEbCycleGapTimeUs;
+   uint                       m_distributeDataPollIntervall;
 
    const bool                 m_isRunningOnScu;
 
@@ -193,6 +194,11 @@ public:
    bool isExitOnError( void ) const
    {
       return m_exitOnError;
+   }
+
+   uint getPollInterwalTime( void )
+   {
+      return m_distributeDataPollIntervall;
    }
 
 protected:

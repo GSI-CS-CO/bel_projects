@@ -400,6 +400,7 @@ int fbMain( int argc, char** ppArgv )
    bool singleShoot = false;
    uint gapReadInterval = 0;
    constexpr uint gapReadTime = 10;
+   uint intervalTime = 0;
    while( (key = Terminal::readKey()) != '\e' )
    {
       switch( key )
@@ -446,8 +447,14 @@ int fbMain( int argc, char** ppArgv )
             pDaqAdmin->sendSwi( FG::FG_OP_PRINT_HISTORY );
          }
       }
-      if( doReceive )
-         pDaqAdmin->distributeData();
+
+      const uint it = daq::getSysMicrosecs();
+      if( it >= intervalTime )
+      {
+         intervalTime = it + cmdLine.getPollInterwalTime() * 1000;
+         if( doReceive )
+            pDaqAdmin->distributeData();
+      }
       ::usleep( 100 );
    }
    DEBUG_MESSAGE( "Loop left" );

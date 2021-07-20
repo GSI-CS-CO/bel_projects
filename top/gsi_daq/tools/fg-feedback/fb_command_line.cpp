@@ -670,6 +670,24 @@ vector<OPTION> CommandLine::c_optList =
                     "Example 2:\n"
                     ESC_BOLD "-b0" ESC_NORMAL "  Etherbone cycle will not divided in smaller ones.\n"
 
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint pollWaitingTime;
+         if( readInteger( pollWaitingTime, poParser->getOptArg() ) )
+            return -1;
+         static_cast<CommandLine*>(poParser)->m_distributeDataPollIntervall = pollWaitingTime;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'I',
+      .m_longOpt  = "poll-interval",
+      .m_helpText = "PARAM=\"<poll interval in milliseconds>\"\n"
+                    "A value of zero (default) means no waiting time between two calls of the\n"
+                    "polling function \"distributeData()\", otherwise the in this option given\n"
+                    "waiting time will expired between consecutive calls of \"distributeData()\"."
    }
 };
 
@@ -759,6 +777,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_throttleTimeout( DEFAULT_THROTTLE_TIMEOUT )
    ,m_maxEbCycleDataLen( DEFAULT_MAX_EB_BLOCK_LEN )
    ,m_blockReadEbCycleGapTimeUs( DEFAULT_EB_CYCLE_GAP_TIME )
+   ,m_distributeDataPollIntervall( 0 )
    ,m_isRunningOnScu( isRunningOnScu() )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
