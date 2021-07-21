@@ -341,10 +341,8 @@
 /** @name Switch node layout definitions*/
 //@{
 #define ORIGIN_DEST           (EVT_HDR_END) ///< origin dst 
-#define ORIGIN_MGMT           (ORIGIN_DEST + _PTR_SIZE_) //32b cpu & thr word
-#define ORIGIN_RES            (ORIGIN_DEST + _PTR_SIZE_) //reserved 16b
-#define ORIGIN_CPU            (ORIGIN_RES  + _16b_SIZE_) // destination CPU
-#define ORIGIN_THR            (ORIGIN_CPU  + _8b_SIZE_) // destination thread
+#define ORIGIN_CPU            (ORIGIN_DEST + _32b_SIZE_) // destination CPU
+#define ORIGIN_THR            (ORIGIN_CPU  + _32b_SIZE_) // destination thread
 //@}
 
 

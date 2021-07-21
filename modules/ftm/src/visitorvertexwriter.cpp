@@ -180,6 +180,8 @@ void VisitorVertexWriter::visit(const Origin& el) const  {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sOrigin);
   pushEventInfo((Event&)el);
+  printf("DBG: Dump thr 0x%02x\n", el.getThread());
+  pushPair(dnp::Base::sThread, el.getThread(), FormatNum::DEC);
   pushSingle(ec::Node::Origin::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookFlow);
   pushPaintedEyecandy((Node&)el);

@@ -55,16 +55,17 @@ void Switch::deserialise(uint8_t* b) {
 
 void Origin::serialise(const vAdr &va, uint8_t* b) const {
   Event::serialise(va, b);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST,   va[ADR_ORIGIN_DEST]);
-  writeLeNumberToBeBytes(b + (uint8_t)ORIGIN_CPU,      va[ADR_ORIGIN_CPU]);
-  writeLeNumberToBeBytes(b + (uint8_t)ORIGIN_THR, this->thread);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST, va[ADR_ORIGIN_DEST]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_CPU,  va[ADR_ORIGIN_CPU]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_THR,  this->getThread());
 }
 
 
 
 void Origin::deserialise(uint8_t* b) {
   Event::deserialise(b);
-  this->thread  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[ORIGIN_THR]);
+  this->setThread(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[ORIGIN_THR]));
+  printf("DL1 -  this-> thread is 0x%02x", this->getThread());
 }
 
 void Command::deserialise(uint8_t* b)   {
@@ -173,6 +174,7 @@ void Origin::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Origin @ %llu, ", p, (long long unsigned int)this->tOffs);
+  printf("%s*** Thr @ %u, ", p, (unsigned int)this->getThread());
 }    
 
 void Command::show(void) const {
@@ -186,6 +188,7 @@ void Command::show(uint32_t cnt, const char* prefix) const {
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Command   @ %llu, ", p, (long long unsigned int)this->tOffs);
   printf("%sValid @ %llu, ", p, (long long unsigned int)this->tValid);
+  printf("%sact @ 0x%08x, ", p, (unsigned int)this->act);
 }
 
 void Flush::show(void) const {

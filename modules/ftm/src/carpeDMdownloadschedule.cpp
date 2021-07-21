@@ -139,6 +139,7 @@ namespace dnt = DotStr::Node::TypeVal;
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
     if(verbose) sLog << "Analysing downloaded graph binary " << std::dec << downloadData.size() << " bytes" << std::endl;
     uint32_t nodeCnt = 0;
+    
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through Bmp
@@ -158,6 +159,7 @@ namespace dnt = DotStr::Node::TypeVal;
           // IMPORTANT: skip all mgmt nodes
           if (type == NODE_TYPE_MGMT) {continue; }
 
+
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
           std::string name      = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
@@ -172,9 +174,14 @@ namespace dnt = DotStr::Node::TypeVal;
           std::string tmp(stream.str());
 
           //Add Vertex
+          
+          sErr << std::endl << "DEBUG_Before_Suspicious_Code" << std::endl;  
+          BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
 
-          vertex_t v        = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
+          vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
           //FIXME workaround for groupstable updates from download. not  nice ...
+          sErr << std::endl << "DEBUG_After_Suspicious_Code" << std::endl;  
+          BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
 
           g[v].bpEntry  = std::to_string((bool)(flags & NFLG_BP_ENTRY_LM32_SMSK));
           g[v].bpExit   = std::to_string((bool)(flags & NFLG_BP_EXIT_LM32_SMSK));
@@ -185,6 +192,7 @@ namespace dnt = DotStr::Node::TypeVal;
           //Add allocTable Entry
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
           //vHexDump("TEST ****", test);
+
 
           if (!(at.insert(cpu, adr, hash, v, false))) {
             sLog << "Offending Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
@@ -198,6 +206,8 @@ namespace dnt = DotStr::Node::TypeVal;
           auto*  x = (AllocMeta*)&(*it);
 
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
+
+      
 
           switch(type) {
             case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise((uint8_t*)x->b); break;
@@ -215,17 +225,21 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
+          sErr << std::endl << "DEBUG_Created node " << name << " @idx " << std::dec << v << " nptr: 0x" << std::hex << g[v].np << std::endl;
 
+          
         }
-      }
+        }
     }
+    
+    
 
 
     if(verbose) sLog << "Node creation done. Creating Edges" << std::endl;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
-
+    sErr << std::endl << "DEBUG_Created all nodes, show graph once more at at edge creation state" << std::endl; 
     //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
@@ -233,7 +247,11 @@ namespace dnt = DotStr::Node::TypeVal;
 
       } else {
 
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
+        if  (!(g[it.v].np->isMeta())) {
+          g[it.v].np->show();
+          hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
+          g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
+        }  
       }
     }
     //second, iterate all meta-types
@@ -246,6 +264,8 @@ namespace dnt = DotStr::Node::TypeVal;
     }
 
     if(verbose) sLog << "Done. Graph generation complete" << std::endl;
+
+
   }
 
     //TODO assign to CPUs/threads

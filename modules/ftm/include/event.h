@@ -94,18 +94,19 @@ public:
   node_ptr clone() const override { return boost::make_shared<Switch>(Switch(*this)); }
 };
 
-// Similar to a command, but no queueing and no overhead. meant for direct atomic dest pointer manipulation
+// Sets the origin node for a cpu/thread combo
 class Origin : public Event {
+  uint32_t thread;
 public:
-  uint8_t thread;
-  Origin(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint8_t thread) 
+  Origin(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint32_t thread) 
   : Event(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ORIGIN << NFLG_TYPE_POS)), tOffs), thread(thread) {}
   Origin(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, flags) {}
   Origin(const Origin& src) : Event(src) {}
   ~Origin() {};
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-
+  virtual const uint32_t getThread(void)  const {return this->thread;}
+  virtual const void setThread(uint32_t thread)  {this->thread = thread;}
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }

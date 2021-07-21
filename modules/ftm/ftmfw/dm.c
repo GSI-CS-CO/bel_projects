@@ -505,9 +505,8 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
 uint32_t* origin(uint32_t* node, uint32_t* thrData) {
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t newOrigin = *(uint32_t*)&node[ORIGIN_DEST >> 2];
-  uint32_t targetAux = *(uint32_t*)&node[ORIGIN_MGMT >> 2];
-  uint8_t targetCpu = (targetAux >> 8) & 0xff;
-  uint8_t targetThr = targetAux & 0xff;
+  uint32_t targetCpu = *(uint32_t*)&node[ORIGIN_CPU >> 2];
+  uint32_t targetThr = *(uint32_t*)&node[ORIGIN_THR >> 2];
 
   //FIXME black magic ahead! RAM sizes are assumed to be equal, _startshared adr is assumed to be the same everywhere
   uint8_t* targetBaseP = (uint8_t*)((newOrigin & PEER_ADR_MSK) + (uint8_t*)&_startshared);

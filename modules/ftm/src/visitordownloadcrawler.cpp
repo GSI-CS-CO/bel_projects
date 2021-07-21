@@ -93,8 +93,9 @@ std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createSwitch(const Switch& e
 }
 
 void VisitorDownloadCrawler::visit(const Origin& el) const  {
+  printf("DEBUG_Reassurance_by_visitor_downloadcrawler, Class Origin member thread = 0x%02x\n", el.getThread());
+
   uint8_t targetCpu;
-  uint8_t targetThr;
   AdrType adrT;
   uint32_t tmpAdr;
 
@@ -102,6 +103,8 @@ void VisitorDownloadCrawler::visit(const Origin& el) const  {
 
   std::tie(targetCpu, adrT) = at.adrClassification(auxAdr);
   targetCpu = (adrT == AdrType::PEER ? targetCpu : cpu); // Internal address type does not know which cpu it belongs to
+
+
 
   setDefDst();
   tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, auxAdr);
