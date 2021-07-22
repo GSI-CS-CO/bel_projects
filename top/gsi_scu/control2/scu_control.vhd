@@ -86,7 +86,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     sfp2_ref_clk_i    : in  std_logic;
 
-    sfp2_tx_disable_o : out std_logic := '0';
+    sfp2_tx_disable_o : out std_logic;
     sfp2_txp_o        : out std_logic;
     sfp2_rxp_i        : in  std_logic;
     sfp2_los_i        : in std_logic;
@@ -329,6 +329,7 @@ begin
       wr_sfp_det_i           => sfp2_mod0,
       wr_sfp_tx_o            => sfp2_txp_o,
       wr_sfp_rx_i            => sfp2_rxp_i,
+      wbar_phy_dis_o         => sfp2_tx_disable_o,
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
@@ -464,7 +465,6 @@ begin
 
   -- Disable SFP1, SFP2=timing
   sfp1_tx_disable_o <= '1';
-  sfp2_tx_disable_o <= '0';
   sfp1_mod1 <= 'Z';
   sfp1_mod2 <= 'Z';
 

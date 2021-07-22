@@ -1,0 +1,21 @@
+                                  ECA-IO-Rule
+                                  -----------
+     Comment        : $                                                      
+     Device ('tr0') : $           IO (1..n) : $         enable (0/1): $  
+
+     match til 'n'  : $       
+     '0'         FID: $       
+     '1'         GID: $       
+     '2'       EvtNo: $           
+     '3'       Flags: $      
+     '4'         SID: $       
+     '5'        BPID: $       
+     '6'    reserved: $       
+     
+      length [ns]   : $                        
+      offset [ns]   : $                      
+
+
+
+         [ & Set to Default  ]                     [ & Return          ] 
+

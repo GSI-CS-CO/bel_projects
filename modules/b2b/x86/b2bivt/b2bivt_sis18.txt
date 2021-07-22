@@ -1,0 +1,21 @@
+                              Transfer from SIS18
+                              -------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+        [ & Configure     ]                          [ & Monitor       ]
+
+      ( [ & Diag          ]                          [ & Clear Diag    ] )
+
+        [ & Help          ]                          [ & Return    (6) ]
+

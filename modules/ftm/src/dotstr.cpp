@@ -207,8 +207,6 @@ namespace DotStr {
         const std::string sLookDef       = "shape     = \"rectangle\"";
         const std::string sLookFix       = sLookDef;
         const std::string sLookAlign     = sLookDef + ", style  = \"dotted, filled\"";
-
-
       }
       namespace TMsg {
         const std::string sLookDef       = "shape     = \"oval\"";

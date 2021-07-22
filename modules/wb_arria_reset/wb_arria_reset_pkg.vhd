@@ -43,25 +43,29 @@ component wb_arria_reset is
             en_wd_tmr    : boolean               := false
           );
   port (
-    clk_sys_i  : in std_logic;
-    rstn_sys_i : in std_logic;
-    clk_upd_i  : in std_logic;
-    rstn_upd_i : in std_logic;
-    hw_version : in std_logic_vector(31 downto 0);
-    slave_o    : out t_wishbone_slave_out;
-    slave_i    : in t_wishbone_slave_in;
-    rstn_o     : out std_logic_vector(rst_channels-1 downto 0));
+    clk_sys_i     : in std_logic;
+    rstn_sys_i    : in std_logic;
+    clk_upd_i     : in std_logic;
+    rstn_upd_i    : in std_logic;
+    hw_version    : in std_logic_vector(31 downto 0);
+    slave_o       : out t_wishbone_slave_out;
+    slave_i       : in t_wishbone_slave_in;
+    phy_rst_o     : out std_logic;
+    phy_aux_rst_o : out std_logic;
+    phy_dis_o     : out std_logic;
+    phy_aux_dis_o : out std_logic;
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0));
 end component;
 
 constant c_arria_reset : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"01",
-    abi_ver_minor => x"02",
+    abi_ver_minor => x"03",
     wbd_endian    => c_sdb_endian_big,
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f",
+    addr_last     => x"00000000000000ff",
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"3a362063",
