@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-03-17}
+\Large{Last change: 2021-07-22}
 \end{center}
 \vfill
 \end{titlepage}
@@ -73,9 +73,12 @@ schedules          &   x        &   x             &   T           &   -         
 \end{table}
 \chapter{The Tests}
 \section{addDownloadCompare}
-\texttt{addDownloadCompare} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmaware.
-The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}. 
+\texttt{addDownloadCompare} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
+The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
 There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
+
+This test requires \texttt{scheduleCompare} to be installed. This tool checks that two dot-files represent the same schedule. For installation use branch
+origin/dm-analysis. The tool is build with make in folder modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo make install in the same folder.
 \section{bpcStart}
 \texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm.
 The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
