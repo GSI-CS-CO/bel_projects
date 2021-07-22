@@ -1062,8 +1062,10 @@ public:
     * the associated channel object.
     *
     * @note This function should run in a polling-loop of a own thread.
+    * @return Number of remaining data in the DDR3-RAM which are still not evaluated
+    *         by the callback functions "onData".
     */
-   void distributeData( void );
+   uint distributeData( void );
 
    /*!
     * @brief Makes the data buffer empty.

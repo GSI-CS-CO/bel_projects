@@ -423,7 +423,7 @@ uint DaqAdministration::distributeData( void )
 
    m_nextReadOutTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC / 8;
 
-   return toRead;
+   return getCurrentNumberOfData();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

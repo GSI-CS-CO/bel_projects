@@ -456,7 +456,7 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 
 /*! ---------------------------------------------------------------------------
  */
-uint DaqAdministration::distributeData( void )
+uint DaqAdministration::distributeDataSingle( void )
 {
    union PROBE_BUFFER_T
    {
@@ -598,6 +598,19 @@ uint DaqAdministration::distributeData( void )
 
 
    return getCurrentRamSize( false );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+uint DaqAdministration::distributeData( void )
+{
+   uint size;
+   do
+   {
+      size = distributeDataSingle();
+   }
+   while( size != 0 );
+   return 0;
 }
 
 /*! ---------------------------------------------------------------------------

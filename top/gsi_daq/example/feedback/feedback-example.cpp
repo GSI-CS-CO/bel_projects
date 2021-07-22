@@ -277,7 +277,15 @@ int main( const int argc, const char** ppArgv )
           * In this example it is the function "MyFeedbackChannel::onData"
           * only.
           */
-         myScu.distributeData();
+         uint remainingData = myScu.distributeData();
+
+         /*
+          * To reduce the duration of the function distributeData() in some cases
+          * there are still data sets in the DDR3-buffer.
+          * The return value has the number of data-sets which are still in
+          * the DDR3-buffer which shall be read by the next call of distributeData().
+          */
+         cout "Remaining data sets in DDR3 RAM: " << remainingData << endl;
       }
       while( daq::getSysMicrosecs() < stopTime );
 

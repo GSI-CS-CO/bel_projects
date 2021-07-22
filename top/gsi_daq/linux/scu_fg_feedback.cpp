@@ -901,7 +901,7 @@ int FgFeedbackAdministration::sendSyncronizeTimestamps( const uint32_t timeOffse
 
 /*! ---------------------------------------------------------------------------
  */
-void FgFeedbackAdministration::distributeData( void )
+uint FgFeedbackAdministration::distributeData( void )
 {
 #ifdef __DOXYGEN__
  /*
@@ -914,8 +914,11 @@ void FgFeedbackAdministration::distributeData( void )
    daq::DaqAdministration::distributeData();
 #endif
 
+   uint remainingData = 0;
    for( const auto& poDaqAdmin: m_vPollList )
-      poDaqAdmin->distributeData();
+      remainingData += poDaqAdmin->distributeData();
+
+   return remainingData;
 }
 
 /*! ---------------------------------------------------------------------------
