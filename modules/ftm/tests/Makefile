@@ -11,13 +11,13 @@ IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformanc
 OPTIONS ?=
 
 test:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
 
 test-default:
-	DATAMASTER="$(DATAMASTER)" pytest $(IGNORE) $(OPTIONS)
+	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
 
 all: dmPerformance dmThreads full_test pps singleEdgeTest
 
@@ -30,14 +30,14 @@ dmThreads:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmThreads/ four-threads
 
 full_test:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) python full_test/dm_testman.py "$(DATAMASTER)"
+	LD_LIBRARY_PATH=$(CARPEDM_PATH) python3 full_test/dm_testman.py "$(DATAMASTER)"
 	rm download.dot
 
 #messageCounter:
-#	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python messageCounter/messageCounter.py $(DATAMASTER)
+#	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python3 messageCounter/messageCounter.py $(DATAMASTER)
 
 pps:
-	DATAMASTER="$(DATAMASTER)" pytest -k pps $(IGNORE) $(OPTIONS)
+	DATAMASTER="$(DATAMASTER)" python3 -m pytest -k pps $(IGNORE) $(OPTIONS)
 
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
