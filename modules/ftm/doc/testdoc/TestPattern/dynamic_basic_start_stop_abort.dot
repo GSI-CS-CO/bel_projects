@@ -1,0 +1,12 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A[pos="0,0" cpu="0", flags="0x0010a007", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN_C0_EX[pos="144,0" cpu="0", flags="0x00108007", type="block", tperiod="1000", pattern="IN_C0", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_IN_C0_MID[pos="144,144" cpu="0", flags="0x00000007", type="block", tperiod="1000000000", pattern="IN_C0", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+MSG_IN_C0_EN[pos="0,144" cpu="0", flags="0x00002002", type="tmsg", toffs="10", pattern="IN_C0", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="0", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+BLOCK_IN_C0_MID->BLOCK_IN_C0_EX [type="defdst", color     = "red"];
+MSG_IN_C0_EN->BLOCK_IN_C0_MID [type="defdst", color     = "red"];
+BLOCK_A->MSG_IN_C0_EN [type="defdst", color     = "red"];
+BLOCK_IN_C0_EX->BLOCK_A [type="defdst", color     = "red"];
+}

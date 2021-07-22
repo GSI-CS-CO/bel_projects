@@ -1,0 +1,52 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A[pos="-72,0" cpu="0", flags="0x0000a007", type="block", tperiod="100000000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_B[pos="72,0" cpu="0", flags="0x0000a007", type="block", tperiod="100000000", pattern="B", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN0[pos="0,144" cpu="0", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN0", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN1[pos="0,-144" cpu="0", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN1", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN0_QBl_Il[pos="-144,288" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Il0[pos="-288,360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Il1[pos="-144,360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_QBl_Hi[pos="144,288" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Hi0[pos="144,360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Hi1[pos="288,360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_QBl_Lo[pos="144,504" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Lo0[pos="144,576" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_Qb_Lo1[pos="288,576" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0_ListDst[pos="-144,504" cpu="0", flags="0x0000000c", type="listdst", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_QBl_Il[pos="-144,-288" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Il0[pos="-288,-360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Il1[pos="-144,-360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_QBl_Hi[pos="144,-288" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Hi0[pos="144,-360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Hi1[pos="288,-360" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_QBl_Lo[pos="144,-504" cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Lo0[pos="144,-576" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_Qb_Lo1[pos="288,-576" cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN1_ListDst[pos="-144,-504" cpu="0", flags="0x0000000c", type="listdst", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_IN0->BLOCK_IN0_ListDst [type="listdst", color     = "gray"];
+BLOCK_IN0->BLOCK_IN0_QBl_Il [type="prioil", color     = "gray"];
+BLOCK_IN0->BLOCK_IN0_QBl_Hi [type="priohi", color     = "gray"];
+BLOCK_IN0->BLOCK_IN0_QBl_Lo [type="priolo", color     = "gray"];
+BLOCK_IN1->BLOCK_IN1_ListDst [type="listdst", color     = "gray"];
+BLOCK_IN1->BLOCK_IN1_QBl_Il [type="prioil", color     = "gray"];
+BLOCK_IN1->BLOCK_IN1_QBl_Hi [type="priohi", color     = "gray"];
+BLOCK_IN1->BLOCK_IN1_QBl_Lo [type="priolo", color     = "gray"];
+BLOCK_IN1_QBl_Il->BLOCK_IN1_Qb_Il0 [type="meta", color     = "gray"];
+BLOCK_IN1_QBl_Il->BLOCK_IN1_Qb_Il1 [type="meta", color     = "gray"];
+BLOCK_IN0_QBl_Il->BLOCK_IN0_Qb_Il0 [type="meta", color     = "gray"];
+BLOCK_IN0_QBl_Il->BLOCK_IN0_Qb_Il1 [type="meta", color     = "gray"];
+BLOCK_IN0->BLOCK_A [type="defdst", color     = "red"];
+BLOCK_IN0->BLOCK_B [type="altdst", color     = "black"];
+BLOCK_IN0_QBl_Hi->BLOCK_IN0_Qb_Hi0 [type="meta", color     = "gray"];
+BLOCK_IN0_QBl_Hi->BLOCK_IN0_Qb_Hi1 [type="meta", color     = "gray"];
+BLOCK_IN0_QBl_Lo->BLOCK_IN0_Qb_Lo0 [type="meta", color     = "gray"];
+BLOCK_IN0_QBl_Lo->BLOCK_IN0_Qb_Lo1 [type="meta", color     = "gray"];
+BLOCK_IN1_QBl_Hi->BLOCK_IN1_Qb_Hi0 [type="meta", color     = "gray"];
+BLOCK_IN1_QBl_Hi->BLOCK_IN1_Qb_Hi1 [type="meta", color     = "gray"];
+BLOCK_IN1_QBl_Lo->BLOCK_IN1_Qb_Lo0 [type="meta", color     = "gray"];
+BLOCK_IN1_QBl_Lo->BLOCK_IN1_Qb_Lo1 [type="meta", color     = "gray"];
+BLOCK_IN1->BLOCK_A [type="defdst", color     = "red"];
+BLOCK_IN1->BLOCK_B [type="altdst", color     = "black"];
+}

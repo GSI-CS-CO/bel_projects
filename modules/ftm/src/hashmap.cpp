@@ -51,11 +51,11 @@ bool HashMap::remove(const uint32_t hash) {
 }
 
 const std::string& HashMap::lookup(const uint32_t hash, const std::string& exMsg)     const  {
-  try { return hm.left.at(hash);}  catch (...) {throw std::runtime_error(exMsg + "HashTable: Hash " + std::to_string(hash) + " (dec) not found");}
+  try { return hm.left.at(hash);}  catch (...) {throw std::runtime_error(exMsg + " HashTable: Hash " + std::to_string(hash) + " (dec) not found");}
 }
 
 const uint32_t&    HashMap::lookup(const std::string& name, const std::string& exMsg) const  {
- try { return hm.right.at(name);} catch (...) {throw std::runtime_error(exMsg + "HashTable: Name " + name + " not found");}
+ try { return hm.right.at(name);} catch (...) {throw std::runtime_error(exMsg + " HashTable: Name " + name + " not found");}
 }
 
 bool HashMap::contains(const uint32_t hash)     const {if (hm.left.count(hash)  > 0) {return true;} else {return false;} };

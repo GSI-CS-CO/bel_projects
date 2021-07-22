@@ -1,0 +1,108 @@
+\section{singleEdgeTest}
+\texttt{singleEdgeTest} tests the validation of combinations of node types and edge types. This uses libcarpedm in a special version, called dmtest. 
+There are all private methods of libcarpedm accessible in dmtest. There are 1936 schedules
+with at least one edge and two nodes tested. Some schedule are enlarged with meta nodes.
+
+Build process: when building the test object libcarpedm / dmtest, start with \texttt{make clean} to build a consitent test object.
+
+For this, the combinations of a node and an outgoing edge and,
+respectively, a node and an incoming edge.
+
+The tables are compiled from source validation.cpp.
+
+Classification of nodes:
+\begin{enumerate}
+\item Meta nodes: qinfo, qbuf, listdst
+\item Event nodes: tmsg, switch, flow, flush, noop, waits
+\item Command nodes: flow, flush, noop, wait
+\end{enumerate}
+
+\begin{table}
+\begin{adjustwidth}{-25mm}{}
+\caption{Schedule -- Valid edge types per node type}
+\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|c|}
+
+\hline
+Edge Type & \multicolumn{11}{c|}{Node Type - Out-Edge, first node} \\
+\hline
+                 & block & blockalign & flow & flush & listdst & noop & qbuf & qinfo & switch & tmsg & wait \\
+\hline
+defdst           & 0..1  & 0..1       & 0..1 & 1     & --      & 0..1 & --   & --    & 0..1   & 1    & 0..1 \\
+altdst           & 0..10 & 0..10      & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+listdst          & 0..1  & 0..1       & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+baddefdst        & --    & --         & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+target (Switch)  & --    & --         & --   & --    & --      & --   & --   & --    & 0..1   & --   & --   \\
+target (Command) & --    & --         & 0..1 & 0..1  & --      & 0..1 & --   & --    & --     & --   & 0..1 \\
+flowdst          & --    & --         & 0..1 & --    & --      & --   & --   & --    & --     & --   & --   \\
+flushovr         & --    & --         & --   & 0..1  & --      & --   & --   & --    & --     & --   & --   \\
+switchdst        & --    & --         & --   & --    & --      & --   & --   & --    & 0..1   & --   & --   \\
+meta             & --    & --         & --   & --    & --      & --   & --   & 2     & --     & --   & --   \\
+priolo           & 0..1  & 0..1       & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+priohi           & 0..1  & 0..1       & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+prioil           & 0..1  & 0..1       & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+dynid x          & --    & --         & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+dynpar0          & --    & --         & --   & --    & --      & --   & --   & --    & --     & 0..1 & --   \\
+dynpar1          & --    & --         & --   & --    & --      & --   & --   & --    & --     & 0..1 & --   \\
+dyntef           & --    & --         & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+dynres           & --    & --         & --   & --    & --      & --   & --   & --    & --     & --   & --   \\
+any edge         & 0..15 & 0..15      & 1..3 & 1..3  & 0..     & 1..2 & 0..  & 2     & 1..3   & 1..3 & 1..2 \\
+\hline
+\end{tabular}
+\end{adjustwidth}
+\end{table}
+The last row combines
+\begin{enumerate}
+\item the check for childless nodes (events and qinfo must have childs),
+\item the sum of min and max cardinalities for the detailed edge types.
+\end{enumerate}
+
+\begin{table}
+\begin{adjustwidth}{-25mm}{}
+\caption{Schedule -- Valid edge types per node type}
+\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|c|}
+
+\hline
+Edge Type & \multicolumn{11}{c|}{Node Type - In-Edge, second node} \\
+\hline
+                 & block & blockalign & flow  & flush & listdst & noop  & qbuf & qinfo & switch & tmsg & wait  \\
+\hline
+defdst           & 0..1  & 0..1       & 0..1  & 0..1  & --      & 0..1  & --   & --    & 0..1   & 0..1  & 0..1  \\
+altdst           & 0..10 & 0..10      & 0..10 & 0..10 & --      & 0..10 & --   & --    & 0..10  & 0..10 & 0..10 \\
+listdst          & 0..1  & 0..1       & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+baddefdst        & --    & --         & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+target (Switch)  & 0..1  & 0..1       & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+target (Command) & 0..1  & 0..1       & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+flowdst          & 0..1  & 0..1       & 0..1  & 0..1  & --      & 0..1  & --   & --    & 0..1   & 0..1  & 0..1  \\
+flushovr         & --    & --         & --    & 0..1  & --      & --    & --   & --    & --     & --    & --    \\
+switchdst        & 0..1  & 0..1       & 0..1  & 0..1  & --      & 0..1  & --   & --    & 0..1   & 0..1  & 0..1  \\
+meta             & --    & --         & --    & --    & --      & --    & 1    & --    & --     & --    & --    \\
+priolo           & --    & --         & --    & --    & --      & --    & --   & 0..1  & --     & --    & --    \\
+priohi           & --    & --         & --    & --    & --      & --    & --   & 0..1  & --     & --    & --    \\
+prioil           & --    & --         & --    & --    & --      & --    & --   & 0..1  & --     & --    & --    \\
+dynid x          & --    & --         & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+dynpar0          & 0..1  & 0..1       & 0..1  & 0..1  & --      & 0..1  & --   & --    & 0..1   & 0..1  & 0..1  \\
+dynpar1          & 0..1  & 0..1       & 0..1  & 0..1  & --      & 0..1  & --   & --    & 0..1   & 0..1  & 0..1  \\
+dyntef           & --    & --         & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+dynres           & --    & --         & --    & --    & --      & --    & --   & --    & --     & --    & --    \\
+any edge         & 0..18 & 0..18      & 0..15 & 0..16 & 0       & 0..15 & 1    & 0..1  & 0..15  & 0..15 & 0..15 \\
+\hline
+\end{tabular}
+\end{adjustwidth}
+\end{table}
+
+Open questions:
+\begin{enumerate}
+\item Is the list of node types complete?
+\item Is the list of edge types complete?
+\item Node type listdst: no rules for in- or out-edges defined. Is this correct?
+\item Edge types dynid x, dyntef, dynres: are these edge types used?
+\item How to distinguish edge types target (Switch) and target (Command)?
+\item Node type flush and flow: these nodes may have priority queues (lo, hi, il). Why are the queues allowed?
+There are no meta nodes generated for these queues. Why?
+\item The rules allow two edges from a block to a bufferlist with edge types priolo and priohi.
+Should the rules be fixed for this invalid schedule?
+\item Is an edge of type defdst necessary for a node of type flow? For node type flush it is necessary.
+\item There are no ConstellationRules for nodes of type listdst and qbuf. Is this correct? Yes! Node types must be childless.
+\item Nodes types listdst and qbuf must be childless.
+\end{enumerate}
+
