@@ -57,15 +57,15 @@ echo -e b2b: configure $SDPM for phase measurement TLU
 saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # lm32 listens to CMD_B2B_PMEXT message from SIS18 CBU
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 450000 0x800 -dg
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 450000 0x800 -dg
+saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
+saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
 
 # lm32 listens to CMD_B2B_TRIGGEREXT message from SIS18 CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
 
-# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMEXT) message from SIS18 CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 19500000 0x81e -d
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 19500000 0x81e -d
+# lm32 listens to >> 9.9ms delayed<< (CMD_B2B_PMEXT) message from SIS18 CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 9900000 0x820 -d
+saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 9900000 0x820  -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
 saft-io-ctl $SDPM -n IO1 -o 1 -t 0

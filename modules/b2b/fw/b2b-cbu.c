@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Jun-2021
+ *  version : 23-Jul-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000300                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000301                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -138,7 +138,8 @@ int32_t  nBucketExt;                    // number of bucket for extraction
 int32_t  nBucketInj;                    // number of bucket for injection
 int      fFineTune;                     // flag: use fine tuning
 int      fMBTune;                       // flag: use multi-beat tuning
-uint64_t tEKS;                          // deadline of EVT_KICK_START
+/* uint64_t tEKS;                          // deadline of EVT_KICK_START */
+uint64_t tCBS;                          // deadline of CMD_B2B_START
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
@@ -674,12 +675,12 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
-    case B2B_MODE_KSE :  // extraction beam now!
+    case B2B_MODE_BSE :  // extraction at earlist deadline for kicker trigger!
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState =  B2B_MFSM_EXTKST;
+          nextMState =  B2B_MFSM_EXTKICK;
           break;
-        case B2B_MFSM_EXTKST :
+        case B2B_MFSM_EXTKICK :
           nextMState =  B2B_MFSM_EXTTRIG;
           break;
         case B2B_MFSM_EXTTRIG :
@@ -785,7 +786,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendParam;                                         // param to send
   uint32_t sendGid;                                           // GID to send
   uint64_t recDeadline;                                       // deadline received
-  uint64_t reqDeadline;                                       // deadline requested by sender
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
@@ -805,10 +805,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
   switch (ecaAction) {
 
-    case B2B_ECADO_KICKSTART :                                // received: EVT_KICK_START1/2 from DM; B2B transfer starts
-      reqDeadline = recDeadline + (uint64_t)COMMON_AHEADT;    // ECA is configured to pre-trigger ahead of time!!!
+    case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
+      // process any pending set-values
+      setSubmit();
+      
+      // clear 'local' variables
       sid        = (uint32_t)(recId >> 20) & 0xfff;
       gid        = 0x0;
       bpid       = 0x0;
@@ -825,11 +828,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       nBucketInj = 0x0;
       fFineTune  = 0x0;
       fMBTune    = 0x0;
-      tEKS       = 0x0;
+      tCBS       = 0x0;
 
       transStat  = 0x0;
 
-      
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid        = setGid[sid]; 
@@ -849,14 +851,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune  = setFFinTune[sid];
       fMBTune    = setFMBTune[sid];
 
-      tEKS       = reqDeadline;
+      tCBS       = recDeadline;
       nTransfer++;
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
-      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
       comLatency    = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
@@ -877,7 +878,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PRINJ :                                // received: measured phase from injection machine
-      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
       comLatency    = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
@@ -901,10 +901,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     default :
       return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
-      
-  // trigger at time of EVT_KICK_START1/2 of extraction machine
-  if (mState == B2B_MFSM_EXTKST) {
-    tTrig      = reqDeadline;                
+
+  // trigger at earliest kicker deadline
+  if (mState == B2B_MFSM_EXTKICK) {
+    tTrig      = tCBS + B2B_KICKOFFSET;                
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTC
@@ -917,7 +917,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0, sid, bpid, 0); 
     sendParam    = TH1Ext & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHExt & 0xff) << 56);              // use upper 8 bit as harmonic number 
-    sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
+    sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to B2BS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
@@ -931,7 +931,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0, sid, bpid, 0); 
     sendParam    = TH1Inj & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHInj & 0xff) << 56);              // use upper 8 bit as harmonic number 
-    sendDeadline = reqDeadline + 2;                                           // add 2ns to avoid collisions with EVT_KICK_START or CMD_B2B_PMEXT
+    sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState     = getNextMState(mode, mState);
@@ -939,7 +939,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction in bunch gap: calculate trigger time
   if (mState == B2B_MFSM_EXTBGT) {
-    tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;
     if (errorFlags) tTrig = tWantExt;                                         // plan B
     else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
       tTrig       = tWantExt;                                                 // plan B
@@ -952,7 +952,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
   if (mState == B2B_MFSM_EXTMATCHT) {
-    tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;    
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;    
     if (errorFlags) tTrig =  tWantExt;                                        // plan B
     else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat)) != COMMON_STATUS_OK) {
         tTrig       = tWantExt;                                               // plan B
@@ -969,7 +969,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    offsetDone   = (int32_t)(getSysTime() - tEKS);
+    offsetDone   = (int32_t)(getSysTime() - tCBS);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, 0, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
@@ -1013,7 +1013,6 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
-  //uint32_t dummy1;                              // dummy parameter
   uint32_t *buildID;                            // WB address of build ID
 
   // init local variables
@@ -1024,7 +1023,9 @@ int main(void) {
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
   nTransfer      = 0x0;
-
+  
+  pp_printf("\nhallo\nhuhu\n");
+  
   init();                                                                     // initialize stuff for lm32
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-cbu", B2BCBU_FW_VERSION); // init common stuff
   initSharedMem();                                                            // initialize shared memory

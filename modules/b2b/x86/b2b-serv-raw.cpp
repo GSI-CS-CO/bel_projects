@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2021
+ *  version : 23-Jul-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000237
+#define B2B_SERV_RAW_VERSION 0x000300
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -71,7 +71,7 @@ using namespace std;
 
 
 #define FID          0x1                // format ID of timing messages
-#define EKSOFFSET    -500000            // offset for EVT_KICK_START
+/* #define EKSOFFSET    -500000            // offset for EVT_KICK_START  */
 
 
 static const char* program;
@@ -231,7 +231,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.flagEvtErr |= flagErr << tag;
       break;     
     case tagKte     :
-      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS
+      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS /* chk */
       getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tEKS);
       setval.ext_cTrig    = ((param & 0x00000000ffffffff));
       getval.doneOff      = ((param & 0xffffffff00000000) >> 32);
@@ -480,13 +480,13 @@ int main(int argc, char** argv)
     switch (reqExtRing) {
       case SIS18_RING : 
 
-        // SIS18, EVT_KICK_START, EKSOFFSET, signals start of data collection
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
+        // SIS18, CMD_B2B_START, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[0]        = tagStart;
         
-        // SIS18, EVT_KICK_START, +100ms (!), signals stop of data collection 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
+        // SIS18, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
         condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
         tag[1]        = tagStop;
         
@@ -558,13 +558,13 @@ int main(int argc, char** argv)
         break;
       case ESR_RING : 
 
-        // ESR, EVT_KICK_START, EKSOFFSET, signals start of data collection
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
+        // ESR, CMD_B2B_START, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[0]        = tagStart;
         
-        // ESR, EVT_KICK_START, +100ms (!), signals stop of data collection 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
+        // ESR, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
         condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
         tag[1]        = tagStop;
         

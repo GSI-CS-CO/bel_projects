@@ -3,11 +3,11 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-January-2021
+ *  version : 22-Jul-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
- *  - when receiving B2B_ECADO_PHASEMEAS, the phase is measured as a timestamp for an 
+ *  - when receiving B2B_ECADO_PRXX or B2B_ECADO_DIAGXXX, the phase is measured as a timestamp for an 
  *    arbitraty period
  *  - the phase timestamp is then sent as a timing message to the network
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000300                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000301                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -370,13 +370,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
 
   switch (ecaAction) {
-    // the following two cases handle H=1 group DDS phase measurement
+    // the following two cases handle h=1 group DDS phase measurement
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGERPM;    // ECA is configured to pre-trigger ahead of time!!!
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
@@ -412,7 +411,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // send command: transmit measured phase value
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1;
-      sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
       transStat    = dt;
@@ -420,7 +419,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       //flagIsLate = 0; /* chk */      
       break; // case  B2B_ECADO_B2B_PMEXT
 
-    // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and H=1 group DDS signals
+    // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and h=1 group DDS signals
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
@@ -451,7 +450,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
-    // the following two cases handle frequency diagnostic and measure the skew between expected and H=1 group DDS signals
+    // the following two cases handle frequency diagnostic and measure the skew between expected and h=1 group DDS signals
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_DIAGEXT;
     case B2B_ECADO_B2B_PDINJ :
@@ -459,7 +458,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
       if(!flagPMError) {                                              // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
 
-        reqDeadline      = recDeadline + (uint64_t)COMMON_AHEADT;     // ECA is configured to pre-trigger ahead of time!!!
         recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
         recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
         recBpid          = (uint32_t)((recEvtId >>  6) & 0x3fff    );
@@ -485,7 +483,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
         sendParam    = (uint64_t)((dtDiag  & 0xffffffff) << 32);      // high word; phase diagnostic
         sendParam   |= (uint64_t)( dtMatch & 0xffffffff);             // low word; match diagnostic
-        sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
+        sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
       } // if not pm error
       //flagIsLate = 0; /* chk */
