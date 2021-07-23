@@ -382,7 +382,11 @@ uint DaqAdministration::distributeData( void )
    m_lastReadIndex = getReadIndex();
 
    if( m_pMiddleBufferMem == nullptr )
-   {
+   { /*
+      * Why not using std::vector?
+      * Well a fast data transfer is requested in this case std::vector
+      * could be a bit expensive. So the classical C- array will preferred.
+      */
       m_pMiddleBufferMem = new MIDDLE_BUFFER_T[m_pMiddleBufferSize];
    }
 

@@ -401,6 +401,7 @@ int fbMain( int argc, char** ppArgv )
    uint gapReadInterval = 0;
    constexpr uint gapReadTime = 10;
    uint intervalTime = 0;
+   uint remainingData = 0;
    while( (key = Terminal::readKey()) != '\e' )
    {
       switch( key )
@@ -449,11 +450,12 @@ int fbMain( int argc, char** ppArgv )
       }
 
       const uint it = daq::getSysMicrosecs();
-      if( it >= intervalTime )
+      if( it >= intervalTime || remainingData != 0 )
       {
-         intervalTime = it + cmdLine.getPollInterwalTime() * 1000;
+         if( it >= intervalTime )
+            intervalTime = it + cmdLine.getPollInterwalTime() * 1000;
          if( doReceive )
-            pDaqAdmin->distributeData();
+            remainingData = pDaqAdmin->distributeData();
       }
       ::usleep( 100 );
    }

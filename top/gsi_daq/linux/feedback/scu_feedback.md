@@ -33,3 +33,23 @@ This function has to be put in a polling-loop, which runs for example in a own t
 
 See also in the following small well documented example program
 @include feedback-example.cpp
+
+In some cases not all DAQ-data residing in the DDR3-RAM will read and evaluated in one iteration step.\n
+This could be the case when the data is jammed in the DDR3-RAM.\n
+In this case the function [distributeData](@ref Scu::FgFeedbackAdministration::distributeData) returns by the number of DDR3-payload items which are in the
+DDR3-RAM and not evaluated by the callback [onData](@ref Scu::FgFeedbackChannel::onData) function yet.
+
+Proposal to read the entire data-buffer in any cases:
+@code
+void myThreadFunction_or_myTimerEvent( void )
+{
+   uint remainingData;
+   do
+   {
+      remainingData = myScu.distributeData();
+
+      // Maybe do something others here...
+   }
+   while( remainingData != 0 );
+}
+@endcode

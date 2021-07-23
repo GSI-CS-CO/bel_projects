@@ -1081,9 +1081,6 @@ private:
    bool dataBlocksPresent( void );
 
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData, std::size_t len );
-
-   uint distributeDataSingle( void );
-
 }; // class DaqAdministration
 
 ///////////////////////////////////////////////////////////////////////////////
