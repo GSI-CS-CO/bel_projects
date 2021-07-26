@@ -88,8 +88,8 @@
 // specialities
 #define B2B_PMOFFSET              500000    // offset [ns] for deadline of PMEXT/PMINJ events relative to B2BS event
 #define B2B_KICKOFFSET           2000000    // offset [ns] for earliest deadline of kicker trigger events
-#define B2B_PRETRIGGERPR          450000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
-#define B2B_PRETRIGGER             20000    // offset [ns] used as pre-trigger on the trigger event
+#define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
+#define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
 #define B2B_NSID                      16    // max number of SID settings

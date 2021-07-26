@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Jul-2021
+ *  version : 26-Jul-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -297,7 +297,7 @@ uint32_t setSubmit()
   
   setFlagValid[sid]    = 1;
   
-  pp_printf("submit %u\n", sid);
+  DBPRINT3("submit %u\n", sid);
   return COMMON_STATUS_OK;
 } // setSubmit
 
@@ -434,7 +434,7 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
   return COMMON_STATUS_OK;
 } // calcExtTime
 
-
+/*
 // send event for MIL busses; this is intended for the WR->MIL Gateways for the timing groups ESR_RING and SIS18_RING
 void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
 {
@@ -457,7 +457,7 @@ void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
   fwlib_ebmWriteTM(deadline, sendEvtId, 0, 0);
 #endif
 } // sendMilTrigger
-
+*/
 
 // fine tune for individual h=1 cycles
 void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t *dt)

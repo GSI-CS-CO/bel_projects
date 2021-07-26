@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2021
+ *  version : 26-Jul-2021
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000300                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000301                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -258,7 +258,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (ecaAction == B2B_ECADO_B2B_TRIGGEREXT) flagIsExt = 1;
       else                                       flagIsExt = 0;
       
-      reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;  // ECA is configured to pre-trigger ahead of time!!!
+      reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;// ECA is configured to pre-trigger ahead of time!!!
 
       recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
       recSid                 = (uint32_t)((recEvtId >> 20) & 0xfff);
@@ -291,7 +291,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // check, if there is a rising edge of the probe signal 
       ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
       if ((ecaAction == B2B_ECADO_TLUINPUT1) || (ecaAction == B2B_ECADO_TLUINPUT4)) {
-        tKickProbe   = recDeadline - (uint64_t)B2B_PRETRIGGER;
+        tKickProbe   = recDeadline - (uint64_t)B2B_PRETRIGGERTR;
         flagRecProbe = 1;
       } // if TLUINPUT
       else flagRecProbe = 0;
