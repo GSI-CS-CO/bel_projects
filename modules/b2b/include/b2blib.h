@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-July-2021
+ *  version : 26-July-2021
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000300
+#define B2BLIB_VERSION 0x000301
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -102,7 +102,7 @@ extern "C" {
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
-    uint64_t tEKS;                                     // EKS deadline
+    uint64_t tCBS;                                     // deadline of CMD_B2B_START
     int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
     int32_t  preOff;                                   // offset from EKS to measured extraction phase
     int32_t  priOff;                                   // offset from EKS to measured injection phase

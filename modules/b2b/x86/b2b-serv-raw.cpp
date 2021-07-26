@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Jul-2021
+ *  version : 26-Jul-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000300
+#define B2B_SERV_RAW_VERSION 0x000301
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -165,7 +165,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   switch (tag) {
     case tagStart   :
       sid                  = recSid;
-      tStart               = deadline.getUTC() - EKSOFFSET;
+      tStart               = deadline.getUTC();
       flagActive           = 1;
       setval.flag_nok      = 0xfffffffe;                    // mode is 'ok'
       setval.mode          = 0;
@@ -190,7 +190,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.flagEvtRec    = 0x1 << tag;
       getval.flagEvtErr    = 0;
       getval.flagEvtLate   = flagLate << tag;;
-      getval.tEKS          = deadline.getTAI() - EKSOFFSET;;
+      getval.tCBS          = deadline.getTAI();
       getval.doneOff       = 0;
       getval.preOff        = 0;
       getval.priOff        = 0;
@@ -217,14 +217,14 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
       break;
     case tagPre     :
-      getval.preOff      = (int32_t)(param - getval.tEKS);
+      getval.preOff      = (int32_t)(param - getval.tCBS);
       getval.ext_phase   = param;
       if (param) getval.flag_nok &= 0xfffffffe;
       flagErr            = ((id & B2B_ERRFLAG_PMEXT) != 0);
       getval.flagEvtErr |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff      = (int32_t)(param - getval.tEKS);
+      getval.priOff      = (int32_t)(param - getval.tCBS);
       getval.inj_phase   = param;
       if (param) getval.flag_nok &= 0xffffffdf;
       flagErr            = ((id & B2B_ERRFLAG_PMINJ) != 0);
@@ -232,7 +232,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       break;     
     case tagKte     :
       if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS /* chk */
-      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tEKS);
+      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tCBS);
       setval.ext_cTrig    = ((param & 0x00000000ffffffff));
       getval.doneOff      = ((param & 0xffffffff00000000) >> 32);
       setval.flag_nok    &= 0xfffffff7;
@@ -241,7 +241,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       break;
     case tagKti     :
       if (setval.mode < 3) setval.mode = 3;
-      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tEKS);
+      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tCBS);
       setval.inj_cTrig   = ((param & 0x00000000ffffffff));
       setval.cPhase      = ((param & 0xffffffff00000000) >> 32);
       setval.flag_nok   &= 0xffffffbf;
