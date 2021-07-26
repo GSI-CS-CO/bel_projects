@@ -755,6 +755,23 @@ FgFeedbackChannel* FgFeedbackDevice::getChannel( const uint number )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+void FgFeedbackAdministration::AddacAdministration::onUnregistered( const daq::DAQ_DESCRIPTOR_T& roDescriptor )
+{
+   //TODO
+   //m_pParent->onUnregistered( fg );
+}
+
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::MilDaqAdministration::onUnregistered( const FG_MACRO_T fg )
+{
+   m_pParent->onUnregistered( fg );
+}
+#endif // ifdef CONFIG_MIL_FG
+
+/*! ---------------------------------------------------------------------------
+ */
 FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                     const bool doRescan )
    :m_oAddacDaqAdmin( this, poEtherbone )

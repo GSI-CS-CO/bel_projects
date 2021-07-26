@@ -658,6 +658,9 @@ private:
       }
 
       void onDataReadingPause( void ) override;
+
+      void onUnregistered( const daq::DAQ_DESCRIPTOR_T& roDescriptor ) override;
+
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -679,10 +682,7 @@ private:
       }
       virtual ~MilDaqAdministration( void ) {}
 
-      void onUnregistered( const FG_MACRO_T fg )  override
-      {
-         //TODO
-      }
+      void onUnregistered( const FG_MACRO_T fg )  override;
 
       RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) override
       {
@@ -1089,6 +1089,7 @@ protected:
     */
    virtual void onDataReadingPause( const bool isMil );
 
+   virtual void onUnregistered( const FG_MACRO_T fg ) {}
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

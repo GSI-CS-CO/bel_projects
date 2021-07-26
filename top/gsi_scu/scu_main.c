@@ -243,9 +243,15 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
 
    #ifdef CONFIG_MIL_FG
       if( (pendingIrqs & DREQ ) != 0 )
-      {
+      { /*
+         * MIL-SIO function generator recognized. 
+         */
          const MIL_QEUE_T milMsg =
-         { 
+         { /*
+            * The slot number is in any cases not zero.
+            * In this way the MIL handler function knows it comes
+            * from a SCU-bus SIO slave.
+            */
             .slot = slot,
             .time = getWrSysTime()
          };
@@ -321,10 +327,13 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
      #ifdef CONFIG_MIL_FG
          case ADDR_DEVBUS:
          { /*
-            * Message from MIL-bus respectively device-bus.
+            * Message from MIL- extention bus respectively device-bus.
             */
             const MIL_QEUE_T milMsg =
-            {
+            { /*
+               * In the case of MIL-extention the slot-number has to be zero.
+               * In this way the MIL handler function will know that.
+               */
                .slot = 0,
                .time = getWrSysTime()
             };

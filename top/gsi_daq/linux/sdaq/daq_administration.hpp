@@ -1069,6 +1069,9 @@ public:
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return daqDescriptorGetTimeBase( m_poCurrentDescriptor );
    }
+   
+protected:
+   virtual void onUnregistered( const DAQ_DESCRIPTOR_T& roDescriptor ) {}
 
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
