@@ -659,7 +659,7 @@ private:
 
       void onDataReadingPause( void ) override;
 
-      void onUnregistered( const daq::DAQ_DESCRIPTOR_T& roDescriptor ) override;
+      void onUnregistered( daq::DAQ_DESCRIPTOR_T& roDescriptor ) override;
 
    }; // class AddacAdministration
    /*!
@@ -1089,7 +1089,23 @@ protected:
     */
    virtual void onDataReadingPause( const bool isMil );
 
-   virtual void onUnregistered( const FG_MACRO_T fg ) {}
+#ifdef CONFIG_MIL_FG
+   /*!
+    * @brief Optional callback function becomes invoked if a unregistered
+    *        MIL-device has been detected.
+    * @param fg Properties of MIL-device @see FG_MACRO_T
+    */
+   virtual void onUnregisteredMilDevice( FG_MACRO_T fg ) {}
+#endif
+
+   /*!
+    * @brief Optional callback function becomes invoked if a unregistered
+    *        ADDAC/ACU DAQ device has been detected.
+    * @param slot Slot number of SCU-bus
+    * @param daqNumber DAQ channel number within the SCU-slave.
+    */
+   virtual void onUnregisteredAddacDaq( uint slot, uint daqNumber ) {}
+   
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

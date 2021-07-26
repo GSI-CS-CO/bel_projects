@@ -755,10 +755,10 @@ FgFeedbackChannel* FgFeedbackDevice::getChannel( const uint number )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-void FgFeedbackAdministration::AddacAdministration::onUnregistered( const daq::DAQ_DESCRIPTOR_T& roDescriptor )
+void FgFeedbackAdministration::AddacAdministration::onUnregistered( daq::DAQ_DESCRIPTOR_T& roDescriptor )
 {
-   //TODO
-   //m_pParent->onUnregistered( fg );
+   m_pParent->onUnregisteredAddacDaq( daq::daqDescriptorGetSlot( &roDescriptor ),
+                                      daq::daqDescriptorGetChannel( &roDescriptor ) );
 }
 
 #ifdef CONFIG_MIL_FG
@@ -766,7 +766,7 @@ void FgFeedbackAdministration::AddacAdministration::onUnregistered( const daq::D
  */
 void FgFeedbackAdministration::MilDaqAdministration::onUnregistered( const FG_MACRO_T fg )
 {
-   m_pParent->onUnregistered( fg );
+   m_pParent->onUnregisteredMilDevice( fg );
 }
 #endif // ifdef CONFIG_MIL_FG
 

@@ -1071,7 +1071,7 @@ public:
    }
    
 protected:
-   virtual void onUnregistered( const DAQ_DESCRIPTOR_T& roDescriptor ) {}
+   virtual void onUnregistered( DAQ_DESCRIPTOR_T& roDescriptor ) {}
 
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )

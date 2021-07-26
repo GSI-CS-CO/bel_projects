@@ -593,7 +593,8 @@ uint DaqAdministration::distributeData( void )
    else
    {
       readLastStatus();
-      onBlockReceiveError();
+      //onBlockReceiveError();
+      onUnregistered( probe.descriptor );
    }
 
 
