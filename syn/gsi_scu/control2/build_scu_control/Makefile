@@ -182,7 +182,7 @@ endif
  STACK_SIZE  =  4096
 
 # SCU_URL = scuxl0118
-# SCU_URL = scuxl0107
+ SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
 # SCU_URL = scuxl0212

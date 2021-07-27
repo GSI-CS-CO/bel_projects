@@ -294,19 +294,23 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
 
    while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
    {
+      //mprintf( "a=%04X\n", m.adr );
       switch( GET_LOWER_HALF( m.adr )  )
       {
          case ADDR_SCUBUS:
-         { 
+         {
          #if defined( CONFIG_MIL_FG ) && defined( _CONFIG_ECA_BY_MSI )
+            STATIC_ASSERT( ADDR_SCUBUS == 0 );
             if( (m.msg & ECA_VALID_ACTION) != 0 )
             { /*
                * ECA event received
                */
+              // mprintf( "*\n" );
                ecaHandler();
                break;
             }
          #endif
+
            /*
             * Message from SCU- bus.
             */

@@ -45,7 +45,7 @@ void initEcaQueue( void )
    if( g_eca.pControl == NULL )
       die( "Can't find ECA control register!" );
 
-   const unsigned int valCnt = ecaControlGetAndResetChannelValidCount( g_eca.pControl );
+   const unsigned int valCnt = ecaControlGetAndResetLM32ValidCount( g_eca.pControl );
    if( valCnt != 0 )
    {
       mprintf( ESC_FG_MAGENTA
@@ -85,13 +85,15 @@ inline void ecaHandler
                       ( register TASK_T* pThis FG_UNUSED )
                     #endif
 {
-#ifndef _CONFIG_ECA_BY_MSI
-   FG_ASSERT( pThis->pTaskData == NULL );
-#endif
    FG_ASSERT( g_eca.pQueue != NULL );
+#ifdef _CONFIG_ECA_BY_MSI
+   FG_ASSERT( pThis->pTaskData == NULL );
+   ecaControlGetAndResetLM32ValidCount( g_eca.pControl );
+#endif
 
    if( !ecaTestTagAndPop( g_eca.pQueue, g_eca.tag ) )
       return;
+
 
    bool                 isMilDevArmed = false;
    SCUBUS_SLAVE_FLAGS_T active_sios   = 0; /* bitmap with active sios */
