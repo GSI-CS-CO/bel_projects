@@ -234,6 +234,12 @@ public:
    void setSingleShoot( bool enable );
 
    uint getPlotInterval( void );
+
+#ifdef CONFIG_MIL_FG
+   void onUnregisteredMilDevice( FG_MACRO_T fg ) override;
+#endif
+
+   void onUnregisteredAddacDaq( uint slot, uint daqNumber ) override;
 };
 
 inline

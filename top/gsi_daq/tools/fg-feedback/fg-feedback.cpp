@@ -364,11 +364,31 @@ void AllDaqAdministration::setSingleShoot( bool enable )
    }
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 uint AllDaqAdministration::getPlotInterval( void )
 {
    return m_poCommandLine->getPlotInterval();
 }
 
+
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ */
+void AllDaqAdministration::onUnregisteredMilDevice( FG_MACRO_T fg )
+{
+   WARNING_MESSAGE( "MIL device: fg-" << static_cast<uint>(fg.socket) << '-' <<
+                    static_cast<uint>(fg.device) << "\tnot registered" );
+}
+#endif
+
+/*! ---------------------------------------------------------------------------
+ */
+void AllDaqAdministration::onUnregisteredAddacDaq( uint slot, uint daqNumber )
+{
+   WARNING_MESSAGE( "ADDAC DAQ " << daqNumber << " in slot " << slot <<
+                    "\tnot registered" ); 
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
