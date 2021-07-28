@@ -522,6 +522,7 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
 /*! ---------------------------------------------------------------------------
  * @brief Finite state machine which handles the on/off switching of
  *        feed-back channels for ADDAC- function generators.
+
  * @dotfile daq.gv
  */
 STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
@@ -562,6 +563,12 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          }
 
          DAQ_ASSERT( act.action == FB_ON );
+         
+         /*! 
+          * @todo Maybe a misunderstanding in the DAQ specification of KHK or
+          *       a bug in the VHDL code.\n
+          *       It's a construction site yet!
+          */     
          daqChannelSetTriggerDelay( pSetChannel, 10 ); //TODO
         // daqChannelEnableTriggerMode( pSetChannel );
         // daqChannelEnableEventTrigger( pSetChannel );
