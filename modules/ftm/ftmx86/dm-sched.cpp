@@ -24,6 +24,7 @@ static void help(const char *program) {
   fprintf(stderr, "  overwrite  <.dot file>    Overwrites all Schedules on DM with the one in the input file, already existing nodes on the DM will be erased. \n");
   fprintf(stderr, "  remove     <.dot file>    Removes the schedule in the input file from the DM, nodes with hashes (names) not present on the DM will be ignored \n");
   fprintf(stderr, "  keep       <.dot file>    Removes everything BUT the schedule in the input file from the DM, nodes with hashes (names) not present on the DM will be ignored.\n");
+  fprintf(stderr, "  rawvisited                Show 'visited' (1) / 'not visited' (0) for all nodes.\n");
   fprintf(stderr, "  chkrem     <.dot file>    Checks if all patterns in given dot can be removed safely\n");
   fprintf(stderr, "  -n                        No verify, status will not be read after operation\n");
   fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", outfile);

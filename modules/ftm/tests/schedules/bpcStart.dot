@@ -1,0 +1,9 @@
+digraph G {
+graph [name=BPCstart]
+node [pattern="BPCstart" toffs=0 tef=0 cpu=0 par=0 type="tmsg" fid=1]
+edge[type="defdst"]
+BPCSTART_B[type="block", tperiod="100000000", patexit="true"];
+BPCSTART_MSG1[par=111 patentry="true", bpcstart="true", vacc=3];
+BPCSTART_MSG2[par=222 toffs=500000, bpcstart=1, beamin=1];
+BPCSTART_B -> BPCSTART_MSG1 -> BPCSTART_MSG2 -> BPCSTART_B
+}

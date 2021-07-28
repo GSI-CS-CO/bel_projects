@@ -6,30 +6,30 @@
 --+   Das Macro 'Modul_Bus_Macro' realisiert die Schnittstelle zum Modul-Bus, es hat zwei Betriebsarten.					+
 --+																															+
 --+     1)	Der Normalbetrieb:																								+
---+				Hierbei müssen  a l l e  fest verdrahtete Signalgruppen (VG-Leiste)											+
---+				mit den Modul-Bus-Signalen und Kartenkennungen übereinstimmen.												+
+--+				Hierbei muessen  a l l e  fest verdrahtete Signalgruppen (VG-Leiste)											+
+--+				mit den Modul-Bus-Signalen und Kartenkennungen uebereinstimmen.												+
 --+				Wenn:																										+
 --+																															+
 --+					I)	VG_Mod_ID[7..0] == MOD_ID[7..0] ist, steckt richtige Karte auf dem richtigen Busplatz.				+
 --+								Wobei VG_Mod_ID[] den Kartentyp vorgibt, der an diesem Steckplatz erwartet wird, und		+
---+								MOD_ID[] den Typ der bestückten Karte beschreibt. Über den Parameter 'MOD_ID' wird			+
+--+								MOD_ID[] den Typ der bestueckten Karte beschreibt. Ueber den Parameter 'MOD_ID' wird			+
 --+								MOD_ID[] festgelegt, dezimal 37 entspricht z.B. dem Kartentyp Event-Sequencer.				+
 --+																															+
 --+					II)	VG_Mod_Adr[4..0] == Mod_Adr[4..0] ist, wird der entsprechende Busplatz adressiert.					+
 --+								Wobei VG_Mod_Adr[] die Adresse des Steckplatzes festlegt und Mod_Adr[] die aktuell			+
 --+								angesprochene Modul_Bus_Adresse darstellt.													+
 --+																															+
---+				Außerdem sollte die Sub_Adresse des Modul-Busses 'Sub_Adr[7..0]' eine gültige Funktion beim jeweiligen		+
---+				Kartentyp auslösen. Nur dann sollte von der Adressdekodierung ein 'DT_Adr_Deco' kommen und der Daten-Bus-	+
+--+				Ausserdem sollte die Sub_Adresse des Modul-Busses 'Sub_Adr[7..0]' eine gueltige Funktion beim jeweiligen		+
+--+				Kartentyp ausloesen. Nur dann sollte von der Adressdekodierung ein 'DT_Adr_Deco' kommen und der Daten-Bus-	+
 --+				Treiber zum Modul-Bus aktiviert werden.																		+
 --+																															+
 --+     2) Der Diagnosebetrieb:																								+
 --+				Hier steckt  n i c h t  die richtige Karte auf dem richtigen Busplatz ( VG_Mod_ID[] <> MOD_ID[] ).			+
---+				Um solch eine Fehlkonfiguration mit Software erkennen zu können gibt es sechs standardisierte Subadressen.	+
+--+				Um solch eine Fehlkonfiguration mit Software erkennen zu koennen gibt es sechs standardisierte Subadressen.	+
 --+				Stimmt die am Steckplatz fest verdrahtete VG_Mod_Adr[4..0] mit der auf den Modul-Bus angelegten				+
---+				Mod_Adr[4..0] überein, liefert der Macro zumindest bei diesen sechs Subadressen:							+
+--+				Mod_Adr[4..0] ueberein, liefert der Macro zumindest bei diesen sechs Subadressen:							+
 --+        			1) Die am Steckplatz verdrahtetete VG_Mod_ID[].															+
---+					2) Die MOD_ID[] des bestückten Kartentyps.																+
+--+					2) Die MOD_ID[] des bestueckten Kartentyps.																+
 --+						Siehe auch im Konstanten-Definitionsteil nach 'C_Rd_ID'.       										+
 --+					3) Das VG_Skalierungsbyte.																				+
 --+					4) Die VG_Mod_Adresse.																					+
@@ -43,7 +43,7 @@
 --+						Bits[1..0] im Status_Reg[].																			+
 --+					7)* Lese 'ST_160_Skal[7..0]'																			+
 --+					8)* Lese 'Macro_Activ'([7]), 'Macro_Skal_OK'([6]) und 'ST_160_Auxi[5..0]'								+
---+				Der Macro gibt nur für diese 6 (8)* Lese-Subadressen das Dtack 'DT_Mod_Bus'. Alle anderen Subadressen 		+
+--+				Der Macro gibt nur fuer diese 6 (8)* Lese-Subadressen das Dtack 'DT_Mod_Bus'. Alle anderen Subadressen 		+
 --+				belassen den 'Modul_Bus_Macro' im passiven Zustand.															+
 --+	*) Nur wenn 'St_160pol' gleich '1' ist.																					+
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -63,7 +63,7 @@ ENTITY modulbus_v5 IS
 			St_160_pol	: INTEGER := 0;			-- 	0 ==> VG96-Modulbus,	1 ==> 160 poliger Modulbus (5-Reihig)				--
 			Mod_Id		: INTEGER := 16#27#;
 			CLK_in_Hz	: INTEGER := 50000000;	-- Damit das Design schnell auf eine andere Frequenz umgestellt werden kann, wird diese		--
-												-- in Hz festgelegt. Zähler die betimmte Zeiten realisieren sollen z.B. 'time_out_cnt'		--
+												-- in Hz festgelegt. Zaehler die betimmte Zeiten realisieren sollen z.B. 'time_out_cnt'		--
 												-- werden entprechend berechnet.
 			Loader_Base_Adr	: INTEGER := 240;
 			Res_Deb_in_ns	: INTEGER := 100;
@@ -75,7 +75,7 @@ ENTITY modulbus_v5 IS
 		Epld_Vers		: IN	STD_LOGIC_VECTOR(7 DOWNTO 0) := "00000000";
 		VG_Mod_Id		: IN	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Der an diesem Modul-Bus-Steckplatz erwartete Karten-Typ (an der VG-Leiste fest verdrahtet).	--
 		VG_Mod_Adr		: IN	STD_LOGIC_VECTOR(4 DOWNTO 0);	-- Adresse des Modul-Bus-Steckplatzes (an der VG-Leiste fest verdrahtet).						--
-		VG_Mod_Skal		: IN	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Modul-Bus-Skalierung, für jeden Kartentyp unterschiedl. Bedeutung (an VG-Leiste verdrahtet).	--
+		VG_Mod_Skal		: IN	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- Modul-Bus-Skalierung, fuer jeden Kartentyp unterschiedl. Bedeutung (an VG-Leiste verdrahtet).	--
 		St_160_Skal		: IN	STD_LOGIC_VECTOR(7 DOWNTO 0);
 		St_160_Auxi		: IN	STD_LOGIC_VECTOR(5 DOWNTO 0);
 		Stat_IN			: IN	STD_LOGIC_VECTOR(7 DOWNTO 2);
@@ -87,7 +87,7 @@ ENTITY modulbus_v5 IS
 		nDS				: IN	STD_LOGIC;						-- Datenstrobe des Modul-Busses. /DS = 0 => aktiv.												--
 		CLK				: IN	STD_LOGIC;						-- Systemtakt des restlichen Designs sollte >= 12 Mhz sein.										--
 		nMB_Reset		: IN	STD_LOGIC;
-		V_Data_Rd		: IN	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Data to Modulbus, alle Daten-Quellen die außerhalb dieses Macros liegen sollten hier über	--
+		V_Data_Rd		: IN	STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Data to Modulbus, alle Daten-Quellen die ausserhalb dieses Macros liegen sollten hier ueber	--
 																-- Multiplexer angeschlossen werden.															--
 		nExt_Data_En	: OUT	STD_LOGIC;						-- Signal = 0, schaltet externen Datentreiber des Modul-Busses ein.
 
@@ -100,7 +100,7 @@ ENTITY modulbus_v5 IS
 		Extern_Wr_Fin	: OUT	STD_LOGIC;		
 		Extern_Rd_Activ	: OUT	STD_LOGIC;	
 		Extern_Rd_Fin	: OUT	STD_LOGIC;
-		Extern_Dtack	: IN	STD_LOGIC;						-- Alle extern dekodierten Modul-Bus-Aktionen, müssen hier ihr Dtack anlegen.					--
+		Extern_Dtack	: IN	STD_LOGIC;						-- Alle extern dekodierten Modul-Bus-Aktionen, muessen hier ihr Dtack anlegen.					--
 		Powerup_Res		: OUT	STD_LOGIC := '0';
 		nInterlock		: OUT	STD_LOGIC;
 		Timeout			: OUT	STD_LOGIC;
@@ -141,11 +141,11 @@ ENTITY modulbus_v5 IS
 	CONSTANT 	C_Rd_Skal_Adr				: STD_LOGIC_VECTOR(7 DOWNTO 0) := X"FC";
 
 	----------------------------------------------------------------------------------------------
-	-- Standardisierte Subadresse zum Lesen der EPLD-Version und Lesen Rücksetzen				--
+	-- Standardisierte Subadresse zum Lesen der EPLD-Version und Lesen Ruecksetzen				--
 	-- des 'Status-Reg[7..0]'.																	--
 	-- Achtung nur Bit[7..1] definiert. Bit0 dient zur HB-LB-Kennung.               			--
 	-- Bit0 = 0 => HB = Subadr. FA => lese 'Epld_Vers[7..0]'									--
-	-- Bit0 = 1 => LB = Subadr. FB => lesen/rücksetzen des 'Status-Reg[7..0]'.					--
+	-- Bit0 = 1 => LB = Subadr. FB => lesen/ruecksetzen des 'Status-Reg[7..0]'.					--
 	----------------------------------------------------------------------------------------------
 	CONSTANT 	C_Rd_EPLD_Vers_Rd_Wr_Stat	: STD_LOGIC_VECTOR(7 DOWNTO 0) := X"FA";
 
@@ -161,7 +161,7 @@ ENTITY modulbus_v5 IS
 	
 	------------------------------------------------------------------------------------------------------
 	-- Die Adressen Loader-Base-Adr bis Loader-Base-Adr+3 sollen genau wie die interen Zugriffe unab-	--
-	-- hängig vom ID des Steckplatzes funktionieren. Es sollen aber die exteren Strobes erzeugt werden,	--
+	-- haengig vom ID des Steckplatzes funktionieren. Es sollen aber die exteren Strobes erzeugt werden,	--
 	-- da der Loader-Macro nicht im Modulbus-Macro integriert werden soll.								--
 	------------------------------------------------------------------------------------------------------
 	CONSTANT 	C_Loader_Base_Adr	: STD_LOGIC_VECTOR(7 DOWNTO 0) := conv_std_logic_vector(Loader_Base_Adr, 8);
@@ -243,7 +243,7 @@ ARCHITECTURE Arch_modulbus_v5 OF modulbus_v5 IS
 	SIGNAL 	S_Sel_To_Cnt		: STD_LOGIC;
 	SIGNAL	S_Set_TO_Cnt		: STD_LOGIC;
 	SIGNAL	S_Timeout			: STD_LOGIC;
-	SIGNAL	S_Adr_OK			: STD_LOGIC_VECTOR(1 DOWNTO 0);	-- Als Vektor damit Flankenerkennung möglich ist.
+	SIGNAL	S_Adr_OK			: STD_LOGIC_VECTOR(1 DOWNTO 0);	-- Als Vektor damit Flankenerkennung moeglich ist.
 	SIGNAL	S_ID_OK				: STD_LOGIC;
 	SIGNAL	S_DS_Sync			: STD_LOGIC;
 	SIGNAL	S_DS				: STD_LOGIC;
@@ -362,7 +362,7 @@ Mod_SM:	PROCESS (clk, S_SM_Reset)
 						ELSE
 							S_Intern_Access <= '0';
 							IF S_ID_OK = '1' OR Sub_Adr(7 DOWNTO 2) = C_Loader_Base_Adr(7 DOWNTO 2) THEN	-- Die 2 Loader-Sub-Adr.--
-								S_Extern_Access <= '1';														-- sollen unabhägig vom	--
+								S_Extern_Access <= '1';														-- sollen unabhaegig vom	--
 							END IF;																			-- ID funktionieren!	--
 						END IF;
 						IF RDnWR = '1' THEN
@@ -442,14 +442,14 @@ P_DT_MOD_Bus: PROCESS (clk, S_SM_Reset)
 				S_Start_DT_Led <= '1';
 			ELSIF S_Extern_Access = '1' THEN
 				IF (State_Mod_SM = Rd_HB OR State_Mod_SM = Wr_LB) AND Extern_Dtack = '1' THEN
-					S_DT_Delay <= (S_DT_Delay(0) & '1');		-- Beim Lesen muss der externe Macro beim High Byte schon gültige	--
+					S_DT_Delay <= (S_DT_Delay(0) & '1');		-- Beim Lesen muss der externe Macro beim High Byte schon gueltige	--
 					S_Start_DT_Led <= '1';						-- Daten liefern, beim Schreiben wird das Datum erst mit dem 		--
 																-- Low Byte vom externen Macro gespeichert. Deshalb wird 			--
 																-- Extern_Dtack hier ausgewertet.									--
 				ELSIF State_Mod_SM = Rd_LB OR State_Mod_SM = Wr_HB THEN
 					S_DT_Delay <= (S_DT_Delay(0) & '1');		-- Beim Lesen ist das Low Byte gleichzeitig mit dem High Byte		--
-																-- gültig. Beim Schreiben wird das High Byte erst zwischenge-		--
-																-- speichert. In beiden Fällen wird Dtack ohne Abfrage von 			--
+																-- gueltig. Beim Schreiben wird das High Byte erst zwischenge-		--
+																-- speichert. In beiden Faellen wird Dtack ohne Abfrage von 			--
 																-- Extern_Dtack aktiv.												--
 				END IF;
 			END IF;
@@ -498,7 +498,7 @@ P_Status_Reg:	PROCESS (clk, S_Powerup_Res)
 	END PROCESS;
 
 	
-P_Interlock:	PROCESS (S_Status_Reg(0))	-- Powerup_Res wird dem Modulbus-Kontroller über Interlock gemeldet
+P_Interlock:	PROCESS (S_Status_Reg(0))	-- Powerup_Res wird dem Modulbus-Kontroller ueber Interlock gemeldet
 	BEGIN
 		IF S_Status_Reg(0) = '0' THEN
 			nInterlock <= 'Z';
@@ -520,7 +520,7 @@ P_Adr_Deco_Read_Mux: PROCESS	(
 		IF S_Extern_Access = '1' THEN
 			--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			-- Es besteht kein Diagnose-Zugriff auf die Modul-Buskarte, d.h. andere Lese-Register sind von anderen Macros an den		+
-			-- Eingang Data_RD[15..0] zu legen und das Signal 'Extern_Dtack' muß 'S_MB_Macro_Rd_Mux[]' zum Scheiben in Richtung Modul-Bus schalten.	+
+			-- Eingang Data_RD[15..0] zu legen und das Signal 'Extern_Dtack' muss 'S_MB_Macro_Rd_Mux[]' zum Scheiben in Richtung Modul-Bus schalten.	+
 			--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			IF State_Mod_SM = Rd_HB THEN
 				S_MB_Macro_Rd_Mux <= V_Data_Rd(15 DOWNTO 8);

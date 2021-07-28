@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 26-Sep-2019
+//  version : 02-Jun-2021
 //
-#define WB_SLAVES_VERSION "0.07.0"
+#define WB_SLAVES_VERSION "0.08.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -55,7 +55,7 @@
 #define WR_ENDPOINT_VMAJOR      1           // major revision
 #define WR_ENDPOINT_VMINOR      1           // minor revision
 
-// register offsets 
+// register offsets
 #define WR_ENDPOINT_MACHI       0x24        // MAC high bytes
 #define WR_ENDPOINT_MACLO       0x28        // MAC low bytes
 #define WR_ENDPOINT_LINK        0x30        // link status
@@ -155,15 +155,23 @@
 #define FPGA_RESET_VENDOR            WB_GSI              // vendor ID
 #define FPGA_RESET_PRODUCT           0x3a362063          // product ID
 #define FPGA_RESET_VMAJOR            1                   // major revision
-#define FPGA_RESET_VMINOR            1                   // minor revision
+#define FPGA_RESET_VMINOR            3                   // minor revision
 
 // register offsets
-#define FPGA_RESET_RESET             0x0000              // reset register of FPGA (write)
+#define FPGA_RESET_RESET             0x0000              // reset register of FPGA (write), write 'deadbeef' to reset
 #define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0 (read)
 #define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
 #define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
-#define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write), write 'cafebabe' to prevent auto-restart
-
+#define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write),    write 'cafebabe' to disable watchdog
+                                                         //                               write 'cafebab0' to reenable watchdog
+#define FPGA_RESET_WATCHDOG_STAT     0x000c              // reads watchdog stauts (read), read '1': watchdog enabled, '0': watchdog disabled
+#define FPGA_RESET_WATCHDOG_TRG      0x0010              // retrigger watchdog (write),   write 'cafebabe' regularly to prevent auto-reset
+                                                         //
+#define FPGA_RESET_PHY_RESET         0x0014              // reset register of PHY and SFP (write/read)
+#define FPGA_RESET_PHY_DROP_LINK_WR  0x0001              // drop link: main (White Rabbit) port
+#define FPGA_RESET_PHY_DROP_LINK_AUX 0x0002              // drop link: auxiliary port
+#define FPGA_RESET_PHY_SFP_DIS_WR    0x0004              // disable SFP: main (White Rabbit) port
+#define FPGA_RESET_PHY_SFP_DIS_AUX   0x0008              // disable SFP: auxiliary port
 // masks
 
 
@@ -220,11 +228,11 @@
 #define IO_CTRL_LVDSINGATERESETLOW   0x2008            // LVDS input gate reset low, one bit per input /* chk, subject to change */
 
 // masks
- 
 
 
 
-//-- TLU -- 
+
+//-- TLU --
 //device ID
 #define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
 #define GSI_TM_LATCH_PRODUCT         0x10051981  //product ID
@@ -247,8 +255,8 @@
 
 //IRQ
 #define GSI_TM_LATCH_IRQ_ENABLE      0x024       // Enable/Disable Global IRQ               (rw)
-#define GSI_TM_LATCH_IRQ_MASKSTAT    0x028       // Status of   IRQ Channel Mask            
-#define GSI_TM_LATCH_IRQ_MASKSET     0x02C       // n...0 channel(n) IRQ Mask Set           (wo)        
+#define GSI_TM_LATCH_IRQ_MASKSTAT    0x028       // Status of   IRQ Channel Mask
+#define GSI_TM_LATCH_IRQ_MASKSET     0x02C       // n...0 channel(n) IRQ Mask Set           (wo)
 #define GSI_TM_LATCH_IRQ_MASKCLR     0x030       // n...0 channel(n) IRQ Mask Clear         (wo)
 
 // Channels Related Parameters
@@ -276,4 +284,3 @@
 
 
 #endif  // wb_slaves.h
-

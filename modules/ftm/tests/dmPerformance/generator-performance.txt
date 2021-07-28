@@ -1,0 +1,25 @@
+Generator Performance Tests 2020-08-17 tsl008
+
+Generator Operationen in updatePatternSchedule
+- alle Zeiten in ms und jeweils pro Aufruf
+- removeSchedule=entfernen des alten schedules
+- addSchedule=hinzufuegen des neuen schedules
+
+1 PatternGroup, 1 Pattern(blocks=1): isSafeToRemove 18, removeSchedule 44, addSchedule 40
+1 PatternGroup, 2 Pattern(blocks=1): isSafeToRemove 22, removeSchedule 51, addSchedule 45
+1 PatternGroup, 4 Pattern(blocks=1): isSafeToRemove 29, removeSchedule 66, addSchedule 58
+
+1 PatternGroup, 9 Pattern(blocks=1): isSafeToRemove 46, removeSchedule 109, addSchedule 93
+2 PatternGroup, 9 Pattern(blocks=1): isSafeToRemove 79, removeSchedule 192, addSchedule 161
+3 PatternGroup, 9 Pattern(blocks=1): isSafeToRemove 109, removeSchedule 275, addSchedule 235
+4 PatternGroup, 9 Pattern(blocks=1): isSafeToRemove 143, removeSchedule 367, addSchedule 310
+
+1 PatternGroup, 9 Pattern(blocks=10): isSafeToRemove 71, removeSchedule 156, addSchedule 120
+2 PatternGroup, 9 Pattern(blocks=10): isSafeToRemove 127, removeSchedule 288, addSchedule 222
+3 PatternGroup, 9 Pattern(blocks=10): isSafeToRemove 187, removeSchedule 434, addSchedule 332
+4 PatternGroup, 9 Pattern(blocks=10): isSafeToRemove 241, removeSchedule 579, addSchedule 443
+
+1 PatternGroup, 9 Pattern(blocks=150): isSafeToRemove 467, removeSchedule 1051, addSchedule 629
+4 PatternGroup, 9 Pattern(blocks=150): isSafeToRemove 1886, removeSchedule 6390, addSchedule 4458
+
+

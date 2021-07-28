@@ -454,7 +454,7 @@ bool CarpeDM::CarpeDMimpl::isPainted(const std::string& name) {
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
-  
+
     return g[x->v].np->isPainted();
   }
   return false;
@@ -465,7 +465,7 @@ void CarpeDM::CarpeDMimpl::showPaint() {
   Graph& g = gDown;
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     if (!g[v].np->isMeta()) std::cout << g[v].name << ":" << (int)(g[v].np->isPainted() ? 1 : 0) << std::endl;
-  }  
+  }
 }
 
 void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
@@ -504,7 +504,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew) {
 
 
 vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
- 
+
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
   uint8_t buf[8];
@@ -719,10 +719,23 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
     }
   }
 
-  sLog << std::endl << "Patterns:" << std::endl;
+  uint maxLengthPatternName = std::string("Patterns").length();
+  uint maxLengthEntryName = std::string("Entry").length();
+  for (auto& it : gt.getAllPatterns()) {
+    if (maxLengthPatternName < it.length()) {
+      maxLengthPatternName = it.length();
+    }
+    if (maxLengthEntryName < getPatternEntryNode(it).length()) {
+      maxLengthEntryName = getPatternEntryNode(it).length();
+    }
+  }
+  maxLengthPatternName += 1;
+  maxLengthEntryName += 1;
+  sLog << std::endl << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << "Patterns" << std::setw(maxLengthEntryName) << "Entry" << "Exit" << std::endl;
 
-  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl;
-
+  for (auto& it : gt.getAllPatterns()) {
+    sLog << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << it << std::setw(maxLengthEntryName) << getPatternEntryNode(it) << getPatternExitNode(it) << std::endl;
+  }
   sLog << std::endl;
 }
 
