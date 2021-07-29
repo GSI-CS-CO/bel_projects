@@ -217,7 +217,7 @@ int main( const int argc, const char** ppArgv )
        *
        * NOTE: In the case of a invalid socket-number the constructor will
        *       thrown an exception!
-       * NOTE: If the device number between 1 and 12 then it will be
+       * NOTE: If the socket number between 1 and 12 then it will be
        *       a ADDAC/ACU-device. In this case the socket-number is equal
        *       to the SCU- bus slot number.
        *
@@ -264,7 +264,7 @@ int main( const int argc, const char** ppArgv )
        * This isn't really the best solution, but all other alternatives
        * will made this example too complex.
        */
-      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1;
+      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 10;
 
       /*
        * Polling loop. This could be a own thread as well.
@@ -285,7 +285,7 @@ int main( const int argc, const char** ppArgv )
           * The return value has the number of data-sets which are still in
           * the DDR3-buffer which shall be read by the next call of distributeData().
           */
-         cout "Remaining data sets in DDR3 RAM: " << remainingData << endl;
+         cout << "Remaining data sets in DDR3 RAM: " << remainingData << endl;
       }
       while( daq::getSysMicrosecs() < stopTime );
 

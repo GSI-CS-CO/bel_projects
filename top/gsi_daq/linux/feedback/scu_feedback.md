@@ -36,7 +36,7 @@ See also in the following small well documented example program
 
 In some cases not all DAQ-data residing in the DDR3-RAM will read and evaluated in one iteration step.\n
 This could be the case when the data is jammed in the DDR3-RAM.\n
-In this case the function [distributeData](@ref Scu::FgFeedbackAdministration::distributeData) returns by the number of DDR3-payload items which are in the
+In this case the function [distributeData](@ref Scu::FgFeedbackAdministration::distributeData) returns by the number of DDR3-payload items (size 64 bit respectively 8 byte per item) which are in the
 DDR3-RAM and not evaluated by the callback [onData](@ref Scu::FgFeedbackChannel::onData) function yet.
 
 Proposal to read the entire data-buffer in any cases:

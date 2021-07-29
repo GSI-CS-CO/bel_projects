@@ -517,7 +517,8 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
 /*!
  * @brief Time distance between two switch-on events of DAQ channels
  */
-#define DAQ_SWITCH_WAITING_TIME 1000000ULL
+//#define DAQ_SWITCH_WAITING_TIME 1000000ULL
+#define DAQ_SWITCH_WAITING_TIME (1000000ULL - 50000)
 
 /*! ---------------------------------------------------------------------------
  * @brief Finite state machine which handles the on/off switching of
@@ -528,13 +529,19 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
 STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
 {
    DAQ_FEEDBACK_T* pFeedback = &pThis->feedback;
-   switch( pThis->feedback.status )
+
+   const DAQ_FEEDBACK_STATUS_T oldStatus = pFeedback->status;
+
+   /*
+    * FSM-do activities:
+    */
+   switch( oldStatus )
    {
       case FB_READY:
       {
          DAQ_ACTION_ITEM_T act;
          /*
-          * Command from  SAFT-LIB received? 
+          * Command from FG-layer received?
           */
          if( !queuePop( &pFeedback->aktionBuffer, &act ) )
          { /*
@@ -549,50 +556,61 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          pSetChannel->sequenceContinuous = 0;
          pActChannel->sequenceContinuous = 0;
-         if( act.action == FB_OFF )
+
+         /*
+          * Evaluating of DAQ command coming from function generator.
+          */
+         switch( act.action )
          {
-            ATOMIC_SECTION()
-            {
-               daqChannelSample1msOff( pSetChannel );
-               daqChannelTestAndClearDaqIntPending( pSetChannel );
-               daqChannelSample1msOff( pActChannel );
-               daqChannelTestAndClearDaqIntPending( pActChannel );
+            case FB_OFF:
+            { /*
+               * Switching both DAQ channels for set and actual value off.
+               */
+               ATOMIC_SECTION()
+               {
+                  daqChannelSample1msOff( pSetChannel );
+                  daqChannelTestAndClearDaqIntPending( pSetChannel );
+                  daqChannelSample1msOff( pActChannel );
+                  daqChannelTestAndClearDaqIntPending( pActChannel );
+               }
+               FSM_TRANSITION_SELF( label='Switch both channels off\nif stop-message received.' );
+               break;
             }
-            FSM_TRANSITION_SELF( label='Switch both channels off\nif stop-message received.' );
-            break;
-         }
+            case FB_ON:
+            { /*!
+               * @todo Maybe a misunderstanding in the DAQ specification of KHK or
+               *       a bug in the VHDL code.\n
+               *       The corresponding workaround on Linux is made by the
+               *       compiler switch: _CONFIG_PATCH_PHASE.\n
+               *       It's a construction site yet!
+               */
+               daqChannelSetTriggerDelay( pSetChannel, 10 ); //TODO
+               // daqChannelEnableTriggerMode( pSetChannel );
+               // daqChannelEnableEventTrigger( pSetChannel );
 
-         DAQ_ASSERT( act.action == FB_ON );
-         
-         /*! 
-          * @todo Maybe a misunderstanding in the DAQ specification of KHK or
-          *       a bug in the VHDL code.\n
-          *       It's a construction site yet!
-          */     
-         daqChannelSetTriggerDelay( pSetChannel, 10 ); //TODO
-        // daqChannelEnableTriggerMode( pSetChannel );
-        // daqChannelEnableEventTrigger( pSetChannel );
+               //daqChannelEnableExtrenTrigger
+               daqChannelSample1msOn( pSetChannel );
+              // mprintf( "D=%d\n", daqChannelGetTriggerDelay( pSetChannel ) );
 
-         //daqChannelEnableExtrenTrigger
-         daqChannelSample1msOn( pSetChannel );
-        // mprintf( "D=%d\n", daqChannelGetTriggerDelay( pSetChannel ) );
-
-         pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
-         FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
+               FSM_TRANSITION( FB_FIRST_ON, label='Start message received.\n'
                                             'Switch DAQ for set value on.' );
+               break;
+            }
+            default: DAQ_ASSERT( false );
+         } /* End switch( act.action ) */
          break;
       } /* End case FB_READY */
 
       case FB_FIRST_ON:
       {
-         if( getWrSysTime() < pFeedback->waitingTime )
+         if( getWrSysTimeSafe() < pFeedback->waitingTime )
          {
             FSM_TRANSITION_SELF();
             break;
          }
          DAQ_CANNEL_T* pActChannel = &pThis->aChannel[daqGetActualDaqNumberOfFg(pFeedback->fgNumber, pThis->type)];
          daqChannelSample1msOn( pActChannel );
-         pFeedback->waitingTime = getWrSysTime() + DAQ_SWITCH_WAITING_TIME;
+
          FSM_TRANSITION( FB_BOTH_ON, label='Waiting time expired.\n'
                                            'Switch DAQ for actual value on.' );
          break;
@@ -600,7 +618,7 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
 
       case FB_BOTH_ON:
       {
-         if( getWrSysTime() < pFeedback->waitingTime )
+         if( getWrSysTimeSafe() < pFeedback->waitingTime )
          {
             FSM_TRANSITION_SELF();
             break;
@@ -610,6 +628,27 @@ STATIC bool daqDeviceDoFeedbackSwitchOnOffFSM( register DAQ_DEVICE_T* pThis )
       } /* End case FB_BOTH_ON */
 
       default: DAQ_ASSERT( false );
+   } /* End switch( oldStatus ) */
+
+   /*
+    * Has the FSM- state not changed?
+    */
+   if( oldStatus == pFeedback->status )
+      return true;
+
+   /*
+    * FSM- entry activities:
+    */
+   switch( pFeedback->status )
+   {
+      case FB_FIRST_ON: /* Immediately to the next case, no break here. */
+      case FB_BOTH_ON:
+      {
+         pFeedback->waitingTime = getWrSysTimeSafe() + DAQ_SWITCH_WAITING_TIME;
+         break;
+      }
+
+      default: break;
    }
    return true;
 }

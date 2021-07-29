@@ -57,15 +57,15 @@ unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum,
    {
       case ADDAC:
       { /*
-         * Returning of DAQ-channel number for ADDAC function generators
-         * of set values.
+         * Returning of DAQ-channel number of ADDAC function generators
+         * for set-values.
          */
          return fgNum + MAX_FG_PER_SLAVE;
       }
       case ACU:
       { /*
-         * Returning of DAQ-channel number for ACU function generators
-         * of set values.
+         * Returning of DAQ-channel number of ACU function generators
+         * for set-values.
          */
          return fgNum * 2;
       }
@@ -93,15 +93,15 @@ unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum,
    {
       case ADDAC:
       { /*
-         * Returning of DAQ-channel number for ADDAC function generators
-         * of actual values.
+         * Returning of DAQ-channel number of ADDAC function generators
+         * for actual-values.
          */
          return fgNum;
       }
       case ACU:
       { /*
-         * Returning of DAQ-channel number for ACU function generators
-         * of actual values.
+         * Returning of DAQ-channel number of ACU function generators
+         * for actual-values.
          */
          return fgNum * 2 + 1;
       }
