@@ -52,4 +52,4 @@ prepare:
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: dmPerformance dmThreads full_test messageCounter pps singleEdgeTest schedules test test-default
+.PHONY: dmPerformance dmThreads full_test messageCounter pps singleEdgeTest test test-default
