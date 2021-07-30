@@ -267,17 +267,17 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_AW_AD1:        ID_CID:= (x"10", 80);   ---- Piggy-ID(Codierung), B"0001_0000", FG901_040 -- analog Input: 2x16Bit ADC
     CONSTANT c_AW_ATR2:       ID_CID:= (x"11", 81);   ---- Piggy-ID(Codierung), B"0001_0001", FG900_761
     CONSTANT c_AW_8In8Out1:   ID_CID:= (x"12", 88);   ---- Piggy-ID(Codierung), B"0001_0010", FG901_050 -- Input 8-Bit + Output 8-
-    CONSTANT c_AW_INLB12S1:   ID_CID:= (x"13", 67);   ---- Piggy-ID(Codierung), B"0001_0011", FG902_050-- neue IO-Modul-Backplane mit 12 Steckplätzen (zu überprüfen und zu berichtigen)
+    CONSTANT c_AW_INLB12S1:   ID_CID:= (x"13", 67);   ---- Piggy-ID(Codierung), B"0001_0011", FG902_050-- neue IO-Modul-Backplane mit 12 Steckplätzen 
 ---
 ---
 --- Konstantenwerte für die Interface-Module für der aktuellen und neuen Zwischenbackplane:
 ---
     CONSTANT c_BP_5LWLIO2 :    ID_CID:= (x"01", 65);   ----SUB- Piggy-ID(Codierung), B"0000_0001", FG902.011 -- 5x opt In, 1x opt Out       -> aktuelle und newe Zwischenbackplane
-    CONSTANT c_BP_5LEMOIO2 :   ID_CID:= (x"02", 66);   ---- SUB-Piggy-ID(Codierung), B"0000_0010", FG902.011 -- 5xlemo In, 1xlemo Out       -> aktuelle und newe Zwischenbackplane
+    CONSTANT c_BP_5LEMOIO2 :   ID_CID:= (x"02", 66);   ---- SUB-Piggy-ID(Codierung), B"0000_0010", FG902.021 -- 5xlemo In, 1xlemo Out       -> aktuelle und newe Zwischenbackplane
     CONSTANT c_BP_6LemoI1 :    ID_CID:= (x"03", 74);   ---- SUB-Piggy-ID(Codierung), B"0000_0011", FG902.130 -- 6xlemo In,   -> neue Zwischenbackplane
     CONSTANT c_BP_6LWLI1 :     ID_CID:= (x"04", 75);   ---- SUB-Piggy-ID(Codierung), B"0000_0100", FG902.110 -- 6x opt In,   -> neue Zwischenbackplane
     CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.120 -- 6x opt Out,  -> neue Zwischenbackplane
-    CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.140 -- 6x opt Out,  -> neue Zwischenbackplane
+    CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(Codierung), B"0000_0110", FG902.140 -- 6x lemo Out,  -> neue Zwischenbackplane
 
     --  CONSTANT c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111",
 
