@@ -1,8 +1,7 @@
 import dm_testbench
 import os
 
-"""
-Class collects unit tests for the command line of dm-cmd.
+"""Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
 
 Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
@@ -21,8 +20,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
       TestDmCmd.ppsPatternStarted = True
 
   def targetName_missing(self, command):
-    """
-    Common method for test cases with missing target name.
+    """Common method for test cases with missing target name.
     Start dm-cmd with the command and check the output on stderr.
     """
     lines = self.startAndGetSubprocessOutput([self.binary_dm_cmd, self.datamaster, command],
@@ -70,8 +68,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName_missing('unlock')
 
   def targetName(self, command, expectedReturnCode=[0], count_out=0, count_err=0, options=''):
-    """
-    Common method for commands with target name.
+    """Common method for commands with target name.
     Start dm-cmd with the command and check the output on stdout and stderr.
     The checks check only the number of lines of the output, not the content.
     """
