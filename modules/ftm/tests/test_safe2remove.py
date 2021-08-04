@@ -23,14 +23,14 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   def safe2removeTestcase(self, dot_file1, pattern_to_remove):
     self.startAllPattern(self.datamaster, dot_file1 + '.dot')
-    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'chkrem', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
     self.deleteFile('debug.dot')
-    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'abortpattern', pattern_to_remove))
-    self.startAndCheckSubprocess(('dm-cmd', self.datamaster, 'chkrem', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'abortpattern', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-safe.dot', 'Created')
-    self.startAndCheckSubprocess(('dm-sched', self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
-    self.startAndCheckSubprocess(('dm-sched', self.datamaster, 'status', '-o', 'status.dot'))
+    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
+    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', 'status.dot'))
     self.compareExpectedResult('status.dot', self.schedules_folder + dot_file1 + '-status.dot')
 
   def test_safe2remove_blockalign1(self):
@@ -39,7 +39,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
   def safe2removeTestcasePerformance(self, dot_file1, limit):
     start = dt.now()
     self.safe2removeTestcase(dot_file1, 'G1_P1')
-    self.startAndCheckSubprocess(('dm-sched', self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
+    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
     duration = dt.now() - start
     self.assertTrue(duration <= limit, f'Duration of test too long, duration: {duration}, limit: {limit}.')
 

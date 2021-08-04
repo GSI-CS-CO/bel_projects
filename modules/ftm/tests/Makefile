@@ -5,16 +5,24 @@ SNOOP ?= saft-ctl tr0 -xv snoop 0 0 0
 SNOOP_FEL0069 ?= ssh -t root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
+# DM Tools to test
+TEST_DM_CMD ?= ../bin/dm-cmd
+TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
 IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=full_test/ --ignore=schedules/
 # pass the command line arguments to pytest
+# Example: OPTIONS=--runslow   this runs also the slow tests.
 OPTIONS ?=
 
 test:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
+		SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
@@ -52,4 +60,4 @@ prepare:
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: dmPerformance dmThreads full_test messageCounter pps singleEdgeTest test test-default
+.PHONY: dmPerformance dmThreads full_test messageCounter pps remote singleEdgeTest test test-default
