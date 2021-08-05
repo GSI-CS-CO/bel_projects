@@ -12,6 +12,8 @@ TEST_DM_SCHED ?= ../bin/dm-sched
 IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=full_test/ --ignore=schedules/
 # pass the command line arguments to pytest
 # Example: OPTIONS=--runslow   this runs also the slow tests.
+# Example: OPTIONS="-rP"       show stdout for all tests.
+# Example: OPTIONS="-k <test name pattern>" run only tests which match the pattern in the test name.
 OPTIONS ?=
 
 test:
