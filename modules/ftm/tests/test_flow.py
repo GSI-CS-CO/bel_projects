@@ -22,12 +22,12 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     # ~ does not work with a delay of 0.0 seconds
     self.delay(0.4)
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', delete=[6])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', delete=[24])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
 
   def test_dynamic_branch_single_tvalid_rel_1(self):
     """Load the schedule dynamic-branch-single-schedule.dot and start pattern IN_C0.
@@ -44,12 +44,12 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     # ~ does not work with a delay of 1.0 seconds
     self.delay(1.4)
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', delete=[6])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', delete=[24])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
 
   def test_dynamic_branch_single_tvalid_abs_0(self):
     """Load the schedule dynamic-branch-single-schedule.dot and start pattern IN_C0.
@@ -64,12 +64,12 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-0-0.txt')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'flowpattern', 'IN_C0', 'B', '-a'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', delete=[6])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', delete=[24])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
 
   def test_dynamic_branch_single_tvalid_abs_1(self):
     """Load the schedule dynamic-branch-single-schedule.dot and start pattern IN_C0.
@@ -85,10 +85,9 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'flowpattern', 'IN_C0', 'B', '-l', '1000000000', '-a'))
     self.delay(1)
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', delete=[6])
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', delete=[24])
-
+    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')

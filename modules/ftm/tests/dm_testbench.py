@@ -163,9 +163,11 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {file_expected}\n{diffLines}')
 
-  def compareExpectedOutput(self, output, file_expected, exclude='', delete=[]):
+  def compareExpectedOutput(self, output, file_expected, exclude='', excludeField='', delete=[]):
     """Compare an output with a test result with an expected result contained in <file_expected>.
-    Lines with the string <exclude> are removed from <file_current> before checking against <file_expected>.
+    1. Lines with the string <exclude> are removed from <output> before checking against <file_expected>.
+    2. Lines in the list 'delete' are deleted in <output> and <file_expected>.
+    3. Lines which contain <excludeField> are not compared after the string specified in 'excludeField'.
     Assert that a unified diff has no lines.
     """
     current = output
@@ -173,11 +175,23 @@ class DmTestbench(unittest.TestCase):
       current = [ x for x in current if exclude not in x ]
     for index in delete:
       del current[index]
+    if len(excludeField) > 0:
+      for line in current:
+        index = current.index(line)
+        pos = line.find(excludeField)
+        if pos > -1:
+          current[index] = line[:(pos + len(excludeField))]
     current = self.removePaintedFlags(current)
     with open(file_expected, 'r') as f_expected:
       expected = f_expected.read().splitlines()
     for index in delete:
       del expected[index]
+    if len(excludeField) > 0:
+      for line in expected:
+        index = expected.index(line)
+        pos = line.find(excludeField)
+        if pos > -1:
+          expected[index] = line[:(pos + len(excludeField))]
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {file_expected}\n{diffLines}')
 
