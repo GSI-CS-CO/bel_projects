@@ -1,5 +1,0 @@
-config arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy_cfg;
-		design arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy;
-		instance arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy.core use arria10_scu4_lvds_tx_altera_lvds_core20_181.arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi;
-endconfig
-

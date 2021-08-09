@@ -37,12 +37,15 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.01.02"
+#define COMMON_LIB_VERSION "0.01.03"
 
 #include <etherbone.h>
 
-// small helper function
+// small helper functions
 uint64_t comlib_getSysTime();
+
+// get character from terminal, 0: no character
+char comlib_getTermChar();
 
 // convert state code to state text
 const char* comlib_stateText(uint32_t  bit             // state code
@@ -70,7 +73,7 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nInjection,           // # of injection within ongoing transfers
                     uint32_t    *statTrans,            // status bits of transfer (application specific)
                     uint32_t    *usedSize,             // used size of shared memory
-                    uint32_t    printFlag              // '1' print information to stdout
+                    int         printFlag              // '1' print information to stdout
                     );
 
 void comlib_printDiag(uint64_t  statusArray,           // array with status bits

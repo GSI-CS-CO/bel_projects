@@ -64,9 +64,9 @@ ARCHITECTURE Arch_K12_K23_Logik_Leds OF K12_K23_Logik_Leds IS
 	SIGNAL		S_LED					: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL		S_Return_To_Live		: STD_LOGIC_VECTOR(How_many_bits(C_Return_To_Live_Cnt)+1 DOWNTO 0);
 	
-	SIGNAL		Sel_Old					: STD_LOGIC_VECTOR(1 DOWNTO 0);		-- Merker um betätigten Schalter zu erkennen.
+	SIGNAL		Sel_Old					: STD_LOGIC_VECTOR(1 DOWNTO 0);		-- Merker um betaetigten Schalter zu erkennen.
 
-	SIGNAL		S_sel					: STD_LOGIC_VECTOR(2 DOWNTO 0);		-- Das höchste Bit = 1 bedeutet auf Live_Sigale umschalten. 
+	SIGNAL		S_sel					: STD_LOGIC_VECTOR(2 DOWNTO 0);		-- Das hoechste Bit = 1 bedeutet auf Live_Sigale umschalten. 
 
 	SIGNAL		S_Live_LED_Out			: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL		S_Live_LED_In			: STD_LOGIC_VECTOR(7 DOWNTO 0);

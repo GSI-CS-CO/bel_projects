@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 17-Sep-2020
+//  version : 06-Feb-2021
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.2.2"
+#define EBMASSMON_VERSION "0.3.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -64,8 +64,8 @@ eb_device_t device;           // needs to be global for 1-wire stuff
 const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing", "Integration", "Unilac"};
 #define     MAXNETWORKTYPES      6
 
-const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl", "amc", "pmc"};
-#define     MAXNODETYPES         7
+const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl", "amc", "pmc", "pexp"};
+#define     MAXNODETYPES         8
 
 #define     MAXFILEFORMATS       2 // only 0, and 1 
 
@@ -86,7 +86,7 @@ static void help(void) {
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -f<format>       file format\n");
   fprintf(stderr, "                   0: one node per line (default)\n");
-  fprintf(stderr, "                   1: ATD format\n");
+  fprintf(stderr, "                   1: IPAM format\n");
   fprintf(stderr, "  -g               include # of acquired WR locks\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
@@ -115,20 +115,26 @@ static void help(void) {
   fprintf(stderr, "                   4: EXPLODER\n");
   fprintf(stderr, "                   5: AMC\n");
   fprintf(stderr, "                   6: PMC\n");
+  fprintf(stderr, "                   7: PEXP\n");
   fprintf(stderr, "  -z               include FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some WR related info of many timing receiver nodes.\n");
   fprintf(stderr, "Warning: This tool is causing some traffic on the network. Use with care.\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x0 -y0 -t -u -q'\n", program);
-  fprintf(stderr, "          don't query (option '-q') but only display all nodes of all networks\n");
+  fprintf(stderr, "Example: '%s udp scu.txt timing.acc.gsi.de -f1 -x0 -y0 -t -u -q'\n", program);
+  fprintf(stderr, "          don't query (option '-q') but only display nodes of all networks\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
+  fprintf(stderr, "Example: '%s udp scu.txt timing.acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
   fprintf(stderr, "          display info on all SCUs of the production network queried via the White Rabbit network\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s tcp allTimingDevices.txt acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
+  fprintf(stderr, "Example: '%s udp misc_devices.txt timing.acc.gsi.de -f1 -x1 -y0 -t -u -d -o -l -s -a -z -q'\n", program);
+  fprintf(stderr, "          display info on all nodes of the production network queried via the White Rabbit network\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example: '%s tcp scu.txt acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z -q'\n", program);
   fprintf(stderr, "          display info on all SCUs of the production network queried via the ACC network\n");
   fprintf(stderr, "\n");
+  fprintf(stderr, "Attention! there are separate IPAM files for SCU (scu.xt) and non-SCU (misc_devices.txt)\n");
+    fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMASSMON_VERSION);
 } //help
@@ -241,9 +247,9 @@ static int parseSimpleLineOk(char* fileLine, char* node)
 } // parseSimpleLineOk
 
 
-static int parseATDLineOk(char* fileLine, char* network, char* node, char* info, uint64_t *mac, uint32_t *ip)
+static int parseIpamLineOk(char* fileLine, char* network, char* node, char* info, uint64_t *mac, uint32_t *ip)
 {
-  // format '00:26:7b:00:03:ff,id:timing,192.168.161.1,scuxl0249t       #NW Production; SCU; ...
+  // format '192.168.160.83       0026.7b00.03b1  scuxl0025t           # NW Production; bla bla '
   char*         ptr1;
   char*         ptr2;
   char          tmp[MAXLEN+1];
@@ -260,29 +266,26 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
   // parse first part including hostname
   sprintf(tmp, "%s", fileLine);   // make a copy
   ptr1 = NULL;
-
-  // mac
-  *mac = 0x0;
-  ptr1 = strtok(tmp,  ",");
-
-  if (ptr1 != NULL) {
-    if (sscanf(ptr1, "%x:%x:%x:%x:%x:%x", &(bytes[5]), &(bytes[4]), &(bytes[3]), &(bytes[2]), &(bytes[1]), &(bytes[0])) == 6){
-      for (i = 0; i < 6; i++) *mac = *mac + ((uint64_t)(bytes[i]) << (i*8));
-    } // mac scan ok
-  } // ptr != 0
-
-  // dummy
-  ptr1 = strtok(NULL, ",");
-
+  
   // ip
   *ip = 0x0;
-  ptr1 = strtok(NULL, ",");
+  ptr1 = strtok(tmp, " ");                        // blank as delimeter
+  if (strlen(ptr1) < 7) return 0;                 // give up if length is unreasonable for an IP
   if (ptr1 != NULL) {
     if (sscanf(ptr1, "%u.%u.%u.%u", &(bytes[3]), &(bytes[2]), &(bytes[1]), &(bytes[0])) == 4){
       for (i = 0; i < 4; i++) *ip = *ip + (bytes[i] << (i*8));
     } // ip scan ok
   } // ptr != 0
- 
+
+  // mac
+  *mac = 0x0;
+  ptr1 = strtok(NULL,  " ");
+  if (ptr1 != NULL) {
+    if (sscanf(ptr1, "%x.%x.%x", &(bytes[2]), &(bytes[1]), &(bytes[0])) == 3){
+      for (i = 0; i < 3; i++) *mac = *mac + ((uint64_t)(bytes[i]) << (i*16));
+    } // mac scan ok
+  } // ptr != 0
+
   // hostname
   ptr1 = strtok(NULL, " ");
   if (ptr1 != NULL) {
@@ -292,7 +295,6 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
   } // ptr != 0
 
   // parse 2nd part which is the comment after hostname
-
   // network name  
   sprintf(tmp, "%s", fileLine);               // make another copy
   if (tmp  != NULL) {
@@ -300,9 +302,9 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
     ptr1 = NULL;
     ptr2 = NULL;
     
-    ptr1 = strstr(tmp, "#NW");                // comment starts here
+    ptr1 = strstr(tmp, "# NW");               // comment starts here
     if (ptr1 != NULL) {                 
-      ptr1 = &(ptr1[3]);                      // first character after '#NW
+      ptr1 = &(ptr1[5]);                      // first character after '# NW '
       ptr2 = strtok(ptr1, ";");         
       if ((ptr2 != NULL) && (strlen(ptr2) < MAXLEN)) {
         sprintf(network, "%s", ptr2);
@@ -311,7 +313,6 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
     } // ptr1 != 0
   } // tmp != 0
     
-  
   // info
   sprintf(tmp, "%s", fileLine);               // make another copy
   if (tmp != NULL) {
@@ -319,7 +320,7 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
     ptr1 = NULL;
     ptr2 = NULL;
     
-    ptr1 = strstr(tmp, "#NW");                // comment starts here
+    ptr1 = strstr(tmp, "# NW");               // comment starts here
     if (ptr1 != NULL) {
       ptr2 = strstr(ptr1, ";");               // info starts here
       if ((ptr2 != NULL) && (strlen(ptr2) < MAXLEN)) sprintf(info, "%s", &(ptr2[1]));
@@ -331,7 +332,7 @@ static int parseATDLineOk(char* fileLine, char* network, char* node, char* info,
 
   if (node_ok && network_ok) return 1;
   else                       return 0;
-} // parseATDLineOk
+} // parseIpamLineOk
 
 
 static int networkOk(char* network, int networkType)
@@ -815,20 +816,20 @@ int main(int argc, char** argv) {
     if (fgets(fileLine, MAXLEN, file) != NULL) {
       switch (fileFormat) {
       case 0 :
-        if (!parseSimpleLineOk(fileLine, node))                                        nodeOk = 0;
+        if (!parseSimpleLineOk(fileLine, node))                                         nodeOk = 0;
         break;
       case 1 :
-        if (!parseATDLineOk(fileLine, network, node, atdTmpStr, &atdTmp64, &atdTmp32)) nodeOk = 0;
-        if (!networkOk(network, networkType))                                          nodeOk = 0;
+        if (!parseIpamLineOk(fileLine, network, node, atdTmpStr, &atdTmp64, &atdTmp32)) nodeOk = 0;
+        if (!networkOk(network, networkType))                                           nodeOk = 0;
         break;
       default:
         die("file format not supported", EB_OOM);
         return 1;
       } // switch fileformat     
         
-      if (!deviceNameOk(ebProto, node))                                                nodeOk = 0;
-      if (!nodeTypeOk(node, nodeType))                                                 nodeOk = 0;
-      if (!protoOk(ebProto, nodeType))                                                 nodeOk = 0;
+      if (!deviceNameOk(ebProto, node))                                                 nodeOk = 0;
+      if (!nodeTypeOk(node, nodeType))                                                  nodeOk = 0;
+      if (!protoOk(ebProto, nodeType))                                                  nodeOk = 0;
           
       if (nodeOk) {
         fprintf(stdout, "%s...", node); fflush(stdout);
@@ -947,6 +948,7 @@ int main(int argc, char** argv) {
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[4], m); 
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[5], n); 
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[6], o); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[7], o); 
     fprintf(stdout, "\n");
     
     // link up

@@ -240,7 +240,7 @@ SEVERITY Warning;
 ASSERT NOT (Clk_in_Hz < 100000000)
 	REPORT "Achtung Generic Clk_in_Hz ist auf " & integer'image(Clk_in_Hz)
 			& " gesetzt. Mit der Periodendauer von " & integer'image(Clk_in_ns)
-			& " ns lassen sich keine genauen Verzögerungen erzeugen!"
+			& " ns lassen sich keine genauen Verzoegerungen erzeugen!"
 SEVERITY Warning;
 
 ASSERT (False)

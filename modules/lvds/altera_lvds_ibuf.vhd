@@ -26,7 +26,7 @@ begin
         datain_b(0) => datain_b,
         dataout(0)  => dataout);
   end generate;
-  
+
   arria5 : if g_family = "Arria V" generate
     ibuf : arria5_lvds_ibuf
       port map(
@@ -34,7 +34,7 @@ begin
         datain_b(0) => datain_b,
         dataout(0)  => dataout);
   end generate;
-  
+
   arria10_scu4 : if g_family = "Arria 10 GX SCU4" generate
     ibuf : arria10_scu4_lvds_ibuf
       port map(
@@ -42,5 +42,21 @@ begin
         pad_in_b(0) => datain_b,
         dout(0)     => dataout);
   end generate;
- 
+
+  arria10_pex10 : if g_family = "Arria 10 GX PEX10" generate
+    ibuf : arria10_pex10_lvds_ibuf
+      port map(
+        pad_in(0)   => datain,
+        pad_in_b(0) => datain_b,
+        dout(0)     => dataout);
+  end generate;
+
+  arria10_ftm10 : if g_family = "Arria 10 GX FTM10" generate
+    ibuf : arria10_ftm10_lvds_ibuf
+      port map(
+        pad_in(0)   => datain,
+        pad_in_b(0) => datain_b,
+        dout(0)     => dataout);
+  end generate;
+
 end rtl;

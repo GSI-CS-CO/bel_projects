@@ -88,16 +88,28 @@ void VisitorVertexWriter::pushStopEyecandy(const Node& el) const {
   if(el.isPatExit()) pushSingle(ec::Node::Base::sLookPatExit);
 }
 
+void VisitorVertexWriter::visit(const BlockAlign& el) const  {
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sBlockAlign);
+  pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FormatNum::DEC);
+  pushMembershipInfo((Node&)el);
+  uint32_t qInfo = (el.getFlags() >> NFLG_BLOCK_QS_POS) & NFLG_BLOCK_QS_MSK;
+  for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) pushPair(dnp::Block::sGenQPrio[prio], (qInfo >> prio) & 1, FormatNum::BOOL);
+  pushSingle(ec::Node::Block::sLookAlign);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
+  pushStopEyecandy((Node&)el);
+  pushEnd();
+}
 
-
-void VisitorVertexWriter::visit(const Block& el) const  {
+void VisitorVertexWriter::visit(const BlockFixed& el) const  {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sBlock);
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FormatNum::DEC);
   pushMembershipInfo((Node&)el);
   uint32_t qInfo = (el.getFlags() >> NFLG_BLOCK_QS_POS) & NFLG_BLOCK_QS_MSK;
   for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) pushPair(dnp::Block::sGenQPrio[prio], (qInfo >> prio) & 1, FormatNum::BOOL);
-  pushSingle(ec::Node::Block::sLookDef);
+  pushSingle(ec::Node::Block::sLookFix);
   pushPaintedEyecandy((Node&)el);
   pushStartEyecandy((Node&)el);
   pushStopEyecandy((Node&)el);
@@ -112,7 +124,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   // ID output depends on FID field
   uint64_t id = el.getId();
   uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK);
-  if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + el.getName() + "'");
+  if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " within ID field of Node '" + el.getName() + "'");
   //ouput ID subfields
   vPf& vF = idFormats[fid];
   for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), FormatNum::DEC); }

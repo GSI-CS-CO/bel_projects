@@ -1,0 +1,20 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A[pos="0,0" cpu="0", flags="0x00008007", type="block", tperiod="1000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_EXIT[pos="288,0" cpu="0", flags="0x0000a007", type="block", tperiod="10", pattern="EXIT", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_LOOP[pos="144,0" cpu="0", flags="0x0010a007", type="block", tperiod="1000", pattern="LOOP", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+INIT_A0[pos="144,-144" cpu="0", flags="0x0000a007", type="block", tperiod="1000", pattern="IN_A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+INIT_B0[pos="144,144" cpu="0", flags="0x00002004", type="flow", tvalid="0", vabs="true", prio="0", toffs="0", pattern="IN_B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qty="10", shape     = "hexagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+INIT_B1[pos="288,144" cpu="0", flags="0x00008007", type="block", tperiod="1000", pattern="IN_B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+MSG_A[pos="0,144" cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="0", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+BLOCK_A->BLOCK_LOOP [type="defdst", color     = "red"];
+INIT_A0->BLOCK_LOOP [type="defdst", color     = "red"];
+INIT_B0->INIT_B1 [type="defdst", color     = "red"];
+INIT_B0->BLOCK_LOOP [type="target", color     = "blue"];
+INIT_B0->MSG_A [type="flowdst", color     = "pink"];
+INIT_B1->BLOCK_LOOP [type="defdst", color     = "red"];
+MSG_A->BLOCK_A [type="defdst", color     = "red"];
+BLOCK_LOOP->BLOCK_EXIT [type="defdst", color     = "red"];
+BLOCK_LOOP->MSG_A [type="altdst", color     = "black"];
+}
