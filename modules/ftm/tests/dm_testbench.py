@@ -26,53 +26,49 @@ class DmTestbench(unittest.TestCase):
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
 
-  def addSchedule(self, data_master, schedule_file):
-    """Connect to the given data master and load the schedule file (dot format).
-    The data master is halted, cleared, and statistics is reset.
-    """
-    self.startAllPattern(data_master, schedule_file, start=False)
+  def setUp(self):
+    self.initDatamaster()
 
-  def startPattern(self, data_master, schedule_file):
-    """Connect to the given data master and load the schedule file (dot format).
+  def initDatamaster(self):
+    """Initialize (clean) the datamaster.
     The data master is halted, cleared, and statistics is reset.
+    This is all done with 'dm-cmd reset all'.
+    """
+    self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'reset', 'all'])
+    # ~ self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'halt'])
+    # ~ self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'clear'])
+    # ~ self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'cleardiag'])
+
+  def addSchedule(self, schedule_file):
+    """Connect to the given data master and load the schedule file (dot format).
+    """
+    self.startAllPattern(schedule_file, start=False)
+
+  def startPattern(self, schedule_file):
+    """Connect to the given data master and load the schedule file (dot format).
     Search for the first pattern in the data master with self.binary_dm_sched and start it.
     """
-    self.startAllPattern(data_master, schedule_file, '', onePattern=True)
+    self.startAllPattern(schedule_file, '', onePattern=True)
 
-  def startPattern(self, data_master, schedule_file, pattern=''):
+  def startPattern(self, schedule_file, pattern=''):
     """Connect to the given data master and load the schedule file (dot format).
-    The data master is halted, cleared, and statistics is reset.
-    Search for the first pattern in the data master with self.binary_dm_sched and start it.
+    Start the given pattern.
     """
-    self.startAllPattern(data_master, schedule_file, pattern, onePattern=False)
+    self.startAllPattern(schedule_file, pattern, onePattern=False)
 
-  def startAllPattern(self, data_master, schedule_file, pattern='', onePattern=False, start=True):
+  def startAllPattern(self, schedule_file, pattern='', onePattern=False, start=True):
     """Connect to the given data master and load the schedule file (dot format).
-    The data master is halted, cleared, and statistics is reset.
     Search for all pattern in the data master with self.binary_dm_sched and start these.
     """
     schedule_file = self.schedules_folder + schedule_file
-    print (f"Connect to device '{data_master}', schedule file '{schedule_file}'.   ", end='', flush=True)
-    process = subprocess.Popen([self.binary_dm_cmd, data_master, 'halt'])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} halt')
-    process = subprocess.Popen([self.binary_dm_sched, data_master, 'clear'])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} clear')
-    process = subprocess.Popen([self.binary_dm_cmd, data_master, 'cleardiag'])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} cleardiag')
-    process = subprocess.Popen([self.binary_dm_sched, data_master, 'add', schedule_file])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {schedule_file}')
+    print (f"Connect to device '{self.datamaster}', schedule file '{schedule_file}'.   ", end='', flush=True)
+    self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'add', schedule_file])
     if start:
       if len(pattern) > 0:
-        process = subprocess.Popen([self.binary_dm_cmd, data_master, 'startpattern', pattern])
-        process.wait()
-        self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {pattern}')
+        self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'startpattern', pattern])
       else:
-        # run 'dm-sched data_master' as a sub process.
-        process = subprocess.Popen([self.binary_dm_sched, data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        # run 'dm-sched self.datamaster' as a sub process.
+        process = subprocess.Popen([self.binary_dm_sched, self.datamaster], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         # get command output and error
         stdout, stderr = process.communicate()
         lines = stdout.decode('utf-8').splitlines()
@@ -81,9 +77,7 @@ class DmTestbench(unittest.TestCase):
         for i in range(len(lines)):
           if patterns and len(lines[i]) > 0:
             # print (f"Pattern: \n{lines[i]} {lines} {lines[i].split()[0]}")
-            process = subprocess.Popen([self.binary_dm_cmd, data_master, 'startpattern', lines[i].split()[0]])
-            process.wait()
-            self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {lines[i]}')
+            self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'startpattern', lines[i].split()[0]])
             if onePattern:
               patterns = False
           if 'Patterns' in lines[i]:
@@ -182,6 +176,8 @@ class DmTestbench(unittest.TestCase):
         if pos > -1:
           current[index] = line[:(pos + len(excludeField))]
     current = self.removePaintedFlags(current)
+    # ~ with open('compare-current.txt', 'w') as file1:
+      # ~ file1.write("\n".join(current))
     with open(file_expected, 'r') as f_expected:
       expected = f_expected.read().splitlines()
     for index in delete:
@@ -192,6 +188,8 @@ class DmTestbench(unittest.TestCase):
         pos = line.find(excludeField)
         if pos > -1:
           expected[index] = line[:(pos + len(excludeField))]
+    # ~ with open('compare-expected.txt', 'w') as file2:
+      # ~ file2.write("\n".join(expected))
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {file_expected}\n{diffLines}')
 

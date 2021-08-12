@@ -1,7 +1,6 @@
 import dm_testbench
 
-"""
-Start all pattern in the schedules and download status. Compare original schedule with downloaded.
+"""Start all pattern in the schedules and download status. Compare original schedule with downloaded.
 Steps for a schedule:
 Add schedule to datamaster
 Start all patterns of this schedule
@@ -13,7 +12,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     schedule_file = 'testSingleEdge-block-blockalign-altdst.dot'
     schedule_file = 'testSingleEdge-tmsg-block-defdst.dot'
     status_file = 'status.dot'
-    self.startAllPattern(self.datamaster, schedule_file)
+    self.startAllPattern(schedule_file)
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', status_file))
     self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + schedule_file, status_file))
     self.deleteFile(status_file)

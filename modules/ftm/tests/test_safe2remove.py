@@ -22,7 +22,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.deleteFile('status.dot')
 
   def safe2removeTestcase(self, dot_file1, pattern_to_remove):
-    self.startAllPattern(self.datamaster, dot_file1 + '.dot')
+    self.startAllPattern(dot_file1 + '.dot')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
     self.deleteFile('debug.dot')
@@ -102,7 +102,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_150', delta(seconds=95))
 
   def test_safe2remove_blockflow1(self):
-    self.startAllPattern(self.datamaster, 'block-flow1.dot')
+    self.startAllPattern('block-flow1.dot')
     file_name = 'snoop_block-flow1.csv'
     parameter_column = 20
     self.snoopToCsv(file_name, 5)

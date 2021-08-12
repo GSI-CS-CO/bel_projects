@@ -12,11 +12,13 @@ class TestDmCmd(dm_testbench.DmTestbench):
     super().setUpClass()
     TestDmCmd.ppsPatternStarted = False
 
+
   def setUp(self):
     """Set up for all test cases in this class: start pps pattern.
     """
     if not TestDmCmd.ppsPatternStarted:
-      self.startPattern(self.datamaster, 'pps.dot')
+      self.initDatamaster()
+      self.startPattern('pps.dot')
       TestDmCmd.ppsPatternStarted = True
 
   def targetName_missing(self, command):

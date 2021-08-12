@@ -25,7 +25,7 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
       UTC deadline + 0.7:  {dt.utcfromtimestamp((int(output[0][21:]) + 700000000)/1000000000)}')
 
   def test_branch1(self):
-    self.startAllPattern(self.datamaster, 'branch1.dot')
+    self.startAllPattern('branch1.dot')
     file_name = 'snoop_branch1.csv'
     parameter_column = 20
     self.snoopToCsvWithAction(file_name, self.doBranch1, 2)

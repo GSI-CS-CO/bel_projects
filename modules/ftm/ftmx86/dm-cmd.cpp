@@ -537,7 +537,9 @@ int main(int argc, char* argv[]) {
   }
 
   uint64_t tvalidOffs = cdm.getModTime();
+  //~ std::cout << program << ": tvalidOffs: " << tvalidOffs << ", cmdTvalid: " << cmdTvalid << std::endl;
   if(!vabs) cmdTvalid += tvalidOffs; // already added modTime when !vabs, so when calling cdm.adjustValidTime, we'll always say tvalid is absolute
+  //~ std::cout << program << ": tvalidOffs: " << tvalidOffs << ", cmdTvalid: " << cmdTvalid << std::endl;
 
   if ((typeName != NULL ) && ( typeName != std::string(""))){
 
@@ -586,13 +588,15 @@ int main(int argc, char* argv[]) {
       std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
 
       if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) {
-        cdm.createFlowCommand(ew, dnt::sCmdFlow, fromNode, toNode, cmdPrio, cmdQty, vabs, cmdTvalid, permanent);
+        //~ std::cout << program << ": vabs: " << vabs << ": tvalidOffs: " << tvalidOffs << ", cmdTvalid: " << cmdTvalid << std::endl;
+        cdm.createFlowCommand(ew, dnt::sCmdFlow, fromNode, toNode, cmdPrio, cmdQty, true, cmdTvalid, permanent);
       } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
       targetName = fromNode.c_str();
     }
     else if (cmp == dnt::sCmdFlow)  {
       if (( ((para != NULL) && ( para != std::string("")))) && (((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para)))) {
-        cdm.createFlowCommand(ew, dnt::sCmdFlow, targetName, para, cmdPrio, cmdQty, vabs, cmdTvalid, permanent);
+        //~ std::cout << program << ": vabs: " << vabs << ": tvalidOffs: " << tvalidOffs << ", cmdTvalid: " << cmdTvalid << std::endl;
+        cdm.createFlowCommand(ew, dnt::sCmdFlow, targetName, para, cmdPrio, cmdQty, true, cmdTvalid, permanent);
       } else {std::cerr << program << ": Destination Node '" << para << "' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "switchpattern")  {
