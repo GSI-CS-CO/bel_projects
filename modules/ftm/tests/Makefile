@@ -9,7 +9,7 @@ CARPEDM_PATH ?= ../lib/
 TEST_DM_CMD ?= ../bin/dm-cmd
 TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
-IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=full_test/ --ignore=schedules/
+IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=schedules/
 # pass the command line arguments to pytest
 # Example: OPTIONS=--runslow   this runs also the slow tests.
 # Example: OPTIONS="-rP"       show stdout for all tests.
@@ -29,7 +29,7 @@ remote:
 test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
 
-all: dmPerformance dmThreads full_test pps singleEdgeTest
+all: dmPerformance dmThreads pps singleEdgeTest
 
 dmPerformance:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmPerformance/ test0
@@ -38,10 +38,6 @@ dmPerformance:
 
 dmThreads:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmThreads/ four-threads
-
-full_test:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) python3 full_test/dm_testman.py "$(DATAMASTER)"
-	rm download.dot
 
 #messageCounter:
 #	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python3 messageCounter/messageCounter.py $(DATAMASTER)
@@ -62,4 +58,4 @@ prepare:
 	$(MAKE) -C ../ftmx86/
 #	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: dmPerformance dmThreads full_test messageCounter pps remote singleEdgeTest test test-default
+.PHONY: dmPerformance dmThreads messageCounter pps remote singleEdgeTest test test-default
