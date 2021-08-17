@@ -22,26 +22,33 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.deleteFile('status.dot')
 
   def safe2removeTestcase(self, dot_file1, pattern_to_remove):
+    start = dt.now()
     self.startAllPattern(dot_file1 + '.dot')
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
+    duration = dt.now() - start
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
     self.deleteFile('debug.dot')
+    start2 = dt.now()
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'abortpattern', pattern_to_remove))
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
+    duration += dt.now() - start2
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-safe.dot', 'Created')
+    start3 = dt.now()
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', 'status.dot'))
+    duration += dt.now() - start3
     self.compareExpectedResult('status.dot', self.schedules_folder + dot_file1 + '-status.dot')
+    return duration
 
   def test_safe2remove_blockalign1(self):
     self.safe2removeTestcase('blockalign1', 'PPS1_TEST')
 
   def safe2removeTestcasePerformance(self, dot_file1, limit):
     start = dt.now()
-    self.safe2removeTestcase(dot_file1, 'G1_P1')
+    duration1 = self.safe2removeTestcase(dot_file1, 'G1_P1')
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
     duration = dt.now() - start
-    self.assertTrue(duration <= limit, f'Duration of test too long, duration: {duration}, limit: {limit}.')
+    self.assertTrue(duration1 <= limit, f'Duration of test too long, duration: {duration1}, limit: {limit}, over all duration: {duration}.')
 
   def test_safe2remove_group_1_1_1(self):
     self.safe2removeTestcasePerformance('groups_1_nonDefaultPatterns_1_blocksPerPattern_1', delta(seconds=1.1))
