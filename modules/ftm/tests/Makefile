@@ -29,7 +29,12 @@ remote:
 test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
 
-all: dmPerformance dmThreads pps singleEdgeTest
+test-all:
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) --runslow $(OPTIONS)
+
+all: test-all dmPerformance dmThreads pps singleEdgeTest
 
 dmPerformance:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmPerformance/ test0
@@ -38,9 +43,6 @@ dmPerformance:
 
 dmThreads:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmThreads/ four-threads
-
-#messageCounter:
-#	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python3 messageCounter/messageCounter.py $(DATAMASTER)
 
 pps:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest -k pps $(IGNORE) $(OPTIONS)
@@ -56,6 +58,5 @@ singleEdgeTest:
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
-#	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: dmPerformance dmThreads messageCounter pps remote singleEdgeTest test test-default
+.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all
