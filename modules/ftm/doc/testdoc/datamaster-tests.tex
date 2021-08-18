@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-07-22}
+\Large{Last change: 2021-08-17}
 \end{center}
 \vfill
 \end{titlepage}
@@ -46,48 +46,50 @@
 \tableofcontents
 
 \chapter{Overview - What is tested}
-All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
+The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be strated
+by name and also with a name pattern to select a group of tests. The tests use the datamaster tools \texttt{dm-cmd}
+and \texttt{dm-sched}.
+
+The tests use the instance of the current build folder of the datamaster tools and \texttt{libcarpedm}.
+
+All tests are on branch \texttt{dm-fallout-tests-2}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
-Each test has a seperate target in the \texttt{Makefile}.
 \begin{table}
 \caption{Which test tests what}
 %\begin{center}
 \centering
 \begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
 \hline
-Test               & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
-addDownloadCompare &   T        &   T             &   T           &   x              &   x         &   -       &   -                \\ \hline
-bpcStart           &   -        &   T             &   x           &   x              &   x         &   -       &   x                \\ \hline
-dmCmd              &   T        &   x             &   x           &   x              &   -         &   -       &   x                \\ \hline
-dmPerformance      &   x        &   T             &   x           &   -              &   -         &   x       &   -                \\ \hline
-dmThreads          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
-fid7               &   -        &   x             &   T           &   x              &   x         &   -       &   x                \\ \hline
-full\_test         &   -        &   T             &   x           &   x              &   -         &   -       &   x                \\ \hline
-pps                &   -        &   T             &   x           &   x              &   -         &   -       &   -                \\ \hline
-safe2remove        &   x        &   T             &   T           &   -              &   -         &   x       &   x                \\ \hline
-singleEdgeTest     &   -        &   T             &   -           &   -              &   -         &   -       &   x                \\ \hline
-schedules          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
+Test                        & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance               &   x        &   T             &   x           &   -              &   -                \\ \hline
+dmThreads                   &   x        &   x             &   T           &   -              &   -                \\ \hline
+singleEdgeTest              &   -        &   T             &   -           &   -              &   x                \\ \hline
+test\_addDownloadCompare.py &   T        &   T             &   T           &   x              &   -                \\ \hline
+test\_async.py              &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_basic.py              &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_bpcStart.py           &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_coupling.py           &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_dm\_cmd.py            &   T        &   x             &   x           &   x              &   x                \\ \hline
+test\_environment.py        &   -        &   -             &   -           &   x              &   X                \\ \hline
+test\_fid7.py               &   x        &   x             &   T           &   x              &   x                \\ \hline
+test\_flowpattern.py        &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_flow.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_loop.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_parallelBranch.py     &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_pps.py                &   x        &   T             &   x           &   x              &   -                \\ \hline
+test\_prio\_and\_type.py    &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_run\_all\_single.py   &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_run\_cpu0\_single.py  &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_safe2remove.py        &   x        &   T             &   T           &   x              &   x                \\ \hline
+test\_schedules.py          &   x        &   x             &   T           &   x              &   -                \\ \hline
+test\_start\_stop\_abort.py &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_switch.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_zzz\_finish.py        &   x        &   T             &   x           &   x              &   -                \\ \hline
 \end{tabular}
 %\end{center}
 \end{table}
 \chapter{The Tests}
-\section{addDownloadCompare}
-\texttt{addDownloadCompare} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
-The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
-There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
-
-This test requires \texttt{scheduleCompare} to be installed. This tool checks that two dot-files represent the same schedule. For installation use branch
-origin/dm-analysis. The tool is build with make in folder modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo make install in the same folder.
-\section{bpcStart}
-\texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm.
-The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
-With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
-In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
-\section{dmCmd}
-\texttt{dmCmd} contains Python test scripts which contain Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
-line. These tests are successful when the response is the correct error message and not a core dump.
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
 The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
@@ -96,15 +98,249 @@ work. There is no check for this.
 \section{dmThreads}
 \texttt{dmThreads} tests the firmware with 4 threads. The same test for 6 threads fails due to a bug in the
 firmware. For each thread a pattern with one block and one timing message is loaded.
-\section{fid7}
-\texttt{fid7} tests the fix for the format id 7 bug.
-\include{full_test}
-\section{messageCounter} This test is obsolete.
-\texttt{messageCounter} is a basic test for the Python-Wrapper of libcarpedm.
-\section{pps}
-\texttt{pps} (pulse per second) is a basic test with a schedule which sends two timing messages every second.
-\section{safe2remove}
-\texttt{safe2remove} tests to remove a pattern from a running schedule. Test steps:
+\include{singleEdgeTest}
+\section{test\_addDownloadCompare.py}
+\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
+The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
+There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
+
+This test requires \texttt{scheduleCompare} to be installed. This tool checks that two dot-files represent the same schedule. For installation use branch
+origin/dm-analysis. The tool is build with make in folder modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo make install in the same folder.
+\section{test\_async.py}
+This test was \texttt{full\_test/dynamic/async}.
+\begin{enumerate}
+	\item Purpose of Test
+
+	For a schedule asynchronous clear a block, change the destination to a timing message and check that all nodes are visited.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
+	\item Test Actions
+
+	Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The
+	nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with
+	\texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}.
+	Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this
+	with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all
+	nodes are visited and no blocks are locked (with \texttt{showlocks}).
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_async.pdf}
+        \caption{Pattern for the dynamic async test}
+        \label{fig:Pattern_for_the_dynamic_async_test}
+    \end{figure}
+	\item Success Criteria
+
+	Check that node 'MSG\_A' is visited after changing the destination of the flow.
+\end{enumerate}
+\section{test\_basic.py}
+This test was \texttt{full\_test/static/basic}.
+\begin{enumerate}
+	\item Purpose of Test
+
+	This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
+	is loaded into data master and removed afterwards.
+
+	\item Test Actions
+
+	On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
+	that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
+	end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
+
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_basic.pdf}
+        \caption{Pattern for the static basic test}
+        \label{fig:Pattern_for_the_static_basic_test}
+    \end{figure}
+	\item Success Criteria
+
+	The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
+\end{enumerate}
+\section{test\_bpcStart.py}
+\texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
+The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
+With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
+In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
+\section{test\_coupling.py}
+This test was \texttt{full\_test/dynamic/coupling}.
+\begin{enumerate}
+	\item Purpose of Test
+
+	This test enlarges an existing pattern with a second pattern with edges into the first
+	pattern. See Figure~\ref{fig:Pattern_for_the_static_coupling_test} for the test patterns.
+	\item Test Actions
+
+	First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added.
+	This pattern contains edges into the first pattern.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_coupling1.pdf}
+        \includegraphics{TestPattern/static_coupling2.pdf}
+        \caption{Pattern for the static coupling test before and after coupling}
+        \label{fig:Pattern_for_the_static_coupling_test}
+    \end{figure}
+	\item Success Criteria
+
+	After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is
+	compared to an expected dot-file.
+\end{enumerate}
+
+\section{test\_dm\_cmd.py}
+\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
+with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
+line. These tests are successful when the response is the correct error message and not a core dump.
+
+\section{test\_environment.py}
+\texttt{test\_environment.py} checks the test environment. The test is ok iff dm-cmd and dm-sched are
+from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
+
+\section{test\_fid7.py}
+\texttt{test\_fid7.py} tests the fix for the format id 7 bug.
+
+\section{test\_flow.py}
+This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
+\begin{enumerate}
+	\item Purpose of Test
+
+	Test that the flow command switches from one block to another.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+	\item Test Actions
+
+	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+        change the flow with the flow command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flow
+        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flow
+        command is processed in the low priority queue and node 'BLOCK\_B' is visited.
+
+  Test the four combinations of relative VTIME, absolute VTIME and immediate vs. delayed (one second) execution.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_branch_single.pdf}
+        \caption{Pattern for the dynamic branch single test}
+        \label{fig:Pattern_for_the_dynamic_branch_single_test}
+    \end{figure}
+	\item Success Criteria
+
+	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+\end{enumerate}
+\section{test\_flowpattern.py}
+This test is based on \texttt{full\_test/dynamic/branch/single}.
+\begin{enumerate}
+	\item Purpose of Test
+
+	Test that the flow command switches from one block to another.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+	\item Test Actions
+
+	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+        change the flow with the flowpattern command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flowpattern
+        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flowpattern
+        command is processed in the low priority queue and node 'BLOCK\_B' is visited.
+
+  Test the four combinations of relative VTIME, absolute VTIME and immediate vs. delayed (one second) execution.
+	\item Success Criteria
+
+	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+\end{enumerate}
+\section{test\_loop.py}
+This test was \texttt{full\_test/dynamic/loop}.
+\begin{enumerate}
+	\item Purpose of Test
+
+        Test loop with flow initializer.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_loop_test} for the test pattern.
+	\item Test Actions
+
+        Add a schedule and start pattern 'IN\_A'. Check the visited nodes. Nodes 'INIT\_A0', 'BLOCK\_LOOP', and 'BLOCK\_EXIT'
+        should be visited. Start pattern 'IN\_B' and check the visited nodes. All nodes should be visited.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_loop.pdf}
+        \caption{Pattern for the dynamic loop test}
+        \label{fig:Pattern_for_the_dynamic_loop_test}
+    \end{figure}
+	\item Success Criteria
+
+	In the end all blocks are visited.
+\end{enumerate}
+\section{test\_pps.py}
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a schedule which sends two timing messages every second.
+\section{test\_prio\_and\_type.py}
+This test was \texttt{full\_test/static/prio\_and\_type}.
+\begin{enumerate}
+	\item Purpose of Test
+
+The test checks the relative and the absolute time values for two nodes in a four node pattern.
+See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for the test pattern
+and \ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} for the test pattern with meta nodes,
+displaying the priority queues.
+	\item Test Actions
+
+	Add the pattern, check the relative time values. Clear the data master. Add the pattern again and check the absolute time values.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_prio_and_type.pdf}
+        \caption{Pattern for the static priority and type test}
+        \label{fig:Pattern_for_the_static_priority_and_type_test}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/static_prio_and_type_meta.pdf}
+        \caption{Pattern for the static priority and type test with meta nodes}
+        \label{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
+    \end{figure}
+	\item Success Criteria
+
+	Two checks of the time values with \texttt{dm-cmd rawqueue}.
+\end{enumerate}
+\section{test\_run\_all\_single.py}
+This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
+\begin{enumerate}
+	\item Purpose of Test
+
+    Run a very basic schedule on all four CPUs.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
+	\item Test Actions
+
+	Add a schedule with four blocks to the data master. For each CPU, check that no block is visited. Then start
+	a pattern for one CPU and check that the block specific for this pattern is visited.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_basic_run_all_single.pdf}
+        \caption{Pattern for the dynamic run all test}
+        \label{fig:Pattern_for_the_dynamic_run_all_test}
+    \end{figure}
+	\item Success Criteria
+
+	For each pattern the correct CPU is used.
+\end{enumerate}
+\section{test\_run\_cpu0\_single.py}
+This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
+\begin{enumerate}
+	\item Purpose of Test
+
+    Add the test schedule to the data master, start patterns and check which nodes were visited.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test} for the test pattern.
+	\item Test Actions
+
+    First check that no block is visited. Start pattern 'IN0'. Check that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
+    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and 'BLOCK\_IN1' are visited.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_basic_run_cpu0_single.pdf}
+        \caption{Pattern for the dynamic run CPU 0 single test}
+        \label{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
+    \end{figure}
+	\item Success Criteria
+
+	In the end all blocks are visited.
+\end{enumerate}
+\section{test\_safe2remove.py}
+\texttt{test\_safe2remove.py} tests to remove a pattern from a running schedule. Test steps:
 \begin{enumerate}
 \item Clear data master
 \item Add schedule
@@ -116,9 +352,42 @@ firmware. For each thread a pattern with one block and one timing message is loa
 \item Check status of remaining schedule.
 \end{enumerate}
 These test steps are applied to a bunch of schedules.
-\include{singleEdgeTest}
-\section{schedules}
-\texttt{schedules} collects schedules which are started. Tests that the schedules are compiled and loaded.
+\section{test\_schedules.py}
+\texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
+\section{test\_start\_stop\_abort.py}
+This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
+\begin{enumerate}
+	\item Purpose of Test
+
+    First part: Start and abort a pattern. Second part: Start and stop a pattern.
+
+	See Figure~\ref{fig:Pattern_for_the_dynamic_start_stop_abort_test} for the test pattern.
+	\item Test Actions
+
+    Add a schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
+    Abort the pattern 'IN\_C0'. Check the visited nodes for the pattern. The second part is similar.
+    Add the same schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
+    Stop the pattern 'IN\_C0'. Check the visited nodes for the pattern.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_basic_start_stop_abort.pdf}
+        \caption{Pattern for the dynamic start stop abort test}
+        \label{fig:Pattern_for_the_dynamic_start_stop_abort_test}
+    \end{figure}
+	\item Success Criteria
+
+	Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
+	stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
+\end{enumerate}
+\section{test\_switch.py}
+This test was \texttt{full\_test/dynamic/switch}.
+\begin{enumerate}
+	\item Purpose of Test
+
+	Test not working, needs set up.
+	\item Test Actions
+	\item Success Criteria
+\end{enumerate}
 \chapter{Common Components}
 \section{dm\_testbench.py}
 \texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.
@@ -127,5 +396,21 @@ These test steps are applied to a bunch of schedules.
     Connect to the given data master and load the pattern file (dot format).
     The data master is halted, cleared, and statistics is reset.
     Search for the first pattern in the data master with 'dm-sched' and start it.
+\end{enumerate}
+
+\subsection{Structure of Description}
+\begin{enumerate}
+	\item Purpose of Test
+
+	What is the objective of this test?
+	\item Prerequisites of Test
+
+	What is the setting of the test?
+	\item Test Actions
+
+	List the actions of the test. This includes the graphs of the test pattern.
+	\item Success Criteria
+
+	What is checked to state a successful test?
 \end{enumerate}
 \end{document}
