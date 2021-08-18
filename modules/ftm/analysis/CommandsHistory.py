@@ -86,81 +86,81 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
         if recordEntries:
           if 'schedule clear' in lines[i]:
             collect_lines = False
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-cmd $DM $OPTIONS halt\n')
             script.write(f'dm-sched $DM $OPTIONS clear\n')
           elif 'schedule add' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-sched $DM $OPTIONS add {dot_file_name}\n')
           elif 'schedule keep' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-sched $DM $OPTIONS keep {dot_file_name}\n')
           elif 'schedule remove' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-sched $DM $OPTIONS remove {dot_file_name}\n')
           elif 'schedule dump' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-sched $DM $OPTIONS status -o {dot_file_name}\n')
           elif 'table check result:' in lines[i]:
             collect_lines = False
-            script.write(f'# entry {entry_no}, {lines[i]}')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}, {lines[i]}')
           elif 'command execute' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'dm-cmd $DM $OPTIONS -i {dot_file_name}\n')
           elif 'is safe to remove' in lines[i]:
             collect_lines = False
             try:
               pattern_name = re.search('is safe to remove: (.+)$', lines[i]).group(1)
-              script.write(f'# entry {entry_no}\n')
+              script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
               script.write(f'dm-cmd $DM $OPTIONS chkrem {pattern_name}\n')
             except AttributeError:
               print(f'Pattern name not found: {lines[i]}, entry {entry_no}')
           elif 'result' in lines[i]:
             collect_lines = False
-            script.write(f'# entry {entry_no}, {lines[i]}')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}, {lines[i]}')
           elif 'queue status for pattern' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'status report' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'static flush pattern' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'queue report for pattern' in lines[i]:
             collect_lines = False
-            script.write(f'# entry {entry_no}, lines[i]')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}, lines[i]')
           elif 'set maintenance mode to true' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'set maintenance mode to false' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'set force schedule actions to true' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'set force schedule actions to false' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'set optimizeSafeToRemove to true' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
           elif 'set optimizeSafeToRemove to false' in lines[i]:
             collect_lines = True
-            script.write(f'# entry {entry_no}\n')
+            script.write(f'# entry {entry_no} {dtTestdate}\necho entry {entry_no} {dtTestdate}\n')
             script.write(f'# dm- $DM $OPTIONS  {dot_file_name}\n')
         if collect_lines:
           graph_lines.append(lines[i])
