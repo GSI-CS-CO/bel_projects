@@ -1,0 +1,4 @@
+digraph {
+	name="tmsg-target-tvalid-patentry_True"
+	A [type=tmsg target="B" tvalid=64 patentry=True]
+}
