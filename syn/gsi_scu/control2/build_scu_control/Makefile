@@ -182,7 +182,7 @@ endif
  STACK_SIZE  =  4096
 
 # SCU_URL = scuxl0118
- SCU_URL = scuxl0107
+# SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
@@ -197,6 +197,9 @@ DOX_MACRO_EXPANSION        = "YES"
 DOX_EXPAND_ONLY_PREDEF     = "YES"
 DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE __DAQ_SHARED_IO_T"
 DOX_DOTFILE_DIRS           += $(SCU_DIR)
+ifdef ADDAC_DAQ
+ DOX_DOTFILE_DIRS          += $(DAQ_LM32_DIR)
+endif
 
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/lm32-firmware
