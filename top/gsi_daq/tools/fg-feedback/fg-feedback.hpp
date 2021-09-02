@@ -229,6 +229,8 @@ public:
       return static_cast<Device*>(FgFeedbackAdministration::getDevice( socket ));
    }
 
+   bool isRunningOnScu( void ) const;
+
 //TODO  void onUnregistered( RingItem* pUnknownItem )  override;
 
    bool showUngegistered( void );

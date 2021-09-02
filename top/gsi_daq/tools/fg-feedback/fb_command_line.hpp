@@ -126,6 +126,11 @@ public:
       return m_verbose;
    }
 
+   bool isRunningOnScu( void ) const
+   {
+      return m_isRunningOnScu;
+   }
+
    const std::string& getGnuplotBinary( void )
    {
       return m_gnuplotBin;

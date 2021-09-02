@@ -390,6 +390,13 @@ void AllDaqAdministration::onUnregisteredAddacDaq( uint slot, uint daqNumber )
                     "\tnot registered" ); 
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+bool AllDaqAdministration::isRunningOnScu( void ) const
+{
+   return m_poCommandLine->isRunningOnScu();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
