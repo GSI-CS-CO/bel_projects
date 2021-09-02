@@ -402,84 +402,98 @@ int fbMain( int argc, char** ppArgv )
       DEBUG_MESSAGE( "Arg " << i << ": " << ppArgv[i] );
 #endif
 
-   CommandLine cmdLine( argc, ppArgv );
 
-   AllDaqAdministration* pDaqAdmin = cmdLine();
-
-   if( pDaqAdmin == nullptr )
+   bool repeat;
+   do
    {
-      DEBUG_MESSAGE( "EXIT_FAILURE" );
-      return EXIT_FAILURE;
-   }
+      repeat = false;
+      CommandLine cmdLine( argc, ppArgv );
+      AllDaqAdministration* pDaqAdmin = cmdLine();
 
-   DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getScuDomainName() );
-   int key;
-   Terminal oTerminal;
-   DEBUG_MESSAGE( "Entering loop" );
-   bool doReceive = true;
-   bool singleShoot = false;
-   uint gapReadInterval = 0;
-   constexpr uint gapReadTime = 10;
-   uint intervalTime = 0;
-   uint remainingData = 0;
-   while( (key = Terminal::readKey()) != '\e' )
-   {
-      switch( key )
+      if( pDaqAdmin == nullptr )
       {
-         case HOT_KEY_RECEIVE:
-         {
-            doReceive = !doReceive;
-            if( cmdLine.isVerbose() )
-               cout << "Plot "
-                    << (doReceive? "enable" : "disable" ) << endl;
-            break;
-         }
-         case HOT_KEY_RESET:
-         {
-            pDaqAdmin->reset();
-            if( cmdLine.isVerbose() )
-               cout << "Reset" << endl;
-            break;
-         }
-         case HOT_KEY_TOGGLE_SINGLE_SHOOT:
-         {
-            singleShoot = !singleShoot;
-            pDaqAdmin->setSingleShoot( singleShoot );
-            if( cmdLine.isVerbose() )
-               cout << "Single shoot is: "
-                    << (singleShoot? "enabled":"disabled") << endl;
-            break;
-         }
-         case HOT_KEY_TOGGLE_GAP_READING:
-         {
-            if( gapReadInterval == 0 )
-               gapReadInterval = gapReadTime;
-            else
-               gapReadInterval = 0;
-            pDaqAdmin->sendGapReadingInterval( gapReadInterval );
-            if( cmdLine.isVerbose() )
-               cout << "Gap reading " << ((gapReadInterval != 0)? "enabled" : "disabled") << endl;
-            break;
-         }
-         case HOT_KEY_PRINT_HISTORY:
-         {
-            if( cmdLine.isVerbose() )
-               cout << "Printing history..." << endl;
-            pDaqAdmin->sendSwi( FG::FG_OP_PRINT_HISTORY );
-         }
+         DEBUG_MESSAGE( "EXIT_FAILURE" );
+         return EXIT_FAILURE;
       }
 
-      const uint it = daq::getSysMicrosecs();
-      if( it >= intervalTime || remainingData != 0 )
+      DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getScuDomainName() );
+      int key;
+      Terminal oTerminal;
+      DEBUG_MESSAGE( "Entering loop" );
+      bool doReceive = true;
+      bool singleShoot = false;
+      uint gapReadInterval = 0;
+      constexpr uint gapReadTime = 10;
+      uint intervalTime = 0;
+      uint remainingData = 0;
+      while( ((key = Terminal::readKey()) != '\e') && !repeat )
       {
-         if( it >= intervalTime )
-            intervalTime = it + cmdLine.getPollInterwalTime() * 1000;
-         if( doReceive )
-            remainingData = pDaqAdmin->distributeData();
+         switch( key )
+         {
+            case HOT_KEY_RECEIVE:
+            {
+               doReceive = !doReceive;
+               if( cmdLine.isVerbose() )
+                  cout << "Plot "
+                       << (doReceive? "enable" : "disable" ) << endl;
+               break;
+            }
+            case HOT_KEY_RESET:
+            {
+               pDaqAdmin->reset();
+               if( cmdLine.isVerbose() )
+                  cout << "Reset" << endl;
+               break;
+            }
+            case HOT_KEY_TOGGLE_SINGLE_SHOOT:
+            {
+               singleShoot = !singleShoot;
+               pDaqAdmin->setSingleShoot( singleShoot );
+               if( cmdLine.isVerbose() )
+                  cout << "Single shoot is: "
+                       << (singleShoot? "enabled":"disabled") << endl;
+               break;
+            }
+            case HOT_KEY_TOGGLE_GAP_READING:
+            {
+               if( gapReadInterval == 0 )
+                  gapReadInterval = gapReadTime;
+               else
+                  gapReadInterval = 0;
+               pDaqAdmin->sendGapReadingInterval( gapReadInterval );
+               if( cmdLine.isVerbose() )
+                  cout << "Gap reading " << ((gapReadInterval != 0)? "enabled" : "disabled") << endl;
+               break;
+            }
+            case HOT_KEY_PRINT_HISTORY:
+            {
+               if( cmdLine.isVerbose() )
+                  cout << "Printing history..." << endl;
+               pDaqAdmin->sendSwi( FG::FG_OP_PRINT_HISTORY );
+               break;
+            }
+            case HOT_KEY_BUILD_NEW:
+            {
+               repeat = true;
+               if( cmdLine.isVerbose() )
+                  cout << "Restart..." << endl;
+               break;
+            }
+         }
+
+         const uint it = daq::getSysMicrosecs();
+         if( it >= intervalTime || remainingData != 0 )
+         {
+            if( it >= intervalTime )
+               intervalTime = it + cmdLine.getPollInterwalTime() * 1000;
+            if( doReceive )
+               remainingData = pDaqAdmin->distributeData();
+         }
+         ::usleep( 100 );
       }
-      ::usleep( 100 );
+      DEBUG_MESSAGE( "Loop left" );
    }
-   DEBUG_MESSAGE( "Loop left" );
+   while( repeat );
    return EXIT_SUCCESS;
 }
 

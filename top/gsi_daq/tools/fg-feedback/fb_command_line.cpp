@@ -130,6 +130,7 @@ vector<OPTION> CommandLine::c_optList =
               << HOT_KEY_RECEIVE  << ": Toggling receiving on / off\n"
               << HOT_KEY_TOGGLE_SINGLE_SHOOT << ": Toggling single shoot mode on / off\n"
               << HOT_KEY_PRINT_HISTORY << ": Prints the current LM32 history in a eb-console. (See option -H)\n"
+              << HOT_KEY_BUILD_NEW << ": Rebuilds the objects respectively restart.\n"
                  "Esc: Program termination\n"
                  "\nCommandline options:\n";
          poParser->list( cout );

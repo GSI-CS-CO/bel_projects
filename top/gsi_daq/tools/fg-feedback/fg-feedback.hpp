@@ -51,7 +51,9 @@
 #ifndef HOT_KEY_PRINT_HISTORY
   #define HOT_KEY_PRINT_HISTORY       'h'
 #endif
-
+#ifndef  HOT_KEY_BUILD_NEW
+  #define HOT_KEY_BUILD_NEW           'n'
+#endif
 
 namespace Scu
 {
