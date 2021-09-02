@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-June-2021
+ *  version : 26-Jul-2021
  *
  * subscribes to and displays status of a b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000241
+#define B2B_VIEWER_VERSION 0x000301
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -91,8 +91,8 @@ uint32_t set_injH;
 int32_t  set_injCTrig;
 int32_t  set_cPhase;                                        // b2b: phase correction [ns]
 double   set_cPhaseD;                                       // b2b: phase correction [degree]
-uint32_t set_msecs;                                         // EKS deadline, fraction [ms]
-time_t   set_secs;                                          // ESK deadline, time [s]
+uint32_t set_msecs;                                         // CBS deadline, fraction [ms]
+time_t   set_secs;                                          // CBS deadline, time [s]
 
 // b2b values
 double   flagB2bValid;                                      // flag b2b data are valid
@@ -108,7 +108,7 @@ double   b2b_beatNue;                                       // beat frequency
 double   b2b_beatT;                                         // beat period
 
 #define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x050               // ... mode EKS
+#define MSKRECMODE1 0x050               // ... mode CBS
 #define MSKRECMODE2 0x155               // ... mode B2E
 #define MSKRECMODE3 0x1f5               // ... mode B2C
 #define MSKRECMODE4 0x3ff               // ... mode B2B
@@ -304,7 +304,7 @@ int printBeat()
 int printSet(uint32_t sid)
 {
   char   modeStr[50];
-  char   tEKS[100];
+  char   tCBS[100];
   
   switch (set_mode) {
     case 0 :
@@ -312,7 +312,7 @@ int printSet(uint32_t sid)
       modeMask = 0;
       break;
     case 1 :
-      sprintf(modeStr, "'EVT_KICK_START'");
+      sprintf(modeStr, "'CMD_B2B_START'");
       modeMask = MSKRECMODE1;
       break;
     case 2 :
@@ -331,7 +331,7 @@ int printSet(uint32_t sid)
       sprintf(modeStr, "'unknonwn'");
   } // switch mode
 
-  strftime(tEKS, 19, "%H:%M:%S", gmtime(&set_secs));
+  strftime(tCBS, 19, "%H:%M:%S", gmtime(&set_secs));
   printf("--- set values ---                                                     v%8s\n", b2b_version_text(B2B_VIEWER_VERSION));
   switch (set_mode) {
     case 0 :
@@ -467,38 +467,38 @@ int printStatus(uint32_t sid)
   printf("\n");
 
   if (set_mode == 0) {
-    printf("fin-EKS [us]: %s\n", TXTNA);
-    printf("KTE-EKS [us]: %s\n", TXTNA);
+    printf("fin-CBS [us]: %s\n", TXTNA);
+    printf("KTE-CBS [us]: %s\n", TXTNA);
     printf("KTE-fin [us]: %s\n", TXTNA);
   }
   else {
     sdevKteFin = sqrt(pow(dicDiagstat.eks_doneOffSdev, 2)+pow(dicDiagstat.eks_kteOffSdev, 2));
-    printf("fin-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+    printf("fin-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_doneOffAct/1000.0, dicDiagstat.eks_doneOffAve/1000.0, dicDiagstat.eks_doneOffSdev/1000.0,
            (double)dicDiagstat.eks_doneOffMin/1000.0, (double)dicDiagstat.eks_doneOffMax/1000.0);
     printf("KTE-fin [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)(dicDiagstat.eks_kteOffAct-dicDiagstat.eks_doneOffAct)/1000.0, (dicDiagstat.eks_kteOffAve-dicDiagstat.eks_doneOffAve)/1000.0, sdevKteFin/1000.0,
            (double)(dicDiagstat.eks_kteOffMin-dicDiagstat.eks_doneOffMax)/1000.0, (double)(dicDiagstat.eks_kteOffMax-dicDiagstat.eks_doneOffMin)/1000.0);
-    printf("KTE-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+    printf("KTE-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_kteOffAct/1000.0, dicDiagstat.eks_kteOffAve/1000.0, dicDiagstat.eks_kteOffSdev/1000.0,
            (double)dicDiagstat.eks_kteOffMin/1000.0, (double)dicDiagstat.eks_kteOffMax/1000.0);
   }
   if (set_mode < 3)
-    printf("KTI-EKS [us]: %s\n", TXTNA);
+    printf("KTI-CBS [us]: %s\n", TXTNA);
   else
-    printf("KTI-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+    printf("KTI-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_ktiOffAct/1000.0, dicDiagstat.eks_ktiOffAve/1000.0, dicDiagstat.eks_ktiOffSdev/1000.0,
            (double)dicDiagstat.eks_ktiOffMin/1000.0, (double)dicDiagstat.eks_ktiOffMax/1000.0);
   if (set_mode <  2)
-    printf("t0E-EKS [us]: %s\n", TXTNA);
+    printf("t0E-CBS [us]: %s\n", TXTNA);
   else
-    printf("t0E-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+    printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_preOffAct/1000.0, dicDiagstat.eks_preOffAve/1000.0, dicDiagstat.eks_preOffSdev/1000.0,
            (double)dicDiagstat.eks_preOffMin/1000.0, (double)dicDiagstat.eks_preOffMax/1000.0);
   if (set_mode < 4)
-    printf("t0I-EKS [us]: %s\n", TXTNA);
+    printf("t0I-CBS [us]: %s\n", TXTNA);
   else
-    printf("t0I-EKS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+    printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.eks_priOffAct/1000.0, dicDiagstat.eks_priOffAve/1000.0, dicDiagstat.eks_priOffSdev/1000.0,
            (double)dicDiagstat.eks_priOffMin/1000.0, (double)dicDiagstat.eks_priOffMax/1000.0);
   return 12;                                                // 12 lines
@@ -559,14 +559,14 @@ void printData(int flagOnce, uint32_t sid, char *name)
   char   tLocal[100];
   time_t time_date;
   char   modeStr[50];
-  char   tEKS[100];
+  char   tCBS[100];
   
   switch (set_mode) {
     case 0 :
       sprintf(modeStr, "'off'");
       break;
     case 1 :
-      sprintf(modeStr, "'EVT_KICK_START'");
+      sprintf(modeStr, "'CMD_B2B_START'");
       break;
     case 2 :
       sprintf(modeStr, "'bunch 2 fast extraction'");
@@ -581,13 +581,13 @@ void printData(int flagOnce, uint32_t sid, char *name)
       sprintf(modeStr, "'unknonwn'");
   } // switch mode
 
-  strftime(tEKS, 19, "%H:%M:%S", gmtime(&set_secs));
+  strftime(tCBS, 19, "%H:%M:%S", gmtime(&set_secs));
   
   if (!flagOnce) {
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(tLocal,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m--- b2b viewer (%5s) ---   SID %02d %25s EKS @ %s.%03d\033[0m\n", name, sid, modeStr, tEKS, set_msecs);
+    printf("\033[7m--- b2b viewer (%5s) ---   SID %02d %25s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 

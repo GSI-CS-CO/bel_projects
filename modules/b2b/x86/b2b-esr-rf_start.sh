@@ -74,11 +74,11 @@ saft-io-ctl $SDPM -n IO3 -b 0xffffa03000000000
 saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU
-saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 450000 0x801 -dg
+saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 0 0x801 -d
 
 # lm32 listens to CMD_B2B_PMEXT message from ESR CBU 
-saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 450000 0x800 -dg
-saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 450000 0x800 -dg
+saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 0 0x800 -d
+saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 0 0x800 -d
 
 # lm32 listens to CMD_B2B_TRIGGERINJ message from SIS18 CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
@@ -86,12 +86,12 @@ saft-ecpu-ctl $SDPM -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
 # lm32 listens to CMD_B2B_TRIGGEREXT message from ESR CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x1154804000000000 0xfffffff000000000 20000 0x804 -dg
 
-# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMINJ) message from SIS18 CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 19500000 0x81f -d
+# lm32 listens to >> 9.9ms delayed<< (CMD_B2B_PMINJ) message from SIS18 CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 9900000 0x821 -d
 
 # lm32 listens to >> 20ms delayed<< (CMD_B2B_PMEXT) message from ESR CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 19500000 0x81e -d
-saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 19500000 0x81e -d
+saft-ecpu-ctl $SDPM -c 0x13a5800000000000 0xfffffff000000000 9900000 0x820 -d
+saft-ecpu-ctl $SDPM -c 0x13a6800000000000 0xfffffff000000000 9900000 0x820 -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGERINJ message from SIS18 CBU
 saft-io-ctl $SDPM -n IO1 -o 1 -t 0
@@ -107,22 +107,17 @@ echo -e b2b: configure $SDCBU as cbu
 ###########################################
 # configure CBU
 ###########################################
-# lm32 listens to EVT_KICK_START_2 (!!!)  message from DM, 500us pretrigger
-saft-ecpu-ctl $SDCBU -c 0x1154045000000000 0xfffffff000000000 500000 0x031 -dg
+# lm32 listens to CMD_B2B_START  message from DM
+saft-ecpu-ctl $SDCBU -c 0x115481f000000000 0xfffffff000000000 0 0x031 -d
 
-# lm32 listens to CMD_B2B_PREXT message from extraction machine
-saft-ecpu-ctl $SDCBU -c 0x13a5802000000000 0xfffffff000000000 500000 0x802 -dg
-saft-ecpu-ctl $SDCBU -c 0x13a6802000000000 0xfffffff000000000 500000 0x802 -dg
+# lm32 listens to CMD_B2B_PREXT message from extraction machine, 450us pretrigger
+saft-ecpu-ctl $SDCBU -c 0x13a5802000000000 0xfffffff000000000 450000 0x802 -dg
+saft-ecpu-ctl $SDCBU -c 0x13a6802000000000 0xfffffff000000000 450000 0x802 -dg
 
 # lm32 listens to CMD_B2B_PRINJ message from injection machine, only for B2B, later
 #saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
 
-# diag: generate pulse upon EVT_KICK_START_1 (!!!) event
+# diag: generate pulse upon CMD_B2B_START event
 saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO1 -c 0x1154031000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO1 -c 0x1154031000000000 0xfffffff000000000 10000000 0x0 0 -u
-
-# diag: generate pulse upon EVT_KICK_START_2 (!!!) event
-saft-io-ctl $SDCBU -n IO2 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO2 -c 0x1154045000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO2 -c 0x1154045000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl $SDCBU -n IO1 -c 0x115481f000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl $SDCBU -n IO1 -c 0x115481f000000000 0xfffffff000000000 10000000 0x0 0 -u

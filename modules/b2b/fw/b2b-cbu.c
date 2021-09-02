@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Apr-2021
+ *  version : 26-Jul-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000241                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000301                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -66,20 +66,28 @@ unsigned int     cpuId, cpuQty;
 uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
-// public variables
-// set values for a single commit
-volatile uint32_t *pSharedSetGid;       // pointer to a "user defined" u32 register; here: group ID of extraction machine
-volatile uint32_t *pSharedSetSid;       // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
-volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of B2B transfer
+// public variables; set-values are split into two parts due to a LSA requirement
+// set values for a single commit, extraction 
+volatile uint32_t *pSharedSetSidEExt;   // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
+volatile uint32_t *pSharedSetGidExt;    // pointer to a "user defined" u32 register; here: b2b group ID of extraction ring
+volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of b2b transfer
 volatile uint32_t *pSharedSetTH1ExtHi;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedSetTH1ExtLo;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
 volatile uint32_t *pSharedSetNHExt;     // pointer to a "user defined" u32 register; here: harmonic number extraction
+volatile int32_t  *pSharedSetCTrigExt;  // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t  *pSharedSetNBuckExt;  // pointer to a "user defined" u32 register; here: bucket numer of extraction
+volatile int32_t  *pSharedSetCPhase;    // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile uint32_t *pSharedSetFFinTune;  // pointer to a "user defined" u32 register; here: flag: use fine tune
+volatile uint32_t *pSharedSetFMBTune;   // pointer to a "user defined" u32 register; here: use multi-beat tune
+
+// set values for a single commit, injection
+volatile uint32_t *pSharedSetSidEInj;   // pointer to a "user defined" u32 register; here: sequence ID of injection machine
+volatile uint32_t *pSharedSetGidInj;    // pointer to a "user defined" u32 register; here: b2b GID offset of injection ring
 volatile uint32_t *pSharedSetTH1InjHi;  // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
 volatile uint32_t *pSharedSetTH1InjLo;  // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
 volatile uint32_t *pSharedSetNHInj;     // pointer to a "user defined" u32 register; here: harmonic number injection
-volatile int32_t  *pSharedSetCPhase;    // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
-volatile int32_t  *pSharedSetCTrigExt;  // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
 volatile int32_t  *pSharedSetCTrigInj;  // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile int32_t  *pSharedSetNBuckInj;  // pointer to a "user defined" u32 register; here: bucket numer of injection
 
 // set values for all SIDs; the index equals the SID
 uint32_t setFlagValid[B2B_NSID];            
@@ -89,25 +97,29 @@ uint64_t setTH1Ext[B2B_NSID];
 uint32_t setNHExt[B2B_NSID];
 uint64_t setTH1Inj[B2B_NSID];
 uint32_t setNHInj[B2B_NSID];
-uint32_t setCPhase[B2B_NSID];
-uint32_t setCTrigExt[B2B_NSID];
-uint32_t setCTrigInj[B2B_NSID];
+int32_t  setCPhase[B2B_NSID];
+int32_t  setCTrigExt[B2B_NSID];
+int32_t  setCTrigInj[B2B_NSID];
+int32_t  setNBuckExt[B2B_NSID];
+int32_t  setNBuckInj[B2B_NSID];
+uint32_t setFFinTune[B2B_NSID];
+uint32_t setFMBTune[B2B_NSID];
 
 // get values
-volatile uint32_t *pSharedGetGid;       // pointer to a "user defined" u32 register; here: group ID of extraction machine
 volatile uint32_t *pSharedGetSid;       // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
-volatile uint32_t *pSharedGetMode;      // pointer to a "user defined" u32 register; here: mode of B2B transfer
+volatile uint32_t *pSharedGetGid;       // pointer to a "user defined" u32 register; here: b2b group ID of extraction machine
+volatile uint32_t *pSharedGetMode;      // pointer to a "user defined" u32 register; here: mode of b2b transfer
 volatile uint32_t *pSharedGetTH1ExtHi;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedGetTH1ExtLo;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
 volatile uint32_t *pSharedGetNHExt;     // pointer to a "user defined" u32 register; here: harmonic number extraction
 volatile uint32_t *pSharedGetTH1InjHi;  // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
 volatile uint32_t *pSharedGetTH1InjLo;  // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
 volatile uint32_t *pSharedGetNHInj;     // pointer to a "user defined" u32 register; here: harmonic number injection
-volatile uint32_t *pSharedGetTBeatHi;   // pointer to a "user defined" u32 register; here: period of beating, high bits
-volatile uint32_t *pSharedGetTBeatLo;   // pointer to a "user defined" u32 register; here: period of beating, low bits
 volatile int32_t  *pSharedGetCPhase;    // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
 volatile int32_t  *pSharedGetCTrigExt;  // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
 volatile int32_t  *pSharedGetCTrigInj;  // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile uint32_t *pSharedGetTBeatHi;   // pointer to a "user defined" u32 register; here: period of beating, high bits
+volatile uint32_t *pSharedGetTBeatLo;   // pointer to a "user defined" u32 register; here: period of beating, low bits
 volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t gid;                           // GID used for transfer
@@ -122,7 +134,12 @@ uint64_t TBeat;                         // beating frquency
 int32_t  cPhase;                        // correction for phase matching [ns]
 int32_t  cTrigExt;                      // correction for extraction trigger
 int32_t  cTrigInj;                      // correction for injection trigger
-uint64_t tEKS;                          // deadline of EVT_KICK_START
+int32_t  nBucketExt;                    // number of bucket for extraction
+int32_t  nBucketInj;                    // number of bucket for injection
+int      fFineTune;                     // flag: use fine tuning
+int      fMBTune;                       // flag: use multi-beat tuning
+/* uint64_t tEKS;                          // deadline of EVT_KICK_START */
+uint64_t tCBS;                          // deadline of CMD_B2B_START
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
@@ -159,18 +176,26 @@ void initSharedMem() // determine address and clear shared mem
   
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
-  pSharedSetGid           = (uint32_t *)(pShared + (B2B_SHARED_SET_GID        >> 2));
-  pSharedSetSid           = (uint32_t *)(pShared + (B2B_SHARED_SET_SID        >> 2));
+  pSharedSetSidEExt       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEEXT    >> 2));
+  pSharedSetGidExt        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDEXT     >> 2));
   pSharedSetMode          = (uint32_t *)(pShared + (B2B_SHARED_SET_MODE       >> 2));
   pSharedSetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTHI   >> 2));
   pSharedSetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTLO   >> 2));
   pSharedSetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHEXT      >> 2));
+  pSharedSetCTrigExt      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGEXT   >> 2));
+  pSharedSetNBuckExt      = (uint32_t *)(pShared + (B2B_SHARED_SET_NBUCKEXT   >> 2));
+  pSharedSetCPhase        =  (int32_t *)(pShared + (B2B_SHARED_SET_CPHASE     >> 2));
+  pSharedSetFFinTune      = (uint32_t *)(pShared + (B2B_SHARED_SET_FFINTUNE   >> 2));
+  pSharedSetFMBTune       = (uint32_t *)(pShared + (B2B_SHARED_SET_FMBTUNE    >> 2));
+  
+  pSharedSetSidEInj       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEINJ    >> 2));
+  pSharedSetGidInj        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDINJ     >> 2));
   pSharedSetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJHI   >> 2));
   pSharedSetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJLO   >> 2));
   pSharedSetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHINJ      >> 2));
-  pSharedSetCPhase        =  (int32_t *)(pShared + (B2B_SHARED_SET_CPHASE     >> 2));
-  pSharedSetCTrigExt      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGEXT   >> 2));
   pSharedSetCTrigInj      =  (int32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
+  pSharedSetNBuckInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
+  
   pSharedGetGid           = (uint32_t *)(pShared + (B2B_SHARED_GET_GID        >> 2));
   pSharedGetSid           = (uint32_t *)(pShared + (B2B_SHARED_GET_SID        >> 2));
   pSharedGetMode          = (uint32_t *)(pShared + (B2B_SHARED_GET_MODE       >> 2));
@@ -224,16 +249,20 @@ void clearAllSid()
 {
   int i;
   for (i=0; i<B2B_NSID; i++) {
-    setFlagValid[i] = 0;            
-    setGid[i]       = 0;
-    setMode[i]      = 0;
-    setTH1Ext[i]    = 0;
-    setNHExt[i]     = 0;
-    setTH1Inj[i]    = 0;
-    setNHInj[i]     = 0;
-    setCPhase[i]    = 0;
-    setCTrigExt[i]  = 0;
-    setCTrigInj[i]  = 0;
+    setFlagValid[i]  = 0;            
+    setGid[i]        = 0;
+    setMode[i]       = 0;
+    setTH1Ext[i]     = 0;
+    setNHExt[i]      = 0;
+    setTH1Inj[i]     = 0;
+    setNHInj[i]      = 0;
+    setCPhase[i]     = 0;
+    setCTrigExt[i]   = 0;
+    setCTrigInj[i]   = 0;
+    setNBuckExt[i]   = 0;
+    setNBuckInj[i]   = 0;
+    setFFinTune[i]   = 0;
+    setFMBTune[i]    = 0;
   } // for i
 } // clearAllSid
 
@@ -241,25 +270,34 @@ void clearAllSid()
 uint32_t setSubmit()
 {
   int sid;
-  if (*pSharedSetSid > 15)  return COMMON_STATUS_OUTOFRANGE;
-  else                      sid = *pSharedSetSid;
+  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
+  else sid = *pSharedSetSidEExt; 
+
+  if (*pSharedSetSidEInj != sid) return COMMON_STATUS_ERROR;
   /* more checking required chk */
+
   setFlagValid[sid]    = 0;
 
-  setGid[sid]          = *pSharedSetGid;     
   setMode[sid]         = *pSharedSetMode;    
+  setGid[sid]          = *pSharedSetGidExt;
+  if ((setMode[sid] == 3) || (setMode[sid] == 4)) setGid[sid] += *pSharedSetGidInj;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtLo) | setTH1Ext[sid];
   setNHExt[sid]        = *pSharedSetNHExt;   
   setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjHi) << 32;
   setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjLo) | setTH1Inj[sid];
   setNHInj[sid]        = *pSharedSetNHInj;   
-  setCPhase[sid]       = *pSharedSetCPhase;  
-  setCTrigExt[sid]     = *pSharedSetCTrigExt;
-  setCTrigInj[sid]     = *pSharedSetCTrigInj;
-
+  setCPhase[sid]       = (int32_t)(*pSharedSetCPhase);  
+  setCTrigExt[sid]     = (int32_t)(*pSharedSetCTrigExt);
+  setCTrigInj[sid]     = (int32_t)(*pSharedSetCTrigInj);
+  setNBuckExt[sid]     = (int32_t)(*pSharedSetNBuckExt);
+  setNBuckInj[sid]     = (int32_t)(*pSharedSetNBuckInj);
+  setFFinTune[sid]     = *pSharedSetFFinTune;
+  setFMBTune[sid]      = *pSharedSetFMBTune;
+  
   setFlagValid[sid]    = 1;
-  pp_printf("submit %u\n", sid);
+  
+  DBPRINT3("submit %u\n", sid);
   return COMMON_STATUS_OK;
 } // setSubmit
 
@@ -303,19 +341,27 @@ uint32_t extern_entryActionOperation()
   while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
-  // init set values
-  *pSharedSetGid         = 0x0;     
-  *pSharedSetSid         = 0x0;     
+  // init set values extraction
+  *pSharedSetGidExt      = 0x0;     
+  *pSharedSetSidEExt     = 0x0;     
   *pSharedSetMode        = 0x0;    
   *pSharedSetTH1ExtHi    = 0x0;
   *pSharedSetTH1ExtLo    = 0x0;
   *pSharedSetNHExt       = 0x0;   
-  *pSharedSetTH1InjHi    = 0x0;
-  *pSharedSetTH1InjLo    = 0x0;
-  *pSharedSetNHInj       = 0x0;   
   *pSharedSetCPhase      = 0x0;  
   *pSharedSetCTrigExt    = 0x0;  
   *pSharedSetCTrigInj    = 0x0;
+  *pSharedSetNBuckExt    = 0x0;
+  *pSharedSetFFinTune    = 0x0;
+  *pSharedSetFMBTune     = 0x0;
+
+  // init set values injection
+  *pSharedSetGidInj      = 0x0;     
+  *pSharedSetSidEInj     = 0x0;     
+  *pSharedSetTH1InjHi    = 0x0;
+  *pSharedSetTH1InjLo    = 0x0;
+  *pSharedSetNHInj       = 0x0;
+  *pSharedSetNBuckInj    = 0x0;
     
   // init get values
   *pSharedGetGid         = 0x0;
@@ -388,7 +434,7 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
   return COMMON_STATUS_OK;
 } // calcExtTime
 
-
+/*
 // send event for MIL busses; this is intended for the WR->MIL Gateways for the timing groups ESR_RING and SIS18_RING
 void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
 {
@@ -411,7 +457,7 @@ void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
   fwlib_ebmWriteTM(deadline, sendEvtId, 0, 0);
 #endif
 } // sendMilTrigger
-
+*/
 
 // fine tune for individual h=1 cycles
 void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t *dt)
@@ -629,12 +675,12 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
-    case B2B_MODE_KSE :  // extraction beam now!
+    case B2B_MODE_BSE :  // extraction at earlist deadline for kicker trigger!
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState =  B2B_MFSM_EXTKST;
+          nextMState =  B2B_MFSM_EXTKICK;
           break;
-        case B2B_MFSM_EXTKST :
+        case B2B_MFSM_EXTKICK :
           nextMState =  B2B_MFSM_EXTTRIG;
           break;
         case B2B_MFSM_EXTTRIG :
@@ -740,7 +786,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendParam;                                         // param to send
   uint32_t sendGid;                                           // GID to send
   uint64_t recDeadline;                                       // deadline received
-  uint64_t reqDeadline;                                       // deadline requested by sender
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
@@ -760,10 +805,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
   switch (ecaAction) {
 
-    case B2B_ECADO_KICKSTART :                                // received: EVT_KICK_START1/2 from DM; B2B transfer starts
-      reqDeadline = recDeadline + (uint64_t)COMMON_AHEADT;    // ECA is configured to pre-trigger ahead of time!!!
+    case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
+      // process any pending set-values
+      setSubmit();
+      
+      // clear 'local' variables
       sid        = (uint32_t)(recId >> 20) & 0xfff;
       gid        = 0x0;
       bpid       = 0x0;
@@ -776,8 +824,14 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase     = 0x0;
       cTrigExt   = 0x0;
       cTrigInj   = 0x0;
+      nBucketExt = 0x0;
+      nBucketInj = 0x0;
+      fFineTune  = 0x0;
+      fMBTune    = 0x0;
+      tCBS       = 0x0;
+
       transStat  = 0x0;
-      
+
       if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
       if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid        = setGid[sid]; 
@@ -792,15 +846,18 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase     = setCPhase[sid];
       cTrigExt   = setCTrigExt[sid];
       cTrigInj   = setCTrigInj[sid];
+      nBucketExt = setNBuckExt[sid];
+      nBucketInj = setNBuckInj[sid];
+      fFineTune  = setFFinTune[sid];
+      fMBTune    = setFMBTune[sid];
 
-      tEKS       = reqDeadline;
+      tCBS       = recDeadline;
       nTransfer++;
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
-      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
       comLatency    = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
@@ -821,7 +878,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PRINJ :                                // received: measured phase from injection machine
-      reqDeadline   = recDeadline + (uint64_t)COMMON_AHEADT;  // ECA is configured to pre-trigger ahead of time!!!
       comLatency    = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
@@ -845,10 +901,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     default :
       return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
-      
-  // trigger at time of EVT_KICK_START1/2 of extraction machine
-  if (mState == B2B_MFSM_EXTKST) {
-    tTrig      = reqDeadline;                
+
+  // trigger at earliest kicker deadline
+  if (mState == B2B_MFSM_EXTKICK) {
+    tTrig      = tCBS + B2B_KICKOFFSET;                
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTC
@@ -861,7 +917,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0, sid, bpid, 0); 
     sendParam    = TH1Ext & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHExt & 0xff) << 56);              // use upper 8 bit as harmonic number 
-    sendDeadline = reqDeadline + 1;                                           // add 1ns to avoid collisions with EVT_KICK_START
+    sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to B2BS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
@@ -875,7 +931,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0, sid, bpid, 0); 
     sendParam    = TH1Inj & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHInj & 0xff) << 56);              // use upper 8 bit as harmonic number 
-    sendDeadline = reqDeadline + 2;                                           // add 2ns to avoid collisions with EVT_KICK_START or CMD_B2B_PMEXT
+    sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
     mState     = getNextMState(mode, mState);
@@ -883,7 +939,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction in bunch gap: calculate trigger time
   if (mState == B2B_MFSM_EXTBGT) {
-    tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;
     if (errorFlags) tTrig = tWantExt;                                         // plan B
     else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
       tTrig       = tWantExt;                                                 // plan B
@@ -896,7 +952,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
   if (mState == B2B_MFSM_EXTMATCHT) {
-    tWantExt = reqDeadline + (uint64_t)COMMON_AHEADT;    
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;    
     if (errorFlags) tTrig =  tWantExt;                                        // plan B
     else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat)) != COMMON_STATUS_OK) {
         tTrig       = tWantExt;                                               // plan B
@@ -913,7 +969,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    offsetDone   = (int32_t)(getSysTime() - tEKS);
+    offsetDone   = (int32_t)(getSysTime() - tCBS);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, 0, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
@@ -957,7 +1013,6 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
-  //uint32_t dummy1;                              // dummy parameter
   uint32_t *buildID;                            // WB address of build ID
 
   // init local variables
@@ -968,7 +1023,9 @@ int main(void) {
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
   nTransfer      = 0x0;
-
+  
+  pp_printf("\nhallo\nhuhu\n");
+  
   init();                                                                     // initialize stuff for lm32
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-cbu", B2BCBU_FW_VERSION); // init common stuff
   initSharedMem();                                                            // initialize shared memory
