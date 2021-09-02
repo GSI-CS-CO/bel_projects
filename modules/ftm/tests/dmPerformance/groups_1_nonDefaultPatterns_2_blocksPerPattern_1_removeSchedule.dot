@@ -1,0 +1,15 @@
+digraph g {
+name="G1_P1_SCHEDULE";
+
+graph[]
+
+  "G1_P1_BLOCK0" [type="block", cpu="0", patentry="false", patexit="false", pattern="G1_P1", tperiod="100000000", qlo="0", qhi="0", qil="0"];
+  "G1_P1_ENTRY" [type="block", cpu="0", patentry="true", patexit="false", pattern="G1_P1", tperiod="100000000", qlo="0", qhi="0", qil="0"];
+  "G1_P1_REPCOUNT_BLOCK" [type="block", cpu="0", patentry="false", patexit="false", pattern="G1_P1", tperiod="0", qlo="1", qhi="0", qil="0"];
+  "G1_P1_EXIT" [type="block", cpu="0", patentry="false", patexit="true", pattern="G1_P1", tperiod="100000000", qlo="1", qhi="1", qil="1"];
+  "G1_P1_ENTRY" -> "G1_P1_BLOCK0" [type="defdst"];
+  "G1_P1_BLOCK0" -> "G1_P1_REPCOUNT_BLOCK" [type="defdst"];
+  "G1_P1_REPCOUNT_BLOCK" -> "G1_P1_EXIT" [type="defdst"];
+  "G1_P1_EXIT" -> "G1_P1_ENTRY" [type="defdst"];
+
+}

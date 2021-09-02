@@ -1,0 +1,4 @@
+digraph {
+	name="tperiod-qlo"
+	A [type=block tperiod=10 qlo=1 qhi=0 qil=0]
+}

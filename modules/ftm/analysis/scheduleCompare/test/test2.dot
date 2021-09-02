@@ -1,0 +1,11 @@
+digraph G {
+name="test2"
+graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_PPS[cpu="2", flags="0x0010c107", type="block", tperiod="1000000000", pattern="PPS_TEST", patentry="false", patexit="true", beamproc="B3", bpentry="false", bpexit="true", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Evt_PPS[cpu="2", flags="0x00003102", type="tmsg", toffs="0", pattern="PPS_TEST", patentry="true", patexit="false", beamproc="B1", bpentry="true", bpexit="false", fid="1", gid="5", evtno="215", beamin="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x10050cd000200200", par="0x0000000000000234", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_PPS2[cpu="2", flags="0x00000102", type="tmsg", toffs="0", pattern="PPS_TEST", patentry="false", patexit="false", beamproc="B2", bpentry="false", bpexit="false", fid="1", gid="5", evtno="205", sid="2", bpid="8", par="0x0000000000000123", tef="0", shape     = "oval", fillcolor = "green"];
+Evt_PPS->B_PPS [type="defdst", color     = "red"];
+Evt_PPS2->Evt_PPS [type="defdst", color     = "red"];
+B_PPS->Evt_PPS2 [type="defdst", color     = "red"];
+}

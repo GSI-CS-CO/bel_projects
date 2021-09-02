@@ -1,0 +1,10 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A_BLOCK[cpu="0", flags="0x00008007", type="block", tperiod="5000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+A_FL[cpu="0", flags="0x00002005", type="flush", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", tvalid="0", vabs="true", prio="1", shape     = "hexagon", qlo="true", qhi="false", qil="false", fillcolor = "white", penwidth=2, color = "darkorange3"];
+A_M[cpu="0", flags="0x00000002", type="tmsg", toffs="500", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="300", evtno="255", beamin="0", sid="5", bpid="32", reqnobeam="0", vacc="0", id="0x112c0ff000500800", par="0x0000140000000000", tef="0", shape     = "oval", fillcolor = "white"];
+A_BLOCK->A_FL [type="defdst", color     = "red"];
+A_FL->A_M [type="defdst", color     = "red"];
+A_M->A_BLOCK [type="defdst", color     = "red"];
+}

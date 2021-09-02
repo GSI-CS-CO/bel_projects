@@ -1,0 +1,6 @@
+digraph G {
+   name=remove1
+   Block_PPS1[cpu=1 type=blockalign tperiod=1000000000 pattern=PPS1_TEST patentry=0 patexit=1]
+   Evt_PPS1[cpu=1 type=tmsg toffs=0 pattern=PPS1_TEST patentry=1 patexit=0 fid=1 par="0x234" tef=0]
+   Evt_PPS1 -> Block_PPS1 -> Evt_PPS1 [type=defdst]
+}

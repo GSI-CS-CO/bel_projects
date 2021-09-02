@@ -1,0 +1,4 @@
+digraph {
+	name="flow-target-tvalid-tabs"
+	A [type=flow target="target1" tvalid=300 tabs=1]
+}

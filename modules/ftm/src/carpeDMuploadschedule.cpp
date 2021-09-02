@@ -149,19 +149,21 @@ using namespace DotStr::Misc;
 
   }
 
+  /** For the given graph generate the meta vertices for blocks, fixed
+   * blocks and aligned blocks. For each block check the attributes and
+   * the outgoing edges for the types 'priolo', 'priohi', 'prioil',
+   * 'listdst', 'altdst'. If the required meta vertices do not exist,
+   * generate these.
+   */
   void CarpeDM::CarpeDMimpl::generateBlockMeta(Graph& g) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       std::string cmp = g[v].type;
-
-
-
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
         //std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
-        
 
         bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasMultiDst, hasDstLst;
         try{
@@ -169,29 +171,25 @@ using namespace DotStr::Misc;
               genHi = s2u<bool>(g[v].qHi);  hasHi = false;
               genLo = s2u<bool>(g[v].qLo);  hasLo = false;
               hasMultiDst = false; hasDstLst = false;
-
         } catch (std::runtime_error const& err) {
           throw std::runtime_error( "Parser error when processing node <" + g[v].name + ">. Cause: " + err.what());
-        }      
+        }
 
         for (out_cur = out_begin; out_cur != out_end; ++out_cur)
         {
-
           if (g[*out_cur].type == det::sQPrio[PRIO_IL]) hasIl       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_HI]) hasHi       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_LO]) hasLo       = true;
           if (g[*out_cur].type == det::sAltDst)         hasMultiDst = true;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
-
         //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v);         }
-
+        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v); }
       }
     }
   }
@@ -284,7 +282,7 @@ using namespace DotStr::Misc;
         cpu  = s2u<uint8_t>(gUp[v].cpu);
         } catch (std::runtime_error const& err) {
           throw std::runtime_error( "Parser error when processing cpu tags of node <" + name + ">. Cause: " + err.what());
-        } 
+        }
         //add flags for beam process and pattern entry and exit points
         try {
         flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS)
@@ -294,7 +292,7 @@ using namespace DotStr::Misc;
 
         } catch (std::runtime_error const& err) {
           throw std::runtime_error( "Parser error when processing pattern/BP entry/exit tags of node <" + name + ">. Cause: " + err.what());
-        }      
+        }
 
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
@@ -433,6 +431,10 @@ using namespace DotStr::Misc;
 
   }
 
+  /** Use the current download graph and allocation table as base for the
+   * upload. Clear upload graph and allocation table. Download schedule from
+   * firmware and copy this to the upload graph and allocation table.
+   */
   void CarpeDM::CarpeDMimpl::baseUploadOnDownload() {
     //init up graph from down
     gUp.clear(); //Necessary?
@@ -443,7 +445,6 @@ using namespace DotStr::Misc;
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
     vertex_map_t vmap;
     mycopy_graph<Graph>(gDown, gUp, vmap);
-
   }
 
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
@@ -626,6 +627,9 @@ using namespace DotStr::Misc;
     hm.clear();
   }
 
+  /** Check that all vertex names of g are in the current HashMap hm and
+   * in the current GroupTable gt. This is used for remove and keep operations.
+   */
   void CarpeDM::CarpeDMimpl::checkTablesForSubgraph(Graph& g) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable

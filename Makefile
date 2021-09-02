@@ -73,6 +73,13 @@ define check_timing
 	@echo "Success! All Timing requirements were met!"
 endef
 
+define ldconfig_note
+	@echo ""
+	@echo "***************************************************************************"
+	@echo "Attention: New libraries have been installed, you may need to run ldconfig!"
+	@echo "***************************************************************************"
+endef
+
 all:		etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
@@ -95,6 +102,7 @@ etherbone-clean::
 
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api DESTDIR=$(STAGING) install
+	$(call ldconfig_note)
 
 saftlib::
 	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
@@ -106,6 +114,7 @@ saftlib-clean::
 
 saftlib-install::
 	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
+	$(call ldconfig_note)
 
 tools::		etherbone
 	$(MAKE) -C tools all
@@ -460,3 +469,4 @@ git_submodules_update:
 
 git_submodules_init:
 	@./fix-git.sh
+

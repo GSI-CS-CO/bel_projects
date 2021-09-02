@@ -124,7 +124,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   // ID output depends on FID field
   uint64_t id = el.getId();
   uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK);
-  if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + el.getName() + "'");
+  if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " within ID field of Node '" + el.getName() + "'");
   //ouput ID subfields
   vPf& vF = idFormats[fid];
   for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), FormatNum::DEC); }
