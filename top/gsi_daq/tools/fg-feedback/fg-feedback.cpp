@@ -229,10 +229,19 @@ void FbChannel::addItem( const uint64_t time,
 void FbChannel::onData( uint64_t wrTimeStamp, DAQ_T actValue,
                                               DAQ_T setValue )
 {
-   if( m_pPlot == nullptr )
-      return;
-
    m_callCount++;
+
+   if( m_pPlot == nullptr )
+   {
+      cout << "fg-" << getSocket() << '-' << getFgNumber() << ":  "
+           << wrTimeStamp
+           << ",   set: " << setValue
+           << ",   act: " << actValue
+           << ",   count: " << m_callCount
+           << endl;
+      return;
+   }
+
    m_currentTime = wrTimeStamp;
    if( m_state != START )
    {
@@ -335,6 +344,24 @@ void FbChannel::onActSetBlockDeviation( const uint setSequ, const uint actSequ )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
+Device::~Device( void )
+{
+   vector<FbChannel*> vChannels;
+
+   for( const auto& i: *this )
+   {
+      vChannels.push_back( static_cast<FbChannel*>(i) );
+   }
+
+   for( const auto& channel: vChannels )
+   {
+      delete channel;
+   }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 AllDaqAdministration::AllDaqAdministration( CommandLine* m_poCommandLine,
@@ -348,7 +375,17 @@ AllDaqAdministration::AllDaqAdministration( CommandLine* m_poCommandLine,
  */
 AllDaqAdministration::~AllDaqAdministration( void )
 {
+   vector<Device*>    vDevices;
 
+   for( const auto& i: *this )
+   {
+      vDevices.push_back( static_cast<Device*>(i) );
+   }
+
+   for( const auto& device: vDevices )
+   {
+      delete device;
+   }
 }
 
 /*! ---------------------------------------------------------------------------

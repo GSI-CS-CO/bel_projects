@@ -198,6 +198,8 @@ class Device: public FgFeedbackDevice
 public:
    Device( uint n ): FgFeedbackDevice( n ) {}
 
+   virtual ~Device( void );
+
    FbChannel* getDaqCompare( const uint address )
    {
       return static_cast<FbChannel*>(FgFeedbackDevice::getChannel( address ));
