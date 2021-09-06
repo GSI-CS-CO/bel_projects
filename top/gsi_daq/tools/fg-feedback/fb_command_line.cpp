@@ -689,6 +689,21 @@ vector<OPTION> CommandLine::c_optList =
                     "A value of zero (default) means no waiting time between two calls of the\n"
                     "polling function \"distributeData()\", otherwise the in this option given\n"
                     "waiting time will expired between consecutive calls of \"distributeData()\"."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_noPlot = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'N',
+      .m_longOpt  = "noplot",
+      .m_helpText = "Suppressing the calling of Gnuplot, that means no graphic output.\n"
+                    "In this case set- and actual values becomes printed directly on standard out.\n"
+                    "NOTE: The graphic output becomes also suppressed when the hardware doesn't support it.\n"
+                    "      E.g.: This program runs directly on a SCU."
    }
 };
 
@@ -771,6 +786,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_doClearBuffer( false )
    ,m_zoomYAxis( false )
    ,m_exitOnError( false )
+   ,m_noPlot( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )

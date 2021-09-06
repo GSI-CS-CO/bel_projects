@@ -85,6 +85,7 @@ class CommandLine: public PARSER
    bool                       m_doClearBuffer;
    bool                       m_zoomYAxis;
    bool                       m_exitOnError;
+   bool                       m_noPlot;
    float                      m_xAxisLen;
    uint                       m_plotInterval;
    uint                       m_throttleThreshold;
@@ -199,6 +200,11 @@ public:
    bool isExitOnError( void ) const
    {
       return m_exitOnError;
+   }
+
+   bool doNotPlot( void ) const
+   {
+      return m_noPlot;
    }
 
    uint getPollInterwalTime( void )
