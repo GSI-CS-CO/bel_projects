@@ -135,6 +135,12 @@ uint64_t FbChannel::getPlotIntervalTime( void )
  */
 void FbChannel::onInit( void )
 {
+   if( getCommandLine()->doNotPlot() )
+      return;
+
+   if( getParent()->getParent()->isRunningOnScu() )
+      return;
+
    if( m_pPlot != nullptr )
       return;
 
