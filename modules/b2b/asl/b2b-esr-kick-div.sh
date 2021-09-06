@@ -8,5 +8,5 @@ ARCH=$(/bin/uname -m)
 HOSTNAME=$(/bin/hostname -s)
 
 log 'start other stuff'
-export DIM_DNS_NODE=lxds014.gsi.de
+export DIM_DNS_NODE=asl105
 b2b-serv-sys dev/wbm0 -s esr-kdx &
