@@ -50,18 +50,17 @@ echo -e b2b: configure $SDCBU as cbu
 ###########################################
 # configure CBU
 ###########################################
-# lm32 listens to EVT_KICK_START1  message from DM, 500us pretrigger
-saft-ecpu-ctl $SDCBU -c 0x112c031000000000 0xfffffff000000000 500000 0x031 -dg
+# lm32 listens to CMD_B2B_START message from DM
+saft-ecpu-ctl $SDCBU -c 0x112c81f000000000 0xfffffff000000000 0 0x81f -d
 
-# lm32 listens to CMD_B2B_PREXT message from extraction machine
-saft-ecpu-ctl $SDCBU -c 0x13a0802000000000 0xfffffff000000000 500000 0x802 -dg
-saft-ecpu-ctl $SDCBU -c 0x13a1802000000000 0xfffffff000000000 500000 0x802 -dg
+# lm32 listens to CMD_B2B_PREXT message from extraction machine, 250us pretrigger
+saft-ecpu-ctl $SDCBU -c 0x13a0802000000000 0xfffffff000000000 250000 0x802 -dg
+saft-ecpu-ctl $SDCBU -c 0x13a1802000000000 0xfffffff000000000 250000 0x802 -dg
 
-# lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B -> later
-saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 500000 0x803 -dg
+# lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B
+saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 250000 0x803 -dg
 
-# diag: generate pulse upon EVT_KICK_START event
+# diag: generate pulse upon CMD_B2B_START event
 saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO1 -c 0x112c031000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO1 -c 0x112c031000000000 0xfffffff000000000 10000000 0x0 0 -u
-
+saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 10000000 0x0 0 -u
