@@ -10,15 +10,15 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := b2b-ctl b2b-ui saft-b2b lib b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
+TARGETS     := lib b2b-ctl b2b-ui saft-b2b b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
 
-DIMPATH     := /opt/dim/dim_v20r29
-#DIMPATH     := /common/usr/timing/b2b/dim_v20r29
-ASLLIB      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib
-ASLINC      := /common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include/saftlib
+#DIMPATH     := /opt/dim/dim_v20r29
+DIMPATH     := /common/usr/timing/b2b/dim_v20r29
+ASLLIB      := /common/export/timing-rte/tg-fallout-v6.1.2/x86_64/lib
+ASLINC      := /common/export/timing-rte/tg-fallout-v6.1.2/x86_64/include/saftlib
 
 EXTRA_FLAGS ?=
 #CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
