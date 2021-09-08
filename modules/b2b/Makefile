@@ -47,7 +47,7 @@ deploy:
 	mkdir -p $(STAGING)/firmware
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
 
-# NFS init scripts, the format is 'b2b-[system>-]<machine>-[room-][function].sh'
+# NFS init scripts, the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
 	cp $(ASL)/b2b-*.sh $(STAGING)                                           # nfs init script SIS18 RF room
 #cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18 RF room
 #cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
@@ -62,7 +62,7 @@ deploy:
 #cp $(ASL)/b2b-sis18-bg2.sh $(STAGING)                               # nfs init script SIS18 BG2 electronic room (for INT)
 #cp $(ASL)/b2b-pmstub-bg2.sh $(STAGING)                              # nfs init script PM stub in BG2 electronic room (for INT)
 #cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
-# FEC configuration scripts; the format is 'b2b-<machine>-[room-][function].sh'
+# FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
 	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin        
 #cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18 RF room
 #cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18 RF room
@@ -78,10 +78,11 @@ deploy:
 	cp $(SW)/b2b-ui $(STAGING)$(ARCH)$(PREFIX)/usr/bin                  # '/usr' is a hack
 	cp $(SW)/b2bivt/*.txt $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt         # needed for ivtpar
 # FEC lm32 firmware
-	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
-	cp $(FW)/b2bpm.bin $(STAGING)/firmware
-	cp $(FW)/b2bkd.bin $(STAGING)/firmware
-	cp $(FW)/b2bpmstub.bin $(STAGING)/firmware
+	cp $(FW)/*.bin $(STAGING)/firmware                   
+#cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
+#cp $(FW)/b2bpm.bin $(STAGING)/firmware
+#cp $(FW)/b2bkd.bin $(STAGING)/firmware
+#cp $(FW)/b2bpmstub.bin $(STAGING)/firmware
 # DAQ
 	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
