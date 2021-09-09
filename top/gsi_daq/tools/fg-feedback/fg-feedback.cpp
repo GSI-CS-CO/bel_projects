@@ -135,6 +135,9 @@ uint64_t FbChannel::getPlotIntervalTime( void )
  */
 void FbChannel::onInit( void )
 {
+   if( getCommandLine()->isVerbose() )
+      cout << "Initializing channel for: fg-" << getSocket() << '-' << getFgNumber() << endl;
+
    if( getCommandLine()->doNotPlot() )
       return;
 
