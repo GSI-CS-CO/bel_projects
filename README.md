@@ -101,6 +101,12 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
+### Error: /bin/sh: 1: hdlmake: not found (Python 2.7)
+You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable: 
+```
+export PATH=$PATH:$HOME/.local/bin
+```
+
 ## JTAG and Programming
 ### Altera/Intel USB Blaster
 
