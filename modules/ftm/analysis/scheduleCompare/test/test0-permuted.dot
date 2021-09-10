@@ -1,0 +1,9 @@
+digraph G {
+name="test0-permuted"
+node [fid=1 cpu=1 type=tmsg]
+edge [type=defdst]
+Evt_PPS[fid=1 toffs=0 pattern=TEST0 patentry=1 patexit=0 beamproc=B1 bpentry=1 bpexit=0 gid=5 evtno=215 beamin=0 sid=2 bpid=8 reqnobeam=0 vacc=0 par="0x0011223344556677" tef=0]
+Evt_PPS2[toffs=0 pattern=TEST0 patentry=0 patexit=0 beamproc=B2 bpentry=0 bpexit=0 gid=5 evtno=205 sid=2 bpid=8 par="0x1122334455667788" tef=0]
+B_PPS[type=block tperiod=1000000000 pattern=TEST0 patentry=0 patexit="true" beamproc=B3 bpentry=0 bpexit=1 qlo="true" qhi=0 qil=0]
+Evt_PPS -> B_PPS -> Evt_PPS2 -> Evt_PPS
+}

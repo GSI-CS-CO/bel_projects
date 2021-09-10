@@ -1,0 +1,4 @@
+digraph {
+	name="wait-target"
+	A [type=wait target="B"]
+}

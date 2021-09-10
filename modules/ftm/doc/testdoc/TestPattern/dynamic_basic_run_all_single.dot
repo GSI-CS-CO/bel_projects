@@ -1,0 +1,8 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_IN_C0[pos="0,216" cpu="0", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN_C0", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN_C1[pos="0,144" cpu="1", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN_C1", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN_C2[pos="0,72" cpu="2", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN_C2", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN_C3[pos="0,0" cpu="3", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN_C3", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+}

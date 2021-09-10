@@ -74,15 +74,15 @@ saft-io-ctl $SDPM -n IO3 -b 0xffffa03000000000
 saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # lm32 listens to CMD_B2B_PMEXT message from SIS18 CBU
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 450000 0x800 -dg
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 450000 0x800 -dg
+saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
+saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
 
 # lm32 listens to CMD_B2B_TRIGGEREXT message from SIS18 CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
 
-# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMEXT) message from SIS18 CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 19500000 0x81e -d
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 19500000 0x81e -d
+# lm32 listens to >> 9.9 ms delayed<< (CMD_B2B_PMEXT) message from SIS18 CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 9900000 0x820 -d
+saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 9900000 0x820 -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
 saft-io-ctl $SDPM -n IO2 -o 1 -t 0
@@ -93,18 +93,18 @@ echo -e b2b: configure $SDCBU as cbu
 ###########################################
 # configure CBU
 ###########################################
-# lm32 listens to EVT_KICK_START1  message from DM, 500us pretrigger
-saft-ecpu-ctl $SDCBU -c 0x112c031000000000 0xfffffff000000000 500000 0x031 -dg
+# lm32 listens to CMD_B2B_START message from DM
+saft-ecpu-ctl $SDCBU -c 0x112c81f000000000 0xfffffff000000000 0 0x81f -d
 
-# lm32 listens to CMD_B2B_PREXT message from extraction machine
-saft-ecpu-ctl $SDCBU -c 0x13a0802000000000 0xfffffff000000000 500000 0x802 -dg
-saft-ecpu-ctl $SDCBU -c 0x13a1802000000000 0xfffffff000000000 500000 0x802 -dg
+# lm32 listens to CMD_B2B_PREXT message from extraction machine, 250us pretrigger
+saft-ecpu-ctl $SDCBU -c 0x13a0802000000000 0xfffffff000000000 250000 0x802 -dg
+saft-ecpu-ctl $SDCBU -c 0x13a1802000000000 0xfffffff000000000 250000 0x802 -dg
 
-# lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B -> later
-saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 500000 0x803 -dg
+# lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B
+saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 250000 0x803 -dg
 
-# diag: generate pulse upon EVT_KICK_START event
+# diag: generate pulse upon CMD_B2B_START event
 saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO1 -c 0x112c031000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO1 -c 0x112c031000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 10000000 0x0 0 -u
 

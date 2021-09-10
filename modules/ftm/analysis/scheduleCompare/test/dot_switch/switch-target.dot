@@ -1,0 +1,4 @@
+digraph {
+	name="switch-target"
+	A [type=switch target="B"]
+}

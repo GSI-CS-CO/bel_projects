@@ -1,0 +1,4 @@
+digraph {
+	name="tmsg-par_ffff"
+	A [type=tmsg par="0xffff"]
+}
