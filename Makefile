@@ -80,7 +80,7 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		etherbone tools sdbfs toolchain firmware driver
+all:		hdlmake_install etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
@@ -456,7 +456,7 @@ pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 ### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
-Makefile: prereq-rule hdlmake_install
+Makefile: prereq-rule
 
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
@@ -470,3 +470,4 @@ git_submodules_init:
 
 hdlmake_install:
 	cd ip_cores/hdlmake/ && python setup.py install --user
+	export PATH=$$PATH:$$HOME/.local/bin
