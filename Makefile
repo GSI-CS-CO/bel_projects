@@ -456,7 +456,7 @@ pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 ### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
-Makefile: prereq-rule
+Makefile: prereq-rule hdlmake_install
 
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
@@ -467,3 +467,6 @@ git_submodules_update:
 
 git_submodules_init:
 	@./fix-git.sh
+
+hdlmake_install:
+	cd ip_cores/hdlmake/ && python setup.py install --user
