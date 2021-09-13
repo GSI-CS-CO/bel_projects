@@ -38,7 +38,7 @@ install:
 
 # update submodules
 before_script:
-make
+- make
 
 # build projects and install
 script:
