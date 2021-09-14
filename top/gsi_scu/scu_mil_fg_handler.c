@@ -300,14 +300,14 @@ unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskData,
  * @todo Storing the MIL-DAQ data in the DDR3-RAM instead wasting of
  *       shared memory.
  */
-STATIC void pushDaqData( FG_MACRO_T fgMacro,
-                         const uint64_t timestamp,
-                         const uint16_t actValue,
-                         const uint32_t setValue
-                      #ifdef CONFIG_READ_MIL_TIME_GAP
-                         , const bool setValueInvalid
-                      #endif
-                       )
+STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
+                                const uint64_t timestamp,
+                                const uint16_t actValue,
+                                const uint32_t setValue
+                              #ifdef CONFIG_READ_MIL_TIME_GAP
+                                , const bool setValueInvalid
+                              #endif
+                              )
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
    static uint64_t lastTime = 0;
@@ -373,6 +373,7 @@ STATIC void pushDaqData( FG_MACRO_T fgMacro,
       ramRingIncWriteIndex( &indexes );
    }
 
+   //TODO Check as its better to actualize the write index only.
    g_shared.mDaq.indexes = indexes;
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
@@ -856,7 +857,7 @@ void milDeviceHandler( register TASK_T* pThis )
                   continue;
                if( mg_aReadGap[channel].timeInterval > time )
                   continue;
-               
+
                mg_aReadGap[channel].pTask = pMilData;
                isInGap = true;
             }
@@ -986,7 +987,7 @@ void milDeviceHandler( register TASK_T* pThis )
             else
          #endif
                pMilData->aFgChannels[channel].daqTimestamp = pMilData->lastMessage.time;
-            
+
             status = milSetTask( pMilData, channel );
             if( status != OKAY )
                milPrintDeviceError( status, 23, "dev_sio read daq" );

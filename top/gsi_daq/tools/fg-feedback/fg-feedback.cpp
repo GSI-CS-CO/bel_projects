@@ -274,7 +274,7 @@ void FbChannel::onData( uint64_t wrTimeStamp, DAQ_T actValue,
       next = false;
       switch( m_state )
       {
-         case START:
+         case  START:
          {
             m_aPlotList.clear();
             m_iterator = m_aPlotList.begin();

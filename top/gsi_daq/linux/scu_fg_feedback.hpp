@@ -809,7 +809,7 @@ public:
    /*!
     * @brief Sets the maximum number of DDR3-RAM payload data base items per etherbone cycle.
     *
-    * That means the etherbone-cycle will divided in "masLen/len" smaller etherbone cycles.
+    * That means the etherbone-cycle will divided in "maxLen/len" smaller etherbone cycles.
     * @note The value of zero has a special meaning, in this case no divisions
     *       in smaller cycles will made.
     * @note In the case of MIL-devices this function has no effect.

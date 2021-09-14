@@ -86,6 +86,29 @@ STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @brief Data type of ring buffer indexes for shared buffers between Linux
+ *        and LM32.
+ */
+typedef struct PACKED_SIZE
+{
+   /*!
+    * @brief Administration of write and read index.
+    */
+   RAM_RING_INDEXES_T indexes;
+
+   /*!
+    * @brief Holds the number of memory items which has been read by the
+    *        client.
+    */
+   RAM_RING_INDEX_T   wasRead;
+} RAM_RING_SHARED_INDEXSS_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXSS_T, indexes ) == 0 );
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXSS_T, wasRead ) == sizeof( RAM_RING_INDEXES_T ));
+#endif
+
+/*! ---------------------------------------------------------------------------
  * @brief Returns the number of currently used memory items
  * @param pThis Pointer to the ring index object
  * @return Actual number written items
@@ -128,6 +151,19 @@ void ramRingIncWriteIndex( RAM_RING_INDEXES_T* pThis )
 void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd );
 
 /*! ---------------------------------------------------------------------------
+ * @brief Synchronizes the read index of the number of items which has been
+ *        read by the client.
+ * @note This shall be the job of the server only, to prevent possible
+ *       race conditions.
+ */
+STATIC inline
+void ramRingSharedSynchonizeReadIndex( RAM_RING_SHARED_INDEXSS_T* pThis )
+{
+   ramRingAddToReadIndex( &pThis->indexes, pThis->wasRead );
+   pThis->wasRead = 0;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Increments the read-index.
  * @param pThis Pointer to the ring index object
  */
@@ -145,6 +181,15 @@ STATIC inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
 {
    pThis->start = 0;
    pThis->end   = 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Resets respectively clears the ring buffer
+ */
+STATIC inline void rimRingSharedReset( RAM_RING_SHARED_INDEXSS_T* pThis )
+{
+   ramRingReset( &pThis->indexes );
+   pThis->wasRead = 0;
 }
 
 /*! ---------------------------------------------------------------------------
