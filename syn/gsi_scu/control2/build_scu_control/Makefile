@@ -153,7 +153,7 @@ DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
-DOX_INPUT += $(DAQ_LM32_DIR)/daq_ring_admin.h
+DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 
 # CODE_OPTIMIZATION = 2
  CODE_OPTIMIZATION = s
@@ -196,6 +196,7 @@ DOX_EXTRACT_PRIVATE = "YES"
 DOX_MACRO_EXPANSION        = "YES"
 DOX_EXPAND_ONLY_PREDEF     = "YES"
 DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE __DAQ_SHARED_IO_T"
+DOX_EXPAND_AS_DEFINED      = ADD_NAMESPACE
 DOX_DOTFILE_DIRS           += $(SCU_DIR)
 ifdef ADDAC_DAQ
  DOX_DOTFILE_DIRS          += $(DAQ_LM32_DIR)
