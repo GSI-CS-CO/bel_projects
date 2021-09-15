@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-September-2020
+ *  version : 25-Sept-2021
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.7.1"
+#define DMUNIPZ_X86_VERSION "0.8.0"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -159,6 +159,7 @@ const char* dmunipz_statusText(uint32_t bit) {
     case DMUNIPZ_STATUS_BADSCHEDULEA     : sprintf(message, "error %d, %s",    bit, "t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms"); break;
     case DMUNIPZ_STATUS_BADSCHEDULEB     : sprintf(message, "error %d, %s",    bit, "unexpected event"); break;
     case DMUNIPZ_STATUS_INVALIDBLKADDR   : sprintf(message, "error %d, %s",    bit, "invalid address of block for Data Master"); break;
+    case DMUNIPZ_STATUS_INVALIDTHRADDR   : sprintf(message, "error %d, %s",    bit, "invalid address of thread handling area for Data Master"); break;
     default                              : return comlib_statusText(bit); break;
   }
 
