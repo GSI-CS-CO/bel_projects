@@ -38,7 +38,7 @@ install:
 
 # update submodules
 before_script:
-- ./autogen.sh
+- make
 
 # build projects and install
 script:
