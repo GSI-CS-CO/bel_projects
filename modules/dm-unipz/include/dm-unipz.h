@@ -79,6 +79,8 @@ typedef struct {                              // group together all information 
   uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
   uint32_t blockWrIdxsAddr;                   // write to DM: external address ofs wrIdxs within block
   uint32_t blockWrIdxs;                       // write to DM: updated value of wrIdxs
+  uint32_t cpuIdx;                            // write to DM: idx of cpu
+  uint32_t thrIdx;                            // write to DM: idx of thread
 } dmComm;
 
 
