@@ -1,0 +1,4 @@
+digraph {
+	name="flow-target"
+	A [type=flow target="target1"]
+}

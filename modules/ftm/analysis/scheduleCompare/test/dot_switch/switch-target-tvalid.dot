@@ -1,0 +1,4 @@
+digraph {
+	name="switch-target-tvalid"
+	A [type=switch target="B" tvalid=100]
+}

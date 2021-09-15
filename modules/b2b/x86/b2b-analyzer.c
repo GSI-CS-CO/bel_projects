@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-June-2021
+ *  version : 26-July-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000241
+#define B2B_ANALYZER_VERSION 0x000301
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -470,7 +470,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // remainder of h=1 phase at electronics monitor
     if ((!((dicGetval[sid].flag_nok >> 1) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
-      tmp64 = dicGetval[sid].tEKS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = dicGetval[sid].tCBS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(ext_monRemN[sid]);
@@ -595,7 +595,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // remainder phase to electronics monitor
     if ((!((dicGetval[sid].flag_nok >> 6) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
-      tmp64 = dicGetval[sid].tEKS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(inj_monRemN[sid]);

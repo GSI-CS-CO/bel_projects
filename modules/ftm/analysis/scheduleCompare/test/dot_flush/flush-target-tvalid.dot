@@ -1,0 +1,4 @@
+digraph {
+	name="flush-target-tvalid"
+	A [type=flush target="B" tvalid=1]
+}

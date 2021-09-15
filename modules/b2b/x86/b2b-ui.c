@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 7-January-2021
+ *  version : 2-July-2021
  *
  *  user interface for B2B
  *
@@ -137,9 +137,9 @@ void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, doub
     if (ok) ok = fscanf(parfile,"%d" , cTrigInj);
     if (ok) ok = fscanf(parfile,"%d" , cPhase);
     fclose(parfile);
-    
     if (!ok) die("read config for SID: ", 1);
   } // if parfile
+  else printf("can't read parfile - %s!\n", filename);
 } // parfileReadSID
 
 void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int flagLsa, int cTrigExt, int cTrigInj, int cPhase)
@@ -193,50 +193,37 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   int      cPhase;
 
   uint32_t gid;
-  uint64_t TH1Ext;
-  uint64_t TH1Inj;
+  uint32_t status;
+  int      errorFlag;
   
-  // get name of file and gid
+
+  // get name of par file and gid of extraction ring
   switch (ring) {
     case SIS18 :
       sprintf(parname, "%s/%s%d.par", path, MENUPAR_SIS18SID, sid);
-      gid = 0x3a0;
+      gid = SIS18_RING;
       break;
     case ESR :
       sprintf(parname, "%s/%s%d.par", path, MENUPAR_ESRSID, sid);
-      gid = 0x3a5;
-      break;
+      gid = ESR_RING;
     default :
-      ;
+      gid = GID_INVALID;
   } // switch ring
-
+  
   // read file with parameters
   parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase);
-  //printf("fH1Ext %lf\n", fH1Ext);
-    /* chk range checking ? */
 
-  // some gymnastics
-  if ((mode == 3) || (mode == 4)) gid += ringInj;
-  if (flagLsa) {
-    TH1Ext = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Ext);  // period in attoseconds
-    TH1Inj = (double)1000000000000000000.0 / b2b_flsa2fdds(fH1Inj);  // period in attoseconds
-  } // if flagLSA
-  else {
-    TH1Ext = (double)1000000000000000000.0 / fH1Ext;                 // period in attoseconds
-    TH1Inj = (double)1000000000000000000.0 / fH1Inj;                 // period in attoseconds    
-  } // else flagLSA
-
-  //printf("TH1Ext %llu\n", TH1Inj);
-  //getchar();
-
-
-  /*
-  printf(" sid %d, gid %d, cTrigExt %d\n", sid, gid, cTrigExt);
-  getchar();
-  */
-  
   // submit parameters to FW
-  b2b_context_upload(ebDevice, sid, gid, mode, TH1Ext, nHExt, TH1Inj, nHInj, cPhase, cTrigExt, cTrigInj);
+  errorFlag = 0;
+  status    = COMMON_STATUS_OK;
+  if (!errorFlag) if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+  if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+  if (!errorFlag) b2b_cmd_submit(ebDevice);
+
+  if (errorFlag) {
+    printf("%s\n", b2b_status_text(status));
+    getchar();
+  } // if errorFlag
 } // submitSid
 
 

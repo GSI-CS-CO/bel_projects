@@ -1,0 +1,272 @@
+\documentclass[12pt,a4paper]{report}
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{tabularx, multirow}
+\usepackage{amssymb}
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\vspace{2em}
+\Huge{ScheduleCompare}\\[2cm]
+\Large{Documentation}\\[2cm]
+\begin{large}
+\begin{tabularx}{\textwidth}{Xl}
+Version & 1.0\\
+Last updated & 2021-06-08\\
+\vspace{1.5cm}\\
+Author & Martin Skorsky\\
+Department & ACO \\
+Group & TOS\\
+Contact & Martin Skorsky
+\end{tabularx}%
+\end{large}
+
+\vfill
+
+\end{center}
+\end{titlepage}
+\tableofcontents
+\chapter{Purpose of ScheduleCompare}
+The tool \texttt{scheduleCompare} tests if two graphs describe the same schedule. The graphs are written as dot-files.
+
+The output is either "graphs represent the same schedule" or "graphs represent different schedules and the differences are \textellipsis".
+The output in the later case should show at least the first vertex with non-matching attributes.
+It is also interesting to know that $g_1$ is a subgraph of $g_2$. This is also visible in the output.
+
+The algorithm used ist the method \texttt{vf2\_subgraph\_iso} from the Boost Graph Library. This tests if a graph $g_1$ is isomorph
+to a subgraph og graph$g_2$. Thus, we have to test that $g_1$ is a subgraph of $g_2$ and $g_2$ is a subgraph $g_1$ to check
+that the two graphs are isomorph. This test can be shortened by testing that $g_1$ is a subgraph of $g_2$ and the number
+of vertices are equal $|V(g_1)| = |V(g_2)|$ and the number of edges are equal $|E(g_1)| = |E(g_2)|$.
+
+In the following table, $g_1 S g_2$
+means $g_1$ is possibly a subgraph of $g_2$. In addition, $g_1 S g_2$ means $g_1$ is possibly isomorphic to $g_2$.
+\begin{table}
+\label{tab:cardinalities}
+\begin{tabular}[t]{|c|ccc|}
+\hline
+                     & $|E(g_1)|<|E(g_2)|$ & $|E(g_1)|=|E(g_2)|$ & $|E(g_1)|>|E(g_2)|$ \\ \hline
+ $|V(g_1)|<|V(g_2)|$ &          S          &          S          &          -  \\
+ $|V(g_1)|=|V(g_2)|$ &          S          &          I          &          -  \\
+ $|V(g_1)|>|V(g_2)|$ &          -          &          -          &          -  \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Prerequisites}
+The dot files to compare should be syntactically correct.
+They should contain a graph with at least one vertex.
+It is not necessary that the dot file can be loaded into the datamaster. This is not checked.
+\texttt{libcarpedm} is not needed.
+
+\section{Compare Vertices}
+The Boost Graph algorithm needs a comparator for the vertices and a second comparator for the edges.
+The comparator for the edges is easy: two edges are equal if and only if the types are equal (as strings).
+
+The comparator for the vertices has to handle the class hierarchy to the vertices (subclasses of \texttt{Node} in \texttt{libcarpedm}).
+The attributes for vertices are defined in \texttt{libcarpedm} for the dot parser, the members of \texttt{mxVertex}, and the subclasses of \texttt{Node}.
+The attributes for \texttt{Node} (see~\ref{tab:Node-attributes}) are common to all vertices.
+
+The comparator for the vertices checks as a first step the types. If a vertex has no type, this is interpreted as a wildcard for a type defined elsewhere.
+This occures for dot files with describe a pattern to remove. The dot file to remove describes a schedule which is isomorphic to a subgraph of the larger schedule.
+
+The comparator for the vertices handle sthe different data types of the values. For boolean values, \texttt{0}, \texttt{false}, \texttt{False}, and none (empty string) are interpreted as false.
+\texttt{1}, \texttt{true}, and \texttt{True} are interpreted as true. For hexadecimal values, leading zeros between prefix '0x' and the value are removed before comparing.
+
+\begin{table}
+\caption{Attributes for \texttt{Node}}
+\label{tab:Node-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|clll|}
+\hline
+Attribute & Required   & Value Type & Value Range                  & Remark           \\ \hline
+name      & \checkmark & String     & vertex name                  &                  \\
+pattern   & tested     & String     & pattern name                 &                  \\
+patentry  & \checkmark & boolean    & 0,1,True, true, False, false &                  \\
+patexit   & \checkmark & boolean    & 0,1,True, true, False, false &                  \\
+beamproc  & tested     & String     & beam process name            &                  \\
+bpentry   & \checkmark & boolean    & 0,1,True, true, False, false &                  \\
+bpexit    & \checkmark & boolean    & 0,1,True, true, False, false &                  \\
+cpu       & \checkmark & uint8      & 0,1,2,3                      &                  \\
+thread    & not tested & uint8      & 0..7                         & not a parser tag \\
+flags     & tested     & uint32     & bit field                    &                  \\
+hash      & not tested & uint32     & -                            & not a parser tag \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{Block} include attributes for \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{Block}}
+\label{tab:Block-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+tperiod   & \checkmark & uint64     & -           \\
+rdidxlo   & not tested & uint8      &             \\
+rdidxhi   & not tested & uint8      &             \\
+rdidxil   & not tested & uint8      &             \\
+wridxlo   & not tested & uint8      &             \\
+wridxhi   & not tested & uint8      &             \\
+wridxil   & not tested & uint8      &             \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{Event} include attributes for \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{Event}}
+\label{tab:Event-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+toffs     & \checkmark & unint64    &             \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{TimingMsg} include attributes for \texttt{Event} and \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{TimingMsg}}
+\label{tab:TimingMsg-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+id        & \checkmark & uint64     &             \\
+fid       & \checkmark & 4 bit      & 0,1         \\
+gid       & \checkmark & 12 bit     &             \\
+evtno     & \checkmark & 12 bit     &             \\
+bin       & \checkmark & 1 bit      &             \\
+bpcstart  & \checkmark & 1 bit      &             \\
+res\_1    & not tested & 2 bit      &             \\
+sid       & \checkmark & 12 bit     &             \\
+bpid      & \checkmark & 14 bit     &             \\
+res\_2    & not tested & 1 bit      &             \\
+reqnob    & \checkmark & 1 bit      &             \\
+vacc      & \checkmark & 4 bit      &             \\
+par       & \checkmark & uint64     &             \\
+tef       & tested     & uint32     &             \\
+res       & tested     & uint32     &             \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{Command} include attributes for \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{Command}}
+\label{tab:Command-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+tvalid    & \checkmark & uint64     &             \\
+vabs      & tested     & boolean    & 0,1,Ture, true, False, false \\
+act       & not tested & unit32     &             \\
+target    & \checkmark & String     & vertex name \\
+dest      & \checkmark & String     & vertex name \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{Flush} include attributes for \texttt{Command} and \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{Flush}}
+\label{tab:Flush-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+mode      &            & uint8      &             \\
+qLo       &            &            &             \\
+qHi       &            &            &             \\
+qIl       &            &            &             \\
+frmIl     & not tested & uint8      &             \\
+toIl      & not tested & uint8      &             \\
+frmHi     & not tested & uint8      &             \\
+toHi      & not tested & uint8      &             \\
+frmLo     & not tested & uint8      &             \\
+toLo      & not tested & uint8      &             \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The attributes for \texttt{Wait} include attributes for \texttt{Command} and \texttt{Node}.
+\begin{table}
+\caption{Additional attributes for \texttt{Wait}}
+\label{tab:Wait-attributes}
+\begin{center}
+\begin{tabular}[t]{|l|cll|}
+\hline
+Attribute & Required   & Value Type & Value Range \\ \hline
+twait     & \checkmark & uint64     &             \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}
+\begin{center}
+\includegraphics*[height=.98\textheight,keepaspectratio]{attributeCompareTree.pdf}
+\caption{Decision Tree to Test Attributes and Types for Vertices}
+\label{fig:attributeCompareTree}
+\end{center}
+\end{figure}
+
+\chapter{Arguments and Options}
+Usage: \texttt{scheduleCompare $<$dot file 1$>$ $<$dot file 2$>$}
+
+Options:
+\begin{enumerate}
+  \item -c: check dot syntax (stops parsing on all unknown attributes).
+  \item -h: help and usage.
+  \item -s: silent, no output, only return code. Usefull for automated tests.
+  \item -t: test a single graph: compare each vertex with itself.
+  \item -v: verbose, output of input graphs as dot text.
+  \item -vv: super verbose, in addition to verbose more output.
+\end{enumerate}
+
+Return Codes:
+\begin{enumerate}
+  \item 0 EXIT\_SUCCESS, graphs are isomorphic.
+  \item 1 NOT\_ISOMORPHIC, graphs are not isomorphic.
+  \item 2 SUBGRAPH\_ISOMORPHIC, graph is isomorphic to a subgraph of the larger graph.
+  \item 11 BAD\_ARGUMENTS, unknown arguments on command line.
+  \item 12 MISSING\_ARGUMENT, at least one of the file names is missing.
+  \item 13 FILE\_NOT\_FOUND, one of the dot files not found.
+  \item 14 USAGE\_MESSAGE, usage message (help) displayed.
+  \item 15 PARSE\_ERROR, error while parsing, unknown tag or attribute.
+  \item 16 TEST\_SUCCESS, test a single graph with success.
+  \item 17 TEST\_FAIL, test a single graph with failure.
+  \item negative values are UNIX signals
+\end{enumerate}
+
+\chapter{Testframework and Test Cases}
+First attempt for the test framework are unit tests with Python. A test case in general calls \texttt{scheduleCompare} with two dot files and examines the output. For this, the return code of \texttt{scheduleCompare}.
+
+\begin{enumerate}
+  \item 9 test cases for the cardinalities from table~\ref{tab:cardinalities}
+  \item 1815 dot files (11 * 11 *15) from \texttt{singleEdgeTest}. Each two of these are compared. Only if a dot file is compared with itself, the graphs should be isomorphic. These are 3.294.225 combinations.
+This test runs for about 8 hours. Start with \texttt{nohup} $<$ command $>$ \& to run this in the background without a tty / terminal.
+  \item same graph, but different names for the vertices.
+  \item same graph, but different types for vertices with the same name.
+  \item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
+  \item test cases for boolean values.
+  \item cases for hex values.
+\end{enumerate}
+
+\chapter{Source and Branches}
+The source code is in branch \texttt{dm-analysis}, \\
+folder \texttt{modules/ftm/analysis/sourceCompare/}. The subfolders
+\begin{enumerate}
+  \item doc for the documentation,
+  \item main for the source files,
+  \item test for the test framework and the test input
+\end{enumerate}
+\end{document}
