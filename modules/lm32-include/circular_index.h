@@ -86,29 +86,6 @@ STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @brief Data type of ring buffer indexes for shared buffers between Linux
- *        and LM32.
- */
-typedef struct PACKED_SIZE
-{
-   /*!
-    * @brief Administration of write and read index.
-    */
-   RAM_RING_INDEXES_T indexes;
-
-   /*!
-    * @brief Holds the number of memory items which has been read by the
-    *        client.
-    */
-   RAM_RING_INDEX_T   wasRead;
-} RAM_RING_SHARED_INDEXSS_T;
-
-#ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXSS_T, indexes ) == 0 );
-STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXSS_T, wasRead ) == sizeof( RAM_RING_INDEXES_T ));
-#endif
-
-/*! ---------------------------------------------------------------------------
  * @brief Returns the number of currently used memory items
  * @param pThis Pointer to the ring index object
  * @return Actual number written items
@@ -151,19 +128,6 @@ void ramRingIncWriteIndex( RAM_RING_INDEXES_T* pThis )
 void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, const RAM_RING_INDEX_T toAdd );
 
 /*! ---------------------------------------------------------------------------
- * @brief Synchronizes the read index of the number of items which has been
- *        read by the client.
- * @note This shall be the job of the server only, to prevent possible
- *       race conditions.
- */
-STATIC inline
-void ramRingSharedSynchonizeReadIndex( RAM_RING_SHARED_INDEXSS_T* pThis )
-{
-   ramRingAddToReadIndex( &pThis->indexes, pThis->wasRead );
-   pThis->wasRead = 0;
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief Increments the read-index.
  * @param pThis Pointer to the ring index object
  */
@@ -181,15 +145,6 @@ STATIC inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
 {
    pThis->start = 0;
    pThis->end   = 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Resets respectively clears the ring buffer
- */
-STATIC inline void rimRingSharedReset( RAM_RING_SHARED_INDEXSS_T* pThis )
-{
-   ramRingReset( &pThis->indexes );
-   pThis->wasRead = 0;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -245,6 +200,7 @@ RAM_RING_INDEX_T ramRingGetUpperWriteSize( register RAM_RING_INDEXES_T* pThis )
    return pThis->capacity - pThis->end;
 }
 
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the current absolute write-index for a write access to the
  *        physical memory.
@@ -266,6 +222,212 @@ RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
       return ramRingGetReadIndex( pThis );
    }
    return pThis->end + pThis->offset;
+}
+
+/*============= Index administration for shared memory ======================*/
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Data type of ring buffer indexes for shared buffers between Linux
+ *        and LM32.
+ */
+typedef struct PACKED_SIZE
+{  /*!
+    * @brief Administration of write and read index.
+    */
+   RAM_RING_INDEXES_T indexes;
+
+   /*!
+    * @brief Holds the number of memory items which has been read by the
+    *        client.
+    */
+   RAM_RING_INDEX_T   wasRead;
+} RAM_RING_SHARED_INDEXES_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXES_T, indexes ) == 0 );
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_INDEXES_T, wasRead ) == sizeof( RAM_RING_INDEXES_T ));
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the number of currently used memory items
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Actual number written items
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingSharedGetSize( const RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetSize( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the remaining free items of the currently used memory
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of free memory items.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingSharedGetRemainingCapacity( const RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetRemainingCapacity( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Adds a value to the write index.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @param value to add to the write index.
+ */
+STATIC inline
+void ramRingSharedAddToWriteIndex( RAM_RING_SHARED_INDEXES_T* pThis,
+                                   const RAM_RING_INDEX_T toAdd )
+{
+   ramRingAddToWriteIndex( &pThis->indexes, toAdd );
+}
+
+/*!----------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Increments the write-index.
+ * @param pThis Pointer to the shared ring indexes object.
+ */
+STATIC inline
+void ramRingSharedIncWriteIndex( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   ramRingIncWriteIndex( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Adds a value to the read index.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @param value to add to the read index.
+ */
+STATIC inline
+void ramRingSharedAddToReadIndex( RAM_RING_SHARED_INDEXES_T* pThis,
+                                  const RAM_RING_INDEX_T toAdd )
+{
+   ramRingAddToReadIndex( &pThis->indexes, toAdd );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Synchronizes the read index of the number of items which has been
+ *        read by the client.
+ * @note This shall be the job of the server only, to prevent possible
+ *       race conditions.
+ * @param pThis Pointer to the shared ring indexes object.
+ */
+STATIC inline
+void ramRingSharedSynchonizeReadIndex( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   ramRingSharedAddToReadIndex( pThis, pThis->wasRead );
+   pThis->wasRead = 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Increments the read-index.
+ * @param pThis Pointer to the shared ring indexes object.
+ */
+STATIC inline
+void ramRingSharedIncReadIndex( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   ramRingIncReadIndex( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Resets respectively clears the ring buffer
+ * @param pThis Pointer to the shared ring indexes object.
+ */
+STATIC inline void ramRingSharedReset( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   ramRingReset( &pThis->indexes );
+   pThis->wasRead = 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the current absolute read index for a read access to the
+ *        physical memory.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Index value for read access.
+ */
+STATIC inline 
+RAM_RING_INDEX_T ramRingSharedGetReadIndex( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetReadIndex( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the number of items beginning at the read index until to the
+ *        upper border  of the used memory buffer belonging to this object.
+ *
+ * Value range:  {1 <= return <= max capacity}
+ *
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of items which can read until the upper border of the buffer.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingSharedGetUpperReadSize( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetUpperReadSize( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the number of items beginning at the read index until to the
+ *        upper border  of the used memory buffer belonging to this object.
+ *
+ * Value range:  {1 <= return <= max capacity}
+ *
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of items which can write until the upper border of the buffer.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingSharedGetUpperWriteSize( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetUpperWriteSize( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the current absolute write-index for a write access to the
+ *        physical memory.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Index value for write access.
+ */
+STATIC inline 
+RAM_RING_INDEX_T ramRingSharedGetWriteIndex( RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return ramRingGetWriteIndex( &pThis->indexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Sets the number of items which was read by the client and which the
+ *        server shall synchronize.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @param wasRead Number of memory items which the client has been read.
+ */
+STATIC inline
+void ramRingSharedSetWasRead( RAM_RING_SHARED_INDEXES_T* pThis, 
+                              const RAM_RING_INDEX_T wasRead )
+{
+   pThis->wasRead = wasRead;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
+ * @brief Returns the number of memory items which has been read by the client.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of memory items which the client has been read.
+ */
+STATIC inline
+RAM_RING_INDEX_T ramRingSharedGetWasRead( const RAM_RING_SHARED_INDEXES_T* pThis )
+{
+   return pThis->wasRead;
 }
 
 #ifdef CONFIG_CIRCULAR_DEBUG
