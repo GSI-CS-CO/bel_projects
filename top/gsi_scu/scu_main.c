@@ -599,23 +599,25 @@ void main( void )
    mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );
 #endif
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
-   mprintf( "MIL-DAQ buffer offset:     %u item\n", g_shared.mDaq.indexes.offset );
-   mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.indexes.capacity );
+   mprintf( "MIL-DAQ buffer offset:     %u item\n", g_shared.mDaq.memAdmin.indexes.offset );
+   mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.memAdmin.indexes.capacity );
 #endif
    initInterrupt();
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM__
-   ramRingAddToWriteIndex( &g_shared.mDaq.indexes, 4 ); //!!!!!
-   RAM_RING_INDEX_T r = g_shared.mDaq.indexes.start;
+   ramRingAddToWriteIndex( &g_shared.mDaq.memAdmin.indexes, 4 ); //!!!!!
+   RAM_RING_INDEX_T r = g_shared.mDaq.memAdmin.indexes.start;
 #endif
 
    while( true )
    {
 #if CONFIG_MIL_DAQ_USE_RAM__
-      if( r != g_shared.mDaq.indexes.start )
+      if( r != g_shared.mDaq.memAdmin.indexes.start )
       {
          r = g_shared.mDaq.indexes.start;
-         mprintf( "read: %u\nwrite: %u\n", g_shared.mDaq.indexes.start, g_shared.mDaq.indexes.end );
+         mprintf( "read: %u\nwrite: %u\n", 
+                  g_shared.mDaq.memAdmin.indexes.start,
+                  g_shared.mDaq.memAdmin.indexes.end );
       }
 #endif
       if( _endram != STACK_MAGIC )

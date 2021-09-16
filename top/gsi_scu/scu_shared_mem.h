@@ -76,7 +76,7 @@ namespace MiLdaq
  */
 typedef uint16_t MIL_DAQ_VAL_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Data set of a MIL-DAQ in the DDR3-RAM.
  */
 typedef struct PACKED_SIZE
@@ -143,67 +143,30 @@ typedef union
  */
 #define MIL_DAQ_MAGIC_NUMBER ((uint32_t)0xDABADABA)
 
-#if 1
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
  * @brief Administration type for MIL-DAQ in shared memory
  */
 typedef struct PACKET_SIZE
 {  /*!
     * @brief Magic number for recognizing the LM32 firmware manages
-    *        the MIL-DAQ date in the DDR3 RAM-
+    *        the MIL-DAQ date in the DDR3- RAM
     */
-   uint32_t           magicNumber;
+   const uint32_t            magicNumber;
 
    /*!
     * @brief Administration of memory offset, write and read index.
     */
-   RAM_RING_INDEXES_T indexes;
-
-   /*!
-    * @brief Number of items which the Linux-client has been read.
-    */
-   RAM_RING_INDEX_T   wasRead;
-} MIL_DAQ_ADMIN_T;
-
-#ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, magicNumber ) == 0);
-STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, indexes ) ==
-               (offsetof( MIL_DAQ_ADMIN_T, magicNumber ) + sizeof( uint32_t ) ));
-STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, wasRead ) ==
-               offsetof( MIL_DAQ_ADMIN_T, indexes ) + sizeof( RAM_RING_INDEXES_T ));
-STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
-               (sizeof( uint32_t ) + sizeof(RAM_RING_INDEXES_T)) + sizeof(RAM_RING_INDEX_T) );
-#endif
-
-#else
-/*!
- * @ingroup SHARED_MEMORY
- * @brief Administration type for MIL-DAQ in shared memory
- */
-typedef struct PACKET_SIZE
-{  /*!
-    * @brief Magic number for recognizing the LM32 firmware manages
-    *        the MIL-DAQ date in the DDR3 RAM-
-    */
-   uint32_t           magicNumber;
-
-   /*!
-    * @brief Administration of memory offset, write and read index.
-    */
-   RAM_RING_SHARED_INDEXES_T indexes;
+   RAM_RING_SHARED_INDEXES_T memAdmin;
 
 } MIL_DAQ_ADMIN_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, magicNumber ) == 0);
-STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, indexes ) ==
+STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, memAdmin ) ==
                (offsetof( MIL_DAQ_ADMIN_T, magicNumber ) + sizeof( uint32_t ) ));
 STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
                (sizeof( uint32_t ) + sizeof(RAM_RING_SHARED_INDEXES_T)) );
-
-#endif
-
-#endif
+#endif /* ifndef __DOXYGEN__ */
 
 #ifdef __cplusplus
 } /* namespace MiLdaq */
@@ -619,7 +582,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM           \
      , .mDaq.magicNumber = MIL_DAQ_MAGIC_NUMBER           \
-     , .mDaq.indexes = RAM_RING_INDEXES_MDAQ_INITIALIZER
+     , .mDaq.memAdmin.indexes = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
      , .daq_buf = {0}

@@ -239,6 +239,8 @@ typedef struct PACKED_SIZE
    /*!
     * @brief Holds the number of memory items which has been read by the
     *        client.
+    * 
+    * This will also need for a handshaking transfer.
     */
    RAM_RING_INDEX_T   wasRead;
 } RAM_RING_SHARED_INDEXES_T;
@@ -315,6 +317,9 @@ void ramRingSharedAddToReadIndex( RAM_RING_SHARED_INDEXES_T* pThis,
  *        read by the client.
  * @note This shall be the job of the server only, to prevent possible
  *       race conditions.
+ * 
+ * In this way a handshaking transfer becomes possible.
+ *
  * @param pThis Pointer to the shared ring indexes object.
  */
 STATIC inline

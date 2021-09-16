@@ -106,8 +106,7 @@ void milInitTasks( void )
       }
    }
 #ifdef CONFIG_MIL_DAQ_USE_RAM
-   ramRingReset( &g_shared.mDaq.indexes );
-   g_shared.mDaq.wasRead = 0;
+   ramRingSharedReset( &g_shared.mDaq.memAdmin );
 #endif
 #ifdef CONFIG_READ_MIL_TIME_GAP
    for( unsigned int i = 0; i < ARRAY_SIZE( mg_aReadGap ); i++ )
@@ -351,14 +350,19 @@ STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
    pl.item.fgMacro   = fgMacro;
  #endif
 
-   RAM_RING_INDEXES_T indexes = g_shared.mDaq.indexes;
+   /*
+    * A local copy of the read and write indexes will prevent a possible
+    * race condition with the Linux client.
+    */
+   RAM_RING_INDEXES_T indexes = g_shared.mDaq.memAdmin.indexes;
 
    /*
     * Is the circular buffer full?
     */
    if( ramRingGetRemainingCapacity( &indexes ) < ARRAY_SIZE(pl.ramPayload) )
    { /*
-      * Yes, removing the oldest item;
+      * Yes, removing the oldest item. 
+      * Maybe the Linux-client doesn't run or is to slow.  
       */
       ramRingAddToReadIndex( &indexes, ARRAY_SIZE(pl.ramPayload) );
    }
@@ -373,8 +377,11 @@ STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
       ramRingIncWriteIndex( &indexes );
    }
 
+   /*
+    * Making the modified memory indexes known for the Linux client.
+    */
    //TODO Check as its better to actualize the write index only.
-   g_shared.mDaq.indexes = indexes;
+   g_shared.mDaq.memAdmin.indexes = indexes;
 
 #else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
    #warning Deprecated: MIL-DAQ data will stored in the LM32 shared memory!
@@ -815,8 +822,7 @@ void milDeviceHandler( register TASK_T* pThis )
     * Removing old data which has been possibly read by the Linux client.
     * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
     */
-   ramRingAddToReadIndex( &g_shared.mDaq.indexes, g_shared.mDaq.wasRead );
-   g_shared.mDaq.wasRead = 0;
+   ramRingSharedSynchonizeReadIndex( &g_shared.mDaq.memAdmin );
 #endif
 
    const FG_STATE_T lastState = pMilData->state;
