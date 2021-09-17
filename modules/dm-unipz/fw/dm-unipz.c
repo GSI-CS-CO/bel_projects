@@ -169,7 +169,7 @@ dmComm  dmCmds[DM_NBLOCKS];             // data for treatment of blocks
 #define REQTK            0              // handles DM for TK request; flow command
 
 #define DM_NTHREADS      1              // max number of threads changed within the Data Master
-dmThrd  dmThrds[DM_NTHREADS];           // data for treatment of threads
+dmThrd  dmThrs[DM_NTHREADS];            // data for treatment of threads
 #define REQBEAM          0              // handles DM for beam request; thread handling
 
 
@@ -184,10 +184,10 @@ uint32_t dmCheckThr(uint32_t blk)
   if (!(dmThrs[blk].dynpar))                    return DMUNIPZ_STATUS_INVALIDTHRADDR;
 
   // exclude non-zero 'thread staging' addresses
-  if (!(dmThrs[blk].thrTSAddr))                 return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  if (!(dmThrs[blk].TSAddr))                    return DMUNIPZ_STATUS_INVALIDTHRADDR;
 
   // exclude non-zero 'start register' addresses
-  if (!(dmThrs[blk].thrStartAddr))              return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  if (!(dmThrs[blk].StartAddr))                 return DMUNIPZ_STATUS_INVALIDTHRADDR;
   
   return COMMON_STATUS_OK;
 } // dmCheckThr
@@ -205,8 +205,8 @@ uint32_t dmClearThr(uint32_t blk)
   // - this prevents thread handling int the Data Master in case the schedule is corrupt
 
   dmThrs[blk].dynpar                         = 0x0;
-  dmThrs[blk].thrTSAddr                      = 0x0;
-  dmThrs[blk].thrStartAddr                   = 0x0;
+  dmThrs[blk].TSAddr                         = 0x0;
+  dmThrs[blk].StartAddr                      = 0x0;
 
   return COMMON_STATUS_OK;
 } // dmClearThr
@@ -215,40 +215,8 @@ uint32_t dmClearThr(uint32_t blk)
 // prepare data to start a thread in the Data Master
 uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS) 
 {
-  // simplified memory layout at DM
-  //
-  // blockAddr -> |...      |
-  //              |IL       |
-  //              |HI       |
-  //              |Lo-------|--buffListAddr--> |buf0  |
-  //              |wrIdx    |                  |buf1--|--cmdListAddr-->|cmd0  |                           
-  //              |rdIdx    |                                          |cmd1--|--cmdAddr-->|TS valid Hi  |                           
-  //              |...      |                                                              |TS valid Lo  |                           
-  //                                                                                       |action(type) |
-  //                                                                                       |type specific|
-  //                                                                           
-  //                                                                           
-  //                                                   
-
   uint32_t originAddr;                                         // address of thread origin at CPU
   uint32_t extBaseAddr;                                        // base address of CPU
-  
-  uint32_t wrIdxs;                                             // write indices for all prios (8 bit N/A, 8 bit IL, 8 bit Hi, 8 bit Lo)
-  uint8_t  wrIdx;                                              // write index for relevant priority
-  uint32_t rdIdxs;                                             // read indices for all prios (8 bit N/A, 8 bit IL, 8 bit Hi, 8 bit Lo)
-  uint8_t  rdIdx;                                              // read index for relevant priority
-
-  uint32_t buffListAddrIL;                                     // address of buffer list (of interlock priority Q)
-  uint32_t buffListAddrHi;                                     // address of buffer list (of high priority Q)
-  uint32_t buffListAddrLo;                                     // address of buffer list (of low priority Q)
-  
-  uint32_t buffListAddr;                                       // address of  buffer list (of relevant priority)
-  uint32_t buffListAddrOffs;                                   // where to find the relevant command buffer within the buffer list
-  uint32_t buffAddr;                                           // address of relevant command buffer; buffListAdd + buffListAddOffs
-  
-  uint32_t cmdListAddr;                                        // address of command list 
-  uint32_t cmdListAddrOffs;                                    // where to find the relevant command  within the command list
-  uint32_t cmdAddr;                                            // address of relevant command; cmdListAddr + cmdListAddrOffs
   
   uint32_t startTSAddr;                                        // address of start timestamp (external view)
   uint32_t startTSHi;                                          // time when thread shall start, high32 bit
@@ -256,8 +224,7 @@ uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS)
 
   uint32_t startCtlAddr;                                       // address of thread control register for thread start
   uint32_t startCtlData;                                       // bit field for starting a thread
-  
-  
+    
   int      i;
   uint32_t status;
 
@@ -268,30 +235,26 @@ uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS)
   // addresses for thread start
   startTSAddr              = extBaseAddr + (( SHCTL_THR_STA + dmThrs[blk].thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2);
   startCtlAddr             = extBaseAddr + (( SHCTL_THR_CTL + T_TC_START) >> 2); 
-  DBPRINT3("dm-unipz: thread start TS address 0x%08x, thread start ctrl address 0x%08x\n", startTSAddr, startCtlAddr);
+  DBPRINT3("dm-unipz: prep thread start TS address 0x%08x, thread start ctrl address 0x%08x\n", startTSAddr, startCtlAddr);
 
   // timestamp when thread shall start
   startTSHi         = (uint32_t)(startTS >> 32);
-  startTSLo         = (uint32_t)(startTS & 0xffffffff); 
+  startTSLo         = (uint32_t)(startTS & 0xffffffff);
+  startCtlData      = 1 << dmThrs[blk].thrIdx;
   DBPRINT3("dm-unipz: prep thread validTSHi 0x%08x\n", startTSHi);
   DBPRINT3("dm-unipz: prep thread validTSLo 0x%08x\n", startTSLo);
+  DBPRINT3("dm-unipz: prep thread ctlData   0x%08x\n", startCtlData);
 
-  // control register for thread start
+  // start bit required for thread start
   
 
   // assign prepared values for later use;
-  dmThrs[blk].thrTSAddr    = startTSAddr;
-  dmThrs[blk].thrTSData[0] = startTSHi;
-  dmThrs[blk].thrTSData[1] = startTSLo;
-  
-  /*for (i=0; i<_T_CMD_SIZE_; i++) dmCmds[blk].cmdData[i] = 0x0;                        // init command data  
-  dmCmds[blk].cmdAddr                        = cmdAddr;
-  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
-  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 1] = cmdValidTSLo;  
-  dmCmds[blk].blockWrIdxs                    = wrIdxs;
-  dmCmds[blk].blockWrIdxsAddr                = blockAddr + BLOCK_CMDQ_WR_IDXS;  
-  DBPRINT2("dm-unipz: prep cmd wrIdxAddr 0x%08x, wrIdxs 0x%08x\n", dmCmds[blk].blockWrIdxsAddr, wrIdxs);*/
-  
+  dmThrs[blk].TSAddr    = startTSAddr;
+  dmThrs[blk].TSData[0] = startTSHi;
+  dmThrs[blk].TSData[1] = startTSLo;
+  dmThrs[blk].StartAddr = startCtlAddr;
+  dmThrs[blk].StartData = startCtlData;
+   
   return COMMON_STATUS_OK;
 } //dmPrepThrStart
 
@@ -299,8 +262,8 @@ uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS)
 // start a thread of the Data Master on-the fly
 void dmStartThread(uint32_t blk)
 {
-  fwlib_ebmWriteN(dmCmds[blk].cmdAddr, dmCmds[blk].cmdData, (_T_CMD_SIZE_ >> 2));  
-  fwlib_ebmWriteN(dmCmds[blk].blockWrIdxsAddr, &dmCmds[blk].blockWrIdxs, 1);             
+  fwlib_ebmWriteN(dmThrs[blk].TSAddr, dmThrs[blk].TSData, 2);  
+  fwlib_ebmWriteN(dmThrs[blk].StartAddr, &dmThrs[blk].StartData, 1);             
   DBPRINT2("dm-unipz: dmChangeBlock blk %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", blk, dmCmds[blk].cmdAddr, dmCmds[blk].cmdData[0], dmCmds[blk].cmdData[1]);
 } // dmStartThread
 
@@ -1147,10 +1110,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       else (*nMulti)++;
 
       //---- copy tag specific data from ECA
-      ecaVirtAcc              = ecaEvtId & 0xf;
-      dmThrds[REQBEAM].dynpar = (ecaParam >> 32) & 0xffffffff;
-      dmThrds[REQBEAM].cpuIdx = (ecaParam >>  8) & 0xff;
-      dmThrds[REQBEAM].thrIdx = ecaParam & 0xff;
+      ecaVirtAcc             = ecaEvtId & 0xf;
+      dmThrs[REQBEAM].dynpar = (ecaParam >> 32) & 0xffffffff;
+      dmThrs[REQBEAM].cpuIdx = (ecaParam >>  8) & 0xff;
+      dmThrs[REQBEAM].thrIdx = ecaParam & 0xff;
         
       //---- init values
       flagEBTimeout   = 0;                                                         // this is a 'warning flag'

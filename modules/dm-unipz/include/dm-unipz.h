@@ -86,10 +86,10 @@ typedef struct {                              // group together all information 
   uint32_t dynpar;                            // received from DM: 32bit of param field
   uint32_t cpuIdx;                            // received from  DM: idx of cpu (redundant information)
   uint32_t thrIdx;                            // received from  DM: idx of thread (required to start the thread) 
-  uint32_t thrTSAddr;                         // write to DM: 32bit address of thread start timestamp in the 'thread staging' area
-  uint32_t thrTSData[2];                      // write to DM: start timestamp low and high words
-  uint32_t thrStartAddr;                      // write to DM: 32bit address of thread start bits in the 'Global Thread Control and Status' area
-  uint32_t thrStartData;                      // write to DM: 32bit thread start bits
+  uint32_t TSAddr;                            // write to DM: 32bit address of thread start timestamp in the 'thread staging' area
+  uint32_t TSData[2];                         // write to DM: start timestamp low and high words
+  uint32_t StartAddr;                         // write to DM: 32bit address of thread start bits in the 'Global Thread Control and Status' area
+  uint32_t StartData;                         // write to DM: 32bit thread start bits
 } dmThrd;
 
 
