@@ -559,6 +559,11 @@ int main( int argc, char** ppArgv )
    {
       return fbMain( argc, ppArgv );
    }
+   catch( daq::DaqException& e )
+   {
+      ERROR_MESSAGE( "ADDAC/ACU-DAQ Exception occurred: \"" << e.what() << "\"\n"
+                      << e.getStatusString() );
+   }
    catch( MiLdaq::Exception& e )
    {
       ERROR_MESSAGE( "Exception occurred: \"" << e.what() << '"' );

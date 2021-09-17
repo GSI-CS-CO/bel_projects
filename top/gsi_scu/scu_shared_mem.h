@@ -152,7 +152,7 @@ typedef struct PACKET_SIZE
     * @brief Magic number for recognizing the LM32 firmware manages
     *        the MIL-DAQ date in the DDR3- RAM
     */
-   const uint32_t            magicNumber;
+   uint32_t            magicNumber;
 
    /*!
     * @brief Administration of memory offset, write and read index.

@@ -298,7 +298,10 @@ DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 
    if( m_oSharedData.operation.retCode < DAQ_RET_OK )
    {
-      throw DaqException( "DAQ firmware error",
+      std::string message = "DAQ firmware error. LM32-command: \"";
+      message += command2String( cmd );
+      message += "\", return: ";
+      throw DaqException( message,
                           m_oSharedData.operation.retCode );
    }
 

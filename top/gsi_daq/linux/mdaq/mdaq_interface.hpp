@@ -185,11 +185,11 @@ public:
       BufferAdmin( void )
       {
          magicNumber = 0;
-         indexes.offset = 0;
-         indexes.capacity = 0;
-         indexes.start = 0;
-         indexes.end = 0;
-         wasRead = 0;
+         memAdmin.indexes.offset = 0;
+         memAdmin.indexes.capacity = 0;
+         memAdmin.indexes.start = 0;
+         memAdmin.indexes.end = 0;
+         memAdmin.wasRead = 0;
       }
    };
 
@@ -244,7 +244,7 @@ public:
     */
    uint getRamCapacity( void ) override
    {
-      return m_oBufferAdmin.indexes.capacity; //TODO return the maximum capacity of MIL-DAQ-buffer
+      return m_oBufferAdmin.memAdmin.indexes.capacity; //TODO return the maximum capacity of MIL-DAQ-buffer
    }
 
    /*!
@@ -253,7 +253,7 @@ public:
     */
    uint getRamOffset( void ) override
    {
-      return m_oBufferAdmin.indexes.offset; //TODO return the offset of MIL-DAQ-buffer
+      return m_oBufferAdmin.memAdmin.indexes.offset; //TODO return the offset of MIL-DAQ-buffer
    }
 
 protected:
@@ -272,7 +272,7 @@ protected:
 
    void addToReadIndex( const uint toAdd )
    {
-      ramRingAddToReadIndex( &m_oBufferAdmin.indexes, toAdd );
+      ramRingSharedAddToReadIndex( &m_oBufferAdmin.memAdmin, toAdd );
    }
 
 public:
@@ -285,7 +285,7 @@ public:
     */
    uint getCurrentNumberOfData( void )
    {
-      return ramRingGetSize( &m_oBufferAdmin.indexes );
+      return ramRingSharedGetSize( &m_oBufferAdmin.memAdmin );
    }
 
    /*!
@@ -296,7 +296,7 @@ public:
     */
    uint getWasRead( void ) const
    {
-      return m_oBufferAdmin.wasRead;
+      return ramRingSharedGetWasRead( &m_oBufferAdmin.memAdmin );
    }
 
    /*!
@@ -307,7 +307,7 @@ public:
     */
    uint getWriteIndex( void )
    {
-      return m_oBufferAdmin.indexes.end;
+      return m_oBufferAdmin.memAdmin.indexes.end;
    }
 
    /*!
@@ -318,7 +318,7 @@ public:
     */
    uint getReadIndex( void )
    {
-      return m_oBufferAdmin.indexes.start;
+      return m_oBufferAdmin.memAdmin.indexes.start;
    }
 
 
@@ -365,7 +365,7 @@ protected:
 
    void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
    {
-      getEbAccess()->readRam( pData, len, m_oBufferAdmin.indexes );
+      getEbAccess()->readRam( pData, len, m_oBufferAdmin.memAdmin.indexes );
    }
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE

@@ -75,7 +75,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
    }
 
    if( ret == 0 )
-      mprintf( ESC_WARNING "WARNING: No ADDAC devices found!\n" ESC_NORMAL );
+      mprintf( ESC_WARNING "WARNING: No ADDAC/ACU-DAQ macros found!\n" ESC_NORMAL );
 #ifdef DEBUGLEVEL
    else
    {
