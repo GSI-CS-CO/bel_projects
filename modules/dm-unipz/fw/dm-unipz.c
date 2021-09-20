@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Sept-2021
+ *  version : 20-Sept-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -174,7 +174,7 @@ dmThrd  dmThrs[DM_NTHREADS];            // data for treatment of threads
 
 
 // check thread control data
-uint32_t dmCheckThr(uint32_t blk)    
+uint32_t dmCheckThr(uint32_t blk)
 {
   // two checks are run on the data of the thread control, which we intend to send to the Data Master later
   // verify, the addresses of thread data are non-zero
@@ -213,7 +213,7 @@ uint32_t dmClearThr(uint32_t blk)
 
 
 // prepare data to start a thread in the Data Master
-uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS) 
+uint32_t dmPrepThrStart(uint32_t blk, uint64_t startTS) 
 {
   uint32_t originAddr;                                         // address of thread origin at CPU
   uint32_t extBaseAddr;                                        // base address of CPU
@@ -240,13 +240,11 @@ uint32_t dmPrepThrStart(uint32_t blk, uint32_t prio, uint64_t startTS)
   // timestamp when thread shall start
   startTSHi         = (uint32_t)(startTS >> 32);
   startTSLo         = (uint32_t)(startTS & 0xffffffff);
+  // start bit required for thread start
   startCtlData      = 1 << dmThrs[blk].thrIdx;
   DBPRINT3("dm-unipz: prep thread validTSHi 0x%08x\n", startTSHi);
   DBPRINT3("dm-unipz: prep thread validTSLo 0x%08x\n", startTSLo);
   DBPRINT3("dm-unipz: prep thread ctlData   0x%08x\n", startCtlData);
-
-  // start bit required for thread start
-  
 
   // assign prepared values for later use;
   dmThrs[blk].TSAddr    = startTSAddr;
@@ -1109,6 +1107,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       } // if flagBooster
       else (*nMulti)++;
 
+      // existing thread data is invalid and must be cleared
+      dmClearThr(REQBEAM); 
+
       //---- copy tag specific data from ECA
       ecaVirtAcc             = ecaEvtId & 0xf;
       dmThrs[REQBEAM].dynpar = (ecaParam >> 32) & 0xffffffff;
@@ -1124,6 +1125,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       tReady2Sis      = 0;                                                         // init value for timestamp of EVT_READY_TO_SIS
       flagNoCmd       = 0;                                                         // always send the commands to DM unless something goes terribly wrong
 
+      // this is either mode 'multi-multi' XOR the 1st normal injection of 'booster mode'
       if (!flagBooster) {
         dmStatus = dmPrepCmdCommon(REQTK, 1, 1, tCmdValid);                        // try "Schnitzeljagd" in Data Master. Here: "slow" waiting block
         if (dmStatus ==  COMMON_STATUS_EBREADTIMEDOUT) {                           // in case of timeout, we probably lost a UDP packet; plan B: try a 2nd time
@@ -1194,10 +1196,17 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
         status = DMUNIPZ_STATUS_DMTIMEOUT;
       }
 
+      // prepare command starting a thread at the Data Master
+      dmStatus = dmPrepThrStart(REQBEAM, tCmdFlex);                                // prepare command for thread start
+      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // prepare command failed: give up
+      dmStatus = dmCheckThr(REQBEAM);
+      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // check command failed: give up
+      
       //---- send data to Data Master ----
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
         if (!flagBooster) dmChangeBlock(REQTK);                                    // modify "slow" waiting block within DM
-      } // if getSysTime
+        dmStartThread(REQBEAM);                                                    // start thread within DM
+      } // if !flagNoCmd
 
       *dtStart     = tCmdFlex - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
@@ -1213,9 +1222,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (status == COMMON_STATUS_OK)
         *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAMOK);
 
-      if ((status == COMMON_STATUS_OK) && flagEBTimeout)                          // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
+      if ((status == COMMON_STATUS_OK) && flagEBTimeout)                           // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
         status = COMMON_STATUS_EBREADTIMEDOUT;                                           
-          
+       
       break;
 
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
