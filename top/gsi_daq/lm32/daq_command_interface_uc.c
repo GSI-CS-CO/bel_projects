@@ -99,6 +99,12 @@ verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
       return DAQ_RET_ERR_SLAVE_OUT_OF_RANGE;
    }
 
+   if( pDaqBus->aDaq[pLocation->deviceNumber-1].maxChannels == 0 )
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_NO_VHDL_MACRO_FOUND\n" );
+      return DAQ_RET_ERR_NO_VHDL_MACRO_FOUND;
+   }
+   
    if( pLocation->deviceNumber > pDaqBus->foundDevices )
    {
       DBPRINT1( "DBG: DAQ_RET_ERR_SLAVE_NOT_PRESENT\n" );

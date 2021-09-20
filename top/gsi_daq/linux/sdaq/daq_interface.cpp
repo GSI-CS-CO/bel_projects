@@ -48,7 +48,7 @@ using namespace daq;
  * @ingroup DEBUG
  * @brief Converts a operation code for the LM32 into a string.
  */
-const std::string command2String( daq::DAQ_OPERATION_CODE_T op )
+const std::string command2String( DAQ_OPERATION_CODE_T op )
 {
    #define __OP_CODE_CASE_ITEM( name ) case name: return #name
    switch( op )
@@ -87,7 +87,7 @@ const std::string command2String( daq::DAQ_OPERATION_CODE_T op )
  * @ingroup DEBUG
  * @brief Converts the command return code of LM32 into a string.
  */
-const std::string daq::status2String( DAQ_RETURN_CODE_T status )
+const std::string daq::status2String( DAQ_OP_STATE_T status )
 {
    #define __RET_CODE_CASE_ITEM( name ) case name: return #name
    switch( status )
@@ -103,6 +103,7 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
       __RET_CODE_CASE_ITEM( DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER );
       __RET_CODE_CASE_ITEM( DAQ_ERR_PROGRAM );
       __RET_CODE_CASE_ITEM( DAQ_ERR_RESPONSE_TIMEOUT );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_NO_VHDL_MACRO_FOUND );
    }
    return "unknown";
    #undef __RET_CODE_CASE_ITEM
@@ -305,7 +306,7 @@ DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
                           m_oSharedData.operation.retCode );
    }
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -349,7 +350,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -368,7 +369,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -387,7 +388,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -406,7 +407,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
    CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param4 );
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -420,7 +421,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, start );
    CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, end );
 
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -580,7 +581,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
       m_slotFlags  = 0;
       m_maxDevices = 0;
    }
-   return m_oSharedData.operation.retCode;
+   return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );;
 }
 
 /*! ---------------------------------------------------------------------------

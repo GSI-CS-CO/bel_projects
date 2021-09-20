@@ -93,27 +93,41 @@ namespace daq
  */
 
 /*! ---------------------------------------------------------------------------
- * @brief Return code type of the DAQ LM32 application.
+ * @brief Return code type of the DAQ LM32 application used in shared memory.
+ * @see DAQ_OP_STATE_T
  */
 typedef int32_t DAQ_RETURN_CODE_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Error and status codes of the LM32 command interface.
+ * @see DAQ_RETURN_CODE_T
+ */
+typedef enum
+{
+   DAQ_RET_ERR_UNKNOWN_OPERATION        = -1,
+   DAQ_RET_ERR_SLAVE_NOT_PRESENT        = -2,
+   DAQ_RET_ERR_CHANNEL_NOT_PRESENT      = -3,
+   DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND = -4,
+   DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE     = -5,
+   DAQ_RET_ERR_SLAVE_OUT_OF_RANGE       = -6,
+   DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER   = -7,
+   DAQ_RET_ERR_NO_VHDL_MACRO_FOUND      = -8,
+#ifndef __lm32__
+   DAQ_ERR_PROGRAM                      = -100,
+   DAQ_ERR_RESPONSE_TIMEOUT             = -101,
+#endif
+   DAQ_RET_OK                           =  0,
+   DAQ_RET_RESCAN                       =  1
+} DAQ_OP_STATE_T;
 
-#define DAQ_RET_ERR_UNKNOWN_OPERATION        -1
-#define DAQ_RET_ERR_SLAVE_NOT_PRESENT        -2
-#define DAQ_RET_ERR_CHANNEL_NOT_PRESENT      -3
-#define DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND -4
-#define DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE     -5
-#define DAQ_RET_ERR_SLAVE_OUT_OF_RANGE       -6
-#define DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER   -7
-
-#define DAQ_RET_OK                            0
-#define DAQ_RET_RESCAN                        1
 
 /*! @} DAQ_STATUS_MESSAGES */
 
 #ifndef DAQ_OP_OFFSET
   #define DAQ_OP_OFFSET 0
 #endif
+
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY

@@ -32,17 +32,12 @@
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <daq_descriptor.h>
-//#include <stddef.h>
-//#include <string>
 #include <daq_eb_ram_buffer.hpp>
 #include <daq_calculations.hpp>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
 #endif
-
-#define DAQ_ERR_PROGRAM                     -100
-#define DAQ_ERR_RESPONSE_TIMEOUT            -101
 
 #define DAQ_ASSERT_CHANNEL_ACCESS( deviceNumber, channel ) \
 {                                                          \
@@ -61,7 +56,7 @@ namespace daq
  * @ingroup DAQ
  * @brief Converts the status number in to the defined string.
  */
-const std::string status2String( DAQ_RETURN_CODE_T status );
+const std::string status2String( DAQ_OP_STATE_T status );
 
 /*!
  * @ingroup DAQ
@@ -87,15 +82,15 @@ public:
  */
 class DaqException: public Exception
 {
-   const DAQ_RETURN_CODE_T  m_daqStatus;
+   const DAQ_OP_STATE_T  m_daqStatus;
 
 public:
    DaqException( const std::string& rMsg,
                  const DAQ_RETURN_CODE_T status = DAQ_ERR_PROGRAM )
       :Exception( "DAQ: " + rMsg )
-      ,m_daqStatus( status ) {}
+      ,m_daqStatus( static_cast<DAQ_OP_STATE_T>(status) ) {}
 
-   const DAQ_RETURN_CODE_T getStatus( void )
+   const DAQ_OP_STATE_T getStatus( void )
    {
       return m_daqStatus;
    }
@@ -113,7 +108,7 @@ class DaqInterface: public DaqBaseInterface
 {
 public:
    using SLOT_FLAGS_T  = Bus::SCUBUS_SLAVE_FLAGS_T;
-   using RETURN_CODE_T = DAQ_RETURN_CODE_T;
+   using RETURN_CODE_T = DAQ_OP_STATE_T;
 
 private:
    DAQ_SHARED_IO_T              m_oSharedData;
@@ -180,7 +175,7 @@ public:
 
    RETURN_CODE_T getLastReturnCode( void ) const
    {
-      return m_oSharedData.operation.retCode;
+      return static_cast<RETURN_CODE_T>(m_oSharedData.operation.retCode);
    }
 
    const std::string getLastReturnCodeString( void );
