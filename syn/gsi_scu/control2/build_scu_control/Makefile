@@ -188,6 +188,7 @@ endif
 # SCU_URL = scuxl0212
 # SCU_URL = scuxl0331
 # SCU_URL = scuxl0025
+SCU_URL = scuxl0328
  # ACU-test
 
 DOX_EXTRACT_STATIC         = "YES"
