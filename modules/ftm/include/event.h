@@ -116,6 +116,31 @@ public:
   node_ptr clone() const override { return boost::make_shared<Origin>(Origin(*this)); }
 };
 
+// Sarts threads at a given time (current of executor plus offset)
+class StartThread : public Event {
+  uint64_t startOffs;
+  uint32_t thread;
+public:
+  StartThread(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t startOffs, uint32_t thread) 
+  : Event(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_STARTTHREAD << NFLG_TYPE_POS)), tOffs), startOffs(startOffs), thread(thread) {}
+  StartThread(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, flags) {}
+  StartThread(const StartThread& src) : Event(src), startOffs(src.startOffs), thread(src.thread) {}
+  ~StartThread() {};
+  void show(void) const;
+  void show(uint32_t cnt, const char* sPrefix) const;
+  virtual const uint32_t getThread(void)  const {return this->thread;}
+  virtual const void setThread(uint32_t thread)  {this->thread = thread;}
+  virtual const uint64_t getStartOffs(void)  const {return this->startOffs;}
+  virtual const void setStartOffs(uint64_t startOffs)  {this->startOffs = startOffs;}
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
+  node_ptr clone() const override { return boost::make_shared<StartThread>(StartThread(*this)); }
+};
+
 
 // A command to be sent over the bus to a Queue inside the DM, not executed before tValid
 class Command : public Event {

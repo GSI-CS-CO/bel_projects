@@ -155,7 +155,7 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
 
 
-          //FIXME Can't management and data be handled in parallel?... unsure
+          //TODO Can't management and data be handled in parallel?... unsure
           // IMPORTANT: skip all mgmt nodes
           if (type == NODE_TYPE_MGMT) {continue; }
 
@@ -175,13 +175,12 @@ namespace dnt = DotStr::Node::TypeVal;
 
           //Add Vertex
           
-          sErr << std::endl << "DEBUG_Before_Suspicious_Code" << std::endl;  
-          BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
+          
 
           vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
           //FIXME workaround for groupstable updates from download. not  nice ...
-          sErr << std::endl << "DEBUG_After_Suspicious_Code" << std::endl;  
-          BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
+          //sErr << std::endl << "DEBUG_After_Suspicious_Code" << std::endl;  
+          //BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
 
           g[v].bpEntry  = std::to_string((bool)(flags & NFLG_BP_ENTRY_LM32_SMSK));
           g[v].bpExit   = std::to_string((bool)(flags & NFLG_BP_EXIT_LM32_SMSK));
@@ -215,6 +214,7 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_ORIGIN       : g[v].np = (node_ptr) new     Origin(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sOrigin;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_STARTTHREAD  : g[v].np = (node_ptr) new StartThread(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sStartThread; g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;
@@ -225,7 +225,7 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
-          sErr << std::endl << "DEBUG_Created node " << name << " @idx " << std::dec << v << " nptr: 0x" << std::hex << g[v].np << std::endl;
+          
 
           
         }
@@ -239,7 +239,6 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
-    sErr << std::endl << "DEBUG_Created all nodes, show graph once more at at edge creation state" << std::endl; 
     //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
@@ -248,8 +247,8 @@ namespace dnt = DotStr::Node::TypeVal;
       } else {
 
         if  (!(g[it.v].np->isMeta())) {
-          g[it.v].np->show();
-          hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
+          //g[it.v].np->show();
+          //hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
           g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
         }  
       }

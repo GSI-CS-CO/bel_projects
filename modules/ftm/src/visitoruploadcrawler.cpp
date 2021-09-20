@@ -35,6 +35,10 @@ void VisitorUploadCrawler::visit(const Origin& el) const {
   el.serialise( getDefDst() + getOriginDst(), b);
 }
 
+void VisitorUploadCrawler::visit(const StartThread& el) const {
+  el.serialise( getDefDst(), b);
+}
+
 void VisitorUploadCrawler::visit(const Flush& el) const {
   el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlushOvr(), b);
 }

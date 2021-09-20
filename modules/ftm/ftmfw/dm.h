@@ -278,6 +278,13 @@ uint32_t* cswitch(uint32_t* node, uint32_t* thrData);
 */
 uint32_t* origin(uint32_t* node, uint32_t* thrData);
 
+/// Processes a startthread node 
+/** Overwrites target's successor. No queueing involved, effect is immediate.
+  * @param node Pointer to current node of basetype origin
+  * @param thrData Pointer to the associated thread's metadata
+  * @return Ptr to successor node
+*/
+uint32_t* startThread(uint32_t* node, uint32_t* thrData);
 
 /// Generates a timing message and dispatches it to priority queue
 /** Reformats timing node content and generates a timing message. 

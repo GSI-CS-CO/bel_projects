@@ -112,6 +112,11 @@ namespace DotStr {
         extern const std::string sTef;
       }
 
+      namespace StartThread {
+        extern const std::string sStartOffs;
+      }
+
+
       namespace Cmd {
 
         extern const std::string sTimeValid;
@@ -157,6 +162,7 @@ namespace DotStr {
       extern const std::string sCmdStop;
       extern const std::string sCmdAbort;
       extern const std::string sCmdOrigin;
+      extern const std::string sStartThread;
       extern const std::string sCmdLock;
       extern const std::string sCmdUnlock;
       extern const std::string sCmdAsyncClear;
@@ -225,6 +231,11 @@ namespace DotStr {
       }
 
       namespace Origin {
+        extern const std::string sLookDef;
+
+      }
+
+      namespace StartThread {
         extern const std::string sLookDef;
 
       }

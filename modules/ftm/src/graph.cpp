@@ -51,6 +51,9 @@ myVertex::myVertex(myVertex const &src) {
   this->tef = src.tef;
   this->res = src.res;
 
+  //StartThread
+  this->startOffs = src.startOffs;
+
   //Command
   this->tValid = src.tValid;
   this->vabs   = src.vabs;

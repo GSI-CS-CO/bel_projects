@@ -93,8 +93,6 @@ std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createSwitch(const Switch& e
 }
 
 void VisitorDownloadCrawler::visit(const Origin& el) const  {
-  printf("DEBUG_Reassurance_by_visitor_downloadcrawler, Class Origin member thread = 0x%02x\n", el.getThread());
-
   uint8_t targetCpu;
   AdrType adrT;
   uint32_t tmpAdr;
@@ -110,6 +108,10 @@ void VisitorDownloadCrawler::visit(const Origin& el) const  {
   tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, auxAdr);
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sOriginDst),    g);
 
+}
+
+void VisitorDownloadCrawler::visit(const StartThread& el) const  {
+  setDefDst();
 }
 
 std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el) const {

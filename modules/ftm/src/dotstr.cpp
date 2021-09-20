@@ -113,6 +113,11 @@ namespace DotStr {
         const std::string sPar           = "par"; // transparent Parameter field
         const std::string sTef           = "tef"; // time fraction (TEF) field
       }
+
+      namespace StartThread {
+        const std::string sStartOffs      = "startoffs"; // a newly spawned threads offset to current time sum in ns  
+      }
+
       // Command Parameters
       namespace Cmd {
 
@@ -155,7 +160,8 @@ namespace DotStr {
       const std::string sCmdStart      = "start";       // For cmd dots, starts a thread (by cpu/thread, patternname or node name)
       const std::string sCmdStop       = "stop";        // For cmd dots, stops a thread (by cpu/thread, patternname or node name)
       const std::string sCmdAbort      = "abort";       // For cmd dots, aborts a thread (by cpu/thread, patternname or node name)
-      const std::string sCmdOrigin     = "origin";      // For cmd dots, sets origin to node name
+      const std::string sCmdOrigin     = "origin";      // sets origin to node name. For cmd dots or schedules.
+      const std::string sStartThread   = "startthread"; // For schedules. Starts a thread at a given time relative to current tsum
       const std::string sCmdLock       = "lock";       // locks a block against DM reading/writing
       const std::string sCmdUnlock     = "unlock";     // unlocks a block
       const std::string sCmdAsyncClear = "asyncclear"; // clears all queues of a block. Only possible when locked.
@@ -227,6 +233,10 @@ namespace DotStr {
 
       namespace Origin {
         const std::string sLookDef       = "shape     = \"octagon\", color  = \"cyan\"";
+      }
+
+      namespace StartThread {
+        const std::string sLookDef       = "shape     = \"triangle\", color  = \"cyan\"";
       }
 
       namespace Meta {

@@ -34,6 +34,12 @@ void VisitorValidation::visit(const Origin& el) const  {
   //destcheck
 }
 
+void VisitorValidation::visit(const StartThread& el) const  {
+  eventSequenceCheck();
+  //targetcheck
+  //destcheck
+}
+
 
 void VisitorValidation::visit(const Flush& el) const {
   eventSequenceCheck();

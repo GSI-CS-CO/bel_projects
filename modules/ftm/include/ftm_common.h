@@ -338,11 +338,19 @@
 #define SWITCH_DEST				(SWITCH_TARGET + _PTR_SIZE_ + _TS_SIZE_ + _32b_SIZE_) //switch destination. offset is equal to command destination layout
 //@}
 
-/** @name Switch node layout definitions*/
+/** @name Origin node layout definitions*/
 //@{
 #define ORIGIN_DEST           (EVT_HDR_END) ///< origin dst 
-#define ORIGIN_CPU            (ORIGIN_DEST + _32b_SIZE_) // destination CPU
+#define ORIGIN_RES            (ORIGIN_DEST + _32b_SIZE_) 
+#define ORIGIN_CPU            (ORIGIN_RES  + _32b_SIZE_) // destination CPU
 #define ORIGIN_THR            (ORIGIN_CPU  + _32b_SIZE_) // destination thread
+//@}
+
+/** @name StartThread node layout definitions*/
+//@{
+#define STARTTHREAD_STARTOFFS      (EVT_HDR_END) ///< Start time offset
+#define STARTTHREAD_CPU            (STARTTHREAD_STARTOFFS + _64b_SIZE_) // CPU(s)
+#define STARTTHREAD_THR            (STARTTHREAD_CPU      + _32b_SIZE_) // thread(s)
 //@}
 
 
@@ -594,8 +602,9 @@
 #define NODE_TYPE_SHARE         (NODE_TYPE_QBUF         +1)	///< share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
 #define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)	///< lists all alternative destinations of a decision block
-#define NODE_TYPE_ORIGIN        (NODE_TYPE_ALTDST       +1)	///< used to denote the time offset for pattern rows
-#define NODE_TYPE_MGMT          (NODE_TYPE_ORIGIN         +1)	///< contain the part of the groups and node name table in compressed form
+#define NODE_TYPE_ORIGIN        (NODE_TYPE_ALTDST       +1)	///< sets the origin of a thread to the connected node
+#define NODE_TYPE_STARTTHREAD   (NODE_TYPE_ORIGIN       +1) ///< starts specified thread(s) at given time
+#define NODE_TYPE_MGMT          (NODE_TYPE_STARTTHREAD  +1)	///< contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)	///< contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)	///< type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
 #define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)	///< instantaneously switch defdest of a block. Like permanent flow with no queue

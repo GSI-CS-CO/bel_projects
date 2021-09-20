@@ -73,6 +73,8 @@ public:
   std::string tef         = sZero;
   std::string res         = sZero;
 
+  //StartThread
+  std::string startOffs = sZero;
   //Command
 
   std::string tValid = sZero;
