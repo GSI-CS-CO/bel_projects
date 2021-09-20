@@ -140,14 +140,28 @@ typedef struct PACKED_SIZE
     */
    uint32_t           serverHasWritten;
    uint32_t           ramAccessLock;
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   RAM_RING_SHARED_INDEXES_T ringAdmin;
+#else
    RAM_RING_INDEXES_T ringIndexes;
+#endif
+   
 } RAM_RING_SHARED_OBJECT_T;
 #ifndef __DOXYGEN__
+ #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
+               sizeof(RAM_RING_SHARED_INDEXES_T) +
+               2 * sizeof(uint32_t) );
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
+               offsetof( RAM_RING_SHARED_OBJECT_T, ringAdmin ));
+
+ #else
 STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
                sizeof(RAM_RING_INDEXES_T) +
                2 * sizeof(uint32_t) );
 STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
                offsetof( RAM_RING_SHARED_OBJECT_T, ringIndexes ));
+ #endif
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -155,12 +169,22 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
  * @brief Initializer of the shared object for the communication between
  *        server and Linux client.
  */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+#define RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER                               \
+{                                                                             \
+   .serverHasWritten  = false,                                                \
+   .ramAccessLock     = false,                                                \
+   .ringAdmin.indexes = RAM_RING_INDEXES_SDAQ_INITIALIZER,                    \
+   .ringAdmin.wasRead = 0                                                     \
+}
+#else
 #define RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER                               \
 {                                                                             \
    .serverHasWritten = false,                                                 \
    .ramAccessLock    = false,                                                 \
    .ringIndexes      = RAM_RING_INDEXES_SDAQ_INITIALIZER                      \
 }
+#endif
 
 #define RAM_RING_GET_CAPACITY() (RAM_SDAQ_MAX_INDEX - RAM_SDAQ_MIN_INDEX)
 

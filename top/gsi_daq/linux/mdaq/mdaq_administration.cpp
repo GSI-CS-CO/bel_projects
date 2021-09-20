@@ -364,10 +364,18 @@ uint DaqAdministration::distributeData( void )
 
    const uint lastWasToRead = getWasRead();
 
+   /*
+    * Synchronize the ring administrator data with the LM32 shared memory.
+    */
    updateMemAdmin();
 
    if( getWasRead() != 0 )
+   { /*
+      * Server respectively the LM32 has not synchronized the read index yet.
+      * Therefore no data are present as well. 
+      */
       return 0;
+   }
 
    const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
    if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )

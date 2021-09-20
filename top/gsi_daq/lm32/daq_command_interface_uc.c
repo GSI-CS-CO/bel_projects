@@ -182,7 +182,11 @@ DAQ_RETURN_CODE_T opReset( DAQ_ADMIN_T* pDaqAdmin,
 {
    DBG_FUNCTION_INFO();
    daqBusReset( &pDaqAdmin->oDaqDevs );
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   ramRingSharedReset( &pDaqAdmin->oRam.pSharedObj->ringAdmin );   
+#else
    ramRingReset( &pDaqAdmin->oRam.pSharedObj->ringIndexes );
+#endif
    GET_SHARED().ramIndexes.ramAccessLock = false;
    return DAQ_RET_OK;
 }
