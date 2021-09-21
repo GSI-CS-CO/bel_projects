@@ -531,7 +531,7 @@ uint DaqInterface::getSlotNumber( const uint deviceNumber )
    SCU_ASSERT( deviceNumber <= c_maxDevices );
 
    uint i = 0;
-   for( uint slot = 1; slot <= c_maxSlots; slot++ )
+   for( uint slot = c_startSlot; slot <= c_maxSlots; slot++ )
    {
       if( isDevicePresent( slot ) )
          i++;
@@ -552,7 +552,7 @@ uint DaqInterface::getDeviceNumber( const uint slotNumber )
       return 0;
 
    uint deviceNumber = 0;
-   for( uint slot = 1; slot <= slotNumber; slot++ )
+   for( uint slot = c_startSlot; slot <= slotNumber; slot++ )
    {
       if( isDevicePresent( slot ) )
          deviceNumber++;
@@ -570,7 +570,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
    {
       m_slotFlags = m_oSharedData.operation.ioData.param1;
       m_maxDevices = 0;
-      for( uint slot = 1; slot <= c_maxSlots; slot++ )
+      for( uint slot = c_startSlot; slot <= c_maxSlots; slot++ )
       {
          if( isDevicePresent( slot ) )
             m_maxDevices++;

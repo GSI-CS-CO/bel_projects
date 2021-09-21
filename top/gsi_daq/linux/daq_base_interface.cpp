@@ -58,6 +58,11 @@ DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
    ,m_ebAccessSelfCreated( true )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
    ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
+#ifdef __NEW__
+   ,m_poRingAdmin( nullptr )
+   ,m_lastReadIndex( 0 )
+   ,m_daqBaseOffset( 0 )
+#endif
 {
 
 }
@@ -69,6 +74,11 @@ DaqBaseInterface::DaqBaseInterface( DaqAccess* poEbAccess )
    ,m_ebAccessSelfCreated( false )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
    ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
+#ifdef __NEW__
+   ,m_poRingAdmin( nullptr )
+   ,m_lastReadIndex( 0 )
+   ,m_daqBaseOffset( 0 )
+#endif
 {
 
 }
@@ -88,5 +98,8 @@ void DaqBaseInterface::onDataReadingPause( void )
    if( m_blockReadEbCycleGapTimeUs != 0 )
      ::usleep( m_blockReadEbCycleGapTimeUs );
 }
+
+#ifdef __NEW__
+#endif
 
 //================================== EOF ======================================

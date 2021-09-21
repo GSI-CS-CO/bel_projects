@@ -11,6 +11,8 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += VERSION=2.5
 
+#DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+
 MIAN_MODULE := fg-feedback.cpp
 
 BASE_DIR := ..
@@ -101,17 +103,17 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 #CALL_ARGS = --generate_doc_tagged
 
-#CALL_ARGS = scuxl0035 -vadt1
+# CALL_ARGS = scuxl0035 -vadt1
+CALL_ARGS = scuxl0035 -vaN
+# CALL_ARGS = scuxl0212 -adt1
 
-#CALL_ARGS = scuxl0212 -adt1
-
-#CALL_ARGS = scuxl0035 -vy
+# CALL_ARGS = scuxl0035 -vy
 
 # CALL_ARGS = scuxl0035 -b11,12
 # CALL_ARGS = scuxl0035 -azdt1 -I10000 -T"X11 size 800,150"
-CALL_ARGS = "140.181.160.53" -azt1 -T"X11 size 800,150"
+# CALL_ARGS = "140.181.160.53" -azt1 -T"X11 size 800,150"
 # CALL_ARGS = scuxl0107 -azdt1 -T"X11 size 800,150"i
-# DEBUG = 1
+ DEBUG = 1
 
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 

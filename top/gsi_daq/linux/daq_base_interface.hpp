@@ -33,6 +33,7 @@
 #include <daqt_messages.hpp>
 #include <daq_ring_admin.h>
 #include <daq_fg_allocator.h>
+#include <assert.h>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -154,6 +155,8 @@ public:
    }
 };
 
+#define __NEW__
+
 ///////////////////////////////////////////////////////////////////////////////
 /*!----------------------------------------------------------------------------
  * @brief Handles the data access of MIL- and ADDAC DAQ's via
@@ -166,7 +169,7 @@ protected:
 
 private:
    DaqAccess*   m_poEbAccess;
-   const bool          m_ebAccessSelfCreated;
+   const bool   m_ebAccessSelfCreated;
 
 protected:
    static constexpr std::size_t c_defaultMaxEbCycleDataLen = 10;
@@ -174,6 +177,12 @@ protected:
 
    std::size_t       m_maxEbCycleDataLen;
    uint              m_blockReadEbCycleGapTimeUs;
+
+#ifdef __NEW__
+   RAM_RING_SHARED_INDEXES_T* m_poRingAdmin;
+   uint                       m_lastReadIndex;
+   std::size_t                m_daqBaseOffset;
+#endif
 
 public:
    constexpr static uint c_maxSlots  = Bus::MAX_SCU_SLAVES;
@@ -311,6 +320,43 @@ public:
     * usleep() by the parameter m_blockReadEbCycleGapTimeUs,
     */
    virtual void onDataReadingPause( void );
+
+#ifdef __NEW__
+protected:
+   void setRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  )
+   {
+      assert( m_poRingAdmin == nullptr );
+      assert( m_daqBaseOffset == 0 );
+      m_poRingAdmin = pAdmin;
+      m_daqBaseOffset = daqBaseOffset;
+   }
+
+   void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      getEbAccess()->readRam( pData, len, m_poRingAdmin->indexes );
+   }
+
+   void readLM32( eb_user_data_t pData,
+                  const std::size_t len,
+                  const std::size_t offset = 0,
+                  const etherbone::format_t format = EB_DATA8
+                )
+   {
+      assert( m_daqBaseOffset != 0 );
+      getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
+   }
+
+   void writeLM32( const eb_user_data_t pData,
+                   const std::size_t len,
+                   const std::size_t offset = 0,
+                   const etherbone::format_t format = EB_DATA8 )
+   {
+      assert( m_daqBaseOffset != 0 );
+      getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
+   }
+
+#endif
 };
 
 } // namespace Scu
