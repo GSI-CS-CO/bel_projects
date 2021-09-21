@@ -134,6 +134,7 @@ uint32_t *pSharedDtBprep;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedDtReady2Sis;           // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
 uint32_t *pSharedNR2sTransfer;          // pointer to a "user defined" u32 register; here: publish # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 uint32_t *pSharedNR2sCycle;             // pointer to a "user defined" u32 register; here: publish # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
+uint32_t *pSharedNBooster;              // pointer to a "user defined" u32 register; here: publish # of booster injections
 volatile uint32_t *pSharedDstMacHi;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
@@ -545,6 +546,7 @@ void initSharedMem(uint32_t *reqState)
   pSharedDtReady2Sis  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTREADY2SIS >> 2));
   pSharedNR2sTransfer = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NR2STRANSFER >> 2));
   pSharedNR2sCycle    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NR2SCYCLE >> 2));
+  pSharedNBooster     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NBOOSTER >> 2));
   pSharedVirtAccRec   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_RECVIRTACC >> 2));
   pSharedDstMacHi     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
   pSharedDstMacLo     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
@@ -1101,11 +1103,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (nextAction == DMUNIPZ_ECADO_REQBEAMNW) flagBooster = 1;
       else                                       flagBooster = 0;
 
-      if (flagBooster) {                                                           // diagnostics: increment/set number of injections (of current transfer)
-        (*nMulti) = 0;
-        (*nBoost)++;
-      } // if flagBooster
-      else (*nMulti)++;
+      if (flagBooster) (*nBoost)++;                                                // diagnostics: increment/set number of injections (of current transfer)
+      else             (*nMulti)++;
 
       // existing thread data is invalid and must be cleared
       dmClearThr(REQBEAM); 
@@ -1410,6 +1409,7 @@ int main(void) {
 
     *pSharedNR2sTransfer = nR2sTransfer;
     *pSharedNR2sCycle    = nR2sCycle;
+    *pSharedNBooster     = nBoost;
 
     // update OLED display
     updateOLED(statusTransfer, virtAccReq, nTransfer, statusArray, actState);

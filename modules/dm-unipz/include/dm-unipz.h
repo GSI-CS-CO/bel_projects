@@ -171,8 +171,9 @@ typedef union {
 #define DMUNIPZ_SHARED_NR2STRANSFER   (DMUNIPZ_SHARED_DTREADY2SIS   + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_NR2SCYCLE      (DMUNIPZ_SHARED_NR2STRANSFER  + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_DTBPREP        (DMUNIPZ_SHARED_NR2SCYCLE     + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
+#define DMUNIPZ_SHARED_NBOOSTER       (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // # of booster injections
 
 // diagnosis: end of used shared memory
-#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // end of shared memory
+#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // end of shared memory
 
 #endif
