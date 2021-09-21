@@ -571,17 +571,20 @@ void initSharedMem(uint32_t *reqState)
   } // if idx
   else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("dm-unipz: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("dm-unipz: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("dm-unipz: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2) + 1);
   DBPRINT2("dm-unipz: fw specific shared begin 0x%08x\n", pSharedTemp);
-  while (pSharedTemp < (uint32_t *)(pShared + (DMUNIPZ_SHARED_END >> 2 ))) {
+  while (pSharedTemp < (uint32_t *)(pShared + (DMUNIPZ_SHARED_END >> 2))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
+  DBPRINT2("dm-unipz: fw specific shared end   0x%08x\n", pSharedTemp);
 
   fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
   
@@ -1338,8 +1341,8 @@ int main(void) {
   statusTransfer = 0;
 
   init();                                                                   // initialize stuff for lm32
-  initSharedMem(&reqState);                                                 // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
+  initSharedMem(&reqState);                                                 // initialize shared memory
   fwlib_clearDiag();                                                        // clear common diagnostic data
   
   while (1) {

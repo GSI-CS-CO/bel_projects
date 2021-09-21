@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-January-2021
+ *  version : 21-September-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -471,7 +471,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     i++;
   } // while pSharedTemp
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared));
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
   
   // set initial values;
   ebmClearSharedMem();
