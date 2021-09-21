@@ -435,7 +435,11 @@ begin
                                                       ENA_SLOT(9) <= std_logic_vector'("111111");
                                                       IOBP_Aktiv_LED(9)  <=  IOBP_Out(9); 
                                                       ENA_SLOT(9) <= std_logic_vector'("100000");
-                                                      IOBP_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9 
+                                                  
+                                                      when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 9
+                                                      AW_Input_Reg(5)( 4 downto  0) <=   (Deb_Sync( 52 downto  48) AND not IOBP_Masken_Reg5( 4 downto  0));  -- Input, IO-Modul Nr. 9
+                                                      AW_Input_Reg(5)(5) <='0';              
                                                       IOBP_In_Reg(9) (4 downto 0) <= ( PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       if  (Config = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
