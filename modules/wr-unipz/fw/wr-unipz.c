@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Aug-2020
+ *  version : 02-Sep-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000206                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000208                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -199,7 +199,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
   deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
-  fwlib_ebmWriteTM(deadline, id, param);
+  fwlib_ebmWriteTM(deadline, id, param, 1);
   
   // diag and status
   tDiff = deadline - getSysTime();
@@ -530,7 +530,7 @@ uint32_t extern_entryActionOperation()
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(1, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
@@ -600,7 +600,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   status = actStatus;
 
   // wait for MIL event
-  milStatus = fwlib_wait4MILEvent(COMMON_MILTIMEOUT, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
+  milStatus = fwlib_wait4MILEvent(COMMON_MILTIMEOUT * 1000, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
   if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
   if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other MIL error
 
@@ -614,7 +614,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
       
       // get timestamp from TLU -> ECA
-      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
       deadline = recDeadline;
       
       // check, if timestamping via TLU failed; if yes, continue with TS from MIL

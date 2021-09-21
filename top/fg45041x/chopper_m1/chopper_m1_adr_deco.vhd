@@ -1,6 +1,6 @@
 -- 'chopper_m1_adr_deco' => Chopper-Macro1-Adress-Dekodierung,
 -- Autor: W.Panschow, Stand: 29.04.03, Vers: V01 ";
--- Erweiterung 8.3.06, Delay Counter für Chopper Ausgänge
+-- Erweiterung 8.3.06, Delay Counter fuer Chopper Ausgaenge
 
 
 library IEEE;
@@ -37,7 +37,7 @@ entity chopper_m1_adr_deco is
 		
 		Chop_Macro1_Activ:	OUT std_logic;
 		Chop_RD_Activ:		OUT std_logic;
-		Chop_DT_to_MB:		OUT	std_logic							-- Wird im Macro 'Modul_bus' mit 'Modul_bus'-internen DTACK-Gründen Oder-Verknüpft. (Achtung dient direkt zur	--
+		Chop_DT_to_MB:		OUT	std_logic							-- Wird im Macro 'Modul_bus' mit 'Modul_bus'-internen DTACK-Gruenden Oder-Verknuepft. (Achtung dient direkt zur	--
 																	-- Aktiverung des Modul-Bus-Datentreibers!)																		-- 
 		);
 		

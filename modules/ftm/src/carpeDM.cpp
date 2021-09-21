@@ -2,7 +2,7 @@
 #include "carpeDMimpl.h"
 
   CarpeDM::CarpeDM() : impl_(new CarpeDMimpl()) {}
-  CarpeDM::CarpeDM(std::ostream& sLog) : impl_(new CarpeDMimpl(sLog)) {}                    
+  CarpeDM::CarpeDM(std::ostream& sLog) : impl_(new CarpeDMimpl(sLog)) {}
   CarpeDM::CarpeDM(std::ostream& sLog, std::ostream& sErr) : impl_(new CarpeDMimpl(sLog, sErr)) {}
   CarpeDM::~CarpeDM() = default;
 
@@ -49,7 +49,10 @@
   void CarpeDM::writeTextFile(const std::string& fn, const std::string& s)             { return impl_->writeTextFile(fn, s);}
   std::string CarpeDM::readTextFile(const std::string& fn)                             { return impl_->readTextFile(fn);}
 
+  void CarpeDM::completeId(vertex_t v, Graph& g)                                       {return impl_->completeId(v, g);}
 // Graphs to Dot
+  Graph& CarpeDM::parseDot(const std::string& dotString, Graph& g)                     { return impl_->parseDot(dotString, g);}
+  void CarpeDM::writeDotFile(const std::string& fn, Graph& g, bool filterMeta)         { return impl_->writeDotFile(fn, g, filterMeta);}
   void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)               { return impl_->writeDownDotFile(fn, filterMeta);}
   void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)                 { return impl_->writeUpDotFile(fn, filterMeta);}
 
@@ -69,7 +72,7 @@
   int CarpeDM::clear(bool force)                                                       { return impl_->clear(force);}                              // clears all nodes from DM
 
 // Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
+
 vStrC CarpeDM::getLockedBlocks(bool checkReadLock, bool checkWriteLock)                                         { return impl_->getLockedBlocks(checkReadLock, checkWriteLock);}
 int CarpeDM::sendCommandsDot(const std::string& s)                                                              { return impl_->sendCommandsDot(s);} //Sends a dotfile of commands to the DM
 int CarpeDM::sendCommandsDotFile(const std::string& fn)                                                         { return impl_->sendCommandsDotFile(fn);}
@@ -215,17 +218,4 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
             void CarpeDM::lockManagerClear()                 { return impl_->lockManagerClear();}
             bool CarpeDM::lockManagerHasEntries()            { return impl_->lockManagerHasEntries();}
             void CarpeDM::softwareReset(bool clearStatistic) { return impl_->softwareReset(clearStatistic);}
-               std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
-
-
-
-
-
-
-
-
-
-
-
-                             
-
+            std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}

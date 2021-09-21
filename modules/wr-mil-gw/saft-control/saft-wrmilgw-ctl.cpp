@@ -11,8 +11,11 @@
 // ==================================================================================================== 
 #include <stdio.h>
 #include <iostream>
+#include <deque>
+#include <cassert>
 #include <getopt.h>
 #include <unistd.h>
+#include <algorithm>
 
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
@@ -24,6 +27,8 @@
 #include "TimingReceiver.h"
 #include "WrMilGateway.h"
 #include "wr_mil_gw_regs.h"
+#include "Output.h"
+#include "OutputCondition.h"
 
 #ifdef USEMASP
   #include "MASP/Emitter/StatusEmitter.h"
@@ -77,27 +82,30 @@ static void wrmilgw_help (void)
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
   // std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
-  std::cout << "  -i                            Show gateway information. Repeat the option"    << std::endl;
-  std::cout << "                                 to get more detailed information, e.g. -iii"   << std::endl;
-  std::cout << "  -R                            Read register content"                          << std::endl;
-  std::cout << "  -m                            Start monitoring loop"                          << std::endl;
-  std::cout << "  -g                            Show received MIL events in monitoring loop"    << std::endl;
-  std::cout << "  -H                            Show MIL-event histogram"                       << std::endl;
-  std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"     << std::endl;
-  std::cout << "  -e                            Start WR-MIL Gateway as ESR   Pulszentrale"     << std::endl;
-  std::cout << "  -l <latency>                  Set MIL event latency [us]"                     << std::endl;
-  std::cout << "  -t <trigger>                  Set UTC-trigger event [0..255]"                 << std::endl;
-  std::cout << "  -o <offset>                   Set UTC-offset [s] (value is added to WR-time)" << std::endl;
-  std::cout << "  -d <delay>                    Set Trigger-UTC delay [us]"                     << std::endl;
-  std::cout << "  -u <delay>                    Set UTC-UTC delay [us]"                         << std::endl;
-  std::cout << "  -r                            Pause gateway for 1 s, and reset"               << std::endl;
-  std::cout << "  -k                            Kill gateway. Only LM32 reset can recover."     << std::endl;
-  std::cout << "                                 This is useful before flashing new firmware."  << std::endl;
-  std::cout << "  -c                            No color on console ouput"                      << std::endl;
+  std::cout << "  -i                            Show gateway information. Repeat the option"          << std::endl;
+  std::cout << "                                 to get more detailed information, e.g. -iii"         << std::endl;
+  std::cout << "  -R                            Read register content"                                << std::endl;
+  std::cout << "  -m                            Start monitoring loop"                                << std::endl;
+  std::cout << "  -g                            Show received MIL events in monitoring loop"          << std::endl;
+  std::cout << "  -b                            Bugfix mode: show relevent WR-Events together"        << std::endl;
+  std::cout << "                                             with events that trigger MIL-generation" << std::endl;
+  std::cout << "                                             together with snooped MIL events"        << std::endl;
+  std::cout << "  -H                            Show MIL-event histogram"                             << std::endl;
+  std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"           << std::endl;
+  std::cout << "  -e                            Start WR-MIL Gateway as ESR   Pulszentrale"           << std::endl;
+  std::cout << "  -l <latency>                  Set MIL event latency [us]"                           << std::endl;
+  std::cout << "  -t <trigger>                  Set UTC-trigger event [0..255]"                       << std::endl;
+  std::cout << "  -o <offset>                   Set UTC-offset [s] (value is added to WR-time)"       << std::endl;
+  std::cout << "  -d <delay>                    Set Trigger-UTC delay [us]"                           << std::endl;
+  std::cout << "  -u <delay>                    Set UTC-UTC delay [us]"                               << std::endl;
+  std::cout << "  -r                            Pause gateway for 1 s, and reset"                     << std::endl;
+  std::cout << "  -k                            Kill gateway. Only LM32 reset can recover."           << std::endl;
+  std::cout << "                                 This is useful before flashing new firmware."        << std::endl;
+  std::cout << "  -c                            No color on console ouput"                            << std::endl;
 #ifdef USEMASP
-  std::cout << "  -P                            MASP emitter in productive mode"                << std::endl;
+  std::cout << "  -P                            MASP emitter in productive mode"                      << std::endl;
 #endif
-  std::cout << "  -h                            Print help (this message)"                      << std::endl;
+  std::cout << "  -h                            Print help (this message)"                            << std::endl;
   std::cout << std::endl;
 }
 
@@ -107,6 +115,163 @@ std::string default_color   = "\033[0m";
 
 const int key_width = 25;
 const int value_width = 15;
+
+class BugfixMode {
+public:
+  BugfixMode() : missing_event_time(0), after_missing_countdown(0) {}
+  struct EvtID {
+    uint64_t evtid;
+    saftlib::Time deadline;
+    int fid, gid, evtno, flags, bpc, sid, bpid, res;
+    uint32_t e[5];
+    EvtID(uint64_t id, saftlib::Time dl) : 
+      evtid(id),
+      deadline(dl),
+      fid  ((id >> 60) & 0xf    ),
+      gid  ((id >> 48) & 0xfff  ),
+      evtno((id >> 36) & 0xfff  ),
+      flags((id >> 32) & 0xf    ),
+      bpc  ((id >> 34) & 0x1    ),
+      sid  ((id >> 20) & 0xfff  ),
+      bpid ((id >>  6) & 0x3fff ),
+      res  ( id        & 0x3f   )   {}
+    bool make_mil(int &mil) {
+      if ( (gid == 0x12c) && ((evtno&0xff00) == 0) ) {
+        int tophalf = sid&0xff;
+        int virtacc = tophalf &0xf;
+        if (evtno >= 200 && evtno <= 208) {
+          // tophalf = tophalf;
+        } else if (evtno == 255) {
+          tophalf = (2<<4) | 0xf;
+        } else {
+          tophalf = (2<<4) | virtacc;
+        }
+        mil = (tophalf<<8)|(evtno&0xff);
+        return true;
+      }
+      return false;
+    }
+    uint32_t decode_mil_utc_timestamp() {
+      // uint64_t UTC_offset_ms = 1199142000000;
+      // std::cerr << std::hex << e[0] << " " << e[1] << " " << e[2] << " " << e[3] << " " << e[4] << " " << std::endl;
+      uint32_t time = 0; 
+      time |= e[1]&0x3f; time <<= 8;
+      time |= e[2]     ; time <<= 8;
+      time |= e[3]     ; time <<= 8;
+      time |= e[4];
+      // std::cerr << "time = 0x" << std::hex << std::setw(8) << std::setfill('0') <<                time  << " = " << std::dec <<                time << std::endl;
+      return time;
+    }
+    void encode_mil_utc_timestamp() // e must be an array with lenth 5
+    {
+      // std::cerr << "encode " << deadline.getTAI() << std::endl;
+      uint64_t msNow  = deadline.getTAI() / UINT64_C(1000000); // conversion from ns to ms (since 1970)
+      uint64_t ms2008 = UINT64_C(1199142000000); // miliseconds at 01/01/2008  (since 1970)
+                                                 // the number was caluclated using: date --date='01/01/2008' +%s
+      uint64_t mil_timestamp_ms = msNow - ms2008;
+      uint32_t mil_ms           = mil_timestamp_ms % 1000;
+      uint32_t mil_sec          = mil_timestamp_ms / 1000;
+
+      e[0]  = (( mil_ms>>2      ) & 0xff) /*<< 8) | 0xe0*/;
+      e[1]  = (((mil_ms&0x3)<<6 ) & 0xff) /*<< 8) | 0xe1*/;
+      e[1] |= (( mil_sec>>24    ) & 0xff) /*<< 8) | 0xe1*/;
+      e[2]  = (( mil_sec>>16    ) & 0xff) /*<< 8) | 0xe2*/;
+      e[3]  = (( mil_sec>>8     ) & 0xff) /*<< 8) | 0xe3*/;
+      e[4]  = (( mil_sec        ) & 0xff) /*<< 8) | 0xe4*/;
+      assert(mil_sec == decode_mil_utc_timestamp());
+
+      for (int i = 0; i < 5; ++i) {
+        e[i] <<= 8;
+        e[i] |= 0xe0 | i;
+      }
+
+      // std::cerr << "same? " << mil_sec << " = " << this->decode_mil_utc_timestamp() << std::endl;
+    }
+  };
+
+  bool utc_time_trigger(int mil) {
+    return (mil&0xff) == 0xf6;
+  }
+  void on_missing_mil_output(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
+  	std::cout << "oscilloscope trigger was sent " << (deadline.getTAI()-missing_event_time)/1000000.0 << " ms after missing event" << std::endl;
+  }
+  void on_event_wr(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
+    //std::cout << "wr:       0x" << std::hex << std::setw(16) << std::setfill('0') << id << " " << std::dec << deadline.getTAI() << std::endl;
+    // int mil;
+    // // std::cerr << "on_event_wr " << std::hex << id << std::endl;
+    // EvtID evtid(id, deadline);
+    // if (evtid.make_mil(mil)) {
+    //   // std::cerr << "**** is mil" << std::endl;
+    //   wr_q.push_back(mil);
+    //   if (utc_time_trigger(mil)) {
+    //     // std::cerr << "**** is utc trigger" << std::endl;
+    //     evtid.encode_mil_utc_timestamp();
+    //     for (int i = 0; i < 5; ++i) {
+    //       wr_q.push_back(evtid.e[i]);
+    //     }
+    //   }
+    // }
+  }
+  void on_event_trigger(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
+    // std::cerr << "BugfixMode::on_event_trigger" << (id&0xffff) << std::endl;
+    // std::cout << "mil-gen:     0x" << std::hex << std::setw(4) << std::setfill('0') << (0xffff&id) << "          " << std::dec << deadline.getTAI() << std::endl;
+    gen_q.push_back(id & 0xffff);
+    gen2_q.push_back(id & 0xffff); if (gen2_q.size() > 20) gen2_q.pop_front();
+    gentime_q.push_back(deadline.getTAI());
+    gentime2_q.push_back(deadline.getTAI()); if (gentime2_q.size() > 20) gentime2_q.pop_front();
+    if (after_missing_countdown) {
+    	std::cout << "- 0x" << std::hex << (id&0xffff) << " @ " << std::dec << deadline.getTAI() << std::endl;
+    	--after_missing_countdown;
+    }
+    //B2->WriteOutput(true);
+    //B2->WriteOutput(false);
+    // while (gen_q.size() > 0 && wr_q.size() > 0) {
+    //   if (gen_q.front() != wr_q.front()) {
+    //     std::cerr << "missing internal ECA event for MIL generation: 0x" << std::setw(4) << std::setfill('0') << gen_q.front() << std::endl;
+    //     gen_q.pop_front();
+    //   } else {
+    //     gen_q.pop_front();
+    //     wr_q.pop_front();
+    //     // blink B2 whenever there was a gen-Event
+    //   }
+    // }
+  }
+  void on_mil(uint32_t message) {
+    //std::cout << "mil-snoop:   0x" << std::hex << std::setw(4) << std::setfill('0') << message << std::endl;
+    	mil_q.push_back(message);
+    while (gen_q.size() > 0 && mil_q.size() > 0) {
+      if (gen_q.front() != mil_q.front()) {
+        // blink B2 whenever there was a missing MIL. This can be used as a trigger to look at the broken MIL event on an oscilloscope
+        B2->WriteOutput(true);
+        usleep(100);
+        B2->WriteOutput(false);
+        while (gen2_q.size() > 0) {
+          if (gen2_q.size() == 2) missing_event_time = gentime2_q.front();
+          std::cout << "  0x" << std::hex << gen2_q.front() << " @ " << std::dec << gentime2_q.front() << std::endl;
+          gen2_q.pop_front(); gentime2_q.pop_front();
+        }
+        std::cout << "missing event on MIL bus: 0x" << std::hex << std::setw(4) << std::setfill('0') << gen_q.front() << " at TAI " << std::dec << gentime_q.front() << std::endl;
+        after_missing_countdown = 10;
+        gen_q.pop_front();
+        gentime_q.pop_front();
+      } else {
+        gen_q.pop_front();
+        gentime_q.pop_front();
+        mil_q.pop_front();
+      }
+    }
+  }
+
+  std::shared_ptr<saftlib::Output_Proxy> B1;
+  std::shared_ptr<saftlib::Output_Proxy> B2;
+
+private:
+  std::deque<uint64_t> gentime_q, gentime2_q; 
+  std::deque<uint32_t> gen_q, gen2_q;
+  std::deque<uint32_t> mil_q;
+  uint64_t missing_event_time;
+  int after_missing_countdown;
+};
 
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
@@ -400,23 +565,6 @@ void on_event_source(uint32_t source)
   print_event_source(source);
 }
 
-void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw) 
-{
-  // If gateway is reset, callback will be called with total=0
-  // To prevent this to be displayed as "late MIL event detected", 
-  //  we treat this as a special case.
-  if (total > 0) {
-    std::cout << "late MIL event detected. Total/New = " 
-              << total << '/' << since_last_signal
-              << ". Histogram = ";
-    auto histogram = wrmilgw->getLateHistogram();
-    for (auto bin: histogram) {
-      std::cout << bin << " ";
-    }
-    std::cout << std::endl;
-  }
-}
-
 void on_in_use(bool in_use) 
 {
   if (in_use) {
@@ -448,6 +596,7 @@ int main (int argc, char** argv)
   bool    show_help      = false;
   bool    monitoring     = false;
   bool    receive_mil    = false;
+  bool    bugfix_mode    = false;
   bool    clearStat      = false;
   bool    lateHist       = false;
   bool    show_histogram = false;
@@ -462,12 +611,13 @@ int main (int argc, char** argv)
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:wsehrkifPcCLmgM:HR")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:wsehrkifPcCLmgbM:HR")) != -1) 
   {
     switch (opt)
     {
       case 'm': { monitoring = true; break; }
       case 'g': { receive_mil = true; break; }
+      case 'b': { bugfix_mode = true; break; }
       case 'H': { show_histogram = true; break; }
       case 'R': { read_registers = true; break; }
       case 'c': { red_color = green_color = default_color = ""; break; }
@@ -747,6 +897,79 @@ int main (int argc, char** argv)
     }
 
     ///////////////////////////////////////////
+    // Bugfix Mode
+    // snoop for the WR-events that are supposed to be translated to MIL
+    // snoop for 0xffffffff00000000 events (the ones that trigger the MIL-piggy)
+    // snoop for MIL events 
+    // normally, all three sholud should be present.
+    // if one is missing. report to std::cerr
+    ///////////////////////////////////////////
+    if (bugfix_mode) {
+      BugfixMode bugfix_mode;
+      auto source = wrmilgw->getEventSource();
+      auto eventID = SIS18EventID;
+      auto eventMask = UINT64_C(0xfffff00000000000);
+      if (source == WR_MIL_GW_EVENT_SOURCE_ESR) {
+        eventID = ESREventID;
+      }
+      std::cerr << "bugfix_mode eventID: " << std::hex << eventID << std::endl;
+      auto sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+      auto TriggerCondition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 0xffffffff00000000, 0xffffffff00000000, 0));
+      TriggerCondition->setAcceptLate(true);
+      TriggerCondition->setAcceptEarly(true);
+      TriggerCondition->setAcceptConflict(true);
+      TriggerCondition->setAcceptDelayed(true);
+      TriggerCondition->SigAction.connect(sigc::mem_fun(bugfix_mode, &BugfixMode::on_event_trigger));
+      auto OsciCondition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 0xfffe000000000003, 0xffffffffffffffff, 0));
+      OsciCondition->setAcceptLate(true);
+      OsciCondition->setAcceptEarly(true);
+      OsciCondition->setAcceptConflict(true);
+      OsciCondition->setAcceptDelayed(true);
+      OsciCondition->SigAction.connect(sigc::mem_fun(bugfix_mode, &BugfixMode::on_missing_mil_output));
+      
+      auto WrCondition = SoftwareCondition_Proxy::create(sink->NewCondition(true, eventID, eventMask, 0));
+      WrCondition->setAcceptLate(true);
+      WrCondition->setAcceptEarly(true);
+      WrCondition->setAcceptConflict(true);
+      WrCondition->setAcceptDelayed(true);
+      WrCondition->SigAction.connect(sigc::mem_fun(bugfix_mode, &BugfixMode::on_event_wr));
+
+      wrmilgw->SigReceivedMilEvent.connect(sigc::mem_fun(bugfix_mode, &BugfixMode::on_mil));
+
+      // configure the outputs
+      bugfix_mode.B1 = saftlib::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B1");
+      bugfix_mode.B2 = saftlib::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B2");
+
+      bugfix_mode.B1->Own();
+      bugfix_mode.B2->Own();
+
+      bugfix_mode.B1->WriteOutput(false);
+      bugfix_mode.B2->WriteOutput(false);
+
+      bugfix_mode.B1->setOutputEnable(true);
+      bugfix_mode.B2->setOutputEnable(true);
+
+      // create a 16 us long pulse on ouput B1 when a MIL event is sent to the MIL piggy by the ECA wb-master output channel
+      auto condition1 = OutputCondition_Proxy::create(bugfix_mode.B1->NewCondition(true, 0xffffffff00000000, 0xffffffff00000000,     0, 1));
+      auto condition2 = OutputCondition_Proxy::create(bugfix_mode.B1->NewCondition(true, 0xffffffff00000000, 0xffffffff00000000, 16000, 0));
+      condition1->setAcceptConflict(true);
+      condition1->setAcceptDelayed(true);
+      condition1->setAcceptEarly(true);
+      condition1->setAcceptLate(true);
+      condition2->setAcceptConflict(true);
+      condition2->setAcceptDelayed(true);
+      condition2->setAcceptEarly(true);
+      condition2->setAcceptLate(true);
+
+
+      while(true) {
+        saftlib::wait_for_signal();
+      }
+      return 0;
+    }
+
+
+    ///////////////////////////////////////////
     // Monitoring Loop
     ///////////////////////////////////////////
     if (monitoring) {
@@ -816,7 +1039,6 @@ int main (int argc, char** argv)
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
       wrmilgw->SigFirmwareState.connect(sigc::ptr_fun(&on_firmware_state));
       wrmilgw->SigEventSource.connect(sigc::ptr_fun(&on_event_source));
-      wrmilgw->SigNumLateMilEvents.connect(sigc::bind(sigc::ptr_fun(&on_num_late_mil_events), wrmilgw));
       wrmilgw->SigInUse.connect(sigc::ptr_fun(&on_in_use));
 
       bool opReady = op_ready(receiver->getLocked(), 

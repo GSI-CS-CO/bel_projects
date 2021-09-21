@@ -1,0 +1,234 @@
+\documentclass[12pt,a4paper]{report}
+% Language: English
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{xurl}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\newcommand{\ry}{\rotatebox{90}}
+\begin{document}
+
+\begin{titlepage}
+\vspace{2cm}
+\begin{center}
+\Huge{Documentation Data Master Test System}
+
+\Large{Martin Skorsky}
+
+\Large{Last change: 2021-07-02}
+\end{center}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Hardware}
+\section{SuperMicro fel0069}
+The data master for the test system is hosted on SuperMicro fel0069 with two PEXARIA5d \texttt{(fel0069.acc.gsi.de)}.
+One of these is the data master. The other one is used to analyse the timing messages with snoop.
+The SuperMicro is accessible with \texttt{ssh root@fel0069.acc} via ASL cluster or other hosts.
+The management interface (ILO) is accessible via \url{https://fel0069i64.acc}.
+\begin{enumerate}
+\item fel0069.acc.gsi.de
+\begin{itemize}
+\item IP: 140.181.169.146 (in Hex für PXE Boot: 8C.B5.A9.92)
+\item MAC ILO: ac:1f:6b:71:fe:8f, IPv4 ILO: 140.181.169.147
+\item MAC Lan1: ac:1f:6b:72:02:2c
+\item MAC Lan2: ac:1f:6b:72:02:2d
+\item Location: BG2.009, Rack BG2A.A9, Slot 28
+\end{itemize}
+\item pexaria248t (dev/wbm0), Data master
+\begin{itemize}
+\item IP: 192.168.131.184
+\item MAC: 00:26:7b:00:08:0b
+\item Name: pexaria248t
+\item CID: 55 0113 0012 0
+\item PEXARIA5d, Serie EE
+\end{itemize}
+\item pexaria305t (dev/wbm1), Timing receiver for snoop
+\begin{itemize}
+\item IP: 192.168.131.241
+\item MAC: 00:26:7b:00:08:44
+\item Name: pexaria305t
+\item CID: 55 0113 0069 4
+\item PEXARIA5d, Serie EE
+\end{itemize}
+\end{enumerate}
+After power on, set the IP addresses of the two pexarias. This host has no BootP service.
+
+The SuperMicro is configured for PXE boot and nfsinit with links (following
+\url{https://www-acc.gsi.de/wiki/Timing/Intern/TimingSystemHowToHintsForFECS}).
+\begin{enumerate}
+\item On ASL cluster links in folder /common/tftp/csco/pxe/pxelinux.cfg for PXE boot:
+8CB5A992 $\to$ fel0069,
+fel0069 $\to$ scuxl.fallout
+\item On ASL cluster links in folder /common/export/nfsinit/fel0069/ for nfsinit.
+\item On ASL cluster create folder /common/fesadata/data/fel0069/.
+\end{enumerate}
+Connections: network cable to acc network. For management: network cable to acc network.
+
+After \texttt{reboot} of fel0069:
+\begin{enumerate}
+\item ssh mskorsky@asl742.acc
+on asl742.acc copy modified variant of saft-ctl to fel0069. This will be obsolete when modified saft-ctl ist released.\linebreak
+scp staging/usr/bin/saft-ctl root@fel0069.acc.gsi.de:/usr/bin
+
+\item on fel0069.acc remove the old authorized ssh keys and start saftd on second pexarria5.
+\linebreak mv .ssh/authorized\_keys .ssh/authorized\_keys\_old \raggedright
+\linebreak saftd tr1:dev/wbm1 \raggedright
+
+\item on acopc042 copy the public ssh key to fel0069. This has to be done for every user / host which needs access to fel0069 with ssh.\raggedright
+\linebreak ssh-copy-id -i .ssh/id\_rsa.pub root@fel0069.acc
+
+\item test (check before automated testing starts)\raggedright
+\linebreak ssh -t root@fel0069.acc.gsi.de "saft-ctl tr1 -xv snoop 0 0 0 3"\raggedright
+\linebreak (snoop on tr1 for all events for 3 seconds)
+\end{enumerate}
+
+\section{White Rabbit Switch nwt0473m66}
+Location: BG2.009, Rack BG2A.A9, Slot 29 \raggedright
+\linebreak Configuration: blank. Not an access switch or distribution switch!
+\linebreak Access via tsl001, like other switches.
+\linebreak Name: nwt0473m66.timing.acc.gsi.de,
+\linebreak IP: 192.168.21.219.
+\linebreak Connections: fibre optic cable from wri2 to pexaria248t, fibre optic cable from wri3 to pexaria305t. Network cable to acc network for management.
+\chapter{Software}
+\section{Firmware Images}
+Datamaster: build with \texttt{make ftm} in bel\_projects root folder. Current version:
+\begin{verbatim}
+Project     : ftm
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : fallout-3295
+Build type  : developer preview
+Build date  : Wed Oct 28 16:45:33 CET 2020
+Prepared by : Martin Skorsky <m.skorsky@gsi.de>
+Prepared on : ACOPC042
+OS version  : Linux Mint 19.3 Tricia, kernel 4.15.0-122-generic
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard
+                                                        Edition
+
+  176fccd2 pmc: changed seed
+  d3ab3c45 vetar2a-ee-butis: changed seed
+  5419e84e microtca: changed seed
+  c0d44bd6 Merge pull request #260 from
+                                  GSI-CS-CO/dm-fallout-merge-v2
+  50444f38 scu4: changed seed
+
+Detecting Firmwares ...
+
+Found 4 RAMs, 4 holding a Firmware ID
+
+
+********************
+* RAM @ 0x04120000 *
+********************
+UserLM32
+Stack Status:
+Project     : ftm
+Version     : 7.0.1
+Platform    :
+Build Date  : Wed Oct 28 16:45:19 CET 2020
+Prepared by : martin Martin Skorsky <m.skorsky@gsi.de>
+Prepared on : ACOPC042
+OS Version  : Linux Mint 19.3 Tricia  Linux 4.15.0-122-generic
+                                                         x86_64
+GCC Version : lm32-elf-gcc(GCC)4.5.3 (build 190527-673a32-f3d6)
+IntAdrOffs  : 0x10000000
+SharedOffs  : 0x500
+SharedSize  : 98304
+FW-ID ROM will contain:
+
+   176fccd2 pmc: changed seed
+   d3ab3c45 vetar2a-ee-butis: changed seed
+   5419e84e microtca: changed seed
+   c0d44bd6 Merge pull request #260 from
+                                GSI-CS-CO/dm-fallout-merge-v2
+   50444f38 scu4: changed seed
+*****
+\end{verbatim}
+
+Pexaria for snoop: \url{https://github.com/GSI-CS-CO/bel\_projects/releases/download/fallout-v6.0.1/pexarria5.rpd}
+
+\section{Access the Data Master}
+\texttt{dm-cmd tcp/fel0069.acc}
+\linebreak
+\texttt{dm-sched tcp/fel0069.acc}
+
+\section{Remote Snoop of Timing Messages}
+Snoop per remote ssh: Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc:~/.ssh/authorized\_keys with \texttt{ssh-copy-id}.
+Snoop with Python3: the tests using python3 / pytest read the command for snooping from environment variable SNOOP.
+\begin{itemize}
+\item Example for local environment: saft-ctl tr0 -xv snoop 0 0 0
+\item Example for remote environment on fel0069.acc: ssh -t root@fel0069.acc 'saft-ctl tr1 -xv snoop 0 0 0' \linebreak
+saftd on fel0069.acc monitors dev/wbm1 as tr1.
+\end{itemize}
+The tests add an additional parameter for the number of seconds to snoop.
+
+\section{Modified variant of saft-ctl}
+The tests use a modified variant of saft-ctl. This snoops for a given number of seconds. This variant is avaliable in branch origin/fallout, folder ip\_cores/saftlib.
+
+Until the modified variant is part of a release, copy it each time to fel0069.acc after reboot. The binary is build on ASL cluster with settings:
+\begin{itemize}
+\item export PKG\_CONFIG\_PATH=\$PWD/staging/usr/lib/pkgconfig
+\item export PREFIX=\$PWD/staging/usr
+\end{itemize}
+
+Permanent way: use a modified RTE, build as described in
+\url{https://github.com/GSI-CS-CO/ci\_cd/blob/master/scripts/deployment/RTE\_Timing/build-rte.sh}.
+
+\section{Required versions}
+\begin{enumerate}
+\item Python 3.6.9
+\item pytest 6.1.2
+\end{enumerate}
+
+\section{Jenkins on tsl025.acc.gsi.de}
+Preparation of jenkins user on tsl025 for remote snoop.
+\linebreak Switch to user jenkins on tsl025:
+\linebreak sudo su -s /bin/bash jenkins
+\linebreak ssh-keygen -t rsa -b 4096
+\linebreak ssh-copy-id -i /var/lib/jenkins/.ssh/id\_rsa.pub root@fel0069
+\linebreak ssh -t root@fel0069 'saft-ctl tr1 -xv snoop 0 0 0 3' (this is the test that the previous commands were successful)
+
+Jenkins Jobs on tsl025: \url{http://tsl025:8080/}
+\begin{enumerate}
+\item Build and install the tools (dm-cmd, dm-sched, libcarpedm)
+\item Build and install scheduleCompare
+\item check remote snoop
+\item Run tests (13 out of 49 tests are skipped because of longer duration). Takes about 40 seconds. Useful during test developement.
+\item Run all 49 tests. Takes up to 6 min. Normal test execution.
+\end{enumerate}
+
+Open tasks:
+\begin{enumerate}
+\item Configure tsl025 as Jenkins-Slave of builder.acc.gsi.de
+\item Add scripts / jobs to install a defined firmware / datamaster firmware on fel0069/dev/wbm0
+\item Merge dm-fallout-tests into fallout, merge dm-analytics into fallout. This simplifies the Jenkins jobs above and the configuration.
+\end{enumerate}
+
+\end{document}

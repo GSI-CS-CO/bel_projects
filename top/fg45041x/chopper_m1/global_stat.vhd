@@ -1,4 +1,4 @@
--- "Global_Status für den 'Chopper'-Macro   W.Panschow V01 d.07.03.01";
+-- "Global_Status fuer den 'Chopper'-Macro   W.Panschow V01 d.07.03.01";
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

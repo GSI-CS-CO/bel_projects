@@ -1,0 +1,12 @@
+digraph g {
+name="G1_P1_FALLBACK";
+
+graph[]
+
+  "G1_P1_ENTRY" [type=block cpu=0 patentry=1 tperiod=1000000]
+  "G1_P1_EXIT" [type=block cpu=0 patexit=1 tperiod=1000000]
+  "G1_P1_UPDATED_NODE" [type="block", cpu="0", patentry="false", patexit="false", pattern="G1_P1", tperiod="1000000", qlo="0", qhi="0", qil="0"];
+  "G1_P1_ENTRY" -> "G1_P1_UPDATED_NODE" [type="defdst"];
+  "G1_P1_UPDATED_NODE" -> "G1_P1_EXIT" [type="defdst"];
+
+}

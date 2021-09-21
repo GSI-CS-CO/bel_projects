@@ -7,18 +7,18 @@
 #include <inttypes.h>
 #include <memory>
 #include "common.h"
+#include "graph.h"
+
 
 
 class CarpeDM {
 
-private:
 
-  class CarpeDMimpl;
-  std::unique_ptr<CarpeDMimpl> impl_;
 
 public:
-  CarpeDM();                                      
-  CarpeDM(std::ostream& sLog);                    
+  class CarpeDMimpl;
+  CarpeDM();
+  CarpeDM(std::ostream& sLog);
   CarpeDM(std::ostream& sLog, std::ostream& sErr);
   ~CarpeDM();
 
@@ -65,7 +65,10 @@ public:
                void writeTextFile(const std::string& fn, const std::string& s);
         std::string readTextFile(const std::string& fn);
 
+               void completeId(vertex_t v, Graph& g);
 // Graphs to Dot
+             Graph& parseDot(const std::string& dotString, Graph& g); //Parse a .dot string to create unprocessed Graph
+               void writeDotFile(const std::string& fn, Graph& g, bool filterMeta);
                void writeDownDotFile(const std::string& fn, bool filterMeta);
                void writeUpDotFile(const std::string& fn, bool filterMeta);
 
@@ -85,7 +88,7 @@ public:
                 int clear(bool force);                              // clears all nodes from DM
 
 // Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
+
               vStrC getLockedBlocks(bool checkReadLock, bool checkWriteLock);
                 int sendCommandsDot(const std::string& s); //Sends a dotfile of commands to the DM
                 int sendCommandsDotFile(const std::string& fn);
@@ -212,10 +215,11 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showMemSpace();
                void lockManagerClear();
                bool lockManagerHasEntries();
-               void softwareReset(bool clearStatistic); 
+               void softwareReset(bool clearStatistic);
 
-
-
+  private:
+  
+    std::unique_ptr<CarpeDMimpl> impl_;               
 };
 
 #endif

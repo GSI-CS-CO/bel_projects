@@ -46,7 +46,7 @@ namespace DotStr {
       const std::string sAltDst       = "altdst";     // Links to Alternative Destination
       const std::string sBadDefDst    = "baddefdst";  // Links to Bad Default Destination
       const std::string sCmdTarget    = "target";     // Links to Command's Target Block
-      const std::string sSwitchTarget = "target";     // Links to Switch's Target 
+      const std::string sSwitchTarget = "target";     // Links to Switch's Target
       const std::string sSwitchDst    = "switchdst";     // Links to Switch's Target Block
       const std::string sOriginDst    = "origindst";     // Links to Switch's Target Block
       const std::string sCmdFlowDst   = "flowdst";    // Links to Flow Command's destination node
@@ -215,9 +215,7 @@ namespace DotStr {
       namespace Block {
         const std::string sLookDef       = "shape     = \"rectangle\"";
         const std::string sLookFix       = sLookDef;
-        const std::string sLookAlign     = sLookDef + ", style  = \"dotted\"";
-
-
+        const std::string sLookAlign     = sLookDef + ", style  = \"dotted, filled\"";
       }
       namespace TMsg {
         const std::string sLookDef       = "shape     = \"oval\"";
@@ -240,21 +238,21 @@ namespace DotStr {
       }
 
       namespace Meta {
-        const std::string sLookDef       = "shape     = \"rectangle\", color  = \"gray\", style  = \"dashed\"";
+        const std::string sLookDef       = "shape = \"rectangle\", color = \"gray\", style = \"dashed, filled\"";
       }
     }
 
     namespace Edge {
 
-      const std::string sLookDefDst    = "color     = \"red\"";
-      const std::string sLookAltDst    = "color     = \"black\"";
-      const std::string sLookMeta      = "color     = \"gray\"";
-      const std::string sLookTarget    = "color     = \"blue\"";
-      const std::string sLookArgument  = "color     = \"pink\"";
-      const std::string sLookDebug0    = "color     = \"maroon3\"";
-      const std::string sLookDebug1    = "color     = \"maroon4\"";
-      const std::string sLookDebug2    = "color     = \"cyan\"";
-      const std::string sLookbad       = "color     = \"orange\", style     = \"dashed\"";
+      const std::string sLookDefDst    = "color = \"red\"";
+      const std::string sLookAltDst    = "color = \"black\"";
+      const std::string sLookMeta      = "color = \"gray\"";
+      const std::string sLookTarget    = "color = \"blue\"";
+      const std::string sLookArgument  = "color = \"pink\"";
+      const std::string sLookDebug0    = "color = \"maroon3\"";
+      const std::string sLookDebug1    = "color = \"maroon4\"";
+      const std::string sLookDebug2    = "color = \"cyan\"";
+      const std::string sLookbad       = "color = \"orange\", style = \"dashed, filled\"";
 
     }
   }

@@ -1,8 +1,0 @@
-
-Download Table
-
-Idx   S/R   Cpu   Name   Hash         Int. Adr     Ext. Adr  
-
-
-Patterns:
-

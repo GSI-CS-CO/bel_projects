@@ -21,15 +21,15 @@ entity chopper_m2_adr_deco is
 				EMI_Schwelle_RD:		out std_logic;
 				Chop_m2_Rd_Activ:		out std_logic;
 				Chop_Macro2_Activ:		out std_logic;
-				Chop_m2_DT_to_MB:		out std_logic						-- Wird im Macro 'Modul_bus' mit 'Modul_bus'-internen DTACK-Gründen Oder-Verknüpft. (Achtung dient direkt zur	--
+				Chop_m2_DT_to_MB:		out std_logic						-- Wird im Macro 'Modul_bus' mit 'Modul_bus'-internen DTACK-Gruenden Oder-Verknuepft. (Achtung dient direkt zur	--
 																			-- Aktiverung des Modul-Bus-Datentreibers!)																		-- 
 		);
 		
 	CONSTANT C_Global_Status_RD:		std_logic_vector(7 downto 0) := x"66";
 	CONSTANT C_Anforder_Maske_WR:		std_logic_vector(7 downto 0) := x"68";
 	CONSTANT C_Anforder_Inputs_RD:		std_logic_vector(7 downto 0) := x"6A";
-	CONSTANT C_EMI_Schwelle_WR:			std_logic_vector(7 downto 0) := x"32";	-- Achtung die ist eigentlich die Adresse für K3-Schreiben!
-	CONSTANT C_EMI_Schwelle_RD:			std_logic_vector(7 downto 0) := x"36";	-- Achtung die ist eigentlich die Adresse für K3-Lesen!
+	CONSTANT C_EMI_Schwelle_WR:			std_logic_vector(7 downto 0) := x"32";	-- Achtung die ist eigentlich die Adresse fuer K3-Schreiben!
+	CONSTANT C_EMI_Schwelle_RD:			std_logic_vector(7 downto 0) := x"36";	-- Achtung die ist eigentlich die Adresse fuer K3-Lesen!
 	
 end chopper_m2_adr_deco;
 

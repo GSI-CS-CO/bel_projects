@@ -378,6 +378,7 @@ begin
       wr_sfp_det_i            => sfp_mod0_i,
       wr_sfp_tx_o             => sfp_td_o,
       wr_sfp_rx_i             => sfp_rd_i,
+      wbar_phy_dis_o          => sfp_tx_dis_o,
       wr_dac_sclk_o           => dac_sclk_o,
       wr_dac_din_o            => dac_din_o,
       wr_ndac_cs_o            => ndac_cs_o,
@@ -428,10 +429,6 @@ begin
       lcd_lp_o                => s_di_lp,
       lcd_flm_o               => s_di_flm,
       lcd_in_o                => s_di_dat);
-
-  -- SFP
-  ----------------
-  sfp_tx_dis_o <= '0'; -- enable SFP
 
   -- Baseboard logic analyzer
   ------------------------------

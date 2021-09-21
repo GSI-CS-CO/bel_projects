@@ -33,7 +33,7 @@ entity pci_pmc is
     -- SFP
     -----------------------------------------------------------------------
 
-    sfp_tx_dis_o     : out std_logic := '0';
+    sfp_tx_dis_o     : out std_logic;
     sfp_tx_fault_i   : in  std_logic;
     sfp_los_i        : in  std_logic;
 
@@ -328,7 +328,7 @@ begin
       wr_ndac_cs_o           => wr_ndac_cs_o,
       wr_ext_clk_i           => clk_lvtio_i,
 
-      sfp_tx_disable_o       => sfp_tx_dis_o,
+      wbar_phy_dis_o         => sfp_tx_dis_o,
       sfp_tx_fault_i         => sfp_tx_fault_i,
       sfp_los_i              => sfp_los_i,
 

@@ -6,6 +6,7 @@ TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload
+EXTRA_I := eb-flash-secure
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
@@ -19,6 +20,7 @@ clean:  monitoring-clean
 install: monitoring-install
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+	cp $(EXTRA_I) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
 	gcc $(CFLAGS) -o $@ $< $(LIBS)

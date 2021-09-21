@@ -39,7 +39,7 @@
 --			1.1 25.07.2005 cont added
 --			1.2 11.08.2005 wrpause added
 --			1.3 18.08.2005 Bit swap
---			1.4 19.02.2008 -W.P. Generic "Loader_Clk_in_Hz" eingfügt damit die SPI-Clk immer richtig erzeugt wird.
+--			1.4 19.02.2008 -W.P. Generic "Loader_Clk_in_Hz" eingfuegt damit die SPI-Clk immer richtig erzeugt wird.
 -- 
 -- in Zukunft: 
 --
@@ -112,8 +112,8 @@ END modul2spi;
 -- D10
 -- D11					FIFO Rleer
 -- D12					FIFO nicht Rvoll
--- D13	readFIFO		read pending (low Lesedaten gültig)
--- D14	Lösche Flash	Löschen nicht nicht fertig
+-- D13	readFIFO		read pending (low Lesedaten gueltig)
+-- D14	Loesche Flash	Loeschen nicht nicht fertig
 --		Adresse muss dabei auf X"654321" stehen
 -- D15	Reload User
 
@@ -127,7 +127,7 @@ CONSTANT	C_SPI_Clk_Cnt		: INTEGER := (Loader_CLK_in_Hz / C_SPI_Clk_in_MHz / 1000
 CONSTANT	C_SPI_Clk_Cnt_Width	: INTEGER := integer(ceil(log2(real(C_SPI_Clk_Cnt))));	-- Die Mindestbreite des Repeat-Timers.
 
 signal vcnt		: std_logic_vector(C_SPI_Clk_Cnt_Width downto 0);	-- Vorteiler um aus den 300MHz herunter zu kommen
-signal enas		: std_logic;					-- enable für den SPI
+signal enas		: std_logic;					-- enable fuer den SPI
 signal rload	: std_logic;	-- Reload
 signal lduser	: std_logic;
 signal ldfail	: std_logic;
@@ -289,7 +289,7 @@ begin
 								end if;
 		
 		WHEN wait_rdstat =>		if (fertig = '1') then
-									if (writeIP = '1') then		-- wenn Schreiben noch läuft
+									if (writeIP = '1') then		-- wenn Schreiben noch laeuft
 										auftrag <= to_rdstat;
 									else
 										auftrag <= done;
@@ -467,7 +467,7 @@ begin
 	elsif rising_edge(clk) then
 		enas	<= vcnt(vcnt'high);
 		if (vcnt(vcnt'high) = '1') then
-			vcnt	<= conv_std_logic_vector(C_SPI_Clk_Cnt, vcnt'length);-- vorläufig
+			vcnt	<= conv_std_logic_vector(C_SPI_Clk_Cnt, vcnt'length);-- vorlaeufig
 		else
 			vcnt	<= vcnt - 1;
 		end if;
@@ -486,7 +486,7 @@ begin
 		Wcontents	<= (others => '0');
 	elsif rising_edge(clk) then
 		
-		if (resfifo = '1') then		-- Am Anfang ReadFIFO löschen
+		if (resfifo = '1') then		-- Am Anfang ReadFIFO loeschen
 			Wradr		<= (others => '0');
 			Wcontents	<= (others => '0');
 		elsif (ink_wadr = '1') then
@@ -588,7 +588,7 @@ begin
 		Rwadr	<= (others => '0');
 	elsif rising_edge(clk) then
 	
-		if (resfifo = '1')or(auftrag = to_read) then	-- mit Auftragsbeginn löschen
+		if (resfifo = '1')or(auftrag = to_read) then	-- mit Auftragsbeginn loeschen
 			Rwadr	<= (others => '0');
 		elsif (Rvoll = '0')and(store = '1')and(enas = '1') then
 			Rwadr	<= Rwadr + 1;

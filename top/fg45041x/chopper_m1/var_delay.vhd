@@ -98,13 +98,13 @@ begin
 			Signal_out <= '1';
 			
 			cnt1_run <= '0';
-			s_cnt1_set <= '1';	-- cnt1 rücksetzen
+			s_cnt1_set <= '1';	-- cnt1 ruecksetzen
 		elsif cnt2_out(cnt2_out'HIGH) = '1' then
 			-- Puls low
 			Signal_out <= '0';
 			
 			cnt2_run <= '0';
-			s_cnt2_set <= '1';	-- cnt2 rücksetzen
+			s_cnt2_set <= '1';	-- cnt2 ruecksetzen
 		elsif Reset = '1' then
 			Signal_out <= '0';
 			s_cnt1_set <= '1';

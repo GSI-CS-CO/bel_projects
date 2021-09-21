@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Sep-2020
+ *  version : 21-June-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000701                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000702                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -857,7 +857,7 @@ uint32_t extern_entryActionConfigured()
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %u pending entries from ECA queue\n", (unsigned int)i);
 
   flexOffset  = *pSharedFlexOffset;
@@ -974,7 +974,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
   status = actStatus; 
 
-  nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);  // 'do action' is driven by actions issued by the ECA
+  nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT * 1000, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);  // 'do action' is driven by actions issued by the ECA
 
   switch (nextAction) {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQTK" from data master
@@ -1081,8 +1081,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
       if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
         *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
-        if ((milStatus = fwlib_wait4MILEvent(uniTimeout, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {  // wait for event in MIL FIFO
-          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagIsLate);       // wait for event from ECA (hoping this is MIL Event -> TLU)
+        if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
+          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagIsLate);        // wait for event from ECA (hoping this is MIL Event -> TLU)
           switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
             {                                                                      
             case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA

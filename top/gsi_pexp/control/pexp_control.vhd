@@ -33,7 +33,7 @@ entity pexp_control is
     -- SFP
     -----------------------------------------------------------------------
 
-    sfp_tx_dis_o     : out std_logic := '0';
+    sfp_tx_dis_o     : out std_logic;
     sfp_tx_fault_i   : in  std_logic;
     sfp_los_i        : in  std_logic;
 
@@ -142,8 +142,8 @@ entity pexp_control is
     nPCI_RESET     : in std_logic;
 
     pe_smdat        : inout std_logic;
-    pe_snclk        : out std_logic;  
-    pe_waken        : out std_logic  
+    pe_snclk        : out std_logic;
+    pe_waken        : out std_logic
 
     );
 end pexp_control;
@@ -310,13 +310,13 @@ begin
       wr_sfp_det_i           => sfp_mod0_i,
       wr_sfp_tx_o            => sfp_txp_o,
       wr_sfp_rx_i            => sfp_rxp_i,
+      wbar_phy_dis_o         => sfp_tx_dis_o,
 
       wr_dac_sclk_o          => wr_dac_sclk_o,
       wr_dac_din_o           => wr_dac_din_o,
       wr_ndac_cs_o           => wr_ndac_cs_o,
       wr_ext_clk_i           => clk_lvtio_i,
 
-      sfp_tx_disable_o       => sfp_tx_dis_o,
       sfp_tx_fault_i         => sfp_tx_fault_i,
       sfp_los_i              => sfp_los_i,
 

@@ -9,20 +9,20 @@ USE IEEE.STD_LOGIC_unsigned.all;
 ENTITY mil_enc_vhdl IS
 
 	PORT(
-		Mil_TRM_D		: IN STD_LOGIC_VECTOR(15 DOWNTO 0);		-- solange 'Mil_TRM' aktiv ist muß hier das zu sendende Datum anliegen.					-- 
-		Cmd_Trm			: IN STD_LOGIC;							-- Cmd_Trm = Eins während 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt, sonst		--
+		Mil_TRM_D		: IN STD_LOGIC_VECTOR(15 DOWNTO 0);		-- solange 'Mil_TRM' aktiv ist muss hier das zu sendende Datum anliegen.					-- 
+		Cmd_Trm			: IN STD_LOGIC;							-- Cmd_Trm = Eins waehrend 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt, sonst		--
 																-- wird ein Data-Sync. generiert.														--
-		Wr_Mil			: IN STD_LOGIC;							-- Startet ein Mil-Send, muß mindestens 1 Takt aktiv sein.								--
-		CLK				: IN STD_LOGIC;							-- Die Frequenz muß mindestens 4 MHz betragen.											--
-		Ena_Every_500ns : IN STD_LOGIC;							-- V03: Muss von CLK abgeleitet sein! Für Standard-Speed								--
-		Ena_Every_250ns : IN STD_LOGIC;							-- V03: Muss von CLK abgeleitet sein! Für High-Speed									--
-		Standard_Speed	: IN STD_LOGIC;							-- V03: Standard-Speed = 1 us für ein Datenbit => Ena_Every_500ns verwenden				--
-		Reset			: IN STD_LOGIC;							-- Die Ablaufsteuerung 'Mil_TRM_SM' zurückgesetzt, unterbricht ein laufendes Mil-Send.	--
+		Wr_Mil			: IN STD_LOGIC;							-- Startet ein Mil-Send, muss mindestens 1 Takt aktiv sein.								--
+		CLK				: IN STD_LOGIC;							-- Die Frequenz muss mindestens 4 MHz betragen.											--
+		Ena_Every_500ns : IN STD_LOGIC;							-- V03: Muss von CLK abgeleitet sein! Fuer Standard-Speed								--
+		Ena_Every_250ns : IN STD_LOGIC;							-- V03: Muss von CLK abgeleitet sein! Fuer High-Speed									--
+		Standard_Speed	: IN STD_LOGIC;							-- V03: Standard-Speed = 1 us fuer ein Datenbit => Ena_Every_500ns verwenden				--
+		Reset			: IN STD_LOGIC;							-- Die Ablaufsteuerung 'Mil_TRM_SM' zurueckgesetzt, unterbricht ein laufendes Mil-Send.	--
 		nMil_Out_Pos	: OUT STD_LOGIC;						-- Der positive Bipolare Ausgang ist null-aktiv.										--
 		nMil_Out_Neg	: OUT STD_LOGIC;						-- Der negative Bipolare Ausgang ist null-aktiv.										--
 		nSel_Mil_Drv	: OUT STD_LOGIC;						-- Soll die ext. bipolaren Treiber von 'nMil_Out_Pos(_Neg)' einschalten (null-aktiv).	--
 		Mil_Rdy_4_Wr	: OUT STD_LOGIC;						-- Das Sende-Register ist frei.															--
-		SD				: OUT STD_LOGIC							-- V02: Bildet das Signal "SD" des 6408-ICs nach, wird für den Blockmode der Interfacekarte benötigt.	--
+		SD				: OUT STD_LOGIC							-- V02: Bildet das Signal "SD" des 6408-ICs nach, wird fuer den Blockmode der Interfacekarte benoetigt.	--
 		);
 		
 END mil_enc_vhdl;
@@ -49,7 +49,7 @@ SIGNAL	S_Encode_SM	: T_Encode_SM;
 SIGNAL	S_Shift_Reg			: STD_LOGIC_VECTOR(15 DOWNTO 0);	-- In 'shift' wird das Sendedatum[15..0] in		--
 																-- einen seriellen Bitstrom umgewandelt.		--
 
-SIGNAL	S_Bit_cnt			: STD_LOGIC_VECTOR(4 DOWNTO 0);		-- Der Zähler bestimmt das Ende des seriellen	--
+SIGNAL	S_Bit_cnt			: STD_LOGIC_VECTOR(4 DOWNTO 0);		-- Der Zaehler bestimmt das Ende des seriellen	--
 																-- Datenstromes (inklusive Parity-Bit).		 	--
 																		
 SIGNAL	S_Odd_Parity		: STD_LOGIC;
@@ -64,16 +64,16 @@ SIGNAL	S_Out_pos			: STD_LOGIC;
 SIGNAL	S_Out_neg			: STD_LOGIC;
 
 SIGNAL	S_Bipol_Out_Pos		: STD_LOGIC;	-- Der bipolare positive Ausgang ist ein getaktetes Register, damit werden etwaige	--
-											-- Übergangsfunktionen von 'Out_Pos' unterdrückt.									--
+											-- Uebergangsfunktionen von 'Out_Pos' unterdrueckt.									--
 SIGNAL	S_Bipol_Out_Neg		: STD_LOGIC;	-- Der bipolare negative Ausgang ist ein getaktetes Register, damit werden etwaige	--
-											-- Übergangsfunktionen von 'Out_Neg' unterdrückt.									--
+											-- Uebergangsfunktionen von 'Out_Neg' unterdrueckt.									--
 
 SIGNAL	S_Sel_Mil_Drv		: STD_LOGIC;	-- Sind 'Out_Pos' und 'Out_Neg' ungleich in ihrem Logikpegel werden die Mil-Treiber aktiviert.	--
-											-- Damit etwaige Übergangsfunktionen weggefiltert werden ist das Register getaktet.				--
+											-- Damit etwaige Uebergangsfunktionen weggefiltert werden ist das Register getaktet.				--
 
-SIGNAL	S_SD				: STD_LOGIC;	-- Bildet das Signal "SD" des 6408-ICs nach, wird für den Blockmode der Interfacekarte benötigt.	--
+SIGNAL	S_SD				: STD_LOGIC;	-- Bildet das Signal "SD" des 6408-ICs nach, wird fuer den Blockmode der Interfacekarte benoetigt.	--
 
-SIGNAL	Ena_2x_TRM_Bitrate	: STD_LOGIC;	-- Multiplexer für Ena_Every_500ns (Standard-Speed) oder Ena_Every_250ns (High-Speed)			--
+SIGNAL	Ena_2x_TRM_Bitrate	: STD_LOGIC;	-- Multiplexer fuer Ena_Every_500ns (Standard-Speed) oder Ena_Every_250ns (High-Speed)			--
 
 BEGIN
 
@@ -162,8 +162,8 @@ P_Encode_SM:	PROCESS (clk, Reset)
 				CASE S_Encode_SM IS
 					WHEN TRM_Idle =>
 						S_SD <= '0';									-- V02
-						IF S_Wr_Mil_Merker = '1' AND Wr_Mil = '0' THEN	-- Wr_Mil muss abgeschlossen sein sonst shifted das Shift-Register wärend	--
-							S_Encode_SM <= Sync1;						-- ladens, weil Trm_Idle schon während Wr_Mil verlassen würde.				--
+						IF S_Wr_Mil_Merker = '1' AND Wr_Mil = '0' THEN	-- Wr_Mil muss abgeschlossen sein sonst shifted das Shift-Register waerend	--
+							S_Encode_SM <= Sync1;						-- ladens, weil Trm_Idle schon waehrend Wr_Mil verlassen wuerde.				--
 						END IF;
 
 					WHEN Sync1 =>
@@ -213,7 +213,7 @@ P_Encode_SM:	PROCESS (clk, Reset)
 							END IF;
 						ELSIF S_Bit_cnt = 16 THEN
 							S_SD <= '0';								-- V02
-							IF S_Odd_Parity = '0' THEN					-- Das Odd-Parity-Bit zählt selbst mit bei der Parity-Bildung,	--
+							IF S_Odd_Parity = '0' THEN					-- Das Odd-Parity-Bit zaehlt selbst mit bei der Parity-Bildung,	--
 								S_Encode_SM <= Idle_HI;					-- deshalb wird bei Parity == GND nach Idle_HI verzweigt.		--
 							ELSE
 								S_Encode_SM <= Idle_LO;
@@ -238,7 +238,7 @@ P_Encode_SM:	PROCESS (clk, Reset)
 							END IF;
 						ELSIF S_Bit_cnt = 16 THEN
 							S_SD <= '0';								-- V02
-							IF S_Odd_Parity = '0' THEN					-- Das Odd-Parity-Bit zählt selbst mit bei der Parity-Bildung,	--
+							IF S_Odd_Parity = '0' THEN					-- Das Odd-Parity-Bit zaehlt selbst mit bei der Parity-Bildung,	--
 								S_Encode_SM <= Idle_HI;					-- deshalb wird bei Parity == GND nach Idle_HI verzweigt.		--
 							ELSE
 								S_Encode_SM <= Idle_LO;
@@ -257,12 +257,12 @@ P_Encode_SM:	PROCESS (clk, Reset)
 P_No_Glitch:	PROCESS (clk)		
 	BEGIN
 		IF rising_edge(clk) THEN
-			S_Bipol_Out_Pos <= S_Out_pos;				-- Um Übergangsfunktionen von 'Out_Pos/Neg' zu vermeiden wird		--
-			S_Bipol_Out_Neg <= S_Out_neg;				-- die Logik über Systemtakt getaktete Register geführt.			--
+			S_Bipol_Out_Pos <= S_Out_pos;				-- Um Uebergangsfunktionen von 'Out_Pos/Neg' zu vermeiden wird		--
+			S_Bipol_Out_Neg <= S_Out_neg;				-- die Logik ueber Systemtakt getaktete Register gefuehrt.			--
 			S_Sel_Mil_Drv <= S_Out_pos XOR S_Out_neg;	-- Nur bei ungleichen Logikpegel werden die externen Treiber der 	--
-														-- bipol. Ausgänge aktiviert. Um Übergangsfuktionen zu vermeiden,	--
+														-- bipol. Ausgaenge aktiviert. Um Uebergangsfuktionen zu vermeiden,	--
 														-- und um das gleiche Timing zu haben wie 'Bipol_Out_Pos/Neg', wird	--
-														-- die Logik über Systemtakt getaktete Register geführt.			--
+														-- die Logik ueber Systemtakt getaktete Register gefuehrt.			--
 		END IF;
 	END PROCESS P_No_Glitch;
 
@@ -279,13 +279,13 @@ P_Rdy_4_Wr:	PROCESS (clk)
 	END PROCESS P_Rdy_4_Wr;
 
 
-nMil_Out_Pos <= NOT S_Bipol_Out_Pos;			-- Die Bipolaren Ausgänge müssen an den externen Treibern		--
+nMil_Out_Pos <= NOT S_Bipol_Out_Pos;			-- Die Bipolaren Ausgaenge muessen an den externen Treibern		--
 nMil_Out_Neg <= NOT S_Bipol_Out_Neg;			-- 'aktiv null' sein.											--
 nSel_Mil_Drv <= NOT S_Sel_Mil_Drv;				-- Die externen Treiber werden mit Null-Pegel aktiviert.		--
 
 Mil_Rdy_4_Wr <= S_Mil_Rdy_4_Wr_Dly(1) WHEN Standard_Speed = '1' ELSE S_Mil_Rdy_4_Wr_Dly(3);				-- V03
 
-SD <= S_SD;				-- Bildet das Signal "SD" des 6408-ICs nach, wird für den Blockmode der Interfacekarte benötigt.	--
+SD <= S_SD;				-- Bildet das Signal "SD" des 6408-ICs nach, wird fuer den Blockmode der Interfacekarte benoetigt.	--
 
 END;
 

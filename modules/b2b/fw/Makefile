@@ -1,7 +1,7 @@
 TARGET		?= b2bpm
-#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 #PLATFPATH       = ../../../syn/gsi_scu/control3
-PLATFPATH	= ../../../syn/gsi_pexarria5/control
+#PLATFPATH	= ../../../syn/gsi_pexarria5/control
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.01.00
+VERSION  	= 00.03.01
 
 .DEFAULT_GOAL	:= fwbin
 
@@ -41,8 +41,10 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 # $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
-b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
-b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+b2bkd.elf:     $(PATHFW)/b2b-kd.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+b2bpm.elf:     $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+b2bcbu.elf:    $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+b2bpmstub.elf: $(PATHFW)/b2b-pm-stub.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
