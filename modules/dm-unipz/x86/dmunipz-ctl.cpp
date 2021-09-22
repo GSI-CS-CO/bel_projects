@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sept-2021
+ *  version : 22-Sept-2021
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.0"
+#define DMUNIPZ_X86_VERSION "0.8.1"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -212,8 +212,10 @@ static void help(void) {
   fprintf(stderr, "  relprep             command forces release of preparation request at UNILAC\n");
   fprintf(stderr, "  relbeam             command forces release of beam request at UNILAC\n");  
   fprintf(stderr, "\n");
-  fprintf(stderr, "  diag                shows statistics and detailled information\n");
+  fprintf(stderr, "  diag                shows statistics and detailed information\n");
   fprintf(stderr, "  cleardiag           command clears FW statistics\n");
+  fprintf(stderr, "  debugon             command enables debugging\n");
+  fprintf(stderr, "  debugoff            command disables debuggging\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 ebmdm 0x00267b000401 0xc0a80a01' set MAC and IP of Data Master\n", program);
@@ -615,9 +617,15 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_CONFIGURED) printf("dm-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
     } // "idle"
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG     , 0, eb_block);
-    } // "cleardiag"
-    
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG, 0, eb_block);
+    } // "cleardiag"    
+    if (!strcasecmp(command, "debugon")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_DEBUGON  , 0, eb_block);
+    } // "debugon"
+    if (!strcasecmp(command, "debugoff")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_DEBUGOFF , 0, eb_block);
+    } // "debugoff"
+
     if (!strcasecmp(command, "diag")) {
       comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
       readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);

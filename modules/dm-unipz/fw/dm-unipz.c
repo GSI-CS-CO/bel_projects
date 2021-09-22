@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Sept-2021
+ *  version : 22-Sept-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000800                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000801                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -164,6 +164,7 @@ uint32_t nR2sTransfer;                  // # of EVT_READY_TO_SIS events in betwe
 uint32_t nR2sTotal;                     // total # of EVT_READY_TO_SIS events
 uint32_t nR2sLastTkrel;                 // # of EVT_READY_TO_SIS events at last CMD_UNI_TKREL
 uint32_t nR2sCycle;                     // # of EVT_READY_TO_SIS events since last CMD_UNI_TKREL
+uint32_t flagDebug;                     // debug flag
 
 #define DM_NBLOCKS       1              // max number of blocks changed within the Data Master
 dmComm  dmCmds[DM_NBLOCKS];             // data for treatment of blocks
@@ -261,9 +262,32 @@ uint32_t dmPrepThrStart(uint32_t blk, uint64_t startTS)
 // start a thread of the Data Master on-the fly
 void dmStartThread(uint32_t blk)
 {
+  uint64_t TS;
+  uint64_t evtId;
+  uint64_t param;
+  
   fwlib_ebmWriteN(dmThrs[blk].TSAddr, dmThrs[blk].TSData, 2);  
   fwlib_ebmWriteN(dmThrs[blk].StartAddr, &dmThrs[blk].StartData, 1);             
   DBPRINT2("dm-unipz: dmChangeBlock blk %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", blk, dmCmds[blk].cmdAddr, dmCmds[blk].cmdData[0], dmCmds[blk].cmdData[1]);
+
+  // if debugging is enabled, write data for Data Master to our own ECA input
+  if (flagDebug) {
+    // TS for thread start
+    TS    = dmThrs[blk].TSData[0] << 32 + dmThrs[blk].TSData[1];
+    evtId = 0x1000000000000000;
+    evtId = evtId | ((uint64_t)0xfa0 << 48);
+    evtId = evtId | dmThrs[blk].TSAddr;
+    param = 0x0;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
+
+    // write start bit to global control register
+    TS    = TS + 8;
+    evtId = 0x1000000000000000;
+    evtId = evtId | ((uint64_t)0xfa1 << 48);
+    evtId = evtId | dmThrs[blk].StartAddr;
+    param = dmThrs[blk].StartData;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
+  } // if flagDebug
 } // dmStartThread
 
 
@@ -945,6 +969,9 @@ volatile uint32_t *pMilPiggy;
   pMilPiggy = fwlib_getMilPiggy();
   
   if (disableFilterEvtMil(pMilPiggy) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+
+  // always disable debugging when entering state 'operation'
+  flagDebug = 0;
   
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
@@ -967,20 +994,24 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer)
   // check, if the command is valid and request state change
   if (cmd) {
     switch (cmd) {
-    case DMUNIPZ_CMD_RELEASETK :
-      releaseTK();   // force release of TK request independently of state or status
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELTK);
-      DBPRINT1("dm-unipz: received cmd %u, forcing release of TK request\n", (unsigned int)cmd);
-      break;
-    case DMUNIPZ_CMD_RELEASEBEAM :
-      releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);
-      unprepareBeam();
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);
-      DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
-      break;
-    default:
-      DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
+      case DMUNIPZ_CMD_RELEASETK :
+        releaseTK();   // force release of TK request independently of state or status
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELTK);
+        DBPRINT1("dm-unipz: received cmd %u, forcing release of TK request\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_RELEASEBEAM :
+        releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);
+        unprepareBeam();
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);
+        DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_DEBUGON :
+        
+        DBPRINT1("dm-unipz: received cmd %u, enable debug option\n", (unsigned int)cmd);
+        break;
+      default:
+        DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
     } // switch 
   } // if command 
 } // cmdHandler

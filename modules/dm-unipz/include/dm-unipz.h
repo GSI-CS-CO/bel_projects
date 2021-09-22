@@ -19,6 +19,8 @@
 // dm-unipz specific commands from the outside
 #define  DMUNIPZ_CMD_RELEASETK    6           // release TK request at UNILAC
 #define  DMUNIPZ_CMD_RELEASEBEAM  7           // release beam request at UNILAC
+#define  DMUNIPZ_CMD_DEBUGON      8           // enables debug mode (writes data to be sent to DM to my own ECA input, experimental!)
+#define  DMUNIPZ_CMD_DEBUGOFF     9           // disables debug mode
 
 // (error) status
 #define  DMUNIPZ_STATUS_REQTKFAILED     16    // UNILAC refuses TK request

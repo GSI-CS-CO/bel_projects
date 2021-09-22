@@ -130,6 +130,15 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid,              // group ID
                             uint32_t reserved          // reserved
                             );
 
+// write timing message to input of ECA
+// deadline must be a least (COMMON_LATELIMIT) in the future
+// if not, the  message will be rescheduled using COMMON_AHEADT
+uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
+                          uint64_t evtId,              // event ID
+                          uint64_t param,              // parameter field
+                          uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
+                          );
+
 
 // write timing message via Etherbone, returns (error) status
 // deadline must be a least (COMMON_LATELIMIT) in the future

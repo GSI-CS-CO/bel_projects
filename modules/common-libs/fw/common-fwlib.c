@@ -68,6 +68,7 @@ extern uint32_t extern_entryActionOperation();
 extern uint32_t extern_exitActionOperation();
 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
+volatile uint32_t *pEca;                // WB address of ECA event input (discoverPeriphery())
 volatile uint32_t *pPPSGen;             // WB address of PPS Gen
 volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
@@ -375,7 +376,7 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // set high bits for EB master
   ebm_hi(COMMON_ECA_ADDRESS);
 
-  // pack Ethernet frame with messages
+  // pack Ethernet frame with message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
   tef     = 0x00000000;
@@ -401,7 +402,49 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   ebm_flush();
           
   return status;
-} //fwlib_bmWriteTM
+} //fwlib_ebmWriteTM
+
+
+uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+{
+  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t deadlineLo, deadlineHi;
+  uint32_t idLo, idHi;
+  uint32_t paramLo, paramHi;
+  
+  uint32_t status;                     // return value
+
+  // check deadline
+  if ((deadline < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) && !flagForceLate) {
+    deadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    status   = COMMON_STATUS_OUTOFRANGE;
+  } // if deadline
+  else status = COMMON_STATUS_OK;
+
+  // pack 32bit words of message data
+  idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
+  idLo       = (uint32_t)(evtId            & 0xffffffff);
+  tef     = 0x00000000;
+  res     = 0x00000000;
+  paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
+  paramLo    = (uint32_t)(param            & 0xffffffff);
+  deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+  deadlineLo = (uint32_t)(deadline         & 0xffffffff);
+          
+  // write timing message to ECA input
+  atomic_on();                                  
+  *pEca = idHi;
+  *pEca = idLo;
+  *pEca = paramHi;
+  *pEca = paramLo;
+  *pEca = tef;
+  *pEca = res;
+  *pEca = deadlineHi;
+  *pEca = deadlineLo;
+  atomic_off();
+          
+  return status;
+} //fwlib_ecaWriteTM
 
 
 uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
