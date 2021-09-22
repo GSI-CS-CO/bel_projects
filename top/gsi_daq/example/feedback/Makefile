@@ -10,7 +10,7 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-  USE_SHARED_LIB := 1
+#  USE_SHARED_LIB := 1
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -50,6 +50,7 @@ INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
 INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 INCLUDE_DIRS += $(DAQ_DIR)/tools
+INCLUDE_DIRS += $(SCU_DIR)/generated
 # LIBS += boost_system
 
 # ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a

@@ -146,7 +146,7 @@ int main( const int argc, const char** ppArgv )
       /*!
        * Uncomment this if you will not the history of the data-buffer.
        */
-      myScu.clearBuffer();
+     // myScu.clearBuffer();
 
       /*
        * After the successful generating of the object "myScu" some information
