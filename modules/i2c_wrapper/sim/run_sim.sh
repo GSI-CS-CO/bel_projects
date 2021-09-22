@@ -13,6 +13,7 @@ I2C_PATH="../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master"
 VHD_PACK="../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd \
 ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
 VHD_FILES="$VHD_PACK \
+../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 $I2C_PATH/i2c_master_bit_ctrl.vhd \
 $I2C_PATH/i2c_master_byte_ctrl.vhd \
 $I2C_PATH/i2c_master_top.vhd \
@@ -36,6 +37,6 @@ $GHDL_BIN -e --work=work $GHDL_FLAGS $TB_NAME
 echo "Starting simulation ..."
 $GHDL_BIN -r $TB_NAME --stop-time=$STOP_TIME --vcd=$VCD_NAME
 
-echo "Hint: View simulation -> $VCD_VIEWER $TB_NAME.vcd"
+echo "Hint: View simulation -> $VCD_VIEWER $TB_NAME.vcd &"
 
 exit 0

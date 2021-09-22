@@ -1,3 +1,5 @@
+-- Synopsys
+
 -- Libraries
 library ieee;
 use ieee.std_logic_1164.all;
@@ -7,19 +9,36 @@ use work.wishbone_pkg.all;
 
 -- Entity (empty)
 entity i2c_testbench is
+  generic (g_interfaces : integer := 5);
+  port  (scl_pad_io : inout std_logic_vector(g_interfaces-1 downto 0);
+         sda_pad_io : inout std_logic_vector(g_interfaces-1 downto 0));
 end;
 
 -- Architecture
 architecture rtl of i2c_testbench is
 
   -- Testbench settings
-  constant c_interfaces  : integer := 5;
-  constant c_reset_time  : time    := 100 ns;
+  constant c_interfaces  : integer := g_interfaces;
+  constant c_reset_time  : time    := 200 ns;
   constant c_clock_cycle : time    := 16 ns;
+
+ -- I2C master registers
+  constant c_reg_prer_lo : std_logic_vector(31 downto 0) := x"00000000"; -- RW clock prescale low-byte
+  constant c_reg_prer_hi : std_logic_vector(31 downto 0) := x"00000001"; -- RW clock prescale high-byte
+  constant c_reg_ctr     : std_logic_vector(31 downto 0) := x"00000002"; -- RW control register
+  constant c_reg_txr     : std_logic_vector(31 downto 0) := x"00000003"; -- #W transmit register
+  constant c_reg_rxr     : std_logic_vector(31 downto 0) := x"00000003"; -- R# receive register
+  constant c_reg_cr      : std_logic_vector(31 downto 0) := x"00000004"; -- #W command register
+  constant c_reg_sr      : std_logic_vector(31 downto 0) := x"00000004"; -- R# status register
+
+  -- I2c master registers
+  constant c_reg_cr_core_enable_bit      : std_logic_vector(31 downto 0) := x"00000080";
+  constant c_reg_cr_interrupt_enable_bit : std_logic_vector(31 downto 0) := x"00000040";
 
   -- Basic device signals
   signal s_clk   : std_logic := '0';
-  signal s_rst_n : std_logic := '1';
+  signal s_rst_n : std_logic := '0';
+  signal s_rst   : std_logic := '0';
 
   -- Wishbone connections
   signal s_wb_slave_in  : t_wishbone_slave_in;
@@ -37,14 +56,39 @@ architecture rtl of i2c_testbench is
   signal s_sda_pad_out    : std_logic_vector(c_interfaces-1 downto 0);
   signal s_sda_padoen_out : std_logic_vector(c_interfaces-1 downto 0);
 
+  -- Testbench logic
+  signal s_sequence_cnt   : std_logic_vector(15 downto 0);
+
+  -- Functions
+  function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
+                   adr : t_wishbone_address; dat : t_wishbone_data) return t_wishbone_slave_in is
+  variable v_setup : t_wishbone_slave_in;
+  begin
+    v_setup.cyc := cyc;
+    v_setup.stb := stb;
+    v_setup.we  := we;
+    v_setup.adr := adr;
+    v_setup.dat := dat;
+    v_setup.sel := (others => '0');
+    return v_setup;
+  end function wb_stim;
+
 begin
+
+  -- Interfaces
+  interfaces : for i in 0 to (c_interfaces-1) generate
+    scl_pad_io(i)   <= s_scl_pad_out(i) when (s_scl_padoen_out(i) = '0') else 'Z';
+    sda_pad_io(i)   <= s_sda_pad_out(i) when (s_sda_padoen_out(i) = '0') else 'Z';
+    s_scl_pad_in(i) <= scl_pad_io(i);
+    s_sda_pad_in(i) <= sda_pad_io(i);
+  end generate;
 
   -- Clock generator
   p_clock : process
   begin
     s_clk <= '0';
     wait for c_clock_cycle/2;
-    s_clk <= '1' and not(s_rst_n);
+    s_clk <= '1' and s_rst_n;
     wait for c_clock_cycle/2;
   end process;
 
@@ -52,8 +96,9 @@ begin
   p_reset : process
   begin
     wait for c_reset_time;
-    s_rst_n <= '0';
+    s_rst_n <= '1';
   end process;
+  s_rst <= not(s_rst_n);
 
   -- I2C master
   u_i2c_dut : xwb_i2c_master
@@ -81,6 +126,36 @@ begin
     wait for c_reset_time;
     s_scl_pad_in <= (others => '0');
     s_sda_pad_in <= (others => '0');
+  end process;
+
+  -- Testbench controller
+  p_tb_ctl : process(s_clk, s_rst_n) is
+  begin
+    if s_rst_n = '0' then
+      s_sequence_cnt <= (others => '0');
+    elsif rising_edge(s_clk) then
+      s_sequence_cnt <= std_logic_vector(unsigned(s_sequence_cnt) + 1);
+    end if;
+  end process;
+
+  -- Wishbone controller
+  p_wishbone_stim : process(s_clk, s_rst_n) is
+  begin
+    if s_rst_n = '0' then
+      s_wb_slave_in <= wb_stim('0', '0', '0', x"00000000", x"00000000");
+    elsif rising_edge(s_clk) then
+      case s_sequence_cnt is
+        -- Input:                                CYC  STR  WE   ADR          DAT
+        -- Enable core
+        when x"0001" => s_wb_slave_in <= wb_stim('1', '1', '1', c_reg_ctr, c_reg_cr_core_enable_bit);
+        when x"0002" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr, c_reg_cr_core_enable_bit);
+        -- Read back configuration
+        when x"0011" => s_wb_slave_in <= wb_stim('1', '1', '0', c_reg_ctr, x"00000000");
+        when x"0012" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr, x"00000000");
+        -- Default
+        when others  => s_wb_slave_in <= wb_stim('0', '0', '0', x"00000000", x"00000000");
+      end case;
+    end if;
   end process;
 
 end;
