@@ -57,7 +57,7 @@ if  [ $(hostname) == $PROSCU ]; then   # production network
     dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
 else                                  # test or development
     echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000446 0xc0a880bc
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
 fi
 
 echo -e dm-unipz - start: make firmware operational
@@ -85,6 +85,10 @@ saft-ecpu-ctl tr0 -c 0x112c028000000000 0xfffffff000000000 0 0x7 -d
 
 # configure ECA for lm32 channel: listen for CMD_UNI_BPREP, tag "0x8"
 saft-ecpu-ctl tr0 -c 0x112c161000000000 0xfffffff000000000 0 0x8 -d
+
+# configure ECA for lm32 channel: listen for CMD_UNI_BREQ_NOWAIT, tag "0x9"
+saft-ecpu-ctl tr0 -c 0x112c162000000000 0xfffffff000000000 0 0x9 -d
+
 
 
 ###########################################
