@@ -430,7 +430,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   paramLo    = (uint32_t)(param            & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline         & 0xffffffff);
-          
+
   // write timing message to ECA input
   atomic_on();                                  
   *pEca = idHi;

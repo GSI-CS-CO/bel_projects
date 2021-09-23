@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Sept-2021
+ *  version : 23-Sept-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -181,15 +181,23 @@ uint32_t dmCheckThr(uint32_t blk)
   // two checks are run on the data of the thread control, which we intend to send to the Data Master later
   // verify, the addresses of thread data are non-zero
 
-
   // exclude non-zero 'origin' addresses
-  if (!(dmThrs[blk].dynpar))                    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  if (!(dmThrs[blk].dynpar)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !dynpar
 
   // exclude non-zero 'thread staging' addresses
-  if (!(dmThrs[blk].TSAddr))                    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  if (!(dmThrs[blk].TSAddr)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !TSAddr
 
   // exclude non-zero 'start register' addresses
-  if (!(dmThrs[blk].StartAddr))                 return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  if (!(dmThrs[blk].StartAddr)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !StartAdddr
   
   return COMMON_STATUS_OK;
 } // dmCheckThr
@@ -235,8 +243,8 @@ uint32_t dmPrepThrStart(uint32_t blk, uint64_t startTS)
   DBPRINT3("dm-unipz: prep thread start for origin address 0x%08x, extBaseAddr 0x%08x\n", originAddr, extBaseAddr);
 
   // addresses for thread start
-  startTSAddr              = extBaseAddr + (( SHCTL_THR_STA + dmThrs[blk].thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2);
-  startCtlAddr             = extBaseAddr + (( SHCTL_THR_CTL + T_TC_START) >> 2); 
+  startTSAddr              = extBaseAddr + SHARED_OFFS + ( SHCTL_THR_STA + dmThrs[blk].thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  startCtlAddr             = extBaseAddr + SHARED_OFFS + (SHCTL_THR_CTL + T_TC_START); 
   DBPRINT3("dm-unipz: prep thread start TS address 0x%08x, thread start ctrl address 0x%08x\n", startTSAddr, startCtlAddr);
 
   // timestamp when thread shall start
@@ -244,8 +252,8 @@ uint32_t dmPrepThrStart(uint32_t blk, uint64_t startTS)
   startTSLo         = (uint32_t)(startTS & 0xffffffff);
   // start bit required for thread start
   startCtlData      = 1 << dmThrs[blk].thrIdx;
-  DBPRINT3("dm-unipz: prep thread validTSHi 0x%08x\n", startTSHi);
-  DBPRINT3("dm-unipz: prep thread validTSLo 0x%08x\n", startTSLo);
+  DBPRINT3("dm-unipz: prep thread startTSHi 0x%08x\n", startTSHi);
+  DBPRINT3("dm-unipz: prep thread startTSLo 0x%08x\n", startTSLo);
   DBPRINT3("dm-unipz: prep thread ctlData   0x%08x\n", startCtlData);
 
   // assign prepared values for later use;
@@ -268,22 +276,24 @@ void dmStartThread(uint32_t blk)
   
   fwlib_ebmWriteN(dmThrs[blk].TSAddr, dmThrs[blk].TSData, 2);  
   fwlib_ebmWriteN(dmThrs[blk].StartAddr, &dmThrs[blk].StartData, 1);             
-  DBPRINT2("dm-unipz: dmChangeBlock blk %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", blk, dmCmds[blk].cmdAddr, dmCmds[blk].cmdData[0], dmCmds[blk].cmdData[1]);
+  DBPRINT2("dm-unipz: dmStartThread %d, TSAddr 0x%08x, TSHi 0x%08x, TSLo 0x%08x\n", blk, dmThrs[blk].TSAddr, dmThrs[blk].TSData[0], dmThrs[blk].TSData[1]);
+  DBPRINT2("dm-unipz: dmStartThread %d, StartAddr 0x%08x, StartData 0x%08x\n", blk, dmThrs[blk].StartAddr, dmThrs[blk].StartData);
 
   // if debugging is enabled, write data for Data Master to our own ECA input
   if (flagDebug) {
     // TS for thread start
-    TS    = dmThrs[blk].TSData[0] << 32 + dmThrs[blk].TSData[1];
-    evtId = 0x1000000000000000;
-    evtId = evtId | ((uint64_t)0xfa0 << 48);
+    TS    = (uint64_t)(dmThrs[blk].TSData[0]) << 32;
+    TS   |= (uint64_t)(dmThrs[blk].TSData[1]);
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa0 << 36);
     evtId = evtId | dmThrs[blk].TSAddr;
     param = 0x0;
     fwlib_ecaWriteTM(TS, evtId, param, 1);
 
     // write start bit to global control register
     TS    = TS + 8;
-    evtId = 0x1000000000000000;
-    evtId = evtId | ((uint64_t)0xfa1 << 48);
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa1 << 36);
     evtId = evtId | dmThrs[blk].StartAddr;
     param = dmThrs[blk].StartData;
     fwlib_ecaWriteTM(TS, evtId, param, 1);
@@ -1007,8 +1017,12 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer)
         DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
         break;
       case DMUNIPZ_CMD_DEBUGON :
-        
+        flagDebug = 1;
         DBPRINT1("dm-unipz: received cmd %u, enable debug option\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_DEBUGOFF :
+        flagDebug = 0;
+        DBPRINT1("dm-unipz: received cmd %u, disable debug option\n", (unsigned int)cmd);
         break;
       default:
         DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
