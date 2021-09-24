@@ -48,7 +48,6 @@
 #define  DMUNIPZ_STATUS_INVALIDTHRADDR  38    // invalid address of thread handling area for Data Master
 #define  DMUNIPZ_STATUS_DELAYEDEVENT    39    // received 'delayed event'
 
-
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN    "U_DM_UNIPZ"   // nomen for gateway
 #define  DMUNIPZ_MASP_CUSTOMSIG  "TRANSFER"   // custom signal for MASP

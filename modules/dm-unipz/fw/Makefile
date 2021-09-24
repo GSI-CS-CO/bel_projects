@@ -17,7 +17,7 @@ VERSION         = 00.08.01
 .DEFAULT_GOAL	:= fwbin
 
 PATHFW 	 = .
-DEBUGLVL    	= 3
+DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
 CFLAGS 	    	= -I../include -I../../common-libs/include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 

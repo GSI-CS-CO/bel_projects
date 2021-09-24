@@ -1177,11 +1177,16 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (nextAction == DMUNIPZ_ECADO_REQBEAMNW) flagBooster = 1;
       else                                       flagBooster = 0;
 
-      if (flagBooster) (*nBoost)++;                                                // diagnostics: increment/set number of injections (of current transfer)
-      else             (*nMulti)++;
+      if (flagBooster) {
+        (*nBoost)++;
+      } // if flagbooster
+      else {
+        (*nMulti)++;
+      } // else flagbooster
 
       // existing thread data is invalid and must be cleared
-      dmClearThr(REQBEAM); 
+      dmClearThr(REQBEAM);
+      if (flagDelayed && flagBooster) return DMUNIPZ_STATUS_DELAYEDEVENT;          // this is a bit rude, but the likelyhood of messing up things can not be accepted
 
       //---- copy tag specific data from ECA
       ecaVirtAcc             = ecaEvtId & 0xf;
@@ -1218,42 +1223,36 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begine to request at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
 
-      if (!flagDelayed) {                                                          // in case of delayed events, we would start the threads in the DM too late; skip the following code
-        //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
-        if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
-          *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
-          if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
-            ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
-            switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
-              {                                                                      
-                case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
-                  if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
-                    flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
-                    status       = COMMON_STATUS_OK;
-                  } // if matchwindow
-                  else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                          // error: timestamp too old
-                  nR2sTransfer++;                                                      // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
-                  nR2sTotal++;                                                         // diagnostics: increment total # of EVT_READY_TO_SIS
-                  break;
-                case DMUNIPZ_ECADO_TIMEOUT :                                           // error: timeout, no timestamp via TLU -> ECA
-                  status = DMUNIPZ_STATUS_NOTIMESTAMP;                                 
-                  break;
-                default :                                                              // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
-                  status = DMUNIPZ_STATUS_BADSCHEDULEB;
-                  flagNoCmd = 1;                                                       // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
-              } // switch (ecaInjAction)
-          } // if wait4MILEvt
-          else {                                                                     // error: timeout, EVT_READY_TO_SIS was not received in MIL FIFO                                          
-            status = milStatus;
-            if (status == COMMON_STATUS_TIMEDOUT) status = DMUNIPZ_STATUS_WAIT4UNIEVENT; 
-          } // else wait4MilEvent
-        } // if request beam
-        else *dtBreq = getSysTime() - ecaDeadline;                                   // error: beam request at UNIPZ failed; diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
-      } // if !flagDelayed
-      else {
-        flagMilEvtValid = 0;
-        status          = DMUNIPZ_STATUS_DELAYEDEVENT;
-      } // else !flagDelayed
+      //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
+      if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
+        *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
+        if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
+          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
+          switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
+            {                                                                      
+              case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
+                if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
+                  flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
+                  status       = COMMON_STATUS_OK;
+                } // if matchwindow
+                else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                          // error: timestamp too old
+                nR2sTransfer++;                                                      // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+                nR2sTotal++;                                                         // diagnostics: increment total # of EVT_READY_TO_SIS
+                break;
+              case DMUNIPZ_ECADO_TIMEOUT :                                           // error: timeout, no timestamp via TLU -> ECA
+                status = DMUNIPZ_STATUS_NOTIMESTAMP;                                 
+                break;
+              default :                                                              // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
+                status = DMUNIPZ_STATUS_BADSCHEDULEB;
+                flagNoCmd = 1;                                                       // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
+            } // switch (ecaInjAction)
+        } // if wait4MILEvt
+        else {                                                                     // error: timeout, EVT_READY_TO_SIS was not received in MIL FIFO                                          
+          status = milStatus;
+          if (status == COMMON_STATUS_TIMEDOUT) status = DMUNIPZ_STATUS_WAIT4UNIEVENT; 
+        } // else wait4MilEvent
+      } // if request beam
+      else *dtBreq = getSysTime() - ecaDeadline;                                   // error: beam request at UNIPZ failed; diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
 
       //---- analyse the situation 
       if (flagMilEvtValid) {                                                                  
@@ -1283,8 +1282,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       
       //---- send data to Data Master ----
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
-        if (!flagBooster) dmChangeBlock(REQTK);                                    // modify "slow" waiting block within DM
-        dmStartThread(REQBEAM);                                                    // start thread within DM
+        if (!flagBooster)               dmChangeBlock(REQTK);                      // modify "slow" waiting block within DM
+        if (status == COMMON_STATUS_OK) dmStartThread(REQBEAM);                    // start thread within DM; only start thread in case everything went fine
       } // if !flagNoCmd
 
       *dtStart     = tCmdFlex - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
