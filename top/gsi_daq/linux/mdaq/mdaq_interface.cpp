@@ -66,7 +66,13 @@ void DaqInterface::init( void )
       readRingPosition();
    else
 #endif
-      readBufferAdmin();
+   {
+      readBufferAdmin(); // deprecated!
+#ifdef __NEW__
+      initRingAdmin( &m_oBufferAdmin.memAdmin,
+                     getEbAccess()->getMilDaqOffset() + offsetof( MIL_DAQ_ADMIN_T, memAdmin ) );
+#endif
+   }
 }
 
 #define BYTE_SWAP( target, origin, member ) \

@@ -322,14 +322,10 @@ public:
    virtual void onDataReadingPause( void );
 
 #ifdef __NEW__
+private:
+   void checkIntegrity( void );
+
 protected:
-   void setRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  )
-   {
-      assert( m_poRingAdmin == nullptr );
-      assert( m_daqBaseOffset == 0 );
-      m_poRingAdmin = pAdmin;
-      m_daqBaseOffset = daqBaseOffset;
-   }
 
    void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
    {
@@ -344,7 +340,7 @@ protected:
                 )
    {
       assert( m_daqBaseOffset != 0 );
-      getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
+      getEbAccess()->readLM32( pData, len, offset + m_daqBaseOffset, format );
    }
 
    void writeLM32( const eb_user_data_t pData,
@@ -356,6 +352,60 @@ protected:
       getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
    }
 
+   void initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  );
+
+   void updateMemAdmin( void );
+
+   /*!
+    * @brief Sends the number DDR3-items back to the LM32.
+    */
+   void sendWasRead( const RAM_RING_INDEX_T wasRead );
+
+   /*!
+    * @brief Returns the number of data items which has been read by
+    *        the last iteration step, but not handled by LM32 yet.
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getWasRead( void ) const
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return ramRingSharedGetWasRead( m_poRingAdmin );
+   }
+
+   uint getReadIndex( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.start;
+   }
+
+   uint getWriteIndex( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.end;
+   }
+
+#if 0 //TODO
+   /*!
+    * @brief Returns the capacity of the ADDAC or MIL DAQ data-buffer
+    *        in minimum addressable payload units of the used RAM-type.
+    */
+   uint getRamCapacity( void ) override
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.capacity;
+   }
+
+   /*!
+    * @brief Returns the offset in minimum addressable payload units of the
+    *        used RAM type.
+    */
+   uint getRamOffset( void ) override
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.offset;
+   }
+#endif
 #endif
 };
 

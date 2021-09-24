@@ -26,6 +26,8 @@
 #include <daq_base_interface.hpp>
 #include <unistd.h>
 
+#include <string.h>
+
 using namespace Scu;
 
 /*! ----------------------------------------------------------------------------
@@ -100,6 +102,87 @@ void DaqBaseInterface::onDataReadingPause( void )
 }
 
 #ifdef __NEW__
+#define BYTE_SWAP( pTarget, origin, member ) \
+  pTarget->member = gsi::convertByteEndian( origin.member )
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqBaseInterface::checkIntegrity( void )
+{
+   if( m_poRingAdmin->indexes.start >= m_poRingAdmin->indexes.capacity )
+      throw daq::Exception( "Read index of DAQ-buffer is corrupt!" );
+
+   if( m_poRingAdmin->indexes.end > m_poRingAdmin->indexes.capacity )
+      throw daq::Exception( "Write index of DAQ-buffer is corrupt!" );
+
+   if( m_poRingAdmin->wasRead > m_poRingAdmin->indexes.capacity )
+      throw daq::Exception(  "Value of wasRead of DAQ-buffer is corrupt!" );
+}
+
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin,
+                                      const std::size_t daqBaseOffset  )
+{
+   assert( m_poRingAdmin == nullptr );
+   assert( m_daqBaseOffset == 0 );
+
+   m_poRingAdmin   = pAdmin;
+   m_daqBaseOffset = daqBaseOffset;
+   assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+
+   RAM_RING_SHARED_INDEXES_T lm32Order;
+
+
+   readLM32( &lm32Order, sizeof( RAM_RING_SHARED_INDEXES_T ) );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.offset );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.capacity );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.start );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.end );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, wasRead );
+
+   checkIntegrity();
+}
+
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::updateMemAdmin( void )
+{
+   RAM_RING_SHARED_INDEXES_T lm32Order;
+
+   assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+
+   static_assert( offsetof( RAM_RING_SHARED_INDEXES_T, indexes.end ) ==
+                  offsetof( RAM_RING_SHARED_INDEXES_T, indexes.start ) +
+                  sizeof( lm32Order.indexes.start ), "" );
+
+   static_assert( offsetof( RAM_RING_SHARED_INDEXES_T, wasRead ) ==
+                  offsetof( RAM_RING_SHARED_INDEXES_T, indexes.end ) +
+                  sizeof( lm32Order.indexes.end ), "" );
+
+   readLM32( &lm32Order.indexes.start,
+             sizeof( lm32Order.indexes.start )
+             + sizeof( lm32Order.indexes.end )
+             + sizeof( lm32Order.wasRead ),
+             offsetof( RAM_RING_SHARED_INDEXES_T, indexes.start ) );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.start );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, indexes.end );
+   BYTE_SWAP( m_poRingAdmin, lm32Order, wasRead );
+
+   checkIntegrity();
+}
+
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::sendWasRead( const RAM_RING_INDEX_T wasRead )
+{
+   assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+
+   ramRingSharedSetWasRead( m_poRingAdmin, wasRead );
+   RAM_RING_INDEX_T wasReadBe = gsi::convertByteEndian( m_poRingAdmin->wasRead );
+   writeLM32( &wasReadBe, sizeof( wasReadBe ), offsetof( RAM_RING_SHARED_INDEXES_T, wasRead ));
+}
+
 #endif
 
 //================================== EOF ======================================
