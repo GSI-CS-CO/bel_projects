@@ -46,6 +46,7 @@
 #define  DMUNIPZ_STATUS_INVALIDBLKADDR  36    // invalid address of block for Data Master
 #define  DMUNIPZ_STATUS_NODM            37    // Data Master unreachable
 #define  DMUNIPZ_STATUS_INVALIDTHRADDR  38    // invalid address of thread handling area for Data Master
+#define  DMUNIPZ_STATUS_DELAYEDEVENT    39    // received 'delayed event'
 
 
 // MASP 

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-September-2021
+ *  version : 22-September-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -543,7 +543,7 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -574,6 +574,9 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
+      *isEarly     = *pECAFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = *pECAFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = *pECAFlag & (0x0001 << ECA_DELAYED);
       
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;

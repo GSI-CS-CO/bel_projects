@@ -22,7 +22,10 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *evtId,         // event ID
                              uint64_t *param,         // parameter field
                              uint32_t *tef,           // TEF filed
-                             uint32_t *isLate         // flag 'is late'
+                             uint32_t *isLate,        // flag 'late'
+                             uint32_t *isEarly,       // flag 'early'
+                             uint32_t *isConflict,    // flag 'conflict'
+                             uint32_t *isDelayed      // flag 'delayed'
                              );
 
 // wait for MIL event or timeout, returns (error) status

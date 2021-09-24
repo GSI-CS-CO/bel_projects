@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Sept-2021
+ *  version : 24-Sept-2021
  *
  * Command-line interface for dmunipz
  *
@@ -161,6 +161,7 @@ const char* dmunipz_statusText(uint32_t bit) {
     case DMUNIPZ_STATUS_BADSCHEDULEB     : sprintf(message, "error %d, %s",    bit, "unexpected event"); break;
     case DMUNIPZ_STATUS_INVALIDBLKADDR   : sprintf(message, "error %d, %s",    bit, "invalid address of block for Data Master"); break;
     case DMUNIPZ_STATUS_INVALIDTHRADDR   : sprintf(message, "error %d, %s",    bit, "invalid address of thread handling area for Data Master"); break;
+    case DMUNIPZ_STATUS_DELAYEDEVENT     : sprintf(message, "error %d, %s",    bit, "received 'delayed event'");break;
     default                              : return comlib_statusText(bit); break;
   }
 
