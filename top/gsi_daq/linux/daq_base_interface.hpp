@@ -325,14 +325,6 @@ public:
 private:
    void checkIntegrity( void );
 
-protected:
-
-   void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
-   {
-      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
-      getEbAccess()->readRam( pData, len, m_poRingAdmin->indexes );
-   }
-
    void readLM32( eb_user_data_t pData,
                   const std::size_t len,
                   const std::size_t offset = 0,
@@ -352,14 +344,25 @@ protected:
       getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
    }
 
+protected:
+   void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      getEbAccess()->readRam( pData, len, m_poRingAdmin->indexes );
+   }
+
    void initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  );
 
    void updateMemAdmin( void );
 
    /*!
     * @brief Sends the number DDR3-items back to the LM32.
+    *
+    * The LM32 will add this to the read-index once he has enter
+    * the handling routine of this buffer.
     */
-   void sendWasRead( const RAM_RING_INDEX_T wasRead );
+   void sendWasRead( const uint wasRead );
+
 
    /*!
     * @brief Returns the number of data items which has been read by
@@ -383,6 +386,25 @@ protected:
    {
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       return m_poRingAdmin->indexes.end;
+   }
+
+   /*!
+    * @brief Returns the number of buffer items which has not been read yet.
+    */
+   uint getUnreadData( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return ramRingSharedGetSize( m_poRingAdmin );
+   }
+
+   /*!
+    * @brief Gives the LM32 the order to clear the data-buffer once he has enter
+    *        the handling routine of this buffer.
+    */
+   void clearBufferRequest( void )
+   {
+      updateMemAdmin();
+      sendWasRead( getUnreadData() );
    }
 
 #if 0 //TODO

@@ -174,7 +174,7 @@ void DaqBaseInterface::updateMemAdmin( void )
 
 /*! --------------------------------------------------------------------------
  */
-void DaqBaseInterface::sendWasRead( const RAM_RING_INDEX_T wasRead )
+void DaqBaseInterface::sendWasRead( const uint wasRead )
 {
    assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
 
