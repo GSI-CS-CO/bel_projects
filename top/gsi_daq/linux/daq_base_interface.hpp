@@ -356,6 +356,17 @@ protected:
    void updateMemAdmin( void );
 
    /*!
+    * @brief Returns the currently number of data items which are not read yet
+    *         in the DDR3-RAM
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getCurrentNumberOfData( void )
+   {
+      return ramRingSharedGetSize( m_poRingAdmin );
+   }
+
+   /*!
     * @brief Sends the number DDR3-items back to the LM32.
     *
     * The LM32 will add this to the read-index once he has enter

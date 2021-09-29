@@ -67,10 +67,11 @@ void DaqInterface::init( void )
    else
 #endif
    {
-      readBufferAdmin(); // deprecated!
 #ifdef __NEW__
       initRingAdmin( &m_oBufferAdmin.memAdmin,
                      getEbAccess()->getMilDaqOffset() + offsetof( MIL_DAQ_ADMIN_T, memAdmin ) );
+#else
+       readBufferAdmin(); // deprecated!
 #endif
    }
 }

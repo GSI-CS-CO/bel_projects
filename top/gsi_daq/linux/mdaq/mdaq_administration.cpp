@@ -362,14 +362,14 @@ uint DaqAdministration::distributeData( void )
 //   if( m_nextReadOutTime > daq::getSysMicrosecs() )
 //      return 0;
 
-   const uint lastWasToRead = getWasRead();
+   const uint lastWasToRead = DaqBaseInterface::getWasRead();
 
    /*
     * Synchronize the ring administrator data with the LM32 shared memory.
     */
-   updateMemAdmin();
+   DaqBaseInterface::updateMemAdmin();
 
-   if( getWasRead() != 0 )
+   if( DaqBaseInterface::getWasRead() != 0 )
    { /*
       * Server respectively the LM32 has not synchronized the read index yet.
       * Therefore no data are present as well. 
@@ -377,17 +377,17 @@ uint DaqAdministration::distributeData( void )
       return 0;
    }
 
-   const uint toRead = std::min( getCurrentNumberOfData(), m_pMiddleBufferSize );
+   const uint toRead = std::min( DaqBaseInterface::getCurrentNumberOfData(), m_pMiddleBufferSize );
    if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
       return toRead;
 
-   if( (m_lastReadIndex == getReadIndex()) && (lastWasToRead != 0) )
+   if( (DaqBaseInterface::m_lastReadIndex == DaqBaseInterface::getReadIndex()) && (lastWasToRead != 0) )
    {
-      sendWasRead( lastWasToRead );
+      DaqBaseInterface::sendWasRead( lastWasToRead );
       DEBUG_MESSAGE( "Second sendWasRead( " << lastWasToRead << " );" );
       return 0;
    }
-   m_lastReadIndex = getReadIndex();
+   DaqBaseInterface::m_lastReadIndex = DaqBaseInterface::getReadIndex();
 
    if( m_pMiddleBufferMem == nullptr )
    { /*
@@ -399,16 +399,16 @@ uint DaqAdministration::distributeData( void )
    }
 
    DEBUG_MESSAGE( "Before\ntoRead: " << toRead <<
-                "\nWrite-index: " << getWriteIndex() <<
-                "\nRead-index:  " << getReadIndex() );
+                "\nWrite-index: " << DaqBaseInterface::getWriteIndex() <<
+                "\nRead-index:  " << DaqBaseInterface::getReadIndex() );
 
 
    readDaqData( m_pMiddleBufferMem->aPayload, toRead );
-   sendWasRead( toRead );
+   DaqBaseInterface::sendWasRead( toRead );
 
    DEBUG_MESSAGE( "After\ntoRead: " << toRead <<
-                "\nWrite-index: " << getWriteIndex() <<
-                "\nRead-index:  " << getReadIndex() );
+                "\nWrite-index: " << DaqBaseInterface::getWriteIndex() <<
+                "\nRead-index:  " << DaqBaseInterface::getReadIndex() );
 
    const uint itemsToHandling = toRead / RAM_ITEM_PER_MIL_DAQ_ITEM;
    for( uint i = 0; i < itemsToHandling; i++ )
@@ -435,7 +435,7 @@ uint DaqAdministration::distributeData( void )
 
    m_nextReadOutTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC / 8;
 
-   return getCurrentNumberOfData();
+   return DaqBaseInterface::getCurrentNumberOfData();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
