@@ -146,21 +146,21 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
   ,m_pfPollDaqData( nullptr )
 #endif
   ,m_pMiddleBufferMem( nullptr )
-  ,m_pMiddleBufferSize( 0 )
-  ,m_lastReadIndex( 0 )
+  ,m_middleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
 {
    initPtr();
 }
 
+/*-----------------------------------------------------------------------------
+ */
 DaqAdministration::DaqAdministration( DaqAccess* poEbAccess )
   :DaqInterface( poEbAccess )
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
   ,m_pfPollDaqData( nullptr )
 #endif
   ,m_pMiddleBufferMem( nullptr )
-  ,m_pMiddleBufferSize( 0 )
-  ,m_lastReadIndex( 0 )
+  ,m_middleBufferSize( 0 )
   ,m_nextReadOutTime( 0 )
 {
    initPtr();
@@ -177,15 +177,14 @@ DaqAdministration::~DaqAdministration( void )
       delete [] m_pMiddleBufferMem;
 }
 
-
 /*-----------------------------------------------------------------------------
  */
 void DaqAdministration::initPtr( void )
 {
-   if( m_pMiddleBufferSize == 0 )
-      m_pMiddleBufferSize = std::min( getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM, 100UL );
+   if( m_middleBufferSize == 0 )
+      m_middleBufferSize = std::min( getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM, 400UL );
 
-   assert( (m_pMiddleBufferSize % RAM_ITEM_PER_MIL_DAQ_ITEM) == 0 );
+   assert( (m_middleBufferSize % RAM_ITEM_PER_MIL_DAQ_ITEM) == 0 );
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    if( m_pfPollDaqData != nullptr )
@@ -197,7 +196,6 @@ void DaqAdministration::initPtr( void )
       m_pfPollDaqData = &DaqAdministration::distributeDataNew;
 #endif
 }
-
 
 /*-----------------------------------------------------------------------------
  */
@@ -327,30 +325,6 @@ uint DaqAdministration::distributeDataOld( void )
 }
 #endif // ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 
-/*! ---------------------------------------------------------------------------
- * @brief Function performs a block reading divided in smaller sub-blocks to
- *        reduce the maximum EB-cycle open time.
- *
- * That makes time gaps for making occasions for other EB-access devices
- * e.g.: SAFTLIB
- */
-inline
-void DaqAdministration::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
-                                     std::size_t len )
-{
-   const std::size_t maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
-   while( true )
-   {
-      const std::size_t partLen = std::min( len, maxLen );
-      readRam( pData, partLen );
-      len -= partLen;
-      if( len == 0 )
-         break;
-      pData += partLen;
-      onDataReadingPause();
-   }
-}
-
 /*-----------------------------------------------------------------------------
  */
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
@@ -361,55 +335,52 @@ uint DaqAdministration::distributeData( void )
 {
 //   if( m_nextReadOutTime > daq::getSysMicrosecs() )
 //      return 0;
-
-   const uint lastWasToRead = DaqBaseInterface::getWasRead();
-
    /*
-    * Synchronize the ring administrator data with the LM32 shared memory.
+    * Getting the number of DDR3 memory items which has to be copied
+    * in the middle buffer.
     */
-   DaqBaseInterface::updateMemAdmin();
+   const uint toRead = std::min( getNumberOfNewData(), m_middleBufferSize );
 
-   if( DaqBaseInterface::getWasRead() != 0 )
-   { /*
-      * Server respectively the LM32 has not synchronized the read index yet.
-      * Therefore no data are present as well. 
-      */
-      return 0;
-   }
-
-   const uint toRead = std::min( DaqBaseInterface::getCurrentNumberOfData(), m_pMiddleBufferSize );
-   if( toRead == 0 || (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
+   if( toRead == 0 )
       return toRead;
 
-   if( (DaqBaseInterface::m_lastReadIndex == DaqBaseInterface::getReadIndex()) && (lastWasToRead != 0) )
+   if( (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
    {
-      DaqBaseInterface::sendWasRead( lastWasToRead );
-      DEBUG_MESSAGE( "Second sendWasRead( " << lastWasToRead << " );" );
-      return 0;
+      DEBUG_MESSAGE( toRead << " items in MIL buffer not dividable by RAM_ITEM_PER_MIL_DAQ_ITEM" );
+      return toRead;
    }
-   DaqBaseInterface::m_lastReadIndex = DaqBaseInterface::getReadIndex();
 
+   /*
+    * Middle buffer not created yet?
+    */
    if( m_pMiddleBufferMem == nullptr )
    { /*
       * Why not using std::vector?
       * Well a fast data transfer is requested in this case std::vector
       * could be a bit expensive. So the classical C- array will preferred.
       */
-      m_pMiddleBufferMem = new MIDDLE_BUFFER_T[m_pMiddleBufferSize];
+      m_pMiddleBufferMem = new MIDDLE_BUFFER_T[m_middleBufferSize];
    }
 
    DEBUG_MESSAGE( "Before\ntoRead: " << toRead <<
-                "\nWrite-index: " << DaqBaseInterface::getWriteIndex() <<
-                "\nRead-index:  " << DaqBaseInterface::getReadIndex() );
+                "\nWrite-index: " << getWriteIndex() <<
+                "\nRead-index:  " << getReadIndex() );
 
-
+   /*
+    * Copying via wishbone/etherbone the DDR3-RAM data in the middle buffer.
+    * This occupies the wishbone/etherbone bus!
+    */
    readDaqData( m_pMiddleBufferMem->aPayload, toRead );
-   DaqBaseInterface::sendWasRead( toRead );
+   sendWasRead( toRead );
 
    DEBUG_MESSAGE( "After\ntoRead: " << toRead <<
-                "\nWrite-index: " << DaqBaseInterface::getWriteIndex() <<
-                "\nRead-index:  " << DaqBaseInterface::getReadIndex() );
+                "\nWrite-index: " << getWriteIndex() <<
+                "\nRead-index:  " << getReadIndex() );
 
+   /*
+    * Splitting the received data containing in the middle buffer in
+    * the registered channels.
+    */
    const uint itemsToHandling = toRead / RAM_ITEM_PER_MIL_DAQ_ITEM;
    for( uint i = 0; i < itemsToHandling; i++ )
    {
@@ -430,12 +401,11 @@ uint DaqAdministration::distributeData( void )
                         pCurrentItem->getSetValue32() );
 
       pCurrent->m_setValueInvalid = true;
-
    }
 
    m_nextReadOutTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC / 8;
 
-   return DaqBaseInterface::getCurrentNumberOfData();
+   return getCurrentNumberOfData();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -179,22 +179,6 @@ public:
    static_assert( sizeof( MIDDLE_BUFFER_T ) == sizeof( MIL_DAQ_RAM_ITEM_T ) +
                   !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( daq::RAM_DAQ_PAYLOAD_T )), ":-O" );
 
-   class BufferAdmin: public MIL_DAQ_ADMIN_T
-   {
-   public:
-      BufferAdmin( void )
-      {
-         magicNumber = 0;
-         memAdmin.indexes.offset = 0;
-         memAdmin.indexes.capacity = 0;
-         memAdmin.indexes.start = 0;
-         memAdmin.indexes.end = 0;
-         memAdmin.wasRead = 0;
-      }
-   };
-
-   static_assert( sizeof( BufferAdmin ) == sizeof( MIL_DAQ_ADMIN_T ), ":-|" );
-
 private:
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    struct DAQ_RING_T
@@ -220,7 +204,7 @@ protected:
    /*!
     * @brief Object contains the write and read index of the RAM buffer
     */
-   BufferAdmin m_oBufferAdmin;
+    MIL_DAQ_ADMIN_T m_oBufferAdmin;
 
 public:
    /*!
@@ -237,90 +221,6 @@ public:
     * @brief Destructor
     */
    virtual ~DaqInterface( void );
-
-   /*!
-    * @brief Returns the capacity of the ADDAC or MIL DAQ data-buffer
-    *        in minimum addressable payload units of the used RAM-type.
-    */
-   uint getRamCapacity( void ) override
-   {
-      return m_oBufferAdmin.memAdmin.indexes.capacity; //TODO return the maximum capacity of MIL-DAQ-buffer
-   }
-
-   /*!
-    * @brief Returns the offset in minimum addressable payload units of the
-    *        used RAM type.
-    */
-   uint getRamOffset( void ) override
-   {
-      return m_oBufferAdmin.memAdmin.indexes.offset; //TODO return the offset of MIL-DAQ-buffer
-   }
-
-protected:
-   /*!
-    * @brief Updates all member variables which has been probably modified
-    *        by LM32.
-    */
-   void updateMemAdmin( void );
-
-   /*!
-    * @brief Sends the number DDR3-items back to the LM32.
-    */
-   void sendWasRead( const RAM_RING_INDEX_T );
-
-   void writeIndexes( void );
-
-   void addToReadIndex( const uint toAdd )
-   {
-      ramRingSharedAddToReadIndex( &m_oBufferAdmin.memAdmin, toAdd );
-   }
-
-public:
-
-   /*!
-    * @brief Returns the currently number of data items which are not read yet
-    *         in the DDR3-RAM
-    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
-    *                to be called before!
-    */
-   uint getCurrentNumberOfData( void )
-   {
-      return ramRingSharedGetSize( &m_oBufferAdmin.memAdmin );
-   }
-
-   /*!
-    * @brief Returns the number of data items which has been read by
-    *        the last iteration step, but not handled by LM32 yet.
-    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
-    *                to be called before!
-    */
-   uint getWasRead( void ) const
-   {
-      return ramRingSharedGetWasRead( &m_oBufferAdmin.memAdmin );
-   }
-
-   /*!
-    * @brief Returns the raw write index of the DDR3 RAM.
-    * @note For debug purposes only.
-    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
-    *                to be called before!
-    */
-   uint getWriteIndex( void )
-   {
-      return m_oBufferAdmin.memAdmin.indexes.end;
-   }
-
-   /*!
-    * @brief Returns the raw read index of the DDR3 RAM.
-    * @note For debug purposes only!
-    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
-    *                to be called before!
-    */
-   uint getReadIndex( void )
-   {
-      return m_oBufferAdmin.memAdmin.indexes.start;
-   }
-
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    RING_INDEX_T getHeadRingIndex( void ) const
@@ -343,31 +243,6 @@ public:
    void clearBuffer( bool update = true ) override;
 
 protected:
-
-   void readLM32( eb_user_data_t pData,
-                  const std::size_t len,
-                  const std::size_t offset = 0,
-                  const etherbone::format_t format = EB_DATA8
-                )
-   {
-      SCU_ASSERT( getEbAccess()->getMilDaqOffset() != DaqAccess::INVALID_OFFSET );
-      getEbAccess()->readLM32( pData, len, offset + getEbAccess()->getMilDaqOffset(), format );
-   }
-
-   void writeLM32( const eb_user_data_t pData,
-                   const std::size_t len,
-                   const std::size_t offset = 0,
-                   const etherbone::format_t format = EB_DATA8 )
-   {
-      SCU_ASSERT( getEbAccess()->getMilDaqOffset() != DaqAccess::INVALID_OFFSET );
-      getEbAccess()->writeLM32( pData, len, offset + getEbAccess()->getMilDaqOffset(), format );
-   }
-
-   void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
-   {
-      getEbAccess()->readRam( pData, len, m_oBufferAdmin.memAdmin.indexes );
-   }
-
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
    bool readRingPosition( void );
    void updateRingTail( void );
@@ -388,11 +263,9 @@ protected:
    {
       return getEbAccess()->isMilDataInLm32Mem();
    }
-#endif
+#endif /* ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE */
 
 private:
-   void readBufferAdmin( void );
-   void checkIntegrity( void );
    void init( void );
 };
 

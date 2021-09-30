@@ -168,21 +168,18 @@ protected:
    using EB_STATUS_T  = eb_status_t;
 
 private:
-   DaqAccess*   m_poEbAccess;
-   const bool   m_ebAccessSelfCreated;
+   DaqAccess*                   m_poEbAccess;
+   const bool                   m_ebAccessSelfCreated;
+   RAM_RING_SHARED_INDEXES_T*   m_poRingAdmin;
+   uint                         m_lastReadIndex;
+   std::size_t                  m_daqBaseOffset;
 
 protected:
    static constexpr std::size_t c_defaultMaxEbCycleDataLen = 10;
    static constexpr uint        c_defaultBlockReadEbCycleGapTimeUs = 1000;
 
-   std::size_t       m_maxEbCycleDataLen;
-   uint              m_blockReadEbCycleGapTimeUs;
-
-#ifdef __NEW__
-   RAM_RING_SHARED_INDEXES_T* m_poRingAdmin;
-   uint                       m_lastReadIndex;
-   std::size_t                m_daqBaseOffset;
-#endif
+   std::size_t                  m_maxEbCycleDataLen;
+   uint                         m_blockReadEbCycleGapTimeUs;
 
 public:
    constexpr static uint c_maxSlots  = Bus::MAX_SCU_SLAVES;
@@ -265,13 +262,21 @@ public:
     * @brief Returns the maximum capacity of the ADDAC or MIL DAQ data-buffer
     *        in minimum addressable payload units of the used RAM-type.
     */
-   virtual uint getRamCapacity( void ) = 0;
+   uint getRamCapacity( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.capacity;
+   }
 
    /*!
     * @brief Returns the offset in minimum addressable payload units of the
     *        used RAM type.
     */
-   virtual uint getRamOffset( void ) = 0;
+   uint getRamOffset( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      return m_poRingAdmin->indexes.offset;
+   }
 
    /*!
     * @brief Returns the number of items which are currently in the
@@ -321,7 +326,6 @@ public:
     */
    virtual void onDataReadingPause( void );
 
-#ifdef __NEW__
 private:
    void checkIntegrity( void );
 
@@ -344,16 +348,37 @@ private:
       getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
    }
 
+   void updateMemAdmin( void );
+
 protected:
+   void initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  );
+
+   /*!
+    * @brief Returns the number of DDR3- memory items which has not been read yet
+    *        since the last call of sendWasRead() or program start.
+    * @see sendWasRead()
+    * @return Number of memory items, which are not copied yet.
+    */
+   uint getNumberOfNewData( void );
+
+   /*!
+    * @brief Sends the number DDR3-items back to the LM32.
+    *
+    * The LM32 will add this to the read-index once he has enter
+    * the handling routine of this buffer.
+    */
+   void sendWasRead( const uint wasRead );
+
+   /*!
+    * @brief Reads the DDR3-RAM.
+    * @param pData Target address in which the data elements shall be copied.
+    * @param len Number of memory items to copy.
+    */
    void readRam( daq::RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
    {
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       getEbAccess()->readRam( pData, len, m_poRingAdmin->indexes );
    }
-
-   void initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  );
-
-   void updateMemAdmin( void );
 
    /*!
     * @brief Returns the currently number of data items which are not read yet
@@ -367,15 +392,6 @@ protected:
    }
 
    /*!
-    * @brief Sends the number DDR3-items back to the LM32.
-    *
-    * The LM32 will add this to the read-index once he has enter
-    * the handling routine of this buffer.
-    */
-   void sendWasRead( const uint wasRead );
-
-
-   /*!
     * @brief Returns the number of data items which has been read by
     *        the last iteration step, but not handled by LM32 yet.
     * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
@@ -387,25 +403,23 @@ protected:
       return ramRingSharedGetWasRead( m_poRingAdmin );
    }
 
+   /*!
+    * @brief Returns the currently read-index of the DDR3-RAM.
+    */
    uint getReadIndex( void )
    {
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       return m_poRingAdmin->indexes.start;
    }
 
+   /*!
+    * @brief Returns the currently read-index of the DDR3-RAM.
+    * @note In this layer for debug purposes only.
+    */
    uint getWriteIndex( void )
    {
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       return m_poRingAdmin->indexes.end;
-   }
-
-   /*!
-    * @brief Returns the number of buffer items which has not been read yet.
-    */
-   uint getUnreadData( void )
-   {
-      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
-      return ramRingSharedGetSize( m_poRingAdmin );
    }
 
    /*!
@@ -414,32 +428,19 @@ protected:
     */
    void clearBufferRequest( void )
    {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       updateMemAdmin();
-      sendWasRead( getUnreadData() );
-   }
-
-#if 0 //TODO
-   /*!
-    * @brief Returns the capacity of the ADDAC or MIL DAQ data-buffer
-    *        in minimum addressable payload units of the used RAM-type.
-    */
-   uint getRamCapacity( void ) override
-   {
-      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
-      return m_poRingAdmin->indexes.capacity;
+      sendWasRead( ramRingSharedGetSize( m_poRingAdmin ) );
    }
 
    /*!
-    * @brief Returns the offset in minimum addressable payload units of the
-    *        used RAM type.
+    * @brief Function performs a block reading divided in smaller sub-blocks to
+    *        reduce the maximum EB-cycle open time.
+    *
+    * That makes time gaps for making occasions for other EB-access devices
+    * e.g.: SAFTLIB
     */
-   uint getRamOffset( void ) override
-   {
-      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
-      return m_poRingAdmin->indexes.offset;
-   }
-#endif
-#endif
+   void readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData, std::size_t len );
 };
 
 } // namespace Scu

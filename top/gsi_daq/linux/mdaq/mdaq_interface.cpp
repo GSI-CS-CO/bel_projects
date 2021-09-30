@@ -76,14 +76,15 @@ void DaqInterface::init( void )
    }
 }
 
-#define BYTE_SWAP( target, origin, member ) \
-  target.member = gsi::convertByteEndian( origin.member )
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::clearBuffer( bool update )
 {
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+  #define BYTE_SWAP( target, origin, member ) \
+     target.member = gsi::convertByteEndian( origin.member )
+
    if( isMilDataInLm32Mem() )
    {
       m_oRing.m_tail = m_oRing.m_head = 0;
@@ -99,92 +100,10 @@ void DaqInterface::clearBuffer( bool update )
    }
 #endif
    ramRingSharedReset( &m_oBufferAdmin.memAdmin );
+#ifndef __NEW__
    if( update )
       writeIndexes();
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqInterface::checkIntegrity( void )
-{
-   if( m_oBufferAdmin.memAdmin.indexes.start >= m_oBufferAdmin.memAdmin.indexes.capacity )
-      throw Exception( "Read index of MIL-buffer is corrupt!" );
-
-   if( m_oBufferAdmin.memAdmin.indexes.end > m_oBufferAdmin.memAdmin.indexes.capacity )
-      throw Exception( "Write index of MIL-buffer is corrupt!" );
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqInterface::readBufferAdmin( void )
-{
-   SCU_ASSERT( !isMilDataInLm32Mem() );
-   MIL_DAQ_ADMIN_T temp;
-   readLM32( &temp, sizeof( temp ) );
-   BYTE_SWAP( m_oBufferAdmin, temp, magicNumber );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.offset );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.capacity );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.start );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.end );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.wasRead );
-   checkIntegrity();
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqInterface::updateMemAdmin( void )
-{
-   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
-   MIL_DAQ_ADMIN_T temp;
-
-   static_assert( offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.end ) ==
-                  offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.start ) +
-                  sizeof( temp.memAdmin.indexes.start ), "" );
-
-
-   static_assert( offsetof( MIL_DAQ_ADMIN_T, memAdmin.wasRead ) ==
-                  offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.end ) +
-                  sizeof( temp.memAdmin.indexes.end ), "" );
-
-   readLM32( &temp.memAdmin.indexes.start,
-             sizeof( temp.memAdmin.indexes.start )
-             + sizeof( temp.memAdmin.indexes.end )
-             + sizeof( temp.memAdmin.wasRead ),
-             offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.start ) );
-
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.start );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.indexes.end );
-   BYTE_SWAP( m_oBufferAdmin, temp, memAdmin.wasRead );
-   checkIntegrity();
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqInterface::sendWasRead( const RAM_RING_INDEX_T wasRead )
-{
-   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
-
-   ramRingSharedSetWasRead( &m_oBufferAdmin.memAdmin, wasRead );
-   RAM_RING_INDEX_T wasReadBe = gsi::convertByteEndian( m_oBufferAdmin.memAdmin.wasRead );
-   writeLM32( &wasReadBe, sizeof( wasReadBe ), offsetof( MIL_DAQ_ADMIN_T, memAdmin.wasRead ));
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqInterface::writeIndexes( void )
-{
-   SCU_ASSERT( m_oBufferAdmin.magicNumber == MIL_DAQ_MAGIC_NUMBER );
-   MIL_DAQ_ADMIN_T temp;
-
-   static_assert( offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.end ) ==
-                  offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.start ) +
-                  sizeof( temp.memAdmin.indexes.start ), "" );
-
-   BYTE_SWAP( temp, m_oBufferAdmin, memAdmin.indexes.start );
-   BYTE_SWAP( temp, m_oBufferAdmin, memAdmin.indexes.end );
-   writeLM32( &temp.memAdmin.indexes.start,
-              sizeof( temp.memAdmin.indexes.start ), //!! + sizeof( temp.indexes.end ),
-              offsetof( MIL_DAQ_ADMIN_T, memAdmin.indexes.start ) );
+#endif
 }
 
 #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE

@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=2.5
+DEFINES += VERSION=2.6
 
 #DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 

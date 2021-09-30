@@ -58,13 +58,11 @@ const std::string Scu::daq::deviceType2String( const DAQ_DEVICE_TYP_T typ )
 DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
    :m_poEbAccess( new DaqAccess( poEtherbone ) )
    ,m_ebAccessSelfCreated( true )
-   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
-   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
-#ifdef __NEW__
    ,m_poRingAdmin( nullptr )
    ,m_lastReadIndex( 0 )
    ,m_daqBaseOffset( 0 )
-#endif
+   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
+   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 {
 
 }
@@ -74,13 +72,11 @@ DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
 DaqBaseInterface::DaqBaseInterface( DaqAccess* poEbAccess )
    :m_poEbAccess( poEbAccess )
    ,m_ebAccessSelfCreated( false )
-   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
-   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
-#ifdef __NEW__
    ,m_poRingAdmin( nullptr )
    ,m_lastReadIndex( 0 )
    ,m_daqBaseOffset( 0 )
-#endif
+   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
+   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 {
 
 }
@@ -93,15 +89,6 @@ DaqBaseInterface::~DaqBaseInterface( void )
       delete m_poEbAccess;
 }
 
-/*! --------------------------------------------------------------------------
- */
-void DaqBaseInterface::onDataReadingPause( void )
-{
-   if( m_blockReadEbCycleGapTimeUs != 0 )
-     ::usleep( m_blockReadEbCycleGapTimeUs );
-}
-
-#ifdef __NEW__
 #define BYTE_SWAP( pTarget, origin, member ) \
   pTarget->member = gsi::convertByteEndian( origin.member )
 
@@ -174,6 +161,38 @@ void DaqBaseInterface::updateMemAdmin( void )
 
 /*! --------------------------------------------------------------------------
  */
+uint DaqBaseInterface::getNumberOfNewData( void )
+{
+   assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+
+   const uint lastWasToRead = getWasRead();
+
+   /*
+    * Synchronize the ring administrator data with the LM32 shared memory.
+    */
+   updateMemAdmin();
+
+   if( getWasRead() != 0 )
+   { /*
+      * Server respectively the LM32 has not synchronized the read index yet.
+      * Therefore no data are present as well.
+      */
+      return 0;
+   }
+
+   if( (m_lastReadIndex == getReadIndex()) && (lastWasToRead != 0) )
+   {
+      sendWasRead( lastWasToRead );
+      DEBUG_MESSAGE( "Second sendWasRead( " << lastWasToRead << " );" );
+      return 0;
+   }
+   m_lastReadIndex = getReadIndex();
+
+   return getCurrentNumberOfData();
+}
+
+/*! --------------------------------------------------------------------------
+ */
 void DaqBaseInterface::sendWasRead( const uint wasRead )
 {
    assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
@@ -183,6 +202,33 @@ void DaqBaseInterface::sendWasRead( const uint wasRead )
    writeLM32( &wasReadBe, sizeof( wasReadBe ), offsetof( RAM_RING_SHARED_INDEXES_T, wasRead ));
 }
 
-#endif
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::onDataReadingPause( void )
+{
+   if( m_blockReadEbCycleGapTimeUs != 0 )
+     ::usleep( m_blockReadEbCycleGapTimeUs );
+}
+
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
+                                    std::size_t len )
+{
+   const std::size_t maxLen = ( m_maxEbCycleDataLen == 0 )? len : m_maxEbCycleDataLen;
+   while( true )
+   {
+      const std::size_t partLen = std::min( len, maxLen );
+      /*
+       * The next function occupies the wishbone/etherbone bus!
+       */
+      readRam( pData, partLen );
+      len -= partLen;
+      if( len == 0 )
+         break;
+      pData += partLen;
+      onDataReadingPause();
+   }
+}
 
 //================================== EOF ======================================
