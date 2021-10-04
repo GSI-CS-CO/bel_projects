@@ -202,7 +202,7 @@ int main( const int argc, const char** ppArgv )
        *       yet whether it's a MIL or ADDAC/ACU object.
        */
       MyFeedbackChannel myFeedBackChannel( pMyFirstFoundFg->getDevice() );
-
+     //   MyFeedbackChannel myFeedBackChannel( 1 );
       /*
        * Creating a feedback device as container for the feedback channels.
        * Based on the constructors argument the device object will be a
@@ -225,6 +225,7 @@ int main( const int argc, const char** ppArgv )
        * an exception!
        */
       FgFeedbackDevice myFeedBackDevice( pMyFirstFoundFg->getSocket() );
+      //FgFeedbackDevice myFeedBackDevice( 39 );
 
       /*
        * Registering the function-generator feedback object in the feedback
@@ -264,7 +265,10 @@ int main( const int argc, const char** ppArgv )
        * This isn't really the best solution, but all other alternatives
        * will made this example too complex.
        */
-      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 10;
+      daq::USEC_T stopTime = daq::getSysMicrosecs() + daq::MICROSECS_PER_SEC * 1; //10
+
+
+      myScu.setMaxEbCycleDataLen(100);
 
       /*
        * Polling loop. This could be a own thread as well.

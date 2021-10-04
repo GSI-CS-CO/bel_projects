@@ -305,12 +305,12 @@ public:
     */
    int sendSyncronizeTimestamps( const uint32_t timeOffset = DEFAULT_SYNC_TIMEOFFSET,
                                  const uint32_t ecaTag = DEFAULT_ECA_SYNC_TAG ) override;
-
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    /*!
     * @brief Returns the maximum capacity of the ADDAC-DAQ data-buffer
     *        in minimum addressable payload units of the used RAM-type.
     */
-   uint getRamCapacity( void ) override
+   uint getRamCapacity( void )
    {
       return m_oSharedData.ramIndexes.ringIndexes.capacity;
    }
@@ -319,12 +319,13 @@ public:
     * @brief Returns the offset in minimum addressable payload units of the
     *        used RAM type.
     */
-   uint getRamOffset( void ) override
+   uint getRamOffset( void )
    {
       return m_oSharedData.ramIndexes.ringIndexes.offset;
    }
+#endif
 
-
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    /*!
     * @brief Returns the number of items which are currently in the
     *        data buffer.
@@ -339,17 +340,18 @@ public:
     *               becomes updated.
     */
    void clearBuffer( bool update = true ) override;
-
+#endif
 protected:
    void checkAddacSupport( void );
 
    virtual bool onCommandReadyPoll( USEC_T pollCount );
 
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    void readRam( RAM_DAQ_PAYLOAD_T* pData, const std::size_t len )
    {
       getEbAccess()->readRam( pData, len, m_oSharedData.ramIndexes.ringIndexes );
    }
-
+#endif
    void readLM32( eb_user_data_t pData,
                   const std::size_t len,
                   const std::size_t offset = 0,

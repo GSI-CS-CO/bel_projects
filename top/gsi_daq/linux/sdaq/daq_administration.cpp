@@ -421,6 +421,7 @@ static int ramReadPoll( const DDR3_T* pThis UNUSED, uint count )
 } // extern "C"
 #endif // ifdef CONFIG_SCU_USE_DDR3
 
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 /*! ---------------------------------------------------------------------------
  */
 inline bool DaqAdministration::dataBlocksPresent( void )
@@ -453,6 +454,7 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 
    return EB_OK;
 }
+
 
 /*! ---------------------------------------------------------------------------
  */
@@ -600,6 +602,115 @@ uint DaqAdministration::distributeData( void )
 
    return getCurrentRamSize( false );
 }
+
+
+#else // ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+uint DaqAdministration::distributeData( void )
+{
+
+   union PROBE_BUFFER_T
+   {
+      DAQ_DATA_T        buffer[c_hiresPmDataLen];
+      RAM_DAQ_PAYLOAD_T ramItems[sizeof(PROBE_BUFFER_T::buffer) /
+                                 sizeof(RAM_DAQ_PAYLOAD_T)];
+      DAQ_DESCRIPTOR_T  descriptor;
+   };
+
+   static_assert( sizeof(PROBE_BUFFER_T)
+                   == c_hiresPmDataLen * sizeof(DAQ_DATA_T),
+                  "sizeof(PROBE_BUFFER_T) has to be equal"
+                  "c_hiresPmDataLen * sizeof(DAQ_DATA_T) !" );
+   static_assert( sizeof(PROBE_BUFFER_T) % sizeof(RAM_DAQ_PAYLOAD_T) == 0,
+                  "sizeof(PROBE_BUFFER_T) has to be dividable by "
+                  "sizeof(RAM_DAQ_PAYLOAD_T) !" );
+
+   /*
+    * Getting the number of DDR3 memory items which has to be copied
+    * in the probe buffer.
+    */
+   const uint toRead = std::min( getNumberOfNewData(),
+                                 static_cast<uint>(sizeof( PROBE_BUFFER_T ) / sizeof(RAM_DAQ_PAYLOAD_T)) );
+
+   if( toRead == 0 )
+      return toRead;
+
+   if( (toRead % c_ramBlockShortLen) != 0 )
+   {
+      DEBUG_MESSAGE( toRead << " items in ADDAC buffer not dividable by " << c_ramBlockShortLen );
+      return toRead;
+   }
+
+   PROBE_BUFFER_T probe; //TODO Move this from stack to the heap!
+#ifdef CONFIG_DAQ_DEBUG
+   ::memset( &probe, 0x7f, sizeof( probe ) );
+#endif
+
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   USEC_T startTime = getSysMicrosecs();
+#endif
+
+   /*
+    * Copying via wishbone/etherbone the DDR3-RAM data in the middle buffer.
+    * This occupies the wishbone/etherbone bus!
+    */
+   readDaqData( &probe.ramItems[0], c_ramBlockShortLen );
+
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   m_elapsedTime = std::max( getSysMicrosecs() - startTime, m_elapsedTime );
+#endif
+   /*
+    * Rough check of the device descriptors integrity.
+    */
+   if( !::daqDescriptorVerifyMode( &probe.descriptor ) )
+   {
+      throw( DaqException( "Erroneous descriptor" ) );
+   }
+
+   std::size_t wordLen;
+
+   if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
+   { /*
+      * Long block has been detected, in this case the rest of the data
+      * has still to be read from the DAQ-Ram-buffer.
+      */
+   #ifdef CONFIG_DAQ_TIME_MEASUREMENT
+      startTime = getSysMicrosecs();
+   #endif
+      readDaqData( &probe.ramItems[c_ramBlockShortLen],
+                   c_ramBlockLongLen - c_ramBlockShortLen );
+   #ifdef CONFIG_DAQ_TIME_MEASUREMENT
+      m_elapsedTime = std::max( getSysMicrosecs() - startTime, m_elapsedTime );
+   #endif
+      wordLen = c_hiresPmDataLen - c_discriptorWordSize;
+   }
+   else
+   { /*
+      * Short block has been detected.
+      */
+      wordLen = c_contineousDataLen - c_discriptorWordSize;
+   }
+
+   sendWasRead( toRead );
+
+   DaqChannel* pChannel = getChannelByDescriptor( probe.descriptor );
+
+   if( pChannel != nullptr )
+   {
+      m_poCurrentDescriptor = &probe.descriptor;
+      pChannel->verifySequence();
+      pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
+      m_poCurrentDescriptor = nullptr;
+   }
+   else
+   {
+      readLastStatus();
+      //onBlockReceiveError();
+      onUnregistered( probe.descriptor );
+   }
+
+   return getCurrentNumberOfData();
+}
+#endif // ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
 /*! ---------------------------------------------------------------------------
  */

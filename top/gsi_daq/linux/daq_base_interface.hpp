@@ -278,6 +278,7 @@ public:
       return m_poRingAdmin->indexes.offset;
    }
 
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    /*!
     * @brief Returns the number of items which are currently in the
     *        data buffer.
@@ -292,7 +293,7 @@ public:
     *               becomes updated.
     */
    virtual void clearBuffer( bool update = true ) = 0;
-
+#endif
    /*!
     * @brief Callback function shall be invoked within a polling-loop and looks
     *        whether enough data are present for forwarding to the higher
@@ -325,6 +326,17 @@ public:
     * usleep() by the parameter m_blockReadEbCycleGapTimeUs,
     */
    virtual void onDataReadingPause( void );
+
+   /*!
+    * @brief Gives the LM32 the order to clear the data-buffer once he has enter
+    *        the handling routine of this buffer.
+    */
+   void clearBufferRequest( void )
+   {
+      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+      updateMemAdmin();
+      sendWasRead( ramRingSharedGetSize( m_poRingAdmin ) );
+   }
 
 private:
    void checkIntegrity( void );
@@ -420,17 +432,6 @@ protected:
    {
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
       return m_poRingAdmin->indexes.end;
-   }
-
-   /*!
-    * @brief Gives the LM32 the order to clear the data-buffer once he has enter
-    *        the handling routine of this buffer.
-    */
-   void clearBufferRequest( void )
-   {
-      assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
-      updateMemAdmin();
-      sendWasRead( ramRingSharedGetSize( m_poRingAdmin ) );
    }
 
    /*!

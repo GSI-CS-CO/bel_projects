@@ -947,14 +947,23 @@ void FgFeedbackAdministration::clearBuffer( const bool update )
   * Necessary for Doxygen - caller graph,
   * it's not a part of the resulting binary.
   */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+#else
  #ifdef CONFIG_MIL_FG
    MiLdaq::DaqAdministration::clearBuffer();
  #endif
    daq::DaqAdministration::clearBuffer();
 #endif
+#endif /* ifdef __DOXYGEN__ */
 
    for( const auto& poDaqAdmin: m_vPollList )
+   {
+   #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+      poDaqAdmin->clearBufferRequest();
+   #else
       poDaqAdmin->clearBuffer( update );
+   #endif
+   }
 }
 
 /*! ---------------------------------------------------------------------------
