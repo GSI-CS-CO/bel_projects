@@ -11,15 +11,15 @@ VCD_VIEWER="gtkwave"
 # Files
 I2C_PATH="../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master"
 VHD_PACK="../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd \
-../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
+          ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
 VHD_FILES="$VHD_PACK \
-../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
-$I2C_PATH/i2c_master_bit_ctrl.vhd \
-$I2C_PATH/i2c_master_byte_ctrl.vhd \
-$I2C_PATH/i2c_master_top.vhd \
-$I2C_PATH/wb_i2c_master.vhd \
-$I2C_PATH/xwb_i2c_master.vhd \
-i2c_testbench.vhd"
+           ../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
+           $I2C_PATH/i2c_master_bit_ctrl.vhd \
+           $I2C_PATH/i2c_master_byte_ctrl.vhd \
+           $I2C_PATH/i2c_master_top.vhd \
+           $I2C_PATH/wb_i2c_master.vhd \
+           $I2C_PATH/xwb_i2c_master.vhd \
+           i2c_testbench.vhd"
 
 echo "Removing old files ..."
 for item in $TB_NAME *.o *.vcd *.cf

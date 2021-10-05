@@ -1,4 +1,5 @@
 -- Synopsys
+-- Small testbench to take this i2c master into operation
 
 -- Libraries
 library ieee;
@@ -34,6 +35,7 @@ architecture rtl of i2c_testbench is
   -- I2c master registers
   constant c_reg_cr_core_enable_bit      : std_logic_vector(31 downto 0) := x"00000080";
   constant c_reg_cr_interrupt_enable_bit : std_logic_vector(31 downto 0) := x"00000040";
+  constant c_reg_all_zero                : std_logic_vector(31 downto 0) := x"00000000";
 
   -- Basic device signals
   signal s_clk   : std_logic := '0';
@@ -142,18 +144,18 @@ begin
   p_wishbone_stim : process(s_clk, s_rst_n) is
   begin
     if s_rst_n = '0' then
-      s_wb_slave_in <= wb_stim('0', '0', '0', x"00000000", x"00000000");
+      s_wb_slave_in <= wb_stim('0', '0', '0', c_reg_all_zero, c_reg_all_zero);
     elsif rising_edge(s_clk) then
       case s_sequence_cnt is
-        -- Input:                                CYC  STR  WE   ADR          DAT
+        -- Input:                                CYC  STR  WE   ADR             DAT
         -- Enable core
-        when x"0001" => s_wb_slave_in <= wb_stim('1', '1', '1', c_reg_ctr, c_reg_cr_core_enable_bit);
-        when x"0002" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr, c_reg_cr_core_enable_bit);
+        when x"0001" => s_wb_slave_in <= wb_stim('1', '1', '1', c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0002" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr,      c_reg_cr_core_enable_bit);
         -- Read back configuration
-        when x"0011" => s_wb_slave_in <= wb_stim('1', '1', '0', c_reg_ctr, x"00000000");
-        when x"0012" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr, x"00000000");
+        when x"0011" => s_wb_slave_in <= wb_stim('1', '1', '0', c_reg_ctr,      c_reg_all_zero);
+        when x"0012" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr,      c_reg_all_zero);
         -- Default
-        when others  => s_wb_slave_in <= wb_stim('0', '0', '0', x"00000000", x"00000000");
+        when others  => s_wb_slave_in <= wb_stim('0', '0', '0', c_reg_all_zero, c_reg_all_zero);
       end case;
     end if;
   end process;
