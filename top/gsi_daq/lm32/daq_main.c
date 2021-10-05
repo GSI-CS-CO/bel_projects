@@ -373,9 +373,26 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
       */
       return;
    }
+
 #ifndef _CONFIG_NO_DAQ_FSM
    daqBusDoFeedbackTask( &g_scuDaqAdmin.oDaqDevs );
 #endif
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   /*
+    * Removing old data which has been possibly read and evaluated by the
+    * Linux client
+    * NOTE: This has to be made in any cases here independently whether one or more
+    *       MIL FG are active or not.
+    *       Because only in this way it becomes possible to continuing the
+    *       handshake transfer at reading the possible remaining data from
+    *       the DDR3 memory by the Linux client.
+    * See daq_base_interface.cpp  function: DaqBaseInterface::getNumberOfNewData
+    * See daq_base_interface.cpp  function: DaqBaseInterface::sendWasRead
+    * See daq_administration.cpp  function: DaqAdministration::distributeData
+    */
+   ramRingSharedSynchonizeReadIndex( &GET_SHARED().ramIndexes.ringAdmin );
+#endif
+
    static DAQ_DEVICE_T* s_pDaqDevice = NULL;
 
    if( s_pDaqDevice == NULL )

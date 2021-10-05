@@ -819,8 +819,16 @@ void milDeviceHandler( register TASK_T* pThis )
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    /*
-    * Removing old data which has been possibly read by the Linux client.
-    * See m_daq_administration.cpp function: DaqAdministration::distributeDataNew
+    * Removing old data which has been possibly read and evaluated by the
+    * Linux client
+    * NOTE: This has to be made in any cases here independently whether one or more
+    *       MIL FG are active or not.
+    *       Because only in this way it becomes possible to continuing the
+    *       handshake transfer at reading the possible remaining data from
+    *       the DDR3 memory by the Linux client.
+    * See daq_base_interface.cpp  function: DaqBaseInterface::getNumberOfNewData
+    * See daq_base_interface.cpp  function: DaqBaseInterface::sendWasRead
+    * See mdaq_administration.cpp function: DaqAdministration::distributeDataNew
     */
    ramRingSharedSynchonizeReadIndex( &g_shared.mDaq.memAdmin );
 #endif

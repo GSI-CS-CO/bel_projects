@@ -237,9 +237,6 @@ bool ramDoesBlockFit( register RAM_SCU_T* pThis, const bool isShort )
 STATIC inline
 void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 {
-#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-   ramRingSharedSynchonizeReadIndex( &pThis->pSharedObj->ringAdmin );
-#endif   
    while( !ramDoesBlockFit( pThis, isShort ) )
    {
       DBPRINT1( "DBG: "ESC_FG_YELLOW"Removing block!\n"ESC_NORMAL );

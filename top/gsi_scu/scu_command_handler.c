@@ -117,12 +117,13 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          * becomes terminated.
          */
          mprintf( ESC_ERROR "Value %d out of range!\n" ESC_NORMAL, value );
-      #ifdef CONFIG_USE_RESCAN_FLAG
+      #ifdef CONFIG_USE_HISTORY
+         hist_addx( HISTORY_XYZ_MODULE, "ERROR: Value out of range!", value );
+      #endif
          /*
           * signal done to saftlib
           */
-         g_shared.busy = 0;
-      #endif
+         g_shared.oSaftLib.oFg.busy = 0;
          return;
       }
       default: break;
