@@ -54,19 +54,15 @@ entity pexarria10 is
     nres_i     : in std_logic;
 
     -----------------------------------------------------------------------
-    -- LVTTL IOs
+    -- USBC LVTTL IOs, no USB functionality these are physical interface only
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(19 downto 0);
-    lemo_n_i : in    std_logic_vector(19 downto 0);
-    lemo_p_o : out   std_logic_vector(19 downto 0);
-    lemo_n_o : out   std_logic_vector(19 downto 0);
-
+    
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
-    wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o                  : out std_logic_vector(1 downto 0) := (others => '1');
+    --wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    --rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- usb
@@ -81,9 +77,9 @@ entity pexarria10 is
     usb_uclkin_i : in    std_logic;
 
     -----------------------------------------------------------------------
-    -- CPLD
+    -- CPLD (F2F)
     -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(9 downto 0);
+    cpld_io : inout std_logic_vector(7 downto 0);
 
     -----------------------------------------------------------------------
     -- SFP
@@ -95,19 +91,21 @@ entity pexarria10 is
     sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic;
+    sfp_mod2_io      : inout std_logic
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - not used here)
     -----------------------------------------------------------------------
-    sfp_aux_tx_disable_o_nc : out   std_logic := '0';
-    sfp_aux_tx_fault_i_nc   : in    std_logic;
-    sfp_aux_los_i_nc        : in    std_logic;
-    sfp_aux_txp_o_nc        : out   std_logic;
-    sfp_aux_rxp_i_nc        : in    std_logic;
-    sfp_aux_mod0_i_nc       : in    std_logic;
-    sfp_aux_mod1_io_nc      : inout std_logic;
-    sfp_aux_mod2_io_nc      : inout std_logic);
+    -- sfp_aux_tx_disable_o_nc : out   std_logic := '0';
+    -- sfp_aux_tx_fault_i_nc   : in    std_logic;
+    -- sfp_aux_los_i_nc        : in    std_logic;
+    -- sfp_aux_txp_o_nc        : out   std_logic;
+    -- sfp_aux_rxp_i_nc        : in    std_logic;
+    -- sfp_aux_mod0_i_nc       : in    std_logic;
+    -- sfp_aux_mod1_io_nc      : inout std_logic;
+    -- sfp_aux_mod2_io_nc      : inout std_logic
+
+    );
 
 end pexarria10;
 
@@ -144,8 +142,6 @@ architecture rtl of pexarria10 is
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_8  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_9  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("LED1_BASE_R",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED2_BASE_B",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_BASE_G",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -258,10 +254,8 @@ begin
   -- LEDs
   wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
   wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
-  
-  wr_aux_leds_or_node_leds_o(3 downto 0) <= not s_gpio_o(17 downto 14);
+ -- wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
+ -- wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
   
   rt_leds_o     <= not s_gpio_o(13 downto 10);
 
@@ -274,7 +268,7 @@ begin
   end generate;
 
   -- CPLD
-  s_gpio_i(9 downto 0) <= cpld_io(9 downto 0);
+  s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
   cpld_con : for i in 0 to 9 generate
     cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
   end generate;
