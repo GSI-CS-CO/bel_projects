@@ -505,7 +505,7 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
 }
 
 uint32_t* origin(uint32_t* node, uint32_t* thrData) {
-  mprintf("#%02u: Hello, Origin function check, base shared 0x%08x\n", cpuId, PEER_ADR_MSK);
+  DBPRINT3("#%02u: Hello, Origin function check, base shared 0x%08x\n", cpuId, PEER_ADR_MSK);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t newOrigin = *(uint32_t*)&node[ORIGIN_DEST >> 2];
   uint32_t targetCpu = *(uint32_t*)&node[ORIGIN_CPU >> 2];
@@ -521,7 +521,7 @@ uint32_t* origin(uint32_t* node, uint32_t* thrData) {
   uint32_t* targetOrigin = (uint32_t*)&targetBaseP[( SHCTL_THR_STA + targetThr * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2]; 
   *targetOrigin = newOrigin;
   
-  mprintf("#%02u: Hello, Origin node, target 0x%08x, cpu %u, thr %u, new origin 0x%08x, target origin 0x%08x\n", cpuId, targetOrigin , targetCpu, targetThr, newOrigin, *targetOrigin);
+  DBPRINT3("#%02u: Hello, Origin node, target 0x%08x, cpu %u, thr %u, new origin 0x%08x, target origin 0x%08x\n", cpuId, targetOrigin , targetCpu, targetThr, newOrigin, *targetOrigin);
   
   return ret;
 }
@@ -538,7 +538,7 @@ uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
   uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + thr * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
   //FIXME Loop this for all designated threads
   *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
-  mprintf("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
+  DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
   *start |= (1 << thr);  // set start bit
   
   return ret;

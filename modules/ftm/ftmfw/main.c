@@ -202,7 +202,7 @@ void main(void) {
 
   if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
 
-  mprintf("#%02u: Base shared ram 0x%08x\n", cpuId, (uint32_t*)&_startshared);
+  DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, (uint32_t*)&_startshared);
 
    while (1) {
 
