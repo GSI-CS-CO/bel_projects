@@ -273,6 +273,7 @@ int main( const int argc, const char** ppArgv )
       /*
        * Polling loop. This could be a own thread as well.
        */
+      //int x = 0;
       do
       {  /*
           * If data form one or more registered function generators present,
@@ -290,8 +291,10 @@ int main( const int argc, const char** ppArgv )
           * the DDR3-buffer which shall be read by the next call of distributeData().
           */
          cout << "Remaining data sets in DDR3 RAM: " << remainingData << endl;
+         //x++;
       }
       while( daq::getSysMicrosecs() < stopTime );
+      //while( x < 4 );
 
       /*
        * In this example the connection was made outside of the

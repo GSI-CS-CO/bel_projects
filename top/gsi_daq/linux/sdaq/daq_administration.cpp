@@ -634,13 +634,18 @@ uint DaqAdministration::distributeData( void )
    if( toRead == 0 )
       return toRead;
 
+   static_assert( (c_ramBlockLongLen % c_ramBlockShortLen) == 0, "" );
+
    if( (toRead % c_ramBlockShortLen) != 0 )
    {
       DEBUG_MESSAGE( toRead << " items in ADDAC buffer not dividable by " << c_ramBlockShortLen );
+      /*!
+       * @todo Trow a exception here?
+       */
       return toRead;
    }
 
-   PROBE_BUFFER_T probe; //TODO Move this from stack to the heap!
+   PROBE_BUFFER_T probe; //!@TODO Move this from stack to the heap!
 #ifdef CONFIG_DAQ_DEBUG
    ::memset( &probe, 0x7f, sizeof( probe ) );
 #endif
@@ -681,16 +686,17 @@ uint DaqAdministration::distributeData( void )
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
       m_elapsedTime = std::max( getSysMicrosecs() - startTime, m_elapsedTime );
    #endif
+      sendWasRead( c_ramBlockLongLen );
       wordLen = c_hiresPmDataLen - c_discriptorWordSize;
    }
    else
    { /*
       * Short block has been detected.
       */
+      sendWasRead( c_ramBlockShortLen );
       wordLen = c_contineousDataLen - c_discriptorWordSize;
    }
 
-   sendWasRead( toRead );
 
    DaqChannel* pChannel = getChannelByDescriptor( probe.descriptor );
 
