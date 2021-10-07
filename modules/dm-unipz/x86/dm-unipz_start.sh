@@ -42,6 +42,7 @@ echo dm-unipz - start: start  monitoring
 #
 # some data masters
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000446 0xc0a880bc (tsl015, user network) 
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000484 0xc0a88111 (tsl020, integration network) 
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7 (tsl017, production network)
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, 'Hanno network')
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
@@ -56,8 +57,8 @@ if  [ $(hostname) == $PROSCU ]; then   # production network
     echo -e dm-unipz - start: configuring for PRODUCTION network on $(hostname)
     dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
 else                                  # test or development
-    echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a8804f
+    echo -e dm-unipz - start: configuring for TEST, DEV or INT network on $(hostname)
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000484 0xc0a88111
 fi
 
 echo -e dm-unipz - start: make firmware operational
