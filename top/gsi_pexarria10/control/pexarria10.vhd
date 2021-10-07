@@ -42,15 +42,22 @@ entity pexarria10 is
     wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
 
     -----------------------------------------------------------------------
+    -- SPI Flash User Mode
+    -----------------------------------------------------------------------
+    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    UM_nCSO           : out   std_logic := 'Z';
+    UM_DCLK           : out   std_logic := 'Z';
+
+    -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data_io : inout std_logic;
-    rom_aux_data_io_nc : inout std_logic;
+    OneWire_CB : inout std_logic;
+    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in std_logic;
+    nuser_pb_i   : in std_logic;  --User Button
     nres_i     : in std_logic;
 
     -----------------------------------------------------------------------
@@ -63,6 +70,21 @@ entity pexarria10 is
     wr_leds_o                  : out std_logic_vector(1 downto 0) := (others => '1');
     --wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
     --rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+
+   -----------------------------------------------------------------------
+    -- Pseudo-SRAM (4x 256Mbit)
+    -----------------------------------------------------------------------
+    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic := 'Z';
+    psram_cre          : out   std_logic := 'Z';
+    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen          : out   std_logic := 'Z';
+    psram_wen          : out   std_logic := 'Z';
+    psram_ubn          : out   std_logic := 'Z';
+    psram_lbn          : out   std_logic := 'Z';
+    psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
     -- usb
@@ -177,6 +199,7 @@ architecture rtl of pexarria10 is
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
+  constant c_psram_bits    : natural := 24;
 
 begin
 
@@ -185,13 +208,14 @@ begin
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25, -- !!! TODO: Check this
+      g_psram_bits        => c_psram_bits,
       g_gpio_out          => 8,
       g_gpio_inout        => 10,
       g_lvds_inout        => 20,
       g_en_pcie           => true,
       g_en_tlu            => false,
       g_en_usb            => true,
-      g_delay_diagnostics => true,
+      g_en_psram         => true,
       g_io_table          => io_mapping_table,
       g_a10_use_sys_fpll  => false,
       g_a10_use_ref_fpll  => false,
@@ -205,7 +229,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
-      wr_onewire_io           => rom_data_io,
+      wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
@@ -243,34 +267,45 @@ begin
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o);
+      pcie_tx_o               => pcie_tx_o
+      --PSRAM TODO: Multi Chip
+      ps_clk                 => psram_clk,
+      ps_addr                => psram_a,
+      ps_data                => psram_dq,
+      ps_seln(0)             => psram_ubn,
+      ps_seln(1)             => psram_lbn,
+      ps_cen                 => psram_cen (0),
+      ps_oen                 => psram_oen,
+      ps_wen                 => psram_wen,
+      ps_cre                 => psram_cre,
+      ps_advn                => psram_advn,
+      ps_wait                => psram_wait);
 
   -- SFP
   sfp_tx_disable_o        <= '0';
-  sfp_aux_tx_disable_o_nc <= 'Z';
-  sfp_aux_mod1_io_nc      <= 'Z';
-  sfp_aux_mod2_io_nc      <= 'Z';
-
+ 
   -- LEDs
   wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
   wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
  -- wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
  -- wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
   
-  rt_leds_o     <= not s_gpio_o(13 downto 10);
+  -- rt_leds_o     <= not s_gpio_o(13 downto 10);
 
   -- LEMOs
-  lemos : for i in 0 to 19 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
-  end generate;
+ -- lemos : for i in 0 to 19 generate
+ --   s_lvds_p_i(i)      <= lemo_p_i(i);
+ --   s_lvds_n_i(i)      <= lemo_n_i(i);
+ --   lemo_p_o(i)        <= s_lvds_p_o(i);
+ --   lemo_n_o(i)        <= s_lvds_n_o(i);
+ -- end generate;
 
   -- CPLD
   s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
   cpld_con : for i in 0 to 9 generate
     cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
   end generate;
+
+  OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
