@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Sept-2021
+ *  version : 08-Oct-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000801                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000804                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -142,7 +142,7 @@ volatile uint32_t *pSharedFlexOffset;   // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
 volatile uint32_t *pSharedTkTimeout;    // pointer to a "user defined" u32 register; here: timeout value for TK (via UNIPZ)
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 
 WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
@@ -574,7 +574,7 @@ void init()
 
 
 // determine address and clear shared mem
-void initSharedMem(uint32_t *reqState)
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -583,7 +583,7 @@ void initSharedMem(uint32_t *reqState)
   sdb_location found_sdb[c_Max_Rams];
   sdb_location found_clu;
 
-  /* chk: rework */
+  // chk: cpuRamExternal as parameter 
   
   // get pointer to shared memory
   pShared             = (uint32_t *)_startshared;
@@ -642,8 +642,13 @@ void initSharedMem(uint32_t *reqState)
   } // while pSharedTemp
   DBPRINT2("dm-unipz: fw specific shared end   0x%08x\n", pSharedTemp);
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
-  
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("dm-unipz: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
+
   // set initial values;
   *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
@@ -711,16 +716,16 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
-  if (readPZUData.bits.Req_not_ok == true) {                                                                                                 // check for 'req not ok'
+  if (readPZUData.bits.Req_not_ok) {                                                                                                         // check for 'req not ok'
 
     writePZUData.uword               = 0x0;
-    writePZUData.bits.Req_not_ok_Ack = true;
+    writePZUData.bits.Req_not_ok_Ack = 0x1;
     if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;           // request to clear not_ok flag
 
     while (getSysTime() < timeoutT) {                                                                                                        // check for timeout
       if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; 
-      if (readPZUData.bits.Req_not_ok == false) {                                                                                            // remove acknowledgement for 'req not ok'
-        writePZUData.bits.Req_not_ok_Ack = false;                     
+      if (readPZUData.bits.Req_not_ok == 0x0) {                                                                                              // remove acknowledgement for 'req not ok'
+        writePZUData.bits.Req_not_ok_Ack = 0x0;                     
         writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword); 
         return DMUNIPZ_STATUS_REQNOTOK;
       } // if UNILAC cleared 'req not ok' flag
@@ -749,7 +754,7 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
 
   // send request to modulbus I/O (UNIPZ)
   writePZUData.uword               = 0x0;
-  writePZUData.bits.TK_Request     = true;
+  writePZUData.bits.TK_Request     = 0x1;
   writePZUData.bits.SIS_Acc_Select = virtAcc;
   writePZUData.bits.ReqNoBeam      = dryRunFlag;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
@@ -757,8 +762,8 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
   // check for acknowledgement, 'request not ok' or timeout
   while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; // read from modulbus I/O (UNIPZ)
-    if (readPZUData.bits.TK_Req_Ack == true) return COMMON_STATUS_OK;                                                                 // check for acknowledgement
-    if (readPZUData.bits.Req_not_ok == true) return DMUNIPZ_STATUS_REQTKFAILED;                                                       // check for 'request not ok'
+    if (readPZUData.bits.TK_Req_Ack == 0x1) return COMMON_STATUS_OK;                                                                  // check for acknowledgement
+    if (readPZUData.bits.Req_not_ok == 0x1) return DMUNIPZ_STATUS_REQTKFAILED;                                                        // check for 'request not ok'
   } // while not timed out
 
   return DMUNIPZ_STATUS_REQTKTIMEOUT;
@@ -771,7 +776,7 @@ uint32_t releaseTK()
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.TK_Request     = false;
+  writePZUData.bits.TK_Request     = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   
   return COMMON_STATUS_OK;
@@ -779,14 +784,15 @@ uint32_t releaseTK()
 
 
 // request beam
-uint32_t requestBeam(uint32_t msTimeout)
+uint32_t requestBeam(uint32_t msTimeout, uint32_t dryRunFlag)
 {
   int16_t          status;       // status MIL device bus operation
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
   uint64_t         timeoutT;     // when to time out
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_Request  = true;
+  writePZUData.bits.SIS_Request  = 0x1;
+  writePZUData.bits.ReqNoBeam    = dryRunFlag; 
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   
   // query UNIPZ for 'req Ack'
@@ -795,8 +801,8 @@ uint32_t requestBeam(uint32_t msTimeout)
 
   while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
-    if (readPZUData.bits.SIS_Req_Ack == true)                                                      return COMMON_STATUS_OK;           
-    if (readPZUData.bits.Req_not_ok == true)                                                       return DMUNIPZ_STATUS_REQBEAMFAILED; 
+    if (readPZUData.bits.SIS_Req_Ack == 0x1)                                                       return COMMON_STATUS_OK;           
+    if (readPZUData.bits.Req_not_ok == 0x1)                                                        return DMUNIPZ_STATUS_REQBEAMFAILED; 
   } // while not timed out
 
   return DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
@@ -811,15 +817,15 @@ uint32_t releaseBeam(uint32_t msTimeout)
   uint64_t         timeoutT;     // when to time out
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_Request  = false;
-  writePZUData.bits.ReqNoBeam    = false;
+  writePZUData.bits.SIS_Request  = 0x0;
+  writePZUData.bits.ReqNoBeam    = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
 
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
-    if (readPZUData.bits.SIS_Req_Ack == false)                                                     return COMMON_STATUS_OK;           
+    if (readPZUData.bits.SIS_Req_Ack == 0x0)                                                       return COMMON_STATUS_OK;           
   } // while not timed out
   
   return DMUNIPZ_STATUS_RELBEAMFAILED;
@@ -832,7 +838,7 @@ uint32_t prepareBeam()
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_PrepReq = true;
+  writePZUData.bits.SIS_PrepReq = 0x1;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   else                                                                                        return COMMON_STATUS_OK;
 } // prepareBeam
@@ -844,7 +850,7 @@ uint32_t unprepareBeam()
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_PrepReq  = false;
+  writePZUData.bits.SIS_PrepReq  = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   else                                                                                        return COMMON_STATUS_OK;
 } // unprepareBeam
@@ -1189,7 +1195,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (flagDelayed && flagBooster) return DMUNIPZ_STATUS_DELAYEDEVENT;          // this is a bit rude, but the likelyhood of messing up things can not be accepted
 
       //---- copy tag specific data from ECA
-      ecaVirtAcc             = ecaEvtId & 0xf;
+      /* ecaVirtAcc             = ecaEvtId & 0xf; chk not used, delete? */
+      ecaFlagDryRun          = (ecaEvtId & 0x10) != 0;
       dmThrs[REQBEAM].dynpar = (ecaParam >> 32) & 0xffffffff;
       dmThrs[REQBEAM].cpuIdx = (ecaParam >>  8) & 0xff;
       dmThrs[REQBEAM].thrIdx = ecaParam & 0xff;
@@ -1224,27 +1231,27 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
 
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
-      if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
+      if ((status = requestBeam(uniTimeout, ecaFlagDryRun)) == COMMON_STATUS_OK) { // request beam from UNIPZ
         *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
         if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
           ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
           switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
             {                                                                      
-              case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
-                if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
-                  flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
+              case DMUNIPZ_ECADO_READY2SIS :                                       // no error:  received EVT_READY_TO_SIS via TLU -> ECA
+                if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {           // check timestamp from TLU: only accept reasonably recent timestamp
+                  flagMilEvtValid = 1;                                             // everything ok: set flag for successful event reception
                   status       = COMMON_STATUS_OK;
                 } // if matchwindow
-                else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                          // error: timestamp too old
-                nR2sTransfer++;                                                      // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
-                nR2sTotal++;                                                         // diagnostics: increment total # of EVT_READY_TO_SIS
+                else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                        // error: timestamp too old
+                nR2sTransfer++;                                                    // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+                nR2sTotal++;                                                       // diagnostics: increment total # of EVT_READY_TO_SIS
                 break;
-              case DMUNIPZ_ECADO_TIMEOUT :                                           // error: timeout, no timestamp via TLU -> ECA
+              case DMUNIPZ_ECADO_TIMEOUT :                                         // error: timeout, no timestamp via TLU -> ECA
                 status = DMUNIPZ_STATUS_NOTIMESTAMP;                                 
                 break;
-              default :                                                              // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
+              default :                                                            // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
                 status = DMUNIPZ_STATUS_BADSCHEDULEB;
-                flagNoCmd = 1;                                                       // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
+                flagNoCmd = 1;                                                     // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
             } // switch (ecaInjAction)
         } // if wait4MILEvt
         else {                                                                     // error: timeout, EVT_READY_TO_SIS was not received in MIL FIFO                                          
@@ -1308,11 +1315,12 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
 
       //---- copy tag specific data from ECA
-      ecaVirtAcc    = ecaEvtId & 0xf;
+      /* ecaVirtAcc    = ecaEvtId & 0xf;  chk not used, delete? */
           
       //---- clear data, release TK, update status
       dmClearCmd(REQTK);                                                           // with TK release, command data becomes invalid and must not be used any more
       releaseTK();                                                                 // release TK
+      checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELTK);            // update status of transfer
 
       //---- diagnostics
@@ -1370,7 +1378,8 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
-  uint32_t cmd;
+  uint32_t cmd;                                 // cmd received via DP RAM
+  uint32_t sharedSize;                          // size of shared memory
   /*uint32_t flagRecover;                         // flag indicating auto-recovery from error state; */
 
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
@@ -1417,8 +1426,8 @@ int main(void) {
   statusTransfer = 0;
 
   init();                                                                   // initialize stuff for lm32
-  initSharedMem(&reqState);                                                 // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
+  initSharedMem(&reqState, &sharedSize);                                    // initialize shared memory THIS MUST BE CALLED FIRST
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                        // clear common diagnostic data
   
   while (1) {
