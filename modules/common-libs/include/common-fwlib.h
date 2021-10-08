@@ -42,9 +42,11 @@ void fwlib_milPulseLemo(uint32_t nLemo                // # of lemo output (start
                         );
 
 // initialize fwlib stuff and WB slave addresses
+// IMPORTANT: *cpuRamExternal must be set prior calling this routine; typically this is done in routine initShared() of the main program
 void fwlib_init(uint32_t *startShared,                // start of shared section (external view)
                 uint32_t *cpuRamExternal,             // lm32 RAM (external view)
                 uint32_t sharedOffs,                  // offset for shared section
+                uint32_t sharedSize,                  // total size of DP RAM 
                 char*    name,                        // firmware name
                 uint32_t fwVersion                    // firmware version
                 );

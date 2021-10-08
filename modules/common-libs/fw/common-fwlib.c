@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-September-2021
+ *  version : 08-Oct-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -467,22 +467,19 @@ void fwlib_publishSharedSize(uint32_t size)
 } // fwlib_publishSharedInfo
 
 
-void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
+void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, uint32_t sharedSize, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
+  uint32_t commonSharedSize;
   int      i;
-
-  // basic info to wr console
-  DBPRINT1("\n");
-  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
-  DBPRINT1("\n");
   
   // set pointer to shared memory
   pShared                 = startShared;
 
   // set pointer ('external view') for EB return values
-  cpuRamExternalData4EB   = (uint32_t *)(cpuRamExternal + ((COMMON_SHARED_DATA_4EB + sharedOffs) >> 2));
+  if (cpuRamExternal) cpuRamExternalData4EB   = (uint32_t *)(cpuRamExternal + ((COMMON_SHARED_DATA_4EB + sharedOffs) >> 2));
+  else                DBPRINT1("common-fwlib: ERROR cpuRamExternal undefined\n");
 
   // get address to data
   pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
@@ -514,8 +511,16 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     i++;
   } // while pSharedTemp
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
-  
+  fwlib_publishSharedSize(sharedSize);                              // set shared size total
+  commonSharedSize   = (uint32_t)(pSharedTemp - pShared) << 2;     // calc shared size common
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("common-fwlib: fwlib_init, shared size [bytes], common part %d, total %d\n", commonSharedSize, sharedSize);
+  DBPRINT1("common-fwlib: cpuRamExternal 0x%08x,  cpuRamExternalData4EB 0x%08x\n", cpuRamExternal, cpuRamExternalData4EB);
+  DBPRINT1("\n");
+
   // set initial values;
   ebmClearSharedMem();
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
