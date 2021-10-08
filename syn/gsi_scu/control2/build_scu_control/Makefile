@@ -166,7 +166,8 @@ DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 ifdef ADDAC_DAQ
    #SHARED_SIZE = 81968
    ifdef MIL_DAQ_USE_DDR3
-      SHARED_SIZE = 24840
+      SHARED_SIZE = 24832
+     # SHARED_SIZE = 24840
      # SHARED_SIZE = 24836
    else
      SHARED_SIZE = 65780
