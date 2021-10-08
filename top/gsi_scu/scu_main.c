@@ -596,8 +596,8 @@ void main( void )
    //print_regs();
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
  #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-   mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ramIndexes.ringAdmin.indexes.offset );
-   mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringAdmin.indexes.capacity );
+   mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ringAdmin.indexes.offset );
+   mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ringAdmin.indexes.capacity );
  #else
    mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.offset );
    mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );

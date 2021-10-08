@@ -205,7 +205,11 @@ typedef struct
     *       memory. \n
     *       Therefore its a pointer in this object.
     */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   RAM_RING_SHARED_INDEXES_T* volatile pSharedObj;
+#else
    RAM_RING_SHARED_OBJECT_T* volatile pSharedObj;
+#endif
 } RAM_SCU_T;
 
 /*! --------------------------------------------------------------------------
@@ -251,11 +255,19 @@ uint16_t ramGetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const unsigned int i )
  * @retval 0 Initializing was successful
  * @retval <0 Error
  */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_INDEXES_T* pSharedObj
+           #ifdef __linux__
+         //   , EB_HANDLE_T* pEbHandle
+           #endif
+           );
+#else
 int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
            #ifdef __linux__
          //   , EB_HANDLE_T* pEbHandle
            #endif
            );
+#endif
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 

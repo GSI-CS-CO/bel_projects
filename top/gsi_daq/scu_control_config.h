@@ -24,7 +24,7 @@
  */
 #define CONFIG_MILDAQ_BACKWARD_COMPATIBLE
 
-//#define _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+#define _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
 #ifdef __cplusplus
 #if 1

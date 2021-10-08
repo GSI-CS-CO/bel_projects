@@ -136,7 +136,9 @@ typedef enum
 typedef enum
 {
    DAQ_OP_IDLE                    = 0,
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    DAQ_OP_LOCK                    = DAQ_OP_OFFSET +  1,
+#endif
    DAQ_OP_GET_ERROR_STATUS        = DAQ_OP_OFFSET +  2,
    DAQ_OP_RESET                   = DAQ_OP_OFFSET +  3,
    DAQ_OP_GET_MACRO_VERSION       = DAQ_OP_OFFSET +  4,
@@ -253,8 +255,11 @@ typedef struct PACKED_SIZE
     * @brief Access parameters for the SCU RAM,
     *        for now the DDR3 RAM.
     */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   RAM_RING_SHARED_INDEXES_T ringAdmin;
+#else
    RAM_RING_SHARED_OBJECT_T  ramIndexes;
-
+#endif
    /*!
     * @brief Operation parameter to invoke a
     *        LM32 function form the Linux host.
@@ -262,6 +267,17 @@ typedef struct PACKED_SIZE
    DAQ_OPERATION_T           operation;
 } DAQ_SHARED_IO_T;
 #ifndef __DOXYGEN__
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
+                                           + sizeof(RAM_RING_SHARED_INDEXES_T)
+                                           + sizeof(DAQ_OPERATION_T) ));
+STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, magicNumber ) == 0 );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, magicNumber ) <
+               offsetof( DAQ_SHARED_IO_T, ringAdmin ) );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ringAdmin ) <
+               offsetof( DAQ_SHARED_IO_T, operation ) );
+#else
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
                                            + sizeof(RAM_RING_SHARED_OBJECT_T)
                                            + sizeof(DAQ_OPERATION_T) ));
@@ -272,11 +288,24 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, magicNumber ) <
 STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
                offsetof( DAQ_SHARED_IO_T, operation ) );
 #endif
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializer of DAQ shared memory.
  * @see DAQ_SHARED_IO_T
  */
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+#define DAQ_SHARAD_MEM_INITIALIZER                                           \
+{                                                                            \
+   .magicNumber = DAQ_MAGIC_NUMBER,                                          \
+   .ringAdmin   = RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER,                   \
+   .operation =                                                              \
+   {                                                                         \
+      .code    = DAQ_OP_IDLE,                                                \
+      .retCode = DAQ_RET_OK                                                  \
+   }                                                                         \
+}
+#else
 #define DAQ_SHARAD_MEM_INITIALIZER                                           \
 {                                                                            \
    .magicNumber = DAQ_MAGIC_NUMBER,                                          \
@@ -287,6 +316,7 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
       .retCode = DAQ_RET_OK                                                  \
    }                                                                         \
 }
+#endif
 
 #if defined( CONFIG_SCU_DAQ_INTEGRATION ) || !defined( CONFIG_DAQ_SINGLE_APP )
 

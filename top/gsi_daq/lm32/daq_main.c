@@ -390,7 +390,7 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
     * See daq_base_interface.cpp  function: DaqBaseInterface::sendWasRead
     * See daq_administration.cpp  function: DaqAdministration::distributeData
     */
-   ramRingSharedSynchonizeReadIndex( &GET_SHARED().ramIndexes.ringAdmin );
+   ramRingSharedSynchonizeReadIndex( &GET_SHARED().ringAdmin );
 #endif
 
    static DAQ_DEVICE_T* s_pDaqDevice = NULL;

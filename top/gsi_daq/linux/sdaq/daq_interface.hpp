@@ -206,7 +206,9 @@ public:
 
    void sendReset( void )
    {
+    #ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
       sendUnlockRamAccess();
+    #endif
       sendCommand( DAQ_OP_RESET );
    }
 
@@ -389,12 +391,12 @@ protected:
       m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
       m_oSharedData.operation.ioData.location.channel      = channel;
    }
-
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    void sendLockRamAccess( void )
    {
       sendCommand( DAQ_OP_LOCK );
    }
-
+#endif
    void sendUnlockRamAccess( void );
 
    void writeRamIndexesAndUnlock( void );

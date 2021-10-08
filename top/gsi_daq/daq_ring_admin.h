@@ -122,6 +122,7 @@ namespace daq
  }
 #endif
 
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
  * @brief Data type for data residing in the shared memory for the
@@ -130,8 +131,7 @@ namespace daq
  *       They must be visible in the LM32 and in the Linux side.
  */
 typedef struct PACKED_SIZE
-{
-   /*!
+{  /*!
     * @brief Flag becomes 1 by the server if he has modified
     *        the ring indexes.
     *
@@ -140,29 +140,16 @@ typedef struct PACKED_SIZE
     */
    uint32_t           serverHasWritten;
    uint32_t           ramAccessLock;
-#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-   RAM_RING_SHARED_INDEXES_T ringAdmin;
-#else
    RAM_RING_INDEXES_T ringIndexes;
-#endif
-   
 } RAM_RING_SHARED_OBJECT_T;
 #ifndef __DOXYGEN__
- #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
-               sizeof(RAM_RING_SHARED_INDEXES_T) +
-               2 * sizeof(uint32_t) );
-STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
-               offsetof( RAM_RING_SHARED_OBJECT_T, ringAdmin ));
-
- #else
 STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
                sizeof(RAM_RING_INDEXES_T) +
                2 * sizeof(uint32_t) );
 STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
                offsetof( RAM_RING_SHARED_OBJECT_T, ringIndexes ));
- #endif
 #endif
+#endif // ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
@@ -170,13 +157,13 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
  *        server and Linux client.
  */
 #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+
 #define RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER                               \
 {                                                                             \
-   .serverHasWritten  = false,                                                \
-   .ramAccessLock     = false,                                                \
-   .ringAdmin.indexes = RAM_RING_INDEXES_SDAQ_INITIALIZER,                    \
-   .ringAdmin.wasRead = 0                                                     \
+   .indexes = RAM_RING_INDEXES_SDAQ_INITIALIZER,                              \
+   .wasRead = 0                                                               \
 }
+
 #else
 #define RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER                               \
 {                                                                             \

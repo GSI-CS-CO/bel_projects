@@ -54,7 +54,9 @@ const std::string command2String( DAQ_OPERATION_CODE_T op )
    switch( op )
    {
       __OP_CODE_CASE_ITEM( DAQ_OP_IDLE );
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
       __OP_CODE_CASE_ITEM( DAQ_OP_LOCK );
+#endif
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_ERROR_STATUS );
       __OP_CODE_CASE_ITEM( DAQ_OP_RESET );
       __OP_CODE_CASE_ITEM( DAQ_OP_GET_MACRO_VERSION );
@@ -153,7 +155,9 @@ void DaqInterface::init( void )
       return;
 
    readSharedTotal();
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    sendUnlockRamAccess();
+#endif
    sendReset();
    readSlotStatus();
 }
@@ -201,16 +205,11 @@ void DaqInterface::readSharedTotal( void )
 {
 
 #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-   initRingAdmin( &m_oSharedData.ramIndexes.ringAdmin,
-                  getEbAccess()->getAddacDaqOffset() + offsetof( DAQ_SHARED_IO_T, ramIndexes.ringAdmin ));
+   initRingAdmin( &m_oSharedData.ringAdmin,
+                  getEbAccess()->getAddacDaqOffset() + offsetof( DAQ_SHARED_IO_T, ringAdmin ));
    DAQ_SHARED_IO_T temp;
    readLM32( &temp, sizeof(DAQ_SHARED_IO_T) );
    CONV_ENDIAN( m_oSharedData, temp, magicNumber );
-
-//   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.offset );
-//   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.capacity );
-//   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.start );
-//   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.end );
    CONV_ENDIAN( m_oSharedData, temp, operation.code );
    CONV_ENDIAN( m_oSharedData, temp, operation.retCode );
 #else
@@ -438,6 +437,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    return static_cast<RETURN_CODE_T>( m_oSharedData.operation.retCode );
 }
 #endif
+#ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::sendUnlockRamAccess( void )
@@ -448,7 +448,7 @@ void DaqInterface::sendUnlockRamAccess( void )
    writeLM32( &temp, sizeof( temp ),
                           offsetof(DAQ_SHARED_IO_T, ramIndexes.ramAccessLock ));
 }
-
+#endif
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1( void )
