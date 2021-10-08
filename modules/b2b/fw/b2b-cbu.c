@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 6-Sep-2021
+ *  version : 8-Oct-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000302                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000303                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -657,7 +657,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
     switch (cmd) {                       // do action according to command
       case B2B_CMD_CONFSUBMIT :
         DBPRINT3("b2b: received cmd %d\n", cmd);
-        if (setSubmit() != COMMON_STATUS_OK) DBPRINT1("b2b: submission of config data failed\n");
+        if (setSubmit() != COMMON_STATUS_OK) DBPRINT3("b2b: submission of config data failed\n");
         break;
       case B2B_CMD_CONFCLEAR :
         DBPRINT3("b2b: received cmd %d\n", cmd);
@@ -809,7 +809,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       // process any pending set-values
-      setSubmit();
+      /* setSubmit(); chk disabled to prevent race conditions */
       
       // clear 'local' variables
       sid        = (uint32_t)(recId >> 20) & 0xfff;
