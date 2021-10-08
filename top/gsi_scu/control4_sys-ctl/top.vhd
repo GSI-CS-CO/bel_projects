@@ -169,6 +169,10 @@ architecture rtl of top is
   signal vcc_deb_in:     std_logic_vector (7 downto 0);
   signal vcc_deb_out:    std_logic_vector (7 downto 0);
 
+  signal pFail:          std_logic;
+  signal pFailU0:        std_logic;
+  signal pFailU1:        std_logic;
+
   begin
 
     main_pll_inst : main_pll
@@ -270,5 +274,11 @@ architecture rtl of top is
     nVcc1_8_down   <= vcc_deb_out(5);
     vcc1_8IO_up    <= vcc_deb_out(6);
     nVcc1_8IO_down <= vcc_deb_out(7);
+
+    --Power Fails
+    -------------------------------------------------------
+    pFail   <= nVcc12_fail and pGood(0) and pGood(1) and pGood(2); -- Main PowerFail 12V and muModul 0.95V, 1.8V and 3.3V
+    pFailU0 <= nVcc12_fail and pGood(2);                           -- Main PowerFail 12V and muModul 3.3V
+    pFailU1 <= nVcc12_fail and pGood(0) and pGood(2);              -- Main PowerFail 12V and muModul 0.95V and 3.3V
 
 end;
