@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-Oct-2021
+ *  version : 11-Oct-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000303                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000304                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -270,30 +270,51 @@ void clearAllSid()
 uint32_t setSubmit()
 {
   int sid;
-  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
-  else sid = *pSharedSetSidEExt; 
+  int flagInject;
 
-  if (*pSharedSetSidEInj != sid) return COMMON_STATUS_ERROR;
+  // SID is used as array index. Strict checking required to avoid segfaults etc
+  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
+  else sid = *pSharedSetSidEExt;
+
+  
+  if (*pSharedSetMode >= B2B_MODE_B2C) flagInject = 1;
+  else                                 flagInject = 0;
+
+  // in case of injection to another ring, we need to check for correct SID of extraction ring
+  if (flagInject && (*pSharedSetSidEInj != sid)) return COMMON_STATUS_OUTOFRANGE;
   /* more checking required chk */
 
   setFlagValid[sid]    = 0;
 
+  // values required for extraction
   setMode[sid]         = *pSharedSetMode;    
   setGid[sid]          = *pSharedSetGidExt;
-  if ((setMode[sid] == 3) || (setMode[sid] == 4)) setGid[sid] += *pSharedSetGidInj;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
-  setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtLo) | setTH1Ext[sid];
-  setNHExt[sid]        = *pSharedSetNHExt;   
-  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjHi) << 32;
-  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjLo) | setTH1Inj[sid];
-  setNHInj[sid]        = *pSharedSetNHInj;   
-  setCPhase[sid]       = (int32_t)(*pSharedSetCPhase);  
+  setTH1Ext[sid]      |= (uint64_t)(*pSharedSetTH1ExtLo);
+  setNHExt[sid]        = *pSharedSetNHExt;
   setCTrigExt[sid]     = (int32_t)(*pSharedSetCTrigExt);
-  setCTrigInj[sid]     = (int32_t)(*pSharedSetCTrigInj);
   setNBuckExt[sid]     = (int32_t)(*pSharedSetNBuckExt);
-  setNBuckInj[sid]     = (int32_t)(*pSharedSetNBuckInj);
   setFFinTune[sid]     = *pSharedSetFFinTune;
-  setFMBTune[sid]      = *pSharedSetFMBTune;
+
+  // additional values required in case of injection into another ring
+  if (flagInject) {
+    setGid[sid]       += *pSharedSetGidInj;
+    setTH1Inj[sid]     = (uint64_t)(*pSharedSetTH1InjHi) << 32;
+    setTH1Inj[sid]    |= (uint64_t)(*pSharedSetTH1InjLo);
+    setNHInj[sid]      = *pSharedSetNHInj;   
+    setCPhase[sid]     = (int32_t)(*pSharedSetCPhase);  
+    setCTrigInj[sid]   = (int32_t)(*pSharedSetCTrigInj);
+    setNBuckInj[sid]   = (int32_t)(*pSharedSetNBuckInj);
+    setFMBTune[sid]    = *pSharedSetFMBTune;
+  } // if flagInject
+  else {
+    setTH1Inj[sid]     = 0;
+    setNHInj[sid]      = 0;   
+    setCPhase[sid]     = 0;
+    setCTrigInj[sid]   = 0;
+    setNBuckInj[sid]   = 0;
+    setFMBTune[sid]    = 0;
+  } // else flagInject   
   
   setFlagValid[sid]    = 1;
   
@@ -808,9 +829,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
-      // process any pending set-values
-      /* setSubmit(); chk disabled to prevent race conditions */
-      
       // clear 'local' variables
       sid        = (uint32_t)(recId >> 20) & 0xfff;
       gid        = 0x0;
@@ -829,6 +847,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune  = 0x0;
       fMBTune    = 0x0;
       tCBS       = 0x0;
+
+      // process any pending set-values
+      status = setSubmit();
+      if (status != COMMON_STATUS_OK) {DBPRINT1("b2b: submission of config data for SID %u failed\n", sid); return status;}
 
       transStat  = 0x0;
 

@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-Oct-2021
+ *  version : 11-Oct-2021
  *
  * library for b2b
  *
@@ -128,6 +128,7 @@ const char* b2b_status_text(uint32_t code)
     case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s", code, "no RF signal detected"); break;
     case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
     case B2B_STATUS_NOKICK               : sprintf(message, "error %d, %s", code, "no kicker signal detected"); break;
+    case B2B_STATUS_BADSETTING           : sprintf(message, "error %d, %s", code, "bad setting data"); break;
     default                              : sprintf(message, "%s", comlib_statusText(code)); break;
   } // switch code
   
@@ -218,7 +219,7 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
   int                 nDevices;                            // number of instantiated cores
 
-  b2b_debug(1);
+  // b2b_debug(1);                                            /* enable/disable this for implicit debugging */
   b2b_log("open firmware");
   
   *ebDevice = 0x0;
@@ -416,8 +417,10 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_status_t  eb_status;    // eb status
   uint32_t     gidExt;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
 
-  b2b_log("ext_upload start");
+  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
+  // b2b_log("ext upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -459,7 +462,7 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  b2b_log("ext_upload done");
+  b2b_log(buff);
   
   return COMMON_STATUS_OK;
 } // b2b_context_ext_upload
@@ -471,8 +474,9 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_status_t  eb_status;    // eb status
   uint32_t     gidInj;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
 
-  b2b_log("inj_upload start");
+  //b2b_log("inj_upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -507,7 +511,8 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  b2b_log("inj_upload done");
+  sprintf(buff, "inj_upload: sidExt %u, gid %u", sidExt, gid);
+  b2b_log(buff);
   
   return COMMON_STATUS_OK;
 } // b2b_context_inj_upload
