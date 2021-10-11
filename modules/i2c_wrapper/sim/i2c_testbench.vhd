@@ -1,5 +1,5 @@
 -- Synopsys
--- Small testbench to take this i2c master into operation
+-- Small testbench to take this i2c master into operation and observe Wishbone wrapper handling
 --
 -- Prescaler:
 -- Value = (wb_clk_frequency)/(5*desired_frequency)
@@ -66,7 +66,7 @@ architecture rtl of i2c_testbench is
   signal s_wb_desc_out  : t_wishbone_device_descriptor;
 
   -- Interrupt
-  signal s_int : std_logic;
+  signal s_int : std_logic; -- Don't care
 
   -- I2C pads
   signal s_scl_pad_in     : std_logic_vector(c_interfaces-1 downto 0);
@@ -102,7 +102,7 @@ architecture rtl of i2c_testbench is
       report "Test succeeded: " & msg;
     else
       report "Test failed: " & msg;
-      report "-> Info Answer from slave:            " & integer'image(to_integer(unsigned(dat_from_slave)));
+      report "-> Info:  Answer from slave:          " & integer'image(to_integer(unsigned(dat_from_slave)));
       report "-> Error: Expected answer from slave: " & integer'image(to_integer(unsigned(compare_value)));
     end if;
   end procedure wb_expect;
@@ -179,14 +179,19 @@ begin
       s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
     elsif rising_edge(s_clk) then
       case s_sequence_cnt is
-        -- Enable core
-        when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
-        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
+        -- Check if core is disabled (read configuration)
+        when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
+        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         when x"0003" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
-        -- Read back configuration
-        when x"0011" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
-        when x"0012" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
+                        wb_expect("Core disabled?", s_wb_slave_out.dat, c_reg_all_zero);
+        -- Enable core
+        when x"0011" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
+        when x"0012" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
         when x"0013" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
+        -- Read back configuration
+        when x"0021" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
+        when x"0022" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
+        when x"0023" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
                         wb_expect("Core enabled?", s_wb_slave_out.dat, c_reg_ctr_core_enable_bit);
         -- Default
         when others  => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
