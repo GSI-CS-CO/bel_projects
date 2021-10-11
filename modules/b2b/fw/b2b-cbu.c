@@ -1,3 +1,4 @@
+
 /********************************************************************************************
  *  b2b-cbu.c
  *
@@ -281,7 +282,7 @@ uint32_t setSubmit()
   else                                 flagInject = 0;
 
   // in case of injection to another ring, we need to check for correct SID of extraction ring
-  if (flagInject && (*pSharedSetSidEInj != sid)) return COMMON_STATUS_OUTOFRANGE;
+  if (flagInject && (*pSharedSetSidEInj != sid)) return B2B_STATUS_BADSETTING;
   /* more checking required chk */
 
   setFlagValid[sid]    = 0;
@@ -850,7 +851,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       // process any pending set-values
       status = setSubmit();
-      if (status != COMMON_STATUS_OK) {DBPRINT1("b2b: submission of config data for SID %u failed\n", sid); return status;}
+      if (status != COMMON_STATUS_OK) {DBPRINT3("b2b: submission of config data for SID %u failed\n", sid); return status;}
 
       transStat  = 0x0;
 
