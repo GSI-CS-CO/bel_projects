@@ -35,7 +35,15 @@ architecture rtl of i2c_testbench is
   -- I2c master registers
   constant c_reg_cr_core_enable_bit      : std_logic_vector(31 downto 0) := x"00000080";
   constant c_reg_cr_interrupt_enable_bit : std_logic_vector(31 downto 0) := x"00000040";
+
+  -- Other constants
   constant c_reg_all_zero                : std_logic_vector(31 downto 0) := x"00000000";
+  constant c_cyc_on                      : std_logic := '1';
+  constant c_cyc_off                     : std_logic := '0';
+  constant c_str_on                      : std_logic := '1';
+  constant c_str_off                     : std_logic := '0';
+  constant c_we_on                       : std_logic := '1';
+  constant c_we_off                      : std_logic := '0';
 
   -- Basic device signals
   signal s_clk   : std_logic := '0';
@@ -144,18 +152,19 @@ begin
   p_wishbone_stim : process(s_clk, s_rst_n) is
   begin
     if s_rst_n = '0' then
-      s_wb_slave_in <= wb_stim('0', '0', '0', c_reg_all_zero, c_reg_all_zero);
+      s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
     elsif rising_edge(s_clk) then
       case s_sequence_cnt is
-        -- Input:                                CYC  STR  WE   ADR             DAT
         -- Enable core
-        when x"0001" => s_wb_slave_in <= wb_stim('1', '1', '1', c_reg_ctr,      c_reg_cr_core_enable_bit);
-        when x"0002" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0003" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         -- Read back configuration
-        when x"0011" => s_wb_slave_in <= wb_stim('1', '1', '0', c_reg_ctr,      c_reg_all_zero);
-        when x"0012" => s_wb_slave_in <= wb_stim('1', '0', '0', c_reg_ctr,      c_reg_all_zero);
+        when x"0011" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
+        when x"0012" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
+        when x"0013" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         -- Default
-        when others  => s_wb_slave_in <= wb_stim('0', '0', '0', c_reg_all_zero, c_reg_all_zero);
+        when others  => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
       end case;
     end if;
   end process;
