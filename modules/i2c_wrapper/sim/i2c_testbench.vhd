@@ -1,10 +1,16 @@
 -- Synopsys
 -- Small testbench to take this i2c master into operation
+--
+-- Prescaler:
+-- Value = (wb_clk_frequency)/(5*desired_frequency)
+-- Reset = 0xffff
 
 -- Libraries
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+library std;
+use std.textio.all;
 library work;
 use work.wishbone_pkg.all;
 
@@ -33,8 +39,12 @@ architecture rtl of i2c_testbench is
   constant c_reg_sr      : std_logic_vector(31 downto 0) := x"00000004"; -- R# status register
 
   -- I2c master registers
-  constant c_reg_cr_core_enable_bit      : std_logic_vector(31 downto 0) := x"00000080";
-  constant c_reg_cr_interrupt_enable_bit : std_logic_vector(31 downto 0) := x"00000040";
+  constant c_reg_ctr_core_enable_bit            : std_logic_vector(31 downto 0) := x"00000080";
+  constant c_reg_ctr_interrupt_enable_bit       : std_logic_vector(31 downto 0) := x"00000040";
+  constant c_reg_txr_next_byte_to_transmit_mask : std_logic_vector(31 downto 0) := x"000000fe";
+  constant c_reg_txr_reading_from_slave_bit     : std_logic_vector(31 downto 0) := x"00000001";
+  constant c_reg_txr_writing_fo_slave_bit       : std_logic_vector(31 downto 0) := x"00000000";
+  constant c_reg_rxr_last_byte_received_mask    : std_logic_vector(31 downto 0) := x"000000ff";
 
   -- Other constants
   constant c_reg_all_zero                : std_logic_vector(31 downto 0) := x"00000000";
@@ -83,6 +93,19 @@ architecture rtl of i2c_testbench is
     v_setup.sel := (others => '0'); -- Don't care
     return v_setup;
   end function wb_stim;
+
+  -- Procedures
+  -- Procedure wb_expect -> Check WB slave answer
+  procedure wb_expect(msg : string; dat_from_slave : t_wishbone_data; compare_value : t_wishbone_data) is
+  begin
+    if (dat_from_slave = compare_value) then
+      report "Test succeeded: " & msg;
+    else
+      report "Test failed: " & msg;
+      report "-> Info Answer from slave:            " & integer'image(to_integer(unsigned(dat_from_slave)));
+      report "-> Error: Expected answer from slave: " & integer'image(to_integer(unsigned(compare_value)));
+    end if;
+  end procedure wb_expect;
 
 begin
 
@@ -157,13 +180,14 @@ begin
     elsif rising_edge(s_clk) then
       case s_sequence_cnt is
         -- Enable core
-        when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_cr_core_enable_bit);
-        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_on, c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
+        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_on,  c_reg_ctr,      c_reg_ctr_core_enable_bit);
         when x"0003" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         -- Read back configuration
         when x"0011" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
         when x"0012" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         when x"0013" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
+                        wb_expect("Core enabled?", s_wb_slave_out.dat, c_reg_ctr_core_enable_bit);
         -- Default
         when others  => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
       end case;
