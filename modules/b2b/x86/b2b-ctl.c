@@ -118,16 +118,15 @@ static void help(void) {
 
 void printTransferHeader()
 {
-  printf("b2b:        nTrans |                 INFO                  \n");
-  printf("b2b: STATUS      n |   state      nchng     stat      nchng\n");
+  printf("b2b:        nTrans |      DIAG       |                 INFO                  \n");
+  printf("b2b: STATUS      n |  gid  sid  mode |   state      nchng     stat      nchng\n");
 } // printTransferHeader
 
 
-void printTransfer(uint32_t nTransfer)
+void printTransfer(uint32_t nTransfer, uint32_t sid, uint32_t gid, uint32_t mode)
 {
   // diag
-  printf("b2b:    %010u |", nTransfer);
-
+  printf("b2b:    %010u | %4x   %2u     %1u |", nTransfer, gid, sid, mode);
 } // printTransfer
 
 
@@ -259,7 +258,7 @@ int main(int argc, char** argv) {
     b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     printTransferHeader();
-    printTransfer(nTransfer);
+    printTransfer(nTransfer, getsid, getgid, getmode);
     printf(", %s (%6u), ", b2b_state_text(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
@@ -336,6 +335,7 @@ if (snoop) {
 
     while (1) {
       b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+      
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -353,13 +353,14 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        printTransfer(nTransfer); 
+        b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
+        printTransfer(nTransfer, getsid, getgid, getmode); 
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
         // print set status bits (except OK)
         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", comlib_statusText(i));
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(i));
         } // for i
       } // if printFlag
 
