@@ -70,6 +70,7 @@ architecture rtl of i2c_testbench is
   signal s_sequence_cnt   : std_logic_vector(15 downto 0);
 
   -- Functions
+  -- Function wb_stim -> Helper function to create a human-readable testbench
   function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
                    adr : t_wishbone_address; dat : t_wishbone_data) return t_wishbone_slave_in is
   variable v_setup : t_wishbone_slave_in;
@@ -79,7 +80,7 @@ architecture rtl of i2c_testbench is
     v_setup.we  := we;
     v_setup.adr := adr;
     v_setup.dat := dat;
-    v_setup.sel := (others => '0');
+    v_setup.sel := (others => '0'); -- Don't care
     return v_setup;
   end function wb_stim;
 
@@ -157,7 +158,7 @@ begin
       case s_sequence_cnt is
         -- Enable core
         when x"0001" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_reg_ctr,      c_reg_cr_core_enable_bit);
-        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_reg_ctr,      c_reg_cr_core_enable_bit);
+        when x"0002" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_on, c_reg_ctr,      c_reg_cr_core_enable_bit);
         when x"0003" => s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_ctr,      c_reg_all_zero);
         -- Read back configuration
         when x"0011" => s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_reg_ctr,      c_reg_all_zero);
