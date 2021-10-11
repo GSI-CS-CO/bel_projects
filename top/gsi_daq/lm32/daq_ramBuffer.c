@@ -68,7 +68,7 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
            )
 {
    pThis->pSharedObj = pSharedObj;
-   ramRingSharedReset( &pSharedObj->ringAdmin );   
+   ramRingReset( &pSharedObj->ringIndexes );   
 
 #ifdef CONFIG_SCU_USE_DDR3
  #if defined( __linux__ ) && defined( CONFIG_NO_FE_ETHERBONE_CONNECTION)
