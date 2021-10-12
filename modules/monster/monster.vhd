@@ -69,6 +69,7 @@ use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
+use work.wb_i2c_wrapper_pkg.all;
 
 entity monster is
   generic(
