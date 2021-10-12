@@ -109,6 +109,8 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_psram             : boolean := false;
       g_en_beam_dump         : boolean := false;
+      g_en_i2c_wrapper       : boolean := false;
+      g_num_i2c_interfaces   : integer := 1;
       g_dual_port_wr         : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;

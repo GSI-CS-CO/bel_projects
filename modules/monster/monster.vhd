@@ -101,6 +101,8 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
     g_en_beam_dump         : boolean;
+    g_en_i2c_wrapper       : boolean;
+    g_num_i2c_interfaces   : integer;
     g_dual_port_wr         : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
