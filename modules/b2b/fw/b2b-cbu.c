@@ -1,10 +1,9 @@
-
 /********************************************************************************************
  *  b2b-cbu.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2021
+ *  version : 12-Oct-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -35,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000304                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000305                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -823,7 +822,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   status = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
     
   switch (ecaAction) {
 
@@ -831,8 +830,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       // clear 'local' variables
-      sid        = (uint32_t)(recId >> 20) & 0xfff;
-      gid        = 0x0;
+      sid        = (uint32_t)((recId >> 20) & 0xfff);         // required for proper indexing
+      gid        = (uint32_t)((recId >> 48) & 0xfff);         // temporary assignment useful for debugging if routine setSubmit() fails
       bpid       = 0x0;
       mode       = 0x0;
       nHExt      = 0x0;
@@ -849,18 +848,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fMBTune    = 0x0;
       tCBS       = 0x0;
 
-      // process any pending set-values
-      status = setSubmit();
-      if (status != COMMON_STATUS_OK) {DBPRINT3("b2b: submission of config data for SID %u failed\n", sid); return status;}
+      transStat  = 0x0;                                       // reset transfer status
+      nTransfer++;                                            // increment transfer counter
+      status     = COMMON_STATUS_OK;                          // set to 'ok' if a a new transfer starts
 
-      transStat  = 0x0;
+      // submit data and primitive error checks
+      if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
+      if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
+      if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return COMMON_STATUS_OUTOFRANGE;}
 
-      if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
-      if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
       gid        = setGid[sid]; 
-      /*bpid       = 0x2000;        chk                            // bit    13: indicate 'b2b' (bit 12: reserved)
-      /bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
-      bpid      |= nTransfer & 0xf;                       */    // bit 0..3 : 4 bit counter of transfers
       mode       = setMode[sid];
       TH1Ext     = setTH1Ext[sid];
       nHExt      = setNHExt[sid];
@@ -875,7 +872,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fMBTune    = setFMBTune[sid];
 
       tCBS       = recDeadline;
-      nTransfer++;
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
       break;
@@ -1058,7 +1054,7 @@ int main(void) {
     check_stack_fwid(buildID);
     fwlib_cmdHandler(&reqState, &cmd);                                        // check for commands and possibly request state changes
     cmdHandler(&reqState, cmd);                                               // check for project relevant commands
-    status = COMMON_STATUS_OK;                                                // reset status for each iteration
+    /* status = COMMON_STATUS_OK;  hm... maybe its better to reset only upon the start of a new transaction                // reset status for each iteration */
 
     // state machine
     status = fwlib_changeState(&actState, &reqState, status);                 // handle requested state changes

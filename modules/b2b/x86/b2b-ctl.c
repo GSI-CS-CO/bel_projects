@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Jul-2021
+ *  version : 12-Oct-2021
  *
  * Command-line interface for b2b
  *
@@ -335,10 +335,10 @@ if (snoop) {
 
     while (1) {
       b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
-      
-
       switch(state) {
       case COMMON_STATE_OPREADY :
+        if (actNTransfer != nTransfer) sleepTime = COMMON_DEFAULT_TIMEOUT * 1000 * 2;        // ongoing transfer: reduce polling rate ...
+        else                           sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;            // sleep for default timeout to catch next REQ_TK
         break;
       default:
         sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                          
@@ -347,7 +347,6 @@ if (snoop) {
       // determine when to print info
       printFlag = 0;
 
-      
       if ((actState       != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState       = state;}
       if ((actStatusArray != statusArray)  && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actStatusArray = statusArray;}
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}

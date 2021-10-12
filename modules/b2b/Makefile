@@ -1,7 +1,7 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Note: setting the PKG_CONFIG_PATH might help too, example:
-# export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.1.2/x86_64/lib/pkgconfig/
+# 'export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.1.2/x86_64/lib/pkgconfig/'
 # Example usage:
 #   'make clean'                                                 
 #   'make PREFIX= all' ;                          don't send kick trigger evts on MIL  (hack: leave PREFIX empty for SCU path)
