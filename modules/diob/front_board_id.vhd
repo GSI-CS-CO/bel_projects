@@ -97,8 +97,8 @@ begin
                                                         IOBP_Out(1)(5)  <= quench_sk_out(quench_det_cnt); --0
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
-                                                      -- IOBP_Out(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
-                                                        IOBP_Out(1)(5) <=  AW_Input_Reg(1)(0);--for test
+                                                      IOBP_Out(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
+                                                       -- IOBP_Out(1)(5) <=  AW_Input_Reg(1)(0);--for test
                                                       end if;
                                                       IOBP_Aktiv_LED(1)  <=  (IOBP_Out(1)(5)    &  Deb_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
                                                       OUT_SLOT(1) <= IOBP_out(1);
