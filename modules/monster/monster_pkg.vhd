@@ -370,6 +370,13 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      -- i2c
+      i2c_scl_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
+      i2c_scl_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
+      i2c_scl_padoen_o       : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
+      i2c_sda_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
+      i2c_sda_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
+      i2c_sda_padoen_o       : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
       -- g_en_pmc
       pmc_pci_clk_i          : in    std_logic := '0';
       pmc_pci_rst_i          : in    std_logic := '0';
@@ -389,7 +396,6 @@ package monster_pkg is
       pmc_inta_o             : out   std_logic;
       pmc_req_o              : out   std_logic;
       pmc_gnt_i              : in    std_logic := '1';
-
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));
