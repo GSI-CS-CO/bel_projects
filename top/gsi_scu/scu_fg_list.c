@@ -241,11 +241,11 @@ void addAddacToFgList( const void* pScuBusBase,
 {
    FG_ASSERT( pFGlist != NULL );
    fgListAdd( slot,
-                  0,
-                  SYS_CSCO,
-                  GRP_ADDAC2,
-                  getFgFirmwareVersion( pScuBusBase, slot ),
-                  pFGlist );
+              0,
+              SYS_CSCO,
+              GRP_ADDAC2,
+              getFgFirmwareVersion( pScuBusBase, slot ),
+              pFGlist );
 }
 
 #ifndef CONFIG_SCU_DAQ_INTEGRATION
@@ -399,17 +399,18 @@ void fgResetAndInit( FG_CHANNEL_REG_T* pChannelRegisters,
    pChannelRegisters[channel].state = STATE_STOPPED;
    pChannelRegisters[channel].ramp_count = 0;
 
+   const int32_t macroNumber = pChannelRegisters[channel].macro_number;
+
    /*
     *  Is a macro assigned to that channel by SAFTLIB?
     *  FunctionGeneratorImpl::acquireChannel
     */
-   const int32_t macro = pChannelRegisters[channel].macro_number;
-   if( macro < 0 )
+   if( macroNumber < 0 )
       return; /* No */
 
 
-   const unsigned int socket = pFgList[macro].socket;
-   const unsigned int dev    = pFgList[macro].device;
+   const unsigned int socket = pFgList[macroNumber].socket;
+   const unsigned int dev    = pFgList[macroNumber].device;
 
 #ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) )
@@ -428,7 +429,7 @@ void fgResetAndInit( FG_CHANNEL_REG_T* pChannelRegisters,
       return;
    }
 
-   /* mil extension */
+   /* MIL- extension */
    FG_ASSERT( isMilExtentionFg( socket ) );
    reset_mil( (unsigned int*)pMilBus );
    write_mil( (unsigned int*)pMilBus, FG_RESET, FC_CNTRL_WR | dev );
