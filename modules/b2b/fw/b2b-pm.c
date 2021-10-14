@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Jul-2021
+ *  version : 6-Sep-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000301                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000302                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -424,7 +424,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
-        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;         // ECA is configured to pre-trigger ahead of time!!!
+        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
         nInput  = 0;
         TWait   = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
         TWaitUs = (TWait / 1000 - 10);                                // the '-10' is a fudge thing

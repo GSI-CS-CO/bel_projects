@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Jul-2021
+ *  version : 11-Oct-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x0003001                                  // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000304                                  // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -335,7 +335,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      reqDeadline      = recDeadline + (uint64_t)B2B_PRETRIGGERPM;    // ECA is configured to pre-trigger ahead of time!!!
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
@@ -371,7 +370,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // send command: transmit measured phase value
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1;
-      sendDeadline = reqDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
       transStat    = dt;
@@ -384,7 +383,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
-        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;         // ECA is configured to pre-trigger ahead of time!!!
+        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
         nInput  = 0;
         TWait   = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
         TWaitUs = (TWait / 1000 - 10);                                // the '-10' is a fudge thing

@@ -8,6 +8,6 @@ ARCH=$(/bin/uname -m)
 HOSTNAME=$(/bin/hostname -s)
 
 log 'start other stuff'
-export DIM_DNS_NODE=lxds014.gsi.de
-b2b-serv-sys dev/wbm0 -s sis18-pm &
-b2b-serv-sys dev/wbm1 -s sis18-cbu &
+export DIM_DNS_NODE=asl105
+b2b-serv-raw tr0 -e1 pro &
+b2b-analyzer pro_esr &

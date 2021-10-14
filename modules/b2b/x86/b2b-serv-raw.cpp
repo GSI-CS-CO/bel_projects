@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Jul-2021
+ *  version : 7-Sep-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000301
+#define B2B_SERV_RAW_VERSION 0x000302
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -339,7 +339,7 @@ using namespace std;
 
 // display help
 static void help(void) {
-  std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name>" << std::endl;
+  std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
   std::cerr << "  -e<index>            specify extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
@@ -347,7 +347,7 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
-  std::cerr << "Example1: '" << program << " tr1 -e0'" << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -e0' pro" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
@@ -440,7 +440,7 @@ int main(int argc, char** argv)
   
 
   
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", ringName, argv[++optind]);
+  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
   else                 sprintf(prefix, "b2b_%s", ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);

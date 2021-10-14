@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Jul-2021
+ *  version : 12-Oct-2021
  *
  *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000301                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000305                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -270,30 +270,51 @@ void clearAllSid()
 uint32_t setSubmit()
 {
   int sid;
-  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
-  else sid = *pSharedSetSidEExt; 
+  int flagInject;
 
-  if (*pSharedSetSidEInj != sid) return COMMON_STATUS_ERROR;
+  // SID is used as array index. Strict checking required to avoid segfaults etc
+  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
+  else sid = *pSharedSetSidEExt;
+
+  
+  if (*pSharedSetMode >= B2B_MODE_B2C) flagInject = 1;
+  else                                 flagInject = 0;
+
+  // in case of injection to another ring, we need to check for correct SID of extraction ring
+  if (flagInject && (*pSharedSetSidEInj != sid)) return B2B_STATUS_BADSETTING;
   /* more checking required chk */
 
   setFlagValid[sid]    = 0;
 
+  // values required for extraction
   setMode[sid]         = *pSharedSetMode;    
   setGid[sid]          = *pSharedSetGidExt;
-  if ((setMode[sid] == 3) || (setMode[sid] == 4)) setGid[sid] += *pSharedSetGidInj;
   setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
-  setTH1Ext[sid]       = (uint64_t)(*pSharedSetTH1ExtLo) | setTH1Ext[sid];
-  setNHExt[sid]        = *pSharedSetNHExt;   
-  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjHi) << 32;
-  setTH1Inj[sid]       = (uint64_t)(*pSharedSetTH1InjLo) | setTH1Inj[sid];
-  setNHInj[sid]        = *pSharedSetNHInj;   
-  setCPhase[sid]       = (int32_t)(*pSharedSetCPhase);  
+  setTH1Ext[sid]      |= (uint64_t)(*pSharedSetTH1ExtLo);
+  setNHExt[sid]        = *pSharedSetNHExt;
   setCTrigExt[sid]     = (int32_t)(*pSharedSetCTrigExt);
-  setCTrigInj[sid]     = (int32_t)(*pSharedSetCTrigInj);
   setNBuckExt[sid]     = (int32_t)(*pSharedSetNBuckExt);
-  setNBuckInj[sid]     = (int32_t)(*pSharedSetNBuckInj);
   setFFinTune[sid]     = *pSharedSetFFinTune;
-  setFMBTune[sid]      = *pSharedSetFMBTune;
+
+  // additional values required in case of injection into another ring
+  if (flagInject) {
+    setGid[sid]       += *pSharedSetGidInj;
+    setTH1Inj[sid]     = (uint64_t)(*pSharedSetTH1InjHi) << 32;
+    setTH1Inj[sid]    |= (uint64_t)(*pSharedSetTH1InjLo);
+    setNHInj[sid]      = *pSharedSetNHInj;   
+    setCPhase[sid]     = (int32_t)(*pSharedSetCPhase);  
+    setCTrigInj[sid]   = (int32_t)(*pSharedSetCTrigInj);
+    setNBuckInj[sid]   = (int32_t)(*pSharedSetNBuckInj);
+    setFMBTune[sid]    = *pSharedSetFMBTune;
+  } // if flagInject
+  else {
+    setTH1Inj[sid]     = 0;
+    setNHInj[sid]      = 0;   
+    setCPhase[sid]     = 0;
+    setCTrigInj[sid]   = 0;
+    setNBuckInj[sid]   = 0;
+    setFMBTune[sid]    = 0;
+  } // else flagInject   
   
   setFlagValid[sid]    = 1;
   
@@ -657,7 +678,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
     switch (cmd) {                       // do action according to command
       case B2B_CMD_CONFSUBMIT :
         DBPRINT3("b2b: received cmd %d\n", cmd);
-        if (setSubmit() != COMMON_STATUS_OK) DBPRINT1("b2b: submission of config data failed\n");
+        if (setSubmit() != COMMON_STATUS_OK) DBPRINT3("b2b: submission of config data failed\n");
         break;
       case B2B_CMD_CONFCLEAR :
         DBPRINT3("b2b: received cmd %d\n", cmd);
@@ -801,19 +822,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   status = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
     
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
-      // process any pending set-values
-      setSubmit();
-      
       // clear 'local' variables
-      sid        = (uint32_t)(recId >> 20) & 0xfff;
-      gid        = 0x0;
+      sid        = (uint32_t)((recId >> 20) & 0xfff);         // required for proper indexing
+      gid        = (uint32_t)((recId >> 48) & 0xfff);         // temporary assignment useful for debugging if routine setSubmit() fails
       bpid       = 0x0;
       mode       = 0x0;
       nHExt      = 0x0;
@@ -830,14 +848,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fMBTune    = 0x0;
       tCBS       = 0x0;
 
-      transStat  = 0x0;
+      transStat  = 0x0;                                       // reset transfer status
+      nTransfer++;                                            // increment transfer counter
+      status     = COMMON_STATUS_OK;                          // set to 'ok' if a a new transfer starts
 
-      if (sid > 15)  {sid = 0; mState = B2B_MFSM_NOTHING; return status;}
-      if (!setFlagValid[sid]) {mState = B2B_MFSM_NOTHING; return status;}
+      // submit data and primitive error checks
+      if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
+      if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
+      if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return COMMON_STATUS_OUTOFRANGE;}
+
       gid        = setGid[sid]; 
-      /*bpid       = 0x2000;        chk                            // bit    13: indicate 'b2b' (bit 12: reserved)
-      /bpid      |= (gid & 0xff) << 4;                         // bit 4..11: use relevant bits of GID
-      bpid      |= nTransfer & 0xf;                       */    // bit 0..3 : 4 bit counter of transfers
       mode       = setMode[sid];
       TH1Ext     = setTH1Ext[sid];
       nHExt      = setNHExt[sid];
@@ -852,7 +872,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fMBTune    = setFMBTune[sid];
 
       tCBS       = recDeadline;
-      nTransfer++;
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
       break;
@@ -975,7 +994,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
-    sendMilTrigger(tTrigExt+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
+    /* chk sendMilTrigger(tTrigExt+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway*/
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -991,7 +1010,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
-    sendMilTrigger(tTrigInj+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway
+    /* chk sendMilTrigger(tTrigInj+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway*/
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ
@@ -1035,7 +1054,7 @@ int main(void) {
     check_stack_fwid(buildID);
     fwlib_cmdHandler(&reqState, &cmd);                                        // check for commands and possibly request state changes
     cmdHandler(&reqState, cmd);                                               // check for project relevant commands
-    status = COMMON_STATUS_OK;                                                // reset status for each iteration
+    /* status = COMMON_STATUS_OK;  hm... maybe its better to reset only upon the start of a new transaction                // reset status for each iteration */
 
     // state machine
     status = fwlib_changeState(&actState, &reqState, status);                 // handle requested state changes

@@ -1,14 +1,14 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Note: setting the PKG_CONFIG_PATH might help too, example:
-# export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib/pkgconfig/
+# 'export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.1.2/x86_64/lib/pkgconfig/'
 # Example usage:
 #   'make clean'                                                 
 #   'make PREFIX= all' ;                          don't send kick trigger evts on MIL  (hack: leave PREFIX empty for SCU path)
 #   'make EXTRA_FLAGS='-D USEMIL' PREFIX= all' ;  send kick trigger evts on MIL        (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -46,27 +46,30 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt                      # needed for ivtpar
 	mkdir -p $(STAGING)/firmware
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
-# NFS init scripts
-	cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18 RF room
-	cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
-	cp $(ASL)/b2b-sis18-kick.sh $(STAGING)                              # nfs init script SIS18 kicker room
-	cp $(ASL)/b2b-sis18-kick-div.sh $(STAGING)                          # nfs init script SIS18 kicker room, other stuff
-	cp $(ASL)/b2b-sis18-daq.sh $(STAGING)                               # nfs init script SIS18 kicker room, other stuff
-	cp $(ASL)/b2b-esr-rf.sh $(STAGING)                                  # nfs init script ESR RF room
-	cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR RF room, other stuff
-	cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
-	cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
-	cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
-	cp $(ASL)/b2b-sis18-bg2.sh $(STAGING)                               # nfs init script SIS18 BG2 electronic room (for INT)
-	cp $(ASL)/b2b-pmstub-bg2.sh $(STAGING)                              # nfs init script PM stub in BG2 electronic room (for INT)
-	cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
-# FEC configuration scripts
-	cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18 RF room
-	cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18 RF room
-	cp $(SW)/b2b-esr-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # FEC init script ESR RF room
-	cp $(SW)/b2b-esr-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script ESR RF foom
-	cp $(SW)/b2b-sis18-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script SIS18 BG2 electronic room
-	cp $(SW)/b2b-pmstub-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script PM stub BG2 electronic room
+
+# NFS init scripts, the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
+	cp $(ASL)/b2b-*.sh $(STAGING)                                           # nfs init script SIS18 RF room
+#cp $(ASL)/b2b-sis18-rf.sh $(STAGING)                                # nfs init script SIS18 RF room
+#cp $(ASL)/b2b-sis18-rf-div.sh $(STAGING)                            # nfs init script SIS18 RF room, other sutff
+#cp $(ASL)/b2b-sis18-kick.sh $(STAGING)                              # nfs init script SIS18 kicker room
+#cp $(ASL)/b2b-sis18-kick-div.sh $(STAGING)                          # nfs init script SIS18 kicker room, other stuff
+#cp $(ASL)/b2b-sis18-daq.sh $(STAGING)                               # nfs init script SIS18 kicker room, other stuff
+#cp $(ASL)/b2b-esr-rf.sh $(STAGING)                                  # nfs init script ESR RF room
+#cp $(ASL)/b2b-esr-rf-div.sh $(STAGING)                              # nfs init script ESR RF room, other stuff
+#cp $(ASL)/b2b-esr-kick.sh $(STAGING)                                # nfs init script ESR kicker room
+#cp $(ASL)/b2b-esr-kick-div.sh $(STAGING)                            # nfs init script ESR kicker room, other stufff
+#cp $(ASL)/b2b-esr-daq.sh $(STAGING)                                 # nfs init script SIS18 kicker room, other stuff
+#cp $(ASL)/b2b-sis18-bg2.sh $(STAGING)                               # nfs init script SIS18 BG2 electronic room (for INT)
+#cp $(ASL)/b2b-pmstub-bg2.sh $(STAGING)                              # nfs init script PM stub in BG2 electronic room (for INT)
+#cp $(ASL)/b2b-tools.sh $(STAGING)                                   # nfs init script tools (UI ...)
+# FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
+	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin        
+#cp $(SW)/b2b-sis18-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script SIS18 RF room
+#cp $(SW)/b2b-sis18-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script SIS18 RF room
+#cp $(SW)/b2b-esr-rf_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # FEC init script ESR RF room
+#cp $(SW)/b2b-esr-kick_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # FEC init script ESR RF foom
+#cp $(SW)/b2b-sis18-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script SIS18 BG2 electronic room
+#cp $(SW)/b2b-pmstub-bg2_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # FEC init script PM stub BG2 electronic room
 # FEC x86 binaries 
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(SW)/saft-b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
@@ -75,10 +78,11 @@ deploy:
 	cp $(SW)/b2b-ui $(STAGING)$(ARCH)$(PREFIX)/usr/bin                  # '/usr' is a hack
 	cp $(SW)/b2bivt/*.txt $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt         # needed for ivtpar
 # FEC lm32 firmware
-	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
-	cp $(FW)/b2bpm.bin $(STAGING)/firmware
-	cp $(FW)/b2bkd.bin $(STAGING)/firmware
-	cp $(FW)/b2bpmstub.bin $(STAGING)/firmware
+	cp $(FW)/*.bin $(STAGING)/firmware                   
+#cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
+#cp $(FW)/b2bpm.bin $(STAGING)/firmware
+#cp $(FW)/b2bkd.bin $(STAGING)/firmware
+#cp $(FW)/b2bpmstub.bin $(STAGING)/firmware
 # DAQ
 	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 

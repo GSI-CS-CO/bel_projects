@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-June-2021
+ *  version : 07-Sep-2021
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -86,7 +86,7 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   uint32_t version;
   
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> <server name>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");

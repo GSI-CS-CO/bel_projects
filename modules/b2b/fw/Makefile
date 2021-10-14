@@ -1,6 +1,6 @@
 TARGET		?= b2bpm
-PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
-#PLATFPATH       = ../../../syn/gsi_scu/control3
+#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../../syn/gsi_scu/control3
 #PLATFPATH	= ../../../syn/gsi_pexarria5/control
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.03.01
+VERSION  	= 00.03.05
 
 .DEFAULT_GOAL	:= fwbin
 

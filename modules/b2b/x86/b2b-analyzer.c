@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-July-2021
+ *  version : 7-Sep-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000301
+#define B2B_ANALYZER_VERSION 0x000302
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -188,13 +188,13 @@ double    inj_monRemStreamOld[B2B_NSID];
 
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <server name>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to analyze and display get values of the B2B system\n");
-  fprintf(stderr, "Example1: '%s sis18\n", program);
+  fprintf(stderr, "Example1: '%s pro-sis18\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_ANALYZER_VERSION));
