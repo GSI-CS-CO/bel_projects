@@ -19,6 +19,8 @@
 // dm-unipz specific commands from the outside
 #define  DMUNIPZ_CMD_RELEASETK    6           // release TK request at UNILAC
 #define  DMUNIPZ_CMD_RELEASEBEAM  7           // release beam request at UNILAC
+#define  DMUNIPZ_CMD_DEBUGON      8           // enables debug mode (writes data to be sent to DM to my own ECA input, experimental!)
+#define  DMUNIPZ_CMD_DEBUGOFF     9           // disables debug mode
 
 // (error) status
 #define  DMUNIPZ_STATUS_REQTKFAILED     16    // UNILAC refuses TK request
@@ -43,6 +45,8 @@
 #define  DMUNIPZ_STATUS_BADSCHEDULEB    35    // unexpected event
 #define  DMUNIPZ_STATUS_INVALIDBLKADDR  36    // invalid address of block for Data Master
 #define  DMUNIPZ_STATUS_NODM            37    // Data Master unreachable
+#define  DMUNIPZ_STATUS_INVALIDTHRADDR  38    // invalid address of thread handling area for Data Master
+#define  DMUNIPZ_STATUS_DELAYEDEVENT    39    // received 'delayed event'
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN    "U_DM_UNIPZ"   // nomen for gateway
@@ -52,12 +56,13 @@
 #define  DMUNIPZ_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
-#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam at UNIPZ
+#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam at UNIPZ, terminate waiting block and start thread at DM
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
 #define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
 #define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS via TLU
 #define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
 #define  DMUNIPZ_ECADO_PREPBEAM   8           // prepare beam at UNIPZ (preceedes 'REQBEAM')
+#define  DMUNIPZ_ECADO_REQBEAMNW  9           // request beam at UNIPZ, start thread at DM
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_REQTK       0           // TK requested
@@ -70,16 +75,24 @@
 #define DMUNIPZ_TRANS_UNPREPBEAM  7           // beam preparation released
 
 
-typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
-  uint32_t dynpar0;                           // received from DM: 1st 32 bit of param field
-  uint32_t dynpar1;                           // received from DM: 2nd 32 bit of param field
-  uint32_t tef;                               // received from DM: TEF field
-  uint32_t hash;                              // queried from DM via EB: hash of node name
+typedef struct {                              // group together all information required for modifying blocks within the data master
+  uint32_t dynpar;                            // received from DM: 32 bit of param field
   uint32_t cmdAddr;                           // write to DM: external address of a command
   uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
   uint32_t blockWrIdxsAddr;                   // write to DM: external address ofs wrIdxs within block
   uint32_t blockWrIdxs;                       // write to DM: updated value of wrIdxs
 } dmComm;
+
+
+typedef struct {                              // group together all information required for modifying threads with the data master 
+  uint32_t dynpar;                            // received from DM: 32bit of param field
+  uint32_t cpuIdx;                            // received from  DM: idx of cpu (redundant information)
+  uint32_t thrIdx;                            // received from  DM: idx of thread (required to start the thread) 
+  uint32_t TSAddr;                            // write to DM: 32bit address of thread start timestamp in the 'thread staging' area
+  uint32_t TSData[2];                         // write to DM: start timestamp low and high words
+  uint32_t StartAddr;                         // write to DM: 32bit address of thread start bits in the 'Global Thread Control and Status' area
+  uint32_t StartData;                         // write to DM: 32bit thread start bits
+} dmThrd;
 
 
 // part below provided by Ludwig Hechler 
@@ -160,8 +173,9 @@ typedef union {
 #define DMUNIPZ_SHARED_NR2STRANSFER   (DMUNIPZ_SHARED_DTREADY2SIS   + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_NR2SCYCLE      (DMUNIPZ_SHARED_NR2STRANSFER  + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_DTBPREP        (DMUNIPZ_SHARED_NR2SCYCLE     + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
+#define DMUNIPZ_SHARED_NBOOSTER       (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // # of booster injections
 
 // diagnosis: end of used shared memory
-#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // end of shared memory
+#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // end of shared memory
 
 #endif
