@@ -99,9 +99,9 @@ architecture rtl of i2c_testbench is
   procedure wb_expect(msg : string; dat_from_slave : t_wishbone_data; compare_value : t_wishbone_data) is
   begin
     if (dat_from_slave = compare_value) then
-      report "Test succeeded: " & msg;
+      report "Test passed: " & msg;
     else
-      report "Test failed: " & msg;
+      report "Test errored: " & msg;
       report "-> Info:  Answer from slave:          " & integer'image(to_integer(unsigned(dat_from_slave)));
       report "-> Error: Expected answer from slave: " & integer'image(to_integer(unsigned(compare_value)));
     end if;

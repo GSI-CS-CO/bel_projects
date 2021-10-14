@@ -1,22 +1,26 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Oct 11 12:46:14 2021
+[*] Thu Oct 14 11:39:12 2021
 [*]
 [dumpfile] "i2c_testbench.vcd"
-[dumpfile_mtime] "Mon Oct 11 12:45:28 2021"
-[dumpfile_size] 5871226
-[savefile] "view.gtkw"
+[dumpfile_mtime] "Thu Oct 14 11:38:01 2021"
+[dumpfile_size] 8370588
+[savefile] "i2c_testbench.gtkw"
 [timestart] 0
-[size] 2053 1106
-[pos] -1 -1
-*-38.492973 1000000000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 2560 1360
+[pos] -27 -24
+*-36.486710 272100000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2c_testbench.
 [treeopen] i2c_testbench.u_i2c_dut.
 [treeopen] i2c_testbench.u_i2c_dut.u_wrapped_i2c.
 [sst_width] 281
 [signals_width] 174
 [sst_expanded] 1
-[sst_vpaned_height] 331
+[sst_vpaned_height] 419
+@23
+i2c_testbench.sda_pad_io[4:0]
+@22
+i2c_testbench.scl_pad_io[4:0]
 @28
 i2c_testbench.u_i2c_dut.u_wrapped_i2c.clk_sys_i
 @22
