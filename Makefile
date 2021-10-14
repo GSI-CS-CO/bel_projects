@@ -80,7 +80,7 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		etherbone tools sdbfs toolchain firmware driver
+all:		hdlmake_install etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
@@ -461,8 +461,6 @@ Makefile: prereq-rule
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules"; ./fix-git.sh)
-	@test -d lib/python2.7/site-packages || \
-		(echo "Installing hdlmake"; ./install-hdlmake.sh)
 
 git_submodules_update:
 	@git submodule update --recursive
@@ -470,3 +468,6 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
+hdlmake_install:
+	cd ip_cores/hdlmake/ && python setup.py install --user
+	export PATH=$$PATH:$$HOME/.local/bin

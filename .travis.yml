@@ -35,10 +35,14 @@ install:
 - sudo apt-get install libglib2.0 -y
 - sudo apt-get install xsltproc -y
 - sudo apt-get install libboost-dev -y
+- sudo update-ca-certificates
 
 # update submodules
 before_script:
-- ./autogen.sh
+- export GIT_SSL_NO_VERIFY=true
+- git config http.sslVerify false
+- git config --global http.sslverify "false"
+- make
 
 # build projects and install
 script:
