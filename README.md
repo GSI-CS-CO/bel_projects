@@ -113,6 +113,12 @@ In case you are running Ubuntu:
 sudo apt-get install python-is-python3
 ```
 
+Optional (python-is-python3 not found):
+```
+sudo ln -s /usr/bin/python3 /etc/python
+sudo apt-get install python-setuptools
+```
+
 ### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
