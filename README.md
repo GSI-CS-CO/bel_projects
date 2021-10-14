@@ -107,6 +107,12 @@ export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
+### Error: cd ip_cores/hdlmake/ && python setup.py install --user /bin/sh: 1: python: not found
+In case you are running Ubuntu:
+```
+sudo apt-get install python-is-python3
+```
+
 ### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
