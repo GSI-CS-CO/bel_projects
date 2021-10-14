@@ -232,6 +232,13 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
   signal s_lvds_term    : std_logic_vector(11 downto 1);
 
+  signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 0);
+  signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 0);
+  signal s_i2c_scl_padoen   : std_logic_vector(1 downto 0);
+  signal s_i2c_sda_pad_out  : std_logic_vector(1 downto 0);
+  signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 0);
+  signal s_i2c_sda_padoen   : std_logic_vector(1 downto 0);
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -273,31 +280,33 @@ begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_flash_bits        => 25,
-      g_psram_bits        => c_psram_bits,
-      g_gpio_in           => 4,
-      g_gpio_out          => 4,
-      g_lvds_in           => 3,
-      g_lvds_out          => 3,
-      g_lvds_inout        => 8,
-      g_fixed             => 3,
-      g_en_pcie           => true,
-      g_en_usb            => true,
-      g_en_ssd1325        => true,
-      g_en_nau8811        => true,
-      g_en_psram          => true,
-      g_en_user_ow        => true,
-      g_en_tempsens       => true,
-      g_delay_diagnostics => true,
-      g_en_timer          => true,
-      g_en_eca_tap        => true,
-      g_io_table          => io_mapping_table,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25,
+      g_psram_bits         => c_psram_bits,
+      g_gpio_in            => 4,
+      g_gpio_out           => 4,
+      g_lvds_in            => 3,
+      g_lvds_out           => 3,
+      g_lvds_inout         => 8,
+      g_fixed              => 3,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 2,
+      g_en_pcie            => true,
+      g_en_usb             => true,
+      g_en_ssd1325         => true,
+      g_en_nau8811         => true,
+      g_en_psram           => true,
+      g_en_user_ow         => true,
+      g_en_tempsens        => true,
+      g_delay_diagnostics  => true,
+      g_en_timer           => true,
+      g_en_eca_tap         => true,
+      g_io_table           => io_mapping_table,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -322,6 +331,12 @@ begin
       sfp_tx_disable_o       => open,
       sfp_tx_fault_i         => sfp4_tx_fault,
       sfp_los_i              => sfp4_los,
+      i2c_scl_pad_i          => s_i2c_scl_pad_in,
+      i2c_scl_pad_o          => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o       => s_i2c_scl_padoen,
+      i2c_sda_pad_i          => s_i2c_sda_pad_in,
+      i2c_sda_pad_o          => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o       => s_i2c_sda_padoen,
       gpio_o                 => s_gpio_o,
       gpio_i                 => s_gpio_i,
       lvds_p_i               => s_lvds_p_i,
@@ -395,10 +410,19 @@ begin
   sfp4_green_o <= '0' when led_link_up ='1' else 'Z';
 
   -- GPIO LED outputs
-  led_o(5)         <= '0' when s_gpio_o(1)='1' else 'Z'; -- (baseboard)
-  led_o(6)         <= '0' when s_gpio_o(2)='1' else 'Z'; -- 2.5V output, with 2.5V pull-up
-  led_o(7)         <= '0' when s_gpio_o(3)='1' else 'Z';
-  led_o(8)         <= '0' when s_gpio_o(4)='1' else 'Z';
+  --led_o(5)         <= '0' when s_gpio_o(1)='1' else 'Z'; -- (baseboard)
+  --led_o(6)         <= '0' when s_gpio_o(2)='1' else 'Z'; -- 2.5V output, with 2.5V pull-up
+  --led_o(7)         <= '0' when s_gpio_o(3)='1' else 'Z';
+  --led_o(8)         <= '0' when s_gpio_o(4)='1' else 'Z';
+
+  led_o(5)   <= s_i2c_scl_pad_out(0) when (s_i2c_scl_padoen(0) = '0') else 'Z';
+  led_o(6)   <= s_i2c_sda_pad_out(0) when (s_i2c_sda_padoen(0) = '0') else 'Z';
+  led_o(7)   <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(0) = '0') else 'Z';
+  led_o(8)   <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(0) = '0') else 'Z';
+  interfaces : for i in 0 to 1 generate
+    s_i2c_scl_pad_in(i) <= s_i2c_scl_pad_out(i);
+    s_i2c_sda_pad_in(i) <= s_i2c_sda_pad_out(i);
+  end generate;
 
   -- GPIO inputs
   s_gpio_i <= not button_i;
