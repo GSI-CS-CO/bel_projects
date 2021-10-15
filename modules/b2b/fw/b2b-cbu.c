@@ -3,9 +3,9 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Oct-2021
+ *  version : 15-Oct-2021
  *
- *  firmware implementing the CBU (Central Buncht-To-Bucket Unit)
+ *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000305                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000306                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -157,7 +157,8 @@ uint32_t errorFlags;                    // error flags, bit 0: PM Ext, bit 1: KD
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
-void init() // typical init for lm32
+// typical init for lm32
+void init()
 {
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console   
@@ -165,7 +166,8 @@ void init() // typical init for lm32
 } // init
 
 
-void initSharedMem() // determine address and clear shared mem
+// determine address and clear shared mem
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize) 
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -214,29 +216,45 @@ void initSharedMem() // determine address and clear shared mem
   
   // find address of CPU from external perspective
   idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
+   if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("b2b-cbu: fatal error - did not find LM32-CB-CLUSTER!\n");
+  } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) {
-    cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-  }
-
-  DBPRINT2("b2b-cbu: CPU RAM External 0x%8x, begin shared 0x%08x\n", (unsigned int)cpuRamExternal, SHARED_OFFS);
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("b2b-cbu: fatal error - did not find THIS CPU!\n");
+  } // if idx
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  
+  DBPRINT2("b2b-cbu: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("b2b-cbu: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("b2b-cbu: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  DBPRINT2("b2b-cbu: fw specific shared begin 0x%08x\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-cbu: used size of shared mem is %d words, begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp);
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+  DBPRINT2("b2b-cbu: fw specific shared end   0x%08x\n", pSharedTemp);
+
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("b2b-cbu: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
 } // initSharedMem
 
 
-void extern_clearDiag() // clears all statistics
+// clears all statistics
+void extern_clearDiag()
 {
   statusArray = 0x0;
   nTransfer   = 0x0;
@@ -245,6 +263,7 @@ void extern_clearDiag() // clears all statistics
 } // extern_clearDiag 
 
 
+// clears all multiplexing data
 void clearAllSid()
 {
   int i;
@@ -267,6 +286,7 @@ void clearAllSid()
 } // clearAllSid
 
 
+// submits a new set for a specific sid to the multiplexing data
 uint32_t setSubmit()
 {
   int sid;
@@ -323,6 +343,7 @@ uint32_t setSubmit()
 } // setSubmit
 
 
+// entryActionConfigured called by common ...
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
@@ -345,6 +366,7 @@ uint32_t extern_entryActionConfigured()
 } // extern_entryActionConfigured
 
 
+// entryActionOperation called by common ...
 uint32_t extern_entryActionOperation()
 {
   int      i;
@@ -352,14 +374,15 @@ uint32_t extern_entryActionOperation()
   uint64_t eDummy;
   uint64_t pDummy;
   uint32_t fDummy;
-  uint32_t flagDummy;
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
+  
 
   // clear diagnostics
   fwlib_clearDiag();             
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init set values extraction
@@ -405,12 +428,14 @@ uint32_t extern_entryActionOperation()
 } // extern_entryActionOperation
 
 
+// exitActionOperation called by common ...
 uint32_t extern_exitActionOperation()
 {
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
 
 
+// gets the GID for timing message used for triggering a kicker
 uint32_t getTrigGid(uint32_t extFlag)
 {
   uint32_t trigGid;
@@ -440,6 +465,7 @@ uint32_t getTrigGid(uint32_t extFlag)
 } // getTrigGid
 
 
+// calculates time for extraction
 uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 {
   uint32_t period;
@@ -455,30 +481,6 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
   return COMMON_STATUS_OK;
 } // calcExtTime
 
-/*
-// send event for MIL busses; this is intended for the WR->MIL Gateways for the timing groups ESR_RING and SIS18_RING
-void sendMilTrigger(uint64_t deadline, uint32_t gid, uint32_t sid)
-{
-#ifdef USEMIL
-  uint64_t sendEvtId;                               // evtID to send
-  uint32_t evtNo;                                   // evtNo to send
-
-  switch (gid) {
-    case SIS18_RING :
-      evtNo = B2B_ECADO_B2B_TRIGGERSIS;
-      break;
-    case ESR_RING :
-      evtNo = B2B_ECADO_B2B_TRIGGERESR;
-      break;
-    default :
-      return;
-  } // switch gid
-      
-  sendEvtId = fwlib_buildEvtidV1(gid, evtNo, 0, sid, 0, 0); 
-  fwlib_ebmWriteTM(deadline, sendEvtId, 0, 0);
-#endif
-} // sendMilTrigger
-*/
 
 // fine tune for individual h=1 cycles
 void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t *dt)
@@ -528,6 +530,7 @@ void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t
 } // rfFineTune
 
 
+// true b2b: calculate time for phase match
 uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' RF signal               [as] // sic! atoseconds
@@ -692,6 +695,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
 } // cmdHandler
 
 
+// mini fsm
 uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
@@ -797,10 +801,14 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
 } // getNextMState
 
 
+// doActionOperation: almost everything happens here
 uint32_t doActionOperation(uint32_t actStatus)                // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t flagIsEarly;                                       // flag 'early'
+  uint32_t flagIsConflict;                                    // flag 'conflict'
+  uint32_t flagIsDelayed;                                     // flag 'delayed'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
@@ -822,7 +830,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   status = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate);
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
     
   switch (ecaAction) {
 
@@ -830,9 +838,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       // clear 'local' variables
-      sid        = (uint32_t)((recId >> 20) & 0xfff);         // required for proper indexing
-      gid        = (uint32_t)((recId >> 48) & 0xfff);         // temporary assignment useful for debugging if routine setSubmit() fails
-      bpid       = 0x0;
+      sid        = (uint32_t)((recId >> 20) & 0x0fff);         // required for proper indexing
+      gid        = (uint32_t)((recId >> 48) & 0x0fff);         // temporary assignment useful for debugging if routine setSubmit() fails
+      bpid       = (uint32_t)((recId >>  6) & 0x3fff);         // not part of setting data; 'inherit' from received timing message
       mode       = 0x0;
       nHExt      = 0x0;
       nHInj      = 0x0;
@@ -1026,12 +1034,14 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 } // doActionOperation
 
 
+// main :-)
 int main(void) {
   uint32_t status;                              // (error) status
   uint32_t cmd;                                 // command via shared memory
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
+  uint32_t sharedSize;                          // size of shared memory
   uint32_t *buildID;                            // WB address of build ID
 
   // init local variables
@@ -1046,8 +1056,8 @@ int main(void) {
   pp_printf("\nhallo\nhuhu\n");
   
   init();                                                                     // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-cbu", B2BCBU_FW_VERSION); // init common stuff
-  initSharedMem();                                                            // initialize shared memory
+  initSharedMem(&reqState, &sharedSize);                                     // initialize shared memory THIS MUST BE CALLED FIRST
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "b2b-cbu", B2BCBU_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                          // clear common diagnostic data
 
   while (1) {
