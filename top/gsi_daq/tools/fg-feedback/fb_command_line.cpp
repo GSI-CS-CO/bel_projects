@@ -222,12 +222,21 @@ vector<OPTION> CommandLine::c_optList =
       {
          if( static_cast<CommandLine*>(poParser)->m_verbose )
          {
-            cout << "Version: " TO_STRING( VERSION )
-                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
+            cout << "Version: "
+         #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+                 "* "
+         #endif
+                 TO_STRING( VERSION )
+                    ", Git revision: "
+                 TO_STRING( GIT_REVISION ) << endl;
          }
          else
          {
-            cout << TO_STRING( VERSION ) << endl;
+            cout <<
+         #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+            "* "
+         #endif
+            TO_STRING( VERSION ) << endl;
          }
          ::exit( EXIT_SUCCESS );
          return 0;

@@ -327,6 +327,7 @@ public:
     */
    virtual void onDataReadingPause( void );
 
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    /*!
     * @brief Gives the LM32 the order to clear the data-buffer once he has enter
     *        the handling routine of this buffer.
@@ -337,6 +338,7 @@ public:
       updateMemAdmin();
       sendWasRead( ramRingSharedGetSize( m_poRingAdmin ) );
    }
+#endif
 
 private:
    void checkIntegrity( void );
