@@ -3,7 +3,7 @@
 # Build instructions for the bel_projects project using Travis CI
 #
 # Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
-dist: bionic
+dist: focal
 sudo: required
 jobs:
   include:
