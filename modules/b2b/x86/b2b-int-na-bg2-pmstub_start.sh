@@ -67,6 +67,15 @@ saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
 saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 9900000 0x820 -d
 saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 9900000 0x820  -d
 
+# lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU
+saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 0 0x801 -d
+
+# lm32 listens to CMD_B2B_TRIGGERINJ message from SIS18 CBU - match diagnostic
+saft-ecpu-ctl $SDPM -c 0x112c805000000000 0xfffffff000000000 20000 0x805 -dg
+
+# lm32 listens to >> 9.9ms delayed<< (CMD_B2B_PMINJ) message from SIS18 CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 9900000 0x821  -d
+
 # diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
 saft-io-ctl $SDPM -n IO1 -o 1 -t 0
 saft-io-ctl $SDPM -n IO1 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
