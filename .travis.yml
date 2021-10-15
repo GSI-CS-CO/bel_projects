@@ -3,8 +3,10 @@
 # Build instructions for the bel_projects project using Travis CI
 #
 # Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
-
-anguage: cpp
+arch:
+  - amd64
+  - arm64
+language: cpp
 os: linux
 dist: xenial
 sudo: required
