@@ -36,7 +36,7 @@
  ********************************************************************************************/
 #define B2BCBU_FW_VERSION 0x000306                                      // make this consistent with makefile
 
-/* standard includes */
+// standard includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +44,7 @@
 #include <stdint.h>
 #include <math.h>
 
-/* includes specific for bel_projects */
+// includes specific for bel_projects
 #include "dbg.h"
 #include <stack.h>                                                      // stack check
 #include "ebm.h"
@@ -53,7 +53,7 @@
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 
-/* includes for this project */
+// includes for this project
 #include <common-defs.h>                                                // common defs
 #include <common-fwlib.h>                                               // fw lib
 #include <b2b.h>                                                        // defs for b2b
