@@ -3,11 +3,12 @@
 # Build instructions for the bel_projects project using Travis CI
 #
 # Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
-arch:
-  - amd64
-  - arm64
 dist: bionic
 sudo: required
+jobs:
+  include:
+   - arch: amd64
+   - arch: arm64
 
 git:
   submodules: false
