@@ -3,12 +3,13 @@
 # Build instructions for the bel_projects project using Travis CI
 #
 # Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
-arch:
-  - amd64
-  - arm64
-language: cpp
-os: linux
-dist: xenial
+matrix:
+  include:
+    - arch: amd64
+      dist: xenial
+    - arch: arm64
+      dist: bionic
+
 sudo: required
 
 git:
@@ -27,7 +28,7 @@ install:
 - sudo apt-get install build-essential --install-suggests -y
 - sudo apt-get install docbook-utils -y
 - sudo apt-get install libreadline-dev -y
-- if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then sudo apt-get install linux-headers-$(uname -r) -y; fi
+- sudo apt-get install linux-headers-$(uname -r) -y
 - sudo apt-get install sdcc fxload -y
 - sudo apt-get install autotools-dev -y
 - sudo apt-get install automake -y
