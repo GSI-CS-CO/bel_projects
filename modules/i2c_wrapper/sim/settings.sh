@@ -18,5 +18,5 @@ VHD_FILES="$VHD_PACK \
            $I2C_PATH/i2c_master_top.vhd \
            $I2C_PATH/wb_i2c_master.vhd \
            $I2C_PATH/xwb_i2c_master.vhd \
-           ../src/wb_i2c_wrapper_pkg.vhd \
+           ../src/hdl/wb_i2c_wrapper_pkg.vhd \
            i2c_testbench.vhd"
