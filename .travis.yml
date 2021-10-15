@@ -27,7 +27,6 @@ install:
 - sudo apt-get install build-essential --install-suggests -y
 - sudo apt-get install docbook-utils -y
 - sudo apt-get install libreadline-dev -y
-- sudo apt-get install zlib1g:i386 -y
 - sudo apt-get install linux-headers-$(uname -r) -y
 - sudo apt-get install sdcc fxload -y
 - sudo apt-get install autotools-dev -y
