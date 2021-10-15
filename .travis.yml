@@ -9,6 +9,7 @@ arch:
 language: cpp
 os: linux
 dist: xenial
+sudo: required
 
 git:
   submodules: false
