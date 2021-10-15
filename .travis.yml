@@ -9,7 +9,6 @@ arch:
 language: cpp
 os: linux
 dist: xenial
-sudo: required
 
 git:
   submodules: false
@@ -20,23 +19,24 @@ compiler:
 # show CPU info, update package manager
 before_install:
 - lscpu
-- sudo apt-get update
+- apt-get update
+- apt-get upgrade
 
 # install required packages
 install:
-- sudo apt-get install build-essential --install-suggests -y
-- sudo apt-get install docbook-utils -y
-- sudo apt-get install libreadline-dev -y
-- sudo apt-get install linux-headers-$(uname -r) -y
-- sudo apt-get install sdcc fxload -y
-- sudo apt-get install autotools-dev -y
-- sudo apt-get install automake -y
-- sudo apt-get install libtool -y
-- sudo apt-get install libglibmm-2.4 -y
-- sudo apt-get install libglib2.0 -y
-- sudo apt-get install xsltproc -y
-- sudo apt-get install libboost-dev -y
-- sudo update-ca-certificates
+- apt-get install build-essential --install-suggests -y
+- apt-get install docbook-utils -y
+- apt-get install libreadline-dev -y
+- apt-get install linux-headers-$(uname -r) -y
+- apt-get install sdcc fxload -y
+- apt-get install autotools-dev -y
+- apt-get install automake -y
+- apt-get install libtool -y
+- apt-get install libglibmm-2.4 -y
+- apt-get install libglib2.0 -y
+- apt-get install xsltproc -y
+- apt-get install libboost-dev -y
+- update-ca-certificates
 
 # update submodules
 before_script:
