@@ -34,6 +34,7 @@ install:
 - sudo apt-get install libglib2.0 -y
 - sudo apt-get install xsltproc -y
 - sudo apt-get install libboost-dev -y
+- if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4; fi
 
 # update submodules
 before_script:
