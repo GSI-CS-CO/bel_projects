@@ -3152,7 +3152,9 @@ end generate;
   i2c_wrapper_y : if g_en_i2c_wrapper generate
     i2c_wrapper : xwb_i2c_master
       generic map (
-        g_num_interfaces => g_num_i2c_interfaces)
+        g_interface_mode      => PIPELINED,
+        g_address_granularity => BYTE,
+        g_num_interfaces      => g_num_i2c_interfaces)
       port map (
         clk_sys_i    => clk_sys,
         rst_n_i      => rstn_sys,
