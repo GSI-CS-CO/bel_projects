@@ -128,6 +128,13 @@ You should run "make" to install hdlmake locally. In case you're still using Pyt
 export PATH=$PATH:$HOME/.local/bin
 ```
 
+### Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project/generic_project.git/': server certificate verification failed. CAfile: none CRLfile: none
+Systems with outdated trust databases (root CA certificate Let's Encrypt) will be unable to validate the certificate of the site. Update ca-certificates to fix this:
+```
+sudo apt update
+sudo apt upgrade ca-certificates
+```
+
 ## JTAG and Programming
 ### Altera/Intel USB Blaster
 
