@@ -1,3 +1,3 @@
 files = [
-  "src/wb_i2c_wrapper_pkg.vhd", 
+  "src/hdl/wb_i2c_wrapper_pkg.vhd", 
   ]
