@@ -22,7 +22,14 @@
 const char *program;
 const char *device_name;
 
-/* Main */
+/* Function print_help */
+/* ==================================================================================================== */
+void print_help(void)
+{
+  printf("%s is a simple tool to control each WB I2C master.\n", program);
+}
+
+/* Function main */
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
@@ -40,12 +47,12 @@ int main (int argc, char** argv)
   int current_base = 0;
 
   /* Check argument counter */
+  program = argv[0];
   if (argc < 2)
   {
-    printf("%s: Missing arguments (got only %i)\n", program, argc);
+    printf("Error: Missing arguments (got only %i)!\n", argc);
     return 1;
   }
-  program = argv[0];
   device_name = argv[1];
 
   /* Process the command-line arguments */
@@ -54,13 +61,13 @@ int main (int argc, char** argv)
     switch (opt)
     {
       case 'h':
-        printf("%s: Simple tool to control each I2C master\n", program);
+        print_help();
         return 0;
       case 'v':
         verbose = 1;
         break;
       default:
-        printf("%s: Bad getopt result\n", program);
+        printf("Error: Ambiguous arguments!\n");
         error = 1;
     }
   }
@@ -71,27 +78,27 @@ int main (int argc, char** argv)
   /* Find device */
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_DATAX|EB_ADDRX, &socket)) != EB_OK)
   {
-    printf("%s: Failed to open a socket!\n", program);
+    printf("Error: Failed to open a socket!\n");
     return 1;
   }
 
   if ((status = eb_device_open(socket, device_name, EB_ADDRX|EB_DATAX, 3, &device)) != EB_OK)
   {
-    printf("%s: Failed to open device %s\n", program, device_name);
+    printf("Error: Failed to open device (%s)!\n", device_name);
     return 1;
   }
 
   if ((status = eb_sdb_find_by_identity(device, I2C_WRAP_GSI_ID, I2C_WRAP_ID, &sdb, &devices)) != EB_OK)
   {
-    printf("%s: Failed find I2C master\n", program);
+    printf("Error: Failed find I2C master!\n");
     return 1;
   }
   base = (uint32_t) sdb.sdb_component.addr_first;
 
   if (verbose)
   {
-    printf("%s: Found I2C master at 0x%x (start)\n", program, (uint32_t) sdb.sdb_component.addr_first);
-    printf("%s: Found I2C master at 0x%x (end)\n", program, (uint32_t) sdb.sdb_component.addr_last);
+    printf("Found I2C master at 0x%x-0x%x\n", (uint32_t) sdb.sdb_component.addr_first,
+                                              (uint32_t) sdb.sdb_component.addr_last);
   }
 
   /* Enable core */
@@ -99,7 +106,7 @@ int main (int argc, char** argv)
   {
     current_base = base+(OC_I2C_CTR<<2);
     eb_device_read(device, (eb_address_t)(current_base), EB_DATA32, &data, 0, NULL);
-    printf("%s: Core status: 0x%x (0x%x)\n", program, (uint32_t) data, current_base);
+    printf("Core status: 0x%x (0x%x)\n", (uint32_t) data, current_base);
   }
 
   /* Done */
