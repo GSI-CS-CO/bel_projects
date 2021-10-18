@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Oct-2021
+ *  version : 18-Oct-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -296,15 +296,15 @@ uint32_t setSubmit()
   if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
   else sid = *pSharedSetSidEExt;
 
-  
+  // diable 'valid' flag here so that the corresponding setting is disabled in case of erronous settings
+  setFlagValid[sid]    = 0;
+
   if (*pSharedSetMode >= B2B_MODE_B2C) flagInject = 1;
   else                                 flagInject = 0;
 
   // in case of injection to another ring, we need to check for correct SID of extraction ring
   if (flagInject && (*pSharedSetSidEInj != sid)) return B2B_STATUS_BADSETTING;
   /* more checking required chk */
-
-  setFlagValid[sid]    = 0;
 
   // values required for extraction
   setMode[sid]         = *pSharedSetMode;    

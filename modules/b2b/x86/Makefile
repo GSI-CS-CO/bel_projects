@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := lib b2b-ctl b2b-ui saft-b2b b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
+TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
