@@ -14,12 +14,12 @@ In addition, run scheduleCompare in test mode, comparing a dot file with itself.
 Usage: ./unitTestScheduleCompare.py <binary of scheduleCompare to test>
 """
 class TestScheduleCompare(unittest.TestCase):
-
-  def setUp(self):
+  @classmethod
+  def setUpClass(self):
     """
-    Set up for all test cases: store the arguments in class variables.
+    Set up for all test cases: store the environment variables in variables.
     """
-    self.binary = test_binary
+    self.binary = os.environ.get('TEST_BINARY_SCHEDULECOMPARE', 'scheduleCompare')
 
   def t1est_1print_args(self):
     print(f'Binary: {self.binary}.', end='')
@@ -210,12 +210,3 @@ class TestScheduleCompare(unittest.TestCase):
 
   def test_folder_dot(self):
     self.allPairsFilesInfolderTest('dot1/')
-
-if __name__ == '__main__':
-  if len(sys.argv) > 1:
-#    print(f"Arguments: {sys.argv}")
-    test_binary = sys.argv.pop()
-#    print(f"Arguments: {sys.argv}, {len(sys.argv)}")
-    unittest.main(verbosity=2)
-  else:
-    print("Required argument missing", sys.argv)

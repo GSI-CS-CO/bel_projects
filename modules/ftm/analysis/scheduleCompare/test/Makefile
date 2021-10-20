@@ -1,8 +1,14 @@
-.PHONY: test fast
+# Makefile for tests of scheduleCompare
+
+# folders to ignore (no tests inside)
+IGNORE = --ignore=dot*/
+# pass the command line arguments to pytest
+OPTIONS ?=
 
 test:
-	./unitTestScheduleCompare.py ../main/scheduleCompare
+	TEST_BINARY_SCHEDULECOMPARE=../main/scheduleCompare python3 -m pytest $(IGNORE) $(OPTIONS)
 
 fast:
-	./unitTestScheduleCompare.py --failfast ../main/scheduleCompare
+	TEST_BINARY_SCHEDULECOMPARE=../main/scheduleCompare python3 -m pytest --failfast $(IGNORE) $(OPTIONS)
 
+.PHONY: test fast
