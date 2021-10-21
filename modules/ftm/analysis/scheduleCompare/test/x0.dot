@@ -1,5 +1,5 @@
 digraph G {
-name=x0;
+name=x0
 node [type=tmsg]
 edge [type=xy]
 a -> b -> c -> a
