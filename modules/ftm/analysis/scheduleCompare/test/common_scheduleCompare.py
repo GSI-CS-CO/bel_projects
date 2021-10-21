@@ -43,7 +43,9 @@ class CommonScheduleCompare(unittest.TestCase):
 
   def allPairsFilesInfolderTest(self, folder):
     files = os.listdir(folder)
-    # print (files)
+    # ~ print (files)
+    files = [ x for x in files if '.dot' in x ]
+    # ~ print (files)
     counter = 0
     for dotFile1 in files:
       for dotFile2 in files:
@@ -61,6 +63,7 @@ class CommonScheduleCompare(unittest.TestCase):
 
   def allFilesInfolderTest(self, folder):
     files = os.listdir(folder)
+    files = [ x for x in files if '.dot' in x ]
     # print (files)
     counter = 0
     for dotFile1 in files:
