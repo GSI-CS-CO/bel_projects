@@ -8,22 +8,22 @@ In addition, run scheduleCompare in test mode, comparing a dot file with itself.
 class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
 
   def test_first_isomorphism(self):
-    self.callScheduleCompare('test0.dot', 'test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
+    self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
 
   def test_first_isomorphism_verbose(self):
-    self.callScheduleCompare('test0.dot', 'test0.dot', '-v', expectedReturnCode=0, linesCerr=0, linesCout=25)
+    self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', '-v', expectedReturnCode=0, linesCerr=0, linesCout=25)
 
   def test_subgraph_isomorphism(self):
-    self.callScheduleCompare('x0.dot', 'x1.dot', expectedReturnCode=2, linesCerr=0, linesCout=3)
+    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', expectedReturnCode=2, linesCerr=0, linesCout=3)
 
   def test_subgraph_isomorphism_verbose(self):
-    self.callScheduleCompare('x0.dot', 'x1.dot', '-v', expectedReturnCode=2, linesCerr=0, linesCout=31)
+    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-v', expectedReturnCode=2, linesCerr=0, linesCout=31)
 
   def test_subgraph_isomorphism_superverbose(self):
-    self.callScheduleCompare('x0.dot', 'x1.dot', '-vv', expectedReturnCode=2, linesCerr=0, linesCout=51)
+    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-vv', expectedReturnCode=2, linesCerr=0, linesCout=51)
 
   def test_subgraph_isomorphism_silent(self):
-    self.callScheduleCompare('x0.dot', 'x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
 
   def test_usage_message(self):
     self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=21, linesCout=0)
