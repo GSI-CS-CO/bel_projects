@@ -20,4 +20,4 @@ log 'copying firmware to ramdisk'
 cp -a /opt/$NAME/firmware/* /
 
 log 'starting'
-b2b-sis18-pro-rt1-kick_start.sh
+b2b-pro-sis18-rt1-kick_start.sh
