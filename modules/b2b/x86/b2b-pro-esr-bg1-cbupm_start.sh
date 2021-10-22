@@ -108,11 +108,11 @@ echo -e b2b: configure $SDCBU as cbu
 # configure CBU
 ###########################################
 # lm32 listens to CMD_B2B_START  message from DM
-saft-ecpu-ctl $SDCBU -c 0x115481f000000000 0xfffffff000000000 0 0x031 -d
+saft-ecpu-ctl $SDCBU -c 0x115481f000000000 0xfffffff000000000 0 0x81f -d
 
-# lm32 listens to CMD_B2B_PREXT message from extraction machine, 450us pretrigger
-saft-ecpu-ctl $SDCBU -c 0x13a5802000000000 0xfffffff000000000 450000 0x802 -dg
-saft-ecpu-ctl $SDCBU -c 0x13a6802000000000 0xfffffff000000000 450000 0x802 -dg
+# lm32 listens to CMD_B2B_PREXT message from extraction machine, 250us pretrigger
+saft-ecpu-ctl $SDCBU -c 0x13a5802000000000 0xfffffff000000000 250000 0x802 -dg
+saft-ecpu-ctl $SDCBU -c 0x13a6802000000000 0xfffffff000000000 250000 0x802 -dg
 
 # lm32 listens to CMD_B2B_PRINJ message from injection machine, only for B2B, later
 #saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
