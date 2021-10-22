@@ -17,7 +17,7 @@ export SDCBU=tr1
 # CBU: dev/wbm0, tr1
 #export TRPM=$(saft-eb-fwd tr0)
 #export SDPM=tr0
-#export TRCBU=dev/wbm0
+#export TRCBU=$(saft-eb-fwd tr1)
 #export SDCBU=tr1
 ###########################################
 

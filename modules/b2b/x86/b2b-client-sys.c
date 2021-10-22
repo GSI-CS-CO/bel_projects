@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 6-Sep-2021
+ *  version : 22-Oct-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000302
+#define B2B_CLIENT_SYS_VERSION 0x000303
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -131,7 +131,7 @@ static void help(void) {
   fprintf(stderr, "  -o                  print info only once and exit (useful with '-s')\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display system information on the B2B system\n");
-  fprintf(stderr, "Example1: '%s pro\n", program);
+  fprintf(stderr, "Example1: '%s -s pro'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_CLIENT_SYS_VERSION));

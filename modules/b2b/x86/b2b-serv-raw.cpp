@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 7-Sep-2021
+ *  version : 22-Oct-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000302
+#define B2B_SERV_RAW_VERSION 0x000303
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -347,7 +347,7 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
-  std::cerr << "Example1: '" << program << " tr0 -e0' pro" << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -e0 pro'" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;

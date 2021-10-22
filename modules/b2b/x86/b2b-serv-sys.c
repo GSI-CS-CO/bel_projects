@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Sep-2021
+ *  version : 22-Oct-2021
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -93,7 +93,7 @@ static void help(void) {
   fprintf(stderr, "  -s                  start server publishing system info\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KD...)\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s\n", program);
+  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
