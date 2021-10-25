@@ -199,11 +199,11 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                     )
    :DaqInterface( poEtherbone, doReset, doSendCommand )
    ,m_maxChannels( 0 )
-   ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
+   ,m_poCurrentDescriptor( nullptr )
 {
 }
 
@@ -215,11 +215,11 @@ DaqAdministration::DaqAdministration( DaqAccess* poEbAccess,
                                     )
    :DaqInterface( poEbAccess, doReset, doSendCommand )
    ,m_maxChannels( 0 )
-   ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
+   ,m_poCurrentDescriptor( nullptr )
 {
 }
 
@@ -671,12 +671,16 @@ uint DaqAdministration::distributeData( void )
       throw( DaqException( "Erroneous descriptor" ) );
    }
 
+   /*!
+    * Holds the number of received payload data words without descriptor.
+    */
    std::size_t wordLen;
 
    if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
    { /*
-      * Long block has been detected, in this case the rest of the data
-      * has still to be read from the DAQ-Ram-buffer.
+      * Long block has been detected, (high resolution or post mortem)
+      * in this case the rest of the data has still to be read
+      * from the DAQ-Ram-buffer.
       */
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
       startTime = getSysMicrosecs();
@@ -691,7 +695,8 @@ uint DaqAdministration::distributeData( void )
    }
    else
    { /*
-      * Short block has been detected.
+      * Short block has been detected (continuous mode).
+      * All data of this block has been already read.
       */
       sendWasRead( c_ramBlockShortLen );
       wordLen = c_contineousDataLen - c_discriptorWordSize;

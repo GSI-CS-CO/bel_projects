@@ -765,13 +765,13 @@ class DaqAdministration: public DaqInterface
    friend class DaqChannel;
 
    uint              m_maxChannels;
-   DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
    uint              m_receiveCount;
 
 protected:
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    USEC_T            m_elapsedTime;
 #endif
+   DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
 
    #define DEVICE_LIST_BASE std::list
    using DEVICE_LIST_T = DEVICE_LIST_BASE<DaqDevice*>;

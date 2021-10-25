@@ -661,6 +661,8 @@ private:
 
       void onUnregistered( daq::DAQ_DESCRIPTOR_T& roDescriptor ) override;
 
+      void onBlockReceiveError( void ) override;
+
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -1105,7 +1107,17 @@ protected:
     * @param daqNumber DAQ channel number within the SCU-slave.
     */
    virtual void onUnregisteredAddacDaq( uint slot, uint daqNumber ) {}
-   
+
+   /*!
+    * @brief Optional callback function becomes invoked in the case of a
+    *        possible loss of one or more ADDAC-DAQ date blocks.
+    *
+    * This is the case when the expected block sequence number doesn't fit
+    * to the received sequence number.
+    * @param slot Slot number of SCU-bus
+    * @param daqNumber DAQ channel number within the SCU-slave.
+    */
+   virtual void onAddacBlockError( uint slot, uint daqNumber ) {}
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

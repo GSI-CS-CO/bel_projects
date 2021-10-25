@@ -438,6 +438,14 @@ void AllDaqAdministration::onUnregisteredAddacDaq( uint slot, uint daqNumber )
 
 /*! ---------------------------------------------------------------------------
  */
+void AllDaqAdministration::onAddacBlockError( uint slot, uint daqNumber )
+{
+   WARNING_MESSAGE( "Possible loss of data blocks of ADDAC DAQ "
+                     << daqNumber << " in slot " << slot );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 bool AllDaqAdministration::isRunningOnScu( void ) const
 {
    return m_poCommandLine->isRunningOnScu();

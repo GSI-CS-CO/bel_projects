@@ -246,6 +246,8 @@ public:
 #endif
 
    void onUnregisteredAddacDaq( uint slot, uint daqNumber ) override;
+
+   void onAddacBlockError( uint slot, uint daqNumber ) override;
 };
 
 inline
