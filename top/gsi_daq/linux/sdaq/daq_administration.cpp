@@ -624,6 +624,7 @@ uint DaqAdministration::distributeData( void )
                   "sizeof(PROBE_BUFFER_T) has to be dividable by "
                   "sizeof(RAM_DAQ_PAYLOAD_T) !" );
 
+   //TODO: Timeout detection!
    /*
     * Getting the number of DDR3 memory items which has to be copied
     * in the probe buffer.
@@ -645,6 +646,7 @@ uint DaqAdministration::distributeData( void )
       return toRead;
    }
 
+   //TODO Timeout init
    PROBE_BUFFER_T probe; //!@TODO Move this from stack to the heap!
 #ifdef CONFIG_DAQ_DEBUG
    ::memset( &probe, 0x7f, sizeof( probe ) );
@@ -668,6 +670,7 @@ uint DaqAdministration::distributeData( void )
     */
    if( !::daqDescriptorVerifyMode( &probe.descriptor ) )
    {
+      // TODO virtual function instead a exception.
       throw( DaqException( "Erroneous descriptor" ) );
    }
 
@@ -715,7 +718,6 @@ uint DaqAdministration::distributeData( void )
    else
    {
       readLastStatus();
-      //onBlockReceiveError();
       onUnregistered( probe.descriptor );
    }
 
