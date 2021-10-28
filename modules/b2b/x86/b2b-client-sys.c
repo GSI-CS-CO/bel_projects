@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Oct-2021
+ *  version : 28-Oct-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000303
+#define B2B_CLIENT_SYS_VERSION 0x000304
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define B2BNSYS     10                    // number of B2B systems
+#define B2BNSYS     16                   // number of B2B systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -76,7 +76,13 @@ const char * sysShortNames[] = {
   "esr-pm",
   "esr-kdx",
   "esr-raw",
-  "esr-cal"
+  "esr-cal",
+  "yr-cbu",
+  "yr-pm",
+  "yr-kdi",
+  "yr-kde",
+  "yr-raw",
+  "yr-cal"
 };
 
 const char * ringNames[] = {
@@ -89,7 +95,13 @@ const char * ringNames[] = {
   "   ESR",
   "   ESR",
   "   ESR",
-  "   ESR"
+  "   ESR",
+  "    YR",
+  "    YR",
+  "    YR",
+  "    YR",
+  "    YR",
+  "    YR"
 };
 
 const char * typeNames[] = {
@@ -101,6 +113,12 @@ const char * typeNames[] = {
   "CBU",
   " PM",
   "KDX",
+  "DAQ",
+  "CAL",
+  "CBU",
+  " PM",
+  "KDI",
+  "KDE",
   "DAQ",
   "CAL"
 };
@@ -235,6 +253,7 @@ int main(int argc, char** argv) {
   int      once;
 
   char     userInput;
+  int      sysId;
   int      quit;
 
   char     prefix[DIMMAXSIZE];
@@ -292,10 +311,14 @@ int main(int argc, char** argv) {
       if (once) {sleep(1); quit=1;}                 // wait a bit to get the values
       printServices(once);
       if (!quit) {
+        sysId = 0xffff;
         userInput = comlib_getTermChar();
         switch (userInput) {
+          case 'a' ... 'f' :
+            sysId = userInput - 87;                 // no break on purpose
           case '0' ... '9' :
-            dicCmdClearDiag(prefix, (uint32_t)(userInput - 48));
+            if (sysId == 0xffff) sysId = userInput - 48; // ugly
+            dicCmdClearDiag(prefix, sysId);
             break;
           case 'q'         :
             quit = 1;
