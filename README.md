@@ -107,6 +107,18 @@ export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
+### Error: cd ip_cores/hdlmake/ && python setup.py install --user /bin/sh: 1: python: not found
+In case you are running Ubuntu:
+```
+sudo apt-get install python-is-python3
+```
+
+Optional (python-is-python3 not found):
+```
+sudo ln -s /usr/bin/python3 /etc/python
+sudo apt-get install python-setuptools
+```
+
 ### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
@@ -114,6 +126,13 @@ Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64
 You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable: 
 ```
 export PATH=$PATH:$HOME/.local/bin
+```
+
+### Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project/generic_project.git/': server certificate verification failed. CAfile: none CRLfile: none
+Systems with outdated trust databases (root CA certificate Let's Encrypt) will be unable to validate the certificate of the site. Update ca-certificates to fix this:
+```
+sudo apt update
+sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming

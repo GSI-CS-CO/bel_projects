@@ -64,6 +64,9 @@
 #define  COMMON_LOGLEVEL_STATUS           2    // info on status changes, info on state changes
 #define  COMMON_LOGLEVEL_STATE            3    // info on state changes
 
+// other
+#define COMMON_TIMMSG_LEN                 8    // length of timing message [32bit words]
+
 // ****************************************************************************************
 // DP RAM
 // ****************************************************************************************
@@ -93,7 +96,7 @@
 #define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)
 #define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT      + _32b_SIZE_)         // bitwise state of ongoing transfer
 #define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // shared area for EB return values
-#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes]
+#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */
 #define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE     + _32b_SIZE_)         // here the common part of the shared memory ends
 
 #endif 

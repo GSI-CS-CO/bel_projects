@@ -47,10 +47,11 @@ modules = {
     "prioq2",
     "stub_pll",
     "temp_sens",
-    "eca_tap",	
+    "eca_tap",
     "beam_dump",
     "daq",
     "diob",
     "wb_timer",
+    "i2c_wrapper",
   ]
 }

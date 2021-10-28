@@ -10,6 +10,7 @@ STAGING         ?=
 PREFIX          ?= /usr/local
 SYSCONFDIR      ?= /etc
 PWD             := $(shell pwd)
+UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 export EXTRA_FLAGS
@@ -198,10 +199,16 @@ wrpc-sw-config::
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain wrpc-sw-config
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
+else
+	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+endif
 
 firmware-clean:
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
+endif
 
 # #################################################################################################
 # Arria 2 devices

@@ -3,11 +3,13 @@
 # Build instructions for the bel_projects project using Travis CI
 #
 # Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
-
-anguage: cpp
-os: linux
-dist: xenial
+dist: focal
 sudo: required
+language: cpp
+jobs:
+  include:
+   - arch: amd64
+   - arch: arm64
 
 git:
   submodules: false
@@ -25,19 +27,21 @@ install:
 - sudo apt-get install build-essential --install-suggests -y
 - sudo apt-get install docbook-utils -y
 - sudo apt-get install libreadline-dev -y
-- sudo apt-get install zlib1g:i386 -y
 - sudo apt-get install linux-headers-$(uname -r) -y
 - sudo apt-get install sdcc fxload -y
 - sudo apt-get install autotools-dev -y
 - sudo apt-get install automake -y
 - sudo apt-get install libtool -y
 - sudo apt-get install libglibmm-2.4 -y
-- sudo apt-get install libglib2.0 -y
 - sudo apt-get install xsltproc -y
 - sudo apt-get install libboost-dev -y
+- if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4; fi
 
 # update submodules
 before_script:
+- export GIT_SSL_NO_VERIFY=true
+- git config http.sslVerify false
+- git config --global http.sslverify "false"
 - make
 
 # build projects and install
