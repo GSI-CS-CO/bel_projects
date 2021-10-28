@@ -575,6 +575,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pkg.vhd -librar
 set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_top.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_writer.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/heap/xwb_heap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/i2c_wrapper/src/hdl/wb_i2c_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd -library work
