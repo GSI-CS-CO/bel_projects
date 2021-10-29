@@ -97,8 +97,7 @@ begin
                                                         IOBP_Out(1)(5)  <= quench_sk_out(quench_det_cnt); --0
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
-                                                      -- IOBP_Out(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
-                                                        IOBP_Out(1)(5) <=  AW_Input_Reg(1)(0);--for test
+                                                      IOBP_Out(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
                                                       end if;
                                                       IOBP_Aktiv_LED(1)  <=  (IOBP_Out(1)(5)    &  Deb_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
                                                       OUT_SLOT(1) <= IOBP_out(1);
@@ -138,7 +137,6 @@ begin
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
                                                        IOBP_Out(2)(5)  <= (AW_Output_Reg(1)( 11) AND not IOBP_Masken_Reg7(1));
-                                                       --IOBP_Out(2)(5) <=  AW_Input_Reg(1)(6);--for test
                                                       end if;
                                                       OUT_SLOT(2)<= IOBP_Out(2);
                                                       IOBP_Aktiv_LED(2)  <=  (IOBP_Out(2)(5)    &  Deb_out( 10 DOWNTO  6));  -- Signale für Aktiv-LED's
@@ -178,7 +176,6 @@ begin
                                                         quench_det_cnt <= quench_det_cnt+1;
                                                       else 
                                                         IOBP_Out(3)(5)  <= (AW_Output_Reg(2)( 5) AND not IOBP_Masken_Reg7( 2));
-                                                        --IOBP_Out(3)(5) <=  AW_Input_Reg(2)(0);--for test
                                                       end if;
                                                       IOBP_Aktiv_LED(3)  <=  (IOBP_Out(3)(5)    &  Deb_out( 16 DOWNTO  12));  -- Signale für Aktiv-LED's
                                                       OUT_SLOT(3) <= IOBP_Out(3);
@@ -222,7 +219,6 @@ begin
                                                       quench_det_cnt <= quench_det_cnt+1;
                                                     else 
                                                       IOBP_Out(4)(5)  <= (AW_Output_Reg(2)( 11) AND not IOBP_Masken_Reg7(3));
-                                                      --IOBP_Out(4)(5) <=  AW_Input_Reg(2)(6);--for test
                                                     end if;
                                                     OUT_SLOT(4) <= IOBP_Out(4);
                                                     IOBP_Aktiv_LED(4)  <=  (IOBP_Out(4)(5)    &  Deb_out( 22 DOWNTO  18));  -- Signale für Aktiv-LED's
@@ -266,7 +262,6 @@ begin
                                                           quench_det_cnt <= quench_det_cnt+1;          
                                                       else 
                                                        IOBP_Out(5)(5)  <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
-                                                       --IOBP_Out(5)(5) <=  AW_Input_Reg(3)(0);--for test
                                                       end if;
                                                       IOBP_Aktiv_LED(5)  <=  (IOBP_Out(5)(5)    &  Deb_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
                                                       OUT_SLOT(5) <= IOBP_Out(5);
@@ -315,7 +310,6 @@ begin
                                                         end if;
                                                     else 
                                                      IOBP_Out(6)(5)  <= (AW_Output_Reg(3)( 11) AND not IOBP_Masken_Reg7(5));
-                                                     --IOBP_Out(6)(5) <=  AW_Input_Reg(3)(6);--for test
                                                     end if;
                                                       OUT_SLOT(6)<= IOBP_Out(6);
                                                       IOBP_Aktiv_LED(6)  <=  (IOBP_Out(6)(5) & Deb_out( 34 DOWNTO  30));  -- Signale für Aktiv-LED's
@@ -362,7 +356,6 @@ begin
                                                         end if;
                                                   else 
                                                       IOBP_Out(7)(5)  <= (AW_Output_Reg(4)( 5) AND not IOBP_Masken_Reg7(6));
-                                                      --IOBP_Out(7)(5) <=  AW_Input_Reg(4)(0);--for test
                                                   end if;
                                                       OUT_SLOT(7) <= IOBP_Out(7);
                                                       IOBP_Aktiv_LED(7)  <=  (IOBP_Out(7)(5)    &  Deb_out( 40 DOWNTO  36));  -- Signale für Aktiv-LED's
@@ -409,7 +402,6 @@ begin
                                                         end if;
                                                       else 
                                                         IOBP_Out(8)(5)  <= (AW_Output_Reg(4)( 11) AND not IOBP_Masken_Reg7(7));
-                                                        --IOBP_Out(8)(5) <=  AW_Input_Reg(4)(6);--for test
                                                     end if;
                                                       OUT_SLOT(8) <= IOBP_Out(8);
                                                       IOBP_Aktiv_LED(8)  <=  (IOBP_Out(8)(5)    &  Deb_out( 46 DOWNTO  42));  -- Signale für Aktiv-LED's
@@ -435,7 +427,11 @@ begin
                                                       ENA_SLOT(9) <= std_logic_vector'("111111");
                                                       IOBP_Aktiv_LED(9)  <=  IOBP_Out(9); 
                                                       ENA_SLOT(9) <= std_logic_vector'("100000");
-                                                      IOBP_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9 
+                                                  
+                                                      when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 9
+                                                      AW_Input_Reg(5)( 4 downto  0) <=   (Deb_Sync( 52 downto  48) AND not IOBP_Masken_Reg5( 4 downto  0));  -- Input, IO-Modul Nr. 9
+                                                      AW_Input_Reg(5)(5) <='0';              
                                                       IOBP_In_Reg(9) (4 downto 0) <= ( PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       if  (Config = x"DEDE") then      
                                                         if quench_det_cnt = 2 then
@@ -450,7 +446,6 @@ begin
                                                         end if;
                                                 else 
                                                       IOBP_Out(9)(5)  <= (AW_Output_Reg(5)(5) AND not IOBP_Masken_Reg7(8));
-                                                      --IOBP_Out(9)(5) <=  AW_Input_Reg(5)(0);--for test
                                                 end if;
                                                       OUT_SLOT(9) <= IOBP_Out(9);
                                                       IOBP_Aktiv_LED(9)  <=  (IOBP_Out(9)(5)    &  Deb_out( 52 DOWNTO 48));  -- Signale für Aktiv-LED's
@@ -497,7 +492,6 @@ begin
                                                        end if;
                                                       else 
                                                         IOBP_Out(10)(5)  <= (AW_Output_Reg(5)( 11) AND not IOBP_Masken_Reg7(9));
-                                                        --IOBP_Out(10)(5) <=  AW_Input_Reg(5)(6);--for test
                                                       end if;
                                                       OUT_SLOT(10) <= IOBP_Out(10);
                                                       IOBP_Aktiv_LED(10)  <=  (IOBP_Out(10)(5)    &  Deb_out( 58 DOWNTO  54));  -- Signale für Aktiv-LED's
@@ -544,7 +538,6 @@ begin
                                                         end if;
                                                     else 
                                                       IOBP_Out(11)(5)  <= (AW_Output_Reg(6)( 5) AND not IOBP_Masken_Reg7(10));
-                                                      --IOBP_Out(11)(5) <=  AW_Input_Reg(6)(0);--for test
                                                     end if;
                                                       OUT_SLOT(11) <= IOBP_Out(11);
                                                       IOBP_Aktiv_LED(11)  <=  (IOBP_Out(11)(5)    &  Deb_out( 64 DOWNTO 60));  -- Signale für Aktiv-LED's
@@ -591,7 +584,6 @@ begin
                                                         end if;
                                                       else 
                                                        IOBP_Out(12)(5)  <= (AW_Output_Reg(6)( 11) AND not IOBP_Masken_Reg7(11));
-                                                       --IOBP_Out(12)(5) <=  AW_Input_Reg(6)(6);--for test
                                                       end if;
                                                       OUT_SLOT(12) <= IOBP_Out(12);
                                                       IOBP_Aktiv_LED(12)  <=  (IOBP_Out(12)(5)    &  Deb_out( 70 DOWNTO  66));  -- Signale für Aktiv-LED's
