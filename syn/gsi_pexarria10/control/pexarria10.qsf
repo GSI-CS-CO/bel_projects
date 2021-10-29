@@ -721,6 +721,16 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[4]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[6]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[7]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[4]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[5]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[4]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_out_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nuser_pb_i
@@ -751,16 +761,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_DCLK
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_nCSO
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_scl_io[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_scl_io[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_scl_io[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_scl_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_scl_io[5]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_sda_io[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_sda_io[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_sda_io[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_sda_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_i2c_sda_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[2]
@@ -911,7 +911,7 @@ set_location_assignment PIN_AC4 -to usbc_rx1_p[4]
 set_location_assignment PIN_AC5 -to usbc_rx1_n[4]
 set_location_assignment PIN_AC7 -to usbc_rx2_n[4]
 set_location_assignment PIN_AC9 -to usbc_rx4_p[4]
-set_location_assignment PIN_AD19 -to usbc_i2c_sda_io[5]
+set_location_assignment PIN_AD19 -to i2c_sda_pad_io[5]
 #set_location_assignment PIN_AD1  -to  usbc_tx2_n[4]
 set_location_assignment PIN_AD24 -to usb_pa_io[3]
 set_location_assignment PIN_AD25 -to usb_fd_io[6]
@@ -937,7 +937,7 @@ set_location_assignment PIN_AE6 -to usbc_rx5_p[4]
 set_location_assignment PIN_AE7 -to usbc_rx5_n[4]
 set_location_assignment PIN_AE8 -to wr_ndac_cs_o[2]
 set_location_assignment PIN_AE9 -to wr_dac_sclk_o
-set_location_assignment PIN_AF19 -to usbc_i2c_scl_io[5]
+set_location_assignment PIN_AF19 -to i2c_scl_pad_io[5]
 set_location_assignment PIN_AF1 -to usbc_tx2_p[5]
 set_location_assignment PIN_AF23 -to UM_nCSO
 set_location_assignment PIN_AF25 -to usb_fd_io[0]
@@ -970,7 +970,7 @@ set_location_assignment PIN_AH3 -to usbc_tx4_p[5]
 set_location_assignment PIN_AH4 -to usbc_rx2_n[5]
 set_location_assignment PIN_AH7 -to cpld_io[4]
 set_location_assignment PIN_AH8 -to cpld_io[2]
-set_location_assignment PIN_AJ17 -to usbc_i2c_sda_io[4]
+set_location_assignment PIN_AJ17 -to i2c_sda_pad_io[4]
 set_location_assignment PIN_AJ1 -to usbc_rx1_p[5]
 set_location_assignment PIN_AJ24 -to UM_AS_D[2]
 set_location_assignment PIN_AJ25 -to usb_pa_io[0]
@@ -982,9 +982,9 @@ set_location_assignment PIN_AJ34 -to pcie_tx_o[2]
 set_location_assignment PIN_AJ4 -to usbc_rx2_p[5]
 set_location_assignment PIN_AJ6 -to sfp_tx_fault_i
 set_location_assignment PIN_AJ7 -to sfp_tx_disable_o
-set_location_assignment PIN_AK14 -to usbc_i2c_sda_io[3]
-set_location_assignment PIN_AK17 -to usbc_i2c_scl_io[4]
-set_location_assignment PIN_AK18 -to usbc_i2c_scl_io[3]
+set_location_assignment PIN_AK14 -to i2c_sda_pad_io[3]
+set_location_assignment PIN_AK17 -to i2c_scl_pad_io[4]
+set_location_assignment PIN_AK18 -to i2c_scl_pad_io[3]
 set_location_assignment PIN_AK1 -to usbc_rx5_n[5]
 set_location_assignment PIN_AK24 -to UM_AS_D[1]
 set_location_assignment PIN_AK26 -to usb_slwr_o
@@ -1005,7 +1005,7 @@ set_location_assignment PIN_AL34 -to pcie_tx_o[1]
 set_location_assignment PIN_AL4 -to "clk_125m_local_alt_i(n)"
 set_location_assignment PIN_AL5 -to clk_125m_local_alt_i
 set_location_assignment PIN_AL6 -to sfp_los_i
-set_location_assignment PIN_AM17 -to usbc_i2c_scl_io[2]
+set_location_assignment PIN_AM17 -to i2c_scl_pad_io[2]
 #set_location_assignment PIN_AM17 -to wr_aux_leds_o[0]
 #set_location_assignment PIN_AM18 -to wr_aux_leds_o[1]
 set_location_assignment PIN_AM1 -to sfp_mod1_io
@@ -1015,11 +1015,11 @@ set_location_assignment PIN_AM25 -to usb_uclk_i
 set_location_assignment PIN_AM26 -to UM_DCLK
 set_location_assignment PIN_AM27 -to usb_pa_io[5]
 set_location_assignment PIN_AM2 -to sfp_mod2_io
-set_location_assignment PIN_AN14 -to usbc_i2c_sda_io[1]
+set_location_assignment PIN_AN14 -to i2c_sda_pad_io[1]
 #set_location_assignment PIN_AN14 -to wr_leds_o[2]
 #set_location_assignment PIN_AN15 -to wr_leds_o[3]
 #set_location_assignment PIN_AN17 -to wr_aux_leds_o[2]
-set_location_assignment PIN_AN18 -to usbc_i2c_sda_io[2]
+set_location_assignment PIN_AN18 -to i2c_sda_pad_io[2]
 #set_location_assignment PIN_AN18 -to wr_aux_leds_o[3]
 set_location_assignment PIN_AN20 -to sfp_led_fpr_o
 set_location_assignment PIN_AN23 -to wr_leds_o[1]
@@ -1027,8 +1027,8 @@ set_location_assignment PIN_AN25 -to usb_ctl_i[1]
 set_location_assignment PIN_AN27 -to usb_pa_io[4]
 set_location_assignment PIN_AN33 -to "pcie_tx_o[0](n)"
 set_location_assignment PIN_AN34 -to pcie_tx_o[0]
+set_location_assignment PIN_AP14 -to i2c_scl_pad_io[1]
 #set_location_assignment PIN_AP14 -to rt_leds_o[3]
-set_location_assignment PIN_AP14 -to usbc_i2c_scl_io[1]
 #set_location_assignment PIN_AP15 -to rt_leds_o[2]
 #set_location_assignment PIN_AP16 -to rt_leds_o[1]
 #set_location_assignment PIN_AP17 -to rt_leds_o[0]
@@ -1172,7 +1172,7 @@ set_location_assignment PIN_Y8 -to usbc_tx1_p[2]
 # SFP
 # Start pinning
 # TCB clock
-# This one is not sure connected to 
+# This one is not sure connected to
 #UM_AS (Not implemented)
 # USB
 # USBC
