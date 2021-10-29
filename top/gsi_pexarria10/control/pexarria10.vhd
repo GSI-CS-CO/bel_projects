@@ -68,8 +68,8 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    i2c_scl_pad_io   : inout std_logic_vector(4 downto 0);
-    i2c_sda_pad_io   : inout std_logic_vector(4 downto 0);
+    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -138,8 +138,6 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
     -----------------------------------------------------------------------
-    usbc_i2c_scl_io : inout std_logic_vector(5 downto 1);
-    usbc_i2c_sda_io : inout std_logic_vector(5 downto 1);
     usbc_tx1_en     : out std_logic_vector(5 downto 1);
     usbc_tx2_en     : out std_logic_vector(5 downto 1);
     usbc_tx3_en     : out std_logic_vector(5 downto 1);
@@ -382,7 +380,7 @@ begin
   end generate;
 
   -- I2C
-  interfaces : for i in 0 to 4 generate
+  interfaces : for i in 1 to 5 generate
     i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
     i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
     s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
