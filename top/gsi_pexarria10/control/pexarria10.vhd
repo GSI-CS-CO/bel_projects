@@ -181,12 +181,12 @@ architecture rtl of pexarria10 is
   signal s_lvds_p_o : std_logic_vector(24 downto 0);
   signal s_lvds_n_o : std_logic_vector(24 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_padoen   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_padoen   : std_logic_vector(4 downto 0);
+  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
