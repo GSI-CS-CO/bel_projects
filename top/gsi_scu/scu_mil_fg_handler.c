@@ -188,6 +188,7 @@ STATIC void printMilError( const int status, const int slave_nr )
    #undef __CASE_ITEM
    mprintf( ESC_ERROR "MIL-Error: \"%s\" %d, slave: %d\n" ESC_NORMAL,
             errStr, status, slave_nr );
+   //!@todo Push it in history.
 }
 
 /*! ---------------------------------------------------------------------------
@@ -844,7 +845,7 @@ void milDeviceHandler( register TASK_T* pThis )
       {
          if( queuePopSave( &g_queueMilFg, &pMilData->lastMessage ) )
          {
-            FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
+            FSM_TRANSITION( ST_PREPARE, label='Message received', color=green );
             break;
          }
       #ifdef CONFIG_READ_MIL_TIME_GAP
