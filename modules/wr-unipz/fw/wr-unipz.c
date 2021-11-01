@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Sep-2021
+ *  version : 01-Nov-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000208                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000209                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -297,7 +297,7 @@ void init()
 
 
 // determine address and clear shared mem
-void initSharedMem() 
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize) 
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -326,26 +326,43 @@ void initSharedMem()
   pSharedEvtFlag          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_FLAGS >> 2));
   
   // find address of CPU from external perspective
+  cpuRamExternal = 0x0;
   idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("wr-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+  } // if idx     	
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("wr-unipz: fatal error - did not find THIS CPU!\n");
+  } // if idx    
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("wr-unipz: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("wr-unipz: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("wr-unipz: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
-  DBPRINT2("wr-unipz: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
+  DBPRINT2("wr-unipz: fw specific shared begin 0x%08x\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (WRUNIPZ_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
+  DBPRINT2("dm-unipz: fw specific shared end   0x%08x\n", pSharedTemp);
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
-  
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console                                                                                                                                                                                                                
+  DBPRINT1("\n");
+  DBPRINT1("wr-unipz: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
+
   // set initial values;
 } // initSharedMem 
 
@@ -514,7 +531,7 @@ uint32_t extern_entryActionOperation()
   uint64_t iDummy;
   uint64_t pDummy;
   uint32_t fDummy;
-  uint32_t flagDummy;
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
 
   fwlib_clearDiag();
   clearAllPZ();                                              // clear all event tables
@@ -530,7 +547,7 @@ uint32_t extern_entryActionOperation()
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) != WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
@@ -577,7 +594,11 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint64_t recEvtId;                                          // event ID received via ECA
   uint64_t recParam;                                          // param received via ECA
   uint32_t recTEF;                                            // TEF field received via ECA
-  uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t flagLate;                                          // flag indicating that we received a 'late' event from ECA
+  uint32_t flagEarly;                                         // flag indicating that a 'early event' was received from data master
+  uint32_t flagConflict;                                      // flag indicating that a 'conflict event' was received from data master
+  uint32_t flagDelayed;                                       // flag indicating that a 'delayed event' was received from data master
+
   uint64_t deadline;                                          // deadline to be used for action
   uint64_t tMIL;                                              // time when MIL event was received
   uint64_t tDummy;                                            // dummy timestamp
@@ -614,7 +635,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
       
       // get timestamp from TLU -> ECA
-      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagLate, &flagEarly, &flagConflict, &flagDelayed);
       deadline = recDeadline;
       
       // check, if timestamping via TLU failed; if yes, continue with TS from MIL
@@ -669,7 +690,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       // reset requested virt accs; flush ECA queue
       for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
-      while (fwlib_wait4ECAEvent(0, &tDummy, &iDummy, &pDummy, &fDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+      while (fwlib_wait4ECAEvent(0, &tDummy, &iDummy, &pDummy, &fDummy, &flagLate, &flagEarly, &flagConflict, &flagDelayed) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
       
       break;
       
@@ -745,6 +766,8 @@ int main(void) {
   uint32_t actState;                                          // actual FSM state
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
+  uint32_t sharedSize;                                        // size of shared memory
+
   uint32_t *buildID;
 
   // init local variables
@@ -755,9 +778,9 @@ int main(void) {
   buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);
 
   // init 
-  init();                                                              // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "wr-unipz", WRUNIPZ_FW_VERSION); // init common stuff
-  initSharedMem();                                                     // initialize shared memory
+  init();
+  initSharedMem(&reqState, &sharedSize);                               // initialize shared memory THIS MUST BE CALLED FIRST
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "wr-unipz", WRUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
 
   while (1) {
