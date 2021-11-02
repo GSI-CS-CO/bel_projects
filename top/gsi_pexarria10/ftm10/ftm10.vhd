@@ -62,6 +62,12 @@ entity ftm10 is
     lemo_n_o : out   std_logic_vector(19 downto 0);
 
     -----------------------------------------------------------------------
+    -- I2C
+    -----------------------------------------------------------------------
+    i2c_scl_pad_io   : inout std_logic_vector(4 downto 0);
+    i2c_sda_pad_io   : inout std_logic_vector(4 downto 0);
+
+    -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
@@ -130,6 +136,13 @@ architecture rtl of ftm10 is
   signal s_lvds_p_o     : std_logic_vector(19 downto 0);
   signal s_lvds_n_o     : std_logic_vector(19 downto 0);
 
+  signal s_i2c_scl_pad_out  : std_logic_vector(4 downto 0);
+  signal s_i2c_scl_pad_in   : std_logic_vector(4 downto 0);
+  signal s_i2c_scl_padoen   : std_logic_vector(4 downto 0);
+  signal s_i2c_sda_pad_out  : std_logic_vector(4 downto 0);
+  signal s_i2c_sda_pad_in   : std_logic_vector(4 downto 0);
+  signal s_i2c_sda_padoen   : std_logic_vector(4 downto 0);
+
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
   signal s_clk_125m_local_i     : std_logic;
@@ -187,27 +200,29 @@ begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_flash_bits        => 25, -- !!! TODO: Check this
-      g_gpio_out          => 4,
-      g_gpio_inout        => 10,
-      g_lvds_inout        => 20,
-      g_en_pcie           => true,
-      g_en_tlu            => false,
-      g_en_usb            => true,
-      g_io_table          => io_mapping_table,
-      g_a10_use_sys_fpll  => false,
-      g_a10_use_ref_fpll  => false,
-      g_dual_port_wr      => true,
-      g_en_eca            => false,
-      g_delay_diagnostics => true,
-      g_lm32_are_ftm      => true,
-      g_lm32_MSIs         => 1,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25, -- !!! TODO: Check this
+      g_gpio_out           => 4,
+      g_gpio_inout         => 10,
+      g_lvds_inout         => 20,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 5,
+      g_en_pcie            => true,
+      g_en_tlu             => false,
+      g_en_usb             => true,
+      g_io_table           => io_mapping_table,
+      g_a10_use_sys_fpll   => false,
+      g_a10_use_ref_fpll   => false,
+      g_dual_port_wr       => true,
+      g_en_eca             => false,
+      g_delay_diagnostics  => true,
+      g_lm32_are_ftm       => true,
+      g_lm32_MSIs          => 1,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -235,6 +250,12 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
+      i2c_scl_pad_i           => s_i2c_scl_pad_in,
+      i2c_scl_pad_o           => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o        => s_i2c_scl_padoen,
+      i2c_sda_pad_i           => s_i2c_sda_pad_in,
+      i2c_sda_pad_o           => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o        => s_i2c_sda_padoen,
       gpio_o                  => s_gpio_o,
       gpio_i                  => s_gpio_i,
       lvds_p_i                => s_lvds_p_i,
@@ -290,6 +311,14 @@ begin
     s_lvds_n_i(i)      <= lemo_n_i(i);
     lemo_p_o(i)        <= s_lvds_p_o(i);
     lemo_n_o(i)        <= s_lvds_n_o(i);
+  end generate;
+
+  -- I2C
+  interfaces : for i in 0 to 4 generate
+    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
+    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
   end generate;
 
   -- CPLD

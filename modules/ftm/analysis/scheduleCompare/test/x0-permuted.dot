@@ -1,0 +1,6 @@
+digraph G {
+name="x0-permuted";
+node [type=tmsg]
+edge [type=xy]
+b -> c -> a -> b
+}

@@ -22,7 +22,10 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *evtId,         // event ID
                              uint64_t *param,         // parameter field
                              uint32_t *tef,           // TEF filed
-                             uint32_t *isLate         // flag 'is late'
+                             uint32_t *isLate,        // flag 'late'
+                             uint32_t *isEarly,       // flag 'early'
+                             uint32_t *isConflict,    // flag 'conflict'
+                             uint32_t *isDelayed      // flag 'delayed'
                              );
 
 // wait for MIL event or timeout, returns (error) status
@@ -39,9 +42,11 @@ void fwlib_milPulseLemo(uint32_t nLemo                // # of lemo output (start
                         );
 
 // initialize fwlib stuff and WB slave addresses
+// IMPORTANT: *cpuRamExternal must be set prior calling this routine; typically this is done in routine initShared() of the main program
 void fwlib_init(uint32_t *startShared,                // start of shared section (external view)
                 uint32_t *cpuRamExternal,             // lm32 RAM (external view)
                 uint32_t sharedOffs,                  // offset for shared section
+                uint32_t sharedSize,                  // total size of DP RAM 
                 char*    name,                        // firmware name
                 uint32_t fwVersion                    // firmware version
                 );
@@ -129,6 +134,15 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid,              // group ID
                             uint32_t bpid,             // beam process ID
                             uint32_t reserved          // reserved
                             );
+
+// write timing message to input of ECA
+// deadline must be a least (COMMON_LATELIMIT) in the future
+// if not, the  message will be rescheduled using COMMON_AHEADT
+uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
+                          uint64_t evtId,              // event ID
+                          uint64_t param,              // parameter field
+                          uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
+                          );
 
 
 // write timing message via Etherbone, returns (error) status
