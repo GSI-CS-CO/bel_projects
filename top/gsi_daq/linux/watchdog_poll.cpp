@@ -27,4 +27,30 @@
 
 using namespace Scu;
 
+/*! ---------------------------------------------------------------------------
+ * @see watchdog_poll.hpp
+ */
+void Watchdog::start( const uint64_t timeout )
+{
+   if( timeout != 0 )
+      m_timeout = timeout;
+
+   m_currentLimit = m_timeout + daq::getSysMicrosecs();
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see watchdog_poll.hpp
+ */
+bool Watchdog::isBarking( void )
+{
+   if( !isActive() )
+      return false;
+
+   if( daq::getSysMicrosecs() < m_currentLimit )
+      return false;
+
+   stop();
+   return true;
+}
+
 //================================== EOF ======================================

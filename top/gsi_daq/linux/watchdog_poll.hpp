@@ -38,13 +38,17 @@ class Watchdog
 {
    uint64_t  m_timeout;
    uint64_t  m_currentLimit;
-public:
 
+public:
+   /*!
+    * @brief Constructor of watchdog object
+    * @param timeout The watchdogs watching time in microseconds.
+    */
    Watchdog( const uint64_t timeout = 0 ):
       m_timeout( timeout ),
       m_currentLimit( 0 )
    {}
-   
+
    ~Watchdog( void ) {}
 
    /*!
@@ -52,6 +56,8 @@ public:
     *
     * This function has to be in the initialization part outside
     * of the polling loop.
+    *
+    * @param timeout The watchdogs watching time in microseconds.
     */
    void start( const uint64_t timeout = 0 );
 
@@ -63,6 +69,29 @@ public:
     */
    bool isBarking( void );
 
+   /*!
+    * @brief Returns true if the watchdog is watching.
+    */
+   bool isActive( void ) const
+   {
+      return (m_currentLimit != 0);
+   }
+
+   /*!
+    * @brief Deactivates the watchdog.
+    */
+   void stop( void )
+   {
+      m_currentLimit = 0;
+   }
+
+   /*!
+    * @brief Returns the watchdogs watching time in microseconds.
+    */
+   uint64_t getWatchTime( void ) const
+   {
+      return m_timeout;
+   }
 };
 
 } // namespace Scu

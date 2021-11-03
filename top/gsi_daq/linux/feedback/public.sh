@@ -9,7 +9,7 @@
 ## (c)     GSI Helmholtz Centre for Heavy Ion Research GmbH                  ##
 ## Date:   14.10.2020                                                        ##
 ###############################################################################
-VERSION_DIR="1.2.8"
+VERSION_DIR="1.3.0"
 
 SOURCE_BASE_DIR="/common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/"
 DESTINATION_BASE_DIR="/common/usr/cscofe/opt/daq-fg/${VERSION_DIR}/"
@@ -33,6 +33,7 @@ COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/daq_fg_allocator.h"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_calculations.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_administration.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/sdaq/daq_interface.hpp"
+COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/watchdog_poll.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_base_interface.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/daq_exception.hpp"
 COPY_LIST="${COPY_LIST} ${SOURCE_BASE_DIR}top/gsi_daq/linux/scu_env.hpp"

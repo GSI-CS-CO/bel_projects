@@ -28,6 +28,7 @@ SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_lm32_mailbox.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
+SOURCE += $(DAQ_LINUX_DIR)/watchdog_poll.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
@@ -55,6 +56,8 @@ DOX_INPUT += $(SCU_DIR)/scu_circular_buffer.h
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/daq
 endif
+
+DOX_EXPAND_AS_DEFINED      = ADD_NAMESPACE
 
 DOX_EXAMPLE_PATH = $(DAQ_LINUX_DIR)/../example/feedback/
 DOX_EXTRACT_PRIVATE = "YES"

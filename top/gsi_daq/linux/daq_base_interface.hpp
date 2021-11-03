@@ -33,6 +33,7 @@
 #include <daqt_messages.hpp>
 #include <daq_ring_admin.h>
 #include <daq_fg_allocator.h>
+#include <watchdog_poll.hpp>
 #include <assert.h>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
