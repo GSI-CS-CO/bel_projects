@@ -121,12 +121,11 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             const bool doReset,
                             const bool doSendCommand
                           )
-   :DaqBaseInterface( poEtherbone )
+   :DaqBaseInterface( poEtherbone, c_dataTimeout )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
    ,m_doSendCommand( doSendCommand )
-   //,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
@@ -135,12 +134,11 @@ DaqInterface::DaqInterface( DaqAccess* poEbAccess,
                             const bool doReset,
                             const bool doSendCommand
                           )
-   :DaqBaseInterface( poEbAccess )
+   :DaqBaseInterface( poEbAccess, c_dataTimeout )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
    ,m_doSendCommand( doSendCommand )
-//   ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }

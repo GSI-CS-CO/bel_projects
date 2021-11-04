@@ -29,6 +29,7 @@
 #include <daq_base_interface.hpp>
 #include <scu_fg_list.hpp>
 #include <daq_ramBuffer.h>
+#include <daq_calculations.hpp>
 
 namespace Scu
 {
@@ -49,6 +50,8 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class DaqInterface: public DaqBaseInterface
 {
+   constexpr static uint c_dataTimeout = 10 * daq::MICROSECS_PER_SEC;
+
 public:
    // TODO Replace these naked numbers asap!!!
    constexpr static uint         c_maxDevices        = 40;

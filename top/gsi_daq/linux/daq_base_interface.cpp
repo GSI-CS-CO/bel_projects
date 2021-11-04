@@ -55,12 +55,14 @@ const std::string Scu::daq::deviceType2String( const DAQ_DEVICE_TYP_T typ )
 ///////////////////////////////////////////////////////////////////////////////
 /*! --------------------------------------------------------------------------
  */
-DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
+DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone,
+                                    const uint64_t dataTimeout )
    :m_poEbAccess( new DaqAccess( poEtherbone ) )
    ,m_ebAccessSelfCreated( true )
    ,m_poRingAdmin( nullptr )
    ,m_lastReadIndex( 0 )
    ,m_daqBaseOffset( 0 )
+   ,m_oWatchdog( dataTimeout )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
    ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 {
@@ -69,12 +71,14 @@ DaqBaseInterface::DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone )
 
 /*! --------------------------------------------------------------------------
  */
-DaqBaseInterface::DaqBaseInterface( DaqAccess* poEbAccess )
+DaqBaseInterface::DaqBaseInterface( DaqAccess* poEbAccess,
+                                    const uint64_t dataTimeout )
    :m_poEbAccess( poEbAccess )
    ,m_ebAccessSelfCreated( false )
    ,m_poRingAdmin( nullptr )
    ,m_lastReadIndex( 0 )
    ,m_daqBaseOffset( 0 )
+   ,m_oWatchdog( dataTimeout )
    ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
    ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 {
@@ -165,6 +169,9 @@ uint DaqBaseInterface::getNumberOfNewData( void )
 {
    assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
 
+   if( m_oWatchdog.isBarking() )
+      onDataTimeout();
+
    const uint lastWasToRead = getWasRead();
 
    /*
@@ -188,7 +195,12 @@ uint DaqBaseInterface::getNumberOfNewData( void )
    }
    m_lastReadIndex = getReadIndex();
 
-   return getCurrentNumberOfData();
+   const uint ret = getCurrentNumberOfData();
+
+   if( ret != 0 )
+      m_oWatchdog.start();
+
+   return ret;
 }
 
 /*! --------------------------------------------------------------------------

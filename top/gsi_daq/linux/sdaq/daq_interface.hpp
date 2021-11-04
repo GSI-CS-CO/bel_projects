@@ -106,6 +106,8 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class DaqInterface: public DaqBaseInterface
 {
+   constexpr static uint c_dataTimeout = 1 * MICROSECS_PER_SEC;
+
 public:
    using SLOT_FLAGS_T  = Bus::SCUBUS_SLAVE_FLAGS_T;
    using RETURN_CODE_T = DAQ_OP_STATE_T;

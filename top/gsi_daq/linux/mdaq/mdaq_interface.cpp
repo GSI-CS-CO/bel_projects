@@ -33,13 +33,13 @@ using namespace std;
 /*! ---------------------------------------------------------------------------
  */
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone )
-   :DaqBaseInterface( poEtherbone )
+   :DaqBaseInterface( poEtherbone, c_dataTimeout )
 {
    init();
 }
 
 DaqInterface::DaqInterface( DaqAccess* poEbAccess )
-   :DaqBaseInterface( poEbAccess )
+   :DaqBaseInterface( poEbAccess, c_dataTimeout )
 {
    init();
 }

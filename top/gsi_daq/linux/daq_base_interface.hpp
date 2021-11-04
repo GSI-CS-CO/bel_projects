@@ -174,6 +174,7 @@ private:
    RAM_RING_SHARED_INDEXES_T*   m_poRingAdmin;
    uint                         m_lastReadIndex;
    std::size_t                  m_daqBaseOffset;
+   Watchdog                     m_oWatchdog;
 
 protected:
    static constexpr std::size_t c_defaultMaxEbCycleDataLen = 10;
@@ -189,12 +190,12 @@ public:
    /*!
     * @brief Constructor variant for object of type DaqEb::EtherboneConnection
     */
-   DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone );
+   DaqBaseInterface( DaqEb::EtherboneConnection* poEtherbone, const uint64_t dataTimeout = 0 );
 
    /*!
     * @brief Constructor variant for object of type DaqAccess
     */
-   DaqBaseInterface( DaqAccess* poEbAccess );
+   DaqBaseInterface( DaqAccess* poEbAccess, const uint64_t dataTimeout = 0 );
 
    /*!
     * @brief Destructor
@@ -445,6 +446,12 @@ protected:
     * e.g.: SAFTLIB
     */
    void readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData, std::size_t len );
+
+   /*!
+    * @brief Callback function becomes invoked when a data timeout
+    *        has been detected.
+    */
+   virtual void onDataTimeout( void ) {}
 };
 
 } // namespace Scu

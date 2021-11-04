@@ -663,6 +663,8 @@ private:
 
       void onBlockReceiveError( void ) override;
 
+      void onDataTimeout( void ) override;
+
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -692,6 +694,8 @@ private:
       }
 #endif
       void onDataReadingPause( void ) override;
+
+      void onDataTimeout( void ) override;
    }; // class MilDaqAdministration
 
    /*!
@@ -1118,6 +1122,15 @@ protected:
     * @param daqNumber DAQ channel number within the SCU-slave.
     */
    virtual void onAddacBlockError( uint slot, uint daqNumber ) {}
+
+   /*!
+    * @brief Optional callback function becomes invoked when a data timeout
+    *        has been detected.
+    *
+    * @param isMil If true then the function has been invoked by a
+    *              MIL data-transfer.
+    */
+   virtual void onDataTimeout( const bool isMil ) {};
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

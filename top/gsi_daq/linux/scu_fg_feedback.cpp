@@ -770,12 +770,26 @@ void FgFeedbackAdministration::AddacAdministration::onBlockReceiveError( void )
                                  daq::daqDescriptorGetChannel( m_poCurrentDescriptor ));
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::AddacAdministration::onDataTimeout( void )
+{
+   m_pParent->onDataTimeout( false );
+}
+
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  */
 void FgFeedbackAdministration::MilDaqAdministration::onUnregistered( const FG_MACRO_T fg )
 {
    m_pParent->onUnregisteredMilDevice( fg );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::MilDaqAdministration::onDataTimeout( void )
+{
+   m_pParent->onDataTimeout( true );
 }
 #endif // ifdef CONFIG_MIL_FG
 
