@@ -81,6 +81,7 @@ void usage(char* program) {
   std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
   std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
+  std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
   std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
   std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
