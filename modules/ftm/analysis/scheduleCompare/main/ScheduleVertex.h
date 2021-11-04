@@ -82,4 +82,6 @@ class ScheduleVertex {
   bool startsWith(std::string value, std::string start, bool caseSensitive);
   int compareValues(const std::string& value1, const std::string& value2, const std::string& key, valueType type);
 };
+
+std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex);
 #endif

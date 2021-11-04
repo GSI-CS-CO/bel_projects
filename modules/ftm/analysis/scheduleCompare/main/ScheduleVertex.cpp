@@ -4,9 +4,14 @@
 #include <iostream>
 #include <sstream>
 
+std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex)
+{
+  os << vertex.name;
+  return os;
+}
+
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-  // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
-  //      return v1.type.compare(v2.type);
+  //~ std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
   if (v1.name == v2.name) {
     if (v1.type == "") {
       return 0;
@@ -28,6 +33,7 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
       } else if ("switch" == v1.type) {
         return compareSwitch(v1, v2);
       } else if ("tmsg" == v1.type) {
+        //~ std::cout << "--V tmsg " << compareTmsg(v1, v2) << std::endl;
         return compareTmsg(v1, v2);
       } else if ("wait" == v1.type) {
         return compareWait(v1, v2);

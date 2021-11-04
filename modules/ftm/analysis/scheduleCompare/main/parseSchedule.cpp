@@ -19,6 +19,13 @@ bool parseSchedule(std::string &dot_file, ScheduleGraph &g, boost::dynamic_prope
     fileBuffer.open(dot_file, std::ios::in);
     std::istream dot_stream(&fileBuffer);
     result = read_graphviz(dot_stream, g, dp, "name");
+    if (result) {
+      auto edge_pair = edges(g);
+      for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
+        g[*iter].vertex_source = g[source(*iter, g)];
+        g[*iter].vertex_target = g[target(*iter, g)];
+      }
+    }
     if (config.superverbose) {
       std::cout << "read " << num_vertices(g) << " vertices, " << num_edges(g) << " edges." << std::endl;
     }
