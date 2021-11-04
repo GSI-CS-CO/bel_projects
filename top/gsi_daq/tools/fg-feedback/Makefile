@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=2.7
+DEFINES += VERSION=2.8
 
 #DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
@@ -35,6 +35,7 @@ SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
+SOURCE += $(DAQ_LINUX_DIR)/watchdog_poll.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
