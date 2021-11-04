@@ -26,25 +26,25 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
 
   def test_usage_message(self):
-    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=21, linesCout=0)
+    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=22, linesCout=0)
 
   def test_folder_dot_tmsg(self):
-    self.allPairsFilesInfolderTest('dot_tmsg/')
+    self.allPairsFilesInFolderTest('dot_tmsg/')
 
   def test_folder_dot_block(self):
-    self.allPairsFilesInfolderTest('dot_block/')
+    self.allPairsFilesInFolderTest('dot_block/')
 
   def test_folder_dot_flow(self):
-    self.allPairsFilesInfolderTest('dot_flow/')
+    self.allPairsFilesInFolderTest('dot_flow/')
 
   def test_folder_dot_flush(self):
-    self.allPairsFilesInfolderTest('dot_flush/')
+    self.allPairsFilesInFolderTest('dot_flush/')
 
   def test_folder_dot_switch(self):
-    self.allPairsFilesInfolderTest('dot_switch/')
+    self.allPairsFilesInFolderTest('dot_switch/')
 
   def test_folder_dot_wait(self):
-    self.allPairsFilesInfolderTest('dot_wait/')
+    self.allPairsFilesInFolderTest('dot_wait/')
 
   def test_folder_dot_hex(self):
     self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
@@ -60,7 +60,7 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', 'dot_hex/tmsg-par_FFFFEEEEDDDDCCCC.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
 
   def test_folder_dot_graph_entries(self):
-    self.allPairsFilesInfolderTest('dot_graph_entries/')
+    self.allPairsFilesInFolderTest('dot_graph_entries/')
     
   def test_dot_graph_entries_2(self):
     self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-009852.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
@@ -68,7 +68,7 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('dot_graph_entries/graph-entry-010773.dot', 'dot_graph_entries_2/graph-entry-010745.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries/graph-entry-016159.dot', 'dot_graph_entries_2/graph-entry-016193.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries_2/pro_2020_11_24.dot', 'dot_graph_entries_2/pro_2020_11_24.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
-    self.allFilesInfolderTest('dot_graph_entries_2/')
+    self.allFilesInFolderTest('dot_graph_entries_2/')
   
   def test_dot_boolean(self):
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_.dot', 'dot_boolean/wait-target-tvalid-tabs_.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
@@ -139,4 +139,4 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('dot_boolean/tmsg-target-tvalid-patentry_True.dot', 'dot_boolean/tmsg-target-tvalid-patentry_True.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
 
   def test_folder_dot(self):
-    self.allPairsFilesInfolderTest('dot1/')
+    self.allPairsFilesInFolderTest('dot1/')

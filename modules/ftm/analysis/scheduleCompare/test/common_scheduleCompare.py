@@ -41,7 +41,7 @@ class CommonScheduleCompare(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {self.binary} {file1} {file2} {options}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
 
-  def allPairsFilesInfolderTest(self, folder):
+  def allPairsFilesInFolderTest(self, folder):
     files = os.listdir(folder)
     # ~ print (files)
     files = [ x for x in files if '.dot' in x ]
@@ -61,7 +61,7 @@ class CommonScheduleCompare(unittest.TestCase):
         self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
     print(f'Pairs tested: {counter}. ', end='', flush=True)
 
-  def allFilesInfolderTest(self, folder):
+  def allFilesInFolderTest(self, folder):
     files = os.listdir(folder)
     files = [ x for x in files if '.dot' in x ]
     # print (files)
@@ -72,5 +72,5 @@ class CommonScheduleCompare(unittest.TestCase):
         print(f'{counter},', end='', flush=True)
       if counter % 1000 == 0:
         print(f'', flush=True)
-      self.callScheduleCompare(folder + dotFile1, '-t', expectedReturnCode=16, linesCout=1)
+      self.callScheduleCompare(folder + dotFile1, '-t', expectedReturnCode=17, linesCout=1)
     print(f'Files tested: {counter}. ', end='', flush=True)
