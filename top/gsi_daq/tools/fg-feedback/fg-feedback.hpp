@@ -100,7 +100,7 @@ class FbChannel: public FgFeedbackChannel
 
    STATE_T            m_state;
 
-   typedef std::vector<PLOT_T> PLOT_LIST_T;
+   using PLOT_LIST_T = std::vector<PLOT_T>;
 
    Plot*                 m_pPlot;
    MiLdaq::MIL_DAQ_T     m_lastSetRawValue;
@@ -248,6 +248,9 @@ public:
    void onUnregisteredAddacDaq( uint slot, uint daqNumber ) override;
 
    void onAddacBlockError( uint slot, uint daqNumber ) override;
+
+   void onDataTimeout( const bool isMil ) override;
+
 };
 
 inline

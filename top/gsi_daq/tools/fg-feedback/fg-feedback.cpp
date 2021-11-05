@@ -446,6 +446,13 @@ void AllDaqAdministration::onAddacBlockError( uint slot, uint daqNumber )
 
 /*! ---------------------------------------------------------------------------
  */
+void AllDaqAdministration::onDataTimeout( const bool isMil )
+{
+   WARNING_MESSAGE( "Timeout of " << (isMil? "MIL":"ADDAC") << " data stream detected!" );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 bool AllDaqAdministration::isRunningOnScu( void ) const
 {
    return m_poCommandLine->isRunningOnScu();
