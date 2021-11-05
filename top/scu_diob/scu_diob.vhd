@@ -2966,7 +2966,8 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         IOBP_in_rd_active,        IOBP_in_data_to_SCUB,
                         ATR_DAC_rd_active,        ATR_DAC_data_to_SCUB,
                         atr_comp_ctrl_rd_active,  atr_comp_ctrl_data_to_SCUB,
-                        atr_puls_ctrl_rd_active,  atr_puls_ctrl_data_to_SCUB
+                        atr_puls_ctrl_rd_active,  atr_puls_ctrl_data_to_SCUB,
+                        daq_user_rd_active,       daq_data_to_SCUB
                       )
 
 
