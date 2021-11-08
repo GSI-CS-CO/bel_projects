@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2021
+ *  version : 8-Nov-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000306                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000307                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -67,7 +67,8 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 
 // public variables; set-values are split into two parts due to a LSA requirement
-// set values for a single commit, extraction 
+// set values for a single commit, extraction
+#define FLAGBEAMIN 0x8                  // 'beam-in' flag; required for messages
 volatile uint32_t *pSharedSetSidEExt;   // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
 volatile uint32_t *pSharedSetGidExt;    // pointer to a "user defined" u32 register; here: b2b group ID of extraction ring
 volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of b2b transfer
@@ -138,7 +139,6 @@ int32_t  nBucketExt;                    // number of bucket for extraction
 int32_t  nBucketInj;                    // number of bucket for injection
 int      fFineTune;                     // flag: use fine tuning
 int      fMBTune;                       // flag: use multi-beat tuning
-/* uint64_t tEKS;                          // deadline of EVT_KICK_START */
 uint64_t tCBS;                          // deadline of CMD_B2B_START
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
@@ -457,6 +457,10 @@ uint32_t getTrigGid(uint32_t extFlag)
       if (extFlag) trigGid = ESR_RING;
       else         trigGid = CRYRING_RING;
       break;
+    case CRYRING_B2B_EXTRACT :
+      if (extFlag) trigGid = CRYRING_RING;
+      else         trigGid = GID_INVALID;
+      break;     
     default :
       trigGid = GID_INVALID;
   } // switch gid
@@ -941,7 +945,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Ext       = 0x0;
     
     // send command: phase measurement at extraction machine
-    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0, sid, bpid, 0); 
+    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
     sendParam    = TH1Ext & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHExt & 0xff) << 56);              // use upper 8 bit as harmonic number 
     sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to B2BS
@@ -955,7 +959,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Ext       = 0x0;
     
     // send command: phase measurement at injection machine
-    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0, sid, bpid, 0); 
+    sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
     sendParam    = TH1Inj & 0x00ffffffffffffff;                               // use low 56 bit as period
     sendParam    = sendParam | ((uint64_t)(nHInj & 0xff) << 56);              // use upper 8 bit as harmonic number 
     sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
@@ -998,7 +1002,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     offsetDone   = (int32_t)(getSysTime() - tCBS);
 
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, 0, sid, bpid, errorFlags);
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, FLAGBEAMIN, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
@@ -1014,7 +1018,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
 
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, 0, sid, bpid, errorFlags);
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, FLAGBEAMIN, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
@@ -1052,8 +1056,6 @@ int main(void) {
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
   nTransfer      = 0x0;
-  
-  pp_printf("\nhallo\nhuhu\n");
   
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                     // initialize shared memory THIS MUST BE CALLED FIRST
