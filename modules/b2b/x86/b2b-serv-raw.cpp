@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Oct-2021
+ *  version : 02-Nov-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000303
+#define B2B_SERV_RAW_VERSION 0x000304
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -69,10 +69,7 @@
 
 using namespace std;
 
-
 #define FID          0x1                // format ID of timing messages
-/* #define EKSOFFSET    -500000            // offset for EVT_KICK_START  */
-
 
 static const char* program;
 
@@ -341,7 +338,7 @@ using namespace std;
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            specify extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
+  std::cerr << "  -e<index>            specify extraction ring (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
@@ -386,8 +383,9 @@ int main(int argc, char** argv)
     switch (opt) {
       case 'e' :
         switch (strtol(optarg, &tail, 0)) {
-          case 0 : reqExtRing = SIS18_RING; break;
-          case 1 : reqExtRing = ESR_RING;   break;
+          case 0 : reqExtRing = SIS18_RING;   break;
+          case 1 : reqExtRing = ESR_RING;     break;
+          case 2 : reqExtRing = CRYRING_RING; break;
           default:
             std::cerr << "option -e: parameter out of range" << std::endl;
             return 1;
@@ -432,6 +430,10 @@ int main(int argc, char** argv)
     case ESR_RING :
       nCondition = 7;
       sprintf(ringName, "esr");
+      break;
+    case CRYRING_RING :
+      nCondition = 7;
+      sprintf(ringName, "yr");
       break;
     default :
         std::cerr << "Ring '"<< reqExtRing << "' does not exist" << std::endl;
@@ -583,13 +585,90 @@ int main(int argc, char** argv)
         condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[4]        = tagPde;
        
+        // ESR to CRYRING, PMEXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[5]        = tagPme;
+
+        // ESR to CRYRING, PMINJ
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PMINJ << 36);
+        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[6]        = tagPmi;
+
+        // ESR to CRYRING, PREXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[7]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[7]        = tagPre;
+
+        // ESR to CRYRING, PRINJ
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);
+        condition[8]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[8]        = tagPri;
+   
+        // ESR to CRYRING, DIAGEXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[9]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[9]        = tagPde;
+
+        // ESR to CRYRING, DIAGINJ
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGINJ << 36);
+        condition[10] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[10]       = tagPdi;
         // ESR extraction kicker trigger
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
         condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[5]        = tagKte;
+        tag[11]        = tagKte;
         
         // ESR extraction kicker diagnostic
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
+        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[12]        = tagKde;
+
+        // CRYRING injection kicker trigger
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);
+        condition[13] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[13]       = tagKti;
+        
+        // CRYRING injection kicker diagnostic
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
+        condition[14] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[14]       = tagKdi;
+
+        break;
+      case CRYRING_RING : 
+
+        // CRYRING, CMD_B2B_START, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[0]        = tagStart;
+        
+        // CRYRING, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
+        tag[1]        = tagStop;
+        
+        // CRYRING to extraction, PMEXT, 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[2]        = tagPme;
+
+        // CRYRING to extraction, PREXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[3]        = tagPre;
+
+        // CRYRING to extraction, DIAGEXT
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[4]        = tagPde;
+       
+        // CRYRING extraction kicker trigger
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[5]        = tagKte;
+        
+        // CRYRING extraction kicker diagnostic
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
         condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[6]        = tagKde;
 
