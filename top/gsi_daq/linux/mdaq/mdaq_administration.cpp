@@ -347,6 +347,7 @@ uint DaqAdministration::distributeData( void )
    if( (toRead % RAM_ITEM_PER_MIL_DAQ_ITEM) != 0 )
    {
       DEBUG_MESSAGE( toRead << " items in MIL buffer not dividable by RAM_ITEM_PER_MIL_DAQ_ITEM" );
+      onDataError();
       return toRead;
    }
 

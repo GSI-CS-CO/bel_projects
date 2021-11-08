@@ -243,4 +243,11 @@ void DaqBaseInterface::readDaqData( daq::RAM_DAQ_PAYLOAD_T* pData,
    }
 }
 
+/*! --------------------------------------------------------------------------
+ */
+void DaqBaseInterface::onDataError( void )
+{
+   //TODO
+}
+
 //================================== EOF ======================================

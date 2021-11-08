@@ -640,13 +640,10 @@ uint DaqAdministration::distributeData( void )
    if( (toRead % c_ramBlockShortLen) != 0 )
    {
       DEBUG_MESSAGE( toRead << " items in ADDAC buffer not dividable by " << c_ramBlockShortLen );
-      /*!
-       * @todo Trow a exception here?
-       */
+      onDataError();
       return toRead;
    }
 
-   //TODO Timeout init
    PROBE_BUFFER_T probe; //!@TODO Move this from stack to the heap!
 #ifdef CONFIG_DAQ_DEBUG
    ::memset( &probe, 0x7f, sizeof( probe ) );

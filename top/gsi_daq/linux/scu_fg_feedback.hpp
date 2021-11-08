@@ -665,6 +665,7 @@ private:
 
       void onDataTimeout( void ) override;
 
+      void onDataError( void ) override;
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -696,6 +697,8 @@ private:
       void onDataReadingPause( void ) override;
 
       void onDataTimeout( void ) override;
+
+      void onDataError( void ) override;
    }; // class MilDaqAdministration
 
    /*!
@@ -1130,7 +1133,9 @@ protected:
     * @param isMil If true then the function has been invoked by a
     *              MIL data-transfer.
     */
-   virtual void onDataTimeout( const bool isMil ) {};
+   virtual void onDataTimeout( const bool isMil ) {}
+
+   virtual void onDataError( const bool isMil );
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

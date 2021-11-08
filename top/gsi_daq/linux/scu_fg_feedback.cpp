@@ -777,6 +777,14 @@ void FgFeedbackAdministration::AddacAdministration::onDataTimeout( void )
    m_pParent->onDataTimeout( false );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::AddacAdministration::onDataError( void )
+{
+   m_pParent->onDataError( false );
+}
+
+///////////////////////////////////////////////////////////////////////////////
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  */
@@ -791,8 +799,16 @@ void FgFeedbackAdministration::MilDaqAdministration::onDataTimeout( void )
 {
    m_pParent->onDataTimeout( true );
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::MilDaqAdministration::onDataError( void )
+{
+   m_pParent->onDataError( true );
+}
 #endif // ifdef CONFIG_MIL_FG
 
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone,
@@ -1020,6 +1036,20 @@ void FgFeedbackAdministration::onDataReadingPause( const bool isMil )
    }
 #endif
    m_oAddacDaqAdmin.daq::DaqAdministration::onDataReadingPause();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::onDataError( const bool isMil )
+{
+#ifdef CONFIG_MIL_FG
+   if( isMil )
+   {
+      m_oMilDaqAdmin.MiLdaq::DaqAdministration::onDataError();
+      return;
+   }
+#endif
+   m_oAddacDaqAdmin.daq::DaqAdministration::onDataError();
 }
 
 //================================== EOF ======================================

@@ -452,6 +452,13 @@ protected:
     *        has been detected.
     */
    virtual void onDataTimeout( void ) {}
+
+public:
+   /*!
+    * @brief Becomes invoked if the received number of data units are not
+    *        dividable by the expected number.
+    */
+   virtual void onDataError( void );
 };
 
 } // namespace Scu
