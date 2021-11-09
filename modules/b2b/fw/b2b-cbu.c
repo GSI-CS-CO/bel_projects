@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-Nov-2021
+ *  version : 9-Nov-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000307                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000308                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -68,7 +68,6 @@ volatile uint32_t *pShared;             // pointer to begin of shared memory reg
 
 // public variables; set-values are split into two parts due to a LSA requirement
 // set values for a single commit, extraction
-#define FLAGBEAMIN 0x8                  // 'beam-in' flag; required for messages
 volatile uint32_t *pSharedSetSidEExt;   // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
 volatile uint32_t *pSharedSetGidExt;    // pointer to a "user defined" u32 register; here: b2b group ID of extraction ring
 volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of b2b transfer
@@ -154,6 +153,7 @@ uint32_t mState;                        // state of 'miniFSM'
 // flags
 uint32_t flagClearAllSid;               // data for all SIDs shall be cleared
 uint32_t errorFlags;                    // error flags, bit 0: PM Ext, bit 1: KD Ext, bit 2: PM INJ, bit 3: KD INJ, bit 4: CBU
+uint32_t flagInjKickTest;               // flag for injection kicker test (non-multiplexed!); 1: allow injection kick; 0: disable injection kick
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -703,8 +703,11 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
 uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
+  flagInjKickTest = 0;      // reset this flag; only used for mode B2B_MODE_BSE
+
   switch (mode) {
-    case B2B_MODE_BSE :  // extraction at earlist deadline for kicker trigger!
+    case B2B_MODE_BSE :     // kick on start event
+      flagInjKickTest = 1;  // allow injection kick test
       switch (actMState) {
         case B2B_MFSM_S0 :
           nextMState =  B2B_MFSM_EXTKICK;
@@ -719,7 +722,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode KSE
       break;
-    case B2B_MODE_B2E :  // bunch to extraction
+    case B2B_MODE_B2E :     // bunch to extraction
       switch (actMState) {
         case B2B_MFSM_S0 :
           nextMState = B2B_MFSM_EXTPS;
@@ -740,7 +743,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode B2E
       break;
-    case B2B_MODE_B2C :  // bunch to coasting beam
+    case B2B_MODE_B2C :     // bunch to coasting beam
       switch (actMState) {
         case B2B_MFSM_S0 :
           nextMState = B2B_MFSM_EXTPS;
@@ -764,7 +767,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode B2C
       break;
-    case B2B_MODE_B2B :  // bunch to bucket
+    case B2B_MODE_B2B :     // bunch to bucket
       switch (actMState) {
         case B2B_MFSM_S0 :
           nextMState = B2B_MFSM_EXTPS;
@@ -824,6 +827,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recTEF;                                            // TEF received
   uint32_t recGid;                                            // GID received
   uint32_t recSid;                                            // SID received
+  uint32_t recBpid;                                           // BPID received
   uint32_t recRes;                                            // reserved bits received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t tWantExt;                                          // approximate time of extraction
@@ -842,9 +846,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       // clear 'local' variables
-      sid        = (uint32_t)((recId >> 20) & 0x0fff);         // required for proper indexing
-      gid        = (uint32_t)((recId >> 48) & 0x0fff);         // temporary assignment useful for debugging if routine setSubmit() fails
-      bpid       = (uint32_t)((recId >>  6) & 0x3fff);         // not part of setting data; 'inherit' from received timing message
+      sid        = (uint32_t)((recId >> 20) & 0x0fff);        // required for proper indexing
+      gid        = (uint32_t)((recId >> 48) & 0x0fff);        // temporary assignment useful for debugging if routine setSubmit() fails
+      bpid       = (uint32_t)((recId >>  6) & 0x3fff);        // not part of setting data; 'inherit' from received timing message
       mode       = 0x0;
       nHExt      = 0x0;
       nHInj      = 0x0;
@@ -929,6 +933,19 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       //pp_printf("b2b: PRINJ %u\n", mState);
       break;
 
+    case B2B_ECADO_B2B_INJKICKTEST :                          // received: request injection kicker test
+      if (flagInjKickTest) {                                  // hackish solution for ESR and CRYRING (non-multiplexed operation)
+        recSid       = (uint32_t)((recId >> 20) & 0x0fff);    // not part of setting data; 'inherit' from received timing message
+        recGid       = (uint32_t)((recId >> 48) & 0x0fff);    // not part of setting data; 'inherit' from received timing message
+        recBpid      = (uint32_t)((recId >>  6) & 0x3fff);    // not part of setting data; 'inherit' from received timing message
+
+        sendEvtId    = fwlib_buildEvtidV1(recGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, recSid, recBpid, errorFlags);
+        sendParam    = 0x0;
+        sendDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERINJKICK;
+        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+      } // flagInjKickTest
+      break;
+
     default :
       return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
@@ -937,8 +954,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTKICK) {
     tTrig      = tCBS + B2B_KICKOFFSET;                
     transStat |= mState;
-    mState   = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTTC
+    mState     = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTKICK
 
   // request phase measurement of extraction 
   if (mState == B2B_MFSM_EXTPS) {
@@ -1002,11 +1019,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     offsetDone   = (int32_t)(getSysTime() - tCBS);
 
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, FLAGBEAMIN, sid, bpid, errorFlags);
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
-    /* chk sendMilTrigger(tTrigExt+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway*/
     transStat |= mState;
     mState   = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -1018,11 +1034,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
 
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, FLAGBEAMIN, sid, bpid, errorFlags);
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = ((uint64_t)cPhase & 0xffffffff) << 32;                     // param field, cPhase as high word
     sendParam    = sendParam | ((uint64_t)cTrigInj & 0xffffffff);             // param field, cTrigInj as low word 
     fwlib_ebmWriteTM(tTrigInj, sendEvtId, sendParam, 0);
-    /* chk sendMilTrigger(tTrigInj+8, sendGid, sid);                                 // send trigger event to MIL Bus via WR->MIL Gateway*/
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ

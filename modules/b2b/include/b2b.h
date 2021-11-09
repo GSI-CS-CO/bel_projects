@@ -20,7 +20,6 @@
 #define B2B_STATUS_NOKICK             21   // no kicker signal detected
 #define B2B_STATUS_BADSETTING         22   // bad setting data
 
-
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define B2B_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define B2B_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
@@ -43,6 +42,7 @@
 #define B2B_ECADO_B2B_START        0x81f   // command: start b2b procedure
 #define B2B_ECADO_B2B_PDEXT        0x820   // internal command: perform phase diagnostic (extraction)
 #define B2B_ECADO_B2B_PDINJ        0x821   // internal command: perform phase diagnostic (injection)
+#define B2B_ECADO_B2B_INJKICKTEST  0x822   // internal command: perform injection kicker test
 
 // commands from the outside
 #define B2B_CMD_CONFSUBMIT            11   // submit data written to DP RAM
@@ -56,16 +56,19 @@
 #define B2B_ERRFLAG_CBU             0x10   // error central b2b unit
 
 // B2B mode flags                          //                                            | ext trig | ext phase | inj trig | inj phase |
-#define B2B_MODE_BSE                   1   // CMD_B2B_START: trigger extraction kicker   |     x    |           |          |           |
+#define B2B_MODE_BSE                   1   // CMD_B2B_START: trigger extraction kicker   |     x    |           |   (x)    |           |
 #define B2B_MODE_B2E                   2   // simple bunch extraction 'fast extraction'  |     x    |     x     |          |           | 
 #define B2B_MODE_B2C                   3   // bunch to coasting transfer                 |     x    |     x     |    x     |           | 
 #define B2B_MODE_B2B                   4   // bunch to bucket transfer                   |     x    |     x     |    x     |     x     |
+
+// B2B other flags
+#define B2B_FLAG_BEAMIN              0x8   // part of a timing message signaling a 'beam in event'
 
 // B2B states of 'miniFSM'
 #define B2B_MFSM_S0                  0x1   // start state
 #define B2B_MFSM_EXTPS               0x2   // phase measurement extraction, send request to PM
 #define B2B_MFSM_EXTPR               0x4   // phase measurement extraction, receive data from PM
-#define B2B_MFSM_EXTKICK             0x8   // calculate time for earliest kick (~ EVT_KICK_START)
+#define B2B_MFSM_EXTKICK             0x8   // calculate time for earliest kick (~ CMD_B2b_START)
 #define B2B_MFSM_EXTBGT             0x10   // calculate time for extraction at next bunch gap
 #define B2B_MFSM_EXTMATCHT          0x20   // calculate time for phase matching 
 #define B2B_MFSM_EXTTRIG            0x40   // trigger extraction kicker
@@ -90,10 +93,12 @@
 // specialities
 #define B2B_PMOFFSET              500000    // offset [ns] for deadline of PMEXT/PMINJ events relative to B2BS event
 #define B2B_KICKOFFSET           2000000    // offset [ns] for earliest deadline of kicker trigger events
+#define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
+#define B2B_TDIAGOBS            15900000    // observation interval for phase diagnostic; a bit shorter than length of flat top
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 
