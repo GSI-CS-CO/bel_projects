@@ -34,6 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
+#define B2B_SERVSYS_VERSION 0x000308
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -84,8 +85,6 @@ static void die(const char* where, eb_status_t status) {
 
 
 static void help(void) {
-  uint32_t version;
-  
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> <server name>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
@@ -96,9 +95,7 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-
-  b2b_version_library(&version);
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(version));
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_SERVSYS_VERSION));
 } //help
 
 
@@ -204,9 +201,9 @@ int main(int argc, char** argv) {
   
   if (getVersion) {
     b2b_version_library(&verLib);
-    printf("b2b: library (firmware) version %s",  b2b_version_text(verLib));     
+    printf("b2b: serv-sys / library / firmware /  version %s / %s",  b2b_version_text(verLib), b2b_version_text(B2B_SERVSYS_VERSION));     
     b2b_version_firmware(ebDevice, &verFw);
-    printf(" (%s)\n",  b2b_version_text(verFw));     
+    printf(" / %s\n",  b2b_version_text(verFw));     
   } // if getVersion
 
 

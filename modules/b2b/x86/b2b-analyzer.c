@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Oct-2021
+ *  version : 9-Nov-2021
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000303
+#define B2B_ANALYZER_VERSION 0x000308
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -56,7 +56,6 @@
 
 const char* program;
 
-#define TDIAGOBS    20000000               // observation time for diagnostic [ns]
 #define DDSSTEP     0.046566129            // min frequency step of gDDS
 
 // dim stuff
@@ -535,7 +534,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
 
     // rf frequency diagnostics; theoretical value is '0'
-    calcNue(&actD, disDiagval[sid].ext_rfOffAct, (double)TDIAGOBS, dicSetval[sid].ext_T);
+    calcNue(&actD, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T);
     if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
     else                           tmp = 0.0;
     n   = ++(ext_rfNueN[sid]);
@@ -678,7 +677,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
 
     // rf frequency diagnostics; theoretical value is '0'
-    calcNue(&actD, disDiagval[sid].inj_rfOffAct, (double)TDIAGOBS, dicSetval[sid].inj_T);
+    calcNue(&actD, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T);
     if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
     else                           tmp = 0.0;
     n   = ++(inj_rfNueN[sid]);

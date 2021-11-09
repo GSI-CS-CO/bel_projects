@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000303
+#define B2B_VIEWER_VERSION 0x000308
 
 // standard includes 
 #include <unistd.h> // getopt

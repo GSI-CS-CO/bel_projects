@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Nov-2021
+ *  version : 09-Nov-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000304
+#define B2B_SERV_RAW_VERSION 0x000308
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -428,7 +428,7 @@ int main(int argc, char** argv)
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
-      nCondition = 7;
+      nCondition = 15;
       sprintf(ringName, "esr");
       break;
     case CRYRING_RING :
@@ -471,7 +471,6 @@ int main(int argc, char** argv)
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     } //if(useFirstDevice);
-
 
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
@@ -616,13 +615,13 @@ int main(int argc, char** argv)
         tag[10]       = tagPdi;
         // ESR extraction kicker trigger
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
-        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[11]        = tagKte;
+        condition[11] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[11]       = tagKte;
         
         // ESR extraction kicker diagnostic
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
-        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[12]        = tagKde;
+        condition[12] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[12]       = tagKde;
 
         // CRYRING injection kicker trigger
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);
@@ -687,7 +686,7 @@ int main(int argc, char** argv)
       condition[i]->SigAction.connect(sigc::bind(sigc::ptr_fun(&recTimingMessage), tag[i]));
       condition[i]->setActive(true);    
     } // for i
-    
+
     while(true) {
       saftlib::wait_for_signal();
     } // while true
