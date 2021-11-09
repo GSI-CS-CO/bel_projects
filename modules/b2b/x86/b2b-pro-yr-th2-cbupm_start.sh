@@ -85,11 +85,11 @@ saft-ecpu-ctl $SDPM -c 0x10d2805000000000 0xfffffff000000000 20000 0x805 -dg
 # lm32 listens to CMD_B2B_TRIGGEREXT message from CRYRING CBU - match diagnostic
 saft-ecpu-ctl $SDPM -c 0x10d2804000000000 0xfffffff000000000 20000 0x804 -dg
 
-# lm32 listens to >> 9.9ms delayed<< (CMD_B2B_PMINJ) message from ESR CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a6801000000000 0xfffffff000000000 9900000 0x821 -d
+# lm32 listens to >>delayed<< (CMD_B2B_PMINJ) message from ESR CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13a6801000000000 0xfffffff000000000 15900000 0x821 -d
 
-# lm32 listens to >> 20ms delayed<< (CMD_B2B_PMEXT) message from CRYRING CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13aa800000000000 0xfffffff000000000 9900000 0x820 -d
+# lm32 listens to >>delayed<< (CMD_B2B_PMEXT) message from CRYRING CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
+saft-ecpu-ctl $SDPM -c 0x13aa800000000000 0xfffffff000000000 15900000 0x820 -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGERINJ message from ESR CBU
 saft-io-ctl $SDPM -n IO1 -o 1 -t 0
