@@ -627,7 +627,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'y',
       .m_longOpt  = "sync",
       .m_helpText = "Synchronizing of the timestamp-counter of all found"
-                    " ADDAC/SCU-DAQ slaves on SCU bis.\n"
+                    " ADDAC/SCU-DAQ slaves on SCU bus.\n"
                     "PARAM: =<time-offset in milliseconds>,<ECA tag>\n\n"
                     ESC_BOLD "CAUTION: The timing ECA has to be appear within the "
                     "given time-offset!" ESC_NORMAL "\n\n"
