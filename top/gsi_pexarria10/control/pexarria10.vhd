@@ -176,10 +176,10 @@ architecture rtl of pexarria10 is
 
   signal s_gpio_o   : std_logic_vector(7 downto 0);
   signal s_gpio_i   : std_logic_vector(7 downto 0);
-  signal s_lvds_p_i : std_logic_vector(24 downto 0);
-  signal s_lvds_n_i : std_logic_vector(24 downto 0);
-  signal s_lvds_p_o : std_logic_vector(24 downto 0);
-  signal s_lvds_n_o : std_logic_vector(24 downto 0);
+  signal s_lvds_p_i : std_logic_vector(4 downto 0);
+  signal s_lvds_n_i : std_logic_vector(4 downto 0);
+  signal s_lvds_p_o : std_logic_vector(4 downto 0);
+  signal s_lvds_n_o : std_logic_vector(4 downto 0);
 
   signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
   signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
@@ -196,7 +196,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 32) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 12) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -212,27 +212,27 @@ architecture rtl of pexarria10 is
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO4  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC5_IO1  ",  IO_NONE,         false,   false, 20,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC5_IO2  ",  IO_NONE,         false,   false, 21,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC5_IO3  ",  IO_NONE,         false,   false, 22,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC5_IO4  ",  IO_NONE,         false,   false, 23,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC5_IO5  ",  IO_NONE,         false,   false, 24,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+--    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC5_IO1  ",  IO_NONE,         false,   false, 20,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC5_IO2  ",  IO_NONE,         false,   false, 21,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC5_IO3  ",  IO_NONE,         false,   false, 22,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC5_IO4  ",  IO_NONE,         false,   false, 23,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+--    ("USBC5_IO5  ",  IO_NONE,         false,   false, 24,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
   constant c_family        : string := "Arria 10 GX PEX10";
   constant c_project       : string := "pexarria10";
@@ -250,7 +250,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_inout         => 8,
-      g_lvds_inout         => 25,
+      g_lvds_inout         => 5,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
@@ -295,10 +295,10 @@ begin
       lvds_p_o                 => s_lvds_p_o,
       lvds_n_o                 => s_lvds_n_o,
       lvds_oen_o(4 downto 0)   => usbc_tx1_en,
-      lvds_oen_o(9 downto 5)   => usbc_tx2_en,
-      lvds_oen_o(14 downto 10) => usbc_tx3_en,
-      lvds_oen_o(19 downto 15) => usbc_tx4_en,
-      lvds_oen_o(24 downto 20) => usbc_tx5_en,
+      --lvds_oen_o(9 downto 5)   => usbc_tx2_en,
+      --lvds_oen_o(14 downto 10) => usbc_tx3_en,
+      --lvds_oen_o(19 downto 15) => usbc_tx4_en,
+      --lvds_oen_o(24 downto 20) => usbc_tx5_en,
       usb_rstn_o               => usb_ures_o,
       usb_ebcyc_i              => usb_pa_io(3),
       usb_speed_i              => usb_pa_io(0),
@@ -356,27 +356,27 @@ begin
     --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
     usbc_tx1_p(i+1) <= s_lvds_p_o(i);
     --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
-    usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
+    --usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
     --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
-    usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
+    --usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
     --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
-    usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
+    --usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
     --usbc_tx5_n(i+1) <= s_lvds_n_o(i+20);
-    usbc_tx5_p(i+1) <= s_lvds_p_o(i+20);
+    --usbc_tx5_p(i+1) <= s_lvds_p_o(i+20);
   end generate;
 
   -- USBC RX LVDS input
   usbc_rx : for i in 0 to 4 generate
     s_lvds_n_i(i) <= usbc_rx1_n(i+1);
     s_lvds_p_i(i) <= usbc_rx1_p(i+1);
-    s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
-    s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
-    s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
-    s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
-    s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
-    s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
-    s_lvds_n_i(i+20) <= usbc_rx5_n(i+1);
-    s_lvds_p_i(i+20) <= usbc_rx5_p(i+1);
+    --s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
+    --s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
+    --s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
+    --s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
+    --s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
+    --s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
+    --s_lvds_n_i(i+20) <= usbc_rx5_n(i+1);
+    --s_lvds_p_i(i+20) <= usbc_rx5_p(i+1);
   end generate;
 
   -- I2C
