@@ -45,9 +45,13 @@ endif # ifdef SCU_URL
 
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
 PUBLIC_TARGET ?= /common/usr/cscofe/bin/
+PUBLIC_SCU_TARGET ?= /common/export/nfsinit/global/tools/
 .PHONY: public
 public: $(BIN_FILE)
 	cp -u $(BIN_FILE) $(PUBLIC_TARGET)
+ifdef FOR_SCU
+	cp -u $(BIN_FILE) $(PUBLIC_SCU_TARGET)
+endif
 endif
 
 #=================================== EOF ======================================

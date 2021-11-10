@@ -10,6 +10,8 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += VERSION=2.8
+FOR_SCU := 1
+
 
 #DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
@@ -57,8 +59,8 @@ DEFINES += _POSIX_C_SOURCE
 # DEBUG = 1
 # DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
-DEFINES += CONFIG_DAQ_DEBUG
- DEFINES += DEBUGLEVEL
+# DEFINES += CONFIG_DAQ_DEBUG
+# DEFINES += DEBUGLEVEL
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
 # DEFINES += CONFIG_NO_SCU_RAM

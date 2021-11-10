@@ -242,9 +242,12 @@ void FbChannel::onData( uint64_t wrTimeStamp, DAQ_T actValue,
 
    if( m_pPlot == nullptr )
    {
-      cout << "fg-" << getSocket() << '-' << getFgNumber() << ":  "
-           << wrTimeStamp
-           << ",   set: " << setValue
+      cout << "fg-" << getSocket() << '-' << getFgNumber() << ":  ";
+      if( getCommandLine()->isVerbose() )
+         cout     << daq::wrToTimeDateString( wrTimeStamp );
+      else
+         cout     << wrTimeStamp;
+      cout << ",   set: " << setValue
            << ",   act: " << actValue
            << ",   count: " << m_callCount
            << endl;
@@ -434,6 +437,14 @@ void AllDaqAdministration::onUnregisteredAddacDaq( uint slot, uint daqNumber )
 {
    WARNING_MESSAGE( "ADDAC DAQ " << daqNumber << " in slot " << slot <<
                     "\tnot registered" ); 
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void AllDaqAdministration::onDataError( const bool isMil )
+{
+   WARNING_MESSAGE( "Data length error of " << (isMil? "MIL":"ADDAC") << " data!" );
+   FgFeedbackAdministration::onDataError( isMil );
 }
 
 /*! ---------------------------------------------------------------------------

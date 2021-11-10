@@ -251,6 +251,7 @@ public:
 
    void onDataTimeout( const bool isMil ) override;
 
+   void onDataError( const bool isMil ) override;
 };
 
 inline
