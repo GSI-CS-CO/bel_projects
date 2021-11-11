@@ -149,7 +149,8 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
                   << "isomorphic." << std::endl;
       }
       if (config.verbose) {
-        listVertexProtocols(*ref1);
+        listVertexProtocols(*ref1, "Graph 1,");
+        listEdgeProtocols(*ref1, "Graph 1,");
       }
       result = (isomorphic ? EXIT_SUCCESS : NOT_ISOMORPHIC);
     } else {
@@ -274,12 +275,29 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
   }
 }
 
-void listVertexProtocols(ScheduleGraph& graph) {
-  boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
-  BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph)) {
-    ScheduleVertex vTemp = graph[get(vertex_id, v)];
-    if (!vTemp.protocol.empty()) {
-      std::cout << vTemp.name << ": " << vTemp.protocol << std::endl;
+void listVertexProtocols(ScheduleGraph& graph, const std::string prefix) {
+  auto vertex_pair = vertices(graph);
+  for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
+    std::string protocol = graph[*iter].printProtocol(prefix);
+    if (protocol.find("compare") != std::string::npos) {
+      std::cout << protocol << std::endl;
+    }
+  }
+  //~ boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
+  //~ BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph)) {
+    //~ ScheduleVertex vTemp = graph[get(vertex_id, v)];
+    //~ if (!vTemp.protocol.empty()) {
+      //~ std::cout << "Node: " << vTemp << ": " << vTemp.protocol << std::endl;
+    //~ }
+  //~ }
+}
+
+void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix) {
+  auto edge_pair = edges(graph);
+  for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
+    std::string protocol = graph[*iter].printProtocol(prefix);
+    if (protocol.find("Result") != std::string::npos) {
+      std::cout << protocol << std::endl;
     }
   }
 }

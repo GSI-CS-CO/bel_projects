@@ -17,6 +17,8 @@ class ScheduleEdge {
   std::string protocol = std::string("");
 
   int compare(const ScheduleEdge& e1, const ScheduleEdge& e2);
+  operator std::string();
+  std::string printProtocol(const std::string prefix);
 
   inline bool operator==(const ScheduleEdge& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleEdge& rhs) { return compare(*this, rhs) != 0; }

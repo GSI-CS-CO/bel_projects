@@ -57,7 +57,8 @@ class ScheduleVertex {
   std::string protocol = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
-
+  std::string printProtocol(const std::string prefix);
+  operator std::string();
   inline bool operator==(const ScheduleVertex& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleVertex& rhs) { return compare(*this, rhs) != 0; }
   inline bool operator<(const ScheduleVertex& rhs) { return compare(*this, rhs) < 0; }
@@ -84,4 +85,5 @@ class ScheduleVertex {
 };
 
 std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex);
+
 #endif

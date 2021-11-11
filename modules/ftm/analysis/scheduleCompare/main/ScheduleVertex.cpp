@@ -4,10 +4,13 @@
 #include <iostream>
 #include <sstream>
 
-std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex)
-{
+std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex) {
   os << vertex.name;
   return os;
+}
+
+ScheduleVertex::operator std::string() {
+  return this->name;
 }
 
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
@@ -229,8 +232,8 @@ int ScheduleVertex::compareNoop(const ScheduleVertex& v1, const ScheduleVertex& 
   return result;
 }
 
-int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) { 
-	  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+    int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
   if (result != 0) {
     return result;
   }
@@ -384,11 +387,43 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
   if (startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
     unsigned long x1;
     unsigned long x2;
-    std::stringstream hexStream2;
     std::stringstream hexStream1;
+    std::stringstream hexStream2;
     hexStream1 << std::hex << hex1;
     hexStream2 << std::hex << hex2;
     hexStream1 >> x1;
+    hexStream2 >> x2;
+    if (x1 < x2) {
+      return -1;
+    } else if (x1 > x2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (startsWith(hex1, "0x", false) && !startsWith(hex2, "0X", false)) {
+    unsigned long x1;
+    unsigned long x2;
+    std::stringstream hexStream1;
+    std::stringstream stream2;
+    hexStream1 << std::hex << hex1;
+    stream2 << hex2;
+    hexStream1 >> x1;
+    stream2 >> x2;
+    if (x1 < x2) {
+      return -1;
+    } else if (x1 > x2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (!startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    unsigned long x1;
+    unsigned long x2;
+    std::stringstream stream1;
+    std::stringstream hexStream2;
+    stream1 << std::hex << hex1;
+    hexStream2 << std::hex << hex2;
+    stream1 >> x1;
     hexStream2 >> x2;
     if (x1 < x2) {
       return -1;
@@ -412,7 +447,7 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = value1.compare(value2);
   }
   if (result != 0) {
-    protocol += "Result: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.\n";
+    protocol += "compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
   }
   return result;
 }
@@ -428,9 +463,9 @@ bool ScheduleVertex::startsWith(std::string value, std::string start, bool caseS
     // Convert start to lower case
     std::transform(start.begin(), start.end(), start.begin(), ::tolower);
   }
-  if (value.find(start) == 0) {
-    return true;
-  } else {
-    return false;
-  }
+  return (value.find(start) == 0);
+}
+
+std::string ScheduleVertex::printProtocol(const std::string prefix) {
+  return std::string("Vertex: ") + prefix + std::string(" ") + std::string(*this) + std::string(": ") + this->protocol;
 }
