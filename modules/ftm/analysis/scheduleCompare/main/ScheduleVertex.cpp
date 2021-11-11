@@ -421,7 +421,7 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
     unsigned long x2;
     std::stringstream stream1;
     std::stringstream hexStream2;
-    stream1 << std::hex << hex1;
+    stream1 << hex1;
     hexStream2 << std::hex << hex2;
     stream1 >> x1;
     hexStream2 >> x2;

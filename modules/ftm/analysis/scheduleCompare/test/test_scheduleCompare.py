@@ -48,6 +48,9 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
 
   def test_folder_dot_hex(self):
     self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_10.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_10.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('dot_hex/tmsg-par_10.dot', 'dot_hex/tmsg-par_10.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_hex/tmsg-par_A.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_hex/tmsg-par_000a.dot', 'dot_hex/tmsg-par_000A.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_hex/tmsg-par_ffff.dot', 'dot_hex/tmsg-par_A.dot', '-s', expectedReturnCode=1, linesCerr=0, linesCout=0)
@@ -61,7 +64,7 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
 
   def test_folder_dot_graph_entries(self):
     self.allPairsFilesInFolderTest('dot_graph_entries/')
-    
+
   def test_dot_graph_entries_2(self):
     self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-009852.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries/graph-entry-008600.dot', 'dot_graph_entries_2/graph-entry-008541.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
@@ -69,7 +72,7 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('dot_graph_entries/graph-entry-016159.dot', 'dot_graph_entries_2/graph-entry-016193.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_graph_entries_2/pro_2020_11_24.dot', 'dot_graph_entries_2/pro_2020_11_24.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.allFilesInFolderTest('dot_graph_entries_2/')
-  
+
   def test_dot_boolean(self):
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_.dot', 'dot_boolean/wait-target-tvalid-tabs_.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
     self.callScheduleCompare('dot_boolean/wait-target-tvalid-tabs_.dot', 'dot_boolean/wait-target-tvalid-tabs_0.dot', '-s', expectedReturnCode=0, linesCerr=0, linesCout=0)
