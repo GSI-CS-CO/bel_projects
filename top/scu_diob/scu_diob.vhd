@@ -5334,8 +5334,9 @@ BEGIN
  
     --################################      daq_channel 3 assignments     ##################################
     
-   -- daq_dat(3)<= P25IO_DAC_Out(2)(15 downto 0);
-	 daq_dat(3)<= AW_Output_Reg(2);
+   daq_dat(3)<= P25IO_DAC_Out(15 downto 0);
+   --daq_dat(3)<= AW_Output_Reg(2);
+
     --################################ 
 
     --################################ 
