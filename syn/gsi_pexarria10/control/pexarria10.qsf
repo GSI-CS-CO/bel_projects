@@ -855,7 +855,7 @@ set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx4_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx4_p
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx5_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx5_p
-#set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx1_n
+set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx1_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx1_p
 #set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx2_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx2_p
@@ -888,8 +888,8 @@ set_location_assignment PIN_A26 -to psram_a[3]
 #set_location_assignment PIN_AA6 -to   usbc_tx4_n[2]
 #set_location_assignment PIN_AA8 -to usbc_tx3_p[2]
 #set_location_assignment PIN_AA9 -to   usbc_tx3_n[2]
-#set_location_assignment PIN_AB10 -to usbc_tx1_p[4]
-#set_location_assignment PIN_AB11 -to usbc_tx1_n[4]
+set_location_assignment PIN_AB10 -to usbc_tx1_p[4]
+set_location_assignment PIN_AB11 -to usbc_tx1_n[4]
 #set_location_assignment PIN_AB1 -to usbc_rx5_p[2]
 set_location_assignment PIN_AB27 -to "clk_125m_tcb_local_i(n)"
 set_location_assignment PIN_AB28 -to clk_125m_tcb_local_i
@@ -943,7 +943,7 @@ set_location_assignment PIN_AF23 -to UM_nCSO
 set_location_assignment PIN_AF25 -to usb_fd_io[0]
 set_location_assignment PIN_AF27 -to "pcie_refclk_i(n)"
 set_location_assignment PIN_AF28 -to pcie_refclk_i
-#set_location_assignment PIN_AF5  -to  usbc_tx1_n[5]
+set_location_assignment PIN_AF5  -to  usbc_tx1_n[5]
 #set_location_assignment PIN_AF6  -to  usbc_tx3_n[5]
 set_location_assignment PIN_AF8 -to wr_dac_din_o
 set_location_assignment PIN_AF9 -to wr_ndac_cs_o[1]
@@ -954,7 +954,7 @@ set_location_assignment PIN_AG25 -to usb_fd_io[1]
 set_location_assignment PIN_AG33 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_AG34 -to pcie_tx_o[3]
 #set_location_assignment PIN_AG3  -to  usbc_tx4_n[5]
-#set_location_assignment PIN_AG5 -to usbc_tx1_p[5]
+set_location_assignment PIN_AG5 -to usbc_tx1_p[5]
 #set_location_assignment PIN_AG6 -to usbc_tx3_p[5]
 set_location_assignment PIN_AG7 -to cpld_io[5]
 set_location_assignment PIN_AG8 -to cpld_io[3]
@@ -1046,10 +1046,10 @@ set_location_assignment PIN_B23 -to psram_a[0]
 set_location_assignment PIN_B25 -to psram_a[8]
 set_location_assignment PIN_B26 -to psram_a[2]
 set_location_assignment PIN_B27 -to psram_a[5]
-#set_location_assignment PIN_C18 -to usbc_tx1_en[3]
-#set_location_assignment PIN_C19 -to usbc_tx1_en[1]
+set_location_assignment PIN_C18 -to usbc_tx1_en[3]
+set_location_assignment PIN_C19 -to usbc_tx1_en[1]
 #set_location_assignment PIN_C20 -to usbc_tx3_en[3]
-#set_location_assignment PIN_C22 -to usbc_tx1_en[4]
+set_location_assignment PIN_C22 -to usbc_tx1_en[4]
 set_location_assignment PIN_C23 -to psram_a[1]
 set_location_assignment PIN_C24 -to psram_a[6]
 set_location_assignment PIN_C25 -to psram_a[13]
@@ -1115,8 +1115,8 @@ set_location_assignment PIN_L8 -to OneWire_CB_splz
 set_location_assignment PIN_M23 -to psram_cen[1]
 #set_location_assignment PIN_M2 -to usbc_tx5_p[3]
 #set_location_assignment PIN_M3   -to  usbc_tx5_n[3]
-#set_location_assignment PIN_M6 -to usbc_tx1_p[3]
-#set_location_assignment PIN_M7   -to  usbc_tx1_n[3]
+set_location_assignment PIN_M6 -to usbc_tx1_p[3]
+set_location_assignment PIN_M7   -to  usbc_tx1_n[3]
 #set_location_assignment PIN_N2 -to usbc_rx1_p[3]
 #set_location_assignment PIN_N3 -to usbc_rx1_n[3]
 #set_location_assignment PIN_N4 -to usbc_tx3_p[3]
@@ -1132,11 +1132,11 @@ set_location_assignment PIN_P9 -to psram_dq[13]
 #set_location_assignment PIN_R1 -to usbc_rx3_p[1]
 #set_location_assignment PIN_R2 -to usbc_rx2_n[1]
 #set_location_assignment PIN_R3  -to   usbc_tx3_n[1]
-#set_location_assignment PIN_R4  -to   usbc_tx1_n[1]
+set_location_assignment PIN_R4  -to   usbc_tx1_n[1]
 set_location_assignment PIN_R9 -to psram_dq[1]
 set_location_assignment PIN_T10 -to psram_dq[7]
 #set_location_assignment PIN_T3 -to usbc_tx3_p[1]
-#set_location_assignment PIN_T4 -to usbc_tx1_p[1]
+set_location_assignment PIN_T4 -to usbc_tx1_p[1]
 #set_location_assignment PIN_T5 -to usbc_tx4_p[1]
 #set_location_assignment PIN_T6  -to   usbc_tx4_n[1]
 set_location_assignment PIN_T8 -to psram_dq[3]
@@ -1167,8 +1167,8 @@ set_location_assignment PIN_Y28 -to clk_125m_tcb_pllref_i
 #set_location_assignment PIN_Y2 -to usbc_rx4_n[2]
 #set_location_assignment PIN_Y3 -to usbc_tx5_p[2]
 #set_location_assignment PIN_Y4  -to   usbc_tx5_n[2]
-#set_location_assignment PIN_Y8 -to usbc_tx1_p[2]
-#set_location_assignment PIN_Y9  -to   usbc_tx1_n[2]
+set_location_assignment PIN_Y8 -to usbc_tx1_p[2]
+set_location_assignment PIN_Y9  -to   usbc_tx1_n[2]
 # SFP
 # Start pinning
 # TCB clock
