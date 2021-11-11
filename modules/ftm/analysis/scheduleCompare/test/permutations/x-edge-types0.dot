@@ -1,5 +1,5 @@
 digraph G {
-name="x-edge-types"
+name="x-edge-types0"
 node [type=tmsg]
 a -> b [type=defdst]
 a -> c [type=altdst]
