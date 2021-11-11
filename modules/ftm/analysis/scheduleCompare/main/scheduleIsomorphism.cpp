@@ -20,7 +20,7 @@ class iso_callback {
     }
     set_of_vertex_iso_map.push_back(vertex_iso_map);
     vertex_iso_map.clear();
-    return false;
+    return true;
   }
   std::vector<std::vector<std::pair<int, int>>> get_setvmap() {
     return set_of_vertex_iso_map;
