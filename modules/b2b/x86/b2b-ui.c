@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-July-2021
+ *  version : 12-Nov-2021
  *
  *  user interface for B2B
  *
@@ -69,6 +69,14 @@
 #define  MENUPAR_ESRSID     "b2bivt_esrsid"        // name is completed at run-time
 #define  MENUTXT_ESRKNOB    "b2bivt_esrknob.txt"
 #define  MENUPAR_ESRKNOB    "b2bivt_esrknob.par"
+#define  MENUTXT_YR         "b2bivt_yr.txt"
+#define  MENUPAR_YR         "b2bivt_yr.par"
+#define  MENUTXT_YRCONF     "b2bivt_yrconf.txt"
+#define  MENUPAR_YRCONF     "b2bivt_yrconf.par"
+#define  MENUTXT_YRSID      "b2bivt_yrsid.txt"
+#define  MENUPAR_YRSID      "b2bivt_yrsid"         // name is completed at run-time
+#define  MENUTXT_YRKNOB     "b2bivt_yrknob.txt"
+#define  MENUPAR_YRKNOB     "b2bivt_yrknob.par"
 
 #define  MAXLEN              256                   // max string length
 
@@ -105,15 +113,18 @@ void getEbDevice(ring_t ring, char *ebDevice)
   char   parname[MAXLEN];
   char   ebsis[MAXLEN];
   char   ebesr[MAXLEN];
+  char   ebyr[MAXLEN];
 
   sprintf(parname, "%s/%s", path, MENUPAR_EXPERT);
   if ((parfile = fopen(parname,"r"))) {
     fscanf(parfile,"%s",ebsis);
     fscanf(parfile,"%s",ebesr);
+    fscanf(parfile,"%s",ebyr);
     fclose(parfile);
     
-    if (ring == SIS18) sprintf(ebDevice, "%s", ebsis);
-    if (ring == ESR)   sprintf(ebDevice, "%s", ebesr);
+    if (ring == SIS18)   sprintf(ebDevice, "%s", ebsis);
+    if (ring == ESR)     sprintf(ebDevice, "%s", ebesr);
+    if (ring == CRYRING) sprintf(ebDevice, "%s", ebyr);    
   } // if parfile
 } // getEbDevice
 
@@ -173,7 +184,7 @@ void parfileWriteDefaultSID(char *filename, uint32_t sid)
   char comment[MAXLEN];
 
   sprintf(comment, "SID-%d", sid);
-  parfileWriteSID(filename, comment, 1, 1, 1000000, 1, 1000000, 1, 1, 0, 0, 0);
+  parfileWriteSID(filename, comment, 0, 0, 1000000, 1, 1000000, 1, 1, 0, 0, 0);
 } // parfileWriteDefaultSID
 
 
@@ -207,6 +218,11 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
       sprintf(parname, "%s/%s%d.par", path, MENUPAR_ESRSID, sid);
       gid = ESR_RING;
       break;
+    case CRYRING :
+      sprintf(parname, "%s/%s%d.par", path, MENUPAR_YRSID, sid);
+      gid = CRYRING_RING;
+      break;
+      
     default :
       gid = GID_INVALID;
   } // switch ring
@@ -217,8 +233,9 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   // submit parameters to FW
   errorFlag = 0;
   status    = COMMON_STATUS_OK;
-  if (!errorFlag) if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
-  if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+  if (!errorFlag)   if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+  if (mode > B2B_MODE_B2E) 
+    if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
 
   if (errorFlag) {
     printf("%s\n", b2b_status_text(status));
@@ -299,6 +316,10 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
       sprintf(txtname, "%s/%s", path, MENUTXT_ESRKNOB);
       sprintf(parname, "%s/%s", path, MENUPAR_ESRKNOB);
       break;      
+    case CRYRING :
+      sprintf(txtname, "%s/%s", path, MENUTXT_YRKNOB);
+      sprintf(parname, "%s/%s", path, MENUPAR_YRKNOB);
+      break;      
     default :
       ;
   } // switch ring
@@ -365,6 +386,10 @@ void menuSID(uint64_t ebDevice, ring_t ring, uint32_t sid)
       sprintf(txtname, "%s/%s", path, MENUTXT_ESRSID);
       sprintf(parname, "%s/%s%d.par", path, MENUPAR_ESRSID, sid);
       break;
+    case CRYRING :
+      sprintf(txtname, "%s/%s", path, MENUTXT_YRSID);
+      sprintf(parname, "%s/%s%d.par", path, MENUPAR_YRSID, sid);
+      break;
     default :
       ;
   } // switch ring
@@ -424,6 +449,11 @@ void menuConfig(uint64_t ebDevice, ring_t ring)
       sprintf(parname,          "%s/%s", path, MENUPAR_ESRCONF);
       sprintf(parnameSidPrefix, "%s/%s", path, MENUPAR_ESRSID);          
       break;
+    case CRYRING :
+      sprintf(txtname,          "%s/%s", path, MENUTXT_YRCONF);
+      sprintf(parname,          "%s/%s", path, MENUPAR_YRCONF);
+      sprintf(parnameSidPrefix, "%s/%s", path, MENUPAR_YRSID);          
+      break;
     default :
       ;
   } // switch ring
@@ -474,6 +504,9 @@ void menuMonitor(uint64_t ebDevice, ring_t ring)
       break;
     case ESR :
       sprintf(machine, "ESR");
+      break;
+    case CRYRING :
+      sprintf(machine, "CRYRING");
       break;
     default :
       ;
@@ -547,6 +580,10 @@ void menuRing(ring_t ring)
     case ESR : 
       sprintf(txtname, "%s/%s", path, MENUTXT_ESR);
       sprintf(parname, "%s/%s", path, MENUPAR_ESR);
+      break;
+    case CRYRING : 
+      sprintf(txtname, "%s/%s", path, MENUTXT_YR);
+      sprintf(parname, "%s/%s", path, MENUPAR_YR);
       break;
     default :
       ;
@@ -643,9 +680,12 @@ int main(int argc, char** argv)
         menuRing(ESR);
         break;
       case 3 :
-        menuExpert();
+        menuRing(CRYRING);
         break;
       case 4 :
+        menuExpert();
+        break;
+      case 5 :
         exit(0);
       default :
         ;
