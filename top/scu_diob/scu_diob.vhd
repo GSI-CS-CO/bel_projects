@@ -1163,7 +1163,8 @@ END COMPONENT front_board_id;
 -----------------DAQ-Signale---------------------------------------------------------------------------------------------------
 
 --TYPE t_daq_ch_num IS ARRAY(NATURAL RANGE <>) OF integer range 1 to 16;
-constant daq_ch_num: integer := 4;
+--constant daq_ch_num: integer := 4;
+constant daq_ch_num: integer := 16;
 -- signal daq_diob_ID: std_logic_vector(15 downto 0);
 
 constant daq_diob_ID: std_logic_vector(15 downto 0):=x"0002"; --to be checked
@@ -5592,6 +5593,15 @@ daq_dat(2)(5 downto 0)<= AW_Input_Reg(1)(13 downto 8);
 daq_dat(3)(7 downto 0)<= AW_Input_Reg(2)(7 downto 0);
 
 daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
+
+---- daq_dat for Outputs
+
+daq_dat(5)(0)  <= AW_Output_Reg(1)(3);   --  Output "2CB2", 
+daq_dat(6)(0) <=  AW_Output_Reg(1)(2);  --  Output "2CA2"
+daq_dat(7)(0) <=  AW_Output_Reg(1)(1);  --  Output "1CB2"
+daq_dat(8)(0) <=  AW_Output_Reg(1)(0);  --  Output "1CA2"
+
+
 --#########################################################
 
   WHEN   c_AW_OCIO1.ID | c_AW_OCIO2.ID  =>    --- OCIO1 oder OCIO2=>
