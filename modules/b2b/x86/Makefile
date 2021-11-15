@@ -17,8 +17,8 @@ B2BLIB      := libb2blib.so
 
 #DIMPATH     := /opt/dim/dim_v20r29
 DIMPATH     := /common/usr/timing/b2b/dim_v20r29
-ASLLIB      := /common/export/timing-rte/tg-fallout-v6.1.2/x86_64/lib
-ASLINC      := /common/export/timing-rte/tg-fallout-v6.1.2/x86_64/include/saftlib
+ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
+ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
 
 EXTRA_FLAGS ?=
 #CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
