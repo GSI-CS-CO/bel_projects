@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 9-Nov-2021
+ *  version : 15-Nov-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000308                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000309                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -337,7 +337,6 @@ uint32_t setSubmit()
   } // else flagInject   
   
   setFlagValid[sid]    = 1;
-  
   DBPRINT3("submit %u\n", sid);
   return COMMON_STATUS_OK;
 } // setSubmit
@@ -871,7 +870,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // submit data and primitive error checks
       if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
       if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
-      if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return COMMON_STATUS_OUTOFRANGE;}
+      if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return B2B_STATUS_BADSETTING;}
 
       gid        = setGid[sid]; 
       mode       = setMode[sid];
