@@ -18,6 +18,8 @@ const int TEST_FAIL = 18;
 struct configuration {
   // option -c
   bool check = false;
+  // option -n
+  bool CompareNames = true;
   // option -s
   bool silent = false;
   // option -vv

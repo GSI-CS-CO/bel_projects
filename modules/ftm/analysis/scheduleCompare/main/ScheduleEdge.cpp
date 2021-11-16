@@ -25,8 +25,8 @@ int ScheduleEdge::compare(const ScheduleEdge& e1, const ScheduleEdge& e2) {
   return result;
 }
 
-std::string ScheduleEdge::printProtocol(const std::string prefix) {
-  return std::string("Edge: ") + prefix + std::string(" ") + std::string(*this) + std::string(": ") + this->protocol;
+std::string ScheduleEdge::printProtocol() {
+  return std::string("Edge: ") + std::string(*this) + std::string(": ") + this->protocol;
 }
 
 ScheduleEdge::operator std::string() {

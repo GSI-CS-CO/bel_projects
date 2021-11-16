@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chstv")) != -1) {
+  while ((opt = getopt(argc, argv, "chnstv")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -32,6 +32,9 @@ int main(int argc, char* argv[]) {
       case 'h':
         usage(program);
         error = USAGE_MESSAGE;
+        break;
+      case 'n':
+        config.CompareNames = false;
         break;
       case 'c':
         config.check = true;
@@ -68,8 +71,9 @@ void usage(char* program) {
   std::cerr << "Options: " << std::endl;
   std::cerr << "        -c: check dot syntax (stops parsing on all unknown attributes)." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
+  std::cerr << "        -n: do not compare names of vertices. Not applicable with option -t." << std::endl;
   std::cerr << "        -s: silent mode, no output." << std::endl;
-  std::cerr << "        -t: test a single graph: compare each vertex with itself." << std::endl;
+  std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "Return codes: " << std::endl;

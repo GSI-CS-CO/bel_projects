@@ -13,9 +13,13 @@ ScheduleVertex::operator std::string() {
   return this->name;
 }
 
+void ScheduleVertex::switchCompareNames(const bool flag){
+  this->compareNames = flag;
+}
+
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-  //~ std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
-  if (v1.name == v2.name) {
+  //~ std::cout << "--V " << v1.name << ", " << v2.name << " | " << v1.protocol << std::endl;
+  if (!v1.compareNames || v1.name == v2.name) {
     if (v1.type == "") {
       return 0;
     } else if (v1.type == v2.type) {
@@ -47,7 +51,11 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
       return v1.type.compare(v2.type);
     }
   } else {
-    return v1.name.compare(v2.name);
+    bool result = !v1.compareNames || v1.name.compare(v2.name);
+    if (result != 0) {
+      protocol += " != '" + v2.name + "';";
+    }
+    return result;
   }
 }
 
@@ -466,6 +474,10 @@ bool ScheduleVertex::startsWith(std::string value, std::string start, bool caseS
   return (value.find(start) == 0);
 }
 
-std::string ScheduleVertex::printProtocol(const std::string prefix) {
-  return std::string("Vertex: ") + prefix + std::string(" ") + std::string(*this) + std::string(": ") + this->protocol;
+std::string ScheduleVertex::printProtocol() {
+  std::string result = std::string("");
+  if (!this->protocol.empty()) {
+    result = std::string("Vertex: ") + std::string(*this) + this->protocol;
+  }
+  return result;
 }

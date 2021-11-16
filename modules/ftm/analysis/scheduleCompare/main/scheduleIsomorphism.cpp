@@ -20,10 +20,16 @@ class iso_callback {
     }
     set_of_vertex_iso_map.push_back(vertex_iso_map);
     vertex_iso_map.clear();
+    isomorphismCounter++;
     return true;
   }
+
   std::vector<std::vector<std::pair<int, int>>> get_setvmap() {
     return set_of_vertex_iso_map;
+  }
+
+  int getIsomorphismCounter() {
+    return isomorphismCounter;
   }
 
  private:
@@ -31,6 +37,7 @@ class iso_callback {
   const Graph1& graph2_;
   std::vector<std::pair<int, int>> vertex_iso_map;
   std::vector<std::vector<std::pair<int, int>>> set_of_vertex_iso_map;
+  int isomorphismCounter = 1;
 };
 
 template <typename Graph1>
@@ -106,6 +113,9 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
   }
   // std::cerr << "parse1: " << parse1 << ", parse2: " << parse2 << ", result: " << result << std::endl;
   if (parse1 && parse2) {
+    // set the flag for comparing the names on all vertices of both graphs.
+    switchCompareNames(graph1, config.CompareNames);
+    switchCompareNames(graph2, config.CompareNames);
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
     std::string *refName1, *refName2;
@@ -143,25 +153,22 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
                           vertex_order_by_mult(*ref1),                  // const VertexOrderSmall& vertex_order_small,
                           std::ref(edgeComparator),                     // EdgeEquivalencePredicate edge_comp,
                           std::ref(graphComparator));                   // VertexEquivalencePredicate vertex_comp)
+    std::string isSubgraph = "";
     if (num_vertices(*ref1) == num_vertices(*ref2) && num_edges(*ref1) == num_edges(*ref2)) {
-      if (!config.silent) {
-        std::cout << "Graphs " << getGraphName(*ref1) << " (" << *refName1 << ") and " << getGraphName(*ref2) << " (" << *refName2 << ") are " << (isomorphic ? "" : "NOT ")
-                  << "isomorphic." << std::endl;
-      }
-      if (config.verbose) {
-        listVertexProtocols(*ref1, "Graph 1,");
-        listEdgeProtocols(*ref1, "Graph 1,");
-      }
       result = (isomorphic ? EXIT_SUCCESS : NOT_ISOMORPHIC);
     } else {
-      if (!config.silent) {
-        std::cout << "Graph " << getGraphName(*ref1) << " (" << *refName1 << ") is " << (isomorphic ? "" : "NOT ") << "isomorphic to a subgraph of graph " << getGraphName(*ref2)
-                  << " (" << *refName2 << ")." << std::endl;
-      }
       result = (isomorphic ? SUBGRAPH_ISOMORPHIC : NOT_ISOMORPHIC);
+      isSubgraph = "a subgraph of ";
     }
 
     if (!config.silent) {
+      std::cout << "Graph " << getGraphName(*ref1) << " (" << *refName1 << ") is " << (isomorphic ? "" : "NOT ") << "isomorphic to "
+                << isSubgraph << "graph " << getGraphName(*ref2) << " (" << *refName2 << ")." << std::endl;
+      if (config.verbose) {
+        std::string prefix = "Isomorphism " + std::to_string(callback.getIsomorphismCounter()) + ", Graph 1, ";
+        listVertexProtocols(*ref1, prefix);
+        listEdgeProtocols(*ref1, prefix);
+      }
       // get vector from callback
       auto set_of_isomorphisms = callback.get_setvmap();
 
@@ -278,26 +285,27 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
 void listVertexProtocols(ScheduleGraph& graph, const std::string prefix) {
   auto vertex_pair = vertices(graph);
   for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
-    std::string protocol = graph[*iter].printProtocol(prefix);
-    if (protocol.find("compare") != std::string::npos) {
-      std::cout << protocol << std::endl;
+    std::string protocol = graph[*iter].printProtocol();
+    if (!protocol.empty()) {
+    //~ if (protocol.find("compare") != std::string::npos) {
+      std::cout << prefix << protocol << std::endl;
     }
   }
-  //~ boost::property_map<ScheduleGraph, boost::vertex_index_t>::type vertex_id = get(boost::vertex_index, graph);
-  //~ BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph)) {
-    //~ ScheduleVertex vTemp = graph[get(vertex_id, v)];
-    //~ if (!vTemp.protocol.empty()) {
-      //~ std::cout << "Node: " << vTemp << ": " << vTemp.protocol << std::endl;
-    //~ }
-  //~ }
 }
 
 void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix) {
   auto edge_pair = edges(graph);
   for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
-    std::string protocol = graph[*iter].printProtocol(prefix);
+    std::string protocol = graph[*iter].printProtocol();
     if (protocol.find("Result") != std::string::npos) {
-      std::cout << protocol << std::endl;
+      std::cout << prefix << protocol << std::endl;
     }
+  }
+}
+
+void switchCompareNames(ScheduleGraph& graph, const bool flag) {
+  auto vertex_pair = vertices(graph);
+  for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
+    graph[*iter].switchCompareNames(flag);
   }
 }

@@ -11,22 +11,10 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', expectedReturnCode=0, linesCerr=0, linesCout=3)
 
   def test_first_isomorphism_verbose(self):
-    self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', '-v', expectedReturnCode=0, linesCerr=0, linesCout=25)
-
-  def test_subgraph_isomorphism(self):
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', expectedReturnCode=2, linesCerr=0, linesCout=3)
-
-  def test_subgraph_isomorphism_verbose(self):
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-v', expectedReturnCode=2, linesCerr=0, linesCout=31)
-
-  def test_subgraph_isomorphism_superverbose(self):
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-vv', expectedReturnCode=2, linesCerr=0, linesCout=51)
-
-  def test_subgraph_isomorphism_silent(self):
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x1.dot', '-s', expectedReturnCode=2, linesCerr=0, linesCout=0)
+    self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', '-v', expectedReturnCode=0, linesCerr=0, linesCout=26)
 
   def test_usage_message(self):
-    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=22, linesCout=0)
+    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=23, linesCout=0)
 
   def test_folder_dot_tmsg(self):
     self.allPairsFilesInFolderTest('dot_tmsg/')

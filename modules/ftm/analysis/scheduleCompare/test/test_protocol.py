@@ -15,4 +15,4 @@ class TestProtocol(common_scheduleCompare.CommonScheduleCompare):
     """Structure is the same, the edge types are different.
     The protocol shows:
     """
-    self.callScheduleCompare('permutations/x-edge-types0.dot', 'permutations/x-edge-types1.dot', '-v', expectedReturnCode=1, linesCerr=0, linesCout=22)
+    self.callScheduleCompare('permutations/x-edge-types0.dot', 'permutations/x-edge-types1.dot', '-v', expectedReturnCode=1, linesCerr=0, linesCout=24)

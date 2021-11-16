@@ -38,4 +38,5 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
 std::string getGraphName(ScheduleGraph& g);
 void listVertexProtocols(ScheduleGraph& graph, const std::string prefix);
 void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix);
+void switchCompareNames(ScheduleGraph& graph, const bool flag);
 #endif
