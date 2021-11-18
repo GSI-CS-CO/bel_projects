@@ -288,9 +288,16 @@ void forEachScuDaqDevice( void )
 void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
   // DEBUG_FEEDBACK_ON_OFF();
+   criticalSectionEnter();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
+   criticalSectionExit();
 
+#ifdef CONFIG_NON_DAQ_FG_SUPPORT
+   if( (pDaqDevice == NULL) || (pDaqDevice->type == UNKNOWN))
+      return;
+#else
    DAQ_ASSERT( pDaqDevice != NULL );
+#endif
 #ifdef _CONFIG_NO_DAQ_FSM
    DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
@@ -318,9 +325,17 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
    DEBUG_FEEDBACK_ON_OFF();
+   criticalSectionEnter();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
+   criticalSectionExit();
 
+#ifdef CONFIG_NON_DAQ_FG_SUPPORT
+   if( (pDaqDevice == NULL) || (pDaqDevice->type == UNKNOWN))
+      return;
+#else
    DAQ_ASSERT( pDaqDevice != NULL );
+#endif
+
 #ifdef _CONFIG_NO_DAQ_FSM
    DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];

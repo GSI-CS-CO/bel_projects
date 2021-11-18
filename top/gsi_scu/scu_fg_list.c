@@ -282,6 +282,59 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 }
 #endif /* ifndef CONFIG_SCU_DAQ_INTEGRATION */
 
+#ifdef CONFIG_NON_DAQ_FG_SUPPORT
+/*! ---------------------------------------------------------------------------
+ * @brief Scans the whole SCU bus for specific slaves having a
+ *        function generator and add it to the function generator list if
+ *        any found.
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFgList Start pointer of function generator list.
+ * @param systemAddr System address
+ * @param groupAddr  Group address
+ */
+STATIC void scanScuBusForFg( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList,
+                             SLAVE_SYSTEM_T systemAddr, SLAVE_GROUP_T groupAddr )
+{
+   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( (void*)scub_adr,
+                                                                    systemAddr,
+                                                                    groupAddr );
+   if( slotFlags == 0 )
+      return;
+
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   {
+      if( scuBusIsSlavePresent( slotFlags, slot ) )
+      {
+         fgListAdd( slot,
+                    0,
+                    systemAddr,
+                    groupAddr,
+                    getFgFirmwareVersion( (void*)scub_adr, slot ),
+                    pFgList );
+      #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+         scuBusEnableSlaveInterrupt( (void*)scub_adr, slot );
+      #endif
+      }      
+   }
+}
+
+#define CONFIG_DIOB_WITHOUT_DAQ
+
+/*! ---------------------------------------------------------------------------
+ * @brief Scans the SCU- bus for function generators which doesn't have DAQs.
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFgList Start pointer of function generator list.
+ */
+ONE_TIME_CALL
+void scanScuBusFgsWithoutDaq( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
+{
+   scanScuBusForFg( scub_adr, pFgList, SYS_PBRF, GRP_FIB_DDS );
+ #ifdef CONFIG_DIOB_WITHOUT_DAQ
+   scanScuBusForFg( scub_adr, pFgList, SYS_CSCO, GRP_DIOB );
+ #endif
+}
+#endif /* ifdef CONFIG_NON_DAQ_FG_SUPPORT */
+
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus for all kinda of function generators.
  */
@@ -293,7 +346,7 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
 #else
    scanScuBusFgsDirect( (void*)scub_adr, pFgList );
 #endif
-#ifdef CONFIG_MIL_FG
+#if defined( CONFIG_MIL_FG ) || defined( CONFIG_NON_DAQ_FG_SUPPORT )
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
    if( daqBusIsAcuDeviceOnly( &g_scuDaqAdmin.oDaqDevs ) )
    { /*
@@ -303,7 +356,12 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
       return;
    }
  #endif
+ #ifdef CONFIG_NON_DAQ_FG_SUPPORT
+   scanScuBusFgsWithoutDaq( scub_adr, pFgList );
+ #endif
+ #ifdef CONFIG_MIL_FG
    scanScuBusFgsViaMil( scub_adr, pFgList );
+ #endif
 #endif
 }
 
