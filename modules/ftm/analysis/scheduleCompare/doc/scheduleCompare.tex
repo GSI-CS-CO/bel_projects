@@ -12,7 +12,7 @@
 \begin{large}
 \begin{tabularx}{\textwidth}{Xl}
 Version & 1.0\\
-Last updated & 2021-06-08\\
+Last updated & 2021-11-18\\
 \vspace{1.5cm}\\
 Author & Martin Skorsky\\
 Department & ACO \\
@@ -226,8 +226,9 @@ Options:
 \begin{enumerate}
   \item -c: check dot syntax (stops parsing on all unknown attributes).
   \item -h: help and usage.
+  \item -n: do not compare names of vertices. Not applicable with option -t.
   \item -s: silent, no output, only return code. Usefull for automated tests.
-  \item -t: test a single graph: compare each vertex with itself.
+  \item -t: test a single graph: compare each vertex with itself. This tests the vertex comparator.
   \item -v: verbose, output of input graphs as dot text.
   \item -vv: super verbose, in addition to verbose more output.
 \end{enumerate}
@@ -242,8 +243,9 @@ Return Codes:
   \item 13 FILE\_NOT\_FOUND, one of the dot files not found.
   \item 14 USAGE\_MESSAGE, usage message (help) displayed.
   \item 15 PARSE\_ERROR, error while parsing, unknown tag or attribute.
-  \item 16 TEST\_SUCCESS, test a single graph with success.
-  \item 17 TEST\_FAIL, test a single graph with failure.
+  \item 16 PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax.
+  \item 17 TEST\_SUCCESS, test a single graph with success.
+  \item 18 TEST\_FAIL, test a single graph with failure.
   \item negative values are UNIX signals
 \end{enumerate}
 
@@ -259,6 +261,47 @@ This test runs for about 8 hours. Start with \texttt{nohup} $<$ command $>$ \& t
   \item same graph, but different types for edges between the same vertices. Vertex names and types are the same.
   \item test cases for boolean values.
   \item cases for hex values.
+\end{enumerate}
+
+\section{Test cases for the protocol}
+If the two schedules are not isomorphic, a protocol of the comparison is printed in verbose mode. The test cases
+ensure that the protocol works for different situations. These are:
+\begin{enumerate}
+  \item Set of vertices of graph 1 and graph 2 have the same size.
+  \item Set of edges of graph 1 and graph 2 have the same size.
+  \item Graph 1 is isomorphic to graph 2.
+  \item Graph 1 is isomorphic to a subgraph of graph 2.
+  \item Graph 1 is not isomorphic to a subgraph of graph 2 because of vertex comparison.
+  \item Graph 1 is not isomorphic to a subgraph of graph 2 because of edge comparison.
+  \item Vertex names are equal.
+  \item Vertex names are not equal.
+\end{enumerate}
+
+List of test cases:
+\begin{enumerate}
+  \item Graph 1 and graph 2 have the same size and are isomorphic.
+  \item Graph 1 and graph 2 have the same size and are not isomorphic due to vertex comparison with name comparison.
+  \item Graph 1 and graph 2 have the same size and are not isomorphic due to vertex comparison without name comparison.
+  \item Graph 1 and graph 2 have the same size and are not isomorphic due to edge comparison with name comparison.
+  \item Graph 1 and graph 2 have the same size and are not isomorphic due to edge comparison without name comparison.
+
+  \item Graph 1 has less number of edges than graph 2, but the same number of vertices and are isomorphic.
+  \item Graph 1 has less number of edges than graph 2, but the same number of vertices and are not isomorphic due to vertex comparison with name comparison.
+  \item Graph 1 has less number of edges than graph 2, but the same number of vertices and are not isomorphic due to vertex comparison without name comparison.
+  \item Graph 1 has less number of edges than graph 2, but the same number of vertices and are not isomorphic due to edge comparison with name comparison.
+  \item Graph 1 has less number of edges than graph 2, but the same number of vertices and are not isomorphic due to edge comparison without name comparison.
+
+  \item Graph 1 has less number of vertices than graph 2, but the same number of edges and are isomorphic.
+  \item Graph 1 has less number of vertices than graph 2, but the same number of edges and are not isomorphic due to vertex comparison with name comparison.
+  \item Graph 1 has less number of vertices than graph 2, but the same number of edges and are not isomorphic due to vertex comparison without name comparison.
+  \item Graph 1 has less number of vertices than graph 2, but the same number of edges and are not isomorphic due to edge comparison with name comparison.
+  \item Graph 1 has less number of vertices than graph 2, but the same number of edges and are not isomorphic due to edge comparison without name comparison.
+
+  \item Graph 1 has less number of vertices than graph 2 and less number of edges and are isomorphic.
+  \item Graph 1 has less number of vertices than graph 2 and less number of edges and are not isomorphic due to vertex comparison with name comparison.
+  \item Graph 1 has less number of vertices than graph 2 and less number of edges and are not isomorphic due to vertex comparison without name comparison.
+  \item Graph 1 has less number of vertices than graph 2 and less number of edges and are not isomorphic due to edge comparison with name comparison.
+  \item Graph 1 has less number of vertices than graph 2 and less number of edges and are not isomorphic due to edge comparison without name comparison.
 \end{enumerate}
 
 \chapter{Source and Branches}

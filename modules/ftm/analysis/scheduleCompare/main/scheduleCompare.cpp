@@ -72,7 +72,7 @@ void usage(char* program) {
   std::cerr << "        -c: check dot syntax (stops parsing on all unknown attributes)." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
   std::cerr << "        -n: do not compare names of vertices. Not applicable with option -t." << std::endl;
-  std::cerr << "        -s: silent mode, no output." << std::endl;
+  std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
   std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
