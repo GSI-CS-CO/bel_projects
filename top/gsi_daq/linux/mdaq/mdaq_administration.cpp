@@ -181,7 +181,11 @@ DaqAdministration::~DaqAdministration( void )
  */
 void DaqAdministration::initPtr( void )
 {
-   if( m_middleBufferSize == 0 )
+   if( (m_middleBufferSize == 0)
+ #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+      && !isMilDataInLm32Mem()
+ #endif
+     )
       m_middleBufferSize = std::min( getRamCapacity() / RAM_ITEM_PER_MIL_DAQ_ITEM, 400UL );
 
    assert( (m_middleBufferSize % RAM_ITEM_PER_MIL_DAQ_ITEM) == 0 );
