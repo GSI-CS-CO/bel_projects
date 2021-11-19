@@ -26,6 +26,9 @@ EXTRA_FLAGS ?=
 CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I $(ASLINC) -I../../common-libs/include -I $(DIMPATH)/dim
 LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(ASLLIB) -L $(EB)/.libs -L $(DIMPATH)/linux -Wl,-rpath,$(PREFIX)/lib -lm -letherbone -lb2blib
 
+STRIPCFLAGS ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I $(ASLINC) -I../../common-libs/include -I $(DIMPATH)/dim
+STRIPLIBS   ?=  -L . -L $(ASLLIB) -L $(DIMPATH)/linux -Wl,-rpath,$(PREFIX)/lib -lm  -lb2blib
+
 
 
 all: $(TARGETS)
@@ -40,7 +43,7 @@ b2b-serv-sys: b2b-serv-sys.c
 	$(CC) $(CFLAGS) -o b2b-serv-sys b2b-serv-sys.c $(LIBS) -ldim -lpthread
 
 b2b-client-sys: b2b-client-sys.c
-	$(CC) $(CFLAGS) -o b2b-client-sys b2b-client-sys.c $(LIBS) -ldim -lpthread 
+	$(CC) $(STRIPCFLAGS) -o b2b-client-sys b2b-client-sys.c $(STRIPLIBS) -ldim -lpthread 
 
 b2b-viewer: b2b-viewer.c
 	$(CC) $(CFLAGS) -o b2b-viewer b2b-viewer.c $(LIBS) -ldim -lpthread 
