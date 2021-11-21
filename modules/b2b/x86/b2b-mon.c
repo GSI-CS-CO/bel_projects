@@ -333,6 +333,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
 
   if ((*tag < 0) || (*tag >= NALLSID)) return;
   idx = (uint32_t)(*tag);
+  if (idx >= NALLSID) return;
   
   flagSetValid[idx] = (*size != sizeof(uint32_t));
 
@@ -370,7 +371,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   else set_mode[idx] = 0;
 
   buildPrintLine(idx);
-  //flagPrintNow = 1;
+  flagPrintNow = 1;
 } // recSetValue
 
 
@@ -391,19 +392,15 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
   } // switch ring
 
   sprintf(name, "%s_%s-raw_sid%02d_setval", prefix, ringName, sid);
-  printf("name %s\n", name);
   dicSetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, idx, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-raw_sid%02d_getval", prefix, ringName, sid);
-  printf("name %s\n", name);
   dicGetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_diag_sid%02d", prefix, ringName, sid);
-  printf("name %s\n", name);
   dicDiagvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_stat_sid%02d", prefix, ringName,  sid);
-  printf("name %s\n", name);
   dicDiagstatId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 } // dicSubscribeServices
 
@@ -849,7 +846,6 @@ void printData(char *name)
 
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m\n", buff);
-
   flagPrintNow = 0;
 } // printServices
   
@@ -932,30 +928,33 @@ int main(int argc, char** argv)
     if (flagPrintNow) printData(name);
     if (!quit) {
       userInput = comlib_getTermChar();
-      flagPrintNow = 1;
       switch (userInput) {
         case 'c' :
           clearStatus();
           break;
         case 'i' :
           flagPrintInactive = !flagPrintInactive;
+          flagPrintNow = 1;
           break;
         case '0' :
           flagPrintSis18 = !flagPrintSis18;
+          flagPrintNow = 1;
           break;
         case '1' :
           flagPrintEsr = !flagPrintEsr;
+          flagPrintNow = 1;
           break;
         case '2' :
           flagPrintYr = !flagPrintYr;
+          flagPrintNow = 1;
           break;
         case 'q'         :
           quit = 1;
           break;
         default          :
+          usleep(500000);
           break;
       } // switch
-      usleep(500000);
     } // if !quit
   } // while
 
