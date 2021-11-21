@@ -5,7 +5,7 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 22-Sep-2021
  *
- * subscribes to and displays status of a b2b transfers
+ * subscribes to and displays status of a b2b transfer
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
