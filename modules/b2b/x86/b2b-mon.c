@@ -125,6 +125,7 @@ int      flagPrintInactive;                                 // flag: print inact
 int      flagPrintSis18;                                    // flag: print SIDs for SIS18
 int      flagPrintEsr;                                      // flag: print SIDs for ESR
 int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
+int      flagPrintNow;                                      // flag: print stuff to screen NOW
 
 int      modeMask;                                          // mask: marks events used in actual mode
 
@@ -369,6 +370,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   else set_mode[idx] = 0;
 
   buildPrintLine(idx);
+  //flagPrintNow = 1;
 } // recSetValue
 
 
@@ -847,6 +849,8 @@ void printData(char *name)
 
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m\n", buff);
+
+  flagPrintNow = 0;
 } // printServices
   
 int main(int argc, char** argv)
@@ -914,15 +918,21 @@ int main(int argc, char** argv)
   printf("%s: starting client using prefix %s\n", program, prefix);
   
   for (i=0; i<NALLSID; i++) {
-    dicSubscribeServices(prefix, i);
     sprintf(printLine[i], "not initialized");
+    dicSubscribeServices(prefix, i);
   } // for i
   buildHeader();
+
+  // wait a bit, then rebuild all indices
+  usleep(1000000);
+  for (i=0; i<NALLSID; i++) buildPrintLine(i);
+  flagPrintNow = 1;
   
   while (!quit) {
-    printData(name);
+    if (flagPrintNow) printData(name);
     if (!quit) {
       userInput = comlib_getTermChar();
+      flagPrintNow = 1;
       switch (userInput) {
         case 'c' :
           clearStatus();
@@ -943,8 +953,9 @@ int main(int argc, char** argv)
           quit = 1;
           break;
         default          :
-          usleep(1000000);
+          break;
       } // switch
+      usleep(500000);
     } // if !quit
   } // while
 
