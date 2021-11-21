@@ -72,7 +72,7 @@ saft-io-ctl $SDTRIG -n IO4 -b 0xffffa04000000000
 # to IO2 (monitor), an offset is added for IO1/IO4
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
-saft-ecpu-ctl $SDTRIG -c 0xffffa04000000001 0xffffffffffffffff 20000 0xa04 -d
+saft-ecpu-ctl $SDTRIG -c 0xffffa04000000000 0xffffffffffffffff 20000 0xa04 -d
 
 # INJECTION: lm32 listens to CMD_B2B_TRIGGERINJ message from CBU
 # need pre-trigger to open input gates for probe signal
@@ -92,14 +92,14 @@ saft-io-ctl $SDTRIG -n IO3 -c 0x1154804000000000 0xfffffff000000000 1000 0x0 0 -
 
 # generate test pulses upon CMD_B2B_TRIGGERINJ (IO5,IO6) and CMD_B2B_TRIGGEREXT (IO5, IO7)
 #saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3210 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3410 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3200 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154805000000000 0xfffffff000000000 3400 0x0 0 -u
 #saft-io-ctl $SDTRIG -n IO6 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4220 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4420 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4200 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO6 -c 0x1154805000000000 0xfffffff000000000 4400 0x0 0 -u
 #saft-io-ctl $SDTRIG -n IO5 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 2410 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 2610 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 6400 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO5 -c 0x1154804000000000 0xfffffff000000000 6600 0x0 0 -u
 #saft-io-ctl $SDTRIG -n IO7 -o 1 -t 0 -a 1
-#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 3420 0x0 1 -u
-#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 3620 0x0 0 -u 
+#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 7400 0x0 1 -u
+#saft-io-ctl $SDTRIG -n IO7 -c 0x1154804000000000 0xfffffff000000000 7600 0x0 0 -u
