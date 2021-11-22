@@ -58,7 +58,7 @@ const char* program;
 // dim stuff
 #define  DIMCHARSIZE 32                   // standard size for char services
 #define  DIMMAXSIZE  1024                 // max size for service names
-#define  SCREENWIDTH 150                  // width of screen
+#define  SCREENWIDTH 1024                 // width of screen
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
 
 uint32_t no_link_32    = 0xdeadbeef;
@@ -133,6 +133,10 @@ char     header[SCREENWIDTH+1];                             // header line to be
 char     empty[SCREENWIDTH+1];                              // empty line to be printed
 char     printLine[NALLSID][SCREENWIDTH+1];                 // lines to be printed
 
+void term_clear(void)
+{
+  printf("\033[2J\033[1;1H");
+}
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <name>\n", program);
@@ -832,13 +836,14 @@ void printData(char *name)
   uint32_t nLines;
   uint32_t minLines = 20;
 
-  for (i=0;i<60;i++) printf("\n");
+  //for (i=0;i<60;i++) printf("\n");
 
   nLines = calcFlagPrint();
 
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
-  printf("\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------- (units [ns] unless explictly given) - v%8s\033[0m\n", name, b2b_version_text(B2B_MON_VERSION));
+  term_clear();
+  printf("\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m\n", name, b2b_version_text(B2B_MON_VERSION));
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("%s\n", header);
   for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLine[i]);
@@ -846,6 +851,7 @@ void printData(char *name)
 
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m\n", buff);
+  fflush(stdout);
   flagPrintNow = 0;
 } // printServices
   
