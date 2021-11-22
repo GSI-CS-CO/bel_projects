@@ -119,6 +119,13 @@ sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
 ```
 
+### Error: ModuleNotFoundError: No module named 'setuptools'
+Just install the right setuptools:
+```
+sudo apt-get install python3-setuptools # Python 3.X
+sudo apt-get install python-setuptool # Python 2.X
+```
+
 ### Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
