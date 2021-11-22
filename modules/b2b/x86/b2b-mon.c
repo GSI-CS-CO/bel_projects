@@ -279,14 +279,17 @@ void buildPrintLine(uint32_t idx)
   } // else flagb2b
   
   if (flagExtTrig) {
+    // trigger event received
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%5d",set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct );
+    else sprintf(tmp1, "%s", TXTERROR);
+    // signal from output of kicker electronics
     if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
-      sprintf(tmp1, "%s", TXTERROR);
-      sprintf(tmp2, "%s", TXTUNKWN);
+      sprintf(tmp2, "%s", TXTERROR);
       sprintf(tmp3, "%s", TXTUNKWN);
     } // if not ok
     else {
-      sprintf(tmp1, "%5d",set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct );
       sprintf(tmp2, "%5d", dicGetval[idx].ext_dKickMon);
+      // signal from magnet probe
       if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
       else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
     } //else not ok
@@ -295,9 +298,16 @@ void buildPrintLine(uint32_t idx)
   else sprintf(extTrig, "---");
 
   if (flagInjTrig) {
+    // trigger event received
+    if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
+      if (flagB2b) itmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
+      else         itmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+      sprintf(tmp1, "%5d", itmp1);
+    }
+    else sprintf(tmp1, "%s", TXTERROR);
+    // signal from output of kicker electronics    
     if ((dicGetval[idx].flag_nok >> 6) & 0x1) {
-      sprintf(tmp1, "%s", TXTERROR);
-      sprintf(tmp2, "%s", TXTUNKWN);
+      sprintf(tmp2, "%s", TXTERROR);
       sprintf(tmp3, "%s", TXTUNKWN);
       sprintf(tmp4, "%s", TXTUNKWN);
       sprintf(tmp5, "%s", TXTUNKWN);     
@@ -314,9 +324,6 @@ void buildPrintLine(uint32_t idx)
         if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp5, "%5s", TXTUNKWN);
         else                                      sprintf(tmp5, "%5d", utmp2);
       } // if not nok
-      if (flagB2b) itmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-      else         itmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
-      sprintf(tmp1, "%5d", itmp1);
     } //else not ok
     sprintf(injTrig, "%5d %5s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
   } // if flagExtTrig
