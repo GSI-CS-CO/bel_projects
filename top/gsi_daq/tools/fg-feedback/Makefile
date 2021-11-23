@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=2.8.1
+DEFINES += VERSION=2.9
 FOR_SCU := 1
 
 
@@ -56,7 +56,7 @@ DEFINES += CONFIG_AUTODOC_OPTION
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
 
- DEBUG = 1
+# DEBUG = 1
 # DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 # DEFINES += CONFIG_DAQ_DEBUG
