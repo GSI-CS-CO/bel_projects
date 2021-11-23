@@ -5102,6 +5102,10 @@ BEGIN
       AW_Input_Reg(2)(15 downto 0)  <=  P37IO_Status_o;           -- Status
       AW_Input_Reg(3)(15 downto 0)  <=  P37IO_Error_o;            -- Error
 
+  --################################      daq_channels assignments     ##################################
+  daq_dat(1)(7 downto 0) <= P37IO_in_Data(15 downto 8);
+  daq_dat(2)(7 downto 0) <= P37IO_in_Data(7  downto 0);
+  daq_dat(3) (7 downto 0) <= AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]"  
 
 
   WHEN   c_AW_P25IO.ID =>
@@ -7675,7 +7679,10 @@ WHEN   c_AW_16Out2.ID  =>
     PIO_OUT(139)            <=  Out16_nLED_Lemo_In_o;  --  Output "nLED_Lemo_IN"
     PIO_ENA(139)            <=  '1';                   -- Output Enable
 
+      --#################################daq assignments ######################################
 
+      daq_dat(1) <=   AW_Output_Reg(2)(15 DOWNTO 0); --CH1 Output-Daten DAC Mode
+      daq_dat(2) <=   FG_1_sw(31 downto 16);         --CH3 Output-Daten vom FG
       -----------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -7826,8 +7833,9 @@ WHEN   c_AW_16Out2.ID  =>
     PIO_OUT(117)           <=    AW_Output_Reg(1)(1);     -- Request-Output
     PIO_ENA(117)           <=  '1';                       -- Output Enable
 
+ --#################################daq assignments ######################################
 
-
+daq_dat(1) <= AW_Input_Reg(2)(15 DOWNTO 0); --CH1
 
       -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -7941,7 +7949,12 @@ WHEN   c_AW_16Out2.ID  =>
 
 
       -----------------------------------------------------------------------------------------------------------------------------------------
+ --#################################daq assignments ######################################
+ daq_ext_trig(1)<= AD1_ext_Trigger;
+ daq_ext_trig(2)<= AD2_ext_Trigger;
 
+ daq_dat(1)(7 downto 0) <= AD1_Data(7 downto 0);
+ daq_dat(2)(7 downto 0) <= AD2_Data(7 downto 0);
 
   WHEN   c_AW_8In8Out1.ID  =>
 
