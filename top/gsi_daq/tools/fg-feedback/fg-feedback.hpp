@@ -54,6 +54,9 @@
 #ifndef  HOT_KEY_BUILD_NEW
   #define HOT_KEY_BUILD_NEW           'n'
 #endif
+#ifndef HOT_KEY_CLEAR_BUFFER
+  #define HOT_KEY_CLEAR_BUFFER        'c'
+#endif
 
 namespace Scu
 {

@@ -524,6 +524,13 @@ int fbMain( int argc, char** ppArgv )
                   cout << "Reset" << endl;
                break;
             }
+            case HOT_KEY_CLEAR_BUFFER:
+            {
+               pDaqAdmin->clearBuffer();
+               if( cmdLine.isVerbose() )
+                  cout << "clearing buffer" << endl;
+               break;
+            }
             case HOT_KEY_TOGGLE_SINGLE_SHOOT:
             {
                singleShoot = !singleShoot;

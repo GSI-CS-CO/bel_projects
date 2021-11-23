@@ -127,6 +127,7 @@ vector<OPTION> CommandLine::c_optList =
                  "(Not tested yet.)\n\n"
                  "Hot keys:\n"
               << HOT_KEY_RESET    << ": Reset zooming of all plot windows\n"
+              << HOT_KEY_CLEAR_BUFFER << ": Clearing of the DDR3 buffer\n"
               << HOT_KEY_RECEIVE  << ": Toggling receiving on / off\n"
               << HOT_KEY_TOGGLE_SINGLE_SHOOT << ": Toggling single shoot mode on / off\n"
               << HOT_KEY_PRINT_HISTORY << ": Prints the current LM32 history in a eb-console. (See option -H)\n"
@@ -524,6 +525,22 @@ vector<OPTION> CommandLine::c_optList =
                     "before.\n"
                     ESC_BOLD "CAUTION: Using this option will destroy the timing! "
                     "Don't use it in the real production environment!" ESC_NORMAL
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         FgFeedbackAdministration* pAllDaq = getDaqAdministration( static_cast<CommandLine*>(poParser) );
+         if( pAllDaq == nullptr )
+            return -1;
+         pAllDaq->clearBuffer();
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'C',
+      .m_longOpt  = "clear",
+      .m_helpText = "Clears the whole shared memory buffer of LM32 and Linux and exit."
    },
    {
       OPT_LAMBDA( poParser,
