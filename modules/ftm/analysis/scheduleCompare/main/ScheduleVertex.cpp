@@ -455,7 +455,7 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = value1.compare(value2);
   }
   if (result != 0) {
-    protocol += "compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
+    protocol += " compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
   }
   return result;
 }

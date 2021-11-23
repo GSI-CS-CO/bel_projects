@@ -1,0 +1,6 @@
+digraph G {
+name=x0a
+node [type=tmsg]
+edge [type=xy1]
+a -> b -> c -> a
+}

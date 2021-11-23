@@ -119,7 +119,8 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
     std::string *refName1, *refName2;
-    if (num_vertices(graph1) > num_vertices(graph2)) {
+    if (num_vertices(graph1) > num_vertices(graph2) ||
+        (num_vertices(graph1) == num_vertices(graph2) && num_edges(graph1) > num_edges(graph2))) {
       ref1 = &graph2;
       refName1 = &dotFile2;
       ref2 = &graph1;
