@@ -5103,8 +5103,8 @@ BEGIN
       AW_Input_Reg(3)(15 downto 0)  <=  P37IO_Error_o;            -- Error
 
   --################################      daq_channels assignments     ##################################
-  daq_dat(1)(7 downto 0) <= P37IO_in_Data(15 downto 8);
-  daq_dat(2)(7 downto 0) <= P37IO_in_Data(7  downto 0);
+  daq_dat(1)(7 downto 0) <= P37IO_Deb_in(15 downto 8);
+  daq_dat(2)(7 downto 0) <= P37IO_Deb_in(7  downto 0);
   daq_dat(3) (7 downto 0) <= AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]"  
 
 
