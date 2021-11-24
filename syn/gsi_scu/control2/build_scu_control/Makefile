@@ -14,7 +14,7 @@ DEPLOY_DIR     := .
 TARGET         := scu_control
 
  SCU_MIL := 1
- MIL_GAP := 1
+# MIL_GAP := 1
   MIL_DAQ_USE_DDR3 := 1
  ADDAC_DAQ := 1
 
@@ -166,8 +166,8 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 
-# CODE_OPTIMIZATION = 2
- CODE_OPTIMIZATION = s
+ CODE_OPTIMIZATION = 2
+# CODE_OPTIMIZATION = s
 # CODE_OPTIMIZATION = 0
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 # TOOLCHAIN_DIR = /home/bel/ubecker/lnx/src/extern/gcc-toolchain-builder/TEST93/bin/
@@ -208,7 +208,8 @@ endif
 # SCU_URL = scuxl0025
 # SCU_URL = scuxl0328
 # SCU_URL = scuxl0202
- SCU_URL = scuxl0305
+# SCU_URL = scuxl0305
+ SCU_URL = scuxl0331
  # ACU-test
 
 DOX_EXTRACT_STATIC         = "YES"

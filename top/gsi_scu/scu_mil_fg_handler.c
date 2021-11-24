@@ -590,7 +590,8 @@ STATIC inline void feedMilFg( const unsigned int socket,
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Handling of a MIL function generator.
+ * @brief Handling of a MIL function generator and send the next polynomial
+ *        date set.
  * @see handleAdacFg
  */
 STATIC inline
@@ -632,12 +633,14 @@ void handleMilFg( const unsigned int socket,
 
    if( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq )
    { /*
-      * Send signal to SAFT-lib.
+      * Send refill-signal to SAFT-lib if necessary.
       */
       sendRefillSignalIfThreshold( channel );
 
      /*
-      * Send next polynomial data via MIL-bus to function generator.
+      * Send next polynomial data via MIL-bus to function generator
+      * and fetches the C- coefficient which will used as set-data
+      * of the MIL-DAQ.
       */
       feedMilFg( socket, devNum, ctrlReg, pSetvalue );
    }
@@ -659,12 +662,16 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
 
    const unsigned int dev = getDevice( channel );
 
+   /*
+    * Writes the next polynomial data set to the concerning
+    * function generator.
+    */
    handleMilFg( getSocket( channel ),
                 dev,
                 pMilTaskData->aFgChannels[channel].irqFlags,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
    /*
-    * clear irq pending and end block transfer
+    * Clear IRQ pending and end block transfer.
     */
    if( pMilTaskData->lastMessage.slot != 0 )
    {
@@ -787,6 +794,10 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData,
  */
 #define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
 
+
+#define IRQ_WAITING_TIME 2*INTERVAL_200US
+//#define IRQ_WAITING_TIME INTERVAL_200US
+
 /*! ---------------------------------------------------------------------------
  * @see scu_mil_fg_handler.
  */
@@ -890,11 +901,11 @@ void milDeviceHandler( register TASK_T* pThis )
 
       case ST_PREPARE:
       { /*
-         * wait for 200 us
+         * wait for IRQ_WAITING_TIME
          */
          if( getWrSysTimeSafe() < pMilData->waitingTime )
          {
-            FSM_TRANSITION_SELF( label='200 us not expired', color=blue );
+            FSM_TRANSITION_SELF( label='IRQ_WAITING_TIME not expired', color=blue );
             break;
          }
          /*
@@ -975,6 +986,10 @@ void milDeviceHandler( register TASK_T* pThis )
                */
                continue;
             }
+            /*
+             * Writing the next polynomial data set to the concerning function
+             * generator in non blocking mode.
+             */
             status = milHandleAndWrite( pMilData, channel );
             if( status != OKAY )
                milPrintDeviceError( status, 22, "dev_sio end handle");
@@ -1135,8 +1150,8 @@ void milDeviceHandler( register TASK_T* pThis )
 
       case ST_PREPARE:
       {
-         //pMilData->waitingTime = getWrSysTimeSafe() + INTERVAL_200US;
-         pMilData->waitingTime = pMilData->lastMessage.time + INTERVAL_200US;
+         //pMilData->waitingTime = getWrSysTimeSafe() + IRQ_WAITING_TIME;
+         pMilData->waitingTime = pMilData->lastMessage.time + IRQ_WAITING_TIME;
          break;
       }
 
