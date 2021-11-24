@@ -7681,8 +7681,7 @@ WHEN   c_AW_16Out2.ID  =>
 
       --#################################daq assignments ######################################
 
-      daq_dat(1) <=   AW_Output_Reg(2)(15 DOWNTO 0); --CH1 Output-Daten DAC Mode
-      daq_dat(2) <=   FG_1_sw(31 downto 16);         --CH3 Output-Daten vom FG
+      daq_dat(1) <=   Out16_Out;                     --CH1
       -----------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -7953,8 +7952,8 @@ daq_dat(1) <= AW_Input_Reg(2)(15 DOWNTO 0); --CH1
  daq_ext_trig(1)<= AD1_ext_Trigger;
  daq_ext_trig(2)<= AD2_ext_Trigger;
 
- daq_dat(1)(7 downto 0) <= AD1_Data(7 downto 0);
- daq_dat(2)(7 downto 0) <= AD2_Data(7 downto 0);
+ daq_dat(1)<= AD1_Out;
+ daq_dat(2) <= AD2_Out;
 
   WHEN   c_AW_8In8Out1.ID  =>
 
