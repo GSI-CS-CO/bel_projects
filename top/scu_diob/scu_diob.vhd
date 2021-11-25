@@ -5600,11 +5600,7 @@ daq_dat(4)(7 downto 0)<= AW_Input_Reg(2)(15 downto 8);
 
 ---- daq_dat for Outputs
 
---daq_dat(5)(0)  <= AW_Output_Reg(1)(3);   --  Output "2CB2", 
---daq_dat(6)(0) <=  AW_Output_Reg(1)(2);  --  Output "2CA2"
---daq_dat(7)(0) <=  AW_Output_Reg(1)(1);  --  Output "1CB2"
---daq_dat(8)(0) <=  AW_Output_Reg(1)(0);  --  Output "1CA2"
-
+daq_dat(5)(3 downto 0)  <= AW_Output_Reg(1)(3 downto 0);   
 
 --#########################################################
 
