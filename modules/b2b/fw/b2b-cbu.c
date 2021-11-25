@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Nov-2021
+ *  version : 25-Nov-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000309                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000310                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -153,7 +153,6 @@ uint32_t mState;                        // state of 'miniFSM'
 // flags
 uint32_t flagClearAllSid;               // data for all SIDs shall be cleared
 uint32_t errorFlags;                    // error flags, bit 0: PM Ext, bit 1: KD Ext, bit 2: PM INJ, bit 3: KD INJ, bit 4: CBU
-uint32_t flagInjKickTest;               // flag for injection kicker test (non-multiplexed!); 1: allow injection kick; 0: disable injection kick
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -702,11 +701,8 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
 uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
-  flagInjKickTest = 0;      // reset this flag; only used for mode B2B_MODE_BSE
-
   switch (mode) {
     case B2B_MODE_BSE :     // kick on start event
-      flagInjKickTest = 1;  // allow injection kick test
       switch (actMState) {
         case B2B_MFSM_S0 :
           nextMState =  B2B_MFSM_EXTKICK;
@@ -930,19 +926,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);
-      break;
-
-    case B2B_ECADO_B2B_INJKICKTEST :                          // received: request injection kicker test
-      if (flagInjKickTest) {                                  // hackish solution for ESR and CRYRING (non-multiplexed operation)
-        recSid       = (uint32_t)((recId >> 20) & 0x0fff);    // not part of setting data; 'inherit' from received timing message
-        recGid       = (uint32_t)((recId >> 48) & 0x0fff);    // not part of setting data; 'inherit' from received timing message
-        recBpid      = (uint32_t)((recId >>  6) & 0x3fff);    // not part of setting data; 'inherit' from received timing message
-
-        sendEvtId    = fwlib_buildEvtidV1(recGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, recSid, recBpid, errorFlags);
-        sendParam    = 0x0;
-        sendDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERINJKICK;
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
-      } // flagInjKickTest
       break;
 
     default :

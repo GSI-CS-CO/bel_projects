@@ -51,6 +51,7 @@ deploy:
 # FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
 	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin        
 # FEC x86 binaries 
+	cp $(SW)/b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 #	cp $(SW)/saft-b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack THIS IS DEPRECATED
 	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
