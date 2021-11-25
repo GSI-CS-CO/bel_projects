@@ -1,5 +1,5 @@
-digraph G {
-name="x0-permuted"
+digraph "3-cycle-abc.dot" {
+name="3-cycle-abc.dot"
 node [type=tmsg]
 edge [type=xy]
 a -> c -> b -> a

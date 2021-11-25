@@ -7,12 +7,12 @@ class TestPermutations(common_scheduleCompare.CommonScheduleCompare):
   def test_permutation_x0(self):
     """Structure is the same, labels of the nodes are permuted.
     """
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x0-permuted.dot', expectedReturnCode=1, linesCerr=0, linesCout=1)
+    self.callScheduleCompare('permutations/3-cycle-abc.dot', 'permutations/3-cycle-acb.dot', expectedReturnCode=1, linesCerr=0, linesCout=1)
 
   def test_permutation_x0_n(self):
     """Structure is the same, labels of the nodes are permuted.
     """
-    self.callScheduleCompare('permutations/x0.dot', 'permutations/x0-permuted.dot', '-n', expectedReturnCode=0, linesCerr=0, linesCout=5)
+    self.callScheduleCompare('permutations/3-cycle-abc.dot', 'permutations/3-cycle-acb.dot', '-n', expectedReturnCode=0, linesCerr=0, linesCout=5)
 
   def test_permutation_test0(self):
     """The order of the nodes in the dot files is permuted. Same definition of edges.

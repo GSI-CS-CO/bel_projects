@@ -1,5 +1,5 @@
-digraph G {
-name=x0a
+digraph "3-cycle-abc-xy1" {
+name="3-cycle-abc-xy1"
 node [type=tmsg]
 edge [type=xy1]
 a -> b -> c -> a

@@ -1,5 +1,5 @@
-digraph G {
-name=x0b
+digraph "broken-cycle-abc" {
+name="broken-cycle-abc"
 node [type=tmsg]
 edge [type=xy]
 a -> b -> c 

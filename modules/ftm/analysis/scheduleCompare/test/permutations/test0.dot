@@ -1,4 +1,4 @@
-digraph G {
+digraph test0 {
 name=test0
 node [fid=1 cpu=1 type=tmsg]
 edge [type=defdst]

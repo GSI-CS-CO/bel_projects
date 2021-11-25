@@ -1,6 +1,0 @@
-digraph G {
-name=x2a
-node [type=tmsg]
-edge [type=xy1]
-a2 -> b2 -> c2 -> a2
-}

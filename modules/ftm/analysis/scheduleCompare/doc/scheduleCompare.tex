@@ -281,27 +281,27 @@ List of test cases:
 \begin{enumerate}
   \item Graph 1 and graph 2 have the same size and are isomorphic. \\
     \texttt{test\_protocol\_case\_01}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x0.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3-cycle-abc.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 2, Graph 1, Vertex: a != 'b'; != 'c';} \\
-    This shows failure while constructing the second isomorphism. This is OK.
+    This protocol shows failure while constructing the second isomorphism. This is OK.
   \item Graph 1 and graph 2 have the same size and are not isomorphic due to vertex comparison with name comparison. \\
     \texttt{test\_protocol\_case\_02}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x2.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3-cycle-a1b1c1.dot -v} \\
     The protocol shows: \\
-    \texttt{Isomorphism 1, Graph 1, Vertex: a != 'a2'; != 'b2'; != 'c2';} \\
+    \texttt{Isomorphism 1, Graph 1, Vertex: a != 'a1'; != 'b1'; != 'c1';} \\
     This shows failure while constructing the first isomorphism. Vertex a is not found in graph 2.
   \item Graph 1 and graph 2 have the same size and are not isomorphic due to vertex comparison without name comparison.
     \texttt{test\_protocol\_case\_03}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x2a.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3-cycle-abc-par.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a compare: -1, key: par, value1: '', value2: '1'. \\
     compare: -1, key: par, value1: '', value2: '1'. \\
     compare: -1, key: par, value1: '', value2: '1'.} \\
-    
+    The vertices have different attributes (par=1 in graph 2).
   \item Graph 1 and graph 2 have the same size and are not isomorphic due to edge comparison with name comparison.
     \texttt{test\_protocol\_case\_04}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x0b.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/broken-cycle-abc.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a !='b'; !='c';} \\
     Mapping each vertex to the vertex with the same name fails because of the different structure.
@@ -309,7 +309,7 @@ List of test cases:
     Graph 1 is a cycle, graph 2 has an edge from a to c. Thus, the structure is different.
   \item Graph 1 and graph 2 have the same size and are not isomorphic due to edge comparison without name comparison.
     \texttt{test\_protocol\_case\_05}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x0a.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3-cycle-abc-xy1.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Edge: a -> b [xy]: \\ 
         Result: -1, key: type, value1: 'xy', value2: 'xy1'. \\
@@ -322,13 +322,13 @@ List of test cases:
     \texttt{test\_protocol\_case\_06}. This is imposible, graph 2 has an edge, which has no source in graph 1.
   \item Graph 1 has less edges than graph 2, but the same number of vertices and are not isomorphic due to vertex comparison with name comparison.
     \texttt{test\_protocol\_case\_07}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0d.dot \\ permutations/x0.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-path-a1b1c1.dot \\ protocol/3-cycle-abc.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a1 != 'a'; != 'b'; != 'c';} \\
     Vertex a1 is not found in graph 2.
   \item Graph 1 has less edges than graph 2, but the same number of vertices and are not isomorphic due to vertex comparison without name comparison.
     \texttt{test\_protocol\_case\_08}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0e.dot \\ permutations/x0.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-path-abc-par.dot \\ protocol/3-cycle-abc.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a1 compare: 1, key: par, value1: '1', value2: ''. \\
     compare: 1, key: par, value1: '1', value2: ''. \\
@@ -336,14 +336,14 @@ List of test cases:
     Vertices of graph 1 have a parameter, value 1 but vertices of graph 2 have no parameter. This causes vertex comparison to fail.
   \item Graph 1 has less edges than graph 2, but the same number of vertices and are not isomorphic due to edge comparison with name comparison.
     \texttt{test\_protocol\_case\_09}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0c.dot \\ permutations/x0.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-path-abc.dot \\ protocol/3-cycle-abc.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a != 'b'; != 'c';} \\
     There is no edge from c to a in graph 1. 
 
   \item Graph 1 has less edges than graph 2, but the same number of vertices and are not isomorphic due to edge comparison without name comparison.
     \texttt{test\_protocol\_case\_10}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0c.dot \\ permutations/x0.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-path-abc.dot \\ protocol/3-cycle-abc.dot -vn} \\
     The protocol shows: nothing. \\
     There is no edge from c to a in graph 1. since vertex names are not compared, no protocol is shown.
 
@@ -354,14 +354,14 @@ List of test cases:
     Dummy test case.
   \item Graph 1 has less vertices than graph 2, but the same number of edges and are not isomorphic due to vertex comparison with name comparison.
     \texttt{test\_protocol\_case\_12}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x4.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/4-path-a1b1c1d1.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a !='a1'; !='b1'; !='c1'; \\ !='d1';} \\
     Vertex a of graph 1 is not found in graph 2.
     Graph 1 is a cycle with 3 vertices and graph 2 is a path with 4 vertices.
   \item Graph 1 has less vertices than graph 2, but the same number of edges and are not isomorphic due to vertex comparison without name comparison.
     \texttt{test\_protocol\_case\_13}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x4a.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/4-path-abcd-par.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a compare: -1, key: par, value1: '', value2: '1'. \\
     compare: -1, key: par, value1: '', value2: '1'. \\
@@ -370,19 +370,19 @@ List of test cases:
     Vertices in graph 2 have a parameter value 1. Vertices in graph 1 have no parameter.
   \item Graph 1 has less vertices than graph 2, but the same number of edges and are not isomorphic due to edge comparison with name comparison.
     \texttt{test\_protocol\_case\_14}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x4b.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/4-path-abcd.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a != 'b'; != 'c'; != 'd';} \\
     Graph 1 is a cycle with 3 vertices and graph 2 is a path with 4 vertices.
   \item Graph 1 has less vertices than graph 2, but the same number of edges and are not isomorphic due to edge comparison without name comparison.
     \texttt{test\_protocol\_case\_15}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x4.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/4-path-abcd.dot -vn} \\
     The protocol shows: The protocol shows: nothing (protocol implementation to be improved).\\
     Graph 1 is a cycle with 3 vertices and graph 2 is a path with 4 vertices.
 
   \item Graph 1 has less vertices than graph 2 and less edges and graph 1 is isomorphic to a subgraph of graph 2.
     \texttt{test\_protocol\_case\_16}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x1.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3cycles-abcde.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 2, Graph 1, Vertex: a !='b'; !='c'; !='d'; \\ !='e';
     Isomorphism 2, Graph 1, Vertex: c != 'd';} \\
@@ -390,13 +390,13 @@ List of test cases:
     There is one isomorphism (0, 0) (1, 1) (2, 2). 
   \item Graph 1 has less vertices than graph 2 and less edges and are not isomorphic due to vertex comparison with name comparison. \\
     \texttt{test\_protocol\_case\_17}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x1a.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3cycles-a1b1c1d1e1.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a != 'a1'; != 'b1'; \\ != 'c1'; != 'd1'; != 'e1';} \\
     Vertex a is not found in graph 2.
   \item Graph 1 has less vertices than graph 2 and less edges and are not isomorphic due to vertex comparison without name comparison. \\
     \texttt{test\_protocol\_case\_18}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x1b.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/3cycles-abcde-par.dot -vn} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a compare: -1, key: par, value1: '', value2: '1'. \\
     compare: -1, key: par, value1: '', value2: '1'. \\
@@ -406,13 +406,13 @@ List of test cases:
     Vertices in graph 2 have a parameter value 1. Vertices in graph 1 have no parameter.
   \item Graph 1 has less vertices than graph 2 and less edges and are not isomorphic due to edge comparison with name comparison. \\
     \texttt{test\_protocol\_case\_19}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x5.dot -v} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/5-path-abcde.dot -v} \\
     The protocol shows: \\
     \texttt{Isomorphism 1, Graph 1, Vertex: a!='b'; !='c'; !='d'; \\ !='e';} \\
     Graph 1 is a cycle with 3 vertices and graph 2 is a path with 5 vertices.
   \item Graph 1 has less vertices than graph 2 and less edges and are not isomorphic due to edge comparison without name comparison. \\
     \texttt{test\_protocol\_case\_20}. Command in folder \texttt{test}: \\
-    \texttt{../main/scheduleCompare permutations/x0.dot \\ permutations/x5.dot -vn} \\
+    \texttt{../main/scheduleCompare protocol/3-cycle-abc.dot \\ protocol/5-path-abcde.dot -vn} \\
     The protocol shows: nothing (protocol implementation to be improved). \\
     Graph 1 is a cycle with 3 vertices and graph 2 is a path with 5 vertices.
 \end{enumerate}
