@@ -211,7 +211,7 @@ void tellMailboxSlot( void )
  *  @param ms delay value in milliseconds
  */
 OPTIMIZE( "-O2"  )
-STATIC void msDelayBig( const uint64_t ms )
+void msDelayBig( const uint64_t ms )
 {
    const uint64_t later = getWrSysTime() + ms * 1000000ULL / 8;
    while( getWrSysTime() < later )

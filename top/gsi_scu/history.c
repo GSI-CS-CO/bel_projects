@@ -31,6 +31,9 @@
 #include <lm32Interrupts.h>
 #include <mprintf.h>
 
+#if defined( CONFIG_USE_INTERRUPT_TIMESTAMP ) && defined( CONFIG_MIL_FG )
+   #include <scu_mil_fg_handler.h>
+#endif
 
 /* Define PRINTF appropriate for the operating system being used */
 #define PRINTF  mprintf
@@ -128,6 +131,15 @@ void hist_print( const bool doReturn )
       idx++;
       idx %= ARRAY_SIZE( mg_aHistbuf );
    }
+#if defined( CONFIG_USE_INTERRUPT_TIMESTAMP ) && defined( CONFIG_MIL_FG )
+   PRINTF( "\nMIL-interrupt duration:\n" );
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      unsigned int time = (unsigned int)g_aMilTaskData[i].irqDurationTime;
+      g_aMilTaskData[i].irqDurationTime = 0LL;
+      PRINTF( "Task %u: %u.%06u ms\n", i, time / 1000000, time % 1000000 );
+   }
+#endif
 #ifdef CONFIG_HIST_NO_REPEAT_OLD_LOGS
    mg_histstart = idx;
 #endif

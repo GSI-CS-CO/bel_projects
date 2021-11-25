@@ -133,6 +133,18 @@ uint64_t irqGetTimestamp( void )
    criticalSectionExit();
    return timestamp;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+uint64_t irqGetTimeSinceLastInterrupt( void )
+{
+   criticalSectionEnter();
+   const uint64_t ret = getWrSysTime() - mg_interruptTimestamp; 
+   criticalSectionExit();
+   return ret;
+}
+
 #endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
 
 #if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )

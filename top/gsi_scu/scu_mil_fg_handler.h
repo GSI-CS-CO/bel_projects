@@ -14,6 +14,7 @@
 #ifndef __DOCFSM__
 /* Headers will not need for FSM analysator "docfsm" */
   #include "scu_main.h"
+  #include "scu_fg_macros.h"
 #endif
 
 #ifdef __cplusplus
@@ -159,6 +160,15 @@ typedef struct
     * @brief Waiting time after interrupt.
     */
    uint64_t          waitingTime;
+
+#ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+   /*!
+    * @brief Duration in nanoseconds since the last interrupt.
+    * 
+    * For measurement and debug purposes only. 
+    */
+   uint64_t          irqDurationTime;
+#endif
 
    /*!
     * @see FG_CHANNEL_TASK_T

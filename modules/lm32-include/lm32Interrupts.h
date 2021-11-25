@@ -102,7 +102,14 @@ typedef void(*ISRCallback)( const unsigned int intNum, const void* pContext );
  * @brief Returns the white rabbit time-stamp of the last occurred interrupt.
  */
 uint64_t irqGetTimestamp( void );
-#endif
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the elapsed time in nanoseconds sonce the last interrupt.
+ */
+uint64_t irqGetTimeSinceLastInterrupt( void );
+
+#endif /* ifdef CONFIG_USE_INTERRUPT_TIMESTAMP */
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT OVERWRITABLE

@@ -98,6 +98,9 @@ void milInitTasks( void )
       g_aMilTaskData[i].lastChannel       = 0;
       g_aMilTaskData[i].timeoutCounter    = 0;
       g_aMilTaskData[i].waitingTime       = 0LL;
+   #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+      g_aMilTaskData[i].irqDurationTime   = 0LL;
+   #endif
       for( unsigned int j = 0; j < ARRAY_SIZE( g_aMilTaskData[0].aFgChannels ); j++ )
       {
          g_aMilTaskData[i].aFgChannels[j].irqFlags     = 0;
@@ -795,7 +798,7 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData,
 #define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
 
 
-#define IRQ_WAITING_TIME 2*INTERVAL_200US
+#define IRQ_WAITING_TIME INTERVAL_200US 
 //#define IRQ_WAITING_TIME INTERVAL_200US
 
 /*! ---------------------------------------------------------------------------
@@ -856,6 +859,11 @@ void milDeviceHandler( register TASK_T* pThis )
       {
          if( queuePopSave( &g_queueMilFg, &pMilData->lastMessage ) )
          {
+         #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+           // volatile unsigned int x = 12000;
+           // while( x-- );
+            pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
+         #endif
             FSM_TRANSITION( ST_PREPARE, label='Message received', color=green );
             break;
          }
@@ -903,11 +911,17 @@ void milDeviceHandler( register TASK_T* pThis )
       { /*
          * wait for IRQ_WAITING_TIME
          */
+#if 1
          if( getWrSysTimeSafe() < pMilData->waitingTime )
          {
             FSM_TRANSITION_SELF( label='IRQ_WAITING_TIME not expired', color=blue );
             break;
          }
+#endif
+         #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
+          //  pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
+         #endif
+
          /*
           * Requesting of all IRQ-pending registers.
           */
