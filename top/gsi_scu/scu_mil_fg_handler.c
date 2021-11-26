@@ -9,12 +9,13 @@
 
 #ifndef __DOCFSM__
   #include "scu_fg_macros.h"
-  #include "scu_mil_fg_handler.h"
   #include "scu_fg_list.h"
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     #include <daq_main.h>
   #endif
 #endif
+
+#include "scu_mil_fg_handler.h"
 
 #ifdef CONFIG_MIL_DAQ_USE_RAM
 extern DAQ_ADMIN_T g_scuDaqAdmin;
@@ -341,8 +342,8 @@ STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
     * See also daq_eb_ram_buffer.hpp and daq_eb_ram_buffer.cpp.
     */
    pl.item.timestamp = MERGE_HIGH_LOW( GET_LOWER_HALF( timestamp ), (uint32_t)GET_UPPER_HALF( timestamp ) );
-   pl.item.setValue  = actValue;
-   pl.item.actValue  = GET_UPPER_HALF( setValue );
+   pl.item.setValue  = actValue;                   /* yes, it's swapped with setValue */
+   pl.item.actValue  = GET_UPPER_HALF( setValue ); /* yes, it's swapped with actValue */
    pl.item.fgMacro   = convertByteEndian_FG_MACRO_T( fgMacro );
  #else
    /*
@@ -461,11 +462,6 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData,
    const unsigned int milTaskNo  = getMilTaskNumber( pMilTaskData, channel );
 
    /*
-    * Reset old IRQ-flags
-    */
-   pMilTaskData->aFgChannels[channel].irqFlags = 0;
-   
-   /*
     * Is trades as a SIO device? 
     */
    if( pMilTaskData->lastMessage.slot != 0 )
@@ -500,9 +496,23 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData,
                                                   const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->lastMessage.slot != INVALID_SLAVE_NR );
+
    const unsigned int  socket = getSocket( channel );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
-    /* test only if as connected to sio */
+
+#ifndef __DOXYGEN__
+   STATIC_ASSERT( sizeof(short) == sizeof( pMilTaskData->aFgChannels[0].irqFlags ) );
+#endif
+   short* const pIrqFlags = &pMilTaskData->aFgChannels[channel].irqFlags;
+
+   /*
+    * Reset old IRQ-flags
+    */
+   *pIrqFlags = 0;
+
+   /*
+    * test only if as connected to sio
+    */
    if( pMilTaskData->lastMessage.slot != 0 )
    {
       if( getFgSlotNumber( socket ) != pMilTaskData->lastMessage.slot )
@@ -510,14 +520,14 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData,
       if( !isMilScuBusFg( socket ) )
          return OKAY;
 
-      return scub_get_task_mil( g_pScub_base, pMilTaskData->lastMessage.slot,  milTaskNo,
-                                &pMilTaskData->aFgChannels[channel].irqFlags );
+      return scub_get_task_mil( g_pScub_base, pMilTaskData->lastMessage.slot,
+                                milTaskNo, pIrqFlags );
    }
 
    if( !isMilExtentionFg( socket ) )
       return OKAY;
-   return get_task_mil( g_pScu_mil_base, milTaskNo,
-                                &pMilTaskData->aFgChannels[channel].irqFlags );
+
+   return get_task_mil( g_pScu_mil_base, milTaskNo, pIrqFlags );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -798,8 +808,8 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData,
 #define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
 
 
-#define IRQ_WAITING_TIME INTERVAL_200US 
-//#define IRQ_WAITING_TIME INTERVAL_200US
+//#define IRQ_WAITING_TIME INTERVAL_100US
+#define IRQ_WAITING_TIME 200000ULL
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mil_fg_handler.
@@ -1008,6 +1018,8 @@ void milDeviceHandler( register TASK_T* pThis )
             if( status != OKAY )
                milPrintDeviceError( status, 22, "dev_sio end handle");
          }
+         if( channel == 0 )
+            milPrintDeviceError( 0,0, "No interrupt pending!" );
          FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
       } /* end case ST_HANDLE_IRQS */
@@ -1148,9 +1160,8 @@ void milDeviceHandler( register TASK_T* pThis )
          {
             if( (mg_aReadGap[channel].pTask != pMilData) && isNoIrqPending( pMilData, channel ))
                continue;
-            
+
             mg_aReadGap[channel].pTask = NULL;
-               
             mg_aReadGap[channel].timeInterval = pMilData->aFgChannels[channel].daqTimestamp +
          #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
             INTERVAL_1MS * g_gapReadingTime;
@@ -1164,8 +1175,8 @@ void milDeviceHandler( register TASK_T* pThis )
 
       case ST_PREPARE:
       {
-         //pMilData->waitingTime = getWrSysTimeSafe() + IRQ_WAITING_TIME;
-         pMilData->waitingTime = pMilData->lastMessage.time + IRQ_WAITING_TIME;
+         pMilData->waitingTime = getWrSysTimeSafe() + IRQ_WAITING_TIME;
+         //pMilData->waitingTime = pMilData->lastMessage.time + IRQ_WAITING_TIME;
          break;
       }
 

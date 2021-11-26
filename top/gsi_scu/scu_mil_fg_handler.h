@@ -70,7 +70,7 @@ typedef enum
    FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message', color=blue ),
    FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-IRQ-flags\nclear old IRQ-flags', color=cyan ),
    FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-IRQ-flags', color=green ),
-   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction\nif IRQ-flag set', color=red ),
+   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction generator\nif IRQ-flag set', color=red ),
    FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data\nif IRQ-flag set', color=cyan ),
    FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data\nif IRQ-flag set',color=green )
 } FG_STATE_T;
