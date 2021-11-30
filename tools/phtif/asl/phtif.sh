@@ -16,3 +16,8 @@ cp -a /opt/$NAME/$ARCH/usr/bin/phtif /usr/bin/
 mkdir /tmp/phtifivt
 cp -a /opt/$NAME/$ARCH/tmp/phtifivt/* /tmp/phtifivt
 
+log 'creating phtif user'
+touch /etc/phtif
+
+adduser --disabled-password --shell /bin/sh --home / phtif
+echo "phtif:phtif" | chpasswd
