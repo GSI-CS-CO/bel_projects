@@ -87,8 +87,9 @@ inline void ecaHandler
 {
    FG_ASSERT( g_eca.pQueue != NULL );
 #ifdef _CONFIG_ECA_BY_MSI
-   FG_ASSERT( pThis->pTaskData == NULL );
    ecaControlGetAndResetLM32ValidCount( g_eca.pControl );
+#else
+   FG_ASSERT( pThis->pTaskData == NULL );
 #endif
 
    if( !ecaTestTagAndPop( g_eca.pQueue, g_eca.tag ) )

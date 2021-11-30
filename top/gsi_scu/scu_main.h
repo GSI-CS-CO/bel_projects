@@ -180,7 +180,7 @@ void scanFgs( void );
 STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 {
    STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
 
    ATOMIC_SECTION()
       MSI_BOX_SLOT_ACCESS( g_shared.oSaftLib.oFg.aRegs[channel].mbx_slot, signal ) = sig;

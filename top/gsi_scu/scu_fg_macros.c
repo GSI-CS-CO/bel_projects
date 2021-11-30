@@ -704,7 +704,7 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
  */
 void fgDisableChannel( const unsigned int channel )
 {
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
 
    FG_CHANNEL_REG_T* pFgRegs = &g_shared.oSaftLib.oFg.aRegs[channel];
 

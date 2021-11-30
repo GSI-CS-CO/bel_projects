@@ -614,8 +614,14 @@ void handleMilFg( const unsigned int socket,
                   signed int* pSetvalue )
 {
    FG_ASSERT( !isAddacFg( socket ) );
+
    const FG_CTRL_RG_T ctrlReg = { .i16 = irqFlags };
    const unsigned int channel = ctrlReg.bv.number;
+
+   //mprintf( "%02b\n", irqFlags );
+   FG_ASSERT( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq );
+  // FG_ASSERT( ctrlReg.bv.devStateIrq == ctrlReg.bv.devDrq );
+
    if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
       mprintf( ESC_ERROR "%s: Channel out of range: %d\n" ESC_NORMAL,
@@ -637,14 +643,17 @@ void handleMilFg( const unsigned int socket,
     */
    g_shared.oSaftLib.oFg.aRegs[channel].ramp_count++;
 
-   if( ctrlReg.bv.devStateIrq )
+   
+   if( ctrlReg.bv.devStateIrq && !ctrlReg.bv.devDrq )
+   //if( !ctrlReg.bv.devDrq )
    { /*
       * Send signal to SAFT-lib
       */
+     // mprintf( "*\n" );
       makeStart( channel );
    }
 
-   if( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq )
+ //  if( /*ctrlReg.bv.devStateIrq ||*/ ctrlReg.bv.devDrq )
    { /*
       * Send refill-signal to SAFT-lib if necessary.
       */
@@ -683,15 +692,21 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
                 dev,
                 pMilTaskData->aFgChannels[channel].irqFlags,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
+
+  // mprintf( "%02b\n", pMilTaskData->aFgChannels[channel].irqFlags );
    /*
     * Clear IRQ pending and end block transfer.
     */
+#if 1
    if( pMilTaskData->lastMessage.slot != 0 )
    {
       return scub_write_mil( g_pScub_base, pMilTaskData->lastMessage.slot,
                                                     0,  dev | FC_IRQ_ACT_WR );
    }
    return write_mil( g_pScu_mil_base, 0, dev | FC_IRQ_ACT_WR );
+#else
+  return OKAY;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

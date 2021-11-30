@@ -100,7 +100,7 @@ void fgResetAndInit( FG_CHANNEL_REG_T* cr,
 STATIC inline ALWAYS_INLINE
 int getFgMacroIndexFromFgRegister( const unsigned int channel )
 {
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oFg.aRegs ) );
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
    return g_shared.oSaftLib.oFg.aRegs[channel].macro_number;
 }
 
