@@ -13,8 +13,10 @@ ln -s /usr/lib/libetherbone.so.5 /lib/libetherbone.so.5
 log 'copying software to ramdisk'
 cp -a /opt/$NAME/$ARCH/usr/bin/phtif /usr/bin/
 
+log 'copying ivtpar files to ramdisk'
 mkdir /tmp/phtifivt
 cp -a /opt/$NAME/$ARCH/tmp/phtifivt/* /tmp/phtifivt
+chmod a+w -R /tmp/phtifivt/
 
 log 'creating phtif user'
 touch /etc/phtif
