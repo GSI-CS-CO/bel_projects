@@ -555,7 +555,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
    if( !cbRead( &g_shared.oSaftLib.oFg.aChannelBuffers[0],
                 &g_shared.oSaftLib.oFg.aRegs[0], channel, &pset ) )
    {
-      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
+      hist_addx(HISTORY_XYZ_MODULE, "MIL-FG buffer empty, no parameter sent", socket);
       return;
    }
 
@@ -568,8 +568,10 @@ STATIC inline void feedMilFg( const unsigned int socket,
    /*
     * clear freq, step select, fg_running and fg_enabled
     */
-   setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
-                                    (pset.control.i32 & 0x3F) << 10) ;
+  // setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
+  //                                  (pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) ;
+   setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & FG_NUMBER) |
+                                    ((pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) );
    int status;
  #if __GNUC__ >= 9
    #pragma GCC diagnostic push

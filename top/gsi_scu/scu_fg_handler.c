@@ -37,7 +37,7 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
                     &g_shared.oSaftLib.oFg.aRegs[0],
                     pThis->cntrl_reg.bv.number, &pset ) )
    {
-      hist_addx( HISTORY_XYZ_MODULE, "buffer empty, no parameter sent",
+      hist_addx( HISTORY_XYZ_MODULE, "ADDAC-FG buffer empty, no parameter sent",
                  pThis->cntrl_reg.bv.number );
       return false;
    }
