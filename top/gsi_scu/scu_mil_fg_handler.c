@@ -541,12 +541,7 @@ STATIC inline void feedMilFg( const unsigned int socket,
 {
    const unsigned int channel = cntrl_reg.bv.number;
 
-   if( channel >= ARRAY_SIZE( g_aFgChannels ) )
-   {
-      mprintf( ESC_ERROR "%s: FG-number %d out of range!" ESC_NORMAL "\n",
-               __func__, channel );
-      return;
-   }
+   FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
 
    FG_PARAM_SET_T pset;
    /*
@@ -626,14 +621,16 @@ void handleMilFg( const unsigned int socket,
 
    if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
-      mprintf( ESC_ERROR "%s: Channel out of range: %d\n" ESC_NORMAL,
+      mprintf( ESC_ERROR "%s: Channel of MIL-FG out of range: %d\n" ESC_NORMAL,
                __func__, channel );
       return;
    }
 
    if( !ctrlReg.bv.isRunning )
    { /*
-      * Send signal to SAFT-lib
+      * Function generator has stopped.
+      * Sending a appropriate stop-message including the reason
+      * to the SAFT-lib.
       */
       makeStop( channel );
       return;
@@ -645,29 +642,28 @@ void handleMilFg( const unsigned int socket,
     */
    g_shared.oSaftLib.oFg.aRegs[channel].ramp_count++;
 
-   
-   if( ctrlReg.bv.devStateIrq && !ctrlReg.bv.devDrq )
-   //if( !ctrlReg.bv.devDrq )
+   if( !ctrlReg.bv.devDrq )
    { /*
-      * Send signal to SAFT-lib
+      * The concerned function generator has received the
+      * timing- tag or the broadcast message.
+      * Sending a start-message to the SAFT-lib.
       */
      // mprintf( "*\n" );
       makeStart( channel );
    }
 
- //  if( /*ctrlReg.bv.devStateIrq ||*/ ctrlReg.bv.devDrq )
-   { /*
-      * Send refill-signal to SAFT-lib if necessary.
-      */
-      sendRefillSignalIfThreshold( channel );
+   /*
+    * Send a refill-message to the SAFT-lib if
+    * the buffer has reached a critical level.
+    */
+   sendRefillSignalIfThreshold( channel );
 
-     /*
-      * Send next polynomial data via MIL-bus to function generator
-      * and fetches the C- coefficient which will used as set-data
-      * of the MIL-DAQ.
-      */
-      feedMilFg( socket, devNum, ctrlReg, pSetvalue );
-   }
+   /*
+    * Send next polynomial data via MIL-bus to function generator
+    * and fetches the C- coefficient which will used as set-data
+    * of the MIL-DAQ.
+    */
+   feedMilFg( socket, devNum, ctrlReg, pSetvalue );
 }
 
 /*! ---------------------------------------------------------------------------
