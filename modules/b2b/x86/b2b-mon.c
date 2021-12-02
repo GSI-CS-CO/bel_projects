@@ -60,7 +60,7 @@ const char* program;
 #define  DIMMAXSIZE  1024                 // max size for service names
 #define  SCREENWIDTH 1024                 // width of screen
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
-#define  TINACTIVE   15                   // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
+#define  TINACTIVE   120                  // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -70,11 +70,13 @@ setval_t   dicSetval[NALLSID];
 getval_t   dicGetval[NALLSID];
 diagval_t  dicDiagval[NALLSID];
 diagstat_t dicDiagstat[NALLSID];
+char       dicPName[NALLSID][DIMMAXSIZE];
 
 uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
 uint32_t  dicDiagvalId[NALLSID];
 uint32_t  dicDiagstatId[NALLSID];
+uint32_t  dicPNameId[NALLSID];
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -250,9 +252,10 @@ void buildPrintLine(uint32_t idx)
   } // switch ring
 
   // pattern name
-  sprintf(pattern, "coming soon");
-  if (!set_mode[idx])     sprintf(pattern, "---");
-  if (!flagSetValid[idx]) sprintf(pattern, "NO_LINK");
+  if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);
+  else                            sprintf(pattern, "%.20s", dicPName[idx]);
+  if (!set_mode[idx])             sprintf(pattern, "---");
+  if (!flagSetValid[idx])         sprintf(pattern, "NO_LINK (DATA)");
 
   // destination
   switch (set_mode[idx]) {
@@ -349,6 +352,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   uint64_t actUsecs;
   time_t   actT;
 
+  /* printf("tag %lx\n", *tag); */
   if ((*tag < 0) || (*tag >= NALLSID)) return;
   idx = (uint32_t)(*tag);
   if (idx >= NALLSID) return;
@@ -415,16 +419,24 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
   } // switch ring
 
   sprintf(name, "%s_%s-raw_sid%02d_setval", prefix, ringName, sid);
-  dicSetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, idx, &no_link_32, sizeof(uint32_t));
+  /* printf("name %s\n", name); */
+  dicSetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, (long)idx, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-raw_sid%02d_getval", prefix, ringName, sid);
-  dicGetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  /* printf("name %s\n", name); */
+  dicGetvalId[idx]   = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_diag_sid%02d", prefix, ringName, sid);
-  dicDiagvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  /* printf("name %s\n", name); */
+  dicDiagvalId[idx]  = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_stat_sid%02d", prefix, ringName,  sid);
+  /* printf("name %s\n", name); */
   dicDiagstatId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+
+  sprintf(name,"%s_ring_pnames_%s_sid%02d_pname", prefix, ringName, sid);
+  printf("name %s\n", name);
+  dicPNameId[idx]    = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 } // dicSubscribeServices
 
 /*
