@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Nov-2021
+ *  version : 2-Dec-2021
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000310
+#define B2B_MON_VERSION 0x000311
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -60,6 +60,7 @@ const char* program;
 #define  DIMMAXSIZE  1024                 // max size for service names
 #define  SCREENWIDTH 1024                 // width of screen
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
+#define  TINACTIVE   15                   // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -81,7 +82,8 @@ uint32_t  dicDiagstatId[NALLSID];
 
 
 // set values
-uint32_t flagSetValid[NALLSID];                             // flag set data are valid 
+uint32_t flagSetValid[NALLSID];                             // flag: data of this set are valid
+uint32_t flagSetUpdate[NALLSID];                            // flag: update displayed data of this set
 uint32_t set_mode[NALLSID];                                 // b2b mode
 double   set_extT[NALLSID];                                 // extraction, h=1 period [ns]
 double   set_extNue[NALLSID];                               // extraction, h=1 frequency [Hz]
@@ -95,6 +97,8 @@ int32_t  set_cPhase[NALLSID];                               // b2b: phase correc
 double   set_cPhaseD[NALLSID];                              // b2b: phase correction [degree]
 uint32_t set_msecs[NALLSID];                                // CBS deadline, fraction [ms]
 time_t   set_secs[NALLSID];                                 // CBS deadline, time [s]
+
+time_t   secsOffset;                                        // offset between timestamp and system time
 
 /*
 // b2b values
@@ -342,6 +346,9 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   uint32_t nok;
   uint32_t idx;
 
+  uint64_t actUsecs;
+  time_t   actT;
+
   if ((*tag < 0) || (*tag >= NALLSID)) return;
   idx = (uint32_t)(*tag);
   if (idx >= NALLSID) return;
@@ -378,10 +385,15 @@ void recSetvalue(long *tag, setval_t *address, int *size)
 
     dic_get_timestamp(0, &secs, &(set_msecs[idx]));
     set_secs[idx]      = (time_t)(secs);
+
+    // calibrate offset between THIS system time and time of set_values
+    actUsecs           = comlib_getSysTime();
+    actT               = (time_t)(actUsecs / 1000000);
+    secsOffset         = actT - set_secs[idx];
   } // if flagSetValid
   else set_mode[idx] = 0;
 
-  buildPrintLine(idx);
+  flagSetUpdate[idx] = 1;
   flagPrintNow = 1;
 } // recSetValue
 
@@ -817,16 +829,24 @@ uint32_t calcFlagPrint()
   uint32_t sid;
   uint32_t nLines;
 
-  nLines = 0;
-  
+  uint64_t actUsecs;
+  time_t   actT;
+
+  nLines   = 0;
+  actUsecs = comlib_getSysTime();
+  actT     = (time_t)(actUsecs / 1000000);
+
   for (i=0; i<NALLSID; i++) {
     flagPrintIdx[i] = 1;
     idx2RingSid(i, &ring, &sid);
-    
-    if (!flagPrintInactive) if (set_mode[i] == 0) flagPrintIdx[i] = 0;
-    if (!flagPrintSis18)    if (ring == SIS18)    flagPrintIdx[i] = 0;
-    if (!flagPrintEsr)      if (ring == ESR)      flagPrintIdx[i] = 0;
-    if (!flagPrintYr)       if (ring == CRYRING)  flagPrintIdx[i] = 0;
+        
+    if (!flagPrintInactive) {
+      if (set_mode[i] == 0)                                      flagPrintIdx[i] = 0;
+      if ((actT - set_secs[i] - secsOffset) > (time_t)TINACTIVE) flagPrintIdx[i] = 0;
+    } // if !flagPrintActive
+    if (!flagPrintSis18)    if (ring == SIS18)                   flagPrintIdx[i] = 0;
+    if (!flagPrintEsr)      if (ring == ESR)                     flagPrintIdx[i] = 0;
+    if (!flagPrintYr)       if (ring == CRYRING)                 flagPrintIdx[i] = 0;
     if (flagPrintIdx[i]) nLines++;
   } // for i
 
@@ -927,17 +947,28 @@ int main(int argc, char** argv)
   printf("%s: starting client using prefix %s\n", program, prefix);
   
   for (i=0; i<NALLSID; i++) {
+    flagSetUpdate[i] = 0;
     sprintf(printLine[i], "not initialized");
     dicSubscribeServices(prefix, i);
   } // for i
   buildHeader();
+  flagPrintNow = 1;
 
   // wait a bit, then rebuild all indices
   usleep(1000000);
-  for (i=0; i<NALLSID; i++) buildPrintLine(i);
-  flagPrintNow = 1;
+  /*for (i=0; i<NALLSID; i++) buildPrintLine(i);*/
   
   while (!quit) {
+
+    // check for new data and update text for later printing
+    for (i=0; i<NALLSID; i++) {
+      if (flagSetUpdate[i]) {
+        flagSetUpdate[i] = 0;
+        flagPrintNow     = 1;
+        buildPrintLine(i);
+      } // if flagSetUpdate
+    } // for i
+    
     if (flagPrintNow) printData(name);
     if (!quit) {
       userInput = comlib_getTermChar();

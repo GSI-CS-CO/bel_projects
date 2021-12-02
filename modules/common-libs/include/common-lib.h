@@ -41,7 +41,7 @@
 
 #include <etherbone.h>
 
-// small helper functions
+// small helper functions; actual time [us]
 uint64_t comlib_getSysTime();
 
 // get character from terminal, 0: no character
