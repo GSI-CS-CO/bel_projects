@@ -72,7 +72,7 @@ saft-io-ctl $SDTRIG -n IO4 -b 0xffffa04000000000
 # to IO2 (monitor), an offset is added for IO1/IO4
 saft-ecpu-ctl $SDTRIG -c 0xffffa02000000001 0xffffffffffffffff 0 0xa02 -d
 saft-ecpu-ctl $SDTRIG -c 0xffffa01000000001 0xffffffffffffffff 20000 0xa01 -d
-saft-ecpu-ctl $SDTRIG -c 0xffffa04000000000 0xffffffffffffffff 20000 0xa04 -d
+saft-ecpu-ctl $SDTRIG -c 0xffffa04000000001 0xffffffffffffffff 20000 0xa04 -d
 
 # INJECTION: lm32 listens to CMD_B2B_TRIGGERINJ message from CBU
 # need pre-trigger to open input gates for probe signal

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Nov-2021
+ *  version : 03-Dec-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -1002,7 +1002,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     offsetDone   = (int32_t)(getSysTime() - tCBS);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-    sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to EKS
+    sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to CBS as high word
     sendParam   |=    (uint64_t)(cTrigExt & 0xffffffff);                      // param field, cTrigExt as low word
     fwlib_ebmWriteTM(tTrigExt, sendEvtId, sendParam, 0);
     transStat |= mState;

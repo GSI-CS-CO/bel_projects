@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-Dec-2021
+ *  version : 3-Dec-2021
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000311
+#define B2B_MON_VERSION 0x000312
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -205,7 +205,7 @@ double ns2Degree(double phase,          // phase [ns]
 
 void buildHeader()
 {
-  sprintf(header, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probF dOffst 'ToF'|");
+  sprintf(header, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
   sprintf(empty , "|                     |              |        |    |             |                          |        |        |                                      |");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeaderLine
@@ -326,7 +326,7 @@ void buildPrintLine(uint32_t idx)
       else                                      sprintf(tmp4, "%5d", utmp1);
       if ((dicGetval[idx].flag_nok >> 7) & 0x1) sprintf(tmp3, "%5s", TXTUNKWN);
       else {
-        sprintf(tmp2, "%5d", dicGetval[idx].inj_dKickProb);
+        sprintf(tmp3, "%5d", dicGetval[idx].inj_dKickProb);
         utmp2 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
         if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp5, "%5s", TXTUNKWN);
         else                                      sprintf(tmp5, "%5d", utmp2);
