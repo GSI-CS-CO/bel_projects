@@ -109,7 +109,7 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = --generate_doc_tagged
 
 # CALL_ARGS = scuxl0035 -vadt1
- CALL_ARGS = scuxl0035 -vaN
+ CALL_ARGS = scuxl0035 -vS
 # CALL_ARGS = scuxl0212 -adt1
 
 # CALL_ARGS = scuxl0035 -vy

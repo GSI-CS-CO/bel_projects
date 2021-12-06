@@ -678,10 +678,9 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "block",
       .m_helpText = "PARAM=\"n,t\"\n"
                     "Adjusting of the maximum etherbone data block length of"
-                    " a ADDAC/ACU-DAQ,\n"
+                    " to read out of data in the DDR3 RAM,\n"
                     "whereby the length of zero has a special meaning, in this"
-                    " case the maximum data block length will be equal the"
-                    " ADDAC/DAQ block length.\n"
+                    " case the data will not divide.\n"
                     "When the first parameter \"n\" is not equal to zero,"
                     " then the etherbone block will divided in partial cycles with \"n\""
                     " DDR3-payload items per cycle.\nIn this case the second parameter"
@@ -689,7 +688,8 @@ vector<OPTION> CommandLine::c_optList =
                     " (Time for the SaftLib.)\n"
                     "The default values are: \"" TO_STRING( DEFAULT_MAX_EB_BLOCK_LEN )
                     "," TO_STRING( DEFAULT_EB_CYCLE_GAP_TIME ) "\"\n"
-                    "In the case of MIL-DAQs this option is without any effect.\n\n"
+                    "In the case of vintage LM32-firmware were the MIL-data is still be"
+                    " in the LM32 shared memory, this option is without any effect for MIL DAQs\n\n"
                     "Example 1:\n"
                     ESC_BOLD "-b5,100" ESC_NORMAL "  Divides a etherbone block to receive"
                     " in blocks with 5 DDR3-payload items per cycle and a"
