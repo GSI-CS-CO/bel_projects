@@ -15,6 +15,7 @@ ESC_NORMAL="\e[0m"
 ESC_FG_CYAN="\e[1m\e[36m"
 ESC_FG_BLUE="\e[34m"
 
+
 die()
 {
    echo -e $ESC_ERROR"ERROR: $@"$ESC_NORMAL 1>&2
@@ -94,24 +95,42 @@ then
    echo "CAUTION: FESA daemon is running! If you will run this script then the FESA-daemon will terminate!"
    read -r -p "Are you sure? [y/N] " response
    case "$response" in
-      [yY][eE][sS]|[yY]) 
+      [yY][eE][sS]|[yY])
+         echo -e ${ESC_FG_BLUE}"Killing daemon..."${ESC_NORMAL}
+         killall daemon 2>/dev/null
+         sleep 1
    ;;
       *)
          exit 0
    ;;
-   esac    
+   esac
 fi
 
-killall daemon 2>/dev/null
-killall $(basename $FG_CTL) 2>/dev/null
+if [ -n "$(pidof $(basename $FG_CTL))" ]
+then
+   echo -e ${ESC_FG_BLUE}"Killing running saft-fg-ctl applications..."${ESC_NORMAL}
+   killall $(basename $FG_CTL) 2>/dev/null
+   sleep 1
+fi
 
+
+#
+# Initializing of the FG-list by all found function generators..
+#
 FG_LIST=$( $FG_CTL -si 2>/dev/null | egrep 'fg-[0-9]{1,3}-[0-9]{1,3}' | awk '{printf $1; printf "\n"}')
 if [ ! -n "$FG_LIST" ]
 then
    die "No function generator(s) found!"
 fi
 
-sleep 0.5
+NUM_OF_FG=0
+for i in $FG_LIST
+do
+   let NUM_OF_FG+=1
+done
+echo -e ${ESC_FG_CYAN}"In total $NUM_OF_FG function generators found.\n"${ESC_NORMAL}
+
+#sleep 0.5
 
 if [ -n "$2" ]
 then
@@ -120,54 +139,86 @@ else
    m=1
 fi
 
-IS_MIL=false
+MIL_COUNT=0
 n=1
 lastSlot=-1
+#
+# For all found function generators:
+#
 for i in $FG_LIST
 do
-  socket=$(echo $i | tr '-' ' ' | awk '{printf $2}')
-  slot=$(( socket & 0x000F ))
-  dev=$(echo $i | tr '-' ' ' | awk '{printf $3}')
-  if [ "$slot" -eq "$socket" ]
-  then
-     if [ "$dev" -gt "1" ]
-     then
-        die "Invalid device number $dev for ADDAC-FG on slot $slot !"  
-     fi
-     echo -e ${ESC_FG_CYAN}"${n}: activating ADDAC-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
-     $FG_CTL -rf $i -g <$1 &
-  else
-     if [ "$slot" -ge "1" ]
-     then
-        if [ "$lastSlot" -ne "$slot" ]
-        then
-           echo -e ${ESC_FG_BLUE}"Sending broadcast and clearing power up bit of SIO on slot ${slot}."${ESC_NORMAL}
-           slaveBase=$((slot*0x20000+0x400800))
-           $WB_WRITE $(printf "0x%X/2" $slaveBase) 0x100
-           $WB_WRITE $(printf "0x%X/2" $((slaveBase+2))) 0x12FF
-        fi
-        echo -e ${ESC_FG_CYAN}"${n}: activating SIO-MIL-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
-     else
-        if [ "$lastSlot" -ne "$slot" ]
-        then
-           echo -e ${ESC_FG_BLUE}"Sending broadcast and clearing power up bit of MIL-extention."${ESC_NORMAL}
-           $WB_WRITE 0x9000/4 0x100
-           $WB_WRITE 0x9004/4 0x12FF
-        fi
-        echo -e ${ESC_FG_CYAN}"${n}: activating extention-MIL-FG ${dev} on socket ${socket}: $i"${ESC_NORMAL}
-     fi
-     lastSlot=$slot
-     IS_MIL=true
-     $FG_CTL -rf $i -g <$1 &
-  fi
-  sleep 0.5
-  let n+=1
-  [ "$n" -gt "$m" ] && break
+   socket=$(echo $i | tr '-' ' ' | awk '{printf $2}')
+   slot=$(( socket & 0x000F ))
+   dev=$(echo $i | tr '-' ' ' | awk '{printf $3}')
+   #
+   # Is ADDAC device?
+   #
+   if [ "$slot" -eq "$socket" ]
+   then
+      #
+      # ADDAC-device (respectively scu-bus fg)
+      #
+      if [ "$dev" -gt "1" ]
+      then
+         die "Invalid device number $dev for ADDAC-FG on slot $slot !"  
+      fi
+      echo -e ${ESC_FG_CYAN}"${n}: activating ADDAC-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
+   else
+      #
+      # MIL device
+      #
+      if [ "$slot" -ge "1" ]
+      then
+         #
+         # MIL over SIO (SCU-bus)
+         #
+         if [ "$lastSlot" -ne "$slot" ]
+         then
+            echo -e ${ESC_FG_CYAN}"Sending broadcast and clearing power up bit of SIO on slot ${slot}."${ESC_NORMAL}
+            slaveBase=$((slot*0x20000+0x400800))
+            $WB_WRITE $(printf "0x%X/2" $slaveBase) 0x100
+            $WB_WRITE $(printf "0x%X/2" $((slaveBase+2))) 0x12FF
+         fi
+         echo -e ${ESC_FG_CYAN}"${n}: activating SIO-MIL-FG ${dev} on slot ${slot}: $i"${ESC_NORMAL}
+      else
+         #
+         # MIL over extension
+         #
+         if [ "$lastSlot" -ne "$slot" ]
+         then
+            echo -e ${ESC_FG_CYAN}"Sending broadcast and clearing power up bit of MIL-extension."${ESC_NORMAL}
+            $WB_WRITE 0x9000/4 0x100
+            $WB_WRITE 0x9004/4 0x12FF
+         fi
+         echo -e ${ESC_FG_CYAN}"${n}: activating extension-MIL-FG ${dev} on socket ${socket}: $i"${ESC_NORMAL}
+      fi
+      lastSlot=$slot
+      let MIL_COUNT+=1
+   fi
+   let n+=1
+   if [ "$n" -gt "$m" ]
+   then
+      #
+      # Start of the last function generator in list by generating start-tag.
+      #
+      $FG_CTL -rf $i -g <$1 &
+   else
+      #
+      # Start of a function generator in list.
+      #
+      $FG_CTL -rf $i <$1 &
+   fi
+   #sleep 0.5
+   [ "$n" -gt "$m" ] && break
 done
+#
+# End for all found function generators
+#
 
-if [ "$IS_MIL" == true ]
+
+if [ "$MIL_COUNT" -gt "0" ]
 then
-   echo -e ${ESC_FG_BLUE}"At least one MIL fg found. Creating action for LM32."${ESC_NORMAL}
+   echo -e ${ESC_FG_CYAN}"*** $MIL_COUNT MIL-FGs activated. Creating action for LM32. ***"${ESC_NORMAL}
    $LM32_CTL -x
    $LM32_CTL -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFF 0x0 0xDEADBEEF -d
    
