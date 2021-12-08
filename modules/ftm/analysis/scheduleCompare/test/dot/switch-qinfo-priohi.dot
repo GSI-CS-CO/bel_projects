@@ -1,0 +1,11 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A1[cpu="0", flags="0x00000000", type="switch", toffs="0", pattern="patternA", patentry="false", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", shape     = "pentagon", fillcolor = "white"];
+B2[cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+C3[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+D4[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+A1->B2 [type="priohi", color     = "gray"];
+B2->C3 [type="meta", color     = "gray"];
+B2->D4 [type="meta", color     = "gray"];
+}

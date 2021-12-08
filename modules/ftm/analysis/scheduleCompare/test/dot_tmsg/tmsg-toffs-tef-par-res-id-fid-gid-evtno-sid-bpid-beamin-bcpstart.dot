@@ -1,0 +1,4 @@
+digraph {
+	name="tmsg-toffs-tef-par-res-id-fid-gid-evtno-sid-bpid-beamin-bpcstart"
+	A [type=tmsg toffs=99 tef=100 par="0xFF" res="0x123" id="0xABCD" fid=1 gid=5 evtno=55 sid=22 bpid=17 beamin=true bpcstart=true]
+}

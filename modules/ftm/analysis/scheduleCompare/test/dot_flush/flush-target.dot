@@ -1,0 +1,4 @@
+digraph {
+	name="flush-target"
+	A [type=flush target="B"]
+}

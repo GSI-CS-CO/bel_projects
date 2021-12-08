@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2021
+ *  version : 26-Jul-2021
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000237
+#define B2B_SERV_RAW_VERSION 0x000301
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -71,7 +71,7 @@ using namespace std;
 
 
 #define FID          0x1                // format ID of timing messages
-#define EKSOFFSET    -500000            // offset for EVT_KICK_START
+/* #define EKSOFFSET    -500000            // offset for EVT_KICK_START  */
 
 
 static const char* program;
@@ -165,7 +165,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   switch (tag) {
     case tagStart   :
       sid                  = recSid;
-      tStart               = deadline.getUTC() - EKSOFFSET;
+      tStart               = deadline.getUTC();
       flagActive           = 1;
       setval.flag_nok      = 0xfffffffe;                    // mode is 'ok'
       setval.mode          = 0;
@@ -190,7 +190,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.flagEvtRec    = 0x1 << tag;
       getval.flagEvtErr    = 0;
       getval.flagEvtLate   = flagLate << tag;;
-      getval.tEKS          = deadline.getTAI() - EKSOFFSET;;
+      getval.tCBS          = deadline.getTAI();
       getval.doneOff       = 0;
       getval.preOff        = 0;
       getval.priOff        = 0;
@@ -217,22 +217,22 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
       break;
     case tagPre     :
-      getval.preOff      = (int32_t)(param - getval.tEKS);
+      getval.preOff      = (int32_t)(param - getval.tCBS);
       getval.ext_phase   = param;
       if (param) getval.flag_nok &= 0xfffffffe;
       flagErr            = ((id & B2B_ERRFLAG_PMEXT) != 0);
       getval.flagEvtErr |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff      = (int32_t)(param - getval.tEKS);
+      getval.priOff      = (int32_t)(param - getval.tCBS);
       getval.inj_phase   = param;
       if (param) getval.flag_nok &= 0xffffffdf;
       flagErr            = ((id & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr |= flagErr << tag;
       break;     
     case tagKte     :
-      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS
-      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tEKS);
+      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS /* chk */
+      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tCBS);
       setval.ext_cTrig    = ((param & 0x00000000ffffffff));
       getval.doneOff      = ((param & 0xffffffff00000000) >> 32);
       setval.flag_nok    &= 0xfffffff7;
@@ -241,7 +241,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       break;
     case tagKti     :
       if (setval.mode < 3) setval.mode = 3;
-      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tEKS);
+      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tCBS);
       setval.inj_cTrig   = ((param & 0x00000000ffffffff));
       setval.cPhase      = ((param & 0xffffffff00000000) >> 32);
       setval.flag_nok   &= 0xffffffbf;
@@ -480,13 +480,13 @@ int main(int argc, char** argv)
     switch (reqExtRing) {
       case SIS18_RING : 
 
-        // SIS18, EVT_KICK_START, EKSOFFSET, signals start of data collection
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
+        // SIS18, CMD_B2B_START, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[0]        = tagStart;
         
-        // SIS18, EVT_KICK_START, +100ms (!), signals stop of data collection 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART << 36);
+        // SIS18, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
         condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
         tag[1]        = tagStop;
         
@@ -558,13 +558,13 @@ int main(int argc, char** argv)
         break;
       case ESR_RING : 
 
-        // ESR, EVT_KICK_START, EKSOFFSET, signals start of data collection
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, EKSOFFSET));
+        // ESR, CMD_B2B_START, signals start of data collection
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[0]        = tagStart;
         
-        // ESR, EVT_KICK_START, +100ms (!), signals stop of data collection 
-        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_KICKSTART2 << 36);
+        // ESR, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
         condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
         tag[1]        = tagStop;
         

@@ -10,6 +10,7 @@ STAGING         ?=
 PREFIX          ?= /usr/local
 SYSCONFDIR      ?= /etc
 PWD             := $(shell pwd)
+UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 export EXTRA_FLAGS
@@ -73,7 +74,14 @@ define check_timing
 	@echo "Success! All Timing requirements were met!"
 endef
 
-all:		etherbone tools sdbfs toolchain firmware driver
+define ldconfig_note
+	@echo ""
+	@echo "***************************************************************************"
+	@echo "Attention: New libraries have been installed, you may need to run ldconfig!"
+	@echo "***************************************************************************"
+endef
+
+all:		hdlmake_install etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
@@ -95,6 +103,7 @@ etherbone-clean::
 
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api DESTDIR=$(STAGING) install
+	$(call ldconfig_note)
 
 saftlib::
 	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
@@ -106,6 +115,7 @@ saftlib-clean::
 
 saftlib-install::
 	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
+	$(call ldconfig_note)
 
 tools::		etherbone
 	$(MAKE) -C tools all
@@ -189,10 +199,16 @@ wrpc-sw-config::
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain wrpc-sw-config
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
+else
+	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+endif
 
 firmware-clean:
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
+endif
 
 # #################################################################################################
 # Arria 2 devices
@@ -452,11 +468,13 @@ Makefile: prereq-rule
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules"; ./fix-git.sh)
-	@test -d lib/python2.7/site-packages || \
-		(echo "Installing hdlmake"; ./install-hdlmake.sh)
 
 git_submodules_update:
 	@git submodule update --recursive
 
 git_submodules_init:
 	@./fix-git.sh
+
+hdlmake_install:
+	cd ip_cores/hdlmake/ && python setup.py install --user
+	export PATH=$$PATH:$$HOME/.local/bin

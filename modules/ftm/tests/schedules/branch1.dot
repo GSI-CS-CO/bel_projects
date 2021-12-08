@@ -1,0 +1,21 @@
+digraph branch1 {
+  name=branch1
+  node [type=tmsg cpu=0 fid=1 toffs=0 pattern=A]
+  A1 [par="0xA1"]
+  A2 [par="0xA2"]
+  A3 [par="0xA3"]
+  BlockA [type=block qlo=1 tperiod=1000000 patentry=1 patexit=1]
+  A2 -> BlockA -> A1 -> BlockA [type=defdst]
+  A3 -> BlockA [type=defdst]
+  BlockA -> A2 [type=altdst]
+  BlockA -> A3 [type=altdst]
+  node [type=tmsg cpu=1 fid=1 toffs=0 pattern=B]
+  B1 [par="0xB1"]
+  B2 [par="0xB2"]
+  B3 [par="0xB3"]
+  BlockB [type=block qlo=1 tperiod=1000000 patentry=1 patexit=1]
+  B2 -> BlockB -> B1 -> BlockB [type=defdst]
+  B3 -> BlockB [type=defdst]
+  BlockB -> B2 [type=altdst]
+  BlockB -> B3 [type=altdst]
+}

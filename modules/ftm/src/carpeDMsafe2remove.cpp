@@ -24,11 +24,14 @@ namespace isSafeToRemove {
   const std::string exIntro = "isSafeToRemove: ";
 }
 
-
+/** Check that it is safe to remove the graph gRem from current schedule.
+ * Get all pattern of gRem and call isSafeToRemove for a set of pattern.
+ * Warn on stderr if there are undefined pattern.
+ */
 bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   std::set<std::string> patterns;
   bool warnUndefined = false;
-  //Find all patterns 2B removed
+  //Find all patterns to be removed
   for (auto& patternIt : getGraphPatterns(gRem)) {
     if (patternIt == DotStr::Misc::sUndefined) warnUndefined = true;
     else patterns.insert(patternIt);
@@ -37,15 +40,17 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std:
   return isSafeToRemove(patterns, report, vQr, ctAdditions);
 }
 
+/** Check that it is safe to remove a pattern from current schedule.
+ */
 bool CarpeDM::CarpeDMimpl::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions) {
   std::set<std::string> p = {pattern};
   return isSafeToRemove(p, report, vQr, ctAdditions);
 }
 
-
+/** Check that it is safe to remove a set of patterns from current schedule.
+ */
 bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl;
-
 
   bool isSafe = true, allCovenantsUncritical = true;
   Graph& g        = gDown;
@@ -55,21 +60,23 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
   vertex_set_t blacklist, remlist, entries, cursors, covenants; //hashes of all covenants
   vertex_set_map_t covenantsPerVertex;
   std::string optmisedAnalysisReport, covenantReport;
-  uint64_t currentTime = getDmWrTime(); 
+  uint64_t currentTime = getDmWrTime();
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
   for (auto& patternIt : patterns) {
     // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
+    const std::string& exMsgMemberNode = isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node ";
     for (auto& nodeIt : getPatternMembers(patternIt)) {
-      auto x = at.lookupHash(hm.lookup(nodeIt, isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node "), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node ! ");
+      auto x = at.lookupHash(hm.lookup(nodeIt, exMsgMemberNode), exMsgMemberNode + "! ");
       remlist.insert(x->v);
       covenantsPerVertex[x->v].insert(null_vertex);
     }
     //Find and list all entry nodes of patterns 2B removed
     std::string sTmp = getPatternEntryNode(patternIt);
-    auto x = at.lookupHash(hm.lookup(sTmp, isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node"), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node");
+    const std::string& exMsgEntryNode = isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node";
+    auto x = at.lookupHash(hm.lookup(sTmp, exMsgEntryNode), exMsgEntryNode);
     entries.insert(x->v);
 
   }
@@ -223,7 +230,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
 
   report += createDot(gEq, true);
   report += optmisedAnalysisReport;
-  
+
 
 
   if (optimisedS2R && isSafe) {
@@ -317,7 +324,7 @@ unsigned CarpeDM::CarpeDMimpl::updateCovenants() {
 void CarpeDM::CarpeDMimpl::addCovenants(CovenantTable& ctAdditions) {
   for (cmI it = ctAdditions.getTable().begin(); it != ctAdditions.getTable().end(); it++ ) {
     ct.insert(it);
-  }  
+  }
 }
 
 
@@ -337,14 +344,14 @@ void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Grap
     if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];
 
-    
+
     if ( (g[*in_cur].type != det::sDefDst && g[*in_cur].type != det::sResFlowDst && g[*in_cur].type != det::sDynFlowDst) ) { // if its a non-traversiable edge and the traversal limit is reached, don't follow this trail
       if ( (maxNtEdges > 0) && (tNtEdges >= maxNtEdges) ) {
         if (verbose) sLog << "Non-Traversible edge limit reached, not crossing " << g[source(*in_cur, g)].name << " -> " << g[target(*in_cur, g)].name << std::endl;
         continue;
       } else {tNtEdges++;}
     }
-   
+
     sV.insert(source(*in_cur, g));
 
     if (cpvs.find(covenant) != cpvs.end()) { continue; }
@@ -367,7 +374,7 @@ void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Grap
 bool CarpeDM::CarpeDMimpl::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
   vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
-  
+
   //FIXME what about flush with override ???
   BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if ((gEq[vChkResCmd].type == dnt::sCmdFlow) || (gEq[vChkResCmd].type == dnt::sSwitch)) resCmds.insert(vChkResCmd);}
   bool addEdge = (resCmds.size() > 0);

@@ -69,6 +69,7 @@ use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
+use work.wb_i2c_wrapper_pkg.all;
 
 entity monster is
   generic(
@@ -101,6 +102,8 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
     g_en_beam_dump         : boolean;
+    g_en_i2c_wrapper       : boolean;
+    g_num_i2c_interfaces   : integer;
     g_dual_port_wr         : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
@@ -353,7 +356,13 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
-
+    -- i2c
+    i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
+    i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
+    i2c_scl_padoen_o       : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
+    i2c_sda_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
+    i2c_sda_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
+    i2c_sda_padoen_o       : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
     -- g_en_pmc
     pmc_pci_clk_i          : in    std_logic;
     pmc_pci_rst_i          : in    std_logic;
@@ -373,11 +382,9 @@ entity monster is
     pmc_inta_o             : out   std_logic := 'Z';
     pmc_req_o              : out   std_logic;
     pmc_gnt_i              : in    std_logic;
-
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0);
-
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic);
 end monster;
@@ -496,6 +503,7 @@ architecture rtl of monster is
     devs_DDR3_ctrl,
     devs_tempsens,
     devs_a10_phy_reconf,
+    devs_i2c_wrapper,
     devs_eca_tap
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
@@ -536,6 +544,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
+    dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -3135,6 +3144,28 @@ end generate;
         slave_i    => dev_bus_master_o(dev_slaves'pos(devs_tempsens)),
         slave_o    => dev_bus_master_i(dev_slaves'pos(devs_tempsens)),
         clr_o      => tempsens_clr_out);
+  end generate;
+
+  i2c_wrapper_n : if not g_en_i2c_wrapper generate
+    dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)) <= cc_dummy_slave_out;
+  end generate;
+  i2c_wrapper_y : if g_en_i2c_wrapper generate
+    i2c_wrapper : xwb_i2c_master
+      generic map (
+        g_interface_mode      => PIPELINED,
+        g_address_granularity => BYTE,
+        g_num_interfaces      => g_num_i2c_interfaces)
+      port map (
+        clk_sys_i    => clk_sys,
+        rst_n_i      => rstn_sys,
+        slave_i      => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)),
+        slave_o      => dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)),
+        scl_pad_i    => i2c_scl_pad_i,
+        scl_pad_o    => i2c_scl_pad_o,
+        scl_padoen_o => i2c_scl_padoen_o,
+        sda_pad_i    => i2c_sda_pad_i,
+        sda_pad_o    => i2c_sda_pad_o,
+        sda_padoen_o => i2c_sda_padoen_o);
   end generate;
 
   -- END OF Wishbone slaves

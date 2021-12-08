@@ -1,0 +1,4 @@
+digraph {
+	name="wait-target-tvalid-tabs_"
+	A [type=wait target="B" tvalid=64 tabs=""]
+}

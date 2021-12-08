@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-January-2021
+ *  version : 08-Oct-2021
  *
  *  common functions used by various firmware projects
  *  
@@ -68,6 +68,7 @@ extern uint32_t extern_entryActionOperation();
 extern uint32_t extern_exitActionOperation();
 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
+volatile uint32_t *pEca;                // WB address of ECA event input (discoverPeriphery())
 volatile uint32_t *pPPSGen;             // WB address of PPS Gen
 volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
@@ -386,7 +387,7 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // set high bits for EB master
   ebm_hi(COMMON_ECA_ADDRESS);
 
-  // pack Ethernet frame with messages
+  // pack Ethernet frame with message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
   tef     = 0x00000000;
@@ -412,7 +413,49 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   ebm_flush();
           
   return status;
-} //fwlib_bmWriteTM
+} //fwlib_ebmWriteTM
+
+
+uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+{
+  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t deadlineLo, deadlineHi;
+  uint32_t idLo, idHi;
+  uint32_t paramLo, paramHi;
+  
+  uint32_t status;                     // return value
+
+  // check deadline
+  if ((deadline < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) && !flagForceLate) {
+    deadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    status   = COMMON_STATUS_OUTOFRANGE;
+  } // if deadline
+  else status = COMMON_STATUS_OK;
+
+  // pack 32bit words of message data
+  idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
+  idLo       = (uint32_t)(evtId            & 0xffffffff);
+  tef     = 0x00000000;
+  res     = 0x00000000;
+  paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
+  paramLo    = (uint32_t)(param            & 0xffffffff);
+  deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+  deadlineLo = (uint32_t)(deadline         & 0xffffffff);
+
+  // write timing message to ECA input
+  atomic_on();                                  
+  *pEca = idHi;
+  *pEca = idLo;
+  *pEca = paramHi;
+  *pEca = paramLo;
+  *pEca = tef;
+  *pEca = res;
+  *pEca = deadlineHi;
+  *pEca = deadlineLo;
+  atomic_off();
+          
+  return status;
+} //fwlib_ecaWriteTM
 
 
 uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
@@ -435,22 +478,19 @@ void fwlib_publishSharedSize(uint32_t size)
 } // fwlib_publishSharedInfo
 
 
-void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
+void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, uint32_t sharedSize, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
+  uint32_t commonSharedSize;
   int      i;
-
-  // basic info to wr console
-  DBPRINT1("\n");
-  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
-  DBPRINT1("\n");
   
   // set pointer to shared memory
   pShared                 = startShared;
 
   // set pointer ('external view') for EB return values
-  cpuRamExternalData4EB   = (uint32_t *)(cpuRamExternal + ((COMMON_SHARED_DATA_4EB + sharedOffs) >> 2));
+  if (cpuRamExternal) cpuRamExternalData4EB   = (uint32_t *)(cpuRamExternal + ((COMMON_SHARED_DATA_4EB + sharedOffs) >> 2));
+  else                DBPRINT1("common-fwlib: ERROR cpuRamExternal undefined\n");
 
   // get address to data
   pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
@@ -482,8 +522,16 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     i++;
   } // while pSharedTemp
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared));
-  
+  fwlib_publishSharedSize(sharedSize);                              // set shared size total
+  commonSharedSize   = (uint32_t)(pSharedTemp - pShared) << 2;     // calc shared size common
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("common-fwlib: fwlib_init, shared size [bytes], common part %d, total %d\n", commonSharedSize, sharedSize);
+  DBPRINT1("common-fwlib: cpuRamExternal 0x%08x,  cpuRamExternalData4EB 0x%08x\n", cpuRamExternal, cpuRamExternalData4EB);
+  DBPRINT1("\n");
+
   // set initial values;
   ebmClearSharedMem();
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
@@ -511,7 +559,7 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -542,6 +590,9 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
+      *isEarly     = *pECAFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = *pECAFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = *pECAFlag & (0x0001 << ECA_DELAYED);
       
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
