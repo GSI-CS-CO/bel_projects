@@ -495,6 +495,8 @@ void printBigBuff(int nLines, int nEmpty)
 
   k = 0;
 
+  // the purpose of this routine is to print everything in one go to reduce flickering
+
   // title
   len = strlen(title);
   for (j=0; j<len; j++) bigBuff[k++] = title[j];
@@ -527,8 +529,11 @@ void printBigBuff(int nLines, int nEmpty)
 
   // terminate
   bigBuff[k]  = '\0';
-  
+
+  // print to screen
+  term_clear();
   printf("%s", bigBuff);
+  fflush(stdout); 
 } // printBigBuff
 
 
@@ -537,7 +542,6 @@ void printData(char *name)
 {
   char     buff[100];
   time_t   time_date;
-  int      i;
   uint32_t nLines;
   uint32_t nEmpty;
   uint32_t minLines = 20;
@@ -548,7 +552,6 @@ void printData(char *name)
 
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
-  term_clear();
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m", buff);
   
@@ -562,11 +565,9 @@ void printData(char *name)
 
   printBigBuff(nLines, nEmpty); 
 
-  
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     
-  fflush(stdout);
   flagPrintNow = 0;
 } // printServices
   
