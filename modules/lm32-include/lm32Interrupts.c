@@ -251,7 +251,9 @@ void _irq_entry( void )
  */
 inline void criticalSectionEnter( void )
 {
+#ifndef CONFIG_DISABLE_CRITICAL_SECTION
    irqDisable();
+#endif
    __atomic_section_nesting_count++;
 }
 
@@ -265,8 +267,10 @@ inline void criticalSectionExit( void )
 {
    IRQ_ASSERT( __atomic_section_nesting_count != 0 );
    __atomic_section_nesting_count--;
+#ifndef CONFIG_DISABLE_CRITICAL_SECTION
    if( __atomic_section_nesting_count == 0 )
       _irqEnable();
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
