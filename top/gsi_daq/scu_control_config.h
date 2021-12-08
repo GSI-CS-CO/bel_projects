@@ -19,6 +19,12 @@
 #define _CONFIG_PATCH_PHASE
 
 /*!
+ * @brief If defined then the maximum and minimum of all whishbone accesses
+ *        becomes printed in stderr.
+ */
+#define CONFIG_EB_TIME_MEASSUREMENT
+
+/*!
  * @brief MIL-DAQ-buffer-handlong is backward compatible to the old
  *        LM32-firmware
  */

@@ -35,6 +35,8 @@
 #ifndef CONFIG_NO_SCU_RAM
  #include <daq_ramBuffer.h>
 #endif
+#include <daq_calculations.hpp>
+
 
 // ... a little bit paranoia, I know ... ;-)
 static_assert( EB_DATA8  == sizeof(uint8_t),  "" );
@@ -67,6 +69,12 @@ class EbRamAccess
    uint                        m_ddr3BurstModeBase;
  #endif
  #endif
+#endif
+
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+    USEC_T                     m_startTime;
+    USEC_T                     m_minElapsedTime;
+    USEC_T                     m_maxElapsedTime;
 #endif
 
 public:
@@ -120,6 +128,19 @@ public:
       return m_poEb->isConnected();
    }
 
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+private:
+
+   void startTimeMeasurement( void )
+   {
+      m_startTime = getSysMicrosecs();
+   }
+
+   void stopTimeMeasurement( void );
+
+public:
+#endif
+
 #ifndef CONFIG_NO_SCU_RAM
    /*!
     * @brief Reads data from the SCU-RAM.
@@ -132,10 +153,16 @@ public:
    {
       SCU_ASSERT( m_poEb->isConnected() );
       SCU_ASSERT( m_ddr3TrModeBase != 0 );
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      startTimeMeasurement();
+   #endif
       m_poEb->read( m_ddr3TrModeBase + offset * sizeof(RAM_DAQ_PAYLOAD_T),
                     pData,
                     sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
                     len * ARRAY_SIZE( pData->ad32 ) );
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      stopTimeMeasurement();
+   #endif
    }
 
    /*!
@@ -168,9 +195,15 @@ public:
                   const std::size_t offset = 0,
                   const etherbone::format_t format = EB_DATA8 )
    {
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      startTimeMeasurement();
+   #endif
       m_poEb->read( m_lm32SharedMemAddr + offset, pData,
                     EB_BIG_ENDIAN | format,
                     len );
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      stopTimeMeasurement();
+   #endif
    }
 
 
@@ -193,9 +226,15 @@ public:
                    const std::size_t offset = 0,
                    const etherbone::format_t format = EB_DATA8 )
    {
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      startTimeMeasurement();
+   #endif
       m_poEb->write( m_lm32SharedMemAddr + offset, pData,
                      EB_BIG_ENDIAN | format,
                      len );
+   #ifdef CONFIG_EB_TIME_MEASSUREMENT
+      stopTimeMeasurement();
+   #endif
    }
 };
 

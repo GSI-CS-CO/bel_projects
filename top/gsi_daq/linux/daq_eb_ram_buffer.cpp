@@ -48,6 +48,11 @@ EbRamAccess::EbRamAccess( DaqEb::EtherboneConnection* poEb )
    #endif
   #endif
 #endif
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+   , m_startTime( 0 )
+   , m_minElapsedTime( static_cast<USEC_T>(~0) )
+   , m_maxElapsedTime( 0 )
+#endif
 {
    if( !m_poEb->isConnected() )
    {
@@ -133,4 +138,26 @@ void EbRamAccess::readRam( RAM_DAQ_PAYLOAD_T* pData, std::size_t len,
  #endif
 }
 #endif /* #ifndef CONFIG_NO_SCU_RAM */
+
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+#warning "Timemeasurment output to stderr is active"
+/*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
+ */
+void EbRamAccess::stopTimeMeasurement( void )
+{
+   const USEC_T newDuration = getSysMicrosecs() - m_startTime;
+   if( newDuration > m_maxElapsedTime )
+   {
+      std::cerr << "WB max duration: " << newDuration << " us" << std::endl;
+      m_maxElapsedTime = newDuration;
+   }
+   if( newDuration < m_minElapsedTime )
+   {
+      std::cerr << "WB min duration: " << newDuration << " us" << std::endl;
+      m_minElapsedTime = newDuration;
+   }
+}
+#endif
+
 //================================== EOF =======================================
