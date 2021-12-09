@@ -72,12 +72,49 @@ class EbRamAccess
 #endif
 
 #ifdef CONFIG_EB_TIME_MEASSUREMENT
+public:
+    struct TIME_MEASUREMENT_T
+    {
+       enum WB_ACCESS_T
+       {
+          UNKNOWN    = 0,
+          LM32_READ  = 1,
+          LM32_WRITE = 2,
+          DDR3_READ  = 3
+       };
+
+       USEC_T      m_duration;
+       USEC_T      m_timestamp;
+       std::size_t m_dataSize;
+       WB_ACCESS_T m_eAccess;
+
+       TIME_MEASUREMENT_T( const USEC_T duration )
+        :m_duration( duration )
+        ,m_timestamp( 0 )
+        ,m_dataSize( 0 )
+        ,m_eAccess( UNKNOWN ) {}
+    };
+
+    struct MAX_DURATION: public TIME_MEASUREMENT_T
+    {
+       MAX_DURATION( void ): TIME_MEASUREMENT_T( 0 ) {}
+    };
+
+    struct MIN_DURATION: public TIME_MEASUREMENT_T
+    {
+       MIN_DURATION( void ): TIME_MEASUREMENT_T( static_cast<USEC_T>(~0) ) {}
+    };
+
+    using WB_ACCESS_T = TIME_MEASUREMENT_T::WB_ACCESS_T;
+
+private:
+    MAX_DURATION               m_oMaxDuration;
+    MIN_DURATION               m_oMinDuration;
     USEC_T                     m_startTime;
-    USEC_T                     m_minElapsedTime;
-    USEC_T                     m_maxElapsedTime;
-#endif
+#endif /* #ifdef CONFIG_EB_TIME_MEASSUREMENT */
 
 public:
+
    /*!
     * @brief Constructor establishes the etherbone connection if it's not
     *        already been done outside.
@@ -136,9 +173,12 @@ private:
       m_startTime = getSysMicrosecs();
    }
 
-   void stopTimeMeasurement( void );
+   void stopTimeMeasurement( const std::size_t size, const WB_ACCESS_T access );
 
 public:
+
+   WB_ACCESS_T getWbMeasurementMaxTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize );
+   WB_ACCESS_T getWbMeasurementMinTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize );
 #endif
 
 #ifndef CONFIG_NO_SCU_RAM
@@ -161,7 +201,7 @@ public:
                     sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
                     len * ARRAY_SIZE( pData->ad32 ) );
    #ifdef CONFIG_EB_TIME_MEASSUREMENT
-      stopTimeMeasurement();
+      stopTimeMeasurement( len * sizeof( pData->ad32[0] ), TIME_MEASUREMENT_T::DDR3_READ );
    #endif
    }
 
@@ -202,7 +242,7 @@ public:
                     EB_BIG_ENDIAN | format,
                     len );
    #ifdef CONFIG_EB_TIME_MEASSUREMENT
-      stopTimeMeasurement();
+      stopTimeMeasurement( len * (format & 0xFF), TIME_MEASUREMENT_T::LM32_READ );
    #endif
    }
 
@@ -233,7 +273,7 @@ public:
                      EB_BIG_ENDIAN | format,
                      len );
    #ifdef CONFIG_EB_TIME_MEASSUREMENT
-      stopTimeMeasurement();
+      stopTimeMeasurement( len * (format & 0xFF), TIME_MEASUREMENT_T::LM32_WRITE );
    #endif
    }
 };

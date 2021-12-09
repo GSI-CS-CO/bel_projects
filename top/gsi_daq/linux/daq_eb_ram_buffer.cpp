@@ -50,8 +50,6 @@ EbRamAccess::EbRamAccess( DaqEb::EtherboneConnection* poEb )
 #endif
 #ifdef CONFIG_EB_TIME_MEASSUREMENT
    , m_startTime( 0 )
-   , m_minElapsedTime( static_cast<USEC_T>(~0) )
-   , m_maxElapsedTime( 0 )
 #endif
 {
    if( !m_poEb->isConnected() )
@@ -140,24 +138,79 @@ void EbRamAccess::readRam( RAM_DAQ_PAYLOAD_T* pData, std::size_t len,
 #endif /* #ifndef CONFIG_NO_SCU_RAM */
 
 #ifdef CONFIG_EB_TIME_MEASSUREMENT
-#warning "Timemeasurment output to stderr is active"
+   #ifdef COMFIG_EB_TIME_MEASSUREMENT_TO_STDERR
+     #warning "Timemeasurment output to stderr is active"
+   #endif
 /*! ---------------------------------------------------------------------------
  * @see daq_eb_ram_buffer.hpp
  */
-void EbRamAccess::stopTimeMeasurement( void )
+void EbRamAccess::stopTimeMeasurement( const std::size_t size, const WB_ACCESS_T access )
 {
    const USEC_T newDuration = getSysMicrosecs() - m_startTime;
-   if( newDuration > m_maxElapsedTime )
+
+   if( newDuration > m_oMaxDuration.m_duration )
    {
+   #ifdef COMFIG_EB_TIME_MEASSUREMENT_TO_STDERR
       std::cerr << "WB max duration: " << newDuration << " us" << std::endl;
-      m_maxElapsedTime = newDuration;
+   #endif
+      m_oMaxDuration.m_duration  = newDuration;
+      m_oMaxDuration.m_timestamp = m_startTime;
+      m_oMaxDuration.m_eAccess   = access;
+      m_oMaxDuration.m_dataSize  = size;
    }
-   if( newDuration < m_minElapsedTime )
+
+   if( newDuration < m_oMinDuration.m_duration )
    {
+   #ifdef COMFIG_EB_TIME_MEASSUREMENT_TO_STDERR
       std::cerr << "WB min duration: " << newDuration << " us" << std::endl;
-      m_minElapsedTime = newDuration;
+   #endif
+      m_oMinDuration.m_duration  = newDuration;
+      m_oMinDuration.m_timestamp = m_startTime;
+      m_oMinDuration.m_eAccess   = access;
+      m_oMinDuration.m_dataSize  = size;
    }
 }
-#endif
+
+/*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
+ */
+EbRamAccess::WB_ACCESS_T
+EbRamAccess::getWbMeasurementMaxTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize )
+{
+   rTimestamp = m_oMaxDuration.m_timestamp;
+   rDuration  = m_oMaxDuration.m_duration;
+   rSize      = m_oMaxDuration.m_dataSize;
+
+   m_oMaxDuration.m_duration  = 0;
+   m_oMaxDuration.m_timestamp = 0;
+   m_oMaxDuration.m_dataSize  = 0;
+
+   const WB_ACCESS_T ret = m_oMaxDuration.m_eAccess;
+   m_oMaxDuration.m_eAccess = TIME_MEASUREMENT_T::UNKNOWN;
+
+   return ret;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq_eb_ram_buffer.hpp
+ */
+EbRamAccess::WB_ACCESS_T
+EbRamAccess::getWbMeasurementMinTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize )
+{
+   rTimestamp = m_oMinDuration.m_timestamp;
+   rDuration  = m_oMinDuration.m_duration;
+   rSize      = m_oMinDuration.m_dataSize;
+
+   m_oMinDuration.m_duration  = static_cast<USEC_T>(~0);
+   m_oMinDuration.m_timestamp = 0;
+   m_oMinDuration.m_dataSize  = 0;
+
+   const WB_ACCESS_T ret = m_oMinDuration.m_eAccess;
+   m_oMinDuration.m_eAccess = TIME_MEASUREMENT_T::UNKNOWN;
+
+   return ret;
+}
+
+#endif // ifdef CONFIG_EB_TIME_MEASSUREMENT
 
 //================================== EOF =======================================

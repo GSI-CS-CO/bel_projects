@@ -1052,4 +1052,20 @@ void FgFeedbackAdministration::onDataError( const bool isMil )
    m_oAddacDaqAdmin.daq::DaqAdministration::onDataError();
 }
 
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+/*! ---------------------------------------------------------------------------
+ */
+const char* FgFeedbackAdministration::accessConstantToString( const WB_ACCESS_T access )
+{
+   #define __ACCESS_TO_STRING( a ) case a: return #a
+   switch( access )
+   {
+      __ACCESS_TO_STRING( UNKNOWN );
+      __ACCESS_TO_STRING( LM32_READ );
+      __ACCESS_TO_STRING( LM32_WRITE );
+      __ACCESS_TO_STRING( DDR3_READ );
+   }
+   return "\0";
+}
+#endif /* ifdef CONFIG_EB_TIME_MEASSUREMENT */
 //================================== EOF ======================================

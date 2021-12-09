@@ -628,6 +628,34 @@ class FgFeedbackAdministration
 public:
    using DAQ_T          = FgFeedbackDevice::DAQ_T;
 
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+   /*!
+    * @ingroup TIME_MEASUREMENT_T
+    * @brief Access constants to inform which wishbone/etherbone access was made.
+    */
+   enum WB_ACCESS_T
+   {  /*!
+       * @brief Unknown, that means no wishbone access has been made.
+       */
+      UNKNOWN    = daq::EbRamAccess::TIME_MEASUREMENT_T::UNKNOWN,
+
+      /*!
+       * @brief Read access from LM32 shared memory has been made.
+       */
+      LM32_READ  = daq::EbRamAccess::TIME_MEASUREMENT_T::LM32_READ,
+
+      /*!
+       * @brief Write access from LM32 shared memory has been made.
+       */
+      LM32_WRITE = daq::EbRamAccess::TIME_MEASUREMENT_T::LM32_WRITE,
+
+      /*!
+       * @brief Read access from DDR3-ram has been made.
+       */
+      DDR3_READ  = daq::EbRamAccess::TIME_MEASUREMENT_T::DDR3_READ
+   };
+#endif /* ifdef CONFIG_EB_TIME_MEASSUREMENT */
+
    static constexpr uint  VALUE_SHIFT = (BIT_SIZEOF( DAQ_T ) - BIT_SIZEOF( daq::DAQ_DATA_T ));
    static constexpr DAQ_T DEFAULT_THROTTLE_THRESHOLD = 10;
    static constexpr uint  DEFAULT_THROTTLE_TIMEOUT   = 10;
@@ -870,6 +898,50 @@ public:
    {
       return m_oAddacDaqAdmin.getBlockReadEbCycleTimeUs();
    }
+
+#ifdef CONFIG_EB_TIME_MEASSUREMENT
+   /*!
+    * @ingroup TIME_MEASUREMENT
+    * @brief Get the maximum time of a wishbone cycle in microseconds since the
+    *        last call of this function or program start.
+    * @param rTimestamp Timestamp of the maximum value.
+    * @param rDuration  Maximum value in microseconds.
+    * @param rSize      Number of transfer data in bytes.
+    * @retval UNKNOWN
+    * @retval LM32_READ
+    * @retval LM32_WRITE
+    * @retval DDR3_READ
+    */
+   WB_ACCESS_T getWbMeasurementMaxTime( daq::USEC_T& rTimestamp, daq::USEC_T& rDuration, std::size_t& rSize )
+   {
+      return static_cast<WB_ACCESS_T>(getEbAccess()->getWbMeasurementMaxTime( rTimestamp, rDuration, rSize ));
+   }
+
+   /*!
+    * @ingroup TIME_MEASUREMENT
+    * @brief Get the minimum time of a wishbone cycle in microseconds since the
+    *        last call of this function or program start.
+    * @param rTimestamp Timestamp of the minimum value.
+    * @param rDuration  Minimum value in microseconds.
+    * @param rSize      Number of transfer data in bytes.
+    * @retval UNKNOWN
+    * @retval LM32_READ
+    * @retval LM32_WRITE
+    * @retval DDR3_READ
+    */
+   WB_ACCESS_T getWbMeasurementMinTime( daq::USEC_T& rTimestamp, daq::USEC_T& rDuration, std::size_t& rSize )
+   {
+      return static_cast<WB_ACCESS_T>(getEbAccess()->getWbMeasurementMinTime( rTimestamp, rDuration, rSize ));
+   }
+
+   /*!
+    * @ingroup TIME_MEASUREMENT
+    * @brief Static class helper function converts the access constant
+    *        (return value of getWbMeasurementMaxTime and
+    *        getWbMeasurementMinTime) in a zero terminated ASCII string.
+    */
+   static const char* accessConstantToString( const WB_ACCESS_T access );
+#endif /* #ifdef CONFIG_EB_TIME_MEASSUREMENT */
 
    /*!
     * @brief Returns the major version number of the
