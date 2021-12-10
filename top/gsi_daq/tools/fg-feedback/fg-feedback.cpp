@@ -565,6 +565,36 @@ int fbMain( int argc, char** ppArgv )
                   cout << "Restart..." << endl;
                break;
             }
+         #ifdef CONFIG_EB_TIME_MEASSUREMENT
+            case HOT_KEY_SHOW_TIMING:
+            {
+               daq::USEC_T timestamp;
+               daq::USEC_T duration;
+               size_t      dataSize;
+               FgFeedbackAdministration::WB_ACCESS_T access;
+               if( (access = pDaqAdmin->getWbMeasurementMaxTime( timestamp, duration, dataSize )) != FgFeedbackAdministration::UNKNOWN )
+               {
+                  cout << "Maximum access time in mode: "
+                       << FgFeedbackAdministration::accessConstantToString( access )
+                       << ": " << dataSize << " bytes; duration: "
+                       << duration << " us; time: "
+                       << daq::wrToTimeDateString( timestamp * 1000 )
+                       << " + " << (timestamp % 1000000) << " us"
+                       << endl;
+               }
+               if( (access = pDaqAdmin->getWbMeasurementMinTime( timestamp, duration, dataSize )) != FgFeedbackAdministration::UNKNOWN )
+               {
+                  cout << "Minimum access time in mode: "
+                       << FgFeedbackAdministration::accessConstantToString( access )
+                       << ": " << dataSize << " bytes; duration: "
+                       << duration << " us; time: "
+                       << daq::wrToTimeDateString( timestamp * 1000 )
+                       << " + " << (timestamp % 1000000) << " us"
+                       << endl;
+               }
+               break;
+            }
+         #endif
          }
 
          const uint it = daq::getSysMicrosecs();

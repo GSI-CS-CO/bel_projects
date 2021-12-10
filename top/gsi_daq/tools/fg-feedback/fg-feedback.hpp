@@ -57,6 +57,9 @@
 #ifndef HOT_KEY_CLEAR_BUFFER
   #define HOT_KEY_CLEAR_BUFFER        'c'
 #endif
+#if defined( CONFIG_EB_TIME_MEASSUREMENT ) && !defined( HOT_KEY_SHOW_TIMING )
+  #define HOT_KEY_SHOW_TIMING         't'
+#endif
 
 namespace Scu
 {

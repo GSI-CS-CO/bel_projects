@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=2.9
+DEFINES += VERSION=2.10
 FOR_SCU := 1
 
 
@@ -109,8 +109,8 @@ REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = --generate_doc_tagged
 
 # CALL_ARGS = scuxl0035 -vadt1
- CALL_ARGS = scuxl0035 -vS
-# CALL_ARGS = scuxl0212 -adt1
+# CALL_ARGS = scuxl0035 -vS
+ CALL_ARGS = scuxl0035 -aN
 
 # CALL_ARGS = scuxl0035 -vy
 
