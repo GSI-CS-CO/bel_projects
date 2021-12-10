@@ -84,7 +84,7 @@
 #define CRYRING_RING               0x0d2   // LSA GID
 #define SIS18_B2B_EXTRACT          0x3a0   // GID: SIS18 simple extraction
 #define SIS18_B2B_ESR              0x3a1   // GID: SIS18 to ESR
-#define SIS18_B2B_SIS100           0x3a2   // GID: SIS18 to CRYRING
+#define SIS18_B2B_SIS100           0x3a2   // GID: SIS18 to SIS100
 #define ESR_B2B_EXTRACT            0x3a5   // GID: ESR simple extraction
 #define ESR_B2B_CRYRING            0x3a6   // GID: ESR to CRYRING
 #define CRYRING_B2B_EXTRACT        0x3aa   // GID: CRYRING simple extraction
@@ -92,7 +92,8 @@
 
 // specialities
 #define B2B_PMOFFSET              500000    // offset [ns] for deadline of PMEXT/PMINJ events relative to B2BS event
-#define B2B_KICKOFFSET           2000000    // offset [ns] for earliest deadline of kicker trigger events
+#define B2B_KICKOFFSETMIN        2000000    // offset [ns] for earliest deadline of kicker trigger events relative to B2BS event
+#define B2B_KICKOFFSETMAX       10500000    // offset [ns] for last possible deadline of kicker trigger events relative to B2BS event
 #define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event

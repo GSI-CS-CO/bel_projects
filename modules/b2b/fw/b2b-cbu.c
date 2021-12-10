@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Dec-2021
+ *  version : 10-Dec-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000310                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000311                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -127,9 +127,9 @@ uint32_t sid;                           // SID user for transfer
 uint32_t bpid;                          // BPID used for transfer
 uint32_t mode;                          // mode for transfer
 uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
-uint32_t nHExt;                         // harmonic number of extraction machine 0..15
+uint32_t nHExt;                         // harmonic number of extraction machine 0..255
 uint64_t TH1Inj;                        // h=1 period [as] of injection machine
-uint32_t nHInj;                         // harmonic number of injection machine 0..15
+uint32_t nHInj;                         // harmonic number of injection machine 0..255
 uint64_t TBeat;                         // beating frquency
 int32_t  cPhase;                        // correction for phase matching [ns]
 int32_t  cTrigExt;                      // correction for extraction trigger
@@ -139,6 +139,9 @@ int32_t  nBucketInj;                    // number of bucket for injection
 int      fFineTune;                     // flag: use fine tuning
 int      fMBTune;                       // flag: use multi-beat tuning
 uint64_t tCBS;                          // deadline of CMD_B2B_START
+uint32_t nGExt;                         // geometric harmonic number of extraction machine due to its circumference
+uint32_t nGInj;                         // geometric harmonic number of injections machine due to its circumference
+
 
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
@@ -467,6 +470,28 @@ uint32_t getTrigGid(uint32_t extFlag)
 } // getTrigGid
 
 
+// get geometric harmonic numbers defined by ratio of ring circumferences
+void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
+{
+  switch (gid) {
+    case SIS18_B2B_ESR :
+      *nExt = 2;
+      *nInj = 1;
+      break;
+    case SIS18_B2B_SIS100 :
+      *nExt = 1;
+      *nInj = 5;
+      break;
+    case ESR_B2B_CRYRING :
+      *nExt = 2;
+      *nInj = 1;
+    default :
+      *nExt = 1;
+      *nInj = 1;
+  } // switch gid
+} // getGeometricHarmonics
+
+
 // calculates time for extraction
 uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 {
@@ -501,8 +526,8 @@ void rfFineTune(uint64_t tH1ExtAs, uint64_t tH1InjAs, uint64_t *tMatch, uint64_t
   // fine tuning; align to 'common' multiple of TH1
   // algorithm: compare match for previous, actual and next iteration
   // calculate common multiples of h=1 for each ring
-  ftTExt = TH1Ext * nHInj;
-  ftTInj = TH1Inj * nHExt;
+  ftTExt = TH1Ext * nGInj;
+  ftTInj = TH1Inj * nGExt;
 
   // ftMatch extraction, use input value as reference
   half        = TH1Ext >> 1;
@@ -546,6 +571,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t Tdiff;                                   // difference of true RF periods            [as]
   uint64_t nDiff;                                   // # we need project Tdiff into the future  
   uint64_t tMatch;                                  // 0 phase of best match                    [as]
+  uint64_t tTmp;                                    // temporary time                           [as]
   uint64_t tD0;                                     // tFast - tSlow                            [as]
   uint64_t tMatchNs;                                // 'tMatch' in units of [ns]                [ns]
   uint64_t epoch;                                   // temporary epoch                          [ns] (!)
@@ -556,34 +582,35 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
 
   // parameters for 'best bunch probing'
-#define LIMITFINETUNE  360                          // do fine tuning if number of h=1 periods within beating is below this number
-#define LIMITMULTIBEAT 120                          // do tuning with multiple beats if number of h=1 periods within beating is below this number
+#define LIMITMULTIBEAT  360                         // do multibeat-tuning, if number of h=1 periods within beating is below this number
+
   uint64_t nH1BeatExt;                              // number of h=1 periods within beating period extraction
   int      i;
-  int      nProbes;                                 // number of probes
+  int      nProbes;                                 // number of probes to be used
+  int      maxProbes;                               // max number of probes
+  uint64_t tTimeout;                                // deadline, when this routine must finish
   int64_t  dt, dtTmp;                               // achieved precision, temporary variable
   uint64_t tMatch0, tMatchTmp;                      // temporary variables
-  
-
-  
 
   // define temporary epoch [ns]
   tNow    = getSysTime();
   epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
 
-  DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nHExt %u, nHInj %u\n", (unsigned int)(tNow - tH1Ext), (unsigned int)(tNow - tH1Inj), nHExt, nHInj);
+  DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nGExt %u, nGInj %u\n", (unsigned int)(tNow - tH1Ext), (unsigned int)(tNow - tH1Inj), nGExt, nGInj);
 
   // check for unreasonable values
   if (TH1Ext == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
   if (TH1Inj == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
   if (nHExt  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
   if (nHInj  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
+  if (nGExt  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
+  if (nGInj  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
   if (TH1Inj == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
   if ((tH1Ext + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
   if ((tH1Inj + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
 
-  TRfExt = TH1Ext / nHExt;
-  TRfInj = TH1Inj / nHInj;
+  TRfExt = TH1Ext / nGExt;
+  TRfInj = TH1Inj / nGInj;
 
   if (TRfExt == TRfInj)                 return COMMON_STATUS_OUTOFRANGE;           // no beating
 
@@ -634,29 +661,53 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
   //pp_printf("b2b-cbu: nProject %llu, tD0 %llu, Tdiff %llu\n", nProject, tD0, Tdiff);
 
-  // check, that tMatch is far enough in the future; if not, add one -> chk --> sufficient beating periods
+  // check, that tMatch is far enough in the future; if not, add sufficient beating periods
   while ((tMatch / nineO + epoch) < tMin) tMatch += *TBeat; 
 
-  // if the injection ring is larger than the extraction ring
-  // we need to align to the injection H=1 group DDS first
-  if (nHInj > nHExt) {
+  // align to h=1 group DDS of extraction ring
+  half   = TH1Ext >> 1;
+  nDiff  = (tMatch - tH1ExtAs) / TH1Ext;
+  if (((tMatch - tH1ExtAs) % TH1Ext) > half) nDiff++;
+  tMatch  = tH1ExtAs + nDiff * TH1Ext;
+
+  // in case injection ring is larger, align to its h=1 group DDS
+  if (nGInj > nGExt) {
+    // 1st, find match for injection
     half   = TH1Inj >> 1;
     nDiff  = (tMatch - tH1InjAs) / TH1Inj;
     if (((tMatch - tH1InjAs) % TH1Inj) > half) nDiff++;
-    tMatch  = tH1InjAs + nDiff * TH1Inj;
-  } // if injection ring is larger
-  //pp_printf("TH1Inj %llu, nPeriod %llu, nHInj %u, flagExtSlow %d\n", TH1Inj, nPeriod, nHInj, flagExtSlow);
+    tTmp   = tH1InjAs + nDiff * TH1Inj;
+    // 2nd, find next match in the future
+    while (tTmp < tMatch) tTmp += TH1Inj;
+    // 3rd, advance extraction by its h=1 periods until match
+    // this will just work if nGInj == 1; else further beating required
+    while (tTmp + (TH1Ext >> 1) > tMatch) tMatch += TH1Ext;
+  } // if nGInj
+ 
+      
+  //pp_printf("TH1Inj %llu, nPeriod %llu, nGInj %u, flagExtSlow %d\n", TH1Inj, nPeriod, nGInj, flagExtSlow);
   
-  // fine tuning and multi-beat tuning; the following code and parameters are for SIS18->ESR 
-  dt      = 999999999999;
-  tMatch0 = tMatch;
-  nH1BeatExt = *TBeat / TH1Ext;
-  nProbes = 1;                                             // enable fine-tuning
-  if (nH1BeatExt < LIMITFINETUNE)  nProbes = 2;            // enable multi-beat tuning for one ring revolution (chk: hackish h = 2)
-  if (nH1BeatExt < LIMITMULTIBEAT) nProbes = nProbes * 3;  // enable multi-beat tuning (chk: hackish try 3 complete revolutions)
-
+  // enable fine tuning?
+  if (fFineTune) nProbes = 1;
+  else           nProbes = 0;
+  
+  // multi-beat tuning
+  dt         = 999999999999;
+  tMatch0    = tMatch;
+  nH1BeatExt = *TBeat / TRfExt;
+  maxProbes  = 0;
+  // multi-beat tuning is applied if one of the following conditions is fullfilled
+  // a. very short beating period
+  // b. geometric harmonic number of injection > 1 (CR -> HESR, 'brute force')
+  // c. if the multi-beat flag is set
+  if ((nH1BeatExt < LIMITMULTIBEAT) || (nGInj > 1) || fMBTune) {
+    tTimeout = tMin - COMMON_AHEADT;    // time, when we must finish     
+    maxProbes = (1000000000 * (uint64_t)(B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN)) / *TBeat;
+    if (maxProbes > nProbes) nProbes = maxProbes;
+  } // if nH1BeatExt
+  
   for (i=0; i < nProbes; i++) {
-    // advance to next bucket (unless in first iteration)
+    // advance to next possible beat time (unless in first iteration)
     tMatchTmp = tMatch0 + (uint64_t)i * *TBeat;
 
     // fine tune (and align to extraction ring) and check for improved value
@@ -665,11 +716,17 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
       tMatch = tMatchTmp;
       dt     = dtTmp;
     } // if dtTmp
+    if (getSysTime() > tTimeout) break;
   } // for i
+
+  // pp_printf("b2b: probes max %d, used %d\n", maxProbes, i);
   
   // convert back to TAI [ns]
   tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
   *tPhaseMatch =  tMatchNs + epoch;
+
+  // check if we are still within allowed time window
+  if ((*tPhaseMatch - tMin) > (uint64_t)(B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN)) return COMMON_STATUS_OUTOFRANGE;
 
   return COMMON_STATUS_OK;    
 } // calcPhaseMatch
@@ -858,6 +915,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune  = 0x0;
       fMBTune    = 0x0;
       tCBS       = 0x0;
+      nGExt      = 0x0;
+      nGInj      = 0x0;
 
       transStat  = 0x0;                                       // reset transfer status
       nTransfer++;                                            // increment transfer counter
@@ -883,6 +942,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fMBTune    = setFMBTune[sid];
 
       tCBS       = recDeadline;
+      getGeometricHarmonics(gid, &nGExt, &nGInj);
+      
       mState     = getNextMState(mode, B2B_MFSM_S0);
       errorFlags = 0x0;
       break;
@@ -934,7 +995,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // trigger at earliest kicker deadline
   if (mState == B2B_MFSM_EXTKICK) {
-    tTrig      = tCBS + B2B_KICKOFFSET;                
+    tTrig      = tCBS + B2B_KICKOFFSETMIN;                
     transStat |= mState;
     mState     = getNextMState(mode, mState);
   } // B2B_MFSM_EXTKICK
@@ -946,7 +1007,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // send command: phase measurement at extraction machine
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
     sendParam    = TH1Ext & 0x00ffffffffffffff;                               // use low 56 bit as period
-    sendParam    = sendParam | ((uint64_t)(nHExt & 0xff) << 56);              // use upper 8 bit as harmonic number 
+    sendParam    = sendParam | ((uint64_t)(nGExt & 0xff) << 56);              // use upper 8 bit as geometric harmonic number 
     sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to B2BS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
@@ -960,7 +1021,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // send command: phase measurement at injection machine
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
     sendParam    = TH1Inj & 0x00ffffffffffffff;                               // use low 56 bit as period
-    sendParam    = sendParam | ((uint64_t)(nHInj & 0xff) << 56);              // use upper 8 bit as harmonic number 
+    sendParam    = sendParam | ((uint64_t)(nGInj & 0xff) << 56);              // use upper 8 bit as geometric harmonic number 
     sendDeadline = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
     transStat   |= mState;
@@ -969,7 +1030,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction in bunch gap: calculate trigger time
   if (mState == B2B_MFSM_EXTBGT) {
-    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSETMIN;
     if (errorFlags) tTrig = tWantExt;                                         // plan B
     else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
       tTrig       = tWantExt;                                                 // plan B
@@ -982,12 +1043,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
   if (mState == B2B_MFSM_EXTMATCHT) {
-    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSET;    
-    if (errorFlags) tTrig =  tWantExt;                                        // plan B
+    tWantExt = tCBS + (uint64_t)B2B_KICKOFFSETMIN;    
+    if (errorFlags) {tTrig =  tWantExt; pp_printf("b2b: error flags\n");}     // plan B
     else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat)) != COMMON_STATUS_OK) {
-        tTrig       = tWantExt;                                               // plan B
-        errorFlags |= B2B_ERRFLAG_CBU;
-        /* pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat)); */
+      tTrig       = tWantExt;                                                 // plan B
+      errorFlags |= B2B_ERRFLAG_CBU;
+      pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat)); 
     } // if NOT STATUS_OK
     transStat |= mState;
     mState     = getNextMState(mode, mState);
