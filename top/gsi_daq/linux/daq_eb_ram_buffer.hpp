@@ -179,7 +179,7 @@ public:
 
    WB_ACCESS_T getWbMeasurementMaxTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize );
    WB_ACCESS_T getWbMeasurementMinTime( USEC_T& rTimestamp, USEC_T& rDuration, std::size_t& rSize );
-#endif
+#endif /* ifdef CONFIG_EB_TIME_MEASSUREMENT */
 
 #ifndef CONFIG_NO_SCU_RAM
    /*!
@@ -201,7 +201,7 @@ public:
                     sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
                     len * ARRAY_SIZE( pData->ad32 ) );
    #ifdef CONFIG_EB_TIME_MEASSUREMENT
-      stopTimeMeasurement( len * sizeof( pData->ad32[0] ), TIME_MEASUREMENT_T::DDR3_READ );
+      stopTimeMeasurement( len * sizeof( pData->ad32 ), TIME_MEASUREMENT_T::DDR3_READ );
    #endif
    }
 
