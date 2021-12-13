@@ -102,22 +102,6 @@ time_t   set_secs[NALLSID];                                 // CBS deadline, tim
 
 time_t   secsOffset;                                        // offset between timestamp and system time
 
-/*
-// b2b values
-double   flagB2bValid;                                      // flag b2b data are valid
-double   b2b_extNue;                                        // extraction, rf frequency [Hz]
-double   b2b_extT;                                          // extraction, rf period [ns]
-double   b2b_extN;                                          // extraction, number of rf periods within beat period
-double   b2b_injNue;                                        // injeciton ...
-double   b2b_injT;
-double   b2b_injN;
-double   b2b_diff;                                          // difference of rf periods [ns]
-double   b2b_diffD;                                         // difference of rf periods [degree]
-double   b2b_beatNue;                                       // beat frequency
-double   b2b_beatT;                                         // beat period
-*/
-
-
 #define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
 #define MSKRECMODE1 0x050               // ... mode CBS
 #define MSKRECMODE2 0x155               // ... mode B2E
@@ -185,28 +169,13 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
   } // switch idx
 } // idx2RingSid
 
-/*
-// convert nanoseconds to degree
-double ns2Degree(double phase,          // phase [ns]
-                 uint64_t T             // period [as]
-                 )
-{
-  double period;                        // [ns]
-  double degree;
-
-  period = (double)T / 1000000000.0;
-  degree = phase / period * 360.0;
-
-  return degree;
-}  // ns2Degree
-*/
 
 void buildHeader()
 {
   sprintf(header, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
   sprintf(empty , "|                     |              |        |    |             |                          |        |        |                                      |");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
-} // buildHeaderLine
+} // buildHeader
 
 
 // build string for printing
@@ -479,61 +448,6 @@ uint32_t calcFlagPrint()
 } // calcFlagPrint;
 
 
-/*
-// print text as big buffer
-void printBigBuff(int nLines, int nEmpty)
-{
-#define BIGBUFFMAXCOL 256
-#define BIGBUFFMAXLIN 50
-
-  static char bigBuff[BIGBUFFMAXLIN*BIGBUFFMAXCOL];
-  int    i, j, k;
-  int    len;
-
-  k = 0;
-
-  // the purpose of this routine is to print everything in one go to reduce flickering
-
-  // title
-  len = strlen(title);
-  for (j=0; j<len; j++) bigBuff[k++] = title[j];
-  bigBuff[k++] = '\n';
-  
-  // header
-  len = strlen(header);
-  for (j=0; j<len; j++) bigBuff[k++] = header[j];
-  bigBuff[k++] = '\n';
-
-  // main 
-  for (i=0; i < NALLSID; i++) {
-    if (flagPrintIdx[i]) {
-      len = strlen(printLine[i]);
-      for(j=0; j<len; j++) bigBuff[k++] = printLine[i][j];
-      bigBuff[k++] = '\n';
-    } // if flagprint
-  } // for i
-  
-  for (i=0; i<nEmpty; i++) {
-    len = strlen(empty);
-    for (j=0; j<len; j++) bigBuff[k++] = empty[j];
-    bigBuff[k++] = '\n';
-  } // for i
-
-  // footer
-  len = strlen(footer);
-  for (j=0; j<len; j++) bigBuff[k++] = footer[j];
-  bigBuff[k++] = '\n';
-
-  // terminate
-  bigBuff[k]  = '\0';
-
-  // print to screen
-  term_clear();
-  printf("%s", bigBuff);
-  fflush(stdout); 
-} // printBigBuff
-*/
-
 // print data to screen
 void printData(char *name)
 {
@@ -542,8 +456,6 @@ void printData(char *name)
   uint32_t nLines;
   uint32_t minLines = 20;
   int      i;
-
-  //for (i=0;i<60;i++) printf("\n");
 
   nLines = calcFlagPrint();
 
@@ -560,12 +472,6 @@ void printData(char *name)
   if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", empty);
   printf("%s\n", footer);
   
-
-  /*if (minLines > nLines) nEmpty = minLines - nLines;
-  else                   nEmpty = 0;
-
-  printBigBuff(nLines, nEmpty); */
-
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     

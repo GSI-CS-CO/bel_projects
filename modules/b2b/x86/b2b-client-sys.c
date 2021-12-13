@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Nov-2021
+ *  version : 13-Dec-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -70,6 +70,7 @@ char    disB2bPrefix[DIMMAXSIZE];
 char     title[SCREENWIDTH+1];                              // title line to be printed
 char     footer[SCREENWIDTH+1];                             // footer line to be printed
 char     header[SCREENWIDTH+1];                             // header line to be printed
+char     empty[SCREENWIDTH+1];                              // an empty line
 
 const char * sysShortNames[] = {
   "sis18-cbu",
@@ -162,6 +163,15 @@ static void help(void) {
 } //help
 
 
+void buildHeader()
+{
+  sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
+  sprintf(header, "  #   ring sys  version     state  transfers           status               node");
+  sprintf(empty , "                                                                                ");
+  //       printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
+} // buildHeader
+
+
 // add all dim services
 void dicSubscribeServices(char *prefix)
 {
@@ -204,11 +214,10 @@ void printServices(int flagOnce)
   time_t time_date;              
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-  
+
+  // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
-  sprintf(header, "  #   ring sys  version     state  transfers           status               node");
   sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
@@ -223,8 +232,9 @@ void printServices(int flagOnce)
     else                                      sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
     printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], dicSystem[i].version, dicSystem[i].state, cTransfer, cStatus, dicSystem[i].hostname);
   } // for i
-  
-  if (!flagOnce) printf("\n\n\n%s\n", footer);
+
+  for (i=0; i<4; i++) printf("%s\n", empty);
+  if (!flagOnce) printf("%s\n", footer);
 } // printServices
 
 
@@ -305,7 +315,8 @@ int main(int argc, char** argv) {
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
 
-  comlib_term_clear();    
+  comlib_term_clear();
+  buildHeader();
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
