@@ -104,7 +104,7 @@ void comlib_term_clear()
 // move cursor position in terminal
 void comlib_term_curpos(int column, int line)
 {
-  printf("\033[2J\033[1;1H");
+  printf("\033[%d;%dH", line, column);
 } // comlib_term_curpos
 
 
