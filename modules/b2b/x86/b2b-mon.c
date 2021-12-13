@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 8-Dec-2021
+ *  version : 13-Dec-2021
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000313
+#define B2B_MON_VERSION 0x000314
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -141,10 +141,20 @@ char     header[SCREENWIDTH+1];                             // header line to be
 char     empty[SCREENWIDTH+1];                              // empty line to be printed
 char     printLine[NALLSID][SCREENWIDTH+1];                 // lines to be printed
 
+
+// clear teminal windows and jump to 1,1
 void term_clear(void)
 {
   printf("\033[2J\033[1;1H");
-}
+} //term_clear
+
+
+// move cursor position in terminal
+void term_curpos(int column, int line)
+{
+  printf("\033[%d;%dH", line, column);
+} // term_curpos
+
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <name>\n", program);
@@ -483,6 +493,7 @@ uint32_t calcFlagPrint()
 } // calcFlagPrint;
 
 
+/*
 // print text as big buffer
 void printBigBuff(int nLines, int nEmpty)
 {
@@ -535,7 +546,7 @@ void printBigBuff(int nLines, int nEmpty)
   printf("%s", bigBuff);
   fflush(stdout); 
 } // printBigBuff
-
+*/
 
 // print data to screen
 void printData(char *name)
@@ -545,6 +556,7 @@ void printData(char *name)
   uint32_t nLines;
   uint32_t nEmpty;
   uint32_t minLines = 20;
+  int      i;
 
   //for (i=0;i<60;i++) printf("\n");
 
@@ -554,16 +566,20 @@ void printData(char *name)
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m", buff);
+
+  term_curpos(1,1);
   
-  /*printf("%s\n", header);
+  printf("%s\n", title);
+  printf("%s\n", header);
   for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLine[i]);
   if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", empty);
-  */
+  printf("%s\n", footer);
+  
 
-  if (minLines > nLines) nEmpty = minLines - nLines;
+  /*if (minLines > nLines) nEmpty = minLines - nLines;
   else                   nEmpty = 0;
 
-  printBigBuff(nLines, nEmpty); 
+  printBigBuff(nLines, nEmpty); */
 
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
@@ -633,6 +649,7 @@ int main(int argc, char** argv)
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_MON_VERSION));
 
+  term_clear();
   printf("%s: starting client using prefix %s\n", program, prefix);
   
   for (i=0; i<NALLSID; i++) {
@@ -646,6 +663,7 @@ int main(int argc, char** argv)
   // wait a bit, then rebuild all indices
   usleep(1000000);
   /*for (i=0; i<NALLSID; i++) buildPrintLine(i);*/
+
   
   while (!quit) {
 
@@ -657,6 +675,8 @@ int main(int argc, char** argv)
         buildPrintLine(i);
       } // if flagSetUpdate
     } // for i
+
+    /*term_clear();*/
     
     if (flagPrintNow) printData(name);
     if (!quit) {
@@ -666,6 +686,7 @@ int main(int argc, char** argv)
           clearStatus();
           break;
         case 'i' :
+          term_clear();
           flagPrintInactive = !flagPrintInactive;
           flagPrintNow = 1;
           break;
