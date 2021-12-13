@@ -142,20 +142,6 @@ char     empty[SCREENWIDTH+1];                              // empty line to be 
 char     printLine[NALLSID][SCREENWIDTH+1];                 // lines to be printed
 
 
-// clear teminal windows and jump to 1,1
-void term_clear(void)
-{
-  printf("\033[2J\033[1;1H");
-} //term_clear
-
-
-// move cursor position in terminal
-void term_curpos(int column, int line)
-{
-  printf("\033[%d;%dH", line, column);
-} // term_curpos
-
-
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <name>\n", program);
   fprintf(stderr, "\n");
@@ -456,7 +442,7 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
 void clearStatus()
 {
   printf("not yet implemented, press any key to continue\n");
-  while (!comlib_getTermChar()) {usleep(200000);}
+  while (!comlib_term_getChar()) {usleep(200000);}
 } // clearStatus
 
 
@@ -554,7 +540,6 @@ void printData(char *name)
   char     buff[100];
   time_t   time_date;
   uint32_t nLines;
-  uint32_t nEmpty;
   uint32_t minLines = 20;
   int      i;
 
@@ -567,7 +552,7 @@ void printData(char *name)
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m", buff);
 
-  term_curpos(1,1);
+  comlib_term_curpos(1,1);
   
   printf("%s\n", title);
   printf("%s\n", header);
@@ -649,7 +634,7 @@ int main(int argc, char** argv)
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_MON_VERSION));
 
-  term_clear();
+  comlib_term_clear();
   printf("%s: starting client using prefix %s\n", program, prefix);
   
   for (i=0; i<NALLSID; i++) {
@@ -676,17 +661,16 @@ int main(int argc, char** argv)
       } // if flagSetUpdate
     } // for i
 
-    /*term_clear();*/
     
     if (flagPrintNow) printData(name);
     if (!quit) {
-      userInput = comlib_getTermChar();
+      userInput = comlib_term_getChar();
       switch (userInput) {
         case 'c' :
           clearStatus();
           break;
         case 'i' :
-          term_clear();
+          comlib_term_clear();
           flagPrintInactive = !flagPrintInactive;
           flagPrintNow = 1;
           break;

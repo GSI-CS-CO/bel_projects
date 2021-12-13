@@ -64,8 +64,8 @@ uint64_t comlib_getSysTime()
 } // small helper function
 
 
-// read a single character from stdin
-char comlib_getTermChar()
+// get character from stdin, 0: no character
+char comlib_term_getChar()
 {
   static struct termios oldt, newt;
   char ch = 0;
@@ -91,7 +91,21 @@ char comlib_getTermChar()
   
   if (len) return ch;
   else     return 0;
-} // comLib_getTermChar
+} // comLib_term_getChar
+
+
+// clear teminal windows and jump to 1,1
+void comlib_term_clear()
+{
+  printf("\033[2J\033[1;1H");
+} // comlib_term_clear
+
+
+// move cursor position in terminal
+void comlib_term_curpos(int column, int line)
+{
+  printf("\033[2J\033[1;1H");
+} // comlib_term_curpos
 
 
 // returns state text

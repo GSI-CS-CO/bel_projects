@@ -44,8 +44,14 @@
 // small helper functions; actual time [us]
 uint64_t comlib_getSysTime();
 
-// get character from terminal, 0: no character
-char comlib_getTermChar();
+// get character from stdin, 0: no character
+char comlib_term_getChar();
+
+// clear teminal windows and jump to 1,1
+void comlib_term_clear();
+
+// move cursor position in terminal
+void comlib_term_curpos(int column, int line);
 
 // convert state code to state text
 const char* comlib_stateText(uint32_t  bit             // state code

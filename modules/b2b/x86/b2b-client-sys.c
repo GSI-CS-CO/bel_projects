@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000310
+#define B2B_CLIENT_SYS_VERSION 0x000311
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -248,7 +248,7 @@ void printStatusText()
     } // if status
   } // for i
   printf("press any key to continue\n");
-  while (!comlib_getTermChar()) {usleep(200000);}
+  while (!comlib_term_getChar()) {usleep(200000);}
 } // printStatusText
 
 
@@ -321,7 +321,7 @@ int main(int argc, char** argv) {
       printServices(once);
       if (!quit) {
         sysId = 0xffff;
-        userInput = comlib_getTermChar();
+        userInput = comlib_term_getChar();
         switch (userInput) {
           case 'a' ... 'f' :
             sysId = userInput - 87;                 // no break on purpose

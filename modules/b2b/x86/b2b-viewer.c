@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000309
+#define B2B_VIEWER_VERSION 0x000310
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -705,7 +705,7 @@ int main(int argc, char** argv) {
       /*if (once) {sleep(1); quit=1;}                 // wait a bit to get the values */
       printData(once, sid, name);
       if (!quit) {
-        userInput = comlib_getTermChar();
+        userInput = comlib_term_getChar();
         switch (userInput) {
           case 'c' :
             dicCmdClearDiag(prefix, sid);
