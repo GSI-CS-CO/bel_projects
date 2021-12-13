@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-mon b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver
+TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-mon b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver b2b-pattern-name-info
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
@@ -28,6 +28,9 @@ LIBS        ?= `pkg-config  saftlib --libs` -L . -L $(ASLLIB) -L $(EB)/.libs -L 
 
 STRIPCFLAGS ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I $(ASLINC) -I../../common-libs/include -I $(DIMPATH)/dim
 STRIPLIBS   ?=  -L . -L $(ASLLIB) -L $(DIMPATH)/linux -Wl,-rpath,$(PREFIX)/lib -lm  -lb2blib
+
+
+
 
 
 
@@ -59,6 +62,14 @@ b2b-archiver: b2b-archiver.c
 
 b2b-serv-raw: b2b-serv-raw.cpp
 	g++ --std=c++0x $(CFLAGS) -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) -ldim -lpthread
+
+b2b-pattern-name-info: b2b-pattern-name-info.cpp
+	g++ --std=c++11 $(CFLAGS) -o b2b-pattern-name-info b2b-pattern-name-info.cpp $(LIBS) -ldim -lpthread
+#CXXFLAGS=-I/common/usr/timing/b2b/dim_v20r29/dim --std=c++11
+#LDFLAGS=-L/common/usr/timing/b2b/dim_v20r29/linux -ldim -Wl,-rpath=/common/usr/timing/b2b/dim_v20r29/linux -lpthread
+
+
+
 
 saft-b2b: saft-b2b-mon.cpp
 	g++ --std=c++0x $(CFLAGS) -o saft-b2b-mon saft-b2b-mon.cpp $(LIBS)
