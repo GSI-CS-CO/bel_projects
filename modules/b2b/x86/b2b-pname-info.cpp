@@ -1,3 +1,13 @@
+/*******************************************************************************************
+ *  b2b-pname-info.c
+ *
+ *  created : 2021
+ *  author  : Michael Reese, GSI-Darmstadt
+ *  version : 13-Dec-2021
+ *
+ * a hackish solution providing pattern name information for relevant Sequence IDs
+ *
+ *********************************************************************************************/
 #include <dis.h>
 #include <cstdio>
 #include <iostream>
@@ -50,7 +60,7 @@ struct PatternNameService {
 		// build service name and add the service
 		for (int sid = 0 ; sid < buffers.size(); ++sid) {
 			std::ostringstream service_name;
-			service_name << service_prefix << "_sid" << std::setw(2) << std::setfill('0') << sid << "_pname";
+			service_name << service_prefix << "-pname" << "_sid" << std::setw(2) << std::setfill('0') << sid;
 			service_ids[sid] = dis_add_service(service_name.str().c_str(), "C", &buffers[sid][0], buffers[sid].size(), 0, 0);
 			service_names[sid] = service_name.str();
 		}
@@ -96,30 +106,30 @@ struct PatternNameService {
 };
 
 int main()  
-{  
+{
 	try {
 		std::string dim_server_name = "b2b_pro_ring_pnames";
 		std::vector<PatternNameService> b2b_pro_ring_pnames_services;
-		b2b_pro_ring_pnames_services.push_back(PatternNameService(dim_server_name + "_sis18", "T=300", "S="));
-		b2b_pro_ring_pnames_services.push_back(PatternNameService(dim_server_name + "_esr",   "T=340", "S="));
-		b2b_pro_ring_pnames_services.push_back(PatternNameService(dim_server_name + "_yr",    "T=210", "S="));
+		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_sis18", "T=300", "S="));
+		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_esr",   "T=340", "S="));
+		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_yr",    "T=210", "S="));
 
 		if (!dis_start_serving(dim_server_name.c_str())) {
 			throw std::runtime_error("cannot start DIM server");
 		}
 
 		std::string magic_command = "/common/usr/lsa/bin/lsa_residump -t";
-		for(;;) {
-			std::string script_output = execute_and_capture_output(magic_command);
+		for(;;) { 
+                  	std::string script_output = execute_and_capture_output(magic_command);
 			for(auto &service: b2b_pro_ring_pnames_services) {
 				service.process_script_output(script_output);
 				// write the buffer content to stderr 
 				// for (int sid = 0; sid < service.buffers.size(); ++sid) {
 				// 	std::cerr << service.service_names[sid] << " : " << &service.buffers[sid][0] << std::endl;
 				// }
-			}
+                                }
 			sleep(60);  
-		}  
+                        }  
 	} catch (std::runtime_error &e) {
 		std::cerr << "error in DIM server for ring pattern names: " << e.what() << std::endl;
 		return 1;

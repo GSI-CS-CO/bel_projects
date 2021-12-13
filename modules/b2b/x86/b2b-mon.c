@@ -446,7 +446,7 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
   /* printf("name %s\n", name); */
   dicDiagstatId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
-  sprintf(name,"%s_ring_pnames_%s_sid%02d_pname", prefix, ringName, sid);
+  sprintf(name,"%s_%s-pname_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name);*/
   dicPNameId[idx]    = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 } // dicSubscribeServices
