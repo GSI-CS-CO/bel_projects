@@ -401,7 +401,7 @@ protected:
                                             const uint64_t actTimestamp );
 
    /*!
-    * @brief Optional qver-writable callback function becomes invoked in the
+    * @brief Optional over-writable callback function becomes invoked in the
     *        case if a time stamp error has been detected.
     * @note For debug purposes.
     * @param timestamp Possibly wrong time stamp.
@@ -479,7 +479,7 @@ public:
     *        to a function generator.
     * @note If the channel has been already registered or its channel-number
     *       is invalid then a exception will thrown.
-    * @param pFeedbackChannel Pointer
+    * @param pFeedbackChannel Pointer of type FgFeedbackChannel to register.
     */
    void registerChannel( FgFeedbackChannel* pFeedbackChannel );
 
@@ -517,6 +517,11 @@ public:
     * @brief Returns the device type.
     * @note If the object isn't registered yet then this function will return
     *       UNKNOWN, else ADDAC, ACU, DOIB or MIL.
+    * @retval UNKNOWN Maybe no connection to the LM32 app yet.
+    * @retval ADDAC   This object communicates with a ADDAC device
+    * @retval ACU     This object communicates with a ACU device
+    * @retval DIOB    This object communicates with a DIOB device
+    * @retval MIL     This object communicates with a MIL device
     */
    daq::DAQ_DEVICE_TYP_T getTyp( void ) const
    {
@@ -528,7 +533,7 @@ public:
    /*!
     * @brief Returns the pointer to the MIL device if this object has been
     *        mutated to a MIL- object after registration in
-    *        object of FgFeedbackAdministration, else NULL.
+    *        object of FgFeedbackAdministration, else nullptr.
     */
    MiLdaq::DaqDevice* getMil( void ) const
    {
@@ -544,7 +549,7 @@ public:
    {
       return (getMil() != nullptr);
    }
-#endif
+#endif /* ifdef CONFIG_MIL_FG */
 
    /*!
     * @brief Returns the pointer to the ADDAC/ACU device if this object
@@ -577,7 +582,9 @@ public:
 
    /*!
     * @ingroup REGISTRATION
-    * @returns the start-iterator of the pointer of registered
+    * @brief Helper function for browsing in the list of registered channel objects.
+    * @see FgFeedbackAdministration::begin
+    * @returns Start-iterator of the pointer of registered
     *          channel objects of type FgFeedbackChannel*
     *
     */
@@ -588,7 +595,9 @@ public:
 
    /*!
     * @ingroup REGISTRATION
-    * @returns the stop-iterator of the pointer of registered
+    * @brief Helper function for browsing in the list of registered channel objects.
+    * @see FgFeedbackAdministration::end
+    * @returns Stop-iterator of the pointer of registered
     *          channel objects of type FgFeedbackChannel*
     */
    const CHANNEL_LIST_T::iterator end( void )
@@ -733,7 +742,7 @@ private:
     * @brief Object for MIL DAQ administration.
     */
    MilDaqAdministration  m_oMilDaqAdmin;
-#endif // ifdef CONFIG_MIL_FG
+#endif /* ifdef CONFIG_MIL_FG */
 
    /*!
     * @brief Object triggering software interrupts to LM32-firmware
@@ -992,6 +1001,8 @@ public:
 
    /*!
     * @brief Triggering a software interrupt in LM32 firmware
+    * @param opCode Operation code
+    * @param param  Optional parameter
     */
    void sendSwi( FG::FG_OP_CODE_T opCode, uint param = 0 )
    {
@@ -1106,8 +1117,10 @@ public:
 
    /*!
     * @ingroup REGISTRATION
-    * @brief Returns the start iterator object of the list of registered
-    *        objects of base-type FgFeedbackDevice*.
+    * @brief Helper function for browsing in the list of registered device objects.
+    * @see FgFeedbackDevice::begin
+    * @returns Start iterator object of the list of registered
+    *          objects of base-type FgFeedbackDevice*.
     */
    const GEN_DEV_LIST_T::iterator begin( void )
    {
@@ -1116,8 +1129,10 @@ public:
 
    /*!
     * @ingroup REGISTRATION
-    * @brief Returns the stop iterator object of the list of registered
-    *        objects of base-type FgFeedbackDevice*.
+    * @brief Helper function for browsing in the list of registered device objects.
+    * @see FgFeedbackDevice::end
+    * @returns Stop iterator object of the list of registered
+    *          objects of base-type FgFeedbackDevice*.
     */
    const GEN_DEV_LIST_T::iterator end( void )
    {
