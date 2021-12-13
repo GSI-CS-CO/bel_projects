@@ -59,12 +59,17 @@ const char* program;
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
+#define SCREENWIDTH 1024                 // width of screen
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
 char     no_link_str[] = "NO_LINK";
 
 char    disB2bPrefix[DIMMAXSIZE];
+
+char     title[SCREENWIDTH+1];                              // title line to be printed
+char     footer[SCREENWIDTH+1];                             // footer line to be printed
+char     header[SCREENWIDTH+1];                             // header line to be printed
 
 const char * sysShortNames[] = {
   "sis18-cbu",
@@ -140,12 +145,7 @@ struct b2bSystem_t {
 struct b2bSystem_t dicSystem[B2BNSYS];
 
 
-void term_clear(void)
-{
-  printf("\033[2J\033[1;1H");
-}
-
-
+// help
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
   fprintf(stderr, "\n");
@@ -203,32 +203,28 @@ void printServices(int flagOnce)
   char   buff[100];
   time_t time_date;              
 
-  if (!flagOnce) {
-    //for (i=0;i<60;i++) printf("\n");
-    time_date = time(0);
-    strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-
-    term_clear();
-    printf("\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m\n", b2b_version_text(B2B_CLIENT_SYS_VERSION));
-    //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-  } // if not once
+  //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   
-  printf("  #   ring sys  version     state  transfers           status               node\n");
+  time_date = time(0);
+  strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
+  sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
+  sprintf(header, "  #   ring sys  version     state  transfers           status               node");
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m", buff);
+  
+  comlib_term_curpos(1,1);
+  
+  if (!flagOnce) printf("%s\n", title);
+  printf("%s\n", header);
+
   for (i=0; i<B2BNSYS; i++) {
     if (dicSystem[i].nTransfer == no_link_32) sprintf(cTransfer, "%9s",         no_link_str);
     else                                      sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
     if (dicSystem[i].status    == no_link_64) sprintf(cStatus,  "%16s",         no_link_str);
     else                                      sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
-    
     printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], dicSystem[i].version, dicSystem[i].state, cTransfer, cStatus, dicSystem[i].hostname);
   } // for i
-
-  if (!flagOnce) {
-    printf("\n\n\n\n");
-    //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-    printf("\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m\n", buff);
-    fflush(stdout);
-  } // if not once
+  
+  if (!flagOnce) printf("\n\n\n%s\n", footer);
 } // printServices
 
 
@@ -308,6 +304,8 @@ int main(int argc, char** argv) {
 
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
+
+  comlib_term_clear();    
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
