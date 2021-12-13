@@ -511,7 +511,7 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData,
    *pIrqFlags = 0;
 
    /*
-    * test only if as connected to sio
+    * Is trades as a SIO device? 
     */
    if( pMilTaskData->lastMessage.slot != 0 )
    {
@@ -1023,6 +1023,7 @@ void milDeviceHandler( register TASK_T* pThis )
                */
                continue;
             }
+            TRACE_MIL_DRQ( "4 %d\n", channel );
             /*
              * Writing the next polynomial data set to the concerning function
              * generator in non blocking mode.
