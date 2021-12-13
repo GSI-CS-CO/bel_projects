@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Dec-2021
+ *  version : 13-Dec-2021
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -591,6 +591,8 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tTimeout;                                // deadline, when this routine must finish
   int64_t  dt, dtTmp;                               // achieved precision, temporary variable
   uint64_t tMatch0, tMatchTmp;                      // temporary variables
+  uint64_t TBeatNs;                                 // beat period (see 'trick' below)          [ns]
+  uint64_t iMatch;                                  // trick: iteration of good match allows continuation of fine tuning
 
   // define temporary epoch [ns]
   tNow    = getSysTime();
@@ -704,6 +706,8 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
     tTimeout = tMin - COMMON_AHEADT;    // time, when we must finish     
     maxProbes = (1000000000 * (uint64_t)(B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN)) / *TBeat;
     if (maxProbes > nProbes) nProbes = maxProbes;
+    TBeatNs = (uint64_t)((double)(*TBeat) / (double)nineO);
+    iMatch  = 0;
   } // if nH1BeatExt
   
   for (i=0; i < nProbes; i++) {
@@ -715,12 +719,13 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
     if (llabs(dtTmp) < llabs(dt)) {
       tMatch = tMatchTmp;
       dt     = dtTmp;
+      iMatch = i;
     } // if dtTmp
-    if (getSysTime() > tTimeout) break;
+    if (getSysTime() > (tTimeout + iMatch * TBeatNs)) break;
   } // for i
 
-  // pp_printf("b2b: probes max %d, used %d\n", maxProbes, i);
-  
+  //pp_printf("b2b: n probes (=max) %d, used %d\n", nProbes, i);
+
   // convert back to TAI [ns]
   tMatchNs     = (uint64_t)((double)tMatch / (double)nineO);
   *tPhaseMatch =  tMatchNs + epoch;
