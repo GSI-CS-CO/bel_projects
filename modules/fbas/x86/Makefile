@@ -134,7 +134,7 @@ restart_fbasdm_multi_loop:
 	source dm.sh && stop_dm_patt PatLoop1
 	source dm.sh && stop_dm_patt PatLoop2
 	source dm.sh && stop_dm_patt PatLoop3
-	source dm.sh && print_dm_diag
+	source dm.sh && cnt_dm_msg
 	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
 
 # Datamaster sends a set of patterns (timing messages) with the same deadline.
@@ -235,8 +235,12 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasd
 	source dm.sh && stop_dm_patt PatLoop3
 	source setup.sh && disable_mps_all
 	source dm.sh && print_dm_diag
-	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
-	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo
+	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	@rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1); \
+		echo   "total rx msg:   $$rx_msg"
 
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_finite_patterns
 	source setup.sh && setup_fbastx && setup_fbasrx
@@ -245,5 +249,7 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fba
 	@echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	source setup.sh && disable_mps_all
 	source dm.sh && print_dm_diag
-	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
-	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo
+	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg

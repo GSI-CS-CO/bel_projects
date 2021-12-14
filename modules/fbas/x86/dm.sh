@@ -37,6 +37,35 @@ function print_dm_patt() {
 }
 
 ######################
+## Get DM sent message count (hex)
+######################
+
+function cnt_dm_msg() {
+
+    check_fbasdm
+
+    status=$(dm-cmd $fbasdm rawstatus -v)   # get raw status
+
+    # output looks like
+    #CPU:00,THR:00,RUN:0
+    #MSG:000196114              # msg count of thread0 in cpu0
+
+    pattern="MSG:"              # match pattern
+    msg_cnt=0
+
+    for line in $status; do
+        if [[ "$line" =~ "MSG" ]]; then       # line has a 'pattern'
+            cnt=${line/MSG:/};                # remove 'pattern' from a line
+            cnt=$((10#$cnt));                 # convert it to decimal
+            #echo $cnt;
+            msg_cnt=$(($msg_cnt + $cnt));     # sum it up
+            #echo $msg_cnt;
+        fi
+    done
+    echo "$(printf '%08x' $msg_cnt)"          # convert to hexadecimal
+}
+
+######################
 ## Show DM status
 ######################
 
