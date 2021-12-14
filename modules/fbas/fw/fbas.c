@@ -128,7 +128,7 @@ void init()
  * Set up user defined u32 register set in the shared memory
  *
  **/
-void initSharedMem()
+void initSharedMem(uint32_t *sharedSize)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -162,8 +162,8 @@ void initSharedMem()
     i++;
   }
 
-  // report shared memory usage
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+  // get shared memory usage
+  *sharedSize = ((uint32_t)(pSharedTemp - pShared) << 2);
 
   // print application-specific register set (in shared mem)
   pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
@@ -322,11 +322,15 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
   uint64_t ecaParam;      // parameter value in received ECA event
   uint32_t ecaTef;        // TEF value in received ECA event
   uint32_t flagIsLate;    // flag indicates that received ECA event is 'late'
+  uint32_t flagIsEarly;   // flag indicates that received ECA event is 'early'
+  uint32_t flagIsConflict;// flag indicates that received ECA event is 'conflict'
+  uint32_t flagIsDelayed; // flag indicates that received ECA event is 'delayed'
   uint64_t now;           // actual timestamp of the system time
   int64_t  poll;          // elapsed time to poll a pending ECA event
   uint32_t actions;
 
-  nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);
+  nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
+    &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   if (nextAction) {
     now = getSysTime();
@@ -647,6 +651,7 @@ int main(void) {
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
   uint32_t *buildID;
+  uint32_t sharedSize;                                        // shared memory size
 
   // init local variables
   reqState       = COMMON_STATE_S0;
@@ -657,10 +662,9 @@ int main(void) {
 
   // init
   init();                                                              // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, pCpuRamExternal, SHARED_OFFS, "fbas", FBAS_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
-  initSharedMem();                                                     // initialize shared memory
-
+  initSharedMem(&sharedSize);                                          // initialize shared memory
+  fwlib_init((uint32_t *)_startshared, pCpuRamExternal, SHARED_OFFS, sharedSize, "fbas", FBAS_FW_VERSION); // init common stuff
   initMpsData();                                                       // initialize application specific data structure
 
   while (1) {
