@@ -9,48 +9,74 @@
 ## Date:      26.01.2021                                                     ##
 ## Copyright: GSI Helmholtz Centre for Heavy Ion Research GmbH               ##
 ###############################################################################
+PROG_NAME=${0##*/}
 ESC_ERROR="\e[1m\e[31m"
 ESC_SUCCESS="\e[1m\e[32m"
 ESC_NORMAL="\e[0m"
 ESC_FG_CYAN="\e[1m\e[36m"
 ESC_FG_BLUE="\e[34m"
 
-
+#------------------------------------------------------------------------------
 die()
 {
    echo -e $ESC_ERROR"ERROR: $@"$ESC_NORMAL 1>&2
    exit 1;
 }
 
-if [ "$1" == "-h" ]
-then
-   echo "Starter script for all detected function generators"
-   echo
-   echo "Usage $0 [-h] <fg-wave-file> [maximum number of function generators to start]"
-   echo
-   echo "If the second optional parameter omited then only the first found" \
-        "function generator becones started."
-   echo
-   echo "Option:"
-   echo "-h  This help"
-   echo
+#------------------------------------------------------------------------------
+isInArgument()
+{
+   for i in $ACTIVATION_LIST
+   do
+      if [ "$i" = "$1" ]
+      then
+         echo true
+         return
+      fi
+   done
+   echo false
+}
+
+#------------------------------------------------------------------------------
+printHelp()
+{
+   cat << __EOH__
+Starter script for all detected function generators on this SCU.
+
+Usage:  $PROG_NAME [OPTION] <wave file> <FG channel numbers>
+Author: Ulrich Becker
+
+Options:
+-h, --help 
+   This help and exit.
+
+-e, --exit
+   Exit after activation of the function generators.
+
+-n, --nokill
+   Don't kill already running fg-ctl instances.
+
+-s, --strobe
+   Generates a 10 us trigger strobe on LEMO.
+
+-t, --tag 
+   Generates a start tag for all function generator channels else
+   for the last channel only.
+
+Example:
+$PROG_NAME sinus.fgw 1 3 5
+Funktion generator channels 1, 2 and 5 will activated if present.
+
+__EOH__
    exit 0
-fi
+}
+
+#==============================================================================
 
 if [ "${HOSTNAME:0:5}" != "scuxl" ]
 then
    die "This script can run on SCU only!"
 fi
-
-if [ ! -n "$1" ]
-then
-   die "Missing fg-wave file name!"
-fi
-if [ ! -f "$1" ]
-then
-   die "No fg-wave file \"$1\" found!"
-fi
-
 
 FG_CTL=$(which saft-fg-ctl)
 if [ ! -x "$FG_CTL" ]
@@ -82,21 +108,88 @@ then
    die "Program saft-ctl not found!"
 fi
 
+#
+# Parsing of all options:
+#
+GENERATE_STROBE=false
+DO_EXIT=false
+NO_KILL=false
+while [ "${1:0:1}" = "-" ]
+do
+   A=${1#-}
+   while [ -n "$A" ]
+   do
+      case ${A:0:1} in
+         "e")
+            DO_EXIT=true
+         ;;
+         "h")
+            printHelp
+         ;;
+         "n")
+            NO_KILL=true
+         ;;
+         "s")
+            GENERATE_STROBE=true 
+         ;;
+         "t")
+            START_TAG="-g"
+         ;;
+         "-")
+            B=${A#*-}
+            case ${B%=*} in
+               "help")
+                  printHelp
+               ;;
+               "exit")
+                  DO_EXIT=true
+               ;;
+               "nokill")
+                  NO_KILL=true
+               ;;
+               "strobe")
+                  GENERATE_STROBE=true 
+               ;;
+               "tag")
+                  START_TAG="-g"
+               ;;
+               *)
+                  die "Unknown short option \"-${A}\"!"
+               ;;
+            esac
+            A=""
+         ;;
+         *)
+            die "Unknown long option: \"${A:0:1}\"!"
+         ;;
+      esac
+      A=${A#?}
+   done
+   shift
+done
 
-OUT="tr0"
+WAVE_FILE=$1
+shift
 
-LM32_CTL="$LM32_CTL $OUT"
-IO_CTL="$IO_CTL $OUT"
-SAFT_CTL="$SAFT_CTL $OUT"
-WB_WRITE="$WB_WRITE dev/wbm0"
+if [ ! -n "$WAVE_FILE" ]
+then
+   die "Missing fg-wave file name!"
+fi
+if [ ! -f "$WAVE_FILE" ]
+then
+   die "No fg-wave file \"$WAVE_FILE\" found!"
+fi
 
+#
+# Checks whether a FESA demon is running.
+#
 if [ -n "$(pidof daemon)" ]
 then
    echo "CAUTION: FESA daemon is running! If you will run this script then the FESA-daemon will terminate!"
    read -r -p "Are you sure? [y/N] " response
    case "$response" in
       [yY][eE][sS]|[yY])
-         echo -e ${ESC_FG_BLUE}"Killing daemon..."${ESC_NORMAL}
+         echo -e ${ESC_FG_CYAN}"Killing daemon..."${ESC_NORMAL}
          killall daemon 2>/dev/null
          sleep 1
    ;;
@@ -106,13 +199,31 @@ then
    esac
 fi
 
-if [ -n "$(pidof $(basename $FG_CTL))" ]
+#
+# Calculates the number of fg-channels which shall be activated.
+#
+ACTIVATION_LIST=""
+while [ -n "$1" ]
+do
+   ACTIVATION_LIST="$ACTIVATION_LIST $1"
+   shift
+done
+
+OUT="tr0"
+LM32_CTL="$LM32_CTL $OUT"
+IO_CTL="$IO_CTL $OUT"
+SAFT_CTL="$SAFT_CTL $OUT"
+WB_WRITE="$WB_WRITE dev/wbm0"
+
+#
+# Kills possible already running instances of saft-fg-ctl.
+#
+if [ -n "$(pidof $(basename $FG_CTL))" ] && ! $NO_KILL
 then
-   echo -e ${ESC_FG_BLUE}"Killing running saft-fg-ctl applications..."${ESC_NORMAL}
+   echo -e ${ESC_FG_CYAN}"Killing running saft-fg-ctl applications..."${ESC_NORMAL}
    killall $(basename $FG_CTL) 2>/dev/null
    sleep 1
 fi
-
 
 #
 # Initializing of the FG-list by all found function generators..
@@ -123,33 +234,47 @@ then
    die "No function generator(s) found!"
 fi
 
+#
+# Calculates the number of found function-generators and the number of function generators
+# which shall be activated.
+#
 NUM_OF_FG=0
+MAX_FG_TO_ACTIVATE=0
 for i in $FG_LIST
 do
    let NUM_OF_FG+=1
+   if [ $(isInArgument $NUM_OF_FG) == "true" ]
+   then
+      let MAX_FG_TO_ACTIVATE+=1
+   fi
 done
-echo -e ${ESC_FG_CYAN}"In total $NUM_OF_FG function generators found.\n"${ESC_NORMAL}
-
-#sleep 0.5
-
-if [ -n "$2" ]
-then
-   m=$2
-else
-   m=1
-fi
+echo -e ${ESC_FG_CYAN}"In total $NUM_OF_FG function generators found on $HOSTNAME."${ESC_NORMAL}
+echo -e ${ESC_FG_CYAN}"To activate: $MAX_FG_TO_ACTIVATE function generators."${ESC_NORMAL}
 
 MIL_COUNT=0
-n=1
+n=0
+activated=0
 lastSlot=-1
 #
 # For all found function generators:
 #
 for i in $FG_LIST
 do
+   let n+=1
    socket=$(echo $i | tr '-' ' ' | awk '{printf $2}')
    slot=$(( socket & 0x000F ))
    dev=$(echo $i | tr '-' ' ' | awk '{printf $3}')
+   if [ $(isInArgument $n) == "false" ]
+   then
+     if [ "$slot" -eq "$socket" ]
+     then
+        echo -e ${ESC_FG_BLUE}"${n}: omitting ADDAC-FG: ${dev} on slot ${slot}: $i"${ESC_NORMAL}
+     else
+        echo -e ${ESC_FG_BLUE}"${n}: omitting MIL-FG: ${dev} on slot ${slot}: $i"${ESC_NORMAL}
+     fi
+     continue 
+   fi
+   let activated+=1
    #
    # Is ADDAC device?
    #
@@ -195,56 +320,67 @@ do
       lastSlot=$slot
       let MIL_COUNT+=1
    fi
-   let n+=1
-   if [ "$n" -gt "$m" ]
+   if [ "$activated" = "$MAX_FG_TO_ACTIVATE" ]
    then
       #
       # Start of the last function generator in list by generating start-tag.
       #
-      $FG_CTL -rf $i -g <$1 &
+      $FG_CTL -rf $i -g <$WAVE_FILE &
    else
       #
       # Start of a function generator in list.
       #
-      $FG_CTL -rf $i <$1 &
+      $FG_CTL -rf $i $START_TAG <$WAVE_FILE &
    fi
    #sleep 0.5
-   [ "$n" -gt "$m" ] && break
 done
 #
 # End for all found function generators
 #
 
+if [ "$MAX_FG_TO_ACTIVATE" = "0" ]
+then
+   exit 0
+fi
 
 if [ "$MIL_COUNT" -gt "0" ]
 then
    echo -e ${ESC_FG_CYAN}"*** $MIL_COUNT MIL-FGs activated. Creating action for LM32. ***"${ESC_NORMAL}
    $LM32_CTL -x
    $LM32_CTL -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFF 0x0 0xDEADBEEF -d
-   
-   echo -e ${ESC_FG_BLUE}"Generating 10 us trigger strobe on LEMO."${ESC_NORMAL}
+fi
+
+if $GENERATE_STROBE
+then
+   echo -e ${ESC_FG_CYAN}"Generating 10 us trigger strobe on LEMO."${ESC_NORMAL}
    $IO_CTL -x
    $IO_CTL -n B1 -o1
    $IO_CTL -n B1 -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFFFFFF 0 0x0 0x1 -u
    $IO_CTL -n B1 -c 0xCAFEBABE 0xFFFFFFFFFFFFFFFFFFFF 10000 0x0 0x0 -u
+fi
 
+if [ "$MIL_COUNT" -gt "0" ]
+then
    $SAFT_CTL inject 0xCAFEBABE 0xFFFFFFFFFFFFFFFF 10000 -p
 fi
 
-echo
+if $DO_EXIT
+then
+   exit 0;
+fi
+
 echo
 read -p "$(echo -e "*** Press enter to terminate all running function-generators ***\n\n")"
 
-echo -e ${ESC_FG_BLUE}"Terminating all running function generators."${ESC_NORMAL}
+echo -e ${ESC_FG_CYAN}"Terminating all running function generators."${ESC_NORMAL}
 killall $(basename $FG_CTL) 2>/dev/null
 
-if [ "$IS_MIL" == true ]
+if [ "$MIL_COUNT" -gt "0" ]
 then
-   echo -e ${ESC_FG_BLUE}"Clearing action for LM32."${ESC_NORMAL} 
+   echo -e ${ESC_FG_CYAN}"Clearing action for LM32."${ESC_NORMAL} 
    $LM32_CTL -x
    $IO_CTL -x
 fi
 
 echo "done"
-
 #=================================== EOF ======================================
