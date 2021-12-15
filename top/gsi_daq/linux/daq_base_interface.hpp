@@ -336,7 +336,12 @@ public:
     */
    void clearBufferRequest( void )
    {
+    #ifdef CONFIG_MILDAQ_BACKWARD_COMPATIBLE
+      if( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) == nullptr )
+         return;
+    #else
       assert( dynamic_cast<RAM_RING_SHARED_INDEXES_T*>(m_poRingAdmin) != nullptr );
+    #endif
       updateMemAdmin();
       sendWasRead( ramRingSharedGetSize( m_poRingAdmin ) );
    }
