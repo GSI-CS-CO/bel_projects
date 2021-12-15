@@ -73,6 +73,14 @@
 extern "C" {
 #endif
 
+//#define    CONFIG_TRACE_MIL_DRQ
+
+#ifdef CONFIG_TRACE_MIL_DRQ
+   #define TRACE_MIL_DRQ( arg... ) mprintf( arg );
+   #warning Macro TRACE_MIL_DRQ is active!
+#else
+   #define TRACE_MIL_DRQ( arg... ) ((void)0)
+#endif
 
 #define INTERVAL_1000MS 1000000000ULL
 #define INTERVAL_2000MS 2000000000ULL

@@ -228,7 +228,7 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
 {
    const unsigned int slot = GET_LOWER_HALF( pMessage->msg ) + SCUBUS_START_SLOT;
    uint16_t pendingIrqs;
-
+   TRACE_MIL_DRQ( "2\n" );
    while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((void*)g_pScub_base, slot )) != 0)
    {
       if( (pendingIrqs & FG1_IRQ) != 0 )
@@ -246,6 +246,7 @@ ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
       { /*
          * MIL-SIO function generator recognized. 
          */
+         TRACE_MIL_DRQ( "3\n" );
          const MIL_QEUE_T milMsg =
          { /*
             * The slot number is in any cases not zero.
@@ -291,9 +292,10 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
    MSI_ITEM_T m;
-
+   TRACE_MIL_DRQ( "0\n" );
    while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
    {
+      TRACE_MIL_DRQ( "1\n" );
       //mprintf( "a=%04X\n", m.adr );
       switch( GET_LOWER_HALF( m.adr )  )
       {
@@ -305,7 +307,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
             { /*
                * ECA event received
                */
-              // mprintf( "*\n" );
+               TRACE_MIL_DRQ( "*\n" );
                ecaHandler();
                break;
             }
