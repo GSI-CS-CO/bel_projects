@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Dec-2021
+ *  version : 14-Dec-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
