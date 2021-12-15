@@ -8,6 +8,7 @@ set -x
 # KD : dev/wbm0, tr0
 export TRTRIG=dev/wbm0
 export SDTRIG=tr0
+export SDKICK=tr1
 ###########################################
 # setting for development
 # ! don't forget to (un)comment test pulses
@@ -15,6 +16,7 @@ export SDTRIG=tr0
 # KD : dev/ttyUSB0, tr2
 #export TRTRIG=$(saft-eb-fwd tr2)
 #export SDTRIG=tr2
+#export SDKICK=tr2
 ###########################################
 
 echo -e B2B start script for CRYRING cave kicker injection
@@ -75,8 +77,8 @@ saft-ecpu-ctl $SDTRIG -c  0x10d2805000000000 0xfffffff000000000 20000 0x805 -d -
 
 echo -e b2b: configure outputs
 # generate pulse upon CMD_B2B_TRIGGERINJ
-saft-io-ctl $SDTRIG -n IO3 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIG -n IO3 -c 0x10d2805000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDTRIG -n IO3 -c 0x10d2805000000000 0xfffffff000000000 1000 0x0 0 -u 
+saft-io-ctl $SDKICK -n IO1 -o 1 -t 0 -a 1
+saft-io-ctl $SDKICK -n IO1 -c 0x10d2805000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl $SDKICK -n IO1 -c 0x10d2805000000000 0xfffffff000000000 1000 0x0 0 -u 
 
 # generate test pulses upon CMD_B2B_TRIGGERINJ (sorry: requires PEXP, do this later)
