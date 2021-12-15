@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Oct-2021
+ *  version : 14-Dec-2021
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000309
+#define B2B_SERVSYS_VERSION 0x000314
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -149,6 +149,7 @@ int main(int argc, char** argv) {
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t verLib;
   uint32_t verFw;
+  uint32_t verFwOld;
 
   uint32_t cpu;
   uint32_t status;
@@ -218,6 +219,7 @@ int main(int argc, char** argv) {
     b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
     sprintf(disVersion, "%s", b2b_version_text(verFw));
     dis_update_service(disVersionId);
+    verFwOld = verFw;
 
     while (1) {
       b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
@@ -236,6 +238,12 @@ int main(int argc, char** argv) {
         disNTransfer = nTransfer;
         dis_update_service(disNTransferId);
       } // if disNTransfer  
+
+      if (verFw != verFwOld) {
+        sprintf(disVersion, "%s", b2b_version_text(verFw));
+        dis_update_service(disVersionId);
+        verFwOld = verFw;
+      } // if verFw 
         
       sleep(1);
     } // while
