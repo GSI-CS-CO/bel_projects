@@ -446,3 +446,27 @@ function do_test2() {
     # time to transmit FBAS events (TX->RX):
     # =   25966 ns (1604325967001030350 - 1604325967001004384)
 }
+
+function report_two_senders_result() {
+    # $1 - RX count (in hex format without 0x, like 0000abcd)
+    # $2 - TX count by sender node
+    # $3 - TX count by datamaster
+
+    rx_count=$((16#$1))
+    tx_node=$((16#$2))
+    tx_dm=$((16#$3))
+    tx_count=$(( $tx_node + $tx_dm ))
+
+    echo "Received:           $1 ($rx_count)"
+    echo "Sent by TX node:    $2 ($tx_node)"
+    echo "Sent by Datamaster: $3 ($tx_dm)"
+
+    result="PASSED"
+
+    if [ $rx_count -ne $tx_count ]; then
+        result="FAILED"
+    fi
+
+    echo "Result of two_senders test: $result"
+    echo "Received: $rx_count of $tx_count"
+}

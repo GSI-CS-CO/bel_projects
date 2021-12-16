@@ -51,7 +51,8 @@
 	restart_fbasdm_single_msg continue_fbasdm_single_msg \
 	print_fbasdm_status \
 	clear_fbasdm load_fbasdm_loop_patterns load_fbasdm_finite_patterns \
-	restart_two_senders_multi_finite restart_two_senders_multi_loop
+	restart_two_senders_multi_finite restart_two_senders_multi_loop \
+	show_result
 
 SHELL=/bin/bash
 sleep_period=20    # seconds
@@ -239,8 +240,7 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasd
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
-	@rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1); \
-		echo   "total rx msg:   $$rx_msg"
+	$(MAKE) show_result
 
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_finite_patterns
 	source setup.sh && setup_fbastx && setup_fbasrx
@@ -253,3 +253,10 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fba
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	$(MAKE) show_result
+
+show_result:
+	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1))
+	@$(eval tx_msg=$(shell source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1))
+	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
+	@source setup.sh && report_two_senders_result ${rx_msg} ${tx_msg} ${dm_msg}
