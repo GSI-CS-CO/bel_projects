@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Dec-2021
+ *  version : 20-Dec-2021
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000314
+#define B2B_CLIENT_SYS_VERSION 0x000315
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -180,11 +180,11 @@ void dicSubscribeServices(char *prefix)
 
   for (i=0; i<B2BNSYS; i++) {
     sprintf(name, "%s_%s_version_fw", prefix, sysShortNames[i]);
-    dicSystem[i].versionId   = dic_info_service(name, MONITORED, 0, (dicSystem[i].version), 8, 0, 0, no_link_str, strlen(no_link_str));
+    dicSystem[i].versionId   = dic_info_service(name, MONITORED, 0, (dicSystem[i].version), 8, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_state", prefix, sysShortNames[i]);
-    dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), 10, 0, 0, no_link_str, strlen(no_link_str));
+    dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), 10, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_hostname", prefix, sysShortNames[i]);
-    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), 32, 0, 0, no_link_str, strlen(no_link_str));
+    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), 32, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_status", prefix, sysShortNames[i]);
     dicSystem[i].statusId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].status), sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
     sprintf(name, "%s_%s_ntransfer", prefix, sysShortNames[i]);
@@ -210,8 +210,12 @@ void printServices(int flagOnce)
 
   char   cTransfer[10];
   char   cStatus[17];
+  char   cVersion[9];
+  char   cState[11];
+  char   cHost[19];
   char   buff[100];
-  time_t time_date;              
+  time_t time_date;
+  uint32_t *tmp;
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
 
@@ -226,11 +230,20 @@ void printServices(int flagOnce)
   printf("%s\n", header);
 
   for (i=0; i<B2BNSYS; i++) {
-    if (dicSystem[i].nTransfer == no_link_32) sprintf(cTransfer, "%9s",         no_link_str);
-    else                                      sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
-    if (dicSystem[i].status    == no_link_64) sprintf(cStatus,  "%16s",         no_link_str);
-    else                                      sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
-    printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], dicSystem[i].version, dicSystem[i].state, cTransfer, cStatus, dicSystem[i].hostname);
+    if (dicSystem[i].nTransfer == no_link_32)    sprintf(cTransfer, "%9s",         no_link_str);
+    else                                         sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
+    if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,  "%16s",         no_link_str);
+    else                                         sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
+    tmp = (uint32_t *)(&(dicSystem[i].state));
+    if (*tmp == no_link_32)                      sprintf(cState,   "%10s",         no_link_str);
+    else                                         sprintf(cState,   "%10s",         dicSystem[i].state); 
+    tmp = (uint32_t *)(&(dicSystem[i].version));
+    if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
+    else                                         sprintf(cVersion, "%8s",          dicSystem[i].version); 
+    tmp = (uint32_t *)(&(dicSystem[i].hostname));
+    if (*tmp == no_link_32)                      sprintf(cHost,   "%18s",          no_link_str);
+    else                                         sprintf(cHost,   "%18s",          dicSystem[i].hostname); 
+    printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cHost);
   } // for i
 
   for (i=0; i<4; i++) printf("%s\n", empty);
