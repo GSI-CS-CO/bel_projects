@@ -609,24 +609,11 @@ void main( void )
    mprintf( "MIL-DAQ buffer offset:     %u item\n", g_shared.mDaq.memAdmin.indexes.offset );
    mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.memAdmin.indexes.capacity );
 #endif
-   initInterrupt();
 
-#ifdef CONFIG_MIL_DAQ_USE_RAM__
-   ramRingAddToWriteIndex( &g_shared.mDaq.memAdmin.indexes, 4 ); //!!!!!
-   RAM_RING_INDEX_T r = g_shared.mDaq.memAdmin.indexes.start;
-#endif
+   initInterrupt();
 
    while( true )
    {
-#if CONFIG_MIL_DAQ_USE_RAM__
-      if( r != g_shared.mDaq.memAdmin.indexes.start )
-      {
-         r = g_shared.mDaq.indexes.start;
-         mprintf( "read: %u\nwrite: %u\n", 
-                  g_shared.mDaq.memAdmin.indexes.start,
-                  g_shared.mDaq.memAdmin.indexes.end );
-      }
-#endif
       if( _endram != STACK_MAGIC )
          die( "Stack overflow!" );
       schedule();
