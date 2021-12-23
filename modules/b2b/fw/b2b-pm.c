@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Oct-2021
+ *  version : 23-Dec-2021
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000314                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000315                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -249,12 +249,12 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t 
   uint64_t tmp;          // helper variable
 
   int32_t  test;
-  uint64_t t1,t2;
+  /* uint64_t t1,t2; */
 
   if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // this does not make sense
   if (nSamples < 3)           return B2B_STATUS_PHASEFAILED;           // have at least three samples
 
-  t1 = getSysTime();
+  /* t1 = getSysTime(); */
 
   // select timestamp in the middle (never use the first TS)
   usedIdx  = nSamples >> 1;                                            // this is safe as we have at least three samples
@@ -406,8 +406,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       dtDiag           = 0x7fffffff;
       flagPMError      = 0x0;
 
-      if (TH1 > 2000000000000) nSamples = NSAMPLES >> 1;             // use only half the sample for nue > 1MHz
-      else                     nSamples = NSAMPLES;
+      nSamples                           = NSAMPLES;
+      if (TH1 >  2000000000000) nSamples = NSAMPLES >> 1;            // use only half the sample for nue < 500 kHz
+      if (TH1 > 25000000000000) nSamples = 3;                        // use minimum for nue 40 kHz
       TMeas           = (uint64_t)(nSamples)*(TH1 / 1000000000);     // window for acquiring timestamps [ns]
       TMeasUs         = (int32_t)(TMeas / 1000) + 1;                 // add 1 us to avoid a too short window
       
