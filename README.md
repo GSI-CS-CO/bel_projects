@@ -82,7 +82,7 @@ Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/d
 #### Mint
 <pre>
 sudo add-apt-repository ppa:linuxuprising/libpng12
-sudo apt update 
+sudo apt update
 sudo apt install libpng12-0
 </pre>
 
@@ -92,7 +92,7 @@ Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib
 ### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
-### Error: hdlmake: AttributeError: 'module' object has no attribute '_vendor' or hdlmake not found
+### Error: hdlmake: AttributeError: module object has no attribute vendor or hdlmake not found
 In case a simple "make" does not fix this:
 ```
 apt-get install python-setuptools
@@ -130,7 +130,7 @@ sudo apt-get install python-setuptool # Python 2.X
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
 ### Error: /bin/sh: 1: hdlmake: not found (Python 2.7)
-You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable: 
+You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable:
 ```
 export PATH=$PATH:$HOME/.local/bin
 ```
@@ -150,3 +150,7 @@ See bel_projects/doc/usbblaster/readme.md
 ### Xilinx Platform Cable II
 
 See bel_projects/doc/platform_cable/readme.md
+
+### Arrow USB Programmer
+
+See bel_projects/doc/arrow_usb_programmer/readme.md
