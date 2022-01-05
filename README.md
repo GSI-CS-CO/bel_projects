@@ -96,10 +96,12 @@ make pexp
 ## Synthesis
 ### Quartus Version
 Question: Which Version of Quartus Do I Need?
+
 Answer: We recommend to use Quartus 18.1.0 (Build 625 09/12/2018 SJ)
 
 ### Library libpng12
 Error: Quartus error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]
+
 Solution: Install the missing package
 
 #### Ubuntu
@@ -114,11 +116,14 @@ sudo apt install libpng12-0
 
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
+
 Solution: Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
 ### Tool qsys-generate
 Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or directory
+
 Solution: Adjust your PATH variable like this:
+
 ```
 export QUARTUS=/opt/quartus/
 export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
@@ -128,7 +133,9 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ## Build Flow
 ### Required Packages
 Question: Which Packages Are Required?
+
 Answer: You need to have installed the following packages before you can configure and build Etherbone and Saftlib:
+
 - docbook-utils
 - libglib2.0-dev
 - autotools-dev
@@ -140,6 +147,7 @@ Answer: You need to have installed the following packages before you can configu
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
+
 Solution: Create a new symlink:
 ```
 sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
@@ -147,6 +155,7 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libm
 
 ### Tool hdlmake
 Error: hdlmake AttributeError: module object has no attribute vendor or hdlmake not found
+
 Solution: In case a simple "make" does not fix this:
 ```
 apt-get install python-setuptools
@@ -155,19 +164,24 @@ apt-get install python-setuptools
 
 #### Tool hdlmake not found (Python 2.7)
 Error: /bin/sh: 1: hdlmake: not found
+
 Solution: You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable:
+
 ```
 export PATH=$PATH:$HOME/.local/bin
 ```
 
 ### Python not found
 Error: cd ip_cores/hdlmake/ && python setup.py install --user /bin/sh: 1: python: not found
+
 Solution: In case you are running Ubuntu:
+
 ```
 sudo apt-get install python-is-python3
 ```
 
 Optional (python-is-python3 not found):
+
 ```
 sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
@@ -177,7 +191,9 @@ We recommend to use at least Python3.7.
 
 ### Setuptools not found
 Error: ModuleNotFoundError: No module named 'setuptools'
+
 Solution: Just install the right setuptools:
+
 ```
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptool # Python 2.X
@@ -186,7 +202,9 @@ sudo apt-get install python-setuptool # Python 2.X
 ## Git
 ### CAfile
 Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project/generic_project.git/': server certificate verification failed. CAfile: none CRLfile: none
+
 Solution: Systems with outdated trust databases (root CA certificate Let's Encrypt) will be unable to validate the certificate of the site. Update ca-certificates to fix this:
+
 ```
 sudo apt update
 sudo apt upgrade ca-certificates
@@ -196,7 +214,9 @@ sudo apt upgrade ca-certificates
 
 ### USB-Blaster Issues
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
+
 Solution: Create a new symlink:
+
 ```
 sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 ```
