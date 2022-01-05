@@ -241,7 +241,9 @@ See bel_projects/doc/arrow_usb_programmer/readme.md
 
 ### Flashing
 
-Problem: Flashing might fail sometimes on certain devices and host combinations. If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
+Problem: Flashing might fail sometimes on certain devices and host combinations.
+
+Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
 
 Optional (before using eb-flash):
 ```
