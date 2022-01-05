@@ -32,6 +32,10 @@ GSI Timing Gateware and Tools
     - [Altera/Intel USB Blaster](#alteraintel-usb-blaster)
     - [Xilinx Platform Cable II](#xilinx-platform-cable-ii)
     - [Arrow USB Programmer](#arrow-usb-programmer)
+  - [Timing Receiver](#timing-receiver)
+    - [Flashing](#flashing)
+      - [Arria2 Devices](#arria2-devices)
+      - [ArriaV Devices](#arriav-devices)
 
 # Build Instructions
 ## Checkout
@@ -232,3 +236,25 @@ See bel_projects/doc/platform_cable/readme.md
 ### Arrow USB Programmer
 
 See bel_projects/doc/arrow_usb_programmer/readme.md
+
+## Timing Receiver
+
+### Flashing
+
+Problem: Flashing might fail sometimes on certain devices and host combinations. If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
+
+Optional (before using eb-flash):
+```
+eb-reset $device wddisable # disable watchdog timer
+eb-reset $device cpuhalt 0xff # stop all embedded CPUs
+```
+
+#### Arria2 Devices
+```
+eb-flash -s 0x40000 -w 3 $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
+```
+
+#### ArriaV Devices
+```
+eb-flash -s 0x10000 -w 3 $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
+```
