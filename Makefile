@@ -462,7 +462,7 @@ pexarria10_soc::	firmware
 pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
+# We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
 
 prereq-rule::
@@ -475,6 +475,14 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
+# Check if hdlmake 3.3 is already installed
 hdlmake_install:
-	cd ip_cores/hdlmake/ && python setup.py install --user
-	export PATH=$$PATH:$$HOME/.local/bin
+	@rm .hdlmake 2>/dev/null || true
+	@hdlmake --version 2>/dev/null | grep 3.3 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
+	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
+	@rm .hdlmake 2>/dev/null || true
+	@export PATH=$$PATH:$$HOME/.local/bin
+
+# Just install hdlmake (even if it's already installed)
+hdlmake_install_locally:
+	@cd ip_cores/hdlmake/ && python setup.py install --user
