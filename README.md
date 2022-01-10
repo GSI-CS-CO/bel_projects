@@ -32,6 +32,7 @@ GSI Timing Gateware and Tools
     - [Altera/Intel USB Blaster](#alteraintel-usb-blaster)
     - [Xilinx Platform Cable II](#xilinx-platform-cable-ii)
     - [Arrow USB Programmer](#arrow-usb-programmer)
+    - [Altera/Intel Ethernet Blaster](#alteraintel-ethernet-blaster)
   - [Timing Receiver](#timing-receiver)
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
@@ -236,6 +237,14 @@ See bel_projects/doc/platform_cable/readme.md
 ### Arrow USB Programmer
 
 See bel_projects/doc/arrow_usb_programmer/readme.md
+
+### Altera/Intel Ethernet Blaster
+
+<pre>
+Default user: admin
+Default password: password
+Default server port (programmer GUI): 1309
+</pre>
 
 ## Timing Receiver
 
