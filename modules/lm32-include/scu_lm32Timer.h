@@ -57,7 +57,7 @@ namespace gsi
  * @note First argument is "GSI"
  * @see find_device_adr
  */
-#define WB_TIMER 0xd8baaa13
+#define WB_TIMER 0xD8BAAA13
 
 /*!
  * @ingroup SCU_LM32_TIMER

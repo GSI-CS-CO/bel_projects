@@ -73,7 +73,6 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
    //lm32TimerSetPeriod( (SCU_LM32_TIMER_T*)pContext, configCPU_CLOCK_HZ );
 }
 
-volatile uint32_t* wb_timer_base   = 0;
 
 void main( void )
 {
