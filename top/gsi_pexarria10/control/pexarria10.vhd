@@ -68,8 +68,8 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
-    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
+    --i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
+    --i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -108,7 +108,7 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- CPLD (F2F)
     -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(7 downto 0);
+    --cpld_io : inout std_logic_vector(7 downto 0);
 
     -----------------------------------------------------------------------
     -- SFP
@@ -196,18 +196,18 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 22) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_2  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_2  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    --("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -249,15 +249,15 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_inout         => 8,
+      --g_gpio_inout         => 8,
       g_lvds_inout         => 15,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
-      g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
+      --g_en_i2c_wrapper     => true,
+      --g_num_i2c_interfaces => 5,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_lm32_cores         => c_cores,
@@ -282,14 +282,14 @@ begin
       sfp_tx_disable_o         => open,
       sfp_tx_fault_i           => sfp_tx_fault_i,
       sfp_los_i                => sfp_los_i,
-      i2c_scl_pad_i            => s_i2c_scl_pad_in,
-      i2c_scl_pad_o            => s_i2c_scl_pad_out,
-      i2c_scl_padoen_o         => s_i2c_scl_padoen,
-      i2c_sda_pad_i            => s_i2c_sda_pad_in,
-      i2c_sda_pad_o            => s_i2c_sda_pad_out,
-      i2c_sda_padoen_o         => s_i2c_sda_padoen,
-      gpio_o                   => s_gpio_o,
-      gpio_i                   => s_gpio_i,
+      --i2c_scl_pad_i            => s_i2c_scl_pad_in,
+      --i2c_scl_pad_o            => s_i2c_scl_pad_out,
+      --i2c_scl_padoen_o         => s_i2c_scl_padoen,
+      --i2c_sda_pad_i            => s_i2c_sda_pad_in,
+      --i2c_sda_pad_o            => s_i2c_sda_pad_out,
+      --i2c_sda_padoen_o         => s_i2c_sda_padoen,
+      --gpio_o                   => s_gpio_o,
+      --gpio_i                   => s_gpio_i,
       lvds_p_i                 => s_lvds_p_i,
       lvds_n_i                 => s_lvds_n_i,
       lvds_p_o                 => s_lvds_p_o,
@@ -380,18 +380,18 @@ begin
   end generate;
 
   -- I2C
-  interfaces : for i in 1 to 5 generate
-    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
-  end generate;
+  --interfaces : for i in 1 to 5 generate
+  --  i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+  --  i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+  --  s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
+  --  s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+  --end generate;
 
   -- CPLD
-  s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
-  cpld_con : for i in 0 to 7 generate
-    cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
-  end generate;
+  --s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
+  --cpld_con : for i in 0 to 7 generate
+  --  cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
+  --end generate;
 
   ------------------
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
