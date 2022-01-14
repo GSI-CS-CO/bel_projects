@@ -1,0 +1,368 @@
+TITLE "I2C Controller"; 
+
+PARAMETERS
+(
+  DIVISOR = 25
+);
+
+%
+Version 3.0, January 29th, 1998. Copyright Rune Baeverrud, 1996-1998.
+You may use or distribute this function freely, provided you do not remove
+this copyright notice. If you have questions or comments, feel free to
+contact me by email at r@acte.no, World Wide WEB: http://www.acte.no/freecore
+
+This code will generate two different versions of the I2C controller:
+
+- If you set CONSTANT SIMULATION = 1, then compile for target simulation.
+- If you set CONSTANT SIMULATION = 0, then compile for target physical device.
+
+The reason for this? Read the online documentation for an explaination
+of the difficulty of simulating bidirectional IO ports.
+
+In addition, you will have to enable the correct block in the ports list manually,
+as Max+Plus II cannot do conditional compile in the ports list section. Have a look 
+at the end of the ports list, and make sure the correct block is enabled and the
+other one is commented out. The default is target physical device, so unless you
+want to simulate the I2C controller you should never have to worry about it!
+
+NOTE: The I2C module uses the external div_by_n module, which has to be
+      version 2.0 or later. Make sure you use the latest version of 
+      the FreeCore Library!
+%
+
+CONSTANT SIMULATION = 0;    -- 1 = Compile for simulation, 
+                            -- 0 = Compile for physical device
+FUNCTION f_divider (clk, ena_cnt, sclr)
+   WITH (cnt, Use_LPM = 1)
+   RETURNS (f_div);
+
+SUBDESIGN i2c
+(
+  -- System timing
+  SysClk     : INPUT;       -- System clock
+  clk_en     : INPUT = VCC; -- Clock Enable input
+
+  -- System reset
+  nReset     : INPUT = VCC; -- Reset I2C Controller
+
+  -- Inputs are sampled on the first system clock after Execute goes high
+  Din[7..0]  : INPUT;  -- Data to send on I2C port
+  Ack_tx     : INPUT;  -- Ack bit to transmit on received data
+
+  Cmd_stop   : INPUT;  -- Generate stop condition
+  Cmd_start  : INPUT;  -- Generate start condition and send Din[]
+  Cmd_send   : INPUT;  -- Send Din[]
+  Cmd_receive: INPUT;  -- Receive data byte on I2C port
+
+  -- Inputs are sampled on the first system clock after Execute goes high
+  Execute    : INPUT;  -- Execute command
+  
+  -- Outputs
+  Dout[7..0] : OUTPUT; -- Current value of transfer shift register
+  Ack_rx     : OUTPUT; -- Last data acknowledge received
+  Status     : OUTPUT; -- I2C bus has been claimed by the (this) master
+  DValid     : OUTPUT; -- Data valid at Dout[]
+  DEnable    : OUTPUT; -- Data valid at Dout[] 1 system clock period
+  Busy       : OUTPUT; -- Busy
+
+
+%  
+  -- This block is used when target is simulation
+    SDA_IN   : INPUT;  -- SDA_in input, normally '1' (pull-up resistor)
+    SCL_IN   : INPUT;  -- SCL_in input, normally '1' (pull-up resistor)
+    SDA_OUT  : OUTPUT; -- This is the "desired" SDA output value from the controller itself
+    SCL_OUT  : OUTPUT; -- This is the "desired" SCL output value from the controller itself
+    SDA      : OUTPUT; -- Combined value ((SDA_IN) AND (SDA_OUT)), "actual" SDA level
+    SCL      : OUTPUT; -- Combined value ((SCL_IN) AND (SCL_OUT)), "actual" SCL level
+    BaudOut  : OUTPUT; -- Shows the "baudclock" from the div_by_n module
+    sclr     : OUTPUT; -- Shows the sclr signal to the div_by_n module
+%
+  -- This block is used when target is physical device
+    SDA      : BIDIR;  -- I2C Bus SDA port with external pull-up
+    SCL      : BIDIR;  -- I2C Bus SCL port with external pull-up
+--%
+)
+
+VARIABLE
+  -- Generates the clock enable to which all I2C bus activity is synchronized
+  div_by_x : f_divider WITH (cnt = Divisor);
+
+  -- System Control 
+  Sx: MACHINE WITH STATES (Sx_idle, x1);
+
+  -- Controls the generation of a start condition
+  Ss: MACHINE WITH STATES (Ss_idle,s1,s1a,s2,s2a,s2b,s3);
+
+  -- Controls the generation of a stop condition
+  Sy: MACHINE WITH STATES (y0,y1,y2,y3);
+
+  -- Controls the data transfer process
+  St: MACHINE WITH STATES (t0,t1,t1a,t2,t3,t4,t4a,t5,t6);
+
+  SDA_reg, SCL_reg : DFFE;  -- I2C output registers
+  Cmd_reg[3..0]    : DFFE;  -- Command input registers
+  Start_condition  : DFFE;  -- Set if the I2C bus has been claimed
+  Sh_reg[7..0]     : DFFE;  -- Data transfer shift register
+  BitCnt[2..0]     : DFFE;  -- Number of bits transfered
+  Ack_rx_reg       : DFFE;  -- Last Ack received or successfully sent
+  Valid_data       : DFFE;  -- Valid data exist on Dout[]
+  Ack_tx_reg       : DFFE;  -- Ack to send
+  Enable_reg       : DFFE;  -- Used with the DEnable signal
+
+  FINISHED         : NODE;  -- Command execution finished - return to idle state
+ 
+  SDA_node_in      : NODE;  -- I2C data in
+  SDA_node_out     : NODE;  -- I2C data out
+  SDA_tmp          : NODE;  -- I2C data working node  
+
+  SCL_node_in      : NODE;  -- I2C clock in
+  SCL_node_out     : NODE;  -- I2C clock out
+ 
+  BaudGen          : NODE;  -- I2C bus activity is synchronized to this signal
+
+BEGIN
+  IF SIMULATION GENERATE
+    BaudOut = BaudGen;
+
+    SDA_OUT = !SDA_reg; 
+    SCL_OUT = !SCL_reg;
+
+    SDA_node_in = SDA_IN AND !SDA_reg;
+    SCL_node_in = SCL_IN AND !SCL_reg;
+ 
+    SDA = SDA_node_in; -- This is how SDA will behave in bidir operation
+    SCL = SCL_node_in; -- This is how SCL will behave in bidir operation
+  ELSE GENERATE
+    SDA = OPNDRN(!SDA_reg); -- Difficult to simulate
+    SCL = OPNDRN(!SCL_reg); -- Difficult to simulate
+
+    SDA_node_in = SDA;
+    SCL_node_in = SCL;
+  END GENERATE;
+
+  -- Asynchronous system reset
+  Sx.reset             = NOT nReset;
+  Ss.reset             = NOT nReset;
+  Sy.reset             = NOT nReset;
+  St.reset             = NOT nReset;
+  SDA_reg.clrn         = nReset;
+  SCL_reg.clrn         = nReset;
+  Cmd_reg[3..0].clrn   = nReset;
+  Start_condition.clrn = nReset;
+  Sh_reg[7..0].clrn    = nReset; 
+  BitCnt[2..0].clrn    = nReset;
+  Ack_rx_reg.clrn      = nReset;
+  Valid_data.clrn      = nReset;
+  Ack_tx_reg.clrn      = nReset;
+  Enable_reg.clrn      = nReset;
+
+  -- Generation of the I2C synchronization clock enable signal
+  div_by_x.ena_cnt = clk_en;
+  IF ((SCL_reg == GND) AND (SCL_node_in == GND)) OR (nReset == GND) THEN
+    div_by_x.sclr = VCC;
+    IF SIMULATION GENERATE
+      sclr = VCC;
+    END GENERATE;
+  END IF;
+  BaudGen = div_by_x.f_div;
+
+  -- I2C output register
+  SDA_reg = !SDA_node_out;
+  SCL_reg = !SCL_node_out;
+
+  -- All registers clocked by common system clock
+  div_by_x.Clk       = SysClk;
+  SDA_reg.clk         = SysClk;
+  SCL_reg.clk         = SysClk;
+  Cmd_reg[].clk       = SysClk;
+  Start_condition.clk = SysClk;
+  BitCnt[].clk        = SysClk;
+  Sh_reg[].clk        = SysClk;
+  Valid_data.clk      = SysClk;
+  Ack_rx_reg.clk      = SysClk;
+  Ack_tx_reg.clk      = SysClk;
+  Enable_reg.clk      = SysClk;
+
+  -- Output signals reflect current values of internal registers
+  Dout[]              = Sh_reg[];
+  Ack_rx              = Ack_rx_reg;
+  Status              = Start_condition;
+  DValid              = Valid_data;
+  DEnable             = Enable_reg;
+
+  -- Make sure each command is executed only once
+  -- Execute has to go to GND after instruction execution
+  -- before next command can be accepted
+  Sx.clk = SysClk;
+  Busy = !Sx_idle;
+  CASE Sx IS
+    WHEN Sx_idle =>
+      IF Execute THEN
+        Valid_data = GND;
+        Valid_data.ena = VCC;
+        Sh_reg[] = Din[];
+        Sh_reg[].ena = VCC;
+        Ack_tx_reg = Ack_tx;
+        Ack_tx_reg.ena = VCC;
+        Cmd_reg0 = Cmd_stop;
+        Cmd_reg1 = Cmd_start;
+        Cmd_reg2 = Cmd_send;
+        Cmd_reg3 = Cmd_receive;
+        Cmd_reg[].ena = VCC;
+        Sx = x1;
+      ELSE
+        Sx = Sx_idle;
+      END IF;
+    WHEN x1 =>
+      IF Cmd_reg[] != 0 OR Execute THEN
+        Sx = x1;
+      ELSE
+        Sx = Sx_idle;
+      END IF;
+  END CASE;
+ 
+  -- signals to the Sx state machine that instruction has finished execution
+  IF FINISHED THEN
+    Cmd_reg[] = 0;
+    Cmd_reg[].ena = BaudGen;
+  END IF;
+
+  -- This state machine controls the generation of start condition
+  Ss.clk = SysClk;
+  Ss.ena = BaudGen;
+  CASE Ss IS
+    WHEN Ss_idle =>
+      IF Cmd_reg1 THEN
+        Start_condition = VCC;
+        Start_condition.ena = BaudGen;
+        SDA_reg.ena = BaudGen;
+        IF Start_condition THEN
+          -- Repeated start condition
+          SDA_node_out = VCC;
+          Ss = s2;
+        ELSE
+          SDA_node_out = GND;
+          Ss = s1;
+        END IF;
+      ELSE
+        Ss = Ss_idle;
+      END IF;
+    WHEN s1 =>
+      Ss = S1a;
+    WHEN s1a =>
+     SCL_node_out = GND;
+     SCL_reg.ena = BaudGen;
+     Cmd_reg[] = 4;
+     Cmd_reg[].ena = BaudGen;
+     Ss = Ss_idle;
+    WHEN s2 =>
+      SCL_node_out = VCC;
+      SCL_reg.ena = BaudGen;
+      Ss = s2a;
+    WHEN s2a =>
+      Ss = s3;
+    WHEN s3 =>
+      SDA_node_out = GND;
+      SDA_reg.ena = BaudGen;
+      Ss = S1;
+  END CASE;
+    
+  -- This state machine controls the generation of stop condition
+  Sy.clk = SysClk;
+  Sy.ena = BaudGen;
+  CASE Sy IS
+    WHEN y0 =>
+      IF Cmd_reg0 THEN
+        SCL_node_out = VCC;
+        SCL_reg.ena = BaudGen;
+        Sy = y1;
+      ELSE
+        Sy = y0;
+      END IF;
+    WHEN y1 =>
+      Sy = y2;
+    WHEN y2 =>
+      SDA_node_out = VCC;
+      SDA_reg.ena = BaudGen;
+      Sy = y3;
+    WHEN y3 =>
+      FINISHED = VCC;
+      Start_condition = GND;
+      Start_condition.ena = BaudGen;
+      Sy = y0;
+  END CASE;
+
+  -- If reading from the I2C bus then output only 1's.
+  IF Cmd_reg2 THEN
+    SDA_tmp = Sh_reg7;
+  ELSE
+    SDA_tmp = VCC;
+  END IF;
+
+ -- This state machine controls transfers one byte to/from the I2C port
+  St.clk = SysClk;
+  St.ena = BaudGen;
+  CASE St IS
+    WHEN t0 =>
+      IF Cmd_reg2 OR Cmd_reg3 THEN
+        -- Data bit starts here
+        SDA_node_out = SDA_tmp;
+        SDA_reg.ena = BaudGen;
+        St = t1;
+      ELSE
+        St = t0;
+      END IF;
+    WHEN t1 =>
+      SCL_node_out = VCC;
+      SCL_reg.ena = BaudGen;
+      St = t1a;
+    WHEN t1a =>
+      St = t2;
+    WHEN t2 =>
+      Sh_reg[0] = SDA_node_in;
+      Sh_reg[7..1] = Sh_reg[6..0];
+      Sh_reg[].ena = BaudGen;
+      SCL_node_out = GND;
+      SCL_reg.ena = BaudGen;
+      IF BitCnt[] == 7 THEN
+        St = t3;
+      ELSE
+        St = t0;
+      END IF;
+    WHEN t3 =>
+      -- Ack bit starts here
+      IF Cmd_reg2 THEN
+        SDA_node_out = VCC;
+      ELSE
+        SDA_node_out = Ack_tx_reg;
+      END IF;
+      SDA_reg.ena = BaudGen;
+      St = t4;
+    WHEN t4 =>
+      SCL_node_out = VCC;
+      SCL_reg.ena = BaudGen;
+      St = t4a;
+    WHEN t4a =>
+      St = t5;
+    WHEN t5 =>
+      Valid_data = VCC;
+      Valid_data.ena = BaudGen;
+      Enable_reg = BaudGen;
+      Ack_rx_reg = SDA_node_in;
+      Ack_rx_reg.ena = BaudGen;
+      SCL_node_out = GND;
+      SCL_reg.ena = BaudGen;
+      St = t6;
+    WHEN t6 =>
+      SDA_node_out = GND;
+      SDA_reg.ena = BaudGen;
+      FINISHED = VCC;
+      St = t0;     
+  END CASE;
+  
+  BitCnt[] = BitCnt[] + 1;
+  IF t2 THEN BitCnt[].ena = BaudGen; END IF;
+
+END;
+  
+
