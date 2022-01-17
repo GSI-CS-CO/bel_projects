@@ -809,6 +809,8 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_slrd_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_slwr_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclk_i
 #set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclkin_i
+#set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclkin_i
+set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclkin_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ures_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_dac_din_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_dac_sclk_o
@@ -899,6 +901,7 @@ set_location_assignment PIN_AB3 -to "usbc_tx4_p[2](n)"
 #set_location_assignment PIN_AB7  -to  usbc_tx4_n[4]
 #set_location_assignment PIN_AB8 -to usbc_tx4_p[4]
 #set_location_assignment PIN_AC10 -to usbc_rx4_n[4]
+set_location_assignment PIN_AC24 -to usb_pa_io[2]
 set_location_assignment PIN_AC29 -to "pcie_rx_i[2](n)"
 #set_location_assignment PIN_AC2 -to usbc_rx3_n[2]
 set_location_assignment PIN_AC30 -to pcie_rx_i[2]
@@ -908,6 +911,8 @@ set_location_assignment PIN_AC30 -to pcie_rx_i[2]
 #set_location_assignment PIN_AC7 -to usbc_rx2_n[4]
 #set_location_assignment PIN_AC9 -to usbc_rx4_p[4]
 #set_location_assignment PIN_AD1  -to  usbc_tx2_n[4]
+set_location_assignment PIN_AD24 -to usb_pa_io[3]
+set_location_assignment PIN_AD25 -to usb_fd_io[6]
 set_location_assignment PIN_AD27 -to "clk_125m_tcb_sfpref_i(n)"
 set_location_assignment PIN_AD28 -to clk_125m_tcb_sfpref_i
 set_location_assignment PIN_AD31 -to "pcie_rx_i[1](n)"
@@ -920,6 +925,8 @@ set_location_assignment PIN_AE11 -to cpld_io[1]
 set_location_assignment PIN_AE12 -to cpld_io[0]
 set_location_assignment PIN_AE16 -to nPCI_RESET_i
 #set_location_assignment PIN_AE1  -to  usbc_tx2_n[5]
+set_location_assignment PIN_AE23 -to usb_uclkin_i
+set_location_assignment PIN_AE24 -to usb_fd_io[7]
 set_location_assignment PIN_AE29 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_AE2 -to clk_20m_vcxo_alt_i
 set_location_assignment PIN_AE30 -to pcie_rx_i[0]
@@ -928,6 +935,7 @@ set_location_assignment PIN_AE30 -to pcie_rx_i[0]
 set_location_assignment PIN_AE8 -to wr_ndac_cs_o[2]
 set_location_assignment PIN_AE9 -to wr_dac_sclk_o
 set_location_assignment PIN_AF23 -to UM_nCSO
+set_location_assignment PIN_AF25 -to usb_fd_io[0]
 set_location_assignment PIN_AF27 -to "pcie_refclk_i(n)"
 set_location_assignment PIN_AF28 -to pcie_refclk_i
 #set_location_assignment PIN_AF6  -to  usbc_tx3_n[5]
@@ -935,6 +943,7 @@ set_location_assignment PIN_AF8 -to wr_dac_din_o
 set_location_assignment PIN_AF9 -to wr_ndac_cs_o[1]
 #set_location_assignment PIN_AG1 -to usbc_tx5_p[5]
 set_location_assignment PIN_AG23 -to UM_AS_D[3]
+set_location_assignment PIN_AG25 -to usb_fd_io[1]
 #set_location_assignment PIN_AG2  -to  usbc_tx5_n[5]
 set_location_assignment PIN_AG33 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_AG34 -to pcie_tx_o[3]
@@ -945,6 +954,9 @@ set_location_assignment PIN_AH10 -to nres_out_o
 set_location_assignment PIN_AH18 -to clk_125m_sfpref_alt_i
 set_location_assignment PIN_AH19 -to "clk_125m_sfpref_alt_i(n)"
 set_location_assignment PIN_AH23 -to UM_AS_D[0]
+set_location_assignment PIN_AH25 -to usb_pa_io[1]
+set_location_assignment PIN_AH26 -to usb_fd_io[2]
+set_location_assignment PIN_AH27 -to usb_fd_io[4]
 #set_location_assignment PIN_AH2 -to usbc_rx1_n[5]
 #set_location_assignment PIN_AH3 -to usbc_tx4_p[5]
 #set_location_assignment PIN_AH4 -to usbc_rx2_n[5]
@@ -952,6 +964,9 @@ set_location_assignment PIN_AH7 -to cpld_io[4]
 set_location_assignment PIN_AH8 -to cpld_io[2]
 #set_location_assignment PIN_AJ1 -to usbc_rx1_p[5]
 set_location_assignment PIN_AJ24 -to UM_AS_D[2]
+set_location_assignment PIN_AJ25 -to usb_pa_io[0]
+set_location_assignment PIN_AJ26 -to usb_fd_io[3]
+set_location_assignment PIN_AJ27 -to usb_fd_io[5]
 #set_location_assignment PIN_AJ2 -to usbc_rx4_n[5]
 set_location_assignment PIN_AJ33 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_AJ34 -to pcie_tx_o[2]
@@ -960,6 +975,8 @@ set_location_assignment PIN_AJ6 -to sfp_tx_fault_i
 set_location_assignment PIN_AJ7 -to sfp_tx_disable_o
 #set_location_assignment PIN_AK1 -to usbc_rx5_n[5]
 set_location_assignment PIN_AK24 -to UM_AS_D[1]
+set_location_assignment PIN_AK26 -to usb_slwr_o
+set_location_assignment PIN_AK27 -to usb_slrd_o
 #set_location_assignment PIN_AK2 -to usbc_rx4_p[5]
 #set_location_assignment PIN_AK3 -to usbc_rx3_n[5]
 #set_location_assignment PIN_AK4 -to usbc_rx3_p[5]
@@ -967,6 +984,8 @@ set_location_assignment PIN_AK6 -to sfp_mod0_i
 set_location_assignment PIN_AK7 -to cpld_io[6]
 set_location_assignment PIN_AK8 -to cpld_io[7]
 #set_location_assignment PIN_AL1 -to usbc_rx5_p[5]
+set_location_assignment PIN_AL24 -to usb_ctl_i[2]
+set_location_assignment PIN_AL25 -to usb_ures_o
 set_location_assignment PIN_AL29 -to "sfp_rxp_i(n)"
 set_location_assignment PIN_AL30 -to sfp_rxp_i
 set_location_assignment PIN_AL33 -to "pcie_tx_o[1](n)"
@@ -979,7 +998,9 @@ set_location_assignment PIN_AL6 -to sfp_los_i
 set_location_assignment PIN_AM1 -to sfp_mod1_io
 set_location_assignment PIN_AM22 -to nuser_pb_i
 set_location_assignment PIN_AM23 -to wr_leds_o[0]
+set_location_assignment PIN_AM25 -to usb_uclk_i
 set_location_assignment PIN_AM26 -to UM_DCLK
+set_location_assignment PIN_AM27 -to usb_pa_io[5]
 set_location_assignment PIN_AM2 -to sfp_mod2_io
 #set_location_assignment PIN_AN14 -to wr_leds_o[2]
 #set_location_assignment PIN_AN15 -to wr_leds_o[3]
@@ -987,6 +1008,8 @@ set_location_assignment PIN_AM2 -to sfp_mod2_io
 #set_location_assignment PIN_AN18 -to wr_aux_leds_o[3]
 set_location_assignment PIN_AN20 -to sfp_led_fpr_o
 set_location_assignment PIN_AN23 -to wr_leds_o[1]
+set_location_assignment PIN_AN25 -to usb_ctl_i[1]
+set_location_assignment PIN_AN27 -to usb_pa_io[4]
 set_location_assignment PIN_AN33 -to "pcie_tx_o[0](n)"
 set_location_assignment PIN_AN34 -to pcie_tx_o[0]
 #set_location_assignment PIN_AP14 -to rt_leds_o[3]
@@ -994,6 +1017,9 @@ set_location_assignment PIN_AN34 -to pcie_tx_o[0]
 #set_location_assignment PIN_AP16 -to rt_leds_o[1]
 #set_location_assignment PIN_AP17 -to rt_leds_o[0]
 set_location_assignment PIN_AP20 -to sfp_led_fpg_o
+set_location_assignment PIN_AP25 -to usb_ctl_i[0]
+set_location_assignment PIN_AP26 -to usb_pa_io[6]
+set_location_assignment PIN_AP27 -to usb_pa_io[7]
 set_location_assignment PIN_AP31 -to "sfp_txp_o(n)"
 set_location_assignment PIN_AP32 -to sfp_txp_o
 #set_location_assignment PIN_B18 -to usbc_tx5_en[2]

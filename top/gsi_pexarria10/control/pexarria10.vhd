@@ -96,14 +96,14 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    --usb_slrd_o   : out   std_logic;
-    --usb_slwr_o   : out   std_logic;
-    --usb_fd_io    : inout std_logic_vector(7 downto 0);
-    --usb_pa_io    : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    --usb_ctl_i    : in    std_logic_vector(2 downto 0);
-    --usb_uclk_i   : in    std_logic;
-    --usb_ures_o   : out   std_logic;
-    --usb_uclkin_i : in    std_logic;
+    usb_slrd_o   : out   std_logic;
+    usb_slwr_o   : out   std_logic;
+    usb_fd_io    : inout std_logic_vector(7 downto 0);
+    usb_pa_io    : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    usb_ctl_i    : in    std_logic_vector(2 downto 0);
+    usb_uclk_i   : in    std_logic;
+    usb_ures_o   : out   std_logic;
+    usb_uclkin_i : in    std_logic;
 
     -----------------------------------------------------------------------
     -- CPLD (F2F)
@@ -253,7 +253,7 @@ begin
       g_lvds_inout         => 20,
       g_en_pcie            => true,
       g_en_tlu             => false,
-      --g_en_usb             => true,
+      g_en_usb             => true,
       --g_en_psram           => true,
       g_io_table           => io_mapping_table,
       --g_en_i2c_wrapper     => true,
@@ -299,19 +299,19 @@ begin
       lvds_oen_o(14 downto 10) => usbc_tx3_en,
       --lvds_oen_o(19 downto 15) => usbc_tx4_en,
       --lvds_oen_o(24 downto 20) => usbc_tx5_en,
-      --usb_rstn_o               => usb_ures_o,
-      --usb_ebcyc_i              => usb_pa_io(3),
-      --usb_speed_i              => usb_pa_io(0),
-      --usb_shift_i              => usb_pa_io(1),
-      --usb_readyn_io            => usb_pa_io(7),
-      --usb_fifoadr_o            => usb_pa_io(5 downto 4),
-      --usb_sloen_o              => usb_pa_io(2),
-      --usb_fulln_i              => usb_ctl_i(1),
-      --usb_emptyn_i             => usb_ctl_i(2),
-      --usb_slrdn_o              => usb_slrd_o,
-      --usb_slwrn_o              => usb_slwr_o,
-      --usb_pktendn_o            => usb_pa_io(6),
-      --usb_fd_io                => usb_fd_io,
+      usb_rstn_o               => usb_ures_o,
+      usb_ebcyc_i              => usb_pa_io(3),
+      usb_speed_i              => usb_pa_io(0),
+      usb_shift_i              => usb_pa_io(1),
+      usb_readyn_io            => usb_pa_io(7),
+      usb_fifoadr_o            => usb_pa_io(5 downto 4),
+      usb_sloen_o              => usb_pa_io(2),
+      usb_fulln_i              => usb_ctl_i(1),
+      usb_emptyn_i             => usb_ctl_i(2),
+      usb_slrdn_o              => usb_slrd_o,
+      usb_slwrn_o              => usb_slwr_o,
+      usb_pktendn_o            => usb_pa_io(6),
+      usb_fd_io                => usb_fd_io,
       led_link_up_o            => s_led_link_up,
       led_link_act_o           => s_led_link_act,
       led_track_o              => s_led_track,
