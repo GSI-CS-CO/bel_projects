@@ -67,8 +67,8 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    --i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
-    --i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -245,8 +245,8 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
-      --g_en_i2c_wrapper     => true,
-      --g_num_i2c_interfaces => 5,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 5,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_lm32_cores         => c_cores,
@@ -271,12 +271,12 @@ begin
       sfp_tx_disable_o         => open,
       sfp_tx_fault_i           => sfp_tx_fault_i,
       sfp_los_i                => sfp_los_i,
-      --i2c_scl_pad_i            => s_i2c_scl_pad_in,
-      --i2c_scl_pad_o            => s_i2c_scl_pad_out,
-      --i2c_scl_padoen_o         => s_i2c_scl_padoen,
-      --i2c_sda_pad_i            => s_i2c_sda_pad_in,
-      --i2c_sda_pad_o            => s_i2c_sda_pad_out,
-      --i2c_sda_padoen_o         => s_i2c_sda_padoen,
+      i2c_scl_pad_i            => s_i2c_scl_pad_in,
+      i2c_scl_pad_o            => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o         => s_i2c_scl_padoen,
+      i2c_sda_pad_i            => s_i2c_sda_pad_in,
+      i2c_sda_pad_o            => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o         => s_i2c_sda_padoen,
       gpio_o                   => s_gpio_o,
       gpio_i                   => s_gpio_i,
       lvds_p_i                 => s_lvds_p_i,
@@ -368,12 +368,12 @@ begin
   end generate;
 
   -- I2C
-  --interfaces : for i in 1 to 5 generate
-  --  i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-  --  i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-  --  s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-  --  s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
-  --end generate;
+  interfaces : for i in 1 to 5 generate
+    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
+    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+  end generate;
 
   -- CPLD
   s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
