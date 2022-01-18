@@ -52,14 +52,13 @@ entity pexarria10 is
     -- OneWire
     -----------------------------------------------------------------------
     OneWire_CB        : inout std_logic;
-    OneWire_CB_splz   : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB_splz   : out  std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nuser_pb_i   : in std_logic;  --User Button
-    -- Reset MAX10
-    nres_out_o   : out std_logic;
+    nuser_pb_i   : in std_logic;  -- User Button
+    nres_out_o   : out std_logic; -- Reset MAX10
 
     -----------------------------------------------------------------------
     -- USBC LVTTL IOs, no USB functionality these are physical interface only
@@ -142,7 +141,6 @@ entity pexarria10 is
     usbc_tx2_en     : out std_logic_vector(5 downto 1);
     usbc_tx3_en     : out std_logic_vector(5 downto 1);
     usbc_tx4_en     : out std_logic_vector(5 downto 1);
-    usbc_tx5_en     : out std_logic_vector(5 downto 1);
     --usbc_tx1_n     : out std_logic_vector(5 downto 1);
     usbc_tx1_p     : out std_logic_vector(5 downto 1);
     --usbc_tx2_n     : out std_logic_vector(5 downto 1);
@@ -151,8 +149,6 @@ entity pexarria10 is
     usbc_tx3_p     : out std_logic_vector(5 downto 1);
     --usbc_tx4_n     : out std_logic_vector(5 downto 1);
     usbc_tx4_p     : out std_logic_vector(5 downto 1);
-    --usbc_tx5_n     : out std_logic_vector(5 downto 1);
-    --usbc_tx5_p     : out std_logic_vector(5 downto 1);
     usbc_rx1_n     : in std_logic_vector(5 downto 1);
     usbc_rx1_p     : in std_logic_vector(5 downto 1);
     usbc_rx2_n     : in std_logic_vector(5 downto 1);
@@ -161,8 +157,6 @@ entity pexarria10 is
     usbc_rx3_p     : in std_logic_vector(5 downto 1);
     usbc_rx4_n     : in std_logic_vector(5 downto 1);
     usbc_rx4_p     : in std_logic_vector(5 downto 1)
-    --usbc_rx5_n     : in std_logic_vector(5 downto 1);
-    --usbc_rx5_p     : in std_logic_vector(5 downto 1)
     );
 
 end pexarria10;
@@ -292,8 +286,7 @@ begin
       lvds_oen_o(4 downto 0)   => usbc_tx1_en,
       lvds_oen_o(9 downto 5)   => usbc_tx2_en,
       lvds_oen_o(14 downto 10) => usbc_tx3_en,
-      --lvds_oen_o(19 downto 15) => usbc_tx4_en,
-      --lvds_oen_o(24 downto 20) => usbc_tx5_en,
+      lvds_oen_o(19 downto 15) => usbc_tx4_en,
       usb_rstn_o               => usb_ures_o,
       usb_ebcyc_i              => usb_pa_io(3),
       usb_speed_i              => usb_pa_io(0),
