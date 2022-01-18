@@ -81,17 +81,17 @@ entity pexarria10 is
    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
     -----------------------------------------------------------------------
-    --psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
-    --psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    --psram_clk          : out   std_logic := 'Z';
-    --psram_advn         : out   std_logic := 'Z';
-    --psram_cre          : out   std_logic := 'Z';
-    --psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
-    --psram_oen          : out   std_logic := 'Z';
-    --psram_wen          : out   std_logic := 'Z';
-    --psram_ubn          : out   std_logic := 'Z';
-    --psram_lbn          : out   std_logic := 'Z';
-    --psram_wait         : in    std_logic; -- DDR magic
+    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic := 'Z';
+    psram_cre          : out   std_logic := 'Z';
+    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen          : out   std_logic := 'Z';
+    psram_wen          : out   std_logic := 'Z';
+    psram_ubn          : out   std_logic := 'Z';
+    psram_lbn          : out   std_logic := 'Z';
+    psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
     -- usb
@@ -228,11 +228,6 @@ architecture rtl of pexarria10 is
     ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
-    --("USBC5_IO1  ",  IO_NONE,         false,   false, 20,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    --("USBC5_IO2  ",  IO_NONE,         false,   false, 21,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    --("USBC5_IO3  ",  IO_NONE,         false,   false, 22,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    --("USBC5_IO4  ",  IO_NONE,         false,   false, 23,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    --("USBC5_IO5  ",  IO_NONE,         false,   false, 24,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
   constant c_family        : string := "Arria 10 GX PEX10";
   constant c_project       : string := "pexarria10";
@@ -248,13 +243,13 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      --g_psram_bits         => c_psram_bits,
+      g_psram_bits         => c_psram_bits,
       g_gpio_inout         => 8,
       g_lvds_inout         => 20,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
-      --g_en_psram           => true,
+      g_en_psram           => true,
       g_io_table           => io_mapping_table,
       --g_en_i2c_wrapper     => true,
       --g_num_i2c_interfaces => 5,
@@ -319,19 +314,19 @@ begin
       pcie_refclk_i            => pcie_refclk_i,
       pcie_rstn_i              => nPCI_RESET_i,
       pcie_rx_i                => pcie_rx_i,
-      pcie_tx_o                => pcie_tx_o);
+      pcie_tx_o                => pcie_tx_o,
       --PSRAM TODO: Multi Chip
-      --ps_clk                  => psram_clk,
-      --ps_addr                 => psram_a,
-      --ps_data                 => psram_dq,
-      --ps_seln(0)              => psram_ubn,
-      --ps_seln(1)              => psram_lbn,
-      --ps_cen                  => psram_cen (0),
-      --ps_oen                  => psram_oen,
-      --ps_wen                  => psram_wen,
-      --ps_cre                  => psram_cre,
-      --ps_advn                 => psram_advn,
-      --ps_wait                 => psram_wait);
+      ps_clk                  => psram_clk,
+      ps_addr                 => psram_a,
+      ps_data                 => psram_dq,
+      ps_seln(0)              => psram_ubn,
+      ps_seln(1)              => psram_lbn,
+      ps_cen                  => psram_cen (0),
+      ps_oen                  => psram_oen,
+      ps_wen                  => psram_wen,
+      ps_cre                  => psram_cre,
+      ps_advn                 => psram_advn,
+      ps_wait                 => psram_wait);
 
   -- SFP
   sfp_tx_disable_o        <= '0';
