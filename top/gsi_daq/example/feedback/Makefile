@@ -26,6 +26,7 @@ ifndef USE_SHARED_LIB
  SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
  SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
  SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
+ SOURCE += $(DAQ_LINUX_DIR)/watchdog_poll.cpp
  SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
  SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
  SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
@@ -65,9 +66,9 @@ LIBS += etherbone
 
 
 # CALL_ARGS         = "tcp/scuxl0107"
-# CALL_ARGS         = "tcp/scuxl0192"
+ CALL_ARGS         = "tcp/scuxl0192"
 # CALL_ARGS         = "tcp/scuxl0212"
- CALL_ARGS         = "tcp/scuxl0035"
+# CALL_ARGS         = "tcp/scuxl0035"
 # CALL_ARGS = "tcp/scuxl0118"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
