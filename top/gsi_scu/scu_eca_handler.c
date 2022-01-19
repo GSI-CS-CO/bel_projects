@@ -40,7 +40,6 @@ void initEcaQueue( void )
       die( "Can't find ECA queue for LM32!" );
 
 #ifdef _CONFIG_ECA_BY_MSI
-   #warning ECA by MSI not tested yet!
    g_eca.pControl = ecaControlGetRegisters();
    if( g_eca.pControl == NULL )
       die( "Can't find ECA control register!" );
@@ -61,7 +60,10 @@ void initEcaQueue( void )
    //g_eca.tag = g_eca.pQueue->tag;
    mprintf( ESC_FG_MAGENTA
             "ECA queue found at: 0x%p.\n"
-            "\tWaiting for actions with tag 0x%08X...\n"
+         #ifdef _CONFIG_ECA_BY_MSI
+            "MSI for ECA installed.\n"
+         #endif
+            "Waiting for ECA with tag 0x%08X...\n"
             ESC_NORMAL,
             g_eca.pQueue, g_eca.tag );
 }

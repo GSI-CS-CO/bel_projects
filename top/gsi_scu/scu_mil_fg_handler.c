@@ -257,6 +257,7 @@ void suspendGapReading( void )
  * @ingroup MIL_FSM
  * @brief Returns the task-id-number of the given MIL-task data object.
  * @param pMilTaskData Pointer to the currently MIL-task-data object.
+ * @return ID-number in the range of 0 to maximum task objects minus one.
  */
 inline STATIC unsigned int getMilTaskId( const MIL_TASK_DATA_T* pMilTaskData )
 {
@@ -272,12 +273,14 @@ inline STATIC unsigned int getMilTaskId( const MIL_TASK_DATA_T* pMilTaskData )
  * @param channel Channel number
  */
 inline STATIC 
-unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskData,
+unsigned int getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskData,
                                 const unsigned int channel )
 {
 #ifndef __DOXYGEN__
    STATIC_ASSERT( (TASKMIN + ARRAY_SIZE( g_aMilTaskData ) * ARRAY_SIZE( g_aMilTaskData[0].aFgChannels )) <= TASKMAX );
 #endif
+   // TODO At the moment that isn't a clean solution it wastes to much task numbers in the task-RAM.
+   //      The goal is a maximum of 16 possible task numbers in the range from 1 to 16 per SIO device.
   // return TASKMIN + channel + getMilTaskId( pMilTaskData );
    return TASKMIN + channel + getMilTaskId( pMilTaskData ) * ARRAY_SIZE( g_aMilTaskData[0].aFgChannels );
 }
