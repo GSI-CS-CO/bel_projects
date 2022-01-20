@@ -19,6 +19,7 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 INCLUDE_DIRS += $(DAQ_DIR)/tools
+INCLUDE_DIRS += $(SCU_DIR)/generated
 
 SOURCE =  $(SDAQ_LINUX_DIR)/daq_administration.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp

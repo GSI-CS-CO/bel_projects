@@ -369,7 +369,19 @@ private:
       getEbAccess()->writeLM32( pData, len, offset + m_daqBaseOffset, format );
    }
 
+public:
    void updateMemAdmin( void );
+
+   /*!
+    * @brief Returns the currently number of data items which are not read yet
+    *         in the DDR3-RAM
+    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
+    *                to be called before!
+    */
+   uint getCurrentNumberOfData( void )
+   {
+      return ramRingSharedGetSize( m_poRingAdmin );
+   }
 
 protected:
    void initRingAdmin( RAM_RING_SHARED_INDEXES_T* pAdmin, const std::size_t daqBaseOffset  );
@@ -401,16 +413,6 @@ protected:
       getEbAccess()->readRam( pData, len, m_poRingAdmin->indexes );
    }
 
-   /*!
-    * @brief Returns the currently number of data items which are not read yet
-    *         in the DDR3-RAM
-    * @note CAUTION: Obtaining valid data so the function updateMemAdmin() has
-    *                to be called before!
-    */
-   uint getCurrentNumberOfData( void )
-   {
-      return ramRingSharedGetSize( m_poRingAdmin );
-   }
 
    /*!
     * @brief Returns the number of data items which has been read by

@@ -154,13 +154,13 @@ do
                   START_TAG="-g"
                ;;
                *)
-                  die "Unknown short option \"-${A}\"!"
+                  die "Unknown long option \"-${A}\"!"
                ;;
             esac
             A=""
          ;;
          *)
-            die "Unknown long option: \"${A:0:1}\"!"
+            die "Unknown short option: \"${A:0:1}\"!"
          ;;
       esac
       A=${A#?}

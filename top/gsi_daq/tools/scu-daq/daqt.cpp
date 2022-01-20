@@ -102,7 +102,12 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
    m_sequence   = m_pParent->descriptorGetSequence();
    m_sampleTime = m_pParent->descriptorGetTimeBase();
    m_timeStamp  = m_pParent->descriptorGetTimeStamp() - m_sampleTime * wordLen;
+#ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+  m_pParent->getParent()->getParent()->updateMemAdmin();
+  m_ramLevel = m_pParent->getParent()->getParent()->getCurrentNumberOfData();
+#else
    m_ramLevel   = m_pParent->getParent()->getParent()->getCurrentRamSize( false );
+#endif
    m_pParent->calcFrequency( m_frequency, pData, wordLen );
    for( std::size_t i = 0; i < len; i++ )
       m_pY[i] = rawToVoltage( pData[i] );
@@ -802,7 +807,11 @@ inline int daqtMain( const int argc, char** ppArgv )
          }
          case HOT_KEY_CLEAR_BUFFER:
          {
+         #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+            pDaqContainer->clearBufferRequest();
+         #else
             pDaqContainer->clearBuffer();
+         #endif
             break;
          }
          case HOT_KEY_RECEIVE:
@@ -815,7 +824,12 @@ inline int daqtMain( const int argc, char** ppArgv )
          }
          case HOT_KEY_SHOW_RAM_LEVEL:
          {
-            std::size_t level = pDaqContainer->getCurrentRamSize( !doRead );
+         #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+            pDaqContainer->updateMemAdmin();
+            const std::size_t level = pDaqContainer->getCurrentNumberOfData();
+         #else
+            const std::size_t level = pDaqContainer->getCurrentRamSize( !doRead );
+         #endif
             cout << "RAM-level: " << level << " items -> "
                  << std::fixed << setprecision( 2 )
                  << static_cast<double>(level * 100.0 /
@@ -831,6 +845,7 @@ inline int daqtMain( const int argc, char** ppArgv )
       try
       {
          pDaqContainer->distributeData();
+         ::usleep( 100 );
       }
       catch( std::exception& e )
       {

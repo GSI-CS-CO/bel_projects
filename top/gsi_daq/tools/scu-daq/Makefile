@@ -10,6 +10,8 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
+DEFINES += VERSION=1.0
+
 MIAN_MODULE := daqt.cpp
 
 BASE_DIR := ..
@@ -32,6 +34,7 @@ SOURCE += $(DAQ_LINUX_DIR)/daq_access.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
+SOURCE += $(DAQ_LINUX_DIR)/watchdog_poll.cpp
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
@@ -48,7 +51,6 @@ DEFINES += _DEFAULT_SOURCE
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
-DEFINES += VERSION=0.6
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
 
