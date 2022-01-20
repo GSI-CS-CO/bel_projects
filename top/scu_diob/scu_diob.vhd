@@ -5340,7 +5340,6 @@ BEGIN
     --################################      daq_channel 3 assignments     ##################################
     
    daq_dat(3)<= P25IO_DAC_Out(15 downto 0);
-   --daq_dat(3)<= AW_Output_Reg(2);
 
     --################################ 
 
@@ -6006,23 +6005,10 @@ daq_dat(5)(3 downto 0)  <= AW_Output_Reg(1)(3 downto 0);
 
 --################################daq assignments to be checked ##########################################
 
-
---daq_dat(1)(7 downto 0) <= AW_Input_Reg(1)(15 downto 8);
---daq_dat(2) <= AW_Input_Reg(2);
-
---daq_dat(3)(7 downto 0) <= AW_Output_Reg(1)(15 downto 8);
---daq_dat(4) <= AW_Output_Reg(2);
-
 daq_dat(1) <= AW_Input_Reg(1);
 daq_dat(2) <= AW_Input_Reg(2);
-
---daq_dat(3)(7 downto 0)<= AW_Output_Reg(1)(15 downto 8);
---daq_dat(4)<= AW_Output_Reg(2);
---daq_dat(5)<= UIO_Output(15 DOWNTO 0);
---daq_dat(6) (7 downto 0) <= UIO_Output(23 downto 16);
-
-daq_dat(3) (7 downto 0) <= UIO_Data_FG_Out(7 DOWNTO 0);
-daq_dat(4) <= UIO_Data_FG_Out(23 DOWNTO 8);
+daq_dat(3) (7 downto 0) <= UIO_Output(7 DOWNTO 0);
+daq_dat(4) <= UIO_Output(23 DOWNTO 8);
 
 
   WHEN   c_AW_DA1.ID | c_AW_DA2.ID  =>    --- DA1 oder DA2=>
@@ -6314,14 +6300,11 @@ daq_dat(4) <= UIO_Data_FG_Out(23 DOWNTO 8);
   -- ############################## daq assignments #####################################
 
 
- --daq_ext_trig(1) <= DA_DAC1_Str;
--- daq_ext_trig(2) <= DA_DAC2_Str;
-
 daq_ext_trig(1) <= DA_DAC1_Str_Out;
 daq_ext_trig(2) <= DA_DAC2_Str_Out;
 
-daq_dat(1)<= DA_DAC1_Data;
-daq_dat(2)<= DA_DAC2_Data;
+daq_dat(1)<= DA_DAC1_Out;
+daq_dat(2)<= DA_DAC2_Out;
   --###################################
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6634,11 +6617,8 @@ daq_dat(2)<= DA_DAC2_Data;
 -- ########################### daq assignments ##################################
 
 
-daq_ext_trig(1) <=  AW_Output_Reg(1)(0);
-
---daq_dat(1)(7 downto 0) <= AW_Input_Reg(2)(7 downto 0);
+daq_ext_trig(1) <= ATR_TRIG_IN_Dis;
 daq_dat(1)(7 downto 0) <=Syn_ATR_Comp_in_puls_8_1(8 downto 1);
---daq_dat(2)(7 downto 0)<= AW_Config1(15 downto 8);
 daq_dat(2)(7 downto 0)<= AW_Config1(14 downto 7);
 daq_dat(3)<= UIO_Out;
 
@@ -6749,7 +6729,6 @@ daq_dat(3)<= UIO_Out;
 
 
   daq_dat(1) <= AW_Input_Reg(1);
-  --daq_dat(2) <=  AW_Input_Reg(2); --but AW_Input_Reg(2)(15 downto 8) is "00000000"
   daq_dat(2)(7 downto 0) <=  AW_Input_Reg(2)(7 downto 0); 
   daq_dat(3)(7 downto 0) <= AW_Output_Reg(1)(7 downto 0);
 
