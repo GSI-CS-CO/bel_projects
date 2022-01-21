@@ -52,17 +52,13 @@ entity pexarria10 is
     -- OneWire
     -----------------------------------------------------------------------
     OneWire_CB        : inout std_logic;
-    OneWire_CB_splz   : out  std_logic; --Strong Pull-Up for Onewire
+    OneWire_CB_splz   : out   std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nuser_pb_i   : in std_logic;  -- User Button
+    nuser_pb_i   : in  std_logic; -- User Button
     nres_out_o   : out std_logic; -- Reset MAX10
-
-    -----------------------------------------------------------------------
-    -- USBC LVTTL IOs, no USB functionality these are physical interface only
-    -----------------------------------------------------------------------
 
     -----------------------------------------------------------------------
     -- I2C
@@ -73,9 +69,9 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o                  : out std_logic_vector(1 downto 0) := (others => '1');
-    --wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    --rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -120,8 +116,6 @@ entity pexarria10 is
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic;
-    sfp_led_fpg_o    : out   std_logic:='0';
-    sfp_led_fpr_o    : out   std_logic:='0';
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - not used here)
@@ -133,7 +127,8 @@ entity pexarria10 is
     -- sfp_aux_rxp_i_nc        : in    std_logic;
     -- sfp_aux_mod0_i_nc       : in    std_logic;
     -- sfp_aux_mod1_io_nc      : inout std_logic;
-    -- sfp_aux_mod2_io_nc      : inout std_logic
+    -- sfp_aux_mod2_io_nc      : inout std_logic;
+
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
     -----------------------------------------------------------------------
@@ -240,6 +235,8 @@ begin
       g_psram_bits         => c_psram_bits,
       g_gpio_inout         => 8,
       g_lvds_inout         => 20,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 5,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
@@ -385,3 +382,4 @@ begin
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
+
