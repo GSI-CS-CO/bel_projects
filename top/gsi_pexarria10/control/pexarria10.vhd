@@ -268,6 +268,7 @@ begin
       sfp_tx_disable_o         => open,
       sfp_tx_fault_i           => sfp_tx_fault_i,
       sfp_los_i                => sfp_los_i,
+      wbar_phy_dis_o           => sfp_tx_disable_o,
       i2c_scl_pad_i            => s_i2c_scl_pad_in,
       i2c_scl_pad_o            => s_i2c_scl_pad_out,
       i2c_scl_padoen_o         => s_i2c_scl_padoen,
@@ -317,9 +318,6 @@ begin
       ps_cre                  => psram_cre,
       ps_advn                 => psram_advn,
       ps_wait                 => psram_wait);
-
-  -- SFP
-  sfp_tx_disable_o        <= '0';
 
   -- LEDs
   wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
@@ -382,4 +380,3 @@ begin
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
-
