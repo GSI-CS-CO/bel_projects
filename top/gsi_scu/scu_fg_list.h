@@ -62,15 +62,35 @@ void print_regs( void );
  */
 void fgListReset( FG_MACRO_T* pFgList );
 
-/*! ---------------------------------------------------------------------------
- */
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
+/*! ---------------------------------------------------------------------------
+ * @brief Adds a found function generator receiding in ADDAC-device
+ *        to the function generator list.
+ */
 void addAddacToFgList( const void* pScuBusBase,
                        const unsigned int slot,
                        FG_MACRO_T* pFGlist );
-#endif
 
-/*! --------------------------------------------------------------------------
+
+ALWAYS_INLINE STATIC inline void addAcuToFgList( const void* pScuBusBase,
+                                   const unsigned int slot,
+                                   FG_MACRO_T* pFGlist )
+{
+   addAddacToFgList( pScuBusBase, slot, pFGlist );
+}
+
+#ifdef CONFIG_DIOB_WITH_DAQ
+/*! ---------------------------------------------------------------------------
+ * @brief Adds a found function generator receiding in DIOB-device
+ *        to the function generator list.
+ */
+void addDiobToFgList( const void* pScuBusBase,
+                      const unsigned int slot,
+                      FG_MACRO_T* pFGlist );
+#endif /* CONFIG_DIOB_WITH_DAQ */
+#endif /* CONFIG_SCU_DAQ_INTEGRATION */
+
+/*! -------------------------------------------------------------------------- 
  * @brief Finding of all kinds of function generators connected to
  *        this SCU.
  */

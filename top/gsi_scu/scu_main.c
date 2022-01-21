@@ -334,11 +334,12 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
          case ADDR_DEVBUS:
          { /*
             * Message from MIL- extention bus respectively device-bus.
+            * MIL-Piggy
             */
             const MIL_QEUE_T milMsg =
             { /*
-               * In the case of MIL-extention the slot-number has to be zero.
-               * In this way the MIL handler function will know that.
+               * In the case of MIL-PIGGY the slot-number has to be zero.
+               * In this way the MIL handler function becomes to know that.
                */
                .slot = 0,
                .time = getWrSysTime()

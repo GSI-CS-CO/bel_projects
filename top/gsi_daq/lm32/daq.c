@@ -813,6 +813,10 @@ SCUBUS_SLAVE_FLAGS_T findAllAddacDevices( const void* pScuBusBase )
           scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_ADDAC1 );
 }
 
+#ifdef CONFIG_DIOB_WITH_DAQ
+#warning DIOB-DAQ not compleatly implemented yet!
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -830,6 +834,10 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    DAQ_ASSERT( pThis != NULL );
 
    DAQ_DEVICE_TYP_T currentType = UNKNOWN;
+   SCUBUS_SLAVE_FLAGS_T addacSlots;
+#ifdef CONFIG_DIOB_WITH_DAQ
+   SCUBUS_SLAVE_FLAGS_T diobSlots;
+#endif
    /*
     * Pre-initializing
     */
@@ -850,14 +858,11 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       * No ACU device found, therefore now scanning the whole SCU-bus
       * for ADDAC-DAQ- slaves.
       */
-      pThis->slotDaqUsedFlags = findAllAddacDevices( pScuBusBase );
-      if( pThis->slotDaqUsedFlags != 0 )
-      { /*
-         * One or more ADDAC slaves found.
-         */
-         currentType = ADDAC;
-      }
-      else
+      pThis->slotDaqUsedFlags = addacSlots = findAllAddacDevices( pScuBusBase );
+   #ifdef CONFIG_DIOB_WITH_DAQ
+      pThis->slotDaqUsedFlags |= diobSlots = scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, GRP_DIOB );
+   #endif
+      if( pThis->slotDaqUsedFlags == 0 )
       {
          DBPRINT( "DBG: Neither ADDAC nor ACU slaves found!\n" );
          return 0;
@@ -871,7 +876,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    {
       if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
       { /*
-         * In this slot is not a ADDAC or ACU! So go to the next slot...
+         * In this slot is not a device with a SCU-BUS-DAQ go to the next slot...
          */
          continue;
       }
@@ -880,18 +885,35 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
        * For each found ADDAC-device:
        */
 
+      DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
+      pCurrentDaqDevice->type = UNKNOWN;
+      pCurrentDaqDevice->n = pThis->foundDevices;
+
    #ifndef CONFIG_DAQ_SINGLE_APP
       if( pFgList != NULL )
       {/*
         * Making the ADDAC resp. ACU function-generator known for SAFT-LIB.
         */
-         addAddacToFgList( pScuBusBase, slot, pFgList );
+         if( currentType == ACU )
+         {
+            pCurrentDaqDevice->type = currentType;
+            addAcuToFgList( pScuBusBase, slot, pFgList );
+         }
+         else if( scuBusIsSlavePresent( addacSlots, slot ) )
+         {
+            pCurrentDaqDevice->type = ADDAC;
+            addAddacToFgList( pScuBusBase, slot, pFgList );
+         }
+       #ifdef CONFIG_DIOB_WITH_DAQ  
+         else if( scuBusIsSlavePresent( diobSlots, slot ) )
+         {
+            pCurrentDaqDevice->type = DIOB;
+            addDiobToFgList( pScuBusBase, slot, pFgList );
+         }
+       #endif     
       }
    #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
-      DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
-      pCurrentDaqDevice->type = currentType;
-      pCurrentDaqDevice->n = pThis->foundDevices;
      /*
       * Because the register access to the DAQ device is more frequent than
       * to the registers of the SCU slave, therefore the base address of the
