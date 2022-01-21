@@ -288,6 +288,8 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
+      wbar_phy_dis_o          => sfp_tx_disable_o,
+      wbar_phy_dis_o          => sfp_aux_tx_disable_o,
       i2c_scl_pad_i           => s_i2c_scl_pad_in,
       i2c_scl_pad_o           => s_i2c_scl_pad_out,
       i2c_scl_padoen_o        => s_i2c_scl_padoen,
@@ -324,11 +326,19 @@ begin
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o);
-
-  -- SFPs
-  sfp_tx_disable_o     <= '0';
-  sfp_aux_tx_disable_o <= '0';
+      pcie_tx_o               => pcie_tx_o,
+      --PSRAM TODO: Multi Chip
+      ps_clk                  => psram_clk,
+      ps_addr                 => psram_a,
+      ps_data                 => psram_dq,
+      ps_seln(0)              => psram_ubn,
+      ps_seln(1)              => psram_lbn,
+      ps_cen                  => psram_cen (0),
+      ps_oen                  => psram_oen,
+      ps_wen                  => psram_wen,
+      ps_cre                  => psram_cre,
+      ps_advn                 => psram_advn,
+      ps_wait                 => psram_wait);
 
   -- LEDs
   wr_leds_o(0)     <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
@@ -341,29 +351,56 @@ begin
   wr_aux_leds_or_node_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
   wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
 
-  rt_leds_o        <= not s_gpio_o(13 downto 10);
+  ----------------------------------------------------------
+  -- GPIO mapping
+  ----------------------------------------------------------
 
-  -- LEMOs
-  lemos : for i in 0 to 19 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
-  end generate;
+  -------------------------------------------------
+  -- LVDS USBC mapping
+  -------------------------------------------------
+    -- USBC TX LVDS output
+    usbc_tx : for i in 0 to 4 generate
+      --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
+      usbc_tx1_p(i+1) <= s_lvds_p_o(i);
+      --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
+      usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
+      --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
+      usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
+      --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
+      usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
+      --usbc_tx5_n(i+1) <= s_lvds_n_o(i+20);
+      --usbc_tx5_p(i+1) <= s_lvds_p_o(i+20);
+    end generate;
 
-  -- I2C
-  interfaces : for i in 0 to 4 generate
-    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
-  end generate;
+    -- USBC RX LVDS input
+    usbc_rx : for i in 0 to 4 generate
+      s_lvds_n_i(i) <= usbc_rx1_n(i+1);
+      s_lvds_p_i(i) <= usbc_rx1_p(i+1);
+      s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
+      s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
+      s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
+      s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
+      s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
+      s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
+      --s_lvds_n_i(i+20) <= usbc_rx5_n(i+1);
+      --s_lvds_p_i(i+20) <= usbc_rx5_p(i+1);
+    end generate;
 
-  -- CPLD
-  s_gpio_i(9 downto 0) <= cpld_io(9 downto 0);
-  cpld_con : for i in 0 to 9 generate
-    cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
-  end generate;
+    -- I2C
+    interfaces : for i in 1 to 5 generate
+      i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+      i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+      s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
+      s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+    end generate;
+
+    -- CPLD
+    s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
+    cpld_con : for i in 0 to 7 generate
+      cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
+    end generate;
+
+    ------------------
+    OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
-
