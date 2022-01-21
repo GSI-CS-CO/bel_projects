@@ -102,7 +102,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     fastIO_p_i : in    std_logic_vector(2 downto 0);
     fastIO_n_i : in    std_logic_vector(2 downto 0);
-    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues 
+    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
@@ -269,9 +269,9 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o              => ser0_rxd,
-      wr_uart_i              => ser0_txd,
-      sfp_tx_disable_o        => open,
+      wr_uart_o               => ser0_rxd,
+      wr_uart_i               => ser0_txd,
+      wbar_phy_dis_o          => sfp4_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
@@ -328,9 +328,6 @@ begin
       ps_wait                => psram_wait,
       hw_version             => x"0000000" & not scu_cb_version);
 
-  -- SFP
-  sfp_tx_disable_o <= '0';
-
   -- LEDs
   wr_led_pps              <= not s_led_pps;                            -- white = PPS
   wr_rgb_led(0)           <= not s_led_link_act;                       -- WR-RGB Red
@@ -342,7 +339,7 @@ begin
   lemos : for i in 0 to 2 generate
     s_lvds_p_i(i)      <= fastIO_p_i(i);
     s_lvds_n_i(i)      <= fastIO_n_i(i);
-    fastIO_p_o(i)        <= s_lvds_p_o(i);
+    fastIO_p_o(i)      <= s_lvds_p_o(i);
   end generate;
 
   lemo_out <= not s_gpio_o(6 downto 3);
@@ -350,7 +347,7 @@ begin
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
-      
+
   --Extension Piggy
   ext_ch(21 downto 19) <= s_lvds_term;
 
