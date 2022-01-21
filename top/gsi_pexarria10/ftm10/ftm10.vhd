@@ -248,8 +248,6 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
-      g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_dual_port_wr       => true,
