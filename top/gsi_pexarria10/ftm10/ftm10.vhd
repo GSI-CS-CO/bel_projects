@@ -42,30 +42,29 @@ entity ftm10 is
     wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
 
     -----------------------------------------------------------------------
+    -- SPI Flash User Mode
+    -----------------------------------------------------------------------
+    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    UM_nCSO           : out   std_logic := 'Z';
+    UM_DCLK           : out   std_logic := 'Z';
+
+    -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data_io     : inout std_logic;
-    rom_aux_data_io : inout std_logic;
+    OneWire_CB        : inout std_logic;
+    OneWire_CB_splz   : out   std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in std_logic;
-    nres_i     : in std_logic;
-
-    -----------------------------------------------------------------------
-    -- LVTTL IOs
-    -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(19 downto 0);
-    lemo_n_i : in    std_logic_vector(19 downto 0);
-    lemo_p_o : out   std_logic_vector(19 downto 0);
-    lemo_n_o : out   std_logic_vector(19 downto 0);
+    nuser_pb_i   : in  std_logic; -- User Button
+    nres_out_o   : out std_logic; -- Reset MAX10
 
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    i2c_scl_pad_io   : inout std_logic_vector(4 downto 0);
-    i2c_sda_pad_io   : inout std_logic_vector(4 downto 0);
+    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -73,6 +72,21 @@ entity ftm10 is
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
     wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
     rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+
+   -----------------------------------------------------------------------
+    -- Pseudo-SRAM (4x 256Mbit)
+    -----------------------------------------------------------------------
+    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic := 'Z';
+    psram_cre          : out   std_logic := 'Z';
+    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen          : out   std_logic := 'Z';
+    psram_wen          : out   std_logic := 'Z';
+    psram_ubn          : out   std_logic := 'Z';
+    psram_lbn          : out   std_logic := 'Z';
+    psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
     -- usb
@@ -87,9 +101,9 @@ entity ftm10 is
     usb_uclkin_i : in    std_logic;
 
     -----------------------------------------------------------------------
-    -- CPLD
+    -- CPLD (F2F)
     -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(9 downto 0);
+    cpld_io : inout std_logic_vector(7 downto 0);
 
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
@@ -104,7 +118,7 @@ entity ftm10 is
     sfp_mod2_io      : inout std_logic;
 
     -----------------------------------------------------------------------
-    -- SFP (auxiliary)
+    -- SFP (auxiliary - only used on ftm10)
     -----------------------------------------------------------------------
     sfp_aux_tx_disable_o : out   std_logic := '0';
     sfp_aux_tx_fault_i   : in    std_logic;
@@ -113,7 +127,32 @@ entity ftm10 is
     sfp_aux_rxp_i        : in    std_logic;
     sfp_aux_mod0_i       : in    std_logic;
     sfp_aux_mod1_io      : inout std_logic;
-    sfp_aux_mod2_io      : inout std_logic);
+    sfp_aux_mod2_io      : inout std_logic;
+
+    -----------------------------------------------------------------------
+    -- USBC no USB functionality only LVDS signals
+    -----------------------------------------------------------------------
+    usbc_tx1_en     : out std_logic_vector(5 downto 1);
+    usbc_tx2_en     : out std_logic_vector(5 downto 1);
+    usbc_tx3_en     : out std_logic_vector(5 downto 1);
+    usbc_tx4_en     : out std_logic_vector(5 downto 1);
+    --usbc_tx1_n     : out std_logic_vector(5 downto 1);
+    usbc_tx1_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx2_n     : out std_logic_vector(5 downto 1);
+    usbc_tx2_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx3_n     : out std_logic_vector(5 downto 1);
+    usbc_tx3_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx4_n     : out std_logic_vector(5 downto 1);
+    usbc_tx4_p     : out std_logic_vector(5 downto 1);
+    usbc_rx1_n     : in std_logic_vector(5 downto 1);
+    usbc_rx1_p     : in std_logic_vector(5 downto 1);
+    usbc_rx2_n     : in std_logic_vector(5 downto 1);
+    usbc_rx2_p     : in std_logic_vector(5 downto 1);
+    usbc_rx3_n     : in std_logic_vector(5 downto 1);
+    usbc_rx3_p     : in std_logic_vector(5 downto 1);
+    usbc_rx4_n     : in std_logic_vector(5 downto 1);
+    usbc_rx4_p     : in std_logic_vector(5 downto 1)
+    );
 
 end ftm10;
 
@@ -129,19 +168,19 @@ architecture rtl of ftm10 is
   signal s_led_aux_track    : std_logic;
   signal s_led_aux_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(13 downto 0);
-  signal s_gpio_i       : std_logic_vector(9 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(19 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(19 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(19 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(19 downto 0);
+  signal s_gpio_o   : std_logic_vector(7 downto 0);
+  signal s_gpio_i   : std_logic_vector(7 downto 0);
+  signal s_lvds_p_i : std_logic_vector(19 downto 0);
+  signal s_lvds_n_i : std_logic_vector(19 downto 0);
+  signal s_lvds_p_o : std_logic_vector(19 downto 0);
+  signal s_lvds_n_o : std_logic_vector(19 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_padoen   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_padoen   : std_logic_vector(4 downto 0);
+  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -151,8 +190,9 @@ architecture rtl of ftm10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 33) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 27) :=
   (
+  -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
@@ -162,12 +202,6 @@ architecture rtl of ftm10 is
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_8  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_9  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("LED1_BASE_R",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_BASE_B",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_BASE_G",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_BASE_W",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -195,6 +229,7 @@ architecture rtl of ftm10 is
   constant c_cores         : natural:= 4;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
+  constant c_psram_bits    : natural := 24;
 
 begin
 
@@ -203,15 +238,18 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_gpio_out           => 4,
-      g_gpio_inout         => 10,
+      g_psram_bits         => c_psram_bits,
+      g_gpio_inout         => 8,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 5,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
+      g_en_psram           => true,
       g_io_table           => io_mapping_table,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 5,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_dual_port_wr       => true,
@@ -328,3 +366,4 @@ begin
   end generate;
 
 end rtl;
+
