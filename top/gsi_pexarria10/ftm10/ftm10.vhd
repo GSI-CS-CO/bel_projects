@@ -51,8 +51,10 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB        : inout std_logic;
-    OneWire_CB_splz   : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_CB          : inout std_logic;
+    OneWire_CB_splz     : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_CB_aux      : inout std_logic;
+    OneWire_CB_aux_splz : out   std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
@@ -168,6 +170,8 @@ architecture rtl of ftm10 is
   signal s_led_aux_track    : std_logic;
   signal s_led_aux_pps      : std_logic;
 
+  signal s_sfp_disable : std_logic;
+
   signal s_gpio_o   : std_logic_vector(7 downto 0);
   signal s_gpio_i   : std_logic_vector(7 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
@@ -268,8 +272,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_onewire_io           => rom_data_io,
-      wr_aux_onewire_io       => OneWire_CB,
+      wr_onewire_io           => OneWire_CB,
+      wr_aux_onewire_io       => OneWire_aux_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
@@ -286,8 +290,7 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
-      wbar_phy_dis_o          => sfp_tx_disable_o,
-      wbar_phy_dis_o          => sfp_aux_tx_disable_o,
+      wbar_phy_dis_o          => s_sfp_disable,
       i2c_scl_pad_i           => s_i2c_scl_pad_in,
       i2c_scl_pad_o           => s_i2c_scl_pad_out,
       i2c_scl_padoen_o        => s_i2c_scl_padoen,
@@ -337,6 +340,10 @@ begin
       ps_cre                  => psram_cre,
       ps_advn                 => psram_advn,
       ps_wait                 => psram_wait);
+
+  -- SFP management
+  sfp_tx_disable_o     <= s_sfp_disable;
+  sfp_aux_tx_disable_o <= s_sfp_disable;
 
   -- LEDs
   wr_leds_o(0)     <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
@@ -399,6 +406,7 @@ begin
     end generate;
 
     ------------------
-    OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
+    OneWire_CB_splz     <= '1';  --Strong Pull-Up disabled
+    OneWire_aux_CB_splz <= '1';  --Strong Pull-Up disabled
 
 end rtl;
