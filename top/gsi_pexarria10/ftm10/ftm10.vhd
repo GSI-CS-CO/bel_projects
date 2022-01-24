@@ -53,8 +53,8 @@ entity ftm10 is
     -----------------------------------------------------------------------
     OneWire_CB          : inout std_logic;
     OneWire_CB_splz     : out   std_logic; --Strong Pull-Up for Onewire
-    OneWire_CB_aux      : inout std_logic;
-    OneWire_CB_aux_splz : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_aux_CB      : inout std_logic;
+    OneWire_aux_CB_splz : out   std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
