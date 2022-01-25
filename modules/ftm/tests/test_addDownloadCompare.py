@@ -8,12 +8,24 @@ Download status of datamaster
 Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
-  def test_aSchedule(self):
-    schedule_file = 'testSingleEdge-block-blockalign-altdst.dot'
-    schedule_file = 'testSingleEdge-tmsg-block-defdst.dot'
+  def addDownloadCompareSchedule(self, schedule_file):
     status_file = 'status.dot'
     self.startAllPattern(schedule_file)
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', status_file))
     self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + schedule_file, status_file))
     self.deleteFile(status_file)
 
+  def test_aScheduleTmsg1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-defdst.dot')
+
+  def test_aScheduleBlock1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-altdst.dot')
+
+  def test_aScheduleSwitch1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-switch-tmsg-defdst.dot')
+
+  def test_aScheduleFlow1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flow-tmsg-defdst.dot')
+
+  def test_aScheduleFlush1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flush-tmsg-defdst.dot')
