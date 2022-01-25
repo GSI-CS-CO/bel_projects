@@ -115,7 +115,7 @@ void CarpeDM::CarpeDMimpl::adjustValidTime(uint64_t& tValid, bool abs) {
 
 
 vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
-  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr )
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr )
 {
     mc_ptr mc;
     adjustValidTime(cmdTvalid, vabs);
@@ -123,11 +123,14 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Global Commands (not targeted at cmd queues of individual blocks)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+
 
     //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
-    if (type == dnt::sCmdStart)   {
-      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination, cmdTvalid);  }
-      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
+    if (type == dnt::sCmdStart)   { 
+      sLog << "Yep, its a start allright" << std::endl;
+      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination, cmdThr, cmdTvalid);  }
+      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
     }
     if (type == dnt::sCmdStop)    {
@@ -144,11 +147,14 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     //FIMXE hack to test compile
     uint8_t thr = 0;
 
+    //Origin 
     if (type == dnt::sCmdOrigin)   {
-      //Leave out for now and autocorrect cpu
-      try { setThrOrigin(ew, getNodeCpu(target, TransferDir::DOWNLOAD), thr, target); } catch (std::runtime_error const& err) {
-        throw std::runtime_error("Cannot execute command '" + type + "', " + std::string(err.what()));
+      if (hm.lookup(destination)) {
+        sLog << " Setting Origin to <" << destination << ">" << std::endl; 
+        uint8_t cpuIdx    = getNodeCpu(destination, TransferDir::DOWNLOAD); // a node can only run on the cpu it resides
+        setThrOrigin(ew, cpuIdx, cmdThr, destination); //configure thread and run it
       }
+      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
     }
 
@@ -229,42 +235,42 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
 // FIXME god this is awful ... replace with builder pattern!
 //wrappers
 //commands with no extras
-vEbwrs& CarpeDM::CarpeDMimpl::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target) {
-  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, false, false);
+vEbwrs& CarpeDM::CarpeDMimpl::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdThr) {
+  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, false, false, cmdThr);
 }
 
 vEbwrs& CarpeDM::CarpeDMimpl::createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr ) {
-  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, lockRd, lockWr );
+  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, lockRd, lockWr, 0 );
 }
 
 //commands with time
-vEbwrs& CarpeDM::CarpeDMimpl::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid) {
-  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, 0, false, false, false);
+vEbwrs& CarpeDM::CarpeDMimpl::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint8_t cmdThr) {
+  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, 0, false, false, false, cmdThr);
 }
   
 //flows
 vEbwrs& CarpeDM::CarpeDMimpl::createFlowCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
   uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma) {
-  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, false, false, false, 0, false, false, false);
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, false, false, false, 0, false, false, false, 0);
 } 
 
 //flush or flush override
 vEbwrs& CarpeDM::CarpeDMimpl::createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
   uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo) {
-  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, false, qIl, qHi, qLo, 0, false, false, false);
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, false, qIl, qHi, qLo, 0, false, false, false, 0);
 } 
 
 //wait
 vEbwrs& CarpeDM::CarpeDMimpl::createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target,  
   uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait ) {
-  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, cmdTwait, abswait, false, false);
+  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, cmdTwait, abswait, false, false, 0);
 }
 
 vEbwrs& CarpeDM::CarpeDMimpl::createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
-  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait,bool lockRd, bool lockWr )
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait,bool lockRd, bool lockWr, uint8_t cmdThr )
 {
   updateModTime();
-  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, perma, qIl, qHi, qLo, cmdTvalid, cmdTwait, abswait, lockRd, lockWr);
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, perma, qIl, qHi, qLo, cmdTvalid, cmdTwait, abswait, lockRd, lockWr, cmdThr);
 }
 
 
@@ -290,6 +296,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     uint64_t cmdTvalid, cmdTwait;
     uint32_t cmdQty;
     uint8_t cmdPrio;
+    uint8_t cmdThr;
 
     //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
           if (g[v].patName  != DotStr::Misc::sUndefined)  { target = getPatternExitNode(g[v].patName); destination = getPatternEntryNode(g[v].patName); }
@@ -313,14 +320,16 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     qHi       = s2u<bool>(g[v].qHi);
     qLo       = s2u<bool>(g[v].qLo);
     perma     = s2u<bool>(g[v].perma);
-    
+
+    cmdThr    = s2u<uint8_t>(g[v].cmdDestThr);
+    sLog << "g[v].cmdDestThr == " << g[v].cmdDestThr << " == Num" << cmdThr << std::endl;
     lockRd    = true;
     lockWr    = true;
     //fixme hack to test compile
     abswait   = false;
   
     if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
-    createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr);
+    createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr, cmdThr);
     } catch (std::runtime_error const& err) {
         throw std::runtime_error( "Parser error when processing command <" + g[v].name + ">. Cause: " + err.what());
     }
@@ -730,9 +739,10 @@ int CarpeDM::CarpeDMimpl::getIdleThread(uint8_t cpuIdx) {
 
 //Requests Pattern to start on thread <x>
 vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx, uint64_t t) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), thrIdx, t);}
+/*
 //Requests Pattern to start
 vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern, uint64_t t) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), t); }
-
+*/
 //Requests Pattern to stop
 vEbwrs& CarpeDM::CarpeDMimpl::stopPattern(vEbwrs& ew, const std::string& sPattern) { return stopNodeOrigin(ew, getPatternExitNode(sPattern)); }
 
@@ -747,6 +757,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::abortPattern(vEbwrs& ew, const std::string& sPatte
 
 //Requests thread <thrIdx> to start at node <sNode>
 vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx, uint64_t t) {
+  printf("StartNodeOrigin: Thr%u\n", thrIdx);
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
   setThrStartTime(ew, cpuIdx, thrIdx, t);
@@ -754,6 +765,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNo
   //sLog << "Started thread at cpuidx " << std::dec << cpuIdx << " thrIdx " << thrIdx << " @ 0x" << std::hex << cmdTvalid << std::endl;
   return ew;
 }
+/*
 //Requests a start at node <sNode>
 vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint64_t t) {
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
@@ -764,7 +776,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNo
   startThr(ew, cpuIdx, (uint8_t)thrIdx);
   return ew;
 }
-
+*/
 //Requests stop at node <sNode> (flow to idle)
 vEbwrs& CarpeDM::CarpeDMimpl::stopNodeOrigin(vEbwrs& ew, const std::string& sNode) {
   //send a command: tell patternExitNode to change the flow to Idle

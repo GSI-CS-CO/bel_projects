@@ -73,6 +73,8 @@ public:
   std::string tef         = sZero;
   std::string res         = sZero;
 
+  //StartThread
+  std::string startOffs = sZero;
   //Command
 
   std::string tValid = sZero;
@@ -98,6 +100,7 @@ public:
   std::string cmdDest     = sUndefined;
   std::string cmdDestBp   = sUndefined;
   std::string cmdDestPat  = sUndefined;
+  std::string cmdDestThr  = sZero;
 
   myVertex() {}
 
