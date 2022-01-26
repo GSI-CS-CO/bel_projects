@@ -1841,7 +1841,7 @@ use work.wishbone_pkg.all;
 -- A state machine controls the waiting.
 entity wb_cyc_delay is
   generic (
-    g_wait_count : integer := 3 -- introduce (wait_count+2) additional clock ticks of stall='1' between two wb-cycles
+    g_wait_count : integer := 3 -- introduce (wait_count+1) additional clock ticks of stall='1' between two wb-cycles
   );
   port (
     clk_i    : in  std_logic;
@@ -1859,8 +1859,8 @@ architecture rtl of wb_cyc_delay is
   signal count : integer range 0 to g_wait_count;
 begin
     
-  slave_o  <= master_i when state = s_cyc else (ack=>'0', err=>'0', rty=>'0', stall=>'1', dat=>(others=>'-'));
-  master_o <= slave_i  when state = s_cyc else (cyc=>'0', stb=>'0', we=>'-', sel=>(others=>'-'), adr=>(others=>'-'),dat=>(others=>'-'));
+  slave_o  <= (ack=>'0', err=>'0', rty=>'0', stall=>'1', dat=>(others=>'-'))                            when state = s_wait else  master_i;
+  master_o <= (cyc=>'0', stb=>'0', we=>'0', sel=>(others=>'-'), adr=>(others=>'-'),dat=>(others=>'-'))  when state = s_wait else  slave_i;
 
   process(clk_i, rst_n_i) is
   begin
@@ -1975,7 +1975,7 @@ BEGIN
 
     bugfix: entity work.wb_cyc_delay
       generic map(
-        g_wait_count => 3 -- introduce (wait_count+2) additional clock ticks of stall='1' between two wb-cycles
+        g_wait_count => 3 -- introduce (wait_count+1) additional clock ticks of stall='1' between two wb-cycles
       )
       port map (
         clk_i     => clk_i,
