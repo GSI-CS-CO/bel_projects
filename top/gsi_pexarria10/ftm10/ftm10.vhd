@@ -73,7 +73,6 @@ entity ftm10 is
     -----------------------------------------------------------------------
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
     wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -110,14 +109,16 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
     -----------------------------------------------------------------------
-    sfp_tx_disable_o : out   std_logic := '0';
-    sfp_tx_fault_i   : in    std_logic;
-    sfp_los_i        : in    std_logic;
-    sfp_txp_o        : out   std_logic;
-    sfp_rxp_i        : in    std_logic;
-    sfp_mod0_i       : in    std_logic;
-    sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic;
+    sfp_tx_disable_o  : out   std_logic; -- Second SFP (ftm10 only)
+    sfp_tx_fault_i    : in    std_logic; -- Second SFP (ftm10 only)
+    sfp_los_i         : in    std_logic; -- Second SFP (ftm10 only)
+    sfp_txp_o         : out   std_logic; -- Second SFP (ftm10 only)
+    sfp_rxp_i         : in    std_logic; -- Second SFP (ftm10 only)
+    sfp_mod0_i        : in    std_logic; -- Second SFP (ftm10 only)
+    sfp_mod1_io       : inout std_logic; -- Second SFP (ftm10 only)
+    sfp_mod2_io       : inout std_logic; -- Second SFP (ftm10 only)
+    sfp_aux_gpio_zero : inout std_logic; -- unused on ftm10
+    sfp_aux_gpio_one  : inout std_logic; -- unused on ftm10
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
@@ -334,7 +335,7 @@ begin
       ps_data                 => psram_dq,
       ps_seln(0)              => psram_ubn,
       ps_seln(1)              => psram_lbn,
-      ps_cen                  => psram_cen (0),
+      ps_cen                  => psram_cen(0),
       ps_oen                  => psram_oen,
       ps_wen                  => psram_wen,
       ps_cre                  => psram_cre,
@@ -346,50 +347,45 @@ begin
   sfp_aux_tx_disable_o <= s_sfp_disable;
 
   -- LEDs
-  wr_leds_o(0)     <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
-  wr_leds_o(1)     <= not s_led_link_up;                              -- blue  = link
-  wr_leds_o(2)     <= not s_led_track;                                -- green = timing valid
-  wr_leds_o(3)     <= not s_led_pps;                                  -- white = PPS
-
+  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
+  wr_leds_o(1)                  <= not s_led_link_up;                              -- blue  = link
+  wr_leds_o(2)                  <= not s_led_track;                                -- green = timing valid
+  wr_leds_o(3)                  <= not s_led_pps;                                  -- white = PPS
   wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
   wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
   wr_aux_leds_or_node_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
   wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
 
-  ----------------------------------------------------------
-  -- GPIO mapping
-  ----------------------------------------------------------
+  -- Unused
+  sfp_aux_gpio_zero <= 'Z';
+  sfp_aux_gpio_one  <= 'Z';
 
   -------------------------------------------------
   -- LVDS USBC mapping
   -------------------------------------------------
-    -- USBC TX LVDS output
-    usbc_tx : for i in 0 to 4 generate
-      --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
-      usbc_tx1_p(i+1) <= s_lvds_p_o(i);
-      --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
-      usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
-      --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
-      usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
-      --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
-      usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
-      --usbc_tx5_n(i+1) <= s_lvds_n_o(i+20);
-      --usbc_tx5_p(i+1) <= s_lvds_p_o(i+20);
-    end generate;
+  -- USBC TX LVDS output
+  usbc_tx : for i in 0 to 4 generate
+    --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
+    usbc_tx1_p(i+1) <= s_lvds_p_o(i);
+    --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
+    usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
+    --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
+    usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
+    --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
+    usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
+  end generate;
 
-    -- USBC RX LVDS input
-    usbc_rx : for i in 0 to 4 generate
-      s_lvds_n_i(i) <= usbc_rx1_n(i+1);
-      s_lvds_p_i(i) <= usbc_rx1_p(i+1);
-      s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
-      s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
-      s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
-      s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
-      s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
-      s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
-      --s_lvds_n_i(i+20) <= usbc_rx5_n(i+1);
-      --s_lvds_p_i(i+20) <= usbc_rx5_p(i+1);
-    end generate;
+  -- USBC RX LVDS input
+  usbc_rx : for i in 0 to 4 generate
+    s_lvds_n_i(i) <= usbc_rx1_n(i+1);
+    s_lvds_p_i(i) <= usbc_rx1_p(i+1);
+    s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
+    s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
+    s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
+    s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
+    s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
+    s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
+  end generate;
 
     -- I2C
     interfaces : for i in 1 to 5 generate
@@ -405,8 +401,8 @@ begin
       cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
     end generate;
 
-    ------------------
-    OneWire_CB_splz     <= '1';  --Strong Pull-Up disabled
-    OneWire_aux_CB_splz <= '1';  --Strong Pull-Up disabled
+  -- OneWire
+    OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled
+    OneWire_aux_CB_splz <= '1'; -- Strong Pull-Up disabled
 
 end rtl;
