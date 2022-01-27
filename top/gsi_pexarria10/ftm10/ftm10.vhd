@@ -109,16 +109,15 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
     -----------------------------------------------------------------------
-    sfp_tx_disable_o  : out   std_logic; -- Second SFP (ftm10 only)
-    sfp_tx_fault_i    : in    std_logic; -- Second SFP (ftm10 only)
-    sfp_los_i         : in    std_logic; -- Second SFP (ftm10 only)
-    sfp_txp_o         : out   std_logic; -- Second SFP (ftm10 only)
-    sfp_rxp_i         : in    std_logic; -- Second SFP (ftm10 only)
-    sfp_mod0_i        : in    std_logic; -- Second SFP (ftm10 only)
-    sfp_mod1_io       : inout std_logic; -- Second SFP (ftm10 only)
-    sfp_mod2_io       : inout std_logic; -- Second SFP (ftm10 only)
-    sfp_aux_gpio_zero : inout std_logic; -- unused on ftm10
-    sfp_aux_gpio_one  : inout std_logic; -- unused on ftm10
+    sfp_tx_disable_o   : out   std_logic;                    -- Second SFP (ftm10 only)
+    sfp_tx_fault_i     : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_los_i          : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_txp_o          : out   std_logic;                    -- Second SFP (ftm10 only)
+    sfp_rxp_i          : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod0_i         : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod1_io        : inout std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod2_io        : inout std_logic;                    -- Second SFP (ftm10 only)
+    sfp_aux_gpio_extra : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
@@ -357,8 +356,10 @@ begin
   wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
 
   -- Unused
-  sfp_aux_gpio_zero <= 'Z';
-  sfp_aux_gpio_one  <= 'Z';
+  sfp_aux_gpio_extra(0) <= 'Z';
+  sfp_aux_gpio_extra(1) <= 'Z';
+  sfp_aux_gpio_extra(2) <= 'Z';
+  sfp_aux_gpio_extra(3) <= 'Z';
 
   -------------------------------------------------
   -- LVDS USBC mapping
@@ -377,10 +378,10 @@ begin
 
   -- USBC RX LVDS input
   usbc_rx : for i in 0 to 4 generate
-    s_lvds_n_i(i) <= usbc_rx1_n(i+1);
-    s_lvds_p_i(i) <= usbc_rx1_p(i+1);
-    s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
-    s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
+    s_lvds_n_i(i)    <= usbc_rx1_n(i+1);
+    s_lvds_p_i(i)    <= usbc_rx1_p(i+1);
+    s_lvds_n_i(i+5)  <= usbc_rx2_n(i+1);
+    s_lvds_p_i(i+5)  <= usbc_rx2_p(i+1);
     s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
     s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
     s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
