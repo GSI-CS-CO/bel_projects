@@ -39,7 +39,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-08-19}
+\Large{Last change: 2022-01-27}
 \end{center}
 \vfill
 \end{titlepage}
@@ -189,6 +189,7 @@ The tests add an additional parameter for the number of seconds to snoop.
 \end{enumerate}
 
 \section{Jenkins on tsl025.acc.gsi.de}
+Update tsl025 with sudo apt update / upgrade.
 Preparation of jenkins user on tsl025 for remote snoop.
 \linebreak Switch to user jenkins on tsl025:
 \linebreak sudo su -s /bin/bash jenkins
@@ -254,6 +255,9 @@ sudo make install
 \end{verbatim}
 
 \subsection{Flash on dal029 (data master develoment environment)}
+
+Remark: datamaster for development environment is now on acopc042, dev/wbm1 ! Commands have to be changed accordingly.
+
 On \texttt{dal029.acc.gsi.de} do (use \texttt{ssh root@dal029.acc.gsi.de}):
 \begin{verbatim}
 # 1. Preparation:
@@ -308,10 +312,15 @@ OPTIONS=--runslow make
 On \texttt{fel0069.acc.gsi.de} do (use \texttt{ssh root@fel0069.acc.gsi.de}):
 \begin{verbatim}
 # 1. Preparation:
-scp martin@acopc042:bel_projects/release/syn/gsi_pexarria5/ftm/ftm.rpd
+Version 6.1.2 / FTM 7.0.1:
+scp martin@acopc042.gsi.de:bel_projects/release/syn/gsi_pexarria5/ftm/ftm.rpd
            ftm_v6.1.2-rc1.rpd
 wget https://github.com/GSI-CS-CO/bel_projects/releases/download
             /fallout-v6.1.2-rc1/falloutv6_1_2-rc1-pexarria5.rpd
+Version 6.2.0 / FTM 8.0.0:
+scp martin@acopc042.gsi.de:Documents/fel0069/ftm_722413ec_2021_11_02.rpd
+           ftm_722413ec_2021_11_02.rpd
+pexarria5: same as version 6.1.2.
 ## stop fesa: how to?
 ## stop saftd - error message if saftd is not running
 saft-ctl tr1 quit
@@ -323,8 +332,8 @@ eb-reset dev/wbm1 cpuhalt 0xff
 # 2. Flash - don't use eb-flash-secure.
 # Included preparation not ok.
 # Parameters -s and -w not supported
-eb-flash -s 0x10000 -w 3 dev/wbm0 ftm_v6.1.2-rc1.rpd
-eb-flash -s 0x10000 -w 3 dev/wbm1 falloutv6_1_2-rc1-pexarria5.rpd
+eb-flash -s 0x10000 -w 3 dev/wbm0 'ftm rpd file'
+eb-flash -s 0x10000 -w 3 dev/wbm1 'pexarria5 rpd file'
 # 3. Reboot
 eb-reset dev/wbm0 fpgareset; eb-reset dev/wbm1 fpgareset; reboot
 \end{verbatim}
@@ -332,8 +341,12 @@ Now, if result of flash looks OK, update PXE boot (on ASL cluster).
 \begin{verbatim}
 ssh mskorsky@asl742.acc
 cd /common/export/nfsinit/fel0069/
+# adopt gateware timing rte
 rm 20_timing-rte
 ln -s ../global/timing-rte-tg-fallout-v6.1.2-rc1 20_timing-rte
+# adopt DM tools, includes dm-cmd, dm-sched, libcarpedm
+rm 40_generator_dev
+ln -s ../global/dm-.... 40_generator_dev
 str-D # end ssh session
 \end{verbatim}
 Second reboot of fel0029.
