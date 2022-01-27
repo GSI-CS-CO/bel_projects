@@ -51,8 +51,10 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB        : inout std_logic;
-    OneWire_CB_splz   : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_CB          : inout std_logic;
+    OneWire_CB_splz     : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_aux_CB      : inout std_logic;
+    OneWire_aux_CB_splz : out   std_logic; --Strong Pull-Up for Onewire+
 
     -----------------------------------------------------------------------
     -- Misc.
@@ -71,7 +73,6 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
     wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
 
    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -120,14 +121,14 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- SFP (auxiliary - not used here)
     -----------------------------------------------------------------------
-    -- sfp_aux_tx_disable_o_nc : out   std_logic := '0';
-    -- sfp_aux_tx_fault_i_nc   : in    std_logic;
-    -- sfp_aux_los_i_nc        : in    std_logic;
-    -- sfp_aux_txp_o_nc        : out   std_logic;
-    -- sfp_aux_rxp_i_nc        : in    std_logic;
-    -- sfp_aux_mod0_i_nc       : in    std_logic;
-    -- sfp_aux_mod1_io_nc      : inout std_logic;
-    -- sfp_aux_mod2_io_nc      : inout std_logic;
+    sfp_aux_tx_disable_o_nc : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_tx_fault_i_nc   : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_los_i_nc        : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_mod0_i_nc       : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_mod1_io_nc      : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_mod2_io_nc      : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_gpio_zero       : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_gpio_one        : inout std_logic; -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
@@ -163,7 +164,7 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(7 downto 0);
+  signal s_gpio_o   : std_logic_vector(11 downto 0);
   signal s_gpio_i   : std_logic_vector(7 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
@@ -185,7 +186,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 27) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 31) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -197,6 +198,10 @@ architecture rtl of pexarria10 is
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_RED ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_BLU ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_GRE ",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RE_LED_WHI ",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -234,6 +239,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_inout         => 8,
+      g_gpio_out           => 4,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 5,
@@ -242,8 +248,6 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
-      g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_lm32_cores         => c_cores,
@@ -312,7 +316,7 @@ begin
       ps_data                 => psram_dq,
       ps_seln(0)              => psram_ubn,
       ps_seln(1)              => psram_lbn,
-      ps_cen                  => psram_cen (0),
+      ps_cen                  => psram_cen(0),
       ps_oen                  => psram_oen,
       ps_wen                  => psram_wen,
       ps_cre                  => psram_cre,
@@ -320,20 +324,18 @@ begin
       ps_wait                 => psram_wait);
 
   -- LEDs
-  wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
-  sfp_led_fpg_o <= not s_led_track;                        -- green = timing valid
-  sfp_led_fpr_o <= not s_led_pps;                          -- white = PPS
- -- wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
- -- wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
+  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
+  wr_leds_o(1)                  <= not s_led_link_up;                      -- blue  = link
+  wr_leds_o(2)                  <= not s_led_track;                        -- green = timing valid
+  wr_leds_o(3)                  <= not s_led_pps;                          -- white = PPS
+  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(8);                            -- red
+  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(9);                            -- blue
+  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(10);                           -- green
+  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(11);                           -- white
 
-----------------------------------------------------------
--- GPIO mapping
-----------------------------------------------------------
-
--------------------------------------------------
--- LVDS USBC mapping
--------------------------------------------------
+  -------------------------------------------------
+  -- LVDS USBC mapping
+  -------------------------------------------------
   -- USBC TX LVDS output
   usbc_tx : for i in 0 to 4 generate
     --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
@@ -344,8 +346,6 @@ begin
     usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
     --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
     usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
-    --usbc_tx5_n(i+1) <= s_lvds_n_o(i+20);
-    --usbc_tx5_p(i+1) <= s_lvds_p_o(i+20);
   end generate;
 
   -- USBC RX LVDS input
@@ -358,8 +358,6 @@ begin
     s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
     s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
     s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
-    --s_lvds_n_i(i+20) <= usbc_rx5_n(i+1);
-    --s_lvds_p_i(i+20) <= usbc_rx5_p(i+1);
   end generate;
 
   -- I2C
@@ -376,7 +374,8 @@ begin
     cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
   end generate;
 
-  ------------------
-  OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
+  -- OneWire
+  OneWire_CB_splz     <= '1';  -- Strong Pull-Up disabled
+  OneWire_aux_CB_splz <= 'Z';  -- Unconnected on pexarria10
 
 end rtl;
