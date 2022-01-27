@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Dec-2021
+ *  version : 27-Jan-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000315
+#define B2B_MON_VERSION 0x000316
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -289,9 +289,9 @@ void buildPrintLine(uint32_t idx)
     else {
       sprintf(tmp2, "%5d", dicGetval[idx].inj_dKickMon);
       utmp1   = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickMon - dicGetval[idx].ext_dKickMon;
-      if ((dicGetval[idx].flag_nok >> 1) & 0x1) sprintf(tmp4, "%5s", TXTERROR);
-      else                                      sprintf(tmp4, "%5d", utmp1);
-      if ((dicGetval[idx].flag_nok >> 7) & 0x1) sprintf(tmp3, "%5s", TXTUNKWN);
+      if ((dicGetval[idx].flag_nok >> 1) & 0x1)  sprintf(tmp4, "%5s", TXTERROR);
+      else                                       sprintf(tmp4, "%5d", utmp1);
+      if ((dicGetval[idx].flag_nok >> 7) & 0x1) {sprintf(tmp3, "%5s", TXTUNKWN); sprintf(tmp5, "%5s", TXTUNKWN);}
       else {
         sprintf(tmp3, "%5d", dicGetval[idx].inj_dKickProb);
         utmp2 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
@@ -478,6 +478,25 @@ void printData(char *name)
   flagPrintNow = 0;
 } // printServices
   
+
+// print help text to screen
+void printHelpText()
+{
+  int i;
+
+  comlib_term_curpos(1,1);
+  printf("%s\n", title);
+  
+  for (i=0; i<15; i++) printf("%s\n", empty);
+  //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+  printf("please visit the following URL                                                    \n");
+  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_Monitor             \n");
+  printf("%s\n", empty);
+  printf("press any key to continue\n");
+  while (!comlib_term_getChar()) {usleep(200000);}
+} // printHelpText
+
+
 int main(int argc, char** argv)
 {
   int opt, error = 0;
@@ -591,6 +610,10 @@ int main(int argc, char** argv)
         case '2' :
           flagPrintYr = !flagPrintYr;
           flagPrintNow = 1;
+          break;
+        case 'h'         :
+          printHelpText();
+          flagSetUpdate[0] = 1; // this is a hack to force an update
           break;
         case 'q'         :
           quit = 1;
