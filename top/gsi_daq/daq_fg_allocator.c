@@ -6,7 +6,7 @@
  * @note This module is suitable for LM32 and Linux
  *
  * @see
- * <a href="https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ * <a href="https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/DataAquisitionMacrofürSCUSlaveBaugruppen">
  * Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  *
  * @date 21.10.2020
@@ -49,12 +49,36 @@
 /*! ---------------------------------------------------------------------------
  * @see daq_fg_allocator.h
  */
+const char* daqDeviceTypeToString( const DAQ_DEVICE_TYP_T type )
+{
+   #define CASE_ITEM( c ) case c: return #c
+
+   switch( type )
+   {
+      CASE_ITEM( UNKNOWN );
+      CASE_ITEM( ADDAC );
+      CASE_ITEM( ACU );
+      CASE_ITEM( DIOB );
+   #ifdef CONFIG_MIL_FG
+      CASE_ITEM( MIL );
+   #endif
+   }
+
+   #undef CASE_ITEM
+
+   return "undefined";
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq_fg_allocator.h
+ */
 unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum,
                                      const DAQ_DEVICE_TYP_T type )
 {
    DAQ_FG_ASSERT( fgNum < MAX_FG_PER_SLAVE );
    switch( type )
    {
+      case DIOB: /* CAUTION: DIOB is a workaround! No break here. */
       case ADDAC:
       { /*
          * Returning of DAQ-channel number of ADDAC function generators
@@ -91,6 +115,7 @@ unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum,
    DAQ_FG_ASSERT( fgNum < MAX_FG_PER_SLAVE );
    switch( type )
    {
+      case DIOB: /* CAUTION: DIOB is a workaround! No break here. */
       case ADDAC:
       { /*
          * Returning of DAQ-channel number of ADDAC function generators

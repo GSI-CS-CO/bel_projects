@@ -764,7 +764,7 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
       mprintf( ESC_FG_CYAN
                "%s-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
                ESC_NORMAL,
-               (pThis->type == ACU)? "ACU" : "ADDAC",
+               daqDeviceTypeToString( pThis->type ),
                channel, daqChannelGetSlot( pCurrentChannel ),
                pCurrentChannel
              );
@@ -891,26 +891,35 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
 
    #ifndef CONFIG_DAQ_SINGLE_APP
       if( pFgList != NULL )
-      {/*
-        * Making the ADDAC resp. ACU function-generator known for SAFT-LIB.
-        */
+      {
+   #endif
+        /*
+         * Making the ADDAC resp. ACU function-generator known for SAFT-LIB.
+         */
          if( currentType == ACU )
          {
             pCurrentDaqDevice->type = currentType;
+          #ifndef CONFIG_DAQ_SINGLE_APP
             addAcuToFgList( pScuBusBase, slot, pFgList );
+          #endif
          }
          else if( scuBusIsSlavePresent( addacSlots, slot ) )
          {
             pCurrentDaqDevice->type = ADDAC;
+          #ifndef CONFIG_DAQ_SINGLE_APP
             addAddacToFgList( pScuBusBase, slot, pFgList );
+          #endif
          }
-       #ifdef CONFIG_DIOB_WITH_DAQ  
+       #ifdef CONFIG_DIOB_WITH_DAQ
          else if( scuBusIsSlavePresent( diobSlots, slot ) )
          {
             pCurrentDaqDevice->type = DIOB;
+          #ifndef CONFIG_DAQ_SINGLE_APP
             addDiobToFgList( pScuBusBase, slot, pFgList );
+          #endif
          }
-       #endif     
+       #endif
+   #ifndef CONFIG_DAQ_SINGLE_APP
       }
    #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 

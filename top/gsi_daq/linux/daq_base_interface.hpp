@@ -48,7 +48,10 @@ namespace daq
  * @ingroup DEBUG
  * @brief Converts the device type into a string.
  */
-const std::string deviceType2String( const DAQ_DEVICE_TYP_T typ );
+inline const std::string deviceType2String( const DAQ_DEVICE_TYP_T typ )
+{
+   return daqDeviceTypeToString( typ );
+}
 
 } // namespace daq
 

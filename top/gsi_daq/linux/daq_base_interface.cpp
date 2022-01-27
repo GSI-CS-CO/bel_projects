@@ -26,31 +26,7 @@
 #include <daq_base_interface.hpp>
 #include <unistd.h>
 
-#include <string.h>
-
 using namespace Scu;
-
-/*! ----------------------------------------------------------------------------
- * @ingroup DEBUG
- * @brief Converts the command return code of LM32 into a string.
- */
-const std::string Scu::daq::deviceType2String( const DAQ_DEVICE_TYP_T typ )
-{
-   #define __RET_CODE_CASE_ITEM( name ) case name: return #name
-   switch( typ )
-   {
-      __RET_CODE_CASE_ITEM( UNKNOWN );
-      __RET_CODE_CASE_ITEM( ADDAC );
-      __RET_CODE_CASE_ITEM( ACU );
-      __RET_CODE_CASE_ITEM( DIOB );
-   #ifdef CONFIG_MIL_FG
-      __RET_CODE_CASE_ITEM( MIL );
-   #endif
-      default: break;
-   }
-   return "unknown";
-   #undef __RET_CODE_CASE_ITEM
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! --------------------------------------------------------------------------

@@ -75,6 +75,17 @@ typedef enum
 #endif
 } DAQ_DEVICE_TYP_T;
 
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Function converts the binary enum type of DAQ device-type in a
+ *        human readable string.
+ * @param type Binary coded device type.
+ * @return Human readable DAQ device type.
+ */
+const char* daqDeviceTypeToString( const DAQ_DEVICE_TYP_T type );
+
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @brief Returns the channel number for the set-value of the given function-
