@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Dec-2021
+ *  version : 27-Jan-2022
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000315
+#define B2B_CLIENT_SYS_VERSION 0x000316
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -222,7 +222,7 @@ void printServices(int flagOnce)
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s>              %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>   %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
   
@@ -243,7 +243,7 @@ void printServices(int flagOnce)
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
     if (*tmp == no_link_32)                      sprintf(cHost,   "%18s",          no_link_str);
     else                                         sprintf(cHost,   "%18s",          dicSystem[i].hostname); 
-    printf(" %2d %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cHost);
+    printf(" %2x %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cHost);
   } // for i
 
   for (i=0; i<4; i++) printf("%s\n", empty);
@@ -269,6 +269,24 @@ void printStatusText()
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
 } // printStatusText
+
+
+// print help text to screen
+void printHelpText()
+{
+  int i;
+
+  comlib_term_curpos(1,1);
+  printf("%s\n", title);
+  
+  for (i=0; i<B2BNSYS; i++) printf("%s\n", empty);
+  //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+  printf("please visit the following URL                                                    \n");
+  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_System_Status       \n");
+  printf("%s\n", empty);
+  printf("press any key to continue\n");
+  while (!comlib_term_getChar()) {usleep(200000);}
+} // printHelpText
 
 
 int main(int argc, char** argv) {
@@ -350,6 +368,9 @@ int main(int argc, char** argv) {
           case '0' ... '9' :
             if (sysId == 0xffff) sysId = userInput - 48; // ugly
             dicCmdClearDiag(prefix, sysId);
+            break;
+          case 'h'         :
+            printHelpText();
             break;
           case 'q'         :
             quit = 1;
