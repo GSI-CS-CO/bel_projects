@@ -281,8 +281,8 @@ void printHelpText()
   
   for (i=0; i<B2BNSYS; i++) printf("%s\n", empty);
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-  printf("please visit the following URL                                                    \n");
-  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_System_Status       \n");
+  printf("please visit the following URL                                                  \n");
+  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_System_Status     \n");
   printf("%s\n", empty);
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
