@@ -462,7 +462,7 @@ void printData(char *name)
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>                                                                         %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                              %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
