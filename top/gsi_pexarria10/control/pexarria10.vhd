@@ -121,14 +121,13 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- SFP (auxiliary - not used here)
     -----------------------------------------------------------------------
-    sfp_aux_tx_disable_o_nc : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_tx_fault_i_nc   : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_los_i_nc        : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_mod0_i_nc       : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_mod1_io_nc      : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_mod2_io_nc      : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_gpio_zero       : inout std_logic; -- USBC5 (pexarria10 only)
-    sfp_aux_gpio_one        : inout std_logic; -- USBC5 (pexarria10 only)
+    sfp_aux_tx_disable_io_nc : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_tx_fault_io_nc   : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_los_io_nc        : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_mod0_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_mod1_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_mod2_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
+    sfp_aux_gpio_io_extra    : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
@@ -164,8 +163,8 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(11 downto 0);
-  signal s_gpio_i   : std_logic_vector(7 downto 0);
+  signal s_gpio_o   : std_logic_vector(21 downto 0);
+  signal s_gpio_i   : std_logic_vector(17 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
@@ -186,7 +185,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 31) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 41) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -198,10 +197,20 @@ architecture rtl of pexarria10 is
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_RED ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_BLU ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_GRE ",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RE_LED_WHI ",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX1P ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX1N ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX2P ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX2N ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX1P ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX1N ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX2P ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX2N ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_DATP ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_DATN ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_RED ",  IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_BLU ",  IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_GRE ",  IO_NONE,         false,   false, 20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RE_LED_WHI ",  IO_NONE,         false,   false, 21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -238,7 +247,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_inout         => 8,
+      g_gpio_inout         => 18,
       g_gpio_out           => 4,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
@@ -328,10 +337,32 @@ begin
   wr_leds_o(1)                  <= not s_led_link_up;                      -- blue  = link
   wr_leds_o(2)                  <= not s_led_track;                        -- green = timing valid
   wr_leds_o(3)                  <= not s_led_pps;                          -- white = PPS
-  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(8);                            -- red
-  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(9);                            -- blue
-  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(10);                           -- green
-  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(11);                           -- white
+  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(18);                           -- red
+  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(19);                           -- blue
+  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(20);                           -- green
+  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(21);                           -- white
+
+  -- Additional GPIOs (USBC5)
+  sfp_aux_tx_disable_io_nc <= s_gpio_o(8)  when s_gpio_o(8)='0'  else 'Z';
+  sfp_aux_tx_fault_io_nc   <= s_gpio_o(9)  when s_gpio_o(9)='0'  else 'Z';
+  sfp_aux_los_io_nc        <= s_gpio_o(10) when s_gpio_o(10)='0' else 'Z';
+  sfp_aux_mod0_io_nc       <= s_gpio_o(11) when s_gpio_o(11)='0' else 'Z';
+  sfp_aux_mod1_io_nc       <= s_gpio_o(12) when s_gpio_o(12)='0' else 'Z';
+  sfp_aux_mod2_io_nc       <= s_gpio_o(13) when s_gpio_o(13)='0' else 'Z';
+  sfp_aux_gpio_io_extra(0) <= s_gpio_o(14) when s_gpio_o(14)='0' else 'Z';
+  sfp_aux_gpio_io_extra(1) <= s_gpio_o(15) when s_gpio_o(15)='0' else 'Z';
+  sfp_aux_gpio_io_extra(2) <= s_gpio_o(16) when s_gpio_o(16)='0' else 'Z';
+  sfp_aux_gpio_io_extra(3) <= s_gpio_o(17) when s_gpio_o(17)='0' else 'Z';
+  s_gpio_i(8)              <= sfp_aux_tx_disable_io_nc;
+  s_gpio_i(9)              <= sfp_aux_tx_fault_io_nc;
+  s_gpio_i(10)             <= sfp_aux_los_io_nc;
+  s_gpio_i(11)             <= sfp_aux_mod0_io_nc;
+  s_gpio_i(12)             <= sfp_aux_mod1_io_nc;
+  s_gpio_i(13)             <= sfp_aux_mod2_io_nc;
+  s_gpio_i(14)             <= sfp_aux_gpio_io_extra(0);
+  s_gpio_i(15)             <= sfp_aux_gpio_io_extra(1);
+  s_gpio_i(16)             <= sfp_aux_gpio_io_extra(2);
+  s_gpio_i(17)             <= sfp_aux_gpio_io_extra(3);
 
   -------------------------------------------------
   -- LVDS USBC mapping
@@ -350,10 +381,10 @@ begin
 
   -- USBC RX LVDS input
   usbc_rx : for i in 0 to 4 generate
-    s_lvds_n_i(i) <= usbc_rx1_n(i+1);
-    s_lvds_p_i(i) <= usbc_rx1_p(i+1);
-    s_lvds_n_i(i+5) <= usbc_rx2_n(i+1);
-    s_lvds_p_i(i+5) <= usbc_rx2_p(i+1);
+    s_lvds_n_i(i)    <= usbc_rx1_n(i+1);
+    s_lvds_p_i(i)    <= usbc_rx1_p(i+1);
+    s_lvds_n_i(i+5)  <= usbc_rx2_n(i+1);
+    s_lvds_p_i(i+5)  <= usbc_rx2_p(i+1);
     s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
     s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
     s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
