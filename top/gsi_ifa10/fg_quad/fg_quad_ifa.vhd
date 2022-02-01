@@ -5,18 +5,14 @@ use ieee.numeric_std.all;
 use ieee.std_logic_misc.all;
 
 library work;
-use work.fg_quad_ifa_pkg.all;
-
---vk Input nReset zu sys_reset mit signal not
--- gate gate_o_b raus da übergeordnet kein anschluss
+use work.fg_quad_pkg.all;
 
 entity fg_quad_ifa is
   generic (
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;    -- if 1 then diagnosic information is generated during compilation
-    fw_version:           integer range 0 to 65535 := 1
+    fw_version:           integer range 0 to 65535 := 2
     );
-
   port (
     -- ifa interface
     fc:                 in    std_logic_vector(7 downto 0);   -- latched function code from mil interface
@@ -25,7 +21,7 @@ entity fg_quad_ifa is
 
 
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
-    sys_reset:          in    std_logic;
+    nReset:             in    std_logic;
     ext_trigger:        in    std_logic;                      -- external trigger for ramp start
 
     user_rd_active:     out   std_logic;                      -- '1' = read data available
@@ -36,7 +32,7 @@ entity fg_quad_ifa is
 
     sw_out:             out   std_logic_vector(31 downto 8);  -- function generator output
     sw_strobe:          out   std_logic;
-    --gate_o_bc:          out   std_logic;
+    gate_o_bc:          out   std_logic;
     fg_version:         out   std_logic_vector(6 downto 0)
    );
 end entity;
@@ -94,13 +90,13 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal  rd_irq_act:       std_logic;
 
   signal  fg_is_running:    std_logic;
-  --signal  ramp_sec_fin:     std_logic;
+  signal  ramp_sec_fin:     std_logic;
   signal  state_change_irq: std_logic;
   signal  dreq:             std_logic;
   signal  tag_start:        std_logic;
 
   type tag_state_type is(IDLE, TAG_RECEIVED);
-   signal tag_state  :  tag_state_type;
+	signal tag_state	:	tag_state_type;
 
   signal s_sw_out:          std_logic_vector(31 downto 0);
 
@@ -116,20 +112,19 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal fc_edge1    : std_logic;
   signal fc_edge2    : std_logic;
   signal fc_str_edge : std_logic;
-  signal nReset      : std_logic;
 
 begin
-
-nReset <= not sys_reset;
-
   quad_fg: fg_quad_datapath
     generic map (
-      ClK_in_hz => clk_in_hz)
+      ClK_in_hz => clk_in_hz,
+      ACU => false
+      )
     port map (
       data_a              => coeff_a_reg,
       data_b              => coeff_b_reg,
       data_c              => start_value_reg(31 downto 0),
       clk                 => clk,
+      sysclk              => '0',
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a or blk_start_h_wr,
@@ -141,7 +136,7 @@ nReset <= not sys_reset;
       freq_sel            => fg_cntrl_reg(15 downto 13),
       state_change_irq    => state_change_irq,
       dreq                => dreq,
-      ramp_sec_fin        => open, --ramp_sec_fin,
+      ramp_sec_fin        => ramp_sec_fin,
       sw_out              => s_sw_out,
       sw_strobe           => sw_strobe,
       fg_is_running       => fg_is_running

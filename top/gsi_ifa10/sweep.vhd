@@ -27,7 +27,7 @@ use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 use ieee.math_real.all;
 
-use work.ifk10_pkg.all;
+use work.ifa8_pkg.all;
 
 entity sweep is
   generic (
@@ -259,7 +259,5 @@ begin
                 & '0' & '0' & '0' & ena_soft_trig
                 & std_logic_vector(to_unsigned(version, 4));
   sweep_vers <= std_logic_vector(to_unsigned(version, 4));
-  
-  stat_sel<='0'; --VK sonst permanent in select sd_mux_b auf '1'
 
 end architecture;

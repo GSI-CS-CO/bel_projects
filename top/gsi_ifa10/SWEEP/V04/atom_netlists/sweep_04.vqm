@@ -1,0 +1,3175 @@
+// Copyright (C) 1991-2009 Altera Corporation
+// Your use of Altera Corporation's design tools, logic functions 
+// and other software and tools, and its AMPP partner logic 
+// functions, and any output files from any of the foregoing 
+// (including device programming or simulation files), and any 
+// associated documentation or information are expressly subject 
+// to the terms and conditions of the Altera Program License 
+// Subscription Agreement, Altera MegaCore Function License 
+// Agreement, or other applicable license agreement, including, 
+// without limitation, that your use is for the sole purpose of 
+// programming logic devices manufactured by Altera and sold by 
+// Altera or its authorized distributors.  Please refer to the 
+// applicable agreement for further details.
+
+// VENDOR "Altera"
+// PROGRAM "Quartus II"
+// VERSION "Version 9.0 Build 235 06/17/2009 Service Pack 2 SJ Full Version"
+
+// DATE "08/25/2009 09:28:49"
+
+module 	sweep_04 (
+	Stat_Sel,
+	SWEEP_SEL,
+	TAKE_DA,
+	PU_RESET,
+	CLK,
+	FKT,
+	\Sweep-Out ,
+	\/HW_Trig ,
+	D,
+	\Sweep-Stat ,
+	\SWEEP-VERS );
+output 	Stat_Sel;
+input 	SWEEP_SEL;
+input 	TAKE_DA;
+input 	PU_RESET;
+input 	CLK;
+input 	[7:0] FKT;
+output 	[15:0] \Sweep-Out ;
+input 	\/HW_Trig ;
+input 	[15:0] D;
+output 	[15:0] \Sweep-Stat ;
+output 	[3:0] \SWEEP-VERS ;
+wire \lpm_ff:SUB_REG|dffs[17] ;
+wire \lpm_ff:SUB_REG|dffs[14] ;
+wire \lpm_ff:SUB_REG|dffs[12] ;
+wire \lpm_ff:SUB_REG|dffs[9] ;
+wire \lpm_ff:SUB_REG|dffs[8] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22 ;
+wire \lpm_ff:Delta_Reg|dffs[10] ;
+wire \lpm_ff:Delta_Reg|dffs[6] ;
+wire \lpm_ff:SUB_REG|dffs[5] ;
+wire \lpm_ff:SUB_REG|dffs[4] ;
+wire \lpm_ff:SUB_REG|dffs[3] ;
+wire \lpm_ff:Delta_Reg|dffs[2] ;
+wire \lpm_ff:SUB_REG|dffs[1] ;
+wire \lpm_ff:SUB_REG|dffs[0] ;
+wire \lpm_ff:SUB_REG|dffs[0]~19 ;
+wire \lpm_ff:SUB_REG|dffs[1]~21 ;
+wire \lpm_ff:SUB_REG|dffs[3]~25 ;
+wire \lpm_ff:SUB_REG|dffs[4]~27 ;
+wire \lpm_ff:SUB_REG|dffs[5]~29 ;
+wire \lpm_ff:SUB_REG|dffs[8]~35 ;
+wire \lpm_ff:SUB_REG|dffs[9]~37 ;
+wire \lpm_ff:SUB_REG|dffs[12]~43 ;
+wire \lpm_ff:SUB_REG|dffs[14]~47 ;
+wire \lpm_ff:SUB_REG|dffs[16]~52 ;
+wire \lpm_ff:SUB_REG|dffs[17]~53 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[2] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[7] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[11] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[10] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[4] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[2] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[0] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[14] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[13] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[11] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[4] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[2] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[0] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14 ;
+wire \lpm_ff:SW_Reg|dffs[4] ;
+wire \lpm_ff:SW_Reg|dffs[1] ;
+wire \lpm_ff:Flat_Reg|dffs[10] ;
+wire \lpm_ff:Flat_Reg|dffs[9] ;
+wire \lpm_ff:Flat_Reg|dffs[8] ;
+wire \lpm_ff:Flat_Reg|dffs[7] ;
+wire \lpm_ff:Flat_Reg|dffs[5] ;
+wire \lpm_ff:Flat_Reg|dffs[4] ;
+wire \lpm_ff:Flat_Reg|dffs[3] ;
+wire \lpm_ff:Flat_Reg|dffs[2] ;
+wire \lpm_ff:Flat_Reg|dffs[1] ;
+wire \lpm_ff:Flat_Reg|dffs[0] ;
+wire \Steuerung:St1|SM_Wr_FT_Int ;
+wire \Steuerung:St1|Delta_Not_Zero ;
+wire \SWEEP_DECO:Deco|Soft_Trig_ff~2 ;
+wire \SWEEP_DECO:Deco|Soft_Trig_ff~3 ;
+wire \SWEEP_DECO:Deco|RES_DFF~1 ;
+wire \rtl~0 ;
+wire \rtl~3 ;
+wire \SWEEP_DECO:Deco|Soft_Trig_ff~4 ;
+wire \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2 ;
+wire \Steuerung:St1|SM_Wr_FT_Int~1 ;
+wire \Steuerung:St1|_~95 ;
+wire \Steuerung:St1|SM_Wr_FT_Int~0 ;
+wire \Steuerung:St1|Delta_Not_Zero~1 ;
+wire \Steuerung:St1|Delta_Not_Zero~2 ;
+wire \Steuerung:St1|Delta_Not_Zero~3 ;
+wire \Steuerung:St1|Delta_Not_Zero~4 ;
+wire \lpm_ff:Delta_Reg|dffs[10]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[8]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[7]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[6]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[5]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[4]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[3]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[2]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[2]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[1]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[0]~feeder ;
+wire \CLK~clkctrl ;
+wire \SWEEP_DECO:Deco|STAT1_DFF~2 ;
+wire \SWEEP_DECO:Deco|_~83 ;
+wire \SWEEP_DECO:Deco|STAT1_DFF~3 ;
+wire \SWEEP_DECO:Deco|_~84 ;
+wire \SWEEP_DECO:Deco|RES_DFF~0 ;
+wire \SWEEP_DECO:Deco|RES_DFF ;
+wire \SWEEP_DECO:Deco|RES_DFF~clkctrl ;
+wire \SWEEP_DECO:Deco|STAT1_DFF ;
+wire \SWEEP_DECO:Deco|Ld_Delay_DFF~2 ;
+wire \SWEEP_DECO:Deco|Ld_Delta_DFF~1 ;
+wire \SWEEP_DECO:Deco|Ld_Delta_DFF ;
+wire \SWEEP_DECO:Deco|Ld_Delay_DFF~1 ;
+wire \SWEEP_DECO:Deco|Ld_Delay_DFF ;
+wire \Steuerung:St1|_~87 ;
+wire \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1 ;
+wire \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ;
+wire \Steuerung:St1|_~88 ;
+wire \Steuerung:St1|SM_Set_Flattop~0 ;
+wire \Steuerung:St1|SM_Set_Flattop ;
+wire \lpm_ff:Flat_Reg|dffs[15]~feeder ;
+wire \SWEEP_DECO:Deco|Set_Flattop_DFF~1 ;
+wire \SWEEP_DECO:Deco|Set_Flattop_DFF ;
+wire \Steuerung:St1|_~90 ;
+wire \Steuerung:St1|_~96 ;
+wire \Steuerung:St1|SM_Wr_Delta~1 ;
+wire \Steuerung:St1|SM_Wr_Delta~2 ;
+wire \Steuerung:St1|SM_Wr_Delta ;
+wire \Steuerung:St1|SM_Wr_Delay~1 ;
+wire \Steuerung:St1|SM_Wr_Delay~0 ;
+wire \Steuerung:St1|SM_Wr_Delay ;
+wire \Steuerung:St1|_~91 ;
+wire \Steuerung:St1|_~89 ;
+wire \Steuerung:St1|_~86 ;
+wire \Steuerung:St1|SM_Seq_Err~1 ;
+wire \Steuerung:St1|SM_Seq_Err~2 ;
+wire \Steuerung:St1|Seq_Err_FF~3 ;
+wire \Steuerung:St1|Seq_Err_FF ;
+wire \Steuerung:St1|_~92 ;
+wire \Steuerung:St1|SM_Seq_Err~3 ;
+wire \Steuerung:St1|SM_Seq_Err~4 ;
+wire \Steuerung:St1|SM_Seq_Err ;
+wire \lpm_ff:Flat_Reg|dffs[13]~feeder ;
+wire \Steuerung:St1|Wr_FT_Int ;
+wire \lpm_ff:Flat_Reg|dffs[13] ;
+wire \lpm_ff:Flat_Reg|dffs[12]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[12] ;
+wire \lpm_ff:Flat_Reg|dffs[11] ;
+wire \lpm_ff:Flat_Reg|dffs[6]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[6] ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51 ;
+wire \ADD_C~0 ;
+wire \Steuerung:St1|_~85 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1 ;
+wire \~GND ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[1] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[3] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[5] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[6] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[7] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[8] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[9] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[10] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[12] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[15] ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~COUT ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16 ;
+wire \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[16] ;
+wire \Steuerung:St1|Timeout ;
+wire \SWEEP_DECO:Deco|Stop_DFF~1 ;
+wire \SWEEP_DECO:Deco|Stop_DFF ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1 ;
+wire \Steuerung:St1|Wr_Delay ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[1] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[4] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[6] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[8] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~COUT ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[9] ;
+wire \Steuerung:St1|Delay_Fin~3 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[5] ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[3] ;
+wire \Steuerung:St1|Delay_Fin~2 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0 ;
+wire \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[0] ;
+wire \SWEEP_DECO:Deco|Soft_Trig_ff~0 ;
+wire \SWEEP_DECO:Deco|Soft_Trig_ff ;
+wire \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8 ;
+wire \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff ;
+wire \Steuerung:St1|Trigger_Sync~1 ;
+wire \Steuerung:St1|Trigger_Sync ;
+wire \Steuerung:St1|Trigger_Sync_1~feeder ;
+wire \Steuerung:St1|Trigger_Sync_1 ;
+wire \Steuerung:St1|Trigger_FF~5 ;
+wire \Steuerung:St1|Trigger_FF ;
+wire \Steuerung:St1|Delay_Fin~1 ;
+wire \Steuerung:St1|Delay_Fin~4 ;
+wire \Steuerung:St1|Delay_Fin ;
+wire \Steuerung:St1|_~93 ;
+wire \Steuerung:St1|SM_W_Start~0 ;
+wire \Steuerung:St1|SM_W_Start ;
+wire \Steuerung:St1|S_Stop_Delta~5 ;
+wire \Steuerung:St1|SM_Stop~0 ;
+wire \Steuerung:St1|SM_Stop ;
+wire \Steuerung:St1|Stop_DFF ;
+wire \Steuerung:St1|_~94 ;
+wire \Steuerung:St1|SM_Work~0 ;
+wire \Steuerung:St1|SM_Work ;
+wire \Steuerung:St1|Work_DFF ;
+wire \120 ;
+wire \120~clkctrl ;
+wire ADD_C;
+wire SUB_C;
+wire \11 ;
+wire \lpm_ff:SW_Reg|dffs[11] ;
+wire \lpm_ff:Delta_Reg|dffs[11]~feeder ;
+wire \Steuerung:St1|S_Stop_Delta~6 ;
+wire \Steuerung:St1|Wr_Delta ;
+wire \114 ;
+wire \lpm_ff:Delta_Reg|dffs[11] ;
+wire \lpm_ff:Delta_Reg|dffs[9]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[9] ;
+wire \lpm_ff:Delta_Reg|dffs[8]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[8] ;
+wire \lpm_ff:Delta_Reg|dffs[7]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[7] ;
+wire \lpm_ff:Delta_Reg|dffs[5]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[5] ;
+wire \lpm_ff:Delta_Reg|dffs[4]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[4] ;
+wire \lpm_ff:Delta_Reg|dffs[3]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[3] ;
+wire \lpm_ff:Delta_Reg|dffs[1]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[1] ;
+wire \lpm_ff:Delta_Reg|dffs[0]~feeder ;
+wire \lpm_ff:Delta_Reg|dffs[0] ;
+wire \lpm_ff:SUB_REG|dffs[0]~20 ;
+wire \lpm_ff:SUB_REG|dffs[1]~22 ;
+wire \lpm_ff:SUB_REG|dffs[2]~23 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[1] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[3] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[5] ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~COUT ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6 ;
+wire \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[6] ;
+wire \136 ;
+wire \lpm_ff:SUB_REG|dffs[2] ;
+wire \lpm_ff:SUB_REG|dffs[2]~24 ;
+wire \lpm_ff:SUB_REG|dffs[3]~26 ;
+wire \lpm_ff:SUB_REG|dffs[4]~28 ;
+wire \lpm_ff:SUB_REG|dffs[5]~30 ;
+wire \lpm_ff:SUB_REG|dffs[6]~31 ;
+wire \lpm_ff:SUB_REG|dffs[6] ;
+wire \lpm_ff:SUB_REG|dffs[6]~32 ;
+wire \lpm_ff:SUB_REG|dffs[7]~34 ;
+wire \lpm_ff:SUB_REG|dffs[8]~36 ;
+wire \lpm_ff:SUB_REG|dffs[9]~38 ;
+wire \lpm_ff:SUB_REG|dffs[10]~39 ;
+wire \lpm_ff:SUB_REG|dffs[10] ;
+wire \lpm_ff:SUB_REG|dffs[10]~40 ;
+wire \lpm_ff:SUB_REG|dffs[11]~42 ;
+wire \lpm_ff:SUB_REG|dffs[12]~44 ;
+wire \lpm_ff:SUB_REG|dffs[13]~45 ;
+wire \lpm_ff:SUB_REG|dffs[13] ;
+wire \lpm_ff:SUB_REG|dffs[13]~46 ;
+wire \lpm_ff:SUB_REG|dffs[14]~48 ;
+wire \lpm_ff:SUB_REG|dffs[15]~50 ;
+wire \lpm_ff:SUB_REG|dffs[16]~51 ;
+wire \lpm_ff:SUB_REG|dffs[16] ;
+wire \lpm_ff:SUB_REG|dffs[15]~49 ;
+wire \lpm_ff:SUB_REG|dffs[15] ;
+wire \lpm_ff:SUB_REG|dffs[11]~41 ;
+wire \lpm_ff:SUB_REG|dffs[11] ;
+wire \lpm_ff:SUB_REG|dffs[7]~33 ;
+wire \lpm_ff:SUB_REG|dffs[7] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0 ;
+wire \rtl~4 ;
+wire \lpm_ff:SW_Reg|dffs[0] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~1 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~3 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4 ;
+wire \rtl~2 ;
+wire \lpm_ff:SW_Reg|dffs[2] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~5 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6 ;
+wire \rtl~1 ;
+wire \lpm_ff:SW_Reg|dffs[3] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~7 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~9 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~11 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56 ;
+wire \lpm_ff:SW_Reg|dffs[6] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~13 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55 ;
+wire \lpm_ff:SW_Reg|dffs[7] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~15 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54 ;
+wire \lpm_ff:SW_Reg|dffs[8] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~17 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~19 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~21 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~23 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~25 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~27 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~29 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~31 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46 ;
+wire \lpm_ff:SW_Reg|dffs[16] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~33 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45 ;
+wire \lpm_ff:SW_Reg|dffs[17] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~35 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44 ;
+wire \lpm_ff:SW_Reg|dffs[18] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~37 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~39 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~41 ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42 ;
+wire R_Fin;
+wire \Steuerung:St1|SM_Idle~1 ;
+wire \Steuerung:St1|SM_Idle~2 ;
+wire \Steuerung:St1|SM_Idle ;
+wire \Steuerung:St1|Init_HW_DFF~0 ;
+wire \Steuerung:St1|Init_HW_DFF ;
+wire \Steuerung:St1|Init_HW_DFF~clkctrl ;
+wire \lpm_ff:Flat_Reg|dffs[15] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42 ;
+wire \lpm_ff:SW_Reg|dffs[20] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38 ;
+wire \lpm_ff:Flat_Reg|dffs[14]~feeder ;
+wire \lpm_ff:Flat_Reg|dffs[14] ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43 ;
+wire \lpm_ff:SW_Reg|dffs[19] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47 ;
+wire \lpm_ff:SW_Reg|dffs[15] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48 ;
+wire \lpm_ff:SW_Reg|dffs[14] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49 ;
+wire \lpm_ff:SW_Reg|dffs[13] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50 ;
+wire \lpm_ff:SW_Reg|dffs[12] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52 ;
+wire \lpm_ff:SW_Reg|dffs[10] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53 ;
+wire \lpm_ff:SW_Reg|dffs[9] ;
+wire \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10 ;
+wire \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57 ;
+wire \lpm_ff:SW_Reg|dffs[5] ;
+wire \Steuerung:St1|W_Start_DFF~feeder ;
+wire \Steuerung:St1|W_Start_DFF ;
+wire \Steuerung:St1|Idle ;
+wire \Steuerung:St1|Stop_Exec_SRFF~3 ;
+wire \Steuerung:St1|Stop_Exec_SRFF ;
+wire \Steuerung:St1|TO_Err_FF~3 ;
+wire \Steuerung:St1|TO_Err_FF ;
+wire [15:0] \lpm_ff:Flat_Reg|dffs ;
+wire [11:0] \lpm_ff:Delta_Reg|dffs ;
+wire [6:0] \lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard ;
+wire [17:0] \lpm_ff:SUB_REG|dffs ;
+wire [11:0] \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q ;
+wire [16:0] \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q ;
+wire [20:0] \lpm_ff:SW_Reg|dffs ;
+
+
+wire gnd;
+wire vcc;
+
+assign gnd = 1'b0;
+assign vcc = 1'b1;
+
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[17]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[17]~53 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[17] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[14]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[14]~47 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[14] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[12]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[12]~43 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[12] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[9]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[9]~37 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[9] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[8]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[8]~35 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[8] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[1] ),
+	.datab(\lpm_ff:SUB_REG|dffs[7] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~1 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~3 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2_I .lut_mask = "694D";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[4] ),
+	.datab(\lpm_ff:SUB_REG|dffs[10] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~7 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~9 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8_I .lut_mask = "962B";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[17] ),
+	.datab(\lpm_ff:SW_Reg|dffs[11] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~21 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~23 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22_I .lut_mask = "692B";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[10]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[10]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[10] ));
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[6]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[6]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[6] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[5]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[5]~29 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[5] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[4]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[4]~27 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[4] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[3]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[3]~25 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[3] ));
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[2]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[2]~feeder ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[2] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[1]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[1]~21 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[1] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[0]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[0]~19 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[0] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[0]~19_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[0] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[0] ),
+	.datad(vcc),
+	.combout(\lpm_ff:SUB_REG|dffs[0]~19 ),
+	.cout(\lpm_ff:SUB_REG|dffs[0]~20 ));
+defparam \lpm_ff:SUB_REG|dffs[0]~19_I .sum_lutc_input = "datac";
+defparam \lpm_ff:SUB_REG|dffs[0]~19_I .lut_mask = "6688";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[1]~21_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[1] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[1] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[0]~20 ),
+	.combout(\lpm_ff:SUB_REG|dffs[1]~21 ),
+	.cout(\lpm_ff:SUB_REG|dffs[1]~22 ));
+defparam \lpm_ff:SUB_REG|dffs[1]~21_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[1]~21_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[3]~25_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[3] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[3] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[2]~24 ),
+	.combout(\lpm_ff:SUB_REG|dffs[3]~25 ),
+	.cout(\lpm_ff:SUB_REG|dffs[3]~26 ));
+defparam \lpm_ff:SUB_REG|dffs[3]~25_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[3]~25_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[4]~27_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[4] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[4] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[3]~26 ),
+	.combout(\lpm_ff:SUB_REG|dffs[4]~27 ),
+	.cout(\lpm_ff:SUB_REG|dffs[4]~28 ));
+defparam \lpm_ff:SUB_REG|dffs[4]~27_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[4]~27_I .lut_mask = "698E";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[5]~29_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[5] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[5] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[4]~28 ),
+	.combout(\lpm_ff:SUB_REG|dffs[5]~29 ),
+	.cout(\lpm_ff:SUB_REG|dffs[5]~30 ));
+defparam \lpm_ff:SUB_REG|dffs[5]~29_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[5]~29_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[8]~35_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[8] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[8] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[7]~34 ),
+	.combout(\lpm_ff:SUB_REG|dffs[8]~35 ),
+	.cout(\lpm_ff:SUB_REG|dffs[8]~36 ));
+defparam \lpm_ff:SUB_REG|dffs[8]~35_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[8]~35_I .lut_mask = "698E";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[9]~37_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[9] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[9] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[8]~36 ),
+	.combout(\lpm_ff:SUB_REG|dffs[9]~37 ),
+	.cout(\lpm_ff:SUB_REG|dffs[9]~38 ));
+defparam \lpm_ff:SUB_REG|dffs[9]~37_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[9]~37_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[12]~43_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[12] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[11]~42 ),
+	.combout(\lpm_ff:SUB_REG|dffs[12]~43 ),
+	.cout(\lpm_ff:SUB_REG|dffs[12]~44 ));
+defparam \lpm_ff:SUB_REG|dffs[12]~43_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[12]~43_I .lut_mask = "A50A";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[14]~47_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[14] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[13]~46 ),
+	.combout(\lpm_ff:SUB_REG|dffs[14]~47 ),
+	.cout(\lpm_ff:SUB_REG|dffs[14]~48 ));
+defparam \lpm_ff:SUB_REG|dffs[14]~47_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[14]~47_I .lut_mask = "A50A";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[16]~51_I (
+	.datab(\lpm_ff:SUB_REG|dffs[16] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[15]~50 ),
+	.combout(\lpm_ff:SUB_REG|dffs[16]~51 ),
+	.cout(\lpm_ff:SUB_REG|dffs[16]~52 ));
+defparam \lpm_ff:SUB_REG|dffs[16]~51_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[16]~51_I .lut_mask = "C30C";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[17]~53_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[17] ),
+	.cin(\lpm_ff:SUB_REG|dffs[16]~52 ),
+	.combout(\lpm_ff:SUB_REG|dffs[17]~53 ));
+defparam \lpm_ff:SUB_REG|dffs[17]~53_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[17]~53_I .lut_mask = "5A5A";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[2] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2 ),
+	.sdata(D[2]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[2] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[7] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7 ),
+	.sdata(D[7]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[7] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[11] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11 ),
+	.sdata(D[11]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[11] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[10] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10 ),
+	.sdata(D[10]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[10] ));
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[4] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[4] ));
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[2] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[2] ));
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[0] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[0] ));
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~I (
+	.dataa(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[0] ),
+	.datad(vcc),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~I .lut_mask = "55AA";
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~I (
+	.dataa(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[2] ),
+	.datad(vcc),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~I .lut_mask = "A50A";
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~I (
+	.dataa(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[4] ),
+	.datad(vcc),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~I .lut_mask = "A50A";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[2] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~I .lut_mask = "A505";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[7] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[9] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~I (
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[10] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~I .lut_mask = "C303";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11~I (
+	.datad(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[11] ),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita10~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11 ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita11~I .lut_mask = "0FF0";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[14] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[14] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[13] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[13] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[11] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[11] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[4] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[4] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[2] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[2] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[0] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[0] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[0] ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~I .lut_mask = "5555";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[2] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~I .lut_mask = "A505";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[4] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~I .lut_mask = "A505";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[11] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[13] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[14] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita13~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~I .lut_mask = "A505";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[4]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\rtl~0 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[4] ));
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[1]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\rtl~3 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[1] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[10]~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(D[10]),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.sload(vcc),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[10] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[9]~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(D[9]),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.sload(vcc),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[9] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[8]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[8]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[8] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[7]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[7]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[7] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[5]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[5]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[5] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[4]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[4]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[4] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[3]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[3]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[3] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[2]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[2]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[2] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[1]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[1]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[1] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[0]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[0]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[0] ));
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Wr_FT_Int~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Wr_FT_Int~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Wr_FT_Int ));
+
+cycloneii_lcell_ff \Steuerung:St1|Delta_Not_Zero~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Delta_Not_Zero~4 ),
+	.regout(\Steuerung:St1|Delta_Not_Zero ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Soft_Trig_ff~2_I (
+	.dataa(FKT[2]),
+	.datac(FKT[5]),
+	.combout(\SWEEP_DECO:Deco|Soft_Trig_ff~2 ));
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~2_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~2_I .lut_mask = "5050";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Soft_Trig_ff~3_I (
+	.dataa(\SWEEP_DECO:Deco|_~84 ),
+	.datab(\SWEEP_DECO:Deco|Soft_Trig_ff~2 ),
+	.datac(FKT[3]),
+	.datad(SWEEP_SEL),
+	.combout(\SWEEP_DECO:Deco|Soft_Trig_ff~3 ));
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~3_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~3_I .lut_mask = "0800";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|RES_DFF~1_I (
+	.dataa(PU_RESET),
+	.datac(SWEEP_SEL),
+	.combout(\SWEEP_DECO:Deco|RES_DFF~1 ));
+defparam \SWEEP_DECO:Deco|RES_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|RES_DFF~1_I .lut_mask = "AFAF";
+
+cycloneii_lcell_comb \rtl~0_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~8 ),
+	.combout(\rtl~0 ));
+defparam \rtl~0_I .sum_lutc_input = "datac";
+defparam \rtl~0_I .lut_mask = "5F00";
+
+cycloneii_lcell_comb \rtl~3_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~2 ),
+	.combout(\rtl~3 ));
+defparam \rtl~3_I .sum_lutc_input = "datac";
+defparam \rtl~3_I .lut_mask = "5F00";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Soft_Trig_ff~4_I (
+	.datab(\SWEEP_DECO:Deco|_~84 ),
+	.datac(SWEEP_SEL),
+	.combout(\SWEEP_DECO:Deco|Soft_Trig_ff~4 ));
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~4_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~4_I .lut_mask = "C0C0";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2_I (
+	.dataa(FKT[2]),
+	.datab(FKT[1]),
+	.datac(FKT[5]),
+	.datad(FKT[0]),
+	.combout(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2 ));
+defparam \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2_I .lut_mask = "0001";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_FT_Int~1_I (
+	.dataa(\Steuerung:St1|SM_Wr_FT_Int ),
+	.datab(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.datad(\Steuerung:St1|_~87 ),
+	.combout(\Steuerung:St1|SM_Wr_FT_Int~1 ));
+defparam \Steuerung:St1|SM_Wr_FT_Int~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_FT_Int~1_I .lut_mask = "A0A2";
+
+cycloneii_lcell_comb \Steuerung:St1|_~95_I (
+	.datac(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|_~95 ));
+defparam \Steuerung:St1|_~95_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~95_I .lut_mask = "00F0";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_FT_Int~0_I (
+	.dataa(\Steuerung:St1|_~90 ),
+	.datab(\Steuerung:St1|_~95 ),
+	.datac(\Steuerung:St1|SM_Wr_FT_Int~1 ),
+	.datad(\Steuerung:St1|SM_Wr_Delay ),
+	.combout(\Steuerung:St1|SM_Wr_FT_Int~0 ));
+defparam \Steuerung:St1|SM_Wr_FT_Int~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_FT_Int~0_I .lut_mask = "F4F0";
+
+cycloneii_lcell_comb \Steuerung:St1|Delta_Not_Zero~1_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[11] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[10] ),
+	.datac(\lpm_ff:Delta_Reg|dffs[8] ),
+	.datad(\lpm_ff:Delta_Reg|dffs[9] ),
+	.combout(\Steuerung:St1|Delta_Not_Zero~1 ));
+defparam \Steuerung:St1|Delta_Not_Zero~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delta_Not_Zero~1_I .lut_mask = "0001";
+
+cycloneii_lcell_comb \Steuerung:St1|Delta_Not_Zero~2_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[6] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[4] ),
+	.datac(\lpm_ff:Delta_Reg|dffs[5] ),
+	.datad(\lpm_ff:Delta_Reg|dffs[7] ),
+	.combout(\Steuerung:St1|Delta_Not_Zero~2 ));
+defparam \Steuerung:St1|Delta_Not_Zero~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delta_Not_Zero~2_I .lut_mask = "0001";
+
+cycloneii_lcell_comb \Steuerung:St1|Delta_Not_Zero~3_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[2] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[3] ),
+	.datac(\lpm_ff:Delta_Reg|dffs[1] ),
+	.datad(\lpm_ff:Delta_Reg|dffs[0] ),
+	.combout(\Steuerung:St1|Delta_Not_Zero~3 ));
+defparam \Steuerung:St1|Delta_Not_Zero~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delta_Not_Zero~3_I .lut_mask = "0001";
+
+cycloneii_lcell_comb \Steuerung:St1|Delta_Not_Zero~4_I (
+	.datab(\Steuerung:St1|Delta_Not_Zero~2 ),
+	.datac(\Steuerung:St1|Delta_Not_Zero~1 ),
+	.datad(\Steuerung:St1|Delta_Not_Zero~3 ),
+	.combout(\Steuerung:St1|Delta_Not_Zero~4 ));
+defparam \Steuerung:St1|Delta_Not_Zero~4_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delta_Not_Zero~4_I .lut_mask = "3FFF";
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[10]~feeder_I (
+	.dataa(D[10]),
+	.combout(\lpm_ff:Delta_Reg|dffs[10]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[10]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[10]~feeder_I .lut_mask = "AAAA";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[8]~feeder_I (
+	.datad(D[8]),
+	.combout(\lpm_ff:Flat_Reg|dffs[8]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[8]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[8]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[7]~feeder_I (
+	.datac(D[7]),
+	.combout(\lpm_ff:Flat_Reg|dffs[7]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[7]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[7]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[6]~feeder_I (
+	.dataa(D[6]),
+	.combout(\lpm_ff:Delta_Reg|dffs[6]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[6]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[6]~feeder_I .lut_mask = "AAAA";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[5]~feeder_I (
+	.datac(D[5]),
+	.combout(\lpm_ff:Flat_Reg|dffs[5]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[5]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[5]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[4]~feeder_I (
+	.datac(D[4]),
+	.combout(\lpm_ff:Flat_Reg|dffs[4]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[4]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[4]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[3]~feeder_I (
+	.datad(D[3]),
+	.combout(\lpm_ff:Flat_Reg|dffs[3]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[3]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[3]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[2]~feeder_I (
+	.datab(D[2]),
+	.combout(\lpm_ff:Delta_Reg|dffs[2]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[2]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[2]~feeder_I .lut_mask = "CCCC";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[2]~feeder_I (
+	.datad(D[2]),
+	.combout(\lpm_ff:Flat_Reg|dffs[2]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[2]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[2]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[1]~feeder_I (
+	.datad(D[1]),
+	.combout(\lpm_ff:Flat_Reg|dffs[1]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[1]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[1]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[0]~feeder_I (
+	.datad(D[0]),
+	.combout(\lpm_ff:Flat_Reg|dffs[0]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[0]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[0]~feeder_I .lut_mask = "FF00";
+
+cycloneii_clkctrl \CLK~clkctrl_I (
+	.inclk({CLK}),
+	.outclk(\CLK~clkctrl ));
+defparam \CLK~clkctrl_I .clock_type = "Global Clock";
+defparam \CLK~clkctrl_I .ena_register_mode = "falling edge";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|STAT1_DFF~2_I (
+	.dataa(FKT[4]),
+	.datab(FKT[6]),
+	.datac(TAKE_DA),
+	.datad(FKT[7]),
+	.combout(\SWEEP_DECO:Deco|STAT1_DFF~2 ));
+defparam \SWEEP_DECO:Deco|STAT1_DFF~2_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|STAT1_DFF~2_I .lut_mask = "2000";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|_~83_I (
+	.dataa(FKT[2]),
+	.datab(FKT[1]),
+	.datac(FKT[5]),
+	.datad(FKT[0]),
+	.combout(\SWEEP_DECO:Deco|_~83 ));
+defparam \SWEEP_DECO:Deco|_~83_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|_~83_I .lut_mask = "0100";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|STAT1_DFF~3_I (
+	.dataa(SWEEP_SEL),
+	.datab(\SWEEP_DECO:Deco|STAT1_DFF~2 ),
+	.datac(FKT[3]),
+	.datad(\SWEEP_DECO:Deco|_~83 ),
+	.combout(\SWEEP_DECO:Deco|STAT1_DFF~3 ));
+defparam \SWEEP_DECO:Deco|STAT1_DFF~3_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|STAT1_DFF~3_I .lut_mask = "0800";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|_~84_I (
+	.dataa(FKT[4]),
+	.datab(FKT[6]),
+	.datac(TAKE_DA),
+	.datad(FKT[7]),
+	.combout(\SWEEP_DECO:Deco|_~84 ));
+defparam \SWEEP_DECO:Deco|_~84_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|_~84_I .lut_mask = "0010";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|RES_DFF~0_I (
+	.dataa(\SWEEP_DECO:Deco|RES_DFF~1 ),
+	.datab(\SWEEP_DECO:Deco|_~84 ),
+	.datac(FKT[3]),
+	.datad(\SWEEP_DECO:Deco|_~83 ),
+	.combout(\SWEEP_DECO:Deco|RES_DFF~0 ));
+defparam \SWEEP_DECO:Deco|RES_DFF~0_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|RES_DFF~0_I .lut_mask = "AEAA";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|RES_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|RES_DFF~0 ),
+	.regout(\SWEEP_DECO:Deco|RES_DFF ));
+
+cycloneii_clkctrl \SWEEP_DECO:Deco|RES_DFF~clkctrl_I (
+	.inclk({\SWEEP_DECO:Deco|RES_DFF }),
+	.outclk(\SWEEP_DECO:Deco|RES_DFF~clkctrl ));
+defparam \SWEEP_DECO:Deco|RES_DFF~clkctrl_I .clock_type = "Global Clock";
+defparam \SWEEP_DECO:Deco|RES_DFF~clkctrl_I .ena_register_mode = "falling edge";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|STAT1_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|STAT1_DFF~3 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|STAT1_DFF ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ld_Delay_DFF~2_I (
+	.dataa(FKT[2]),
+	.datac(FKT[5]),
+	.datad(FKT[1]),
+	.combout(\SWEEP_DECO:Deco|Ld_Delay_DFF~2 ));
+defparam \SWEEP_DECO:Deco|Ld_Delay_DFF~2_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ld_Delay_DFF~2_I .lut_mask = "0A00";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ld_Delta_DFF~1_I (
+	.dataa(\SWEEP_DECO:Deco|Soft_Trig_ff~4 ),
+	.datab(FKT[0]),
+	.datac(FKT[3]),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF~2 ),
+	.combout(\SWEEP_DECO:Deco|Ld_Delta_DFF~1 ));
+defparam \SWEEP_DECO:Deco|Ld_Delta_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ld_Delta_DFF~1_I .lut_mask = "0200";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Ld_Delta_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Ld_Delta_DFF~1 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Ld_Delta_DFF ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ld_Delay_DFF~1_I (
+	.dataa(\SWEEP_DECO:Deco|Soft_Trig_ff~4 ),
+	.datab(FKT[0]),
+	.datac(FKT[3]),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF~2 ),
+	.combout(\SWEEP_DECO:Deco|Ld_Delay_DFF~1 ));
+defparam \SWEEP_DECO:Deco|Ld_Delay_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ld_Delay_DFF~1_I .lut_mask = "0800";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Ld_Delay_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Ld_Delay_DFF~1 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Ld_Delay_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~87_I (
+	.dataa(\Steuerung:St1|Seq_Err_FF ),
+	.datac(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|_~87 ));
+defparam \Steuerung:St1|_~87_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~87_I .lut_mask = "5550";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~2 ),
+	.datab(FKT[3]),
+	.datac(SWEEP_SEL),
+	.datad(\SWEEP_DECO:Deco|_~84 ),
+	.combout(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1 ));
+defparam \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1_I .lut_mask = "8000";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF~1 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~88_I (
+	.dataa(\Steuerung:St1|SM_Wr_FT_Int ),
+	.datad(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.combout(\Steuerung:St1|_~88 ));
+defparam \Steuerung:St1|_~88_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~88_I .lut_mask = "00AA";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Set_Flattop~0_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\Steuerung:St1|_~87 ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.datad(\Steuerung:St1|_~88 ),
+	.combout(\Steuerung:St1|SM_Set_Flattop~0 ));
+defparam \Steuerung:St1|SM_Set_Flattop~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Set_Flattop~0_I .lut_mask = "A2A0";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Set_Flattop~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Set_Flattop~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Set_Flattop ));
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[15]~feeder_I (
+	.datad(D[15]),
+	.combout(\lpm_ff:Flat_Reg|dffs[15]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[15]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[15]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Set_Flattop_DFF~1_I (
+	.dataa(SWEEP_SEL),
+	.datab(\SWEEP_DECO:Deco|_~84 ),
+	.datac(FKT[3]),
+	.datad(\SWEEP_DECO:Deco|_~83 ),
+	.combout(\SWEEP_DECO:Deco|Set_Flattop_DFF~1 ));
+defparam \SWEEP_DECO:Deco|Set_Flattop_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Set_Flattop_DFF~1_I .lut_mask = "8000";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Set_Flattop_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Set_Flattop_DFF~1 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Set_Flattop_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~90_I (
+	.dataa(\Steuerung:St1|Seq_Err_FF ),
+	.datac(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datad(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.combout(\Steuerung:St1|_~90 ));
+defparam \Steuerung:St1|_~90_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~90_I .lut_mask = "5550";
+
+cycloneii_lcell_comb \Steuerung:St1|_~96_I (
+	.datab(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|_~96 ));
+defparam \Steuerung:St1|_~96_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~96_I .lut_mask = "0033";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_Delta~1_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datab(\Steuerung:St1|SM_Idle ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.combout(\Steuerung:St1|SM_Wr_Delta~1 ));
+defparam \Steuerung:St1|SM_Wr_Delta~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_Delta~1_I .lut_mask = "D8D8";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_Delta~2_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datab(\Steuerung:St1|SM_Wr_Delta~1 ),
+	.datac(\Steuerung:St1|SM_Wr_Delta ),
+	.datad(\Steuerung:St1|_~96 ),
+	.combout(\Steuerung:St1|SM_Wr_Delta~2 ));
+defparam \Steuerung:St1|SM_Wr_Delta~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_Delta~2_I .lut_mask = "B2A2";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Wr_Delta~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Wr_Delta~2 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Wr_Delta ));
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_Delay~1_I (
+	.dataa(\Steuerung:St1|SM_Wr_Delay ),
+	.datab(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datac(\Steuerung:St1|SM_Wr_Delta ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|SM_Wr_Delay~1 ));
+defparam \Steuerung:St1|SM_Wr_Delay~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_Delay~1_I .lut_mask = "BA00";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Wr_Delay~0_I (
+	.dataa(\Steuerung:St1|_~90 ),
+	.datab(\Steuerung:St1|_~96 ),
+	.datac(\Steuerung:St1|SM_Wr_Delay ),
+	.datad(\Steuerung:St1|SM_Wr_Delay~1 ),
+	.combout(\Steuerung:St1|SM_Wr_Delay~0 ));
+defparam \Steuerung:St1|SM_Wr_Delay~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Wr_Delay~0_I .lut_mask = "FF40";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Wr_Delay~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Wr_Delay~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Wr_Delay ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~91_I (
+	.datab(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.datac(\Steuerung:St1|_~90 ),
+	.datad(\Steuerung:St1|SM_Wr_Delay ),
+	.combout(\Steuerung:St1|_~91 ));
+defparam \Steuerung:St1|_~91_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~91_I .lut_mask = "3000";
+
+cycloneii_lcell_comb \Steuerung:St1|_~89_I (
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\Steuerung:St1|_~89 ));
+defparam \Steuerung:St1|_~89_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~89_I .lut_mask = "0F00";
+
+cycloneii_lcell_comb \Steuerung:St1|_~86_I (
+	.dataa(\Steuerung:St1|Seq_Err_FF ),
+	.datab(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.datac(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datad(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.combout(\Steuerung:St1|_~86 ));
+defparam \Steuerung:St1|_~86_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~86_I .lut_mask = "5554";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Seq_Err~1_I (
+	.dataa(\Steuerung:St1|_~87 ),
+	.datab(\Steuerung:St1|_~89 ),
+	.datac(\Steuerung:St1|_~86 ),
+	.datad(\Steuerung:St1|_~88 ),
+	.combout(\Steuerung:St1|SM_Seq_Err~1 ));
+defparam \Steuerung:St1|SM_Seq_Err~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Seq_Err~1_I .lut_mask = "EAC0";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Seq_Err~2_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.datab(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\Steuerung:St1|SM_Wr_Delta ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|SM_Seq_Err~2 ));
+defparam \Steuerung:St1|SM_Seq_Err~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Seq_Err~2_I .lut_mask = "00E0";
+
+cycloneii_lcell_comb \Steuerung:St1|Seq_Err_FF~3_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datab(\Steuerung:St1|SM_Wr_Delta ),
+	.datac(\Steuerung:St1|Seq_Err_FF ),
+	.datad(\Steuerung:St1|SM_Seq_Err ),
+	.combout(\Steuerung:St1|Seq_Err_FF~3 ));
+defparam \Steuerung:St1|Seq_Err_FF~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Seq_Err_FF~3_I .lut_mask = "7F70";
+
+cycloneii_lcell_ff \Steuerung:St1|Seq_Err_FF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Seq_Err_FF~3 ),
+	.regout(\Steuerung:St1|Seq_Err_FF ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~92_I (
+	.datab(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.datac(\Steuerung:St1|Seq_Err_FF ),
+	.datad(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.combout(\Steuerung:St1|_~92 ));
+defparam \Steuerung:St1|_~92_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~92_I .lut_mask = "0F0C";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Seq_Err~3_I (
+	.dataa(\Steuerung:St1|SM_Idle ),
+	.datac(\Steuerung:St1|SM_Seq_Err~2 ),
+	.datad(\Steuerung:St1|_~92 ),
+	.combout(\Steuerung:St1|SM_Seq_Err~3 ));
+defparam \Steuerung:St1|SM_Seq_Err~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Seq_Err~3_I .lut_mask = "F5F0";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Seq_Err~4_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datab(\Steuerung:St1|_~91 ),
+	.datac(\Steuerung:St1|SM_Seq_Err~1 ),
+	.datad(\Steuerung:St1|SM_Seq_Err~3 ),
+	.combout(\Steuerung:St1|SM_Seq_Err~4 ));
+defparam \Steuerung:St1|SM_Seq_Err~4_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Seq_Err~4_I .lut_mask = "FDFC";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Seq_Err~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Seq_Err~4 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Seq_Err ));
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[13]~feeder_I (
+	.datac(D[13]),
+	.combout(\lpm_ff:Flat_Reg|dffs[13]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[13]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[13]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_comb \Steuerung:St1|Wr_FT_Int~I (
+	.dataa(\Steuerung:St1|SM_Wr_FT_Int ),
+	.datad(\SWEEP_DECO:Deco|Ld_Flattop_Int_DFF ),
+	.combout(\Steuerung:St1|Wr_FT_Int ));
+defparam \Steuerung:St1|Wr_FT_Int~I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Wr_FT_Int~I .lut_mask = "AA00";
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[13]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[13]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[13] ));
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[12]~feeder_I (
+	.datad(D[12]),
+	.combout(\lpm_ff:Flat_Reg|dffs[12]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[12]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[12]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[12]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[12]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[12] ));
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[11]~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(D[11]),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.sload(vcc),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[11] ));
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[6]~feeder_I (
+	.datac(D[6]),
+	.combout(\lpm_ff:Flat_Reg|dffs[6]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[6]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[6]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[6]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[6]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[6] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51_I (
+	.dataa(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~22 ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_ff:Flat_Reg|dffs[6] ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51_I .lut_mask = "EA2A";
+
+cycloneii_lcell_comb \ADD_C~0_I (
+	.datac(ADD_C),
+	.combout(\ADD_C~0 ));
+defparam \ADD_C~0_I .sum_lutc_input = "datac";
+defparam \ADD_C~0_I .lut_mask = "0F0F";
+
+cycloneii_lcell_comb \Steuerung:St1|_~85_I (
+	.dataa(\Steuerung:St1|SM_Stop ),
+	.datac(R_Fin),
+	.combout(\Steuerung:St1|_~85 ));
+defparam \Steuerung:St1|_~85_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~85_I .lut_mask = "0A0A";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[1] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita0~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1~I .lut_mask = "3CCF";
+
+cycloneii_lcell_comb \~GND~I (
+	.combout(\~GND ));
+defparam \~GND~I .sum_lutc_input = "datac";
+defparam \~GND~I .lut_mask = "0000";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57_I (
+	.datab(\Steuerung:St1|SM_Wr_Delta ),
+	.datac(\Steuerung:St1|SM_W_Start ),
+	.datad(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57_I .lut_mask = "FFFC";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[1] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita1 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[1] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[3] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita2~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3~I .lut_mask = "3CCF";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[3] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita3 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[3] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[5] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita4~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~I .lut_mask = "3CCF";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[5] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[5] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[6] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita5~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[6] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[6] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[7] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita6~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~I .lut_mask = "3CCF";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[7] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[7] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[8] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita7~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[8] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[8] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[9] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita8~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~I .lut_mask = "3CCF";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[9] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[9] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[10] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita9~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[10] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita10 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[10] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[12] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita11~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[12] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita12 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[12] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~I (
+	.datab(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[15] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita14~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15 ),
+	.cout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~COUT ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~I .lut_mask = "3CCF";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[15] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15 ),
+	.sdata(\Steuerung:St1|SM_Wr_Delta ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[15] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16~I (
+	.dataa(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[16] ),
+	.cin(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita15~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16 ));
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16~I .lut_mask = "A5A5";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_reg_bit1a[16] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|counter_comb_bita16 ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|SM_Wr_Delta ),
+	.ena(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|_~57 ),
+	.regout(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[16] ));
+
+cycloneii_lcell_ff \Steuerung:St1|Timeout~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(\Steuerung:St1|lpm_counter:TO_Timer|cntr_fdk:auto_generated|safe_q[16] ),
+	.sload(vcc),
+	.regout(\Steuerung:St1|Timeout ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Stop_DFF~1_I (
+	.dataa(\SWEEP_DECO:Deco|Soft_Trig_ff~3 ),
+	.datab(FKT[0]),
+	.datad(FKT[1]),
+	.combout(\SWEEP_DECO:Deco|Stop_DFF~1 ));
+defparam \SWEEP_DECO:Deco|Stop_DFF~1_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Stop_DFF~1_I .lut_mask = "8800";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Stop_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Stop_DFF~1 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Stop_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[0] ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~I .lut_mask = "5555";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~I (
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[1] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1~I .lut_mask = "3CCF";
+
+cycloneii_lcell_comb \Steuerung:St1|Wr_Delay~I (
+	.datac(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.datad(\Steuerung:St1|SM_Wr_Delay ),
+	.combout(\Steuerung:St1|Wr_Delay ));
+defparam \Steuerung:St1|Wr_Delay~I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Wr_Delay~I .lut_mask = "F000";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2_I (
+	.dataa(\Steuerung:St1|Trigger_FF ),
+	.datab(\Steuerung:St1|SM_Wr_Delay ),
+	.datac(\SWEEP_DECO:Deco|Ld_Delay_DFF ),
+	.datad(\Steuerung:St1|SM_W_Start ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2_I .lut_mask = "EAC0";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[1] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita1 ),
+	.sdata(D[1]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[1] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[3] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita2~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~I (
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[4] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[4] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4 ),
+	.sdata(D[4]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[4] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[5] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita4~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~I (
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[6] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[6] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita6 ),
+	.sdata(D[6]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[6] ));
+
+cycloneii_lcell_comb \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~I (
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[8] ),
+	.datad(vcc),
+	.cin(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita7~COUT ),
+	.combout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8 ),
+	.cout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~COUT ));
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~I .sum_lutc_input = "cin";
+defparam \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8~I .lut_mask = "C303";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[8] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita8 ),
+	.sdata(D[8]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[8] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[9] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita9 ),
+	.sdata(D[9]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[9] ));
+
+cycloneii_lcell_comb \Steuerung:St1|Delay_Fin~3_I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[11] ),
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[8] ),
+	.datac(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[9] ),
+	.datad(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[6] ),
+	.combout(\Steuerung:St1|Delay_Fin~3 ));
+defparam \Steuerung:St1|Delay_Fin~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delay_Fin~3_I .lut_mask = "0001";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[5] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita5 ),
+	.sdata(D[5]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[5] ));
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[3] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita3 ),
+	.sdata(D[3]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[3] ));
+
+cycloneii_lcell_comb \Steuerung:St1|Delay_Fin~2_I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[7] ),
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[4] ),
+	.datac(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[5] ),
+	.datad(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[3] ),
+	.combout(\Steuerung:St1|Delay_Fin~2 ));
+defparam \Steuerung:St1|Delay_Fin~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delay_Fin~2_I .lut_mask = "0001";
+
+cycloneii_lcell_ff \Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_reg_bit1a[0] (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|counter_comb_bita0 ),
+	.sdata(D[0]),
+	.sload(\Steuerung:St1|Wr_Delay ),
+	.ena(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|_~2 ),
+	.regout(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[0] ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Soft_Trig_ff~0_I (
+	.dataa(\SWEEP_DECO:Deco|Soft_Trig_ff~3 ),
+	.datab(FKT[0]),
+	.datad(FKT[1]),
+	.combout(\SWEEP_DECO:Deco|Soft_Trig_ff~0 ));
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~0_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Soft_Trig_ff~0_I .lut_mask = "0022";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Soft_Trig_ff~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Soft_Trig_ff~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Soft_Trig_ff ));
+
+cycloneii_lcell_comb \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8_I (
+	.dataa(\SWEEP_DECO:Deco|Soft_Trig_ff~3 ),
+	.datab(FKT[0]),
+	.datac(\SWEEP_DECO:Deco|Ena_Soft_Trig_Dff ),
+	.datad(FKT[1]),
+	.combout(\SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8 ));
+defparam \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8_I .sum_lutc_input = "datac";
+defparam \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8_I .lut_mask = "D0F8";
+
+cycloneii_lcell_ff \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\SWEEP_DECO:Deco|Ena_Soft_Trig_Dff~8 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\SWEEP_DECO:Deco|Ena_Soft_Trig_Dff ));
+
+cycloneii_lcell_comb \Steuerung:St1|Trigger_Sync~1_I (
+	.dataa(\Steuerung:St1|SM_W_Start ),
+	.datab(\SWEEP_DECO:Deco|Soft_Trig_ff ),
+	.datac(\/HW_Trig ),
+	.datad(\SWEEP_DECO:Deco|Ena_Soft_Trig_Dff ),
+	.combout(\Steuerung:St1|Trigger_Sync~1 ));
+defparam \Steuerung:St1|Trigger_Sync~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Trigger_Sync~1_I .lut_mask = "880A";
+
+cycloneii_lcell_ff \Steuerung:St1|Trigger_Sync~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Trigger_Sync~1 ),
+	.regout(\Steuerung:St1|Trigger_Sync ));
+
+cycloneii_lcell_comb \Steuerung:St1|Trigger_Sync_1~feeder_I (
+	.datad(\Steuerung:St1|Trigger_Sync ),
+	.combout(\Steuerung:St1|Trigger_Sync_1~feeder ));
+defparam \Steuerung:St1|Trigger_Sync_1~feeder_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Trigger_Sync_1~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \Steuerung:St1|Trigger_Sync_1~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Trigger_Sync_1~feeder ),
+	.regout(\Steuerung:St1|Trigger_Sync_1 ));
+
+cycloneii_lcell_comb \Steuerung:St1|Trigger_FF~5_I (
+	.dataa(\Steuerung:St1|Wr_Delta ),
+	.datab(\Steuerung:St1|Trigger_Sync_1 ),
+	.datac(\Steuerung:St1|Trigger_FF ),
+	.datad(\Steuerung:St1|Trigger_Sync ),
+	.combout(\Steuerung:St1|Trigger_FF~5 ));
+defparam \Steuerung:St1|Trigger_FF~5_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Trigger_FF~5_I .lut_mask = "A3A0";
+
+cycloneii_lcell_ff \Steuerung:St1|Trigger_FF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Trigger_FF~5 ),
+	.regout(\Steuerung:St1|Trigger_FF ));
+
+cycloneii_lcell_comb \Steuerung:St1|Delay_Fin~1_I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[2] ),
+	.datab(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[0] ),
+	.datac(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[1] ),
+	.datad(\Steuerung:St1|Trigger_FF ),
+	.combout(\Steuerung:St1|Delay_Fin~1 ));
+defparam \Steuerung:St1|Delay_Fin~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delay_Fin~1_I .lut_mask = "0100";
+
+cycloneii_lcell_comb \Steuerung:St1|Delay_Fin~4_I (
+	.dataa(\Steuerung:St1|lpm_counter:Delay_Timer|cntr_3kj:auto_generated|safe_q[10] ),
+	.datab(\Steuerung:St1|Delay_Fin~3 ),
+	.datac(\Steuerung:St1|Delay_Fin~2 ),
+	.datad(\Steuerung:St1|Delay_Fin~1 ),
+	.combout(\Steuerung:St1|Delay_Fin~4 ));
+defparam \Steuerung:St1|Delay_Fin~4_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Delay_Fin~4_I .lut_mask = "4000";
+
+cycloneii_lcell_ff \Steuerung:St1|Delay_Fin~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Delay_Fin~4 ),
+	.regout(\Steuerung:St1|Delay_Fin ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~93_I (
+	.dataa(\Steuerung:St1|Delta_Not_Zero ),
+	.datab(\Steuerung:St1|SM_W_Start ),
+	.datac(\SWEEP_DECO:Deco|Stop_DFF ),
+	.datad(\Steuerung:St1|Delay_Fin ),
+	.combout(\Steuerung:St1|_~93 ));
+defparam \Steuerung:St1|_~93_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~93_I .lut_mask = "040C";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_W_Start~0_I (
+	.dataa(\Steuerung:St1|_~89 ),
+	.datab(\Steuerung:St1|_~86 ),
+	.datac(\Steuerung:St1|Timeout ),
+	.datad(\Steuerung:St1|_~93 ),
+	.combout(\Steuerung:St1|SM_W_Start~0 ));
+defparam \Steuerung:St1|SM_W_Start~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_W_Start~0_I .lut_mask = "2F22";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_W_Start~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_W_Start~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_W_Start ));
+
+cycloneii_lcell_comb \Steuerung:St1|S_Stop_Delta~5_I (
+	.dataa(\Steuerung:St1|Delta_Not_Zero ),
+	.datac(\Steuerung:St1|SM_W_Start ),
+	.datad(\Steuerung:St1|Delay_Fin ),
+	.combout(\Steuerung:St1|S_Stop_Delta~5 ));
+defparam \Steuerung:St1|S_Stop_Delta~5_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|S_Stop_Delta~5_I .lut_mask = "50F0";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Stop~0_I (
+	.dataa(\Steuerung:St1|Timeout ),
+	.datab(\Steuerung:St1|_~85 ),
+	.datac(\Steuerung:St1|S_Stop_Delta~5 ),
+	.datad(\SWEEP_DECO:Deco|Stop_DFF ),
+	.combout(\Steuerung:St1|SM_Stop~0 ));
+defparam \Steuerung:St1|SM_Stop~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Stop~0_I .lut_mask = "FCEC";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Stop~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Stop~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Stop ));
+
+cycloneii_lcell_ff \Steuerung:St1|Stop_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(\Steuerung:St1|SM_Stop ),
+	.sload(vcc),
+	.regout(\Steuerung:St1|Stop_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|_~94_I (
+	.dataa(\Steuerung:St1|Delta_Not_Zero ),
+	.datad(\Steuerung:St1|Delay_Fin ),
+	.combout(\Steuerung:St1|_~94 ));
+defparam \Steuerung:St1|_~94_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|_~94_I .lut_mask = "AA00";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Work~0_I (
+	.dataa(R_Fin),
+	.datab(\Steuerung:St1|SM_W_Start ),
+	.datac(\Steuerung:St1|SM_Work ),
+	.datad(\Steuerung:St1|_~94 ),
+	.combout(\Steuerung:St1|SM_Work~0 ));
+defparam \Steuerung:St1|SM_Work~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Work~0_I .lut_mask = "DC50";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Work~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Work~0 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Work ));
+
+cycloneii_lcell_ff \Steuerung:St1|Work_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(\Steuerung:St1|SM_Work ),
+	.sload(vcc),
+	.regout(\Steuerung:St1|Work_DFF ));
+
+cycloneii_lcell_comb \120~I (
+	.datac(\Steuerung:St1|Stop_DFF ),
+	.datad(\Steuerung:St1|Work_DFF ),
+	.combout(\120 ));
+defparam \120~I .sum_lutc_input = "datac";
+defparam \120~I .lut_mask = "000F";
+
+cycloneii_clkctrl \120~clkctrl_I (
+	.inclk({\120 }),
+	.outclk(\120~clkctrl ));
+defparam \120~clkctrl_I .clock_type = "Global Clock";
+defparam \120~clkctrl_I .ena_register_mode = "falling edge";
+
+cycloneii_lcell_ff \ADD_C~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\ADD_C~0 ),
+	.aclr(\120~clkctrl ),
+	.regout(ADD_C));
+
+cycloneii_lcell_ff \SUB_C~I (
+	.clk(\CLK~clkctrl ),
+	.sdata(ADD_C),
+	.aclr(\120~clkctrl ),
+	.sload(vcc),
+	.regout(SUB_C));
+
+cycloneii_lcell_comb \11~I (
+	.datab(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(SUB_C),
+	.datad(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\11 ));
+defparam \11~I .sum_lutc_input = "datac";
+defparam \11~I .lut_mask = "FCF0";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[11]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[11]~51 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[11] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[11]~feeder_I (
+	.dataa(D[11]),
+	.combout(\lpm_ff:Delta_Reg|dffs[11]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[11]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[11]~feeder_I .lut_mask = "AAAA";
+
+cycloneii_lcell_comb \Steuerung:St1|S_Stop_Delta~6_I (
+	.dataa(\SWEEP_DECO:Deco|Stop_DFF ),
+	.datac(\Steuerung:St1|Timeout ),
+	.datad(\Steuerung:St1|S_Stop_Delta~5 ),
+	.combout(\Steuerung:St1|S_Stop_Delta~6 ));
+defparam \Steuerung:St1|S_Stop_Delta~6_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|S_Stop_Delta~6_I .lut_mask = "FA00";
+
+cycloneii_lcell_comb \Steuerung:St1|Wr_Delta~I (
+	.datac(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datad(\Steuerung:St1|SM_Wr_Delta ),
+	.combout(\Steuerung:St1|Wr_Delta ));
+defparam \Steuerung:St1|Wr_Delta~I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Wr_Delta~I .lut_mask = "0FFF";
+
+cycloneii_lcell_comb \114~I (
+	.dataa(\SWEEP_DECO:Deco|Stop_DFF ),
+	.datab(\Steuerung:St1|Wr_Delta ),
+	.datac(\Steuerung:St1|Timeout ),
+	.datad(\Steuerung:St1|S_Stop_Delta~5 ),
+	.combout(\114 ));
+defparam \114~I .sum_lutc_input = "datac";
+defparam \114~I .lut_mask = "FB33";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[11]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[11]~feeder ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[11] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[9]~feeder_I (
+	.dataa(D[9]),
+	.combout(\lpm_ff:Delta_Reg|dffs[9]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[9]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[9]~feeder_I .lut_mask = "AAAA";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[9]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[9]~feeder ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[9] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[8]~feeder_I (
+	.datad(D[8]),
+	.combout(\lpm_ff:Delta_Reg|dffs[8]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[8]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[8]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[8]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[8]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[8] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[7]~feeder_I (
+	.dataa(D[7]),
+	.combout(\lpm_ff:Delta_Reg|dffs[7]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[7]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[7]~feeder_I .lut_mask = "AAAA";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[7]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[7]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[7] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[5]~feeder_I (
+	.datab(D[5]),
+	.combout(\lpm_ff:Delta_Reg|dffs[5]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[5]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[5]~feeder_I .lut_mask = "CCCC";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[5]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[5]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[5] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[4]~feeder_I (
+	.datab(D[4]),
+	.combout(\lpm_ff:Delta_Reg|dffs[4]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[4]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[4]~feeder_I .lut_mask = "CCCC";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[4]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[4]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[4] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[3]~feeder_I (
+	.datad(D[3]),
+	.combout(\lpm_ff:Delta_Reg|dffs[3]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[3]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[3]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[3]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[3]~feeder ),
+	.sdata(\~GND ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[3] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[1]~feeder_I (
+	.datad(D[1]),
+	.combout(\lpm_ff:Delta_Reg|dffs[1]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[1]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[1]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[1]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[1]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[1] ));
+
+cycloneii_lcell_comb \lpm_ff:Delta_Reg|dffs[0]~feeder_I (
+	.datad(D[0]),
+	.combout(\lpm_ff:Delta_Reg|dffs[0]~feeder ));
+defparam \lpm_ff:Delta_Reg|dffs[0]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Delta_Reg|dffs[0]~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \lpm_ff:Delta_Reg|dffs[0]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Delta_Reg|dffs[0]~feeder ),
+	.sdata(\Steuerung:St1|S_Stop_Delta~6 ),
+	.sload(\Steuerung:St1|S_Stop_Delta~6 ),
+	.ena(\114 ),
+	.regout(\lpm_ff:Delta_Reg|dffs[0] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[2]~23_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[2] ),
+	.datab(\lpm_ff:SUB_REG|dffs[2] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[1]~22 ),
+	.combout(\lpm_ff:SUB_REG|dffs[2]~23 ),
+	.cout(\lpm_ff:SUB_REG|dffs[2]~24 ));
+defparam \lpm_ff:SUB_REG|dffs[2]~23_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[2]~23_I .lut_mask = "698E";
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~I (
+	.datab(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[1] ),
+	.datad(vcc),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita0~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1~I .lut_mask = "3C3F";
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[1] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita1 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[1] ));
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~I (
+	.datab(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[3] ),
+	.datad(vcc),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita2~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3~I .lut_mask = "3C3F";
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[3] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita3 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[3] ));
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~I (
+	.datab(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[5] ),
+	.datad(vcc),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita4~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5 ),
+	.cout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~COUT ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~I .lut_mask = "3C3F";
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[5] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[5] ));
+
+cycloneii_lcell_comb \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6~I (
+	.datad(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[6] ),
+	.cin(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita5~COUT ),
+	.combout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6 ));
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6~I .sum_lutc_input = "cin";
+defparam \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6~I .lut_mask = "F00F";
+
+cycloneii_lcell_ff \lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_reg_bit1a[6] (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|counter_comb_bita6 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[6] ));
+
+cycloneii_lcell_comb \136~I (
+	.datab(ADD_C),
+	.datac(\lpm_counter:RND_CNT|cntr_u5k:auto_generated|pre_hazard[6] ),
+	.combout(\136 ));
+defparam \136~I .sum_lutc_input = "datac";
+defparam \136~I .lut_mask = "0C0C";
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[2]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[2]~23 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[2] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[6]~31_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[6] ),
+	.datab(\lpm_ff:SUB_REG|dffs[6] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[5]~30 ),
+	.combout(\lpm_ff:SUB_REG|dffs[6]~31 ),
+	.cout(\lpm_ff:SUB_REG|dffs[6]~32 ));
+defparam \lpm_ff:SUB_REG|dffs[6]~31_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[6]~31_I .lut_mask = "698E";
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[6]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[6]~31 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[6] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[7]~33_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[7] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[7] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[6]~32 ),
+	.combout(\lpm_ff:SUB_REG|dffs[7]~33 ),
+	.cout(\lpm_ff:SUB_REG|dffs[7]~34 ));
+defparam \lpm_ff:SUB_REG|dffs[7]~33_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[7]~33_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[10]~39_I (
+	.dataa(\lpm_ff:Delta_Reg|dffs[10] ),
+	.datab(\lpm_ff:SUB_REG|dffs[10] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[9]~38 ),
+	.combout(\lpm_ff:SUB_REG|dffs[10]~39 ),
+	.cout(\lpm_ff:SUB_REG|dffs[10]~40 ));
+defparam \lpm_ff:SUB_REG|dffs[10]~39_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[10]~39_I .lut_mask = "698E";
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[10]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[10]~39 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[10] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[11]~41_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[11] ),
+	.datab(\lpm_ff:Delta_Reg|dffs[11] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[10]~40 ),
+	.combout(\lpm_ff:SUB_REG|dffs[11]~41 ),
+	.cout(\lpm_ff:SUB_REG|dffs[11]~42 ));
+defparam \lpm_ff:SUB_REG|dffs[11]~41_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[11]~41_I .lut_mask = "9617";
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[13]~45_I (
+	.datab(\lpm_ff:SUB_REG|dffs[13] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[12]~44 ),
+	.combout(\lpm_ff:SUB_REG|dffs[13]~45 ),
+	.cout(\lpm_ff:SUB_REG|dffs[13]~46 ));
+defparam \lpm_ff:SUB_REG|dffs[13]~45_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[13]~45_I .lut_mask = "3C3F";
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[13]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[13]~45 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[13] ));
+
+cycloneii_lcell_comb \lpm_ff:SUB_REG|dffs[15]~49_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[15] ),
+	.datad(vcc),
+	.cin(\lpm_ff:SUB_REG|dffs[14]~48 ),
+	.combout(\lpm_ff:SUB_REG|dffs[15]~49 ),
+	.cout(\lpm_ff:SUB_REG|dffs[15]~50 ));
+defparam \lpm_ff:SUB_REG|dffs[15]~49_I .sum_lutc_input = "cin";
+defparam \lpm_ff:SUB_REG|dffs[15]~49_I .lut_mask = "5A5F";
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[16]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[16]~51 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[16] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[15]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[15]~49 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[15] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[11]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[11]~41 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[11] ));
+
+cycloneii_lcell_ff \lpm_ff:SUB_REG|dffs[7]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:SUB_REG|dffs[7]~33 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\136 ),
+	.regout(\lpm_ff:SUB_REG|dffs[7] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[6] ),
+	.datab(\lpm_ff:SW_Reg|dffs[0] ),
+	.datad(vcc),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~1 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0_I .sum_lutc_input = "datac";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0_I .lut_mask = "66DD";
+
+cycloneii_lcell_comb \rtl~4_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[0]~0 ),
+	.combout(\rtl~4 ));
+defparam \rtl~4_I .sum_lutc_input = "datac";
+defparam \rtl~4_I .lut_mask = "5F00";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[0]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\rtl~4 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[0] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[8] ),
+	.datab(\lpm_ff:SW_Reg|dffs[2] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[1]~3 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~5 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4_I .lut_mask = "964D";
+
+cycloneii_lcell_comb \rtl~2_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~4 ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\rtl~2 ));
+defparam \rtl~2_I .sum_lutc_input = "datac";
+defparam \rtl~2_I .lut_mask = "4C4C";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[2]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\rtl~2 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[2] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[9] ),
+	.datab(\lpm_ff:SW_Reg|dffs[3] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[2]~5 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~7 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6_I .lut_mask = "692B";
+
+cycloneii_lcell_comb \rtl~1_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\Steuerung:St1|SM_Set_Flattop ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[3]~6 ),
+	.combout(\rtl~1 ));
+defparam \rtl~1_I .sum_lutc_input = "datac";
+defparam \rtl~1_I .lut_mask = "5F00";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[3]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\rtl~1 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[3] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[5] ),
+	.datab(\lpm_ff:SUB_REG|dffs[11] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[4]~9 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~11 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10_I .lut_mask = "694D";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[12] ),
+	.datab(\lpm_ff:SW_Reg|dffs[6] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~11 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~13 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12_I .lut_mask = "964D";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[1] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~12 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[6]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[6]~56 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[6] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[13] ),
+	.datab(\lpm_ff:SW_Reg|dffs[7] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[6]~13 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~15 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14_I .lut_mask = "692B";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[2] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~14 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[7]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[7]~55 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[7] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16_I (
+	.dataa(\lpm_ff:SUB_REG|dffs[14] ),
+	.datab(\lpm_ff:SW_Reg|dffs[8] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[7]~15 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~17 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16_I .lut_mask = "964D";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[3] ),
+	.datab(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datac(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~16 ),
+	.datad(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54_I .lut_mask = "B8F0";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[8]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[8]~54 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[8] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[9] ),
+	.datab(\lpm_ff:SUB_REG|dffs[15] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[8]~17 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~19 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18_I .lut_mask = "694D";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[10] ),
+	.datab(\lpm_ff:SUB_REG|dffs[16] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~19 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~21 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20_I .lut_mask = "962B";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[12] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[11]~23 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~25 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24_I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[13] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~25 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~27 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26_I .lut_mask = "A505";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[14] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~27 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~29 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28_I .lut_mask = "5AAF";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[15] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~29 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~31 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30_I .lut_mask = "A505";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32_I (
+	.datab(\lpm_ff:SW_Reg|dffs[16] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~31 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~33 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32_I .lut_mask = "3CCF";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\lpm_ff:Flat_Reg|dffs[11] ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~32 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46_I .lut_mask = "F780";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[16]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[16]~46 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[16] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34_I (
+	.datab(\lpm_ff:SW_Reg|dffs[17] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[16]~33 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~35 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34_I .lut_mask = "C303";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\lpm_ff:Flat_Reg|dffs[12] ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~34 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45_I .lut_mask = "F780";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[17]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[17]~45 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[17] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36_I (
+	.datab(\lpm_ff:SW_Reg|dffs[18] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[17]~35 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~37 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36_I .lut_mask = "3CCF";
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\lpm_ff:Flat_Reg|dffs[13] ),
+	.datac(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~36 ),
+	.datad(\Steuerung:St1|SM_Set_Flattop ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44_I .lut_mask = "D8F0";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[18]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[18]~44 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[18] ));
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38_I (
+	.dataa(\lpm_ff:SW_Reg|dffs[19] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[18]~37 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~39 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38_I .lut_mask = "A505";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40_I (
+	.datab(\lpm_ff:SW_Reg|dffs[20] ),
+	.datad(vcc),
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~39 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40 ),
+	.cout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~41 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40_I .lut_mask = "3CCF";
+
+cycloneii_lcell_comb \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42_I (
+	.cin(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~41 ),
+	.combout(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42 ));
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42_I .sum_lutc_input = "cin";
+defparam \lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42_I .lut_mask = "0F0F";
+
+cycloneii_lcell_ff \R_Fin~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[21]~42 ),
+	.regout(R_Fin));
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Idle~1_I (
+	.dataa(\Steuerung:St1|SM_Work ),
+	.datab(\Steuerung:St1|SM_Seq_Err ),
+	.datac(R_Fin),
+	.datad(\Steuerung:St1|SM_Stop ),
+	.combout(\Steuerung:St1|SM_Idle~1 ));
+defparam \Steuerung:St1|SM_Idle~1_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Idle~1_I .lut_mask = "FCEC";
+
+cycloneii_lcell_comb \Steuerung:St1|SM_Idle~2_I (
+	.dataa(\SWEEP_DECO:Deco|Ld_Delta_DFF ),
+	.datab(\Steuerung:St1|SM_Idle~1 ),
+	.datac(\Steuerung:St1|SM_Idle ),
+	.datad(\Steuerung:St1|_~92 ),
+	.combout(\Steuerung:St1|SM_Idle~2 ));
+defparam \Steuerung:St1|SM_Idle~2_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|SM_Idle~2_I .lut_mask = "3332";
+
+cycloneii_lcell_ff \Steuerung:St1|SM_Idle~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|SM_Idle~2 ),
+	.aclr(\SWEEP_DECO:Deco|RES_DFF~clkctrl ),
+	.regout(\Steuerung:St1|SM_Idle ));
+
+cycloneii_lcell_comb \Steuerung:St1|Init_HW_DFF~0_I (
+	.dataa(R_Fin),
+	.datac(\Steuerung:St1|SM_Idle ),
+	.combout(\Steuerung:St1|Init_HW_DFF~0 ));
+defparam \Steuerung:St1|Init_HW_DFF~0_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Init_HW_DFF~0_I .lut_mask = "AFAF";
+
+cycloneii_lcell_ff \Steuerung:St1|Init_HW_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Init_HW_DFF~0 ),
+	.regout(\Steuerung:St1|Init_HW_DFF ));
+
+cycloneii_clkctrl \Steuerung:St1|Init_HW_DFF~clkctrl_I (
+	.inclk({\Steuerung:St1|Init_HW_DFF }),
+	.outclk(\Steuerung:St1|Init_HW_DFF~clkctrl ));
+defparam \Steuerung:St1|Init_HW_DFF~clkctrl_I .clock_type = "Global Clock";
+defparam \Steuerung:St1|Init_HW_DFF~clkctrl_I .ena_register_mode = "falling edge";
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[15]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[15]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[15] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\lpm_ff:Flat_Reg|dffs[15] ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[20]~40 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42_I .lut_mask = "F780";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[20]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[20]~42 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[20] ));
+
+cycloneii_lcell_comb \lpm_ff:Flat_Reg|dffs[14]~feeder_I (
+	.datac(D[14]),
+	.combout(\lpm_ff:Flat_Reg|dffs[14]~feeder ));
+defparam \lpm_ff:Flat_Reg|dffs[14]~feeder_I .sum_lutc_input = "datac";
+defparam \lpm_ff:Flat_Reg|dffs[14]~feeder_I .lut_mask = "F0F0";
+
+cycloneii_lcell_ff \lpm_ff:Flat_Reg|dffs[14]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\lpm_ff:Flat_Reg|dffs[14]~feeder ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\Steuerung:St1|Wr_FT_Int ),
+	.regout(\lpm_ff:Flat_Reg|dffs[14] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43_I (
+	.dataa(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[19]~38 ),
+	.datad(\lpm_ff:Flat_Reg|dffs[14] ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43_I .lut_mask = "F870";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[19]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[19]~43 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[19] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[10] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[15]~30 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[15]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[15]~47 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[15] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[9] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[14]~28 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[14]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[14]~48 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[14] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[8] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[13]~26 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[13]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[13]~49 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[13] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[7] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[12]~24 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[12]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[12]~50 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[12] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[5] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[10]~20 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[10]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[10]~52 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[10] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[4] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[9]~18 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[9]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[9]~53 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[9] ));
+
+cycloneii_lcell_comb \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57_I (
+	.dataa(\lpm_ff:Flat_Reg|dffs[0] ),
+	.datab(\Steuerung:St1|SM_Set_Flattop ),
+	.datac(\SWEEP_DECO:Deco|Set_Flattop_DFF ),
+	.datad(\lpm_add_sub:SW_SUB|add_sub_0jf:auto_generated|result_int[5]~10 ),
+	.combout(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57 ));
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57_I .sum_lutc_input = "datac";
+defparam \busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57_I .lut_mask = "BF80";
+
+cycloneii_lcell_ff \lpm_ff:SW_Reg|dffs[5]~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\busmux:3|lpm_mux:$00000|mux_7oc:auto_generated|result_node[5]~57 ),
+	.aclr(\Steuerung:St1|Init_HW_DFF~clkctrl ),
+	.ena(\11 ),
+	.regout(\lpm_ff:SW_Reg|dffs[5] ));
+
+cycloneii_lcell_comb \Steuerung:St1|W_Start_DFF~feeder_I (
+	.datad(\Steuerung:St1|SM_W_Start ),
+	.combout(\Steuerung:St1|W_Start_DFF~feeder ));
+defparam \Steuerung:St1|W_Start_DFF~feeder_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|W_Start_DFF~feeder_I .lut_mask = "FF00";
+
+cycloneii_lcell_ff \Steuerung:St1|W_Start_DFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|W_Start_DFF~feeder ),
+	.regout(\Steuerung:St1|W_Start_DFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|Idle~I (
+	.datab(\Steuerung:St1|SM_Seq_Err ),
+	.datac(\Steuerung:St1|SM_Idle ),
+	.combout(\Steuerung:St1|Idle ));
+defparam \Steuerung:St1|Idle~I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Idle~I .lut_mask = "CFCF";
+
+cycloneii_lcell_comb \Steuerung:St1|Stop_Exec_SRFF~3_I (
+	.dataa(\SWEEP_DECO:Deco|Stop_DFF ),
+	.datab(\Steuerung:St1|Wr_Delta ),
+	.datac(\Steuerung:St1|Stop_Exec_SRFF ),
+	.datad(\Steuerung:St1|S_Stop_Delta~5 ),
+	.combout(\Steuerung:St1|Stop_Exec_SRFF~3 ));
+defparam \Steuerung:St1|Stop_Exec_SRFF~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|Stop_Exec_SRFF~3_I .lut_mask = "CAC0";
+
+cycloneii_lcell_ff \Steuerung:St1|Stop_Exec_SRFF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|Stop_Exec_SRFF~3 ),
+	.regout(\Steuerung:St1|Stop_Exec_SRFF ));
+
+cycloneii_lcell_comb \Steuerung:St1|TO_Err_FF~3_I (
+	.dataa(\Steuerung:St1|Timeout ),
+	.datab(\Steuerung:St1|Wr_Delta ),
+	.datac(\Steuerung:St1|TO_Err_FF ),
+	.datad(\Steuerung:St1|_~93 ),
+	.combout(\Steuerung:St1|TO_Err_FF~3 ));
+defparam \Steuerung:St1|TO_Err_FF~3_I .sum_lutc_input = "datac";
+defparam \Steuerung:St1|TO_Err_FF~3_I .lut_mask = "CAC0";
+
+cycloneii_lcell_ff \Steuerung:St1|TO_Err_FF~I (
+	.clk(\CLK~clkctrl ),
+	.datain(\Steuerung:St1|TO_Err_FF~3 ),
+	.regout(\Steuerung:St1|TO_Err_FF ));
+
+assign Stat_Sel = \SWEEP_DECO:Deco|STAT1_DFF ;
+
+assign \Sweep-Out [15] = \lpm_ff:SW_Reg|dffs[20] ;
+
+assign \Sweep-Out [14] = \lpm_ff:SW_Reg|dffs[19] ;
+
+assign \Sweep-Out [13] = \lpm_ff:SW_Reg|dffs[18] ;
+
+assign \Sweep-Out [12] = \lpm_ff:SW_Reg|dffs[17] ;
+
+assign \Sweep-Out [11] = \lpm_ff:SW_Reg|dffs[16] ;
+
+assign \Sweep-Out [10] = \lpm_ff:SW_Reg|dffs[15] ;
+
+assign \Sweep-Out [9] = \lpm_ff:SW_Reg|dffs[14] ;
+
+assign \Sweep-Out [8] = \lpm_ff:SW_Reg|dffs[13] ;
+
+assign \Sweep-Out [7] = \lpm_ff:SW_Reg|dffs[12] ;
+
+assign \Sweep-Out [6] = \lpm_ff:SW_Reg|dffs[11] ;
+
+assign \Sweep-Out [5] = \lpm_ff:SW_Reg|dffs[10] ;
+
+assign \Sweep-Out [4] = \lpm_ff:SW_Reg|dffs[9] ;
+
+assign \Sweep-Out [3] = \lpm_ff:SW_Reg|dffs[8] ;
+
+assign \Sweep-Out [2] = \lpm_ff:SW_Reg|dffs[7] ;
+
+assign \Sweep-Out [1] = \lpm_ff:SW_Reg|dffs[6] ;
+
+assign \Sweep-Out [0] = \lpm_ff:SW_Reg|dffs[5] ;
+
+assign \Sweep-Stat [15] = gnd;
+
+assign \Sweep-Stat [14] = \Steuerung:St1|W_Start_DFF ;
+
+assign \Sweep-Stat [13] = \Steuerung:St1|Work_DFF ;
+
+assign \Sweep-Stat [12] = \Steuerung:St1|Idle ;
+
+assign \Sweep-Stat [11] = \Steuerung:St1|Stop_Exec_SRFF ;
+
+assign \Sweep-Stat [10] = \Steuerung:St1|TO_Err_FF ;
+
+assign \Sweep-Stat [9] = \Steuerung:St1|Seq_Err_FF ;
+
+assign \Sweep-Stat [8] = \Steuerung:St1|Trigger_FF ;
+
+assign \Sweep-Stat [7] = gnd;
+
+assign \Sweep-Stat [6] = gnd;
+
+assign \Sweep-Stat [5] = gnd;
+
+assign \Sweep-Stat [4] = \SWEEP_DECO:Deco|Ena_Soft_Trig_Dff ;
+
+assign \Sweep-Stat [3] = gnd;
+
+assign \Sweep-Stat [2] = vcc;
+
+assign \Sweep-Stat [1] = gnd;
+
+assign \Sweep-Stat [0] = gnd;
+
+assign \SWEEP-VERS [3] = gnd;
+
+assign \SWEEP-VERS [2] = vcc;
+
+assign \SWEEP-VERS [1] = gnd;
+
+assign \SWEEP-VERS [0] = gnd;
+
+endmodule

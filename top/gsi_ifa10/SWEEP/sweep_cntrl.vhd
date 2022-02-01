@@ -6,7 +6,7 @@
 -- author: Stefan Rauch <s.rauch@gsi.de>
 -- based on graphical design by W.Panschow
 --
--- Copyright (C) 2017 GSI Helmholtz Centre for Heavy Ion Research GmbH
+-- Copyright (C) 2017 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 --
 ---------------------------------------------------------------------------------
 -- This library is free software; you can redistribute it and/or
@@ -18,10 +18,10 @@
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
---
+--  
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library. If not, see <http://www.gnu.org/licenses/>.
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------- 
 library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
@@ -36,7 +36,7 @@ entity sweep_cntrl is
     clk:      in std_logic;
     freq_en:  in std_logic;
     reset:    in std_logic;
-
+    
     ena_soft_trig:  in std_logic;
     ld_delta:       in std_logic;
     ld_delay:       in std_logic;
@@ -48,7 +48,7 @@ entity sweep_cntrl is
     ramp_fin:       in std_logic;
     delta:          in unsigned(dw-1 downto 0);
     d_in:           in unsigned(dw-1 downto 0);
-
+    
     wr_delta:       out std_logic;
     s_stop_delta:   out std_logic;
     wr_ft_int:      out std_logic;
@@ -62,7 +62,7 @@ entity sweep_cntrl is
     seq_err:        out std_logic;
     trigger:        out std_logic;
     init_hw:        out std_logic
-
+    
   );
 end entity;
 
@@ -70,17 +70,17 @@ architecture arch of sweep_cntrl is
   constant c_to_time:         integer := 2995;                      -- timeout in microseconds
   constant c_to_count:        integer := f_in_khz * c_to_time / 1000;
   constant c_to_count_width:  integer := integer(ceil(log2(real(c_to_count)))) + 1;
-
+  
   signal s_trig_sync, s_trig_sync1, s_trig_sync2: std_logic;
   signal s_trigger_ff:      std_logic;
   signal delay_tmr_cnt:     unsigned(dw downto 0); -- width dw + 1
   signal to_tmr_cnt:        unsigned(c_to_count_width - 1 downto 0);
   signal s_delay_fin:       std_logic;
   signal s_delta_not_zero:  std_logic;
-
+  
   type sm_type is (sm_idle, sm_wr_delta, sm_wr_delay, sm_wr_ft_int, sm_set_flattop, sm_w_start, sm_work, sm_stop, sm_seq_err);
   signal control_sm:  sm_type;
-
+  
   signal s_to_err:          std_logic;
   signal s_seq_err:         std_logic;
   signal s_stop_exec:       std_logic;
@@ -90,7 +90,7 @@ architecture arch of sweep_cntrl is
   signal s_stop:            std_logic;
   signal s_timeout:         std_logic;
   signal s_wr_delay:        std_logic;
-
+  
 
 begin
   trigger_sync: process(clk)
@@ -107,7 +107,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   trigger_ff: process(clk)
   begin
     if rising_edge(clk) then
@@ -118,7 +118,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   to_tmr: process(clk)
   begin
     if rising_edge(clk) then
@@ -131,7 +131,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   timeout: process(clk)
   begin
     if rising_edge(clk) then
@@ -140,7 +140,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   delay_tmr: process(clk)
   begin
     if rising_edge(clk) then
@@ -153,7 +153,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   dly_fin: process(clk)
   begin
     if rising_edge(clk) then
@@ -162,8 +162,8 @@ begin
       end if;
     end if;
   end process;
-
-  delta_not_zero: process(clk,reset)
+  
+  delta_not_zero: process(clk)
   begin
     if rising_edge(clk) then
       if freq_en = '1' then
@@ -176,7 +176,7 @@ begin
     end if;
   end process;
 
-  sm: process(clk,reset)
+  sm: process(clk)
   begin
     if reset <= '1' then
       control_sm <= sm_idle;
@@ -189,7 +189,7 @@ begin
             elsif (ld_flattop_int = '1' or ld_delay = '1') and not s_seq_err = '1' then
               control_sm <= sm_seq_err;
             end if;
-
+          
           when sm_wr_delta =>
             if ld_delta = '1' then
               s_to_err      <= '0';
@@ -203,7 +203,7 @@ begin
             elsif (ld_flattop_int = '1' or set_flattop = '1') then
               control_sm <= sm_seq_err;
             end if;
-
+            
           when sm_wr_delay =>
             if ld_delta = '1' then
               s_wr_delay <= '1';
@@ -213,7 +213,7 @@ begin
             elsif ld_flattop_int = '1' then
               control_sm <= sm_wr_ft_int;
             end if;
-
+          
           when sm_wr_ft_int =>
             if ld_flattop_int = '1' then
               wr_ft_int <= '1';
@@ -223,7 +223,7 @@ begin
             else
               control_sm <= sm_set_flattop;
             end if;
-
+            
           when sm_set_flattop =>
             if set_flattop = '1' then
               wr_flattop <= '1';
@@ -233,7 +233,7 @@ begin
             else
               control_sm <= sm_w_start;
             end if;
-
+          
           when sm_w_start =>
             if s_delay_fin = '1' and s_delta_not_zero = '1' then
               control_sm <= sm_work;
@@ -248,34 +248,34 @@ begin
             else
               control_sm    <= sm_w_start;
             end if;
-
+          
           when sm_work =>
             if ramp_fin = '1' then
               control_sm <= sm_idle;
             else
               control_sm <= sm_stop;
             end if;
-
-
+          
+          
           when sm_stop =>
             if ramp_fin = '1' then
               control_sm <= sm_idle;
             else
               control_sm <= sm_stop;
             end if;
-
+          
           when sm_seq_err =>
             s_seq_err   <= '1';
             control_sm  <= sm_idle;
-
+        
           when others =>
             null;
          end case;
       end if; -- freq_en
     end if; -- rising_edge
   end process;
-
-  inithw: process(freq_en,ramp_fin,control_sm)
+  
+  inithw: process(clk,control_sm,freq_en)
   begin
     if freq_en = '1' then
       if control_sm = sm_idle or ramp_fin = '1' then
@@ -285,8 +285,8 @@ begin
       end if;
     end if;
   end process;
-
-  wstart: process(freq_en)
+    
+  wstart: process(clk,freq_en)
   begin
     if freq_en = '1' then
       if control_sm = sm_w_start then
@@ -296,8 +296,8 @@ begin
       end if;
     end if;
   end process;
-
-  workff: process(freq_en)
+  
+  workff: process(clk,freq_en)
   begin
     if freq_en = '1' then
       if control_sm = sm_work then
@@ -307,8 +307,8 @@ begin
       end if;
     end if;
   end process;
-
-  stopff: process(freq_en)
+  
+  stopff: process(clk,freq_en)
   begin
     if freq_en = '1' then
       if control_sm = sm_stop then
@@ -318,7 +318,7 @@ begin
       end if;
     end if;
   end process;
-
+  
   init_hw   <= s_init_hw;
   w_start   <= s_w_start;
   work      <= s_work;
@@ -327,5 +327,5 @@ begin
   stop_exec <= s_stop_exec;
   trigger   <= s_trigger_ff;
   idle      <= '1' when (control_sm = sm_idle or control_sm = sm_seq_err) else '0';
-
+  
 end architecture;

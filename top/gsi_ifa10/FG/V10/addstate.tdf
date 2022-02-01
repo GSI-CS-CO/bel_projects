@@ -1,0 +1,170 @@
+TITLE "ADDSTATE von IFK-FG (FG 380.210) V08 den 27.04.99";
+
+SUBDESIGN ADDSTATE
+	(
+    /RES,
+    Broadc_Ena,
+    STG_CNT,
+    SW1,
+	SW2,
+    SW3,
+    BROADC_STR,
+    Slave,
+    /GATE_IN,
+	FOSZ       : INPUT;
+    STG_STR,
+    F_ADD_EN,
+	FG/IFC,
+    SW1_SET,
+    SW2_SET,
+    GATE_OUT,
+    SW3_TO,
+    ADD_SM_ERR,
+    /DATA_REQ,
+    BROADCAST   :OUTPUT;
+    )
+
+
+VARIABLE
+	ADD_SM: MACHINE OF BITS (ADD_SM_[12..1])
+            WITH STATES ( IF_IDL   ,
+                          IF_SW1   ,
+                          IF_SW1S  ,
+                          IF_SW2   ,
+                          IF_SW2S  ,
+                          IF_TO_FG ,
+                          FG_FIRST ,
+                          FG_SW3W  ,
+                          FG_SW3G  ,
+                          FG_SW3_TO,
+                          ADD_SM_E ,
+                          FG_TO_IF
+                        );
+
+   FG/IFCF    : SRFF;
+   F_ADD_ENF  : SRFF;
+   DATA_REQF  : SRFF;
+   BROADC_F   : SRFF;
+
+
+BEGIN
+
+	ADD_SM.clk   = FOSZ;
+	ADD_SM.reset = !/RES;
+
+  CASE ADD_SM IS
+
+    WHEN IF_IDL =>
+	  IF    SW1 THEN   ADD_SM = IF_SW1;
+      ELSIF SW2 THEN   ADD_SM = IF_SW2;
+      ELSIF SW3 THEN   ADD_SM = IF_TO_FG;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN IF_SW1 =>
+      IF SW1 THEN      ADD_SM = IF_SW1S;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN IF_SW1S =>
+      IF SW1 THEN      ADD_SM = IF_SW1S;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN IF_SW2 =>
+      IF SW2 THEN      ADD_SM = IF_SW2S;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN IF_SW2S =>
+      IF SW2 THEN      ADD_SM = IF_SW2S;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN IF_TO_FG =>
+      IF    SW3 THEN   ADD_SM = FG_FIRST;
+      ELSE             ADD_SM = IF_IDL;
+      END IF;
+
+    WHEN FG_FIRST =>
+      IF    SW3 THEN   ADD_SM = FG_FIRST;
+      ELSE             ADD_SM = FG_SW3W;
+      END IF;
+
+    WHEN FG_SW3W =>
+      IF    SW3     THEN   ADD_SM = FG_SW3G;
+      ELSIF STG_CNT THEN   ADD_SM = FG_SW3_TO;
+      ELSIF SW1     THEN   ADD_SM = FG_TO_IF;
+      ELSIF SW2     THEN   ADD_SM = FG_TO_IF;
+      ELSE                 ADD_SM = FG_SW3W;
+      END IF;
+
+    WHEN FG_TO_IF =>  ADD_SM = IF_IDL;
+
+    WHEN FG_SW3_TO => ADD_SM = FG_TO_IF;
+
+    WHEN FG_SW3G =>
+      IF    SW3     THEN   ADD_SM = FG_SW3G;
+      ELSIF STG_CNT THEN   ADD_SM = FG_SW3W;
+      ELSIF SW1     THEN   ADD_SM = FG_TO_IF;
+      ELSIF SW2     THEN   ADD_SM = FG_TO_IF;
+      ELSE                 ADD_SM = FG_SW3G;
+      END IF;
+
+  WHEN ADD_SM_E => ADD_SM = IF_IDL;
+
+  WHEN OTHERS => ADD_SM = ADD_SM_E;
+       
+
+  END CASE;
+
+%++++++++++++++++++++++++++++++++++++++++++++++++++++%
+% Nur im Funktionsgeneratormode soll addiert werden. %
+%++++++++++++++++++++++++++++++++++++++++++++++++++++%
+FG/IFCF.clk  = FOSZ;
+FG/IFCF.s    = FG_FIRST;
+FG/IFCF.r    = IF_IDL # IF_SW1 # IF_SW2 # !/RES;
+FG/IFC       = FG/IFCF.q;
+
+F_ADD_ENF.clk  = FOSZ;
+F_ADD_ENF.s    = ((FG_FIRST # FG_SW3W # FG_SW3G) & NOT Slave             & NOT Broadc_Ena)
+               # ((FG_FIRST # FG_SW3W # FG_SW3G) &     Slave & !/GATE_IN & NOT Broadc_Ena)
+               # ((FG_FIRST # FG_SW3W # FG_SW3G) & BROADC_F.q & Broadc_Ena);
+F_ADD_ENF.r    = FG_TO_IF # IF_IDL # FG_SW3_TO # !/RES;
+F_ADD_EN       = F_ADD_ENF.q;
+
+DATA_REQF.clk  = FOSZ;
+DATA_REQF.r    = (NOT Slave             & FG_SW3W & NOT Broadc_Ena)
+               # (    Slave & !/GATE_IN & FG_SW3W & NOT Broadc_Ena)
+               # ( FG_SW3W & BROADC_F.q & Broadc_Ena);
+DATA_REQF.s    = FG_SW3G # IF_IDL # IF_SW1 # IF_SW2 # !/RES;
+/DATA_REQ      = DATA_REQF.q;
+
+BROADC_F.clk  = FOSZ;
+BROADC_F.r    = IF_IDL # !/RES;
+BROADC_F.s    = BROADC_STR & Broadc_Ena;
+
+
+%++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
+% Der erste SW3 schaltet in den Funktionsgenerator-Mode  %
+% Der erste SW3 muss direkt das Operantenreg. OP2[15..0] % 
+% uebernommen werden. Alle folgenden SW3...              %
+%++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
+                                 
+STG_STR = IF_TO_FG # STG_CNT;
+
+SW1_SET = IF_SW1;
+
+SW2_SET = IF_SW2;
+
+SW3_TO = FG_SW3_TO;  % Sollwert_3 timeout %
+
+GATE_OUT = F_ADD_ENF.q;
+
+ADD_SM_ERR = ADD_SM_E;
+
+BROADCAST = BROADC_F.q;
+ 
+END;
+
+

@@ -41,15 +41,15 @@ COMPONENT IFA8_X
       A_SEL_B        :   IN STD_LOGIC_VECTOR(3 DOWNTO 0);
       A_UMIL15V      :   IN STD_LOGIC;
       A_UMIL5V       :   IN STD_LOGIC;
-      sysclk         :   IN STD_LOGIC;
+      sys_clk        :   IN STD_LOGIC;
       Ena_Every100ns :   IN STD_LOGIC;
       Ena_Every166ns :   IN STD_LOGIC;
       Ena_Every250ns :   IN STD_LOGIC;
       Ena_Every500ns :   IN STD_LOGIC;
       Ena_Every1us   :   IN STD_LOGIC;
       Ena_Every20ms  :   IN STD_LOGIC;
-      Ena_every1sec  :   IN  STD_LOGIC;
-      Ena_every2_5s  :   IN  STD_LOGIC;
+      Ena_every1sec  :   IN STD_LOGIC;
+      Ena_every2_5s  :   IN STD_LOGIC;
       FS_DATA        :   IN STD_LOGIC;
       CPU_RESET      :   IN STD_LOGIC;
       Manual_RES     :   IN STD_LOGIC;
@@ -161,6 +161,45 @@ component build_id_ram is
     str:      in std_logic;
 
     build_id_out: out std_logic_vector(15 downto 0)
+  );
+end component;
+
+component sweep_cntrl is
+  generic (
+    dw:       integer;
+    f_in_khz: integer
+  );
+  port (
+    clk:      in std_logic;
+    freq_en:  in std_logic;
+    reset:    in std_logic;
+    
+    ena_soft_trig:  in std_logic;
+    ld_delta:       in std_logic;
+    ld_delay:       in std_logic;
+    ld_flattop_int: in std_logic;
+    set_flattop:    in std_logic;
+    stop_in:        in std_logic;
+    hw_trig:        in std_logic;
+    sw_trig:        in std_logic;
+    ramp_fin:       in std_logic;
+    delta:          in unsigned(dw-1 downto 0);
+    d_in:           in unsigned(dw-1 downto 0);
+    
+    wr_delta:       out std_logic;
+    s_stop_delta:   out std_logic;
+    wr_ft_int:      out std_logic;
+    wr_flattop:     out std_logic;
+    idle:           out std_logic;
+    w_start:        out std_logic;
+    work:           out std_logic;
+    stop:           out std_logic;
+    stop_exec:      out std_logic;
+    to_err:         out std_logic;
+    seq_err:        out std_logic;
+    trigger:        out std_logic;
+    init_hw:        out std_logic
+    
   );
 end component;
 

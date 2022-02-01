@@ -1,0 +1,43 @@
+TITLE "'Seep_Status' von W.Panschow, für den Sweeper der IFK FG 380 210, Version V03, d. 06.12.99";
+
+-- V03: Auf Bit11 wurde 'Stop_Exec' gelegt. Es speichert einen gültig abgesetzten Stop-Befehl.
+
+SUBDESIGN Sweep_Stat
+(
+	Frei15:					INPUT = GND;
+	Wait_Start:				INPUT;
+	Work:					INPUT;
+	Idle:					INPUT;
+    Stop_Exec:				INPUT;
+	TO_Err:					INPUT;
+	Seq_Err:				INPUT;
+	Trigger:				INPUT;
+	Frei7:					INPUT = GND;
+	Frei6:					INPUT = GND;
+	Frei5:					INPUT = GND;
+	Ena_Soft_Trig:			INPUT;
+	Version[3..0]:			INPUT;
+
+	Status[15..0]:			OUTPUT;
+)
+
+BEGIN
+
+Status[15..0] = (
+				Frei15,
+				Wait_Start,
+				Work,
+				Idle,
+				Stop_Exec,
+				TO_Err,		
+				Seq_Err,	
+				Trigger,
+				Frei7,
+				Frei6,
+				Frei5,
+				Ena_Soft_Trig,
+				Version[3..0]
+				);	
+
+
+END;

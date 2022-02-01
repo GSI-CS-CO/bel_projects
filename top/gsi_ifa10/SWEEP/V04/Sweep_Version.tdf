@@ -1,0 +1,87 @@
+TITLE "Sweep_Version sollte alle Änderungsbemerkungen die den Sweeper-Macro der IFK (FG380.211!) betreffen enthalten.";
+
+PARAMETERS (TEST);
+
+--*******************************************************************************
+--                          Hier immer die aktuelle Versions-Nummer festlegen !!!
+--                                    |
+--                                    |
+CONSTANT Versions_nr = (TEST==0) ? H"04" : H"00";
+--                                            |
+--                                            |
+--                                  Eine Testversion bekommt immer die Nr. 00 !!!    
+--*******************************************************************************
+
+
+SUBDESIGN Sweep_Version
+(
+	v[3..0] : OUTPUT;
+)
+--------------------------------------------------------------------------------------------------------------------------------
+-- Version 1 erstellt am 24.08.99
+	-- Erste Übersetzung mit Maxplus V9.21
+--------------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- Änderungen Version 2
+  -- Der Sweeper soll seinen Startwert nicht mehr direkt am Gerät mit 'Ld_St_SW' setzen, sondern nur Intern
+  -- mit 'Ld_SW_Int' speichern. Am Gerät wird dieser Startwert erst gesetzt, wenn der Broadcast_FC geschreiben wurde.
+  -- In nachfolgenden Macros wurde geändert.
+
+  -- In 'sweep'
+    -- Ist ein Zwischenspeicher für den Startwert hinzugefügt worden. Selektiert wird er mit 'Wr_SW_Int'.
+
+  -- In Modul 'sweep_deco'
+    -- Wurde das Signal 'Ld_St_SW' in 'Ld_SW_Int' umbenannt.
+	-- Wurde das Signal 'Boadcast' hinzugefügt.
+
+  -- In Modul 'steuerung'
+	-- Der State 'SM_Wr_SW_Int' hinzugefügt. In diesem wird das Signal 'Wr_SW_Int' erzeugt.
+	-- Der State 'SM_Wr_ST_SW' wartet nun auf Broadcast und erzeugt dann 'Wr_St_SW'.
+	-- Der Flattop-Timeout 'TO_Time' ist von 4900us auf 4050us geändert worden.
+--------------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- Änderungen Version 3
+	-- Die Timout-Überwachung soll sich nicht mehr aus der maximalen Flattop-Zeit plus der langsamsten Abwärtsrampen-
+	-- Zeit zusammensetzen (3050us + 1000us), da in dem Sweeper-Netzgerät nach dem Überschreiten der max. Flattop-Zeit eine
+	-- eigene Schutzfunktion aktiv wird. Das auf Null-Schalten mit der bisherigen Zeit kam zu spät.
+	-- Ausserdem wurde festgestellt, dass das Netzgerät kein direktes auf Null-Schalten verkraftet.
+--hier muss noch weiter geschrieben werden......von 8.192MHz auf 12Mhz......Timout ist immer ein Fehler auch bei Steigung Null..
+--------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+-- Änderungen Version 4	erstellt 21.08.2009																			--
+--		Die Ablaufsteuerungszustände SM_W_Start, SM_Work und SM_Stop werden nicht mehr direkt auf die gleichnamigen	--
+--		Ausgänge dieses Makros gelegt, sondern über Register entkoppelt. Das Selbe gilt für den Ausgang Init_HW der --
+--		bisher direkt mit dem Ablaufsteuerungszustand SM_Idle belegt war. Als Grund für diese Änderung sind			--
+--		auftretende Fehler an asynchronen Eingängen, die direkt durch die Ablaufsteuerung bedient wurden.			--
+--		In Modul "Steuerung"																						--
+--			a) 	OUTPUT SM_W_Start umbenannt in W_Start 																--
+--				OUTPUT SM_Work umbenannt in Work																	--
+--				OUTPUT SM_Stop umbenannt in Stop																	--
+--			b)	W_Start = W_Start_DFF(.d = SM_W_Start) über Reg geführtes Ablaufsteurungssignal						--
+--				Work = Work_DFF(.d = SM_Work) über Reg geführtes Ablaufsteurungssignal								--
+--				Stop = Stop_DFF(.d = SM_Stop) über Reg geführtes Ablaufsteurungssignal								--
+--				Init_HW = Init_HW_DFF(.d = SM_Idle) über Reg geführtes Ablaufsteurungssignal						--
+--			c)  TO_Timer wird jetzt synchron gesetzt (sset statt aset)												--
+--				Der Ablauf des TO_Timers wird nicht mehr mit dem EQ-Ausgang sondern mit dem höchsten Bit = '1' des	--
+--				TO_Timers dedektiert. 																				--
+----------------------------------------------------------------------------------------------------------------------
+
+
+BEGIN
+
+v[] = Versions_nr;
+ 
+ASSERT NOT(VERSIONS_NR == 0)
+  REPORT "      ----------- Dies ist eine Testversion des Sweepers  !!!!  -----------" 
+SEVERITY Warning;
+
+ASSERT NOT(VERSIONS_NR != 0)
+  REPORT "      Die Design-Version des Sweepers lautet    -------->  %  <---------" Versions_nr
+SEVERITY Warning;
+
+END;
+
+

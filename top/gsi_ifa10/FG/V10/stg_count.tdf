@@ -1,0 +1,60 @@
+TITLE "'stg_count' => Stützpunktsabstand-Zähler-Macro des IFK-FG (FG 380.210), Autor: W.Panschow, Stand: 10.12.98, Vers: V08";
+
+PARAMETERS (TEST = 1);
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, aclr, aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+CONSTANT C_Stuetz_Cnt_0 = 32768;
+CONSTANT C_Stuetz_Cnt_1 = C_Stuetz_Cnt_0 DIV 2;
+CONSTANT C_Stuetz_Cnt_2 = C_Stuetz_Cnt_0 DIV 4;
+CONSTANT C_Stuetz_Cnt_3 = C_Stuetz_Cnt_0 DIV 8;
+CONSTANT C_Stuetz_Cnt_4 = C_Stuetz_Cnt_0 DIV 16;
+CONSTANT C_Stuetz_Cnt_5 = C_Stuetz_Cnt_0 DIV 32;
+CONSTANT C_Stuetz_Cnt_6 = C_Stuetz_Cnt_0 DIV 64;
+CONSTANT C_Stuetz_Cnt_7 = (TEST==0) ? (C_Stuetz_Cnt_0 DIV 128) : (C_Stuetz_Cnt_0 DIV 2048);
+
+subdesign stg_count
+	(
+	Cnt_Sel[2..0]:	INPUT;
+	F_Add:			INPUT;
+	F_Add_En:		INPUT;
+	F_OSZ:			INPUT;
+	FG_SEL:			INPUT;
+	Stuetz_Punkt:	OUTPUT;
+	)
+	
+
+VARIABLE
+	Stuetz_Cnt_Mux:		lpm_mux WITH (LPM_WIDTH = 16, LPM_SIZE = 8, LPM_WIDTHS = 3); 
+	Stuetz_Count:		lpm_counter WITH (LPM_WIDTH = 16, LPM_DIRECTION = "DOWN");
+	Stuetz_Punkt_FF:	DFF;
+BEGIN
+
+Stuetz_Cnt_Mux.sel[] = Cnt_Sel[];
+Stuetz_Cnt_Mux.data[0][] = C_Stuetz_Cnt_0;
+Stuetz_Cnt_Mux.data[1][] = C_Stuetz_Cnt_1;
+Stuetz_Cnt_Mux.data[2][] = C_Stuetz_Cnt_2;
+Stuetz_Cnt_Mux.data[3][] = C_Stuetz_Cnt_3;
+Stuetz_Cnt_Mux.data[4][] = C_Stuetz_Cnt_4;
+Stuetz_Cnt_Mux.data[5][] = C_Stuetz_Cnt_5;
+Stuetz_Cnt_Mux.data[6][] = C_Stuetz_Cnt_6;
+Stuetz_Cnt_Mux.data[7][] = C_Stuetz_Cnt_7;
+
+Stuetz_Count.data[] = Stuetz_Cnt_Mux.result[];
+Stuetz_Count.clock	= F_OSZ;
+Stuetz_Count.cnt_en	= F_Add;
+Stuetz_Count.sload	= NOT F_Add_En OR Stuetz_Count.eq0;
+Stuetz_Count.aclr	= NOT FG_SEL;
+
+Stuetz_Punkt_FF.clk	= F_OSZ;
+Stuetz_Punkt_FF.d	= Stuetz_Count.eq0;
+
+Stuetz_Punkt = Stuetz_Punkt_FF;
+
+END;

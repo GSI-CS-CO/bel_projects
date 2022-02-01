@@ -1,0 +1,316 @@
+TITLE "'Steuerung': Ablaufsteuerung für den Sweeper, V04 den 27.08.2009, W.Panschow";
+
+----------------------------------------------------------------------------------------------------------------------
+-- V02:																												--
+-- Der Sweeper soll seinen Startwert nicht mehr direkt am Gerät mit 'Ld_St_SW' setzen, sondern nur Intern			--
+-- mit 'Ld_SW_Int' speichern. Am Gerät wird dieser Startwert erst gesetzt, wenn der Broadcast_FC geschreiben wurde.	--
+-- 		1)	In der Ablaufsteuerung 'Steuer_SM' ist der State 'SM_Wr_SW_Int' hinzugefügt worden. In diesem wird das	--
+--			Signal 'Wr_SW_Int' erzeugt.																				--
+-- 		2)	Der State 'SM_Wr_ST_SW' wartet nun auf Broadcast und erzeugt dann 'Wr_St_SW'.							--
+--		3)	Der Flattop-Timeout 'TO_Time' ist von 4900us auf 4050us geändert worden.								--
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+-- V03:	Die wichtigsten Änderungen betreffen:																		--
+--			1)	Die Timeout-Zeit.																					--
+--				Bis V02 setzte sich der Timeout aus der maximalen Flattop-Zeit und der langsamsten Rampen-Zeit		--
+--				zusammen. Da der Sweeper nach einer Flattopzeit von 3.0 ms einen eigenständigen Selbstschutz		--
+--				aktiviert, der von Hand rückgesetzt werden muss, war die bisherige Timeoutüberwachung in diesem		--
+--				Macro (V02) nicht brauchbar. In V03 wird deshalb nur noch die Flattop-Zeit überwacht (s. 'TO_Time'	--
+--				u. 'TO_Timer'). Die Flattop-Timeout-Zeit 'TO_Time' ist von 4050us auf 2995 geändert worden.			--
+--			2)	Die Timeout-Funktion.																				--
+--				Es wurde nachträglich gefordert, dass der Flattop-Wert im Timout-Fall nicht direkt auf null			--
+--				zurückgesetzt wird, sondern mit einer verundeten Rampe gefahren wird (Dauer 120 us).				--
+--			3)	Neuer Softwarebefehl: Stop-Rampe fahren.															--
+--				Damit ein Flattop-Wert ohne Timeout-Funktion und dadurch auch ohne Fehler auf Null gefahren werden	--
+--				kann ist ein Stop-Befehl eingebaut worden. Die Steilheit ist die gleiche wie bei der Timeout-Rampe.	--
+--				Der Befehl wird nur akzeptiert, wenn die Ablaufsteuerung im State 'SM_W_Start' ist, in allen 		--
+--				anderen Fällen wird der Befehl ignoriert. Ein aktzeptierter Stop-Befehl wird im	'Stop_Exec_SRFF'	--
+--				gespeichert und im State 'SM_Wr_Delta' zurückgesetzt.												--
+--			4)	Es gibt einen Merker für das Trigger-Ereignis. 'Trigger_FF' wird gesetzt wenn ein gültiger Trigger	--
+--				erkannt wurde. Der Merker wird im State 'SM_Wr_Delta' zurückgesetzt.								--
+--			5)	'Tigger_Err' wird nicht mehr generiert.																--
+--			6)	Es sind einige Signalnamen umbenannt worden, oder neue hinzugekommen:								--
+--					'Ld_SW_Int'		=>		'Ld_Flattop_Int'														--
+--					'Broadcast'		=>		'Set_Flattop'															--
+--					'Wr_SW_Int'		=>		'Wr_FT_Int'																--
+--					'Wr_St_SW'		=>		'Wr_Flattop'															--
+--									neu		'Stop' 			(INPUT)													--
+--									neu		'S_Stop_Delta' 	(OUTPUT)												--
+--									neu		'Trigger' 		(OUTPUT)												--
+--									neu		'Stop_Exec' 	(OUTPUT)												--
+----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+-- V04:	Die wichtigsten Änderungen betreffen:																		--
+--		Die Ablaufsteuerungszustände SM_W_Start, SM_Work und SM_Stop werden nicht mehr direkt auf die gleichnamigen	--
+--		Ausgänge dieses Makros gelegt, sondern über Register entkoppelt. Das Selbe gilt für den Ausgang Init_HW der --
+--		bisher direkt mit dem Ablaufsteuerungszustand SM_Idle belegt war. Als Grund für diese Änderung sind			--
+--		auftretende Fehler an asynchronen Eingängen, die direkt durch die Ablaufsteuerung bedient wurden.			--
+--			1) 	OUTPUT SM_W_Start umbenannt in W_Start 																--
+--				OUTPUT SM_Work umbenannt in Work																	--
+--				OUTPUT SM_Stop umbenannt in Stop																	--
+--			2)	W_Start = W_Start_DFF(.d = SM_W_Start) über Reg geführtes Ablaufsteurungssignal						--
+--				Work = Work_DFF(.d = SM_Work) über Reg geführtes Ablaufsteurungssignal								--
+--				Stop = Stop_DFF(.d = SM_Stop) über Reg geführtes Ablaufsteurungssignal								--
+--				Init_HW = Init_HW_DFF(.d = SM_Idle) über Reg geführtes Ablaufsteurungssignal						--
+--			3)  TO_Timer wird jetzt synchron gesetzt (sset statt aset)												--
+--				Der Ablauf des TO_Timers wird nicht mehr mit dem EQ-Ausgang sondern mit dem höchsten Bit = '1' des	--
+--				TO_Timers dedektiert. 																				--
+--			4)	Der Ablauf des Delay_Timers wird nicht mehr mit dem EQ-Ausgang sondern mit dem höchsten Bit = '1'	--
+--				des Delay_Timers dedektiert. Die vorgegebene Delay-Zeit ist um einen Takt länger als bisher.		--
+--			5)	Die Trigger-Flanke wird jetzt nur noch während SM_W_Start ausgewertet.								--
+----------------------------------------------------------------------------------------------------------------------
+
+
+INCLUDE "lpm_counter.inc";
+
+
+Parameters (
+			DW,				-- Breite des Delta-Registers (Rampensteilheit), und des Delay-Timers.			--
+			F_in_kHz,		-- Die Systemfrequenz in kHz, damit Gleitkommazahl vermieden wird.				--
+			TEST			-- Wenn '1' wird die 'TO_Time' niedriger definiert (die Simmulation ist kürzer)	--
+		   );
+
+
+CONSTANT TO_Time	= (TEST==0)  ? 2995 : 20; 		-- Timeout-Zeit in us, länger darf Flattop-Wert nicht gesetzt sein.	--
+CONSTANT TO_Count	= F_in_kHz * TO_Time DIV 1000;	-- Der Timeout-Zählerstand, wird aus gegebener Timeout-Zeit und		--
+													-- Systemfrequenz berechnet.										--
+
+CONSTANT TO_Timer_width = FLOOR(LOG2(TO_Count)+1);
+
+ASSERT TEST==0
+  REPORT "Zum Test ist die Timeout-Zeit des Sweepers = % us, d.h. der TO_Count beträgt bei % kHz Takt = %"
+																						To_Time, F_in_kHz, TO_Count
+SEVERITY Warning;
+
+ASSERT TEST==1
+  REPORT "Die Timeout-Zeit des Sweepers ist = % us, d.h. der TO_Count beträgt bei % kHz Takt = %, die Laenge von TO_Count = %" 
+																						To_Time, F_in_kHz, TO_Count, TO_Timer_width
+SEVERITY Warning;
+
+SUBDESIGN Steuerung
+	(
+	Ena_Soft_Trig:	INPUT;		-- 'eins' => nur Software-Trigger, 'null' => nur Hardware-Trigger.				--
+    Ld_Delta:		INPUT;		-- Legt die Steilheit fest, mit der der Flattop-Wert auf Null gefahren wird.	--
+	Ld_Delay:		INPUT;		-- Lädt Verzögerung zwischen Hard/Software-Trigger und dem Beginn der Rampe.	--
+    Ld_Flattop_Int:	INPUT;		-- Lädt Flattop-Wert in ein internen Zwischenspeicher.							--
+	Set_Flattop:	INPUT;		-- Der Flattop-Wert-Zwischenspeicher wird in die Ausgangsregister übernommen.	--
+	Stop_In:		INPUT;		-- Flattop-Wert soll mit max. Steilheit auf null fahren.						--
+    HW_Trig:		INPUT;		-- Hardware-Trigger soll Sweeper-Rampe starten.									--
+	SW_Trig:		INPUT;		-- Sweeper-Rampe soll per Software gestartet werden.							--
+	Ramp_Fin:		INPUT;		-- 'eins' Rampe ist auf Null gefahren.											--
+	Delta[DW-1..0]:	INPUT;		-- Dient zum Test des Delta-Registers, ob die Steigung der Rampe = 0 ist.		--
+	D_In[DW-1..0]:	INPUT;		-- Datenpfad zum Laden des Trigger-Delay 'Delay_Timer'.							--
+    Reset:			INPUT;		-- 'eins' wenn Software-, Powerup-Reset, oder Sweeper generell ausgeschaltet.	--
+    CLK:			INPUT;
+
+    Wr_Delta:		OUTPUT;
+	S_Stop_Delta:	OUTPUT;
+	Wr_FT_Int:		OUTPUT;
+	Wr_Flattop:		OUTPUT;
+	Idle:			OUTPUT;
+	W_Start:		OUTPUT;
+    Work:			OUTPUT;
+	Stop:			OUTPUT;
+	Stop_Exec:		OUTPUT;
+    TO_Err:			OUTPUT;
+    Seq_Err:		OUTPUT;
+	Trigger:		OUTPUT;
+	Init_HW:		OUTPUT;
+    )
+
+VARIABLE
+	Steuer_SM: MACHINE OF BITS (Steuer_SM_[9..1])
+            	WITH STATES ( SM_Idle		,
+							  SM_Wr_Delta	,
+							  SM_Wr_Delay	,
+							  SM_Wr_FT_Int	,
+							  SM_Set_Flattop,
+							  SM_W_Start	,
+							  SM_Work		,
+							  SM_Stop		,
+							  SM_Seq_Err
+            	    		);
+
+TO_Timer:	lpm_counter WITH (LPM_WIDTH = TO_Timer_width, LPM_DIRECTION = "Down",  LPM_SVALUE = TO_Count);
+Timeout:	DFF;
+
+Delay_Timer:	lpm_counter WITH (LPM_WIDTH = DW+1, LPM_DIRECTION = "Down"); -- höchstes bit wird als Überlauf ausgewertet
+Delay_Fin:		DFF;
+
+Delta_Not_Zero:	DFF;
+
+TO_Err_FF:	SRFF;
+Seq_Err_FF:	SRFF;
+
+Trigger_Sync, Trigger_Sync_1, Trigger_Sync_2: DFF;
+Trigger_FF: SRFF;
+
+Init_HW_DFF: 	DFF;
+W_Start_DFF:	DFF;
+Work_DFF:		DFF;
+Stop_DFF:		DFF;
+
+Stop_Exec_SRFF: SRFF;
+
+Wr_Delay:	NODE;
+
+BEGIN
+
+Trigger_Sync.clk	= CLK;
+Trigger_Sync.d		= (Ena_Soft_Trig AND SW_Trig) OR (NOT Ena_Soft_Trig AND HW_Trig);
+
+Trigger_Sync_1.clk	= CLK;
+Trigger_Sync_1.d	= Trigger_Sync;
+
+Trigger_Sync_2.clk	= CLK;
+Trigger_Sync_2.d	= Trigger_Sync_1;
+
+Trigger_FF.clk	= CLK;
+Trigger_FF.s	= Trigger_Sync_1 AND NOT Trigger_Sync_2 AND SM_W_Start;
+
+Delay_Fin.clk	= CLK;
+Delay_Fin.d		= Delay_Timer.q[DW] AND Trigger_FF;	-- höchstes Bit q[DW] = 1 Delay_Timer ist abgelaufen
+
+TO_Timer.clock	= CLK;
+TO_Timer.sset	= SM_Wr_Delta;
+TO_Timer.cnt_en	= SM_Set_Flattop OR SM_W_Start;
+
+Timeout.clk	= CLK;
+Timeout.d	= TO_Timer.q[TO_Timer_width-1];
+
+Delta_Not_Zero.clk	= CLK;
+Delta_Not_Zero.d	= DELTA[] != 0;
+
+Delay_Timer.clock	= CLK;
+Delay_Timer.sload	= Wr_Delay;
+Delay_Timer.data[]	= (GND, D_in[11..0]);				-- höchstes Bit q[DW] ist die Überlaufkennung, wird mit Null vorgesetzt
+Delay_Timer.cnt_en	= Trigger_FF AND SM_W_Start;
+
+Steuer_SM.clk   = CLK;
+Steuer_SM.reset = Reset;
+
+TO_Err_ff.clk	= CLK;
+Seq_Err_FF.clk	= CLK;
+Stop_Exec_SRFF.clk = CLK;
+
+CASE Steuer_SM IS
+
+	WHEN SM_Idle =>
+		IF Ld_Delta THEN
+			Steuer_SM = SM_Wr_Delta;
+		ELSIF (Ld_Flattop_Int OR Ld_Delay) AND NOT Seq_Err_FF THEN
+			Steuer_SM = SM_Seq_Err;
+		ELSE
+			Steuer_SM = SM_Idle;
+		END IF;
+
+	WHEN SM_Wr_Delta =>
+		IF Ld_Delta THEN
+			TO_Err_FF.r			= VCC;
+			Seq_Err_FF.r		= VCC;
+			Trigger_FF.r		= VCC;
+			Wr_Delta			= VCC;
+			Stop_Exec_SRFF.r	= VCC;
+			Steuer_SM = SM_Wr_Delta;
+		ELSIF Ld_Delay THEN
+			Steuer_SM = SM_Wr_Delay;
+		ELSIF (Ld_Flattop_Int OR Set_Flattop) THEN
+			Steuer_SM = SM_Seq_Err;
+		END IF;
+
+	WHEN SM_Wr_Delay =>
+		IF Ld_Delay THEN
+			Wr_Delay = VCC;
+			Steuer_SM = SM_Wr_Delay;
+		ELSIF (Ld_Delta OR Set_Flattop) AND NOT Seq_Err_FF  THEN
+			Steuer_SM = SM_Seq_Err;
+		ELSIF Ld_Flattop_Int THEN
+			Steuer_SM = SM_Wr_FT_Int;
+		END IF;
+
+	WHEN SM_Wr_FT_Int =>
+		IF Ld_Flattop_Int THEN							-- Der Flattop-Wert des Sweepers muss intern zwischengespeichert werden,	--
+			Wr_FT_Int = VCC;							-- damit zwei Sweeper mit unterschiedlichem Startwert vorbereitet werden	--
+			Steuer_SM = SM_Wr_FT_Int;					-- koennen. Diese werden dann gleichzeitig durch ein mit Broadcast-Adr.		--
+		ELSIF (Ld_Delta OR Ld_Delay) AND NOT Seq_Err_FF  THEN		-- 'Set_Flattop' Kommando gesetzt (s. State 'SM_Set_Flattop').	--
+			Steuer_SM = SM_Seq_Err;
+		ELSIF Set_Flattop THEN
+			Steuer_SM = SM_Set_Flattop;
+		END IF;
+
+
+	WHEN SM_Set_Flattop =>
+		IF Set_Flattop THEN								-- Hier wird der intern gespeicherte Flattop-Wert (s. State 'SM_Wr_FT_Int')	--
+			Wr_Flattop = VCC;							-- per Set_Flattop-Kommando am Gerät gesetzt.								--
+			Steuer_SM = SM_Set_Flattop;
+		ELSIF (Ld_Delta OR Ld_Delay OR Ld_Flattop_Int)
+			   AND NOT Seq_Err_FF  THEN
+			Steuer_SM = SM_Seq_Err;
+		ELSE
+			Steuer_SM = SM_W_Start;
+		END IF;
+
+	WHEN SM_W_Start =>
+		IF Delay_Fin AND Delta_Not_Zero THEN
+			Steuer_SM = SM_Work;
+		ELSIF Stop_In THEN
+			S_Stop_Delta = VCC;
+			Stop_Exec_SRFF.s = VCC;
+			Steuer_SM = SM_Stop;
+		ELSIF Timeout THEN
+			TO_Err_FF.s = VCC;
+			S_Stop_Delta = VCC;
+			Steuer_SM = SM_Stop;
+		ELSE
+			Steuer_SM = SM_W_Start;
+		END IF;
+
+	WHEN SM_Work =>
+		IF Ramp_Fin THEN
+			Steuer_SM = SM_Idle;
+		ELSE
+			Steuer_SM = SM_Work;
+		END IF;
+
+    WHEN SM_Stop =>
+		IF Ramp_Fin THEN
+			Steuer_SM = SM_Idle;
+		ELSE
+			Steuer_SM = SM_Stop;
+		END IF;
+
+    WHEN SM_Seq_Err =>
+		Seq_Err_FF.s = VCC;
+		Steuer_SM = SM_Idle;
+
+END CASE;
+
+Init_HW_DFF.clk = clk;
+Init_HW_DFF.d	= SM_Idle OR Ramp_Fin;
+Init_HW			= Init_HW_DFF;
+
+W_Start_DFF.clk = clk;
+W_Start_DFF.d	= SM_W_Start;
+W_Start			= W_Start_DFF;
+
+Work_DFF.clk	= clk;
+Work_DFF.d		= SM_Work;
+Work			= Work_DFF;
+
+Stop_DFF.clk	= clk;
+Stop_DFF.d		= SM_Stop;
+Stop			= Stop_DFF;
+
+TO_Err = TO_Err_FF;
+
+Seq_Err = Seq_Err_FF;
+
+Stop_Exec = Stop_Exec_SRFF;
+
+Trigger = Trigger_FF;
+
+Idle = SM_Idle OR SM_Seq_Err;
+
+END;

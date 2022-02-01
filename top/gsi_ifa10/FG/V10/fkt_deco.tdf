@@ -1,0 +1,147 @@
+TITLE "fkt_deco: Funktionscode-Dekodierung V08 den 27.04.99 (IFK-FG = FG 380.210!)";
+
+
+CONSTANT  SW1_FKT    =  H"06";
+CONSTANT  SW2_FKT    =  H"07";
+CONSTANT  SW3_FKT    =  H"08";
+CONSTANT  SW4_FKT    =  H"09";
+CONSTANT  SW5_FKT    =  H"0A";
+CONSTANT  RES_FKT    =  H"01";
+CONSTANT  STAT1_FKT  =  H"91";
+CONSTANT  STAT2_FKT  =  H"92";
+CONSTANT  SW1_RD_FKT =  H"93";
+CONSTANT  SW2_RD_FKT =  H"94";
+CONSTANT  STP1_RD_FKT =  H"95";
+CONSTANT  STP2_RD_FKT =  H"96";
+CONSTANT  BROADC_FKT =  H"20";
+
+
+SUBDESIGN FKT_DECO
+    (
+     CLK,
+     /RES,
+     TAKE_DA,
+     INTERPOL,
+     SHIFT_SW3_IN,
+	 Broadc_Ena_In,
+	 FG/IFC,
+	 FG_SEL,
+     FKT[7..0]  : INPUT;
+	 SW1_STR,
+	 SW2_STR,
+	 SW3_STR,
+	 SW4_STR,
+     /INTERPOL,
+     /RES_STR,
+	 STAT1_STR,
+     STAT2_STR,
+	 SW1_RD_STR,
+	 SW2_RD_STR,
+	 STP1_RD_STR,
+	 STP2_RD_STR,
+	 FG_RD_ACTIV,
+     Broadc_Str,
+	 Broadc_Ena,
+     SHIFT_SW3  : OUTPUT;
+	)
+
+VARIABLE
+  SW1_DFF, SW2_DFF, SW3_DFF, SW4_DFF, RES_DFF, Broadc_Str_Dff : DFF;
+  INTERPOL_DFF, Broadc_Ena_Dff, SHIFT_SW3_DFF : DFFE;
+  STAT1_DFF, STAT2_DFF, SW1_RD_DFF, SW2_RD_DFF, STP1_RD_DFF, STP2_RD_DFF: DFF;
+  FG_RD_ACTIV_DFF, Take_DA_Sync: DFF;
+
+BEGIN
+Take_DA_Sync.clk	= CLK;
+TAKE_DA_Sync.d		= TAKE_DA;
+
+STAT1_DFF.CLRN	= /RES;
+STAT1_DFF.CLK	= CLK;
+STAT1_DFF.d 	= (FKT[] == STAT1_FKT)  & Take_DA_Sync  AND FG_SEL;
+STAT1_STR	= STAT1_DFF;
+
+STAT2_DFF.CLRN	= /RES;
+STAT2_DFF.CLK	= CLK;
+STAT2_DFF.d 	= (FKT[] == STAT2_FKT)  & Take_DA_Sync  AND FG_SEL;
+STAT2_STR	= STAT2_DFF;
+
+--STAT3_DFF.CLRN	= /RES;
+--STAT3_DFF.CLK	= CLK;
+--STAT3_DFF.d 	= (FKT[] == STAT3_FKT)  & Take_DA_Sync  AND FG_SEL;
+--STAT3_STR	= STAT3_DFF;
+
+SW1_RD_DFF.CLRN	= /RES;
+SW1_RD_DFF.CLK	= CLK;
+SW1_RD_DFF.d 	= (FKT[] == SW1_RD_FKT)  & Take_DA_Sync  AND FG_SEL;
+SW1_RD_STR	= SW1_RD_DFF;
+
+SW2_RD_DFF.CLRN	= /RES;
+SW2_RD_DFF.CLK	= CLK;
+SW2_RD_DFF.d 	= (FKT[] == SW2_RD_FKT)  & Take_DA_Sync  AND FG_SEL;
+SW2_RD_STR	= SW2_RD_DFF;
+
+STP1_RD_DFF.CLRN	= /RES;
+STP1_RD_DFF.CLK		= CLK;
+STP1_RD_DFF.d 		= (FKT[] == STP1_RD_FKT)  & Take_DA_Sync  AND FG_SEL;
+STP1_RD_STR	= STP1_RD_DFF;
+
+STP2_RD_DFF.CLRN	= /RES;
+STP2_RD_DFF.CLK		= CLK;
+STP2_RD_DFF.d 		= (FKT[] == STP2_RD_FKT)  & Take_DA_Sync  AND FG_SEL;
+STP2_RD_STR	= STP2_RD_DFF;
+
+SW1_DFF.clk     = clk;
+SW1_DFF.clrn	= /RES;
+SW1_DFF.d		= (FKT[] == SW1_FKT) & Take_DA_Sync  AND FG_SEL;
+SW1_STR	= SW1_DFF;
+
+SW2_DFF.clk     = clk;
+SW2_DFF.clrn	= /RES;
+SW2_DFF.d		= (FKT[] == SW2_FKT) & Take_DA_Sync  AND FG_SEL;
+SW2_STR	= SW2_DFF;
+
+SW3_DFF.clk     = clk;
+SW3_DFF.clrn	= /RES;
+SW3_DFF.d		= (FKT[] == SW3_FKT) & Take_DA_Sync  AND FG_SEL;
+SW3_STR	= SW3_DFF;
+
+SW4_DFF.clk     = clk;
+SW4_DFF.clrn	= /RES;
+SW4_DFF.d		= (FKT[] == SW4_FKT) AND Take_DA_Sync  AND FG_SEL AND NOT FG/IFC;
+SW4_STR	= SW4_DFF;
+
+INTERPOL_DFF.d    =  INTERPOL;
+INTERPOL_DFF.clk  = CLK;
+INTERPOL_DFF.ena  = (FKT[] == SW5_FKT)    & Take_DA_Sync  AND FG_SEL;
+INTERPOL_DFF.clrn = /RES;
+/INTERPOL         = INTERPOL_DFF;
+
+SHIFT_SW3_DFF.d    = SHIFT_SW3_IN;
+SHIFT_SW3_DFF.clk  = CLK;
+SHIFT_SW3_DFF.ena  = (FKT[] == SW5_FKT)    & Take_DA_Sync  AND FG_SEL;
+SHIFT_SW3_DFF.clrn = /RES;
+SHIFT_SW3          = SHIFT_SW3_DFF;
+
+Broadc_Ena_Dff.d    = Broadc_Ena_In;
+Broadc_Ena_Dff.clk  = CLK;
+Broadc_Ena_Dff.ena  = (FKT[] == SW5_FKT)    & Take_DA_Sync  AND FG_SEL;
+Broadc_Ena_Dff.clrn = /RES;
+Broadc_Ena          = Broadc_Ena_Dff;
+
+RES_DFF.clk	= clk;
+RES_DFF.d	= ((FKT[] == RES_FKT) & Take_DA_Sync  AND FG_SEL) OR NOT FG_SEL;		-- Solange der FG nicht eingeschaltet ist, wird für den FG-Macro ein	--
+/RES_STR    = Not RES_DFF;															-- permanenter Reset erzeugt.											--
+
+Broadc_Str_Dff.d		= (FKT[] == BROADC_FKT) & Take_DA_Sync  AND FG_SEL;
+Broadc_Str_Dff.clk	= clk;
+Broadc_Str_Dff.clrn	= /RES;
+Broadc_Str	= Broadc_Str_Dff;
+
+FG_RD_ACTIV_DFF.d		= STAT1_STR OR STAT2_STR OR SW1_RD_STR OR SW2_RD_STR OR STP1_RD_STR OR STP2_RD_STR;
+FG_RD_ACTIV_DFF.clk		= clk;
+FG_RD_ACTIV_DFF.clrn	= /RES;
+FG_RD_ACTIV	= FG_RD_ACTIV_DFF;
+
+END;
+
+

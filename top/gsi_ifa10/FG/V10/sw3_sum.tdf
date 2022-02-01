@@ -1,0 +1,23 @@
+SUBDESIGN SW3_SUM
+(
+    I[20..0]	: INPUT;
+    CLK         : INPUT;
+	ENA:		 INPUT;
+    CLRN        : INPUT;
+	O[31..0]	: OUTPUT;
+)
+VARIABLE
+	qff[20..0]	: DFFE;
+
+BEGIN
+	qff[].clk  = clk;
+	qff[].ena	= ena;
+    qff[].clrn = clrn;
+	qff[]      = I[];
+    O[20..0]   = qff[20..0];
+
+	O[31..21] = qff20; -- Die Bits[31..21] werden dem Vorzeichen
+                       -- vom SW3 entsprechend gesetzt. Sie müssen aber
+                       -- nicht im Register gespeichert werden.
+END;
+

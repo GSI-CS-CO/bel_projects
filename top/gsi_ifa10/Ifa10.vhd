@@ -599,7 +599,7 @@ end process;
 Modul: ifa8_X
   Port MAP (
 
-   sysclk        => sys_clk,
+   sys_clk       => sys_clk,
    sys_reset     => sys_reset,
    clk_50MHz     => clk_50MHz,
 

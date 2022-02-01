@@ -1,0 +1,94 @@
+Parameters (tst_cnt=16);
+
+TITLE "Osz_cntrl   Autor: W.Panschow   Vers:09   d.29.05.00";
+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+																										+
+--+		Name des Macros:	Osz_Cntrl																	+
+--+								Vers: 09	d. 25.05.00 												+
+--+																										+
+--+		Beschreibung:		Der Macro 'Osz_Cntrl' kontrolliert ob am Eingang 'Osz_Ext' eine Frequenz	+
+--+							die in etwa der Frequenz 'Osz_Int' entspricht.								+
+--+							Dies ist mit zwei Zählern realisiert. 'Cnt_F_Int' und 'Cnt_F_Ext'.			+
+--+																										+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+CONSTANT c_differenz = 2;	-- Um diesen Betrag darf sich der 'cnt_osz_ext' vom 'cnt_osz_int' unterscheiden	--
+							-- wenn der cnt_osz_int den Wert 'tst_cnt' erreicht hat.						--
+
+CONSTANT c_cnt_max = (tst_cnt-1 + c_differenz); -- Temporäre Konstante damit die 'group member size' immer paßt.
+
+CONSTANT cnt_width = CEIL(log2(c_cnt_max));
+
+FUNCTION lpm_counter (	data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown,
+						aclr, aset, aconst, aload, sclr, sset, sconst, sload	)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+FUNCTION lpm_compare (dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0], clock, aclr)
+   WITH (LPM_WIDTH, LPM_REPRESENTATION, LPM_PIPELINE, CHAIN_SIZE, ONE_INPUT_IS_CONSTANT)
+   RETURNS (alb, aeb, agb, ageb, aneb, aleb);
+
+ASSERT (tst_cnt >= 16)
+  REPORT "   tst_cnt von Osz_Cntrl sollte >= 16 sein, ist aber % !" tst_cnt
+SEVERITY ERROR;
+
+
+SUBDESIGN Osz_Cntrl
+(
+	Osz_Ext:	INPUT;			-- Externe Frequenz														--
+	Osz_Int: 	INPUT;			-- Interne Frequenz														--
+	F_Ext/Int:	INPUT;			-- high => Externe Frequenz; low => Interne Frequenz.					--
+
+	Ext_Clk_Work:	OUTPUT;		-- Externe Frequenz wurde ausgewählt und existiert und wird als FOSZ	--
+								-- die wesendlichen Funktionsblöcke des FG takten.						--
+	FOSZ:			OUTPUT;
+)
+
+
+VARIABLE
+
+Ext_Clk_Exist_ff: dffe;		--
+
+Check_ff: dff;
+
+Osz_Int_Cnt: lpm_counter WITH (LPM_WIDTH = cnt_width);	-- Zählt Osz_Int.
+
+Osz_Ext_Cnt: lpm_counter WITH (LPM_WIDTH = cnt_width);	-- Zählt Osz_Ext.
+
+Sync_out_a[cnt_width-1..0]: DFF;
+Sync_out_b[cnt_width-1..0]: DFF;
+
+BEGIN
+
+Check_ff.clk	= Osz_Int;
+Check_ff.d		= Osz_Int_Cnt.q[] == tst_cnt - 1;
+
+Sync_out_a[].clk	= Osz_Int;
+Sync_out_a[].d		= Osz_Ext_Cnt.q[];	-- erste Synchronisation des Osz_Ext_Cnt.q[].	--
+
+Sync_out_b[].clk	= Osz_Int;
+Sync_out_b[].d		= Sync_out_a[].q;	-- zweite Synchronisation des Osz_Ext_Cnt.q[].	--
+
+Osz_Int_Cnt.clock	= Osz_Int;			-- Referenz-Zähler arbeitet mit dem internen Takt.	--
+Osz_Int_Cnt.sclr	= Check_ff.q;		-- Wird synchron zurückgesetzt.						--
+
+Osz_Ext_cnt.clock	= Osz_Ext;			-- Kontroll-Zähler arbeitet mit dem externen Takt.	--
+Osz_Ext_cnt.aclr	= Check_ff.q;		-- Muss asynchron zurückgesetzt werden!				--
+
+Ext_Clk_Exist_ff.clk	= Osz_Int;
+Ext_Clk_Exist_ff.ena	= Check_ff;											-- Ist nur einen internen Takt aktiv.							--
+Ext_Clk_Exist_ff.d		=	((Sync_out_b[] - tst_cnt) <= c_differenz - 2)	-- '-2-Korrekur' Fehlerkorrektur durch die Aufsynchronisation 	--
+						OR 	((tst_cnt - Sync_out_b[]) <= c_differenz + 2);	-- '+2-Korrekur' Fehlerkorrektur durch die Aufsynchronisation 	--
+Ext_Clk_Exist_ff.clrn	= F_Ext/Int;										-- nur bei eingeschalteter externer Frequenz kann				--
+																			-- Ext_Clk_Exist_ff aktiv werden.								--
+
+Ext_Clk_Work = Ext_Clk_Exist_ff;
+
+IF Ext_Clk_Work THEN
+  FOSZ = Osz_Ext;
+ELSE
+  FOSZ = Osz_Int;
+END IF;
+
+END;
