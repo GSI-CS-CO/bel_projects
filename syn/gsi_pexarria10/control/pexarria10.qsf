@@ -1,3 +1,5 @@
+
+
 # ?
 # Clocks
 # LVDS
@@ -747,8 +749,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_oen
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_ubn
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_wait
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_wen
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_led_fpg_o
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_led_fpr_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_los_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod0_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod1_io
@@ -784,11 +784,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx4_en[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx4_en[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx4_en[4]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx4_en[5]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx5_en[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx5_en[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx5_en[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx5_en[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usbc_tx5_en[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_fd_io[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_fd_io[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_fd_io[2]
@@ -855,9 +850,6 @@ set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx3_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx3_p
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx4_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx4_p
-set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx5_n
-set_instance_assignment -name IO_STANDARD LVDS -to usbc_rx5_p
-set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx1_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx1_p
 #set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx2_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx2_p
@@ -866,7 +858,6 @@ set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx3_p
 #set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx4_n
 set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx4_p
 #set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx5_n
-set_instance_assignment -name IO_STANDARD LVDS -to usbc_tx5_p
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c2"
@@ -874,7 +865,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment PIN_A18 -to psram_a[23]
 set_location_assignment PIN_A19 -to psram_a[22]
 set_location_assignment PIN_A20 -to psram_a[21]
@@ -1044,7 +1034,6 @@ set_location_assignment PIN_AM2 -to sfp_mod2_io
 #set_location_assignment PIN_AN15 -to wr_leds_o[3]
 #set_location_assignment PIN_AN17 -to wr_aux_leds_o[2]
 #set_location_assignment PIN_AN18 -to wr_aux_leds_o[3]
-set_location_assignment PIN_AN20 -to sfp_led_fpr_o
 set_location_assignment PIN_AN23 -to wr_leds_o[1]
 set_location_assignment PIN_AN25 -to usb_ctl_i[1]
 set_location_assignment PIN_AN27 -to usb_pa_io[4]
@@ -1054,7 +1043,6 @@ set_location_assignment PIN_AN34 -to pcie_tx_o[0]
 #set_location_assignment PIN_AP15 -to rt_leds_o[2]
 #set_location_assignment PIN_AP16 -to rt_leds_o[1]
 #set_location_assignment PIN_AP17 -to rt_leds_o[0]
-set_location_assignment PIN_AP20 -to sfp_led_fpg_o
 set_location_assignment PIN_AP25 -to usb_ctl_i[0]
 set_location_assignment PIN_AP26 -to usb_pa_io[6]
 set_location_assignment PIN_AP27 -to usb_pa_io[7]
@@ -1130,7 +1118,7 @@ set_location_assignment PIN_K3 -to usbc_rx1_n[5]
 set_location_assignment PIN_K4 -to usbc_rx1_n[4]
 #set_location_assignment PIN_K4   -to  usbc_tx4_n[3]
 set_location_assignment PIN_K6 -to clk_125m_pllref_alt_i
-set_location_assignment PIN_K7 -to OneWire_CB
+set_location_assignment PIN_M17 -to OneWire_CB
 set_location_assignment PIN_L1 -to usbc_rx2_n[1]
 #set_location_assignment PIN_L1 -to usbc_rx5_n[3]
 set_location_assignment PIN_L3 -to usbc_rx1_p[5]
@@ -1138,7 +1126,7 @@ set_location_assignment PIN_L3 -to usbc_rx1_p[5]
 set_location_assignment PIN_L4 -to usbc_rx1_p[4]
 #set_location_assignment PIN_L4 -to usbc_tx4_p[3]
 set_location_assignment PIN_L6 -to "clk_125m_pllref_alt_i(n)"
-set_location_assignment PIN_L8 -to OneWire_CB_splz
+set_location_assignment PIN_M18 -to OneWire_CB_splz
 set_location_assignment PIN_M1 -to usbc_rx2_p[1]
 #set_location_assignment PIN_M1 -to usbc_rx5_p[3]
 set_location_assignment PIN_M2 -to usbc_rx2_p[2]
@@ -1240,3 +1228,9 @@ set_location_assignment PIN_Y9 -to "usbc_tx4_p[1](n)"
 # USBC
 # VCXO
 # WR_LED0_1
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_location_assignment PIN_M20 -to OneWire_aux_CB
+set_location_assignment PIN_M21 -to OneWire_aux_CB_splz
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB_splz
