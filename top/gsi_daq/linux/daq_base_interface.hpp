@@ -439,7 +439,7 @@ protected:
    }
 
    /*!
-    * @brief Returns the currently read-index of the DDR3-RAM.
+    * @brief Returns the currently write-index of the DDR3-RAM.
     * @note In this layer for debug purposes only.
     */
    uint getWriteIndex( void )

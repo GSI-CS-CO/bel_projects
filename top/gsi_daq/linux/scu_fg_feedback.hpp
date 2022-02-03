@@ -554,7 +554,7 @@ public:
    /*!
     * @brief Returns the pointer to the ADDAC/ACU device if this object
     *        has been mutated to a ADDAC/ACU- object after registration in
-    *        object of FgFeedbackAdministration, else NULL.
+    *        object of FgFeedbackAdministration, else nullptr.
     */
    daq::DaqDevice* getAddac( void ) const
    {
