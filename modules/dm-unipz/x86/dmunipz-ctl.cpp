@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Sept-2021
+ *  version : 04-Feb-2022
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.1"
+#define DMUNIPZ_X86_VERSION "0.8.5"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -565,7 +565,7 @@ int main(int argc, char** argv) {
   dmunipz_dstMacHi     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACHI;
   dmunipz_dstMacLo     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACLO;
   dmunipz_dstIp        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
-  dmunipz_flexOffset   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETFLEX;
+  dmunipz_flexOffset   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETTHRD;
   dmunipz_uniTimeout   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_UNITIMEOUT;
   dmunipz_tkTimeout    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TKTIMEOUT;
   dmunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;

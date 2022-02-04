@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Oct-2021
+ *  version : 04-Feb-2022
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000804                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000805                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -124,7 +124,7 @@ uint32_t *pSharedNIterMain;             // pointer to a "user defined" u32 regis
 uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator requested by Data Master
 uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 register; here: publish # of virtual accelerator received from UNIPZ
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
-uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and flextime @ DM
+uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and start of injection-thread @ DM
 uint32_t *pSharedDtSync;                // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
 uint32_t *pSharedDtInject;              // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
 uint32_t *pSharedDtTransfer;            // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
@@ -138,7 +138,7 @@ uint32_t *pSharedNBooster;              // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedDstMacHi;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
-volatile uint32_t *pSharedFlexOffset;   // pointer to a "user defined" u32 register; here: TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
+volatile uint32_t *pSharedThrdOffset;   // pointer to a "user defined" u32 register; here: TS_STARTTHREAD = OFFSETFLEX + TS_MILEVENT; values in ns
 volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
 volatile uint32_t *pSharedTkTimeout;    // pointer to a "user defined" u32 register; here: timeout value for TK (via UNIPZ)
 
@@ -151,7 +151,7 @@ uint32_t statusTransfer;                // status of transfer
 uint32_t nTransfer;                     // # of transfers
 uint32_t nMulti;                        // # of 'multi-multi-injections' within current transfer
 uint32_t nBoost;                        // # of 'booster cycles' within current transfer
-uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
+uint32_t thrdOffset;                    // offset added to obtain timestamp for start of 'injection-thread' at DM
 uint32_t uniTimeout;                    // timeout value for UNIPZ
 uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
@@ -509,7 +509,7 @@ uint32_t dmPrepCmdFlow(uint32_t blk)
 // prepare flush CMD for DM - need to call dmPrepCmdCommon first
 uint32_t dmPrepCmdFlush(uint32_t blk) 
 {
-  // simplified memory layout of flexwait command
+  // simplified memory layout of flush command
   //
   // dmCmdAddr-->|TS valid Hi  |
   //             |TS valid Lo  |
@@ -607,7 +607,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedDstMacHi     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
   pSharedDstMacLo     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
   pSharedDstIP        = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
-  pSharedFlexOffset   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_OFFSETFLEX >> 2));
+  pSharedThrdOffset   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_OFFSETTHRD >> 2));
   pSharedUniTimeout   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_UNITIMEOUT >> 2));
   pSharedTkTimeout    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT >> 2));
   
@@ -650,7 +650,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   DBPRINT1("\n");
 
   // set initial values;
-  *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
+  *pSharedThrdOffset = DMUNIPZ_OFFSETTHRD; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
   *pSharedTkTimeout  = DMUNIPZ_TKTIMEOUT;  // initialize with default value
 } // initSharedMem 
@@ -985,7 +985,7 @@ uint32_t extern_entryActionConfigured()
   while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %u pending entries from ECA queue\n", (unsigned int)i);
 
-  flexOffset  = *pSharedFlexOffset;
+  thrdOffset  = *pSharedThrdOffset;
   uniTimeout  = *pSharedUniTimeout;
   tkTimeout   = *pSharedTkTimeout;
 
@@ -1065,7 +1065,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
                            uint32_t *virtAccReq,              // virtual accelerator requested from Data Master
                            uint32_t *virtAccRec,              // virtual accelerator received from UNIPZ
                            uint32_t *noBeam,                  // 'no beam' flag from Data Master: UNILAC requested but without beam
-                           uint64_t *dtStart,                 // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
+                           uint64_t *dtStart,                 // remaining time budget for DM after 'start thread command' has been sent, minimum value is 1ms
                            uint64_t *dtSync,                  // time difference between EVT_READY_2_SIS and EVT_MB_TRIGGER, should be 10ms exactly
                            uint64_t *dtInject,                // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
                            uint64_t *dtTransfer,              // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER, for diagnostics only
@@ -1098,7 +1098,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
   uint32_t dmCpuIdx;                                                               // data master CPU Idxs
   uint32_t dmThrIdx;                                                               // data master thread Idxs
   uint64_t tDmTimeout;                                                             // time, when beam request at DM will timeout
-  uint64_t tCmdFlex;                                                               // time, when DM is requested to continue its schedule after flex wait
+  uint64_t tCmdThrd;                                                               // time, when DM is requested to start a dedicated 'injection-thread'
   uint64_t tCmdValid;                                                              // time, when commands sent to DM shall become valid
   uint32_t ecaInjAction;                                                           // action received by ECA during injection
 
@@ -1145,7 +1145,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *dtBreq         = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and reply from UNIPZ
       *dtBprep        = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and begin to request at UNIPZ
       *dtReady2Sis    = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
-      *dtStart        = 0xffffffffffffffff;                                        // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
+      *dtStart        = 0xffffffffffffffff;                                        // remaining time budget for DM after the injection thread has started, minimum value is 1ms
       flagTkReq       = 1;                                                         // used to diagnose number of EVT_READY_TO_SIS events
       tTkreq          = ecaDeadline;
       nR2sTransfer    = 0;
@@ -1263,18 +1263,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       //---- analyse the situation 
       if (flagMilEvtValid) {                                                                  
-        tCmdFlex     = tReady2Sis   + (uint64_t)flexOffset;                        // everything is fine: add offset to obtain deadline for "flex" waiting block at Data Master
+        tCmdThrd     = tReady2Sis   + (uint64_t)thrdOffset;                        // everything is fine: add offset to obtain deadline for "flex" waiting block at Data Master
         *dtReady2Sis = tReady2Sis - ecaDeadline;                                   // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
         fwlib_milPulseLemo(2);                                                     // diagnostics: blink LED and TTL out of MIL piggy for hardware debugging with scope
       } // if MIL event was received
       else {                                                                       // error: did not receive MIL event; 
-        tCmdFlex      = getSysTime() + (uint64_t)flexOffset;                       // plan B is to scacrifice the beam and continue with actual time plus offset
+        tCmdThrd      = getSysTime() + (uint64_t)thrdOffset;                       // plan B is to scacrifice the beam and continue with actual time plus offset
       } // else MIL event was received
       
-      if (tCmdFlex < (getSysTime() + (uint64_t)(COMMON_AHEADT * 2))) {             // error: not enough time is left for Data Master - risk of 'late events'
-        tCmdFlex  = getSysTime()   + (uint64_t)flexOffset;                         // plan B is to scacrifice the beam and continue with actual time plus offset
+      if (tCmdThrd < (getSysTime() + (uint64_t)(COMMON_AHEADT * 2))) {             // error: not enough time is left for Data Master - risk of 'late events'
+        tCmdThrd  = getSysTime()   + (uint64_t)thrdOffset;                         // plan B is to scacrifice the beam and continue with actual time plus offset
         status = DMUNIPZ_STATUS_SAFETYMARGIN;
-      } // if tCmdFlex
+      } // if tCmdThrd
 
       if (getSysTime() > tDmTimeout){                                              // error: Data Master is no longer waiting on us - risk of messung up the schedule and 'late events' 
         flagNoCmd = 1;                                                             // plang B is to sacrifice the beam and continue with actual time plus offset
@@ -1282,7 +1282,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       }
 
       // prepare command starting a thread at the Data Master
-      dmStatus = dmPrepThrStart(REQBEAM, tCmdFlex);                                // prepare command for thread start
+      dmStatus = dmPrepThrStart(REQBEAM, tCmdThrd);                                // prepare command for thread start
       if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // prepare command failed: give up
       dmStatus = dmCheckThr(REQBEAM);
       if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // check command failed: give up
@@ -1293,7 +1293,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
         if (status == COMMON_STATUS_OK) dmStartThread(REQBEAM);                    // start thread within DM; only start thread in case everything went fine
       } // if !flagNoCmd
 
-      *dtStart     = tCmdFlex - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
+      *dtStart     = tCmdThrd - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
       //---- release beam and un-arm MIL piggy
       releaseBeam(uniTimeout);                                                     // release beam request at UNIPZ
@@ -1385,7 +1385,7 @@ int main(void) {
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
-  uint64_t dtStart;                             // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
+  uint64_t dtStart;                             // remaining time budget for DM after the injection-thread as been started, minimum value is 1ms
   uint64_t dtSync;                              // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
   uint64_t dtInject;                            // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
   uint64_t dtTransfer;                          // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
