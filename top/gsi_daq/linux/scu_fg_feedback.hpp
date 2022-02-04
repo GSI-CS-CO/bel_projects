@@ -1,7 +1,7 @@
 /*!
  * @file scu_fg_feedback.hpp
  * @brief Administration of data aquesition units for function generator
- *        feedback.
+ *        feedback.  Fusion of MIL- and ADDAC DAQ.
  *
  * @date 25.05.2020
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH

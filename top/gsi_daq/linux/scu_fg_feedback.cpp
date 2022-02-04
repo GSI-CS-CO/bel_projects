@@ -1,7 +1,7 @@
 /*!
  * @file scu_fg_feedback.cpp
  * @brief Administration of data aquesition units for function generator
- *        feedback.
+ *        feedback. Fusion of MIL- and ADDAC DAQ.
  *
  * @date 25.05.2020
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
@@ -54,6 +54,7 @@ bool FgFeedbackChannel::Common::Throttle::operator()( const uint64_t timestamp,
 {
    assert( m_pParent->m_pParent != nullptr );
    assert( m_pParent->m_pParent->m_pParent != nullptr );
+
    const FgFeedbackAdministration* pAdmin = m_pParent->m_pParent->m_pParent->m_pParent;
    assert( pAdmin != nullptr );
 
