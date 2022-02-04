@@ -55,9 +55,9 @@ typedef enum {
 
 // application-specific commands
 #define FBAS_CMD_SET_NODETYPE   0x15   // set the node type
-#define FBAS_CMD_SET_LVDS_OE    0x16   // set LVDS output enable
-#define FBAS_CMD_GET_LVDS_OE    0x17   // get LVDS output enable
-#define FBAS_CMD_TOGGLE_LVDS    0x18   // toggle LVDS output
+#define FBAS_CMD_SET_IO_OE      0x16   // set IO output enable
+#define FBAS_CMD_GET_IO_OE      0x17   // get IO output enable
+#define FBAS_CMD_TOGGLE_IO      0x18   // toggle IO output
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding

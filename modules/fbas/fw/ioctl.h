@@ -14,6 +14,7 @@ enum {
   MPS_SIGNAL_INVALID    // invalid
 };
 
+// For IO control operations look in ip_cores/saftlib/drivers/InoutImpl.cpp
 // IO-CTRL register map (ip_cores/saftlib/drivers/io_control_regs.h)
 #define IO_CFG_CHANNEL_GPIO          0
 #define IO_CFG_CHANNEL_LVDS          1
@@ -42,7 +43,7 @@ extern volatile uint32_t *pIOCtrl;             // WB address of IO Control
 uint32_t setIoOe(uint32_t channel, uint32_t idx);
 uint32_t getIoOe(uint32_t channel);
 void driveIo(uint32_t channel, uint32_t idx, uint8_t value);
-void driveEffLogOut(mpsTimParam_t* buf);
+void driveEffLogOut(uint32_t channel, mpsTimParam_t* buf);
 void qualifyInput(size_t len, mpsTimParam_t* buf);
 void testOutput(size_t len, mpsTimParam_t* buf);
 

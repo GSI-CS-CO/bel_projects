@@ -45,8 +45,10 @@ uint32_t setIoOe(uint32_t channel, uint32_t idx)
   uint32_t reg = 0;
   if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
     reg = IO_GPIO_OE_SETLOW;
-  if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
+  else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
     reg = IO_LVDS_OE_SETLOW;
+  else
+    return 0xFFFF;
 
   if (reg)
     *(pIOCtrl + (reg >> 2)) = (1 << idx);
@@ -58,8 +60,10 @@ uint32_t getIoOe(uint32_t channel)
   uint32_t reg = 0;
   if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
     reg = IO_GPIO_OE_SETLOW;
-  if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
+  else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
     reg = IO_LVDS_OE_SETLOW;
+  else
+    return 0xFFFF;
 
   if (reg)
     return *(pIOCtrl + (reg >> 2));
@@ -78,12 +82,13 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
     reg = IO_GPIO_SET_OUTBEGIN;
     if (value)
       outVal = 0x01;
-  }
-  if (channel == IO_CFG_CHANNEL_LVDS) { // LVDS channel
+  } else if (channel == IO_CFG_CHANNEL_LVDS) { // LVDS channel
     reg = IO_LVDS_SET_OUTBEGIN;
     if (value)
       outVal = 0xff;
   }
+  else
+    return;
 
   if (reg)
     *(pIOCtrl + (reg >> 2) + idx) = outVal;
@@ -102,7 +107,7 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
  *
  * \ret none
  **/
-void driveEffLogOut(mpsTimParam_t* buf)
+void driveEffLogOut(uint32_t channel, mpsTimParam_t* buf)
 {
   uint8_t ioVal = MPS_SIGNAL_INVALID;
 
@@ -119,8 +124,7 @@ void driveEffLogOut(mpsTimParam_t* buf)
     DBPRINT3("ttl: %x %x %x\n", buf->prot.grpId, buf->prot.evtId, buf->prot.flag);
   }
 
-  if (ioVal != MPS_SIGNAL_INVALID)
-    driveIo(IO_CFG_CHANNEL_LVDS, 0, ioVal); // drive the IO1 port
+  driveIo(channel, 0, ioVal); // drive the IO1 (B1) port
 }
 
 void qualifyInput(size_t len, mpsTimParam_t* buf) {

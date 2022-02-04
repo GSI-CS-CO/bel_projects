@@ -94,6 +94,7 @@ uint64_t mpsTimMsgFlagId = 0;           // timing message ID for MPS flags
 uint64_t mpsTimMsgEvntId = 0;           // timing message ID for MPS events
 volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
+uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
 
 // application-specific function prototypes
 static void init();
@@ -282,7 +283,7 @@ status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
 void clearError(size_t len, mpsTimParam_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
-    driveEffLogOut(buf + i);
+    driveEffLogOut(io_chnl, buf + i);
   }
 }
 
@@ -410,9 +411,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, actions);
 
           // store and handle received MPS flag
-          *head = storeMpsFlag(*head, ecaParam);
+          *head = storeMpsFlag(*head, ecaParam, itr);
           if (*head) {
-            driveEffLogOut(*head);
+            driveEffLogOut(io_chnl, *head);
           }
         }
         break;
@@ -478,7 +479,7 @@ uint32_t extern_entryActionConfigured()
   DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
 
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
-  setIoOe(IO_CFG_CHANNEL_LVDS, 0);  // enable output for the IO1 port
+  setIoOe(io_chnl, 0);              // enable output for the IO1 (or B1) port
 
   fwlib_publishNICData();           // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
   printSrcAddr();                   // output the source MAC/IP address of the Endpoint WB device to the WR console
@@ -540,19 +541,19 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
           DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
         break;
-      case FBAS_CMD_SET_LVDS_OE:
-        setIoOe(IO_CFG_CHANNEL_LVDS, 0);  // enable output for the IO1 port
+      case FBAS_CMD_SET_IO_OE:
+        setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
         break;
-      case FBAS_CMD_GET_LVDS_OE:
-        u32val = getIoOe(IO_CFG_CHANNEL_LVDS);
+      case FBAS_CMD_GET_IO_OE:
+        u32val = getIoOe(io_chnl);
         if (1) {
           DBPRINT2("fbas%d: GPIO OE %x\n", nodeType, u32val);
         }
         break;
-      case FBAS_CMD_TOGGLE_LVDS:
+      case FBAS_CMD_TOGGLE_IO:
         u8val = cntCmd & 0x01;
         u32val = 0;
-        driveIo(IO_CFG_CHANNEL_LVDS, u32val, u8val);
+        driveIo(io_chnl, u32val, u8val);
         DBPRINT2("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
         break;
       case FBAS_CMD_EN_MPS_FWD:
@@ -633,7 +634,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         // monitor lifetime of MPS flags periodically and handle expired MPS flag
         buf = expireMpsFlag(pRdItr);
         if (buf)
-          driveEffLogOut(buf);
+          driveEffLogOut(io_chnl, buf);
       }
       break;
 
