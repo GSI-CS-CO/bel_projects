@@ -29,4 +29,4 @@ sleep $sleep_sec  # wait for given seconds
 echo "stop test4 (TX, RX)"
 echo "----------"
 timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && stop_test4 \$DEV_TX"
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX"
+timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX && result_ow_delay \$DEV_RX \$addr_cnt1"

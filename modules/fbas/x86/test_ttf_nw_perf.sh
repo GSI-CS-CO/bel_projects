@@ -86,5 +86,4 @@ echo -e "\n--- Step 5 - report test result (TX, RX) ---\n"
 echo -n "TX "
 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && result_nw_perf \$DEV_TX \$addr_cnt1"
 echo -n "RX "
-sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_nw_perf \$DEV_RX \$addr_cnt1"
-
+sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_nw_perf \$DEV_RX \$addr_cnt1 && result_ow_delay \$DEV_RX \$addr_cnt1"

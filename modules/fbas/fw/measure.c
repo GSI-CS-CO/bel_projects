@@ -38,7 +38,7 @@
 #include "measure.h"
 
 msrPerfStats_t perfStats = {0};
-
+msrOwDelay_t   owDelay = {0};
 /**
  * \brief store a timestamp
  *
@@ -168,7 +168,7 @@ void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
 }
 
 /**
- * \brief print network performance measurement results
+ * \brief print result of network performance measurement
  *
  * Average, minimum and maximum of network delay and signalling latency are
  * printed to debug output (invoke eb-console $dev to get the debug output)
@@ -204,4 +204,46 @@ uint32_t doCnt(bool enable, uint32_t value)
   }
 
   return cnt.val;
+}
+
+/**
+ * \brief measure one-way delay
+ *
+ * The one-way delay (or end-to-end) is the time taken for a timing message
+ * (with a MPS flag) to be transmitted across a network (a WRS switch) from
+ * a TX node to a RX node.
+ *
+ * \param now   actual system time
+ * \param ts    timestamp of MPS flag
+ *
+ * \ret none
+ **/
+void measureOwDelay(uint64_t now, uint64_t ts, bool verbose)
+{
+  int64_t owd = now - ts;  // one-way (end-to-end) delay
+  if (verbose)
+    DBPRINT2("owd=%lli\n", owd);
+
+  if (owd > 0) {
+    owDelay.avg = (owd + (owDelay.cntValid * owDelay.avg)) / (owDelay.cntValid + 1);
+    ++owDelay.cntValid;
+    if (owd > owDelay.max)
+      owDelay.max = owd;
+  }
+
+  if (owd < owDelay.min || !owDelay.min)
+    owDelay.min = owd;
+
+  ++owDelay.cntTotal;
+}
+
+/**
+ * \brief print result of one-way delay measurement
+ *
+ * \param none
+ * \ret none
+ **/
+void printMeasureOwDelay() {
+  DBPRINT2("owd=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      owDelay.avg, owDelay.min, owDelay.max, owDelay.cntValid, owDelay.cntTotal);
 }

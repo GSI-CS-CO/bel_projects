@@ -27,11 +27,23 @@ struct msrPerfStats {
   uint32_t cntTotal;      // total number of measurement
 };
 
+typedef struct msrOwDelay msrOwDelay_t;
+struct msrOwDelay {
+  uint64_t avg;
+  int64_t  min;
+  uint64_t max;
+  uint32_t cntValid;
+  uint32_t cntTotal;
+};
+
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
 void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
 void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose);
 void printMeasureNwPerf();
+void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
+void printMeasureOwDelay();
+
 /**
  * \brief count events
  *

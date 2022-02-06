@@ -295,6 +295,17 @@ result_nw_perf() {
     eb-write $1 $addr_cmd 0x32
 }
 
+result_ow_delay() {
+    # $1 - dev/wbmo
+    # $2 - event counter
+
+    cnt=$(eb-read $1 $2)
+    cnt_dec=$(printf "%d" 0x$cnt)
+    echo "count: 0x$cnt (${cnt_dec})"
+
+    eb-write $1 $addr_cmd 0x33
+}
+
 disable_mps() {
     echo "Stop MPS on $1"
     eb-write $1 $addr_cmd 0x31

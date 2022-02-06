@@ -414,6 +414,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           *head = storeMpsFlag(*head, ecaParam, itr);
           if (*head) {
             driveEffLogOut(io_chnl, *head);
+
+            // measure one-way delay
+            measureOwDelay(now, ecaDeadline, 0);
           }
         }
         break;
@@ -570,6 +573,9 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         break;
       case FBAS_CMD_PRINT_NW_PERF:
         printMeasureNwPerf();
+        break;
+      case FBAS_CMD_PRINT_OWD:
+        printMeasureOwDelay();
         break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
