@@ -14,10 +14,24 @@ struct msrCnt {
   uint32_t val;    // counter value
 };
 
+typedef struct msrPerfStats msrPerfStats_t;
+struct msrPerfStats {
+  uint64_t avgNwDelay;    // cumulative moving average network delay
+  uint64_t avgSgLatency;  // cumulative moving average signal latency
+  int64_t minNwDelay;     // minimum network delay
+  int64_t minSgLatency;   // minimum signal latency
+  uint64_t maxNwDelay;    // maximum network delay
+  uint64_t maxSgLatency;  // maximum signal latency
+  uint32_t cntNwDelay;    // number of delay measurement
+  uint32_t cntSgLatency;  // number of latency measurement
+  uint32_t cntTotal;      // total number of measurement
+};
+
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
 void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
-void measureDelays(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca);
+void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose);
+void printMeasureNwPerf();
 /**
  * \brief count events
  *

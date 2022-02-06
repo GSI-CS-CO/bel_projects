@@ -37,6 +37,8 @@
 
 #include "measure.h"
 
+msrPerfStats_t perfStats = {0};
+
 /**
  * \brief store a timestamp
  *
@@ -103,11 +105,11 @@ void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint6
 }
 
 /**
- * \brief measure delays
+ * \brief measure network performance
  *
  * Network delay on transmission of an MPS event (broadcast from TX node to RX node) and
- * time spent to forward an MPS event (from MPS event generation at TX node
- * to IO event detection at RX node) are measured.
+ * signalling latency to forward an MPS event (from MPS event generation at TX node
+ * to IO event detection at RX node) are measured using timestamps.
  * The measurement results are output as debug msg.
  *
  * The timestamps required to calculate elapsed time are stored in shared memory:
@@ -123,14 +125,37 @@ void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint6
  *
  * \ret none
  **/
-void measureDelays(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca)
+void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose)
 {
   uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));
   uint64_t tmp64 = *(pSharedTs + ((offset + _64b_SIZE) >> 2));
 
-  int64_t delayNw = tsEca - tmp64;     // network delay
-  int64_t delayFwd = now - *pSharedTs; // forward duration
-  DBPRINT2("nw=%lli, fwd=%lli\n", delayNw, delayFwd);
+  int64_t nwDelay = tsEca - tmp64;       // network delay
+  int64_t sgLatency = now - *pSharedTs;  // signal latency
+  if (verbose)
+    DBPRINT2("nwDly=%lli, sgLty=%lli\n", nwDelay, sgLatency);
+
+  if (nwDelay > 0) {
+    perfStats.avgNwDelay = (nwDelay + (perfStats.cntNwDelay * perfStats.avgNwDelay)) / (perfStats.cntNwDelay + 1);
+    ++perfStats.cntNwDelay;
+    if (nwDelay > perfStats.maxNwDelay)
+      perfStats.maxNwDelay = nwDelay;
+  }
+
+  if (nwDelay < perfStats.minNwDelay || !perfStats.minNwDelay)
+    perfStats.minNwDelay = nwDelay;
+
+  if (sgLatency > 0) {
+    perfStats.avgSgLatency = (sgLatency + (perfStats.cntSgLatency * perfStats.avgSgLatency)) / (perfStats.cntSgLatency + 1);
+    ++perfStats.cntSgLatency;
+    if (sgLatency > perfStats.maxSgLatency)
+      perfStats.maxSgLatency = sgLatency;
+  }
+
+  if (sgLatency < perfStats.minSgLatency || !perfStats.minSgLatency)
+    perfStats.minSgLatency = sgLatency;
+
+  ++perfStats.cntTotal;
 
   // for details, elapsed time of other actions are also calculated
   int64_t poll = now - tsEca;      // elapsed time to detect IO (TLU) event (RX->TX)
@@ -140,6 +165,24 @@ void measureDelays(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
   poll = tmp64 - *pSharedTs;       // elapsed time to send MPS event (TX->RX)
   DBPRINT3("MSP evt (detect %llu, send %llu, poll %lli)\n",
       *pSharedTs, tmp64, poll);
+}
+
+/**
+ * \brief print network performance measurement results
+ *
+ * Average, minimum and maximum of network delay and signalling latency are
+ * printed to debug output (invoke eb-console $dev to get the debug output)
+ *
+ * \param none
+ * \ret none
+ **/
+void printMeasureNwPerf() {
+  DBPRINT2("nwDly=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      perfStats.avgNwDelay, perfStats.minNwDelay, perfStats.maxNwDelay,
+      perfStats.cntNwDelay, perfStats.cntTotal);
+  DBPRINT2("sgLty=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      perfStats.avgSgLatency, perfStats.minSgLatency, perfStats.maxSgLatency,
+      perfStats.cntSgLatency, perfStats.cntTotal);
 }
 
 /**

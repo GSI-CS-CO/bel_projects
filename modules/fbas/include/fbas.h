@@ -62,6 +62,7 @@ typedef enum {
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
 #define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
+#define FBAS_CMD_PRINT_NW_PERF  0x32   // print network performance measurement results
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

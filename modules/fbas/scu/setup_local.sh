@@ -291,6 +291,8 @@ result_nw_perf() {
     cnt=$(eb-read $1 $2)
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "count: 0x$cnt (${cnt_dec})"
+
+    eb-write $1 $addr_cmd 0x32
 }
 
 disable_mps() {
