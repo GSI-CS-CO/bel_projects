@@ -149,14 +149,9 @@ architecture rtl of top is
   signal Ena_Every_1us:   std_logic;
 
   signal adc_value_Vcc_12:        std_logic_vector (11 downto 0) := X"000";  
-  signal adc_value_Vcc_3_3:       std_logic_vector (11 downto 0) := X"000";  
-  signal adc_value_Vcc_5_0:       std_logic_vector (11 downto 0) := X"000";
-  signal adc_value_Vcc_1_8IO:     std_logic_vector (11 downto 0) := X"000";
-  signal adc_value_Vcc_3_3clean:  std_logic_vector (11 downto 0) := X"000";  
+  signal adc_value_Vcc_1_8IO:     std_logic_vector (11 downto 0) := X"000"; 
   signal adc_value_Vcc_0_95:      std_logic_vector (11 downto 0) := X"000";
   signal adc_value_Vcc_1_8:       std_logic_vector (11 downto 0) := X"000";
-  signal adc_value_Vcch_gxb:      std_logic_vector (11 downto 0) := X"000";
-  signal adc_value_Vccrt_gxb:     std_logic_vector (11 downto 0) := X"000";
 
   signal vcc12_up:       std_logic;
   signal nVcc12_fail:    std_logic;
@@ -235,14 +230,14 @@ architecture rtl of top is
             pll_locked  => pll_locked,
             nreset 		=> rst_n,
             channel_0   => adc_value_Vcc_12,  
-            channel_1   => adc_value_Vcc_3_3, 
-            channel_2   => adc_value_Vcc_5_0,  
+            channel_1   => open, 
+            channel_2   => open,  
             channel_3   => adc_value_Vcc_1_8IO, 
-            channel_4   => adc_value_Vcc_3_3clean,  
+            channel_4   => open,  
             channel_5   => adc_value_Vcc_0_95,
             channel_6   => adc_value_Vcc_1_8, 
-            channel_7   => adc_value_Vcch_gxb,  
-            channel_8   => adc_value_Vccrt_gxb, 
+            channel_7   => open,  
+            channel_8   => open, 
             tsd			=> open
         );
         
