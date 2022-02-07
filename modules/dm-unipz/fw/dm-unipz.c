@@ -469,6 +469,38 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
 } //dmPrepCmdCommon
 
 
+// set valid time for DM command - need to call dmPrepCmdCommon first
+uint32_t dmSetTValidCmdCommon(uint32_t blk, uint64_t cmdValidTime) 
+{
+  // simplified memory layout at DM
+  //
+  // blockAddr -> |...      |
+  //              |IL       |
+  //              |HI       |
+  //              |Lo-------|--buffListAddr--> |buf0  |
+  //              |wrIdx    |                  |buf1--|--cmdListAddr-->|cmd0  |                           
+  //              |rdIdx    |                                          |cmd1--|--cmdAddr-->|TS valid Hi  |                           
+  //              |...      |                                                              |TS valid Lo  |                           
+  //                                                                                       | ... |
+  //                                                   
+
+  uint32_t cmdValidTSHi;                                       // time when command becomes valid, high32 bit
+  uint32_t cmdValidTSLo;                                       // time when command becomes valid, low32 bit
+  
+  // timestamp when command shall become valid
+  cmdValidTSHi     = (uint32_t)(cmdValidTime >> 32);
+  cmdValidTSLo     = (uint32_t)(cmdValidTime & 0xffffffff); 
+
+  DBPRINT3("dm-unipz: set valid time cmd validTSHi 0x%08x\n", cmdValidTSHi);
+  DBPRINT3("dm-unipz: set valid time cmd validTSLo 0x%08x\n", cmdValidTSLo);
+  
+  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
+  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 1] = cmdValidTSLo;  
+
+  return COMMON_STATUS_OK;
+} //dmSetTValidCmdCommon
+
+
 // prepare flow CMD for DM - need to call dmPrepCmdCommon first
 // code for treatment of a 'flexwait' block; presently (sept 2021) no longer required but we keep the code
 uint32_t dmPrepCmdFlow(uint32_t blk) 
@@ -1290,6 +1322,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // prepare command failed: give up
       dmStatus = dmCheckThr(REQBEAM);
       if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // check command failed: give up
+
+      // set time to terminate "slow" waiting block within DM
+      if (!flagBooster && !flagNoCmd) dmSetTValidCmdCommon(REQTK, tCmdThrd);
       
       //---- send data to Data Master ----
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
