@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Feb-2022
+ *  version : 07-Feb-2022
  *
  * Command-line interface for dmunipz
  *
@@ -106,7 +106,8 @@ eb_address_t dmunipz_virtAccReq;   // # of requested virtual accelerator of ongo
 eb_address_t dmunipz_virtAccRec;   // # of received virtual accelerator of ongoing or last transfer, read
 eb_address_t dmunipz_noBeam;       // requested 'noBeam' flag, read
 eb_address_t dmunipz_dtStart;      // difference between actual time and flextime @ DM
-eb_address_t dmunipz_dtSync;       // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
+eb_address_t dmunipz_dtSync1;      // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+eb_address_t dmunipz_dtSync2;      // time difference between EVT_READY_TO_SIS and CMD_FG_START
 eb_address_t dmunipz_dtInject;     // time difference between CM_UNI_BREQ and EVT_MB_LOAD
 eb_address_t dmunipz_dtTransfer;   // time difference between CM_UNI_TKREQ and EVT_MB_LOAD
 eb_address_t dmunipz_dtTkreq;      // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -265,7 +266,7 @@ static void help(void) {
 } //help
 
 
-int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync, uint32_t *dtInject, uint32_t *dtTransfer, uint32_t *dtTkreq, uint32_t *dtBreq, uint32_t *dtBprep, uint32_t *dtReady2Sis, uint32_t *nR2sTransfer, uint32_t *nR2sCycle, uint32_t *nBooster)
+int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync1, uint32_t *dtSync2, uint32_t *dtInject, uint32_t *dtTransfer, uint32_t *dtTkreq, uint32_t *dtBreq, uint32_t *dtBprep, uint32_t *dtReady2Sis, uint32_t *nR2sTransfer, uint32_t *nR2sCycle, uint32_t *nBooster)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -277,7 +278,7 @@ int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, u
   eb_cycle_read(cycle, dmunipz_virtAccRec,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
   eb_cycle_read(cycle, dmunipz_noBeam,        EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
   eb_cycle_read(cycle, dmunipz_dtStart,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, dmunipz_dtSync,        EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, dmunipz_dtSync1,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
   eb_cycle_read(cycle, dmunipz_dtInject,      EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(cycle, dmunipz_dtTransfer,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(cycle, dmunipz_dtTkreq,       EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
@@ -286,7 +287,9 @@ int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, u
   eb_cycle_read(cycle, dmunipz_nR2sTransfer,  EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
   eb_cycle_read(cycle, dmunipz_nR2sCycle,     EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
   eb_cycle_read(cycle, dmunipz_dtBprep,       EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, dmunipz_nBooster,      EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
+  eb_cycle_read(cycle, dmunipz_nBooster,      EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(cycle, dmunipz_dtSync2,       EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
   *iterations    = data[0];
@@ -294,7 +297,7 @@ int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, u
   *virtAccRec    = data[2];
   *noBeam        = data[3];
   *dtStart       = data[4];
-  *dtSync        = data[5];
+  *dtSync1       = data[5];
   *dtInject      = data[6];
   *dtTransfer    = data[7];
   *dtTkreq       = data[8];
@@ -304,6 +307,7 @@ int readInfo(uint32_t *iterations, uint32_t *virtAccReq, uint32_t *virtAccRec, u
   *nR2sCycle     = data[12];
   *dtBprep       = data[13];
   *nBooster      = data[14];
+  *dtSync2       = data[15];
 
   return eb_status;
 } // readInfo
@@ -355,7 +359,8 @@ void printTransfer(uint32_t transfers,
                    uint32_t virtAccRec,
                    uint32_t noBeam,
                    uint32_t dtStart,
-                   uint32_t dtSync,
+                   uint32_t dtSync1,
+                   uint32_t dtSync2,
                    uint32_t dtInject,
                    uint32_t dtTransfer,
                    uint32_t dtTkreq,
@@ -373,6 +378,7 @@ void printTransfer(uint32_t transfers,
   char temp3[64];
   char temp4[64];
   char temp5[64];
+  char temp6[64];
 
   // transfer
   if (virtAccReq  == 42)         sprintf(temp1, "--");
@@ -396,10 +402,12 @@ void printTransfer(uint32_t transfers,
   else                           sprintf(temp3, "%4d", (uint32_t)((double)dtBreq / 1000.0));
   if (dtReady2Sis == 0xffffffff) sprintf(temp4, "----");
   else                           sprintf(temp4, "%4d", (uint32_t)((double)dtReady2Sis / 1000.0));
-  if (dtSync      == 0xffffffff) sprintf(temp5, "------");
-  else                           sprintf(temp5, "%6.3f", (double)dtSync / 1000.0);
+  if (dtSync1     == 0xffffffff) sprintf(temp5, "------");
+  else                           sprintf(temp5, "%6.3f", (double)dtSync1 / 1000.0);
+  if (dtSync2     == 0xffffffff) sprintf(temp6, "------");
+  else                           sprintf(temp6, "%6.3f", (double)dtSync2 / 1000.0);
 
-  printf("INJ %05d/%05d(%02d/%02d), %s(%s/%s/%s ->%s)ms | ", injections, nBooster, nR2sTransfer, nR2sCycle, temp1, temp2, temp3, temp4, temp5);
+  printf("INJ %05d/%05d(%02d/%02d), %s(%s/%s/%s ->%s/%s)ms | ", injections, nBooster, nR2sTransfer, nR2sCycle, temp1, temp2, temp3, temp4, temp5, temp6);
 
   // diag
   if (dtStart     == 0xffffffff) sprintf(temp1, "-----");
@@ -449,7 +457,8 @@ int main(int argc, char** argv) {
   uint32_t virtAccRec;   
   uint32_t noBeam;
   uint32_t dtStart;
-  uint32_t dtSync;
+  uint32_t dtSync1;
+  uint32_t dtSync2;
   uint32_t dtInject;  
   uint32_t dtTransfer;  
   uint32_t dtTkreq;  
@@ -552,7 +561,8 @@ int main(int argc, char** argv) {
   dmunipz_virtAccRec   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
   dmunipz_noBeam       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSNOBEAM;
   dmunipz_dtStart      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSTART;
-  dmunipz_dtSync       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC;
+  dmunipz_dtSync1      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC1;
+  dmunipz_dtSync2      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC2;
   dmunipz_dtInject     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTINJECT;
   dmunipz_dtTransfer   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTTRANSFER;
   dmunipz_dtTkreq      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTTKREQ;
@@ -585,9 +595,9 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // status
     comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
-    readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
+    readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync1, &dtSync2, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
     printTransferHeader();
-    printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, nBooster, statTrans); 
+    printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync1, dtSync2, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, nBooster, statTrans); 
     printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
@@ -708,7 +718,7 @@ int main(int argc, char** argv) {
 
     while (1) {
       comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
-      readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
+      readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync1, &dtSync2, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -743,7 +753,7 @@ int main(int argc, char** argv) {
       } // if ....
 
       if (printFlag) {
-        printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, nBooster, statTrans); 
+        printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync1, dtSync2, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, nBooster, statTrans); 
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

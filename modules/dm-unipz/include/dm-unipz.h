@@ -63,6 +63,7 @@
 #define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
 #define  DMUNIPZ_ECADO_PREPBEAM   8           // prepare beam at UNIPZ (preceedes 'REQBEAM')
 #define  DMUNIPZ_ECADO_REQBEAMNW  9           // request beam at UNIPZ, start thread at DM
+#define  DMUNIPZ_ECADO_FGSTART    0xa         // received CMD_FG_START via TLU
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_REQTK       0           // TK requested
@@ -164,8 +165,8 @@ typedef union {
 #define DMUNIPZ_SHARED_TRANSNOBEAM    (DMUNIPZ_SHARED_TRANSVIRTACC  + _32b_SIZE_)       // # UNILAC requested without beam
 #define DMUNIPZ_SHARED_RECVIRTACC     (DMUNIPZ_SHARED_TRANSNOBEAM   + _32b_SIZE_)       // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
 #define DMUNIPZ_SHARED_DTSTART        (DMUNIPZ_SHARED_RECVIRTACC    + _32b_SIZE_)       // difference between actual time and start of injection-thread @ DM
-#define DMUNIPZ_SHARED_DTSYNC         (DMUNIPZ_SHARED_DTSTART       + _32b_SIZE_)       // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in us
-#define DMUNIPZ_SHARED_DTINJECT       (DMUNIPZ_SHARED_DTSYNC        + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTSYNC1        (DMUNIPZ_SHARED_DTSTART       + _32b_SIZE_)       // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTINJECT       (DMUNIPZ_SHARED_DTSYNC1       + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in us
 #define DMUNIPZ_SHARED_DTTRANSFER     (DMUNIPZ_SHARED_DTINJECT      + _32b_SIZE_)       // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER; value in us
 #define DMUNIPZ_SHARED_DTTKREQ        (DMUNIPZ_SHARED_DTTRANSFER    + _32b_SIZE_)       // time difference between CMD_UNI_TKREQ and reply from UNIPZ; value in us
 #define DMUNIPZ_SHARED_DTBREQ         (DMUNIPZ_SHARED_DTTKREQ       + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and reply from UNIPZ; value in us
@@ -174,8 +175,9 @@ typedef union {
 #define DMUNIPZ_SHARED_NR2SCYCLE      (DMUNIPZ_SHARED_NR2STRANSFER  + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_DTBPREP        (DMUNIPZ_SHARED_NR2SCYCLE     + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
 #define DMUNIPZ_SHARED_NBOOSTER       (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // # of booster injections
+#define DMUNIPZ_SHARED_DTSYNC2        (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // time difference between EVT_READY_TO_SIS and CMD_FG_START; value in us
 
 // diagnosis: end of used shared memory
-#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // end of shared memory
+#define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_DTSYNC2       + _32b_SIZE_)       // end of shared memory
 
 #endif

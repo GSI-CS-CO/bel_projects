@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Feb-2022
+ *  version : 07-Feb-2022
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -125,7 +125,8 @@ uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 register; here: publish # of virtual accelerator received from UNIPZ
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
 uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and start of injection-thread @ DM
-uint32_t *pSharedDtSync;                // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+uint32_t *pSharedDtSync1;               // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+uint32_t *pSharedDtSync2;               // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and CMD_FG_START
 uint32_t *pSharedDtInject;              // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
 uint32_t *pSharedDtTransfer;            // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
 uint32_t *pSharedDtTkreq;               // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -593,7 +594,8 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedVirtAcc      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
   pSharedNoBeam       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSNOBEAM >> 2));
   pSharedDtStart      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSTART >> 2));
-  pSharedDtSync       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSYNC >> 2));
+  pSharedDtSync1      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSYNC1 >> 2));
+  pSharedDtSync2      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSYNC2 >> 2));  
   pSharedDtInject     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTINJECT >> 2));
   pSharedDtTransfer   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTTRANSFER >> 2));
   pSharedDtTkreq      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTTKREQ >> 2));
@@ -1066,7 +1068,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
                            uint32_t *virtAccRec,              // virtual accelerator received from UNIPZ
                            uint32_t *noBeam,                  // 'no beam' flag from Data Master: UNILAC requested but without beam
                            uint64_t *dtStart,                 // remaining time budget for DM after 'start thread command' has been sent, minimum value is 1ms
-                           uint64_t *dtSync,                  // time difference between EVT_READY_2_SIS and EVT_MB_TRIGGER, should be 10ms exactly
+                           uint64_t *dtSync1,                 // time difference between EVT_READY_2_SIS and EVT_MB_TRIGGER, should be 10ms exactly
+                           uint64_t *dtSync2,                 // time difference between EVT_READY_2_SIS and CMD_FG_START, should be ~17 ms
                            uint64_t *dtInject,                // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
                            uint64_t *dtTransfer,              // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER, for diagnostics only
                            uint64_t *dtTkreq,                 // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1138,7 +1141,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *statusTransfer = 0x1 << DMUNIPZ_TRANS_REQTK;                                // update status of transfer
       *nMulti         = 0;                                                         // number of multi-multi-injections is reset when DM requests TK
       *nBoost         = 0;                                                         // number of booster cycles is reset when DM requests TK
-      *dtSync         = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+      *dtSync1        = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+      *dtSync2        = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and CMD_FG_START
       *dtTransfer     = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
       *dtInject       = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
       *dtTkreq        = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1333,8 +1337,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
     case DMUNIPZ_ECADO_MBTRIGGER :                                                 // received MBTRIGGER: convenience feature triggering all kind of diagnostics
 
       // calculate time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-      if (tReady2Sis == 0) *dtSync = 0xffffffffffffffff;                           // no valid timestamp for EVT_READY_TO_SIS
-      else                 *dtSync = ecaDeadline - tReady2Sis;                     // we got a valid timestamp
+      if (tReady2Sis == 0) *dtSync1 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
+      else                 *dtSync1 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
 
       // calculate time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
       if (tBreq == 0)      *dtInject = 0xfffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
@@ -1344,20 +1348,28 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (tTkreq == 0)     *dtTransfer = 0xfffffffffffffff;                        // no valid timestamp for EVT_READY_TO_SIS
       else                 *dtTransfer = ecaDeadline - tTkreq;                     // we got a valid timestamp
 
-      if (status == COMMON_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
+      if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
         if (flagTkReq) {                                                           // only do this test, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
           // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
-          if ((*dtSync < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
+          if ((*dtSync1 < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync1 > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
         } // if flagTKReq
       } // if status
 
-      if (status == COMMON_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
+      if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
         // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
         if (*dtInject < (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW)) status = DMUNIPZ_STATUS_BADSCHEDULEA;
       } // if status
       
       break;
       
+    case DMUNIPZ_ECADO_FGSTART :                                                   // received FGSTART: convenience feature triggering all kind of diagnostics
+
+      // calculate time difference between EVT_READY_TO_SIS and CMD_FG_START
+      if (tReady2Sis == 0) *dtSync2 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
+      else                 *dtSync2 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
+      
+      break;
+
     case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU 
       if (flagTkReq) nR2sTransfer++;                                               // receiving EVT_READY_TO_SIS during ongoing transfer within transfer but outside injection (injection handled by case 'DMUNIPZ_ECADO_REQBEAM')
       nR2sTotal++;                                                                 // receiving EVT_READY_TO_SIS outside ongoing transfer indicates a periodic "virtual accelerator" from UNILAC to TK
@@ -1386,7 +1398,8 @@ int main(void) {
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
   uint64_t dtStart;                             // remaining time budget for DM after the injection-thread as been started, minimum value is 1ms
-  uint64_t dtSync;                              // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+  uint64_t dtSync1;                             // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+  uint64_t dtSync2;                             // time difference between EVT_READY_TO_SIS and CMD_FG_START
   uint64_t dtInject;                            // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
   uint64_t dtTransfer;                          // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
   uint64_t dtTkreq;                             // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1401,7 +1414,8 @@ int main(void) {
   
   noBeam         = 0xffffffff;
   dtStart        = 0xffffffffffffffff;
-  dtSync         = 0xffffffffffffffff;
+  dtSync1        = 0xffffffffffffffff;
+  dtSync2        = 0xffffffffffffffff; 
   dtInject       = 0xffffffffffffffff;
   dtTransfer     = 0xffffffffffffffff;
   dtTkreq        = 0xffffffffffffffff;
@@ -1440,7 +1454,7 @@ int main(void) {
     status = fwlib_changeState(&actState, &reqState, status);               // handle requested state changes
     switch(actState) {                                                      // state specific do actions
       case COMMON_STATE_OPREADY :
-        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nMulti, &nBoost,status);
+        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync1, &dtSync2, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nMulti, &nBoost,status);
         //pp_printf("mainstatus %x\n", status);
         if (status == COMMON_STATUS_WRBADSYNC)     reqState = COMMON_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)  reqState = COMMON_STATE_ERROR; 
@@ -1480,8 +1494,10 @@ int main(void) {
     
     if (dtStart          == 0xffffffffffffffff) *pSharedDtStart      = 0xffffffff;
     else                                        *pSharedDtStart      = (uint32_t)((float)dtStart / 1000.0);
-    if (dtSync           == 0xffffffffffffffff) *pSharedDtSync       = 0xffffffff;
-    else                                        *pSharedDtSync       = (uint32_t)((float)dtSync / 1000.0);
+    if (dtSync1          == 0xffffffffffffffff) *pSharedDtSync1      = 0xffffffff;
+    else                                        *pSharedDtSync1      = (uint32_t)((float)dtSync1 / 1000.0);
+    if (dtSync2          == 0xffffffffffffffff) *pSharedDtSync2      = 0xffffffff;
+    else                                        *pSharedDtSync2      = (uint32_t)((float)dtSync2 / 1000.0);
     if (dtTransfer       == 0xffffffffffffffff) *pSharedDtTransfer   = 0xffffffff;
     else                                        *pSharedDtTransfer   = (uint32_t)((float)dtTransfer / 1000.0);
     if (dtInject         == 0xffffffffffffffff) *pSharedDtInject     = 0xffffffff;
