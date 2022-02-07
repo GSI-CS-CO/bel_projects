@@ -3,22 +3,27 @@
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
+unset username userpasswd option
 
 usage() {
 
-    echo -e "\nThis is a MPS signalling test between TX and RX SCUs."
-    echo -e "User might be logged in to both SCUs to perform optional pre-check."
-    echo -e "Used SCUs: ${rxscu%%.*} (RX), ${txscu%%.*} (TX)\n"
-    echo -e "Usage: $0 [auto]"
-    echo -e "       auto - user input is taken from environment variables"
-    echo -e "              GSI_SCU_ROOT_USER, GSI_SCU_ROOT_PASSWD\n"
+    echo "Usage: $0 [OPTION]"
+    echo "Run a MPS signalling test between TX and RX SCUs."
+    echo "User might be logged in to both SCUs to perform optional pre-check."
+    echo "Used SCUs: ${rxscu%%.*} (RX), ${txscu%%.*} (TX)"
+    echo
+    echo "OPTION:"
+    echo "  -u <username>          user name to log in to SCUs"
+    echo "  -p <userpassd>         user password"
+    echo "  -y                     'yes' to all prompts"
+    echo "  -h                     display this help and exit"
 }
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
     read -r answer
 
-    if [ "$answer" != "y" ] && [ "$answer" != "Y" ] && [ "$answer" != "" ]; then
+    if [ "$answer" != "y" ] && [ "$answer" != "Y" ] && [ -n "$answer" ]; then
         exit 1
     fi
 }
@@ -35,19 +40,25 @@ pre_check() {
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
-# print usage info
-usage
+while getopts 'hyu:p:' c; do
+    case $c in
+        h) usage; exit 1 ;;
+        u) username=$OPTARG ;;
+        p) userpasswd=$OPTARG ;;
+        y) option="auto" ;;
+    esac
+done
 
 # get username and password to access SCUs
-if [ "$1" == "auto" ]; then
-    username=$GSI_SCU_ROOT_USER
-    userpasswd=$GSI_SCU_ROOT_PASSWD
-else
+if [ -z "$username" ]; then
     read -rp "username to access '${rxscu%%.*}, ${txscu%%.*}': " username
+fi
+
+if [ -z "$userpasswd" ]; then
     read -rsp "password for '$username' : " userpasswd
 fi
 
-echo -e "\n--- Step 1 - set up nodes (RX, TX)---\n"
+echo -e "\n--- Step 1 - set up nodes (RX, TX)---"
 echo -e "\n--- setup RX node ---\n"
 timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx"
 if [ $? -ne 0 ]; then
@@ -66,7 +77,7 @@ echo -e "\n--- Step 2 - pre-check (RX, TX) ---\n"
 
 pre_check
 
-if [ "$1" != "auto" ]; then
+if [ "$option" != "auto" ]; then
     user_approval
 fi
 
