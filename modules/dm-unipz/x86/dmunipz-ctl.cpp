@@ -225,25 +225,26 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s1 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz:                  TRANSFERS                |                        INJECTION                         | DIAGNOSIS  |                    INFO   \n");
-  fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)  sum( init/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
-  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 00006/00000(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' \n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          '    '- status\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '          ' - # of '!OpReady' incidents\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '        '- state\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' ' '- beam (request) released\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' ' '- beam request succeeded\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '- beam requested\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' ' '- beam preparation (request) released\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' ' '- beam preparation requested\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' ' '- TK (request) released -> transfer completed\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | ' '- TK request succeeded\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '   | '- TK requested\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '    - STATUS info ...\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '    |        '- remaining budget for data master and network  [ms] (> 1ms)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '     - DIAGNOSTIC info ...\n");
+  fprintf(stderr, "dm-unipz:                  TRANSFERS                |                        INJECTION                                | DIAGNOSIS  |                    INFO   \n");
+  fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)  sum( init/bmrq/r2sis->mbtrig)          | DIAG margn | status         state      nchng stat   nchng\n");
+  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 00006/00000(06/06),  964(0.146/   0/ 954 -> 9.979/12.345)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' \n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '- status\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          ' - # of '!OpReady' incidents\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '- state\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '- beam (request) released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' '- beam request succeeded\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' '- beam requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' '- beam preparation (request) released\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' '- beam preparation requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' '- TK (request) released -> transfer completed\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' '- TK request succeeded\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | '- TK requested\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '    - STATUS info ...\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '- remaining budget for data master and network  [ms] (> 1ms)\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |- DIAGNOSTIC info ...\n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '- offset CMD_FG_START -> EVT_MB_TRIGGER [ms] (~16ms) \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '- offset EVT_READY_TO_SIS -> EVT_MB_TRIGGER [ms] (~10ms) \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '- offset beam request <-> EVT_READY_TO_SIS [ms] (< 2000ms)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '- period required for acknowledgement of beam request at UNILAC [ms] (~20ms)\n");
@@ -348,8 +349,8 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransferHeader()
 {
-  printf("dm-unipz:                  TRANSFERS                |                              INJECTION                    | DIAGNOSIS  |                        INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)   sum( init/bmrq/r2sis->mbtrig)   | DIAG margn | status             state      nchng   stat   nchng\n");
+  printf("dm-unipz:                  TRANSFERS                |                              INJECTION                            | DIAGNOSIS  |                        INFO                       \n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)   sum( init/bmrq/r2sis-> mbtrig/fgstart)  | DIAG margn | status             state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 
