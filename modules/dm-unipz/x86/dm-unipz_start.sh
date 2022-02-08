@@ -90,10 +90,6 @@ saft-ecpu-ctl tr0 -c 0x112c161000000000 0xfffffff000000000 0 0x8 -d
 # configure ECA for lm32 channel: listen for CMD_UNI_BREQ_NOWAIT, tag "0x9"
 saft-ecpu-ctl tr0 -c 0x112c162000000000 0xfffffff000000000 0 0x9 -d
 
-# configure ECA for lm32 channel: listen for CMD_FG_START, tag "0xa"
-saft-ecpu-ctl tr0 -c 0x112c201000000000 0xfffffff000000000 0 0xa -d
-
-
 
 ###########################################
 # configure TLU and ECA for UNIPZ

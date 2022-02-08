@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Feb-2022
+ *  version : 08-Feb-2022
  *
  * Command-line interface for dmunipz
  *
@@ -107,7 +107,7 @@ eb_address_t dmunipz_virtAccRec;   // # of received virtual accelerator of ongoi
 eb_address_t dmunipz_noBeam;       // requested 'noBeam' flag, read
 eb_address_t dmunipz_dtStart;      // difference between actual time and flextime @ DM
 eb_address_t dmunipz_dtSync1;      // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-eb_address_t dmunipz_dtSync2;      // time difference between EVT_READY_TO_SIS and CMD_FG_START
+eb_address_t dmunipz_dtSync2;      // time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
 eb_address_t dmunipz_dtInject;     // time difference between CM_UNI_BREQ and EVT_MB_LOAD
 eb_address_t dmunipz_dtTransfer;   // time difference between CM_UNI_TKREQ and EVT_MB_LOAD
 eb_address_t dmunipz_dtTkreq;      // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -244,7 +244,7 @@ static void help(void) {
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '    - STATUS info ...\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '- remaining budget for data master and network  [ms] (> 1ms)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |- DIAGNOSTIC info ...\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '- offset CMD_FG_START -> EVT_MB_TRIGGER [ms] (~16ms) \n");
+  fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '- offset CMD_UNI_TCREL -> EVT_MB_TRIGGER [ms] (~16ms) \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '- offset EVT_READY_TO_SIS -> EVT_MB_TRIGGER [ms] (~10ms) \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '- offset beam request <-> EVT_READY_TO_SIS [ms] (< 2000ms)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '- period required for acknowledgement of beam request at UNILAC [ms] (~20ms)\n");
@@ -350,7 +350,7 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 void printTransferHeader()
 {
   printf("dm-unipz:                  TRANSFERS                |                              INJECTION                            | DIAGNOSIS  |                        INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)   sum( init/bmrq/r2sis-> mbtrig/fgstart)  | DIAG margn | status             state      nchng   stat   nchng\n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)   sum( init/bmrq/r2sis-> mbtrig/  tcrel)  | DIAG margn | status             state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 

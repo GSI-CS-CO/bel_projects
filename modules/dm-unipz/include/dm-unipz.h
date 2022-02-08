@@ -63,7 +63,6 @@
 #define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
 #define  DMUNIPZ_ECADO_PREPBEAM   8           // prepare beam at UNIPZ (preceedes 'REQBEAM')
 #define  DMUNIPZ_ECADO_REQBEAMNW  9           // request beam at UNIPZ, start thread at DM
-#define  DMUNIPZ_ECADO_FGSTART    0xa         // received CMD_FG_START via TLU
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_REQTK       0           // TK requested
@@ -175,7 +174,7 @@ typedef union {
 #define DMUNIPZ_SHARED_NR2SCYCLE      (DMUNIPZ_SHARED_NR2STRANSFER  + _32b_SIZE_)       // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_DTBPREP        (DMUNIPZ_SHARED_NR2SCYCLE     + _32b_SIZE_)       // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
 #define DMUNIPZ_SHARED_NBOOSTER       (DMUNIPZ_SHARED_DTBPREP       + _32b_SIZE_)       // # of booster injections
-#define DMUNIPZ_SHARED_DTSYNC2        (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // time difference between EVT_READY_TO_SIS and CMD_FG_START; value in us
+#define DMUNIPZ_SHARED_DTSYNC2        (DMUNIPZ_SHARED_NBOOSTER      + _32b_SIZE_)       // time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL; value in us
 
 // diagnosis: end of used shared memory
 #define DMUNIPZ_SHARED_END            (DMUNIPZ_SHARED_DTSYNC2       + _32b_SIZE_)       // end of shared memory

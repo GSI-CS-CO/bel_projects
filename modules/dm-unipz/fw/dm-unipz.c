@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Feb-2022
+ *  version : 08-Feb-2022
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000805                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000806                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -126,7 +126,7 @@ uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
 uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and start of injection-thread @ DM
 uint32_t *pSharedDtSync1;               // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-uint32_t *pSharedDtSync2;               // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and CMD_FG_START
+uint32_t *pSharedDtSync2;               // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
 uint32_t *pSharedDtInject;              // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
 uint32_t *pSharedDtTransfer;            // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
 uint32_t *pSharedDtTkreq;               // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1101,7 +1101,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
                            uint32_t *noBeam,                  // 'no beam' flag from Data Master: UNILAC requested but without beam
                            uint64_t *dtStart,                 // remaining time budget for DM after 'start thread command' has been sent, minimum value is 1ms
                            uint64_t *dtSync1,                 // time difference between EVT_READY_2_SIS and EVT_MB_TRIGGER, should be 10ms exactly
-                           uint64_t *dtSync2,                 // time difference between EVT_READY_2_SIS and CMD_FG_START, should be ~17 ms
+                           uint64_t *dtSync2,                 // time difference between EVT_READY_2_SIS and CMD_UNI_TCREL, should be ~17 ms
                            uint64_t *dtInject,                // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
                            uint64_t *dtTransfer,              // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER, for diagnostics only
                            uint64_t *dtTkreq,                 // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1174,7 +1174,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *nMulti         = 0;                                                         // number of multi-multi-injections is reset when DM requests TK
       *nBoost         = 0;                                                         // number of booster cycles is reset when DM requests TK
       *dtSync1        = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-      *dtSync2        = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and CMD_FG_START
+      *dtSync2        = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
       *dtTransfer     = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
       *dtInject       = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
       *dtTkreq        = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and reply from UNIPZ
@@ -1354,8 +1354,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
 
       //---- copy tag specific data from ECA
-      /* ecaVirtAcc    = ecaEvtId & 0xf;  chk not used, delete? */
-          
+      // calculate time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
+      if (tReady2Sis == 0) *dtSync2 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
+      else                 *dtSync2 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
+
       //---- clear data, release TK, update status
       dmClearCmd(REQTK);                                                           // with TK release, command data becomes invalid and must not be used any more
       releaseTK();                                                                 // release TK
@@ -1397,14 +1399,6 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       
       break;
       
-    case DMUNIPZ_ECADO_FGSTART :                                                   // received FGSTART: convenience feature triggering all kind of diagnostics
-
-      // calculate time difference between EVT_READY_TO_SIS and CMD_FG_START
-      if (tReady2Sis == 0) *dtSync2 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
-      else                 *dtSync2 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
-      
-      break;
-
     case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU 
       if (flagTkReq) nR2sTransfer++;                                               // receiving EVT_READY_TO_SIS during ongoing transfer within transfer but outside injection (injection handled by case 'DMUNIPZ_ECADO_REQBEAM')
       nR2sTotal++;                                                                 // receiving EVT_READY_TO_SIS outside ongoing transfer indicates a periodic "virtual accelerator" from UNILAC to TK
@@ -1434,7 +1428,7 @@ int main(void) {
   uint32_t noBeam;                              // no beam flag requested by Data Master
   uint64_t dtStart;                             // remaining time budget for DM after the injection-thread as been started, minimum value is 1ms
   uint64_t dtSync1;                             // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-  uint64_t dtSync2;                             // time difference between EVT_READY_TO_SIS and CMD_FG_START
+  uint64_t dtSync2;                             // time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
   uint64_t dtInject;                            // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
   uint64_t dtTransfer;                          // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
   uint64_t dtTkreq;                             // time difference between CMD_UNI_TKREQ and reply from UNIPZ
