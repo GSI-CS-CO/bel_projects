@@ -87,6 +87,7 @@ Currently we support a few different form factors.
 make scu2
 make scu3
 make scu4
+make ftm4
 make vetar2a
 make vetar2a-ee-butis
 make pexarria5
@@ -94,6 +95,8 @@ make exploder5
 make pmc
 make microtca
 make pexp
+make pexarria10
+make ftm10
 ```
 
 # FAQ and Common Problems
