@@ -1229,8 +1229,39 @@ set_location_assignment PIN_Y9 -to "usbc_tx4_p[1](n)"
 # VCXO
 # WR_LED0_1
 
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment PIN_M20 -to OneWire_aux_CB
 set_location_assignment PIN_M21 -to OneWire_aux_CB_splz
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB_splz
+set_location_assignment PIN_AN22 -to wr_leds_o[2]
+set_location_assignment PIN_AL23 -to wr_leds_o[3]
+set_location_assignment PIN_AN20 -to wr_aux_leds_or_node_leds_o[3]
+set_location_assignment PIN_AP20 -to wr_aux_leds_or_node_leds_o[2]
+set_location_assignment PIN_AP21 -to wr_aux_leds_or_node_leds_o[1]
+set_location_assignment PIN_AP22 -to wr_aux_leds_or_node_leds_o[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o
+set_location_assignment PIN_AM3 -to sfp_aux_gpio_io_extra[3]
+set_location_assignment PIN_AL3 -to sfp_aux_gpio_io_extra[2]
+set_location_assignment PIN_AH5 -to sfp_aux_gpio_io_extra[1]
+set_location_assignment PIN_AJ5 -to sfp_aux_gpio_io_extra[0]
+set_location_assignment PIN_AM5 -to sfp_aux_los_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_io_extra[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_io_extra[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_io_extra[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_io_extra[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_los_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_mod0_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_mod1_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_mod2_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_tx_disable_io_nc
+set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_tx_fault_io_nc
+set_location_assignment PIN_AM6 -to sfp_aux_mod0_io_nc
+set_location_assignment PIN_AM7 -to sfp_aux_mod1_io_nc
+set_location_assignment PIN_AM8 -to sfp_aux_mod2_io_nc
+set_location_assignment PIN_AN4 -to sfp_aux_tx_disable_io_nc
+set_location_assignment PIN_AN5 -to sfp_aux_tx_fault_io_nc
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
