@@ -1890,7 +1890,67 @@ begin
 end architecture;
 
 
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.wishbone_pkg.all;
 
+-- If a WB slave stalls for longer than a fixed amount of clock ticks, the 
+-- wrapper stops redirecting the slave signals to the master, ends the stall,
+-- answers all stb with err, and hopes that the master will end the cycle.
+entity end_permanent_stall is
+  generic (
+    g_max_stall : integer := 50 
+  );
+  port (
+    clk_i    : in  std_logic;
+    rst_n_i  : in  std_logic;
+    slave_i  : in  t_wishbone_slave_in;
+    slave_o  : out t_wishbone_slave_out;
+    master_o : out t_wishbone_master_out;
+    master_i : in  t_wishbone_master_in
+  );
+end entity;
+
+architecture rtl of end_permanent_stall is
+  type t_state is (s_idle, s_cyc, s_end_cycle);
+  signal state : t_state := s_idle;
+  signal count : integer range 0 to g_max_stall;
+begin
+    
+  slave_o  <= (ack=>'0', err=>slave_i.stb and slave_i.cyc, rty=>'0', stall=>'0', dat=>(others=>'-'))    when state = s_end_cycle else  master_i;
+  master_o <= (cyc=>'0', stb=>'0', we=>'0', sel=>(others=>'0'), adr=>(others=>'-'),dat=>(others=>'-'))  when state = s_end_cycle else  slave_i;
+
+  process(clk_i, rst_n_i) is
+  begin
+    if rst_n_i = '0' then
+      state <= s_idle;
+    elsif rising_edge(clk_i) then
+      case state is
+        when s_idle =>
+          if slave_i.cyc = '1' then 
+            state <= s_cyc;
+            count <= g_max_stall;
+          end if;
+        when s_cyc =>
+          if master_i.stall = '1' then
+            if count = 0 then 
+              state <= s_end_cycle;
+            else
+              count <= count - 1;
+            end if;
+          else
+            count <= g_max_stall; -- reset the counter when the slave unstalls
+          end if;
+        when s_end_cycle =>
+          if slave_i.cyc = '0' then 
+            state <= s_idle;
+          end if;
+      end case;
+    end if;
+  end process;
+
+end architecture;
 
 
 LIBRARY ieee;
@@ -1969,8 +2029,8 @@ PORT  (
 END wb_mil_scu;
 
 ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS
-    signal mosi: t_wishbone_slave_in;
-    signal miso: t_wishbone_slave_out;
+    signal mosi, mosi_2: t_wishbone_slave_in;
+    signal miso, miso_2: t_wishbone_slave_out;
 BEGIN
 
     bugfix: entity work.wb_cyc_delay
@@ -1982,6 +2042,19 @@ BEGIN
         rst_n_i   => nRst_i,
         slave_i   => slave_i,
         slave_o   => slave_o,
+        master_o  => mosi_2,
+        master_i  => miso_2
+      );
+
+    bugfix_2: entity work.wb_cyc_delay
+      generic map(
+        g_wait_count => 50 
+      )
+      port map (
+        clk_i     => clk_i,
+        rst_n_i   => nRst_i,
+        slave_i   => mosi_2,
+        slave_o   => miso_2,
         master_o  => mosi,
         master_i  => miso
       );
