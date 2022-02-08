@@ -6,6 +6,7 @@ timing/
 board/
 *.bsf
 *.cmp
+*.bak
 
 
 
