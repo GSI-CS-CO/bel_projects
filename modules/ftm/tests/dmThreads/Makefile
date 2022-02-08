@@ -1,4 +1,5 @@
 DATAMASTER ?=$$DM
+SNOOP ?=saft-ctl tr0 -xv snoop 0 0 0
 DOT_FILE ?= pps-all-threads.dot
 PROTOCOL_FILE ?= pps-threads.log
 DURATION ?= 5
