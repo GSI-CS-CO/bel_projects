@@ -139,7 +139,7 @@ uint32_t *pSharedNBooster;              // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedDstMacHi;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
-volatile uint32_t *pSharedThrdOffset;   // pointer to a "user defined" u32 register; here: TS_STARTTHREAD = OFFSETFLEX + TS_MILEVENT; values in ns
+volatile uint32_t *pSharedThrdOffset;   // pointer to a "user defined" u32 register; here: TS_STARTTHREAD = OFFSETTHRD + TS_MILEVENT; values in ns
 volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
 volatile uint32_t *pSharedTkTimeout;    // pointer to a "user defined" u32 register; here: timeout value for TK (via UNIPZ)
 
@@ -578,15 +578,15 @@ void dmChangeBlock(uint32_t blk)
 
   // if debugging is enabled, write data for Data Master to our own ECA input
   if (flagDebug) {
-    // TS for sending command
+    // command address and data
     TS    = getSysTime();
     evtId = 0xcafe000000000000;
     evtId = evtId | ((uint64_t)0xfa2 << 36);
     evtId = evtId | dmCmds[blk].cmdAddr;
-    param = dmCmds[blk].cmdData[0];;
+    param = dmCmds[blk].cmdData[0];
     fwlib_ecaWriteTM(TS, evtId, param, 1);
 
-    // write start bit to global control register
+    // blockWrIdxs address and idxs
     TS    = TS + 8;
     evtId = 0xcafe000000000000;
     evtId = evtId | ((uint64_t)0xfa3 << 36);
@@ -1299,7 +1299,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       //---- analyse the situation 
       if (flagMilEvtValid) {                                                                  
-        tCmdThrd     = tReady2Sis   + (uint64_t)thrdOffset;                        // everything is fine: add offset to obtain deadline for "flex" waiting block at Data Master
+        tCmdThrd     = tReady2Sis   + (uint64_t)thrdOffset;                        // everything is fine: add offset to obtain deadline for starting the injection thread at Data Master
         *dtReady2Sis = tReady2Sis - ecaDeadline;                                   // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
         fwlib_milPulseLemo(2);                                                     // diagnostics: blink LED and TTL out of MIL piggy for hardware debugging with scope
       } // if MIL event was received
@@ -1323,16 +1323,17 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       dmStatus = dmCheckThr(REQBEAM);
       if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // check command failed: give up
 
-      // set time to terminate "slow" waiting block within DM
-      if (!flagBooster && !flagNoCmd) dmSetTValidCmdCommon(REQTK, tCmdThrd);
-      
       //---- send data to Data Master ----
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
-        if (!flagBooster)               dmChangeBlock(REQTK);                      // modify "slow" waiting block within DM
         if (status == COMMON_STATUS_OK) dmStartThread(REQBEAM);                    // start thread within DM; only start thread in case everything went fine
+        if (!flagBooster) {
+          dmSetTValidCmdCommon(REQTK, tCmdValid);                                  // set time that shall be used for terminating "slow" waiting block within DM
+          uwait(450);
+          dmChangeBlock(REQTK);                                                    // modify "slow" waiting block within DM
+        } // if !flagBooster
       } // if !flagNoCmd
 
-      *dtStart     = tCmdThrd - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
+      *dtStart     = tCmdThrd - getSysTime();                                      // diagnostics: we want to know how much of the thread-offset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
       //---- release beam and un-arm MIL piggy
       releaseBeam(uniTimeout);                                                     // release beam request at UNIPZ
