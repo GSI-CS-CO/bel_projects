@@ -52,7 +52,7 @@
 	print_fbasdm_status \
 	clear_fbasdm load_fbasdm_loop_patterns load_fbasdm_finite_patterns \
 	restart_two_senders_multi_finite restart_two_senders_multi_loop \
-	show_result
+	show_two_senders_result
 
 SHELL=/bin/bash
 sleep_period=20    # seconds
@@ -91,6 +91,7 @@ disable_mps_all:
 enable_mps_all:
 	source setup.sh && enable_mps_all
 
+# FW for TX/RX nodes: fbas.bin.single_timing_msg
 restart_fbasdm_finite:
 	source setup.sh && setup_fbasrx
 	source dm.sh && clear_dm_diag
@@ -98,8 +99,11 @@ restart_fbasdm_finite:
 	source dm.sh && load_dm_patt my_mps_finite.dot && start_dm_patt PatA
 	echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	source dm.sh && print_dm_diag
-	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	$(MAKE) show_fbasdm_result
 
+# FW for TX/RX nodes: fbas.bin.single_timing_msg
 restart_fbasdm_loop:
 	source setup.sh && setup_fbasrx
 	source dm.sh && clear_dm_diag
@@ -108,7 +112,9 @@ restart_fbasdm_loop:
 	echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	source dm.sh && stop_dm_patt PatLoop
 	source dm.sh && print_dm_diag
-	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	$(MAKE) show_fbasdm_result
 
 # Single timing message in single Ethernet frame
 set_single_msg_per_frame:
@@ -207,6 +213,8 @@ load_fbasdm_finite_patterns:
 
 # Simple test: 2 senders, each EB frame with single timing message
 #
+# FW for TX/RX nodes: fbas.bin.single_timing_msg
+#
 # To evaluate result add the number of messages sent by the datamaster (decimal
 # numbers given in a table) and FBASTX (hexadecimal number) and compare the sum
 # with the number of messages received by FBASRX (last hexadecimal output).
@@ -220,11 +228,15 @@ restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
 	source dm.sh && stop_dm_patt PatLoop3
 	source setup.sh && disable_mps_all
 	source dm.sh && print_dm_diag
-	source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
-	source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo
+	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
+	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	$(MAKE) show_two_senders_result
 
 # datamaster sends EB frame with multiple timing messages
 # FBASRX is getting started to loose timing messages at transmission period of 180us
+# FW for TX/RX nodes: fbas.bin.single_timing_msg
 restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_loop_patterns
 	source setup.sh && setup_fbastx && setup_fbasrx
 	source setup.sh && enable_mps_all
@@ -240,8 +252,9 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasd
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
-	$(MAKE) show_result
+	$(MAKE) show_two_senders_result
 
+# FW for TX/RX nodes: fbas.bin.single_timing_msg
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_finite_patterns
 	source setup.sh && setup_fbastx && setup_fbasrx
 	source setup.sh && enable_mps_all
@@ -253,10 +266,15 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fba
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
-	$(MAKE) show_result
+	$(MAKE) show_two_senders_result
 
-show_result:
+show_two_senders_result:
 	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1))
 	@$(eval tx_msg=$(shell source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} ${tx_msg} ${dm_msg}
+
+show_fbasdm_result:
+	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1))
+	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
+	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
