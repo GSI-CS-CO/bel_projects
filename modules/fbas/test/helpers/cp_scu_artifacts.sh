@@ -8,6 +8,8 @@
 # 321/264 - nwt0472
 scu_arr=(scuxl0396 scuxl0497 scuxl0321 scuxl0264 scuxl0329 scuxl0411)
 
+unset username userpasswd scu option
+
 usage() {
     echo "usage: $0 scu"
     echo
@@ -15,8 +17,19 @@ usage() {
     exit 1
 }
 
-if [ $# -eq 1 ]; then
-    scu_arr=("$1")
+while getopts 'hyu:p:s:' c
+do
+    case $c in
+        h) usage; exit 0 ;;
+        u) username=$OPTARG ;;
+        p) userpasswd=$OPTARG ;;
+        s) scu=$OPTARG ;;
+        y) option="auto" ;;
+    esac
+done
+
+if [ -n $scu ]; then
+    scu_arr=("$scu")
 fi
 
 # project directory path
@@ -27,7 +40,7 @@ prj_dir="${PWD/fbas*/fbas}"
 tr_gw="v6.1.2"
 
 # SCU FW (independent from gateware version, built by devel host)
-lm32_fw="fw/*.bin"
+lm32_fw="lm32/fbas.bin*"
 
 # SCU provided by user
 domain=$(hostname -d)
@@ -37,9 +50,6 @@ scu_tools="scu/*.sh"
 
 # EB tool not available in ramdisk (eg., gw v6.0.1)
 ebfwload="eb-fwload"
-
-# user to access SCUs
-username="root"
 
 # Acknowledge SCUs
 echo "SCUs below are chosen for MPS:"
@@ -55,11 +65,16 @@ if [ "$answer" != "Y" ] && [ "$answer" != "y" ] && [ "$answer" != "" ]; then
     exit 1
 fi
 
-# Prompt $username password for SCU
-read -rsp "password for '$username' (SCU): " userpasswd
+# get username and password to access SCUs
+if [ -z "$username" ]; then
+    read -rp "username to access '${rxscu%%.*}, ${txscu%%.*}': " username
+fi
+
+if [ -z "$userpasswd" ]; then
+    read -rsp "password for '$username' : " userpasswd
+fi
 
 # Deploy artifacts
-
 if [ "$tr_gw" == "v6.0.1" ]; then
     echo -e "\nDeploy '$lm32_fw', '$scu_tools' and '$ebfwload' to:"
 else
@@ -72,14 +87,11 @@ for item in ${scu_arr[*]}; do
 
     # deploy EB tool (required for gw v6.0.1)
     if [ "$tr_gw" == "v6.0.1" ]; then
-        SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$tr_gw/$ebfwload" "$username@$scu:/usr/bin/"
+        SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir/lm32/$tr_gw/$ebfwload" "$username@$scu:/usr/bin/"
     fi
 
-    # deploy LM32 firmware
-    SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir"/$lm32_fw "$username@$scu:~"
-
-    # deploy script
-    SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir"/$scu_tools "$username@$scu:~"
+    # deploy LM32 firmware and script
+    SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir"/$lm32_fw "$prj_dir"/$scu_tools "$username@$scu:~"
 
     echo "- $item"
 done

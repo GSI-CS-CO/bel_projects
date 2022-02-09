@@ -3,6 +3,7 @@
 ##########################
 ## Setup of the datamaster
 ##########################
+# Pexaria as DM, /dev/wbm1 on devel host
 # Pexaria as FBASTX, /dev/wbm0
 # Pexp as FBASRX, /dev/wbm2
 
@@ -12,9 +13,9 @@
 
 source setup.sh
 
-export fbasdm="dev/wbm1"
-export patt_loc="$HOME/gsi_prj/bel_projects/modules/fbas/x86"
-export reg_maxmsg="0x41000a4/4"
+export fbasdm="dev/wbm1"                                   # DM device on devel host
+export patt_loc="${PWD/fbas*/fbas}/test/dm"                # DM pattern location
+export reg_maxmsg="0x41000a4/4"                            # DM register
 export cmd_file_start_loop="start_synchron.dot"
 export cmd_file_start_finite="start_synchron_finite.dot"
 

@@ -3,8 +3,15 @@
 ##########################
 ## Setup of the WR network
 ##########################
-# WRS with dot-config_integration_access_fbas (CONFIG_DOTCONF_INFO="gen_time=2021-02-11+11:42:43;gen_user=timing@tgservice;git_hash=ff32f67-dirty;role=integration_access_fbas;")
+# TTF:
+# WRS configured with dot-config_timing_mps_access
+# SCU as TX node, scuxl0396
+# SCU as RX node, scuxl0497
+
+# HO:
+# WRS configured with dot-config_production_mps_access_ho
 # RPi with DHCP/FTP server
+# Pexaria as DM, /dev/wbm1
 # Pexaria as FBASTX, /dev/wbm0
 # Pexp as FBASRX, /dev/wbm2
 
@@ -15,6 +22,10 @@
 export FBASTX="dev/wbm0"
 export FBASRX="dev/wbm2"
 export addr_cnt1="0x04060934/4"  # shared memory location for received frames counter
+module_dir="${PWD/fbas*/fbas}"
+fw_dir="$module_dir/test/lm32"
+fw_tx="$fw_dir/fbas.bin"
+fw_rx="$fw_dir/fbas.bin"
 
 function user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -149,7 +160,7 @@ function setup_fbastx() {
     check_fbastx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASTX u 0x0 $HOME/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
+    eb-fwload $FBASTX u 0x0 $fw_tx
     wait_seconds 1
 
     # wrc output:
@@ -217,7 +228,7 @@ function setup_fbasrx() {
     check_fbasrx
 
     echo "load the LM32 firmware"
-    eb-fwload $FBASRX u 0x0 $HOME/gsi_prj/bel_projects/modules/fbas/fw/fbas.bin
+    eb-fwload $FBASRX u 0x0 $fw_rx
     wait_seconds 1
 
     # wrc output:
