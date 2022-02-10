@@ -395,7 +395,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
         }
         break;
       case FBAS_TLU_EVT:
-        if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the TLU events
+        if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {// only FBAS TX node handles the TLU events
           // measure network delay (broadcast MPS events from TX to RX nodes) and
           // signalling latency (from MPS event generation at TX to IO event detection at RX)
           measureNwPerf(pSharedApp, FBAS_SHARED_GET_TS1, nextAction, flagIsLate, now, ecaDeadline, 0);
@@ -571,11 +571,14 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask &= ~TSK_TTL_MPS_FLAGS; // disable lifetime monitoring of the MPS flags
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
-      case FBAS_CMD_PRINT_NW_PERF:
-        printMeasureNwPerf();
+      case FBAS_CMD_PRINT_NW_DLY:
+        printMeasureNwDelay(pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+      case FBAS_CMD_PRINT_SG_LTY:
+        printMeasureSgLatency(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_OWD:
-        printMeasureOwDelay();
+        printMeasureOwDelay(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);

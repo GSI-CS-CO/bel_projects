@@ -30,7 +30,12 @@
 #define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + _32b_SIZE_ * 2)   // timestamp4 (IO action event polled by TX)
 #define FBAS_SHARED_GET_TS5        (FBAS_SHARED_GET_TS4        + _32b_SIZE_ * 2)   // timestamp5 (measure time period)
 #define FBAS_SHARED_GET_TS6        (FBAS_SHARED_GET_TS5        + _32b_SIZE_ * 2)   // timestamp6 (measure time period)
-#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_TS6        + _32b_SIZE_ * 2)   // end of the 'get' region
+#define FBAS_SHARED_GET_AVG        (FBAS_SHARED_GET_TS6        + _32b_SIZE_ * 2)   // average (performance, delay measurements)
+#define FBAS_SHARED_GET_MIN        (FBAS_SHARED_GET_AVG        + _32b_SIZE_ * 2)   // min
+#define FBAS_SHARED_GET_MAX        (FBAS_SHARED_GET_MIN        + _32b_SIZE_ * 2)   // max
+#define FBAS_SHARED_GET_VAL        (FBAS_SHARED_GET_MAX        + _32b_SIZE_ * 2)   // valid counts
+#define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VAL        + _32b_SIZE_ * 2)   // all/total counts
+#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_ALL        + _32b_SIZE_ * 2)   // end of the 'get' region
 
 // diagnosis: end of used shared memory
 #define FBAS_SHARED_END            (FBAS_SHARED_GET_END)
@@ -62,8 +67,9 @@ typedef enum {
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
 #define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
-#define FBAS_CMD_PRINT_NW_PERF  0x32   // print result of network performance measurement
+#define FBAS_CMD_PRINT_NW_DLY   0x32   // print result of network delay measurement
 #define FBAS_CMD_PRINT_OWD      0x33   // print result of one-way delay measurement
+#define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MSP signaling latency measurement
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

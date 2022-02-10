@@ -22,6 +22,8 @@
 export FBASTX="dev/wbm0"
 export FBASRX="dev/wbm2"
 export addr_cnt1="0x04060934/4"  # shared memory location for received frames counter
+export addr_msr1="0x04060968"    # shared memory location for measurement results
+export addr_cmd="0x04060508/4"   # shared memory location for command buffer
 module_dir="${PWD/fbas*/fbas}"
 fw_dir="$module_dir/test/lm32"
 fw_tx="$fw_dir/fbas.bin"
@@ -292,6 +294,72 @@ function setup_fbasrx() {
 }
 
 ####################
+## Reset FTRN node
+#
+# - FW is not re-loaded
+# + reset LM32
+# + set node type, if 'RX'
+# + set oper. mode to 'OPREADY'
+####################
+
+function reset_node() {
+
+    # $1 - node type (TX or RX)
+
+    if [ "$1" == "RX" ]; then
+        check_fbasrx
+        node=$FBASRX
+    elif [ "$1" == "TX" ]; then
+        check_fbastx
+        node=$FBASTX
+    else
+        echo "unknown node type: $1"
+        exit 1
+    fi
+
+    echo "reset LM32"
+    eb-reset $node cpureset 0x0
+    wait_seconds 1
+
+    echo "CONFIGURE state "
+    eb-write $node 0x4060508/4 0x1
+    wait_seconds 1
+
+    if [ "$1" == "RX" ]; then
+        echo "set node type to FBASRX (0x1)"
+        eb-write $node 0x4060820/4 0x1
+        wait_seconds 1
+
+        echo "tell LM32 to set the node type"
+        eb-write $node 0x4060508/4 0x15
+        wait_seconds 1
+
+        # wrc output:
+        #   common-fwlib: common_cmdHandler received unknown command '0x00000015'
+        #   fbas1: node type 1
+
+        echo "verify the actual node type"
+        eb-read $node 0x4060830/4
+        wait_seconds 1
+
+        # wrc output:
+        #   00000001
+    fi
+
+    echo "OPREADY state "
+    eb-write $node 0x4060508/4 0x2
+
+    # wrc output:
+    #   common-fwlib: changed to state 4
+
+    echo "show actual ECA conditions"
+    saft-ecpu-ctl fbasrx -l
+
+    echo "list all IO conditions in ECA"
+    saft-io-ctl fbastx -l
+}
+
+####################
 ## Test FW operation
 ####################
 
@@ -306,6 +374,30 @@ function dont_call_open_wr_console() {
 }
 
 ##########################################################
+# Pre-check for test 3:
+#
+# Suggest to check the IO connection between RX and TX nodes.
+#
+# IO connection with LEMO: RX:IO1 -> TX:IO2
+##########################################################
+
+function precheck_test3() {
+    echo "Step 1: test TLU action for TX"
+    echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
+    echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"
+
+    user_approval
+
+    echo "Drive IO1 of RX on 2nd terminal:"
+    echo "saft-io-ctl fbasrx -n IO1 -o 1 -d 1"
+    echo "saft-io-ctl fbasrx -n IO1 -o 1 -d 0"
+
+    user_approval
+
+    echo "if on 1st terminal some events like 'tDeadline: 2020-11-02 17:24:49.591537414 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 8186 ns)' is displayed, then it's ready for next step"
+}
+
+##########################################################
 # Test 3:
 # TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
 # sends MPS event immediately in timing msg with event ID=0x1fccfcc00.
@@ -315,20 +407,7 @@ function dont_call_open_wr_console() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function do_test3() {
-    echo "Step 1: test TLU action for TX"
-    echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
-    echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"
-
-    user_approval
-
-    echo "Drive IO1 of RX on 2nd terminal:"
-    echo "saft-io-ctl fbasrx -n IO1 -d 1"
-    echo "saft-io-ctl fbasrx -n IO1 -d 0"
-
-    user_approval
-
-    echo "if on 1st terminal some events like 'tDeadline: 2020-11-02 17:24:49.591537414 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 8186 ns)' is displayed, then it's ready for next step"
+function start_test3() {
 
     echo "Step 2: enable MPS task on RX and TX nodes"
     echo "for TX: enable sending MPS flags and events, you will see EB frames in wireshark, verify their event ID, MPS flag etc"
@@ -388,6 +467,14 @@ function do_test3() {
 
     echo "Print counter value of RX"
     eb-read $FBASRX $addr_cnt1
+
+    eb-write $FBASTX $addr_cmd 0x32  # get network delay
+    echo "Results of network delay measurement:"
+    read_measurement_results $addr_msr1
+
+    eb-write $FBASTX $addr_cmd 0x34  # get signaling latency
+    echo "Results of signaling latency measurement:"
+    read_measurement_results $addr_msr1
 }
 
 function disable_mps() {
@@ -480,4 +567,31 @@ function report_two_senders_result() {
 
     echo "Result of two_senders test: $result"
     echo "Received: $rx_count of $tx_count"
+}
+
+function read_measurement_results() {
+    # $1 - shared memory location where measurement results are stored
+
+    addr_msr=$1
+
+    avg=$(eb-read -q $FBASTX ${addr_msr}/8)
+    avg_dec=$(printf "%d" 0x$avg)
+    #echo "avg= 0x$avg (${avg_dec})"
+
+    addr_msr=$(( $addr_msr + 8 ))
+    min=$(eb-read -q $FBASTX ${addr_msr}/8)
+    min_dec=$(printf "%lli" 0x$min)
+
+    addr_msr=$(( $addr_msr + 8 ))
+    max=$(eb-read -q $FBASTX ${addr_msr}/8)
+    max_dec=$(printf "%d" 0x$max)
+
+    addr_msr=$(( $addr_msr + 8 ))
+    cnt_val=$(eb-read -q $FBASTX ${addr_msr}/4)
+    cnt_val_dec=$(printf "%d" 0x$cnt_val)
+
+    addr_msr=$(( $addr_msr + 4 ))
+    cnt_all=$(eb-read -q $FBASTX ${addr_msr}/4)
+    cnt_all_dec=$(printf "%d" 0x$cnt_all)
+    echo "avg=${avg_dec}, min=${min_dec}, max=${max_dec}, cnt=${cnt_val_dec}/${cnt_all_dec}"
 }

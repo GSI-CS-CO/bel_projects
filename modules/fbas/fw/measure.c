@@ -168,19 +168,59 @@ void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
 }
 
 /**
- * \brief print result of network performance measurement
+ * \brief print result of network performance measurement - network delay
  *
- * Average, minimum and maximum of network delay and signalling latency are
+ * Average, minimum and maximum of network delay are
  * printed to debug output (invoke eb-console $dev to get the debug output)
  *
  * \param none
  * \ret none
  **/
-void printMeasureNwPerf() {
-  DBPRINT2("nwDly=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+void printMeasureNwDelay(uint32_t* base, uint32_t offset) {
+
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  uint32_t *pSharedReg32;
+
+  *pSharedReg64 = perfStats.avgNwDelay;
+  *(++pSharedReg64) = perfStats.minNwDelay;
+  *(++pSharedReg64) = perfStats.maxNwDelay;
+  ++pSharedReg64;
+
+  pSharedReg32 = (uint32_t *)pSharedReg64;
+  *pSharedReg32 = perfStats.cntNwDelay;
+  *(++pSharedReg32) = perfStats.cntTotal;
+
+  DBPRINT2("nwDly @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      pSharedReg64 - 3,
       perfStats.avgNwDelay, perfStats.minNwDelay, perfStats.maxNwDelay,
       perfStats.cntNwDelay, perfStats.cntTotal);
-  DBPRINT2("sgLty=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+}
+
+/**
+ * \brief print result of network performance measurement - signaling latency
+ *
+ * Average, minimum and maximum of signaling latency are
+ * printed to debug output (invoke eb-console $dev to get the debug output)
+ *
+ * \param none
+ * \ret none
+ **/
+void printMeasureSgLatency(uint32_t* base, uint32_t offset) {
+
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  uint32_t *pSharedReg32;
+
+  *pSharedReg64 = perfStats.avgSgLatency;
+  *(++pSharedReg64) = perfStats.minSgLatency;
+  *(++pSharedReg64) = perfStats.maxSgLatency;
+  ++pSharedReg64;
+
+  pSharedReg32 = (uint32_t *)pSharedReg64;
+  *pSharedReg32 = perfStats.cntSgLatency;
+  *(++pSharedReg32) = perfStats.cntTotal;
+
+  DBPRINT2("sgLty @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      pSharedReg64 - 3,
       perfStats.avgSgLatency, perfStats.minSgLatency, perfStats.maxSgLatency,
       perfStats.cntSgLatency, perfStats.cntTotal);
 }
@@ -243,7 +283,21 @@ void measureOwDelay(uint64_t now, uint64_t ts, bool verbose)
  * \param none
  * \ret none
  **/
-void printMeasureOwDelay() {
-  DBPRINT2("owd=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+void printMeasureOwDelay(uint32_t* base, uint32_t offset) {
+
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  uint32_t *pSharedReg32;
+
+  *pSharedReg64 = owDelay.avg;
+  *(++pSharedReg64) = owDelay.min;
+  *(++pSharedReg64) = owDelay.max;
+  ++pSharedReg64;
+
+  pSharedReg32 = (uint32_t *)pSharedReg64;
+  *pSharedReg32 = owDelay.cntValid;
+  *(++pSharedReg32) = owDelay.cntTotal;
+
+  DBPRINT2("owd @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
+      pSharedReg64 - 3,
       owDelay.avg, owDelay.min, owDelay.max, owDelay.cntValid, owDelay.cntTotal);
 }

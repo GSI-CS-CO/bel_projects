@@ -12,6 +12,9 @@
 #  make setup_nodes      # load fw, set ECA rules
 #  make do_test3         # transmit MPS flags and events, count/print timing messages
 #
+# 1.1 Repeat basic test (launch it only after 'do_test3' invokation):
+#  make repeat_test3
+#
 # 2. Measure message transmission:
 #  make saftd            # load saft daemon
 #  make setup_fbasrx     # load fw, set ECA rules only for RX node
@@ -44,7 +47,7 @@
 
 .PHONY: mytest \
 	saftd setup_nodes setup_fbastx setup_fbasrx \
-	do_test3 \
+	do_test3 repeat_test3 \
 	disable_mps_tx disable_mps_rx disable_mps_all enable_mps_all \
 	restart_fbasdm_finite restart_fbasdm_loop \
 	restart_fbasdm_multi_msg restart_fbasdm_multi_max_msg \
@@ -73,7 +76,13 @@ setup_fbasrx:
 	source setup.sh && setup_fbasrx
 
 do_test3:
-	source setup.sh && do_test3
+	source setup.sh && precheck_test3
+	source setup.sh && start_test3
+
+repeat_test3:
+	source setup.sh && reset_node RX
+	source setup.sh && reset_node TX
+	source setup.sh && start_test3
 
 disable_mps_tx:
 	source setup.sh && disable_mps $$FBASTX
