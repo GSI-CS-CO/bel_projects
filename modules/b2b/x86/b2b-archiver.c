@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 6-Sep-2021
+ *  version : 10-Feb-2022
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000315
+#define B2B_ARCHIVER_VERSION 0x000316
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -69,9 +69,11 @@ char       no_link_str[] = "NO_LINK";
 
 setval_t   dicSetval[B2B_NSID];
 getval_t   dicGetval[B2B_NSID];
+char       dicPName[B2B_NSID][DIMMAXSIZE];
 
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
+uint32_t   dicPNameId[B2B_NSID];
 
 // global variables
 int        flagSetValid[B2B_NSID];          // flag: received set value
@@ -92,7 +94,7 @@ static void help(void) {
   fprintf(stderr, "  -n                  create new files, erases existing files\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to archive data of the B2B system\n");
-  fprintf(stderr, "Example1: '%s sis18 -ftest\n", program);
+  fprintf(stderr, "Example1: '%s pro_sis18 -ftest\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_ARCHIVER_VERSION));
@@ -133,7 +135,7 @@ int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
 // header String for file
 char * headerString()
 {
-  return "time_EKS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-EKS; EKS-pre; EKS-pri; kte-EKS, kti-EKS";
+  return "patternName; time_EKS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-EKS; EKS-pre; EKS-pri; kte-EKS, kti-EKS";
 } // headerString
 
 // receive set values
@@ -202,7 +204,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %d; %d; %d; %d; %d", dicGetval[sid].doneOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   if (!(dataFile = fopen(filename[sid], "a"))) return;
-  fprintf(dataFile, "%s%s\n", strSetval, strGetval);
+  fprintf(dataFile, "%s; %s%s\n", dicPName[sid], strSetval, strGetval);
   fclose(dataFile);
   
 } // recGetvalue
@@ -237,6 +239,10 @@ void dicSubscribeServices(char *prefix)
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
     //printf("name %s\n", name);
     dicGetvalId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[i]), sizeof(getval_t), recGetvalue, i, &no_link_32, sizeof(uint32_t));
+
+    sprintf(name,"%s-pname_sid%02d", prefix, i);
+    //printf("name %s\n", name);
+    dicPNameId[i]  = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[i]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
   } // for i
 } // dicSubscribeServices
 
