@@ -170,7 +170,7 @@ entity ftm4 is
     -----------------------------------------------------------------------
     --sfp_led_fpg_o    : out   std_logic;
     --sfp_led_fpr_o    : out   std_logic;
-    sfp_tx_disable_o : out   std_logic := '0';
+    sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
     sfp_txp_o        : out   std_logic;
@@ -271,7 +271,7 @@ begin
       wr_ndac_cs_o            => wr_ndac_cs_o,
       wr_uart_o               => ser0_rxd,
       wr_uart_i               => ser0_txd,
-      wbar_phy_dis_o          => sfp4_tx_disable_o,
+      wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
