@@ -779,6 +779,9 @@ BEGIN
             n_rst_mil_macro          <= slave_i.dat(0);
             ex_stall_res             <= '0';
             ex_ack_res               <= '1';
+          else  
+            ex_stall_res             <= '0';
+            ex_err_res               <= '1';
           end if;
         else
           -- access to high word or unaligned word is not allowed
