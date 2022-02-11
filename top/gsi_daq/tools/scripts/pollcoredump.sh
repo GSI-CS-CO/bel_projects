@@ -44,7 +44,7 @@ Options:
 -e
    Terminates a possible already running instance of this application and exit self.
 
-   
+
 Example for using gdb on ASL cluster:
 
    gdb /path/to/the/faulty/app/MyApp /common/fesadata/data/${HOSTNAME}/MyApp.$CORE_EXTENTION -tui
@@ -76,8 +76,9 @@ do
          then
             shift
             POLL_INTERVAL_TIME=$1
+         else
+            A=${A:1}
          fi
-         shift
       ;;
       "e")
          DO_EXIT=true
