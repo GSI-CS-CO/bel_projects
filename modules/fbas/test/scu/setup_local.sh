@@ -6,8 +6,9 @@ export DEV_TX="dev/wbm0"
 export DEV_RX="dev/wbm0"
 export addr_cmd="0x20140508/4"   # shared memory location for command buffer
 export addr_cnt1="0x20140934/4"  # shared memory location for received frames counter
-export FW_TX="fbas.bin"
-export FW_RX="fbas.bin"
+export addr_msr1="0x20140968"    # shared memory location for measurement results
+export FW_TX="fbas.scucontrol.bin"
+export FW_RX="fbas.scucontrol.bin"
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -293,17 +294,16 @@ result_nw_perf() {
     echo "count: 0x$cnt (${cnt_dec})"
 
     eb-write $1 $addr_cmd 0x32
+    echo "Results of network delay measurement:"
+    read_measurement_results $1 $addr_msr1
 }
 
 result_ow_delay() {
     # $1 - dev/wbmo
-    # $2 - event counter
-
-    cnt=$(eb-read $1 $2)
-    cnt_dec=$(printf "%d" 0x$cnt)
-    echo "count: 0x$cnt (${cnt_dec})"
 
     eb-write $1 $addr_cmd 0x33
+    echo "Results of one-way delay measurement:"
+    read_measurement_results $1 $addr_msr1
 }
 
 disable_mps() {
@@ -328,6 +328,35 @@ enable_mps_all() {
     echo "Enable MPS"
     enable_mps $DEV_RX
     enable_mps $DEV_TX
+}
+
+read_measurement_results() {
+    # $1 - device (dev/wbm0)
+    # $2 - shared memory location where measurement results are stored
+
+    device=$1
+    addr_msr=$2
+
+    avg=$(eb-read -q $device ${addr_msr}/8)
+    avg_dec=$(printf "%d" 0x$avg)
+    #echo "avg= 0x$avg (${avg_dec})"
+
+    addr_msr=$(( $addr_msr + 8 ))
+    min=$(eb-read -q $device ${addr_msr}/8)
+    min_dec=$(printf "%lli" 0x$min)
+
+    addr_msr=$(( $addr_msr + 8 ))
+    max=$(eb-read -q $device ${addr_msr}/8)
+    max_dec=$(printf "%d" 0x$max)
+
+    addr_msr=$(( $addr_msr + 8 ))
+    cnt_val=$(eb-read -q $device ${addr_msr}/4)
+    cnt_val_dec=$(printf "%d" 0x$cnt_val)
+
+    addr_msr=$(( $addr_msr + 4 ))
+    cnt_all=$(eb-read -q $device ${addr_msr}/4)
+    cnt_all_dec=$(printf "%d" 0x$cnt_all)
+    echo "avg=${avg_dec}, min=${min_dec}, max=${max_dec}, cnt=${cnt_val_dec}/${cnt_all_dec}"
 }
 
 ##########################################################

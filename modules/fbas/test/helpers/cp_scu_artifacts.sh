@@ -8,12 +8,16 @@
 # 321/264 - nwt0472
 scu_arr=(scuxl0396 scuxl0497 scuxl0321 scuxl0264 scuxl0329 scuxl0411)
 
-unset username userpasswd scu option
+unset username userpasswd scu option answer
 
 usage() {
-    echo "usage: $0 scu"
+    echo "usage: $0 [OPTION]"
     echo
-    echo "   scu - name of SCU (eg., scuxl0264)"
+    echo "OPTION:"
+    echo "  -u <username>          user name to log in to SCUs"
+    echo "  -p <userpasswd>        user password"
+    echo "  -y                     'yes' to all prompts"
+    echo "  -h                     display this help and exit"
     exit 1
 }
 
@@ -40,7 +44,7 @@ prj_dir="${PWD/fbas*/fbas}"
 tr_gw="v6.1.2"
 
 # SCU FW (independent from gateware version, built by devel host)
-lm32_fw="lm32/fbas.bin*"
+lm32_fw="lm32/fbas.scucontrol.bin"
 
 # SCU provided by user
 domain=$(hostname -d)
@@ -58,11 +62,13 @@ for scu in ${scu_arr[*]}; do
     echo "$scu"
 done
 
-read -rp "Do you agree with above devices (Y/n)? " answer
+if [ "$option" != "auto" ]; then
+    read -rp "Do you agree with above devices (Y/n)? " answer
 
-if [ "$answer" != "Y" ] && [ "$answer" != "y" ] && [ "$answer" != "" ]; then
-    echo "User disagreed. Exit!"
-    exit 1
+    if [ "$answer" != "Y" ] && [ "$answer" != "y" ] && [ "$answer" != "" ]; then
+        echo "User disagreed. Exit!"
+        exit 1
+    fi
 fi
 
 # get username and password to access SCUs

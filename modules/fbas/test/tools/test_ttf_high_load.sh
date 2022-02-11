@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Control procedure dedicated for the Xenabay 'high_load' testbed
-# SCU (scuxl0497) operates as RX node
+# Control flow dedicated for the Xenabay 'high_load' testbed.
+# RX SCU - scuxl0497
 
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
-sleep_sec=30
+sleep_sec=20
 
 unset username userpasswd
 
@@ -42,9 +42,9 @@ timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.s
 # enable MPS task of rxscu
 timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && start_test4 \$DEV_RX"
 
-echo "wait $sleep_sec seconds"
+echo "wait $sleep_sec seconds (start Xenabay schedule now)"
 echo "------------"
 sleep $sleep_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX"
+timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX && result_ow_delay \$DEV_RX \$addr_cnt1"

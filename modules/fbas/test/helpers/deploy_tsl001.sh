@@ -19,10 +19,12 @@ fi
 
 module_dir="${PWD/fbas*/fbas}"     # bel_projects/modules/fbas
 rsync_opts="-Pauvh"
-lm32_fw="test/lm32"
-scu_tools="test/scu"
-x86_tools="test/tools"
-x86_helpers="test/helpers"
+build_dir="$module_dir/fw"
+lm32_fw_dir="$module_dir/test/lm32"
+scu_tools_dir="$module_dir/test/scu"
+x86_tools_dir="$module_dir/test/tools"
+x86_helpers_dir="$module_dir/test/helpers"
+wrs_config_dir="$module_dir/test/wrs"
 
 filename=$(basename "$0" .sh)
 hostname=${filename##*_}
@@ -36,10 +38,16 @@ fi
 
 hostname+=.$domain
 
+# local deployment
+rsync $rsync_opts --include='fbas.*.bin' \
+    --exclude='*' "$build_dir/" "$lm32_fw_dir/"
+
+# remote deployment
 rsync $rsync_opts \
-    "$module_dir"/$lm32_fw \
-    "$module_dir"/$scu_tools \
-    "$module_dir"/$x86_tools \
-    "$module_dir"/$x86_helpers \
+    $lm32_fw_dir \
+    $scu_tools_dir \
+    $x86_tools_dir \
+    $x86_helpers_dir \
+    $wrs_config_dir \
     --exclude="helpers/deploy_tsl001.sh" \
     "$1@$hostname:~/fbas/"

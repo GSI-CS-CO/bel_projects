@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Test procedure to check timing message transfer between 2 SCUs:
-# - RX SCU
-# - TX SCU
+# Control flow for Xenabay 'broadcast_timing_msg' and 'high_load' testbeds.
+# Timing message transfer is done between 2 SCUs:
+# - RX SCU (scuxl0497)
+# - TX SCU (scuxl0396)
 
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
@@ -49,7 +50,7 @@ echo "-----------"
 timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$DEV_RX"
 timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$DEV_TX"
 
-echo "wait $sleep_sec seconds"
+echo "wait $sleep_sec seconds (start Xenabay schedule now)"
 echo "------------"
 sleep $sleep_sec  # wait for given seconds
 
