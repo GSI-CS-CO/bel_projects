@@ -222,7 +222,7 @@ architecture rtl of ftm4 is
     ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX SCU4";
+  constant c_family        : string := "Arria 10 GX FTM4";
   constant c_project       : string := "scu_control";
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
