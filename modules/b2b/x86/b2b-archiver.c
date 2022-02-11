@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Feb-2022
+ *  version : 11-Feb-2022
  *
  * archives set and get values to data files
  *
@@ -236,13 +236,15 @@ void dicSubscribeServices(char *prefix)
     //printf("name %s\n", name);
     dicSetvalId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[i]), sizeof(setval_t), recSetvalue, i, &no_link_32, sizeof(uint32_t));
 
-    sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    //printf("name %s\n", name);
-    dicGetvalId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[i]), sizeof(getval_t), recGetvalue, i, &no_link_32, sizeof(uint32_t));
-
     sprintf(name,"%s-pname_sid%02d", prefix, i);
     //printf("name %s\n", name);
     dicPNameId[i]  = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[i]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
+
+    sleep (2);  // data is taken upon callback of set-values; wait a bit until the other services have connected to their servers
+
+    sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
+    //printf("name %s\n", name);
+    dicGetvalId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[i]), sizeof(getval_t), recGetvalue, i, &no_link_32, sizeof(uint32_t));
   } // for i
 } // dicSubscribeServices
 
