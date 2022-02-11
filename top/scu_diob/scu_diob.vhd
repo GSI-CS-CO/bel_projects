@@ -1165,9 +1165,9 @@ END COMPONENT front_board_id;
 --TYPE t_daq_ch_num IS ARRAY(NATURAL RANGE <>) OF integer range 1 to 16;
 --constant daq_ch_num: integer := 4;
 constant daq_ch_num: integer := 16;
--- signal daq_diob_ID: std_logic_vector(15 downto 0);
+signal daq_diob_ID: std_logic_vector(15 downto 0):=x"00FF"; --hard-coded ID Value for DAQ Diob implementation of which bits 3-0 are used 
 
-constant daq_diob_ID: std_logic_vector(15 downto 0):=x"0002"; --to be checked
+--constant daq_diob_ID: std_logic_vector(15 downto 0):=x"0002"; --to be checked
 
 signal daq_user_rd_active:    std_logic;
 signal daq_data_to_SCUB:           std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
@@ -4555,7 +4555,7 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             AD1_Trigger_Mode, AD1_sw_Trigger, AD1_ext_Trigger, AD1_nCS, AD1_Reset, AD1_ByteSwap, AD1_nCNVST, AD1_Busy, AD1_Out, AD1_ext_Trigger_nLED,
             AD2_Trigger_Mode, AD2_sw_Trigger, AD2_ext_Trigger, AD2_nCS, AD2_Reset, AD2_ByteSwap, AD2_nCNVST, AD2_Busy, AD2_Out, AD2_ext_Trigger_nLED,
             In8Out8_In, In8Out8_Input, In8Out8_Deb_out, In8Out8_nLED_Lemo_In_o, In8Out8_Out, In8Out8_nLED_Lemo_Out_o,
-            IOBP_SK_Output, IOBP_SK_Input, Deb72_out, Deb72_in, Syn72, AW_SK_Input_Reg, IOBP_SK_Aktiv_LED_i 
+            IOBP_SK_Output, IOBP_SK_Input, Deb72_out, Deb72_in, Syn72, AW_SK_Input_Reg, IOBP_SK_Aktiv_LED_i, daq_diob_ID, daq_dat, daq_ext_trig
             )
 
 
@@ -5106,7 +5106,7 @@ BEGIN
   daq_dat(1)(7 downto 0) <= P37IO_Deb_in(15 downto 8);
   daq_dat(2)(7 downto 0) <= P37IO_Deb_in(7  downto 0);
   daq_dat(3) (7 downto 0) <= AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]"  
-
+  daq_diob_ID(15 downto 0)<= "00000000"& c_AW_P37IO.ID;
 
   WHEN   c_AW_P25IO.ID =>
 
@@ -5338,9 +5338,11 @@ BEGIN
 
  
     --################################      daq_channel 3 assignments     ##################################
-    
-   daq_dat(3)<= P25IO_DAC_Out(15 downto 0);
+  daq_diob_ID(15 downto 0)<= "00000000"& c_AW_P25IO.ID;
+   
+    daq_dat(3)<= P25IO_DAC_Out(15 downto 0);
 
+  
     --################################ 
 
     --################################ 
@@ -5588,6 +5590,7 @@ BEGIN
 
 --######################################## daq assignments #############################
 
+daq_diob_ID(15 downto 0)<= "00000000"& c_AW_OCin.ID;
 
 daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
 
@@ -5720,7 +5723,13 @@ daq_dat(5)(3 downto 0)  <= AW_Output_Reg(1)(3 downto 0);
 
     --###################################### daq assignments ##########################
 
- 
+    if  ( AW_ID(7 downto 0) = c_AW_OCIO1.ID) then
+        daq_diob_ID(15 downto 0)<= "00000000"& c_AW_OCIO1.ID;
+    else
+      if  ( AW_ID(7 downto 0) = c_AW_OCIO2.ID) then
+        daq_diob_ID(15 downto 0)<= "00000000"& c_AW_OCIO2.ID;  
+      end if;
+    end if;
 
     daq_dat(1)(7 downto 0)<= AW_Input_Reg(1)(7 downto 0);
 
@@ -6005,10 +6014,13 @@ daq_dat(5)(3 downto 0)  <= AW_Output_Reg(1)(3 downto 0);
 
 --################################daq assignments to be checked ##########################################
 
+daq_diob_ID(15 downto 0)<= "00000000"& c_AW_UIO.ID;
+
+
 daq_dat(1) <= AW_Input_Reg(1);
 daq_dat(2) <= AW_Input_Reg(2);
-daq_dat(3) (7 downto 0) <= UIO_Output(7 DOWNTO 0);
-daq_dat(4) <= UIO_Output(23 DOWNTO 8);
+daq_dat(3) (7 downto 0) <= UIO_Data_FG_Out(7 DOWNTO 0);
+daq_dat(4) <= UIO_Data_FG_Out(23 DOWNTO 8);
 
 
   WHEN   c_AW_DA1.ID | c_AW_DA2.ID  =>    --- DA1 oder DA2=>
@@ -6298,13 +6310,20 @@ daq_dat(4) <= UIO_Output(23 DOWNTO 8);
 
 
   -- ############################## daq assignments #####################################
-
+  if  ( AW_ID(7 downto 0) = c_AW_DA1.ID) then 
+    daq_diob_ID(15 downto 0)<= "00000000"&c_AW_DA1.ID;
+  else
+    if  ( AW_ID(7 downto 0) = c_AW_DA2.ID) then 
+      daq_diob_ID(15 downto 0)<= "00000000"&c_AW_DA2.ID;
+    end if;
+  end if;
 
 daq_ext_trig(1) <= DA_DAC1_Str_Out;
 daq_ext_trig(2) <= DA_DAC2_Str_Out;
 
-daq_dat(1)<= DA_DAC1_Out;
-daq_dat(2)<= DA_DAC2_Out;
+daq_dat(1)<= DA_DAC1_Data;
+daq_dat(2)<= DA_DAC2_Data;
+
   --###################################
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6616,8 +6635,16 @@ daq_dat(2)<= DA_DAC2_Out;
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- ########################### daq assignments ##################################
 
+  if  ( AW_ID(7 downto 0) = c_AW_ATR1.ID) then 
+    daq_diob_ID(15 downto 0)<= "00000000"&c_AW_ATR1.ID;
+  else
+    if  ( AW_ID(7 downto 0) = c_AW_ATR2.ID) then 
+      daq_diob_ID(15 downto 0)<= "00000000"&c_AW_ATR2.ID;
+    end if;
+  end if;
 
-daq_ext_trig(1) <= ATR_TRIG_IN_Dis;
+
+daq_ext_trig(1) <=  AW_Output_Reg(1)(0);
 daq_dat(1)(7 downto 0) <=Syn_ATR_Comp_in_puls_8_1(8 downto 1);
 daq_dat(2)(7 downto 0)<= AW_Config1(14 downto 7);
 daq_dat(3)<= UIO_Out;
@@ -6726,6 +6753,13 @@ daq_dat(3)<= UIO_Out;
 
 
   --#################################daq assignments ######################################
+if  ( AW_ID(7 downto 0) = c_AW_SPSIO1.ID ) then 
+  daq_diob_ID(15 downto 0)<= "00000000"&c_AW_DA1.ID;
+else
+  if  ( AW_ID(7 downto 0) = c_AW_SPSIOI1.ID) then 
+    daq_diob_ID(15 downto 0)<= "00000000"&c_AW_DA2.ID;
+  end if;
+end if;
 
 
   daq_dat(1) <= AW_Input_Reg(1);
@@ -6949,10 +6983,11 @@ daq_dat(3)<= UIO_Out;
         AW_Input_Reg(1)(0)   <=  HFIO_in_PHASE_FEHLER_Deb_i;      -- Entprellung "ausgeschaltet"
       END IF;
    --####################### daq assignments  ##############################
-
+  
+   
+   daq_diob_ID(15 downto 0)<= "00000000"&c_AW_HFIO.ID;
 
    daq_dat(1) (1 downto 0)<= AW_Input_Reg(1)(1 downto 0);
-
    daq_dat(2)(10 downto 0) <= AW_Output_Reg(1)(10 downto 0);
    daq_dat(3)(10 downto 0) <= AW_Output_Reg(2)(10 downto 0); 
    daq_dat(4)(12 downto 0) <= AW_Output_Reg(3)(12 downto 0);
@@ -7656,7 +7691,10 @@ WHEN   c_AW_16Out2.ID  =>
 
       --#################################daq assignments ######################################
 
+      daq_diob_ID(15 downto 0)<= "00000000"&c_AW_16Out2.ID;
       daq_dat(1) <=   Out16_Out;                     --CH1
+
+    
       -----------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -7809,6 +7847,8 @@ WHEN   c_AW_16Out2.ID  =>
 
  --#################################daq assignments ######################################
 
+daq_diob_ID(15 downto 0)<= "00000000"&c_AW_16In2.ID; 
+
 daq_dat(1) <= AW_Input_Reg(2)(15 DOWNTO 0); --CH1
 
       -----------------------------------------------------------------------------------------------------------------------------------------
@@ -7924,6 +7964,9 @@ daq_dat(1) <= AW_Input_Reg(2)(15 DOWNTO 0); --CH1
 
       -----------------------------------------------------------------------------------------------------------------------------------------
  --#################################daq assignments ######################################
+ 
+ daq_diob_ID(15 downto 0)<= "00000000"&c_AW_AD1.ID;
+
  daq_ext_trig(1)<= AD1_ext_Trigger;
  daq_ext_trig(2)<= AD2_ext_Trigger;
 
