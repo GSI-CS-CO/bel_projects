@@ -20,6 +20,11 @@ create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_lo
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
 
+# Cut asynchronous reset paths (launch and latch clock sys to psram)
+set_false_path -from {monster:main|altera_reset:reset|nresets[1][0]} -to {monster:main|psram:\psram_y:ram|*}
+set_false_path -from {monster:main|altera_reset:reset|nresets[1][1]} -to {monster:main|psram:\psram_y:ram|*}
+set_false_path -from {monster:main|altera_reset:reset|nresets[1][2]} -to {monster:main|psram:\psram_y:ram|*}
+
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
 -group [get_clocks {altera_reserved_tck}] \
@@ -154,6 +159,11 @@ set_clock_groups -asynchronous \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
+-group [get_clocks {main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|avmmclk \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|avmmclk \
                     main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
                     main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
