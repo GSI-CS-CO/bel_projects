@@ -1,64 +1,32 @@
-TARGET		?= fbas
+# build FW binaries for multiple platforms: SCU3, Pexaria5
 
-ifeq ($(strip $(TARGET)),)
-  $(error empty TARGET)
-endif
+export TARGET        ?= fbas
 
-ifeq ($(TARGET), fbas)
-  PLATFPATH = ../../../syn/gsi_pexarria5/control
-else ifeq ($(TARGET), sb_scan)
-  PLATFPATH = ../../../syn/gsi_scu/control3
-else
-  $(error unknown TARGET=$(TARGET), cannot set up PLATFPATH)
-endif
+export .DEFAULT_GOAL := fwbin
 
-PLATFMAKEFILE   = $(PLATFPATH)/Makefile
+# common settings
+export SHARED_SIZE   ?= 8K
+export USRCPUCLK     ?= 125000
+export VERSION       = 00.01.00
+export PATHFW        = .
+export DEBUGLVL      = 2
+export EXTRA_FLAGS   ?=
 
-PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
-DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 DEVICE    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
-FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
-SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 SPI_LANES | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
-RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+# platform-specific settings
+PLATFPATHSCU3       := ../../../syn/gsi_scu/control3
+PLATFPATHPEX5       := ../../../syn/gsi_pexarria5/control
 
-SHARED_SIZE    	?= 8K
-USRCPUCLK      	?= 125000
-VERSION  	= 00.01.00
+.PHONY: fwbin
+fwbin:
+	@echo --- build $@ for platform $(PLATFPATHSCU3)
+	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) $@
+	@echo --- build $@ for platform $(PLATFPATHPEX5)
+	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) $@
 
-.DEFAULT_GOAL	:= fwbin
-
-PATHFW 	        = .
-DEBUGLVL    	= 2
-EXTRA_FLAGS	?=
-CFLAGS 	    	= -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
-                -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
-SRC_FILES     = $(PATHFW)/$(TARGET).c $(PATHFW)/tmessage.c  \
-								$(PATHFW)/ioctl.c $(PATHFW)/measure.c       \
-								$(PATHFW)/timer.c $(PATHFW)/fwlib.c \
-								$(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
-
-$(info    >>>>)
-$(info    building is done by importing the following data from $(PLATFMAKEFILE):)
-$(info    PLATFORM    is $(PLATFORM))
-$(info    DEVICE      is $(DEVICE))
-$(info    FLASH       is $(FLASH))
-$(info    SPI_LANES   is $(SPI_LANES))
-$(info    RAM_SIZE    is $(RAM_SIZE))
-$(info    ----)
-$(info    building firmware using)
-$(info    SHARED_SIZE is $(SHARED_SIZE))
-$(info    USRCPUCLK   is $(USRCPUCLK))
-$(info    VERSION     is $(VERSION))
-$(info    <<<<)
-
-
-include ../../../syn/build.mk
-
-
-fwbin: $(TARGET).bin
-
-$(TARGET).elf: $(SRC_FILES)
-#b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
-#b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+# ram.ld is built recursively from platform.mk
+.PHONY: ram.ld
+ram.ld:
+	$(MAKE) -f ../../../syn/build.mk $@
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
