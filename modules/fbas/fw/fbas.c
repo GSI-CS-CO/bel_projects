@@ -481,6 +481,10 @@ uint32_t extern_entryActionConfigured()
 
   DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
 
+  DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
+  if (MYPLATFORM == "pcicontrol")   // GPIO for SCU, LVDS for Pexiara
+    io_chnl=IO_CFG_CHANNEL_LVDS;
+
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
   setIoOe(io_chnl, 0);              // enable output for the IO1 (or B1) port
 

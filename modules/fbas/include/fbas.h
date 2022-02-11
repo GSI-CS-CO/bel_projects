@@ -43,6 +43,19 @@
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
 
+// macro defintions
+// gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing
+#define XSTR(s) STR(s)
+#define STR(s)  #s
+
+#ifndef PLATFORM
+  #define MYPLATFORM XSTR(unknown)
+#endif
+
+#ifdef PLATFORM
+  #define MYPLATFORM XSTR(PLATFORM)
+#endif
+
 // node type
 typedef enum {
   FBAS_NODE_TX = 0,   // FBAS transmitter

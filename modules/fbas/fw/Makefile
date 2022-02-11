@@ -29,7 +29,8 @@ VERSION  	= 00.01.00
 PATHFW 	        = .
 DEBUGLVL    	= 2
 EXTRA_FLAGS	?=
-CFLAGS 	    	= -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+CFLAGS 	    	= -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
+                -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 SRC_FILES     = $(PATHFW)/$(TARGET).c $(PATHFW)/tmessage.c  \
 								$(PATHFW)/ioctl.c $(PATHFW)/measure.c       \
 								$(PATHFW)/timer.c $(PATHFW)/fwlib.c \
