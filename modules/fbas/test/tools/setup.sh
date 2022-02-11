@@ -25,9 +25,9 @@ export addr_cnt1="0x04060934/4"  # shared memory location for received frames co
 export addr_msr1="0x04060968"    # shared memory location for measurement results
 export addr_cmd="0x04060508/4"   # shared memory location for command buffer
 module_dir="${PWD/fbas*/fbas}"
-fw_dir="$module_dir/test/lm32"
-fw_tx="$fw_dir/fbas.bin"
-fw_rx="$fw_dir/fbas.bin"
+fw_dir="$module_dir/fw"
+fw_tx="$fw_dir/fbas.pcicontrol.bin"
+fw_rx="$fw_dir/fbas.pcicontrol.bin"
 
 function user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -161,8 +161,12 @@ function setup_fbastx() {
 
     check_fbastx
 
-    echo "load the LM32 firmware"
+    echo "load the LM32 firmware (TX)"
     eb-fwload $FBASTX u 0x0 $fw_tx
+    if [ $? -ne 0 ]; then
+        echo "Error: failed to load LM32 FW '$fw_tx'. Exit!"
+        exit 1
+    fi
     wait_seconds 1
 
     # wrc output:
@@ -229,8 +233,12 @@ function setup_fbasrx() {
 
     check_fbasrx
 
-    echo "load the LM32 firmware"
+    echo "load the LM32 firmware (RX)"
     eb-fwload $FBASRX u 0x0 $fw_rx
+    if [ $? -ne 0 ]; then
+        echo "Error: failed to load LM32 FW '$fw_rx'. Exit!"
+        exit 1
+    fi
     wait_seconds 1
 
     # wrc output:
