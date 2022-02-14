@@ -41,7 +41,7 @@ COMPONENT IFA8_X
       A_SEL_B        :   IN STD_LOGIC_VECTOR(3 DOWNTO 0);
       A_UMIL15V      :   IN STD_LOGIC;
       A_UMIL5V       :   IN STD_LOGIC;
-      sysclk         :   IN STD_LOGIC;
+      sys_clk        :   IN STD_LOGIC;
       Ena_Every100ns :   IN STD_LOGIC;
       Ena_Every166ns :   IN STD_LOGIC;
       Ena_Every250ns :   IN STD_LOGIC;
@@ -212,7 +212,7 @@ COMPONENT  A6408_decoder
     DSC        : in  STD_LOGIC;  -- Decoder-Shift-Clock
     SDO        : in  STD_LOGIC;  -- serielle Daten input
     TD         : in  STD_LOGIC;  -- Take-Data -Frame für datenbits vom MIL-Baustein
-   CDS        : in  STD_LOGIC;   -- Data/Command Worttyp vom MIL-Baustein
+    CDS        : in  STD_LOGIC;   -- Data/Command Worttyp vom MIL-Baustein
     VW         : in  STD_LOGIC;  -- Valid Word
     Res_VW_Err : in  STD_LOGIC;  -- Reset Fehlerspeicher für VW-Test
 
