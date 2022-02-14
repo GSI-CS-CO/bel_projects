@@ -54,6 +54,31 @@ __EOH__
 }
 
 #------------------------------------------------------------------------------
+printDocTagged()
+{
+   cat << __EOH__
+<toolinfo>
+        <name>$PROG_NAME</name>
+        <topic>Development</topic>
+        <description>
+           Moves coredump-files in a NFS-directory
+        </description>
+        <usage>
+           $PROG_NAME [-h --help] [-i{seconds}] [-e, --exit]
+        </usage>
+        <author>Ulrich Becker</author>
+        <tags></tags>
+        <version>1.0</version>
+        <documentation></documentation>
+        <environment>scu</environment>
+        <requires>gdb</requires>
+        <autodocversion>1.0</autodocversion>
+</toolinfo>
+__EOH__
+   exit 0
+}
+
+#------------------------------------------------------------------------------
 die()
 {
    echo -e $ESC_ERROR"ERROR: $@"$ESC_NORMAL 1>&2
@@ -77,7 +102,10 @@ do
             shift
             POLL_INTERVAL_TIME=$1
          else
-            A=${A:1}
+            while [ -n "$A" ]
+            do
+              A=${A:1}
+            done
          fi
       ;;
       "e")
@@ -88,6 +116,12 @@ do
          case ${B%=*} in
             "help")
                printHelp
+            ;;
+            "exit")
+               DO_EXIT=true
+            ;;
+            "generate_doc_tagged")
+               printDocTagged
             ;;
             *)
                die "Unknown long option \"-${A}\"!"
@@ -103,12 +137,11 @@ do
    done
    shift
 done
-    
+
 if [ "${HOSTNAME:0:5}" != "scuxl" ]
 then
    die "This script can run on SCU only!"
 fi
-
 
 # Regular expressions seems not work on SCU! :-(
 #if ! [[ "$POLL_INTERVAL_TIME" =~ ^[0-9]+$ ]]

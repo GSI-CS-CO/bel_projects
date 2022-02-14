@@ -5,7 +5,7 @@
 ## directory for core-dump-files and if found any invokes gdb and delete it. ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:      pollcoredump.sh                                                ##
+## File:      scan-coredump.sh                                               ##
 ## Author:    Ulrich Becker                                                  ##
 ## Date:      11.02.2022                                                     ##
 ## Copyright: GSI Helmholtz Centre for Heavy Ion Research GmbH               ##
@@ -32,7 +32,7 @@ and deletes the huge core-dump-file.
 The log-file has the same name like the executable with the extension ".log"
 and is in the directory of the concerning SCU.
 
-Usage:  $PROG_NAME [option] /path/to/the/executable
+Usage:  $PROG_NAME [option] </path/to/the/executable1> [/path/to/the/executable2 ...]
 Author: Ulrich Becker
 
 Options:
@@ -51,6 +51,31 @@ Options:
 -s --show
    Shows the the content of the new generated log-file.
 
+__EOH__
+   exit 0
+}
+
+#------------------------------------------------------------------------------
+printDocTagged()
+{
+   cat << __EOH__
+<toolinfo>
+        <name>$PROG_NAME</name>
+        <topic>Development</topic>
+        <description>
+           Scans the "/common/fesadata/data/scuxlXXXX" directory for core-dump files and converted them in to small log-files
+        </description>
+        <usage>
+           $PROG_NAME [-h --help] [-i{seconds}] [-e, --exit][-s --show] {/path/to/the/executable1 [/path/to/the/executable2 ...]}
+        </usage>
+        <author>Ulrich Becker</author>
+        <tags></tags>
+        <version>1.0</version>
+        <documentation></documentation>
+        <environment></environment>
+        <requires>gdb, pollcoredump.sh</requires>
+        <autodocversion>1.0</autodocversion>
+</toolinfo>
 __EOH__
    exit 0
 }
@@ -80,9 +105,11 @@ do
             shift
             POLL_INTERVAL_TIME=$1
          else
-            A=${A:1}
+            while [ -n "$A" ]
+            do
+              A=${A:1}
+            done
          fi
-         #shift
       ;;
       "e")
          DO_EXIT=true
@@ -101,6 +128,9 @@ do
             ;;
             "show")
                SHOW_LOGFILE=true
+            ;;
+            "generate_doc_tagged")
+               printDocTagged
             ;;
             *)
                die "Unknown long option \"-${A}\"!"
@@ -123,6 +153,11 @@ then
    die "This script can run on ASL-cluster only!"
 fi
 
+if ! [[ "$POLL_INTERVAL_TIME" =~ ^[0-9]+$ ]]
+then
+   die "Wrong format of interval time: \"$POLL_INTERVAL_TIME\"!"
+fi
+
 if [ ! -d "$SCAN_DIR" ]
 then
    die "Scan-directory \"$SCAN_DIR\" not found!"
@@ -131,11 +166,6 @@ fi
 if [ ! -x "$(which "$DEBUGGER")" ]
 then
    die "Debugger \"$DEBUGGER\" not found!"
-fi
-
-if [ ! -x "$1" ]
-then
-   die "Executable file with symbol-table \"$1\" not found!"
 fi
 
 #PID_NAME=$(basename $PROG_NAME)
@@ -152,11 +182,30 @@ then
    exit 0
 fi
 
-CORE_DUMP_FILE=$(basename $1 ).$CORE_EXTENTION
-echo $CORE_DUMP_FILE
+EXEC_LIST=""
+while [ -n "$1" ]
+do
+   EXEC_LIST="$EXEC_LIST $1"
+   shift
+done
+if [ ! -n "$EXEC_LIST" ]
+then
+   die "Missing executable with symbol-table!"
+fi
 
-echo $$ > ${PID_NAME}
-echo "PID-file \"${PID_NAME}\" created."
+for i in $EXEC_LIST
+do
+   if [ ! -x "$i" ]
+   then
+      die "Executable file with symbol-table \"$i\" not found!"
+   fi
+done
+
+if [ "$POLL_INTERVAL_TIME" != "0" ]
+then
+   echo $$ > ${PID_NAME}
+   echo "PID-file \"${PID_NAME}\" created."
+fi
 
 if [ "$POLL_INTERVAL_TIME" = "0" ]
 then
@@ -164,35 +213,47 @@ then
 else
    echo "Scanning directories \"${SCAN_DIR}scuxlXXXX\" of a interval of $POLL_INTERVAL_TIME seconds"
 fi
-echo "for core-dump-files \"$CORE_DUMP_FILE\""
+echo "for core-dump-files:"
+for i in $EXEC_LIST
+do
+   echo -e "\t$(basename $i ).$CORE_EXTENTION"
+done
 
 while true
 do
-   for i in $(ls ${SCAN_DIR}scuxl[0-9][0-9][0-9][0-9]/$CORE_DUMP_FILE 2>/dev/null )
+   for i in $EXEC_LIST
    do
-      LOGFILE="${i%.*}.log"
-      if [ -f "$LOGFILE" ]
+      if [ ! -x "$i" ]
       then
-         echo "Remove old log-file: \"$LOGFILE\""
-         rm $LOGFILE
+         die "Executable file with symbol-table \"$i\" not found!"
       fi
-      echo "q" | $DEBUGGER $1 $i 2>/dev/null | tail -n8 | head -n6 > $LOGFILE
-      if [ "$?" != "0" ]
-      then
-         die "Debugger failed!"
-      fi
-      if [ -f "$LOGFILE" ]
-      then
-         echo "Log-file \"$LOGFILE\" written"
-         rm $i
-         echo "Core-dump-file \"$i\" removed."
-         if $SHOW_LOGFILE
+      CORE_DUMP_FILE=$(basename $i ).$CORE_EXTENTION
+      for j in $(ls ${SCAN_DIR}scuxl[0-9][0-9][0-9][0-9]/$CORE_DUMP_FILE 2>/dev/null )
+      do
+         LOGFILE="${j%.*}.log"
+         if [ -f "$LOGFILE" ]
          then
-            echo "----------------------------------"
-            cat $LOGFILE
-            echo "----------------------------------"
+            echo "Remove old log-file: \"$LOGFILE\""
+            rm $LOGFILE
          fi
-      fi
+         echo "q" | $DEBUGGER $i $j 2>/dev/null | tail -n8 | head -n6 > $LOGFILE
+         if [ "$?" != "0" ]
+         then
+            die "Debugger failed!"
+         fi
+         if [ -f "$LOGFILE" ]
+         then
+            echo "Log-file \"$LOGFILE\" written"
+            rm $j
+            echo "Core-dump-file \"$j\" removed."
+            if $SHOW_LOGFILE
+            then
+               echo "----------------------------------"
+               cat $LOGFILE
+               echo "----------------------------------"
+            fi
+         fi
+      done
    done
    if [ "$POLL_INTERVAL_TIME" = "0" ]
    then
@@ -201,7 +262,6 @@ do
    sleep $POLL_INTERVAL_TIME
 done
 
-rm $PID_NAME
 echo "done"
 
 #=================================== EOF ======================================
