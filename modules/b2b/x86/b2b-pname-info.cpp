@@ -88,7 +88,8 @@ struct PatternNameService {
 
 	void process_script_output(const std::string& script_output) {
 		for (int sid = 0; sid < buffers.size(); ++sid) {
-			buffers[sid].resize(buffers[sid].size(),'\0'); // clear the buffer content
+			// clear the buffer content
+			std::fill(buffers[sid].begin(), buffers[sid].end(), '\0');
 			// build a SID search string, e.g. "S=10"
 			std::ostringstream sid_str;
 			sid_str << sid_prefix << sid;
