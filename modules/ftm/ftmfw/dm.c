@@ -1,3 +1,43 @@
+/********************************************************************************************
+ *  dm.c
+ *
+ *  created : 08.03.2016
+ *  author  : Mathias Kreider, GSI-Darmstadt
+ *
+ *  LM32 firmware, core routines of FAIR Data Master 
+ *  To be used with carpeDM library
+ * 
+ * -------------------------------------------------------------------------------------------
+ * License Agreement for this software:
+ *
+ * Copyright (C) 2016  Mathias Kreider
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
+ * Planckstrasse 1
+ * D-64291 Darmstadt
+ * Germany
+ *
+ * Contact: m.kreider@gsi.de
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * For all questions and ideas contact: m.kreider@gsi.de
+ * Last update: 09.01.2022
+ * 
+ * Currently known bugs: None 
+ ********************************************************************************************/
+
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -305,14 +345,6 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
   else                                                     tValid = *ptCurrent + *ptValid;
 
-//TODO: find out what's wrong with this code
-/*
-  uint64_t vabsMsk    = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1; // abs -> 0x0, !abs -> 0xfff..f
-  uint64_t tMinimum   = getSysTime() + _T_TVALID_OFFS_;                 // minimum timestamp that we consider 'future'
-  uint64_t tValidCalc = *ptValid + *ptCurrent & vabsMsk;                // if tValid is relative offset (not absolute), add current time sum
-  uint64_t tMinMsk    = (uint64_t)(tMinimum < tValidCalc) -1;           // min < calc -> 0x0, min >= calc -> 0xfff..f
-  uint64_t tValid     = (tMinimum & tMinMsk) | (tValidCalc & ~tMinMsk); // equiv. tValid = (tMinimum < tvalidCalc) ? tvalidCalc : tMinimum;
-*/
   //copy cmd data to target queue
   e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tValid >> 32);
   e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tValid);
@@ -547,40 +579,60 @@ uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
 
 
 void heapify() {
+  //restore MinHeap property
+  // Start at the second to last layer of the heap (heapsize/2-1,  last layer not have children)
   int startSrc;
-  //go through the heap, restore heap property
-  for(startSrc=(_HEAP_SIZE_-1)>>1; startSrc >= 0; startSrc--) { heapReplace(startSrc); }
+  for(startSrc=(_HEAP_SIZE_>>1) - 1; startSrc >= 0; startSrc--) {
+    heapReplace(startSrc); // Work your way up to the top sorting nodes
+  }
 }
 
 void heapReplace(uint32_t src) {
-  uint32_t  dst = src, cl = 1, cr = 1, mask, lLEr, mGr, mGl, l, r;
-  uint32_t* mov = hp[dst];
-  int j;
-  //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
+  // HeapRrelace, aka HeapMin Extraction
+  //
+  // We take the min element away from top of the heap and put a new element on top.
+  // Then we sort the new element downward until it rests in the right place.
+  // This is the case when the parent is less or equal than both left child (l) and right child (r)
 
-  DBPRINT3("#%02u: Looking at Dl Mov %u: %20s Dl LC %u: %20s, DL RC %u: %20s\n",  cpuId, dst, print64(DL(mov), 0), l, print64(DL(hp[l]), 0), r, print64(DL(hp[r]), 0) );
+  // normally, heap sort involves a swap at each layer, but that uses more copy operations than necessary (3*n vs n+1).
+  // This approach compares the children not to their parent, but the moving node, ie. the original source node.
+  // Each time the moving node is greater than its children, the chosen child is copied to its parents position, thus moving it upward one layer.
+  // Once the moving node is less or equal to both children (or does not have childern), we copy the moving node to the parent position and are done.
+  
+  uint32_t parent = src;      // index of the parent, initial value is the source node we were given  
+  uint32_t choice;            // index of the child we choose in each step
+  uint32_t* moving = hp[src]; // The source node is moving downward, and we compare to this moving node in each step. Must be saved because we overwrite hp[src]
 
-  // unrolled heap replace operation
-  while (cl | cr)  {
-    //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
-    l       = (dst<<1)+1; // left child
-    r       = l + 1;      // right child
+  uint8_t sort;
+  do { //sort loop happens at least once... 
+    sort = 0;
+    
+    uint32_t left   = (parent << 1) + 1;  // left child idx is parent idx * 2 + 1
+    uint32_t right  = left + 1;           // right child idx is left child idx +1 = parent idx * 2 + 2
+             choice = parent;             // parent is the default choice. Means copy has no effect in case we dont choose a child.
 
-    lLEr    = (DL(hp[l]) <= DL(hp[r]))  | (r  > _HEAP_SIZE_ -1);  // (left child less or equal r c) or r c non existent
-    mGr     = (DL(mov)   >  DL(hp[r]))  & (r  < _HEAP_SIZE_ );    // mover greater right child and r c exists
-    mGl     = (DL(mov)   >  DL(hp[l]))  & (l  < _HEAP_SIZE_ );    // mover greater left child and l c exists
+    //we choose left child if...
+    if( (        left < _HEAP_SIZE_   )   // left child exists...
+    &&  (DL(hp[left]) < DL(moving)))      // and its deadline less than moving node's
+    {  
+        sort = 1;
+        choice = left;
+    }
+    
+    //we choose right child (can override left) if...
+    if( (         right < _HEAP_SIZE_    )  // right child exists...
+    &&  ( DL(hp[right]) < DL(moving)     )  // and its deadline is less than moving node's ...
+    &&  ( DL(hp[right]) < DL(hp[left])   )) // and its deadline is less than left child's
+    { 
+      sort = 1;
+      choice = right;
+    }
 
-    cl      = ( mGl &  lLEr);                    // choose left child
-    cr      = ( mGr & ~lLEr);                    // choose right child
-    mask    = -(cl | cr);                        // all 0 when no chosen child, all 1 otherwise
-    src     = dst + ((dst + 1) & mask) + cr;     //parent  = dst, left = dst+(dst+1), rightC  = dst+(dst+1)+1
+    hp[parent]  = hp[choice]; // copy chosen child upward to parent location
+    parent      = choice;     // parent location for the next round is the location of our chosen child.
 
-    hp[dst] = hp[src];
-    dst     = src;
+  } while(sort); // ... and sort loop continues if nodes were rearranged last round.
 
-  }
-
-  hp[dst] = mov;
-
-
+  // we found the location the moving node is supposed to go. Copy it in and we are done.
+  hp[choice]    = moving; 
 }
