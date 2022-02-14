@@ -1,0 +1,10 @@
+;XENAPORT
+;FormatVersion: 2
+;Savedby: ValkyrieManager (v1.77.7853.2)
+;Testbed: flood_timing_msg
+;Chassis: New chassis S.427, D.38)
+;ChassisSerial: 7711642
+;ModuleModel: M6SFP
+;Port: 0/0
+PC_TRIGGER  FILTER 0 4 0
+PC_KEEP  FILTER 0 -1

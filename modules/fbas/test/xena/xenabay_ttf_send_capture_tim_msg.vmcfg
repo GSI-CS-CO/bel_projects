@@ -1,0 +1,610 @@
+{
+  "ChassisManager": {
+    "ChassisList": [
+      {
+        "ChassisName": "New chassis",
+        "Address": {
+          "HostName": "140.181.139.228",
+          "PortNumber": 22606,
+          "Password": "xena"
+        },
+        "ChassisIsDisconnected": false,
+        "FullInfo": "Chassis 0 'New chassis' (140.181.139.228)",
+        "ResourceIndex": 0,
+        "ItemId": "f9192168-da72-4082-ad35-240777b3abad",
+        "ParentId": ""
+      }
+    ]
+  },
+  "TestBedHandler": {
+    "SelectedTestBedId": "aabadcc3-198d-474a-8427-cc2a07be6bf7",
+    "EntityList": [
+      {
+        "Description": "- capture network packets (sent by scuxl0396 or P001) via port P000\r\n- send timing msgs via port P001",
+        "UsedPorts": [
+          {
+            "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+            "ModuleIndex": 0,
+            "PortIndex": 0
+          },
+          {
+            "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+            "ModuleIndex": 0,
+            "PortIndex": 1
+          }
+        ],
+        "PollAwaysPorts": [],
+        "ZeroRateCheckPorts": [],
+        "TsnPorts": [],
+        "ShowOnlyUsedPorts": true,
+        "PortGridPropertySelector": {
+          "ShowReadOnlyProperties": true,
+          "DisabledGroups": [],
+          "DisabledProperties": []
+        },
+        "StreamGridPropertySelector": {
+          "ShowReadOnlyProperties": true,
+          "DisabledGroups": [],
+          "DisabledProperties": []
+        },
+        "UsePortTxTimeForDuration": false,
+        "LoggingDefinition": {
+          "EnableLogging": false,
+          "EnabledFields": {
+            "TxL1Bps": true,
+            "TxBps": true,
+            "TxFps": true,
+            "TxBytes": true,
+            "TxFrames": true,
+            "RxL1Bps": true,
+            "RxBps": true,
+            "RxFps": true,
+            "RxBytes": true,
+            "RxFrames": true,
+            "TxNonPldBytes": false,
+            "TxNonPldFrames": false,
+            "RxNonPldBytes": false,
+            "RxNonPldFrames": false,
+            "RxFcsErrors": true,
+            "RxSeqErr": true,
+            "RxPckLossRatio": true,
+            "RxMisErr": true,
+            "RxPldErr": true,
+            "RxBer": true,
+            "RxBerCurr": true,
+            "LatencyCurr": true,
+            "LatencyCurrMin": true,
+            "LatencyCurrMax": true,
+            "LatencyAvg": true,
+            "LatencyMin": true,
+            "LatencyMax": true,
+            "JitterCurr": true,
+            "JitterCurrMin": true,
+            "JitterCurrMax": true,
+            "JitterAvg": true,
+            "JitterMin": true,
+            "JitterMax": true,
+            "TxArpRequests": false,
+            "TxArpReplies": false,
+            "TxPingRequests": false,
+            "TxPingReplies": false,
+            "TxInjectedFcs": false,
+            "TxInjectedSeq": false,
+            "TxInjectedMis": false,
+            "TxInjectedIntegErr": false,
+            "TxInjectedTidErr": false,
+            "TxMacTraining": false,
+            "TxIgmpJoin": false,
+            "RxArpRequests": false,
+            "RxArpReplies": false,
+            "RxPingRequests": false,
+            "RxPingReplies": false,
+            "RxGapCount": false,
+            "RxGapDuration": false,
+            "RxPauseFrames": false,
+            "RxPfcFrames": false,
+            "RxPfcQuanta0": false,
+            "RxPfcQuanta1": false,
+            "RxPfcQuanta2": false,
+            "RxPfcQuanta3": false,
+            "RxPfcQuanta4": false,
+            "RxPfcQuanta5": false,
+            "RxPfcQuanta6": false,
+            "RxPfcQuanta7": false,
+            "TsnOffsetPreServo": false,
+            "TsnOffsetPostServo": false,
+            "TsnRxSyncRateInterArrival": false,
+            "TsnPDelay": false,
+            "TsnNrr": false
+          },
+          "SourceResolution": "Ports",
+          "LatencyOORIndication": false,
+          "LogScheduleSettings": {
+            "PollInterval": "00:00:01",
+            "LoggingPeriod": "01:00:00",
+            "RunUntilStopped": false,
+            "UseGlobalTrafficStartStop": false
+          },
+          "LoggingTargets": [
+            "TextFile"
+          ],
+          "PluginHandlerSettings": {
+            "PluginId": "",
+            "PluginConfig": null
+          },
+          "CustomHandlerSettings": {
+            "ExecutablePath": "",
+            "Arguments": ""
+          },
+          "ReportSettings": {
+            "GenerateReport": false,
+            "ReportFileTypes": [
+              "PDF"
+            ],
+            "ReportTitle": "Test Report",
+            "CompanyName": "",
+            "TesterName": "",
+            "TestDescription": "",
+            "LogoImagePath": "",
+            "PdfPageSettings": {
+              "ProduceOutline": true,
+              "PaperKind": "A4",
+              "Orientation": "Portrait",
+              "Margin": {
+                "Bottom": 2.0,
+                "Left": 2.0,
+                "Right": 2.0,
+                "Top": 2.0,
+                "Unit": "Centimeters"
+              }
+            },
+            "ChartSettings": {
+              "EnabledChartFields": {
+                "TxL1Bps": false,
+                "TxBps": false,
+                "TxFps": false,
+                "TxBytes": false,
+                "TxFrames": false,
+                "RxL1Bps": false,
+                "RxBps": false,
+                "RxFps": false,
+                "RxBytes": false,
+                "RxFrames": false,
+                "TxNonPldBytes": false,
+                "TxNonPldFrames": false,
+                "RxNonPldBytes": false,
+                "RxNonPldFrames": false,
+                "RxFcsErrors": false,
+                "RxSeqErr": false,
+                "RxPckLossRatio": false,
+                "RxMisErr": false,
+                "RxPldErr": false,
+                "RxBer": false,
+                "RxBerCurr": false,
+                "LatencyCurr": false,
+                "LatencyCurrMin": false,
+                "LatencyCurrMax": false,
+                "LatencyAvg": false,
+                "LatencyMin": false,
+                "LatencyMax": false,
+                "JitterCurr": false,
+                "JitterCurrMin": false,
+                "JitterCurrMax": false,
+                "JitterAvg": false,
+                "JitterMin": false,
+                "JitterMax": false,
+                "TxArpRequests": false,
+                "TxArpReplies": false,
+                "TxPingRequests": false,
+                "TxPingReplies": false,
+                "TxInjectedFcs": false,
+                "TxInjectedSeq": false,
+                "TxInjectedMis": false,
+                "TxInjectedIntegErr": false,
+                "TxInjectedTidErr": false,
+                "TxMacTraining": false,
+                "TxIgmpJoin": false,
+                "RxArpRequests": false,
+                "RxArpReplies": false,
+                "RxPingRequests": false,
+                "RxPingReplies": false,
+                "RxGapCount": false,
+                "RxGapDuration": false,
+                "RxPauseFrames": false,
+                "RxPfcFrames": false,
+                "RxPfcQuanta0": false,
+                "RxPfcQuanta1": false,
+                "RxPfcQuanta2": false,
+                "RxPfcQuanta3": false,
+                "RxPfcQuanta4": false,
+                "RxPfcQuanta5": false,
+                "RxPfcQuanta6": false,
+                "RxPfcQuanta7": false,
+                "TsnOffsetPreServo": false,
+                "TsnOffsetPostServo": false,
+                "TsnRxSyncRateInterArrival": false,
+                "TsnPDelay": false,
+                "TsnNrr": false
+              },
+              "UseChartFieldsFromLogging": false,
+              "ChartWidth": 640,
+              "ChartHeight": 480,
+              "MaxChartItems": 1200
+            }
+          },
+          "FileSettings": {
+            "LogFileType": "CSV",
+            "LogFileNamePrefix": "statslog",
+            "AppendTimestamp": true,
+            "SeparateRunDirs": true,
+            "UseRollOverFileSize": true,
+            "RollOverFileSize": 10000,
+            "UseMaxArchiveFiles": true,
+            "MaxArchiveFiles": 10,
+            "CompressArchiveFiles": true
+          },
+          "ItemId": "9cf5003c-399e-403e-81ae-286d1fbe336a",
+          "ParentId": "",
+          "FullInfo": ""
+        },
+        "StreamWizardDefinition": {
+          "TopologyHandler": {
+            "StreamTopology": "MESH",
+            "StreamDirection": "BIDIR",
+            "TidAllocationScope": "ConfigScope"
+          },
+          "PortHandler": {
+            "ResetPorts": true,
+            "PortConfigMap": {
+              "P_f9192168-da72-4082-ad35-240777b3abad_0_0": {
+                "PortGroup": "UNDEFINED",
+                "SavedPropertyValueMap": {
+                  "P_COMMENT": "50,6F,72,74,20,6E,75,6D,62,65,72,20,30",
+                  "P_SPEEDSELECTION": "03"
+                },
+                "FullInfo": "Port 0 'Unknown'",
+                "ResourceIndex": 0,
+                "ItemId": "0b2a65d4-4122-4918-ac29-870317f6cf21",
+                "ParentId": ""
+              },
+              "P_f9192168-da72-4082-ad35-240777b3abad_0_1": {
+                "PortGroup": "UNDEFINED",
+                "SavedPropertyValueMap": {
+                  "P_COMMENT": "50,6F,72,74,20,6E,75,6D,62,65,72,20,31",
+                  "P_SPEEDSELECTION": "03"
+                },
+                "FullInfo": "Port 0 'Unknown'",
+                "ResourceIndex": 0,
+                "ItemId": "aaa4c5d7-bb5e-447f-851d-d871d28e3baa",
+                "ParentId": ""
+              }
+            },
+            "PortPeerRelations": {
+              "Relations": []
+            },
+            "UsedPortProperties": {
+              "EnabledGroups": [],
+              "EnabledProperties": [
+                "Description",
+                "SpeedSelection"
+              ]
+            }
+          },
+          "StreamHandler": {
+            "RemoveExistingStreams": true,
+            "ArpForGateways": true,
+            "StreamCountPerPort": 1,
+            "StreamConfigMap": {
+              "0": {
+                "SavedPropertyValueMap": {
+                  "PS_ENABLE": "01",
+                  "PS_COMMENT": "53,74,72,65,61,6D",
+                  "PS_PACKETHEADER": "00,00,00,00,00,00,00,00,00,00,00,00,FF,FF",
+                  "PS_HEADERPROTOCOL": "01",
+                  "PS_RATEFRACTION": "00,01,86,A0"
+                },
+                "FullInfo": "Stream 0/0",
+                "ResourceIndex": 0,
+                "ItemId": "71d74862-6b39-487f-9098-aa32e9291fe8",
+                "ParentId": ""
+              }
+            },
+            "UsedStreamProperties": {
+              "EnabledGroups": [],
+              "EnabledProperties": [
+                "Description",
+                "EnableState",
+                "TxRatePcnt"
+              ]
+            }
+          },
+          "ItemId": "040ea5ef-666e-4543-b61a-bde515be57fa",
+          "ParentId": "",
+          "FullInfo": ""
+        },
+        "ChartingSettings": {
+          "ShowTrackBall": true,
+          "MaxSamples": 100,
+          "ChartDefinitions": []
+        },
+        "ScheduleSettings": {
+          "CurrentScheduleId": "3d9e7729-57a3-40b4-8687-bf8ed9dce80d",
+          "Schedules": [
+            {
+              "Operations": [
+                {
+                  "OperType": "SetParamValue",
+                  "ParamType": "PS_RATEL2BPS",
+                  "OperValue": 300.0,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": false,
+                  "FullInfo": "Set Parameter Value",
+                  "Operations": [],
+                  "ItemId": "5eb7d82d-a083-43d7-93f4-c8c207a9c810",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "EnableStream",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Enable Stream",
+                  "Operations": [],
+                  "ItemId": "4d761ec6-cb95-4ea0-9e5a-94bb7c38ea44",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "StartTraffic",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Start Traffic",
+                  "Operations": [],
+                  "ItemId": "3f9a26c2-91b2-4996-83a1-fa7096aceb60",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "Wait",
+                  "ParamType": 0,
+                  "OperValue": 10.0,
+                  "PortTargetList": [],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Wait Period",
+                  "Operations": [],
+                  "ItemId": "34072d55-f533-4e27-aa4a-3e377d7e8584",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "StopTraffic",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Stop Traffic",
+                  "Operations": [],
+                  "ItemId": "8402feb5-3bef-41dd-a9a1-ecc644a7dbbf",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "DisableStream",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Disable Stream",
+                  "Operations": [],
+                  "ItemId": "ec7aa0e3-5b03-4465-8ae8-f5faa8ba522c",
+                  "ParentId": ""
+                }
+              ],
+              "ItemId": "3d9e7729-57a3-40b4-8687-bf8ed9dce80d",
+              "ParentId": "",
+              "FullInfo": "send_packet_10_seconds"
+            },
+            {
+              "Operations": [
+                {
+                  "OperType": "SetParamValue",
+                  "ParamType": "PS_RATEL2BPS",
+                  "OperValue": 300.0,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": false,
+                  "FullInfo": "Set Parameter Value",
+                  "Operations": [],
+                  "ItemId": "5eb7d82d-a083-43d7-93f4-c8c207a9c810",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "EnableStream",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Enable Stream",
+                  "Operations": [],
+                  "ItemId": "4d761ec6-cb95-4ea0-9e5a-94bb7c38ea44",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "StartTraffic",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Start Traffic",
+                  "Operations": [],
+                  "ItemId": "3f9a26c2-91b2-4996-83a1-fa7096aceb60",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "Wait",
+                  "ParamType": 0,
+                  "OperValue": 10.0,
+                  "PortTargetList": [],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Wait Period",
+                  "Operations": [],
+                  "ItemId": "34072d55-f533-4e27-aa4a-3e377d7e8584",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "StopTraffic",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Stop Traffic",
+                  "Operations": [],
+                  "ItemId": "8402feb5-3bef-41dd-a9a1-ecc644a7dbbf",
+                  "ParentId": ""
+                },
+                {
+                  "OperType": "DisableStream",
+                  "ParamType": 0,
+                  "OperValue": null,
+                  "PortTargetList": [
+                    {
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "StreamTargetList": [
+                    {
+                      "StreamId": 0,
+                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+                      "ModuleIndex": 0,
+                      "PortIndex": 1
+                    }
+                  ],
+                  "AllTargetsSelected": true,
+                  "FullInfo": "Disable Stream",
+                  "Operations": [],
+                  "ItemId": "ec7aa0e3-5b03-4465-8ae8-f5faa8ba522c",
+                  "ParentId": ""
+                }
+              ],
+              "ItemId": "3d9e7729-57a3-40b4-8687-bf8ed9dce80d",
+              "ParentId": "",
+              "FullInfo": "send_packet_10_seconds"
+            }
+          ]
+        },
+        "ChimeraPortAssocContainer": {
+          "Modified": "2022-01-27T04:52:50.1164548-08:00",
+          "ChimeraPortAssociations": []
+        },
+        "ItemId": "aabadcc3-198d-474a-8427-cc2a07be6bf7",
+        "ParentId": "",
+        "FullInfo": "send_capture_timing_msg"
+      }
+    ]
+  },
+  "FormatVersion": 1,
+  "ApplicationVersion": "1.77.7853.2 (1.77.7853.2)",
+  "ItemId": "c04d9fd3-778a-4de8-b2cf-62dfcd084c35",
+  "ParentId": "",
+  "FullInfo": ""
+}
