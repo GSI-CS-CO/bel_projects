@@ -840,7 +840,7 @@ END COMPONENT front_board_id;
   COMPONENT daq 
     generic (
         Base_addr:          unsigned(15 downto 0):= x"0000";
-        CLK_sys_in_Hz:      integer := 125_000_000;               
+        CLK_sys_in_Hz:      integer := 125000000;               
         ch_num:             integer := 1                      
             );
     
@@ -2588,7 +2588,7 @@ port map  (
 DAQ_modul: daq
 GENERIC MAP(
   Base_addr           => x"0000",
-  CLK_sys_in_Hz       => 125_000_000,        
+  CLK_sys_in_Hz       => 125000000,        
   ch_num => daq_ch_num                  
       )
 
