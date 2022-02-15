@@ -62,6 +62,8 @@ void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
   if (freq && itr->total) {
     itr->period /=(freq * itr->total); // for 30Hz it's 33312 us (30.0192 Hz)
 
+    itr->ttl = itr->total * freq / 15; // TTL value of the MPS protocol data (2x lost msgs)
+
     //itr->period /= 1000ULL; // granularity in 1 us
     //itr->period *= 1000ULL;
   }
@@ -243,12 +245,12 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
   // check lifetime of next MPS flag
   if (deadline <= now) {
 
-    // decrement TTL counter
     if (bufMpsFlag[itr->idx].prot.ttl) {
-      --bufMpsFlag[itr->idx].prot.ttl;
 
-      if (!bufMpsFlag[itr->idx].prot.ttl) {
+      if (now - bufMpsFlag[itr->idx].prot.ts > TIM_100_MS) {
+        //DBPRINT2("%llu %llu\n", now, bufMpsFlag[itr->idx].prot.ts);
         bufMpsFlag[itr->idx].prot.flag = MPS_FLAG_NOK;
+        bufMpsFlag[itr->idx].prot.ttl = 0;
         buf = &bufMpsFlag[itr->idx];  // expired MPS flag
       }
     }
@@ -288,11 +290,13 @@ mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt)
  * \brief store recieved MPS flag
  *
  * \param buf pointer to MPS flags buffer
- * \param raw raw protocol data (bits 63-56 = flag, 57-48 = grpId, 47-32 = evtId)
+ * \param raw raw protocol data (bits 63-56 = flag, 55-48 = grpId, 47-32 = evtId, 31-24 = TTL, 23-16 = pending)
+ * \param ts  timestamp of MPS flag
+ * \param itr iterator used to access MPS flags
  *
  * \ret ptr pointer to the stored MPS flag
  **/
-mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw)
+mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw, uint64_t ts, timedItr_t* itr)
 {
   // evaluate MPS channel and its flag
   uint8_t flag = raw >> 56;
@@ -306,7 +310,8 @@ mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw)
   buf += evtId;
   buf->prot.pending = buf->prot.flag ^ flag;
   buf->prot.flag = flag;
-  buf->prot.ttl = 10; // die after 10 iterations
+  buf->prot.ttl = itr->ttl;
+  buf->prot.ts = ts;
   return buf;
 }
 
@@ -326,7 +331,8 @@ void resetMpsFlag(size_t len, mpsTimParam_t* buf)
   for (size_t i = 0; i < len; ++i) {
     (buf + i)->prot.pending = (buf + i)->prot.flag ^ flag;
     (buf + i)->prot.flag  = flag;
-    (buf + i)->prot.ttl = 10; // time-out for 10 iterations
+    (buf + i)->prot.ttl = 0;
+    (buf + i)->prot.ts = 0;
   }
 }
 

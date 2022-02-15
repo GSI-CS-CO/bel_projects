@@ -40,6 +40,66 @@ pre_check() {
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
+setup_nodes() {
+    echo -e "\n--- setup RX node ---\n"
+    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx"
+    if [ $? -ne 0 ]; then
+        echo "Error: cannot set up ${rxscu%%.*} -> timed out"
+        exit 1
+    fi
+    echo -e "\n--- setup TX node ---\n"
+    timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && setup_mpstx"
+    if [ $? -ne 0 ]; then
+        echo "Error: cannot set up ${txscu%%.*} -> timed out"
+        exit 1
+    fi
+}
+
+measure_nw_perf() {
+    echo -e "\n--- enable MPS operation (RX, TX) ---\n"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX"
+    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX"
+
+    # start test
+    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && start_nw_perf"
+
+    echo -e "\n--- disable MPS operation (TX, RX) ---\n"
+    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
+
+    # report test result
+    echo -e "\n--- report test result (TX, RX) ---\n"
+    echo -n "TX "
+    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && result_nw_perf \$DEV_TX \$addr_cnt1"
+    echo -n "RX "
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && \
+        result_nw_perf \$DEV_RX \$addr_cnt1 && \
+        result_ow_delay \$DEV_RX \$addr_cnt1 && \
+        result_ttl_ival \$DEV_RX \$addr_cnt1"
+}
+
+measure_ttl() {
+    echo -e "enable MPS operation of RX"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX"
+
+    echo -e "toggle MPS operation of TX:\n"
+    for i in $(seq 1 10); do
+        echo -en "   $i : enable  "
+        sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX"
+        sleep 1
+        echo -en "   $i : disable "
+        sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX"
+        sleep 2
+    done
+
+    echo -e "disable MPS operation of RX"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
+
+    echo -e "\n--- report TTL measurement ---\n"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1"
+}
+
 while getopts 'hyu:p:' c; do
     case $c in
         h) usage; exit 1 ;;
@@ -59,42 +119,19 @@ if [ -z "$userpasswd" ]; then
 fi
 
 echo -e "\n--- Step 1 - set up nodes (RX, TX)---"
-echo -e "\n--- setup RX node ---\n"
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx"
-if [ $? -ne 0 ]; then
-    echo "Error: cannot set up ${rxscu%%.*} -> timed out"
-    exit 1
-fi
-echo -e "\n--- setup TX node ---\n"
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && setup_mpstx"
-if [ $? -ne 0 ]; then
-    echo "Error: cannot set up ${txscu%%.*} -> timed out"
-    exit 1
-fi
+setup_nodes
 
 # optional pre-check before real test
 echo -e "\n--- Step 2 - pre-check (RX, TX) ---\n"
-
 pre_check
 
 if [ "$option" != "auto" ]; then
     user_approval
 fi
 
-echo -e "\n--- Step 3 - enable MPS operation (RX, TX) ---\n"
-sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX"
-sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX"
+echo -e "\n--- Step 3 - measure network performance ---\n"
+measure_nw_perf
 
-# start test
-sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && start_nw_perf"
-
-echo -e "\n--- Step 4 - disable MPS operation (TX, RX) ---\n"
-sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX"
-sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
-
-# report test result
-echo -e "\n--- Step 5 - report test result (TX, RX) ---\n"
-echo -n "TX "
-sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && result_nw_perf \$DEV_TX \$addr_cnt1"
-echo -n "RX "
-sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_nw_perf \$DEV_RX \$addr_cnt1 && result_ow_delay \$DEV_RX \$addr_cnt1"
+# TTL measurement
+echo -e "\n--- Step 4 - measure TTL ---\n"
+measure_ttl

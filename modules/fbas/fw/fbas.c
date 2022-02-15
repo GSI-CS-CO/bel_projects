@@ -197,7 +197,8 @@ void initMpsData()
     bufMpsFlag[i].prot.flag  = MPS_FLAG_TEST;
     bufMpsFlag[i].prot.grpId = 1;
     bufMpsFlag[i].prot.evtId = i;
-    bufMpsFlag[i].prot.ttl = -1;
+    bufMpsFlag[i].prot.ttl = 0;
+    bufMpsFlag[i].prot.ts = 0;
   }
 
   // initialize the read iterator for MPS flags
@@ -411,7 +412,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = doCnt(true, actions);
 
           // store and handle received MPS flag
-          *head = storeMpsFlag(*head, ecaParam, itr);
+          *head = storeMpsFlag(*head, ecaParam, ecaDeadline, itr);
           if (*head) {
             driveEffLogOut(io_chnl, *head);
 
@@ -584,6 +585,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_PRINT_OWD:
         printMeasureOwDelay(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
+      case FBAS_CMD_PRINT_TTL:
+        printMeasureTtl(pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
         break;
@@ -649,8 +654,10 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       if (*pMpsTask & TSK_TTL_MPS_FLAGS) {
         // monitor lifetime of MPS flags periodically and handle expired MPS flag
         buf = expireMpsFlag(pRdItr);
-        if (buf)
+        if (buf) {
           driveEffLogOut(io_chnl, buf);
+          measureTtlInterval(buf);
+        }
       }
       break;
 

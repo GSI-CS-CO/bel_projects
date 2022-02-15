@@ -306,16 +306,22 @@ result_ow_delay() {
     read_measurement_results $1 $addr_msr1
 }
 
+result_ttl_ival() {
+    # $1 - dev/wbmo
+
+    eb-write $1 $addr_cmd 0x35
+    echo "Results of TTL interval measurement:"
+    read_measurement_results $1 $addr_msr1
+}
+
 disable_mps() {
     echo "Stop MPS on $1"
     eb-write $1 $addr_cmd 0x31
-    wait_seconds 1
 }
 
 enable_mps() {
     echo "Start MPS on $1"
     eb-write $1 $addr_cmd 0x30
-    wait_seconds 1
 }
 
 disable_mps_all() {

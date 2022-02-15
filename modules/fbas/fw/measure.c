@@ -39,6 +39,7 @@
 
 msrPerfStats_t perfStats = {0};
 msrOwDelay_t   owDelay = {0};
+msrTtlIval_t   ttl = {0};
 /**
  * \brief store a timestamp
  *
@@ -300,4 +301,46 @@ void printMeasureOwDelay(uint32_t* base, uint32_t offset) {
   DBPRINT2("owd @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
       pSharedReg64 - 3,
       owDelay.avg, owDelay.min, owDelay.max, owDelay.cntValid, owDelay.cntTotal);
+}
+
+void measureTtlInterval(mpsTimParam_t* buf)
+{
+  int64_t interval;
+  uint64_t now = getSysTime();
+
+  // measure time interval
+  if (!buf->prot.ttl) {
+    interval = now - buf->prot.ts;
+
+    if (interval > 0) {
+      ttl.avg = (interval + (ttl.cntValid * ttl.avg)) / (ttl.cntValid + 1);
+      ++ttl.cntValid;
+
+      if (interval > ttl.max)
+        ttl.max = interval;
+
+      if (interval < ttl.min || !ttl.min)
+        ttl.min = interval;
+    }
+    ++ttl.cntTotal;
+  }
+}
+
+void printMeasureTtl(uint32_t* base, uint32_t offset) {
+
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  uint32_t *pSharedReg32;
+
+  *pSharedReg64 = ttl.avg;
+  *(++pSharedReg64) = ttl.min;
+  *(++pSharedReg64) = ttl.max;
+  ++pSharedReg64;
+
+  pSharedReg32 = (uint32_t *)pSharedReg64;
+  *pSharedReg32 = ttl.cntValid;
+  *(++pSharedReg32) = ttl.cntTotal;
+
+  DBPRINT2("ttl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+      pSharedReg64 - 3,
+      ttl.avg, ttl.min, ttl.max, ttl.cntValid, ttl.cntTotal);
 }

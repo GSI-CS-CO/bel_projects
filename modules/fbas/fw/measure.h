@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "dbg.h"
+#include "dbg.h"  // DBPRINTx()
+#include "aux.h"  // getSysTime()
 #include "fbas.h"
+#include "fbas_common.h"
 
 #define _64b_SIZE  8
 
@@ -36,6 +38,15 @@ struct msrOwDelay {
   uint32_t cntTotal;
 };
 
+typedef struct msrTtlIval msrTtlIval_t;
+struct msrTtlIval {
+  uint64_t avg;
+  int64_t  min;
+  uint64_t max;
+  uint32_t cntValid;
+  uint32_t cntTotal;
+};
+
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
 void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
@@ -44,6 +55,8 @@ void printMeasureNwDelay(uint32_t* base, uint32_t offset);
 void printMeasureSgLatency(uint32_t* base, uint32_t offset);
 void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
 void printMeasureOwDelay(uint32_t* base, uint32_t offset);
+void measureTtlInterval(mpsTimParam_t* buf);
+void printMeasureTtl(uint32_t* base, uint32_t offset);
 
 /**
  * \brief count events

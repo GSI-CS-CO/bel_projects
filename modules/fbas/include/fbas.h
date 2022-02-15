@@ -83,6 +83,7 @@ typedef enum {
 #define FBAS_CMD_PRINT_NW_DLY   0x32   // print result of network delay measurement
 #define FBAS_CMD_PRINT_OWD      0x33   // print result of one-way delay measurement
 #define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MSP signaling latency measurement
+#define FBAS_CMD_PRINT_TTL      0x35   // print result of TTL interval measurement
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

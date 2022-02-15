@@ -14,6 +14,7 @@ typedef uint32_t status_t;
 #define TIM_1_US       1000ULL              // 1 us
 #define TIM_1_MS       1000000ULL           // 1 ms
 #define TIM_52_MS      TIM_1_MS * 52ULL     // 52 ms
+#define TIM_100_MS     TIM_1_MS * 100ULL    // 100 ms
 #define TIM_1000_MS    TIM_1_MS * 1000ULL   // 1 second
 #define TIM_2000_MS    TIM_1_MS * 2000ULL   // 2 seconds
 
@@ -21,10 +22,10 @@ typedef uint32_t status_t;
 #define PSCR_1S_TIM_1MS    1000  // prescaler for 1 second (at 1ms timer period)
 
 // MPS definitions
-#define N_MPS_CHANNELS     40//32  // total number of MPS channels
+#define N_MPS_CHANNELS     1   // total number of MPS channels
 #define N_MPS_FLAGS        1   // MPS flags in an Ethernet frame
 #define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
-#define F_MPS_BCAST        200//30  // frequency to broadcast MPS flags [MPS_FS_530]
+#define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 
 // MPS flags
 #define MPS_FLAG_OK        1   // OK
@@ -39,6 +40,7 @@ struct mpsProt {
   uint16_t evtId;    // event ID
   uint8_t  ttl;      // time-to-live (RX)
   uint8_t  pending;  // pending is set if flag is changed
+  uint64_t ts;       // timestamp
 };
 
 // MPS protocol as parameter field in timing message
@@ -55,6 +57,7 @@ struct timedItr {
   uint8_t total;     // total number of elements
   uint64_t last;     // timestamp of last access
   uint64_t period;   // time period between accesses
+  uint8_t  ttl;      // TTL value used to evaluate validity
 };
 
 #endif
