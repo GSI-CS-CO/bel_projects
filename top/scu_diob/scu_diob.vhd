@@ -230,8 +230,8 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_HW_Interlock_Base_Addr:           Integer := 16#0640#;  -- IO-Backplane Spill Abort HW Interlock
     CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0650#;  -- IO-Backplane Quench Detection
     CONSTANT c_IOBP_READBACK_Base_Addr:          Integer := 16#0670#;  -- IO-Backplane Output Readback Register
-
-
+    CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#0690#;  -- IO-Backplane Output Readback Register
+ 
 
 --  +============================================================================================================================+
 --  |                                                 CONSTANT                                                                   |
@@ -839,7 +839,7 @@ END COMPONENT front_board_id;
 
   COMPONENT daq 
     generic (
-        Base_addr:          unsigned(15 downto 0):= x"0000";
+        Base_addr:          unsigned(15 downto 0);
         CLK_sys_in_Hz:      integer := 125000000;               
         ch_num:             integer := 1                      
             );
@@ -2587,7 +2587,7 @@ port map  (
 
 DAQ_modul: daq
 GENERIC MAP(
-  Base_addr           => x"0000",
+  Base_addr           =>  to_unsigned(c_DIOB_DAQ_Base_Addr, 16),
   CLK_sys_in_Hz       => 125000000,        
   ch_num => daq_ch_num                  
       )
