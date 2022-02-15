@@ -120,8 +120,8 @@ status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
     idLo       = (uint32_t)(evtId            & 0xffffffff);
     tef        = 0x00000000;
     res        = 0x00000000;
-    deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-    deadlineLo = (uint32_t)(deadline         & 0xffffffff);
+    deadlineHi = (uint32_t)((now >> 32) & 0xffffffff);
+    deadlineLo = (uint32_t)(now         & 0xffffffff);
 
     // start EB operation
     ebm_hi(COMMON_ECA_ADDRESS);
@@ -134,7 +134,7 @@ status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
       paramLo  = (uint32_t)(bufMpsFlag[itr->idx].param         & 0xffffffff);
 
       // update iterator
-      resetItr(itr, deadline);
+      resetItr(itr, now);
 
       // build a timing message
       ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
@@ -182,7 +182,7 @@ status_t sendMpsFlag(timedItr_t* itr, uint64_t evtid)
     fwlib_ebmWriteTM(now, evtid, bufMpsFlag[itr->idx].param, 1);
 
     // update iterator with deadline
-    resetItr(itr, deadline);
+    resetItr(itr, now);
   }
   else
     return COMMON_STATUS_ERROR;
@@ -235,6 +235,7 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
 {
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
+  mpsTimParam_t* buf = 0;
 
   if (!itr->last)
     deadline = now;       // initial check
@@ -248,15 +249,15 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
 
       if (!bufMpsFlag[itr->idx].prot.ttl) {
         bufMpsFlag[itr->idx].prot.flag = MPS_FLAG_NOK;
-        return &bufMpsFlag[itr->idx];  // expired MPS flag
+        buf = &bufMpsFlag[itr->idx];  // expired MPS flag
       }
     }
 
     // update iterator with deadline
-    resetItr(itr, deadline);
+    resetItr(itr, now);
   }
 
-  return 0;
+  return buf;
 }
 
 /**
