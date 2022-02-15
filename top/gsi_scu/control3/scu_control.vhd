@@ -323,7 +323,7 @@ begin
       g_en_wd_tmr         => true,
       g_en_eca_tap        => true,
       g_en_timer          => true,
-      g_en_asmi           => true
+      g_en_asmi           => false
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
