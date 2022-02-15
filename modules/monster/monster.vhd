@@ -521,7 +521,7 @@ architecture rtl of monster is
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (dev_slaves'pos(devs_build_id)       => f_sdb_auto_device(c_build_id_sdb,                   true),
     dev_slaves'pos(devs_watchdog)       => f_sdb_auto_device(c_watchdog_sdb,                   true),
-    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), false),
+    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), not g_en_asmi),
     dev_slaves'pos(devs_reset)          => f_sdb_auto_device(c_arria_reset,                    true),
     dev_slaves'pos(devs_tlu)            => f_sdb_auto_device(c_tlu_sdb,                        c_use_tlu),
     dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
@@ -3209,10 +3209,9 @@ end generate;
       )
       port map (
         clk_flash_i => clk_flash_ext,
-        rst_n_i   => rstn_update,
-
-        slave_i      =>  asmi_i,
-        slave_o      =>  asmi_o
+        rst_n_i     => rstn_update,
+        slave_i     =>  asmi_i,
+        slave_o     =>  asmi_o
       );
    end generate asmi_y;
 
