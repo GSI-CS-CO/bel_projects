@@ -44,9 +44,9 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    UM_nCSO           : out   std_logic := 'Z';
-    UM_DCLK           : out   std_logic := 'Z';
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- OneWire
@@ -74,7 +74,7 @@ entity pexarria10 is
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
     wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
 
-   -----------------------------------------------------------------------
+    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
     -----------------------------------------------------------------------
     psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
@@ -262,7 +262,8 @@ begin
       g_lm32_cores         => c_cores,
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => true
     )
     port map(
       core_clk_20m_vcxo_i      => clk_20m_vcxo_i,
