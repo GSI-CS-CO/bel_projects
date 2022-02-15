@@ -58,7 +58,9 @@ set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/ref_fpll
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/ref_pll10/ref_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/sys_fpll10_e3p1/sys_fpll10_e3p1.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/sys_pll10/sys_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/remote_update/asmi10/asmi10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/stub_pll/stub_pll/stub_pll.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
 set_global_assignment -name SEED 123456
@@ -155,6 +157,7 @@ set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name TOP_LEVEL_ENTITY pci_control
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_svbigkq.v
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
@@ -633,10 +636,12 @@ set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library 
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_remote_update.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/housekeeping.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd -library work
@@ -671,6 +676,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd -l
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/synth/arria10_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd -library work

@@ -14,3 +14,4 @@ eb-iflash
 eb-reset
 eb-daq-dump
 eb-i2c-master
+eb-asmi

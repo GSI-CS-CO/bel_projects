@@ -1,0 +1,7 @@
+asmi10.bsf
+asmi10.cmp
+asmi10_bb.v
+asmi10_inst.v
+asmi10_inst.vhd
+synth/asmi10.v
+synth/asmi10_cfg.v
