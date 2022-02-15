@@ -9,7 +9,7 @@ TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash 
 EXTRA_I := eb-flash-secure
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
+CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all:	$(TARGETS) monitoring
