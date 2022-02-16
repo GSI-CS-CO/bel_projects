@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Jan-2022
+ *  version : 16-Feb-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000316
+#define B2B_MON_VERSION 0x000317
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -206,6 +206,12 @@ void buildPrintLine(uint32_t idx)
   uint32_t sid;
   ring_t   ring;
 
+  uint64_t actUsecs;
+  time_t   actT;
+
+  actUsecs = comlib_getSysTime();
+  actT     = (time_t)(actUsecs / 1000000);
+
   if (idx > NALLSID) return;
 
   idx2RingSid(idx, &ring, &sid);
@@ -220,13 +226,17 @@ void buildPrintLine(uint32_t idx)
 
   // pattern name
   if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);
-  else                            sprintf(pattern, "%.20s", dicPName[idx]);
-  if (!set_mode[idx])             sprintf(pattern, "---");
+  else {
+    if ((actT - set_secs[idx] - secsOffset) < (time_t)TINACTIVE)
+                                  sprintf(pattern, "%.20s", dicPName[idx]);
+    else                          sprintf(pattern, "%s", TXTUNKWN);
+    if (set_secs[idx] <= 1)       sprintf(pattern, "%s", TXTUNKWN);
+  }
   if (!flagSetValid[idx])         sprintf(pattern, "NO_LINK (DATA)");
 
   // destination
   switch (set_mode[idx]) {
-    case 0 : sprintf(dest, "---");      flagTCBS = 0; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case 0 : sprintf(dest, "---");      flagTCBS = 1; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
     case 1 : sprintf(dest, "kicker");   flagTCBS = 1; flagExtNue = 0; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
     case 2 : sprintf(dest, "target");   flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
     case 3 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1; break;
@@ -234,6 +244,9 @@ void buildPrintLine(uint32_t idx)
     default: sprintf(dest, "UNKNWN");   flagTCBS = 0; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
+  // ignore ancient timestamps
+  if (set_secs[idx] <= 1) flagTCBS = 0;
+  
   if (flagTCBS)     {strftime(tmp1, 10, "%H:%M:%S", gmtime(&(set_secs[idx]))); sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);}
   else               sprintf(tCBS, "---");
 
@@ -435,8 +448,8 @@ uint32_t calcFlagPrint()
     idx2RingSid(i, &ring, &sid);
         
     if (!flagPrintInactive) {
-      if (set_mode[i] == 0)                                      flagPrintIdx[i] = 0;
-      if ((actT - set_secs[i] - secsOffset) > (time_t)TINACTIVE) flagPrintIdx[i] = 0;
+      if ((actT - set_secs[i] - secsOffset) > (time_t)TINACTIVE) flagPrintIdx[i] = 0; // ignore old timestamps
+      if (set_secs[i] <= 1)                                      flagPrintIdx[i] = 0; // ignore ancient timestamps
     } // if !flagPrintActive
     if (!flagPrintSis18)    if (ring == SIS18)                   flagPrintIdx[i] = 0;
     if (!flagPrintEsr)      if (ring == ESR)                     flagPrintIdx[i] = 0;
@@ -613,7 +626,8 @@ int main(int argc, char** argv)
           break;
         case 'h'         :
           printHelpText();
-          flagSetUpdate[0] = 1; // this is a hack to force an update
+          //          flagSetUpdate[0] = 1; // this is a hack to force an update
+          flagPrintNow = 1;
           break;
         case 'q'         :
           quit = 1;

@@ -321,14 +321,14 @@ void disAddServices(char *prefix)
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
     disSetvalId[i]  = dis_add_service(name, "I:1;I:1;X:1;I:2;X:1;I:2;I:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
-    dis_set_timestamp(disSetvalId[i], 1, 1);
+    dis_set_timestamp(disSetvalId[i], 1, 0);
   } // for i
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
     disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:4;X:1;I:4;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
-    dis_set_timestamp(disGetvalId[i], 1, 1);
+    dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices
 
