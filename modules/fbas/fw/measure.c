@@ -91,54 +91,54 @@ int64_t getElapsedTime(uint32_t* base, uint32_t offset, uint64_t now)
  *
  * \param base   base address of the user-defined u32 register set
  * \param offset offset in the register set that will store given timestamps
+ * \param now    timestamp of MPS event transmission (actual system time)
  * \param tsEca  timestamp of MPS event detection (ECA event deadline)
- * \param tsTx   timestamp of MPS event transmission (actual system time)
  *
  * \ret none
  **/
-void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx)
+void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t now, uint64_t tsEca)
 {
   uint32_t next = offset + _64b_SIZE;
   uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));
-  *pSharedTs = tsEca;
-  *(pSharedTs + (next >> 2)) = tsTx;
+  *pSharedTs = now;
+  *(pSharedTs + (next >> 2)) = tsEca;
 }
 
 /**
  * \brief measure network performance
  *
- * Network delay on transmission of an MPS event (broadcast from TX node to RX node) and
- * signalling latency to forward an MPS event (from MPS event generation at TX node
- * to IO event detection at RX node) are measured using timestamps.
- * The measurement results are output as debug msg.
+ * Transmission delay is defined by time-span that points the start of
+ * transmission on TX node and completion of reception on RX node.
+ * Signalling latency is determined by time-span that points the detection of
+ * the MPS event on TX node and completion of signalling it back to the same TX node.
  *
- * The timestamps required to calculate elapsed time are stored in shared memory:
- * - timestamp of MPS event detection is stored in a location pointed by base + offset
- * - timestamp of MPS event transmission is stored in next location.
+ * The timestamps required to calculate time-spans are stored in shared memory:
+ * - timestamp of MPS event transmission is stored in a location pointed by base + offset
+ * - timestamp of MPS event detection is stored in next location
  *
  * \param base   base address of the user-defined u32 register set
  * \param offset offset in register set that stores timestamps
  * \param tag    ECA condition tag
  * \param flag   ECA late event flag
  * \param now    actual system time
- * \param tsEca  timestamp of IO event detection (ECA event deadline)
+ * \param tsEca  timestamp of TLU event detection (signalling MPS event back to generator)
  *
  * \ret none
  **/
 void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose)
 {
-  uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));
-  uint64_t tmp64 = *(pSharedTs + ((offset + _64b_SIZE) >> 2));
+  uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));    // timestamp of MPS event transmission
+  uint64_t tmp64 = *(pSharedTs + ((offset + _64b_SIZE) >> 2)); // timestamp of MPS event detection
 
-  int64_t nwDelay = tsEca - tmp64;       // network delay
-  int64_t sgLatency = now - *pSharedTs;  // signal latency
+  int64_t txDelay = tsEca - *pSharedTs;  // transmission delay
+  int64_t sgLatency = now - tmp64;       // signal latency
   msrSumStats_t* pStats;
 
   if (verbose)
-    DBPRINT2("nwDly=%lli, sgLty=%lli\n", nwDelay, sgLatency);
+    DBPRINT2("txDly=%lli, sgLty=%lli\n", txDelay, sgLatency);
 
-  pStats = &sumStats[msr_nw_dly];
-  calculateSumStats(nwDelay, pStats);
+  pStats = &sumStats[msr_tx_dly];
+  calculateSumStats(txDelay, pStats);
 
   pStats = &sumStats[msr_sg_lty];
   calculateSumStats(sgLatency, pStats);
@@ -154,20 +154,22 @@ void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
 }
 
 /**
- * \brief print result of network performance measurement - network delay
+ * \brief print result of network performance measurement - transmission delay
  *
- * Average, minimum and maximum of network delay are
- * printed to debug output (invoke eb-console $dev to get the debug output)
+ * Average, minimum and maximum values of transmission delay are
+ * printed to debug output (invoke eb-console $dev to get the debug output) and
+ * written to a given location of the shared memory.
  *
- * \param none
+ * \param base   base address of the shared memory
+ * \param offset offset to the given location
  * \ret none
  **/
-void printMeasureNwDelay(uint32_t* base, uint32_t offset) {
+void printMeasureTxDelay(uint32_t* base, uint32_t offset) {
 
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[msr_nw_dly];
+  msrSumStats_t* pStats = &sumStats[msr_tx_dly];
 
-  DBPRINT2("nwd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+  DBPRINT2("txd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
       pSharedReg64,
       pStats->avg, pStats->min, pStats->max,pStats->cntValid, pStats->cntTotal);
 
@@ -175,9 +177,9 @@ void printMeasureNwDelay(uint32_t* base, uint32_t offset) {
 }
 
 /**
- * \brief print result of network performance measurement - signaling latency
+ * \brief print result of network performance measurement - signalling latency
  *
- * Average, minimum and maximum of signaling latency are
+ * Average, minimum and maximum of signalling latency are
  * printed to debug output (invoke eb-console $dev to get the debug output)
  *
  * \param none

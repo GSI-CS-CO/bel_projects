@@ -5,7 +5,7 @@ following devices in TTF (rack BG2A.A9):
 - WRSs: nwt0297 (dot-config_timing_mps_access_xena)
 
 1. broadcast_timing_msg: used to measure maximum data rate of background network traffic,
-                         at which MPS signaling latency exceeds its upper bound of 1 ms.
+                         at which MPS signalling latency exceeds its upper bound of 1 ms.
                          Stream 0 is used to generate timing msgs with group and event ID = 0xFCA (not relevant to MPS)
                          tools: test_ttf_basic.ssh (run it at least for 60 sec)
                          nwt0297: dot-config_timing_mps_access_xena

@@ -470,18 +470,20 @@ function start_test3() {
     echo "Disable MPS task on TX and RX nodes"
     disable_mps_all
 
-    echo "Print counter value of TX"
-    eb-read $FBASTX $addr_cnt1
+    cnt=$(eb-read $FBASTX $addr_cnt1)
+    cnt_dec=$(printf "%d" 0x$cnt)
+    echo "MPS flags (TX): $cnt ($cnt_dec)"
 
-    echo "Print counter value of RX"
-    eb-read $FBASRX $addr_cnt1
+    cnt=$(eb-read $FBASRX $addr_cnt1)
+    cnt_dec=$(printf "%d" 0x$cnt)
+    echo "MPS flags (RX): $cnt ($cnt_dec)"
 
     eb-write $FBASTX $addr_cmd 0x32  # get network delay
-    echo "Results of network delay measurement:"
+    echo -n "Transmission delay: "
     read_measurement_results $addr_msr1
 
-    eb-write $FBASTX $addr_cmd 0x34  # get signaling latency
-    echo "Results of signaling latency measurement:"
+    eb-write $FBASTX $addr_cmd 0x34  # get signalling latency
+    echo -n "Signalling latency: "
     read_measurement_results $addr_msr1
 }
 
@@ -601,5 +603,5 @@ function read_measurement_results() {
     addr_msr=$(( $addr_msr + 4 ))
     cnt_all=$(eb-read -q $FBASTX ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo "avg=${avg_dec}, min=${min_dec}, max=${max_dec}, cnt=${cnt_val_dec}/${cnt_all_dec}"
+    echo "avg=${avg_dec} min=${min_dec} max=${max_dec} cnt=${cnt_val_dec}/${cnt_all_dec}"
 }

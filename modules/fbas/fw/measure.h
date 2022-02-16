@@ -26,8 +26,8 @@ struct msrSumStats {
 };
 
 enum {
-  msr_nw_dly,  // network delay
-  msr_sg_lty,  // signaling latency
+  msr_tx_dly,  // transmission delay
+  msr_sg_lty,  // signalling latency
   msr_ow_dly,  // one-way delay
   msr_ttl,     // TTL threshold/interval
   msr_all,
@@ -37,7 +37,7 @@ void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
 void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
 void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose);
-void printMeasureNwDelay(uint32_t* base, uint32_t offset);
+void printMeasureTxDelay(uint32_t* base, uint32_t offset);
 void printMeasureSgLatency(uint32_t* base, uint32_t offset);
 void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
 void printMeasureOwDelay(uint32_t* base, uint32_t offset);

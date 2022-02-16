@@ -9,6 +9,10 @@ export addr_cnt1="0x20140934/4"  # shared memory location for received frames co
 export addr_msr1="0x20140968"    # shared memory location for measurement results
 export FW_TX="fbas.scucontrol.bin"
 export FW_RX="fbas.scucontrol.bin"
+export cmd_wr_tx_delay=0x32
+export cmd_wr_ow_delay=0x33
+export cmd_wr_sg_latency=0x34
+export cmd_wr_ow_ttl_ival=0x35
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -285,32 +289,46 @@ start_nw_perf() {
     saft-ctl tr0 -p inject 0xffffdddd00000000 0x0 1000000
 }
 
-result_nw_perf() {
+result_event_count() {
+    # sent/received event count
+
     # $1 - dev/wbmo
     # $2 - event counter
 
     cnt=$(eb-read $1 $2)
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "count: 0x$cnt (${cnt_dec})"
+}
 
-    eb-write $1 $addr_cmd 0x32
-    echo -n "Results of network delay measurement: "
+result_tx_delay() {
+    # $1 - dev/wbmo
+
+    eb-write $1 $addr_cmd $cmd_wr_tx_delay
+    echo -n "Result of the transmit delay measurement: "
+    read_measurement_results $1 $addr_msr1
+}
+
+result_sg_latency() {
+    # $1 - dev/wbmo
+
+    eb-write $1 $addr_cmd $cmd_wr_sg_latency
+    echo -n "Result of the sig. latency measurement:   "
     read_measurement_results $1 $addr_msr1
 }
 
 result_ow_delay() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd 0x33
-    echo -n "Results of one-way delay measurement: "
+    eb-write $1 $addr_cmd $cmd_wr_ow_delay
+    echo -n "Result of the one-way delay measurement:  "
     read_measurement_results $1 $addr_msr1
 }
 
 result_ttl_ival() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd 0x35
-    echo -n "Results of TTL interval measurement:  "
+    eb-write $1 $addr_cmd $cmd_wr_ow_ttl_ival
+    echo -n "Result of the TTL interval measurement:   "
     read_measurement_results $1 $addr_msr1
 }
 

@@ -577,7 +577,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
-        printMeasureNwDelay(pSharedApp, FBAS_SHARED_GET_AVG);
+        printMeasureTxDelay(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_SG_LTY:
         printMeasureSgLatency(pSharedApp, FBAS_SHARED_GET_AVG);

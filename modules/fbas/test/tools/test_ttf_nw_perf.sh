@@ -70,13 +70,17 @@ measure_nw_perf() {
     # report test result
     echo -e "\n--- report test result (TX, RX) ---\n"
     echo -n "TX "
-    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && result_nw_perf \$DEV_TX \$addr_cnt1"
+    sshpass -p "$userpasswd" ssh "$username@$txscu" \
+        "source setup_local.sh && \
+        result_event_count \$DEV_TX \$addr_cnt1 && \
+        result_tx_delay \$DEV_TX && \
+        result_sg_latency \$DEV_TX"
     echo -n "RX "
     sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
-        result_nw_perf \$DEV_RX \$addr_cnt1 && \
-        result_ow_delay \$DEV_RX \$addr_cnt1 && \
-        result_ttl_ival \$DEV_RX \$addr_cnt1"
+        result_event_count \$DEV_RX \$addr_cnt1 && \
+        result_ow_delay \$DEV_RX && \
+        result_ttl_ival \$DEV_RX"
 }
 
 measure_ttl() {
