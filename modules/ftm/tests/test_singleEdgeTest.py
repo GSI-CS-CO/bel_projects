@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil
 
 """
-Class starts singleThreadTests and compares with expected result.
+Class starts singleEdgeTest and compares with expected result.
 """
 class UnitTestSingleEdgeTest(dm_testbench.DmTestbench):
 
