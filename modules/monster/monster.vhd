@@ -396,9 +396,10 @@ architecture rtl of monster is
   constant c_is_arria10gx       : boolean := g_family = "Arria 10 GX";
   constant c_is_arria10gx_e3p1  : boolean := g_family = "Arria 10 GX E3P1";
   constant c_is_arria10gx_scu4  : boolean := g_family = "Arria 10 GX SCU4";
+  constant c_is_arria10gx_ftm4  : boolean := g_family = "Arria 10 GX FTM4";
   constant c_is_arria10gx_pex10 : boolean := g_family = "Arria 10 GX PEX10";
   constant c_is_arria10gx_ftm10 : boolean := g_family = "Arria 10 GX FTM10";
-  constant c_is_arria10         : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_pex10 or c_is_arria10gx_ftm10;
+  constant c_is_arria10         : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_ftm4 or c_is_arria10gx_pex10 or c_is_arria10gx_ftm10;
   constant c_is_arria5          : boolean := g_family = "Arria V";
   constant c_is_arria2          : boolean := g_family = "Arria II";
 
