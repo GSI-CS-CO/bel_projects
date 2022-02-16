@@ -1,0 +1,21 @@
+# PREFIX  controls where programs and libraries get installed
+# Note: during compile (all), PREFIX must be set to the final installation path
+# Note: setting the PKG_CONFIG_PATH might help too, example:
+# 'export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib/pkgconfig/'
+# Example usage:
+#   'make clean'                                                 
+#   'make PREFIX= all' ;                                                               (hack: leave PREFIX empty for SCU path)
+# Example deploy:
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
+PREFIX      ?= /usr/local
+STAGING     ?=
+DIMPATH     := /common/usr/timing/b2b/dim_v20r29
+RPATH       ?= $(shell pkg-config saftlib --libs | sed 's/-l.*/ /g' | sed 's/-L//g')
+
+CXXFLAGS = `pkg-config saftlib --cflags` -I $(DIMPATH)/dim
+LDFLAGS  = `pkg-config saftlib --libs`   -L $(DIMPATH)/linux -ldim -lpthread -Wl,-rpath=$(RPATH)
+CXX = g++ --std=c++11
+
+all:: freq-measure
+
