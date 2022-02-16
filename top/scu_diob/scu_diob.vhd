@@ -230,7 +230,7 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_HW_Interlock_Base_Addr:           Integer := 16#0640#;  -- IO-Backplane Spill Abort HW Interlock
     CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0650#;  -- IO-Backplane Quench Detection
     CONSTANT c_IOBP_READBACK_Base_Addr:          Integer := 16#0670#;  -- IO-Backplane Output Readback Register
-    CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- IO-Backplane Output Readback Register
+    CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
  
 
 --  +============================================================================================================================+
