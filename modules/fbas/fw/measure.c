@@ -37,9 +37,8 @@
 
 #include "measure.h"
 
-msrPerfStats_t perfStats = {0};
-msrOwDelay_t   owDelay = {0};
-msrTtlIval_t   ttl = {0};
+msrSumStats_t sumStats[msr_all] = {0};  // buffer for summary statistics
+
 /**
  * \brief store a timestamp
  *
@@ -133,30 +132,16 @@ void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
 
   int64_t nwDelay = tsEca - tmp64;       // network delay
   int64_t sgLatency = now - *pSharedTs;  // signal latency
+  msrSumStats_t* pStats;
+
   if (verbose)
     DBPRINT2("nwDly=%lli, sgLty=%lli\n", nwDelay, sgLatency);
 
-  if (nwDelay > 0) {
-    perfStats.avgNwDelay = (nwDelay + (perfStats.cntNwDelay * perfStats.avgNwDelay)) / (perfStats.cntNwDelay + 1);
-    ++perfStats.cntNwDelay;
-    if (nwDelay > perfStats.maxNwDelay)
-      perfStats.maxNwDelay = nwDelay;
-  }
+  pStats = &sumStats[msr_nw_dly];
+  calculateSumStats(nwDelay, pStats);
 
-  if (nwDelay < perfStats.minNwDelay || !perfStats.minNwDelay)
-    perfStats.minNwDelay = nwDelay;
-
-  if (sgLatency > 0) {
-    perfStats.avgSgLatency = (sgLatency + (perfStats.cntSgLatency * perfStats.avgSgLatency)) / (perfStats.cntSgLatency + 1);
-    ++perfStats.cntSgLatency;
-    if (sgLatency > perfStats.maxSgLatency)
-      perfStats.maxSgLatency = sgLatency;
-  }
-
-  if (sgLatency < perfStats.minSgLatency || !perfStats.minSgLatency)
-    perfStats.minSgLatency = sgLatency;
-
-  ++perfStats.cntTotal;
+  pStats = &sumStats[msr_sg_lty];
+  calculateSumStats(sgLatency, pStats);
 
   // for details, elapsed time of other actions are also calculated
   int64_t poll = now - tsEca;      // elapsed time to detect IO (TLU) event (RX->TX)
@@ -180,21 +165,13 @@ void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag,
 void printMeasureNwDelay(uint32_t* base, uint32_t offset) {
 
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  uint32_t *pSharedReg32;
+  msrSumStats_t* pStats = &sumStats[msr_nw_dly];
 
-  *pSharedReg64 = perfStats.avgNwDelay;
-  *(++pSharedReg64) = perfStats.minNwDelay;
-  *(++pSharedReg64) = perfStats.maxNwDelay;
-  ++pSharedReg64;
+  DBPRINT2("nwd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+      pSharedReg64,
+      pStats->avg, pStats->min, pStats->max,pStats->cntValid, pStats->cntTotal);
 
-  pSharedReg32 = (uint32_t *)pSharedReg64;
-  *pSharedReg32 = perfStats.cntNwDelay;
-  *(++pSharedReg32) = perfStats.cntTotal;
-
-  DBPRINT2("nwDly @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
-      pSharedReg64 - 3,
-      perfStats.avgNwDelay, perfStats.minNwDelay, perfStats.maxNwDelay,
-      perfStats.cntNwDelay, perfStats.cntTotal);
+  wrSumStats(pStats, pSharedReg64);
 }
 
 /**
@@ -209,21 +186,13 @@ void printMeasureNwDelay(uint32_t* base, uint32_t offset) {
 void printMeasureSgLatency(uint32_t* base, uint32_t offset) {
 
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  uint32_t *pSharedReg32;
+  msrSumStats_t* pStats = &sumStats[msr_sg_lty];
 
-  *pSharedReg64 = perfStats.avgSgLatency;
-  *(++pSharedReg64) = perfStats.minSgLatency;
-  *(++pSharedReg64) = perfStats.maxSgLatency;
-  ++pSharedReg64;
+  DBPRINT2("sgl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+      pSharedReg64,
+      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
 
-  pSharedReg32 = (uint32_t *)pSharedReg64;
-  *pSharedReg32 = perfStats.cntSgLatency;
-  *(++pSharedReg32) = perfStats.cntTotal;
-
-  DBPRINT2("sgLty @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
-      pSharedReg64 - 3,
-      perfStats.avgSgLatency, perfStats.minSgLatency, perfStats.maxSgLatency,
-      perfStats.cntSgLatency, perfStats.cntTotal);
+  wrSumStats(pStats, pSharedReg64);
 }
 
 /**
@@ -261,86 +230,115 @@ uint32_t doCnt(bool enable, uint32_t value)
  **/
 void measureOwDelay(uint64_t now, uint64_t ts, bool verbose)
 {
+  msrSumStats_t* pStats = &sumStats[msr_ow_dly];
   int64_t owd = now - ts;  // one-way (end-to-end) delay
   if (verbose)
     DBPRINT2("owd=%lli\n", owd);
 
-  if (owd > 0) {
-    owDelay.avg = (owd + (owDelay.cntValid * owDelay.avg)) / (owDelay.cntValid + 1);
-    ++owDelay.cntValid;
-    if (owd > owDelay.max)
-      owDelay.max = owd;
-  }
-
-  if (owd < owDelay.min || !owDelay.min)
-    owDelay.min = owd;
-
-  ++owDelay.cntTotal;
+  calculateSumStats(owd, pStats);
 }
 
 /**
- * \brief print result of one-way delay measurement
+ * \brief measure the TTL period
  *
- * \param none
+ * The TTL period is 101 ms, which corresponds for two lost timing messages.
+ *
+ * \param buf   pointer to MPS protocol data
+ *
  * \ret none
  **/
-void printMeasureOwDelay(uint32_t* base, uint32_t offset) {
-
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  uint32_t *pSharedReg32;
-
-  *pSharedReg64 = owDelay.avg;
-  *(++pSharedReg64) = owDelay.min;
-  *(++pSharedReg64) = owDelay.max;
-  ++pSharedReg64;
-
-  pSharedReg32 = (uint32_t *)pSharedReg64;
-  *pSharedReg32 = owDelay.cntValid;
-  *(++pSharedReg32) = owDelay.cntTotal;
-
-  DBPRINT2("owd @0x%08x, avg=%llu, min=%lli, max=%llu, cnt=%d/%d\n",
-      pSharedReg64 - 3,
-      owDelay.avg, owDelay.min, owDelay.max, owDelay.cntValid, owDelay.cntTotal);
-}
-
 void measureTtlInterval(mpsTimParam_t* buf)
 {
   int64_t interval;
   uint64_t now = getSysTime();
+  msrSumStats_t* pStats = &sumStats[msr_ttl];
 
   // measure time interval
   if (!buf->prot.ttl) {
     interval = now - buf->prot.ts;
 
-    if (interval > 0) {
-      ttl.avg = (interval + (ttl.cntValid * ttl.avg)) / (ttl.cntValid + 1);
-      ++ttl.cntValid;
-
-      if (interval > ttl.max)
-        ttl.max = interval;
-
-      if (interval < ttl.min || !ttl.min)
-        ttl.min = interval;
-    }
-    ++ttl.cntTotal;
+    calculateSumStats(interval, pStats);
   }
 }
 
+/**
+ * \brief print result of the one-way delay measurement
+ *
+ * \param base   base address of the shared memory
+ * \param offset offset to the memory location
+ * \ret none
+ **/
+void printMeasureOwDelay(uint32_t* base, uint32_t offset) {
+
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  msrSumStats_t* pStats = &sumStats[msr_ow_dly];
+
+  DBPRINT2("owd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+      pSharedReg64,
+      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
+
+  wrSumStats(pStats, pSharedReg64);
+}
+
+/**
+ * \brief print result of the TTL measurement
+ *
+ * \param base   base address of the shared memory
+ * \param offset offset to the memory location
+ * \ret none
+ **/
 void printMeasureTtl(uint32_t* base, uint32_t offset) {
 
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
+  msrSumStats_t* pStats = &sumStats[msr_ttl];
+
+  DBPRINT2("ttl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+      pSharedReg64,
+      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
+
+  wrSumStats(pStats, pSharedReg64);
+}
+
+/**
+ * \brief calculate summary statistics
+ *
+ * \param value  measured value for calculation
+ * \param pStats pointer to summary statistics buffer
+ * \ret   count  total number of measurements
+ **/
+uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
+
+    if (value > 0) {
+      pStats->avg = (value + (pStats->cntValid * pStats->avg)) / (pStats->cntValid + 1);
+      ++pStats->cntValid;
+
+      if (value > pStats->max)
+        pStats->max = value;
+
+      if (value < pStats->min || !pStats->min)
+        pStats->min = value;
+    }
+
+    return ++pStats->cntTotal;
+}
+
+/**
+ * \brief write a specified summary statistics to a given memory location
+ *
+ * \param pStats       pointer to summary statistics (avg, min, max) buffer
+ * \param pSharedReg64 address of the shared memory location (64-bit)
+ * \ret none
+ **/
+void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
+
   uint32_t *pSharedReg32;
 
-  *pSharedReg64 = ttl.avg;
-  *(++pSharedReg64) = ttl.min;
-  *(++pSharedReg64) = ttl.max;
+  *pSharedReg64 = pStats->avg;
+  *(++pSharedReg64) = pStats->min;
+  *(++pSharedReg64) = pStats->max;
   ++pSharedReg64;
 
   pSharedReg32 = (uint32_t *)pSharedReg64;
-  *pSharedReg32 = ttl.cntValid;
-  *(++pSharedReg32) = ttl.cntTotal;
-
-  DBPRINT2("ttl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
-      pSharedReg64 - 3,
-      ttl.avg, ttl.min, ttl.max, ttl.cntValid, ttl.cntTotal);
+  *pSharedReg32 = pStats->cntValid;
+  *(++pSharedReg32) = pStats->cntTotal;
 }

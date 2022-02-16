@@ -16,35 +16,21 @@ struct msrCnt {
   uint32_t val;    // counter value
 };
 
-typedef struct msrPerfStats msrPerfStats_t;
-struct msrPerfStats {
-  uint64_t avgNwDelay;    // cumulative moving average network delay
-  uint64_t avgSgLatency;  // cumulative moving average signal latency
-  int64_t minNwDelay;     // minimum network delay
-  int64_t minSgLatency;   // minimum signal latency
-  uint64_t maxNwDelay;    // maximum network delay
-  uint64_t maxSgLatency;  // maximum signal latency
-  uint32_t cntNwDelay;    // number of delay measurement
-  uint32_t cntSgLatency;  // number of latency measurement
-  uint32_t cntTotal;      // total number of measurement
+typedef struct msrSumStats msrSumStats_t;
+struct msrSumStats {
+  uint64_t avg;          // cumulative moving average
+  int64_t  min;          // minimum value
+  uint64_t max;          // maximum value
+  uint32_t cntValid;     // number of valid measurement
+  uint32_t cntTotal;     // number of total measurement
 };
 
-typedef struct msrOwDelay msrOwDelay_t;
-struct msrOwDelay {
-  uint64_t avg;
-  int64_t  min;
-  uint64_t max;
-  uint32_t cntValid;
-  uint32_t cntTotal;
-};
-
-typedef struct msrTtlIval msrTtlIval_t;
-struct msrTtlIval {
-  uint64_t avg;
-  int64_t  min;
-  uint64_t max;
-  uint32_t cntValid;
-  uint32_t cntTotal;
+enum {
+  msr_nw_dly,  // network delay
+  msr_sg_lty,  // signaling latency
+  msr_ow_dly,  // one-way delay
+  msr_ttl,     // TTL threshold/interval
+  msr_all,
 };
 
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
@@ -57,6 +43,8 @@ void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
 void printMeasureOwDelay(uint32_t* base, uint32_t offset);
 void measureTtlInterval(mpsTimParam_t* buf);
 void printMeasureTtl(uint32_t* base, uint32_t offset);
+uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);
+void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64);
 
 /**
  * \brief count events

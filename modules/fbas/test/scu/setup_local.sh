@@ -294,7 +294,7 @@ result_nw_perf() {
     echo "count: 0x$cnt (${cnt_dec})"
 
     eb-write $1 $addr_cmd 0x32
-    echo "Results of network delay measurement:"
+    echo -n "Results of network delay measurement: "
     read_measurement_results $1 $addr_msr1
 }
 
@@ -302,7 +302,7 @@ result_ow_delay() {
     # $1 - dev/wbmo
 
     eb-write $1 $addr_cmd 0x33
-    echo "Results of one-way delay measurement:"
+    echo -n "Results of one-way delay measurement: "
     read_measurement_results $1 $addr_msr1
 }
 
@@ -310,7 +310,7 @@ result_ttl_ival() {
     # $1 - dev/wbmo
 
     eb-write $1 $addr_cmd 0x35
-    echo "Results of TTL interval measurement:"
+    echo -n "Results of TTL interval measurement:  "
     read_measurement_results $1 $addr_msr1
 }
 
