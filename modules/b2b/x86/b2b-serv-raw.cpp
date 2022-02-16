@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Nov-2021
+ *  version : 16-Feb-2022
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000315
+#define B2B_SERV_RAW_VERSION 0x000317
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -321,12 +321,14 @@ void disAddServices(char *prefix)
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
     disSetvalId[i]  = dis_add_service(name, "I:1;I:1;X:1;I:2;X:1;I:2;I:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    dis_set_timestamp(disSetvalId[i], 1, 1);
   } // for i
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
     disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:4;X:1;I:4;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    dis_set_timestamp(disGetvalId[i], 1, 1);
   } // for i
 } // disAddServices
 
