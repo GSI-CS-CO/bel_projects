@@ -1,6 +1,6 @@
 #! /bin/bash
-# hint: add alias getBuild='~/scripts/getBuild.sh <user:token>' to login script.
-echo -e get status of last build in json format
+# hint: add alias getBuild='~/scripts/getJenkinsLog.sh <user:token>' to login script.
+echo -e get console log of last build in html format
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <user:token> <job name, replace blanks by %20>" >&2
   echo "Job names are:"
@@ -13,5 +13,5 @@ if [ "$#" -ne 2 ]; then
   exit 1
 fi
 
-curl -X POST -L --user $1 http://tsl025.acc.gsi.de:8080/job/$2/lastBuild/api/json | python3 -m json.tool > buildResult_$2.json
-echo "Build result written to buildResult_$2.json"
+curl -X POST -L --user $1 http://tsl025.acc.gsi.de:8080/job/$2/lastBuild/console > buildLog_$2.html
+echo "Build log written to buildLog_$2.html"
