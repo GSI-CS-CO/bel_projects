@@ -21,39 +21,32 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
       if index < count:
         self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'PPS0' + x, '-t', y), [0])
         index = index + 1
-    output = self.startAndGetSubprocessOutput((self.binary_dm_cmd, self.datamaster), [0], 13 + count)
+    self.startAndGetSubprocessOutput((self.binary_dm_cmd, self.datamaster), [0], 13 + count)
+    self.check_dmThreads_Cmd()
 
   def test_dmThreads1(self):
     self.run_dmThreads(1)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads2(self):
     self.run_dmThreads(2)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads3(self):
     self.run_dmThreads(3)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads4(self):
     self.run_dmThreads(4)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads5(self):
     self.run_dmThreads(5)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads6(self):
     self.run_dmThreads(6)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads7(self):
     self.run_dmThreads(7)
-    self.check_dmThreads_Cmd()
 
   def test_dmThreads8(self):
     self.run_dmThreads(8)
-    self.check_dmThreads_Cmd()
 
   def analyse_dm_cmd_output(self, output):
     msgCounts = {}
