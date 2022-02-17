@@ -67,6 +67,36 @@ set_clock_groups -asynchronous \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|pll_pcie_clk \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|tx_bonding_clocks[0] \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|tx_clkout}] \
+-group [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|coreclkout \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|pma_hclk_by2 \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_clkout \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_fref \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_pma_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|tx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|pma_hclk_by2 \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|rx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|rx_clkout \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|rx_fref \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|rx_pma_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[1]|tx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|pma_hclk_by2 \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|rx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|rx_clkout \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|rx_fref \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|rx_pma_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[2]|tx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|pma_hclk_by2 \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|rx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|rx_clkout \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|rx_fref \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|rx_pma_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|g_xcvr_native_insts[3]|tx_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|hip_cmn_clk[0] \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|pld_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|pll_pcie_clk \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|tx_bonding_clocks[0] \
+                    main|\pcie_y:pcie|pcie_phy|\arria10gx_ftm4:hip|pcie_a10_hip_0|tx_clkout}] \
 -group [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|coreclkout \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|pma_hclk_by2 \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_clk \
@@ -159,6 +189,11 @@ set_clock_groups -asynchronous \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
+-group [get_clocks {main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|avmmclk \
+                    main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
+                    main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
+                    main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
+                    main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|avmmclk \
                     main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
                     main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
