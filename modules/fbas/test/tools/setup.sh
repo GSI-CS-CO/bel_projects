@@ -24,6 +24,12 @@ export FBASRX="dev/wbm2"
 export addr_cnt1="0x04060934/4"  # shared memory location for received frames counter
 export addr_msr1="0x04060968"    # shared memory location for measurement results
 export addr_cmd="0x04060508/4"   # shared memory location for command buffer
+
+export cmd_wr_tx_delay=0x32      # transmission delay
+export cmd_wr_ow_delay=0x33      # one-way delay
+export cmd_wr_sg_latency=0x34    # signalling latency
+export cmd_wr_ow_ttl_ival=0x35   # TTL interval
+
 module_dir="${PWD/fbas*/fbas}"
 fw_dir="$module_dir/fw"
 fw_tx="$fw_dir/fbas.pcicontrol.bin"
@@ -480,11 +486,44 @@ function start_test3() {
 
     eb-write $FBASTX $addr_cmd 0x32  # get network delay
     echo -n "Transmission delay: "
-    read_measurement_results $addr_msr1
+    read_measurement_results $FBASTX $addr_msr1
 
     eb-write $FBASTX $addr_cmd 0x34  # get signalling latency
     echo -n "Signalling latency: "
-    read_measurement_results $addr_msr1
+    read_measurement_results $FBASTX $addr_msr1
+
+    result_ttl_ival $FBASRX
+
+    echo -e "\nMeasure TTL interval\n"
+    measure_ttl_ival
+}
+
+measure_ttl_ival() {
+    echo -n "enable MPS operation of RX: "
+    enable_mps $FBASRX
+
+    echo -e "toggle MPS operation of TX:\n"
+    for i in $(seq 1 10); do
+        echo -en "   $i : enable  "
+        enable_mps $FBASTX
+        sleep 1
+        echo -en "   $i : disable "
+        disable_mps $FBASTX
+        sleep 2
+    done
+
+    echo -n "disable MPS operation of RX: "
+    disable_mps $FBASRX
+
+    result_ttl_ival $FBASRX
+}
+
+result_ttl_ival() {
+    # $1 - dev/wbmo
+
+    eb-write $1 $addr_cmd $cmd_wr_ow_ttl_ival
+    echo -n "TTL interval: "
+    read_measurement_results $1 $addr_msr1
 }
 
 function disable_mps() {
@@ -580,28 +619,30 @@ function report_two_senders_result() {
 }
 
 function read_measurement_results() {
-    # $1 - shared memory location where measurement results are stored
+    # $1 - TR device (ie., dev/wbm0)
+    # $2 - shared memory location where measurement results are stored
 
-    addr_msr=$1
+    device=$1
+    addr_msr=$2
 
-    avg=$(eb-read -q $FBASTX ${addr_msr}/8)
+    avg=$(eb-read -q $device ${addr_msr}/8)
     avg_dec=$(printf "%d" 0x$avg)
     #echo "avg= 0x$avg (${avg_dec})"
 
     addr_msr=$(( $addr_msr + 8 ))
-    min=$(eb-read -q $FBASTX ${addr_msr}/8)
+    min=$(eb-read -q $device ${addr_msr}/8)
     min_dec=$(printf "%lli" 0x$min)
 
     addr_msr=$(( $addr_msr + 8 ))
-    max=$(eb-read -q $FBASTX ${addr_msr}/8)
+    max=$(eb-read -q $device ${addr_msr}/8)
     max_dec=$(printf "%d" 0x$max)
 
     addr_msr=$(( $addr_msr + 8 ))
-    cnt_val=$(eb-read -q $FBASTX ${addr_msr}/4)
+    cnt_val=$(eb-read -q $device ${addr_msr}/4)
     cnt_val_dec=$(printf "%d" 0x$cnt_val)
 
     addr_msr=$(( $addr_msr + 4 ))
-    cnt_all=$(eb-read -q $FBASTX ${addr_msr}/4)
+    cnt_all=$(eb-read -q $device ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
     echo "avg=${avg_dec} min=${min_dec} max=${max_dec} cnt=${cnt_val_dec}/${cnt_all_dec}"
 }
