@@ -202,6 +202,8 @@ architecture rtl of ftm4dp is
   signal s_lvds_p_o     : std_logic_vector(2 downto 0);
   signal s_lvds_term    : std_logic_vector(2 downto 0);
 
+  signal s_sfp_disable : std_logic;
+
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
   signal s_clk_125m_local_i     : std_logic;
