@@ -1,0 +1,8 @@
+TARGET		= ftm4dp
+DEVICE		= 10AX048E3F
+FLASH		= EPCQL512
+SPI_LANES	= ASx4
+RAM_SIZE	= 262144
+SKIP_JIC	= yes
+
+include ../../build.mk
