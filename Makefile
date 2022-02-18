@@ -39,6 +39,7 @@ CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
+CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
@@ -56,6 +57,7 @@ PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
+PATH_FTM4DP            = syn/gsi_scu/ftm4dp
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_FTM               = syn/gsi_pexarria5/ftm
 PATH_PEXARRIA10        = syn/gsi_pexarria10/control
@@ -366,6 +368,18 @@ ftm4-check:
 	$(call check_timing, $(CHECK_FTM4))
 
 ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4dp-clean::
 	$(MAKE) -C $(PATH_FTM4) clean
 
 a10gx_pcie::	firmware
