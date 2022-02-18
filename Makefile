@@ -371,16 +371,16 @@ ftm4-clean::
 	$(MAKE) -C $(PATH_FTM4) clean
 
 ftm4dp:		firmware
-	$(MAKE) -C $(PATH_FTM4) all
+	$(MAKE) -C $(PATH_FTM4DP) all
 
 ftm4dp-sort:
-	$(call sort_file, $(CHECK_FTM4))
+	$(call sort_file, $(CHECK_FTM4DP))
 
 ftm4dp-check:
-	$(call check_timing, $(CHECK_FTM4))
+	$(call check_timing, $(CHECK_FTM4DP))
 
 ftm4dp-clean::
-	$(MAKE) -C $(PATH_FTM4) clean
+	$(MAKE) -C $(PATH_FTM4DP) clean
 
 a10gx_pcie::	firmware
 	$(MAKE) -C $(PATH_A10GX) all
