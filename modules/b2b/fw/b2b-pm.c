@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Dec-2021
+ *  version : 18-Feb-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000315                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000318                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -472,7 +472,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDINJ :
       if (!sendEvtNo) 
         sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
-      if(!flagPMError) {                                              // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
+      /* if(!flagPMError) {  enable this again for improved frequency measurement */       // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
 
         recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
         recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
@@ -501,7 +501,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendParam   |= (uint64_t)( dtMatch & 0xffffffff);             // low word; match diagnostic
         sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
-      } // if not pm error
+        /*}*/ // if not pm error
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
 
