@@ -10,7 +10,7 @@ syn_top = "ftm4dp"
 syn_project = "ftm4dp"
 syn_family = "Arria 10"
 
-quartus_preflow = "ftm4.tcl"
+quartus_preflow = "ftm4dp.tcl"
 
 modules = {
   "local" : [
