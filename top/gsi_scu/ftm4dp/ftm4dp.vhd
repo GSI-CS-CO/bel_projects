@@ -283,7 +283,7 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
-      wbar_phy_dis_o          => sfp_tx_disable_o,
+      wbar_phy_dis_o          => s_sfp_disable,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
