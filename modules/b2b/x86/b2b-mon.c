@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2022
+ *  version : 18-Feb-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000317
+#define B2B_MON_VERSION 0x000318
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -70,12 +70,14 @@ setval_t   dicSetval[NALLSID];
 getval_t   dicGetval[NALLSID];
 diagval_t  dicDiagval[NALLSID];
 diagstat_t dicDiagstat[NALLSID];
+nueMeas_t  dicNueMeasExt[NALLSID];
 char       dicPName[NALLSID][DIMMAXSIZE];
 
 uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
 uint32_t  dicDiagvalId[NALLSID];
 uint32_t  dicDiagstatId[NALLSID];
+uint32_t  dicNueMeasExtId[NALLSID];
 uint32_t  dicPNameId[NALLSID];
 
 #define  TXTNA       "  N/A"
@@ -112,6 +114,7 @@ time_t   secsOffset;                                        // offset between ti
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
 int      flagPrintInactive;                                 // flag: print inactive SIDs too
+int      flagPrintNue;                                      // flag: print frequency data
 int      flagPrintSis18;                                    // flag: print SIDs for SIS18
 int      flagPrintEsr;                                      // flag: print SIDs for ESR
 int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
@@ -121,11 +124,15 @@ int      modeMask;                                          // mask: marks event
 
 char     title[SCREENWIDTH+1];                              // title line to be printed
 char     footer[SCREENWIDTH+1];                             // footer line to be printed
-char     header[SCREENWIDTH+1];                             // header line to be printed
-char     empty[SCREENWIDTH+1];                              // empty line to be printed
-char     printLine[NALLSID][SCREENWIDTH+1];                 // lines to be printed
+char     headerK[SCREENWIDTH+1];                            // header line to be printed; header for kicker info
+char     headerN[SCREENWIDTH+1];                            // header line to be printed; header for frequency info
+char     emptyK[SCREENWIDTH+1];                             // empty line to be printed; kicker info
+char     emptyN[SCREENWIDTH+1];                             // empty line to be printed; frequency info
+char     printLineK[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for kicker info
+char     printLineN[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for frequency info
 
 
+// help
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <name>\n", program);
   fprintf(stderr, "\n");
@@ -172,8 +179,10 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 
 void buildHeader()
 {
-  sprintf(header, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
-  sprintf(empty , "|                     |              |        |    |             |                          |        |        |                                      |");
+  sprintf(headerK, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
+  sprintf(emptyK,  "|                     |              |        |    |             |                          |        |        |                                      |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS  set         get(stdev)diff[Hz] |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
+  sprintf(emptyN,  "|                     |              |        |    |                                        |        |        |                                      |");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
@@ -194,6 +203,7 @@ void buildPrintLine(uint32_t idx)
   char     b2b[64];
   char     extTrig[64];
   char     injTrig[64];
+  char     nueMeasExt[128];
   char     tmp1[32];
   char     tmp2[32];
   char     tmp3[32];
@@ -221,7 +231,7 @@ void buildPrintLine(uint32_t idx)
     case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  break;
     case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   break;
     case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    break;
-    default      : sprintf(origin, "UNKNWN"); sprintf(tmp1, " ");    break;
+    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    break;
   } // switch ring
 
   // pattern name
@@ -241,7 +251,7 @@ void buildPrintLine(uint32_t idx)
     case 2 : sprintf(dest, "target");   flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
     case 3 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1; break;
     case 4 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagExtNue = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    default: sprintf(dest, "UNKNWN");   flagTCBS = 0; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -252,10 +262,20 @@ void buildPrintLine(uint32_t idx)
 
   if (flagExtNue) {
     if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
-    else                                        sprintf(extNue, "%7.3f", set_extNue[idx]);
+    else                                        sprintf(extNue, "%11.3f", set_extNue[idx]);
+    if (dicNueMeasExt[idx].nTS > 2) {
+      if (dicNueMeasExt[idx].nueErr > 10.0)     sprintf(tmp1, " > 10");
+      else                                      sprintf(tmp1, "%5.3f", dicNueMeasExt[idx].nueErr);
+      if (fabs(dicNueMeasExt[idx].nueDiff)>100) sprintf(tmp2, "  > 100");
+      else                                      sprintf(tmp2, "%7.3f", dicNueMeasExt[idx].nueDiff);
+      sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", dicNueMeasExt[idx].nueSet, dicNueMeasExt[idx].nueGet, tmp1, tmp2);
+    } // if nTS
+    else                                        sprintf(nueMeasExt, "ERROR: no RF signal detected");
   } // if flagExtNue
-  else               sprintf(extNue, "---");
-
+  else {
+    sprintf(extNue, "---");
+    sprintf(nueMeasExt, "---");
+  }
   if (flagB2b) {
     if ((dicGetval[idx].flagEvtErr >> 3) & 0x1) sprintf(b2b, "%s",  TXTERROR);
     else                                        sprintf(b2b, "%6d", dicDiagval[idx].phaseOffAct);
@@ -316,8 +336,9 @@ void buildPrintLine(uint32_t idx)
   } // if flagExtTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLine[idx], "|%20s | %12s | %6s | %2d | %11s | %24s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, extNue, extTrig, dest, b2b, injTrig);
-  //               printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
+  sprintf(printLineK[idx], "|%20s | %12s | %6s | %2d | %11s | %24s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, extNue, extTrig, dest, b2b, injTrig);
+  sprintf(printLineN[idx], "|%20s | %12s | %6s | %2d | %38s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, nueMeasExt, dest, b2b, injTrig);
+  //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
 
@@ -400,23 +421,27 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
 
   sprintf(name, "%s_%s-raw_sid%02d_setval", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicSetvalId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, (long)idx, &no_link_32, sizeof(uint32_t));
+  dicSetvalId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, (long)idx, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-raw_sid%02d_getval", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicGetvalId[idx]   = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicGetvalId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_diag_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicDiagvalId[idx]  = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicDiagvalId[idx]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_stat_sid%02d", prefix, ringName,  sid);
   /* printf("name %s\n", name); */
-  dicDiagstatId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicDiagstatId[idx]   = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+
+  sprintf(name, "%s_%s-other-rf_sid%02d_ext", prefix, ringName,  sid);
+  /* printf("name %s\n", name); */
+  dicNueMeasExtId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicNueMeasExt[idx]), sizeof(nueMeas_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name,"%s_%s-pname_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name);*/
-  dicPNameId[idx]    = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
+  dicPNameId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 } // dicSubscribeServices
 
 
@@ -475,14 +500,21 @@ void printData(char *name)
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                              %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d> | help <h>                                            %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
   printf("%s\n", title);
-  printf("%s\n", header);
-  for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLine[i]);
-  if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", empty);
+  if (flagPrintNue) {
+    printf("%s\n", headerN);
+    for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLineN[i]);
+    if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", emptyN);
+  } // if printNue
+  else {
+    printf("%s\n", headerK);
+    for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLineK[i]);
+    if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", emptyK);      
+  } // else printNue
   printf("%s\n", footer);
   
   //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
@@ -500,11 +532,11 @@ void printHelpText()
   comlib_term_curpos(1,1);
   printf("%s\n", title);
   
-  for (i=0; i<15; i++) printf("%s\n", empty);
+  for (i=0; i<15; i++) printf("%s\n", emptyK);
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("please visit the following URL                                                    \n");
   printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_Monitor             \n");
-  printf("%s\n", empty);
+  printf("%s\n", emptyK);
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
 } // printHelpText
@@ -533,6 +565,7 @@ int main(int argc, char** argv)
   flagPrintSis18    = 1;
   flagPrintEsr      = 1;
   flagPrintYr       = 1;
+  flagPrintNue      = 0;
 
   while ((opt = getopt(argc, argv, "eh")) != -1) {
     switch (opt) {
@@ -577,7 +610,8 @@ int main(int argc, char** argv)
   
   for (i=0; i<NALLSID; i++) {
     flagSetUpdate[i] = 0;
-    sprintf(printLine[i], "not initialized");
+    sprintf(printLineK[i], "not initialized");
+    sprintf(printLineN[i], "not initialized");
     dicSubscribeServices(prefix, i);
   } // for i
   buildHeader();
@@ -622,6 +656,10 @@ int main(int argc, char** argv)
           break;
         case '2' :
           flagPrintYr = !flagPrintYr;
+          flagPrintNow = 1;
+          break;
+        case 'd' :
+          flagPrintNue = !flagPrintNue;
           flagPrintNow = 1;
           break;
         case 'h'         :
