@@ -519,6 +519,8 @@ int fbMain( int argc, char** ppArgv )
             }
             case HOT_KEY_RESET:
             {
+               //pDaqAdmin = nullptr; //!!!!!!
+               //*static_cast<int*>(0) = 4711;
                pDaqAdmin->reset();
                if( cmdLine.isVerbose() )
                   cout << "Reset" << endl;

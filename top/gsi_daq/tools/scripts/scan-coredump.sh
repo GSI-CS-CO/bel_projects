@@ -148,7 +148,7 @@ do
 done
 
 
-if [ ! "${HOSTNAME:0:5}" = "asl74" ]
+if [ ! "${HOSTNAME:0:4}" = "asl7" ]
 then
    die "This script can run on ASL-cluster only!"
 fi
