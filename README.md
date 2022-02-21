@@ -37,7 +37,7 @@ GSI Timing Gateware and Tools
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
       - [ArriaV Devices](#arriav-devices)
-      - [Arria10 Devices](#arriav10-devices)
+      - [Arria10 Devices](#arria10-devices)
 
 # Build Instructions
 ## Checkout
