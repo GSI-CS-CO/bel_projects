@@ -187,6 +187,7 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 	if (edge_times_ns.size() < 3) {
 		return;
 	}
+	assert(std::is_sorted(edge_times_ns.begin(), edge_times_ns.end()));
 
 	// Ignore edge_times_ns[0]. Assume that edge_times_ns[1] and edge_times_ns[2] are valid points
 	lin_reg_all.add_point(1, edge_times_ns[1]);
@@ -420,7 +421,7 @@ struct DataAcquisition {
 	void finish_measurement(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint8_t flags) {
 		if (!measuring) return;
 		measuring = false;
-
+		std::sort(measurements.begin(), measurements.end()); // FrequencyMeasurement expects sorted data
 		FrequencyMeasurement result(measurements);
 		if (result.valid) {
 			if (verbose) {
