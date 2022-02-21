@@ -37,6 +37,7 @@ GSI Timing Gateware and Tools
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
       - [ArriaV Devices](#arriav-devices)
+      - [Arria10 Devices](#arriav10-devices)
 
 # Build Instructions
 ## Checkout
@@ -257,18 +258,31 @@ Problem: Flashing might fail sometimes on certain devices and host combinations.
 
 Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
 
-Optional (before using eb-flash):
+Optional (BEFORE using eb-flash):
 ```
 eb-reset $device wddisable # disable watchdog timer
 eb-reset $device cpuhalt 0xff # stop all embedded CPUs
 ```
 
+Optional (AFTER using eb-flash):
+```
+eb-reset $device fpgareset # reset FPGA
+```
+
 #### Arria2 Devices
 ```
-eb-flash -s 0x40000 -w 3 $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
+(problematic devices) eb-flash -s 0x40000 -w 3 $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
+(unproblematic devices) eb-flash $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
 ```
 
 #### ArriaV Devices
 ```
-eb-flash -s 0x10000 -w 3 $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
+(problematic devices) eb-flash -s 0x10000 -w 3 $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
+(unproblematic devices) eb-flash $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
+```
+
+#### Arria10 Devices
+```
+eb-aswi $device -w $gateware.rpd (write)
+eb-aswi $device -v $gateware.rpd (verify)
 ```
