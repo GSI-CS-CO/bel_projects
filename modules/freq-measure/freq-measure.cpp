@@ -95,6 +95,9 @@ struct LinearRegression {
 		var_b = N / D;
 		covar_ab = - x_sum / D;
 	}
+	int get_N() {
+		return N;
+	}
 	double get_a() const {
 		return a;
 	}
@@ -205,7 +208,7 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 	int64_t previous_number = 0; // keep track of the last period number 
 
 	// loop over all data points (make sure that points edge_times_ns[0],[1],[2] are not used again)
-	for (int i = 0; i < edge_times_ns.size(); ++i) {
+	for (int i = 0; i < (int)edge_times_ns.size(); ++i) {
 		// calculate the period number based on the time (round to nearest integer)
 		int64_t number = round(lin_reg_all.get_x(edge_times_ns[i]));
 		// a new burst is detected if the period number jumps by more than 10
@@ -226,7 +229,7 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 	}
 	
 	// calculate chi^2
-	for (int i = 0; i < points.size(); ++i) {
+	for (int i = 0; i < (int)points.size(); ++i) {
 		double x = points[i].number;
 		double y = points[i].time_ns;
 		double sigma = sqrt(1.0/12.0); // = 0.288
@@ -260,8 +263,13 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 			lin_reg_freq_slope.add_point(burst_time, burst_freq);
 			max_freq_sigma = std::max(max_freq_sigma, burst_measurement.freq_sigma_Hz);
 		}
-		freq_slope_kHz_s       = 1e6*lin_reg_freq_slope.get_b();
-		freq_slope_sigma_kHz_s = 1e6*sqrt(lin_reg_freq_slope.get_var_b())*max_freq_sigma;
+		if (lin_reg_freq_slope.get_N() > 1) {
+			freq_slope_kHz_s       = 1e6*lin_reg_freq_slope.get_b();
+			freq_slope_sigma_kHz_s = 1e6*sqrt(lin_reg_freq_slope.get_var_b())*max_freq_sigma;
+		} else {
+			freq_slope_kHz_s       = 0;
+			freq_slope_sigma_kHz_s = 0;
+		}
 	}
 
 	valid = true;
@@ -306,11 +314,11 @@ double test(double freq) {
 struct DataAcquisition {
 	std::vector<int64_t> measurements;
 	uint64_t measurement_start_time;
-	int SID;
+	uint64_t SID;
 	double expected_period_ns;
 	double expected_frequency_Hz;
 	std::shared_ptr<saftlib::TimingReceiver_Proxy> timingreceiver;
-	int GID;
+	uint64_t GID;
 	bool verbose;
 	bool measuring;
 	const uint64_t EVALUATE_DATA_EVENT = 0x0000000011011011;
@@ -371,7 +379,7 @@ struct DataAcquisition {
 		mask  = 0xffffffffffffffff;
 		add_condition(event, mask)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::finish_measurement));
 
-		for (int i = 0; i < result_for_sid.size(); ++i) {
+		for (int i = 0; i < (int)result_for_sid.size(); ++i) {
 			std::ostringstream service_name;
 			service_name << "b2b_" << instance << "_" << ring << "-other-rf_sid" << std::setw(2) << std::setfill('0') << std::dec << i << "_ext";
 			service_ids[i] = dis_add_service(service_name.str().c_str(), "D:7;I:3", &result_for_sid[i], sizeof(result_for_sid[i]), 0, 0);
@@ -381,7 +389,7 @@ struct DataAcquisition {
 		}
 	}
 
-	bool match_event(uint64_t event, int GID, int EVT) {
+	bool match_event(uint64_t event, uint64_t GID, uint64_t EVT) {
 		return ((event & 0x0fff000000000000) >> (12*4) == GID) && ((event & 0x0000fff000000000) >> (9*4) == EVT);
 	}
 	int get_sid(uint64_t event) {
