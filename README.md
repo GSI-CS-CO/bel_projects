@@ -283,6 +283,6 @@ eb-reset $device fpgareset # reset FPGA
 
 #### Arria10 Devices
 ```
-eb-aswi $device -w $gateware.rpd (write)
-eb-aswi $device -v $gateware.rpd (verify)
+eb-asmi $device -w $gateware.rpd (write)
+eb-asmi $device -v $gateware.rpd (verify)
 ```
