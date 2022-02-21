@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2022
+ *  version : 21-Feb-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -263,14 +263,17 @@ void buildPrintLine(uint32_t idx)
   if (flagExtNue) {
     if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
     else                                        sprintf(extNue, "%11.3f", set_extNue[idx]);
-    if (dicNueMeasExt[idx].nTS > 2) {
-      if (dicNueMeasExt[idx].nueErr > 10.0)     sprintf(tmp1, " > 10");
-      else                                      sprintf(tmp1, "%5.3f", dicNueMeasExt[idx].nueErr);
-      if (fabs(dicNueMeasExt[idx].nueDiff)>100) sprintf(tmp2, "  > 100");
-      else                                      sprintf(tmp2, "%7.3f", dicNueMeasExt[idx].nueDiff);
-      sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", dicNueMeasExt[idx].nueSet, dicNueMeasExt[idx].nueGet, tmp1, tmp2);
-    } // if nTS
-    else                                        sprintf(nueMeasExt, "ERROR: no RF signal detected");
+    if (*(uint32_t *)&(dicNueMeasExt[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
+    else {
+      if (dicNueMeasExt[idx].nTS > 2) {
+        if (dicNueMeasExt[idx].nueErr > 10.0)     sprintf(tmp1, " > 10");
+        else                                      sprintf(tmp1, "%5.3f", dicNueMeasExt[idx].nueErr);
+        if (fabs(dicNueMeasExt[idx].nueDiff)>100) sprintf(tmp2, "  > 100");
+        else                                      sprintf(tmp2, "%7.3f", dicNueMeasExt[idx].nueDiff);
+        sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", dicNueMeasExt[idx].nueSet, dicNueMeasExt[idx].nueGet, tmp1, tmp2);
+      } // if nTS
+    else                                          sprintf(nueMeasExt, "ERROR: no RF signal detected %x ", *(uint32_t *)&(dicNueMeasExt[idx]));
+    } // else NOLINK
   } // if flagExtNue
   else {
     sprintf(extNue, "---");
