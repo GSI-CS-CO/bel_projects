@@ -5,11 +5,68 @@
 %\DeclareGraphicsExtensions{.pdf,.jpeg,.png,.jpg} 
 
 
+
 \input{carpeDMglosentries_sched}
 \input{carpeDMglosentries_cmd}
 \input{carpeDMglosentries_id}
 \glsaddall
 %\printglossary[type=\acronymtype,style=long]  % list of acronyms
+
+\newcommand{\noedge}{-- &  & \\} 
+\newcommand{\edge}[2]{\gls*{#1} & #2 &\glsdesc*{#1}\\} %glossary tag count
+\newcommand{\shortedge}[2]{\gls*{#1} & #2 & See \gls{#1}\\} 
+\newcommand{\shortattrib}[1]{\gls*{#1} & See \gls{#1}\\}
+\newcommand{\attrib}[1]{\gls*{#1} & \glsdesc*{#1}\\}
+
+\newcommand{\attribtable}[5]{
+  {\Huge #1}\\
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabularx}{\textwidth}{>{\bfseries}lX}
+  \toprule
+  Mandatory Attributes&\\
+  \midrule
+  \gls*{sched:type} & Must be \MakeLowercase{#1}, obviously. See \gls{sched:type}\\
+  \attrib{sched:cpu}
+  \attrib{sched:pattern}
+  #2
+  Optional Attributes&\\
+  \midrule
+  #3
+  \end{tabularx} 
+  \begin{tabularx}{\textwidth}{>{\bfseries}lrX}
+  Outgoing Edges&Qty\\
+  \midrule
+  #4
+  Incoming Edges&Qty\\
+  \midrule
+  #5
+  \end{tabularx}  
+}
+\newpage
+\attribtable{Block}{
+  \attrib{sched:tperiod}
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:qlo}
+  \attrib{sched:qhi}
+  \attrib{sched:qil}
+}{
+  \edge{edge:defdst}{0..1}
+  \edge{edge:altdst}{0..10}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \shortedge{edge:altdst}{0..n}
+}
+\vspace*{2em}
+
+\attribtable{Timing Message}{
+  \attrib{sched:cpu}
+  \attrib{sched:tperiod}
+}{
+  \attrib{sched:cpu}
+  \attrib{sched:tperiod}
+}{}{}
 
 %\glsadd{n_dest}
 \printglossary[type=sched, style=symbvaltypelong, nonumberlist]   % list of symbols
@@ -35,7 +92,7 @@
 \hline
 \multirow{2}{*}{Attribute}  & \multicolumn{7}{c|}{Schedule Node Type} \\
  \cline{2-8}
- & tmsg       & noop       & flow       & flush      & wait       & block      & blockalign \\
+          & tmsg       & noop       & flow       & flush      & wait       & block      & blockalign \\
 \hline
 cpu       & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 thread    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
@@ -46,17 +103,17 @@ bpentry   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \ch
 bpexit    & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
 beamproc  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 tperiod   & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
-qil       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
-qhi       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
-qlo       & --         & --         & \checkmark & --         & --         & \checkmark & -- \\       
-toffs     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
-id        & \checkmark & --         & --         & --         & --         & --         & -- \\       
-tvalid    & --         & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
-vabs      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & -- \\       
-prio      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & -- \\       
-qty       & \checkmark & \checkmark & --         & --         & --         & --         & -- \\       
-twait     & --         & --         & --         & \checkmark & --         & --         & -- \\       
-permanent & --         & --         & \checkmark & \checkmark & --         & --         & -- \\       
+qil       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
+qhi       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
+qlo       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
+toffs     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\       
+id        & \checkmark & --         & --         & --         & --         & --         & --         \\       
+tvalid    & --         & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\       
+vabs      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\       
+prio      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\       
+qty       & \checkmark & \checkmark & --         & --         & --         & --         & --         \\       
+twait     & --         & --         & --         & \checkmark & --         & --         & --         \\       
+permanent & --         & --         & \checkmark & \checkmark & --         & --         & --         \\       
 \hline
 \end{tabular}
 \end{table}
@@ -95,7 +152,7 @@ permanent & --         & --         & \checkmark & \checkmark & --         & -- 
 \hline
  Attribute & \multicolumn{6}{c|}{Cmd Node Type I} \\
  \hline
-         & start      & stop       &  noop      & flow       & flush      & wait       \\
+                  & start      & stop       &  noop      & flow       & flush      & wait       \\
 \hline
 cpu               & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 thread            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
@@ -111,9 +168,9 @@ qlo               & --         & --         & --         & --         & \checkma
 tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
 vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
 prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
-qty               & --         & --         & \checkmark & --         & --         & --         \\       
-twait             & --         & --         & --         & --         & \checkmark & --         \\       
-permanent         & --         & --         & --         & \checkmark & \checkmark & --         \\       
+qty               & --         & --         & \checkmark & \checkmark & --         & --         \\       
+twait             & --         & --         & --         & --         & --         & \checkmark \\       
+permanent         & --         & --         & --         & \checkmark & --         & --         \\       
 \hline
 \end{tabular}
 \end{table}
