@@ -194,6 +194,11 @@ set_clock_groups -asynchronous \
                     main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
                     main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
+-group [get_clocks {main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|avmmclk \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
+                    main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|avmmclk \
                     main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
                     main|\dual_port_wr:phy_aux_a10:phy_aux|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
