@@ -6,6 +6,8 @@ files = [
   "fg_quad/fg_quad_datapath.vhd",
   "fg_quad/wbmstr_core.vhd",
   "fg_quad/fg_quad_ifa.vhd",
+  "fg_quad/fg_quad_statistics.vhd",
+  "fg_quad/ring_buffer.vhd"
 ]
 
 modules = {"local" : ["serdes_clk_gen/"]}
