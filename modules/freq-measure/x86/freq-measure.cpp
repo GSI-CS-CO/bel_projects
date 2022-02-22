@@ -356,7 +356,7 @@ struct DataAcquisition {
 			GID = SIS18_B2B_EXTRACT;
 		} else if (ring == "esr") {
 			GID = ESR_B2B_EXTRACT;
-		} else if (ring == "cy") {
+		} else if (ring == "yr") {
 			GID = CRYRING_B2B_EXTRACT;
 		} else {
 			throw std::runtime_error(std::string("DataAcquisition error: unknown ring ") + ring);
@@ -484,7 +484,7 @@ struct DataAcquisition {
 std::string help(std::string argv0) {
 	std::ostringstream out;
 	out << "usage: " << argv0 << " <ring> <environment> [options]" << std::endl;
-	out << "  <ring>        : either sis18, esr, or cy. Host system is the PM for <ring> extraction."      << std::endl;
+	out << "  <ring>        : either sis18, esr, or yr. Host system is the PM for <ring> extraction."      << std::endl;
 	out << "  <environment> : either pro, or int. Host system runs production or integration environment." << std::endl;
 	out << std::endl;
 	out << " options:"                                                                                     << std::endl;
@@ -504,7 +504,7 @@ int main(int argc, char **argv){
 			return 1;
 		}
 
-		std::string ring; // sis18, esr, cy
+		std::string ring; // sis18, esr, yr
 		std::string instance;
 		bool verbose = false;
 		std::string device_name = "tr0";
@@ -516,7 +516,7 @@ int main(int argc, char **argv){
 
 			if (argvi == "sis18") ring     = argvi;
 			if (argvi == "esr")   ring     = argvi;
-			if (argvi == "cy")    ring     = argvi;
+			if (argvi == "yr")    ring     = argvi;
 			if (argvi == "pro")   instance = argvi;
 			if (argvi == "int")   instance = argvi;
 
@@ -550,7 +550,7 @@ int main(int argc, char **argv){
 			}
 		}
 		if (!ring.size()) {
-			std::cerr << "no ring name given. use sis18 or esr or cy" << std::endl;
+			std::cerr << "no ring name given. use sis18 or esr or yr" << std::endl;
 			return 1;
 		}
 		if (!instance.size()) {
