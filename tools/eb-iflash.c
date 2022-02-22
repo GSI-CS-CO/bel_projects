@@ -64,6 +64,9 @@
 #define MIL_SIO3_D_RCVD   0xe00
 #define MIL_SIO3_D_ERR    0xe10
 #define MIL_SIO3_TX_REQ   0xe20
+#define TASKMIN           1
+#define TASKMAX           254
+#define TASK              40
 #define   OKAY                 1
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
@@ -178,40 +181,47 @@ void show_help() {
   printf("-r <file>      read flash image into file\n");
 }
 
-/* blocking read usign task slot1 */
-int devb_read(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
+/* blocking read usign a task slot */
+int devb_read(eb_address_t base, int task, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
   eb_data_t rx_data_avail;
   eb_data_t rx_err;
+  unsigned int reg_offset;
+  unsigned int bit_offset;
   //eb_data_t rx_req;
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
 
+  // fetch avail and err bits
+  reg_offset = task / 16;
+  bit_offset = task % 16;
   if (!(fc >> 7))  {
     printf("not a read fc!\n");
     exit(1);
   } else {
     // write fc and addr to taskram
-    if ((eb_device_write(device, base + MIL_SIO3_TX_TASK1 * 4, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK)
+    if ((eb_device_write(device, base + (MIL_SIO3_TX_TASK1 + task - 1) * 4, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK)
       return RCV_TASK_ERR;
     // wait for task to finish, a read over the dev bus needs at least 40us
-    if ((eb_device_read(device, base + MIL_SIO3_D_RCVD * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+    if ((eb_device_read(device, base + (MIL_SIO3_D_RCVD + reg_offset) * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
       return RCV_TASK_ERR;
       
-    while(!(rx_data_avail & 0x2)) {
+    while(!(rx_data_avail & (1 << bit_offset))) {
       usleep(1);
-      if ((eb_device_read(device, base + MIL_SIO3_D_RCVD * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+      if ((eb_device_read(device, base + (MIL_SIO3_D_RCVD + reg_offset) * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
         return RCV_TASK_ERR;
     }
 
     // task finished
-    if ((eb_device_read(device, base + MIL_SIO3_D_ERR * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_err, 0, eb_block)) != EB_OK)
+    if ((eb_device_read(device, base + (MIL_SIO3_D_ERR + reg_offset) * 4, EB_DATA32|EB_BIG_ENDIAN, &rx_err, 0, eb_block)) != EB_OK)
       return RCV_ERROR;
 
     // no error
-    if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
-      if ((eb_device_read(device, base + MIL_SIO3_RX_TASK1 * 4, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK)
+    if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
+      if ((eb_device_read(device, base + (MIL_SIO3_RX_TASK1 + task - 1) * 4, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK)
       return OKAY;
     // error bit set
     } else {
-      if ((eb_device_read(device, base + MIL_SIO3_RX_TASK1 * 4, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK) {
+      if ((eb_device_read(device, base + (MIL_SIO3_RX_TASK1 + task - 1) * 4, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK) {
         if ((*read_value & 0xffff) == 0xdead)
           return RCV_PARITY;
         else
@@ -223,40 +233,47 @@ int devb_read(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t* read
 
   }
 }
-/* blocking read usign task slot1 */
-int scub_devb_read(eb_address_t base, int slot, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
+/* blocking read usign a task slot */
+int scub_devb_read(eb_address_t base, int task, int slot, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
   eb_data_t rx_data_avail;
   eb_data_t rx_err;
+  unsigned int reg_offset;
+  unsigned int bit_offset;
   //eb_data_t rx_req;
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
 
+  // fetch avail and err bits
+  reg_offset = task / 16;
+  bit_offset = task % 16;
   if (!(fc >> 7))  {
     printf("not a read fc!\n");
     exit(1);
   } else {
     // write fc and addr to taskram
-    if ((eb_device_write(device, base + CALC_OFFS(slot) + MIL_SIO3_TX_TASK1 * 2, EB_DATA16|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK)
+    if ((eb_device_write(device, base + CALC_OFFS(slot) + (MIL_SIO3_TX_TASK1 + task - 1)  * 2, EB_DATA16|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK)
       return RCV_TASK_ERR;
     // wait for task to finish, a read over the dev bus needs at least 40us
-    if ((eb_device_read(device, base + CALC_OFFS(slot) +  MIL_SIO3_D_RCVD * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+    if ((eb_device_read(device, base + CALC_OFFS(slot) +  (MIL_SIO3_D_RCVD + reg_offset) * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
       return RCV_TASK_ERR;
       
-    while(!(rx_data_avail & 0x2)) {
+    while(!(rx_data_avail & (1 << bit_offset))) {
       usleep(1);
-      if ((eb_device_read(device, base + CALC_OFFS(slot) + MIL_SIO3_D_RCVD * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+      if ((eb_device_read(device, base + CALC_OFFS(slot) + (MIL_SIO3_D_RCVD + reg_offset) * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
         return RCV_TASK_ERR;
     }
 
     // task finished
-    if ((eb_device_read(device, base + CALC_OFFS(slot) + MIL_SIO3_D_ERR * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_err, 0, eb_block)) != EB_OK)
+    if ((eb_device_read(device, base + CALC_OFFS(slot) + (MIL_SIO3_D_ERR + reg_offset) * 2, EB_DATA16|EB_BIG_ENDIAN, &rx_err, 0, eb_block)) != EB_OK)
       return RCV_ERROR;
 
     // no error
-    if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
-      if ((eb_device_read(device, base + CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 * 2, EB_DATA16|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK)
+    if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
+      if ((eb_device_read(device, base + CALC_OFFS(slot) + (MIL_SIO3_RX_TASK1 + task - 1) * 2, EB_DATA16|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK)
       return OKAY;
     // error bit set
     } else {
-      if ((eb_device_read(device, base + CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 * 2, EB_DATA16|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK) {
+      if ((eb_device_read(device, base + CALC_OFFS(slot) + (MIL_SIO3_RX_TASK1 + task - 1) * 2, EB_DATA16|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK) {
         if ((*read_value & 0xffff) == 0xdead)
           return RCV_PARITY;
         else
@@ -372,17 +389,17 @@ void clearFlash(eb_address_t devb_base, eb_address_t scub_base, unsigned char sl
   usleep(10000);
 
   if (slot < 1)
-    devb_read(devb_base, ifa_addr, FWL_STATUS_RD, &status);
+    devb_read(devb_base, TASK, ifa_addr, FWL_STATUS_RD, &status);
   else
-    scub_devb_read(scub_base, slot, ifa_addr, FWL_STATUS_RD, &status);
+    scub_devb_read(scub_base, TASK, slot, ifa_addr, FWL_STATUS_RD, &status);
 
   // wait for operation to finish
   while(status & ERASE_USER_FLASH) {
     usleep(10000);
     if (slot < 1)
-      devb_read(devb_base, ifa_addr, FWL_STATUS_RD, &status);
+      devb_read(devb_base, TASK, ifa_addr, FWL_STATUS_RD, &status);
     else
-      scub_devb_read(scub_base, slot, ifa_addr, FWL_STATUS_RD, &status);
+      scub_devb_read(scub_base, TASK, slot, ifa_addr, FWL_STATUS_RD, &status);
   }
 
 }
@@ -402,11 +419,11 @@ void check_ifa_addr(eb_address_t devb_base, eb_address_t scub_base, unsigned cha
   int status;
 
   if (slot < 1) {
-    status = devb_read(devb_base, ifa_addr, IFK_ID, &id);
-    devb_read(devb_base, ifa_addr, IFK_VERS, &version);
+    status = devb_read(devb_base, TASK, ifa_addr, IFK_ID, &id);
+    devb_read(devb_base, TASK, ifa_addr, IFK_VERS, &version);
   } else {
-    status = scub_devb_read(scub_base, slot, ifa_addr, IFK_ID, &id);
-    scub_devb_read(scub_base, slot, ifa_addr, IFK_VERS, &version);
+    status = scub_devb_read(scub_base, TASK, slot, ifa_addr, IFK_ID, &id);
+    scub_devb_read(scub_base, TASK, slot, ifa_addr, IFK_VERS, &version);
   }
 
   if (status == OKAY)
@@ -430,15 +447,15 @@ void scanDevBus(eb_address_t dev_base, eb_address_t scu_base, unsigned char slot
 
   if (slot < 1) {
     for (addr = 0; addr < 254; addr++) {
-      status = devb_read(dev_base, addr, IFK_ID, &id);
-      devb_read(dev_base, addr, IFK_VERS, &version);
+      status = devb_read(dev_base, TASK, addr, IFK_ID, &id);
+      devb_read(dev_base, TASK, addr, IFK_VERS, &version);
       if (status == OKAY)
         printf("Found IFA with addr 0x%x and id 0x%"EB_DATA_FMT" and vers 0x%"EB_DATA_FMT"\n", addr, id, version);
     }
   } else if (slot > 0) {
     for (addr = 0; addr < 254; addr++) {
-      status = scub_devb_read(scu_base, slot, addr, IFK_ID, &id);
-      scub_devb_read(scu_base, slot, addr, IFK_VERS, &version);
+      status = scub_devb_read(scu_base, TASK, slot, addr, IFK_ID, &id);
+      scub_devb_read(scu_base, TASK, slot, addr, IFK_VERS, &version);
       if (status == OKAY)
         printf("Found IFA with addr 0x%x and id 0x%"EB_DATA_FMT" and vers 0x%"EB_DATA_FMT"\n", addr, id, version);
     }
@@ -746,9 +763,9 @@ int main(int argc, char * const* argv) {
         die("EP eb_cycle_close", status);
       // check if fifo is full
       if (slot < 1)
-        devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       else
-        scub_devb_read(scu_bus, slot, ifa_addr, FWL_STATUS_RD, &value);
+        scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
 
       if (value & WR_FIFO) {
         fprintf(stderr, "error: write fifo is not full\n");
@@ -764,15 +781,15 @@ int main(int argc, char * const* argv) {
 
       // check if data is written 
       if (slot < 1)
-        devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       else
-        scub_devb_read(scu_bus, slot, ifa_addr, FWL_STATUS_RD, &value);
+        scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
 
       while (value & FIFO_TO_USER) {
         if (slot < 1)
-          devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+          devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
         else
-          scub_devb_read(scu_bus, slot, ifa_addr, FWL_STATUS_RD, &value);
+          scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
       }
     }
       
@@ -797,15 +814,15 @@ int main(int argc, char * const* argv) {
       // copy page from flash to fifo
       devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
       // wait until done
-      devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+      devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       while(value & RD_USER_FLASH) {
         usleep(1000);
-        devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       }
       // read out page fifo
       i = 0;
       while ((i < 128) && (cnt < buffer_size)) {
-        devb_read(dev_bus, ifa_addr, FWL_DATA_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_DATA_RD, &value);
         lb = value & 0xff;          // low byte
         hb = (value & 0xff00) >> 8; // high byte
         rbuffer[cnt]   = hb;
@@ -844,15 +861,15 @@ int main(int argc, char * const* argv) {
       // copy page from flash to fifo
       devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
       // wait until done
-      devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+      devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       while(value & RD_USER_FLASH) {
         usleep(1000);
-        devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
       }
       // read out page fifo
       i = 0;
       while ((i < 128) && (cnt < buffer_size)) {
-        devb_read(dev_bus, ifa_addr, FWL_DATA_RD, &value);
+        devb_read(dev_bus, TASK, ifa_addr, FWL_DATA_RD, &value);
         putc((value & 0xff00) >> 8, wfp); // high byte
         putc(value & 0xff, wfp);          // low byte
         cnt+=2;
