@@ -135,7 +135,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint64_t timeWrNs = cdm.getDmWrTime();
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-80s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, formatTime(timeWrNs).c_str() );
+  printf("\u2551 DataMaster: %-77s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s   \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, formatTime(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
