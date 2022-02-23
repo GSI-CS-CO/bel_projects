@@ -1,7 +1,7 @@
 #! /bin/bash
 # hint: add alias startBuild='~/scripts/startBuild.sh <user:token>' to login script.
 echo -e start job
-date
+date +'%Y-%M-%d %R:%S'
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <user:token> <job name, replace blanks by %20>"
   echo "Job names are:"
