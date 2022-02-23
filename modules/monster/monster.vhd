@@ -1087,9 +1087,16 @@ begin
     inclk  => clk_sys3,
     outclk => clk_update);
 
-  flash_out : global_region port map(
-    inclk  => clk_sys4,
-    outclk => clk_flash_ext);
+  -- This keeps the legacy flash controller alive (voodoo mode)
+  global_region_flash_y : if not g_en_asmi generate
+    flash_out : global_region port map(
+      inclk  => clk_sys4,
+      outclk => clk_flash_ext);
+  end generate;
+
+  global_region_flash_n : if g_en_asmi generate
+    clk_flash_ext <= clk_sys4;
+  end generate;
 
   clk_flash_in  <= clk_flash_ext;
   clk_flash_out <= clk_reconf;
