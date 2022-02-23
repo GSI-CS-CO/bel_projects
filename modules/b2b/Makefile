@@ -47,9 +47,9 @@ deploy:
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
 
 # NFS init scripts, the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
-	cp $(ASL)/b2b-*.sh $(STAGING)                                           # nfs init script SIS18 RF room
-# FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
-	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin        
+	cp $(ASL)/b2b-*.sh $(STAGING)                                       # nfs init scripts
+# FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>_start.sh'
+	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # configuration scripts
 # FEC x86 binaries 
 	cp $(SW)/b2b-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
 	cp $(SW)/b2b-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                 # '/usr' is a hack
