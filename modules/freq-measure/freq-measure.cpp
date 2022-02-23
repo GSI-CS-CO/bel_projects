@@ -152,7 +152,10 @@ private:
 };
 
 std::string error_format(double x, double dx) {
-	int precision=log(100/dx)/log(10);
+	int precision=log(100.0/dx)/log(10);
+	if (precision<0) {
+		precision = 0;
+	}
 	std::ostringstream out;
 	out //<< x << " " << dx << " " << precision << " " 
 		<< std::fixed << std::setprecision(precision) << x 
