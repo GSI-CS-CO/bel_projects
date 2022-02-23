@@ -450,26 +450,41 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
 
   //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority).
-  //If Do not Read flag is not set and the indices differ, there's work to do
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Check queues for pending commands
+  // If Do not Read flag is not set and the indices differ, there's work to do
+
   if(!(qFlags & BLOCK_CMDQ_DNR_SMSK) 
   && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
-    //only process one command, and that of the highest priority. default is low, check up
-    prio = PRIO_LO;
-    //MSB first: bit 31 is at byte offset 0!
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
-    //correct prio found, create shortcuts to control data of corresponding queue
-    rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);               // this queues read index   (using overflow bit for empty/full)
-    wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);               // this queues write index
-    bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
-    elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
-    bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
-    b       = (uint32_t*)bl[bufOffs >> 2];                                                  // pointer to active command buffer
-    cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data
+    
+    //Iterate over queues, highest priority first. If we find a pending command that has reached its valid time, we take it.
+    for (prio = PRIO_IL; prio-- > PRIO_LO;) {
+    
+      // make sure we only check queue prios this Block actually has
+      if(((node[NODE_FLAGS >> 2] >> NFLG_BLOCK_QS_POS) & (1 << prio))) {
 
-
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if chosen command is not yet valid, directly return to scheduler
-
+        //Check if rd - wr cnt differs. Notation "_32b_SIZE_ - prio - 1" aka "3 - prio" seems weird, but remeber: It's MSB first. bit 31 is at byte offset 0. 
+        if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - prio - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - prio - 1)) {
+          
+          //found pending command
+          //create shortcuts to control data of corresponding queue
+          rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);               // this queues read index   (using overflow bit for empty/full)
+          wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);               // this queues write index
+          bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
+          elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
+          bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
+          b       = (uint32_t*)bl[bufOffs >> 2];                                                  // pointer to active command buffer
+          cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data
+  
+          // if this command is already valid, leave check loop and execute it.
+          if (getSysTime() >= *((uint64_t*)((void*)cmd + T_CMD_TIME))) break;
+                      
+          
+        }
+      }
+    }
+      
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if no command is yet valid, take default successor.
 
     act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
     actTmp  = *act;                                     //create working copy of action word
