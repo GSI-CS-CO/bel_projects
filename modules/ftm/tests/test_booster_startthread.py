@@ -16,6 +16,16 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0003', file_name), [0])
     self.deleteFile(file_name)
 
+  def test_threeThreads3(self):
+    self.startPattern('booster_startthread-3.dot', 'MAIN')
+    file_name = 'snoop_startthread-3.csv'
+    parameter_column = 20
+    self.snoopToCsv(file_name, 3)
+    self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
+    self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0002', file_name), [0])
+    self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0003', file_name), [0])
+    self.deleteFile(file_name)
+
   @pytest.mark.slow
   def test_threeThreads1(self):
     self.startPattern('booster_startthread-1.dot', 'BOOST_REQ')
@@ -38,4 +48,12 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0200', file_name), [0])
     self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0102', file_name), [0])
     self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0103', file_name), [0])
+    self.deleteFile(file_name)
+
+  def test_booster_all_threads(self):
+    self.startPattern('booster-all-threads.dot', 'MAIN')
+    file_name = 'snoop_all_threads.csv'
+    parameter_column = 20
+    self.snoopToCsv(file_name, 3)
+    self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
     self.deleteFile(file_name)

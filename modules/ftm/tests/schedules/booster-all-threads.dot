@@ -1,0 +1,26 @@
+# Notes for booster-all-threads.dot
+
+//~ Test case: start 8 threads on cpu 0.
+//~ Use one pattern, MAIN. P1 has a tmsg and a block in a loop.
+//~ MAIN has also a tmsg and a block in a loop. A startthread node should start
+//~ P1 in thread 1.
+
+digraph "booster-all-threads" {
+name="booster-all-threads"
+edge [type=defdst]
+node [cpu=0 fillcolor=white style=filled type=startthread pattern=MAIN toffs=0 startoffs=0]
+
+StThrT0 [thread=0]
+StThrT1 [thread=1]
+StThrT2 [thread=2]
+StThrT3 [thread=3]
+StThrT4 [thread=4]
+StThrT5 [thread=5]
+StThrT6 [thread=6]
+StThrT7 [thread=7]
+
+Evt_MAIN [type=tmsg patentry=1 toffs=0 fid=1 evtno=1 par=1]
+B_MAIN [type=block patexit=1 tperiod=100000000 qlo=1]
+
+StThrT0 -> StThrT1 -> StThrT2 -> StThrT3 -> StThrT4 -> StThrT5 -> StThrT6 -> StThrT7 -> Evt_MAIN -> B_MAIN -> StThrT0
+}
