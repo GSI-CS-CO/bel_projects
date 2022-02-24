@@ -205,23 +205,11 @@ void suspendGapReading( void );
 void milInitTasks( void );
 
 /*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
  * @ingroup TASK
- * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
- * @param pThis pointer to the current task object
- * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
- * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
- *
- * @dotfile scu_mil_fg_handler.gv State graph for this function
- * @see https://github.com/UlrichBecker/DocFsm
- *
- * @todo When gap-reading is activated (compiler switch CONFIG_READ_MIL_TIME_GAP
- *       is defined) so the danger of jittering could be exist! \n
- *       Solution proposal: Linux-host resp. SAFTLIB shall send a
- *       "function-generator-announcement-signal", before the function generator
- *       issued a new analog signal.
+ * @ingroup MIL_FSM
+ * @brief Non blocking execution of all MIL-threads.
  */
-void milDeviceHandler( register TASK_T* pThis );
+void milExecuteTasks( void );
 
 #ifdef __cplusplus
 }

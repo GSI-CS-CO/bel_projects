@@ -331,7 +331,7 @@ STATIC void scanScuBusForFg( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList,
       #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
          scuBusEnableSlaveInterrupt( (void*)scub_adr, slot );
       #endif
-      }      
+      }
    }
 }
 

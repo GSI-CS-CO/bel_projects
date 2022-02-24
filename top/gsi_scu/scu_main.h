@@ -154,18 +154,6 @@ void pushInQueue( SW_QUEUE_T* pThis, const void* pItem );
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @ingroup TASK
- * @brief Declaration of the task type
- */
-typedef struct _TASK_T
-{
-   const void*    pTaskData;  /*!<@brief Pointer to the memory-space of the current task */
-   const uint64_t interval;   /*!<@brief interval of the task */
-   uint64_t       lasttick;   /*!<@brief when was the task ran last */
-   void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
-} TASK_T;
-
-/*! ---------------------------------------------------------------------------
  * @brief Prints a error-message via UART and stop the LM32 firmware.
  * @param pErrorMessage String containing a error message.
  */

@@ -464,29 +464,6 @@ void scanFgs( void )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
- * @brief Task configuration table.
- * @see schedule
- */
-STATIC TASK_T g_aTasks[] =
-{
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   { NULL,               ALWAYS, 0, addacDaqTask   },
-#endif
-#ifdef CONFIG_MIL_FG
-   { &g_aMilTaskData[0], ALWAYS, 0, milDeviceHandler },
-   { &g_aMilTaskData[1], ALWAYS, 0, milDeviceHandler },
-   { &g_aMilTaskData[2], ALWAYS, 0, milDeviceHandler },
-   { &g_aMilTaskData[3], ALWAYS, 0, milDeviceHandler },
-   { &g_aMilTaskData[4], ALWAYS, 0, milDeviceHandler },
- #ifndef _CONFIG_ECA_BY_MSI
-   { NULL,               ALWAYS, 0, ecaHandler      },
- #endif
-#endif
-   { NULL,               ALWAYS, 0, commandHandler  }
-};
-
-/*! ---------------------------------------------------------------------------
- * @ingroup TASK
  * @brief Scheduler for all SCU-tasks defined in g_aTasks. \n
  *        Performing of a cooperative multitasking.
  * @see TASK_T
@@ -498,31 +475,21 @@ STATIC TASK_T g_aTasks[] =
  */
 ONE_TIME_CALL void schedule( void )
 {
-
-#ifdef __DOXYGEN__
-   /*
-    * For Doxygen only, making visible in caller graph.
-    */
-   milDeviceHandler();
-   ecaHandler();
-   commandHandler();
-   addacDaqTask();
-#endif
 #ifdef _CONFIG_NO_INTERRUPT
    #warning "Testversion with no interrupts!!!"
    onScuMSInterrupt( ECA_INTERRUPT_NUMBER, NULL );
 #endif
-   const uint64_t tick = getWrSysTimeSafe();
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
-   {
-      TASK_T* pCurrent = &g_aTasks[i];
-      if( (tick - pCurrent->lasttick) < pCurrent->interval )
-      {
-         continue;
-      }
-      pCurrent->func( pCurrent );
-      pCurrent->lasttick = tick;
-   }
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   addacDaqTask();
+#endif
+#ifdef CONFIG_MIL_FG
+   milExecuteTasks();
+ #ifndef _CONFIG_ECA_BY_MSI
+   ecaHandler();
+ #endif
+#endif
+   commandHandler();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -613,6 +580,10 @@ void main( void )
 
    initInterrupt();
 
+   mprintf( ESC_FG_GREEN ESC_BOLD
+            "\n *** Initialization done, going in endless loop... ***\n"
+            ESC_NORMAL
+          );
    while( true )
    {
       if( _endram != STACK_MAGIC )

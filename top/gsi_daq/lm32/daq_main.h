@@ -66,7 +66,7 @@ extern SW_QUEUE_T g_queueAddacDaq;
  * @brief Handles all detected ADDAC-DAQs
  * @see schedule
  */
-void addacDaqTask( register TASK_T* FG_UNUSED );
+void addacDaqTask( void );
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 

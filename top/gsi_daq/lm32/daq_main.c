@@ -379,7 +379,7 @@ ONE_TIME_CALL bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
  * @brief Handles all detected ADDAC-DAQs. One DAQ-channel per function call.
  * @see schedule
  */
-void addacDaqTask( register TASK_T* pThis FG_UNUSED )
+void addacDaqTask( void )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
    if( daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs ) == 0 )

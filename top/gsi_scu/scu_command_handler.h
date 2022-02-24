@@ -40,7 +40,7 @@ void initCommandHandler( void )
 /*! ---------------------------------------------------------------------------
  * @brief Evaluates and executes the commands received by SAFT-LIB.
  */
-void commandHandler( register TASK_T* pThis FG_UNUSED );
+void commandHandler( void );
 
 #ifdef __cplusplus
 }

@@ -828,9 +828,46 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData,
 #define IRQ_WAITING_TIME 200000ULL
 
 /*! ---------------------------------------------------------------------------
- * @see scu_mil_fg_handler.
+ * @ingroup TASK
+ * @ingroup MIL_FSM
+ * @brief Wrapper for read queue function, depends on using timer-interrupt
+ *        or FreeRTOS or neither nor...
+ * @param  pMilData Pointer to the current task-data.
+ * @retval false No data in queue.
+ * @retval true New data has been copied in &pMilData->lastMessage
  */
-void milDeviceHandler( register TASK_T* pThis )
+ALWAYS_INLINE STATIC inline
+bool milQueuePop( MIL_TASK_DATA_T* pMilData  )
+{
+#ifdef CONFIG_RTOS
+   return (xQueueReceive( g_queueMilFg, &pMilData->lastMessage, 0 ) == pdPASS);
+#elif  CONFIG_MIL_IN_TIMER_INTERRUPT
+   return queuePop( &g_queueMilFg, &pMilData->lastMessage );
+#else
+   return queuePopSave( &g_queueMilFg, &pMilData->lastMessage );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
+ * @ingroup MIL_FSM
+ * @brief FSM of a single MIL-task.
+ * @see g_aMilTaskData
+ * @see https://github.com/UlrichBecker/DocFsm
+ * @dotfile scu_mil_fg_handler.gv State graph for this function
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/PerfOpt
+ *
+ *
+ * @todo When gap-reading is activated (compiler switch CONFIG_READ_MIL_TIME_GAP
+ *       is defined) so the danger of jittering could be exist! \n
+ *       Solution proposal: Linux-host resp. SAFTLIB shall send a
+ *       "function-generator-announcement-signal", before the function generator
+ *       issued a new analog signal.
+
+ * @param pMilData Pointer to a single element of array: g_aMilTaskData
+ */
+STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
 {
    /*!
     * @brief Currently channel number for loop-macros FOR_EACH_FG and
@@ -845,35 +882,9 @@ void milDeviceHandler( register TASK_T* pThis )
     */
    int status = OKAY;
 
-  /*
-   * Checking integrity of pointer when macro FG_ASSERT is activated, that means
-   * CONFIG_FG_PEDANTIC_CHECK is defined.
-   */
-   FG_ASSERT( pThis->pTaskData != NULL );
-   FG_ASSERT( (unsigned int)pThis->pTaskData >= (unsigned int)&g_aMilTaskData[0] );
-   FG_ASSERT( (unsigned int)pThis->pTaskData <= (unsigned int)&g_aMilTaskData[ARRAY_SIZE(g_aMilTaskData)-1] );
-
    /*!
-    * @brief Pointer to the currently MIL-task.
+    * @brief Holds the actual state of the FSM.
     */
-   MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
-
-#ifdef CONFIG_MIL_DAQ_USE_RAM
-   /*
-    * Removing old data which has been possibly read and evaluated by the
-    * Linux client
-    * NOTE: This has to be made in any cases here independently whether one or more
-    *       MIL FG are active or not.
-    *       Because only in this way it becomes possible to continuing the
-    *       handshake transfer at reading the possible remaining data from
-    *       the DDR3 memory by the Linux client.
-    * See daq_base_interface.cpp  function: DaqBaseInterface::getNumberOfNewData
-    * See daq_base_interface.cpp  function: DaqBaseInterface::sendWasRead
-    * See mdaq_administration.cpp function: DaqAdministration::distributeDataNew
-    */
-   ramRingSharedSynchonizeReadIndex( &g_shared.mDaq.memAdmin );
-#endif
-
    const FG_STATE_T lastState = pMilData->state;
 
   /*
@@ -883,11 +894,9 @@ void milDeviceHandler( register TASK_T* pThis )
    {
       case ST_WAIT:
       {
-         if( queuePopSave( &g_queueMilFg, &pMilData->lastMessage ) )
+         if( milQueuePop( pMilData ) )
          {
          #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
-           // volatile unsigned int x = 12000;
-           // while( x-- );
             pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
          #endif
             FSM_TRANSITION( ST_PREPARE, label='Message received', color=green );
@@ -1209,6 +1218,34 @@ void milDeviceHandler( register TASK_T* pThis )
 
       default: break;
    } /* End of state entry activities */
-} /* End function milDeviceHandler */
+} /* End function milTask */
+
+
+/*-----------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+void milExecuteTasks( void )
+{
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   /*
+    * Removing old data which has been possibly read and evaluated by the
+    * Linux client
+    * NOTE: This has to be made in any cases here independently whether one or more
+    *       MIL FG are active or not.
+    *       Because only in this way it becomes possible to continuing the
+    *       handshake transfer at reading the possible remaining data from
+    *       the DDR3 memory by the Linux client.
+    * See daq_base_interface.cpp  function: DaqBaseInterface::getNumberOfNewData
+    * See daq_base_interface.cpp  function: DaqBaseInterface::sendWasRead
+    * See mdaq_administration.cpp function: DaqAdministration::distributeDataNew
+    */
+   ramRingSharedSynchonizeReadIndex( &g_shared.mDaq.memAdmin );
+#endif
+
+   for( unsigned int i = 0; i < ARRAY_SIZE(g_aMilTaskData); i++ )
+   {
+      milTask( &g_aMilTaskData[i] );
+   }
+}
 
 /*================================== EOF ====================================*/

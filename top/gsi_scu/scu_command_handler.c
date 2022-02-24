@@ -234,13 +234,10 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
  *
  * dispatch the calls from linux to the helper functions
  * called via scheduler in main loop
- * @param pThis pointer to the current task object
  * @see schedule
  */
-void commandHandler( register TASK_T* pThis FG_UNUSED )
+void commandHandler( void )
 {
-   FG_ASSERT( pThis->pTaskData == NULL );
-
    saftLibCommandHandler();
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
