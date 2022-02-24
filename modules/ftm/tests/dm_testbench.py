@@ -57,12 +57,17 @@ class DmTestbench(unittest.TestCase):
     self.startAllPattern(schedule_file, pattern, onePattern=False)
 
   def startAllPattern(self, schedule_file, pattern='', onePattern=False, start=True):
-    """Connect to the given data master and load the schedule file (dot format).
-    Search for all pattern in the data master with self.binary_dm_sched and start these.
+    """If a schedule_file is given, connect to the given data master
+    and load the schedule file (dot format).
+    If onePattern=False and start=True, search for all pattern in the
+    data master with self.binary_dm_sched and start these.
+    If onePattern is True, start only the first pattern in the schedule_file.
+    If start is False, do not start a pattern.
     """
-    schedule_file = self.schedules_folder + schedule_file
-    print (f"Connect to device '{self.datamaster}', schedule file '{schedule_file}'.   ", end='', flush=True)
-    self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'add', schedule_file])
+    if len(schedule_file) > 0:
+      schedule_file = self.schedules_folder + schedule_file
+      print (f"Connect to device '{self.datamaster}', schedule file '{schedule_file}'.   ", end='', flush=True)
+      self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'add', schedule_file])
     if start:
       if len(pattern) > 0:
         self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'startpattern', pattern])
