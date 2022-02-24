@@ -161,17 +161,12 @@ entity ftm4dp is
     --UM_nCSO           : out   std_logic := 'Z';
     --UM_DCLK           : out   std_logic := 'Z';
 
+
     -----------------------------------------------------------------------
     -- SFP (auxiliary - dual phy version)
     -----------------------------------------------------------------------
-    sfp_aux_tx_disable_o : out   std_logic := '0';
-    sfp_aux_tx_fault_i   : in    std_logic;
-    sfp_aux_los_i        : in    std_logic;
-    sfp_aux_txp_o        : out   std_logic;
-    sfp_aux_rxp_i        : in    std_logic;
-    sfp_aux_mod0_i       : in    std_logic;
-    sfp_aux_mod1_io      : inout std_logic;
-    sfp_aux_mod2_io      : inout std_logic;
+    sfp_aux_txp_o       : out   std_logic;
+    sfp_aux_rxp_i       : in    std_logic;
 
     -----------------------------------------------------------------------
     -- SFP
@@ -275,14 +270,14 @@ begin
       wr_ndac_cs_o            => wr_ndac_cs_o,
       wr_uart_o               => ser0_rxd,
       wr_uart_i               => ser0_txd,
-      wr_aux_sfp_sda_io       => sfp_aux_mod2_io,
-      wr_aux_sfp_scl_io       => sfp_aux_mod1_io,
-      wr_aux_sfp_det_i        => sfp_aux_mod0_i,
+      wr_aux_sfp_sda_io       => ext_ch(0),
+      wr_aux_sfp_scl_io       => ext_ch(1),
+      wr_aux_sfp_det_i        => ext_ch(2),
       wr_aux_sfp_tx_o         => sfp_aux_txp_o,
       wr_aux_sfp_rx_i         => sfp_aux_rxp_i,
       sfp_aux_tx_disable_o    => open,
-      sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
-      sfp_aux_los_i           => sfp_aux_los_i,
+      sfp_aux_tx_fault_i      => ext_ch(4),
+      sfp_aux_los_i           => ext_ch(5),
       wbar_phy_dis_o          => s_sfp_disable,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
@@ -351,9 +346,8 @@ begin
   --Extension Piggy
   ext_ch(21 downto 19) <= s_lvds_term;
 
-
   -- SFP management
   sfp_tx_disable_o     <= s_sfp_disable;
-  sfp_aux_tx_disable_o <= s_sfp_disable;
+  ext_ch(3)            <= '0'; -- Get a second bit for aux. phy
 
 end rtl;
