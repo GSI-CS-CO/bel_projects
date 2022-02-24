@@ -58,15 +58,15 @@ saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # SIS18 CBU
 # lm32 listens to CMD_B2B_PMEXT message from SIS18 CBU
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
+#saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 0 0x800 -d
+#saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 0 0x800 -d
 
 # lm32 listens to CMD_B2B_TRIGGEREXT message from SIS18 CBU - match diagnostic
-saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
+#saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
 
 # lm32 listens to >>delayed<< (CMD_B2B_PMEXT) message from SIS18 CBU: B2B_ECADO_B2B_PDEXT - phase diagnostic
-saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 15900000 0x820 -d
-saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 15900000 0x820  -d
+#saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 15900000 0x820 -d
+#saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 15900000 0x820 -d
 
 # lm32 listens to CMD_B2B_PMINJ message from SIS18 CBU
 saft-ecpu-ctl $SDPM -c 0x13a1801000000000 0xfffffff000000000 0 0x801 -d
