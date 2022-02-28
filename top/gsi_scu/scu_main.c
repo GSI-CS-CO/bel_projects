@@ -581,7 +581,7 @@ void main( void )
    initInterrupt();
 
    mprintf( ESC_FG_GREEN ESC_BOLD
-            "\n *** Initialization done, going in endless loop... ***\n"
+            "\n *** Initialization done, going in endless loop... ***\n\n"
             ESC_NORMAL
           );
    while( true )
