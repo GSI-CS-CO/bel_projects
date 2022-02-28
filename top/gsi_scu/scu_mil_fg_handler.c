@@ -45,6 +45,12 @@ extern volatile unsigned int* g_pScu_mil_base;
 
 QUEUE_CREATE_STATIC( g_queueMilFg,  MAX_FG_CHANNELS, MIL_QEUE_T );
 
+#ifdef CONFIG_MIL_WAIT
+   #define INIT_WAITING_TIME .waitingTime      = 0LL,
+#else
+   #define INIT_WAITING_TIME
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Initializer of a single MIL task
@@ -56,7 +62,7 @@ QUEUE_CREATE_STATIC( g_queueMilFg,  MAX_FG_CHANNELS, MIL_QEUE_T );
    .lastMessage.slot = INVALID_SLAVE_NR,    \
    .lastChannel      = 0,                   \
    .timeoutCounter   = 0,                   \
-   .waitingTime      = 0LL,                 \
+   INIT_WAITING_TIME                        \
    .aFgChannels =                           \
    {{                                       \
       .irqFlags         = 0,                \
@@ -98,7 +104,9 @@ void milInitTasks( void )
       g_aMilTaskData[i].lastMessage.time  = 0LL;
       g_aMilTaskData[i].lastChannel       = 0;
       g_aMilTaskData[i].timeoutCounter    = 0;
+   #ifdef CONFIG_MIL_WAIT
       g_aMilTaskData[i].waitingTime       = 0LL;
+   #endif
    #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
       g_aMilTaskData[i].irqDurationTime   = 0LL;
    #endif
@@ -132,10 +140,12 @@ STATIC const char* state2string( const FG_STATE_T state )
    switch( state )
    {
       __CASE_RETURN( ST_WAIT );
+   #ifdef CONFIG_MIL_WAIT
       __CASE_RETURN( ST_PREPARE );
+   #endif
       __CASE_RETURN( ST_FETCH_STATUS );
       __CASE_RETURN( ST_HANDLE_IRQS );
-      __CASE_RETURN( ST_DATA_AQUISITION );
+      //__CASE_RETURN( ST_DATA_AQUISITION );
       __CASE_RETURN( ST_FETCH_DATA );
    }
    return "unknown";
@@ -899,7 +909,11 @@ STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
          #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
             pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
          #endif
+         #ifdef CONFIG_MIL_WAIT
             FSM_TRANSITION( ST_PREPARE, label='Message received', color=green );
+         #else
+            FSM_TRANSITION( ST_FETCH_STATUS, label='Message received', color=green );
+         #endif
             break;
          }
       #ifdef CONFIG_READ_MIL_TIME_GAP
@@ -932,7 +946,9 @@ STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
             }
             if( isInGap )
             {
-               FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
+              // FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
+              //                                  color=magenta );
+               FSM_TRANSITION( ST_FETCH_DATA, label='Gap reading time\nexpired',
                                                 color=magenta );
                break;
             }
@@ -942,36 +958,23 @@ STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
          break;
       } /* end case ST_WAIT */
 
+   #ifdef CONFIG_MIL_WAIT
       case ST_PREPARE:
       { /*
          * wait for IRQ_WAITING_TIME
          */
-#if 1
          if( getWrSysTimeSafe() < pMilData->waitingTime )
          {
             FSM_TRANSITION_SELF( label='IRQ_WAITING_TIME not expired', color=blue );
             break;
          }
-#endif
          #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
           //  pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
          #endif
-
-         /*
-          * Requesting of all IRQ-pending registers.
-          */
-         FOR_EACH_FG( channel )
-         {
-            if( fgIsStopped( channel ) )
-               continue;
-
-            status = milReqestStatus( pMilData, channel );
-            if( status != OKAY )
-               milPrintDeviceError( status, 20, "dev_sio set task" );
-         }
          FSM_TRANSITION( ST_FETCH_STATUS, color=green );
          break;
       }
+   #endif
 
       case ST_FETCH_STATUS:
       { /*
@@ -1046,38 +1049,17 @@ STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
          }
          if( channel == 0 )
             milPrintDeviceError( 0,0, "No interrupt pending!" );
-         FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
+         //FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
+         FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;
       } /* end case ST_HANDLE_IRQS */
-
+#if 0
       case ST_DATA_AQUISITION:
       {
-         FOR_EACH_FG( channel )
-         {
-            if( isNoIrqPending( pMilData, channel ) )
-            { /*
-               * Handle next channel...
-               */
-               continue;
-            }
-            /*
-             * Store the sample timestamp of DAQ.
-             */
-         #ifdef CONFIG_READ_MIL_TIME_GAP
-            if( mg_aReadGap[channel].pTask == pMilData )
-               pMilData->aFgChannels[channel].daqTimestamp = getWrSysTimeSafe();
-            else
-         #endif
-               pMilData->aFgChannels[channel].daqTimestamp = pMilData->lastMessage.time;
-
-            status = milSetTask( pMilData, channel );
-            if( status != OKAY )
-               milPrintDeviceError( status, 23, "dev_sio read daq" );
-         }
          FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;
       } /* end case ST_DATA_AQUISITION */
-
+#endif
       case ST_FETCH_DATA:
       { /*
          * if timeout reached, proceed with next task
@@ -1197,18 +1179,63 @@ STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
          }
          break;
       }
-   #endif
+   #endif /* ifdef CONFIG_READ_MIL_TIME_GAP */
 
+   #ifdef CONFIG_MIL_WAIT
       case ST_PREPARE:
       {
          pMilData->waitingTime = getWrSysTimeSafe() + IRQ_WAITING_TIME;
          //pMilData->waitingTime = pMilData->lastMessage.time + IRQ_WAITING_TIME;
          break;
       }
+   #endif
 
-      case ST_FETCH_STATUS: /* Go immediately to next case. */
-      case ST_FETCH_DATA:
+      case ST_FETCH_STATUS:
       { /*
+         * Requesting of all IRQ-pending registers.
+         */
+         FOR_EACH_FG( channel )
+         {
+            if( fgIsStopped( channel ) )
+               continue;
+
+            status = milReqestStatus( pMilData, channel );
+            if( status != OKAY )
+               milPrintDeviceError( status, 20, "dev_sio set task" );
+         }
+        /*
+         * start next time from channel 0
+         */
+         pMilData->lastChannel = 0;
+         pMilData->timeoutCounter = 0;
+         break;
+      }
+      
+      case ST_FETCH_DATA:
+      { 
+         FOR_EACH_FG( channel )
+         {
+            if( isNoIrqPending( pMilData, channel ) )
+            { /*
+               * Handle next channel...
+               */
+               continue;
+            }
+            /*
+             * Store the sample timestamp of DAQ.
+             */
+         #ifdef CONFIG_READ_MIL_TIME_GAP
+            if( mg_aReadGap[channel].pTask == pMilData )
+               pMilData->aFgChannels[channel].daqTimestamp = getWrSysTimeSafe();
+            else
+         #endif
+               pMilData->aFgChannels[channel].daqTimestamp = pMilData->lastMessage.time;
+
+            status = milSetTask( pMilData, channel );
+            if( status != OKAY )
+               milPrintDeviceError( status, 23, "dev_sio read daq" );
+         }
+        /*
          * start next time from channel 0
          */
          pMilData->lastChannel = 0;

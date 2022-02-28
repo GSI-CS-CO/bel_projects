@@ -17,6 +17,8 @@
   #include "scu_fg_macros.h"
 #endif
 
+//#define CONFIG_MIL_WAIT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,10 +70,12 @@ extern SW_QUEUE_T g_queueMilFg;
 typedef enum
 {
    FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message', color=blue ),
+#ifdef CONFIG_MIL_WAIT
    FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-IRQ-flags\nclear old IRQ-flags', color=cyan ),
+#endif
    FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-IRQ-flags', color=green ),
    FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction generator\nif IRQ-flag set', color=red ),
-   FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data\nif IRQ-flag set', color=cyan ),
+  // FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data\nif IRQ-flag set', color=cyan ),
    FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data\nif IRQ-flag set',color=green )
 } FG_STATE_T;
 
@@ -155,12 +159,12 @@ typedef struct
     * @brief timeout counter
     */
    unsigned int      timeoutCounter;
-
+#ifdef CONFIG_MIL_WAIT
    /*!
     * @brief Waiting time after interrupt.
     */
    uint64_t          waitingTime;
-
+#endif
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
    /*!
     * @brief Duration in nanoseconds since the last interrupt.
