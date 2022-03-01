@@ -161,7 +161,6 @@ entity ftm4dp is
     --UM_nCSO           : out   std_logic := 'Z';
     --UM_DCLK           : out   std_logic := 'Z';
 
-
     -----------------------------------------------------------------------
     -- SFP (auxiliary - dual phy version)
     -----------------------------------------------------------------------
@@ -278,6 +277,7 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => ext_ch(4),
       sfp_aux_los_i           => ext_ch(5),
+      wr_aux_onewire_io       => ext_ch(6),
       wbar_phy_dis_o          => s_sfp_disable,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
