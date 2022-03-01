@@ -1,0 +1,18 @@
+# Notes for booster-thread-0.dot
+
+// Test case: start thread 0 on cpu 0.
+// Use one pattern, MAIN with a tmsg and a block not in a loop.
+// One message is emitted every 0.1 seconds.
+
+digraph "booster-thread-0" {
+name="booster-thread-0"
+edge [type=defdst]
+node [cpu=1 fillcolor=white style=filled pattern=MAIN toffs=0]
+
+StThrT0 [type=startthread patentry=1 thread=0 startoffs=1000000]
+
+Evt_MAIN [type=tmsg fid=1 evtno=1 par=1]
+B_MAIN [type=block patexit=1 tperiod=100000000 qlo=1]
+
+StThrT0 -> Evt_MAIN -> B_MAIN
+}

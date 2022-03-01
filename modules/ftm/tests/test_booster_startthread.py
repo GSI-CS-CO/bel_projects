@@ -57,3 +57,23 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 3)
     self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
     self.deleteFile(file_name)
+
+  def test_booster_thread_0_loop(self):
+    self.startPattern('booster-thread-0-loop.dot', 'MAIN')
+    file_name = 'snoop_booster-thread-0-loop.csv'
+    parameter_column = 20
+    self.snoopToCsv(file_name, 3)
+    self.analyseFrequencyFromCsv(file_name, parameter_column)
+    output = self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
+    self.assertGreater(len(output), 61)
+    self.deleteFile(file_name)
+
+  def test_booster_thread_0(self):
+    self.startPattern('booster-thread-0.dot', 'MAIN')
+    file_name = 'snoop_booster-thread-0.csv'
+    parameter_column = 20
+    self.snoopToCsv(file_name, 3)
+    self.analyseFrequencyFromCsv(file_name, parameter_column)
+    output = self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
+    self.assertGreater(len(output), 2999)
+    self.deleteFile(file_name)

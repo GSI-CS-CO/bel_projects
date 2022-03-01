@@ -267,8 +267,14 @@ class DmTestbench(unittest.TestCase):
             keyAligned = key + "         "
           if "!delayed" in key:
             keyAligned = key + " "
-          print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d} {value/timeSpan:9.3f}Hz')
-        print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
+          if timeSpan > 0:
+            print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d} {value/timeSpan:9.3f}Hz')
+          else:
+            print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d}')
+        if timeSpan > 0:
+          print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
+        else:
+          print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d}, time span: {timeSpan:0.6f}sec')
 
   def delay(self, duration):
     """Delay for <duration> seconds.
