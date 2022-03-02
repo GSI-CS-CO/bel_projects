@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Feb-2022
+ *  version : 02-Mar-2022
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000807                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000808                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -579,7 +579,9 @@ void dmChangeBlock(uint32_t blk)
   // if debugging is enabled, write data for Data Master to our own ECA input
   if (flagDebug) {
     // command address and data
-    TS    = getSysTime();
+    TS    = (uint64_t)(dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 0]) << 32;
+    TS   |= (uint64_t)(dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 1]);
+
     evtId = 0xcafe000000000000;
     evtId = evtId | ((uint64_t)0xfa2 << 36);
     evtId = evtId | dmCmds[blk].cmdAddr;
@@ -1327,9 +1329,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
         if (status == COMMON_STATUS_OK) dmStartThread(REQBEAM);                    // start thread within DM; only start thread in case everything went fine
         if (!flagBooster) {
-          /* dmSetTValidCmdCommon(REQTK, getSysTime() + 100000); hack for testing; '+ 100000' does not work, '- 1000000' does work */
-          dmSetTValidCmdCommon(REQTK, tCmdValid);                                  // set time that shall be used for terminating "slow" waiting block within DM
-          uwait(435);                                                              // use wait, triggering the flush 'by event' and not time based
+          dmSetTValidCmdCommon(REQTK, tCmdThrd - 1000000);                         // set time that shall be used for terminating "slow" waiting block within DM
           dmChangeBlock(REQTK);                                                    // modify "slow" waiting block within DM
         } // if !flagBooster
       } // if !flagNoCmd

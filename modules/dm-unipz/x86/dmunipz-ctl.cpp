@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.5"
+#define DMUNIPZ_X86_VERSION "0.8.8"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -227,7 +227,7 @@ static void help(void) {
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz:                  TRANSFERS                |                        INJECTION                                | DIAGNOSIS  |                    INFO   \n");
   fprintf(stderr, "dm-unipz:              n    sum(tkr)  set(get)/noBm | multi/boost(r2s/sumr2s)  sum( init/bmrq/r2sis->mbtrig)          | DIAG margn | status         state      nchng stat   nchng\n");
-  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 00006/00000(06/06),  964(0.146/   0/ 954 -> 9.979/12.345)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
+  fprintf(stderr, "dm-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 00006/00000(06/06),  964(0.146/   0/ 954 -> 9.979/17.512)ms | DG 1.453ms | 1 1 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' \n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
   fprintf(stderr, "          |            '      '   '         '  '  ' |         '     '  '  '      '     '    '    '        '      '    |        '   | ' ' ' ' ' ' ' '        '          '    '- status\n");
@@ -262,6 +262,13 @@ static void help(void) {
   fprintf(stderr, "          |            '      '- period required for transfer [ms] (including all injections)\n");
   fprintf(stderr, "          |            '- # of transfers\n");
   fprintf(stderr, "           - TRANSFER info ...\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "When using command 'debug_on', the following data is injected into the local ECA\n");
+  fprintf(stderr, "FID: 0xc GID: 0x0afe EVTNO: 0x0fa0 - 'deadline': requested execution time stamp @DM, 'Other': address of TS @ DM\n");
+  fprintf(stderr, "FID: 0xc GID: 0x0afe EVTNO: 0x0fa1 - 'Other': address of control register @ DM     , 'Param': data written to CR\n");
+  fprintf(stderr, "FID: 0xc GID: 0x0afe EVTNO: 0x0fa2 - 'deadline': valid time of command    @ DM     , 'Other': address of command @ DM, 'Param': command data (first part)\n");
+  fprintf(stderr, "FID: 0xc GID: 0x0afe EVTNO: 0x0fa3 - 'Other': address of write index @ DM          , 'Param': write index\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", DMUNIPZ_X86_VERSION);
 } //help
