@@ -224,9 +224,12 @@ class DmTestbench(unittest.TestCase):
     action()
     snoop.join()
 
-  def analyseFrequencyFromCsv(self, csv_file_name, column=20, printTable=True):
+  def analyseFrequencyFromCsv(self, csv_file_name, column=20, printTable=True, check_values=dict()):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printtable=True) the table of values, counters, and frequency over the whole time span.
+    Column for EVTNO is 8.
+    check_values is a dictionary of key-value pairs to check. Key is a value in the column and value is the required frequency.
+    Example: column=8 and check_values={('0x0001', 62)} checks that EVTNO 0x0001 occurs in 62 lines of the file to analyse.
     """
     line_count = 0
     maxTime = datetime.datetime.strptime("2000-01-01", '%Y-%m-%d')
@@ -245,14 +248,15 @@ class DmTestbench(unittest.TestCase):
           maxTime = time1
         listParam.append(row[column])
       timeSpan = (maxTime-minTime).total_seconds()
-      listCounter = sorted(collections.Counter(listParam).items())
+      listCounter = dict(sorted(collections.Counter(listParam).items()))
       if printTable:
         maxLengthKey = len("Value")
         maxLengthValue = len("Count")
         if len(str(line_count)) > maxLengthValue:
           maxLengthValue = len(str(line_count))
         alignKeys = False
-        for key, value in listCounter:
+        for key in listCounter:
+          value = listCounter[key]
           if len(key) > maxLengthKey:
             maxLengthKey = len(key)
           if len(str(value)) > maxLengthValue:
@@ -261,7 +265,8 @@ class DmTestbench(unittest.TestCase):
             alignKeys = True
         print()
         print(f'{"Value":^{maxLengthKey+1}s}  {"Count":>{maxLengthValue}s}   {"Frequency":>9s}')
-        for key, value in listCounter:
+        for key in listCounter:
+          value = listCounter[key]
           keyAligned = key
           if "!" not in key and alignKeys:
             keyAligned = key + "         "
@@ -275,6 +280,21 @@ class DmTestbench(unittest.TestCase):
           print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d} {line_count/timeSpan: >9.3f}Hz, time span: {timeSpan:0.6f}sec')
         else:
           print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d}, time span: {timeSpan:0.6f}sec')
+      if len(check_values) > 0:
+        print(f'checking values: {check_values} {type(check_values)}')
+        print(f'listCounter: {listCounter} {type(listCounter)}')
+        for item in check_values:
+          try:
+            if str(check_values[item])[0] == '>':
+              self.assertGreater(listCounter[item], int(check_values[item][1:]), f'assertGreater: is:{listCounter[item]} expected:{check_values[item]}')
+            elif str(check_values[item])[0] == '=':
+              self.assertEqual(listCounter[item], int(check_values[item][1:]), f'assertEqual: is:{listCounter[item]} expected:{check_values[item]}')
+            else:
+              self.assertEqual(listCounter[item], int(check_values[item]), f'assertEqual: is:{listCounter[item]} expected:{check_values[item]}')
+          except KeyError as keyError:
+            self.fail(f'KeyError: expected value not found {keyError}')
+          except:
+            raise
 
   def delay(self, duration):
     """Delay for <duration> seconds.
