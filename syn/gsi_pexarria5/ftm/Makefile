@@ -5,7 +5,7 @@ SPI_LANES		= ASx4
 RAM_SIZE		= 131072 
 SHARED_SIZE     = 98304 
 USRCPUCLK       = 125000
-VERSION         = 8.0.0
+VERSION         = 8.0.3
 RELEASE         = Fallout 
 DEBUGLVL  		= 0 
 
