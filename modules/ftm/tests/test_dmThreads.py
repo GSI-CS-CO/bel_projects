@@ -48,40 +48,10 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
   def test_dmThreads8(self):
     self.run_dmThreads(8)
 
-  def analyse_dm_cmd_output(self, output):
-    msgCounts = {}
-    firstCount = 0
-    index = 0
-    countLines = len(output)
-    offset = 0
-    offset1 = 0
-    cpu = 0
-    thread = 0
-    for line in output:
-      if index > 11 and index < (countLines - 1):
-        try:
-          cpu = int(line[3 + offset1])
-          thread = int(line[9 + offset1])
-          count = int(line[32 + offset:42 + offset])
-        except ValueError:
-          print(f'ValueError:{index} CPU {cpu} Thread {thread}  line: "{line}", "{line[3 + offset1]}", "{line[9 + offset1]}", "{line[32 + offset:42 + offset]}", offset={offset}, offset1={offset1}')
-        msgCounts[str(10*cpu) + str(thread)] = str(count)
-        if offset == 0:
-          offset = 10
-          offset1 = 5
-        else:
-          offset = 0
-          offset1 = 0
-      index = index + 1
-    self.assertEqual(countLines-13, len(msgCounts))
-    return msgCounts
-
   def check_dmThreads_Cmd(self):
-    output = self.startAndGetSubprocessOutput((self.binary_dm_cmd, self.datamaster), [0])
-    firstCounts = self.analyse_dm_cmd_output(output[0])
+    firstCounts = self.analyse_dm_cmd_output()
     self.delay(1)
-    output = self.startAndGetSubprocessOutput((self.binary_dm_cmd, self.datamaster), [0])
-    secondCounts = self.analyse_dm_cmd_output(output[0])
+    secondCounts = self.analyse_dm_cmd_output()
     for key in firstCounts:
       firstCount = int(firstCounts[key])
       secondCount = int(secondCounts[key])

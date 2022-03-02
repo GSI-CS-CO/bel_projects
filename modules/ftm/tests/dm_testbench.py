@@ -281,8 +281,6 @@ class DmTestbench(unittest.TestCase):
         else:
           print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d}, time span: {timeSpan:0.6f}sec')
       if len(check_values) > 0:
-        print(f'checking values: {check_values} {type(check_values)}')
-        print(f'listCounter: {listCounter} {type(listCounter)}')
         for item in check_values:
           try:
             if str(check_values[item])[0] == '>':
@@ -295,6 +293,44 @@ class DmTestbench(unittest.TestCase):
             self.fail(f'KeyError: expected value not found {keyError}')
           except:
             raise
+
+  def analyse_dm_cmd_output(self, threads_to_check=0):
+    output_stdout_stderr = self.startAndGetSubprocessOutput((self.binary_dm_cmd, self.datamaster), [0])
+    output = output_stdout_stderr[0]
+    msgCounts = {}
+    # ~ firstCount = 0
+    threads_check = 0
+    index = 0
+    countLines = len(output)
+    offset = 0
+    offset1 = 0
+    cpu = 0
+    thread = 0
+    running = ''
+    for line in output:
+      if index > 11 and index < (countLines - 1):
+        try:
+          cpu = int(line[3 + offset1])
+          thread = int(line[9 + offset1])
+          running = line[21 + offset1:24 + offset1]
+          count = int(line[32 + offset:42 + offset])
+        except ValueError:
+          print(f'ValueError:{index} CPU {cpu} Thread {thread}  line: "{line}", "{line[3 + offset1]}", "{line[9 + offset1]}", "{line[32 + offset:42 + offset]}", offset={offset}, offset1={offset1}')
+        msgCounts[str(10*cpu) + str(thread)] = str(count)
+        if running == 'yes':
+          threads_check = threads_check + (1 << (8*cpu + thread))
+        # ~ print(f'threads_check: {threads_check:#X}, threads_to_check: {threads_to_check:#X}, running:{running} {cpu} {thread}')
+        if offset == 0:
+          offset = 10
+          offset1 = 5
+        else:
+          offset = 0
+          offset1 = 0
+      index = index + 1
+    self.assertEqual(countLines-13, len(msgCounts))
+    if threads_to_check > 0:
+      self.assertEqual(threads_check, threads_to_check, f'threads running: {threads_check:#X}, expected: {threads_to_check:#X}')
+    return msgCounts
 
   def delay(self, duration):
     """Delay for <duration> seconds.

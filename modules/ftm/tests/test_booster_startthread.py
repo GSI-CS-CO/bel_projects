@@ -32,7 +32,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 15)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0100': '=10', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
+        check_values={'0x0100': '>8', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
@@ -50,8 +50,10 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startPattern('booster-all-threads.dot', 'MAIN')
     file_name = 'snoop_all_threads.csv'
     parameter_column = 20
-    self.snoopToCsv(file_name, 3)
-    self.startAndGetSubprocessStdout(('grep', 'EVTNO: 0x0001', file_name), [0])
+    self.snoopToCsv(file_name, 1)
+    column_EVTNO = 8
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>9'})
+    self.analyse_dm_cmd_output(0xFF)
     self.deleteFile(file_name)
 
   def test_booster_thread_0_loop(self):
