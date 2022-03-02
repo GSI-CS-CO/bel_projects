@@ -72,7 +72,7 @@ entity LAN_MILIO is
     RCV_RDY_in    : in  STD_LOGIC;
     RCV_Error_in  : in  STD_LOGIC;
 
-    nLED          : in  STD_LOGIC_VECTOR(24 DOWNTO 0);
+    nLED          : in  STD_LOGIC_VECTOR(27 DOWNTO 0);
     V_Ain         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
     V_Bin         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
     V_Cin         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
@@ -373,7 +373,7 @@ epiosrd_MIL_IOREG: process(sys_clk,sys_reset,EPIOS_RD1,EPIOS_RD,EPIOS_adr,EPIO_R
                               EPIOS_Dataout<= not nLED(15 downto 0);
 
             when C_RD_LED1=>
-                              EPIOS_Dataout(8 downto 0) <= not nLED(24 downto 16);
+                              EPIOS_Dataout(11 downto 0) <= not nLED(27 downto 16);
 
             when C_RD_VGDIR0 =>
                               EPIOS_Dataout  <= VG_Control(15 downto 0);
