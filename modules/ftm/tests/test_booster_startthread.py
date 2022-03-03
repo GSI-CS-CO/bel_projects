@@ -75,5 +75,5 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.analyseFrequencyFromCsv(file_name, parameter_column)
     # assert that there are more than 2999 tmsg in 3 seconds with EVTNO 0x0001.
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>2999'})
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>2990'})
     self.deleteFile(file_name)
