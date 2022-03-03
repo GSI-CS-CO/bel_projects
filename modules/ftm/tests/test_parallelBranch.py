@@ -41,7 +41,6 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
 
   def run_test_branch(self, cpuList, diag=False):
     file_name = 'snoop_branch1.csv'
-    parameter_column = 20
     self.diag = diag
     self.cpuList = cpuList
     self.snoopTime = int(max(self.offsetNanoseconds1, self.offsetNanoseconds2)/1000000000) + 1
@@ -49,13 +48,23 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
     for x in cpuList:
       self.startPattern('', x)
     self.snoopToCsvWithAction(file_name, self.doBranch, self.snoopTime)
-    self.analyseFrequencyFromCsv(file_name, parameter_column)
-    for x in cpuList:
-      print(self.startAndGetSubprocessStdout(('grep', '-nHm', '1', x.lower() + '1', file_name), [0]))
-    for x in cpuList:
-      print(self.startAndGetSubprocessStdout(('grep', '-nH', x.lower() + '2', file_name), [0]))
-    for x in cpuList:
-      print(self.startAndGetSubprocessStdout(('grep', '-nH', x.lower() + '3', file_name), [0]))
+    check_values = {}
+    column_evtno = 8
+    if len(cpuList) == 1:
+      check_values = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1'}
+    elif len(cpuList) == 2:
+      check_values = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
+                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1'}
+    elif len(cpuList) == 3:
+      check_values = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
+                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1',
+                      '0x00c1': '>990', '0x00c2': '1', '0x00c3': '1'}
+    elif len(cpuList) == 4:
+      check_values = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
+                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1',
+                      '0x00c1': '>990', '0x00c2': '1', '0x00c3': '1',
+                      '0x00d1': '>990', '0x00d2': '1', '0x00d3': '1'}
+    self.analyseFrequencyFromCsv(file_name, column_evtno, check_values=check_values)
     self.deleteFile(file_name)
 
   def test_branchCPU0(self):
