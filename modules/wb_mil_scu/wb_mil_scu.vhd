@@ -361,6 +361,20 @@ signal   n_modulreset:              std_logic;
 signal   tx_req_led:                std_logic;
 signal   rx_avail_led:              std_logic;
 
+signal   highest_prio_index:        std_logic_vector(7 downto 0);
+signal   prio_index_valid:          std_logic;
+
+function reverse_any_vector (a: in std_logic_vector)
+return std_logic_vector is
+  variable result: std_logic_vector(a'RANGE);
+  alias aa: std_logic_vector(a'REVERSE_RANGE) is a;
+begin
+  for i in aa'RANGE loop
+    result(i) := aa(i);
+  end loop;
+  return result;
+end; -- function reverse_any_vector
+
 
 
 BEGIN
@@ -977,6 +991,12 @@ BEGIN
 
 END PROCESS schedule_mux;
 
+prio_enc: prio_encoder_256_8
+port map (
+  input => tx_req & not tx_fifo_empty,
+  index => highest_prio_index,
+  valid => prio_index_valid
+);
 
 schedule_p : PROCESS (clk_i, n_modulreset)
 BEGIN
@@ -1009,7 +1029,10 @@ BEGIN
     IF timeslot= 0 then                                                            --Empty whole TX_FIFO on timeslot 0
 
       IF  tx_fifo_empty='1'    AND task_runs='0'  THEN                             --skip if there is nothing to do or fifo task finished
-        timeslot         <= timeslot + 1 ;
+        --timeslot         <= timeslot + 1 ;
+        if prio_index_valid = '1' then
+          timeslot <= to_integer(unsigned(highest_prio_index));
+        end if;
         timeout_cntr_en  <= '0';
         timeout_cntr_clr <= '1';
         task_runs        <= '0';
@@ -1032,7 +1055,10 @@ BEGIN
       IF    tx_req(timeslot)='0' and task_runs_del='0'  then           --proceed with scheduler on no task and no request
 
         IF timeslot < ram_count  THEN
-          timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0)
+          --timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0)
+          if prio_index_valid = '1' then
+            timeslot <= to_integer(unsigned(highest_prio_index));
+          end if;
         ELSE
           timeslot           <= 0;
         END IF;
