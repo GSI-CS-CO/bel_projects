@@ -15,15 +15,6 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
         check_values={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
     self.deleteFile(file_name)
 
-  def test_threeThreads3(self):
-    self.startPattern('booster_startthread-3.dot', 'MAIN')
-    file_name = 'snoop_startthread-3.csv'
-    self.snoopToCsv(file_name, 3)
-    column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
-    self.deleteFile(file_name)
-
   @pytest.mark.slow
   def test_threeThreads1(self):
     self.startPattern('booster_startthread-1.dot', 'BOOST_REQ')
@@ -32,7 +23,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 15)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0100': '>8', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
+        check_values={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
@@ -43,7 +34,16 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 10)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0100': '>8', '0x0200': '>0', '0x0102': '=1', '0x0103': '1'})
+        check_values={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '1'})
+    self.deleteFile(file_name)
+
+  def test_threeThreads3(self):
+    self.startPattern('booster_startthread-3.dot', 'MAIN')
+    file_name = 'snoop_startthread-3.csv'
+    self.snoopToCsv(file_name, 3)
+    column_EVTNO = 8
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO,
+        check_values={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
     self.deleteFile(file_name)
 
   def test_booster_all_threads(self):
