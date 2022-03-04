@@ -841,7 +841,7 @@ END COMPONENT front_board_id;
     generic (
         Base_addr:          unsigned(15 downto 0);
         CLK_sys_in_Hz:      integer := 125000000;               
-        ch_num:             integer := 1                      
+        ch_num:             integer := 16                      
             );
     
     port  (
@@ -1167,7 +1167,7 @@ END COMPONENT front_board_id;
 constant daq_ch_num: integer := 16;
 signal daq_diob_ID: std_logic_vector(15 downto 0):=x"00FF"; --hard-coded ID Value for DAQ Diob implementation of which bits 3-0 are used 
 
---constant daq_diob_ID: std_logic_vector(15 downto 0):=x"0002"; --to be checked
+
 
 signal daq_user_rd_active:    std_logic;
 signal daq_data_to_SCUB:           std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
@@ -7850,7 +7850,7 @@ WHEN   c_AW_16Out2.ID  =>
 daq_diob_ID(15 downto 0)<= "00000000"&c_AW_16In2.ID; 
 
 daq_dat(1) <= AW_Input_Reg(2)(15 DOWNTO 0); --CH1
-
+--daq_dat(1) <= In16_Input(15 DOWNTO 0);
       -----------------------------------------------------------------------------------------------------------------------------------------
 
 
