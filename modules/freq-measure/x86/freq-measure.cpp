@@ -1,7 +1,7 @@
 /*******************************************************************************************
  *  created : 2022
  *  author  : Michael Reese, GSI-Darmstadt
- *  version : 15-Feb-2022
+ *  version : 04-Mar-2022
  *
  * Precise measurement of frequency on B2B-PM-Nodes. 
  * The Measurement is based on the same ECA events that the embedded CPU uses to measure the frequency.
@@ -14,6 +14,7 @@
  * TODO: In the future, this tool should generate these events by itself.
  *
  *********************************************************************************************/
+#define FREQ_MEASURE_VERSION "00.03.18"
 
 #include <algorithm>
 #include <iostream>
@@ -361,15 +362,18 @@ struct DataAcquisition {
 		} else {
 			throw std::runtime_error(std::string("DataAcquisition error: unknown ring ") + ring);
 		}
-		event = make_event(GID,B2B_ECADO_B2B_PMEXT);
-		mask  = make_mask (GID,B2B_ECADO_B2B_PMEXT);
-		add_condition(event, mask)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::start_data_taking));
+                for (int j = 0; j < 2; j++) { // hackish solution for creating the rules for injection into the next ring as well
+                  event = make_event(GID+j,B2B_ECADO_B2B_PMEXT);
+                  mask  = make_mask (GID+j,B2B_ECADO_B2B_PMEXT);
+                  add_condition(event, mask, 0)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::start_data_taking));
+                  add_condition(event, mask, 50000000)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::finish_measurement));
+                } // for j
 		event = 0xffffa03000000000;
 		mask  = 0xffffffffffffffff;
-		add_condition(event, mask)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::measure_edge));
-		event = EVALUATE_DATA_EVENT;
+		add_condition(event, mask, 0)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::measure_edge));
+		/*event = EVALUATE_DATA_EVENT;
 		mask  = 0xffffffffffffffff;
-		add_condition(event, mask)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::finish_measurement));
+		add_condition(event, mask, 0)->SigAction.connect(sigc::mem_fun(this,&DataAcquisition::finish_measurement));*/
 
 		for (int i = 0; i < result_for_sid.size(); ++i) {
 			std::ostringstream service_name;
@@ -401,13 +405,13 @@ struct DataAcquisition {
 	}
 
 	void start_data_taking(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint8_t flags) {
-		if (match_event(event, GID, B2B_ECADO_B2B_PMEXT)) {
+                if ((match_event(event, GID, B2B_ECADO_B2B_PMEXT) || match_event(event, GID+1, B2B_ECADO_B2B_PMEXT))) { // hackish solution for handling the rules for injection into the next ring as well
 			SID = get_sid(event);
 			measurements.clear();
 			measurement_start_time = deadline.getTAI();
 			expected_period_ns = (param & 0x00ffffffffffffff)*1e-9; // extract the set frequency in attoseconds
 			expected_frequency_Hz = 1e9/expected_period_ns;
-			timingreceiver->InjectEvent(EVALUATE_DATA_EVENT, 0x0, deadline+50000000); // evaluate the data 50 ms after the start event
+			/* timingreceiver->InjectEvent(EVALUATE_DATA_EVENT, 0x0, deadline+50000000); // evaluate the data 50 ms after the start event */
 			measuring = true;
 		}
 	}
@@ -467,10 +471,10 @@ struct DataAcquisition {
 	}
 
 	std::vector<std::shared_ptr<saftlib::SoftwareCondition_Proxy> > conditions;
-	std::shared_ptr<saftlib::SoftwareCondition_Proxy>  add_condition(uint64_t id, uint64_t mask) {
+  std::shared_ptr<saftlib::SoftwareCondition_Proxy>  add_condition(uint64_t id, uint64_t mask, int64_t myOffset) {
 		bool active = true;
 		int64_t offset = 0;
-		conditions.push_back(saftlib::SoftwareCondition_Proxy::create(action_sink->NewCondition(active, id, mask, offset = 0)));
+		conditions.push_back(saftlib::SoftwareCondition_Proxy::create(action_sink->NewCondition(active, id, mask, offset = myOffset)));
 		conditions.back()->setAcceptLate(true);
 		conditions.back()->setAcceptEarly(true);
 		conditions.back()->setAcceptConflict(true);
@@ -492,6 +496,8 @@ std::string help(std::string argv0) {
 	out << "  -v --verbose : write measurement results to stdout"                                          << std::endl;
 	out << "     --test    : run a self-test and quit"                                                     << std::endl;
 	out << "  -h --help    : print this help and exit"                                                     << std::endl;
+        out << std::endl;
+        out <<  "Version " << FREQ_MEASURE_VERSION << std::endl;
 	return out.str();
 }
 
