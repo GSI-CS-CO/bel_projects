@@ -263,29 +263,25 @@ stop_test4() {
 start_nw_perf() {
 
     wait_seconds 1
+    n=100
     echo "TX: MPS events will be generated locally ..."
-    echo "TX: 1x MPS event -> flag=OK(1) flag, grpID=1, evtID=0 (1x transmission)"
-    saft-ctl tr0 -p inject 0xffffeeee01010000 0x0 1000000
-    wait_seconds 1
+    echo "TX: $n MPS events -> flag=NOK(2), grpID=1, evtID=0 ($(( $n * 3)) transmissions)"
+    echo "TX: $n MPS events -> flag=OK(1), grpID=1, evtID=0 ($n transmissions)"
 
-    echo "TX: 1x MPS event -> flag=NOK(2), grpID=1, evtID=0 (3x transmissions)"
-    saft-ctl tr0 -p inject 0xffffeeee02010000 0x0 1000000
-    wait_seconds 1
-
-    echo "TX: 10x MPS events: 5x OK and 5x NOK (20x transmissions)"
-    for i in seq 1 5; do
-        saft-ctl tr0 -p inject 0xffffeeee01010000 0x0 1000000
+    for i in $(seq $n); do
+        echo -n "$i "
+        saft-ctl tr0 -p inject 0xffffeeee02010000 0x0 0
         wait_seconds 1
 
-        saft-ctl tr0 -p inject 0xffffeeee02010000 0x0 1000000
+        saft-ctl tr0 -p inject 0xffffeeee01010000 0x0 0
         wait_seconds 1
     done
 
-    echo "TX: 12x IO events must be snooped by saft-ctl, when snooper is running."
+    echo
+    echo "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop 0xffff100000000000 0xffffffff00000000 0'"
 
-    echo "TX: send 'new cycle' in 5 seconds ..."
-    wait_seconds 5
-    saft-ctl tr0 -p inject 0xffffdddd00000000 0x0 1000000
+    wait_seconds 1
+    echo "TX: send 'new cycle'"
     saft-ctl tr0 -p inject 0xffffdddd00000000 0x0 1000000
 }
 
