@@ -224,10 +224,10 @@ void msDelayBig( const uint64_t ms )
  * @ingroup INTERRUPT
  * @brief Handling of all SCU-bus MSI events.
  */
-ONE_TIME_CALL void onScuBusEvent( const MSI_ITEM_T* pMessage )
+ONE_TIME_CALL void onScuBusEvent( const unsigned int slot )
 {
-   const unsigned int slot = GET_LOWER_HALF( pMessage->msg ) + SCUBUS_START_SLOT;
    uint16_t pendingIrqs;
+
    TRACE_MIL_DRQ( "2\n" );
    while( (pendingIrqs = scuBusGetAndResetIterruptPendingFlags((void*)g_pScub_base, slot )) != 0)
    {
@@ -292,6 +292,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
    MSI_ITEM_T m;
+
    TRACE_MIL_DRQ( "0\n" );
    while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
    {
@@ -316,7 +317,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
            /*
             * Message from SCU- bus.
             */
-            onScuBusEvent( &m );
+            onScuBusEvent( GET_LOWER_HALF( m.msg ) + SCUBUS_START_SLOT );
             break;
          }
 

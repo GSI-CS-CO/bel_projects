@@ -35,7 +35,9 @@
 #ifndef CONFIG_DAQ_SINGLE_APP
  extern volatile uint16_t* g_pScub_base;
  
+#ifndef CONFIG_RTOS
  QUEUE_CREATE_STATIC( g_queueAddacDaq, 2 * MAX_FG_CHANNELS, DAQ_QUEUE_SLOT_T );
+#endif
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
@@ -376,6 +378,22 @@ ONE_TIME_CALL bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @ingroup TASK
+ * @brief Returns true and copies the slot-number in pSlot, if a message is
+ *        in queue by DAQ-MSI.
+ */
+ALWAYS_INLINE STATIC inline
+bool addacDaqQueuePop( DAQ_QUEUE_SLOT_T* pSlot )
+{
+#ifdef CONFIG_RTOS
+   return (xQueueReceive( g_queueAddacDaq, pSlot, 0 ) == pdPASS);
+#else
+   return queuePopSave( &g_queueAddacDaq, pSlot );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @ingroup TASK
  * @brief Handles all detected ADDAC-DAQs. One DAQ-channel per function call.
  * @see schedule
  */
@@ -416,7 +434,7 @@ void addacDaqTask( void )
       /*
        * Did the interrupt put a message in the pipe?
        */
-      if( queuePopSave( &g_queueAddacDaq, &slot ) )
+      if( addacDaqQueuePop( &slot ) )
       {
          s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
       }

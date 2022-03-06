@@ -30,6 +30,9 @@
 #include <eb_console_helper.h>
 #include <daq_ramBuffer.h>
 
+#if defined( CONFIG_MIL_IN_TIMER_INTERRUPT) || defined( CONFIG_USE_INTERRUPT_TIMESTAMP ) || defined( CONFIG_RTOS )
+   #include <lm32Interrupts.h>
+#endif
 #ifdef _CONFIG_PATCH_DAQ_TIMESTAMP
  #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
   #include <lm32Interrupts.h>
@@ -80,19 +83,45 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
 }
 #endif // else ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 
+//#define CONFIG_MIL_IN_TIMER_INTERRUPT
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
- * @brief Generalized function to read a item from the ring buffer.
+ * @brief Generalized function to read a ADDAC-DAQ-item from the
+ *        shared data buffer.
  */
 STATIC inline
-void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
-                   RAM_DAQ_PAYLOAD_T* pItem )
+void ramRreadAddacDaqItem( RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
+                           RAM_DAQ_PAYLOAD_T* pItem )
 {
 #ifdef CONFIG_SCU_USE_DDR3
+ #if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) || defined( CONFIG_RTOS )
+   criticalSectionEnter();
    ddr3read64( &pThis->ram, pItem, index );
+   criticalSectionExit();
+ #else
+   ddr3read64( &pThis->ram, pItem, index );
+ #endif
 #else
    #error Nothing implemented in function ramRreadItem()!
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Generalized function to write a ADDAC-DAQ-item in the shared
+ *        date buffer.
+ */
+STATIC inline ALWAYS_INLINE
+void ramWriteAddacDaqItem( register RAM_SCU_T* pThis,
+                           const RAM_RING_INDEX_T index,
+                           RAM_DAQ_PAYLOAD_T* pItem )
+{
+#if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) || defined( CONFIG_RTOS )
+   criticalSectionEnter();
+   ramWriteItem( pThis, index, pItem );
+   criticalSectionExit();
+#else
+   ramWriteItem( pThis, index, pItem );
 #endif
 }
 
@@ -156,7 +185,7 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
    RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
 #endif
    ramRingAddToReadIndex( &indexes, RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
-   ramRreadItem( pThis, ramRingGetReadIndex( &indexes ), &item );
+   ramRreadAddacDaqItem( pThis, ramRingGetReadIndex( &indexes ), &item );
 
 #if  (DEBUGLEVEL>1)
    for( unsigned int i = 0; i < ARRAY_SIZE(item.ad16); i++ )
@@ -549,7 +578,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             /*
              * Store item in RAM.
              */
-            ramWriteItem( pThis, ramRingGetWriteIndex(poIndexes), &ramItem );
+            ramWriteAddacDaqItem( pThis, ramRingGetWriteIndex(poIndexes), &ramItem );
             ramRingIncWriteIndex( poIndexes );
 
             /*

@@ -877,7 +877,7 @@ bool milQueuePop( MIL_TASK_DATA_T* pMilData  )
 
  * @param pMilData Pointer to a single element of array: g_aMilTaskData
  */
-STATIC void milTask( MIL_TASK_DATA_T* pMilData  )
+STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
 {
    /*!
     * @brief Currently channel number for loop-macros FOR_EACH_FG and
