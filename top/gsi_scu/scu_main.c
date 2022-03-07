@@ -29,6 +29,9 @@
 #include <scu_fg_list.h>
 #include "scu_fg_macros.h"
 #ifdef CONFIG_MIL_FG
+ #ifdef CONFIG_MIL_IN_TIMER_INTERRUPT
+  #include "scu_lm32Timer.h"
+ #endif
  #include "scu_eca_handler.h"
  #include "scu_mil_fg_handler.h"
 #endif
@@ -38,6 +41,12 @@
  #include "daq_main.h"
 #endif
 #include "lm32signal.h"
+
+#ifndef USRCPUCLK
+   #define CPU_FREQUENCY 125000000
+#else
+   #define CPU_FREQUENCY (USRCPUCLK * 1000)
+#endif
 
 #ifdef CONFIG_DBG_MEASURE_IRQ_TIME
 TIME_MEASUREMENT_T g_irqTimeMeasurement = TIME_MEASUREMENT_INITIALIZER;
@@ -54,6 +63,14 @@ extern ONE_WIRE_T g_oneWireBase;
  */
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*====================== End of shared memory area ==========================*/
+
+#ifdef CONFIG_MIL_IN_TIMER_INTERRUPT
+/*!
+ * @brief Module global flag becones "true" when the mil-handling runs
+ *        in timer-interrupt context.
+ */
+bool g_milUseTimerinterrupt = false;
+#endif
 
 /*!
  * @brief Base pointer of SCU bus.
@@ -363,6 +380,20 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
    }
 }
 
+#if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) && defined( CONFIG_MIL_FG )
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Interrupt callback function for timer-tick it drives the
+ *        MIL-FG handler
+ */
+STATIC void onScuTimerInterrupt( const unsigned int intNum,
+                                 const void* pContext UNUSED )
+{
+   //TODO
+   //mprintf( "*\n" );
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Installs the interrupt callback function and clears the interrupt
@@ -383,8 +414,37 @@ ONE_TIME_CALL void initInterrupt( void )
 #endif
 #ifndef _CONFIG_NO_INTERRUPT
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
-   irqEnable();
+
+ #if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) && defined( CONFIG_MIL_FG )
+ #warning "MIL in interrupt context will not run yet!!!"
+   STATIC_ASSERT( MAX_LM32_INTERRUPTS == 2 );
+   g_milUseTimerinterrupt = false;
+   if( milGetNumberOfFg() > 0 )
+   {
+      SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
+      if( (unsigned int)pTimer == ERROR_NOT_FOUND )
+      {
+         mprintf( ESC_WARNING"Warning no timer for MIL-FGs found,"
+                             " polling will used for them!"ESC_NORMAL );
+      }       
+      else
+      {
+         //TODO
+         /*
+          * Frequency of timer-interrupt will be 10 kHz
+          */
+         lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 10000 );
+         lm32TimerEnable( pTimer );
+         irqRegisterISR( TIMER_IRQ, NULL, onScuTimerInterrupt );
+        //!! g_milUseTimerinterrupt = true;
+      }
+   }
+ #else
+   STATIC_ASSERT( MAX_LM32_INTERRUPTS == 1 );
+ #endif   
+   
    mprintf( "IRQ table configured: 0b%08b\n", irqGetMaskRegister() );
+   irqEnable();
 #endif
 }
 
@@ -485,7 +545,10 @@ ONE_TIME_CALL void schedule( void )
    addacDaqTask();
 #endif
 #ifdef CONFIG_MIL_FG
-   milExecuteTasks();
+ #ifdef CONFIG_MIL_IN_TIMER_INTERRUPT
+   if( !g_milUseTimerinterrupt )
+ #endif
+      milExecuteTasks();
  #ifndef _CONFIG_ECA_BY_MSI
    ecaHandler();
  #endif
@@ -579,6 +642,8 @@ void main( void )
    mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.memAdmin.indexes.capacity );
 #endif
 
+   mprintf( "Found MIL function generators: %d\n", milGetNumberOfFg() );
+   
    initInterrupt();
 
    mprintf( ESC_FG_GREEN ESC_BOLD

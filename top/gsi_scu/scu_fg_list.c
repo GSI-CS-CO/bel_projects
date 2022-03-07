@@ -163,6 +163,20 @@ STATIC int fgListAdd( const uint8_t socked,
 #ifdef CONFIG_MIL_FG
 
 /*! ---------------------------------------------------------------------------
+ * @see scu_fg_list.h
+ */
+unsigned int milGetNumberOfFg( void )
+{
+   unsigned int numOfMilFg = 0;
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oSaftLib.oFg.aMacros ); i++ )
+   {
+      if( isMilFg( g_shared.oSaftLib.oFg.aMacros[i].socket ) )
+         numOfMilFg++;
+   }
+   return numOfMilFg;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-Bus for functions generators which are
  *        connected via SCU-bus-to-MIL-adapter
  */

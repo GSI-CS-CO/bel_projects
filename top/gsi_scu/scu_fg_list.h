@@ -113,6 +113,13 @@ void fgResetAndInit( FG_CHANNEL_REG_T* cr,
                    #endif
                    );
 
+#ifdef CONFIG_MIL_FG
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the number of found MIL-function generators.
+ */
+unsigned int milGetNumberOfFg( void );
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the index number of a FG-macro in the FG-list by the
  *        channel number
