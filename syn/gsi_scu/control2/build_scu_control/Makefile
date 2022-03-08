@@ -16,7 +16,7 @@ TARGET         := scu_control
  SCU_MIL := 1
 # MIL_GAP := 1
  MIL_DAQ_USE_DDR3 := 1
-# MIL_IN_TIMER_INTERRUPT := 1
+ MIL_IN_TIMER_INTERRUPT := 1
  
  ADDAC_DAQ := 1
 # DIOB_WITH_DAQ := 1
@@ -175,6 +175,9 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
+ifdef MIL_IN_TIMER_INTERRUPT
+   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
+endif
 
 # CODE_OPTIMIZATION = 2
  CODE_OPTIMIZATION = s
@@ -212,7 +215,7 @@ endif
 # SCU_URL = scuxl0118
 # SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
- SCU_URL = scuxl0192
+# SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
 # SCU_URL = scuxl0331
 # SCU_URL = scuxl0025

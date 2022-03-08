@@ -386,11 +386,12 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  * @brief Interrupt callback function for timer-tick it drives the
  *        MIL-FG handler
  */
-STATIC void onScuTimerInterrupt( const unsigned int intNum,
+STATIC void onScuTimerInterrupt( const unsigned int intNum UNUSED,
                                  const void* pContext UNUSED )
 {
    //TODO
    //mprintf( "*\n" );
+  //!! milExecuteTasks();
 }
 #endif
 
@@ -413,26 +414,32 @@ ONE_TIME_CALL void initInterrupt( void )
    queueReset( &g_queueAlarm );
 #endif
 #ifndef _CONFIG_NO_INTERRUPT
+   IRQ_ASSERT( irqGetAtomicNestingCount() == 1 );
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
 
  #if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) && defined( CONFIG_MIL_FG )
  #warning "MIL in interrupt context will not run yet!!!"
    STATIC_ASSERT( MAX_LM32_INTERRUPTS == 2 );
    g_milUseTimerinterrupt = false;
+   /*
+    * Is at least one MIL function generator present?
+    */
    if( milGetNumberOfFg() > 0 )
-   {
+   { /*
+      * Trying to use the timer interrupt for MIL-handling.
+      */
       SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
       if( (unsigned int)pTimer == ERROR_NOT_FOUND )
       {
-         mprintf( ESC_WARNING"Warning no timer for MIL-FGs found,"
-                             " polling will used for them!"ESC_NORMAL );
+         mprintf( ESC_WARNING
+                  "WARNING: No LM32-timer-macro for MIL-FGs found,"
+                  " polling will used for them!"
+                  ESC_NORMAL );
       }       
       else
-      {
-         //TODO
-         /*
-          * Frequency of timer-interrupt will be 10 kHz
-          */
+      { /*
+         * Frequency of timer-interrupt will be 10 kHz
+         */
          lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 10000 );
          lm32TimerEnable( pTimer );
          irqRegisterISR( TIMER_IRQ, NULL, onScuTimerInterrupt );
@@ -443,8 +450,9 @@ ONE_TIME_CALL void initInterrupt( void )
    STATIC_ASSERT( MAX_LM32_INTERRUPTS == 1 );
  #endif   
    
-   mprintf( "IRQ table configured: 0b%08b\n", irqGetMaskRegister() );
+   mprintf( "IRQ table configured: 0b%01b\n", irqGetMaskRegister() );
    irqEnable();
+   IRQ_ASSERT( irqGetAtomicNestingCount() == 0 );
 #endif
 }
 
