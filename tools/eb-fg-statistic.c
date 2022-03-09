@@ -34,8 +34,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <sys/stat.h>
-//Etherbone
 #include <etherbone.h>
+#include <sys/time.h>
 
 
 #define GSI_ID      0x651
@@ -70,7 +70,7 @@
 #define MIL_SIO3_TX_REQ   0xe20
 #define TASKMIN           1
 #define TASKMAX           254
-#define TASK              40
+#define TASK              241
 #define   OKAY                 1
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
@@ -406,6 +406,15 @@ void scanDevBus(eb_address_t dev_base, eb_address_t scu_base, unsigned char slot
   }
 }
 
+double time_diff(struct timeval x, struct timeval y) {
+  double x_ms, y_ms, diff;
+
+  x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
+  y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
+
+  diff = (double)y_ms - (double)x_ms;
+  return diff;
+}
   
 
 
@@ -570,18 +579,27 @@ int main(int argc, char * const* argv) {
 
   // read from statistics buffer
   if (rflag == 1) {
+    struct timeval start_t, end_t;
+    double diff_t;
     while (1) {
+      gettimeofday(&start_t, NULL);
+
       if (slot < 1) 
         devb_read(dev_bus, TASK, ifa_addr, STAT_BUFFER, &value);
       else
         scub_devb_read(scu_bus, TASK, slot, ifa_addr, STAT_BUFFER, &value);
+      gettimeofday(&end_t, NULL);
+      diff_t = time_diff(start_t, end_t);
+      if (diff_t > 3000.0)
+        usleep(20000);
 
       // primitive stream control
       if (value == 0) {
-        usleep(100);
+        usleep(20000);
         continue;
       }
-      printf("0x%"EB_DATA_FMT"\n", value);
+      printf("0x%"EB_DATA_FMT", Execution time = %.01f us\n", value, diff_t);
+      usleep(10000);
     }
   }
 
