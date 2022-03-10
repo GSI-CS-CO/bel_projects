@@ -2,7 +2,7 @@
 DATAMASTER ?= $$DM
 # Command for saft-ctl snoop. May be different for remote execution.
 SNOOP ?= saft-ctl tr0 -xv snoop 0 0 0
-SNOOP_FEL0069 ?= ssh -t root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'
+SNOOP_FEL0069 ?= ssh root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
 # DM Tools to test
