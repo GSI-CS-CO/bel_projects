@@ -164,6 +164,8 @@ uint64_t irqGetTimeSinceLastInterrupt( void )
  */
 void _irq_entry( void )
 {
+   IRQ_ASSERT( (irqGetEnableRegister() & IRQ_IE) == 0 );
+   IRQ_ASSERT( irqGetPendingRegister() != 0 );
 #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
    mg_interruptTimestamp = getWrSysTime();
 #endif

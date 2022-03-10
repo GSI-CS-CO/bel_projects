@@ -424,7 +424,7 @@ ONE_TIME_CALL void initInterrupt( void )
    /*
     * Is at least one MIL function generator present?
     */
-   if( milGetNumberOfFg() > 0 )
+  // if( milGetNumberOfFg() > 0 )
    { /*
       * Trying to use the timer interrupt for MIL-handling.
       */
@@ -435,7 +435,7 @@ ONE_TIME_CALL void initInterrupt( void )
                   "WARNING: No LM32-timer-macro for MIL-FGs found,"
                   " polling will used for them!"
                   ESC_NORMAL );
-      }       
+      }
       else
       { /*
          * Frequency of timer-interrupt will be 10 kHz
@@ -448,8 +448,7 @@ ONE_TIME_CALL void initInterrupt( void )
    }
  #else
    STATIC_ASSERT( MAX_LM32_INTERRUPTS == 1 );
- #endif   
-   
+ #endif
    mprintf( "IRQ table configured: 0b%01b\n", irqGetMaskRegister() );
    irqEnable();
    IRQ_ASSERT( irqGetAtomicNestingCount() == 0 );
