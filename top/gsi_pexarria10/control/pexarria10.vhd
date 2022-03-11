@@ -407,7 +407,8 @@ begin
   end generate;
 
   -- OneWire
-  OneWire_CB_splz     <= '1';  -- Strong Pull-Up disabled
-  OneWire_aux_CB_splz <= 'Z';  -- Unconnected on pexarria10
+  OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled
+  OneWire_aux_CB      <= 'Z'; -- Unconnected on pexarria10 (FTM10 only)
+  OneWire_aux_CB_splz <= 'Z'; -- Unconnected on pexarria10 (FTM10 only)
 
 end rtl;
