@@ -391,7 +391,7 @@ STATIC void onScuTimerInterrupt( const unsigned int intNum UNUSED,
 {
    //TODO
    //mprintf( "*\n" );
-  //!! milExecuteTasks();
+   milExecuteTasks();
 }
 #endif
 
@@ -443,7 +443,7 @@ ONE_TIME_CALL void initInterrupt( void )
          lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 10000 );
          lm32TimerEnable( pTimer );
          irqRegisterISR( TIMER_IRQ, NULL, onScuTimerInterrupt );
-        //!! g_milUseTimerinterrupt = true;
+         g_milUseTimerinterrupt = true;
       }
    }
  #else
