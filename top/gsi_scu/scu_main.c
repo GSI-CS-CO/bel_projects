@@ -389,8 +389,6 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
 STATIC void onScuTimerInterrupt( const unsigned int intNum UNUSED,
                                  const void* pContext UNUSED )
 {
-   //TODO
-   //mprintf( "*\n" );
    milExecuteTasks();
 }
 #endif
@@ -418,13 +416,13 @@ ONE_TIME_CALL void initInterrupt( void )
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
 
  #if defined( CONFIG_MIL_IN_TIMER_INTERRUPT ) && defined( CONFIG_MIL_FG )
- #warning "MIL in interrupt context will not run yet!!!"
+ #warning "MIL in interrupt context not fully tested yet!!!"
    STATIC_ASSERT( MAX_LM32_INTERRUPTS == 2 );
    g_milUseTimerinterrupt = false;
    /*
     * Is at least one MIL function generator present?
     */
-  // if( milGetNumberOfFg() > 0 )
+   if( milGetNumberOfFg() > 0 )
    { /*
       * Trying to use the timer interrupt for MIL-handling.
       */
@@ -438,9 +436,9 @@ ONE_TIME_CALL void initInterrupt( void )
       }
       else
       { /*
-         * Frequency of timer-interrupt will be 10 kHz
+         * Frequency of timer-interrupt will be 20 kHz
          */
-         lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 10000 );
+         lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 20000 );
          lm32TimerEnable( pTimer );
          irqRegisterISR( TIMER_IRQ, NULL, onScuTimerInterrupt );
          g_milUseTimerinterrupt = true;

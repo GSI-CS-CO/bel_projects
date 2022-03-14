@@ -364,6 +364,15 @@ void criticalSectionEnter( void );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup ATOMIC
+ * @brief Backward compatibility
+ */
+STATIC inline ALWAYS_INLINE void atomic_on( void )
+{
+   criticalSectionEnter();
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
  * @brief Function shall be invoked immediately after the end of a critical
  *        respectively atomic section.
  *
@@ -375,6 +384,15 @@ void criticalSectionEnter( void );
  * @see criticalSectionEnter
  */
 void criticalSectionExit( void );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Backward compatibility
+ */
+STATIC inline ALWAYS_INLINE void atomic_off( void )
+{
+   criticalSectionExit();
+}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup ATOMIC
@@ -426,16 +444,6 @@ STATIC inline bool __criticalSectionExit( void )
    for( bool __c__ = __criticalSectionEnter();       \
         __c__;                                       \
         __c__ = __criticalSectionExit() )
-
-/*!
- * @brief Backward compatibility
- */
-#define atomic_on   criticalSectionEnter
-
-/*!
- * @brief Backward compatibility
- */
-#define atomic_off  criticalSectionExit
 
 #if defined(__cplusplus ) || defined(__DOXYGEN__)
 } /* namespace gsi */
