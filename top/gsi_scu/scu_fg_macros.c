@@ -387,7 +387,6 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
 {
    FG_ASSERT( !isAddacFg( socket ) );
 
-   int status;
    if( isMilScuBusFg( socket ) )
    {
       const unsigned int slot = getFgSlotNumber( socket );
@@ -403,20 +402,14 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
      /*
       * Enable sending of data request.
       */
-      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-      {
-         milPrintDeviceError( status, slot, "enable dreq");
-         return status;
-      }
+      scub_write_mil( (volatile unsigned short*) pScuBus, slot, 1 << 13, FC_IRQ_MSK | dev );
 
      /*
       * Set MIL-DAC in FG mode
       */
-      if( (status = scub_write_mil((volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-      {
-         milPrintDeviceError( status, slot, "set FG mode");
-      }
-      return status;
+      scub_write_mil( (volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev );
+      
+      return OKAY;
    }
 
    FG_ASSERT( isMilExtentionFg( socket ) );
@@ -424,19 +417,14 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
   /*
    * Enable data request
    */
-   if( (status = write_mil((volatile unsigned int*) pMilBus, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-   {
-      milPrintDeviceError( status, 0, "enable dreq" );
-      return status;
-   }
+   write_mil( (volatile unsigned int*) pMilBus, 1 << 13, FC_IRQ_MSK | dev );
 
    /*
     * Set MIL-DAC in FG mode
     */
-   if( (status = write_mil((volatile unsigned int*) pMilBus, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-      milPrintDeviceError( status, 0, "set FG mode");
+   write_mil( (volatile unsigned int*) pMilBus, 0x1, FC_IFAMODE_WR | dev);
 
-   return status;
+   return OKAY;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -450,15 +438,15 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
  * @param channel Channel number of the concerned function generator.
  * @retval OKAY Action was successful.
  */
-ONE_TIME_CALL int milFgStart( const void* pScuBus,
-                              const void* pMilBus,
-                              const FG_PARAM_SET_T* pPset,
-                              const unsigned int socket,
-                              const unsigned int dev,
-                              const unsigned int channel )
+ONE_TIME_CALL void milFgStart( const void* pScuBus,
+                               const void* pMilBus,
+                               const FG_PARAM_SET_T* pPset,
+                               const unsigned int socket,
+                               const unsigned int dev,
+                               const unsigned int channel )
 {
    FG_ASSERT( !isAddacFg( socket ) );
-   int status;
+
    const uint16_t cntrl_reg_wr = getFgControlRegValue( pPset, channel );
 
    FG_MIL_REGISTER_T milFgRegs;
@@ -476,64 +464,46 @@ ONE_TIME_CALL int milFgStart( const void* pScuBus,
    {
       const unsigned int slot = getFgSlotNumber( socket );
 
-      if( (status = scub_write_mil_blk( (volatile unsigned short*) pScuBus,
-                                        slot,
-                                        (short*)&milFgRegs,
-                                        FC_BLK_WR | dev)) != OKAY )
-      {
-         milPrintDeviceError( status, slot, "blk trm");
-         return status;
-      }
+      scub_write_mil_blk( (volatile unsigned short*) pScuBus,
+                          slot,
+                          (short*)&milFgRegs,
+                          FC_BLK_WR | dev );
 
      /*
       * Still in block mode !
       */
-      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus,
-                                    slot,
-                                    cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
-      {
-         milPrintDeviceError( status, slot, "end blk trm");
-         return status;
-      }
+      scub_write_mil( (volatile unsigned short*) pScuBus,
+                      slot,
+                      cntrl_reg_wr, FC_CNTRL_WR | dev);
 
-      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus,
-                                    slot,
-                                    cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
-      {
-         milPrintDeviceError( status, slot, "end blk mode");
-      }
-      return status;
+      scub_write_mil( (volatile unsigned short*) pScuBus,
+                      slot,
+                      cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev );
+
+      return;
    }
 
    FG_ASSERT( isMilExtentionFg( socket ) );
 
-   if((status = write_mil_blk( (volatile unsigned int*)pMilBus,
-                               (short*)&milFgRegs,
-                               FC_BLK_WR | dev)) != OKAY)
-   {
-      milPrintDeviceError( status, 0, "blk trm");
-      return status;
-   }
+   write_mil_blk( (volatile unsigned int*)pMilBus,
+                  (short*)&milFgRegs,
+                  FC_BLK_WR | dev );
+   
    /*
     * Still in block mode !
     */
-   if((status = write_mil( (volatile unsigned int*)pMilBus,
-                           cntrl_reg_wr,
-                           FC_CNTRL_WR | dev)) != OKAY)
-   {
-      milPrintDeviceError( status, 0, "end blk trm");
-      return status;
-   }
+   write_mil( (volatile unsigned int*)pMilBus,
+              cntrl_reg_wr,
+              FC_CNTRL_WR | dev );
 
-   if( (status = write_mil( (volatile unsigned int*)pMilBus,
-                            cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-      milPrintDeviceError( status, 0, "end blk mode");
+   write_mil( (volatile unsigned int*)pMilBus,
+              cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev );
 
    #if __GNUC__ >= 9
      #pragma GCC diagnostic pop
    #endif
 
-   return status;
+   return;
 }
 
 #endif /* ifdef  CONFIG_MIL_FG */
@@ -597,12 +567,10 @@ void fgEnableChannel( const unsigned int channel )
       }
       else
       {
-         status = milFgStart( (void*)g_pScub_base,
-                              (void*)g_pScu_mil_base,
-                              &pset,
-                              socket, dev, channel );
-         if( status != OKAY )
-            return;
+         milFgStart( (void*)g_pScub_base,
+                     (void*)g_pScu_mil_base,
+                      &pset,
+                      socket, dev, channel );
       }
    #endif /* CONFIG_MIL_FG */
    #ifdef CONFIG_USE_SENT_COUNTER
@@ -632,23 +600,19 @@ ONE_TIME_CALL void milFgDisableIrq( const void* pScuBus,
 {
    FG_ASSERT( !isAddacFg( socket ) );
 
-   int status;
 
    if( isMilScuBusFg( socket ) )
    {
-      status = scub_write_mil( (volatile unsigned short*)pScuBus,
-                               getFgSlotNumber( socket ),
-                               0x0, FC_IRQ_MSK | dev);
+      scub_write_mil( (volatile unsigned short*)pScuBus,
+                      getFgSlotNumber( socket ),
+                      0x0, FC_IRQ_MSK | dev);
    }
    else
    {
       //write_mil((volatile unsigned int* )pMilBus, 0x0, FC_COEFF_A_WR | dev);  //ack drq
-      status = write_mil( (volatile unsigned int* )pMilBus,
-                          0x0, FC_IRQ_MSK | dev);
-
+      write_mil( (volatile unsigned int* )pMilBus,
+                  0x0, FC_IRQ_MSK | dev);
    }
-   if( status != OKAY )
-      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__);
 }
 
 /*! ---------------------------------------------------------------------------
@@ -674,10 +638,8 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
          return status;
       }
 
-      if( (status = scub_write_mil( (volatile unsigned short*) pScuBus, slot,
-           data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         milPrintDeviceError( status, slot, "disarm hw 4" );
-
+      scub_write_mil( (volatile unsigned short*) pScuBus, slot,
+                       data & ~(0x2), FC_CNTRL_WR | dev);
       return status;
    }
 
@@ -690,11 +652,10 @@ ONE_TIME_CALL int milFgDisable( const void* pScuBus,
       return status;
    }
 
-   if( (status = write_mil( (volatile unsigned int*)pMilBus,
-                            data & ~(0x2),
-                            FC_CNTRL_WR | dev)) != OKAY )
-      milPrintDeviceError( status, 0, "disarm hw 2" );
-
+   write_mil( (volatile unsigned int*)pMilBus,
+               data & ~(0x2),
+              FC_CNTRL_WR | dev );
+   
    return status;
 }
 #endif /* ifdef  CONFIG_MIL_FG */
@@ -771,8 +732,8 @@ void scuBusEnableMeassageSignaledInterrupts( const unsigned int channel )
    if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
    {
 #endif
-      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
-      const uint16_t slot = getFgSlotNumber( socket ) - 1;
+      FG_ASSERT( getFgSlotNumber( socket ) >= SCUBUS_START_SLOT );
+      const uint16_t slot = getFgSlotNumber( socket ) - SCUBUS_START_SLOT;
       ATOMIC_SECTION()
       {
          g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;

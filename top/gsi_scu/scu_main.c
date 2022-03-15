@@ -436,9 +436,9 @@ ONE_TIME_CALL void initInterrupt( void )
       }
       else
       { /*
-         * Frequency of timer-interrupt will be 20 kHz
+         * Frequency of timer-interrupt: CPU_FREQUENCY / f_interrupt
          */
-         lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 20000 );
+         lm32TimerSetPeriod( pTimer, CPU_FREQUENCY / 10000 );
          lm32TimerEnable( pTimer );
          irqRegisterISR( TIMER_IRQ, NULL, onScuTimerInterrupt );
          g_milUseTimerinterrupt = true;

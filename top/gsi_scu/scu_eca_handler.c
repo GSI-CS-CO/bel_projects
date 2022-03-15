@@ -80,18 +80,11 @@ void initEcaQueue( void )
  * @brief Event Condition Action (ECA) handler
  * @see schedule
  */
-inline void ecaHandler
-                    #ifdef _CONFIG_ECA_BY_MSI
-                      ( void )
-                    #else
-                      ( register TASK_T* pThis FG_UNUSED )
-                    #endif
+inline void ecaHandler( void )
 {
    FG_ASSERT( g_eca.pQueue != NULL );
 #ifdef _CONFIG_ECA_BY_MSI
    ecaControlGetAndResetLM32ValidCount( g_eca.pControl );
-#else
-   FG_ASSERT( pThis->pTaskData == NULL );
 #endif
 
    if( !ecaTestTagAndPop( g_eca.pQueue, g_eca.tag ) )

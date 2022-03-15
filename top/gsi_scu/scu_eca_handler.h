@@ -41,11 +41,7 @@ void initEcaQueue( void );
  * @brief Event Condition Action (ECA) handler
  * @see schedule
  */
-#ifdef _CONFIG_ECA_BY_MSI
 void ecaHandler( void );
-#else
-void ecaHandler( register TASK_T* FG_UNUSED );
-#endif
 
 #ifdef __cplusplus
 }
