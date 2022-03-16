@@ -10,7 +10,7 @@
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
-TARGETS     := freq-measure
+TARGETS     := freq-measure freq-mon-simple
 
 #DIMPATH     := /opt/dim/dim_v20r29
 DIMPATH     := /common/usr/timing/b2b/dim_v20r29
@@ -33,5 +33,9 @@ all: $(TARGETS)
 freq-measure: freq-measure.cpp
 	g++ --std=c++11 $(CFLAGS) -o freq-measure freq-measure.cpp $(LIBS) -ldim -lpthread
 
+freq-mon-simple: freq-mon-simple.c
+	$(CC) $(CFLAGS) -o freq-mon-simple freq-mon-simple.c $(LIBS) -ldim -lpthread
+
+
 clean: 
-	rm -f freq-measure
+	rm -f freq-measure freq-mon-simple
