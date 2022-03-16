@@ -5,7 +5,7 @@ ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
-TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master
+TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-fg-statistic
 EXTRA_I := eb-flash-secure
 
 EXTRA_FLAGS ?=
