@@ -5,11 +5,11 @@ ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
-TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-fg-statistic
+TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
+CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all:	$(TARGETS) monitoring
@@ -56,3 +56,6 @@ io-test: io-test.cpp
 
 eb-reset: eb-reset.c
 	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
+
+eb-asmi: eb-asmi.c
+	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c crc32.c $(LIBS)

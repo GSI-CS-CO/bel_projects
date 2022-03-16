@@ -70,6 +70,7 @@ use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
 use work.wb_i2c_wrapper_pkg.all;
+use work.remote_update_pkg.all;
 
 entity monster is
   generic(
@@ -122,8 +123,8 @@ entity monster is
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
     g_en_timer             : boolean;
-    g_en_eca_tap           : boolean);
-
+    g_en_eca_tap           : boolean;
+    g_en_asmi              : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -395,9 +396,10 @@ architecture rtl of monster is
   constant c_is_arria10gx       : boolean := g_family = "Arria 10 GX";
   constant c_is_arria10gx_e3p1  : boolean := g_family = "Arria 10 GX E3P1";
   constant c_is_arria10gx_scu4  : boolean := g_family = "Arria 10 GX SCU4";
+  constant c_is_arria10gx_ftm4  : boolean := g_family = "Arria 10 GX FTM4";
   constant c_is_arria10gx_pex10 : boolean := g_family = "Arria 10 GX PEX10";
   constant c_is_arria10gx_ftm10 : boolean := g_family = "Arria 10 GX FTM10";
-  constant c_is_arria10         : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_pex10 or c_is_arria10gx_ftm10;
+  constant c_is_arria10         : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4 or c_is_arria10gx_ftm4 or c_is_arria10gx_pex10 or c_is_arria10gx_ftm10;
   constant c_is_arria5          : boolean := g_family = "Arria V";
   constant c_is_arria2          : boolean := g_family = "Arria II";
 
@@ -504,7 +506,8 @@ architecture rtl of monster is
     devs_tempsens,
     devs_a10_phy_reconf,
     devs_i2c_wrapper,
-    devs_eca_tap
+    devs_eca_tap,
+    devs_asmi
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -519,7 +522,7 @@ architecture rtl of monster is
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (dev_slaves'pos(devs_build_id)       => f_sdb_auto_device(c_build_id_sdb,                   true),
     dev_slaves'pos(devs_watchdog)       => f_sdb_auto_device(c_watchdog_sdb,                   true),
-    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
+    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), not g_en_asmi),
     dev_slaves'pos(devs_reset)          => f_sdb_auto_device(c_arria_reset,                    true),
     dev_slaves'pos(devs_tlu)            => f_sdb_auto_device(c_tlu_sdb,                        c_use_tlu),
     dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
@@ -545,7 +548,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
-    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
+    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
+    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -944,6 +948,12 @@ architecture rtl of monster is
     return result;
   end f_lvds_array_to_trigger_array;
 
+  ----------------------------------------------------------------------------------
+  -- asmi signals ------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  signal asmi_i : t_wishbone_slave_in;
+  signal asmi_o : t_wishbone_slave_out;
+
 begin
 
   ----------------------------------------------------------------------------------
@@ -1077,9 +1087,16 @@ begin
     inclk  => clk_sys3,
     outclk => clk_update);
 
-  flash_out : global_region port map(
-    inclk  => clk_sys4,
-    outclk => clk_flash_ext);
+  -- This keeps the legacy flash controller alive (voodoo mode)
+  global_region_flash_y : if not g_en_asmi generate
+    flash_out : global_region port map(
+      inclk  => clk_sys4,
+      outclk => clk_flash_ext);
+  end generate;
+
+  global_region_flash_n : if g_en_asmi generate
+    clk_flash_ext <= clk_sys4;
+  end generate;
 
   clk_flash_in  <= clk_flash_ext;
   clk_flash_out <= clk_reconf;
@@ -3167,6 +3184,44 @@ end generate;
         sda_pad_o    => i2c_sda_pad_o,
         sda_padoen_o => i2c_sda_padoen_o);
   end generate;
+
+  asmi_n : if not g_en_asmi generate
+    dev_bus_master_i(dev_slaves'pos(devs_asmi)) <= cc_dummy_slave_out;
+  end generate;
+
+  asmi_y : if g_en_asmi generate
+    --------------------------------------------
+    -- clock crossing from sys clk to clk_25Mhz
+    --------------------------------------------
+     cross_systoasmi : xwb_clock_crossing
+      generic map ( g_size => 16)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_asmi)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_asmi)),
+        -- Master reader port
+        master_clk_i   => clk_flash_ext,
+        master_rst_n_i => rstn_update,
+        master_i       => asmi_o,
+        master_o       => asmi_i);
+
+    -----------------------------------------
+    -- wb interface for altera remote update
+    -----------------------------------------
+    asmi: wb_asmi
+      generic map (
+        pagesize => 256,
+        g_family => g_family
+      )
+      port map (
+        clk_flash_i => clk_flash_ext,
+        rst_n_i     => rstn_update,
+        slave_i     =>  asmi_i,
+        slave_o     =>  asmi_o
+      );
+   end generate asmi_y;
 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------

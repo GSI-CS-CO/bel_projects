@@ -4,9 +4,6 @@ eb-info
 eb-console
 eb-config-nv
 eb-time
-eca-snoop
-io-test
-button-game
 eb-time
 eb-fwload
 eb-pps
@@ -15,3 +12,8 @@ eb-reset
 eb-daq-dump
 eb-i2c-master
 eb-fg-statistic
+eb-asmi
+wb_mil_prio
+eca-snoop
+io-test
+button-game
