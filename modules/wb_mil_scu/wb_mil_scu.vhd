@@ -90,7 +90,11 @@ use work.genram_pkg.all;
 --|         |             |             |                                                                                           |
 --|         |             |             |                                                                                           |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
-ENTITY wb_mil_scu IS
+ENTITY wb_mil_scu_broken IS 
+    -- the WB-slave implementation is broken (it cannot handle 2 cyles with only one clock tick in between)
+    -- a fix is provided by wrapping the broken entity together with a state machine that introduces a fixed 
+    -- waiting time between two WB cycles. The wrapper is at the bottom of the file. 
+    -- This should be a temporary solution until someone fixes the slave logic of wb_mil_scu_broken.
 
 GENERIC (
       Clk_in_Hz:          INTEGER := 62_500_000;    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
@@ -181,10 +185,10 @@ PORT  (
 	  n_tx_req_led :        OUT     STD_LOGIC                   ;  -- low solange mindestens ein txreq ansteht
 	  n_rx_avail_led:       OUT     STD_LOGIC                      -- low solange mindestens ein rxavail ansteht
     );
-END wb_mil_scu;
+END wb_mil_scu_broken;
 
 
-ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS
+ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu_broken IS
 
 constant mil_rd_wr_data_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_wr_data_a;   --not used  for reads anymore, use task registers therefore.
                                                                                                         --this address writes data to tx_fifo for block transfers
@@ -357,6 +361,20 @@ signal   n_modulreset:              std_logic;
 signal   tx_req_led:                std_logic;
 signal   rx_avail_led:              std_logic;
 
+signal   highest_prio_index:        std_logic_vector(7 downto 0);
+signal   prio_index_valid:          std_logic;
+
+function reverse_any_vector (a: in std_logic_vector)
+return std_logic_vector is
+  variable result: std_logic_vector(a'RANGE);
+  alias aa: std_logic_vector(a'REVERSE_RANGE) is a;
+begin
+  for i in aa'RANGE loop
+    result(i) := aa(i);
+  end loop;
+  return result;
+end; -- function reverse_any_vector
+
 
 
 BEGIN
@@ -371,7 +389,7 @@ p_mux_slave_o_ctrl: PROCESS (slave_i,ex_stall_res,ex_ack_res,ex_err_res,ex_stall
 VARIABLE LA_a_var          : UNSIGNED (slave_i_adr_max downto 2);
 BEGIN
   LA_a_var                 := UNSIGNED(slave_i.adr(slave_i_adr_max downto 2));
-  IF (LA_a_var = wr_soft_reset_a_map)    THEN
+  IF (LA_a_var = wr_soft_reset_a_map)   or n_modulreset = '0'   THEN
     slave_o.stall             <= ex_stall_res;
     slave_o.ack               <= ex_ack_res;
     slave_o.err               <= ex_err_res;
@@ -775,6 +793,9 @@ BEGIN
             n_rst_mil_macro          <= slave_i.dat(0);
             ex_stall_res             <= '0';
             ex_ack_res               <= '1';
+          else  
+            ex_stall_res             <= '0';
+            ex_err_res               <= '1';
           end if;
         else
           -- access to high word or unaligned word is not allowed
@@ -970,6 +991,12 @@ BEGIN
 
 END PROCESS schedule_mux;
 
+prio_enc: prio_encoder_256_8
+port map (
+  input => tx_req & not tx_fifo_empty,
+  index => highest_prio_index,
+  valid => prio_index_valid
+);
 
 schedule_p : PROCESS (clk_i, n_modulreset)
 BEGIN
@@ -1002,7 +1029,10 @@ BEGIN
     IF timeslot= 0 then                                                            --Empty whole TX_FIFO on timeslot 0
 
       IF  tx_fifo_empty='1'    AND task_runs='0'  THEN                             --skip if there is nothing to do or fifo task finished
-        timeslot         <= timeslot + 1 ;
+        --timeslot         <= timeslot + 1 ;
+        if prio_index_valid = '1' then
+          timeslot <= to_integer(unsigned(highest_prio_index));
+        end if;
         timeout_cntr_en  <= '0';
         timeout_cntr_clr <= '1';
         task_runs        <= '0';
@@ -1025,7 +1055,10 @@ BEGIN
       IF    tx_req(timeslot)='0' and task_runs_del='0'  then           --proceed with scheduler on no task and no request
 
         IF timeslot < ram_count  THEN
-          timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0)
+          --timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0)
+          if prio_index_valid = '1' then
+            timeslot <= to_integer(unsigned(highest_prio_index));
+          end if;
         ELSE
           timeslot           <= 0;
         END IF;
@@ -1817,3 +1850,228 @@ p_wait_timer: process (clk_i, nRst_i)
   end process p_wait_timer;
 
 end arch_wb_mil_scu;
+
+
+
+
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.wishbone_pkg.all;
+
+-- If a WB slave cannot correctly handle a cycle and strobe directly after 
+-- a previous cycle, this entity can be used enforce a delay between two WB cycles.
+-- It causes the master to be stalled a fixed amount of clock ticks after the end of a WB cycle. 
+-- The number of clock ticks to wait is configurable with the generic g_wait_count.
+-- WB signals are not registered.
+-- A state machine controls the waiting.
+entity wb_cyc_delay is
+  generic (
+    g_wait_count : integer := 3 -- introduce (wait_count+1) additional clock ticks of stall='1' between two wb-cycles
+  );
+  port (
+    clk_i    : in  std_logic;
+    rst_n_i  : in  std_logic;
+    slave_i  : in  t_wishbone_slave_in;
+    slave_o  : out t_wishbone_slave_out;
+    master_o : out t_wishbone_master_out;
+    master_i : in  t_wishbone_master_in
+  );
+end entity;
+
+architecture rtl of wb_cyc_delay is
+  type t_state is (s_idle, s_cyc, s_wait);
+  signal state : t_state := s_idle;
+  signal count : integer range 0 to g_wait_count;
+begin
+    
+  slave_o  <= (ack=>'0', err=>'0', rty=>'0', stall=>'1', dat=>(others=>'-'))                            when state = s_wait else  master_i;
+  master_o <= (cyc=>'0', stb=>'0', we=>'0', sel=>(others=>'-'), adr=>(others=>'-'),dat=>(others=>'-'))  when state = s_wait else  slave_i;
+
+  process(clk_i, rst_n_i) is
+  begin
+    if rst_n_i = '0' then
+      state <= s_idle;
+    elsif rising_edge(clk_i) then
+      case state is
+        when s_idle =>
+          if slave_i.cyc = '1' then 
+            state <= s_cyc;
+          end if;
+        when s_cyc =>
+          if slave_i.cyc = '0' then
+            count <= g_wait_count;
+            state <= s_wait;
+          end if;
+        when s_wait =>
+          if count = 0 then
+            state <= s_idle;
+          else
+            count <= count - 1;
+          end if;
+      end case;
+    end if;
+  end process;
+
+end architecture;
+
+
+LIBRARY ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+use work.wishbone_pkg.all;
+use work.aux_functions_pkg.all;
+use work.mil_pkg.all;
+use work.wb_mil_scu_pkg.all;
+use work.genram_pkg.all;
+
+-- wrapper for wb_mil_scu_broken that makes sure no wishbone cycles follows directly after another. 
+-- cycle line is low for at least 5 clock tics between two cycles
+ENTITY wb_mil_scu IS
+
+GENERIC (
+      Clk_in_Hz:          INTEGER := 62_500_000;    
+      slave_i_adr_max:    INTEGER := 14             
+      );
+PORT  (
+    clk_i:                IN      STD_LOGIC;
+    nRst_i:               IN      STD_LOGIC;
+    slave_i:              IN      t_wishbone_slave_in;
+    slave_o:              OUT     t_wishbone_slave_out;
+    nME_BOO:              IN      STD_LOGIC;
+    nME_BZO:              IN      STD_LOGIC;
+    ME_SD:                IN      STD_LOGIC;
+    ME_ESC:               IN      STD_LOGIC;
+    ME_SDI:               OUT     STD_LOGIC;
+    ME_EE:                OUT     STD_LOGIC;
+    ME_SS:                OUT     STD_LOGIC;
+    ME_BOI:               OUT     STD_LOGIC;
+    ME_BZI:               OUT     STD_LOGIC;
+    ME_UDI:               OUT     STD_LOGIC;
+    ME_CDS:               IN      STD_LOGIC;
+    ME_SDO:               IN      STD_LOGIC;
+    ME_DSC:               IN      STD_LOGIC;
+    ME_VW:                IN      STD_LOGIC;
+    ME_TD:                IN      STD_LOGIC;
+    Mil_BOI:              IN      STD_LOGIC;
+    Mil_BZI:              IN      STD_LOGIC;
+    Sel_Mil_Drv:          BUFFER  STD_LOGIC;
+    nSel_Mil_Rcv:         OUT     STD_LOGIC;
+    Mil_nBOO:             OUT     STD_LOGIC;
+    Mil_nBZO:             OUT     STD_LOGIC;
+    nLed_Mil_Rcv:         OUT     STD_LOGIC;
+    nLed_Mil_Trm:         OUT     STD_LOGIC;
+    nLed_Mil_Err:         OUT     STD_LOGIC;
+    error_limit_reached:  OUT     STD_LOGIC;
+    Mil_Decoder_Diag_p:   OUT     STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Mil_Decoder_Diag_n:   OUT     STD_LOGIC_VECTOR(15 DOWNTO 0);
+    timing:               IN      STD_LOGIC;
+    nLed_Timing:          OUT     STD_LOGIC;
+    dly_intr_o:           OUT     STD_LOGIC;
+    nLed_Fifo_ne:         OUT     STD_LOGIC;
+    ev_fifo_ne_intr_o:    OUT     STD_LOGIC;
+    Interlock_Intr_i:     IN      STD_LOGIC;
+    Data_Rdy_Intr_i:      IN      STD_LOGIC;
+    Data_Req_Intr_i:      IN      STD_LOGIC;
+    Interlock_Intr_o:     OUT     STD_LOGIC;
+    Data_Rdy_Intr_o:      OUT     STD_LOGIC;
+    Data_Req_Intr_o:      OUT     STD_LOGIC;
+    nLed_Interl:          OUT     STD_LOGIC;
+    nLed_Dry:             OUT     STD_LOGIC;
+    nLed_Drq:             OUT     STD_LOGIC;
+    every_ms_intr_o:      OUT     STD_LOGIC;
+    lemo_data_o:          OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);
+    lemo_nled_o:          OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);
+    lemo_out_en_o:        OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);
+    lemo_data_i:          IN      STD_LOGIC_VECTOR(4 DOWNTO 1):= (OTHERS => '0');
+    nsig_wb_err:          OUT     STD_LOGIC;  
+    n_tx_req_led :        OUT     STD_LOGIC;  
+    n_rx_avail_led:       OUT     STD_LOGIC                      
+    );
+END wb_mil_scu;
+
+ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS
+    signal mosi: t_wishbone_slave_in;
+    signal miso: t_wishbone_slave_out;
+BEGIN
+
+    bugfix: entity work.wb_cyc_delay
+      generic map(
+        g_wait_count => 3 -- introduce (wait_count+1) additional clock ticks of stall='1' between two wb-cycles
+      )
+      port map (
+        clk_i     => clk_i,
+        rst_n_i   => nRst_i,
+        slave_i   => slave_i,
+        slave_o   => slave_o,
+        master_o  => mosi,
+        master_i  => miso
+      );
+
+
+    broken_mil_scu : entity work.wb_mil_scu_broken
+    generic map(
+        Clk_in_Hz => Clk_in_Hz,
+        slave_i_adr_max => slave_i_adr_max
+    )
+    port map (
+      clk_i               => clk_i, 
+      nRst_i              => nRst_i, 
+      slave_i             => mosi, 
+      slave_o             => miso, 
+      nME_BOO             => nME_BOO, 
+      nME_BZO             => nME_BZO, 
+      ME_SD               => ME_SD, 
+      ME_ESC              => ME_ESC, 
+      ME_SDI              => ME_SDI, 
+      ME_EE               => ME_EE, 
+      ME_SS               => ME_SS, 
+      ME_BOI              => ME_BOI, 
+      ME_BZI              => ME_BZI, 
+      ME_UDI              => ME_UDI, 
+      ME_CDS              => ME_CDS, 
+      ME_SDO              => ME_SDO, 
+      ME_DSC              => ME_DSC, 
+      ME_VW               => ME_VW, 
+      ME_TD               => ME_TD, 
+      Mil_BOI             => Mil_BOI, 
+      Mil_BZI             => Mil_BZI, 
+      Sel_Mil_Drv         => Sel_Mil_Drv, 
+      nSel_Mil_Rcv        => nSel_Mil_Rcv, 
+      Mil_nBOO            => Mil_nBOO, 
+      Mil_nBZO            => Mil_nBZO, 
+      nLed_Mil_Rcv        => nLed_Mil_Rcv, 
+      nLed_Mil_Trm        => nLed_Mil_Trm, 
+      nLed_Mil_Err        => nLed_Mil_Err, 
+      error_limit_reached => error_limit_reached, 
+      Mil_Decoder_Diag_p  => Mil_Decoder_Diag_p, 
+      Mil_Decoder_Diag_n  => Mil_Decoder_Diag_n, 
+      timing              => timing, 
+      nLed_Timing         => nLed_Timing, 
+      dly_intr_o          => dly_intr_o, 
+      nLed_Fifo_ne        => nLed_Fifo_ne, 
+      ev_fifo_ne_intr_o   => ev_fifo_ne_intr_o, 
+      Interlock_Intr_i    => Interlock_Intr_i, 
+      Data_Rdy_Intr_i     => Data_Rdy_Intr_i, 
+      Data_Req_Intr_i     => Data_Req_Intr_i, 
+      Interlock_Intr_o    => Interlock_Intr_o, 
+      Data_Rdy_Intr_o     => Data_Rdy_Intr_o, 
+      Data_Req_Intr_o     => Data_Req_Intr_o, 
+      nLed_Interl         => nLed_Interl, 
+      nLed_Dry            => nLed_Dry, 
+      nLed_Drq            => nLed_Drq, 
+      every_ms_intr_o     => every_ms_intr_o, 
+      lemo_data_o         => lemo_data_o, 
+      lemo_nled_o         => lemo_nled_o, 
+      lemo_out_en_o       => lemo_out_en_o, 
+      lemo_data_i         => lemo_data_i, 
+      nsig_wb_err         => nsig_wb_err, 
+      n_tx_req_led        => n_tx_req_led, 
+      n_rx_avail_led      => n_rx_avail_led
+    );
+
+END ARCHITECTURE;

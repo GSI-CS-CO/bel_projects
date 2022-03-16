@@ -16,7 +16,7 @@ constant  c_mil_addr_width:       integer := integer(ceil(log2(real(c_mil_byte_a
 constant c_xwb_gsi_mil_scu : t_sdb_device := (
   abi_class     => x"0000",             -- undocumented device
   abi_ver_major => x"01",
-  abi_ver_minor => x"00",
+  abi_ver_minor => x"01",
   wbd_endian    => c_sdb_endian_big,    -- '1' = little, '0' = big
   wbd_width     => x"4",                -- only 32-bit port granularity allowed
   sdb_component => (
