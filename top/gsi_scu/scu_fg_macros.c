@@ -27,9 +27,8 @@ extern volatile uint32_t*     g_pScub_irq_base;
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
 extern volatile uint32_t*     g_pMil_irq_base;
-#ifndef __DOXYGEN__
+
 STATIC_ASSERT( sizeof( *g_pScu_mil_base ) == sizeof( uint32_t ) );
-#endif
 
 typedef enum
 {
@@ -54,10 +53,7 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
    {{0}};
 #endif
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( ARRAY_SIZE(g_aFgChannels) == MAX_FG_CHANNELS );
-#endif
-
 
 /*!
  * @brief Container of device properties of a ADDAC/ACU-device
@@ -96,9 +92,7 @@ STATIC const ADDAC_DEV_T mg_devTab[MAX_FG_PER_SLAVE] =
    }
 };
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( ARRAY_SIZE(mg_devTab) == MAX_FG_PER_SLAVE );
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
@@ -181,10 +175,9 @@ ONE_TIME_CALL FG_REGISTER_T* addacFgPrepare( const void* pScuBus,
       ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low )  = 0;
       ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
 
-   #ifndef __DOXYGEN__
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low )  * 2 == sizeof( tag ) );
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) * 2 == sizeof( tag ) );
-   #endif
+
       /*
        * Setting of the ECA timing tag.
        */
@@ -380,7 +373,7 @@ ONE_TIME_CALL bool milHandleClearHandlerState( const void* pScuBus,
  * @param dev Device number of the concerning FG-device
  * @retval OKAY Action was successful
  */
-ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
+ONE_TIME_CALL void milFgPrepare( const void* pScuBus,
                                 const void* pMilBus,
                                 const unsigned int socket,
                                 const unsigned int dev )
@@ -409,7 +402,7 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
       */
       scub_write_mil( (volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev );
       
-      return OKAY;
+      return;
    }
 
    FG_ASSERT( isMilExtentionFg( socket ) );
@@ -423,8 +416,6 @@ ONE_TIME_CALL int milFgPrepare( const void* pScuBus,
     * Set MIL-DAC in FG mode
     */
    write_mil( (volatile unsigned int*) pMilBus, 0x1, FC_IFAMODE_WR | dev);
-
-   return OKAY;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -521,16 +512,12 @@ void fgEnableChannel( const unsigned int channel )
    FG_REGISTER_T* pAddagFgRegs = NULL;
 
 #ifdef CONFIG_MIL_FG
-   int status = OKAY;
-
    if( isAddacFg( socket ) )
    {
 #endif
-   #ifndef __DOXYGEN__
       STATIC_ASSERT( sizeof( g_shared.oSaftLib.oFg.aRegs[0].tag ) == sizeof( uint32_t ) );
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.oSaftLib.oFg.aRegs[0].tag ) / 2 );
       STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.oSaftLib.oFg.aRegs[0].tag ) / 2 );
-   #endif
       /*
        * Note: In the case of ADDAC/ACU-FGs the socket-number is equal
        *       to the slot number.
@@ -545,9 +532,7 @@ void fgEnableChannel( const unsigned int channel )
       if( milHandleClearHandlerState( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket ) )
          return;
 
-      status = milFgPrepare( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket, dev );
-      if( status != OKAY )
-         return;
+      milFgPrepare( (void*)g_pScub_base, (void*)g_pScu_mil_base, socket, dev );
    }
 #endif
 

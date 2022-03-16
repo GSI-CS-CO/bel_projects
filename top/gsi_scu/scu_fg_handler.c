@@ -73,10 +73,9 @@ void handleAdacFg( const unsigned int slot,
       return;
    }
 
-#ifndef __DOXYGEN__
    STATIC_ASSERT( sizeof( pFgRegs->ramp_cnt_high ) == sizeof( pFgRegs->ramp_cnt_low ) );
    STATIC_ASSERT( sizeof( g_shared.oSaftLib.oFg.aRegs[0].ramp_count ) >= 2 * sizeof( pFgRegs->ramp_cnt_low ) );
-#endif
+
    /*
     * Read the hardware ramp counter respectively polynomial counter
     * from the concerning function generator.

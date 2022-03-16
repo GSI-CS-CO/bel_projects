@@ -394,20 +394,20 @@ ifndef GENRAMMIF
    endif
 endif
 
-EB_LOAD := $(shell which lm32-fwload.sh 2>/dev/null)
+EB_LOAD := $(shell which lm32-fwload 2>/dev/null)
 ifeq ($(EB_LOAD), )
-   EB_LOAD := $(REPOSITORY_DIR)/tools/scripts/lm32-fwload.sh
+   EB_LOAD := $(REPOSITORY_DIR)/tools/scripts/lm32-fwload
 endif
 
-EB_RESET := $(shell which scu-reset.sh 2>/dev/null)
+EB_RESET := $(shell which scu-reset 2>/dev/null)
 ifeq ($(EB_RESET), )
-   EB_RESET := $(REPOSITORY_DIR)/tools/scripts/scu-reset.sh
+   EB_RESET := $(REPOSITORY_DIR)/tools/scripts/scu-reset
 endif
 EB_HALT ?= $(EB_RESET)
 
-EB_INFO := $(shell which lm32-info.sh 2>/dev/null)
+EB_INFO := $(shell which lm32-info 2>/dev/null)
 ifeq ($(EB_INFO), )
-   EB_INFO := $(REPOSITORY_DIR)/tools/scripts/lm32-info.sh
+   EB_INFO := $(REPOSITORY_DIR)/tools/scripts/lm32-info
 endif
 
 ifeq ($(V), 1)
