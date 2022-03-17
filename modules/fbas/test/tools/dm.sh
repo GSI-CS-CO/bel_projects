@@ -1,36 +1,62 @@
-#!/bin/bash
+#!/bin/sh
 
 ##########################
 ## Setup of the datamaster
 ##########################
-# Pexaria as DM, /dev/wbm1 on devel host
-# Pexaria as FBASTX, /dev/wbm0
-# Pexp as FBASRX, /dev/wbm2
 
-#####################################
-## General setup for all timing nodes
-#####################################
+ttf_host="tsl014"
 
-source setup.sh
+if [ "$HOSTNAME" = "$ttf_host" ]; then
+    export patt_loc="fbas/test/dm"                         # pattern file location
+    export fbasdm="dev/wbm0"                               # DM device
+else
+    export patt_loc="${PWD/fbas*/fbas/test/dm}"
+    export fbasdm="dev/wbm1"
+fi
 
-export fbasdm="dev/wbm1"                                   # DM device on devel host
-export patt_loc="${PWD/fbas*/fbas}/test/dm"                # DM pattern location
-export reg_maxmsg="0x41000a4/4"                            # DM register
+export reg_maxmsg="0x41000a4"                              # DM register
 export cmd_file_start_loop="start_synchron.dot"
 export cmd_file_start_finite="start_synchron_finite.dot"
+export sleep_period=25                                     # test duration, seconds
 
-function check_fbasdm() {
+#####################
+## Check DM device choice
+#####################
+
+check_fbasdm() {
     if [ -z "$fbasdm" ]; then
         echo "fbasdm is not set"
         exit 1
     fi
 }
 
+#####################
+## Print remaining sleep time
+#####################
+
+wait_print_seconds() {
+    # $1 - wait period in seconds
+
+    if [ "$1" == "" ]; then
+        return
+    fi
+
+    for i in $(seq 1 $1); do
+        #echo -ne "time left (seconds): $[ $1 - $i ]\r"
+        v=$(( $1 - $i ))
+        v=$(printf "%*d\r" "8" $v)          # print numbers in 8 digits leading with spaces
+        echo -ne "time left (seconds): $v"  # overwrite previous output
+        sleep 1
+    done
+    echo
+
+}
+
 ######################
 ## Show DM patterns
 ######################
 
-function print_dm_patt() {
+print_dm_patt() {
 
     check_fbasdm
 
@@ -41,7 +67,7 @@ function print_dm_patt() {
 ## Get DM sent message count (hex)
 ######################
 
-function cnt_dm_msg() {
+cnt_dm_msg() {
 
     check_fbasdm
 
@@ -55,22 +81,25 @@ function cnt_dm_msg() {
     msg_cnt=0
 
     for line in $status; do
-        if [[ "$line" =~ "MSG" ]]; then       # line has a 'pattern'
-            cnt=${line/MSG:/};                # remove 'pattern' from a line
-            cnt=$((10#$cnt));                 # convert it to decimal
+        if [ -z "${line##*$pattern*}" ]; then   # if line contains a given pattern, 'MSG:'
+            cnt=${line/MSG:/}                   # remove the pattern from a line
+            cnt=$(echo $cnt | sed 's/^0*//')    # remove leading 0's
+            if [ -z "$cnt" ]; then
+                cnt=0
+            fi
             #echo $cnt;
-            msg_cnt=$(($msg_cnt + $cnt));     # sum it up
+            msg_cnt=$(( $msg_cnt + $cnt ));     # sum it up
             #echo $msg_cnt;
         fi
     done
-    echo "$(printf '%08x' $msg_cnt)"          # convert to hexadecimal
+    printf "msg sent by DM: %d (0x%x)\n" $msg_cnt $msg_cnt   # print the sum
 }
 
 ######################
 ## Show DM status
 ######################
 
-function print_dm_diag() {
+print_dm_diag() {
 
     check_fbasdm
 
@@ -81,7 +110,7 @@ function print_dm_diag() {
 ## Clear DM status
 ######################
 
-function clear_dm_diag() {
+clear_dm_diag() {
 
     check_fbasdm
 
@@ -92,7 +121,7 @@ function clear_dm_diag() {
 ## Clear DM pattern
 ######################
 
-function clear_dm_patt() {
+clear_dm_patt() {
 
     check_fbasdm
 
@@ -104,7 +133,7 @@ function clear_dm_patt() {
 ## Load given pattern
 ######################
 
-function load_dm_patt() {
+load_dm_patt() {
 
     check_fbasdm
 
@@ -116,7 +145,7 @@ function load_dm_patt() {
 ## Start given pattern
 ######################
 
-function stop_dm_patt() {
+stop_dm_patt() {
 
     check_fbasdm
 
@@ -128,7 +157,7 @@ function stop_dm_patt() {
 ## Stop given pattern
 ######################
 
-function start_dm_patt() {
+start_dm_patt() {
 
     check_fbasdm
 
@@ -139,22 +168,111 @@ function start_dm_patt() {
 ## Set max msg
 ######################
 
-function set_dm_maxmsg() {
+set_dm_maxmsg() {
     # $1 - maximum msgs in a frame (default 0x28)
 
     check_fbasdm
 
-    eb-write $fbasdm $reg_maxmsg $1
+    eb-write $fbasdm $reg_maxmsg/4 $1
 }
 
 ######################
 ## Start patterns synchronuous
 ######################
 
-function start_dm_synchron() {
+start_dm_synchron() {
     # $1 - file path with start command
 
     check_fbasdm
 
     dm-cmd $fbasdm -i $1
+}
+
+######################
+## Get a value of given variable
+######################
+
+get_value() {
+    # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
+    # $2 - variable name (ie., pattern)
+
+    line=$(grep -oE "${2}=([^,])+" $patt_loc/$1) # extract "pattern=value"
+    value=${line#${2}=}
+    echo "$value"
+
+}
+
+######################
+## Run a pattern
+######################
+
+run_pattern() {
+    # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
+
+    if [ ! -f $patt_loc/$1 ]; then
+        echo "'$patt_loc/$1' not found. Exit"
+        return 1
+    fi
+
+    pattern=$(get_value $1 "pattern")
+
+    if [ -z "$pattern" ]; then
+        echo "Pattern not found. Exit"
+        return 1
+    fi
+
+    tperiod=$(get_value $1 "tperiod")
+
+    if [ -z "$tperiod" ]; then
+        echo "tperiod not found. Exit"
+        return 1
+    fi
+
+    qty=$(get_value $1 "qty")
+    # trim a heading and trailing '"' character from value
+    qty=${qty##\"}
+    qty=${qty%%\"}
+
+    if [ -z "$qty" ]; then
+        echo "qty not found. Exit"
+        return 1
+    fi
+
+    qty=$(( $qty + 1 ))                               # get final value
+    sleep_period=$(( $tperiod * $qty / 1000000000 ))
+    sleep_period=$(( $sleep_period + 1 ))             # prevent from a fraction of second
+    echo "pattern=$pattern tperiod=$tperiod qty=$qty sleep_period=$sleep_period"
+
+    clear_dm_diag
+    clear_dm_patt
+    load_dm_patt $1
+    start_dm_patt $pattern
+    echo "sleep $sleep_period" && wait_print_seconds $sleep_period
+    cnt_dm_msg
+}
+
+######################
+## Run multiple patterns
+######################
+
+run_multi_patterns() {
+    pattern="PatA"
+    filename="my_mps_rx_rate_16"
+
+    clear_dm_diag
+    clear_dm_patt
+    indices="a b c d"
+    for index in $indices; do
+        load_dm_patt "${filename}${index}.dot"
+    done
+    start_dm_synchron "$patt_loc/$cmd_file_start_finite"
+
+    echo "sleep $sleep_period" && wait_print_seconds $sleep_period
+
+    indices="A B C D"
+    for index in $indices; do
+        stop_dm_patt "Pat${index}"
+    done
+
+    cnt_dm_msg
 }

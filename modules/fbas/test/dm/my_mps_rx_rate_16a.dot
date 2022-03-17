@@ -1,0 +1,43 @@
+digraph G {
+
+// Commands to run this schedule
+// $ dm-sched dev/wbm1 add <path_to_this_file>            # load pattern
+// $ dm-cmd dev/wbm1 startpattern PatA                    # start pattern
+// $ dm-cmd dev/wbm1 status -v                            # show sent message counts
+// $ dm-cmd dev/wbm1 cleardiag                            # clear diagnostics
+
+// This schedule is used to test the maximum data rate for SCU receiver.
+// A bunch of timing messages are generated and sent by DM with different data rate and
+// allowed maximum data rate is determined by counting lost messages.
+
+// Each timing message with event ID 4043 (0xfcb) contains a pseudo MPS protocol in its parameter field:
+// - parameter (8-byte): MPS_flag (1) + grp_ID (1) + dev_ID (2) + ttl (1) + unused (3)
+// where:
+// - MPS_flag: OK (=1), NOK (=2), TEST (=3)
+// - grp_ID: =1
+// - dev_ID: =0-15
+// - ttl: =10
+
+// This block is used to generate the first quarter of 16 timing messages.
+// 4 timing messages (M_A1-4), each with different dev_ID, will be sent in a period of 'tperiod' [ns] and it is repeated 'qty' + 1 times.
+// To send 1500 (6000/4) timing messages, one block should be iterated 375 times.
+// To send msgs at rates 300/600/1000/1200/1500 Hz (264/528/880/1056/1320 Kbps), the value of 'tperiod' should vary between 53333/26666/16000/13333 us.
+
+name="pseudo_MPS"
+graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [cpu="0", pattern=PatA, patentry=0, patexit=0,  style     = "filled", fillcolor = "white", color = "black"];
+edge [type="defdst"];
+
+C_A0 [type="flow",  patentry=1, toffs=0, qty="374", tvalid="0", vabs="true"];
+M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x010100000a000000"];
+M_A2 [type="tmsg",              toffs=1000000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x010100010a000000"];
+M_A3 [type="tmsg",              toffs=2000000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x010100020a000000"];
+M_A4 [type="tmsg",              toffs=3000000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x010100030a000000"];
+B_A3 [type="block", patexit=1,  tperiod=16000000, qlo="true"];
+
+C_A0 -> M_A1 -> M_A2 -> M_A3 -> M_A4 -> B_A3;
+B_A3 -> M_A1 [type="altdst"];
+C_A0 -> M_A1 [type="flowdst"];
+C_A0 -> B_A3 [type="target"];
+
+}

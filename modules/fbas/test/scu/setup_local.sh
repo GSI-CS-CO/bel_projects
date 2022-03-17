@@ -4,15 +4,18 @@
 
 export DEV_TX="dev/wbm0"
 export DEV_RX="dev/wbm0"
-export addr_cmd="0x20140508/4"   # shared memory location for command buffer
-export addr_cnt1="0x20140934/4"  # shared memory location for received frames counter
+export addr_cmd="0x20140508"     # shared memory location for command buffer
+export addr_cnt1="0x20140934"    # shared memory location for received frames counter
 export addr_msr1="0x20140968"    # shared memory location for measurement results
+export addr_eca_vld="0x20140990" # shared memory location of counter for valid actions
+export addr_eca_ovf="0x20140994" # shared memory location of counter for overflow actions
+
 export FW_TX="fbas.scucontrol.bin"
 export FW_RX="fbas.scucontrol.bin"
-export cmd_wr_tx_delay=0x32
-export cmd_wr_ow_delay=0x33
-export cmd_wr_sg_latency=0x34
-export cmd_wr_ow_ttl_ival=0x35
+export instr_st_tx_dly=0x32
+export instr_st_ow_dly=0x33
+export instr_st_sg_lty=0x34
+export instr_st_ttl_ival=0x35
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -121,11 +124,11 @@ setup_mpstx() {
     wait_seconds 1
 
     echo "CONFIGURE state "
-    eb-write $DEV_TX $addr_cmd 0x1
+    eb-write $DEV_TX $addr_cmd/4 0x1
     wait_seconds 1
 
     echo "OPREADY state "
-    eb-write $DEV_TX $addr_cmd 0x2
+    eb-write $DEV_TX $addr_cmd/4 0x2
     wait_seconds 1
 
     echo "destroy all unowned ECA conditions"
@@ -161,15 +164,26 @@ setup_mpstx() {
 ####################
 
 setup_mpsrx() {
+    # $1 - LM32 firmware
 
     check_mpsrx
 
-    echo "load the LM32 firmware"
-    eb-fwload $DEV_RX u 0x0 $FW_RX
+    fw_filename=$FW_RX
+
+    if [ ! -z "$1" ]; then
+        fw_filename="$1"
+        if [ ! -f "$fw_filename" ]; then
+            echo "'$fw_filename' not found. Exit"
+            return 1
+        fi
+    fi
+
+    echo "load the LM32 firmware '$fw_filename'"
+    eb-fwload $DEV_RX u 0x0 $fw_filename
     wait_seconds 1
 
     echo "CONFIGURE state "
-    eb-write $DEV_RX $addr_cmd 0x1
+    eb-write $DEV_RX $addr_cmd/4 0x1
     wait_seconds 1
 
     echo "set node type to DEV_RX (0x1)"
@@ -178,7 +192,7 @@ setup_mpsrx() {
     wait_seconds 1
 
     echo "tell LM32 to set the node type"
-    eb-write $DEV_RX $addr_cmd 0x15
+    eb-write $DEV_RX $addr_cmd/4 0x15
     wait_seconds 1
 
     echo "verify the actual node type"
@@ -186,7 +200,7 @@ setup_mpsrx() {
     wait_seconds 1
 
     echo "OPREADY state "
-    eb-write $DEV_RX $addr_cmd 0x2
+    eb-write $DEV_RX $addr_cmd/4 0x2
 
     echo "destroy all unowned ECA conditions"
     saft-ecpu-ctl tr0 -x
@@ -231,23 +245,32 @@ do_inject_fbas_event() {
 # There is no IO connection between RX and TX nodes
 ##########################################################
 
+read_counters() {
+    # $1 - dev/wbm0
+
+    device=$1
+    addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    set msg_cnt eca_vld eca_ovf   # labels as positional arguments ($1 $2 $3)
+
+    for addr in $addr_val; do
+        cnt=$(eb-read $device $addr/4)  # get counter value
+        printf "%s @ %s: %d (0x%s)\n" $1 $addr 0x$cnt $cnt
+        shift
+    done
+}
+
 start_test4() {
+    # $1 - dev/wbm0
+
     echo -e "\nEnable MPS task on $1"
-
-    cnt=$(eb-read $1 $addr_cnt1)           # get counter value
-    cnt_dec=$(printf "%d" 0x$cnt)          # convert hex to decimal
-    echo "msg_cnt: 0x$cnt (${cnt_dec})"
-
     enable_mps $1
 }
 
 stop_test4() {
+    # $1 - dev/wbm0
+
     echo -e "\nDisable MPS task on $1"
     disable_mps $1
-
-    cnt=$(eb-read $1 $addr_cnt1)           # get counter value
-    cnt_dec=$(printf "%d" 0x$cnt)          # convert hex to to decimal
-    echo "msg_cnt: 0x$cnt (${cnt_dec})"
 }
 
 ##########################################################
@@ -299,43 +322,39 @@ result_event_count() {
 result_tx_delay() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd $cmd_wr_tx_delay
-    echo -n "Result of the transmit delay measurement: "
-    read_measurement_results $1 $addr_msr1
+    echo -n "Transmit delay: "
+    read_measurement_results $1 $instr_st_tx_dly $addr_msr1
 }
 
 result_sg_latency() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd $cmd_wr_sg_latency
-    echo -n "Result of the sig. latency measurement:   "
-    read_measurement_results $1 $addr_msr1
+    echo -n "Signalling latency:   "
+    read_measurement_results $1 $instr_st_sg_lty $addr_msr1
 }
 
 result_ow_delay() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd $cmd_wr_ow_delay
-    echo -n "Result of the one-way delay measurement:  "
-    read_measurement_results $1 $addr_msr1
+    echo -n "One-way delay:  "
+    read_measurement_results $1 $instr_st_ow_dly $addr_msr1
 }
 
 result_ttl_ival() {
     # $1 - dev/wbmo
 
-    eb-write $1 $addr_cmd $cmd_wr_ow_ttl_ival
-    echo -n "Result of the TTL interval measurement:   "
-    read_measurement_results $1 $addr_msr1
+    echo -n "TTL interval:   "
+    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1
 }
 
 disable_mps() {
     echo "Stop MPS on $1"
-    eb-write $1 $addr_cmd 0x31
+    eb-write $1 $addr_cmd/4 0x31
 }
 
 enable_mps() {
     echo "Start MPS on $1"
-    eb-write $1 $addr_cmd 0x30
+    eb-write $1 $addr_cmd/4 0x30
 }
 
 disable_mps_all() {
@@ -352,10 +371,14 @@ enable_mps_all() {
 
 read_measurement_results() {
     # $1 - device (dev/wbm0)
-    # $2 - shared memory location where measurement results are stored
+    # $2 - instruction code to store measurement results to a location in the shared memory
+    # $3 - shared memory location where measurement results are stored
 
     device=$1
-    addr_msr=$2
+    instr_msr=$2
+    addr_msr=$3
+
+    eb-write $device $addr_cmd/4 $instr_msr
 
     avg=$(eb-read -q $device ${addr_msr}/8)
     avg_dec=$(printf "%d" 0x$avg)

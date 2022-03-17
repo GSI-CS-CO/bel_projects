@@ -44,7 +44,7 @@ prj_dir="${PWD/fbas*/fbas}"
 tr_gw="v6.1.2"
 
 # SCU FW (independent from gateware version, built by devel host)
-lm32_fw="lm32/fbas.scucontrol.bin"
+lm32_fw="lm32/fbas*.scucontrol.bin"
 
 # SCU provided by user
 domain=$(hostname -d)
@@ -59,7 +59,7 @@ ebfwload="eb-fwload"
 echo "SCUs below are chosen for MPS:"
 
 for scu in ${scu_arr[*]}; do
-    echo "$scu"
+    echo "- $scu"
 done
 
 if [ "$option" != "auto" ]; then
@@ -81,23 +81,26 @@ if [ -z "$userpasswd" ]; then
 fi
 
 # Deploy artifacts
+echo -e "\nArtifacts to be deployed:"
+echo "-" $lm32_fw
+echo "-" $scu_tools
+
 if [ "$tr_gw" == "v6.0.1" ]; then
-    echo -e "\nDeploy '$lm32_fw', '$scu_tools' and '$ebfwload' to:"
-else
-    echo -e "\nDeploy '$lm32_fw' and '$scu_tools' to:"
+    echo "-" $ebfwload
 fi
 
+# Start deployment
+echo -e "\nStart deployment ..."
 for item in ${scu_arr[*]}; do
 
     scu="${item}.$domain"
 
+    # deploy LM32 firmware and script (to show progress: redirect output and grep)
+    SSHPASS="$userpasswd" sshpass -e scp -pv "$prj_dir"/$lm32_fw "$prj_dir"/$scu_tools "$username@$scu:~" 2>&1 | grep -v debug
+
     # deploy EB tool (required for gw v6.0.1)
     if [ "$tr_gw" == "v6.0.1" ]; then
-        SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir/lm32/$tr_gw/$ebfwload" "$username@$scu:/usr/bin/"
+        SSHPASS="$userpasswd" sshpass -e scp -pv "$prj_dir/lm32/$tr_gw/$ebfwload" "$username@$scu:/usr/bin/" 2>&1 | grep -v debug
     fi
 
-    # deploy LM32 firmware and script
-    SSHPASS="$userpasswd" timeout 10 sshpass -e scp "$prj_dir"/$lm32_fw "$prj_dir"/$scu_tools "$username@$scu:~"
-
-    echo "- $item"
 done
