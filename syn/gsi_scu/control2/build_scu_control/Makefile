@@ -217,7 +217,7 @@ endif
 # SCU_URL = scuxl0118
 # SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
- SCU_URL = scuxl0192
+# SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
 # SCU_URL = scuxl0331
 # SCU_URL = scuxl0025
