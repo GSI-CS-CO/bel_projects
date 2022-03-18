@@ -14,8 +14,10 @@
 #endif
 
 #include <scu_fg_list.h>
+#include <scu_fg_handler.h>
 #include <scu_main.h>
 #include <eb_console_helper.h>
+#include <scu_fg_handler.h>
 #ifdef CONFIG_MIL_FG
  #include <scu_mil.h>
 #endif
