@@ -253,9 +253,7 @@ typedef struct PACKED_SIZE
 #endif
 } _DAQ_CHANNEL_CONTROL;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_CHANNEL_CONTROL ) == sizeof(DAQ_DATA_T) );
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Summary of nano seconds and seconds
@@ -266,9 +264,7 @@ typedef struct PACKED_SIZE
    uint32_t utSec; /*!<@brief Seconds */
 } _DAQ_WR_NAME_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_WR_NAME_T) == sizeof(uint64_t) );
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief White Rabbit time stamp
@@ -281,9 +277,7 @@ typedef union PACKED_SIZE
    uint64_t timeStamp;
 } _DAQ_WR_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_WR_T) == sizeof(uint64_t) );
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Trigger data type
@@ -295,7 +289,6 @@ typedef struct PACKED_SIZE
    DAQ_DATA_T delay; /*!<@brief Trigger delay */
 } _DAQ_TRIGGER;
 
-#ifndef __DOXYGEN__
 /*
  * We have to made a static check verifying whether the structure-format
  * is equal on both platforms: Linux and LM32.
@@ -304,7 +297,6 @@ STATIC_ASSERT( offsetof( _DAQ_TRIGGER, low )   == 0 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, high )  == 1 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, delay ) == 2 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(DAQ_DATA_T) );
-#endif
 
 /*!
  * @brief Data type of ADDAC-DAQ- block sequence counter
@@ -342,7 +334,6 @@ typedef struct PACKED_SIZE
    _DAQ_BF_CRC_REG      crcReg;   /*!<@see _DAQ_BF_CRC_REG */
 } _DAQ_DISCRIPTOR_STRUCT_T;
 
-#ifndef __DOXYGEN__
 /*
  * Due to the implementation in different platforms - LM32 and linux -
  * we have a bit of paranoia, which can't hurt. ;-)
@@ -365,7 +356,6 @@ STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) ==
                sizeof(_DAQ_BF_CRC_REG ));
 STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) ==
                DAQ_DESCRIPTOR_WORD_SIZE * sizeof(DAQ_DATA_T) );
-#endif /* ifndef __DOXYGEN__ */
 
 /*! ---------------------------------------------------------------------------
  * @brief Final type of DAQ- descriptor
@@ -376,10 +366,8 @@ typedef union PACKED_SIZE
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
                DAQ_DESCRIPTOR_WORD_SIZE * sizeof( DAQ_DATA_T ) );
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -411,9 +399,7 @@ typedef struct PACKED_SIZE
 #endif
 } DAQ_LAST_STATUS_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_LAST_STATUS_T ) == sizeof( DAQ_REGISTER_T ) );
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------

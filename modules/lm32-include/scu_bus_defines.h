@@ -297,6 +297,28 @@ typedef enum
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
+ * @brief Loop for scanning all scu-bus slots.
+ * @param slot Variable of the current slot number of each loop iteration.
+ *             The type is "unsigned int".
+ */
+#define SCU_BUS_FOR_EACH_SLOT( slot ) \
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
+ * @brief Loop- macro scans all SCU-bus slots and skips the iteration step
+ *        if in the current slot not a slave which has defined in slotFlags.
+ * @see   SCU_BUS_FOR_EACH_SLOT
+ * @see   scuBusIsSlavePresent
+ * @param slave Slave-number respectively slot number in which resides a slave.
+ * @param slotFlags Flag-field of used slots. @see SCUBUS_SLAVE_FLAGS_T
+ */      
+#define SCU_BUS_FOR_EACH_SLAVE( slave, slotFlags )  \
+   SCU_BUS_FOR_EACH_SLOT( slave )                   \
+      if( scuBusIsSlavePresent( slotFlags, slave ) )
+      
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Calculates the relative address offset in bytes of a SCU bus slave
  *        from the given slot number.
  * @see MAX_SCU_SLAVES

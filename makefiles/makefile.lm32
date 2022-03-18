@@ -31,7 +31,9 @@ STRINGS = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)strings
 ADDITIONAL_TO_CLEAN += $(ELF_FILE)
 
 # For doxygen if used only.
-DOX_INPUT += $(MAKEFILE_DIR)/makefile.lm32
+DOX_INPUT       += $(MAKEFILE_DIR)/makefile.lm32
+DOX_PREDEFINED  += __lm32__
+DOX_PREDEFINED  += __BYTE_ORDER__=__ORDER_BIG_ENDIAN__
 
 include $(MAKEFILE_DIR)/makefile.uc
 #=================================== EOF ======================================

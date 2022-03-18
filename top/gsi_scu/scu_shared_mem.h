@@ -102,14 +102,12 @@ typedef struct PACKED_SIZE
    FG_MACRO_T fgMacro;
 } MIL_DAQ_RAM_ITEM_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, timestamp ) == 0 );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) == sizeof(uint64_t) );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) ==
                offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) + sizeof(MIL_DAQ_VAL_T) );
 STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, fgMacro ) ==
                offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_VAL_T) );
-#endif /* ifndef __DOXYGEN__ */
 
 /*!
  * @brief Number of required RAM-items per Mil-DAQ item
@@ -160,13 +158,12 @@ typedef struct PACKET_SIZE
    RAM_RING_SHARED_INDEXES_T memAdmin;
 
 } MIL_DAQ_ADMIN_T;
-#ifndef __DOXYGEN__
+
 STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, magicNumber ) == 0);
 STATIC_ASSERT( offsetof( MIL_DAQ_ADMIN_T, memAdmin ) ==
                (offsetof( MIL_DAQ_ADMIN_T, magicNumber ) + sizeof( uint32_t ) ));
 STATIC_ASSERT( sizeof( MIL_DAQ_ADMIN_T ) ==
                (sizeof( uint32_t ) + sizeof(RAM_RING_SHARED_INDEXES_T)) );
-#endif /* ifndef __DOXYGEN__ */
 
 #ifdef __cplusplus
 } /* namespace MiLdaq */
@@ -251,7 +248,6 @@ typedef struct PACKED_SIZE
 
 } SCU_TEMPERATURE_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( SCU_TEMPERATURE_T ) == 3 * (sizeof(uint64_t) + sizeof(uint32_t)));
 STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, board_id ) == 0 );
 STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, ext_id ) ==
@@ -266,7 +262,6 @@ STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, ext_temp ) ==
                sizeof( uint32_t ));
 STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_temp ) ==
                offsetof( SCU_TEMPERATURE_T, ext_temp ) + sizeof( uint32_t ));
-#endif
 
 /*!
  * @ingroup SHARED_MEMORY
@@ -275,7 +270,6 @@ STATIC_ASSERT( offsetof( SCU_TEMPERATURE_T, backplane_temp ) ==
  * @see saftlib/drivers/fg_regs.h
  * @note CAUTION: Don't move the position and/or change the data type
  *       of any of the member variables, because the SAFT-LIB expect this order! 
-
  */
 typedef struct PACKED_SIZE
 {  /*!
@@ -362,7 +356,6 @@ typedef struct PACKED_SIZE
    uint32_t           busy;
 } FG_SHARED_DATA_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, magicNumber ) == 0 );
 STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, version ) ==
                offsetof( FG_SHARED_DATA_T, magicNumber ) +
@@ -385,7 +378,6 @@ STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aRegs ) ==
 STATIC_ASSERT( offsetof( FG_SHARED_DATA_T, aChannelBuffers ) ==
                offsetof( FG_SHARED_DATA_T, aRegs ) +
                MAX_FG_CHANNELS * sizeof( FG_CHANNEL_REG_T ));
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SHARED_MEMORY
@@ -408,10 +400,8 @@ typedef struct PACKED_SIZE
    FG_SHARED_DATA_T    oFg;
 } SAFT_LIB_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( SAFT_LIB_T, oTemperatures ) == 0 );
 STATIC_ASSERT( offsetof( SAFT_LIB_T, oFg ) == sizeof( SCU_TEMPERATURE_T ) );
-#endif
 
 /*!
  * @brief All member variables under this offset value are known in SAFTLIB.
@@ -478,7 +468,6 @@ STATIC_ASSERT( SHARED_SIZE == sizeof( SCU_SHARED_DATA_T ) );
 
 #define GET_SCU_SHM_OFFSET( m ) offsetof( SCU_SHARED_DATA_T, m )
 
-#ifndef __DOXYGEN__
 /*
  * Unfortunately necessary because in some elements of some sub-structures of
  * the main structure SCU_SHARED_DATA_T are still declared as "unsigned int",
@@ -554,7 +543,6 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, oSaftLib ) == 0 );
    //                sizeof( uint32_t ));
   #endif
  #endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
-#endif /* ifndef __DOXYGEN__ */
 
 /* ++++++++++++++ Initializer ++++++++++++++++++++++++++++++++++++++++++++++ */
 /*!

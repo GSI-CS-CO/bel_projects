@@ -62,6 +62,13 @@ void print_regs( void );
  */
 void fgListReset( FG_MACRO_T* pFgList );
 
+int fgListAdd( const uint8_t socked,
+               const uint8_t dev,
+               const uint16_t cid_sys,
+               const uint16_t cid_group,
+               const uint8_t fg_ver,
+               FG_MACRO_T* pFgList );
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 /*! ---------------------------------------------------------------------------
  * @brief Adds a found function generator receiding in ADDAC-device
@@ -114,10 +121,7 @@ void fgResetAndInit( FG_CHANNEL_REG_T* cr,
                    );
 
 #ifdef CONFIG_MIL_FG
-/*! ---------------------------------------------------------------------------
- * @brief Returns the number of found MIL-function generators.
- */
-unsigned int milGetNumberOfFg( void );
+
 #endif
 
 /*! ---------------------------------------------------------------------------

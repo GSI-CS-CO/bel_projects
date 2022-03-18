@@ -146,6 +146,27 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  */
 #define ADDAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
 
+#ifndef CONFIG_SCU_DAQ_INTEGRATION
+/*! ---------------------------------------------------------------------------
+ * @brief Scans the whole SCU-bus direct to the SCU-bus connected
+ *        function generators
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFGlist Start pointer of function generator list.
+ */
+void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist );
+
+#endif /* ifndef CONFIG_SCU_DAQ_INTEGRATION */
+
+#ifdef CONFIG_NON_DAQ_FG_SUPPORT
+/*! ---------------------------------------------------------------------------
+ * @brief Scans the SCU- bus for function generators which doesn't have DAQs.
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFgList Start pointer of function generator list.
+ */
+void scanScuBusFgsWithoutDaq( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList );
+
+#endif /* ifdef CONFIG_NON_DAQ_FG_SUPPORT */
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the pointer of the register structure of a
  *        SCU-bus function generator by its relative offset address.

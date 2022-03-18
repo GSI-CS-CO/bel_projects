@@ -62,6 +62,77 @@ STATIC const ADDAC_DEV_T mg_devTab[MAX_FG_PER_SLAVE] =
 
 STATIC_ASSERT( ARRAY_SIZE(mg_devTab) == MAX_FG_PER_SLAVE );
 
+#ifndef CONFIG_SCU_DAQ_INTEGRATION
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_handler.h
+ */
+void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
+{
+   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase,
+                                                                    SYS_CSCO,
+                                                                    GRP_ADDAC2 )
+                                        | scuBusFindSpecificSlaves( pScuBusBase,
+                                                                    SYS_CSCO,
+                                                                    GRP_ADDAC1 );
+
+   if( slotFlags == 0 )
+      return;
+
+   SCU_BUS_FOR_EACH_SLAVE( slot, slotFlags )
+   {
+      addAddacToFgList( pScuBusBase, slot, pFGlist );
+   #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( pScuBusBase, slot );
+   #endif
+   }
+}
+#endif /* ifndef CONFIG_SCU_DAQ_INTEGRATION */
+
+#ifdef CONFIG_NON_DAQ_FG_SUPPORT
+/*! ---------------------------------------------------------------------------
+ * @brief Scans the whole SCU bus for specific slaves having a
+ *        function generator and add it to the function generator list if
+ *        any found.
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFgList Start pointer of function generator list.
+ * @param systemAddr System address
+ * @param groupAddr  Group address
+ */
+STATIC void scanScuBusForFg( void* pScuBus, FG_MACRO_T* pFgList,
+                      SLAVE_SYSTEM_T systemAddr, SLAVE_GROUP_T groupAddr )
+{
+   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBus,
+                                                                    systemAddr,
+                                                                    groupAddr );
+   if( slotFlags == 0 )
+      return;
+
+   SCU_BUS_FOR_EACH_SLAVE( slot, slotFlags )
+   {
+      fgListAdd( slot,
+                 0,
+                 systemAddr,
+                 groupAddr,
+                 getFgFirmwareVersion( pScuBus, slot ),
+                 pFgList );
+   #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( pScuBus, slot );
+   #endif
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_handler.h
+ */
+void scanScuBusFgsWithoutDaq( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
+{
+   scanScuBusForFg( (void*)scub_adr, pFgList, SYS_PBRF, GRP_FIB_DDS );
+ #ifndef CONFIG_DIOB_WITH_DAQ
+   scanScuBusForFg( (void*)scub_adr, pFgList, SYS_CSCO, GRP_DIOB );
+ #endif
+}
+#endif /* ifdef CONFIG_NON_DAQ_FG_SUPPORT */
+
 /*! ---------------------------------------------------------------------------
  * @brief Sets the registers of a ADAC function generator.
  */

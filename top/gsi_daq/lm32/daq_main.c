@@ -76,8 +76,13 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
    }
 
+
    if( ret == 0 )
+   {
+    #ifdef CONFIG_DAQ_SINGLE_APP
       mprintf( ESC_WARNING "WARNING: No ADDAC/ACU-DAQ macros found!\n" ESC_NORMAL );
+    #endif
+   }
 #ifdef DEBUGLEVEL
    else
    {

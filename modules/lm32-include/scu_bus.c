@@ -73,7 +73,7 @@ SCUBUS_SLAVE_FLAGS_T
    SCUBUS_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
    bool (*op)( const bool, const bool ) = (mode == ALL)? _and : _or;
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
-   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   SCU_BUS_FOR_EACH_SLOT( slot )
    {
       const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       unsigned int i = 0;
@@ -132,7 +132,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
 
-   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   SCU_BUS_FOR_EACH_SLOT( slot )
    {
       const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       if( scuBusGetSlaveValue16( pSlaveAddr, CID_SYSTEM ) != SCUBUS_INVALID_VALUE ||

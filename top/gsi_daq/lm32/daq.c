@@ -872,15 +872,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    /*
     * Initializing all found devices which have a DAQ and its channels.
     */
-   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   SCU_BUS_FOR_EACH_SLAVE( slot, pThis->slotDaqUsedFlags )
    {
-      if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
-      { /*
-         * In this slot is not a device with a SCU-BUS-DAQ go to the next slot...
-         */
-         continue;
-      }
-
       /*
        * For each found ADDAC-device:
        */
