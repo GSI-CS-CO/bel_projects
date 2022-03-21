@@ -15,11 +15,11 @@ MMU_OBJ_T mg_mmuObj;
 
 typedef enum
 {
-   OK          =  0,
-   NOT_PRESENT = -1,
-   NOT_FOUND   = -2,
-   NO_MATCH    = -3,
-   OUT_OF_MEM  = -4
+   OK              =  0,
+   NOT_PRESENT     = -1,
+   TAG_NOT_FOUND   = -2,
+   NO_MATCH        = -3,
+   OUT_OF_MEM      = -4
 } MMU_STATUS_T;
 
 
