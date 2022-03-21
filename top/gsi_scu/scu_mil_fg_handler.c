@@ -125,6 +125,138 @@ STATIC void milPrintDeviceError( const int status, const int slot, const char* m
            pText, slot, pMessage, msg);
 }
 
+
+#define IFA_ID_VAL         0xFA00
+#define IFA_MIN_VERSION    0x1900
+#define FG_MIN_VERSION     2
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+unsigned int milGetNumberOfFg( void )
+{
+   unsigned int numOfMilFg = 0;
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.oSaftLib.oFg.aMacros ); i++ )
+   {
+      if( isMilFg( g_shared.oSaftLib.oFg.aMacros[i].socket ) )
+         numOfMilFg++;
+   }
+   return numOfMilFg;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
+{
+   const SCUBUS_SLAVE_FLAGS_T slotFlags =
+               scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO2 )
+             | scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, GRP_SIO3 );
+
+   if( slotFlags == 0 )
+      return;
+
+   /*
+    * At least one SIO- slave was found.
+    */
+   SCU_BUS_FOR_EACH_SLAVE( slot, slotFlags )
+   {
+   #ifndef _CONFIG_IRQ_ENABLE_IN_START_FG
+      scuBusEnableSlaveInterrupt( (void*)scub_adr, slot );
+   #endif
+
+      /*
+       * MIL-bus adapter was in the current slot found.
+       * Proofing whether MIL function generators connected to this adapter.
+       */
+
+      /*
+       * Resetting all task-slots of this SCU-bus slave.
+       */
+      scub_reset_mil( scub_adr, slot );
+
+      for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
+      {
+         uint16_t ifa_id, ifa_vers, fg_vers;
+         STATIC_ASSERT( sizeof( short ) == sizeof( ifa_id ) );
+         if( scub_read_mil( scub_adr, slot, (short*)&ifa_id, IFA_ID << 8 | ifa_adr ) != OKAY )
+            continue;
+         if( ifa_id != IFA_ID_VAL )
+            continue;
+
+         STATIC_ASSERT( sizeof( short ) == sizeof( ifa_vers ) );
+         if( scub_read_mil( scub_adr, slot, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr ) != OKAY )
+            continue;
+         if( ifa_vers < IFA_MIN_VERSION )
+            continue;
+
+         STATIC_ASSERT( sizeof( short ) == sizeof( fg_vers ) );
+         if( scub_read_mil( scub_adr, slot, (short*)&fg_vers, 0xA6 << 8 | ifa_adr ) != OKAY )
+            continue;
+         if( (fg_vers < FG_MIN_VERSION) || (fg_vers > 0x00FF) )
+            continue;
+
+         /*
+          * All three proves has been passed, so we can add it to the FG-list.
+          */
+         fgListAdd( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
+         //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+      }
+   } /* SCU_BUS_FOR_EACH_SLAVE( slot, slotFlags ) */
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mil_fg_handler.h
+ */
+void scanExtMilFgs( volatile unsigned int *mil_addr,
+                    FG_MACRO_T* pFgList, uint64_t *ext_id )
+{
+  /*
+   * Check only for "ifks", if there is a macro found and a mil extension
+   * attached to the baseboard.
+   * + mil extension is recognized by a valid 1wire id
+   * + mil extension has a 1wire temp sensor with family if 0x42
+   */
+   if( !(((int)mil_addr != ERROR_NOT_FOUND) && (((int)*ext_id & 0xff) == 0x42)) )
+      return;
+
+   /*
+    * reset all task-slots by reading value back
+    */
+   reset_mil( mil_addr );
+
+   /*
+    * Probing of all potential MIL-function-generatirs.
+    */
+   for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
+   {
+      uint16_t ifa_id, ifa_vers, fg_vers;
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( ifa_id ) );
+      if( read_mil( mil_addr, (short*)&ifa_id, IFA_ID << 8 | ifa_adr ) != OKAY )
+         continue;
+      if( ifa_id != IFA_ID_VAL )
+         continue;
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( ifa_vers ) );
+      if( read_mil( mil_addr, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr ) != OKAY )
+         continue;
+      if( ifa_vers < IFA_MIN_VERSION )
+         continue;
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( fg_vers ) );
+      if( read_mil( mil_addr, (short*)&fg_vers, 0xA6 << 8 | ifa_adr ) != OKAY )
+         continue;
+      if( (fg_vers < FG_MIN_VERSION) || (fg_vers > 0x00FF) )
+         continue;
+
+      /*
+       * All three proves has been passed, so we can add it to the FG-list.
+       */
+      fgListAdd( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
+   }
+}
+
 /*! ---------------------------------------------------------------------------
  * @brief Initializes the register set for MIL function generator.
  */
