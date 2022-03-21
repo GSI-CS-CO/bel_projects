@@ -158,9 +158,8 @@ typedef LM32_VOLATILE union
    uint8_t   ad8[sizeof(uint64_t)/sizeof(uint8_t)];
 } DDR3_PAYLOAD_T;
 
-#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(DDR3_PAYLOAD_T) == sizeof(uint64_t) );
-#endif
+
 
 /*!
  * @brief Object type of SCU internal DDR3 RAM.
