@@ -23,7 +23,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   def safe2removeTestcase(self, dot_file1, pattern_to_remove):
     start = dt.now()
-    self.startAllPattern(dot_file1 + '.dot')
+    self.startPattern(dot_file1 + '.dot', pattern_to_remove)
     self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
     duration = dt.now() - start
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
@@ -48,7 +48,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     duration1 = self.safe2removeTestcase(dot_file1, 'G1_P1')
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
     duration = dt.now() - start
-    self.assertTrue(duration1 <= limit, f'Duration of test too long, duration: {duration1}, limit: {limit}, over all duration: {duration}.')
+    self.assertGreater(limit, duration1, f'Duration of test too long, duration: {duration1}, limit: {limit}, over all duration: {duration}.')
 
   def test_safe2remove_group_1_1_1(self):
     self.safe2removeTestcasePerformance('groups_1_nonDefaultPatterns_1_blocksPerPattern_1', delta(seconds=1.1))

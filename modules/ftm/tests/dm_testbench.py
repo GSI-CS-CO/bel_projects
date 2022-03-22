@@ -35,9 +35,6 @@ class DmTestbench(unittest.TestCase):
     This is all done with 'dm-cmd reset all'.
     """
     self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'reset', 'all'])
-    # ~ self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'halt'])
-    # ~ self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'clear'])
-    # ~ self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'cleardiag'])
 
   def addSchedule(self, schedule_file):
     """Connect to the given data master and load the schedule file (dot format).
@@ -67,17 +64,14 @@ class DmTestbench(unittest.TestCase):
     if len(schedule_file) > 0:
       schedule_file = self.schedules_folder + schedule_file
       print (f"Connect to device '{self.datamaster}', schedule file '{schedule_file}'.   ", end='', flush=True)
-      self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'add', schedule_file])
+      self.startAndGetSubprocessStdout([self.binary_dm_sched, self.datamaster, 'add', schedule_file])
     if start:
       if len(pattern) > 0:
         self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster, 'startpattern', pattern])
       else:
-        # run 'dm-sched self.datamaster' as a sub process.
-        process = subprocess.Popen([self.binary_dm_sched, self.datamaster], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        # get command output and error
-        stdout, stderr = process.communicate()
-        lines = stdout.decode('utf-8').splitlines()
-        # start the first pattern found in the data master.
+        # get the names of all pattern on this datamaster
+        lines = self.startAndGetSubprocessStdout([self.binary_dm_sched, self.datamaster])
+        # start all pattern found in the data master.
         patterns = False
         for i in range(len(lines)):
           if patterns and len(lines[i]) > 0:
@@ -141,8 +135,10 @@ class DmTestbench(unittest.TestCase):
       .replace('flags="0x00100107"', 'flags="0x00100007"') \
       .replace('fillcolor = "green"', 'fillcolor = "white"') \
       .replace('flags="0x00020007"', 'flags="0x00000007"') \
+      .replace('flags="0x00020207"', 'flags="0x00000207"') \
       .replace('flags="0x00022007"', 'flags="0x00002007"') \
       .replace('flags="0x00120007"', 'flags="0x00100007"') \
+      .replace('flags="0x00120207"', 'flags="0x00100207"') \
       .replace('flags="0x00128007"', 'flags="0x00108007"') \
       .replace(', fontname="Times-Bold", fontcolor = "blue2", fontsize="16"', '')
     return dot_lines
