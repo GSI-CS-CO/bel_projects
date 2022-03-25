@@ -35,7 +35,9 @@
 #define FBAS_SHARED_GET_MAX        (FBAS_SHARED_GET_MIN        + _32b_SIZE_ * 2)   // max
 #define FBAS_SHARED_GET_VAL        (FBAS_SHARED_GET_MAX        + _32b_SIZE_ * 2)   // valid counts
 #define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VAL        + _32b_SIZE_ * 2)   // all/total counts
-#define FBAS_SHARED_GET_END        (FBAS_SHARED_GET_ALL        + _32b_SIZE_ * 2)   // end of the 'get' region
+#define FBAS_SHARED_ECA_VLD        (FBAS_SHARED_GET_ALL        + _32b_SIZE_ * 2)   // number of the valid actions output by ECA
+#define FBAS_SHARED_ECA_OVF        (FBAS_SHARED_ECA_VLD        + _32b_SIZE_)       // number of the overflow actions output by ECA
+#define FBAS_SHARED_GET_END        (FBAS_SHARED_ECA_OVF        + _32b_SIZE_)       // end of the 'get' region
 
 // diagnosis: end of used shared memory
 #define FBAS_SHARED_END            (FBAS_SHARED_GET_END)

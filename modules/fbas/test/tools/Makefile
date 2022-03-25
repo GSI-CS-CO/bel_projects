@@ -45,6 +45,13 @@
 #  make restart_two_senders_multi_loop or
 #  make restart_two_senders_multi_finite
 
+# 5. Measuring the maximum data rate for receiver
+#  senders: datamaster (dev/wbm1)
+#  receivers: FBASRX node (dev/wbm2)
+#
+#  make saftd
+#  make restart_test_rx_rate
+
 .PHONY: mytest \
 	saftd setup_nodes setup_fbastx setup_fbasrx \
 	do_test3 repeat_test3 \
@@ -55,10 +62,13 @@
 	print_fbasdm_status \
 	clear_fbasdm load_fbasdm_loop_patterns load_fbasdm_finite_patterns \
 	restart_two_senders_multi_finite restart_two_senders_multi_loop \
-	show_two_senders_result
+	show_two_senders_result \
+	restart_test_rx_rate restart_test_rx_rate_bad restart_fbasdm_run_pattern
 
 SHELL=/bin/bash
-sleep_period=20    # seconds
+sleep_period=20                        # seconds
+fw_rxpci="fbas.pcicontrol.bin"         # default LM32 FW for RX node
+sched_filename="my_mps_rx_rate_1.dot"  # default DM schedule
 
 mytest:
 	$(info source setup.sh)
@@ -281,3 +291,18 @@ show_fbasdm_result:
 	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
+
+restart_test_rx_rate:
+	@source setup.sh && setup_fbasrx ${fw_rxpci}
+	@source dm.sh && clear_dm_diag
+	@source dm.sh && clear_dm_patt
+	@echo "start schedule from '${sched_filename}'"
+	@source dm.sh && run_pattern ${sched_filename}
+	@source setup.sh && read_counters $$FBASRX
+	@source setup.sh && result_ow_delay $$FBASRX
+
+restart_fbasdm_run_pattern:
+	@source dm.sh && clear_dm_diag
+	@source dm.sh && clear_dm_patt
+	@echo "start schedule from '${sched_filename}'"
+	@source dm.sh && run_pattern ${sched_filename}

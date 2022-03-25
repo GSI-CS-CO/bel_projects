@@ -5,17 +5,22 @@
 #include "dbg.h"              // DBPRINT()
 #include "mini_sdb.h"         // find_dev()
 #include "aux.h"              // atomic_on/off()
+
+// ip_cores/saftlibi/drivers or
+// ip_cores/wr-cores/modules/wr_eca
 #include "eca_queue_regs.h"   // register layout ECA queue
 #include "eca_regs.h"         // register layout ECA control
 #include "eca_flags.h"        // definitions for ECA queue
 
 /* includes for this project */
 #include <common-defs.h>      // common definitions
+#include "fbas_common.h"      // COMMON_STATUS_
 
 // return (error) status
 uint32_t findEcaCtl();
 
-// return number of the ECA valid actions
-uint32_t fwlib_getEcaValidCnt();
+status_t fwlib_getEcaValidCnt(uint32_t *buffer);
+status_t fwlib_getEcaOverflowCnt(uint32_t *buffer);
+status_t fwlib_getEcaFailureCnt(uint32_t flag, uint32_t *buffer);
 
 #endif

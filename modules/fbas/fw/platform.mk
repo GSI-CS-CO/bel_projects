@@ -7,6 +7,17 @@ export FLASH     := $(shell grep -m1 FLASH     $(PLATFMAKEFILE) | cut -d'=' -f2 
 export SPI_LANES := $(shell grep -m1 SPI_LANES $(PLATFMAKEFILE) | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 export RAM_SIZE  := $(shell grep -m1 RAM_SIZE  $(PLATFMAKEFILE) | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
+# obtain the number of MPS channels
+FBAS_CMN_HDR_FILE:= fbas_common.h
+N_MPS_CH         := $(shell grep -m1 N_MPS_CHANNELS $(FBAS_CMN_HDR_FILE) | tr -s ' ' | cut -d' ' -f3)
+ifneq ($(N_MPS_CH), 1)
+  export N_MPS_CH
+else
+  undefine N_MPS_CH
+endif
+
+$(info    N_MPS       is $(N_MPS_CH))
+
 CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 SRC_FILES     = $(PATHFW)/$(TARGET).c $(PATHFW)/tmessage.c  \
@@ -33,6 +44,6 @@ $(info    <<<<)
 include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin
-	@mv $^ $(TARGET).$(PLATFORM).bin
+	@mv $^ $(TARGET)$(N_MPS_CH).$(PLATFORM).bin
 
 $(TARGET).elf: $(SRC_FILES)

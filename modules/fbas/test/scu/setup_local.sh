@@ -4,6 +4,9 @@
 
 export DEV_TX="dev/wbm0"
 export DEV_RX="dev/wbm0"
+
+export addr_set_node_type="0x20140820"
+export addr_get_node_type="0x20140830"
 export addr_cmd="0x20140508"     # shared memory location for command buffer
 export addr_cnt1="0x20140934"    # shared memory location for received frames counter
 export addr_msr1="0x20140968"    # shared memory location for measurement results
@@ -12,10 +15,24 @@ export addr_eca_ovf="0x20140994" # shared memory location of counter for overflo
 
 export FW_TX="fbas.scucontrol.bin"
 export FW_RX="fbas.scucontrol.bin"
-export instr_st_tx_dly=0x32
-export instr_st_ow_dly=0x33
-export instr_st_sg_lty=0x34
-export instr_st_ttl_ival=0x35
+
+export instr_fsm_configure=0x01 # FSM CONFIGURE state
+export instr_fsm_opready=0x02   # FSM OPREADY state
+
+export instr_set_nodetype=0x15  # set node type
+export instr_set_io_oe=0x16     # set IO output enable
+export instr_get_io_oe=0x17     # get IO output enable
+export instr_toggle_io=0x18     # toggle IO output
+
+export instr_probe_sb_diob=0x20 # probe DIOB slave card on SCU bus
+export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
+
+export instr_en_mps=0x30        # enable MPS signalling
+export instr_dis_mps=0x31       # disable MPS signalling
+export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
+export instr_st_ow_dly=0x33     # store the one-way delay measurement results to shared memory
+export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
+export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -188,7 +205,7 @@ setup_mpsrx() {
 
     echo "set node type to DEV_RX (0x1)"
     echo "write node type (0x1) to dedicated memory location"
-    eb-write $DEV_RX 0x20140820/4 0x1
+    eb-write $DEV_RX $addr_set_node_type/4 0x1
     wait_seconds 1
 
     echo "tell LM32 to set the node type"
@@ -196,7 +213,7 @@ setup_mpsrx() {
     wait_seconds 1
 
     echo "verify the actual node type"
-    eb-read $DEV_RX 0x20140830/4
+    eb-read $DEV_RX $addr_get_node_type/4
     wait_seconds 1
 
     echo "OPREADY state "
@@ -254,7 +271,7 @@ read_counters() {
 
     for addr in $addr_val; do
         cnt=$(eb-read $device $addr/4)  # get counter value
-        printf "%s @ %s: %d (0x%s)\n" $1 $addr 0x$cnt $cnt
+        printf "%d " 0x$cnt
         shift
     done
 }
@@ -322,28 +339,28 @@ result_event_count() {
 result_tx_delay() {
     # $1 - dev/wbmo
 
-    echo -n "Transmit delay: "
+#    echo -n "Transmit delay: "
     read_measurement_results $1 $instr_st_tx_dly $addr_msr1
 }
 
 result_sg_latency() {
     # $1 - dev/wbmo
 
-    echo -n "Signalling latency:   "
+#    echo -n "Signalling latency:   "
     read_measurement_results $1 $instr_st_sg_lty $addr_msr1
 }
 
 result_ow_delay() {
     # $1 - dev/wbmo
 
-    echo -n "One-way delay:  "
+#    echo -n "One-way delay:  "
     read_measurement_results $1 $instr_st_ow_dly $addr_msr1
 }
 
 result_ttl_ival() {
     # $1 - dev/wbmo
 
-    echo -n "TTL interval:   "
+#    echo -n "TTL interval:   "
     read_measurement_results $1 $instr_st_ttl_ival $addr_msr1
 }
 
@@ -399,7 +416,7 @@ read_measurement_results() {
     addr_msr=$(( $addr_msr + 4 ))
     cnt_all=$(eb-read -q $device ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo "avg=${avg_dec}, min=${min_dec}, max=${max_dec}, cnt=${cnt_val_dec}/${cnt_all_dec}"
+    echo "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
 }
 
 ##########################################################
@@ -443,4 +460,54 @@ do_test2() {
     # =   42848 ns (calculated by timestamp, 1604325967001042848 - 1604325967001000000)
     # time to transmit FBAS events (TX->RX):
     # =   25966 ns (1604325967001030350 - 1604325967001004384)
+}
+
+####################
+## Reset FTRN node
+#
+# - FW is not re-loaded
+# + reset LM32
+# + set node type, if 'RX'
+# + set oper. mode to 'OPREADY'
+####################
+
+reset_node() {
+    # $1 - node type (TX or RX)
+
+    if [ "$1" == "RX" ]; then
+        check_mpsrx
+        node=$DEV_RX
+    elif [ "$1" == "TX" ]; then
+        check_mpstx
+        node=$DEV_TX
+    else
+        echo "unknown node type: $1"
+        exit 1
+    fi
+
+    echo "reset LM32"
+    eb-reset $node cpureset 0x0
+    sleep 1
+
+    echo "CONFIGURE state "
+    eb-write $node $addr_cmd/4 $instr_fsm_configure
+    sleep 1
+
+    if [ "$1" == "RX" ]; then
+        echo "set node type to DEV_RX (0x1)"
+        eb-write $node $addr_set_node_type/4 0x1
+        sleep 1
+
+        echo "tell LM32 to set the node type"
+        eb-write $node $addr_cmd/4 $instr_set_nodetype
+        sleep 1
+
+        echo "verify the actual node type"
+        eb-read $node $addr_get_node_type/4
+        sleep 1
+    fi
+
+    echo "OPREADY state "
+    eb-write $node $addr_cmd/4 $instr_fsm_opready
+    sleep 1
 }

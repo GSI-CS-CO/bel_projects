@@ -21,21 +21,38 @@
 
 export FBASTX="dev/wbm0"
 export FBASRX="dev/wbm2"
-export addr_cnt1="0x04060934/4"  # shared memory location for received frames counter
+export addr_set_node_type="0x04060820"
+export addr_get_node_type="0x04060830"
+export addr_cmd="0x04060508"     # shared memory location for command buffer
+export addr_cnt1="0x04060934"    # shared memory location for received frames counter
 export addr_msr1="0x04060968"    # shared memory location for measurement results
-export addr_cmd="0x04060508/4"   # shared memory location for command buffer
+export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
+export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
 
-export cmd_wr_tx_delay=0x32      # transmission delay
-export cmd_wr_ow_delay=0x33      # one-way delay
-export cmd_wr_sg_latency=0x34    # signalling latency
-export cmd_wr_ow_ttl_ival=0x35   # TTL interval
+export instr_fsm_configure=0x01 # FSM CONFIGURE state
+export instr_fsm_opready=0x02   # FSM OPREADY state
+
+export instr_set_nodetype=0x15  # set node type
+export instr_set_io_oe=0x16     # set IO output enable
+export instr_get_io_oe=0x17     # get IO output enable
+export instr_toggle_io=0x18     # toggle IO output
+
+export instr_probe_sb_diob=0x20 # probe DIOB slave card on SCU bus
+export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
+
+export instr_en_mps=0x30        # enable MPS signalling
+export instr_dis_mps=0x31       # disable MPS signalling
+export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
+export instr_st_ow_dly=0x33     # store the one-way delay measurement results to shared memory
+export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
+export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
 
 module_dir="${PWD/fbas*/fbas}"
 fw_dir="$module_dir/fw"
 fw_tx="$fw_dir/fbas.pcicontrol.bin"
 fw_rx="$fw_dir/fbas.pcicontrol.bin"
 
-function user_approval() {
+user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
     read -r answer
 
@@ -44,12 +61,12 @@ function user_approval() {
     fi
 }
 
-function wait_seconds() {
+wait_seconds() {
     #echo "wait $1 seconds ..."
     sleep $1
 }
 
-function wait_print_seconds() {
+wait_print_seconds() {
     # $1 - wait period in seconds
 
     if [ "$1" == "" ]; then
@@ -66,21 +83,21 @@ function wait_print_seconds() {
 
 }
 
-function check_fbastx() {
+check_fbastx() {
     if [ -z "$FBASTX" ]; then
         echo "FBASTX is not set"
         exit 1
     fi
 }
 
-function check_fbasrx() {
+check_fbasrx() {
     if [ -z "$FBASRX" ]; then
         echo "FBASRX is not set"
         exit 1
     fi
 }
 
-function check_dev_fw() {
+check_dev_fw() {
 
     echo "verify if a firmware runs on LM32"
     eb-info -w $1
@@ -106,7 +123,7 @@ function check_dev_fw() {
     #    09bab356 fbas: re-calculated the transmission time of a timig message via a WRS
 }
 
-function list_dev_ram() {
+list_dev_ram() {
     echo "get LM32 RAM address (host perspective)"
     eb-ls $1 | grep LM32
 
@@ -114,14 +131,14 @@ function list_dev_ram() {
     # 12.14.5        0000000000000651:54111351           4060000  LM32-RAM-User
 }
 
-function read_shared_mem() {
+read_shared_mem() {
     # $1 - device
     # $2 - memory address
 
     eb-read $1 $2
 }
 
-function write_shared_mem() {
+write_shared_mem() {
     # $1 - device
     # $2 - memory address
     # $3 - value
@@ -129,14 +146,14 @@ function write_shared_mem() {
     eb-write $1 $2 $3
 }
 
-function dont_call_set_ip() {
+dont_call_set_ip() {
     echo "assign static IP addresses to the timing receivers: 192.168.131.30 for wbm0, 192.168.131.40 for wbm2"
     echo "set IP address (wrc): ip set 192.168.131.30"
     echo "verify IP address (wrc): ip"
     eb-console $1
 }
 
-function start_saftd() {
+start_saftd() {
 
     check_fbastx
     check_fbasrx
@@ -163,7 +180,7 @@ function start_saftd() {
 ## Make 'fbastx' ready
 ######################
 
-function setup_fbastx() {
+setup_fbastx() {
 
     check_fbastx
 
@@ -185,7 +202,7 @@ function setup_fbastx() {
     #   pSharedGetNodeType = 0x40606a0 (CPU RAM External +  begin_shared + SHARED_GET_NODETYPE - 0x10000000)
 
     echo "CONFIGURE state "
-    eb-write $FBASTX 0x4060508/4 0x1
+    eb-write $FBASTX $addr_cmd/4 $instr_fsm_configure
     wait_seconds 1
 
     # wrc output:
@@ -194,7 +211,7 @@ function setup_fbastx() {
     #   common-fwlib: changed to state 3
 
     echo "OPREADY state "
-    eb-write $FBASTX 0x4060508/4 0x2
+    eb-write $FBASTX $addr_cmd/4 $instr_fsm_opready
     wait_seconds 1
 
     # wrc console output:
@@ -235,14 +252,25 @@ function setup_fbastx() {
 ## Make fbasrx ready
 ####################
 
-function setup_fbasrx() {
+setup_fbasrx() {
+    # $1 - external filename with DM schedule
 
     check_fbasrx
 
-    echo "load the LM32 firmware (RX)"
-    eb-fwload $FBASRX u 0x0 $fw_rx
+    fw_filename=$fw_rx
+
+    if [ ! -z "$1" ]; then
+        fw_filename="$fw_dir/$1"
+        if [ ! -f "$fw_filename" ]; then
+            echo "'$fw_filename' not found. Exit"
+            return 1
+        fi
+    fi
+
+    echo "RX: load the LM32 firmware '$fw_filename'"
+    eb-fwload $FBASRX u 0x0 $fw_filename
     if [ $? -ne 0 ]; then
-        echo "Error: failed to load LM32 FW '$fw_rx'. Exit!"
+        echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
         exit 1
     fi
     wait_seconds 1
@@ -257,16 +285,16 @@ function setup_fbasrx() {
     #   pSharedSetNodeType = 0x4060694 (CPU RAM External +  begin_shared + SHARED_SET_NODETYPE - 0x10000000)
 
     echo "CONFIGURE state "
-    eb-write $FBASRX 0x4060508/4 0x1
+    eb-write $FBASRX $addr_cmd/4 $instr_fsm_configure
     wait_seconds 1
 
     echo "set node type to FBASRX (0x1)"
     echo "write node type (0x1) to dedicated memory location"
-    eb-write $FBASRX 0x4060820/4 0x1
+    eb-write $FBASRX $addr_set_node_type/4 0x1
     wait_seconds 1
 
     echo "tell LM32 to set the node type"
-    eb-write $FBASRX 0x4060508/4 0x15
+    eb-write $FBASRX $addr_cmd/4 $instr_set_nodetype
     wait_seconds 1
 
     # wrc output:
@@ -274,14 +302,14 @@ function setup_fbasrx() {
     #   fbas1: node type 1
 
     echo "verify the actual node type"
-    eb-read $FBASRX 0x4060830/4
+    eb-read $FBASRX $addr_get_node_type/4
     wait_seconds 1
 
     # wrc output:
     #   00000001
 
     echo "OPREADY state "
-    eb-write $FBASRX 0x4060508/4 0x2
+    eb-write $FBASRX $addr_cmd/4 $instr_fsm_opready
 
     # wrc output:
     #   common-fwlib: changed to state 4
@@ -316,7 +344,7 @@ function setup_fbasrx() {
 # + set oper. mode to 'OPREADY'
 ####################
 
-function reset_node() {
+reset_node() {
 
     # $1 - node type (TX or RX)
 
@@ -336,16 +364,16 @@ function reset_node() {
     wait_seconds 1
 
     echo "CONFIGURE state "
-    eb-write $node 0x4060508/4 0x1
+    eb-write $node $addr_cmd/4 $instr_fsm_configure
     wait_seconds 1
 
     if [ "$1" == "RX" ]; then
         echo "set node type to FBASRX (0x1)"
-        eb-write $node 0x4060820/4 0x1
+        eb-write $node $addr_set_node_type/4 0x1
         wait_seconds 1
 
         echo "tell LM32 to set the node type"
-        eb-write $node 0x4060508/4 0x15
+        eb-write $node $addr_cmd/4 $instr_set_nodetype
         wait_seconds 1
 
         # wrc output:
@@ -353,7 +381,7 @@ function reset_node() {
         #   fbas1: node type 1
 
         echo "verify the actual node type"
-        eb-read $node 0x4060830/4
+        eb-read $node $addr_get_node_type/4
         wait_seconds 1
 
         # wrc output:
@@ -361,7 +389,7 @@ function reset_node() {
     fi
 
     echo "OPREADY state "
-    eb-write $node 0x4060508/4 0x2
+    eb-write $node $addr_cmd/4 $instr_fsm_opready
 
     # wrc output:
     #   common-fwlib: changed to state 4
@@ -377,7 +405,7 @@ function reset_node() {
 ## Test FW operation
 ####################
 
-function dont_call_open_wr_console() {
+dont_call_open_wr_console() {
 
     check_fbastx
     check_fbasrx
@@ -395,7 +423,7 @@ function dont_call_open_wr_console() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function precheck_test3() {
+precheck_test3() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
     echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"
@@ -421,7 +449,7 @@ function precheck_test3() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function start_test3() {
+start_test3() {
 
     echo "Step 2: enable MPS task on RX and TX nodes"
     echo "for TX: enable sending MPS flags and events, you will see EB frames in wireshark, verify their event ID, MPS flag etc"
@@ -476,21 +504,19 @@ function start_test3() {
     echo "Disable MPS task on TX and RX nodes"
     disable_mps_all
 
-    cnt=$(eb-read $FBASTX $addr_cnt1)
+    cnt=$(eb-read $FBASTX $addr_cnt1/4)
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "MPS flags (TX): $cnt ($cnt_dec)"
 
-    cnt=$(eb-read $FBASRX $addr_cnt1)
+    cnt=$(eb-read $FBASRX $addr_cnt1/4)
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "MPS flags (RX): $cnt ($cnt_dec)"
 
-    eb-write $FBASTX $addr_cmd 0x32  # get network delay
     echo -n "Transmission delay: "
-    read_measurement_results $FBASTX $addr_msr1
+    read_measurement_results $FBASTX $instr_st_tx_dly $addr_msr1
 
-    eb-write $FBASTX $addr_cmd 0x34  # get signalling latency
     echo -n "Signalling latency: "
-    read_measurement_results $FBASTX $addr_msr1
+    read_measurement_results $FBASTX $instr_st_sg_lty $addr_msr1
 
     result_ttl_ival $FBASRX
 
@@ -518,34 +544,26 @@ measure_ttl_ival() {
     result_ttl_ival $FBASRX
 }
 
-result_ttl_ival() {
-    # $1 - dev/wbmo
-
-    eb-write $1 $addr_cmd $cmd_wr_ow_ttl_ival
-    echo -n "TTL interval: "
-    read_measurement_results $1 $addr_msr1
-}
-
-function disable_mps() {
+disable_mps() {
     echo "Stop MPS on $1"
-    eb-write $1 0x4060508/4 0x31
+    eb-write $1 $addr_cmd/4 $instr_dis_mps
     wait_seconds 1
 }
 
-function enable_mps() {
+enable_mps() {
     echo "Start MPS on $1"
-    eb-write $1 0x4060508/4 0x30
+    eb-write $1 $addr_cmd/4 $instr_en_mps
     wait_seconds 1
 }
 
-function disable_mps_all() {
+disable_mps_all() {
     echo "Disable MPS"
     disable_mps $FBASTX
     disable_mps $FBASRX
 }
 
 
-function enable_mps_all() {
+enable_mps_all() {
     echo "Enable MPS"
     enable_mps $FBASRX
     enable_mps $FBASTX
@@ -557,7 +575,7 @@ function enable_mps_all() {
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-function do_test2() {
+do_test2() {
     echo "injectg timing messages to FBASTX that simulate the FBAS class 2 signals"
     saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
 
@@ -594,7 +612,7 @@ function do_test2() {
     # =   25966 ns (1604325967001030350 - 1604325967001004384)
 }
 
-function report_two_senders_result() {
+report_two_senders_result() {
     # $1 - RX count (in hex format without 0x, like 0000abcd)
     # $2 - TX count by sender node
     # $3 - TX count by datamaster
@@ -618,12 +636,16 @@ function report_two_senders_result() {
     echo "Received: $rx_count of $tx_count"
 }
 
-function read_measurement_results() {
+read_measurement_results() {
     # $1 - TR device (ie., dev/wbm0)
-    # $2 - shared memory location where measurement results are stored
+    # $2 - instruction code to store measurement results to a location in the shared memory
+    # $3 - shared memory location where measurement results are stored
 
     device=$1
-    addr_msr=$2
+    instr_msr=$2
+    addr_msr=$3
+
+    eb-write $device $addr_cmd/4 $instr_msr
 
     avg=$(eb-read -q $device ${addr_msr}/8)
     avg_dec=$(printf "%d" 0x$avg)
@@ -645,4 +667,46 @@ function read_measurement_results() {
     cnt_all=$(eb-read -q $device ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
     echo "avg=${avg_dec} min=${min_dec} max=${max_dec} cnt=${cnt_val_dec}/${cnt_all_dec}"
+}
+
+result_tx_delay() {
+    # $1 - dev/wbmo
+
+    #echo -n "Transmit delay: "
+    read_measurement_results $1 $instr_st_tx_dly $addr_msr1
+}
+
+result_sg_latency() {
+    # $1 - dev/wbmo
+
+    #echo -n "Signalling latency:   "
+    read_measurement_results $1 $instr_st_sg_lty $addr_msr1
+}
+
+result_ow_delay() {
+    # $1 - dev/wbmo
+
+    #echo -n "One-way delay:  "
+    read_measurement_results $1 $instr_st_ow_dly $addr_msr1
+}
+
+result_ttl_ival() {
+    # $1 - dev/wbmo
+
+    #echo -n "TTL interval:   "
+    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1
+}
+
+read_counters() {
+    # $1 - dev/wbm0
+
+    device=$1
+    addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    set msg_cnt eca_vld eca_ovf   # labels as positional arguments ($1 $2 $3)
+
+    for addr in $addr_val; do
+        cnt=$(eb-read $device $addr/4)  # get counter value
+        printf "%s @ %s: %d (0x%s)\n" $1 $addr 0x$cnt $cnt
+        shift
+    done
 }

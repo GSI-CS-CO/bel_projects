@@ -16,6 +16,7 @@ usage() {
     echo "OPTION:"
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpasswd>        user password"
+    echo "  -s <scu>               SCU name"
     echo "  -y                     'yes' to all prompts"
     echo "  -h                     display this help and exit"
     exit 1
@@ -32,7 +33,7 @@ do
     esac
 done
 
-if [ -n $scu ]; then
+if [ -n "$scu" ]; then
     scu_arr=("$scu")
 fi
 

@@ -192,6 +192,21 @@ start_dm_synchron() {
 ## Get a value of given variable
 ######################
 
+set_value() {
+    # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
+    # $2 - variable name (ie., pattern)
+    # $3 - value
+    # example: set_value my_mps_rx_rate_16.dot tperiod 33333
+
+    act_tuple=$(grep -oE "${2}=([^,])+" $patt_loc/$1) # extract "pattern=value"
+    new_tuple="$2=$3"                                 # set new value
+    sed -i "s/$act_tuple/$new_tuple/" $patt_loc/$1    # edit in-place
+}
+
+######################
+## Get a value of given variable
+######################
+
 get_value() {
     # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
     # $2 - variable name (ie., pattern)

@@ -38,6 +38,7 @@
 #include "measure.h"
 
 msrSumStats_t sumStats[msr_all] = {0};  // buffer for summary statistics
+msrCnt_t cnt[N_MSR_CNT] = {0};          // event and action counters
 
 /**
  * \brief store a timestamp
@@ -198,24 +199,33 @@ void printMeasureSgLatency(uint32_t* base, uint32_t offset) {
 }
 
 /**
- * \brief count events
+ * \brief Count events
  *
- * \param enable indicates if the counter is incremented (=true) or initialized with a given value
- * \param value  used to increment/initialize the counter
+ * \param name   Counter name (listed in MSR_CNT)
+ * \param value  Used to increment/initialize the counter
  *
- * \ret counter value
+ * \ret counter  Value
  **/
-uint32_t doCnt(bool enable, uint32_t value)
+uint32_t msrCnt(unsigned name, uint32_t value)
 {
-  static msrCnt_t cnt = {0};
+  cnt[name].val += value;
 
-  if (enable) {
-    cnt.val += value;
-  } else {
-    cnt.val = value;
-  }
+  return cnt[name].val;
+}
 
-  return cnt.val;
+/**
+ * \brief Set event counter
+ *
+ * \param name   Counter name (listed in MSR_CNT)
+ * \param value  Used to increment/initialize the counter
+ *
+ * \ret counter  Value
+ **/
+uint32_t msrSetCnt(unsigned name, uint32_t value)
+{
+  cnt[name].val = value;
+
+  return cnt[name].val;
 }
 
 /**
