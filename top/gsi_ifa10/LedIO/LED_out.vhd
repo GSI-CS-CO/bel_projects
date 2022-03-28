@@ -75,9 +75,9 @@ ENTITY LED_out is
    Sync_Event_Ser_Str: IN STD_LOGIC;
    A_EXT_CLK   :   IN STD_LOGIC;
 
-   nUSER_LED_in:   IN STD_LOGIC;
-   nFAILSAVE_LED_in: IN STD_LOGIC;
-   SHOW_CONFIG_in:   IN STD_LOGIC;
+   USER_LED_in :   IN STD_LOGIC;
+   FAILSAVE_LED_in: IN STD_LOGIC;
+   SHOW_CONFIG_in:  IN STD_LOGIC;
 
    nLED_out    :   OUT STD_LOGIC_VECTOR(27 DOWNTO 0)
 
@@ -120,8 +120,8 @@ begin
 
 --LEDs(27 ..25) ohne Stretcher
 nLED(27)    <= SHOW_CONFIG_in;
-nLED(26)    <= nFAILSAVE_LED_in;
-nLED(25)    <= nUSER_LED_in;
+nLED(26)    <= not FAILSAVE_LED_in;
+nLED(25)    <= not USER_LED_in;
 
 ------------
 --Stretcher
