@@ -290,6 +290,79 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t 
   return COMMON_STATUS_OK;
 } //phaseFit
 
+// assume that tStamps has size values in units of ns sorted with increasing value
+int32_t phaseFitSubNs(uint64_t set_period_as, uint32_t nSamples, uint64_t *phase_ns, int32_t *fractional_phase_as) {  // , int32_t *phase_error_as) {
+  if (set_period_as==0) return B2B_STATUS_PHASEFAILED; // need at least three measurement
+  if (nSamples < 3) return B2B_STATUS_PHASEFAILED; // need at least three measurement
+
+  int64_t first_tStamp_ns = tStamp[1];         // always discard tStamp[0]
+  int tStamp_good;                             // this is set to 1 if tStamp[n] was within +- 1ns of the expected value
+  int64_t tStamp_as;                           // tStamp relative to first_tStamp, converted to attoseconds
+  int64_t rel_phase_next_as, rel_phase_as = 0; // phase iterator, relative to first_tStamp
+  int64_t dt_as, abs_dt_as;                    // difference between predicted phase and measured phase
+  int64_t min_dt_as=0, max_dt_as=0;            // the midpoint between min_dt_as and max_dt_as defines the real phase
+  int sample_number = nSamples/2;              // the one point tStamp[sample_number] that is used to calculate the final result
+  int64_t sample_dt_as;                        // the phase difference of the samples
+  int sample_good = 0;                         // is set to 1 if a phase could be calculated, 0 otherwise.
+  int n, i;
+
+  // Special case if the sampling point has index=1: the sample_dt_as of this point is always 0.
+  // In all other cases the sample_dt_as is set in the for(n = 2;... loop below.
+  if (sample_number == 1) {
+    sample_dt_as = 0;
+    sample_good = 1;
+  }
+  for (n = 2; n < nSamples; ++n) {
+    tStamp_as = ((int64_t)tStamp[n]-first_tStamp_ns)*(1000000000LL); // convert measurement to as
+    rel_phase_next_as = rel_phase_as;
+    tStamp_good = 0;
+    for(i = 0; i < NSAMPLES; ++i) { // Advance rel_phase_as so long until it matches measurement_a within +- 1ns.
+                                  // This is necessary because gaps in the measured data can occur.
+                                  // (Normally this loop should brake in the first iteration.)
+      rel_phase_next_as += set_period_as;
+      dt_as = rel_phase_next_as - tStamp_as; 
+      abs_dt_as = dt_as;
+      if (abs_dt_as < 0) abs_dt_as = -abs_dt_as;
+      if (abs_dt_as < 2000000000LL) {
+        tStamp_good = 1;
+        rel_phase_as = rel_phase_next_as;
+        break;
+      } else if (dt_as > 0) {
+        break;
+      }
+    }
+    if (!tStamp_good) continue; // discard this tStamp[n]
+
+    // here we know that the tStamp was close to the expected value 
+    // keep track of the max and min value of the difference
+    if (dt_as < min_dt_as) min_dt_as = dt_as;
+    if (dt_as > max_dt_as) max_dt_as = dt_as;
+    if (n == sample_number) {
+      sample_dt_as = dt_as; // remember the difference at the sample point
+      sample_good = 1;      // flag that we have a good sampling point
+    }
+  }
+  *phase_ns = 0;
+  *fractional_phase_as = 0;
+  if (sample_good) {
+    *phase_ns = tStamp[sample_number];
+    *fractional_phase_as = sample_dt_as-(max_dt_as+min_dt_as)/2;
+      // Convert (fractional phase + 0.5 ns) into a 3 bit value with a resolution of 125ps per bit
+      volatile uint64_t fractional_phase_3bits = (4+(*fractional_phase_as+500000000)/125000000)&0x7;
+
+      // Put 3 bit of fractional phase info into the 3 MSB of the phase_ns value
+      // if (fractional_phase_3bits >= 4) *phase_ns -= 1; // decrease the phase value if the fractional part was negative
+      // *phase_ns |= (fractional_phase_3bits<<61); // use upper 3 bits of phase_ns to store the fractional part of the phase
+
+      // Upper bound of the phase error. This is currently not used.
+    // *phase_error_as = ((1000000000)-(max_dt_as-min_dt_as))/2;  // this is a hard upper limit for the error (if jitter of input signal is negligible)
+    //                                                            // the true value for phase is uniformly distributed in the 
+    //                                                            // interval [-phase_error_as, +phase_error_as] around fractional_phase_as
+    return COMMON_STATUS_OK;
+  }
+  return B2B_STATUS_PHASEFAILED;
+}
+
 
 // aquires a series of timestamps from an IO; returns '0' on success
 int acquireTimestamps(uint64_t *ts,                           // array of timestamps [ns]
@@ -416,7 +489,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       acquireTimestamps(tStamp, nSamples, &nInput, TMeasUs, 2, B2B_ECADO_TLUINPUT3);
 
       if (nInput > 2) insertionSort(tStamp, nInput);                 // for 11 timestamps, this is below 10us
-      if ((nInput < 3) || (phaseFit(TH1, nInput, &tH1, &dt) != COMMON_STATUS_OK)) {
+      if ((nInput < 3) || (phaseFitSubNs(TH1, nInput, &tH1, &dt) != COMMON_STATUS_OK)) {
         tH1       = 0x7fffffffffffffff;
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
