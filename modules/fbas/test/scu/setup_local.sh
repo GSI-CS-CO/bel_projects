@@ -264,16 +264,25 @@ do_inject_fbas_event() {
 
 read_counters() {
     # $1 - dev/wbm0
+    # $2 - verbosity
 
     device=$1
+    verbose=$2
     addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
-    set msg_cnt eca_vld eca_ovf   # labels as positional arguments ($1 $2 $3)
+    unset counts
 
     for addr in $addr_val; do
         cnt=$(eb-read $device $addr/4)  # get counter value
-        printf "%d " 0x$cnt
-        shift
+        cnt_dec=$(printf "%d" 0x$cnt)
+        counts="${counts}$cnt_dec "
     done
+    if [ -n "$verbose" ]; then
+        counts="${counts}(tx_msg rx_vld rx_ovf)\n"
+    else
+        counts="${counts}\n"
+    fi
+
+    echo -e "$counts"
 }
 
 start_test4() {
@@ -301,9 +310,13 @@ stop_test4() {
 ##########################################################
 
 start_nw_perf() {
+    # $1 - number of iterations
 
-    wait_seconds 1
-    n=100
+    n=10
+    if [ -n "$1" ]; then
+        n=$1
+    fi
+
     echo "TX: MPS events will be generated locally ..."
     echo "TX: $n MPS events -> flag=NOK(2), grpID=1, evtID=0 ($(( $n * 3)) transmissions)"
     echo "TX: $n MPS events -> flag=OK(1), grpID=1, evtID=0 ($n transmissions)"
@@ -330,38 +343,54 @@ result_event_count() {
 
     # $1 - dev/wbmo
     # $2 - event counter
+    # $3 - verbosity
 
-    cnt=$(eb-read $1 $2)
+    cnt=$(eb-read $1 $2/4)
     cnt_dec=$(printf "%d" 0x$cnt)
-    echo "count: 0x$cnt (${cnt_dec})"
+    if [ -n "$3" ]; then
+        echo -n "count: "
+    fi
+    echo "0x$cnt (${cnt_dec})"
 }
 
 result_tx_delay() {
     # $1 - dev/wbmo
+    # $2 - verbosity
 
-#    echo -n "Transmit delay: "
-    read_measurement_results $1 $instr_st_tx_dly $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "Transmit delay: "
+    fi
+    read_measurement_results $1 $instr_st_tx_dly $addr_msr1 $2
 }
 
 result_sg_latency() {
     # $1 - dev/wbmo
+    # $2 - verbosity
 
-#    echo -n "Signalling latency:   "
-    read_measurement_results $1 $instr_st_sg_lty $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "Signalling latency:   "
+    fi
+    read_measurement_results $1 $instr_st_sg_lty $addr_msr1 $2
 }
 
 result_ow_delay() {
     # $1 - dev/wbmo
+    # $2 - verbosity
 
-#    echo -n "One-way delay:  "
-    read_measurement_results $1 $instr_st_ow_dly $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "One-way delay:  "
+    fi
+    read_measurement_results $1 $instr_st_ow_dly $addr_msr1 $2
 }
 
 result_ttl_ival() {
     # $1 - dev/wbmo
+    # $2 - verbosity
 
-#    echo -n "TTL interval:   "
-    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "TTL interval:   "
+    fi
+    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1 $2
 }
 
 disable_mps() {
@@ -390,6 +419,7 @@ read_measurement_results() {
     # $1 - device (dev/wbm0)
     # $2 - instruction code to store measurement results to a location in the shared memory
     # $3 - shared memory location where measurement results are stored
+    # $4 - verbosity
 
     device=$1
     instr_msr=$2
@@ -416,7 +446,12 @@ read_measurement_results() {
     addr_msr=$(( $addr_msr + 4 ))
     cnt_all=$(eb-read -q $device ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
+    echo -n "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
+    if [ -n "$4" ]; then
+        echo " (avg min max valid all)"
+    else
+        echo
+    fi
 }
 
 ##########################################################

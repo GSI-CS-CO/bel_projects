@@ -9,7 +9,7 @@ domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
 sleep_sec=10
-unset option username userpasswd
+unset option username userpasswd verbose
 
 usage() {
     echo "Usage: $0 [OPTION]"
@@ -19,16 +19,18 @@ usage() {
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpasswd>        user password"
     echo "  -y                     'yes' to all prompts"
+    echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
 }
 
-while getopts 'hyu:p:' c
+while getopts 'hyu:p:v' c
 do
     case $c in
         h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         y) option="auto" ;;
+        v) verbose="yes" ;;
     esac
 done
 
@@ -56,5 +58,9 @@ sleep $sleep_sec  # wait for given seconds
 
 echo 'stop test4 (TX, RX)'
 echo "----------"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$DEV_TX"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && result_ow_delay \$DEV_RX \$addr_cnt1"
+echo -n "TX: "
+timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$DEV_TX && \
+    read_counters \$DEV_TX $verbose"
+echo -n "RX: "
+timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && \
+    read_counters \$DEV_RX $verbose && result_ow_delay \$DEV_RX $verbose"

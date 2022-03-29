@@ -139,6 +139,8 @@ for rate in ${all_msg_rates[*]}; do
 
     # print measurement results
     counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && read_counters \$DEV_RX && result_ow_delay \$DEV_RX")
+    counts=${counts//$'\n'/}           # remove all 'newline'
+    counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
 
     # format values
     t_period_float=$(echo "$t_period/1000" | bc -l)           # message period [us]
@@ -154,7 +156,8 @@ for rate in ${all_msg_rates[*]}; do
     new_line+=$(printf " | %s" $sel_counts)
 
     eca_overflow=$(echo "$counts" | cut -d' ' -f3)
-    if [ "$eca_overflow" != "0" ]; then
+    eca_overflow=$(( 10#$eca_overflow ))  # convert a string to integer
+    if [ $eca_overflow -ne 0 ]; then
         new_line+=" | yes |\n"
     else
         new_line+=" | no |\n"
@@ -163,13 +166,13 @@ for rate in ${all_msg_rates[*]}; do
     results+=$new_line
 
     # break loop if the 'ECA overflow' counter has non-zero
-    if [ "$eca_overflow" != "0" ]; then
+    if [ $eca_overflow -ne 0 ]; then
         break
     fi
 
     # break loop if the 'average one-way delay' is higher than 1 ms
     avg_owd=$(echo "$counts" | cut -d' ' -f4)
-    avg_owd=$(( 10#$avg_owd ))     # convert a string to decimal
+    avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
     if [ $avg_owd -gt 1000000 ]; then
         break
     fi

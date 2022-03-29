@@ -3,7 +3,7 @@
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
-unset username userpasswd option
+unset username userpasswd option verbose
 
 usage() {
 
@@ -16,6 +16,7 @@ usage() {
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpassd>         user password"
     echo "  -y                     'yes' to all prompts"
+    echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
 }
 
@@ -69,18 +70,18 @@ measure_nw_perf() {
 
     # report test result
     echo -e "\n--- report test result (TX, RX) ---\n"
-    echo -n "TX "
+    echo -n "TX: "
     sshpass -p "$userpasswd" ssh "$username@$txscu" \
         "source setup_local.sh && \
-        result_event_count \$DEV_TX \$addr_cnt1 && \
-        result_tx_delay \$DEV_TX && \
-        result_sg_latency \$DEV_TX"
-    echo -n "RX "
+        read_counters \$DEV_TX $verbose && \
+        result_tx_delay \$DEV_TX $verbose && \
+        result_sg_latency \$DEV_TX $verbose"
+    echo -n "RX: "
     sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
-        result_event_count \$DEV_RX \$addr_cnt1 && \
-        result_ow_delay \$DEV_RX && \
-        result_ttl_ival \$DEV_RX"
+        read_counters \$DEV_RX $verbose && \
+        result_ow_delay \$DEV_RX $verbose && \
+        result_ttl_ival \$DEV_RX $verbose"
 }
 
 measure_ttl() {
@@ -101,15 +102,16 @@ measure_ttl() {
     sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
 
     echo -e "\n--- report TTL measurement ---\n"
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1"
+    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
 }
 
-while getopts 'hyu:p:' c; do
+while getopts 'hyu:p:v' c; do
     case $c in
         h) usage; exit 1 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         y) option="auto" ;;
+        v) verbose="yes" ;;
     esac
 done
 
