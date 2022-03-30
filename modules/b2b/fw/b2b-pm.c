@@ -351,8 +351,8 @@ int32_t phaseFitSubNs(uint64_t set_period_as, uint32_t nSamples, uint64_t *phase
       volatile uint64_t fractional_phase_3bits = (4+(*fractional_phase_as+500000000)/125000000)&0x7;
 
       // Put 3 bit of fractional phase info into the 3 MSB of the phase_ns value
-      // if (fractional_phase_3bits >= 4) *phase_ns -= 1; // decrease the phase value if the fractional part was negative
-      // *phase_ns |= (fractional_phase_3bits<<61); // use upper 3 bits of phase_ns to store the fractional part of the phase
+      if (fractional_phase_3bits >= 4) *phase_ns -= 1; // decrease the phase value if the fractional part was negative
+      *phase_ns |= (fractional_phase_3bits<<61); // use upper 3 bits of phase_ns to store the fractional part of the phase
 
       // Upper bound of the phase error. This is currently not used.
     // *phase_error_as = ((1000000000)-(max_dt_as-min_dt_as))/2;  // this is a hard upper limit for the error (if jitter of input signal is negligible)
