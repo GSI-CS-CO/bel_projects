@@ -458,18 +458,25 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
     
     //Iterate over queues, highest priority first. If we find a pending command that has reached its valid time, we take it.
-    for (prio = PRIO_IL; prio-- > PRIO_LO;) {
-    
+    int32_t i;
+    for (i = PRIO_IL; i >= PRIO_LO; i--) {
+      prio = (uint32_t)i;
+      
       // make sure we only check queue prios this Block actually has
       if(((node[NODE_FLAGS >> 2] >> NFLG_BLOCK_QS_POS) & (1 << prio))) {
+        
+        //Notation "3 - prio" seems weird, but remember: It's big endian, MSB first. bit 31/byte 3 is at address offset 0.
+        //Addr  0x0 0x1 0x2 0x3
+        //Byte    3   2   1   0
+        //Field   -  IL  HI  LO
+        rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + 3 - prio); // this queues read index   (using overflow bit for empty/full)
+        wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + 3 - prio); // this queues write index
 
-        //Check if rd - wr cnt differs. Notation "_32b_SIZE_ - prio - 1" aka "3 - prio" seems weird, but remeber: It's MSB first. bit 31 is at byte offset 0. 
-        if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - prio - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - prio - 1)) {
+        //Check if rd - wr cnt differs. 
+        if (*rdIdx ^ *wrIdx) {
           
           //found pending command
           //create shortcuts to control data of corresponding queue
-          rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);               // this queues read index   (using overflow bit for empty/full)
-          wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);               // this queues write index
           bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
           elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
           bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
