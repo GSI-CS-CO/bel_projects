@@ -896,7 +896,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   status = actStatus;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
-    
+  // recParam contains the phase in units of 125ps, shift-right by 3 bits converts back to nanoseconds.
+  // handle the sub-ns part later
+  int32_t sub_ns_phase = recParam & 0x7;
+  recParam = recParam >> 3;
+  
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts

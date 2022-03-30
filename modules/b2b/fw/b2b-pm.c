@@ -348,11 +348,11 @@ int32_t phaseFitSubNs(uint64_t set_period_as, uint32_t nSamples, uint64_t *phase
     *phase_ns = tStamp[sample_number];
     *fractional_phase_as = sample_dt_as-(max_dt_as+min_dt_as)/2;
       // Convert (fractional phase + 0.5 ns) into a 3 bit value with a resolution of 125ps per bit
-      volatile uint64_t fractional_phase_3bits = (4+(*fractional_phase_as+500000000)/125000000)&0x7;
-
+      uint64_t fractional_phase_3bits = (4+(*fractional_phase_as+500000000)/125000000)&0x7;
       // Put 3 bit of fractional phase info into the 3 MSB of the phase_ns value
       if (fractional_phase_3bits >= 4) *phase_ns -= 1; // decrease the phase value if the fractional part was negative
-      *phase_ns |= (fractional_phase_3bits<<61); // use upper 3 bits of phase_ns to store the fractional part of the phase
+      *phase_ns <<= 3;
+      *phase_ns |= fractional_phase_3bits; // use lower 3 bits of phase_ns to store the fractional part of the phase
 
       // Upper bound of the phase error. This is currently not used.
     // *phase_error_as = ((1000000000)-(max_dt_as-min_dt_as))/2;  // this is a hard upper limit for the error (if jitter of input signal is negligible)
@@ -499,7 +499,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // send command: transmit measured phase value
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
-      sendParam    = tH1;
+      sendParam    = tH1; 
       sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
@@ -527,7 +527,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           min        = 0x7fffffff;
           imin       = -1;
           for (i=1; i<nInput; i++) {                                  // treat 1st TS as junk 
-            dtTmp = reqDeadline - tStamp[i];                        
+            dtTmp = reqDeadline - tStamp[i];// hier phaseFit <<<====================================
             if (abs(dtTmp) < min) {min = abs(dtTmp); dtMatch = dtTmp; imin = i;}
           } // for i
           //for (i=1; i<nInput; i++) pp_printf(" %d", (int32_t)(reqDeadline - tStamp[i])); pp_printf(" imin %d, TWait %d, TWaitUs %d\n", imin, (int32_t)TWait, TWaitUs);
@@ -557,9 +557,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         acquireTimestamps(tStamp, nSamples, &nInput, TMeasUs, 2, B2B_ECADO_TLUINPUT3);
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1, nInput, &tH1Diag, &dt) == COMMON_STATUS_OK) {
-            Dt          = (tH1Diag - tH1);                            // difference [ns]
-            Dt          = Dt * 1000000000;                            // difference [as]
+          if (phaseFitSubNs(TH1, nInput, &tH1Diag, &dt) == COMMON_STATUS_OK) { 
+            Dt          = (tH1Diag - tH1);                            // difference [125ps]
+            Dt          = Dt * 125000000;                             // difference [as]
             remainder   = Dt % TH1;                                   // remainder [as]
             remainder   = (uint64_t)((double)remainder / 1000000000.0); // remainder [ns]
             periodNs    = (uint64_t)((double)TH1 / 1000000000.0);     // period [ns]
