@@ -236,19 +236,21 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t action     = cmd[T_CMD_ACT >> 2];  // command action field
   uint8_t  flushees   =         (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // mask of flushee (target queue) priorities
   uint8_t  flusher    =  1 <<  ((action >> ACT_PRIO_POS)       & ACT_PRIO_MSK);       // mask of flusher (current command) priority
-  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)        & ACT_QTY_MSK));       // flag: flush is attempted exactly once (flusher qty == 1). Should always be true, but we better make sure
   uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;      // flushee buffer wr indices
   uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;      // flushee buffer read indices
+  uint8_t  prio;                                                                      // loop variable, iterate over all  priorities
 
-  uint8_t prio; // loop variable, iterate over all  priorities
   for(prio = PRIO_LO; prio <= PRIO_IL; prio++) { // iterate priorities of flushees
     // if execution would flush the very queue containing the flush command (the flusher), we must prevent the queue from being popped in block() function afterwards.
     // Otherwise, rd idx will overtake wr idx -> queue corrupted. To minimize corner case impact, we do this by adjusting the
     // new read idx to be wr idx-1. Then the queue pop leaves us with new rd idx = wr idx as it should be after a flush.
-    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne; // flag: selfflush requested (flush cmd is in flushed queue)
-    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  // The new rd idx. Must equal the wr idx for queue to be empty, adjust by -1 if this is a selfflush 
+    if(flushees & (1 << prio)) {
+      uint8_t* rdIdx = ((uint8_t *)&rdIdxs + 3 - prio);
+      uint8_t* wrIdx = ((uint8_t *)&wrIdxs + 3 - prio);
 
-    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if loop variable prio matches a flushee
+      uint8_t flushMyselfB4pop  = (flusher & (1 << prio)) != 0; // flag: selfflush requested (flush cmd is in flushed queue)
+      *rdIdx      = ((*wrIdx - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK);  // The new rd idx. Must equal the wr idx for queue to be empty, adjust by -1 if this is a selfflush 
+    } // execute flush if loop variable prio matches a flushee
   }
   //write back potentially updated read indices
   node[BLOCK_CMDQ_RD_IDXS >> 2] = rdIdxs;
