@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-08-17}
+\Large{Last change: 2022-03-29}
 \end{center}
 \vfill
 \end{titlepage}
@@ -56,38 +56,40 @@ All tests are on branch \texttt{dm-fallout-tests-2}. The tests run with \texttt{
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
 \begin{table}
-\caption{Which test tests what}
-%\begin{center}
+\caption{Which test tests what \\ x means: this test uses the component, T means: this test tests this component.
+For some tests the result is not checked.
+These are considered as OK if no exception occurs.}
 \centering
 \begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
 \hline
-Test                        & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
-dmPerformance               &   x        &   T             &   x           &   -              &   -                \\ \hline
-dmThreads                   &   x        &   x             &   T           &   -              &   -                \\ \hline
-singleEdgeTest              &   -        &   T             &   -           &   -              &   x                \\ \hline
-test\_addDownloadCompare.py &   T        &   T             &   T           &   x              &   -                \\ \hline
-test\_async.py              &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_basic.py              &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_bpcStart.py           &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_coupling.py           &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_dm\_cmd.py            &   T        &   x             &   x           &   x              &   x                \\ \hline
-test\_environment.py        &   -        &   -             &   -           &   x              &   X                \\ \hline
-test\_fid7.py               &   x        &   x             &   T           &   x              &   x                \\ \hline
-test\_flowpattern.py        &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_flow.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_loop.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_parallelBranch.py     &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_pps.py                &   x        &   T             &   x           &   x              &   -                \\ \hline
-test\_prio\_and\_type.py    &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_run\_all\_single.py   &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_run\_cpu0\_single.py  &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_safe2remove.py        &   x        &   T             &   T           &   x              &   x                \\ \hline
-test\_schedules.py          &   x        &   x             &   T           &   x              &   -                \\ \hline
-test\_start\_stop\_abort.py &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_switch.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_zzz\_finish.py        &   x        &   T             &   x           &   x              &   -                \\ \hline
+Test                          & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance                 &   x        &   T             &   x           &   -              &   -                \\ \hline
+test\_addDownloadCompare.py   &   T        &   T             &   T           &   x              &   -                \\ \hline
+test\_async.py                &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_basic.py                &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_booster\_startthread.py &   x        &   T             &   T           &   x              &   x                \\ \hline
+test\_bpcStart.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_coupling.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_dm\_cmd.py              &   T        &   x             &   x           &   x              &   x                \\ \hline
+test\_dmThreads.py            &   x        &   x             &   T           &   x              &   x                \\ \hline
+test\_environment.py          &   -        &   -             &   -           &   x              &   x                \\ \hline
+test\_fid7.py                 &   x        &   x             &   T           &   x              &   x                \\ \hline
+test\_flowpattern.py          &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_flow.py                 &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_loop.py                 &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_parallelBranch.py       &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_pps.py                  &   x        &   T             &   x           &   x              &   -                \\ \hline
+test\_prio\_and\_type.py      &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_run\_all\_single.py     &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_run\_cpu0\_single.py    &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_safe2remove.py          &   x        &   T             &   T           &   x              &   x                \\ \hline
+test\_schedules.py            &   x        &   x             &   T           &   x              &   -                \\ \hline
+test\_singleEdgeTest.py       &   -        &   T             &   -           &   -              &   x                \\ \hline
+test\_start\_stop\_abort.py   &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_switch.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
+test\_zzz\_finish.py          &   x        &   T             &   x           &   x              &   -                \\ \hline
 \end{tabular}
-%\end{center}
+
 \end{table}
 \chapter{The Tests}
 \section{dmPerformance}
@@ -95,10 +97,7 @@ test\_zzz\_finish.py        &   x        &   T             &   x           &   x
 The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
 then adds another schedule. This is done for a small schedule and a larger schedule. The test is ok if all commands
 work. There is no check for this.
-\section{dmThreads}
-\texttt{dmThreads} tests the firmware with 4 threads. The same test for 6 threads fails due to a bug in the
-firmware. For each thread a pattern with one block and one timing message is loaded.
-\include{singleEdgeTest}
+
 \section{test\_addDownloadCompare.py}
 \texttt{test\_addDownloadCompare.py} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
 The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
@@ -156,6 +155,7 @@ This test was \texttt{full\_test/static/basic}.
 
 	The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
 \end{enumerate}
+
 \section{test\_bpcStart.py}
 \texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
 The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
@@ -190,8 +190,17 @@ This test was \texttt{full\_test/dynamic/coupling}.
 with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
 line. These tests are successful when the response is the correct error message and not a core dump.
 
+\section{test\_dmThreads.py}
+\texttt{test\_dmThreads.py} tests the firmware with up to 8 threads and up to 4 CPUs.
+For each thread a pattern with one block and one timing message per second is loaded and started. To check that the thread is running,
+\texttt{dm-cmd} is used two times with a delay of one second. The number of messages is extracted from stdout and this number must
+increase for test success.
+
+There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs the schedules one 4 CPUs, each with 8 threads. This
+produces 32 messages per second.
+
 \section{test\_environment.py}
-\texttt{test\_environment.py} checks the test environment. The test is ok iff dm-cmd and dm-sched are
+\texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
 from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
 
 \section{test\_fid7.py}
@@ -339,14 +348,15 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 
 	In the end all blocks are visited.
 \end{enumerate}
+
 \section{test\_safe2remove.py}
 \texttt{test\_safe2remove.py} tests to remove a pattern from a running schedule. Test steps:
 \begin{enumerate}
 \item Clear data master
 \item Add schedule
-\item Start all patterns
+\item Start pattern 'G1\_P1'
 \item Check removal of one pattern, should fail while pattern is running.
-\item Abort pattern
+\item Abort pattern 'G1\_P1'
 \item Check removal of this pattern, should be valid, since pattern is not running.
 \item Remove this pattern.
 \item Check status of remaining schedule.
@@ -354,6 +364,9 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 These test steps are applied to a bunch of schedules.
 \section{test\_schedules.py}
 \texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
+
+\include{singleEdgeTest}
+
 \section{test\_start\_stop\_abort.py}
 This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
 \begin{enumerate}
@@ -379,6 +392,7 @@ This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
 	Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
 	stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
 \end{enumerate}
+
 \section{test\_switch.py}
 This test was \texttt{full\_test/dynamic/switch}.
 \begin{enumerate}
