@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Oct-2021
+ *  version : 01-Apr-2022
  *
  *  common functions used by various firmware projects
  *  
@@ -228,7 +228,32 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
   intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
   tAdvanced  = t1 + intervalNs;
 
-  return tAdvanced;
+  return tAdvanced; // [ns]
+} //fwlib_advanceTime
+
+
+uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas)
+{
+  uint64_t dt125ps;             // approximate time interval to advance [125ps]
+  uint64_t dtas;                // approximate time interval to advance [as]
+  uint64_t nPeriods;            // # of periods
+  uint64_t intervalAs;          // interval [as]
+  uint64_t interval125ps;       // interval [125ps]
+  uint64_t tAdvanced;           // result
+  uint64_t nineO = 125000000 ;  // (almost) nine order of magnitude
+
+  if (Tas == 0)          return 0;
+  if (t2 < t1)           return 0;               // order ok ?
+  if ((t2 - t1) > nineO) return 0;               // not more than 1s! (~18 s max!)
+
+  dt125ps       = t2 - t1;
+  dtas          = dt125ps * nineO;
+  nPeriods      = (uint64_t)((double)dtas / (double)Tas) + 1;
+  intervalAs    = nPeriods * Tas;
+  interval125ps = (uint64_t)((double)intervalAs / (double)nineO);
+  tAdvanced     = t1 + interval125ps;
+
+  return tAdvanced; // [125 ps]
 } //fwlib_advanceTime
 
 

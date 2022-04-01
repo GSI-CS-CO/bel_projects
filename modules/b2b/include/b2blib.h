@@ -89,11 +89,11 @@ extern "C" {
 
   typedef struct{                                      // data type get values
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
-    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [ns]
+    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [125 ps]
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
-    int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
-    int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [125 ps]
+    int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [125 ps]
     uint64_t inj_phase;                                // injection : ...
     int32_t  inj_dKickMon;                             
     int32_t  inj_dKickProb;
@@ -102,7 +102,7 @@ extern "C" {
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
-    uint64_t tCBS;                                     // deadline of CMD_B2B_START
+    uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
     int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
     int32_t  preOff;                                   // offset from EKS to measured extraction phase
     int32_t  priOff;                                   // offset from EKS to measured injection phase

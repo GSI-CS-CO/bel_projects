@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Dec-2021
+ *  version : 01-apr-2022
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000318                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000400                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -143,8 +143,10 @@ uint32_t nGExt;                         // geometric harmonic number of extracti
 uint32_t nGInj;                         // geometric harmonic number of injections machine due to its circumference
 
 
-uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
-uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
+uint64_t tH1Ext_ns;                     // h=1 phase [ns] of extraction machine
+uint64_t tH1Inj_ns;                     // h=1 phase [ns] of injection machine
+uint64_t tH1Ext_125ps;                  // h=1 phase [125ps] of extraction machine
+uint64_t tH1Inj_125ps;                  // h=1 phase [125ps] of injection machine
 int32_t  nPhaseResult;                  // number of received phase result, required to resolve diamond structure in mini FSM
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
@@ -493,17 +495,17 @@ void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
 
 
 // calculates time for extraction
-uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
+uint32_t calcExtTime(uint64_t *tExtract_125ps, uint64_t tWant_ns)
 {
   uint32_t period;
   
   // check for unreasonable values
-  if (TH1Ext == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for period
-  if (nHExt  == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for harmonic number
-  if ((tH1Ext + (1 << 30)) < tWant)  return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
+  if (TH1Ext == 0)                        return COMMON_STATUS_OUTOFRANGE;          // no value for period
+  if (nHExt  == 0)                        return COMMON_STATUS_OUTOFRANGE;          // no value for harmonic number
+  if ((tH1Ext_ns + (1 << 30)) < tWant_ns) return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
   
-  *tExtract = fwlib_advanceTime(tH1Ext, tWant, TH1Ext);
-  if (*tExtract == 0)                return COMMON_STATUS_OUTOFRANGE;
+  *tExtract_125ps = fwlib_advanceTime125ps(tH1Ext_125ps, tWant_ns * 8, TH1Ext);
+  if (*tExtract_125ps == 0)               return COMMON_STATUS_OUTOFRANGE;
 
   return COMMON_STATUS_OK;
 } // calcExtTime
@@ -578,8 +580,8 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   uint64_t tNow;                                    // current time                             [ns] (!)
   uint64_t nineO = 1000000000;                      // nine orders of magnitude, needed for conversion
   uint64_t half;                                    // helper variable
-  uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext
-  uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj
+  uint32_t nExtAdv;                                 // number of h=1 periods required to advance tH1Ext_ns
+  uint32_t nInjAdv;                                 // number of h=1 periods required to advance tH1Inj_ns
 
   // parameters for 'best bunch probing'
 #define LIMITMULTIBEAT  360                         // do multibeat-tuning, if number of h=1 periods within beating is below this number
@@ -598,7 +600,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   tNow    = getSysTime();
   epoch   = tNow - nineO * 1;                       // subtracting one second should be safe
 
-  DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nGExt %u, nGInj %u\n", (unsigned int)(tNow - tH1Ext), (unsigned int)(tNow - tH1Inj), nGExt, nGInj);
+  DBPRINT3("b2b-cbu: tNow - tH1Ext %u ns, tNow - tH1inj %u ns, nGExt %u, nGInj %u\n", (unsigned int)(tNow - tH1Ext_ns), (unsigned int)(tNow - tH1Inj_ns), nGExt, nGInj);
 
   // check for unreasonable values
   if (TH1Ext == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
@@ -608,21 +610,21 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat)  
   if (nGExt  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
   if (nGInj  == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for harmonic number
   if (TH1Inj == 0)                      return COMMON_STATUS_OUTOFRANGE;           // no value for period
-  if ((tH1Ext + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
-  if ((tH1Inj + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
+  if ((tH1Ext_ns + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
+  if ((tH1Inj_ns + nineO * 0.1) < tNow)    return COMMON_STATUS_OUTOFRANGE;           // value older than 100ms
 
   TRfExt = TH1Ext / nGExt;
   TRfInj = TH1Inj / nGInj;
 
   if (TRfExt == TRfInj)                 return COMMON_STATUS_OUTOFRANGE;           // no beating
 
-  tH1ExtAs  = (tH1Ext - epoch) * nineO;
-  tH1InjAs  = (tH1Inj - epoch) * nineO;
+  tH1ExtAs  = (tH1Ext_ns - epoch) * nineO;
+  tH1InjAs  = (tH1Inj_ns - epoch) * nineO;
 
   // advance measured phase to approximate time of kick
   // this should prevent adding additional beating times in case of short beating periods
-  nExtAdv   = 1000000000.0 * (tMin - tH1Ext) / TH1Ext;
-  nInjAdv   = 1000000000.0 * (tMin - tH1Inj) / TH1Inj;
+  nExtAdv   = 1000000000.0 * (tMin - tH1Ext_ns) / TH1Ext;
+  nInjAdv   = 1000000000.0 * (tMin - tH1Inj_ns) / TH1Inj;
   tH1ExtAs += nExtAdv * TH1Ext;
   tH1InjAs += nInjAdv * TH1Inj;
 
@@ -888,7 +890,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recRes;                                            // reserved bits received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
   uint64_t tWantExt;                                          // approximate time of extraction
-  uint64_t tTrig;                                             // time when kickers shall be triggered
+  uint64_t tTrig;                                             // time when kickers shall be triggered [ns];
+  uint64_t tTrig_125ps;                                       // time when kickers shall be triggered [125 ps];
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
   int32_t  offsetDone;                                        // offset from deadline EKS to time, when extraction trigger is sent
@@ -967,7 +970,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // handling error bits
       if (recRes & B2B_ERRFLAG_PMEXT) errorFlags |= B2B_ERRFLAG_PMEXT;
       
-      tH1Ext        = recParam; 
+      tH1Ext_125ps  = recParam;
+      tH1Ext_ns     = tH1Ext_125ps >> 3;                      // hack!
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PREXT %u\n", mState);
@@ -986,9 +990,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       // handling error bits
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
-      
-      tH1Inj        = recParam;
-      tH1Inj       -= cPhase;
+
+      tH1Inj_125ps  = recParam;
+      tH1Inj_ns     = tH1Inj_125ps >> 3;                      // hack!
+      tH1Inj_ns    -= cPhase;
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);
@@ -1007,7 +1012,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // request phase measurement of extraction 
   if (mState == B2B_MFSM_EXTPS) {
-    tH1Ext       = 0x0;
+    tH1Ext_ns       = 0x0;
+    tH1Ext_125ps    = 0x0;
     
     // send command: phase measurement at extraction machine
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
@@ -1021,7 +1027,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // request phase measurement of injection
   if (mState == B2B_MFSM_INJPS) {
-    tH1Ext       = 0x0;
+    tH1Ext_ns    = 0x0;
+    tH1Ext_125ps = 0x0;
     
     // send command: phase measurement at injection machine
     sendEvtId    = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
@@ -1037,7 +1044,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTBGT) {
     tWantExt = tCBS + (uint64_t)B2B_KICKOFFSETMIN;
     if (errorFlags) tTrig = tWantExt;                                         // plan B
-    else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
+    if (calcExtTime(&tTrig_125ps, tWantExt) == COMMON_STATUS_OK) {
+      tTrig       = tTrig_125ps >> 3;                                         // to [ns]
+      if ((tTrig_125ps & 0x7) >= 4) tTrig = tTrig + 1;                        // fix rounding
+    } else {
       tTrig       = tWantExt;                                                 // plan B
       errorFlags |= B2B_ERRFLAG_CBU;
     } // if NOT STATUS_OK
