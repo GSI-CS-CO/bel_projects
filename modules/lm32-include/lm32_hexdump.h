@@ -26,8 +26,15 @@
 #ifndef _LM32_HEXDUMP_H
 #define _LM32_HEXDUMP_H
 
+#include <stdbool.h>
+#include <stdint.h>
+#include "eb_console_helper.h"
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef __lm32__
+  typedef _ssize_t ssize_t;
 #endif
 
 /*!
@@ -39,10 +46,10 @@ extern "C" {
  * @endcode
  * Generates a console output as follows:
  * @code
- * Addr:      0  1  2  3  4  5  6  7 -  8  9  a  b  c  d  e  f |0123456789abcdef|
- * 804a0000: de ad 02 00 00 07 00 00 - 00 37 00 45 05 02 00 00 |.........7.E....|
- * 804a0010: 00 00 30 d4 de ad de ad - de ad de ad de ad de ad |..0.............|
- * 804a0020: 00 00 00 03 de ad de ad - de ad de ad de ad de ad |................|
+ * Addr:      0  1  2  3  4  5  6  7 -  8  9  A  B  C  D  E  F |0123456789ABCDEF|
+ * 804A0000: DE AD 02 00 00 07 00 00 - 00 37 00 45 05 02 00 00 |.........7.E....|
+ * 804A0010: 00 00 30 D4 DE AD DE AD - DE AD DE AD DE AD DE AD |..0.............|
+ * 804A0020: 00 00 00 03 DE AD DE AD - DE AD DE AD DE AD DE AD |................|
  * @endcode
  * @param pData Start address
  * @param Number ob bytes to hex-dump.

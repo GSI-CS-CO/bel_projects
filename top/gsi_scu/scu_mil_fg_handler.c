@@ -166,7 +166,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
    #endif
 
       /*
-       * MIL-bus adapter was in the current slot found.
+       * MIL-bus adapter respectively SIO- slave has been found in current slot.
        * Proofing whether MIL function generators connected to this adapter.
        */
 
@@ -197,7 +197,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* pFgList )
             continue;
 
          /*
-          * All three proves has been passed, so we can add it to the FG-list.
+          * All three proves has been passed, so it can add it to the FG-list.
           */
          fgListAdd( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
          //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
@@ -251,7 +251,7 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
          continue;
 
       /*
-       * All three proves has been passed, so we can add it to the FG-list.
+       * All three proves has been passed, so it can add it to the FG-list.
        */
       fgListAdd( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, pFgList );
    }

@@ -28,10 +28,12 @@
  */
 #include <scu_mmu.h>
 
+#include <lm32_hexdump.h> //!!
+
 /*!
  * @brief Identifier for the bigin of the patition list.
  */
-const uint32_t MMU_MAGIC = 0xAAFF0055;
+const uint32_t MMU_MAGIC = 0xAAFF1155;
 
 /*!
  * @brief Start index of the first partition list item.
@@ -42,6 +44,21 @@ const MMU_ADDR_T MMU_LIST_START = 0;
 const MMU_ADDR_T MMU_MAX_INDEX = DDR3_MAX_INDEX64;
 #endif
 
+void mmuPrintItem( const MMU_ITEM_T* pItem )
+{
+   mprintf( "tag:    0x%04X\n"
+            "flags:  0x%04X\n"
+            "iNext:  %u\n"
+            "iStart: %u\n"
+            "length: %u\n",
+            pItem->tag,
+            pItem->flags,
+            pItem->iNext,
+            pItem->iStart,
+            pItem->length );
+}
+
+
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
@@ -50,7 +67,35 @@ bool mmuIsPresent( void )
    RAM_PAYLOAD_T probe;
 
    mmuRead( MMU_LIST_START, &probe, 1 );
+//hexdump( &probe.ad32[0], sizeof( probe.ad32[0] ) );
    return ( probe.ad32[0] == MMU_MAGIC );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mmu.h
+ */
+void mmuDelete( void )
+{
+   const RAM_PAYLOAD_T probe = { .ad32[0] = ~MMU_MAGIC, .ad32[1] = 0 };
+   mmuWrite( MMU_LIST_START, &probe, 1 );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
+{
+   mmuRead( MMU_LIST_START + index,
+            ((MMU_ACCESS_T*)pItem)->item, 1 );
+            //sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem )
+{
+   mmuWrite( MMU_LIST_START + index,
+            ((MMU_ACCESS_T*)pItem)->item, 1 );
+          //  sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -58,14 +103,53 @@ bool mmuIsPresent( void )
  */
 unsigned int mmuGetNumberOfBlocks( void )
 {
-   return 0; //TODO
+   if( !mmuIsPresent() )
+      return 0;
+
+   MMU_ITEM_T listItem = { .iNext = 0 };
+   unsigned int count = 0;
+   while( true )
+   {
+      mmuReadItem( listItem.iNext, &listItem );
+      if( listItem.iNext == 0 )
+         break;
+      count++;
+   }
+
+   return count;
 }
+
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+  #define MAGIC_LOW   GET_UPPER_HALF( MMU_MAGIC )
+  #define MAGIC_HIGH  GET_LOWER_HALF( MMU_MAGIC )
+#else
+  #define MAGIC_LOW   GET_LOWER_HALF( MMU_MAGIC )
+  #define MAGIC_HIGH  GET_UPPER_HALF( MMU_MAGIC )
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
 MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t len )
 {
+   if( !mmuIsPresent() )
+   {
+      const MMU_ITEM_T listItem =
+      {
+         .tag    = MAGIC_LOW,
+         .flags  = MAGIC_HIGH,
+         .iNext  = 0,
+         .iStart = 0,
+         .length = 0
+      };
+      mprintf( "*\n" );
+      mmuWriteItem( 0, &listItem );
+      mmuPrintItem( &listItem );
+
+   }
+   MMU_ITEM_T li;
+mmuReadItem( 0, &li );
+mmuPrintItem( &li );
    return OK; //TODO
 }
 

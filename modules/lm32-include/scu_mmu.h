@@ -149,6 +149,10 @@ bool mmuIsPresent( void );
  */
 unsigned int mmuGetNumberOfBlocks( void );
 
+/*! ---------------------------------------------------------------------------
+ * @brief Deletes a possible existing partition table.
+ */
+void mmuDelete( void );
 
 /*! ---------------------------------------------------------------------------
  * @brief Allocates a memory area in the shared memory.

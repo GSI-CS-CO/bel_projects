@@ -23,9 +23,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#include <stdbool.h>
-#include <stdint.h>
-#include "eb_console_helper.h"
+#include <lm32_hexdump.h>
+
 
 #define BYTES_PER_LINE 16
 
@@ -40,7 +39,7 @@ static inline void _hexdumpLine( const uint8_t* pData, const size_t dataLen )
 {
    int i;
 
-   mprintf( "%08x: ", pData );
+   mprintf( "%08X: ", pData );
 
    for( i = 0; i < BYTES_PER_LINE; i++ )
    {
@@ -48,7 +47,7 @@ static inline void _hexdumpLine( const uint8_t* pData, const size_t dataLen )
          mprintf( "- " );
 
       if( i < dataLen )
-         mprintf( "%02x ", pData[i] );
+         mprintf( "%02X ", pData[i] );
       else
          mprintf(  "   " );
    }
@@ -85,8 +84,8 @@ int hexdump( const void* pData, ssize_t len )
       return 0;
 
    mprintf( ESC_BOLD "Addr:      0  1  2  3  4  5  6  7 -"
-                              "  8  9  a  b  c  d  e  f "
-                              "|0123456789abcdef|\n" ESC_NORMAL );
+                              "  8  9  A  B  C  D  E  F "
+                              "|0123456789ABCDEF|\n" ESC_NORMAL );
 
    printedLines = 1;
    addr = (uint8_t*)pData;
