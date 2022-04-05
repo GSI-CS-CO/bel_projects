@@ -160,11 +160,11 @@ void mmuDelete( void );
  *            has to be reserved.
  * @param pStartAddr Points on the value of the start address respectively
  *                   start index in smallest addressable memory items.
- * @param len Requested number of items to allocate in in smallest addressable
+ * @param pLen Requested number of items to allocate in in smallest addressable
  *            memory items. 
  * @return @see MMU_STATUS_T
  */
-MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t len );
+MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen );
 
 /*! ---------------------------------------------------------------------------
  * @brief Finds a already allocated memory block. 
@@ -189,7 +189,7 @@ MMU_STATUS_T mmuGet( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen );
  * @param pItem Pointer to memory area which has to be write.
  * @param len Number of items to write.
  */
-void mmuWrite( const MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len );
+void mmuWrite( MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len );
 
 /*! ---------------------------------------------------------------------------
  * @brief Reads the smallest addressable unit of the using memory. 
@@ -201,7 +201,7 @@ void mmuWrite( const MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len );
  * @param pItem Target pointer for the items to read.
  * @param len Number of items to read.
  */
-void mmuRead( const MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len  );
+void mmuRead( MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len  );
 
 #ifdef __cplusplus
 } /* namespace mmu */

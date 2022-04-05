@@ -33,7 +33,7 @@
 /*!
  * @brief Identifier for the bigin of the patition list.
  */
-const uint32_t MMU_MAGIC = 0xAAFF1155;
+const uint32_t MMU_MAGIC = 0xAAFF0055;
 
 /*!
  * @brief Start index of the first partition list item.
@@ -58,6 +58,7 @@ void mmuPrintItem( const MMU_ITEM_T* pItem )
             pItem->length );
 }
 
+#define MMU_ITEMSIZE (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ))
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
@@ -85,8 +86,8 @@ void mmuDelete( void )
 void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
 {
    mmuRead( MMU_LIST_START + index,
-            ((MMU_ACCESS_T*)pItem)->item, 1 );
-            //sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );
+            ((MMU_ACCESS_T*)pItem)->item,
+            MMU_ITEMSIZE );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -94,8 +95,8 @@ void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
 void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem )
 {
    mmuWrite( MMU_LIST_START + index,
-            ((MMU_ACCESS_T*)pItem)->item, 1 );
-          //  sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );
+            ((MMU_ACCESS_T*)pItem)->item,
+            MMU_ITEMSIZE );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -119,38 +120,92 @@ unsigned int mmuGetNumberOfBlocks( void )
    return count;
 }
 
-#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-  #define MAGIC_LOW   GET_UPPER_HALF( MMU_MAGIC )
-  #define MAGIC_HIGH  GET_LOWER_HALF( MMU_MAGIC )
-#else
-  #define MAGIC_LOW   GET_LOWER_HALF( MMU_MAGIC )
-  #define MAGIC_HIGH  GET_UPPER_HALF( MMU_MAGIC )
-#endif
+typedef struct PACKED_SIZE
+{
+   uint32_t magicNumber;
+   uint32_t iNext;
+   uint64_t padding;
+} START_BLOCK_T;
+
+STATIC_ASSERT( sizeof( START_BLOCK_T ) == sizeof( MMU_ITEM_T ) );
+STATIC_ASSERT( offsetof( START_BLOCK_T, iNext ) == offsetof( MMU_ITEM_T, iNext ) );
+
+typedef union
+{
+   START_BLOCK_T startBlock;
+   MMU_ITEM_T    item;
+} START_BLOCK_ACCESS_T;
+
+STATIC_ASSERT( sizeof( START_BLOCK_ACCESS_T ) == sizeof( MMU_ITEM_T ) );
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
-MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t len )
+MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
 {
    if( !mmuIsPresent() )
-   {
-      const MMU_ITEM_T listItem =
+   { /*
+      * List has not yet been created.
+      * This will made here.
+      */
+      const START_BLOCK_ACCESS_T access =
       {
-         .tag    = MAGIC_LOW,
-         .flags  = MAGIC_HIGH,
-         .iNext  = 0,
-         .iStart = 0,
-         .length = 0
+         .startBlock.magicNumber = MMU_MAGIC,
+         .startBlock.iNext       = 0,
+         .startBlock.padding     = 0L
       };
-      mprintf( "*\n" );
-      mmuWriteItem( 0, &listItem );
-      mmuPrintItem( &listItem );
-
+      mmuWriteItem( 0, &access.item );
    }
-   MMU_ITEM_T li;
-mmuReadItem( 0, &li );
-mmuPrintItem( &li );
-   return OK; //TODO
+   
+   /*
+    * Climbing to the end of the already allocated area.
+    */
+   MMU_ITEM_T item = { .iNext = 0 };
+   size_t level = 0;
+   uint32_t lastNext;
+   do
+   {
+      lastNext = item.iNext;
+      mmuReadItem( item.iNext, &item );
+      mmuPrintItem( &item );
+      if( (level != 0) && (item.tag == tag) )
+      { /*
+         * Memory block was already allocated.
+         */
+         *pStartAddr = item.iStart;
+         *pLen       = item.length;
+         return OK; 
+      }
+      level += MMU_ITEMSIZE + item.length;
+   }
+   while( item.iNext != 0 );
+   
+   /*
+    * Checking if enough free memory there.
+    */
+   if( level + *pLen + MMU_ITEMSIZE >= MMU_MAX_INDEX )
+      return OUT_OF_MEM;
+   
+   /*
+    * Actualizing the last found item.
+    */
+   item.iNext = level;
+   mmuWriteItem( lastNext, &item );
+   mmuPrintItem( &item );
+
+   /*
+    * Creating the new item.
+    */
+   item.tag    = tag;
+   item.flags  = 0;
+   item.iNext  = 0;
+   item.iStart = level + MMU_ITEMSIZE;
+   item.length = *pLen;
+   mmuWriteItem( level, &item );
+   mmuPrintItem( &item );
+   *pStartAddr = item.iStart;
+
+   return OK;
 }
 
 /*! ---------------------------------------------------------------------------

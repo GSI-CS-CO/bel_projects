@@ -25,7 +25,8 @@ void main( void )
   // RAM_PAYLOAD_T b = { .ad32[0] = MMU_MAGIC, .ad32[1] = 0 };
   // mmuWrite( MMU_LIST_START, &b, 1 );
    MMU_ADDR_T a;
-   mmuAlloc( 4711, &a, 10 );
+   size_t len = 10;
+   mmuAlloc( 4711, &a, &len );
 
    mprintf( "MMU present?: %s\n", mmuIsPresent()? "yes": "no"  );
 
@@ -33,7 +34,7 @@ void main( void )
 
    RAM_PAYLOAD_T x;
    mmuRead( MMU_LIST_START, &x, 1 );
-   mprintf( "ad32[0] = %08X, ad32[1] = %08X\n", x.ad32[0], x.ad32[1] );
+   mprintf( "ad32[0] = 0x%08X, ad32[1] = 0x%08X\n", x.ad32[0], x.ad32[1] );
 
 
    mprintf( "Listitem length = %u\n", sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );

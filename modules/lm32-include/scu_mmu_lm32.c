@@ -45,27 +45,27 @@ MMU_STATUS_T mmuInit( MMU_OBJ_T* pMuObj )
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
-void mmuRead( const MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len )
+void mmuRead( MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len )
 {
    MMU_ASSERT( mg_pMuObj != NULL );
 
-   for( size_t i = 0; i < len; i++ )
+   for( size_t i = 0; i < len; i++, index++ )
    {
       ddr3read64( mg_pMuObj, &pItem[i], index );
-      mprintf( "Index: %u, r[%u] = 0x%08X%08X\n", index, i, pItem[i].ad32[0], pItem[i].ad32[1] );
+    //  mprintf( "Index: %u, r[%u] = 0x%08X%08X\n", index, i, pItem[i].ad32[0], pItem[i].ad32[1] );
    }
 }
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
-void mmuWrite( const MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len )
+void mmuWrite( MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len )
 {
    MMU_ASSERT( mg_pMuObj != NULL );
 
-   for( size_t i = 0; i < len; i++ )
+   for( size_t i = 0; i < len; i++, index++ )
    {
-      mprintf( "Index: %u, w[%u] = 0x%08X%08X\n", index,  i, pItem[i].ad32[0], pItem[i].ad32[1] );
+    //  mprintf( "Index: %u, w[%u] = 0x%08X%08X\n", index,  i, pItem[i].ad32[0], pItem[i].ad32[1] );
       ddr3write64( mg_pMuObj, index, &pItem[i] );
    }
 }
