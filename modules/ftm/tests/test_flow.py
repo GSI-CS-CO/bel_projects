@@ -62,3 +62,14 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     Check the queues of BLOCK_IN0, the low prio queue should contain the executed flow command.
     """
     self.common_dynamic_branch_single_tvalid(delay=1.0, options=['-l', '1000000000', '-a'])
+
+  def test_flow_bad(self):
+    """This test needs a fix. The schedule flow-bad.dot issues a flow
+    command for Block0 to queue prio0, but there is only prio1 configured
+    for this block. This causes the following command 'dm-cmd $DM' to fail
+    with return code 249.
+    A fix for the libcarpedm is needed such that those schedules are not
+    allowed.
+    """
+    self.startPattern('flow-bad.dot', 'P1')
+    self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster], expectedReturnCode=[249])
