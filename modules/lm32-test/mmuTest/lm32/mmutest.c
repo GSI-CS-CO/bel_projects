@@ -9,6 +9,35 @@ MMU_OBJ_T g_mmuObj;
 extern const uint32_t MMU_MAGIC;
 extern const MMU_ADDR_T MMU_LIST_START;
 
+
+void testAdd( const MMU_TAG_T tag, size_t len, const bool create )
+{
+   MMU_ADDR_T startAddr;
+   mprintf( ESC_FG_MAGENTA
+            "tag:       0x%X\n"
+            "len:       %u\n"
+            "create:    %s\n"
+            ESC_NORMAL,
+            tag,
+            len,
+            create? "true":"false" );
+   mprintf( ESC_BOLD
+            "mmuAlloc:  %s\n"
+            ESC_NORMAL,
+            mmuStatus2String( mmuAlloc( tag, &startAddr, &len, create ) ));
+   mprintf( ESC_FG_CYAN
+            "tag:       0x%X\n"
+            "startAddr: %u\n"
+            "len:       %u\n"
+            "create:    %s\n\n"
+            ESC_NORMAL,
+            tag,
+            startAddr,
+            len,
+            create? "true":"false" );
+}
+
+
 void main( void )
 {
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "MMU-Test\n" );
@@ -21,23 +50,25 @@ void main( void )
    mmuDelete();
 
    mprintf( "MMU present?: %s\n", mmuIsPresent()? "yes": "no"  );
-   
-  // RAM_PAYLOAD_T b = { .ad32[0] = MMU_MAGIC, .ad32[1] = 0 };
-  // mmuWrite( MMU_LIST_START, &b, 1 );
-   MMU_ADDR_T a;
-   size_t len = 10;
-   mmuAlloc( 4711, &a, &len );
+
+   testAdd( 0x4711, 10, true );
 
    mprintf( "MMU present?: %s\n", mmuIsPresent()? "yes": "no"  );
+   mprintf( "Number of blocks = %u\n", mmuGetNumberOfBlocks() );
 
 
+   testAdd( 0x4711, 100, true );
 
-   RAM_PAYLOAD_T x;
-   mmuRead( MMU_LIST_START, &x, 1 );
-   mprintf( "ad32[0] = 0x%08X, ad32[1] = 0x%08X\n", x.ad32[0], x.ad32[1] );
+   testAdd( 0x4712, 10, false );
 
+   mprintf( "Number of blocks = %u\n", mmuGetNumberOfBlocks() );
 
-   mprintf( "Listitem length = %u\n", sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ) );
+   testAdd( 0x4712, 10, true );
+
+   testAdd( 0x4711, 100, false );
+   mprintf( "Number of blocks = %u\n", mmuGetNumberOfBlocks() );
+
+   testAdd( 0x4713, DDR3_MAX_INDEX64 - 30, true );
    mprintf( "Number of blocks = %u\n", mmuGetNumberOfBlocks() );
 
 }

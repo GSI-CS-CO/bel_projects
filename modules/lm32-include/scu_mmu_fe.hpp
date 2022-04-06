@@ -1,17 +1,16 @@
 /*!
- * @file scu_mmu_lm32.h
- * @brief LM32 part of Memory Management Unit of SCU
- * 
- * Administration of the shared memory (for SCU3 using DDR3) between 
+ * @file scu_mmu_fe.hpp
+ * @brief Memory Management Unit of SCU Linux-interface for front end
+ *
+ * Administration of the shared memory (for SCU3 using DDR3) between
  * Linux host and LM32 application.
- * 
- * @note This source code is suitable for LM32 ony.
- * 
- * @see       scu_mmu.h
- * @see       scu_mmu_lm32.h
+ *
+ * @note This source code is suitable for LM32 and Linux.
+ *
+ * @see       scu_mmu_fe.cpp
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
- * @date      31.03.2022
+ * @date      06.04.2022
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,34 +26,39 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef _SCU_MMU_LM32_H
-#define _SCU_MMU_LM32_H
-#ifndef __lm32__
-  #error This module is for LM32 only! 
-#endif
+#ifndef _SCU_MMU_FE_HPP
+#define _SCU_MMU_FE_HPP
 
 #include <scu_mmu.h>
+#include <EtherboneConnection.hpp>
+#include <assert.h>
 
-#define MMU_ASSERT DDR_ASSERT
+namespace mmuEb = FeSupport::Scu::Etherbone;
 
-#ifdef __cplusplus
-extern "C" {
-namespace Scu
+class Mmu
 {
-namespace mmu
-{
-#endif
+   mmuEb::EtherboneConnection* m_poEtherbone;
+   bool                        m_selfConnected;
+   uint                        m_ramBase;
 
-typedef DDR3_T MMU_OBJ_T;
 
-MMU_OBJ_T* mmuGetObject( void );
+public:
+   Mmu( mmuEb::EtherboneConnection* poEtherbone );
+   ~Mmu( void );
 
-MMU_STATUS_T mmuInit( MMU_OBJ_T* pMuObj );
+   mmuEb::EtherboneConnection* getEb( void )
+   {
+      assert( m_poEtherbone->isConnected() );
+      return m_poEtherbone;
+   }
 
-#ifdef __cplusplus
-} /* namespace mmu */
-} /* namespace Scu */
-} /* extern "C"    */
-#endif
-#endif /* ifndef _SCU_MMU_LM32_H */
-/*================================== EOF ====================================*/
+   uint getBase( void )
+   {
+      assert( m_ramBase != 0 );
+      return m_ramBase;
+   }
+};
+
+
+#endif // ifndef _SCU_MMU_FE_HPP
+//================================== EOF ======================================

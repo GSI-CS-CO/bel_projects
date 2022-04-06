@@ -103,7 +103,7 @@
 /*!
  * @brief Using DDR3 memory on SCU
  */
-#if (CONFIG_SCU == 3)
+#if (CONFIG_SCU == 3) && !defined( CONFIG_SCU_USE_DDR3 )
  #define CONFIG_SCU_USE_DDR3
 #endif
 

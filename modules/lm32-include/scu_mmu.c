@@ -28,8 +28,6 @@
  */
 #include <scu_mmu.h>
 
-#include <lm32_hexdump.h> //!!
-
 /*!
  * @brief Identifier for the bigin of the patition list.
  */
@@ -42,6 +40,13 @@ const MMU_ADDR_T MMU_LIST_START = 0;
 
 #ifdef CONFIG_SCU_USE_DDR3
 const MMU_ADDR_T MMU_MAX_INDEX = DDR3_MAX_INDEX64;
+#endif
+
+
+#ifdef CONFIG_DEBUG_MMU
+#ifndef __lm32__
+   #include <stdio.h>
+   #define mprintf printf
 #endif
 
 void mmuPrintItem( const MMU_ITEM_T* pItem )
@@ -57,8 +62,29 @@ void mmuPrintItem( const MMU_ITEM_T* pItem )
             pItem->iStart,
             pItem->length );
 }
+#else
+#define mmuPrintItem( item ) ((void)0)
+#endif
 
 #define MMU_ITEMSIZE (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ))
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_mmu.h
+ */
+const char* mmuStatus2String( const MMU_STATUS_T status )
+{
+   #define CASE_RETURN( c ) case c: return #c
+   switch( status )
+   {
+      CASE_RETURN( OK );
+      CASE_RETURN( MEM_NOT_PRESENT );
+      CASE_RETURN( LIST_NOT_FOUND );
+      CASE_RETURN( TAG_NOT_FOUND );
+      CASE_RETURN( ALREADY_PRESENT );
+      CASE_RETURN( OUT_OF_MEM );
+   }
+   return "unknown";
+}
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
@@ -68,7 +94,6 @@ bool mmuIsPresent( void )
    RAM_PAYLOAD_T probe;
 
    mmuRead( MMU_LIST_START, &probe, 1 );
-//hexdump( &probe.ad32[0], sizeof( probe.ad32[0] ) );
    return ( probe.ad32[0] == MMU_MAGIC );
 }
 
@@ -120,6 +145,9 @@ unsigned int mmuGetNumberOfBlocks( void )
    return count;
 }
 
+/*!
+ * @brief Special block type for the beginning of the list only.
+ */
 typedef struct PACKED_SIZE
 {
    uint32_t magicNumber;
@@ -130,6 +158,9 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof( START_BLOCK_T ) == sizeof( MMU_ITEM_T ) );
 STATIC_ASSERT( offsetof( START_BLOCK_T, iNext ) == offsetof( MMU_ITEM_T, iNext ) );
 
+/*!
+ * @brief Adapter for START_BLOCK_T.
+ */
 typedef union
 {
    START_BLOCK_T startBlock;
@@ -141,10 +172,14 @@ STATIC_ASSERT( sizeof( START_BLOCK_ACCESS_T ) == sizeof( MMU_ITEM_T ) );
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
  */
-MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
+MMU_STATUS_T mmuAlloc( const MMU_TAG_T tag, MMU_ADDR_T* pStartAddr,
+                       size_t* pLen, const bool create )
 {
    if( !mmuIsPresent() )
-   { /*
+   {
+      if( !create )
+         return LIST_NOT_FOUND;
+     /*
       * List has not yet been created.
       * This will made here.
       */
@@ -156,7 +191,7 @@ MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
       };
       mmuWriteItem( 0, &access.item );
    }
-   
+
    /*
     * Climbing to the end of the already allocated area.
     */
@@ -174,18 +209,21 @@ MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
          */
          *pStartAddr = item.iStart;
          *pLen       = item.length;
-         return OK; 
+         return create? ALREADY_PRESENT : OK;
       }
       level += MMU_ITEMSIZE + item.length;
    }
    while( item.iNext != 0 );
-   
+
+   if( !create )
+      return TAG_NOT_FOUND;
+
    /*
     * Checking if enough free memory there.
     */
    if( level + *pLen + MMU_ITEMSIZE >= MMU_MAX_INDEX )
       return OUT_OF_MEM;
-   
+
    /*
     * Actualizing the last found item.
     */
@@ -206,14 +244,6 @@ MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
    *pStartAddr = item.iStart;
 
    return OK;
-}
-
-/*! ---------------------------------------------------------------------------
- * @see scu_mmu.h
- */
-MMU_STATUS_T mmuGet( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen )
-{
-   return OK; //TODO
 }
 
 

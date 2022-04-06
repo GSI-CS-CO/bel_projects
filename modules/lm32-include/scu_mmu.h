@@ -79,21 +79,22 @@ typedef enum
     */
    MEM_NOT_PRESENT = -1,
 
+   LIST_NOT_FOUND  = -2,
+
    /*!
     * @brief Memory block not found.
     */
-   TAG_NOT_FOUND   = -2,
+   TAG_NOT_FOUND   = -3,
 
    /*!
-    * @brief Requested memory block already present,
-    *        but length doesn't match. 
+    * @brief Requested memory block already present.
     */
-   NO_MATCH        = -3,
+   ALREADY_PRESENT = -4,
 
    /*!
     * @brief Requested memory block doesn't fit in physical memory.
     */
-   OUT_OF_MEM      = -4
+   OUT_OF_MEM      = -5
 } MMU_STATUS_T;
 
 /*!
@@ -130,6 +131,9 @@ typedef struct PACKED_SIZE
 
 STATIC_ASSERT( sizeof( MMU_ITEM_T ) == 2 * sizeof( RAM_PAYLOAD_T ) );
 
+/*!
+ * @brief Access adapter for MMU_ITEM_T.
+ */
 typedef union
 {
    MMU_ITEM_T     mmu;
@@ -138,6 +142,8 @@ typedef union
 
 STATIC_ASSERT( sizeof( MMU_ACCESS_T ) == sizeof( MMU_ITEM_T ) );
 
+
+const char* mmuStatus2String( const MMU_STATUS_T status );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" when the partition table is present. 
@@ -162,21 +168,12 @@ void mmuDelete( void );
  *                   start index in smallest addressable memory items.
  * @param pLen Requested number of items to allocate in in smallest addressable
  *            memory items. 
+ * @param create If true then a new memory block will created,
+ *               else a existing block will found only.
  * @return @see MMU_STATUS_T
  */
-MMU_STATUS_T mmuAlloc( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen );
-
-/*! ---------------------------------------------------------------------------
- * @brief Finds a already allocated memory block. 
- * @param tag Unique tag respectively identifier for this memory area
- *            which has to be found.
- * @param pStartAddr Points to the value of the start address respectively
- *        start index of the found memory area.
- * @param pLen Points on the value of the length in smallest addressable
- *             memory items.
- * @return @see MMU_STATUS_T
- */
-MMU_STATUS_T mmuGet( MMU_TAG_T tag, MMU_ADDR_T* pStartAddr, size_t* pLen );
+MMU_STATUS_T mmuAlloc( const MMU_TAG_T tag, MMU_ADDR_T* pStartAddr,
+                       size_t* pLen, const bool create );
 
 
 /*! ---------------------------------------------------------------------------
