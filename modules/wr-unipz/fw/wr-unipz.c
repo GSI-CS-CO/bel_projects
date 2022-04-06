@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Nov-2021
+ *  version : 07-Apr-2022
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000209                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000210                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -613,10 +613,12 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t isPrepFlag;                                        // flag 'isPrep': prep-events are sent immediately, non-prep-events are sent at 50 Hz trigger
   int      ipz;                                               // index of PZ, helper variable
   int      i;
-  uint32_t chn;                                               // channel
   uint32_t servEvt;                                           // service event
   uint32_t servOffs;                                          // offset for service event
   int32_t  tJump;                                             // diff between expected and actual start of UNILAC cycle
+  uint64_t TS_dbg;                                            // debug: send received MIL event to ECA for debugging, here: TS
+  uint64_t evtId_dbg;                                         // debug: vacc as GID; evtCode as evtNo
+  uint64_t param_dbg;                                         // debug: evtData
 
   status = actStatus;
 
@@ -694,11 +696,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       break;
       
-    case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // super PZ announces what happens in next UNILAC cycle
+    case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // A: super PZ announces what happens in next UNILAC cycle or B: 'Service Event'
       // extract information from event from super PZ
       ipz            = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
-      nextVacc[ipz]  = virtAcc;
-      chn            =  ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
       
       // there are two different types of announce events
       // A: The announce event contains information about the vacc to played in the next cycle
@@ -709,8 +709,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chopper mode)
         DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
         // get chopper mode
-        nextChan[ipz]      = chn;
-        nextChopNo[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)    != 0);
+        nextChan[ipz]      = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // bit as channel number (there are only two channels)
+        nextChopNo[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
+        nextVacc[ipz]      = virtAcc;
         nextChopShort[ipz] = nextChan[ipz];                     // UNIPZ implements 'short chopper' via a different 'Kanal', not via bit 14 as described in the documentation
         // pp_printf("data %d\n", evtData);
         
@@ -719,12 +720,12 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
         nLateLocal = nLate;
         isPrepFlag = 1;                                                  
         deadline   = predictNxtCycle();                         // predict start of next cycle
-        pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
+        pzRunVacc(bigData[ipz][nextChan[ipz] * WRUNIPZ_NVACC + nextVacc[ipz]], deadline, ipz, nextVacc[ipz], isPrepFlag);
         if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
       } // if !SERVICE
       else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
         DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-        servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
+        servOffs = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;
         servEvt  = 0x0;
         if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
           servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
@@ -755,6 +756,15 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     default :
       break;
   } // switch evtCode
+
+  // write MIL Event received via internal bus to our own ECA input
+  // this allows debugging using saft-ctl snoop ...
+  TS_dbg    = tMIL;
+  evtId_dbg = 0xcafe000000000000;
+  evtId_dbg = evtId_dbg | ((uint64_t)evtCode << 36);
+  evtId_dbg = evtId_dbg | ((uint64_t)virtAcc << 20);
+  param_dbg = (uint64_t)evtData;
+  fwlib_ecaWriteTM(TS_dbg, evtId_dbg, param_dbg, 1);
   
   return status;
 } // doActionOperation

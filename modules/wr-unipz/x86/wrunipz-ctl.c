@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-August-2020
+ *  version : 07-Apr-2022
  *
  *  command-line interface for wrunipz
  *
@@ -108,7 +108,7 @@ static void help(void)
   fprintf(stderr, "                      '                '       ' |        '     '- average message rate [Hz]\n");
   fprintf(stderr, "                      '                '       ' |        '- average UNILAC cycle rate [Hz]\n");
   fprintf(stderr, "                      '                '       '- '1': PZ is active\n");
-  fprintf(stderr, "                      '                '- '1': vacc is played\n");
+  fprintf(stderr, "                      '                '- '1': messages for this vacc are played\n");
   fprintf(stderr, "                      '- # of UNILAC cycles\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
