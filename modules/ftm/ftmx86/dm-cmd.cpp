@@ -690,6 +690,8 @@ int main(int argc, char* argv[]) {
     }
 
     else if (cmp == "queue") {
+        uint64_t timeWrNs = cdm.getDmWrTime();
+        std::cout << "Called at: " << formatTime(timeWrNs) << "  " << timeWrNs << std::endl;
         std::string report;
         std::cout << cdm.inspectQueues(targetName, report) << std::endl;
         return 0;
