@@ -71,5 +71,5 @@ class UnitTestFlow(dm_testbench.DmTestbench):
     A fix for the libcarpedm is needed such that those schedules are not
     allowed.
     """
-    self.startPattern('flow-bad.dot', 'P1')
-    self.startAndCheckSubprocess([self.binary_dm_cmd, self.datamaster], expectedReturnCode=[249])
+    # ~ self.addSchedule('flow-bad.dot')
+    self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'add', 'schedules/flow-bad.dot'], expectedReturnCode=[250], linesCerr=3, linesCout=2)
