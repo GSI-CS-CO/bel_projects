@@ -35,6 +35,12 @@
 
 namespace mmuEb = FeSupport::Scu::Etherbone;
 
+namespace Scu
+{
+namespace mmu
+{
+
+///////////////////////////////////////////////////////////////////////////////
 class Mmu
 {
    mmuEb::EtherboneConnection* m_poEtherbone;
@@ -45,6 +51,36 @@ class Mmu
 public:
    Mmu( mmuEb::EtherboneConnection* poEtherbone );
    ~Mmu( void );
+
+   bool isPresent( void )
+   {
+      assert( m_poEtherbone->isConnected() );
+      return mmuIsPresent();
+   }
+
+   void clear( void )
+   {
+      assert( m_poEtherbone->isConnected() );
+      mmuDelete();
+   }
+
+   uint getNumberOfBlocks( void )
+   {
+      assert( m_poEtherbone->isConnected() );
+      return mmuGetNumberOfBlocks();
+   }
+
+   MMU_STATUS_T allocate( const MMU_TAG_T tag, MMU_ADDR_T& rStartAddr,
+                          size_t& rLen, const bool create = false )
+   {
+      assert( m_poEtherbone->isConnected() );
+      return mmuAlloc( tag, &rStartAddr, &rLen, create );
+   }
+
+   std::string status2String( const MMU_STATUS_T status )
+   {
+      return mmuStatus2String( status );
+   }
 
    mmuEb::EtherboneConnection* getEb( void )
    {
@@ -57,8 +93,10 @@ public:
       assert( m_ramBase != 0 );
       return m_ramBase;
    }
-};
+}; // class Mmu
 
+} // namespace mmu
+} // namespace Scu
 
 #endif // ifndef _SCU_MMU_FE_HPP
 //================================== EOF ======================================

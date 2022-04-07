@@ -1,6 +1,7 @@
 REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 
 DEBUG = 1
+#DEFINES += CONFIG_DEBUG_MMU
 
 MIAN_MODULE := mmutest.cpp
 

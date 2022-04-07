@@ -99,19 +99,33 @@ typedef enum
 
 /*!
  * @brief Type of list item of memory partition list
+ * @note Because of the different byteorder between x86 and LM32,
+ *       the Linux- library "libetherbone" will made a byte-swap
+ *       for all 32-bit types. \n Therefore has the order of the
+ *       member-variables of "tag" and "flags" to be different
+ *       between x86 and LM32.
  */
 typedef struct PACKED_SIZE
 {
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
    /*!
     * @brief Tag respectively identification (ID) of memory block.
+    *        For LM32.
     */
-   MMU_TAG_T  tag;
-
+   MMU_TAG_T tag;
+#endif
    /*!
     * @brief Access flags of memory block. (rfu).
     */
    uint16_t  flags;
 
+#if (__BYTE_ORDER__ != __ORDER_BIG_ENDIAN__)
+   /*!
+    * @brief Tag respectively identification (ID) of memory block.
+    *        For Linux x86_64.
+    */
+   MMU_TAG_T tag;
+#endif
    /*!
     * @brief Index of next item.
     * @note In the case of the last item then it has to be zero.
@@ -129,6 +143,7 @@ typedef struct PACKED_SIZE
    uint32_t  length;
 } MMU_ITEM_T;
 
+STATIC_ASSERT( sizeof( uint16_t ) + sizeof( MMU_TAG_T ) == sizeof( uint32_t ) );
 STATIC_ASSERT( sizeof( MMU_ITEM_T ) == 2 * sizeof( RAM_PAYLOAD_T ) );
 
 /*!
