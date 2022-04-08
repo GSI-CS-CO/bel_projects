@@ -119,9 +119,32 @@ void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
  */
 void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem )
 {
+#ifndef __lm32__
+   /*
+    * Patch!
+    */
+   const MMU_ITEM_T item =
+   {
+      .tag = pItem->tag,
+      .flags = pItem->flags,
+      .iNext = pItem->length,
+      .iStart = pItem->iStart,
+      .length = pItem->iNext
+   };
+   mmuWrite( MMU_LIST_START + index,
+            ((MMU_ACCESS_T*)&item)->item,
+            MMU_ITEMSIZE );
+
+   mmuWrite( MMU_LIST_START + index,
+            ((MMU_ACCESS_T*)&item)->item,
+            MMU_ITEMSIZE );
+
+
+#else
    mmuWrite( MMU_LIST_START + index,
             ((MMU_ACCESS_T*)pItem)->item,
             MMU_ITEMSIZE );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

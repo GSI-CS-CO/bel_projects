@@ -10,6 +10,7 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu_fe.cpp
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu.c
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32_hexdump.c
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp

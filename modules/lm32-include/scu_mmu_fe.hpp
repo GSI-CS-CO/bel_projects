@@ -84,15 +84,49 @@ public:
 
    mmuEb::EtherboneConnection* getEb( void )
    {
-      assert( m_poEtherbone->isConnected() );
       return m_poEtherbone;
    }
 
-   uint getBase( void )
+   void write( const uint index,
+               const eb_user_data_t pData,
+               const etherbone::format_t format,
+               const uint size = 1 )
    {
-      assert( m_ramBase != 0 );
-      return m_ramBase;
+      assert( m_poEtherbone->isConnected() );
+      m_poEtherbone->write( m_ramBase + index * sizeof(RAM_PAYLOAD_T),
+                            pData,
+                            format,
+                            size );
    }
+
+   void write( MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len )
+   {
+      write( index,
+             eb_user_data_t(pItem),
+             sizeof( pItem->ad32[0] ) | EB_LITTLE_ENDIAN,
+             len * ARRAY_SIZE( pItem->ad32 ) );
+   }
+
+   void read( const uint index,
+              eb_user_data_t pData,
+              const etherbone::format_t format,
+              const uint size = 1 )
+   {
+      assert( m_poEtherbone->isConnected() );
+      m_poEtherbone->read( m_ramBase + index * sizeof(RAM_PAYLOAD_T),
+                           pData,
+                           format,
+                           size );
+   }
+
+   void read( MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len )
+   {
+      read( index,
+            pItem,
+            sizeof( pItem->ad32[0] ) | EB_LITTLE_ENDIAN,
+            len * ARRAY_SIZE( pItem->ad32 ) );
+   }
+
 }; // class Mmu
 
 } // namespace mmu

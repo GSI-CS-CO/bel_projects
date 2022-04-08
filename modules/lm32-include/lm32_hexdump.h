@@ -33,10 +33,6 @@
 extern "C" {
 #endif
 
-#ifdef __lm32__
-  typedef _ssize_t ssize_t;
-#endif
-
 /*!
  * @brief Generates a hexdump output via mptintf().
  *
@@ -55,7 +51,7 @@ extern "C" {
  * @param Number ob bytes to hex-dump.
  * @return Number of printed lines inclusive the headline
  */
-int hexdump( const void* pData, ssize_t len );
+int hexdump( const void* pData, int len );
 
 #ifdef __cplusplus
 }

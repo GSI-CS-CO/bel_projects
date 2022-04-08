@@ -4,6 +4,7 @@
 #include <string>
 #include <scu_env.hpp>
 #include <scu_mmu_fe.hpp>
+#include <lm32_hexdump.h>
 #include <eb_console_helper.h>
 
 using namespace std;
@@ -64,21 +65,25 @@ int main( int argc, char** ppArgv )
 
    MMU_ITEM_T item;
 
-   item.flags   = 111;
-   item.tag     = 222;
-   item.iNext   = 333;
-   item.iStart  = 444;
-   item.length  = 555;
+   item.flags   = 0x1111;
+   item.tag     = 0x2222;
+   item.iNext   = 0x33333333;
+   item.iStart  = 0x44444444;
+   item.length  = 0x55555555;
 
+   cout << "write:" << endl;
+   ::hexdump( &item, sizeof( item ) );
 
-   mmuWriteItem( 1000, &item );
+   mmuWriteItem( 2000, &item );
 
    MMU_ITEM_T item1;
    ::memset( &item1, 0, sizeof( item1 ) );
-   mmuReadItem( 1000, &item1 );
+   mmuReadItem( 2000, &item1 );
 
-#if 0
-   //mmu.clear();
+   cout << "read:" << endl;
+   ::hexdump( &item1, sizeof( item1 ) );
+#if 1
+   mmu.clear();
    cout << "MMU present? " << (mmu.isPresent()? "Yes" : "No" ) << endl;
    cout << "Number of blocks: " << mmu.getNumberOfBlocks() << endl;
 

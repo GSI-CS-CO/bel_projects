@@ -29,6 +29,8 @@
 #define _SCU_MMU_FE_CPP
 #include <scu_mmu_fe.hpp>
 
+#include <lm32_hexdump.h>
+
 using namespace Scu::mmu;
 
 Mmu* mg_pMmu = nullptr;
@@ -67,10 +69,7 @@ extern "C"
 void mmuWrite( MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len )
 {
    assert( mg_pMmu != nullptr );
-   mg_pMmu->getEb()->write( mg_pMmu->getBase() + index * sizeof(RAM_PAYLOAD_T),
-                            eb_user_data_t(pItem),
-                            sizeof( pItem->ad32[0] ) | EB_BIG_ENDIAN,
-                            len * ARRAY_SIZE( pItem->ad32 ) );
+   mg_pMmu->write( index, pItem, len );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -79,10 +78,7 @@ void mmuWrite( MMU_ADDR_T index, const RAM_PAYLOAD_T* pItem, size_t len )
 void mmuRead( MMU_ADDR_T index, RAM_PAYLOAD_T* pItem, size_t len )
 {
    assert( mg_pMmu != nullptr );
-   mg_pMmu->getEb()->read( mg_pMmu->getBase() + index * sizeof(RAM_PAYLOAD_T),
-                           pItem,
-                           sizeof( pItem->ad32[0] ) | EB_LITTLE_ENDIAN,
-                           len * ARRAY_SIZE( pItem->ad32 ) );
+   mg_pMmu->read( index, pItem, len );
 }
 
 } // extern "C"

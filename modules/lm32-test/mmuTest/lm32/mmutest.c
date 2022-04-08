@@ -1,6 +1,8 @@
 // TODO!
 #include <mprintf.h>
 #include <eb_console_helper.h>
+#include <lm32_hexdump.h>
+#include <string.h>
 #include <scu_mmu_lm32.h>
 
 
@@ -37,6 +39,8 @@ void testAdd( const MMU_TAG_T tag, size_t len, const bool create )
             create? "true":"false" );
 }
 
+void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem );
+void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem );
 
 void main( void )
 {
@@ -47,7 +51,26 @@ void main( void )
       return;
    }
 
-   mmuDelete();
+   MMU_ITEM_T item;
+
+   item.flags   = 0x1111;
+   item.tag     = 0x2222;
+   item.iNext   = 0x33333333;
+   item.iStart  = 0x44444444;
+   item.length  = 0x55555555;
+
+   mprintf( "write:\n" );
+   hexdump( &item, sizeof( item ) );
+ //  mmuWriteItem( 2000, &item );
+
+   MMU_ITEM_T item1;
+   memset( &item1, 0, sizeof( item1 ) );
+   mmuReadItem( 2000, &item1 );
+   mprintf( "read:\n" );
+   hexdump( &item1, sizeof( item1 ) );
+
+#if 1
+  // mmuDelete();
 
    mprintf( "MMU present?: %s\n", mmuIsPresent()? "yes": "no"  );
 
@@ -70,6 +93,7 @@ void main( void )
 
    testAdd( 0x4713, DDR3_MAX_INDEX64 - 30, true );
    mprintf( "Number of blocks = %u\n", mmuGetNumberOfBlocks() );
+#endif
 
 }
 
