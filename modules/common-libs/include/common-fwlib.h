@@ -8,10 +8,18 @@ uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
                            );
 
 // project time t1 [125ps] to approximately t2 [125ps] in multiples of period T [as]; returns projected time [125 ps]
-uint64_t fwlib_advanceTime125ps(uint64_t t1,               // time 1 [125ps]
-                                uint64_t t2,               // time 2 [125ps], where t2 > t1
-                                uint64_t Tas               // period T [as]
+uint64_t fwlib_advanceTime125ps(uint64_t t1,          // time 1 [125ps]
+                                uint64_t t2,          // time 2 [125ps], where t2 > t1
+                                uint64_t Tas          // period T [as]
                                 );
+
+// convert [ns] to [125 ps], returns t [125 ps]
+uint64_t fwlib_tns2t125ps(uint64_t t                  // time [ns]
+                          );
+
+// convert [125ps] to [ns], returns t [ns]
+uint64_t fwlib_t125ps2tns(uint64_t t                  // time [125 ps]
+                          );
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();

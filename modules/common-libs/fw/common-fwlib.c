@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Apr-2022
+ *  version : 11-Apr-2022
  *
  *  common functions used by various firmware projects
  *  
@@ -207,7 +207,7 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
-uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
+uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [ns]
 {
   uint64_t dtns;                // approximate time interval to advance [ns]
   uint64_t dtas;                // approximate time interval to advance [as]
@@ -232,7 +232,7 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
 } //fwlib_advanceTime
 
 
-uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas)
+uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [125 ps]
 {
   uint64_t dt125ps;             // approximate time interval to advance [125ps]
   uint64_t dtas;                // approximate time interval to advance [as]
@@ -255,6 +255,23 @@ uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas)
 
   return tAdvanced; // [125 ps]
 } //fwlib_advanceTime
+
+
+uint64_t fwlib_tns2t125ps(uint64_t t)
+{
+  return (t << 3);
+} // tns2t125ps
+
+
+uint64_t fwlib_t125ps2tns(uint64_t t125ps)
+{
+  uint64_t t;
+  
+  t = t125ps >> 3;                               // to [ns]
+  if ((t125ps & 0x7) >= 4) t = t + 1;            // fix rounding
+
+  return t;
+} // t125ps2tns
 
 
 uint64_t fwlib_wrGetMac()  // get my own MAC

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Sep-2021
+ *  version : 04-Apr-2022
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000318
+#define B2B_VIEWER_VERSION 0x000400
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -99,7 +99,7 @@ double   flagB2bValid;                                      // flag b2b data are
 double   b2b_extNue;                                        // extraction, rf frequency [Hz]
 double   b2b_extT;                                          // extraction, rf period [ns]
 double   b2b_extN;                                          // extraction, number of rf periods within beat period
-double   b2b_injNue;                                        // injeciton ...
+double   b2b_injNue;                                        // injection ...
 double   b2b_injT;
 double   b2b_injN;
 double   b2b_diff;                                          // difference of rf periods [ns]
@@ -370,7 +370,7 @@ int printSet(uint32_t sid)
 // print diagnostic values
 int printDiag(uint32_t sid)
 {
-  printf("--- diag ---                                 #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
+  printf("--- diag diff DDS ---                        #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -379,21 +379,21 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: 'diff DDS [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+                   dicDiagval.ext_ddsOffAct * 0.125, dicDiagval.ext_ddsOffAve * 0.125, dicDiagval.ext_ddsOffSdev * 0.125, dicDiagval.ext_ddsOffMin * 0.125, dicDiagval.ext_ddsOffMax * 0.125);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+                   dicDiagval.ext_ddsOffAct * 0.125, dicDiagval.ext_ddsOffAve * 0.125, dicDiagval.ext_ddsOffSdev * 0.125, dicDiagval.ext_ddsOffMin * 0.125, dicDiagval.ext_ddsOffMax * 0.125);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
-                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
+      else  printf("inj [ns]': act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+                   dicDiagval.inj_ddsOffAct * 0.125, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin * 0.125, dicDiagval.inj_ddsOffMax * 0.125);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b: 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
-                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
+      else  printf("b2b [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+                   dicDiagval.phaseOffAct * 0.125, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicDiagval.phaseOffMin * 0.125, dicDiagval.phaseOffMax * 0.125);
       break;
     default :
       ;

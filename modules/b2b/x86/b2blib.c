@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2021
+ *  version : 11-Apr-2022
  *
  * library for b2b
  *
@@ -105,7 +105,6 @@ eb_address_t b2b_get_cPhase;            // phase correction
 eb_address_t b2b_get_cTrigExt;          // kicker correction extraction
 eb_address_t b2b_get_cTrigInj;          // kicker correction injection
 eb_address_t b2b_get_comLatency;        // latency for message transfer via ECA
-
 
 #define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 // use default timeout and convert to us to be sure the command is processed
 
@@ -323,7 +322,7 @@ uint32_t b2b_version_library(uint32_t *version)
 } // b2b_version_library
 
 
-void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
+void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, float cPhase, float cTrigExt, float cTrigInj, int32_t comLatency)
 {
   printf("b2b: info  ...\n\n");
 
@@ -335,19 +334,24 @@ void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, u
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("adjust RF-phase       : %012d ns\n"  , cPhase);
-  printf("adjust ext kicker     : %012d ns\n"  , cTrigExt);
-  printf("adjust inj kicker     : %012d ns\n"  , cTrigInj);
+  printf("adjust RF-phase       : %012.3f ns\n", cPhase);
+  printf("adjust ext kicker     : %012.3f ns\n", cTrigExt);
+  printf("adjust inj kicker     : %012.3f ns\n", cTrigInj);
   printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
 } // b2b_printDiags
 
 
 uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency, int printFlag)
 {
-  eb_cycle_t  eb_cycle;
-  eb_status_t eb_status;
-  eb_device_t eb_device;
-  eb_data_t   data[30];
+  eb_cycle_t   eb_cycle;
+  eb_status_t  eb_status;
+  eb_device_t  eb_device;
+  eb_data_t    data[30];
+
+  union fdat_t tmp;
+  float fCPhase;
+  float fCTrigExt;
+  float fCTrigInj;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
@@ -381,12 +385,18 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   *nHInj         = data[8];
   *TBeat         = (uint64_t)(data[9]) << 32;
   *TBeat        += data[10];
-  *cPhase        = data[11];
-  *cTrigExt      = data[12];
-  *cTrigInj      = data[13];
+  tmp.data       = data[11];            // copy four bytes
+  *cPhase        = (int32_t)(tmp.f);    // intermediate solution: convert to i32; later convert to double
+  fCPhase        = tmp.f;
+  tmp.data       = data[12];            // see above ...
+  *cTrigExt      = (int32_t)(tmp.f);
+  fCTrigExt      = tmp.f;
+  tmp.data       = data[13];            // see above ...
+  *cTrigInj      = (int32_t)(tmp.f);
+  fCTrigInj      = tmp.f;
   *comLatency    = data[14];
 
-  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, *cPhase, *cTrigExt, *cTrigInj, *comLatency);
+  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, fCPhase, fCTrigExt, fCTrigInj, *comLatency);
   
   return COMMON_STATUS_OK;
 } // b2b_info_read
@@ -418,6 +428,8 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   uint32_t     gidExt;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
+
+  union fdat_t tmp;
 
   sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
   // b2b_log("ext upload start");
@@ -455,9 +467,11 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_cycle_write(eb_cycle, b2b_set_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHExt,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
-  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  tmp.f = (float)cTrig;
+  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_nBuckExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
-  eb_cycle_write(eb_cycle, b2b_set_cPhase,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cPhase));
+  tmp.f = (float)cPhase;
+  eb_cycle_write(eb_cycle, b2b_set_cPhase,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_fFinTune,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fFineTune);
   eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
@@ -475,6 +489,8 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   uint32_t     gidInj;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
+
+  union fdat_t tmp;
 
   //b2b_log("inj_upload start");
   
@@ -507,7 +523,8 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
-  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  tmp.f = (float)cTrig;
+  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 

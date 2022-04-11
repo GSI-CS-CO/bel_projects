@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Feb-2022
+ *  version : 11-Apr-2022
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000318
+#define B2BLIB_VERSION 0x000400
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -80,67 +80,67 @@ extern "C" {
     uint32_t mode;                                     // mode of B2B system
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
     uint32_t ext_h;                                    // extraction: harmonic number of rf
-    int32_t  ext_cTrig;                                // extraction: correction for extraction kicker [ns]
+    float    ext_cTrig;                                // extraction: correction for extraction kicker [ns]
     uint64_t inj_T;                                    // injection : ...
     uint32_t inj_h;
-    int32_t  inj_cTrig;
-    int32_t  cPhase;                                   // phase correction for b2b mode
+    float    inj_cTrig;
+    float    cPhase;                                   // phase correction for b2b mode
   } setval_t;
 
   typedef struct{                                      // data type get values
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
-    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [125 ps]
-    int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
-    int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
-    int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [125 ps]
-    int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [125 ps]
-    uint64_t inj_phase;                                // injection : ...
-    int32_t  inj_dKickMon;                             
-    int32_t  inj_dKickProb;
-    int32_t  inj_diagPhase;
-    int32_t  inj_diagMatch;
+    uint64_t ext_phase_125ps;                          // extraction: phase of h=1 Group DDS [125 ps]
+    float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
+    float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
+    float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    uint64_t inj_phase_125ps;                          // injection : ...
+    float    inj_dKickMon;                             
+    float    inj_dKickProb;
+    float    inj_diagPhase;
+    float    inj_diagMatch;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
-    int32_t  preOff;                                   // offset from EKS to measured extraction phase
-    int32_t  priOff;                                   // offset from EKS to measured injection phase
-    int32_t  kteOff;                                   // offset from EKS to KTE deadline
-    int32_t  ktiOff;                                   // offset from EKS to KTI deadline
+    float    doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
+    float    preOff;                                   // offset from CBS to measured extraction phase [ns]
+    float    priOff;                                   // offset from CBS to measured injection phase [ns]
+    float    kteOff;                                   // offset from CBS to KTE deadline [ns]
+    float    ktiOff;                                   // offset from CBS to KTI deadline
   } getval_t;
 
   typedef struct{
-    int32_t  ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
+    double   ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
     uint32_t ext_ddsOffN;                              // number of values
     double   ext_ddsOffAve;                            // average value
     double   ext_ddsOffSdev;                           // standard deviation
-    int32_t  ext_ddsOffMin;                            // minimum value
-    int32_t  ext_ddsOffMax;                            // maximum value
-    int32_t  inj_ddsOffAct;                            // injection, gDDS measured offset: ...
+    double   ext_ddsOffMin;                            // minimum value
+    double   ext_ddsOffMax;                            // maximum value
+    double   inj_ddsOffAct;                            // injection, gDDS measured offset: ...
     uint32_t inj_ddsOffN;
     double   inj_ddsOffAve;
     double   inj_ddsOffSdev;
-    int32_t  inj_ddsOffMin;
-    int32_t  inj_ddsOffMax;
-    int32_t  phaseOffAct;                              // gDDS measured phase offset: ...
+    double   inj_ddsOffMin;
+    double   inj_ddsOffMax;
+    double   phaseOffAct;                              // gDDS measured phase offset: ...
     uint32_t phaseOffN;
     double   phaseOffAve;
     double   phaseOffSdev;
-    int32_t  phaseOffMin;
-    int32_t  phaseOffMax;
-    int32_t  ext_rfOffAct;                             // extraction, measured rf offset
+    double   phaseOffMin;
+    double   phaseOffMax;
+    double   ext_rfOffAct;                             // extraction, measured rf offset
     uint32_t ext_rfOffN;
     double   ext_rfOffAve;
     double   ext_rfOffSdev;
-    int32_t  ext_rfOffMin;
-    int32_t  ext_rfOffMax;
-    int32_t  inj_rfOffAct;                             // injection, measured rf offset
+    double   ext_rfOffMin;
+    double   ext_rfOffMax;
+    double   inj_rfOffAct;                             // injection, measured rf offset
     uint32_t inj_rfOffN;
     double   inj_rfOffAve;
     double   inj_rfOffSdev;
-    int32_t  inj_rfOffMin;
-    int32_t  inj_rfOffMax;
+    double   inj_rfOffMin;
+    double   inj_rfOffMax;
     uint32_t ext_rfNueN;                               // extraction, measured rf frequency
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
@@ -154,36 +154,36 @@ extern "C" {
   } diagval_t;
 
   typedef struct {    
-    int32_t  eks_doneOffAct;                           // offset from EKS deadline to time when we are done
+    double   eks_doneOffAct;                           // offset from CBS deadline to time when we are done
     uint32_t eks_doneOffN;
     double   eks_doneOffAve;
     double   eks_doneOffSdev;
-    int32_t  eks_doneOffMin;
-    int32_t  eks_doneOffMax;
-    int32_t  eks_preOffAct;                            // offset from EKS to measured extraction phase
+    double   eks_doneOffMin;
+    double   eks_doneOffMax;
+    double   eks_preOffAct;                            // offset from CBS to measured extraction phase
     uint32_t eks_preOffN;
     double   eks_preOffAve;
     double   eks_preOffSdev;
-    int32_t  eks_preOffMin;
-    int32_t  eks_preOffMax;
-    int32_t  eks_priOffAct;                            // offset from EKS to measured injection phase
+    double   eks_preOffMin;
+    double   eks_preOffMax;
+    double   eks_priOffAct;                            // offset from CBS to measured injection phase
     uint32_t eks_priOffN;
     double   eks_priOffAve;
     double   eks_priOffSdev;
-    int32_t  eks_priOffMin;
-    int32_t  eks_priOffMax;
-    int32_t  eks_kteOffAct;                            // offset from EKS to KTE
+    double   eks_priOffMin;
+    double   eks_priOffMax;
+    double   eks_kteOffAct;                            // offset from CBS to KTE
     uint32_t eks_kteOffN;
     double   eks_kteOffAve;
     double   eks_kteOffSdev;
-    int32_t  eks_kteOffMin;
-    int32_t  eks_kteOffMax;
-    int32_t  eks_ktiOffAct;                            // offset from EKS to KTE
+    double   eks_kteOffMin;
+    double   eks_kteOffMax;
+    double   eks_ktiOffAct;                            // offset from CBS to KTE
     uint32_t eks_ktiOffN;
     double   eks_ktiOffAve;
     double   eks_ktiOffSdev;
-    int32_t  eks_ktiOffMin;
-    int32_t  eks_ktiOffMax;
+    double   eks_ktiOffMin;
+    double   eks_ktiOffMax;
     int32_t  ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
     uint32_t ext_monRemN;
     double   ext_monRemAve;
@@ -265,6 +265,7 @@ extern "C" {
                                );
   
   // get info from firmware, returns error code
+  // after the 2022 beamtime, data types of cPhase, cTrigExt cTrigInj should change to *double
   uint32_t b2b_info_read(uint64_t ebDevice,                    // EB device
                          uint32_t *sid,                        // SID
                          uint32_t *gid,                        // GID
@@ -293,6 +294,7 @@ extern "C" {
                            );
   
   // uploads configuration for the extraction machine, returns error code
+  // after the 2022 beamtime, data types of cPhase, cTrig should change to double
   uint32_t b2b_context_ext_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sid,                // SID
                                   uint32_t gid,                // GID of ring machine
@@ -308,6 +310,7 @@ extern "C" {
                                   );
 
   // uploads configuration for a injection machine, returns error code
+  // after the 2022 beamtime, data type of cTrig should change to double
   uint32_t b2b_context_inj_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sidExt,             // SID; NB: this is the SID of the extraction machine!!!
                                   uint32_t gid,                // GID of ring machine

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 9-Nov-2021
+ *  version : 04-Apr-2022
  *
  * analyzes and publishes get values
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000318
+#define B2B_ANALYZER_VERSION 0x000400
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -200,13 +200,13 @@ static void help(void) {
 } //help
 
 
-// find nearest rising edge of h=1 signal
-int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
-              int32_t  corr,                                // (trigger)correction [ns]
+// find nearest rising edge of h=1 signal; result [125 ps]
+int32_t fixTS(int32_t  ts,                                  // timestamp [125 ps]
+              int32_t  corr,                                // (trigger)correction [125 ps]
               uint64_t TH1                                  // h=1 period [as]
                 )
 {
-  int64_t ts0;                                              // timestamp with correction removed [ns]
+  int64_t ts0;                                              // timestamp with correction removed [125 ps]
   int32_t dtMatch;
   int64_t ts0as;                                            // t0 [as]
   int64_t remainder;                     
@@ -218,12 +218,12 @@ int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
   if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}                   // make this work for negative numbers too
   else         flagNeg = 0;
 
-  ts0as     = ts0 * (int64_t)1000000000;
+  ts0as     = ts0 * (int64_t)125000000;
   half      = TH1 >> 1;
   remainder = ts0as % TH1;                                 
   if (remainder > half) ts0as = remainder - TH1;
   else                  ts0as = remainder;
-  dtMatch   = (int32_t)(ts0as / 1000000000);
+  dtMatch   = (int32_t)(ts0as / 125000000);
   
   if (flagNeg) dtMatch = -dtMatch;
 
@@ -448,7 +448,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].eks_doneOffMin  = eks_doneOffMin[sid];
     disDiagstat[sid].eks_doneOffMax  = eks_doneOffMax[sid];    
 
-    // offset from deadline EKS to KTE
+    // offset from deadline CBS to KTE
     act = dicGetval[sid].kteOff;
     n   = ++(eks_kteOffN[sid]);
 
@@ -470,7 +470,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // remainder of h=1 phase at electronics monitor
     if ((!((dicGetval[sid].flag_nok >> 1) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
-      tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]
+      tmp64 = tmp64 * 1000000000 - dicGetval[sid].ext_phase * 125000000;                   // difference to measured phase [as]
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(ext_monRemN[sid]);
       
@@ -493,7 +493,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
-    cor = dicSetval[sid].ext_cTrig;
+    cor = dicSetval[sid].ext_cTrig * 8;                     // convert [ns] -> [125 ps]
     act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
     n   = ++(ext_ddsOffN[sid]);
 
@@ -573,7 +573,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   } // if mode >=2
 
   if (mode >= 3) {
-    // offset from deadline EKS to KTI
+    // offset from deadline CBS to KTI
     act = dicGetval[sid].ktiOff;
     n   = ++(eks_ktiOffN[sid]);
 
@@ -595,7 +595,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // remainder phase to electronics monitor
     if ((!((dicGetval[sid].flag_nok >> 6) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
-      tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
+      tmp64 = tmp64 * 1000000000 - dicGetval[sid].ext_phase * 125000000;                   // difference to measured phase [as]; NB: everyting relative to extraction phase
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(inj_monRemN[sid]);
       
@@ -618,7 +618,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   if (mode == 4) {
     // match diagnostics; theoretical value is '0'
-    cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
+    cor = (dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase) * 8;          // [ns] -> [125 ps]
     act = fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
     n   = ++(inj_ddsOffN[sid]);
 
