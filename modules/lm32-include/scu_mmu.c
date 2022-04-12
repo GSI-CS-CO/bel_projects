@@ -27,7 +27,9 @@
  ******************************************************************************
  */
 #include <scu_mmu.h>
-
+#ifndef __lm32__
+   #include <string.h>
+#endif
 /*!
  * @brief Identifier for the bigin of the patition list.
  */
@@ -115,31 +117,35 @@ void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
             MMU_ITEMSIZE );
 }
 
+#define _CONFIG_MMU_PATCH
+
 /*! ---------------------------------------------------------------------------
  */
 void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem )
 {
-#ifndef __lm32__
+#if !defined( __lm32__ ) && defined( _CONFIG_MMU_PATCH )
    /*
-    * Patch!
+    * TODO: This is a very bad patch! Remove this ASAP!!!!
     */
    const MMU_ITEM_T item =
    {
-      .tag = pItem->tag,
-      .flags = pItem->flags,
-      .iNext = pItem->length,
+      .tag    = pItem->tag,
+      .flags  = pItem->flags,
+      .iNext  = pItem->length,
       .iStart = pItem->iStart,
       .length = pItem->iNext
    };
-   mmuWrite( MMU_LIST_START + index,
-            ((MMU_ACCESS_T*)&item)->item,
-            MMU_ITEMSIZE );
 
-   mmuWrite( MMU_LIST_START + index,
-            ((MMU_ACCESS_T*)&item)->item,
-            MMU_ITEMSIZE );
+   MMU_ITEM_T resp;
+   do
+   {
+      mmuWrite( MMU_LIST_START + index,
+               ((MMU_ACCESS_T*)&item)->item,
+               MMU_ITEMSIZE );
 
-
+      mmuReadItem( index, &resp );
+   }
+   while( memcmp( pItem, &resp, sizeof( resp ) ) != 0 );
 #else
    mmuWrite( MMU_LIST_START + index,
             ((MMU_ACCESS_T*)pItem)->item,

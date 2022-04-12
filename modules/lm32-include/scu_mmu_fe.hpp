@@ -87,6 +87,11 @@ public:
       return m_poEtherbone;
    }
 
+   uint getBase( void )
+   {
+      return m_ramBase;
+   }
+
    void write( const uint index,
                const eb_user_data_t pData,
                const etherbone::format_t format,
