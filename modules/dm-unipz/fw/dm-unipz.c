@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-June-2021
+ *  version : 08-Oct-2021
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000702                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000804                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -63,7 +63,8 @@
 
 uint32_t dmExt2BaseAddr(uint32_t extAddr) // data master external address -> external base address
 {
-  uint32_t r;
+  uint32_t r;                                                           // RAM size
+  uint32_t m;                                                           // mask
   uint32_t baseAddr;
 
   // round ram size up to next 2^n value
@@ -77,10 +78,10 @@ uint32_t dmExt2BaseAddr(uint32_t extAddr) // data master external address -> ext
   r++;
 
   // decrement to obtain mask for 'lower' address bit
-  r--;
+  m = r - 1;
 
   // apply inverse mask to get rid of bits for external address range
-  baseAddr = extAddr & ~r;
+  baseAddr = extAddr & ~m;
 
   return baseAddr;
 } //dmExt2BaseAddr
@@ -133,6 +134,7 @@ uint32_t *pSharedDtBprep;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedDtReady2Sis;           // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
 uint32_t *pSharedNR2sTransfer;          // pointer to a "user defined" u32 register; here: publish # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 uint32_t *pSharedNR2sCycle;             // pointer to a "user defined" u32 register; here: publish # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
+uint32_t *pSharedNBooster;              // pointer to a "user defined" u32 register; here: publish # of booster injections
 volatile uint32_t *pSharedDstMacHi;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
@@ -140,14 +142,15 @@ volatile uint32_t *pSharedFlexOffset;   // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
 volatile uint32_t *pSharedTkTimeout;    // pointer to a "user defined" u32 register; here: timeout value for TK (via UNIPZ)
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 
 WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t statusTransfer;                // status of transfer
 uint32_t nTransfer;                     // # of transfers
-uint32_t nInject;                       // # of injections within current transfer
+uint32_t nMulti;                        // # of 'multi-multi-injections' within current transfer
+uint32_t nBoost;                        // # of 'booster cycles' within current transfer
 uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
 uint32_t uniTimeout;                    // timeout value for UNIPZ
 uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
@@ -161,45 +164,162 @@ uint32_t nR2sTransfer;                  // # of EVT_READY_TO_SIS events in betwe
 uint32_t nR2sTotal;                     // total # of EVT_READY_TO_SIS events
 uint32_t nR2sLastTkrel;                 // # of EVT_READY_TO_SIS events at last CMD_UNI_TKREL
 uint32_t nR2sCycle;                     // # of EVT_READY_TO_SIS events since last CMD_UNI_TKREL
+uint32_t flagDebug;                     // debug flag
 
-#define DM_NBLOCKS       2              // max number of blocks changed within the Data Master
-dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
-#define REQBEAMA         0              // 1st block: handles DM for beam request, flow command
-#define REQBEAMB         1              // 2nd block: handles DM for beam request, flex wait
+#define DM_NBLOCKS       1              // max number of blocks changed within the Data Master
+dmComm  dmCmds[DM_NBLOCKS];             // data for treatment of blocks
+#define REQTK            0              // handles DM for TK request; flow command
+
+#define DM_NTHREADS      1              // max number of threads changed within the Data Master
+dmThrd  dmThrs[DM_NTHREADS];            // data for treatment of threads
+#define REQBEAM          0              // handles DM for beam request; thread handling
 
 
-uint32_t dmCheckCmds(uint32_t blk1, uint32_t blk2) // check hashes of commands
+// check thread control data
+uint32_t dmCheckThr(uint32_t blk)
 {
-  // two checks are run on the data of the commands, which we intend to send to the Data Maser later
-  // A. --> verify, the addresses of the blocks are non-zero
-  // B. - each block has a hash of its node names
-  //    - when sending the addresses of the two blocks via a timing message, the Data Master XORs the hashes of
-  //      both node names and sends the XORs result within the TEF field of the timing message
-  //    --> verify, the data of both blocks contain equal TEF field values
-  //    --> verify, the XORed hashes of both blocks match the value in the TEF field
+  // two checks are run on the data of the thread control, which we intend to send to the Data Master later
+  // verify, the addresses of thread data are non-zero
 
-  uint32_t xOredHashes; 
+  // exclude non-zero 'origin' addresses
+  if (!(dmThrs[blk].dynpar)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !dynpar
 
-  // exclude non-zero block addresses (don't test dynpar1 as it is not always used)
-  if (!(dmData[blk1].dynpar0))                  return DMUNIPZ_STATUS_INVALIDBLKADDR;
-  if (!(dmData[blk2].dynpar0))                  return DMUNIPZ_STATUS_INVALIDBLKADDR;
+  // exclude non-zero 'thread staging' addresses
+  if (!(dmThrs[blk].TSAddr)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !TSAddr
 
-  // exclude non-zero command addresses
-  if (!(dmData[blk1].cmdAddr))                  return DMUNIPZ_STATUS_INVALIDBLKADDR;
-  if (!(dmData[blk2].cmdAddr))                  return DMUNIPZ_STATUS_INVALIDBLKADDR;
-
-  // exclude non identical TEF fields
-  if ((dmData[blk1].tef) != (dmData[blk2].tef)) return DMUNIPZ_STATUS_INVALIDBLKADDR;
-
-  // exclude non-fitting hashes
-  xOredHashes = ((dmData[blk1].hash) ^ (dmData[blk2].hash));
-  if ((dmData[blk1].tef) != xOredHashes)        return DMUNIPZ_STATUS_INVALIDBLKADDR;
+  // exclude non-zero 'start register' addresses
+  if (!(dmThrs[blk].StartAddr)) {
+    DBPRINT3("dm-unipz: check thread: dynpar is 0x0\n");
+    return DMUNIPZ_STATUS_INVALIDTHRADDR;
+  } // if !StartAdddr
   
   return COMMON_STATUS_OK;
-} // dmCheckCmds
+} // dmCheckThr
 
 
-uint32_t dmClearCmd(uint32_t blk) // clear command data
+// clear thread control data
+uint32_t dmClearThr(uint32_t blk)
+{
+  // - thread control data is received with every CMD_UNI_BREQ(_NOWAIT) event from the Data Master
+  // - this data is only valid for a single booster cycle
+  // - from the gateway point of view, a cycle is terminated when a EVT_READY_TO_SIS has been
+  //   received from UNIPZ and thread handling for DM is complete
+  // - from then on, the thread control data are no longer valid
+  // ==> the control data data should be cleared after every EVT_READY_TO_SIS command
+  // - this prevents thread handling int the Data Master in case the schedule is corrupt
+
+  dmThrs[blk].dynpar                         = 0x0;
+  dmThrs[blk].TSAddr                         = 0x0;
+  dmThrs[blk].StartAddr                      = 0x0;
+
+  return COMMON_STATUS_OK;
+} // dmClearThr
+
+
+// prepare data to start a thread in the Data Master
+uint32_t dmPrepThrStart(uint32_t blk, uint64_t startTS) 
+{
+  uint32_t originAddr;                                         // address of thread origin at CPU
+  uint32_t extBaseAddr;                                        // base address of CPU
+  
+  uint32_t startTSAddr;                                        // address of start timestamp (external view)
+  uint32_t startTSHi;                                          // time when thread shall start, high32 bit
+  uint32_t startTSLo;                                          // time when thread shall start, low32 bit
+
+  uint32_t startCtlAddr;                                       // address of thread control register for thread start
+  uint32_t startCtlData;                                       // bit field for starting a thread
+    
+  int      i;
+  uint32_t status;
+
+  originAddr               = dmThrs[blk].dynpar;
+  extBaseAddr              = dmExt2BaseAddr(originAddr);
+  DBPRINT3("dm-unipz: prep thread start for origin address 0x%08x, extBaseAddr 0x%08x\n", originAddr, extBaseAddr);
+
+  // addresses for thread start
+  startTSAddr              = extBaseAddr + SHARED_OFFS + ( SHCTL_THR_STA + dmThrs[blk].thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  startCtlAddr             = extBaseAddr + SHARED_OFFS + (SHCTL_THR_CTL + T_TC_START); 
+  DBPRINT3("dm-unipz: prep thread start TS address 0x%08x, thread start ctrl address 0x%08x\n", startTSAddr, startCtlAddr);
+
+  // timestamp when thread shall start
+  startTSHi         = (uint32_t)(startTS >> 32);
+  startTSLo         = (uint32_t)(startTS & 0xffffffff);
+  // start bit required for thread start
+  startCtlData      = 1 << dmThrs[blk].thrIdx;
+  DBPRINT3("dm-unipz: prep thread startTSHi 0x%08x\n", startTSHi);
+  DBPRINT3("dm-unipz: prep thread startTSLo 0x%08x\n", startTSLo);
+  DBPRINT3("dm-unipz: prep thread ctlData   0x%08x\n", startCtlData);
+
+  // assign prepared values for later use;
+  dmThrs[blk].TSAddr    = startTSAddr;
+  dmThrs[blk].TSData[0] = startTSHi;
+  dmThrs[blk].TSData[1] = startTSLo;
+  dmThrs[blk].StartAddr = startCtlAddr;
+  dmThrs[blk].StartData = startCtlData;
+   
+  return COMMON_STATUS_OK;
+} //dmPrepThrStart
+
+
+// start a thread of the Data Master on-the fly
+void dmStartThread(uint32_t blk)
+{
+  uint64_t TS;
+  uint64_t evtId;
+  uint64_t param;
+  
+  fwlib_ebmWriteN(dmThrs[blk].TSAddr, dmThrs[blk].TSData, 2);  
+  fwlib_ebmWriteN(dmThrs[blk].StartAddr, &dmThrs[blk].StartData, 1);             
+  DBPRINT2("dm-unipz: dmStartThread %d, TSAddr 0x%08x, TSHi 0x%08x, TSLo 0x%08x\n", blk, dmThrs[blk].TSAddr, dmThrs[blk].TSData[0], dmThrs[blk].TSData[1]);
+  DBPRINT2("dm-unipz: dmStartThread %d, StartAddr 0x%08x, StartData 0x%08x\n", blk, dmThrs[blk].StartAddr, dmThrs[blk].StartData);
+
+  // if debugging is enabled, write data for Data Master to our own ECA input
+  if (flagDebug) {
+    // TS for thread start
+    TS    = (uint64_t)(dmThrs[blk].TSData[0]) << 32;
+    TS   |= (uint64_t)(dmThrs[blk].TSData[1]);
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa0 << 36);
+    evtId = evtId | dmThrs[blk].TSAddr;
+    param = 0x0;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
+
+    // write start bit to global control register
+    TS    = TS + 8;
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa1 << 36);
+    evtId = evtId | dmThrs[blk].StartAddr;
+    param = dmThrs[blk].StartData;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
+  } // if flagDebug
+} // dmStartThread
+
+
+// check command
+uint32_t dmCheckCmd(uint32_t blk)    
+{
+  // two checks are run on the data of the commands, which we intend to send to the Data Master later
+  // A. --> verify, the addresses of the blocks are non-zero
+
+
+  // exclude non-zero block addresses (don't test dynpar1 as it is not always used)
+  if (!(dmCmds[blk].dynpar))                    return DMUNIPZ_STATUS_INVALIDBLKADDR;
+
+  // exclude non-zero command addresses
+  if (!(dmCmds[blk].cmdAddr))                   return DMUNIPZ_STATUS_INVALIDBLKADDR;
+  
+  return COMMON_STATUS_OK;
+} // dmCheckCmd
+
+
+// clear command data
+uint32_t dmClearCmd(uint32_t blk)
 {
   // - command data is received with every CMD_UNI_TCREQ event from the Data Master
   // - this data is only valid for one transfer
@@ -209,19 +329,15 @@ uint32_t dmClearCmd(uint32_t blk) // clear command data
   // - this prevents that commands are sent to the Data Master in case the schedule
   //   is corrupt
 
-  dmData[blk].dynpar0                        = 0x0;
-  dmData[blk].dynpar0                        = 0x0;
-  dmData[blk].hash                           = 0x0;
-  dmData[blk].tef                            = 0x0;
-  dmData[blk].cmdAddr                        = 0x0;
-  dmData[blk].blockWrIdxs                    = 0x0;
-  dmData[blk].blockWrIdxsAddr                = 0x0;
+  dmCmds[blk].dynpar                         = 0x0;
+  dmCmds[blk].cmdAddr                        = 0x0;
 
   return COMMON_STATUS_OK;
 } // dmClearCmd
 
 
-uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint64_t cmdValidTime) // prepare data common to all commands
+// prepare data common to all commands
+uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint64_t cmdValidTime) 
 {
   // simplified memory layout at DM
   //
@@ -245,7 +361,6 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   uint8_t  wrIdx;                                              // write index for relevant priority
   uint32_t rdIdxs;                                             // read indices for all prios (8 bit N/A, 8 bit IL, 8 bit Hi, 8 bit Lo)
   uint8_t  rdIdx;                                              // read index for relevant priority
-  uint32_t hash;                                               // hash of node name
 
   uint32_t buffListAddrIL;                                     // address of buffer list (of interlock priority Q)
   uint32_t buffListAddrHi;                                     // address of buffer list (of high priority Q)
@@ -274,10 +389,9 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   
   // set Data Master (of relevant lm32) base address from external perspective
   //intBaseAddr      = INT_BASE_ADR;       
-  blockAddr      = dmData[blk].dynpar0;
+  blockAddr      = dmCmds[blk].dynpar;
   extBaseAddr    = dmExt2BaseAddr(blockAddr);
-  DBPRINT3("dm-unipz: prep cmd for block address0x%08x, extBaseAddr 0x%08x\n", blockAddr, extBaseAddr);
-
+  DBPRINT3("dm-unipz: prep cmd for block address0x%08x, extBaseAddr 0x%08x, size %d\n", blockAddr, extBaseAddr, (_MEM_BLOCK_SIZE >> 2 ));
   
   // get data of block from DM
   if ((status = fwlib_ebmReadN(2000, blockAddr, blockData, _MEM_BLOCK_SIZE >> 2)) != COMMON_STATUS_OK) return status;
@@ -288,7 +402,6 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   buffListAddrIL = blockData[BLOCK_CMDQ_IL_PTR >> 2];      // address of buffer list of interlock prio Q
   wrIdxs         = blockData[BLOCK_CMDQ_WR_IDXS >> 2];     // write indices for all prios
   rdIdxs         = blockData[BLOCK_CMDQ_RD_IDXS >> 2];     // read indices for all prios
-  hash           = blockData[NODE_HASH >> 2];              // hash of node
 
   // write and read index bytes
   wrIdx        = (uint8_t)(wrIdxs >> (prio * 8));
@@ -343,20 +456,21 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   DBPRINT3("dm-unipz: prep cmd validTSLo 0x%08x\n", cmdValidTSLo);
   
   // assign prepared values for later use;
-  for (i=0; i<_T_CMD_SIZE_; i++) dmData[blk].cmdData[i] = 0x0;                        // init command data  
-  dmData[blk].hash                           = hash;
-  dmData[blk].cmdAddr                        = cmdAddr;
-  dmData[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
-  dmData[blk].cmdData[(T_CMD_TIME >> 2) + 1] = cmdValidTSLo;  
-  dmData[blk].blockWrIdxs                    = wrIdxs;
-  dmData[blk].blockWrIdxsAddr                = blockAddr + BLOCK_CMDQ_WR_IDXS;  
-  DBPRINT2("dm-unipz: prep cmd wrIdxAddr 0x%08x, wrIdxs 0x%08x\n", dmData[blk].blockWrIdxsAddr, wrIdxs);
+  for (i=0; i<_T_CMD_SIZE_; i++) dmCmds[blk].cmdData[i] = 0x0;                        // init command data  
+  dmCmds[blk].cmdAddr                        = cmdAddr;
+  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
+  dmCmds[blk].cmdData[(T_CMD_TIME >> 2) + 1] = cmdValidTSLo;  
+  dmCmds[blk].blockWrIdxs                    = wrIdxs;
+  dmCmds[blk].blockWrIdxsAddr                = blockAddr + BLOCK_CMDQ_WR_IDXS;  
+  DBPRINT2("dm-unipz: prep cmd wrIdxAddr 0x%08x, wrIdxs 0x%08x\n", dmCmds[blk].blockWrIdxsAddr, wrIdxs);
   
   return COMMON_STATUS_OK;
 } //dmPrepCmdCommon
 
 
-uint32_t dmPrepCmdFlow(uint32_t blk) // prepare flow CMD for DM - need to call dmPrepCmdCommon first
+// prepare flow CMD for DM - need to call dmPrepCmdCommon first
+// code for treatment of a 'flexwait' block; presently (sept 2021) no longer required but we keep the code
+uint32_t dmPrepCmdFlow(uint32_t blk) 
 {
   // simplified memory layout of flow command
   //
@@ -376,7 +490,7 @@ uint32_t dmPrepCmdFlow(uint32_t blk) // prepare flow CMD for DM - need to call d
   cmdAction       |= (      PRIO_LO & ACT_PRIO_MSK) << ACT_PRIO_POS;  // set prio to "Low"
 
   // set address of flow destination
-  cmdFlowDestAddr  = dmExt2IntAddr(dmData[blk].dynpar1);
+  cmdFlowDestAddr  = dmExt2IntAddr(dmCmds[blk].dynpar);
 
   DBPRINT3("dm-unipz: prep  dmPrepFLowCmd for blk %d\n", blk);
   DBPRINT3("dm-unipz: prep  cmdAction 0x%08x, index %d\n", cmdAction, T_CMD_ACT >> 2);
@@ -384,15 +498,16 @@ uint32_t dmPrepCmdFlow(uint32_t blk) // prepare flow CMD for DM - need to call d
   DBPRINT3("dm-unipz: prep  cmdFlowReserved 0x%08x, index %d\n", 0x0, T_CMD_RES >> 2);
   
   // assign prepared values for later use;
-  dmData[blk].cmdData[T_CMD_ACT >> 2]        = cmdAction;
-  dmData[blk].cmdData[T_CMD_FLOW_DEST >> 2]  = cmdFlowDestAddr; 
-  dmData[blk].cmdData[T_CMD_RES >> 2]        = 0x0;
+  dmCmds[blk].cmdData[T_CMD_ACT >> 2]        = cmdAction;
+  dmCmds[blk].cmdData[T_CMD_FLOW_DEST >> 2]  = cmdFlowDestAddr; 
+  dmCmds[blk].cmdData[T_CMD_RES >> 2]        = 0x0;
 
   return COMMON_STATUS_OK;
 } //dmPrepFlowCmd
 
 
-uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call dmPrepCmdCommon first
+// prepare flush CMD for DM - need to call dmPrepCmdCommon first
+uint32_t dmPrepCmdFlush(uint32_t blk) 
 {
   // simplified memory layout of flexwait command
   //
@@ -402,7 +517,7 @@ uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call
   //             |...          | 
 
 
-  uint32_t cmdAction;                                          // action flags of command
+  uint32_t cmdAction;                                                             // action flags of command
 
   // set command action type to flush
   cmdAction        = (      ACT_TYPE_FLUSH & ACT_TYPE_MSK) << ACT_TYPE_POS;       // set type to "flush"
@@ -410,61 +525,47 @@ uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call
   cmdAction       |= (             PRIO_HI & ACT_PRIO_MSK) << ACT_PRIO_POS;       // set prio to "1"
   cmdAction       |= ((1 << PRIO_LO) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS; // flush lo prio q
 
-  dmData[blk].cmdData[T_CMD_ACT >> 2]            = cmdAction;
-  dmData[blk].cmdData[T_CMD_FLUSH_OVR >> 2]      = 0x0;
+  dmCmds[blk].cmdData[T_CMD_ACT >> 2]            = cmdAction;
+  dmCmds[blk].cmdData[T_CMD_FLUSH_OVR >> 2]      = 0x0;
   
   return COMMON_STATUS_OK;  
 } //cmdPrepCmdFlush
 
 
-uint32_t dmPrepFlexWaitCmd(uint32_t blk, uint64_t timestamp) // prepare flexible waiting CMD for DM - need to call dmPrepCmdCommon first
+// alter a block within the Data Master on-the fly
+void dmChangeBlock(uint32_t blk)
 {
-  // simplified memory layout of flexwait command
-  //
-  // dmCmdAddr-->|TS valid Hi|
-  //             |TS valid Lo|
-  //             |action     |
-  //             |TS wait Hi |
-  //             |TS wait Lo |
-  //             |...        | 
-
-  uint32_t cmdAction;                                          // action flags of command
-  uint32_t cmdWaitTimeHi;                                      // waiting time, hi 32 bits
-  uint32_t cmdWaitTimeLo;                                      // waiting time, lo 32 bits
+  uint64_t TS;
+  uint64_t evtId;
+  uint64_t param;
   
-  // set command action type
-  cmdAction        = (ACT_TYPE_WAIT & ACT_TYPE_MSK) << ACT_TYPE_POS;     // set type to "wait"
-  cmdAction       |= (            ACT_WAIT_ABS_MSK) << ACT_WAIT_ABS_POS; // set type of timestamp to "absolute"
-  cmdAction       |= (            1 & ACT_QTY_MSK)  << ACT_QTY_POS;      // set quantity to "1"
-  cmdAction       |= (      PRIO_LO & ACT_PRIO_MSK) << ACT_PRIO_POS;     // set prio to "Low"
+  fwlib_ebmWriteN(dmCmds[blk].cmdAddr, dmCmds[blk].cmdData, (_T_CMD_SIZE_ >> 2));  
+  fwlib_ebmWriteN(dmCmds[blk].blockWrIdxsAddr, &dmCmds[blk].blockWrIdxs, 1);             
+  DBPRINT2("dm-unipz: dmChangeBlock blk %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", blk, dmCmds[blk].cmdAddr, dmCmds[blk].cmdData[0], dmCmds[blk].cmdData[1]);
 
-  // set waiting time
-  cmdWaitTimeHi    = (uint32_t)(timestamp >> 32);
-  cmdWaitTimeLo    = (uint32_t)(timestamp & 0xffffffff); 
+  // if debugging is enabled, write data for Data Master to our own ECA input
+  if (flagDebug) {
+    // TS for sending command
+    TS    = getSysTime();
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa2 << 36);
+    evtId = evtId | dmCmds[blk].cmdAddr;
+    param = dmCmds[blk].cmdData[0];;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
 
-  DBPRINT3("dm-unipz: prep  dmPrepFlexWaitCmd for blk %d\n", blk);
-  DBPRINT3("dm-unipz: prep  cmdAction 0x%08x, index %d\n", cmdAction, T_CMD_ACT >> 2);
-  DBPRINT3("dm-unipz: prep  cmdWaitTimeHi %09u, index %d\n", cmdWaitTimeHi, T_CMD_WAIT_TIME >> 2);
-  DBPRINT3("dm-unipz: prep  cmdWaitTimeLo %09u, index %d\n", cmdWaitTimeLo, (T_CMD_WAIT_TIME >> 2) + 1);
-  
-  // assign prepared values for later use;
-  dmData[blk].cmdData[T_CMD_ACT >> 2]             = cmdAction;
-  dmData[blk].cmdData[T_CMD_WAIT_TIME >> 2]       = cmdWaitTimeHi;
-  dmData[blk].cmdData[(T_CMD_WAIT_TIME >> 2) + 1] = cmdWaitTimeLo;
-  
-  return COMMON_STATUS_OK;
-} //dmPrepFlexWaitCmd
-
-
-void dmChangeBlock(uint32_t blk)     // alter a block within the Data Master on-the fly
-{
-  fwlib_ebmWriteN(dmData[blk].cmdAddr, dmData[blk].cmdData, (_T_CMD_SIZE_ >> 2));  
-  fwlib_ebmWriteN(dmData[blk].blockWrIdxsAddr, &dmData[blk].blockWrIdxs, 1);             
-  DBPRINT2("dm-unipz: dmChangeBlock blk %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", blk, dmData[blk].cmdAddr, dmData[blk].cmdData[0], dmData[blk].cmdData[1]);
+    // write start bit to global control register
+    TS    = TS + 8;
+    evtId = 0xcafe000000000000;
+    evtId = evtId | ((uint64_t)0xfa3 << 36);
+    evtId = evtId | dmCmds[blk].blockWrIdxsAddr;
+    param = dmCmds[blk].blockWrIdxs;
+    fwlib_ecaWriteTM(TS, evtId, param, 1);
+  } // if flagDebug
 } // dmChangeBlock
 
 
-void init() // typical init for lm32
+// typical init for lm32
+void init()
 {
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console   
@@ -472,7 +573,8 @@ void init() // typical init for lm32
 } // init
 
 
-void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
+// determine address and clear shared mem
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -481,7 +583,7 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   sdb_location found_sdb[c_Max_Rams];
   sdb_location found_clu;
 
-  /* chk: rework */
+  // chk: cpuRamExternal as parameter 
   
   // get pointer to shared memory
   pShared             = (uint32_t *)_startshared;
@@ -500,6 +602,7 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   pSharedDtReady2Sis  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTREADY2SIS >> 2));
   pSharedNR2sTransfer = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NR2STRANSFER >> 2));
   pSharedNR2sCycle    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NR2SCYCLE >> 2));
+  pSharedNBooster     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NBOOSTER >> 2));
   pSharedVirtAccRec   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_RECVIRTACC >> 2));
   pSharedDstMacHi     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
   pSharedDstMacLo     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
@@ -524,20 +627,28 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
   } // if idx
   else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("dm-unipz: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("dm-unipz: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("dm-unipz: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2) + 1);
   DBPRINT2("dm-unipz: fw specific shared begin 0x%08x\n", pSharedTemp);
-  while (pSharedTemp < (uint32_t *)(pShared + (DMUNIPZ_SHARED_END >> 2 ))) {
+  while (pSharedTemp < (uint32_t *)(pShared + (DMUNIPZ_SHARED_END >> 2))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
+  DBPRINT2("dm-unipz: fw specific shared end   0x%08x\n", pSharedTemp);
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
-  
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("dm-unipz: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
+
   // set initial values;
   *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
@@ -545,7 +656,8 @@ void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 } // initSharedMem 
 
 
-int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write bit field to module bus output (linked to UNI PZ)
+// write bit field to module bus output (linked to UNI PZ)
+int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data)
 {
   uint16_t wData     = 0x0;     // data to write
   int16_t  busStatus = 0;       // status of bus operation
@@ -569,7 +681,8 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write b
 } // writeToPZU
 
 
-int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read bit field from module bus input (linked to UNI PZ)
+// read bit field from module bus input (linked to UNI PZ)
+int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) 
 {
   uint16_t wData      = 0x0;    // data to write
   uint16_t rData      = 0x0;    // data to read
@@ -593,7 +706,8 @@ int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read 
 } // readFromPZU 
 
 
-uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' flag from UNILAC. If the flag is set, try to clear it
+// check for 'Req not OK' flag from UNILAC. If the flag is set, try to clear it
+uint32_t checkClearReqNotOk(uint32_t msTimeout)
 {
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
   int16_t          status;       // status MIL device bus operation
@@ -602,16 +716,16 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' f
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
-  if (readPZUData.bits.Req_not_ok == true) {                                                                                                 // check for 'req not ok'
+  if (readPZUData.bits.Req_not_ok) {                                                                                                         // check for 'req not ok'
 
     writePZUData.uword               = 0x0;
-    writePZUData.bits.Req_not_ok_Ack = true;
-    if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;  // request to clear not_ok flag
+    writePZUData.bits.Req_not_ok_Ack = 0x1;
+    if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;           // request to clear not_ok flag
 
     while (getSysTime() < timeoutT) {                                                                                                        // check for timeout
       if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; 
-      if (readPZUData.bits.Req_not_ok == false) {                                                                                            // remove acknowledgement for 'req not ok'
-        writePZUData.bits.Req_not_ok_Ack = false;                     
+      if (readPZUData.bits.Req_not_ok == 0x0) {                                                                                              // remove acknowledgement for 'req not ok'
+        writePZUData.bits.Req_not_ok_Ack = 0x0;                     
         writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword); 
         return DMUNIPZ_STATUS_REQNOTOK;
       } // if UNILAC cleared 'req not ok' flag
@@ -624,6 +738,7 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' f
 } // checkClearReqNotOk
 
 
+// request transfer channel
 uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
 {
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
@@ -639,7 +754,7 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
 
   // send request to modulbus I/O (UNIPZ)
   writePZUData.uword               = 0x0;
-  writePZUData.bits.TK_Request     = true;
+  writePZUData.bits.TK_Request     = 0x1;
   writePZUData.bits.SIS_Acc_Select = virtAcc;
   writePZUData.bits.ReqNoBeam      = dryRunFlag;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
@@ -647,34 +762,37 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
   // check for acknowledgement, 'request not ok' or timeout
   while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; // read from modulbus I/O (UNIPZ)
-    if (readPZUData.bits.TK_Req_Ack == true) return COMMON_STATUS_OK;                                                                 // check for acknowledgement
-    if (readPZUData.bits.Req_not_ok == true) return DMUNIPZ_STATUS_REQTKFAILED;                                                       // check for 'request not ok'
+    if (readPZUData.bits.TK_Req_Ack == 0x1) return COMMON_STATUS_OK;                                                                  // check for acknowledgement
+    if (readPZUData.bits.Req_not_ok == 0x1) return DMUNIPZ_STATUS_REQTKFAILED;                                                        // check for 'request not ok'
   } // while not timed out
 
   return DMUNIPZ_STATUS_REQTKTIMEOUT;
 } // requestTK
 
 
+// release transfer channel
 uint32_t releaseTK()
 {
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.TK_Request     = false;
+  writePZUData.bits.TK_Request     = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   
   return COMMON_STATUS_OK;
 } // releaseTK
 
 
-uint32_t requestBeam(uint32_t msTimeout)
+// request beam
+uint32_t requestBeam(uint32_t msTimeout, uint32_t dryRunFlag)
 {
   int16_t          status;       // status MIL device bus operation
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
   uint64_t         timeoutT;     // when to time out
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_Request  = true;
+  writePZUData.bits.SIS_Request  = 0x1;
+  writePZUData.bits.ReqNoBeam    = dryRunFlag; 
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   
   // query UNIPZ for 'req Ack'
@@ -683,14 +801,15 @@ uint32_t requestBeam(uint32_t msTimeout)
 
   while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
-    if (readPZUData.bits.SIS_Req_Ack == true)                                                      return COMMON_STATUS_OK;           
-    if (readPZUData.bits.Req_not_ok == true)                                                       return DMUNIPZ_STATUS_REQBEAMFAILED; 
+    if (readPZUData.bits.SIS_Req_Ack == 0x1)                                                       return COMMON_STATUS_OK;           
+    if (readPZUData.bits.Req_not_ok == 0x1)                                                        return DMUNIPZ_STATUS_REQBEAMFAILED; 
   } // while not timed out
 
   return DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
 } // requestBeam
 
 
+// release beam
 uint32_t releaseBeam(uint32_t msTimeout)
 {
   int16_t          status;       // status MIL device bus operation
@@ -698,44 +817,47 @@ uint32_t releaseBeam(uint32_t msTimeout)
   uint64_t         timeoutT;     // when to time out
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_Request  = false;
-  writePZUData.bits.ReqNoBeam    = false;
+  writePZUData.bits.SIS_Request  = 0x0;
+  writePZUData.bits.ReqNoBeam    = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
 
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
-    if (readPZUData.bits.SIS_Req_Ack == false)                                                     return COMMON_STATUS_OK;           
+    if (readPZUData.bits.SIS_Req_Ack == 0x0)                                                       return COMMON_STATUS_OK;           
   } // while not timed out
   
   return DMUNIPZ_STATUS_RELBEAMFAILED;
 } // releaseBeam
 
- 
+
+// prepare beam; must be sent to UNIPZ ~100ms prior to beam delivery; required for reservation of Alvarez 4
 uint32_t prepareBeam()
 {
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_PrepReq = true;
+  writePZUData.bits.SIS_PrepReq = 0x1;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   else                                                                                        return COMMON_STATUS_OK;
 } // prepareBeam
 
 
+// unprepare beam; un-reserve Alvarez 4
 uint32_t unprepareBeam()
 {
   int16_t          status;       // status MIL device bus operation
 
   // send request to modulbus I/O (UNIPZ)
-  writePZUData.bits.SIS_PrepReq  = false;
+  writePZUData.bits.SIS_PrepReq  = 0x0;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
   else                                                                                        return COMMON_STATUS_OK;
 } // unprepareBeam
 
 
-uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via MIL bus
+// configure SoC to receive events via MIL bus
+uint32_t configMILEvent(uint16_t evtCode)
 {
   uint32_t i;
   volatile uint32_t *pMilPiggy;
@@ -764,7 +886,8 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, uint32_t nInject, uint64_t statusArray, uint32_t actState)
+// print stuff to OLED display
+void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, uint64_t statusArray, uint32_t actState)
 {
   char     c[32];
   volatile uint32_t *pOLED;
@@ -800,6 +923,7 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
 } // updateOLED
 
 
+// entry action of state configured
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
@@ -809,7 +933,7 @@ uint32_t extern_entryActionConfigured()
   uint64_t eDummy;
   uint64_t pDummy;
   uint32_t fDummy;
-  uint32_t flagDummy;
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
   uint64_t dstMac;
   volatile uint32_t *pMilPiggy;
 
@@ -819,6 +943,7 @@ uint32_t extern_entryActionConfigured()
 
   
   // configure EB master (SRC and DST MAC/IP are set from host)
+  DBPRINT1("dm-unipz: use Data Master MAC hi 0x%08x, lo 0x%08x, IP 0x%08x\n", *pSharedDstMacHi, *pSharedDstMacLo, *pSharedDstIP);
   if ((status = fwlib_ebmInit(2000, dstMac, *pSharedDstIP, 0xebd0)) != COMMON_STATUS_OK) {
     DBPRINT1("dm-unipz: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
@@ -857,7 +982,7 @@ uint32_t extern_entryActionConfigured()
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %u pending entries from ECA queue\n", (unsigned int)i);
 
   flexOffset  = *pSharedFlexOffset;
@@ -868,12 +993,14 @@ uint32_t extern_entryActionConfigured()
 } // extern_entryActionConfigured
 
 
+// entry action of state operation
 uint32_t extern_entryActionOperation()
 {
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
 
+// exit action of state operation
 uint32_t extern_exitActionOperation()
 {
 volatile uint32_t *pMilPiggy;
@@ -881,50 +1008,59 @@ volatile uint32_t *pMilPiggy;
   pMilPiggy = fwlib_getMilPiggy();
   
   if (disableFilterEvtMil(pMilPiggy) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+
+  // always disable debugging when entering state 'operation'
+  flagDebug = 0;
   
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
 
 
+// clear diagnostic data
 void extern_clearDiag()
 {
   statusArray     = 0x0; 
   statusTransfer  = 0x0;
   nTransfer       = 0x0;
-  nInject         = 0x0;
+  nMulti          = 0x0;
+  nBoost          = 0x0;
 } // extern_clearDiag
 
-/*
-uint32_t exitActionError()
-{
-  return COMMON_STATUS_OK;
-} // exitActionError
-*/
 
-void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer) // handle commands from the outside world
+// handle commands from the outside world
+void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer)
 {
   // check, if the command is valid and request state change
   if (cmd) {
     switch (cmd) {
-    case DMUNIPZ_CMD_RELEASETK :
-      releaseTK();   // force release of TK request independently of state or status
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELTK);
-      DBPRINT1("dm-unipz: received cmd %u, forcing release of TK request\n", (unsigned int)cmd);
-      break;
-    case DMUNIPZ_CMD_RELEASEBEAM :
-      releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);
-      unprepareBeam();
-      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);
-      DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
-      break;
-    default:
-      DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
+      case DMUNIPZ_CMD_RELEASETK :
+        releaseTK();   // force release of TK request independently of state or status
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELTK);
+        DBPRINT1("dm-unipz: received cmd %u, forcing release of TK request\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_RELEASEBEAM :
+        releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);
+        unprepareBeam();
+        *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_UNPREPBEAM);
+        DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_DEBUGON :
+        flagDebug = 1;
+        DBPRINT1("dm-unipz: received cmd %u, enable debug option\n", (unsigned int)cmd);
+        break;
+      case DMUNIPZ_CMD_DEBUGOFF :
+        flagDebug = 0;
+        DBPRINT1("dm-unipz: received cmd %u, disable debug option\n", (unsigned int)cmd);
+        break;
+      default:
+        DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
     } // switch 
   } // if command 
 } // cmdHandler
 
 
+// do action of state operation
 uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits indicating status of transfer
                            uint32_t *virtAccReq,              // virtual accelerator requested from Data Master
                            uint32_t *virtAccRec,              // virtual accelerator received from UNIPZ
@@ -938,15 +1074,20 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
                            uint64_t *dtBprep,                 // time difference between CMD_UNI_BREQ and begin of request to UNIPZ
                            uint64_t *dtReady2Sis,             // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
                            uint32_t *nTransfer,               // total number of transfers since start of firmware
-                           uint32_t *nInject,                 // number of injections withing ongoing transfer
+                           uint32_t *nMulti,                  // number of multi-multi-injections within ongoing transfer
+                           uint32_t *nBoost,                  // number of booster cycles within ongoing transfer
                            uint32_t actStatus)                // actual status of firmware
 {
   uint32_t milStatus;                                                              // status returned by MIL lib
   uint32_t status, dmStatus;                                                       // status returned by routines
   uint32_t flagEBTimeout;                                                          // flag indicating EB communication with DM timed out
   uint32_t flagMilEvtValid;                                                        // flag indicating that we recevied a valid MIL event
-  uint32_t flagIsLate;                                                             // flag indicating that a 'late event' was received from data master
+  uint32_t flagLate;                                                               // flag indicating that a 'late event' was received from data master
+  uint32_t flagEarly;                                                              // flag indicating that a 'early event' was received from data master
+  uint32_t flagConflict;                                                           // flag indicating that a 'conflict event' was received from data master
+  uint32_t flagDelayed;                                                            // flag indicating that a 'delayed event' was received from data master
   uint32_t flagNoCmd;                                                              // flag indicating we should not send a command to DM
+  uint32_t flagBooster;                                                            // flag indicating we are in booster mode (and not multi-multi mode)
   uint32_t nextAction;                                                             // action triggered by event received from ECA
   uint32_t ecaVirtAcc;                                                             // # of virtual accelerator in event received from ECA
   uint32_t ecaFlagDryRun;                                                          // flag indicating that UNILAC is requested but without beam, received from ECA
@@ -954,6 +1095,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
   uint64_t ecaEvtId;                                                               // event ID received via ECA
   uint64_t ecaParam;                                                               // parameter received via ECA
   uint32_t ecaTef;                                                                 // TEF received via ECA
+  uint32_t dmCpuIdx;                                                               // data master CPU Idxs
+  uint32_t dmThrIdx;                                                               // data master thread Idxs
   uint64_t tDmTimeout;                                                             // time, when beam request at DM will timeout
   uint64_t tCmdFlex;                                                               // time, when DM is requested to continue its schedule after flex wait
   uint64_t tCmdValid;                                                              // time, when commands sent to DM shall become valid
@@ -974,31 +1117,27 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
   status = actStatus; 
 
-  nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT * 1000, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagIsLate);  // 'do action' is driven by actions issued by the ECA
+  nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT * 1000, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed);  // 'do action' is driven by actions issued by the ECA
 
   switch (nextAction) {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQTK" from data master
       
-      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never request TK in case of a late event
+      if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // never request TK in case of a late event
 
       (*nTransfer)++;                                                              // diagnostics: increment number of transfers
 
       //---- copy tag specific data from ECA
       ecaVirtAcc                = ecaEvtId & 0xf;  
       ecaFlagDryRun             = (ecaEvtId & 0x10) != 0;
-      dmData[REQBEAMA].dynpar0  = ecaParam & 0xffffffff;                           // address of block ('slow wait with timeout')
-      dmData[REQBEAMA].dynpar1  = ecaParam >> 32;                                  // address of block ('fast flex wait')
-      dmData[REQBEAMA].tef      = ecaTef;                                          // TEF field
-      dmData[REQBEAMB].dynpar0  = ecaParam >> 32;                                  // address of block ('fast flex wait')
-      dmData[REQBEAMB].dynpar1  = 0x0;
-      dmData[REQBEAMB].tef      = ecaTef;                                          // TEF field
+      dmCmds[REQTK].dynpar      = ecaParam & 0xffffffff;                           // address of block ('slow wait with timeout')
 
       //---- init values
       *virtAccReq     = ecaVirtAcc;                                                // number of virtual accelerator is set when DM requests TK
       *virtAccRec     = 42;
       *noBeam         = ecaFlagDryRun;                                             // UNILAC requested without beam
       *statusTransfer = 0x1 << DMUNIPZ_TRANS_REQTK;                                // update status of transfer
-      *nInject        = 0;                                                         // number of injections is reset when DM requests TK
+      *nMulti         = 0;                                                         // number of multi-multi-injections is reset when DM requests TK
+      *nBoost         = 0;                                                         // number of booster cycles is reset when DM requests TK
       *dtSync         = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
       *dtTransfer     = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
       *dtInject       = 0xffffffffffffffff;                                        // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
@@ -1024,7 +1163,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
     case DMUNIPZ_ECADO_PREPBEAM :                                                  // received command "PREPBEAM" from data master
       
-      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never perform PREPBEAM in case of a late event
+      if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // never perform PREPBEAM in case of a late event
 
       //---- prepare beam 
       status   = prepareBeam();                                                    // prepare beam at UNIPZ
@@ -1034,15 +1173,34 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       break;
 
-    case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "CMD_UNI_BREQ" from data master
+    case DMUNIPZ_ECADO_REQBEAM   :                                                 // received command "CMD_UNI_BREQ" from data master
+                                                                                   // this is an OR, no 'break' on purpose
+    case DMUNIPZ_ECADO_REQBEAMNW :                                                 // received command "CMD_UNI_BREQ_NOWAIT" from data master
+      
+      if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // error: never request beam in case of a 'late event'
 
-      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // error: never request beam in case of a 'late event'
+      // this is ugly, but ...
+      if (nextAction == DMUNIPZ_ECADO_REQBEAMNW) flagBooster = 1;
+      else                                       flagBooster = 0;
 
-      (*nInject)++;                                                                // diagnostics: increment number of injections (of current transfer)
+      if (flagBooster) {
+        (*nBoost)++;
+      } // if flagbooster
+      else {
+        (*nMulti)++;
+      } // else flagbooster
+
+      // existing thread data is invalid and must be cleared
+      dmClearThr(REQBEAM);
+      if (flagDelayed && flagBooster) return DMUNIPZ_STATUS_DELAYEDEVENT;          // this is a bit rude, but the likelyhood of messing up things can not be accepted
 
       //---- copy tag specific data from ECA
-      ecaVirtAcc      = ecaEvtId & 0xf;  
-
+      /* ecaVirtAcc             = ecaEvtId & 0xf; chk not used, delete? */
+      ecaFlagDryRun          = (ecaEvtId & 0x10) != 0;
+      dmThrs[REQBEAM].dynpar = (ecaParam >> 32) & 0xffffffff;
+      dmThrs[REQBEAM].cpuIdx = (ecaParam >>  8) & 0xff;
+      dmThrs[REQBEAM].thrIdx = ecaParam & 0xff;
+        
       //---- init values
       flagEBTimeout   = 0;                                                         // this is a 'warning flag'
       tCmdValid       = getSysTime();                                              // time when commands for DM shall become valid
@@ -1052,24 +1210,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       tReady2Sis      = 0;                                                         // init value for timestamp of EVT_READY_TO_SIS
       flagNoCmd       = 0;                                                         // always send the commands to DM unless something goes terribly wrong
 
-      //---- prepare commands that will be sent to Data Master later
-      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, tCmdValid);                       // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
-      if (dmStatus == COMMON_STATUS_EBREADTIMEDOUT) {                              // in case of timeout, we probably lost a UDP packet; plan B: try a 2nd time
-        flagEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, tCmdValid);                                     
-      } // if EB timeout
-      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // error: communication with DM failed even after two attempts; no plan C, give up! 
-      // NB: we can't prepare the "flex" wait command  yet, as we need to timestamp the MIL event from UNIPZ first
-
-      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, tCmdValid);                       // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
-      if (dmStatus ==  COMMON_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet; plan B: try a 2nd time
-        flagEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, tCmdValid);
-      } // if EB timeout
-      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // error: communication with DM failed even after two attemps; no plan C, give up! 
-      dmPrepCmdFlush(REQBEAMA);                                                    // prepare flush command for first "timeout" waiting block for later use
-      dmStatus = dmCheckCmds(REQBEAMA, REQBEAMB);                                  // check cmds for valid addresses
-      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // error: invalid address fields; no plan B:  give up!
+      // this is either mode 'multi-multi' XOR the 1st normal injection of 'booster mode'
+      if (!flagBooster) {
+        dmStatus = dmPrepCmdCommon(REQTK, 1, 1, tCmdValid);                        // try "Schnitzeljagd" in Data Master. Here: "slow" waiting block
+        if (dmStatus ==  COMMON_STATUS_EBREADTIMEDOUT) {                           // in case of timeout, we probably lost a UDP packet; plan B: try a 2nd time
+          flagEBTimeout = 1;
+          dmStatus = dmPrepCmdCommon(REQTK, 1, 1, tCmdValid);
+        } // if EB timeout
+        if (dmStatus != COMMON_STATUS_OK) return dmStatus;                         // error: communication with DM failed even after two attemps; no plan C, give up! 
+        dmPrepCmdFlush(REQTK);                                                     // prepare flush command for first "timeout" waiting block for later use
+        dmStatus = dmCheckCmd(REQTK);                                              // check cmd for valid addresses
+        if (dmStatus != COMMON_STATUS_OK) return dmStatus;                         // error: invalid address fields; no plan B:  give up!
+      } // if !flagBooster
 
       //---- arm MIL Piggy 
       enableFilterEvtMil(pMilPiggy);                                               // enable filter @ MIL piggy
@@ -1079,27 +1231,27 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
 
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
-      if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
+      if ((status = requestBeam(uniTimeout, ecaFlagDryRun)) == COMMON_STATUS_OK) { // request beam from UNIPZ
         *dtBreq = getSysTime() - ecaDeadline;                                      // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
         if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
-          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagIsLate);        // wait for event from ECA (hoping this is MIL Event -> TLU)
+          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
           switch (ecaInjAction)                                                    // switch required to detect messages that are not expected at this part of the schedule
             {                                                                      
-            case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
-              if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
-                flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
-                status       = COMMON_STATUS_OK;
-              } // if matchwindow
-              else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                          // error: timestamp too old
-              nR2sTransfer++;                                                      // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
-              nR2sTotal++;                                                         // diagnostics: increment total # of EVT_READY_TO_SIS
-              break;
-            case DMUNIPZ_ECADO_TIMEOUT :                                           // error: timeout, no timestamp via TLU -> ECA
-              status = DMUNIPZ_STATUS_NOTIMESTAMP;                                 
-              break;
-            default :                                                              // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
-              status = DMUNIPZ_STATUS_BADSCHEDULEB;
-              flagNoCmd = 1;                                                       // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
+              case DMUNIPZ_ECADO_READY2SIS :                                       // no error:  received EVT_READY_TO_SIS via TLU -> ECA
+                if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {           // check timestamp from TLU: only accept reasonably recent timestamp
+                  flagMilEvtValid = 1;                                             // everything ok: set flag for successful event reception
+                  status       = COMMON_STATUS_OK;
+                } // if matchwindow
+                else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                        // error: timestamp too old
+                nR2sTransfer++;                                                    // diagnostics: increment # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+                nR2sTotal++;                                                       // diagnostics: increment total # of EVT_READY_TO_SIS
+                break;
+              case DMUNIPZ_ECADO_TIMEOUT :                                         // error: timeout, no timestamp via TLU -> ECA
+                status = DMUNIPZ_STATUS_NOTIMESTAMP;                                 
+                break;
+              default :                                                            // error: an unexpected event was received while waiting for EVT_READY_TO_SIS.
+                status = DMUNIPZ_STATUS_BADSCHEDULEB;
+                flagNoCmd = 1;                                                     // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
             } // switch (ecaInjAction)
         } // if wait4MILEvt
         else {                                                                     // error: timeout, EVT_READY_TO_SIS was not received in MIL FIFO                                          
@@ -1129,12 +1281,17 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
         status = DMUNIPZ_STATUS_DMTIMEOUT;
       }
 
-      //---- send data to Data Master
+      // prepare command starting a thread at the Data Master
+      dmStatus = dmPrepThrStart(REQBEAM, tCmdFlex);                                // prepare command for thread start
+      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // prepare command failed: give up
+      dmStatus = dmCheckThr(REQBEAM);
+      if (dmStatus != COMMON_STATUS_OK) return dmStatus;                           // check command failed: give up
+      
+      //---- send data to Data Master ----
       if (!flagNoCmd) {                                                            // after all this error checking we finally arrived at the point when we may send commands to the Data Master
-        dmPrepFlexWaitCmd(REQBEAMB, tCmdFlex);                                     // prepare command for "flex" waiting block
-        dmChangeBlock(REQBEAMB);                                                   // modify "flex" waiting block within DM
-        dmChangeBlock(REQBEAMA);                                                   // modify "slow" waiting block within DM
-      } // if getSysTime
+        if (!flagBooster)               dmChangeBlock(REQTK);                      // modify "slow" waiting block within DM
+        if (status == COMMON_STATUS_OK) dmStartThread(REQBEAM);                    // start thread within DM; only start thread in case everything went fine
+      } // if !flagNoCmd
 
       *dtStart     = tCmdFlex - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
@@ -1150,20 +1307,20 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       if (status == COMMON_STATUS_OK)
         *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAMOK);
 
-      if ((status == COMMON_STATUS_OK) && flagEBTimeout)                          // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
+      if ((status == COMMON_STATUS_OK) && flagEBTimeout)                           // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
         status = COMMON_STATUS_EBREADTIMEDOUT;                                           
-          
+       
       break;
 
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
 
       //---- copy tag specific data from ECA
-      ecaVirtAcc    = ecaEvtId & 0xf;
+      /* ecaVirtAcc    = ecaEvtId & 0xf;  chk not used, delete? */
           
       //---- clear data, release TK, update status
-      dmClearCmd(REQBEAMA);                                                        // with TK release, command data becomes invalid and must not be used any more
-      dmClearCmd(REQBEAMB);                                                        // with TK release, command data becomes invalid and must not be used any more
+      dmClearCmd(REQTK);                                                           // with TK release, command data becomes invalid and must not be used any more
       releaseTK();                                                                 // release TK
+      checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELTK);            // update status of transfer
 
       //---- diagnostics
@@ -1221,7 +1378,8 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
-  uint32_t cmd;
+  uint32_t cmd;                                 // cmd received via DP RAM
+  uint32_t sharedSize;                          // size of shared memory
   /*uint32_t flagRecover;                         // flag indicating auto-recovery from error state; */
 
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
@@ -1264,12 +1422,12 @@ int main(void) {
   tBreq          = 0;
   tReady2Sis     = 0;
   nTransfer      = 0;
-  nInject        = 0;
+  nMulti         = 0;
   statusTransfer = 0;
 
   init();                                                                   // initialize stuff for lm32
-  initSharedMem(&reqState);                                                 // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
+  initSharedMem(&reqState, &sharedSize);                                    // initialize shared memory THIS MUST BE CALLED FIRST
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                        // clear common diagnostic data
   
   while (1) {
@@ -1282,7 +1440,7 @@ int main(void) {
     status = fwlib_changeState(&actState, &reqState, status);               // handle requested state changes
     switch(actState) {                                                      // state specific do actions
       case COMMON_STATE_OPREADY :
-        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nInject, status);
+        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nMulti, &nBoost,status);
         //pp_printf("mainstatus %x\n", status);
         if (status == COMMON_STATUS_WRBADSYNC)     reqState = COMMON_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)  reqState = COMMON_STATE_ERROR; 
@@ -1311,7 +1469,8 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, nInject, statusTransfer);
+    fwlib_publishTransferStatus(nTransfer, nMulti, statusTransfer);
+    /* publish info on mode (multi-multi/booster) and booster cycles (if applicable) */
     
     i++;
     *pSharedNIterMain    = i;
@@ -1338,9 +1497,10 @@ int main(void) {
 
     *pSharedNR2sTransfer = nR2sTransfer;
     *pSharedNR2sCycle    = nR2sCycle;
+    *pSharedNBooster     = nBoost;
 
     // update OLED display
-    updateOLED(statusTransfer, virtAccReq, nTransfer, nInject, statusArray, actState);
+    updateOLED(statusTransfer, virtAccReq, nTransfer, statusArray, actState);
   } // while
 
   return (1);

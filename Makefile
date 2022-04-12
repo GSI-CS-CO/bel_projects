@@ -10,6 +10,7 @@ STAGING         ?=
 PREFIX          ?= /usr/local
 SYSCONFDIR      ?= /etc
 PWD             := $(shell pwd)
+UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 export EXTRA_FLAGS
@@ -37,6 +38,8 @@ CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
+CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
+CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
@@ -53,6 +56,8 @@ PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_SCU4              = syn/gsi_scu/control4
+PATH_FTM4              = syn/gsi_scu/ftm4
+PATH_FTM4DP            = syn/gsi_scu/ftm4dp
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_FTM               = syn/gsi_pexarria5/ftm
 PATH_PEXARRIA10        = syn/gsi_pexarria10/control
@@ -198,10 +203,16 @@ wrpc-sw-config::
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain wrpc-sw-config
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
+else
+	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+endif
 
 firmware-clean:
+ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
+endif
 
 # #################################################################################################
 # Arria 2 devices
@@ -347,6 +358,30 @@ scu4-check:
 scu4-clean::
 	$(MAKE) -C $(PATH_SCU4) clean
 
+ftm4:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4DP) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4DP))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4DP))
+
+ftm4dp-clean::
+	$(MAKE) -C $(PATH_FTM4DP) clean
+
 a10gx_pcie::	firmware
 	$(MAKE) -C $(PATH_A10GX) all
 
@@ -455,7 +490,7 @@ pexarria10_soc::	firmware
 pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
+# We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
 
 prereq-rule::
@@ -468,6 +503,14 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
+# Check if hdlmake 3.3 is already installed
 hdlmake_install:
-	cd ip_cores/hdlmake/ && python setup.py install --user
-	export PATH=$$PATH:$$HOME/.local/bin
+	@rm .hdlmake 2>/dev/null || true
+	@hdlmake --version 2>/dev/null | grep 3.3 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
+	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
+	@rm .hdlmake 2>/dev/null || true
+	@export PATH=$$PATH:$$HOME/.local/bin
+
+# Just install hdlmake (even if it's already installed)
+hdlmake_install_locally:
+	@cd ip_cores/hdlmake/ && python setup.py install --user

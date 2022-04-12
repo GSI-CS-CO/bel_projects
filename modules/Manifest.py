@@ -41,16 +41,16 @@ modules = {
     "flash_loader",
     "remote_update",
     "pll",
-    "remote_update",
     "watchdog",
     "mbox",
     "prioq2",
     "stub_pll",
     "temp_sens",
-    "eca_tap",	
+    "eca_tap",
     "beam_dump",
     "daq",
     "diob",
     "wb_timer",
+    "i2c_wrapper",
   ]
 }

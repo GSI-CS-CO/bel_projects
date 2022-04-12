@@ -102,7 +102,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     fastIO_p_i : in    std_logic_vector(2 downto 0);
     fastIO_n_i : in    std_logic_vector(2 downto 0);
-    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues 
+    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
 
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
@@ -148,29 +148,29 @@ entity scu_control is
     psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
-     -- Fast-SRAM (2x 16Mbit)
-     -----------------------------------------------------------------------
-     sram_a            : out   std_logic_vector(19 downto 0) := (others => 'Z');
-     sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-     sram_csn          : out   std_logic_vector(1 downto 0) := (others => '1');
-     sram_oen          : out   std_logic_vector(1 downto 0) := (others => '1');
-     sram_wen          : out   std_logic := 'Z';
-     sram_lbn          : out   std_logic := 'Z';
-     sram_ubn          : out   std_logic := 'Z';
+    -- Fast-SRAM (2x 16Mbit)
+    -----------------------------------------------------------------------
+    sram_a            : out   std_logic_vector(19 downto 0) := (others => 'Z');
+    sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    sram_csn          : out   std_logic_vector(1 downto 0) := (others => '1');
+    sram_oen          : out   std_logic_vector(1 downto 0) := (others => '1');
+    sram_wen          : out   std_logic := 'Z';
+    sram_lbn          : out   std_logic := 'Z';
+    sram_ubn          : out   std_logic := 'Z';
 
-     -----------------------------------------------------------------------
-     -- SPI Flash User Mode
-     -----------------------------------------------------------------------
-     UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-     UM_nCSO           : out   std_logic := 'Z';
-     UM_DCLK           : out   std_logic := 'Z';
+    -----------------------------------------------------------------------
+    -- SPI Flash User Mode
+    -----------------------------------------------------------------------
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
     --sfp_led_fpg_o    : out   std_logic;
     --sfp_led_fpr_o    : out   std_logic;
-    sfp_tx_disable_o : out   std_logic := '0';
+    sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
     sfp_txp_o        : out   std_logic;
@@ -253,7 +253,8 @@ begin
       g_lm32_cores       => c_cores,
       g_lm32_ramsizes    => c_lm32_ramsizes/4,
       g_lm32_init_files  => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi          => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -269,9 +270,9 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o              => ser0_rxd,
-      wr_uart_i              => ser0_txd,
-      sfp_tx_disable_o        => open,
+      wr_uart_o               => ser0_rxd,
+      wr_uart_i               => ser0_txd,
+      wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
@@ -328,9 +329,6 @@ begin
       ps_wait                => psram_wait,
       hw_version             => x"0000000" & not scu_cb_version);
 
-  -- SFP
-  sfp_tx_disable_o <= '0';
-
   -- LEDs
   wr_led_pps              <= not s_led_pps;                            -- white = PPS
   wr_rgb_led(0)           <= not s_led_link_act;                       -- WR-RGB Red
@@ -342,7 +340,7 @@ begin
   lemos : for i in 0 to 2 generate
     s_lvds_p_i(i)      <= fastIO_p_i(i);
     s_lvds_n_i(i)      <= fastIO_n_i(i);
-    fastIO_p_o(i)        <= s_lvds_p_o(i);
+    fastIO_p_o(i)      <= s_lvds_p_o(i);
   end generate;
 
   lemo_out <= not s_gpio_o(6 downto 3);
@@ -350,7 +348,7 @@ begin
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
-      
+
   --Extension Piggy
   ext_ch(21 downto 19) <= s_lvds_term;
 
