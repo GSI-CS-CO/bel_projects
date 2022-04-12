@@ -172,6 +172,7 @@ public:
   virtual const uint32_t getQty()     const {return (this->act >> ACT_QTY_POS)  & ACT_QTY_MSK;}
   virtual const uint16_t getPrio()    const {return (this->act >> ACT_PRIO_POS) & ACT_PRIO_MSK;}
   virtual const uint16_t getVabs()    const {return (this->act >> ACT_VABS_POS) & ACT_VABS_MSK;}
+  bool isCmd(void) const {return true;}
   virtual node_ptr clone() const = 0;
 };
 
