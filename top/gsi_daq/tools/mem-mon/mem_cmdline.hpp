@@ -39,6 +39,7 @@ class CommandLine: public CLOP::PARSER
    static OPT_LIST_T c_optList;
 
    bool              m_verbose;
+   bool              m_tagInDecimal;
    bool              m_isOnScu;
    std::string       m_scuUrl;
 
@@ -46,11 +47,16 @@ public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
 
-   std::string operator()( void );
+   std::string& operator()( void );
 
    bool isVerbose( void )
    {
       return m_verbose;
+   }
+
+   bool isTagInDecimal( void )
+   {
+      return m_tagInDecimal;
    }
 
    bool isRunningOnScu( void )
@@ -65,6 +71,8 @@ public:
 
 private:
    int onArgument( void ) override;
+   int onErrorUnrecognizedShortOption( char unrecognized ) override;
+   int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
 
 }; // class CommandLine
 

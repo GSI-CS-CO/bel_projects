@@ -33,7 +33,7 @@ using namespace Scu::mmu;
 
 /*! ---------------------------------------------------------------------------
  */
-void onUexpectedException( void )
+void onUnexpectedException( void )
 {
   ERROR_MESSAGE( "Unexpected exception occurred!" );
   throw 0;     // throws int (in exception-specification)
@@ -44,14 +44,18 @@ void onUexpectedException( void )
  */
 int main( int argc, char** ppArgv )
 {
-   set_unexpected( onUexpectedException );
+   set_unexpected( onUnexpectedException );
    try
    {
       CommandLine oCmdLine( argc, ppArgv );
-      oCmdLine();
-      mmuEb::EtherboneConnection ebc( "tcp/scuxl0035" );
-      Browser browse( &ebc, oCmdLine );
-      browse();
+      mmuEb::EtherboneConnection ebc( oCmdLine() );
+      Browser browse( ebc, oCmdLine );
+      browse( cout );
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( "std::exception occurred: \"" << e.what() << '"' );
+      return EXIT_FAILURE;
    }
    catch( ... )
    {

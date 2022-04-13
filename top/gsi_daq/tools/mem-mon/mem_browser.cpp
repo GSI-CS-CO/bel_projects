@@ -22,6 +22,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#include <daqt_messages.hpp>
 #include "mem_browser.hpp"
 
 namespace Scu
@@ -29,23 +30,53 @@ namespace Scu
 namespace mmu
 {
 
-/*-----------------------------------------------------------------------------
+using namespace std;
+
+/*!----------------------------------------------------------------------------
  */
-Browser::Browser( mmuEb::EtherboneConnection* poEtherbone, CommandLine& rCmdLine )
-   :Mmu( poEtherbone )
+Browser::Browser( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine )
+   :Mmu( &roEtherbone )
+   ,m_rCmdLine( rCmdLine )
 {
 }
 
-/*-----------------------------------------------------------------------------
+/*!----------------------------------------------------------------------------
  */
 Browser::~Browser( void )
 {
 }
 
-/*-----------------------------------------------------------------------------
+/*!----------------------------------------------------------------------------
  */
-int Browser::operator()( void )
+void Browser::checkMmuPresent( void )
 {
+   if( isPresent() )
+      return;
+   ERROR_MESSAGE( "No MMU found on this SCU!" );
+   ::exit( EXIT_FAILURE );
+}
+
+/*!----------------------------------------------------------------------------
+ */
+int Browser::operator()( std::ostream& out )
+{
+   checkMmuPresent();
+
+   MMU_ITEM_T currentItem;
+   currentItem.iNext = 0;
+   uint level = 0;
+
+   do
+   {
+      readNextItem( currentItem );
+      if( level > 0 )
+      {
+         out << "tag: " << currentItem.tag  << endl;
+      }
+      level += MMU_ITEMSIZE + currentItem.length;
+   }
+   while( currentItem.iNext != 0 );
+
    return 0;
 }
 

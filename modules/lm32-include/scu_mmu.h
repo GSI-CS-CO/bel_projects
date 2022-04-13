@@ -157,6 +157,7 @@ typedef union
 
 STATIC_ASSERT( sizeof( MMU_ACCESS_T ) == sizeof( MMU_ITEM_T ) );
 
+#define MMU_ITEMSIZE (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ))
 
 const char* mmuStatus2String( const MMU_STATUS_T status );
 
@@ -174,6 +175,19 @@ unsigned int mmuGetNumberOfBlocks( void );
  * @brief Deletes a possible existing partition table.
  */
 void mmuDelete( void );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Reads a single item.
+ */
+void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Reads the next item of the given item.
+ */
+STATIC inline void mmuReadNextItem( MMU_ITEM_T* pItem )
+{
+   mmuReadItem( pItem->iNext, pItem );
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Allocates a memory area in the shared memory.

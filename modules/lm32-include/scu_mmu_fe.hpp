@@ -132,6 +132,12 @@ public:
             len * ARRAY_SIZE( pItem->ad32 ) );
    }
 
+protected:
+
+   void readNextItem( MMU_ITEM_T& rItem )
+   {
+      mmuReadNextItem( &rItem );
+   }
 }; // class Mmu
 
 } // namespace mmu

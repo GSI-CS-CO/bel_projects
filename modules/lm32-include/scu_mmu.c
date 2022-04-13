@@ -68,7 +68,6 @@ void mmuPrintItem( const MMU_ITEM_T* pItem )
 #define mmuPrintItem( item ) ((void)0)
 #endif
 
-#define MMU_ITEMSIZE (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ))
 
 /*! ---------------------------------------------------------------------------
  * @see scu_mmu.h
@@ -165,7 +164,7 @@ unsigned int mmuGetNumberOfBlocks( void )
    unsigned int count = 0;
    while( true )
    {
-      mmuReadItem( listItem.iNext, &listItem );
+      mmuReadNextItem( &listItem );
       if( listItem.iNext == 0 )
          break;
       count++;
@@ -230,7 +229,7 @@ MMU_STATUS_T mmuAlloc( const MMU_TAG_T tag, MMU_ADDR_T* pStartAddr,
    do
    {
       lastNext = item.iNext;
-      mmuReadItem( item.iNext, &item );
+      mmuReadNextItem( &item );
       mmuPrintItem( &item );
       if( (level != 0) && (item.tag == tag) )
       { /*

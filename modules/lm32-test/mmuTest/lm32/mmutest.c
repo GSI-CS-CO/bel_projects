@@ -61,7 +61,7 @@ void main( void )
 
    mprintf( "write:\n" );
    hexdump( &item, sizeof( item ) );
- //  mmuWriteItem( 2000, &item );
+   mmuWriteItem( 2000, &item );
 
    MMU_ITEM_T item1;
    memset( &item1, 0, sizeof( item1 ) );

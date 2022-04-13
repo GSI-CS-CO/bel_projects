@@ -117,7 +117,41 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'v',
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         if( static_cast<CommandLine*>(poParser)->m_verbose )
+         {
+            cout << "Version: " TO_STRING( VERSION )
+                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
+         }
+         else
+         {
+            cout << TO_STRING( VERSION ) << endl;
+         }
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'V',
+      .m_longOpt  = "version",
+      .m_helpText = "Print the software version and exit."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_tagInDecimal = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'd',
+      .m_longOpt  = "decimal",
+      .m_helpText = "Tag will print as decimal number, default is hexadecimal."
    }
+
 
 }; // CommandLine::c_optList
 
@@ -126,6 +160,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,m_verbose( false )
+   ,m_tagInDecimal( false )
 {
    m_isOnScu = Scu::isRunningOnScu();
    if( m_isOnScu )
@@ -144,21 +179,57 @@ CommandLine::~CommandLine( void )
  */
 int CommandLine::onArgument( void )
 {
+   if( m_isOnScu )
+   {
+      WARNING_MESSAGE( "Program is running on SCU, therefore the argument \""
+                       << getArgVect()[getArgIndex()]
+                       << "\" becomes replaced by \""
+                       << m_scuUrl << "\"!" );
+      return 1;
+   }
+
+   if( !m_scuUrl.empty() )
+   {
+      ERROR_MESSAGE( "Only one argument is allowed!" );
+      ::exit( EXIT_FAILURE );
+   }
+
+   m_scuUrl = getArgVect()[getArgIndex()];
+   if( m_scuUrl.find( "tcp/" ) == string::npos )
+         m_scuUrl = "tcp/" + m_scuUrl;
+
+   return 1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int CommandLine::onErrorUnrecognizedShortOption( char unrecognized )
+{
+   ERROR_MESSAGE( "Unknown short option: \"-" << unrecognized << "\"" );
    return 0;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-std::string CommandLine::operator()( void )
+int CommandLine::onErrorUnrecognizedLongOption( const std::string& unrecognized )
+{
+   ERROR_MESSAGE( "Unknown long option: \"--" << unrecognized << "\"" );
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+std::string& CommandLine::operator()( void )
 {
    if( PARSER::operator()() < 0 )
-      return "";
+      ::exit( EXIT_FAILURE );
+
    if( !m_isOnScu && m_scuUrl.empty() )
    {
       ERROR_MESSAGE( "Missing SCU URL" );
       ::exit( EXIT_FAILURE );
    }
-   return "";
+   return m_scuUrl;
 }
 
 } // namespace mmu

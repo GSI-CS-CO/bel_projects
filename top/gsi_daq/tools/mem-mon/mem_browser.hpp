@@ -36,11 +36,15 @@ namespace mmu
 ////////////////////////////////////////////////////////////////////////////////
 class Browser: public Mmu
 {
+   CommandLine& m_rCmdLine;
 public:
-   Browser( mmuEb::EtherboneConnection* poEtherbone, CommandLine& rCmdLine );
+   Browser( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
    ~Browser( void );
 
-   int operator()( void );
+   int operator()( std::ostream& out );
+
+private:
+   void checkMmuPresent( void );
 };
 
 } // namespace Scu
