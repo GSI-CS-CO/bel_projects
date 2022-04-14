@@ -269,19 +269,27 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       break;
     case tagPde     :
       tmp.data             = ((param & 0x00000000ffffffff));
-      getval.ext_diagMatch = (double)tmp.f;
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xffffffef;
+        getval.ext_diagMatch = (double)tmp.f;
+      } // if ok
       tmp.data             = ((param & 0xffffffff00000000) >> 32);
-      getval.ext_diagPhase = (double)tmp.f;
-      if (getval.ext_diagMatch != 0x7fffffff) getval.flag_nok &= 0xffffffef;
-      if (getval.ext_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffff7;          
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffff7;
+        getval.ext_diagPhase = (double)tmp.f;
+      } // if ok
       break;
     case tagPdi     :
       tmp.data             = ((param & 0x00000000ffffffff));
-      getval.inj_diagMatch = (double)tmp.f;
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffdff;
+        getval.inj_diagMatch = (double)tmp.f;
+      } // if ok
       tmp.data             = ((param & 0xffffffff00000000) >> 32);
-      getval.inj_diagPhase = (double)tmp.f;
-      if (getval.inj_diagMatch != 0x7fffffff) getval.flag_nok &= 0xfffffdff;
-      if (getval.inj_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffeff;          
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffeff;
+        getval.inj_diagPhase = (double)tmp.f;
+      } // if ok
       break;
     default         :
       ;
