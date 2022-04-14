@@ -1,7 +1,5 @@
 
 
-REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
-
 MIAN_MODULE := mmutest.c
 
 CODE_OPTIMIZATION = s
@@ -16,9 +14,8 @@ DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += CONFIG_DDR_PEDANTIC_CHECK
 #DEFINES += CONFIG_DEBUG_MMU
 
-#INCLUDE_DIRS   += $(RTOS_PORT_DIR)
-
 # NO_LTO := 1
 
+REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

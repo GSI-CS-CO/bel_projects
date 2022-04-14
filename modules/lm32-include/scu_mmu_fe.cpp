@@ -33,8 +33,10 @@
 
 using namespace Scu::mmu;
 
-Mmu* mg_pMmu = nullptr;
+static Mmu* mg_pMmu = nullptr;
 
+/*! ---------------------------------------------------------------------------
+ */
 Mmu::Mmu( mmuEb::EtherboneConnection* poEtherbone )
    :m_poEtherbone( poEtherbone )
    ,m_selfConnected( false )
@@ -52,6 +54,8 @@ Mmu::Mmu( mmuEb::EtherboneConnection* poEtherbone )
 
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 Mmu::~Mmu( void )
 {
    assert( mg_pMmu == this );

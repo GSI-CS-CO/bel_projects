@@ -82,6 +82,11 @@ public:
       return mmuStatus2String( status );
    }
 
+   bool isOkay( const MMU_STATUS_T status )
+   {
+      return mmuIsOkay( status );
+   }
+
    mmuEb::EtherboneConnection* getEb( void )
    {
       return m_poEtherbone;

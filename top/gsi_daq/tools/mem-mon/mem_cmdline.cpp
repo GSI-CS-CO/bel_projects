@@ -26,13 +26,14 @@
 #include <daqt_messages.hpp>
 #include "mem_cmdline.hpp"
 
-namespace Scu
-{
-namespace mmu
-{
+//namespace Scu
+//{
+//namespace mmu
+//{
 
 using namespace std;
 using namespace CLOP;
+using namespace Scu::mmu;
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing the command line options.
@@ -116,7 +117,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'v',
       .m_longOpt  = "verbose",
-      .m_helpText = "Be verbose"
+      .m_helpText = "Be verbose. That means, all identifiers are displayed."
    },
    {
       OPT_LAMBDA( poParser,
@@ -150,9 +151,21 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'd',
       .m_longOpt  = "decimal",
       .m_helpText = "Tag will print as decimal number, default is hexadecimal."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_isInBytes = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'b',
+      .m_longOpt  = "bytes",
+      .m_helpText = "Displays all in bytes, otherwise all will displayed\n"
+                    "in the smallest addressable unit in 8 byte clusters\n"
+                    "(64 bit) in the case of DDR3-RAM."
    }
-
-
 }; // CommandLine::c_optList
 
 /*! ---------------------------------------------------------------------------
@@ -161,6 +174,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,m_verbose( false )
    ,m_tagInDecimal( false )
+   ,m_isInBytes( false )
 {
    m_isOnScu = Scu::isRunningOnScu();
    if( m_isOnScu )
@@ -232,7 +246,7 @@ std::string& CommandLine::operator()( void )
    return m_scuUrl;
 }
 
-} // namespace mmu
-} // namespace Scu
+//} // namespace mmu
+//} // namespace Scu
 
 //================================== EOF ======================================

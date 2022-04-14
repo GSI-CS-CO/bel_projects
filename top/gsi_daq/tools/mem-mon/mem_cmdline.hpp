@@ -41,6 +41,7 @@ class CommandLine: public CLOP::PARSER
    bool              m_verbose;
    bool              m_tagInDecimal;
    bool              m_isOnScu;
+   bool              m_isInBytes;
    std::string       m_scuUrl;
 
 public:
@@ -62,6 +63,11 @@ public:
    bool isRunningOnScu( void )
    {
       return m_isOnScu;
+   }
+
+   bool isInBytes( void )
+   {
+      return m_isInBytes;
    }
 
    std::string& getScuUrl( void )

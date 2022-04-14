@@ -8,11 +8,12 @@
 ## Author:  Ulrich Becker                                                    ##
 ## Date:    09.01.2019                                                       ##
 ###############################################################################
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+
 TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 
+# USE_MMU := 1
  SCU_MIL := 1
 # MIL_GAP := 1
  MIL_DAQ_USE_DDR3 := 1
@@ -164,6 +165,12 @@ endif
 ifdef USE_SCU_EXTERN_RAM
   DEFINES += CONFIG_SCU_USE_DDR3
 endif
+ifdef USE_MMU
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu_lm32.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu.c
+  DEFINES += CONFIG_USE_MMU
+  VERSION_STR += "+MMU"
+endif
 
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
@@ -215,7 +222,7 @@ endif
  STACK_SIZE  =  4096
 
 # SCU_URL = scuxl0118
-# SCU_URL = scuxl0107
+### SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
 # SCU_URL = scuxl0212
@@ -225,6 +232,8 @@ endif
 # SCU_URL = scuxl0202
 # SCU_URL = scuxl0305
 # SCU_URL = scuxl0331
+# SCU_URL = scuxl0162   # with MIL and ADDAC
+# SCU_URL = scuxl0336  # DIOB-test
  # ACU-test
 
 DOX_EXTRACT_STATIC         = "YES"
@@ -243,6 +252,7 @@ endif
 ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
    DOX_OUTPUT_DIRECTORY = /common/usr/cscofe/doc/scu/lm32-firmware
 endif
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 

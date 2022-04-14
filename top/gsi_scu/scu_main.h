@@ -59,6 +59,10 @@
 #include "scu_circular_buffer.h"
 #include "event_measurement.h"
 
+#ifdef CONFIG_USE_MMU
+ #include <scu_mmu_lm32.h>
+#endif
+
 #include <sw_queue.h>
 
 /*!

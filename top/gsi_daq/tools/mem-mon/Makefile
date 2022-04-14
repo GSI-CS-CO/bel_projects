@@ -8,9 +8,9 @@
 ## Company:  GSI Helmholtz Centre for Heavy Ion Research GmbH                ##
 ## Date:     12.04.2022                                                      ##
 ###############################################################################
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.1
 
+DEFINES += VERSION=1.0
+FOR_SCU := 1
 MIAN_MODULE := mem-mon.cpp
 
 INCLUDE_DIRS += $(BASE_DIR)
@@ -44,9 +44,11 @@ endif
 
 LIBS += stdc++
 
-DEBUG = 1
+#DEBUG = 1
 
-CALL_ARGS = scuxl0035
+CALL_ARGS = scuxl0035 -v
 
+
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================

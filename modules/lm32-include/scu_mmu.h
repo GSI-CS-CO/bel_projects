@@ -60,6 +60,7 @@ typedef unsigned int   MMU_ADDR_T;
   * @brief Datatype of the smallest addressable unit of the using memory.
   */
  typedef DDR3_PAYLOAD_T RAM_PAYLOAD_T;
+ STATIC const MMU_ADDR_T MMU_MAX_INDEX = DDR3_MAX_INDEX64;
 #else
  #error Memory type is unknown!
 #endif
@@ -157,9 +158,26 @@ typedef union
 
 STATIC_ASSERT( sizeof( MMU_ACCESS_T ) == sizeof( MMU_ITEM_T ) );
 
-#define MMU_ITEMSIZE (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ))
+/*!
+ * @brief Size in addressable units of a single item of the partition list.
+ */
+STATIC const unsigned int MMU_ITEMSIZE = (sizeof( MMU_ITEM_T ) / sizeof( RAM_PAYLOAD_T ));
 
+/*! ---------------------------------------------------------------------------
+ * @brief Converts the status which returns the function mmuAlloc() in a
+ *        ASCII-string.
+ * @see mmuAlloc
+ */
 const char* mmuStatus2String( const MMU_STATUS_T status );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Evaluates the status (return value of mmuAlloc()) and
+ *        returns true if mmuAlloc was successful.
+ */
+STATIC inline bool mmuIsOkay( const MMU_STATUS_T status )
+{
+   return (status == OK) || (status == ALREADY_PRESENT);
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" when the partition table is present. 

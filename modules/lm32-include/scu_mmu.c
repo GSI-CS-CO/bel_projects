@@ -40,10 +40,6 @@ const uint32_t MMU_MAGIC = 0xAAFF0055;
  */
 const MMU_ADDR_T MMU_LIST_START = 0;
 
-#ifdef CONFIG_SCU_USE_DDR3
-const MMU_ADDR_T MMU_MAX_INDEX = DDR3_MAX_INDEX64;
-#endif
-
 
 #ifdef CONFIG_DEBUG_MMU
 #ifndef __lm32__
