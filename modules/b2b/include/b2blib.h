@@ -75,7 +75,8 @@ extern "C" {
   enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
-  typedef struct{                                      // data type set values
+  // data type set values; data are in 'native units' used by the lm32 firmware
+  typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: mode, bit 1: ext_T, ...
     uint32_t mode;                                     // mode of B2B system
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
@@ -87,30 +88,32 @@ extern "C" {
     float    cPhase;                                   // phase correction for b2b mode
   } setval_t;
 
-  typedef struct{                                      // data type get values
+  // data type get values; data are in 'native units' used by the lm32 firmware
+  typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase_125ps;                          // extraction: phase of h=1 Group DDS [125 ps]
-    float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
-    float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
+    int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase_125ps;                          // injection : ...
-    float    inj_dKickMon;                             
-    float    inj_dKickProb;
+    int32_t  inj_dKickMon;                             
+    int32_t  inj_dKickProb;
     float    inj_diagPhase;
     float    inj_diagMatch;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    float    doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
-    float    preOff;                                   // offset from CBS to measured extraction phase [ns]
-    float    priOff;                                   // offset from CBS to measured injection phase [ns]
-    float    kteOff;                                   // offset from CBS to KTE deadline [ns]
-    float    ktiOff;                                   // offset from CBS to KTI deadline
+    int32_t  doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
+    int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
+    int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
+    int32_t  ktiOff;                                   // offset from CBS to KTI deadline
   } getval_t;
 
-  typedef struct{
+  // data type for diagnostic values
+  typedef struct{                                      
     double   ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
     uint32_t ext_ddsOffN;                              // number of values
     double   ext_ddsOffAve;                            // average value
@@ -153,49 +156,50 @@ extern "C" {
     double   inj_rfNueEst;
   } diagval_t;
 
-  typedef struct {    
-    double   eks_doneOffAct;                           // offset from CBS deadline to time when we are done
-    uint32_t eks_doneOffN;
-    double   eks_doneOffAve;
-    double   eks_doneOffSdev;
-    double   eks_doneOffMin;
-    double   eks_doneOffMax;
-    double   eks_preOffAct;                            // offset from CBS to measured extraction phase
-    uint32_t eks_preOffN;
-    double   eks_preOffAve;
-    double   eks_preOffSdev;
-    double   eks_preOffMin;
-    double   eks_preOffMax;
-    double   eks_priOffAct;                            // offset from CBS to measured injection phase
-    uint32_t eks_priOffN;
-    double   eks_priOffAve;
-    double   eks_priOffSdev;
-    double   eks_priOffMin;
-    double   eks_priOffMax;
-    double   eks_kteOffAct;                            // offset from CBS to KTE
-    uint32_t eks_kteOffN;
-    double   eks_kteOffAve;
-    double   eks_kteOffSdev;
-    double   eks_kteOffMin;
-    double   eks_kteOffMax;
-    double   eks_ktiOffAct;                            // offset from CBS to KTE
-    uint32_t eks_ktiOffN;
-    double   eks_ktiOffAve;
-    double   eks_ktiOffSdev;
-    double   eks_ktiOffMin;
-    double   eks_ktiOffMax;
-    int32_t  ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+  // data type for status information
+  typedef struct {                                     
+    double   cbs_doneOffAct;                           // offset from CBS deadline to time when we are done
+    uint32_t cbs_doneOffN;
+    double   cbs_doneOffAve;
+    double   cbs_doneOffSdev;
+    double   cbs_doneOffMin;
+    double   cbs_doneOffMax;
+    double   cbs_preOffAct;                            // offset from CBS to measured extraction phase
+    uint32_t cbs_preOffN;
+    double   cbs_preOffAve;
+    double   cbs_preOffSdev;
+    double   cbs_preOffMin;
+    double   cbs_preOffMax;
+    double   cbs_priOffAct;                            // offset from CBS to measured injection phase
+    uint32_t cbs_priOffN;
+    double   cbs_priOffAve;
+    double   cbs_priOffSdev;
+    double   cbs_priOffMin;
+    double   cbs_priOffMax;
+    double   cbs_kteOffAct;                            // offset from CBS to KTE
+    uint32_t cbs_kteOffN;
+    double   cbs_kteOffAve;
+    double   cbs_kteOffSdev;
+    double   cbs_kteOffMin;
+    double   cbs_kteOffMax;
+    double   cbs_ktiOffAct;                            // offset from CBS to KTE
+    uint32_t cbs_ktiOffN;
+    double   cbs_ktiOffAve;
+    double   cbs_ktiOffSdev;
+    double   cbs_ktiOffMin;
+    double   cbs_ktiOffMax;
+    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
     uint32_t ext_monRemN;
     double   ext_monRemAve;
     double   ext_monRemSdev;
-    int32_t  ext_monRemMin;
-    int32_t  ext_monRemMax;
-    int32_t  inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    double   ext_monRemMin;
+    double   ext_monRemMax;
+    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
     uint32_t inj_monRemN;
     double   inj_monRemAve;
     double   inj_monRemSdev;
-    int32_t  inj_monRemMin;
-    int32_t  inj_monRemMax;
+    double   inj_monRemMin;
+    double   inj_monRemMax;
   } diagstat_t;
 
   typedef struct {
