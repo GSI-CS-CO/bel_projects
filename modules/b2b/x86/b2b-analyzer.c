@@ -497,7 +497,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].ext_cTrig;
-    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    // act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T);
+    // printf("cor %8.3f, match %8.3f, act %8.3f\n", cor, dicGetval[sid].ext_diagMatch, act);
     n   = ++(ext_ddsOffN[sid]);
 
     // statistics
@@ -779,7 +781,7 @@ void disAddServices(char *prefix)
   
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
-    disDiagvalId[i]  = dis_add_service(name, "D:1;I:1;D:4;I:1;D:5;I:1;D:5;I:1;D:5;I:1;;D:5;I:1;D:5;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
+    disDiagvalId[i]  = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
 
     sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
     disDiagstatId[i] = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);

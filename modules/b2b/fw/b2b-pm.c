@@ -469,7 +469,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // diagnostic PM; phase (rf) and match (trigger)
   static uint32_t flagMatchDone;                              // flag: match measurement done
   static uint32_t flagPhaseDone;                              // flag: phase meausrement done
-  uint64_t tH1Diag_125ps;                                     // h=1 timestamp of phase diagnostic [125 ps]
+  uint64_t tH1Match_125ps;                                    // h=1 timestamp of match diagnostic [125 ps]
+  uint64_t tH1Phase_125ps;                                    // h=1 timestamp of phase diagnostic [125 ps]
   uint64_t Dt;                                                // difference of the two timestamps
   uint64_t remainder;                                         // remainder
   static int64_t dtMatch_as;                                  // deviation of trigger from expected timestamp [as]
@@ -486,6 +487,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   union  fdat_t   tmp;                                        // for copying of data
   
   uint64_t t1,t2;                                             // for debugging
+  int32_t  tmp1;                                              // for debugging
 
   status    = actStatus;
   sendEvtNo = 0x0;
@@ -559,13 +561,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // find closest timestamp
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Diag_125ps, &dt) == COMMON_STATUS_OK) {
-            Dt          = (tH1Diag_125ps - tH1_125ps) * 125000000;    // difference [as]
+          if (phaseFit(TH1_as, nInput, &tH1Match_125ps, &dt) == COMMON_STATUS_OK) {
+            Dt          = (reqDeadline * 8 - tH1Match_125ps);         // difference to trigger [125 ps]
+            // tmp1 = (int32_t)Dt / 8; pp_printf("match1 [ns] %08d\n", tmp1);            
+            Dt          = Dt * 125000000;                             // difference [as]
             remainder   =  Dt % TH1_as;                               // remainder [as]
             if (remainder > (TH1_as >> 1)) dtMatch_as = remainder - TH1_as;
             else                           dtMatch_as = remainder;
             flagMatchDone = 1;
-            //dt          = dtMatch_as; pp_printf("dt %d\n", dt);
+            // tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match2 %08d\n", tmp1);
           } // if phasefit
         } // if nInput
       } // if not pm error
@@ -591,8 +595,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // find closest timestamp
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Diag_125ps, &dt) == COMMON_STATUS_OK) {
-            Dt          = (tH1Diag_125ps - tH1_125ps) * 125000000;    // difference [as]
+          if (phaseFit(TH1_as, nInput, &tH1Phase_125ps, &dt) == COMMON_STATUS_OK) {
+            Dt          = (tH1Phase_125ps - tH1_125ps) * 125000000;    // difference [as]
             remainder   =  Dt % TH1_as;                               // remainder [as]
             if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
             else                           dtPhase_as = remainder;

@@ -1067,6 +1067,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
+    /* pp_printf("cTrigExt2 [125 ps] %d\n", cTrigExt); */
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     offsetDoneNs = (int32_t)(getSysTime() - fwlib_t125ps2tns(tCBS));
 

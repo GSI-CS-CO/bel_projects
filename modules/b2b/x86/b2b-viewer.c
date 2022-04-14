@@ -508,7 +508,7 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  printf("--- rf ---                                               #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
+  printf("--- rf DDS ---                                           #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -516,32 +516,32 @@ int printRf(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'raw gDDS [ns]' act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'raw gDDS [ns]' act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
-      else printf("inj: 'raw gDDS [ns]' act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+      else printf("inj: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n", TXTNA);
       else {
-           printf("inj:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+           printf("inj: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :
