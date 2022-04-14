@@ -86,7 +86,7 @@ begin
     clk_core <= clk_ref_i;
   end generate;
 
-  arria10_no_clock_tree_y : if g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10" generate
+  arria10_no_clock_tree_y : if g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX FTM4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10" generate
     clk_lvds   <= clk_lvds_i;
     clk_enable <= clk_enable_i;
     clk_core   <= clk_ref_i;
@@ -125,7 +125,7 @@ begin
         tx_in      => s_dat_i(i),
         tx_out     => lvds_odat(i));
 
-    arria5_arria2_obuf : if not(g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10") generate
+    arria5_arria2_obuf : if not(g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX FTM4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10") generate
     buf : altera_lvds_obuf
       generic map(
         g_family  => g_family)
@@ -135,10 +135,10 @@ begin
         dataout_b => lvds_n_o(i));
     end generate;
 
-    arria10_obuf : if g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10" generate
+    arria10_obuf : if g_family = "Arria 10 GX SCU4" or g_family = "Arria 10 GX FTM4" or g_family = "Arria 10 GX PEX10" or g_family = "Arria 10 GX FTM10" generate
      lvds_p_o <= lvds_odat;
     end generate;
-  
+
     --buf : altera_lvds_obuf
     --  generic map(
     --    g_family  => g_family)
@@ -146,7 +146,7 @@ begin
     --    datain    => lvds_odat(i),
     --    dataout   => lvds_p_o(i),
      --   dataout_b => lvds_n_o(i));
-  
+
   end generate;
 
   rx : for i in 0 to g_inputs-1 generate
