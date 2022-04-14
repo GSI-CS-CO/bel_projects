@@ -2,15 +2,14 @@ digraph g {
 name="StaticCouplingB";
 edge  [type="defdst"]
 node  [cpu="1"];
-  	B_SW 	[type="switch", toffs="0", pattern="B", patentry="true"];
-	B_M     [type="tmsg",  toffs="500", pattern="B", id="0x112c0ff000500801", par="0x0000140000000055"];
-	B_BLOCK [type="block", tperiod="5000", pattern="B", patexit="true"];
-	
-	B_SW -> B_M -> B_BLOCK -> B_SW [type="defdst"];
-	
-	A_FL -> B_BLOCK [type="target"];
-	A_FL -> B_SW [type="flushovr"];
-	B_SW -> A_BLOCK [type="target"];
-	B_SW -> A_FL [type="switchdst"];
+  B_Switch [type="switch", toffs="0", pattern="B", patentry="true"];
+	B_Msg    [type="tmsg",  toffs="500", pattern="B", id="0x112c0ff000500801", par="0x0000140000000055"];
+	B_Block  [type="block", tperiod="5000", pattern="B", patexit="true" qhi=1];
 
+	B_Switch -> B_Msg -> B_Block -> B_Switch [type="defdst"];
+
+	A_Flush -> B_Block [type="target"];
+	A_Flush -> B_Switch [type="flushovr"];
+	B_Switch -> A_Block [type="target"];
+	B_Switch -> A_Flush [type="switchdst"];
 }

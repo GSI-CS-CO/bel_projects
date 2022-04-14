@@ -96,7 +96,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('noop')
 
   def test_queue(self):
-    self.targetName('queue', count_out=9)
+    self.targetName('queue', count_out=10)
 
   def test_rawqueue(self):
     self.targetName('rawqueue', count_out=30)
