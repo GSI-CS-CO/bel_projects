@@ -6,6 +6,7 @@
 #include <scu_mmu_fe.hpp>
 #include <lm32_hexdump.h>
 #include <eb_console_helper.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace Scu;
@@ -39,6 +40,12 @@ void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem );
 int main( int argc, char** ppArgv )
 {
    cout << "MMU-Test" << endl;
+   cout << sizeof( eb_data_t ) << endl;
+
+   eb_data_t x = 0;
+   cout << "x=" << x << endl;
+   x++;
+   cout << "x=" << x << endl;
 
    string scuUrl;
    if( isRunningOnScu() )
@@ -61,8 +68,9 @@ int main( int argc, char** ppArgv )
 
    mmuEb::EtherboneConnection ebc( scuUrl );
 
+#define TESTADDR  6000
    Mmu mmu( &ebc );
-
+#if 0
    MMU_ITEM_T item;
 
    item.flags   = 0x1111;
@@ -74,15 +82,26 @@ int main( int argc, char** ppArgv )
    cout << "write:" << endl;
    ::hexdump( &item, sizeof( item ) );
 
-   mmuWriteItem( 2000, &item );
+   mmuWriteItem( TESTADDR, &item );
+#endif
+
+   mmu.getEb()->setDebug( true );
+    uint64_t d[2] = { 0x7766554433221100, 0xFFEEDDCCBBAA9988 };
+   ::hexdump( &d, sizeof( d ) );
+
+   mmu.write( TESTADDR+0, &d[0], EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
+  // ::sleep( 1);
+  // mmu.write( TESTADDR+1, &d[1], EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
+   //  mmu.getEb()->doWrite( mmu.getBase() + TESTADDR, &d[0], EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
 
    MMU_ITEM_T item1;
    ::memset( &item1, 0, sizeof( item1 ) );
-   mmuReadItem( 2000, &item1 );
+   mmuReadItem( TESTADDR, &item1 );
 
    cout << "read:" << endl;
    ::hexdump( &item1, sizeof( item1 ) );
-#if 1
+#if 0
+   mmu.getEb()->setDebug( false );
    mmu.clear();
    cout << "MMU present? " << (mmu.isPresent()? "Yes" : "No" ) << endl;
    cout << "Number of blocks: " << mmu.getNumberOfBlocks() << endl;

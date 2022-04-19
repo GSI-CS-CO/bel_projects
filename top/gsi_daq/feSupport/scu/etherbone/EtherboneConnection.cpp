@@ -358,33 +358,27 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
       /*
        * Is in EtherboneConnection::read() ?
        */
-      if( static_cast<EB_USER_CB_T*>(pUser)->m_pUserAddress != nullptr )
+      if( ::eb_operation_is_read( op ) )
       { /*
          * Yes, section will run by EtherboneConnection::read.
          * Copying from Wishbone/Etherbone to user-buffer.
          */
+         assert( static_cast<EB_USER_CB_T*>(pUser)->m_pUserAddress != nullptr );
          const data_t      data   = ::eb_operation_data( op );
-         const format_t    format = ::eb_operation_format( op );
-         const std::size_t wide   = format & EB_DATAX;
-#ifdef CONFIG_BIT_SWAP_IN_EB_CALLBACK
-         if( (format & EB_BIG_ENDIAN) != 0 )
-         {
-            for( uint k = 0; k < wide; k++ )
-            {
-               (&(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
-                                         (pUser)->m_pUserAddress))[j])[k] =
-                         reinterpret_cast<uint8_t*>(&data)[wide-1-k];
-            }
-         }
-         else
-#endif
-           ::memcpy( &(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
-                         (pUser)->m_pUserAddress))[j],
-                      &data, wide );
+         const std::size_t wide   = ::eb_operation_format( op ) & EB_DATAX;
+
+         ::memcpy( &(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
+                                         (pUser)->m_pUserAddress))[j],
+                   &data, wide );
 
          j += wide;
       }
-
+#ifndef NDEBUG
+      else
+      {
+         assert( static_cast<EB_USER_CB_T*>(pUser)->m_pUserAddress == nullptr );
+      }
+#endif
       op = ::eb_operation_next( op );
       i++;
    }
