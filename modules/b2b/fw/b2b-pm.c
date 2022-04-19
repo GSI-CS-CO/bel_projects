@@ -325,8 +325,13 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
       *phase_ns += 1;
     }
 
-    // calculate a phase value in units of 125 ps
-    int32_t fractional_phase_125ps = *fractional_phase_as / 125000000;
+    // Calculate a phase value in units of 125 ps:
+    //   *fractional_phase_as is in the interval [-500000000,500000000). 
+    //   In C integer division always rounds towards 0 (not towards the smaller number).
+    //   Therefore, 500000000 is added before the division to transform the interval to [0,1000000000)
+    //   Another 62500000 is added to achieve "rounding towards the nearest integer"
+    //   After division, 4 is subtracted to get the [-4,4) interval.
+    int32_t fractional_phase_125ps = (*fractional_phase_as+562500000) / 125000000 - 4;
     *phase_125ps = *phase_ns << 3;
     *phase_125ps += fractional_phase_125ps;
 
