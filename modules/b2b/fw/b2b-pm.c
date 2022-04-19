@@ -471,7 +471,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static uint32_t flagPhaseDone;                              // flag: phase meausrement done
   uint64_t tH1Match_125ps;                                    // h=1 timestamp of match diagnostic [125 ps]
   uint64_t tH1Phase_125ps;                                    // h=1 timestamp of phase diagnostic [125 ps]
-  uint64_t Dt;                                                // difference of the two timestamps
+  int64_t  Dt;                                                // difference of the two timestamps
   uint64_t remainder;                                         // remainder
   static int64_t dtMatch_as;                                  // deviation of trigger from expected timestamp [as]
   int64_t  dtPhase_as;                                        // deviation of phase from expected timestamp [as]
@@ -568,6 +568,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
             remainder   =  Dt % TH1_as;                               // remainder [as]
             if (remainder > (TH1_as >> 1)) dtMatch_as = remainder - TH1_as;
             else                           dtMatch_as = remainder;
+            // hack
+            dtMatch_as = Dt;
+            // hack
             flagMatchDone = 1;
             // tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match2 %08d\n", tmp1);
           } // if phasefit
