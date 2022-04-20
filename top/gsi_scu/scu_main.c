@@ -634,20 +634,62 @@ void main( void )
    initAndScan();
    //print_regs();
 #ifdef CONFIG_USE_MMU
-//TODO
-#endif
+   MMU_OBJ_T mmu;
+   if( mmuInit( &mmu ) != OK )
+   {
+      die( "Unable to get DDR3- RAM for MMU!" );
+   }
+   MMU_STATUS_T status;
+ #ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.sDaq.ringAdmin.indexes.offset) );
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.sDaq.ringAdmin.indexes.capacity) );
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+   status = mmuAlloc( TAG_ADDAC_DAQ,
+                     (size_t*)&g_shared.sDaq.ringAdmin.indexes.offset,
+                     (size_t*)&g_shared.sDaq.ringAdmin.indexes.capacity,
+                     true );
+   #pragma GCC diagnostic pop
+  #else
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.sDaq.ramIndexes.ringIndexes.offset) );
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.sDaq.ramIndexes.ringIndexes.capacity) );
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+   status = mmuAlloc( TAG_ADDAC_DAQ,
+                      (size_t*)&g_shared.sDaq.ramIndexes.ringIndexes.offset,
+                      (size_t*)&g_shared.sDaq.ramIndexes.ringIndexes.capacity,
+                      true );
+   #pragma GCC diagnostic pop
+  #endif
+ #endif
+   mprintf( "MMU-Tag 0x%04X for ADDAC-DAQ-buffer: %s\n", TAG_ADDAC_DAQ, mmuStatus2String( status ) );
+ #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.mDaq.memAdmin.indexes.offset) );
+   STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.mDaq.memAdmin.indexes.capacity) );
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+   status = mmuAlloc( TAG_MIL_DAQ,
+                      (size_t*)&g_shared.mDaq.memAdmin.indexes.offset,
+                      (size_t*)&g_shared.mDaq.memAdmin.indexes.capacity,
+                      true );
+   #pragma GCC diagnostic pop
+   mprintf( "MMU-Tag 0x%04X for MIL-DAQ-buffer:   %s\n", TAG_MIL_DAQ, mmuStatus2String( status ) );
+ #endif
+#endif /* CONFIG_USE_MMU */
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
  #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-   mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ringAdmin.indexes.offset );
-   mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ringAdmin.indexes.capacity );
+   mprintf( "ADDAC-DAQ buffer offset:   %5u item\n", g_shared.sDaq.ringAdmin.indexes.offset );
+   mprintf( "ADDAC-DAQ buffer capacity: %5u item\n", g_shared.sDaq.ringAdmin.indexes.capacity );
  #else
-   mprintf( "ADDAC-DAQ buffer offset:   %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.offset );
-   mprintf( "ADDAC-DAQ buffer capacity: %u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );
+   mprintf( "ADDAC-DAQ buffer offset:   %5u item\n", g_shared.sDaq.ramIndexes.ringIndexes.offset );
+   mprintf( "ADDAC-DAQ buffer capacity: %5u item\n", g_shared.sDaq.ramIndexes.ringIndexes.capacity );
  #endif
 #endif
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
-   mprintf( "MIL-DAQ buffer offset:     %u item\n", g_shared.mDaq.memAdmin.indexes.offset );
-   mprintf( "MIL-DAQ buffer capacity:   %u item\n", g_shared.mDaq.memAdmin.indexes.capacity );
+   mprintf( "MIL-DAQ buffer offset:     %5u item\n", g_shared.mDaq.memAdmin.indexes.offset );
+   mprintf( "MIL-DAQ buffer capacity:   %5u item\n", g_shared.mDaq.memAdmin.indexes.capacity );
 #endif
 
    mprintf( "Found MIL function generators: %d\n", milGetNumberOfFg() );

@@ -1,17 +1,18 @@
 /*!
- * @file scu_mmu_lm32.h
- * @brief LM32 part of Memory Management Unit of SCU
+ * @file scu_mmu_tag.h
+ * @brief Definition of memory-block identifier (tag) for
+ *        Memory Management Unit of SCU
  * 
  * Administration of the shared memory (for SCU3 using DDR3) between 
  * Linux host and LM32 application.
  * 
- * @note This source code is suitable for LM32 ony.
+ * @note Header only
+ * @note This source code is suitable for LM32 and Linux.
  * 
  * @see       scu_mmu.h
- * @see       scu_mmu_lm32.h
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
- * @date      31.03.2022
+ * @date      20.04.2022
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,18 +28,11 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef _SCU_MMU_LM32_H
-#define _SCU_MMU_LM32_H
-#ifndef __lm32__
-  #error This module is for LM32 only! 
-#endif
-
+#ifndef _SCU_MMU_TAG_H
+#define _SCU_MMU_TAG_H
 #include <scu_mmu.h>
 
-#define MMU_ASSERT DDR_ASSERT
-
 #ifdef __cplusplus
-extern "C" {
 namespace Scu
 {
 namespace mmu
@@ -47,23 +41,25 @@ namespace mmu
 
 /*!
  * @ingroup SCU_MMU
+ * @brief Memory block identifier for ADDAC-DAQ
  */
-typedef DDR3_T MMU_OBJ_T;
+STATIC const MMU_TAG_T TAG_ADDAC_DAQ = 0xFF01;
 
 /*!
  * @ingroup SCU_MMU
+ * @brief Memory block identifier for MIL-DAQ
  */
-MMU_OBJ_T* mmuGetObject( void );
+STATIC const MMU_TAG_T TAG_MIL_DAQ   = 0xFF02;
 
 /*!
  * @ingroup SCU_MMU
+ * @brief Memory block identifier for LM32-log messages.
  */
-MMU_STATUS_T mmuInit( MMU_OBJ_T* pMuObj );
+STATIC const MMU_TAG_T TAG_LM32_LOG  = 0xFC01;
 
 #ifdef __cplusplus
 } /* namespace mmu */
 } /* namespace Scu */
-} /* extern "C"    */
 #endif
-#endif /* ifndef _SCU_MMU_LM32_H */
+#endif /* ifndef _SCU_MMU_TAG_H */
 /*================================== EOF ====================================*/

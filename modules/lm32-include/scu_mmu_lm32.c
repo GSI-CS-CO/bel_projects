@@ -26,7 +26,6 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-
 #include <scu_mmu_lm32.h>
 
 MMU_OBJ_T* mg_pMuObj = NULL;

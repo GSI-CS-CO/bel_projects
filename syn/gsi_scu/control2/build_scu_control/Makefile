@@ -13,7 +13,8 @@ TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 
-# USE_MMU := 1
+ USE_HISTORY=1
+ USE_MMU := 1
  SCU_MIL := 1
 # MIL_GAP := 1
  MIL_DAQ_USE_DDR3 := 1
@@ -73,7 +74,7 @@ endif
  DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 
 
- USE_HISTORY=1
+
 # DEFINES += DEBUGLEVEL
 MIAN_MODULE    = $(SCU_DIR)/scu_main.c
 
@@ -186,6 +187,9 @@ DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 ifdef MIL_IN_TIMER_INTERRUPT
    DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
+endif
+ifdef USE_MMU
+   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_mmu_tag.h
 endif
 
 # CODE_OPTIMIZATION = 2

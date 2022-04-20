@@ -115,6 +115,7 @@ void mmuReadItem( const MMU_ADDR_T index, MMU_ITEM_T* pItem )
 #define _CONFIG_MMU_PATCH
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_MMU
  */
 void mmuWriteItem( const MMU_ADDR_T index, const MMU_ITEM_T* pItem )
 {
@@ -170,6 +171,7 @@ unsigned int mmuGetNumberOfBlocks( void )
 }
 
 /*!
+ * @ingroup SCU_MMU
  * @brief Special block type for the beginning of the list only.
  */
 typedef struct PACKED_SIZE
@@ -183,6 +185,7 @@ STATIC_ASSERT( sizeof( START_BLOCK_T ) == sizeof( MMU_ITEM_T ) );
 STATIC_ASSERT( offsetof( START_BLOCK_T, iNext ) == offsetof( MMU_ITEM_T, iNext ) );
 
 /*!
+ * @ingroup SCU_MMU
  * @brief Adapter for START_BLOCK_T.
  */
 typedef union
