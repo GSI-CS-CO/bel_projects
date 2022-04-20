@@ -236,7 +236,7 @@ void insertionSort(uint64_t *stamps, int n) {
 
 
 // perform fit of phase with sub-ns
-int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, uint64_t *phase_125ps, int64_t *fractional_phase_as) {  // , int32_t *phase_error_as) {
+int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, uint64_t *phase_125ps, int64_t *fractional_phase_as, uint64_t *confidence_as) {  // , int32_t *phase_error_as) {
   int32_t ONE_NS_as = 1000000000;
   int32_t HALF_NS_as = 500000000;
 
@@ -335,6 +335,7 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
     *phase_125ps = *phase_ns << 3;
     *phase_125ps += fractional_phase_125ps;
 
+    *confidence_as = max_dt_as-min_dt_as;
     // *phase_error_as = ((1000000000)-(max_dt_as-min_dt_as))/2;  // this is a hard upper limit for the error (if jitter of input signal is negligible)
     //                                                            // the true value for phase is uniformly distributed in the 
     //                                                            // interval [-phase_error_as, +phase_error_as] around fractional_phase_as
@@ -345,7 +346,7 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
 
 
 // 'fit' phase value
-uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uint32_t *dt)
+uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uint32_t *dt, uint64_t *confidence_as)
 {
   int      i;
   int      usedIdx;         // index of used timestamp
@@ -392,7 +393,7 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
     //pp_printf("ohps,  delta %d, usedIDX %d\n", delta, usedIdx);
     return B2B_STATUS_PHASEFAILED;
   }
-  phaseFitSubNs(period, nSamples, &phase_ns, phase_125ps, &dummy);
+  phaseFitSubNs(period, nSamples, &phase_ns, phase_125ps, &dummy, confidence_as);
   dummy = dummy/1000000;
   //pp_printf("fraction %d [ps]\n", dummy);
 
@@ -469,6 +470,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static uint64_t TH1_as;                                     // h=1 period [as]
   static uint64_t tH1_125ps;                                  // h=1 timestamp of phase ( = 'phase') [125 ps]
   uint32_t dt;                                                // uncertainty of h=1 timestamp
+  uint64_t confidence_as;                                     // measure for the confidence of the sub-ns part of the phase fit 
   static uint32_t flagPMError;                                // error flag phase measurement
 
   // diagnostic PM; phase (rf) and match (trigger)
@@ -531,7 +533,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
 
       if (nInput > 2) insertionSort(tStamp, nInput);                 // for 11 timestamps, this is below 10us
-      if ((nInput < 3) || (phaseFit(TH1_as, nInput, &tH1_125ps, &dt) != COMMON_STATUS_OK)) {
+      if ((nInput < 3) || (phaseFit(TH1_as, nInput, &tH1_125ps, &dt, &confidence_as) != COMMON_STATUS_OK)) {
         tH1_125ps = 0x7fffffffffffffff;
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
@@ -542,6 +544,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // send command: transmit measured phase value
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1_125ps;
+      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+
+      // send the confidence value of the phase fit to ECA (for monitoring purposes)
+      sendEvtId    = fwlib_buildEvtidV1(recGid,  0x823, 0, recSid, recBpid, 0x0);
+      sendParam    = confidence_as;
       sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
 
@@ -566,7 +574,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // find closest timestamp
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Match_125ps, &dt) == COMMON_STATUS_OK) {
+          if (phaseFit(TH1_as, nInput, &tH1Match_125ps, &dt, &confidence_as) == COMMON_STATUS_OK) {
             Dt          = (reqDeadline * 8 - tH1Match_125ps);         // difference to trigger [125 ps]
             // tmp1 = (int32_t)Dt / 8; pp_printf("match1 [ns] %08d\n", tmp1);            
             Dt          = Dt * 125000000;                             // difference [as]
@@ -603,7 +611,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // find closest timestamp
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Phase_125ps, &dt) == COMMON_STATUS_OK) {
+          if (phaseFit(TH1_as, nInput, &tH1Phase_125ps, &dt, &confidence_as) == COMMON_STATUS_OK) {
             Dt          = (tH1Phase_125ps - tH1_125ps) * 125000000;    // difference [as]
             remainder   =  Dt % TH1_as;                               // remainder [as]
             if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
@@ -622,6 +630,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendParam   |= (uint64_t)(tmp.data & 0xffffffff);            // low word; match diagnostic
         sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+
+
+        // what EvtId? choose evtno 0x823 for now...
+        sendEvtId    = fwlib_buildEvtidV1(recGid,  0x823, 0, recSid, recBpid, 0x0);
+        sendParam    = confidence_as;
+        sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+        // inject the phase fit confidence locally into ECA
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+
         /*}*/ // if not pm error
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
