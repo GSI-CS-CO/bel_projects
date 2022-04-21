@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Apr-2022
+ *  version : 21-Apr-2022
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -84,12 +84,12 @@ uint32_t set_mode;                                          // b2b mode
 double   set_extT;                                          // extraction, h=1 period [as]
 double   set_extNue;                                        // extraction, h=1 frequency [Hz]
 uint32_t set_extH;                                          // extraction, harmonic number
-int32_t  set_extCTrig;                                      // extraction, kick trigger correction
+double   set_extCTrig;                                      // extraction, kick trigger correction
 double   set_injT;                                          // injection ...
 double   set_injNue;
 uint32_t set_injH;
-int32_t  set_injCTrig;
-int32_t  set_cPhase;                                        // b2b: phase correction [ns]
+double   set_injCTrig;
+double   set_cPhase;                                        // b2b: phase correction [ns]
 double   set_cPhaseD;                                       // b2b: phase correction [degree]
 uint32_t set_msecs;                                         // CBS deadline, fraction [ms]
 time_t   set_secs;                                          // CBS deadline, time [s]
@@ -340,24 +340,24 @@ int printSet(uint32_t sid)
       printf("b2b: %s\n", TXTNA);
       break;
     case 1 :
-      printf("ext: kick  corr %4d ns\n", set_extCTrig);
+      printf("ext: kick  corr %8.3f ns\n", set_extCTrig);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 2 : 
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 3 :
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4 :
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
-      printf("b2b: phase corr %4d ns       %12.3f °\n", set_cPhase, set_cPhaseD);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
+      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
       break;
     default :
       ;
@@ -389,7 +389,7 @@ int printDiag(uint32_t sid)
       else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj [ns]': act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
+      else  printf("inj [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
       else  printf("b2b [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",

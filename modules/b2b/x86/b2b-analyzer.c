@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Apr-2022
+ *  version : 21-Apr-2022
  *
  * analyzes and publishes get values
  * 
@@ -497,9 +497,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].ext_cTrig;
-    // act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T);
-    // printf("cor %8.3f, match %8.3f, act %8.3f\n", cor, dicGetval[sid].ext_diagMatch, act);
+    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    // printf("EXT match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].ext_diagMatch, cor, act);
     n   = ++(ext_ddsOffN[sid]);
 
     // statistics
@@ -623,8 +622,10 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   if (mode == 4) {
     // match diagnostics; theoretical value is '0'
-    cor = (double)(dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase);
+    cor = (double)dicSetval[sid].inj_cTrig - (double)dicSetval[sid].cPhase;
     act = fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    // printf("INJ match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].inj_diagMatch, cor, act);
+
     n   = ++(inj_ddsOffN[sid]);
 
     // statistics

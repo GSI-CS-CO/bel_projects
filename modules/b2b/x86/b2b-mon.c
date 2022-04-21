@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2022
+ *  version : 21-Apr-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000318
+#define B2B_MON_VERSION 0x000400
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -92,12 +92,12 @@ uint32_t set_mode[NALLSID];                                 // b2b mode
 double   set_extT[NALLSID];                                 // extraction, h=1 period [ns]
 double   set_extNue[NALLSID];                               // extraction, h=1 frequency [Hz]
 uint32_t set_extH[NALLSID];                                 // extraction, harmonic number
-int32_t  set_extCTrig[NALLSID];                             // extraction, kick trigger correction
+double   set_extCTrig[NALLSID];                             // extraction, kick trigger correction
 double   set_injT[NALLSID];                                 // injection ...
 double   set_injNue[NALLSID];
 uint32_t set_injH[NALLSID];
-int32_t  set_injCTrig[NALLSID];
-int32_t  set_cPhase[NALLSID];                               // b2b: phase correction [ns]
+double   set_injCTrig[NALLSID];
+double   set_cPhase[NALLSID];                               // b2b: phase correction [ns]
 double   set_cPhaseD[NALLSID];                              // b2b: phase correction [degree]
 uint32_t set_msecs[NALLSID];                                // CBS deadline, fraction [ms]
 time_t   set_secs[NALLSID];                                 // CBS deadline, time [s]
@@ -179,11 +179,11 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
-  sprintf(emptyK,  "|                     |              |        |    |             |                          |        |        |                                      |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS  set         get(stdev)diff[Hz] |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
-  sprintf(emptyN,  "|                     |              |        |    |                                        |        |        |                                      |");
-  //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick  set       trg offst probR | destn |    phase | kick  set       trg offst probR dOffst 'ToF'|");
+  sprintf(emptyK,  "|                     |              |       |    |                                 |       |          |                                             |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS  set         get(stdev)diff[Hz] |     destn | kick  set       trg offst probR dOffst 'ToF'|");
+  sprintf(emptyN,  "|                     |              |       |    |                                        |           |                                             |");
+  //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
 
@@ -211,7 +211,7 @@ void buildPrintLine(uint32_t idx)
   char     tmp5[32];
   uint32_t utmp1;
   uint32_t utmp2;
-  int32_t  itmp1;
+  double   dtmp1;
 
   uint32_t sid;
   ring_t   ring;
@@ -281,7 +281,7 @@ void buildPrintLine(uint32_t idx)
   }
   if (flagB2b) {
     if ((dicGetval[idx].flagEvtErr >> 3) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                        sprintf(b2b, "%6d", dicDiagval[idx].phaseOffAct);
+    else                                        sprintf(b2b, "%9.3f", dicDiagval[idx].phaseOffAct);
   } // if flagB2B
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
@@ -290,7 +290,7 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%5d",set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct );
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
     if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
@@ -303,16 +303,16 @@ void buildPrintLine(uint32_t idx)
       if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
       else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
     } //else not ok
-    sprintf(extTrig, "%5d %5s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
+    sprintf(extTrig, "%9.3f %9s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
   if (flagInjTrig) {
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
-      if (flagB2b) itmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-      else         itmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
-      sprintf(tmp1, "%5d", itmp1);
+      if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
+      else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+      sprintf(tmp1, "%9.3f", dtmp1);
     }
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics    
@@ -335,12 +335,12 @@ void buildPrintLine(uint32_t idx)
         else                                      sprintf(tmp5, "%5d", utmp2);
       } // if not nok
     } //else not ok
-    sprintf(injTrig, "%5d %5s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
+    sprintf(injTrig, "%9.3f %9s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
   } // if flagExtTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLineK[idx], "|%20s | %12s | %6s | %2d | %11s | %24s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, extNue, extTrig, dest, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s | %6s | %2d | %38s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, nueMeasExt, dest, b2b, injTrig);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %31s |%6s |%9s | %43s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s |%10s | %43s |", pattern, tCBS, origin, sid, nueMeasExt, dest, injTrig);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -506,7 +506,8 @@ void printData(char *name)
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d> | help <h>                                            %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
-  
+
+  printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("%s\n", title);
   if (flagPrintNue) {
     printf("%s\n", headerN);
@@ -520,8 +521,7 @@ void printData(char *name)
   } // else printNue
   printf("%s\n", footer);
   
-  //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-  //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+  printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     
   flagPrintNow = 0;
 } // printServices
