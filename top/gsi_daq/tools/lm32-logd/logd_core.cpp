@@ -27,6 +27,8 @@
 
 using namespace Scu;
 
+constexpr uint LM32_OFFSET = 0x10000000;
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -49,6 +51,15 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
 
    m_lm32Base = m_oMmu.getEb()->findDeviceBaseAddress( mmuEb::gsiId,
                                                        mmuEb::lm32_ram_user );
+   /*
+    * The string addresses of LM32 comes from the perspective of the LM32.
+    * Therefore a offset correction has to made here.
+    */
+   if( m_lm32Base < LM32_OFFSET )
+   {
+      throw std::runtime_error( "LM32 base address is corrupt!" );
+   }
+   m_lm32Base -= LM32_OFFSET;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -61,6 +72,9 @@ Lm32Logd::~Lm32Logd( void )
  */
 void Lm32Logd::operator()( void )
 {
+   std::string str;
+   uint n = readStringFromLm32( str, 0x10001824 );
+   std::cout << "Zeichen: " << n << ", Text: " << str << std::endl;
 }
 
 /*! ---------------------------------------------------------------------------

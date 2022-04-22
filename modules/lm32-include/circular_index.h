@@ -278,7 +278,7 @@ RAM_RING_INDEX_T ramRingSharedGetRemainingCapacity( const RAM_RING_SHARED_INDEXE
  * @ingroup SHARED_MEMORY
  * @brief Adds a value to the write index.
  * @param pThis Pointer to the shared ring indexes object.
- * @param value to add to the write index.
+ * @param toAdd to add to the write index.
  */
 STATIC inline
 void ramRingSharedAddToWriteIndex( RAM_RING_SHARED_INDEXES_T* pThis,
@@ -302,7 +302,7 @@ void ramRingSharedIncWriteIndex( RAM_RING_SHARED_INDEXES_T* pThis )
  * @ingroup SHARED_MEMORY
  * @brief Adds a value to the read index.
  * @param pThis Pointer to the shared ring indexes object.
- * @param value to add to the read index.
+ * @param toAdd to add to the read index.
  */
 STATIC inline
 void ramRingSharedAddToReadIndex( RAM_RING_SHARED_INDEXES_T* pThis,
