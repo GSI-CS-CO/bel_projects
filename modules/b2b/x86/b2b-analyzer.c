@@ -204,37 +204,6 @@ static void help(void) {
 } //help
 
 
-// find nearest rising edge of h=1 signal; result [ns]
-double fixTS(double   ts,                              // timestamp [ns]
-             double   corr,                            // (trigger)correction [ns]
-             uint64_t TH1As                            // h=1 period [as]
-             )
-{
-  double  ts0;                                         // timestamp with correction removed [ns]
-  double  dtMatch;
-  int64_t ts0as;                                       // t0 [as]
-  int64_t remainder;                     
-  int64_t half;
-  int     flagNeg; 
-
-  if (TH1As == 0) return ts;                           // can't fix
-  ts0  = ts - corr;
-  if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}              // make this work for negative numbers too
-  else         flagNeg = 0;
-
-  ts0as     = (int64_t)(ts0 * 1000000000.0);
-  half      = TH1As >> 1;
-  remainder = ts0as % TH1As;                                 
-  if (remainder > half) ts0as = remainder - TH1As;
-  else                  ts0as = remainder;
-  dtMatch   = (double)ts0as / 1000000000.0;
-  
-  if (flagNeg) dtMatch = -dtMatch;
-
-  return dtMatch + corr;                               // we have to add back the correction (!)
-} //fixTS
-
-
 // clears diag data
 void clearStats(uint32_t sid)
 {
@@ -497,7 +466,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if (mode >= 2) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].ext_cTrig;
-    act = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    act = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
     // printf("EXT match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].ext_diagMatch, cor, act);
     n   = ++(ext_ddsOffN[sid]);
 
@@ -519,7 +488,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf phase diagnostics; theoretical value is '0'
     cor = 0.0;
-    act = fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
+    act = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
     n   = ++(ext_rfOffN[sid]);
 
     // statistics
@@ -623,7 +592,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if (mode == 4) {
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].inj_cTrig - (double)dicSetval[sid].cPhase;
-    act = fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
     // printf("INJ match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].inj_diagMatch, cor, act);
 
     n   = ++(inj_ddsOffN[sid]);
@@ -645,7 +614,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf phase diagnostics raw values; theoretical value is '0'
     cor = 0.0;
-    act = fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T);
+    act = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T);
     n   = ++(inj_rfOffN[sid]);
 
     // statistics

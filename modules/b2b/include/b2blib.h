@@ -234,11 +234,17 @@ extern "C" {
   // convert LSA frequency to DDS frequency
   double b2b_flsa2fdds(double flsa                             // LSA frequency [Hz]
                        );
-  //convert timestamp to seconds and nanoseconds
+  //convert timestamp [ns] to seconds and nanoseconds
   void b2b_t2secs(uint64_t ts,                                 // timestamp [ns]
                   uint32_t *secs,                              // seconds
                   uint32_t *nsecs                              // nanosecons
                   );
+
+  // find rising edge of h=1 signal nearest to 0; result [ns]
+  double b2b_fixTS(double   tsDiff,                            // timestamp difference to '0' [ns]
+                   double   corr,                              // given (trigger) correction [ns]
+                   uint64_t TH1As                              // h=1 period [as]
+                   );
 
   // enable debugging to trace library activity (experimental)
   void b2b_debug(uint32_t flagDebug                            // 1: debug on; 0: debug off

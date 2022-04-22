@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Apr-2022
+ *  version : 21-Apr-2022
  *
  * library for b2b
  *
@@ -173,6 +173,33 @@ void b2b_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
   *nsecs = (uint32_t)(ts % 1000000000);
   *secs  = (uint32_t)(ts / 1000000000);
 } // b2b_t2secs
+
+
+double b2b_fixTS(double tsDiff, double   corr, uint64_t TH1As)
+{
+  double  ts0;                                         // timestamp with correction removed [ns]
+  double  dtMatch;
+  int64_t ts0as;                                       // t0 [as]
+  int64_t remainder;                     
+  int64_t half;
+  int     flagNeg; 
+
+  if (TH1As == 0) return tsDiff;                       // can't fix
+  ts0  = tsDiff - corr;
+  if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}              // make this work for negative numbers too
+  else         flagNeg = 0;
+
+  ts0as     = (int64_t)(ts0 * 1000000000.0);
+  half      = TH1As >> 1;
+  remainder = ts0as % TH1As;                                 
+  if (remainder > half) ts0as = remainder - TH1As;
+  else                  ts0as = remainder;
+  dtMatch   = (double)ts0as / 1000000000.0;
+  
+  if (flagNeg) dtMatch = -dtMatch;
+
+  return dtMatch + corr;                               // we have to add back the correction (!)
+} //b2b_fixTS
 
 
 void b2b_log(char *message){
