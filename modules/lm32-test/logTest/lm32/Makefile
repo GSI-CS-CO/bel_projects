@@ -13,6 +13,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu_lm32.c
 SOURCE += $(SCU_LIB_SRC_DIR)/lm32_syslog.c
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 
 DEFINES += CONFIG_SCU_USE_DDR3
 

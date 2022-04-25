@@ -35,6 +35,7 @@ constexpr uint LM32_OFFSET = 0x10000000;
 Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine )
    :m_rCmdLine( rCmdLine )
    ,m_oMmu( &roEtherbone )
+   ,m_lastTimestamp( 0 )
 {
    if( !m_oMmu.isPresent() )
    {
@@ -48,9 +49,24 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    {
       throw std::runtime_error( m_oMmu.status2String( status ) );
    }
+   addr += SYSLOG_FIFO_ADMIN_SIZE;
+   size -= SYSLOG_FIFO_ADMIN_SIZE;
+
+   m_fiFoAdmin.admin.indexes.offset   = 0;
+   m_fiFoAdmin.admin.indexes.capacity = 0;
+   m_fiFoAdmin.admin.indexes.start    = 0;
+   m_fiFoAdmin.admin.indexes.end      = 0;
+   m_fiFoAdmin.admin.wasRead          = 0;
+   updateFiFoAdmin();
+   if( (m_fiFoAdmin.admin.indexes.offset   != addr) ||
+       (m_fiFoAdmin.admin.indexes.capacity != size) )
+   {
+      throw std::runtime_error( "LM32 syslog fifo is corrupt!" );
+   }
 
    m_lm32Base = m_oMmu.getEb()->findDeviceBaseAddress( mmuEb::gsiId,
                                                        mmuEb::lm32_ram_user );
+
    /*
     * The string addresses of LM32 comes from the perspective of the LM32.
     * Therefore a offset correction has to made here.
@@ -79,8 +95,20 @@ void Lm32Logd::operator()( void )
 
 /*! ---------------------------------------------------------------------------
  */
+void Lm32Logd::updateFiFoAdmin( void )
+{
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
 {
+   const uint HIGHST_ADDR = 2*LM32_OFFSET;
+   if( !gsi::isInRange( addr, LM32_OFFSET, HIGHST_ADDR ) )
+   {
+      throw std::runtime_error( "String address is corrupt!" );
+   }
+
    char buffer[16];
    uint ret = 0;
 
@@ -89,7 +117,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       readLm32( buffer, sizeof( buffer ), addr );
       for( uint i = 0; i < sizeof( buffer ); i++ )
       {
-         if( buffer[i] == '\0' )
+         if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
             return ret;
          rStr += buffer[i];
          ret++;

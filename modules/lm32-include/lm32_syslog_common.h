@@ -119,7 +119,19 @@ STATIC const size_t SYSLOG_FIFO_ITEM_SIZE = (sizeof(SYSLOG_FIFO_ITEM_T) / sizeof
 STATIC inline
 RAM_RING_INDEX_T sysLogFifoGetSize( const SYSLOG_FIFO_ADMIN_T* pThis )
 {
-   return ramRingSharedGetSize( &pThis->admin ) / SYSLOG_FIFO_ITEM_SIZE;
+   return ramRingSharedGetSize( &pThis->admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Returns the number of currently used sys-log items.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Actual number written items
+ */
+STATIC inline
+RAM_RING_INDEX_T sysLogFifoGetItemSize( const SYSLOG_FIFO_ADMIN_T* pThis )
+{
+   return sysLogFifoGetSize( pThis ) / SYSLOG_FIFO_ITEM_SIZE;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -131,7 +143,19 @@ RAM_RING_INDEX_T sysLogFifoGetSize( const SYSLOG_FIFO_ADMIN_T* pThis )
 STATIC inline
 RAM_RING_INDEX_T sysLogFifoGetRemainingCapacity( const SYSLOG_FIFO_ADMIN_T* pThis )
 {
-   return ramRingSharedGetRemainingCapacity( &pThis->admin ) / SYSLOG_FIFO_ITEM_SIZE;
+   return ramRingSharedGetRemainingCapacity( &pThis->admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Returns the remaining free sys-log items of the currently used memory
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of free memory items.
+ */
+STATIC inline
+RAM_RING_INDEX_T sysLogFifoGetRemainingItemCapacity( const SYSLOG_FIFO_ADMIN_T* pThis )
+{
+   return sysLogFifoGetRemainingCapacity( pThis ) / SYSLOG_FIFO_ITEM_SIZE;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -144,7 +168,7 @@ STATIC inline
 void sysLogFifoAddToWriteIndex( SYSLOG_FIFO_ADMIN_T* pThis,
                                 const RAM_RING_INDEX_T toAdd )
 {
-   ramRingSharedAddToWriteIndex( &pThis->admin, toAdd * SYSLOG_FIFO_ITEM_SIZE );
+   ramRingSharedAddToWriteIndex( &pThis->admin, toAdd );
 }
 
 /*!----------------------------------------------------------------------------
@@ -160,6 +184,19 @@ void sysLogFifoIncWriteIndex( SYSLOG_FIFO_ADMIN_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
+ * @brief Returns the current absolute write-index for a write access to the
+ *        physical memory.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Index value for write access.
+ */
+STATIC inline
+RAM_RING_INDEX_T sysLogFifoGetWriteIndex( SYSLOG_FIFO_ADMIN_T* pThis )
+{
+   return ramRingSharedGetWriteIndex( &pThis->admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
  * @brief Adds a value to the read index.
  * @param pThis Pointer to the shared ring indexes object.
  * @param toAdd to add to the read index.
@@ -168,7 +205,7 @@ STATIC inline
 void sysLogFifoAddToReadIndex( SYSLOG_FIFO_ADMIN_T* pThis,
                                const RAM_RING_INDEX_T toAdd )
 {
-   ramRingSharedAddToReadIndex( &pThis->admin, toAdd * SYSLOG_FIFO_ITEM_SIZE );
+   ramRingSharedAddToReadIndex( &pThis->admin, toAdd );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -197,6 +234,22 @@ STATIC inline
 void sysLogFifoSynchonizeReadIndex( SYSLOG_FIFO_ADMIN_T* pThis )
 {
    ramRingSharedSynchonizeReadIndex( &pThis->admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Returns the number of items beginning at the read index until to the
+ *        upper border  of the used memory buffer belonging to this object.
+ *
+ * Value range:  {1 <= return <= max capacity}
+ *
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Number of items which can read until the upper border of the buffer.
+ */
+STATIC inline
+RAM_RING_INDEX_T sysLogFifoGetUpperReadSize( SYSLOG_FIFO_ADMIN_T* pThis )
+{
+   return ramRingSharedGetUpperReadSize( &pThis->admin );
 }
 
 

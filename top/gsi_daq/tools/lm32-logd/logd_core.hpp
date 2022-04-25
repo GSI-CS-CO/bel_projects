@@ -26,6 +26,7 @@
 #define _LOGD_CORE_HPP
 
 #include <scu_mmu_fe.hpp>
+#include <lm32_syslog_common.h>
 #include "logd_cmdline.hpp"
 
 
@@ -39,10 +40,20 @@ class Lm32Logd
    mmu::Mmu     m_oMmu;
    uint         m_lm32Base;
 
+   uint64_t     m_lastTimestamp;
+
+   SYSLOG_FIFO_ADMIN_T  m_fiFoAdmin;
+
 public:
    Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
    ~Lm32Logd( void );
+
    void operator()( void );
+
+   uint64_t getLastTimestamp( void )
+   {
+      return m_lastTimestamp;
+   }
 
 private:
    void readLm32( char* pData,
@@ -55,6 +66,10 @@ private:
    }
 
    uint readStringFromLm32( std::string& rStr, uint addr );
+
+   void updateFiFoAdmin( void );
+
+   void setResponse( uint n );
 };
 
 } // namespace Scu

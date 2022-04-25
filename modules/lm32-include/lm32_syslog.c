@@ -24,8 +24,116 @@
  */
 #include <scu_wr_time.h>
 #include <lm32_syslog.h>
+#include <scu_mmu_tag.h>
+#include <lm32Interrupts.h>
 
 STATIC_ASSERT( sizeof(char*) == sizeof(uint32_t) );
+
+MMU_OBJ_T g_mmuObj;
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline void syslogWriteRam( unsigned int index, const RAM_PAYLOAD_T* pData )
+{
+   criticalSectionEnter();
+   ddr3write64( &g_mmuObj, index, pData );
+   criticalSectionExit();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline void syslogReadRam( unsigned int index, RAM_PAYLOAD_T* pData )
+{
+   criticalSectionEnter();
+   ddr3read64( &g_mmuObj, pData, index );
+   criticalSectionExit();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void syslogWriteFifoAdmin( const SYSLOG_FIFO_ADMIN_T* pAdmin )
+{
+   unsigned int index = pAdmin->admin.indexes.offset - SYSLOG_FIFO_ADMIN_SIZE;
+   for( size_t i = 0; i < SYSLOG_FIFO_ADMIN_SIZE; i++, index++ )
+   {
+      syslogWriteRam( index, &((RAM_PAYLOAD_T*)pAdmin)[i] );
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void syslogReadFifoAdmin( SYSLOG_FIFO_ADMIN_T* pAdmin )
+{
+   unsigned int index = pAdmin->admin.indexes.offset - SYSLOG_FIFO_ADMIN_SIZE;
+   for( size_t i = 0; i < SYSLOG_FIFO_ADMIN_SIZE; i++, index++ )
+   {
+      syslogReadRam( index, &((RAM_PAYLOAD_T*)pAdmin)[i] );
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void syslogPushItem( const SYSLOG_FIFO_ITEM_T* pItem )
+{
+   SYSLOG_FIFO_ADMIN_T admin;
+
+   syslogReadFifoAdmin( &admin );
+
+   /*
+    * Removing the items which has been probably read by the Linux daemon.
+    */
+   sysLogFifoSynchonizeReadIndex( &admin );
+
+   /*
+    * Is enough space for the new item?
+    */
+   if( sysLogFifoGetRemainingItemCapacity( &admin ) == 0 )
+   { /*
+      * No, deleting the oldest item to make space.
+      */
+      sysLogFifoAddToReadIndex( &admin, SYSLOG_FIFO_ITEM_SIZE );
+   }
+
+   for( size_t i = 0; i < SYSLOG_FIFO_ITEM_SIZE; i++ )
+   {
+      syslogWriteRam( sysLogFifoGetWriteIndex( &admin ), &((RAM_PAYLOAD_T*)pItem)[i] );
+      sysLogFifoIncWriteIndex( &admin );
+   }
+
+   syslogWriteFifoAdmin( &admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32_syslog.h
+ */
+MMU_STATUS_T syslogInit( unsigned int numOfItems )
+{
+   MMU_STATUS_T status;
+
+   if( (status = mmuInit( &g_mmuObj )) != OK )
+      return status;
+
+   numOfItems *= SYSLOG_FIFO_ITEM_SIZE;
+   numOfItems += SYSLOG_FIFO_ADMIN_SIZE;
+
+   MMU_ADDR_T startAddr;
+   status = mmuAlloc( TAG_LM32_LOG, &startAddr, &numOfItems, true );
+   if( status != OK )
+      return status;
+
+   SYSLOG_FIFO_ADMIN_T fifoAdmin =
+   {
+      .admin.indexes.offset   = startAddr  + SYSLOG_FIFO_ADMIN_SIZE,
+      .admin.indexes.capacity = numOfItems - SYSLOG_FIFO_ADMIN_SIZE,
+      .admin.indexes.start    = 0,
+      .admin.indexes.end      = 0,
+      .admin.wasRead          = 0
+   };
+
+   syslogWriteFifoAdmin( &fifoAdmin );
+
+   return status;
+}
 
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
@@ -45,6 +153,8 @@ void vsyslog( uint32_t priority, const char* format, va_list ap )
       .priority = priority,
       .format = (uint32_t)format
    };
+
+   syslogPushItem( &item );
 }
 
 /*! ---------------------------------------------------------------------------
