@@ -37,6 +37,7 @@
 extern "C" {
 #endif
 
+
 MMU_STATUS_T syslogInit( unsigned int numOfItems );
 
 /*! ---------------------------------------------------------------------------

@@ -26,10 +26,12 @@
 #include <lm32_syslog.h>
 #include <scu_mmu_tag.h>
 #include <lm32Interrupts.h>
+#include <dbg.h>
 
 STATIC_ASSERT( sizeof(char*) == sizeof(uint32_t) );
 
 MMU_OBJ_T g_mmuObj;
+STATIC MMU_ADDR_T mg_adminOffset = 0;
 
 /*! ---------------------------------------------------------------------------
  */
@@ -53,7 +55,7 @@ STATIC inline void syslogReadRam( unsigned int index, RAM_PAYLOAD_T* pData )
  */
 STATIC void syslogWriteFifoAdmin( const SYSLOG_FIFO_ADMIN_T* pAdmin )
 {
-   unsigned int index = pAdmin->admin.indexes.offset - SYSLOG_FIFO_ADMIN_SIZE;
+   MMU_ADDR_T index = mg_adminOffset;
    for( size_t i = 0; i < SYSLOG_FIFO_ADMIN_SIZE; i++, index++ )
    {
       syslogWriteRam( index, &((RAM_PAYLOAD_T*)pAdmin)[i] );
@@ -64,11 +66,12 @@ STATIC void syslogWriteFifoAdmin( const SYSLOG_FIFO_ADMIN_T* pAdmin )
  */
 STATIC void syslogReadFifoAdmin( SYSLOG_FIFO_ADMIN_T* pAdmin )
 {
-   unsigned int index = pAdmin->admin.indexes.offset - SYSLOG_FIFO_ADMIN_SIZE;
+   MMU_ADDR_T index = mg_adminOffset;
    for( size_t i = 0; i < SYSLOG_FIFO_ADMIN_SIZE; i++, index++ )
    {
       syslogReadRam( index, &((RAM_PAYLOAD_T*)pAdmin)[i] );
    }
+      ramRingDbgPrintIndexes( &pAdmin->admin.indexes, "read" );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -113,22 +116,28 @@ MMU_STATUS_T syslogInit( unsigned int numOfItems )
    if( (status = mmuInit( &g_mmuObj )) != OK )
       return status;
 
+#ifdef CONFIG_LOG_TEST
+   mmuDelete();
+#endif
    numOfItems *= SYSLOG_FIFO_ITEM_SIZE;
    numOfItems += SYSLOG_FIFO_ADMIN_SIZE;
 
-   MMU_ADDR_T startAddr;
-   status = mmuAlloc( TAG_LM32_LOG, &startAddr, &numOfItems, true );
+   status = mmuAlloc( TAG_LM32_LOG, &mg_adminOffset, &numOfItems, true );
    if( status != OK )
       return status;
 
    SYSLOG_FIFO_ADMIN_T fifoAdmin =
    {
-      .admin.indexes.offset   = startAddr  + SYSLOG_FIFO_ADMIN_SIZE,
-      .admin.indexes.capacity = numOfItems - SYSLOG_FIFO_ADMIN_SIZE,
+      .admin.indexes.offset   = mg_adminOffset + SYSLOG_FIFO_ADMIN_SIZE,
+      .admin.indexes.capacity = numOfItems     - SYSLOG_FIFO_ADMIN_SIZE,
       .admin.indexes.start    = 0,
       .admin.indexes.end      = 0,
       .admin.wasRead          = 0
    };
+
+   DBPRINT1( "offfset: %u\ncapacity: %u\n",
+             fifoAdmin.admin.indexes.offset,
+             fifoAdmin.admin.indexes.capacity );
 
    syslogWriteFifoAdmin( &fifoAdmin );
 

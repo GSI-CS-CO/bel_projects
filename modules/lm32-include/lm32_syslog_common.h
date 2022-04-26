@@ -197,6 +197,19 @@ RAM_RING_INDEX_T sysLogFifoGetWriteIndex( SYSLOG_FIFO_ADMIN_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
+ * @brief Returns the current absolute read index for a read access to the
+ *        physical memory.
+ * @param pThis Pointer to the shared ring indexes object.
+ * @return Index value for read access.
+ */
+STATIC inline
+RAM_RING_INDEX_T sysLogFifoGetReadIndex( SYSLOG_FIFO_ADMIN_T* pThis )
+{
+   return ramRingSharedGetReadIndex( &pThis->admin );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
  * @brief Adds a value to the read index.
  * @param pThis Pointer to the shared ring indexes object.
  * @param toAdd to add to the read index.

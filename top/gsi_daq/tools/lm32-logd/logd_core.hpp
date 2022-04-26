@@ -36,13 +36,17 @@ namespace Scu
 ///////////////////////////////////////////////////////////////////////////////
 class Lm32Logd
 {
-   CommandLine& m_rCmdLine;
-   mmu::Mmu     m_oMmu;
-   uint         m_lm32Base;
-
-   uint64_t     m_lastTimestamp;
-
+   CommandLine&         m_rCmdLine;
+   mmu::Mmu             m_oMmu;
+   uint                 m_lm32Base;
+   uint                 m_fifoAdminBase;
+   mmu::MMU_ADDR_T      m_offset;
+   std::size_t          m_capacity;
+   uint64_t             m_lastTimestamp;
+   uint                 m_maxItems;
    SYSLOG_FIFO_ADMIN_T  m_fiFoAdmin;
+
+   SYSLOG_FIFO_ITEM_T*  m_pMiddleBuffer;
 
 public:
    Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
@@ -65,11 +69,26 @@ private:
                             EB_BIG_ENDIAN | format, len );
    }
 
+   void readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len )
+   {
+      m_oMmu.getEb()->read( m_oMmu.getBase() +
+                               sysLogFifoGetReadIndex( &m_fiFoAdmin ) *
+                               sizeof(mmu::RAM_PAYLOAD_T),
+                            pData,
+                            EB_DATA32 | EB_LITTLE_ENDIAN,
+                            len * sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(uint32_t) );
+      sysLogFifoAddToReadIndex( &m_fiFoAdmin, len );
+   }
+
    uint readStringFromLm32( std::string& rStr, uint addr );
 
-   void updateFiFoAdmin( void );
+   void updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& );
 
    void setResponse( uint n );
+
+   void readItems( void );
+
+   void evaluateItem( const SYSLOG_FIFO_ITEM_T& );
 };
 
 } // namespace Scu
