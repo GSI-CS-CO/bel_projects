@@ -605,27 +605,29 @@ int main(int argc, char* argv[]) {
       std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
 
       if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) {
-        cdm.createCommand(ew, dnt::sSwitch, fromNode, toNode, 0, 0, false, 0, false, false, false, false, false, false, false, false, thrIdx);
+        cdm.createCommand(ew, dnt::sSwitch, fromNode, toNode, cmdPrio, cmdQty, true, cmdTvalid, permanent,
+              false, false, false, 0, false, false, false, thrIdx);
       } else {std::cerr << program << ": Destination Node '" << toNode << "' was not found on DM" << std::endl; return -1; }
       targetName = fromNode.c_str();
     }
     else if (cmp == dnt::sSwitch)  {
       if (( ((para != NULL) && ( para != std::string("")))) && (((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para)))) {
-        cdm.createCommand(ew, dnt::sSwitch, targetName, para, 0, 0, false, 0, false, false, false, false, false, false, false, false, thrIdx);
+        cdm.createCommand(ew, dnt::sSwitch, targetName, para, cmdPrio, cmdQty, true, cmdTvalid, permanent,
+              false, false, false, 0, false, false, false, thrIdx);
       } else {std::cerr << program << ": Destination Node '" << para << "' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
-      cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, 0, strtoll(para, NULL, 0), false);
+      cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, cmdTvalid, strtoll(para, NULL, 0), false);
     }
     else if (cmp == "abswait")  {
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
-      cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, 0, strtoll(para, NULL, 0), true);
+      cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, cmdTvalid, strtoll(para, NULL, 0), true);
     }
     else if (cmp == dnt::sCmdFlush) {
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
       uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-      cdm.createFlushCommand(ew, dnt::sCmdFlush, targetName, "", cmdPrio, cmdQty, true, 0, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
+      cdm.createFlushCommand(ew, dnt::sCmdFlush, targetName, "", cmdPrio, cmdQty, true, cmdTvalid, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "staticflush") {
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
