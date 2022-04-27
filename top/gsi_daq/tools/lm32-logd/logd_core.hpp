@@ -88,7 +88,10 @@ private:
 
    void readItems( void );
 
-   void evaluateItem( const SYSLOG_FIFO_ITEM_T& );
+   void evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item );
+
+   static bool isPaddingChar( const char c );
+   static bool isDecDigit( const char c );
 };
 
 } // namespace Scu

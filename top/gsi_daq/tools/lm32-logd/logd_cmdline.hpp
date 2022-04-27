@@ -40,6 +40,8 @@ class CommandLine: public CLOP::PARSER
    bool        m_daemonize;
    const bool  m_isOnScu;
    bool        m_noTimestamp;
+   bool        m_humanTimestamp;
+   bool        m_isForConsole;
    uint        m_interval;
    std::string m_scuUrl;
 
@@ -69,6 +71,16 @@ public:
    bool isNoTimestamp( void )
    {
       return m_noTimestamp;
+   }
+
+   bool isHumanReadableTimestamp( void )
+   {
+      return m_humanTimestamp;
+   }
+
+   bool isForConsole( void )
+   {
+      return m_isForConsole;
    }
 
    uint getIntervalTime( void )

@@ -142,6 +142,31 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         static_cast<CommandLine*>(poParser)->m_humanTimestamp = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'H',
+      .m_longOpt  = "human",
+      .m_helpText = "Human readable timestamp."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_isForConsole = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'c',
+      .m_longOpt  = "console",
+      .m_helpText = "Console mode: line feed \"\\n\" becomes printed.\n"
+                    "Otherwise it becomes replaced by space character."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
          uint interval;
          if( readInteger( interval, poParser->getOptArg() ) )
             return -1;
@@ -156,7 +181,6 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     "Overwrites the default interval of " TO_STRING( DEFAULT_INTERVAL )
                     " seconds."
    }
-
 }; // CommandLine::c_optList// CommandLine::c_optList
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -185,6 +209,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_daemonize( false )
    ,m_isOnScu( isRunningOnScu() )
    ,m_noTimestamp( false )
+   ,m_humanTimestamp( false )
+   ,m_isForConsole( false )
    ,m_interval( DEFAULT_INTERVAL )
 {
    if( m_isOnScu )
@@ -237,6 +263,12 @@ std::string& CommandLine::operator()( void )
       ERROR_MESSAGE( "Missing SCU URL" );
       ::exit( EXIT_FAILURE );
    }
+
+   if( m_humanTimestamp && m_noTimestamp )
+      WARNING_MESSAGE( "Timestamp will not printed, therefore"
+                       " the option for human readable timestamp"
+                       " has no effect!" );
+
    return m_scuUrl;
 }
 

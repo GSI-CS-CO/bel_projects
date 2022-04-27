@@ -22,7 +22,7 @@ void main( void )
 
    const char* text = "Das ist ein Text im LM32.";
    syslog( 0, "Text in syslog: \"%s\", %d", text, 4711 );
-   syslog( 0, "Noch ein Text in syslog!" );
+   syslog( 0, "Noch ein\nText in syslog!" );
 
 
    mprintf( "Text: \"%s\"\nAddress: 0x%p\n", text, text );

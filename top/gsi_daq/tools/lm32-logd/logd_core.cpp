@@ -22,10 +22,13 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <iomanip>
-#include <scu_mmu_tag.h>
-#include "logd_core.hpp"
-
+#ifndef __DOCFSM__
+ #include <iomanip>
+ #include <scu_mmu_tag.h>
+ #include <daq_calculations.hpp>
+ #include <daqt_messages.hpp>
+ #include "logd_core.hpp"
+#endif
 using namespace Scu;
 using namespace std;
 
@@ -133,12 +136,12 @@ void Lm32Logd::updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& rAdmin )
    }
 }
 
+constexpr uint HIGHST_ADDR = 2*LM32_OFFSET;
+
 /*! ---------------------------------------------------------------------------
  */
 uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
 {
-   const uint HIGHST_ADDR = 2*LM32_OFFSET;
-
    if( !gsi::isInRange( addr, LM32_OFFSET, HIGHST_ADDR ) )
    {
       throw std::runtime_error( "String address is corrupt!" );
@@ -154,7 +157,13 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       {
          if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
             return ret;
-         rStr += buffer[i];
+         if( !m_rCmdLine.isForConsole() && ((buffer[i] == '\n') || (buffer[i] == '\r')) )
+         {
+            if( buffer[i] == '\n')
+               rStr += ' ';
+         }
+         else
+            rStr += buffer[i];
          ret++;
       }
       addr += sizeof( buffer );
@@ -197,7 +206,9 @@ void Lm32Logd::readItems( void )
 
    for( uint i = 0; i < numOfItems; i++ )
    {
-      evaluateItem( m_pMiddleBuffer[i] );
+      std::string output;
+      evaluateItem( output, m_pMiddleBuffer[i] );
+      cout << output << std::endl;
    }
 
    delete[] m_pMiddleBuffer;
@@ -206,13 +217,242 @@ void Lm32Logd::readItems( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void Lm32Logd::evaluateItem( const SYSLOG_FIFO_ITEM_T& item )
+inline bool Lm32Logd::isPaddingChar( const char c )
 {
-   std::string format;
-   readStringFromLm32( format, item.format );
-   cout << "TEST: " << format << endl;
+   switch( c )
+   {
+      case '0': /* No break here! */
+      case ' ': /* No break here! */
+      case '.': /* No break here! */
+      case '_':
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool Lm32Logd::isDecDigit( const char c )
+{
+   return gsi::isInRange( c, '0', '9');
+}
+
+#define FSM_DECLARE_STATE( newState, attr... ) newState
+#define FSM_INIT_FSM( initState, attr... ) STATE_T state = initState
+#define FSM_TRANSITION( target, attr... ) { state = target; break; }
+#define FSM_TRANSITION_NEXT( target, attr... ) { state = target; next = true; break; }
+#define FSM_TRANSITION_SELF( attr...) break
+
+/*! ---------------------------------------------------------------------------
+ */
+void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item )
+{
+   if( m_lastTimestamp >= item.timestamp )
+   {
+      ERROR_MESSAGE( "Invalid timestamp: " << item.timestamp );
+      return;
+   }
 
    m_lastTimestamp = item.timestamp;
+
+   std::string format;
+   readStringFromLm32( format, item.format );
+
+   if( !m_rCmdLine.isNoTimestamp() )
+   {
+      if( m_rCmdLine.isHumanReadableTimestamp() )
+      {
+         rOutput += daq::wrToTimeDateString( item.timestamp );
+         rOutput += std::to_string(item.timestamp % daq::NANOSECS_PER_SEC);
+      }
+      else
+      {
+         rOutput += std::to_string(item.timestamp);
+      }
+      rOutput += ": ";
+   }
+
+   enum STATE_T
+   {
+      FSM_DECLARE_STATE( NORMAL ),
+      FSM_DECLARE_STATE( PADDING_CHAR ),
+      FSM_DECLARE_STATE( PADDING_SIZE ),
+      FSM_DECLARE_STATE( PARAM )
+   };
+
+   FSM_INIT_FSM( NORMAL );
+   char paddingChar = ' ';
+   uint paddingSize = 0;
+
+   uint ai = 0;
+   uint base = 10;
+   for( uint i = 0; i < format.length(); i++ )
+   {
+      bool next;
+      do
+      {
+         next = false;
+         switch( state )
+         {
+            case NORMAL:
+            {
+               if( format[i] == '%' && (ai < ARRAY_SIZE(item.param)) )
+                  FSM_TRANSITION( PADDING_CHAR, label='char == %' );
+
+               rOutput += format[i];
+
+               FSM_TRANSITION_SELF();
+            }
+            case PADDING_CHAR:
+            {
+               if( format[i] == '%' )
+               {
+                  rOutput += format[i];
+                  FSM_TRANSITION( NORMAL, label='char == %' );
+               }
+               if( isPaddingChar( format[i] ) )
+               {
+                  paddingChar = format[i];
+                  FSM_TRANSITION( PADDING_SIZE );
+               }
+               if( isDecDigit( format[i] ) )
+               {
+                  paddingSize = 0;
+                  FSM_TRANSITION_NEXT( PADDING_SIZE );
+               }
+               FSM_TRANSITION_NEXT( PARAM );
+            }
+            case PADDING_SIZE:
+            {
+               if( !isDecDigit( format[i] ) )
+                  FSM_TRANSITION_NEXT( PARAM );
+               paddingSize *= 10;
+               paddingSize += format[i] + '0';
+               FSM_TRANSITION_SELF();
+            }
+            case PARAM:
+            {
+               bool signum  = false;
+               bool unknown = false;
+               bool done    = false;
+               unsigned char hexOffset = 0;
+               assert( ai < ARRAY_SIZE(item.param) );
+               switch( format[i] )
+               {
+                  case 'S': /* No break here! */
+                  case 's':
+                  {
+                     if( gsi::isInRange( item.param[ai], LM32_OFFSET, HIGHST_ADDR ) )
+                        readStringFromLm32( rOutput, item.param[ai] );
+                     else
+                        ERROR_MESSAGE( "String address of parameter " << (ai+1)
+                                       << " is invalid: 0x"
+                                       << std::hex  << std::uppercase << std::setfill('0')
+                                       << std::setw( 8 ) << item.param[ai] << std::dec << " !" );
+                     ai++;
+                     done = true;
+                     break;
+                  }
+                  case 'c':
+                  {
+                     rOutput += item.param[ai++];
+                     done = true;
+                     break;
+                  }
+                  case 'X':
+                  {
+                     base = 16;
+                     hexOffset = 'A' - '9' - 1;
+                     break;
+                  }
+                  case 'x':
+                  {
+                     base = 16;
+                     hexOffset = 'a' - '9' - 1;
+                     break;
+                  }
+                  case 'p':
+                  {
+                     base = 16;
+                     hexOffset = 'A' - '9' - 1;
+                     paddingChar = '0';
+                     paddingSize = sizeof(uint32_t) * 2;
+                     break;
+                  }
+                  case 'i': /* No break here! */
+                  case 'd':
+                  {
+                     base = 10;
+                     signum = true;
+                     break;
+                  }
+                  case 'u':
+                  {
+                     base = 10;
+                     break;
+                  }
+                  case 'o':
+                  {
+                     base = 8;
+                     break;
+                  }
+             #ifndef CONFIG_NO_BINARY_PRINTF_FORMAT
+                  case 'b':
+                  {
+                     base = 2;
+                     break;
+                  }
+             #endif
+                  default:
+                  {
+                     unknown = true;
+                     break;
+                  }
+               }
+               if( unknown )
+                  FSM_TRANSITION_NEXT( NORMAL );
+
+               if( done )
+                  FSM_TRANSITION( NORMAL );
+
+               uint32_t value = item.param[ai++];
+               if( signum && ((value & (1 << (BIT_SIZEOF(value)-1))) != 0) )
+               {
+                  if( paddingSize > 0 )
+                     paddingSize--;
+                  value = -value;
+               }
+
+               unsigned char digitBuffer[BIT_SIZEOF(value)+1];
+               unsigned char* revPtr = digitBuffer + ARRAY_SIZE(digitBuffer);
+               *--revPtr = '\0';
+               assert( base > 0 );
+               do
+               {
+                  unsigned char c = (value % base) + '0';
+                  if( c > '9' )
+                     c += hexOffset;
+                  *--revPtr = c;
+                  value /= base;
+                  assert( revPtr >= digitBuffer );
+                  if( paddingSize > 0 )
+                     paddingSize--;
+               }
+               while( value > 0 );
+
+               while( (paddingSize-- != 0) && (revPtr > digitBuffer) )
+                  *--revPtr = paddingChar;
+
+               rOutput += reinterpret_cast<char*>(revPtr);
+
+               FSM_TRANSITION( NORMAL, label='param was read' );
+            } /* case PARAM */
+         } /* switch( state ) */
+      }
+      while( next );
+   } /* for( uint i = 0; i < format.length(); i++ ) */
 }
 
 
