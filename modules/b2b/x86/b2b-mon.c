@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Apr-2022
+ *  version : 27-Apr-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000400
+#define B2B_MON_VERSION 0x000401
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -60,7 +60,8 @@ const char* program;
 #define  DIMMAXSIZE  1024                 // max size for service names
 #define  SCREENWIDTH 1024                 // width of screen
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
-#define  TINACTIVE   120                  // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
+#define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
+#define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -235,12 +236,12 @@ void buildPrintLine(uint32_t idx)
   } // switch ring
 
   // pattern name
-  if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);
+  if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);               // invalid
   else {
-    if ((actT - set_secs[idx] - secsOffset) < (time_t)TINACTIVE)
-                                  sprintf(pattern, "%.20s", dicPName[idx]);
-    else                          sprintf(pattern, "%s", TXTUNKWN);
-    if (set_secs[idx] <= 1)       sprintf(pattern, "%s", TXTUNKWN);
+    if ((actT - set_secs[idx] /*- secsOffset*/) < (time_t)TINACTIVE)              
+                                  sprintf(pattern, "%.20s",   dicPName[idx]);
+    else                          sprintf(pattern, "?%.18s?", dicPName[idx]);     // very old, assignment might be wrong
+    if (set_secs[idx] <= 1)       sprintf(pattern, "%s", TXTUNKWN);               // timestamp (probably) invalid
   }
   if (!flagSetValid[idx])         sprintf(pattern, "NO_LINK (DATA)");
 
@@ -257,8 +258,14 @@ void buildPrintLine(uint32_t idx)
   // ignore ancient timestamps
   if (set_secs[idx] <= 1) flagTCBS = 0;
   
-  if (flagTCBS)     {strftime(tmp1, 10, "%H:%M:%S", gmtime(&(set_secs[idx]))); sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);}
-  else               sprintf(tCBS, "---");
+  if (flagTCBS) {
+    if ((actT - set_secs[idx]/* - secsOffset*/) > (time_t)TOLD) sprintf(tCBS, "> 24h"); 
+    else {
+      strftime(tmp1, 10, "%H:%M:%S", gmtime(&(set_secs[idx])));
+      sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);
+    } // else actT
+  } // if flagTCBS
+  else sprintf(tCBS, "---");
 
   if (flagExtNue) {
     if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
@@ -280,7 +287,7 @@ void buildPrintLine(uint32_t idx)
     sprintf(nueMeasExt, "---");
   }
   if (flagB2b) {
-    if ((dicGetval[idx].flagEvtErr >> 3) & 0x1) sprintf(b2b, "%s",  TXTERROR);
+    if ((dicGetval[idx].flagEvtErr >> 4) & 0x1) sprintf(b2b, "%s",  TXTERROR);
     else                                        sprintf(b2b, "%9.3f", dicDiagval[idx].phaseOffAct);
   } // if flagB2B
   else {
@@ -290,7 +297,11 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
+      // data invalid
+      if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      else sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
+    } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
     if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
@@ -310,10 +321,14 @@ void buildPrintLine(uint32_t idx)
   if (flagInjTrig) {
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
-      if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-      else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+      // data invalid
+      if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      else {
+        if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
+        else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+      } // else flag_nok
       sprintf(tmp1, "%9.3f", dtmp1);
-    }
+    } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics    
     if ((dicGetval[idx].flag_nok >> 6) & 0x1) {
@@ -622,8 +637,6 @@ int main(int argc, char** argv)
 
   // wait a bit, then rebuild all indices
   usleep(1000000);
-  /*for (i=0; i<NALLSID; i++) buildPrintLine(i);*/
-
   
   while (!quit) {
 

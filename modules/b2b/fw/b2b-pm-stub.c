@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Apr-2022
+ *  version : 27-Apr-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x000400                                   // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000401                                   // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -251,7 +251,7 @@ void insertionSort(uint64_t *stamps, int n) {
   uint64_t t1,t2;
 
   // dummy implementation
-  *phase_125ps   = tStamp[1];
+  *phase_125ps   = tStamp[1] << 3;      // use 2nd stamp and convert to [125 ps]
   *dt            = (*phase_125ps) / 100;
   *confidence_as = 1000000000;
   
