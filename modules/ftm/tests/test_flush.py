@@ -32,7 +32,7 @@ class UnitTestFlush(dm_testbench.DmTestbench):
     for line in output:
       # check that flush is executed (there is exactly 1 flush executed)
       if checkFlush0:
-        print(f'0 {counterFlush0} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        # ~ print(f'0 {counterFlush0} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
         flushExecuted = flushExecuted or (flushPrio == 0 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
         counterFlush0 = counterFlush0 + 1
         if counterFlush0 > 3:
@@ -41,7 +41,7 @@ class UnitTestFlush(dm_testbench.DmTestbench):
         checkFlush0 = True
         counterFlush0 = 0
       if checkFlush1:
-        print(f'1 {counterFlush1} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        # ~ print(f'1 {counterFlush1} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
         flushExecuted = flushExecuted or (flushPrio == 1 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
         counterFlush1 = counterFlush1 + 1
         if counterFlush1 > 3:
@@ -50,7 +50,7 @@ class UnitTestFlush(dm_testbench.DmTestbench):
         checkFlush1 = True
         counterFlush1 = 0
       if checkFlush2:
-        print(f'2 {counterFlush2} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        # ~ print(f'2 {counterFlush2} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
         flushExecuted = flushExecuted or (flushPrio == 2 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
         counterFlush2 = counterFlush2 + 1
         if counterFlush2 > 3:
