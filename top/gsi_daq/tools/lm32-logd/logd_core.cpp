@@ -136,7 +136,7 @@ void Lm32Logd::updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& rAdmin )
    }
 }
 
-constexpr uint HIGHST_ADDR = 2*LM32_OFFSET;
+constexpr uint HIGHST_ADDR = 2 * LM32_OFFSET;
 
 /*! ---------------------------------------------------------------------------
  */
@@ -157,6 +157,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       {
          if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
             return ret;
+
          if( !m_rCmdLine.isForConsole() && ((buffer[i] == '\n') || (buffer[i] == '\r')) )
          {
             if( buffer[i] == '\n')
@@ -276,13 +277,13 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
    enum STATE_T
    {
-      FSM_DECLARE_STATE( NORMAL ),
-      FSM_DECLARE_STATE( PADDING_CHAR ),
-      FSM_DECLARE_STATE( PADDING_SIZE ),
-      FSM_DECLARE_STATE( PARAM )
+      FSM_DECLARE_STATE( NORMAL, color=blue ),
+      FSM_DECLARE_STATE( PADDING_CHAR, color=green ),
+      FSM_DECLARE_STATE( PADDING_SIZE, color=cyan ),
+      FSM_DECLARE_STATE( PARAM, color=magenta )
    };
 
-   FSM_INIT_FSM( NORMAL );
+   FSM_INIT_FSM( NORMAL, color=blue );
    char paddingChar = ' ';
    uint paddingSize = 0;
 
@@ -299,39 +300,41 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
             case NORMAL:
             {
                if( format[i] == '%' && (ai < ARRAY_SIZE(item.param)) )
-                  FSM_TRANSITION( PADDING_CHAR, label='char == %' );
+                  FSM_TRANSITION( PADDING_CHAR, label='char == %', color=green );
 
                rOutput += format[i];
 
-               FSM_TRANSITION_SELF();
+               FSM_TRANSITION_SELF( color=blue );
             }
+
             case PADDING_CHAR:
             {
                if( format[i] == '%' )
                {
                   rOutput += format[i];
-                  FSM_TRANSITION( NORMAL, label='char == %' );
+                  FSM_TRANSITION( NORMAL, label='char == %', color=blue );
                }
                if( isPaddingChar( format[i] ) )
                {
                   paddingChar = format[i];
-                  FSM_TRANSITION( PADDING_SIZE );
+                  FSM_TRANSITION( PADDING_SIZE, color=cyan );
                }
                if( isDecDigit( format[i] ) )
                {
-                  paddingSize = 0;
-                  FSM_TRANSITION_NEXT( PADDING_SIZE );
+                  FSM_TRANSITION_NEXT( PADDING_SIZE  );
                }
-               FSM_TRANSITION_NEXT( PARAM );
+               FSM_TRANSITION_NEXT( PARAM, color=magenta );
             }
+
             case PADDING_SIZE:
             {
                if( !isDecDigit( format[i] ) )
-                  FSM_TRANSITION_NEXT( PARAM );
+                  FSM_TRANSITION_NEXT( PARAM, color=magenta );
                paddingSize *= 10;
-               paddingSize += format[i] + '0';
-               FSM_TRANSITION_SELF();
+               paddingSize += format[i] - '0';
+               FSM_TRANSITION_SELF( color=cyan );
             }
+
             case PARAM:
             {
                bool signum  = false;
@@ -412,10 +415,10 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                   }
                }
                if( unknown )
-                  FSM_TRANSITION_NEXT( NORMAL );
+                  FSM_TRANSITION_NEXT( NORMAL, color=blue );
 
                if( done )
-                  FSM_TRANSITION( NORMAL );
+                  FSM_TRANSITION( NORMAL, color=blue );
 
                uint32_t value = item.param[ai++];
                if( signum && ((value & (1 << (BIT_SIZEOF(value)-1))) != 0) )
@@ -447,13 +450,12 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
                rOutput += reinterpret_cast<char*>(revPtr);
 
-               FSM_TRANSITION( NORMAL, label='param was read' );
+               FSM_TRANSITION( NORMAL, label='param was read', color=blue );
             } /* case PARAM */
          } /* switch( state ) */
       }
       while( next );
    } /* for( uint i = 0; i < format.length(); i++ ) */
 }
-
 
 //================================== EOF ======================================

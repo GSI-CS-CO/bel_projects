@@ -48,7 +48,7 @@ void syslog( uint32_t priority, const char* format, ... );
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
  */
-void vsyslog( uint32_t priority, const char* format, va_list ap );
+//void vsyslog( uint32_t priority, const char* format, va_list ap );
 
 #ifdef __cplusplus
 }

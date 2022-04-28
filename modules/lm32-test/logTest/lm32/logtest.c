@@ -5,8 +5,6 @@
 #include <lm32_syslog.h>
 
 
-
-
 void main( void )
 {
    MMU_STATUS_T status;
@@ -21,11 +19,11 @@ void main( void )
    }
 
    const char* text = "Das ist ein Text im LM32.";
-   syslog( 0, "Text in syslog: \"%s\", %d", text, 4711 );
-   syslog( 0, "Noch ein\nText in syslog!" );
+   syslog( 0, "A: Text in syslog: \"%s\", %.32b", text, 4711 );
+   syslog( 0, "B: Noch ein Text in syslog!, C = %c", 'u' );
+   syslog( 0, "C: Noch ein anderer Text in syslog!, 0x%08X, %d", 4711, 4711 );
 
-
-   mprintf( "Text: \"%s\"\nAddress: 0x%p\n", text, text );
+   mprintf( "\nText: \"%s\"\nAddress: 0x%p\n", text, text );
 
    while( true );
 }
