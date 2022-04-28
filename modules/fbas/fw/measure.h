@@ -49,7 +49,7 @@ void printMeasureTxDelay(uint32_t* base, uint32_t offset);
 void printMeasureSgLatency(uint32_t* base, uint32_t offset);
 void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
 void printMeasureOwDelay(uint32_t* base, uint32_t offset);
-void measureTtlInterval(mpsTimParam_t* buf);
+void measureTtlInterval(mpsMsg_t* buf);
 void printMeasureTtl(uint32_t* base, uint32_t offset);
 uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);
 void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64);

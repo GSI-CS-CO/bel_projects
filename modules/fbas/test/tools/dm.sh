@@ -92,7 +92,7 @@ cnt_dm_msg() {
             #echo $msg_cnt;
         fi
     done
-    printf "msg sent by DM: %d (0x%x)\n" $msg_cnt $msg_cnt   # print the sum
+    printf "%x" $msg_cnt   # print the sum
 }
 
 ######################
@@ -185,7 +185,7 @@ start_dm_synchron() {
 
     check_fbasdm
 
-    dm-cmd $fbasdm -i $1
+    dm-cmd $fbasdm -i $patt_loc/$1
 }
 
 ######################

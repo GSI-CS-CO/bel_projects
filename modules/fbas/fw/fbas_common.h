@@ -32,22 +32,24 @@ typedef uint32_t status_t;
 #define MPS_FLAG_NOK       2   // NOK
 #define MPS_FLAG_TEST      3   // TEST
 
+// Ethernet MAC address
+#define ETH_ALEN           6
+#define ETH_ALEN_STR       18
+
 // structure for an MPS protocol
-typedef struct mpsProt mpsProt_t;
-struct mpsProt {
-  uint8_t  flag;     // flag (FBAS signal state)
-  uint8_t  grpId;    // group ID
-  uint16_t evtId;    // event ID
-  uint8_t  ttl;      // time-to-live (RX)
-  uint8_t  pending;  // pending is set if flag is changed
-  uint64_t ts;       // timestamp
+typedef struct mpsProtocol mpsProtocol_t;
+struct mpsProtocol {
+  uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
+  uint8_t  idx;             // index of MPS flag
+  uint8_t  flag;            // MPS flag
 };
 
-// MPS protocol as parameter field in timing message
-typedef union mpsTimParam mpsTimParam_t;
-union mpsTimParam {
-  mpsProt_t prot;    // MPS protocol data
-  uint64_t param;    // parameter field in timing message
+typedef struct mpsMsg mpsMsg_t;
+struct mpsMsg {
+  mpsProtocol_t prot;       // MPS protocol
+  uint64_t ts;              // timestamp
+  uint8_t  ttl;             // time-to-live (RX)
+  uint8_t  pending;         // flag change indicator
 };
 
 // iterator used to access available MPS flags

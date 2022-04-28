@@ -251,23 +251,23 @@ void measureOwDelay(uint64_t now, uint64_t ts, bool verbose)
 }
 
 /**
- * \brief measure the TTL period
+ * \brief Measure the TTL period
  *
  * The TTL period is 101 ms, which corresponds for two lost timing messages.
  *
- * \param buf   pointer to MPS protocol data
+ * \param buf   Pointer to MPS message buffer
  *
  * \ret none
  **/
-void measureTtlInterval(mpsTimParam_t* buf)
+void measureTtlInterval(mpsMsg_t* buf)
 {
   int64_t interval;
   uint64_t now = getSysTime();
   msrSumStats_t* pStats = &sumStats[msr_ttl];
 
   // measure time interval
-  if (!buf->prot.ttl) {
-    interval = now - buf->prot.ts;
+  if (!buf->ttl) {
+    interval = now - buf->ts;
 
     calculateSumStats(interval, pStats);
   }

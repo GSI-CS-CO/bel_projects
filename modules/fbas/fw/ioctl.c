@@ -95,7 +95,7 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
 }
 
 /**
- * \brief drive the effective logic output [MPS_FS_640]
+ * \brief Drive the effective logic output [MPS_FS_640]
  *
  * Drive internal signal based on MPS flag:
  * - high if MPS flag is OK
@@ -103,32 +103,32 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
  *
  * Generate error (internal signal), if lifetime of MPS flag is expired.
  *
- * \param buf pointer to MPS flag
+ * \param buf Pointer to MPS message buffer
  *
  * \ret none
  **/
-void driveEffLogOut(uint32_t channel, mpsTimParam_t* buf)
+void driveEffLogOut(uint32_t channel, mpsMsg_t* buf)
 {
   uint8_t ioVal = MPS_SIGNAL_INVALID;
 
   // handle MPS flag if it's changed or expired
-  if (buf->prot.pending) {
-    buf->prot.pending = 0;
-    DBPRINT3("pend: %x %x %x\n", buf->prot.grpId, buf->prot.evtId, buf->prot.flag);
+  if (buf->pending) {
+    buf->pending = 0;
+    DBPRINT3("pend: %x %x %x\n", buf->prot.addr[0], buf->prot.idx, buf->prot.flag);
     if (buf->prot.flag == MPS_FLAG_OK)
       ioVal = MPS_SIGNAL_HIGH;
     else
       ioVal = MPS_SIGNAL_LOW;
-  } else if (!buf->prot.ttl) {
+  } else if (!buf->ttl) {
     ioVal = MPS_SIGNAL_LOW;
-    DBPRINT3("ttl: %x %x %x\n", buf->prot.grpId, buf->prot.evtId, buf->prot.flag);
+    DBPRINT3("ttl: %x %x %x\n", buf->prot.addr[0], buf->prot.idx, buf->prot.flag);
   }
 
   driveIo(channel, 0, ioVal); // drive the IO1 (B1) port
 }
 
-void qualifyInput(size_t len, mpsTimParam_t* buf) {
+void qualifyInput(size_t len, mpsMsg_t* buf) {
 }
 
-void testOutput(size_t len, mpsTimParam_t* buf) {
+void testOutput(size_t len, mpsMsg_t* buf) {
 }

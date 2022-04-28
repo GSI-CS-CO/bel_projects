@@ -38,7 +38,7 @@
 #include "tmessage.h"
 
 // application-specific variables
-mpsTimParam_t bufMpsFlag[N_MPS_CHANNELS] = {0};   // buffer for MPS flags
+mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS] = {0};       // buffer for MPS timing messages
 timedItr_t rdItr = {0};                           // read-access iterator for MPS flags
 
 /**
@@ -89,22 +89,23 @@ void resetItr(timedItr_t* itr, uint64_t now)
 }
 
 /**
- * \brief send a block of MPS flags
+ * \brief Send a block of MPS messages
  *
- * Send a specified number of the MPS flags
+ * Send a specified number of the MPS messages
  *
- * \param len   block length
- * \param itr   read-access iterator that specifies next MPS flag to send
- * \param evtId event ID for timing messages
+ * \param len   Block length
+ * \param itr   Read-access iterator that specifies next MPS flag to send
+ * \param evtId Event ID for timing messages
  *
  * \ret status
  **/
-status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
+status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
 {
   uint32_t res, tef;                // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
+  uint64_t param;
 
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
@@ -131,9 +132,10 @@ status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
     // send a block of MPS flags
     atomic_on();
     for (size_t i = 0; i < len; ++i) {
-      // get MPS flag
-      paramHi  = (uint32_t)((bufMpsFlag[itr->idx].param >> 32) & 0xffffffff);
-      paramLo  = (uint32_t)(bufMpsFlag[itr->idx].param         & 0xffffffff);
+      // get MPS protocol
+      memcpy(&param, &bufMpsMsg[itr->idx].prot, sizeof(uint64_t));
+      paramHi  = (uint32_t)((param >> 32) & 0xffffffff);
+      paramLo  = (uint32_t)(param         & 0xffffffff);
 
       // update iterator
       resetItr(itr, now);
@@ -161,27 +163,30 @@ status_t sendMpsFlagBlock(size_t len, timedItr_t* itr, uint64_t evtId)
 }
 
 /**
- * \brief send an MPS flag
+ * \brief Send MPS messages periodically
  *
  * MPS flags are sent at specified period. [MPS_FS_530]
  *
- * \param itr   read-access iterator that specifies next flag to send
- * \param evtid event ID used to send a timing message
+ * \param itr   Read-access iterator that specifies next MPS message to send
+ * \param evtid Event ID used to send a timing message
  *
- * \ret status
+ * \ret status  Zero on success, otherwise non-zero
  **/
-status_t sendMpsFlag(timedItr_t* itr, uint64_t evtid)
+status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
 {
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
   if (!itr->last)
     deadline = now;       // initial transmission
 
-  // send next MPS flag if deadline is over
+  // send next MPS message if deadline is over
   if (deadline <= now) {
+    uint64_t param;
+    mpsProtocol_t* prot = &bufMpsMsg[itr->idx].prot;
+    memcpy(&param, prot, sizeof(mpsProtocol_t));
 
-    // send MPS flag with current timestamp, which varies around deadline
-    fwlib_ebmWriteTM(now, evtid, bufMpsFlag[itr->idx].param, 1);
+    // send MPS message with current timestamp, which varies around deadline
+    fwlib_ebmWriteTM(now, evtid, param, 1);
 
     // update iterator with deadline
     resetItr(itr, now);
@@ -193,33 +198,35 @@ status_t sendMpsFlag(timedItr_t* itr, uint64_t evtid)
 }
 
 /**
- * \brief send an MPS event
+ * \brief Send a specific MPS message
  *
  * Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
  * If the read iterator is blocked by new cycle, then do not send any MPS event. [MPS_FS_630]
  *
- * \param itr   read-access iterator that specifies next flag to send
- * \param buf   pointer to MPS event buffer
- * \param evtid event ID used to send a timing message
- * \param extra number of extra events
+ * \param itr   Read-access iterator that points to MPS message buffer
+ * \param buf   Pointer to a specific MPS message
+ * \param evtid Event ID used to send a timing message
+ * \param extra Number of extra messages
  *
- * \ret status
+ * \ret status  Zero on success, otherwise non-zero
  **/
-status_t sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8_t extra)
+status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra)
 {
   uint64_t now = getSysTime();
 
   if (itr->last >= now) // delayed by a new cycle
     return COMMON_STATUS_ERROR;
 
+  uint64_t param;
+  memcpy(&param, &buf->prot, sizeof(buf->prot));
+
   // send specified MPS event
-  fwlib_ebmWriteTM(now, evtid, buf->param, 1);
+  fwlib_ebmWriteTM(now, evtid, param, 1);
 
   // NOK flag shall be sent as extra events
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
-      now = getSysTime();
-      fwlib_ebmWriteTM(now, evtid, buf->param, 1);
+      fwlib_ebmWriteTM(now, evtid, param, 1);
     }
   }
 
@@ -227,17 +234,17 @@ status_t sendMpsEvent(timedItr_t* itr, mpsTimParam_t* buf, uint64_t evtid, uint8
 }
 
 /**
- * \brief alter lifetime of MPS flags [MPS_FS_600]
+ * \brief alter lifetime of received MPS messages [MPS_FS_600]
  *
- * \param itr iterator used to access MPS flags in pre-defined period
+ * \param itr iterator used to access MPS messages in pre-defined period
  *
- * \ret ptr pointer to expired MPS flag
+ * \ret ptr pointer to expired MPS message
  **/
-mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
+mpsMsg_t* expireMpsMsg(timedItr_t* itr)
 {
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
-  mpsTimParam_t* buf = 0;
+  mpsMsg_t* buf = 0;
 
   if (!itr->last)
     deadline = now;       // initial check
@@ -245,13 +252,13 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
   // check lifetime of next MPS flag
   if (deadline <= now) {
 
-    if (bufMpsFlag[itr->idx].prot.ttl) {
+    if (bufMpsMsg[itr->idx].ttl) {
 
-      if (now - bufMpsFlag[itr->idx].prot.ts > TIM_100_MS) {
-        //DBPRINT2("%llu %llu\n", now, bufMpsFlag[itr->idx].prot.ts);
-        bufMpsFlag[itr->idx].prot.flag = MPS_FLAG_NOK;
-        bufMpsFlag[itr->idx].prot.ttl = 0;
-        buf = &bufMpsFlag[itr->idx];  // expired MPS flag
+      if (now - bufMpsMsg[itr->idx].ts > TIM_100_MS) {
+        //DBPRINT2("%llu %llu\n", now, bufMpsMsg[itr->idx].ts);
+        bufMpsMsg[itr->idx].prot.flag = MPS_FLAG_NOK;
+        bufMpsMsg[itr->idx].ttl = 0;
+        buf = &bufMpsMsg[itr->idx];  // expired MPS message
       }
     }
 
@@ -263,76 +270,103 @@ mpsTimParam_t* expireMpsFlag(timedItr_t* itr)
 }
 
 /**
- * \brief update MPS flag with recieved MPS event
+ * \brief update MPS message with a given MPS event
  *
- * \param buf pointer to MPS flags buffer
- * \param evt raw event data (bits 31-24 = flag, 23-16 = grpId, 15-0 = evtId)
+ * \param buf Pointer to MPS message buffer
+ * \param evt Raw event data (bits 15-8 = index, 7-0 = flag)
  *
- * \ret ptr pointer to the updated MPS flag
+ * \ret ptr Pointer to the updated MPS message buffer
  **/
-mpsTimParam_t* updateMpsFlag(mpsTimParam_t* buf, uint64_t evt)
+mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt)
 {
   // evaluate MPS channel and its flag
-  uint8_t flag = evt >> 24;
-  uint8_t grpId = evt >> 16;
-  uint16_t evtId = evt & 0xFFFF;
+  uint8_t idx = evt >> 8;
+  uint8_t flag = evt;
 
-  if (evtId >= N_MPS_CHANNELS)
-    return 0;
-
-  // update MPS flag
-  buf += evtId;
+  // update MPS message
+  buf->prot.idx = idx;
   buf->prot.flag = flag;
   return buf;
 }
 
 /**
- * \brief store recieved MPS flag
+ * \brief store recieved MPS message
  *
- * \param buf pointer to MPS flags buffer
- * \param raw raw protocol data (bits 63-56 = flag, 55-48 = grpId, 47-32 = evtId, 31-24 = TTL, 23-16 = pending)
- * \param ts  timestamp of MPS flag
- * \param itr iterator used to access MPS flags
+ * \param raw Raw MPS protocol (bits 63-16 = addr, 15-8 = index, 7-0 = flag)
+ * \param ts  Timestamp
+ * \param itr Read-access iterator
  *
  * \ret ptr pointer to the stored MPS flag
  **/
-mpsTimParam_t* storeMpsFlag(mpsTimParam_t* buf, uint64_t raw, uint64_t ts, timedItr_t* itr)
+mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
 {
-  // evaluate MPS channel and its flag
-  uint8_t flag = raw >> 56;
-  uint8_t grpId = raw >> 48;
-  uint16_t evtId = raw >> 32;
+  uint8_t flag = raw;
+  uint8_t idx = raw >> 8;
+  uint8_t addr[ETH_ALEN];
+  mpsMsg_t* buf = &bufMpsMsg[0];
 
-  if (evtId >= N_MPS_CHANNELS)
-    return 0;
+  memcpy(addr, &raw, ETH_ALEN);
 
-  // store MPS flag
-  buf += evtId;
-  buf->prot.pending = buf->prot.flag ^ flag;
-  buf->prot.flag = flag;
-  buf->prot.ttl = itr->ttl;
-  buf->prot.ts = ts;
-  return buf;
+  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+    if (addr_equal(addr, buf->prot.addr)) {
+      if (buf->prot.idx == idx) {
+        buf->pending = buf->prot.flag ^ flag;
+        buf->prot.flag = flag;
+        buf->ttl = itr->ttl;
+        buf->ts = ts;
+        return buf;
+      }
+    }
+    else
+      ++buf;
+
+  return 0;
 }
 
+
 /**
- * \brief reset MPS flag
+ * \brief reset MPS message buffer
  *
  * It is used to reset the CMOS input virtually to high voltage in TX [MPS_FS_620] or
  * reset effective logic input to HIGH bit in RX [MPS_FS_630].
  *
- * \param buf pointer to MPS flag buffer
+ * \param buf Pointer to MPS message buffer
  *
  **/
-void resetMpsFlag(size_t len, mpsTimParam_t* buf)
+void resetMpsMsg(size_t len, mpsMsg_t* buf)
 {
   uint8_t flag = MPS_FLAG_OK;
 
   for (size_t i = 0; i < len; ++i) {
-    (buf + i)->prot.pending = (buf + i)->prot.flag ^ flag;
+    (buf + i)->pending = (buf + i)->prot.flag ^ flag;
     (buf + i)->prot.flag  = flag;
-    (buf + i)->prot.ttl = 0;
-    (buf + i)->prot.ts = 0;
+    (buf + i)->ttl = 0;
+    (buf + i)->ts = 0;
   }
 }
 
+/**
+ * \brief Check if given MAC addresses are equal
+ *
+ * \param a  MAC address
+ * \param b  MAC address
+ *
+ * \ret  Return 1 if both addresses are equal, otherwise 0.
+ **/
+int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
+{
+  return !memcmp(a, b, ETH_ALEN);
+}
+
+/**
+ * \brief Copy source MAC address into the destination MAC address
+ *
+ * \param src Source MAC address
+ * \param dst Destination MAC addres
+ *
+ * \ret  Pointer to the destination MAC address
+ **/
+uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
+{
+  return memcpy(dst, src, ETH_ALEN);
+}

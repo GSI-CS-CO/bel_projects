@@ -135,7 +135,7 @@ read_shared_mem() {
     # $1 - device
     # $2 - memory address
 
-    eb-read $1 $2
+    eb-read $1 $2/4
 }
 
 write_shared_mem() {
@@ -143,7 +143,7 @@ write_shared_mem() {
     # $2 - memory address
     # $3 - value
 
-    eb-write $1 $2 $3
+    eb-write $1 $2/4 $3
 }
 
 dont_call_set_ip() {
@@ -184,10 +184,20 @@ setup_fbastx() {
 
     check_fbastx
 
-    echo "load the LM32 firmware (TX)"
-    eb-fwload $FBASTX u 0x0 $fw_tx
+    fw_filename=$fw_tx
+
+    if [ ! -z "$1" ]; then
+        fw_filename="$fw_dir/$1"
+        if [ ! -f "$fw_filename" ]; then
+            echo "'$fw_filename' not found. Exit"
+            return 1
+        fi
+    fi
+
+    echo "TX: load the LM32 firmware '$fw_filename'"
+    eb-fwload $FBASTX u 0x0 $fw_filename
     if [ $? -ne 0 ]; then
-        echo "Error: failed to load LM32 FW '$fw_tx'. Exit!"
+        echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
         exit 1
     fi
     wait_seconds 1
@@ -451,53 +461,40 @@ precheck_test3() {
 
 start_test3() {
 
+    verbosity="verbose"
+
     echo "Step 2: enable MPS task on RX and TX nodes"
     echo "for TX: enable sending MPS flags and events, you will see EB frames in wireshark, verify their event ID, MPS flag etc"
     echo "for RX: enable monitoring lifetime of received MPS flags"
     enable_mps_all
 
     echo "Step 3: inject timing events locally to generate MPS event"
-    echo "OK(1) flag, grpID=1, evtID=0  -> 1x MPS event (1x transmission)"
-    saft-ctl fbastx -p inject 0xffffeeee01010000 0x0 1000000
-    wait_seconds 1
 
-    echo "NOK(2) flag, grpID=1, evtID=0 -> 1x MPS event (3x transmissions)"
-    saft-ctl fbastx -p inject 0xffffeeee02010000 0x0 1000000
-    wait_seconds 1
-
-    echo "send OK and NOK each 5x times -> 10x MPS events (20x transmissions)"
-    for i in seq 1 5; do
-        saft-ctl fbastx -p inject 0xffffeeee01010000 0x0 1000000
+    total=5
+    echo "send OK and NOK each $total times -> $(( $total * 2)) MPS events ($(( $total * 4 )) transmissions)"
+    for i in $(seq 1 $total); do
+        echo "idx = 0xff, flag = OK(1)  -> 1x MPS event (1x transmission)"
+        saft-ctl fbastx -p inject 0xffffeeee0000ff01 0x0 1000000
         wait_seconds 1
 
-        saft-ctl fbastx -p inject 0xffffeeee02010000 0x0 1000000
+        echo "idx = 0xff, flag = NOK(2) -> 1x MPS event (3x transmissions)"
+        saft-ctl fbastx -p inject 0xffffeeee0000ff02 0x0 1000000
         wait_seconds 1
     done
 
-    echo "If you see 12x IO events in the snooper output, then basically all works."
+    echo "If you see $(( $total * 2)) IO events in the snooper output, then basically all works."
 
     # snooper output (saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0)
-    #   tDeadline: 2020-11-02 13:55:53.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe01010000 Param: 0x0000000000000000
-    #   tDeadline: 2020-11-02 13:55:53.001026455 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 326545 ns)
-    #   tDeadline: 2020-11-02 13:55:58.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe02010000 Param: 0x0000000000000000
-    #   tDeadline: 2020-11-02 13:55:58.001026654 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000 Param: 0x0000000000000000!late (by 292578 ns)
-    #   tDeadline: 2020-11-02 13:56:04.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe01010000 Param: 0x0000000000000000
-    #   tDeadline: 2020-11-02 13:56:04.001030279 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 300977 ns)
-    #   tDeadline: 2020-11-02 13:56:08.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe02010000 Param: 0x0000000000000000
-    #   tDeadline: 2020-11-02 13:56:08.001026822 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000 Param: 0x0000000000000000!late (by 292162 ns)
-    #   tDeadline: 2020-11-02 13:56:12.001000000 FID: 0xf GID: 0x0fff EVTNO: 0x0eee Other: 0xe01010000 Param: 0x0000000000000000
-    #   tDeadline: 2020-11-02 13:56:12.001026879 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 289745 ns)
+    #   tDeadline: 2022-04-27 08:19:54.001037375 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 4089 ns)
+    #   tDeadline: 2022-04-27 08:19:55.001036422 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000 Param: 0x0000000000000000!late (by 8186 ns)
 
-    # wrc output (TX) - debug output msg that shows transmission delay and duration for forwarding MPS events
-    #   fbas0: enabled MPS 70000000
-    #   fbas0: dly=22535, fwd=34720
-    #   fbas0: dly=22678, fwd=41768
-    #   fbas0: dly=26239, fwd=38552
-    #   fbas0: dly=22518, fwd=42128
-    #   fbas0: dly=22695, fwd=35096
+    # wrc output (eb-console dev/wbm2) - debug output msg that shows transmission delay and duration for forwarding MPS events
+    #   txd @0x10000968 avg=35191 min=31897 max=43013 cnt=10/10
+    #   sgl @0x10000968 avg=48712 min=45112 max=56288 cnt=10/10
 
-    echo "Send 'new cycle' in 5 seconds ..."
-    wait_seconds 5
+    pause=2
+    echo "Send 'new cycle' in $pause seconds ..."
+    wait_seconds $pause
     saft-ctl fbastx -p inject 0xffffdddd00000000 0x0 1000000
     saft-ctl fbasrx -p inject 0xffffdddd00000000 0x0 1000000
 
@@ -506,19 +503,23 @@ start_test3() {
 
     cnt=$(eb-read $FBASTX $addr_cnt1/4)
     cnt_dec=$(printf "%d" 0x$cnt)
-    echo "MPS flags (TX): $cnt ($cnt_dec)"
+    echo "MPS msgs (TX): $cnt ($cnt_dec)"
 
-    cnt=$(eb-read $FBASRX $addr_cnt1/4)
+    cnt=$(eb-read $FBASRX $addr_eca_vld/4)
     cnt_dec=$(printf "%d" 0x$cnt)
-    echo "MPS flags (RX): $cnt ($cnt_dec)"
+    echo "MPS valid msgs (RX): $cnt ($cnt_dec)"
+
+    cnt=$(eb-read $FBASRX $addr_eca_ovf/4)
+    cnt_dec=$(printf "%d" 0x$cnt)
+    echo "MPS overflow msgs (RX): $cnt ($cnt_dec)"
 
     echo -n "Transmission delay: "
-    read_measurement_results $FBASTX $instr_st_tx_dly $addr_msr1
+    read_measurement_results $FBASTX $instr_st_tx_dly $addr_msr1 $verbosity
 
     echo -n "Signalling latency: "
-    read_measurement_results $FBASTX $instr_st_sg_lty $addr_msr1
+    read_measurement_results $FBASTX $instr_st_sg_lty $addr_msr1 $verbosity
 
-    result_ttl_ival $FBASRX
+    result_ttl_ival $FBASRX $verbosity
 
     echo -e "\nMeasure TTL interval\n"
     measure_ttl_ival
@@ -535,13 +536,13 @@ measure_ttl_ival() {
         sleep 1
         echo -en "   $i : disable "
         disable_mps $FBASTX
-        sleep 2
+        sleep 1
     done
 
     echo -n "disable MPS operation of RX: "
     disable_mps $FBASRX
 
-    result_ttl_ival $FBASRX
+    result_ttl_ival $FBASRX "verbose"
 }
 
 disable_mps() {
@@ -640,6 +641,7 @@ read_measurement_results() {
     # $1 - TR device (ie., dev/wbm0)
     # $2 - instruction code to store measurement results to a location in the shared memory
     # $3 - shared memory location where measurement results are stored
+    # $4 - verbosity
 
     device=$1
     instr_msr=$2
@@ -666,35 +668,52 @@ read_measurement_results() {
     addr_msr=$(( $addr_msr + 4 ))
     cnt_all=$(eb-read -q $device ${addr_msr}/4)
     cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo "avg=${avg_dec} min=${min_dec} max=${max_dec} cnt=${cnt_val_dec}/${cnt_all_dec}"
+
+    if [ -n "$4" ]; then
+        echo "avg=${avg_dec} min=${min_dec} max=${max_dec} cnt=${cnt_val_dec}/${cnt_all_dec}"
+    else
+        echo "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
+    fi
 }
 
 result_tx_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
+    # $2 - verbosity
 
-    #echo -n "Transmit delay: "
-    read_measurement_results $1 $instr_st_tx_dly $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "Transmit delay: "
+    fi
+    read_measurement_results $1 $instr_st_tx_dly $addr_msr1 $2
 }
 
 result_sg_latency() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
+    # $2 - verbosity
 
-    #echo -n "Signalling latency:   "
-    read_measurement_results $1 $instr_st_sg_lty $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "Signalling latency:   "
+    fi
+    read_measurement_results $1 $instr_st_sg_lty $addr_msr1 $2
 }
 
 result_ow_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
+    # $2 - verbosity
 
-    #echo -n "One-way delay:  "
-    read_measurement_results $1 $instr_st_ow_dly $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "One-way delay:  "
+    fi
+    read_measurement_results $1 $instr_st_ow_dly $addr_msr1 $2
 }
 
 result_ttl_ival() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
+    # $2 - verbosity
 
-    #echo -n "TTL interval:   "
-    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1
+    if [ -n "$2" ]; then
+        echo -n "TTL interval:   "
+    fi
+    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1 $2
 }
 
 read_counters() {

@@ -103,11 +103,11 @@ static void initMpsData();
 static void initIrqTable();
 static void printSrcAddr();
 static status_t setDstAddr(uint64_t dstMac, uint32_t dstIp);
-static void clearError(size_t len, mpsTimParam_t* buf);
+static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
 static void timerHandler();
-static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head);
+static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head);
 static void wrConsolePeriodic(uint32_t seconds);
 
 /**
@@ -198,11 +198,11 @@ void initMpsData()
 
   // initialize MPS flags
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
-    bufMpsFlag[i].prot.flag  = MPS_FLAG_TEST;
-    bufMpsFlag[i].prot.grpId = 1;
-    bufMpsFlag[i].prot.evtId = i;
-    bufMpsFlag[i].prot.ttl = 0;
-    bufMpsFlag[i].prot.ts = 0;
+    bufMpsMsg[i].prot.flag  = MPS_FLAG_TEST;
+    bufMpsMsg[i].prot.idx = 0xff;
+    bufMpsMsg[i].prot.addr[0] = i;
+    bufMpsMsg[i].ttl = 0;
+    bufMpsMsg[i].ts = 0;
   }
 
   // initialize the read iterator for MPS flags
@@ -269,7 +269,7 @@ status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
 
   // configure Etherbone master (src MAC and IP are set by host, i.e. by eb-console or BOOTP)
   if ((status = fwlib_ebmInit(TIM_2000_MS, dstMac, dstIp, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("fbas%d: Error - source IP is not set!\n"); // IP unset
+    DBPRINT1("fbas%d: Error - source IP is not set!\n", nodeType); // IP unset
   }
 
   return status;
@@ -277,15 +277,15 @@ status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
 
 
 /**
- * \brief clear latched error
+ * \brief Clear latched error
  *
  * Errors caused by lost messages or NOK flag are being latched until new cycle.
  * [MPS_FS_600]
  *
- * \param buf pointer to MPS flag buffer
+ * \param buf Pointer to MPS message buffer
  *
  **/
-void clearError(size_t len, mpsTimParam_t* buf) {
+void clearError(size_t len, mpsMsg_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
     driveEffLogOut(io_chnl, buf + i);
@@ -316,11 +316,11 @@ void setOpMode(uint64_t mode) {
  * \param usTimeout maximum interval in microseconds to poll ECA
  * \param mpsTask   pointer to MPS-relevant task flag
  * \param itr       pointer to the read iterator for MPS flags
- * \param head      pointer to pointer of the MPS flags buffer
+ * \param head      pointer to pointer of the MPS message buffer
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
-uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsTimParam_t** head)
+uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -345,8 +345,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
     switch (nextAction) {
       case FBAS_AUX_NEWCYCLE:
         if (nodeType == FBAS_NODE_TX) { // it takes 1848/6328 ns for 2/32 MPS channels
-          // reset MPS flags
-          resetMpsFlag(N_MPS_CHANNELS, *head);
+          // reset MPS msgs
+          resetMpsMsg(N_MPS_CHANNELS, *head);
 
           // init the read iterator for MPS flags, so that iteration is delayed for 52 ms [MPS_FS_630]
           now += TIM_52_MS;
@@ -354,7 +354,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
         } else if (nodeType == FBAS_NODE_RX) { // it takes 2480/31048 ns for 2/32 MPS channels
           // reset effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
-          resetMpsFlag(N_MPS_CHANNELS, *head);
+          resetMpsMsg(N_MPS_CHANNELS, *head);
           // clear latched errors [MPS_FS_600]
           clearError(N_MPS_CHANNELS, *head);
         }
@@ -382,11 +382,11 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // update MPS flag
-          *head = updateMpsFlag(*head, ecaEvtId);
+          *head = updateMpsMsg(*head, ecaEvtId);
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
             // send MPS event
-            if (sendMpsEvent(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
+            if (sendMpsMsgSpecific(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
               // count sent timing messages with MPS event
               *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, 1);
               if ((*head)->prot.flag == MPS_FLAG_NOK) {
@@ -418,7 +418,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
 
           // store and handle received MPS flag
-          *head = storeMpsFlag(*head, ecaParam, ecaDeadline, itr);
+          *head = storeMpsMsg(ecaParam, ecaDeadline, itr);
           if (*head) {
             driveEffLogOut(io_chnl, *head);
 
@@ -627,7 +627,7 @@ void timerHandler()
 
 // do action state 'op ready' - this is the main code of this FW
 uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
-                           mpsTimParam_t* pBufMpsFlag,  // pointer to MPS flags buffer
+                           mpsMsg_t* pBufMpsMsg,        // pointer to MPS message buffer
                            timedItr_t* pRdItr,          // iterator used to read MPS flags buffer
                            uint32_t actStatus)          // actual status of firmware
 {
@@ -635,7 +635,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   uint32_t nSeconds = 15;                                     // time period in secondes
   uint32_t nUSeconds = 100;                                   // time period in microseconds
   uint32_t action;                                            // ECA action tag
-  mpsTimParam_t* buf = pBufMpsFlag;                           // pointer to MPS flags buffer
+  mpsMsg_t* buf = pBufMpsMsg;                                 // pointer to MPS message buffer
 
   status = actStatus;
 
@@ -648,7 +648,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        if (sendMpsFlagBlock(N_MPS_FLAGS, pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
+        if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
           // count sent timing messages with MPS flag
           *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
       }
@@ -659,7 +659,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
     case FBAS_NODE_RX:
       if (*pMpsTask & TSK_TTL_MPS_FLAGS) {
         // monitor lifetime of MPS flags periodically and handle expired MPS flag
-        buf = expireMpsFlag(pRdItr);
+        buf = expireMpsMsg(pRdItr);
         if (buf) {
           driveEffLogOut(io_chnl, buf);
           measureTtlInterval(buf);
@@ -705,7 +705,7 @@ int main(void) {
     status = fwlib_changeState(&actState, &reqState, status);          // handle requested state changes
     switch(actState) {                                                 // state specific do actions
       case COMMON_STATE_OPREADY :
-        status = doActionOperation(&mpsTask, bufMpsFlag, &rdItr, status);
+        status = doActionOperation(&mpsTask, bufMpsMsg, &rdItr, status);
         if (status == COMMON_STATUS_WRBADSYNC) reqState = COMMON_STATE_ERROR;
         if (status == COMMON_STATUS_ERROR)     reqState = COMMON_STATE_ERROR;
         break;

@@ -262,10 +262,11 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame load_fbasd
 	source dm.sh && stop_dm_patt PatLoop3
 	source setup.sh && disable_mps_all
 	source dm.sh && print_dm_diag
-	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_eca_vld
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	@echo
 	$(MAKE) show_two_senders_result
 
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fbasdm_finite_patterns
@@ -275,14 +276,15 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame load_fba
 	@echo "sleep ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	source setup.sh && disable_mps_all
 	source dm.sh && print_dm_diag
-	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1
+	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$FBASRX $$addr_eca_vld
 	@echo
 	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
+	@echo
 	$(MAKE) show_two_senders_result
 
 show_two_senders_result:
-	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_cnt1))
+	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$FBASRX $$addr_eca_vld))
 	@$(eval tx_msg=$(shell source setup.sh && read_shared_mem $$FBASTX $$addr_cnt1))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} ${tx_msg} ${dm_msg}

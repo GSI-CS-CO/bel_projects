@@ -43,8 +43,8 @@ extern volatile uint32_t *pIOCtrl;             // WB address of IO Control
 uint32_t setIoOe(uint32_t channel, uint32_t idx);
 uint32_t getIoOe(uint32_t channel);
 void driveIo(uint32_t channel, uint32_t idx, uint8_t value);
-void driveEffLogOut(uint32_t channel, mpsTimParam_t* buf);
-void qualifyInput(size_t len, mpsTimParam_t* buf);
-void testOutput(size_t len, mpsTimParam_t* buf);
+void driveEffLogOut(uint32_t channel, mpsMsg_t* buf);
+void qualifyInput(size_t len, mpsMsg_t* buf);
+void testOutput(size_t len, mpsMsg_t* buf);
 
 #endif
