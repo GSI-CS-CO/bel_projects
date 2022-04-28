@@ -25,19 +25,20 @@
 #define FBAS_SHARED_GET_SBINUSER   (FBAS_SHARED_GET_SBOUTUSER  + 3 * _32b_SIZE_)   // USER input
 #define FBAS_SHARED_GET_CNT        (FBAS_SHARED_GET_SBINUSER   + 3 * _32b_SIZE_)   // event counter
 #define FBAS_SHARED_GET_TS1        (FBAS_SHARED_GET_CNT        + _32b_SIZE_)       // timestamp1 (generator event deadline)
-#define FBAS_SHARED_GET_TS2        (FBAS_SHARED_GET_TS1        + _32b_SIZE_ * 2)   // timestamp2 (generator event polled by TX)
-#define FBAS_SHARED_GET_TS3        (FBAS_SHARED_GET_TS2        + _32b_SIZE_ * 2)   // timestamp3 (IO action event deadline)
-#define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + _32b_SIZE_ * 2)   // timestamp4 (IO action event polled by TX)
-#define FBAS_SHARED_GET_TS5        (FBAS_SHARED_GET_TS4        + _32b_SIZE_ * 2)   // timestamp5 (measure time period)
-#define FBAS_SHARED_GET_TS6        (FBAS_SHARED_GET_TS5        + _32b_SIZE_ * 2)   // timestamp6 (measure time period)
-#define FBAS_SHARED_GET_AVG        (FBAS_SHARED_GET_TS6        + _32b_SIZE_ * 2)   // average (performance, delay measurements)
-#define FBAS_SHARED_GET_MIN        (FBAS_SHARED_GET_AVG        + _32b_SIZE_ * 2)   // min
-#define FBAS_SHARED_GET_MAX        (FBAS_SHARED_GET_MIN        + _32b_SIZE_ * 2)   // max
-#define FBAS_SHARED_GET_VAL        (FBAS_SHARED_GET_MAX        + _32b_SIZE_ * 2)   // valid counts
-#define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VAL        + _32b_SIZE_ * 2)   // all/total counts
-#define FBAS_SHARED_ECA_VLD        (FBAS_SHARED_GET_ALL        + _32b_SIZE_ * 2)   // number of the valid actions output by ECA
+#define FBAS_SHARED_GET_TS2        (FBAS_SHARED_GET_TS1        + 2 * _32b_SIZE_)   // timestamp2 (generator event polled by TX)
+#define FBAS_SHARED_GET_TS3        (FBAS_SHARED_GET_TS2        + 2 * _32b_SIZE_)   // timestamp3 (IO action event deadline)
+#define FBAS_SHARED_GET_TS4        (FBAS_SHARED_GET_TS3        + 2 * _32b_SIZE_)   // timestamp4 (IO action event polled by TX)
+#define FBAS_SHARED_GET_TS5        (FBAS_SHARED_GET_TS4        + 2 * _32b_SIZE_)   // timestamp5 (measure time period)
+#define FBAS_SHARED_GET_TS6        (FBAS_SHARED_GET_TS5        + 2 * _32b_SIZE_)   // timestamp6 (measure time period)
+#define FBAS_SHARED_GET_AVG        (FBAS_SHARED_GET_TS6        + 2 * _32b_SIZE_)   // average (performance, delay measurements)
+#define FBAS_SHARED_GET_MIN        (FBAS_SHARED_GET_AVG        + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_GET_MAX        (FBAS_SHARED_GET_MIN        + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_GET_VAL        (FBAS_SHARED_GET_MAX        + 2 * _32b_SIZE_)   // valid counts
+#define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VAL        + 2 * _32b_SIZE_)   // all/total counts
+#define FBAS_SHARED_ECA_VLD        (FBAS_SHARED_GET_ALL        + 2 * _32b_SIZE_)   // number of the valid actions output by ECA
 #define FBAS_SHARED_ECA_OVF        (FBAS_SHARED_ECA_VLD        + _32b_SIZE_)       // number of the overflow actions output by ECA
-#define FBAS_SHARED_GET_END        (FBAS_SHARED_ECA_OVF        + _32b_SIZE_)       // end of the 'get' region
+#define FBAS_SHARED_SENDERID       (FBAS_SHARED_ECA_OVF        + _32b_SIZE_)       // location of valid sender ID that is passed to RX node
+#define FBAS_SHARED_GET_END        (FBAS_SHARED_SENDERID       + 2 * _32b_SIZE_)   // end of the 'get' region
 
 // diagnosis: end of used shared memory
 #define FBAS_SHARED_END            (FBAS_SHARED_GET_END)
@@ -78,6 +79,7 @@ typedef enum {
 #define FBAS_CMD_SET_IO_OE      0x16   // set IO output enable
 #define FBAS_CMD_GET_IO_OE      0x17   // get IO output enable
 #define FBAS_CMD_TOGGLE_IO      0x18   // toggle IO output
+#define FBAS_CMD_GET_SENDERID   0x19   // get sender IDs (sender MAC addresses)
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding

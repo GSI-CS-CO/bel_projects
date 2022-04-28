@@ -28,6 +28,7 @@ export addr_cnt1="0x04060934"    # shared memory location for received frames co
 export addr_msr1="0x04060968"    # shared memory location for measurement results
 export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
 export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
+export addr_senderid="0x04060998" # shared memory location of sender ID
 
 export instr_fsm_configure=0x01 # FSM CONFIGURE state
 export instr_fsm_opready=0x02   # FSM OPREADY state
@@ -36,6 +37,7 @@ export instr_set_nodetype=0x15  # set node type
 export instr_set_io_oe=0x16     # set IO output enable
 export instr_get_io_oe=0x17     # get IO output enable
 export instr_toggle_io=0x18     # toggle IO output
+export instr_load_senderid=0x19 # load sender ID
 
 export instr_probe_sb_diob=0x20 # probe DIOB slave card on SCU bus
 export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
@@ -46,6 +48,9 @@ export instr_st_tx_dly=0x32     # store the transmission delay measurement resul
 export instr_st_ow_dly=0x33     # store the one-way delay measurement results to shared memory
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
+
+export senderid_tx_node="0x000000267b0004da" # sender ID of TX node
+export senderid_dm_node="0x010000267b0004dc" # sender ID of DM node
 
 module_dir="${PWD/fbas*/fbas}"
 fw_dir="$module_dir/fw"
@@ -318,6 +323,19 @@ setup_fbasrx() {
     # wrc output:
     #   00000001
 
+    echo "tell LM32 to set the sender IDs"
+    # sender ID of TX node
+    eb-write -q $FBASRX $addr_senderid/8 $senderid_tx_node
+    eb-read -q $FBASRX $addr_senderid/8
+    eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
+    wait_seconds 1
+
+    # sender ID of DM node
+    eb-write -q $FBASRX $addr_senderid/8 $senderid_dm_node
+    eb-read -q $FBASRX $addr_senderid/8
+    eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
+    wait_seconds 1
+
     echo "OPREADY state "
     eb-write $FBASRX $addr_cmd/4 $instr_fsm_opready
 
@@ -396,6 +414,19 @@ reset_node() {
 
         # wrc output:
         #   00000001
+
+        echo "tell LM32 to set the sender IDs"
+        # sender ID of TX node
+        eb-write -q $FBASRX $addr_senderid/8 $senderid_tx_node
+        eb-read -q $FBASRX $addr_senderid/8
+        eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
+        wait_seconds 1
+
+        # sender ID of DM node
+        eb-write -q $FBASRX $addr_senderid/8 $senderid_dm_node
+        eb-read -q $FBASRX $addr_senderid/8
+        eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
+        wait_seconds 1
     fi
 
     echo "OPREADY state "
@@ -474,11 +505,11 @@ start_test3() {
     echo "send OK and NOK each $total times -> $(( $total * 2)) MPS events ($(( $total * 4 )) transmissions)"
     for i in $(seq 1 $total); do
         echo "idx = 0xff, flag = OK(1)  -> 1x MPS event (1x transmission)"
-        saft-ctl fbastx -p inject 0xffffeeee0000ff01 0x0 1000000
+        saft-ctl fbastx -p inject 0xffffeeee00000001 0x0 1000000
         wait_seconds 1
 
         echo "idx = 0xff, flag = NOK(2) -> 1x MPS event (3x transmissions)"
-        saft-ctl fbastx -p inject 0xffffeeee0000ff02 0x0 1000000
+        saft-ctl fbastx -p inject 0xffffeeee00000002 0x0 1000000
         wait_seconds 1
     done
 

@@ -24,6 +24,7 @@ mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
 mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr);
 mpsMsg_t* expireMpsMsg(timedItr_t* itr);
 void resetMpsMsg(size_t len, mpsMsg_t* buf);
+void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
 
 int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);

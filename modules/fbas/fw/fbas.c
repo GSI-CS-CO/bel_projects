@@ -102,7 +102,10 @@ static void initSharedMem();
 static void initMpsData();
 static void initIrqTable();
 static void printSrcAddr();
+static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
+static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo);
 static status_t setDstAddr(uint64_t dstMac, uint32_t dstIp);
+static status_t loadSenderId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
@@ -179,12 +182,13 @@ void initSharedMem(uint32_t *sharedSize)
   DBPRINT2("fbas%d: SHARED_GET_CNT 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)));
   DBPRINT2("fbas%d: SHARED_CNT_VAL 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)));
   DBPRINT2("fbas%d: SHARED_CNT_OVF 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT2("fbas%d: SHARED_SENDERID 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
 } // initSharedMem
 
 /**
- * \brief initialize application specific data structures
+ * \brief Initialize application specific data structures
  *
- * Initialize task control flag, timing event IDs, MPS flag buffer
+ * Initialize task control flag, timing event IDs, MPS message buffer
  *
  **/
 void initMpsData()
@@ -196,13 +200,22 @@ void initMpsData()
   mpsTimMsgEvntId = fwlib_buildEvtidV1(FBAS_EVT_GID, FBAS_EVT_EVTNO,
       FBAS_EVT_FLAGS, FBAS_EVT_SID, FBAS_EVT_BPID, FBAS_EVT_RES);
 
-  // initialize MPS flags
+  // initialize MPS message buffer
+  // - RX node: use own MAC address as valid sender IDs -> other nodes do not have the same MAC
+  // - TX node: sender ID is its MAC address
+  uint64_t mac;
+  convertMacToU64(&mac, pSharedMacHi, pSharedMacLo);
+
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
     bufMpsMsg[i].prot.flag  = MPS_FLAG_TEST;
-    bufMpsMsg[i].prot.idx = 0xff;
-    bufMpsMsg[i].prot.addr[0] = i;
+    bufMpsMsg[i].prot.idx = 0;
+    setMpsMsgSenderId(&bufMpsMsg[i], mac, 1);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].ts = 0;
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x\n",
+        i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
+        bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag);
   }
 
   // initialize the read iterator for MPS flags
@@ -256,6 +269,58 @@ void printSrcAddr()
 }
 
 /**
+ * \brief Convert MAC address to array of uint8
+ *
+ * \param hi  Source buffer address with MAC high octets
+ * \param lo  Source buffer address with MAC low octets
+ * \param buf Destination buffer address
+ *
+ * \ret status Zero on success
+ **/
+
+status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo)
+{
+  status_t status;
+  uint64_t mac = 0;
+  uint8_t bits = 0;
+
+  status = convertMacToU64(&mac, hi, lo);
+
+  if (status == COMMON_STATUS_OK) {
+    for (int i = ETH_ALEN - 1; i >= 0; i--) {
+      buf[i] = mac >> bits;
+      bits += 8;
+    }
+  }
+
+  return status;
+}
+
+/**
+ * \brief Convert MAC address to uint64
+ *
+ * \param hi  Source buffer address with MAC high octets
+ * \param lo  Source buffer address with MAC low octets
+ * \param buf Destination buffer address
+ *
+ * \ret status Zero on success
+ **/
+
+status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
+{
+  if (!(hi && lo && buf)) {
+    DBPRINT1("null pointer: %x %x %x\n", buf, hi, lo);
+    return COMMON_STATUS_ERROR;
+  }
+
+  *buf = *hi & 0x0000ffff;
+  *buf = *buf << 32;
+  *buf += *lo;
+
+  return COMMON_STATUS_OK;
+}
+
+/**
  * \brief set the destination MAC and IP addresses
  *
  * Set the destination MAC and IP addresses of the Endpoint WB device.
@@ -275,6 +340,35 @@ status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
   return status;
 }
 
+/**
+ * \brief Load sender ID
+ *
+ * Read the raw sender ID and sets it to designated MPS message buffer.
+ * Raw data contains: position + index + MAC
+ * where, position specifies a concrete MPS message buffer.
+ *
+ * \param base   Base address of shared memory
+ * \param offset Offset to a location with a valid sender ID
+ *
+ * \ret status   Zero on success
+ **/
+status_t loadSenderId(uint32_t* base, uint32_t offset)
+{
+  uint64_t* pSenderId = (uint64_t *)(base + (offset >> 2));
+  uint8_t pos = *pSenderId >> 56;         // position of MPS message buffer
+
+  if (pos >= N_MPS_CHANNELS) {
+    DBPRINT1("fbas%d: %d position out of range!\n", nodeType, pos);
+    return COMMON_STATUS_ERROR;
+  }
+
+  mpsMsg_t* msg = &bufMpsMsg[pos];
+  msg->prot.idx = *pSenderId >> 48;       // index of MPS channel
+
+  setMpsMsgSenderId(msg, *pSenderId, 1);
+
+  return COMMON_STATUS_OK;
+}
 
 /**
  * \brief Clear latched error
@@ -507,6 +601,8 @@ uint32_t extern_entryActionConfigured()
     startTimer();
   }
 
+  initMpsData();                    // initialize application specific data structure
+
   return status;
 } // entryActionConfigured
 
@@ -554,6 +650,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         } else {
           DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
+        break;
+      case FBAS_CMD_GET_SENDERID:
+        // read valid sender ID (MAC, idx) from the shared memory
+        loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
         setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
@@ -695,7 +795,7 @@ int main(void) {
   fwlib_clearDiag();                                                   // clear common diagnostic data
   initSharedMem(&sharedSize);                                          // initialize shared memory
   fwlib_init((uint32_t *)_startshared, pCpuRamExternal, SHARED_OFFS, sharedSize, "fbas", FBAS_FW_VERSION); // init common stuff
-  initMpsData();                                                       // initialize application specific data structure
+  //initMpsData();                                                       // initialize application specific data structure
 
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption

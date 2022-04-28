@@ -323,7 +323,6 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
   return 0;
 }
 
-
 /**
  * \brief reset MPS message buffer
  *
@@ -342,6 +341,33 @@ void resetMpsMsg(size_t len, mpsMsg_t* buf)
     (buf + i)->prot.flag  = flag;
     (buf + i)->ttl = 0;
     (buf + i)->ts = 0;
+  }
+}
+
+/**
+ * \brief Set the sender ID to the MPS message buffer
+ *
+ * RX node evaluates sender ID of the received MPS message.
+ *
+ * \param msg     MPS message buffer
+ * \param raw     Sender ID (MAC address)
+ * \param verbose Non-zero enables verbosity
+ *
+ * \ret none
+ **/
+void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
+{
+  uint8_t bits = 0;
+  for (int i = ETH_ALEN - 1; i >= 0; i--) {
+    msg->prot.addr[i] = raw >> bits;
+    bits += 8;
+  }
+
+  if (verbose) {
+    DBPRINT1("tmessage: sender ID: ");
+    for (int i = 0; i < ETH_ALEN; i++)
+      DBPRINT1("%x ", msg->prot.addr[i]);
+    DBPRINT1("\n");
   }
 }
 
