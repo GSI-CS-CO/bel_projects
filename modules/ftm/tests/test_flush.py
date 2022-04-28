@@ -1,14 +1,37 @@
 import dm_testbench
 import pytest
 
-"""
-Class tests various variants of the flush command.
+"""Class tests various variants of the flush command.
+
+Naming of the tests:
+test_flow_flushX_prioY, where
+X are the queues to flush. Allowed values: None, 0, 1, 2, 01, 02, 12, 123.
+Y is the priority of the flush. Allowed values: 0, 1, 2.
+Naming of patterns:
+P-queueX-prioY, where X and Y as described above.
+
+Patterns used:
+schedules/flush-queue01-prio0.dot
+schedules/flush-queue01-prio1.dot
+schedules/flush-queue01-prio2.dot
+schedules/flush-queue23-prio0.dot
+schedules/flush-queue23-prio1.dot
+schedules/flush-queue23-prio2.dot
+
+Structure of each test:
+add the schedule, start the pattern twice. The second startpattern executes the commands which are written
+to the queues on first startpattern.
+Check for flushed queues and the executed flush command after a delay of 0.1 seconds.
+Four tests use the same schedule to minimize the numer of schedules. Each schedule uses 4 CPUs.
 """
 class UnitTestFlush(dm_testbench.DmTestbench):
 
   match = 'Qty: '
   lengthQ = len(match)
 
+  """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
+  Search for 'Qty: ' in the line and parse the number.
+  """
   def getQuantity(self, line):
     pos = line.find(self.match)
     pos1 = line.find(' ', pos + self.lengthQ)
@@ -17,6 +40,17 @@ class UnitTestFlush(dm_testbench.DmTestbench):
       quantity = int(line[pos + self.lengthQ:pos1])
     return quantity
 
+  """ Check that a flush command is executed and the defined queues are flushed.
+  queuesToFlush: binary value between 0 and 7 for the queues to flush.
+  blockName: name of the block with the queues to check.
+  flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+  Priority queues higher than the flushPrio are not affected by the flush command since these
+  queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+  flushprio = 0, 1.
+  The check for the executed flush command and the checks for the flushed queues are independant. All checks
+  are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
+  are used to signal the section inside the output.
+  """
   def check_queue_flushed(self, queuesToFlush, blockName, flushPrio):
     output = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, '-v', 'queue', blockName), [0], 38)
     checkQueue0 = False
@@ -100,19 +134,6 @@ class UnitTestFlush(dm_testbench.DmTestbench):
       queuesFlushed = queuesFlushed + 4
     self.assertEqual(queuesFlushed, queuesToFlush, f'Queue 2 flushed {check2}, Queue 1 flushed {check1}, Queue 0 flushed {check0}, Queues to check: {queuesToFlush:03b}')
     self.assertTrue(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
-
-  # Naming of the tests:
-  # test_flow_flushX_prioY, where
-  # X are the queues to flush. Allowed values: None, 0, 1, 2, 01, 02, 12, 123.
-  # Y is the priority of the flush. Allowed values: 0, 1, 2.
-  # Naming of patterns:
-  # P-queueX-prioY, where X and Y as described above.
-
-  # Structure of each test:
-  # add the schedule, start the pattern twice. The second startpattern executes the commands which are written
-  # to the queues on first startpattern.
-  # Check for flushed queues and the executed flush command after a delay of 0.1 seconds.
-  # Four tests use the same schedule to minimize the numer of schedules. Each schedule uses 4 CPUs.
 
   def test_flow_flushNone_prio0(self):
     self.addSchedule('flush-queue01-prio0.dot')
