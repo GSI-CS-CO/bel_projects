@@ -124,7 +124,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # reset the FW in receiver node and enable MPS task
     echo -e "\nreset '${rxscu%%.*}'\n------------"
-    timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && reset_node RX"
+    timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && reset_node DEV_RX"
 
     # enable MPS task of rxscu
     timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && start_test4 \$DEV_RX"

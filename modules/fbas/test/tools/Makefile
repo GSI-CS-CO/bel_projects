@@ -90,8 +90,8 @@ do_test3:
 	source setup.sh && start_test3
 
 repeat_test3:
-	source setup.sh && reset_node RX
-	source setup.sh && reset_node TX
+	source setup.sh && reset_node $$FBASRX
+	source setup.sh && reset_node $$FBASTX
 	source setup.sh && start_test3
 
 disable_mps_tx:

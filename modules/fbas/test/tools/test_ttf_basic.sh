@@ -6,8 +6,8 @@
 # - TX SCU (scuxl0396)
 
 domain=$(hostname -d)
-rxscu="scuxl0497.$domain"
-txscu="scuxl0396.$domain"
+rxscu="scuxl0497.$domain" # 00:26:7b:00:06:c5
+txscu="scuxl0396.$domain" # 00:26:7b:00:06:d7
 sleep_sec=10
 unset option username userpasswd verbose
 

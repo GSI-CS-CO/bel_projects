@@ -52,6 +52,16 @@ export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to 
 export senderid_tx_node="0x000000267b0004da" # sender ID of TX node
 export senderid_dm_node="0x010000267b0004dc" # sender ID of DM node
 
+export evt_mps_flag_any="0xffffeeee00000000" # generator event for MPS flags
+export  evt_mps_flag_ok="0xffffeeee00000001" # event to generate the MPS OK flag
+export evt_mps_flag_nok="0xffffeeee00000002" # event to generate the MPS NOK flag
+export evt_mps_flag_tst="0xffffeeee00000003" # event to generate the MPS TEST flag
+export evt_mps_prot_std="0x1fcbfcb000000000" # event with MPS protocol (regular)
+export evt_mps_prot_chg="0x1fccfcc000000000" # event with MPS protocol (change in flag)
+export          evt_tlu="0xffff100000000000" # TLU event (used to catch the signal change at IO port)
+export    evt_new_cycle="0xffffdddd00000000" # event for new cycle
+export      evt_id_mask="0xffffffff00000000" # event mask
+
 module_dir="${PWD/fbas*/fbas}"
 fw_dir="$module_dir/fw"
 fw_tx="$fw_dir/fbas.pcicontrol.bin"
@@ -181,26 +191,41 @@ start_saftd() {
     #saft-ctl fbasrx attach dev/wbm2
 }
 
-######################
-## Make 'fbastx' ready
-######################
+check_node() {
+    # $1 - device (FBASRX or FBASTX)
 
-setup_fbastx() {
+    if [ "$1" != "$FBASRX" ] && [ "$1" != "$FBASTX" ]; then
+        echo "unknown node type: $1"
+        exit 1
+    fi
+}
 
-    check_fbastx
+load_fw() {
+    # $1 - device (FBASRX or FBASTX)
+    # $2 - firmware filename
 
-    fw_filename=$fw_tx
+    check_node "$1"
 
-    if [ ! -z "$1" ]; then
-        fw_filename="$fw_dir/$1"
+    unset fw_filename
+
+    if [ "$1" == "$FBASRX" ]; then
+        check_fbasrx
+        fw_filename=$fw_rx
+    else
+        check_fbastx
+        fw_filename=$fw_tx
+    fi
+
+    if [ ! -z "$2" ]; then
+        fw_filename="$fw_dir/$2"
         if [ ! -f "$fw_filename" ]; then
             echo "'$fw_filename' not found. Exit"
             return 1
         fi
     fi
 
-    echo "TX: load the LM32 firmware '$fw_filename'"
-    eb-fwload $FBASTX u 0x0 $fw_filename
+    echo "$1: load the LM32 firmware '$fw_filename'"
+    eb-fwload $1 u 0x0 $fw_filename
     if [ $? -ne 0 ]; then
         echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
         exit 1
@@ -216,8 +241,14 @@ setup_fbastx() {
     #   pSharedSetNodeType = 0x4060694 (CPU RAM External +  begin_shared + SHARED_SET_NODETYPE - 0x10000000)
     #   pSharedGetNodeType = 0x40606a0 (CPU RAM External +  begin_shared + SHARED_GET_NODETYPE - 0x10000000)
 
-    echo "CONFIGURE state "
-    eb-write $FBASTX $addr_cmd/4 $instr_fsm_configure
+}
+
+configure_node() {
+    # $1 - device (FBASRX or FBASTX)
+
+    check_node "$1"
+
+    eb-write $1 $addr_cmd/4 $instr_fsm_configure
     wait_seconds 1
 
     # wrc output:
@@ -225,142 +256,142 @@ setup_fbastx() {
     #   fbas0: received unknown command '0x00000001'
     #   common-fwlib: changed to state 3
 
-    echo "OPREADY state "
-    eb-write $FBASTX $addr_cmd/4 $instr_fsm_opready
+    if [ "$1" == "$FBASRX" ]; then
+        echo "set node type to FBASRX (0x1)"
+        eb-write $1 $addr_set_node_type/4 0x1
+        wait_seconds 1
+
+        echo "tell LM32 to set the node type"
+        eb-write $1 $addr_cmd/4 $instr_set_nodetype
+        wait_seconds 1
+
+        # wrc output:
+        #   common-fwlib: common_cmdHandler received unknown command '0x00000015'
+        #   fbas1: node type 1
+
+        echo "verify the actual node type"
+        eb-read $1 $addr_get_node_type/4
+        wait_seconds 1
+
+        # wrc output:
+        #   00000001
+
+        echo "tell LM32 to set the sender IDs"
+        # sender ID of TX node
+        eb-write -q $1 $addr_senderid/8 $senderid_tx_node
+        eb-read -q $1 $addr_senderid/8
+        eb-write $1 $addr_cmd/4 $instr_load_senderid
+        wait_seconds 1
+
+        # sender ID of DM node
+        eb-write -q $1 $addr_senderid/8 $senderid_dm_node
+        eb-read -q $1 $addr_senderid/8
+        eb-write $1 $addr_cmd/4 $instr_load_senderid
+        wait_seconds 1
+    fi
+}
+
+make_node_ready() {
+    # $1 - device (FBASRX or FBASTX)
+
+    check_node "$1"
+
+    eb-write $1 $addr_cmd/4 $instr_fsm_opready
     wait_seconds 1
 
     # wrc console output:
     #   common-fwlib: received cmd 2
     #   fbas0: received unknown command '0x00000002'
     #   common-fwlib: changed to state 4
-    #   fbas0: now 1604321478293723256, elap 47781578728
+}
+
+configure_tr() {
+    # $1 - device (FBASRX or FBASTX)
+
+    check_node "$1"
+
+    unset tr
+
+    if [ "$1" == "$FBASTX" ]; then
+        tr="fbastx"
+    else
+        tr="fbasrx"
+    fi
 
     echo "destroy all unowned ECA conditions"
-    saft-ecpu-ctl fbastx -x
-
-    echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x42"
-    saft-ecpu-ctl fbastx -c 0xffffeeee00000000 0xffffffff00000000 0 0x42 -d
-
-    echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
-    saft-ecpu-ctl fbastx -c 0xffff100000000000 0xffffffff00000000 0 0x43 -d
-
-    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-    saft-ecpu-ctl fbastx -c 0xffffdddd00000000 0xffffffff00000000 0 0x26 -d
-
-    echo "show actual ECA conditions"
-    saft-ecpu-ctl fbastx -l
+    saft-ecpu-ctl $tr -x
 
     echo "disable all events from IO inputs to ECA"
-    saft-io-ctl fbastx -w
+    saft-io-ctl $tr -w
 
-    echo "configure TLU: on signal transition at IO2 input, it will generate a timing event with the given ID"
-    saft-io-ctl fbastx -n IO2 -b 0xffff100000000000
+    if [ "$1" == "$FBASTX" ]; then
+        echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x42"
+        saft-ecpu-ctl $tr -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
 
-    echo "now both events can be snooped with a following command: saft-ctl fbastx -xv snoop 0 0 0"
-    echo "or both events can be presented by the LM32 firmware if WR console is active: $ eb-console $FBASTX"
+        echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
+        saft-ecpu-ctl $tr -c $evt_tlu $evt_id_mask 0 0x43 -d
+
+        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+        saft-ecpu-ctl $tr -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+
+        echo "configure TLU: on signal transition at IO2 input, it will generate a timing event with the given ID"
+        saft-io-ctl $tr -n IO2 -b $evt_tlu
+
+        echo "now events can be snooped with a following command: saft-ctl $tr -xv snoop 0 0 0"
+        echo "or events can be presented by the LM32 firmware if WR console is active: $ eb-console $1"
+    else
+        echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x24 and 0x25"
+        saft-ecpu-ctl $tr -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
+        saft-ecpu-ctl $tr -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
+
+        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+        saft-ecpu-ctl $tr -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+    fi
+
+    echo "show actual ECA conditions"
+    saft-ecpu-ctl $tr -l
 
     echo "list all IO conditions in ECA"
-    saft-io-ctl fbastx -l
+    saft-io-ctl $tr -l
+}
+
+######################
+## Make 'fbastx' ready
+######################
+
+setup_fbastx() {
+
+    echo "set up TX node"
+    load_fw "$FBASTX"
+
+    echo "CONFIGURE state "
+    configure_node "$FBASTX"
+
+    echo "OPREADY state "
+    make_node_ready "$FBASTX"
+
+    echo "configure TR"
+    configure_tr "$FBASTX"
 }
 
 ####################
-## Make fbasrx ready
+## Make 'fbasrx' ready
 ####################
 
 setup_fbasrx() {
-    # $1 - external filename with DM schedule
+    # $1 - firmware filename supplied externally
 
-    check_fbasrx
-
-    fw_filename=$fw_rx
-
-    if [ ! -z "$1" ]; then
-        fw_filename="$fw_dir/$1"
-        if [ ! -f "$fw_filename" ]; then
-            echo "'$fw_filename' not found. Exit"
-            return 1
-        fi
-    fi
-
-    echo "RX: load the LM32 firmware '$fw_filename'"
-    eb-fwload $FBASRX u 0x0 $fw_filename
-    if [ $? -ne 0 ]; then
-        echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
-        exit 1
-    fi
-    wait_seconds 1
-
-    # wrc output:
-    #   fbas0: SHARED_SET_NODETYPE 0x10000694
-    #   fbas0: SHARED_GET_NODETYPE 0x100006a0
-    #   fbas0: CPU RAM External 0x 4060000, begin shared 0x00000500
-    #   fbas0: COMMON_SHARED_BEGIN 0x10000500
-    #
-    #   pSharedCmd = 0x4060508 (CPU RAM External + begin_shared + COMMON_SHARED_CMD)
-    #   pSharedSetNodeType = 0x4060694 (CPU RAM External +  begin_shared + SHARED_SET_NODETYPE - 0x10000000)
+    echo "set up RX node"
+    load_fw "$FBASRX" "$1"
 
     echo "CONFIGURE state "
-    eb-write $FBASRX $addr_cmd/4 $instr_fsm_configure
-    wait_seconds 1
-
-    echo "set node type to FBASRX (0x1)"
-    echo "write node type (0x1) to dedicated memory location"
-    eb-write $FBASRX $addr_set_node_type/4 0x1
-    wait_seconds 1
-
-    echo "tell LM32 to set the node type"
-    eb-write $FBASRX $addr_cmd/4 $instr_set_nodetype
-    wait_seconds 1
-
-    # wrc output:
-    #   common-fwlib: common_cmdHandler received unknown command '0x00000015'
-    #   fbas1: node type 1
-
-    echo "verify the actual node type"
-    eb-read $FBASRX $addr_get_node_type/4
-    wait_seconds 1
-
-    # wrc output:
-    #   00000001
-
-    echo "tell LM32 to set the sender IDs"
-    # sender ID of TX node
-    eb-write -q $FBASRX $addr_senderid/8 $senderid_tx_node
-    eb-read -q $FBASRX $addr_senderid/8
-    eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
-    wait_seconds 1
-
-    # sender ID of DM node
-    eb-write -q $FBASRX $addr_senderid/8 $senderid_dm_node
-    eb-read -q $FBASRX $addr_senderid/8
-    eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
-    wait_seconds 1
+    configure_node "$FBASRX"
 
     echo "OPREADY state "
-    eb-write $FBASRX $addr_cmd/4 $instr_fsm_opready
+    make_node_ready "$FBASRX"
 
-    # wrc output:
-    #   common-fwlib: changed to state 4
-    #   fbas1: now 1604322219371061616, elap 479662071872
-
-    echo "destroy all unowned ECA conditions"
-    saft-ecpu-ctl fbasrx -x
-
-    echo "configure ECA: set FBAS_IO_ACTION for LM32 channel, tag 0x24 and 0x25"
-    saft-ecpu-ctl fbasrx -c 0x1fcbfcb000000000 0xffffffff00000000 0 0x24 -d
-    saft-ecpu-ctl fbasrx -c 0x1fccfcc000000000 0xffffffff00000000 0 0x25 -d
-
-    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-    saft-ecpu-ctl fbasrx -c 0xffffdddd00000000 0xffffffff00000000 0 0x26 -d
-
-    echo "show actual ECA conditions"
-    saft-ecpu-ctl fbasrx -l
-
-    echo "disable all events from IO inputs to ECA"
-    saft-io-ctl fbasrx -w
-
-    echo "list all IO conditions in ECA"
-    saft-io-ctl fbastx -l
+    echo "configure TR"
+    configure_tr "$FBASRX"
 }
 
 ####################
@@ -373,73 +404,35 @@ setup_fbasrx() {
 ####################
 
 reset_node() {
+    # $1 - device (FBASTX or FBASRX)
 
-    # $1 - node type (TX or RX)
+    check_node "$1"
 
-    if [ "$1" == "RX" ]; then
+    unset tr
+
+    if [ "$1" == "$FBASRX" ]; then
         check_fbasrx
-        node=$FBASRX
-    elif [ "$1" == "TX" ]; then
-        check_fbastx
-        node=$FBASTX
+        tr="fbasrx"
     else
-        echo "unknown node type: $1"
-        exit 1
+        check_fbastx
+        tr="fbastx"
     fi
 
     echo "reset LM32"
-    eb-reset $node cpureset 0x0
+    eb-reset $1 cpureset 0x0
     wait_seconds 1
 
     echo "CONFIGURE state "
-    eb-write $node $addr_cmd/4 $instr_fsm_configure
-    wait_seconds 1
-
-    if [ "$1" == "RX" ]; then
-        echo "set node type to FBASRX (0x1)"
-        eb-write $node $addr_set_node_type/4 0x1
-        wait_seconds 1
-
-        echo "tell LM32 to set the node type"
-        eb-write $node $addr_cmd/4 $instr_set_nodetype
-        wait_seconds 1
-
-        # wrc output:
-        #   common-fwlib: common_cmdHandler received unknown command '0x00000015'
-        #   fbas1: node type 1
-
-        echo "verify the actual node type"
-        eb-read $node $addr_get_node_type/4
-        wait_seconds 1
-
-        # wrc output:
-        #   00000001
-
-        echo "tell LM32 to set the sender IDs"
-        # sender ID of TX node
-        eb-write -q $FBASRX $addr_senderid/8 $senderid_tx_node
-        eb-read -q $FBASRX $addr_senderid/8
-        eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
-        wait_seconds 1
-
-        # sender ID of DM node
-        eb-write -q $FBASRX $addr_senderid/8 $senderid_dm_node
-        eb-read -q $FBASRX $addr_senderid/8
-        eb-write $FBASRX $addr_cmd/4 $instr_load_senderid
-        wait_seconds 1
-    fi
+    configure_node "$1"
 
     echo "OPREADY state "
-    eb-write $node $addr_cmd/4 $instr_fsm_opready
-
-    # wrc output:
-    #   common-fwlib: changed to state 4
+    make_node_ready "$1"
 
     echo "show actual ECA conditions"
-    saft-ecpu-ctl fbasrx -l
+    saft-ecpu-ctl $tr -l
 
     echo "list all IO conditions in ECA"
-    saft-io-ctl fbastx -l
+    saft-io-ctl $tr -l
 }
 
 ####################
@@ -467,7 +460,7 @@ dont_call_open_wr_console() {
 precheck_test3() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
-    echo "saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0"
+    echo "saft-ctl fbastx -xv snoop $evt_tlu $evt_id_mask 0"
 
     user_approval
 
@@ -505,17 +498,17 @@ start_test3() {
     echo "send OK and NOK each $total times -> $(( $total * 2)) MPS events ($(( $total * 4 )) transmissions)"
     for i in $(seq 1 $total); do
         echo "idx = 0xff, flag = OK(1)  -> 1x MPS event (1x transmission)"
-        saft-ctl fbastx -p inject 0xffffeeee00000001 0x0 1000000
+        saft-ctl fbastx -p inject $evt_mps_flag_ok 0x0 1000000
         wait_seconds 1
 
         echo "idx = 0xff, flag = NOK(2) -> 1x MPS event (3x transmissions)"
-        saft-ctl fbastx -p inject 0xffffeeee00000002 0x0 1000000
+        saft-ctl fbastx -p inject $evt_mps_flag_nok 0x0 1000000
         wait_seconds 1
     done
 
     echo "If you see $(( $total * 2)) IO events in the snooper output, then basically all works."
 
-    # snooper output (saft-ctl fbastx -xv snoop 0xffff100000000000 0xffffffff00000000 0)
+    # snooper output (saft-ctl fbastx -xv snoop $evt_tlu $evt_id_mask 0)
     #   tDeadline: 2022-04-27 08:19:54.001037375 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 4089 ns)
     #   tDeadline: 2022-04-27 08:19:55.001036422 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000 Param: 0x0000000000000000!late (by 8186 ns)
 
@@ -526,8 +519,7 @@ start_test3() {
     pause=2
     echo "Send 'new cycle' in $pause seconds ..."
     wait_seconds $pause
-    saft-ctl fbastx -p inject 0xffffdddd00000000 0x0 1000000
-    saft-ctl fbasrx -p inject 0xffffdddd00000000 0x0 1000000
+    saft-ctl fbasrx -p inject $evt_new_cycle 0x0 1000000
 
     echo "Disable MPS task on TX and RX nodes"
     disable_mps_all
@@ -602,14 +594,14 @@ enable_mps_all() {
 }
 
 ##########################################################
-# Test 2: Measure time between a signalling and TLU events (0xffffeeee00000000 and 0xffff100000000000)
+# Test 2: Measure time between a signalling and TLU events ($evt_mps_flag_any and $evt_tlu)
 #
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
 do_test2() {
     echo "injectg timing messages to FBASTX that simulate the FBAS class 2 signals"
-    saft-ctl fbastx -p inject 0xffffeeee00000000 0x0 1000000
+    saft-ctl fbastx -p inject $evt_mps_flag_tst 0x0 1000000
 
     # Case 1: consider the ahead time of 500 us (flagForceLate=0)
     # wrc output (TX)
