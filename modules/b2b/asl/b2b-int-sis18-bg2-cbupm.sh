@@ -14,10 +14,10 @@ log 'copying software and startup script to ramdisk'
 cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
 ldconfig
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ctl /usr/bin/
-cp -a /opt/$NAME/$ARCH/usr/bin/b2b-int-sis18-bg2-pm_start.sh /usr/bin/
+cp -a /opt/$NAME/$ARCH/usr/bin/b2b-int-sis18-bg2-cbupm_start.sh /usr/bin/
 
 log 'copying firmware to ramdisk'
 cp -a /opt/$NAME/firmware/* /
 
 log 'starting'
-b2b-int-sis18-bg2-pm_start.sh
+b2b-int-sis18-bg2-cbupm_start.sh
