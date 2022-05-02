@@ -295,7 +295,12 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2]; // ptr to target block
   const uint32_t adrPrefix = (uint32_t)tg & ~PEER_ADR_MSK; // Address prefix. If target is on a different RAM, the B (Host) Port is used and the global adr prefix must be added 
 
-
+  // if this command tries to write to priority that does not exist, this is an emergency. Halt everything, set error bit for bad cmd action.
+  if(!((tg[NODE_FLAGS >> 2] >> NFLG_BLOCK_QS_POS) & (1 << prio))) {
+    *abort1 = 0xffffffff; 
+    *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;
+    return node; // return this node to show where the problem was 
+  }  
  
   uint32_t *bl;     // ptr to buffer list of target queue
   uint32_t *b;      // ptr to specific buffer
@@ -311,7 +316,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   //check if the target queues are write locked
   const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2]; // queue flags field, contains lock bits. Only copy cmd action into buffer if Do not write (DNW) is false
-    
+  
   if(qFlags & BLOCK_CMDQ_DNW_SMSK) { return ret; }
 
   /*                    tg
@@ -324,7 +329,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
    *  e0 e1 e2 e3  e0 e1 e2 e3    e0 e1 e2 e3
    */
 
-  wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
+  wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + 3 - prio);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
   bl      = (uint32_t*)(tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2]  - INT_BASE_ADR + adrPrefix); // get pointer to buf list
