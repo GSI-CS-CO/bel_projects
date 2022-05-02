@@ -25,6 +25,7 @@ scu_tools_dir="$module_dir/test/scu"
 x86_tools_dir="$module_dir/test/tools"
 x86_helpers_dir="$module_dir/test/helpers"
 wrs_config_dir="$module_dir/test/wrs"
+dm_schedule_dir="$module_dir/test/dm"
 
 filename=$(basename "$0" .sh)
 hostname=${filename##*_}
@@ -49,5 +50,6 @@ rsync $rsync_opts \
     $x86_tools_dir \
     $x86_helpers_dir \
     $wrs_config_dir \
+    $dm_schedule_dir \
     --exclude="helpers/deploy_tsl001.sh" \
     "$1@$hostname:~/fbas/"

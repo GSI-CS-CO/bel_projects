@@ -36,7 +36,8 @@ export instr_st_ow_dly=0x33     # store the one-way delay measurement results to
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
 
-export senderid_tx_node="0x000000267b0006d7"  # sender ID of TX node
+export      mac_tx_node="0x00267b0006d7"      # MAC address TX node
+export     mac_any_node="0xffffffffffff"      # MAC address of any node
 export evt_mps_flag_any="0xffffeeee00000000"  # generator event for MPS flags
 export  evt_mps_flag_ok="0xffffeeee00000001"  # event to generate the MPS OK flag
 export evt_mps_flag_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag
@@ -209,10 +210,18 @@ configure_node() {
         wait_seconds 1
 
         echo "tell LM32 to set the sender IDs"
-        # sender ID of TX node
-        eb-write -q $device $addr_senderid/8 $senderid_tx_node
-        eb-read -q $device $addr_senderid/8
-        eb-write $device $addr_cmd/4 $instr_load_senderid
+        # sender ID of TX and other nodes
+        mac_list="$mac_tx_node $mac_any_node"
+        i=0
+        for mac in $mac_list; do
+            pos=$(( $i << 56 ))                               # position in RX buffer
+            senderid=$(( $pos + $mac ))                       # sender ID = position + MAC
+            senderid=$(printf "0x%x" $senderid)
+            eb-write -q $device $addr_senderid/8 $senderid
+            eb-read -q $device $addr_senderid/8
+            eb-write $device $addr_cmd/4 $instr_load_senderid
+            i=$(( $i + 1 ))
+        done
         wait_seconds 1
     fi
 }

@@ -42,6 +42,8 @@ usage() {
     echo "  -f <LM32 firmware>     firmware binary file"
     echo "  -m                     limited only with primary message rates"
     echo "  -h                     display this help and exit"
+    echo
+    echo "Example (@tsl001): ./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f fbas.scucontrol.bin"
 }
 while getopts 'hu:p:s:f:m' c; do
     case $c in
@@ -155,6 +157,9 @@ for rate in ${all_msg_rates[*]}; do
     new_line=${new_line//./,}    # replace all 'dot' with 'comma' (for floating point numbers)
     new_line+=$(printf " | %s" $sel_counts)
 
+    eca_valid=$(echo "$counts" | cut -d' ' -f2)
+    eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
+
     eca_overflow=$(echo "$counts" | cut -d' ' -f3)
     eca_overflow=$(( 10#$eca_overflow ))  # convert a string to integer
     if [ $eca_overflow -ne 0 ]; then
@@ -165,8 +170,9 @@ for rate in ${all_msg_rates[*]}; do
 
     results+=$new_line
 
-    # break loop if the 'ECA overflow' counter has non-zero
-    if [ $eca_overflow -ne 0 ]; then
+    # break loop if the 'ECA overflow' counter has non-zero or
+    # 'ECA valid' counter has zero value
+    if [ $eca_overflow -ne 0 ] || [ $eca_valid -eq 0 ]; then
         break
     fi
 
