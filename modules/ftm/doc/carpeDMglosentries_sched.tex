@@ -5,7 +5,7 @@ type=sched}
 
 \newglossaryentry{sched:type:tmsg}{
 name={tmsg},
-description={Timing Message. Causes a message to be broadcasted to all timing receivers},type=sched,
+description={Timing Message. Broadcasts a message to all timing receivers},type=sched,
 parent={sched:type}
 }
 
@@ -60,7 +60,7 @@ type=sched}
 
 \newglossaryentry{sched:cpu}{
 name={cpu},
-description={Index of the CPU core this Node will reside in. To be replaced by auto-balancer algorithm},
+description={Index of the CPU core this node will reside in},
 type=sched}
 
 \newglossaryentry{sched:thread}{
@@ -75,22 +75,22 @@ type=sched}
 
 \newglossaryentry{sched:patentry}{
 name={patentry},
-description={If true, this node is an entry point to the pattern it belongs to},
+description={If true, this node is an entry point to its pattern},
 type=sched}
 
 \newglossaryentry{sched:patexit}{
 name={patexit},
-description={If true, this node is an exit point from the pattern it belongs to},
+description={If true, this node is an exit point from its pattern},
 type=sched}
 
 \newglossaryentry{sched:pattern}{
 name={pattern},
-description={The name of thepattern this node belongs to},
+description={The name of this node's pattern},
 type=sched}
 
 \newglossaryentry{sched:bpentry}{
 name={bpentry},
-description={If true, this node is an entry point to the beamprocess it belongs to. Currently not supported},
+description={If true, this node is an entry point to its beamprocess. Currently not supported},
 type=sched}
 
 \newglossaryentry{sched:bpexit}{
@@ -115,22 +115,22 @@ type=sched}
 
 \newglossaryentry{sched:qil}{
 name={qil},
-description={Block attribute, generates a command queue of priority High if true},
+description={If true, adds a command queue of top priority (Interlock) to this Block},
 type=sched}
 
 \newglossaryentry{sched:qhi}{
 name={qhi},
-description={Block attribute, generates a command queue of priority Mid if true},
+description={If true, adds a command queue of medium priority (High) to this Block},
 type=sched}
 
 \newglossaryentry{sched:qlo}{
 name={qlo},
-description={Block attribute, generates a command queue of priority Low if true},
+description={If true, adds a command queue of low priority (Low) to this Block},
 type=sched}
 
 \newglossaryentry{sched:toffs}{
 name={toffs},
-description={The time offset \SI{}{\nano\second} relative to the block start at which this node is executed. Negative offsets can be used for debugging to force late events},
+description={The time offset \SI{}{\nano\second} relative to the current timesum at which this node is executed. Negative offsets can be used for debugging to force late events},
 type=sched}
 
 \newglossaryentry{sched:id}{
@@ -155,7 +155,7 @@ type=sched}
 
 \newglossaryentry{sched:qty}{
 name={qty},
-description={Repetition quantity of a command(-node). The generated command will be executed until qty reaches 0},
+description={Number of times this command will be repeated. The generated command will be executed until qty reaches 0, then it will be popped from the block's queue},
 type=sched}
 
 \newglossaryentry{sched:twait}{
@@ -173,3 +173,27 @@ name={tef},
 description={Fractional (sub-nanosecond) time extension field, part of a timing message. Currently not interpreted by ECA)},
 type=sched}
 
+\newglossaryentry{edge:defdst}{
+name={defdst},
+description={Points to default successor node},
+type=sched}
+
+\newglossaryentry{edge:altdst}{
+name={altdst},
+description={Points to an alternative successor node},
+type=sched}
+
+\newglossaryentry{edge:target}{
+name={target},
+description={Points to target block receiving a command},
+type=sched}
+
+\newglossaryentry{edge:flowdst}{
+name={flowdst},
+description={Points to destination node of a flow command},
+type=sched}
+
+\newglossaryentry{edge:switchdst}{
+name={switchdst},
+description={Points to destination node of a switch statement},
+type=sched}
