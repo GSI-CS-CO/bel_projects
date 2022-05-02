@@ -33,17 +33,22 @@ namespace Scu
 ///////////////////////////////////////////////////////////////////////////////
 class CommandLine: public CLOP::PARSER
 {
+public:
+   using      FILTER_FLAG_T = uint32_t;
+
+private:
    using OPT_LIST_T = std::vector<CLOP::OPTION>;
    static OPT_LIST_T c_optList;
 
-   bool        m_verbose;
-   bool        m_daemonize;
-   const bool  m_isOnScu;
-   bool        m_noTimestamp;
-   bool        m_humanTimestamp;
-   bool        m_isForConsole;
-   uint        m_interval;
-   std::string m_scuUrl;
+   bool          m_verbose;
+   bool          m_daemonize;
+   const bool    m_isOnScu;
+   bool          m_noTimestamp;
+   bool          m_humanTimestamp;
+   bool          m_isForConsole;
+   uint          m_interval;
+   FILTER_FLAG_T m_filterFlags;
+   std::string   m_scuUrl;
 
    static bool readInteger( uint&, const std::string& );
 
@@ -91,6 +96,11 @@ public:
    std::string& getScuUrl( void )
    {
       return m_scuUrl;
+   }
+
+   FILTER_FLAG_T getFilterFlags( void )
+   {
+      return m_filterFlags;
    }
 
 private:

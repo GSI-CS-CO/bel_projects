@@ -162,7 +162,9 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'c',
       .m_longOpt  = "console",
       .m_helpText = "Console mode: line feed \"\\n\" becomes printed.\n"
-                    "Otherwise it becomes replaced by space character."
+                    "Otherwise it becomes replaced by space character and \"\\r\" will ignored.\n\n"
+                    "NOTE:\n"
+                    "It is recommended to use this option in combination with option -n --notime."
    },
    {
       OPT_LAMBDA( poParser,
@@ -180,7 +182,43 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_helpText = "PARAM=\"<new poll interval in seconds>\"\n"
                     "Overwrites the default interval of " TO_STRING( DEFAULT_INTERVAL )
                     " seconds."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint filter;
+         if( readInteger( filter, poParser->getOptArg() ) )
+            return -1;
+         if( filter >= BIT_SIZEOF( FILTER_FLAG_T ) )
+         {
+            ERROR_MESSAGE( "Filter value " << filter << " out of range from 0 to "
+                           << BIT_SIZEOF( FILTER_FLAG_T ) -1 << "!" );
+            return -1;
+         }
+         static_cast<CommandLine*>(poParser)->m_filterFlags |= 1 << filter;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'f',
+      .m_longOpt  = "filter",
+      .m_helpText = "PARAM=\"<filter value>\"\n"
+                    "Setting a filter.\n"
+                    "It is possible to specify this option multiple times"
+                    " with different values,\n"
+                    "from which an OR link is created.\n\n"
+                    "E.g. code in LM32:\n"
+                    "   syslog( 1, \"Log-text A\" );\n"
+                    "   syslog( 2, \"Log-text B\" );\n"
+                    "   syslog( 3, \"Log-text C\" );\n\n"
+                    "Commandline: -f1 -f3\n"
+                    "In this example only \"Log-text A\" and \"Log-text B\""
+                    " becomes forwarded.\n\n"
+                    "NOTE:\nWhen this option is omitted,\n"
+                    "then all log-messages becomes forwarded."
+
    }
+
 }; // CommandLine::c_optList// CommandLine::c_optList
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -212,6 +250,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_humanTimestamp( false )
    ,m_isForConsole( false )
    ,m_interval( DEFAULT_INTERVAL )
+   ,m_filterFlags( 0 )
 {
    if( m_isOnScu )
       m_scuUrl = "dev/wbm0";

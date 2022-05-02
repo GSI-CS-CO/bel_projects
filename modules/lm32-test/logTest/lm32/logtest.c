@@ -19,10 +19,10 @@ void main( void )
    }
 
    const char* text = "Das ist ein Text im LM32.";
-   syslog( 0, "A: Text in syslog: \"%s\", %.32b", text, 4711 );
+   syslog( 0, "A: Text in syslog: \"%s\", %.32b %%", text, 4711 );
    syslog( 0, "B: Noch ein Text in syslog!, C = %c", 'u' );
-   syslog( 0, "C: Noch ein anderer Text in syslog!, 0x%08X, %d", 4711, 4711 );
-
+   syslog( 0, "C: Noch ein anderer Text in syslog!, 0x%08X, %d", 0xAFFE, 4711 );
+   syslog( 0, "D: Und noch was in syslog!, %u, %_9d, %d, %d, %d", -4711, -4711, 100, 200, 300 );
    mprintf( "\nText: \"%s\"\nAddress: 0x%p\n", text, text );
 
    while( true );

@@ -86,9 +86,9 @@ typedef struct PACKED_SIZE
    uint64_t  timestamp;
 
    /*!
-    * @brief Priority
+    * @brief Filter value
     */
-   uint32_t  priority;
+   uint32_t  filter;
 
    /*!
     * @brief LM32 start address of control string.

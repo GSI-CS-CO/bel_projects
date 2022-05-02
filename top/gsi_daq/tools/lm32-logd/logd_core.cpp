@@ -24,6 +24,8 @@
  */
 #ifndef __DOCFSM__
  #include <iomanip>
+ #include <iostream>
+ #include <sstream>
  #include <scu_mmu_tag.h>
  #include <daq_calculations.hpp>
  #include <daqt_messages.hpp>
@@ -190,7 +192,7 @@ void Lm32Logd::readItems( void )
 
    m_fiFoAdmin = fifoAdmin;
 
-   const uint readTotalLen = min( size, m_maxItems );
+   const uint readTotalLen = min( size, static_cast<uint>(m_maxItems * SYSLOG_FIFO_ITEM_SIZE) );
    uint len = readTotalLen;
    const uint numOfItems = readTotalLen / SYSLOG_FIFO_ITEM_SIZE;
    assert( m_pMiddleBuffer == nullptr );
@@ -250,6 +252,11 @@ inline bool Lm32Logd::isDecDigit( const char c )
  */
 void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item )
 {
+ //  if( item.filter > BIT_SIZEOF( Lm32Logd::FILTER_FLAG_T ) )
+ //  {
+ //     WARNING_MESSAGE( "Filter value " << item.filter <<  " out of range!" );
+ //  }
+
    if( m_lastTimestamp >= item.timestamp )
    {
       ERROR_MESSAGE( "Invalid timestamp: " << item.timestamp );
@@ -258,15 +265,15 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
    m_lastTimestamp = item.timestamp;
 
-   std::string format;
-   readStringFromLm32( format, item.format );
-
    if( !m_rCmdLine.isNoTimestamp() )
    {
       if( m_rCmdLine.isHumanReadableTimestamp() )
       {
          rOutput += daq::wrToTimeDateString( item.timestamp );
-         rOutput += std::to_string(item.timestamp % daq::NANOSECS_PER_SEC);
+         std::stringstream stream;
+         stream << " + " << std::setw( 9 ) << std::setfill( '0' )
+                << (item.timestamp % daq::NANOSECS_PER_SEC) << " ns";
+         rOutput += stream.str();
       }
       else
       {
@@ -274,6 +281,9 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
       }
       rOutput += ": ";
    }
+
+   std::string format;
+   readStringFromLm32( format, item.format );
 
    enum STATE_T
    {
@@ -284,8 +294,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
    };
 
    FSM_INIT_FSM( NORMAL, color=blue );
-   char paddingChar = ' ';
-   uint paddingSize = 0;
+   char paddingChar;
+   uint paddingSize;
 
    uint ai = 0;
    uint base = 10;
@@ -300,7 +310,11 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
             case NORMAL:
             {
                if( format[i] == '%' && (ai < ARRAY_SIZE(item.param)) )
+               {
+                  paddingChar = ' ';
+                  paddingSize = 0;
                   FSM_TRANSITION( PADDING_CHAR, label='char == %', color=green );
+               }
 
                rOutput += format[i];
 
@@ -420,12 +434,18 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                if( done )
                   FSM_TRANSITION( NORMAL, color=blue );
 
+               bool     isNegative = false;
                uint32_t value = item.param[ai++];
                if( signum && ((value & (1 << (BIT_SIZEOF(value)-1))) != 0) )
                {
+                  value = -value;
+                  if( paddingChar == '0' )
+                     rOutput += '-';
+                  else
+                     isNegative = true;
+
                   if( paddingSize > 0 )
                      paddingSize--;
-                  value = -value;
                }
 
                unsigned char digitBuffer[BIT_SIZEOF(value)+1];
@@ -444,6 +464,9 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                      paddingSize--;
                }
                while( value > 0 );
+
+               if( isNegative && (revPtr > digitBuffer) )
+                  *--revPtr = '-';
 
                while( (paddingSize-- != 0) && (revPtr > digitBuffer) )
                   *--revPtr = paddingChar;

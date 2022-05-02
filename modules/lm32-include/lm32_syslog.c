@@ -211,7 +211,7 @@ void printStates( STATE_T state )
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
  */
-STATIC void inline vsyslog( uint32_t priority, const char* format, va_list ap )
+STATIC void inline vsyslog( uint32_t filter, const char* format, va_list ap )
 {
    mprintf( "'%s' %s\n", format, __func__ );
 
@@ -225,7 +225,7 @@ STATIC void inline vsyslog( uint32_t priority, const char* format, va_list ap )
    #else
       .timestamp = timestamp,
    #endif
-      .priority = priority,
+      .filter = filter,
       .format = (uint32_t)format
    };
 
@@ -309,12 +309,12 @@ STATIC void inline vsyslog( uint32_t priority, const char* format, va_list ap )
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
  */
-void syslog( uint32_t priority, const char* format, ... )
+void syslog( uint32_t filter, const char* format, ... )
 {
    //mprintf( "'%s' %s\n", format, __func__ );
    va_list ap;
    va_start( ap, format );
-   vsyslog( priority, format, ap );
+   vsyslog( filter, format, ap );
    va_end( ap );
 }
 
