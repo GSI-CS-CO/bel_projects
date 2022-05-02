@@ -134,6 +134,12 @@ typedef std::set<vertex_t> vertex_set_t;
 typedef std::set<edge_t> edge_set_t;
 typedef std::map<vertex_t, std::set<vertex_t>> vertex_set_map_t;
 
+auto vThrCmp = [](Graph& g, vertex_t a, vertex_t b) {
+  if (g[a].thread.compare(g[b].thread) <= 0)  return a; //alphabetic comparison. Otherwise we'd need to compare thread in the attached data object
+  else                                        return b;
+};
+
+
 typedef boost::property_map<Graph, std::string myVertex::*>::type NameMap;
 
 template <class NameMap >

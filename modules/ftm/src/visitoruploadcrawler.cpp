@@ -84,9 +84,17 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
 
 vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults, const unsigned int maxResults, const bool allowPeers, const uint32_t resultPadData) const {
   unsigned int results = ret.size();
+/*
+  std::set<vertex_t, decltype(vThrCmp)> vsSorted(vThrCmp);
 
+  vsSorted = vs;
+  for (auto& itVs : vsSorted ) {
+    std::cout << "Sorted Vertex " << itVs.name << " Thread " << itVs.thread << std::endl;
+  }
+ */   
   for (auto& itVs : vs ) {
     if (ret.size() >= results + maxResults) break;
+    std::cout << "Unsorted Vertex " << g[itVs].name << " Thread " << g[itVs].thread << std::endl;
     auto x = at.lookupVertex(itVs);
     if (!allowPeers & (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
 
