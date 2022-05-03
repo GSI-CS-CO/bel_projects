@@ -18,11 +18,11 @@ void main( void )
       return;
    }
 
-   const char* text = "Das ist ein Text im LM32.";
+   const char* text = ESC_FG_CYAN ESC_BOLD"Das ist ein Text im LM32."ESC_NORMAL;
    syslog( 0, "A: Text in syslog: \"%s\", %.32b %%", text, 4711 );
-   syslog( 0, "B: Noch ein Text in syslog!, C = %c", 'u' );
-   syslog( 0, "C: Noch ein anderer Text in syslog!, 0x%08X, %d", 0xAFFE, 4711 );
-   syslog( 0, "D: Und noch was in syslog!, %u, %_9d, %d, %d, %d", -4711, -4711, 100, 200, 300 );
+   syslog( 1, "B: Noch ein Text in syslog!, C = %c", 'u' );
+   syslog( 2, "C: Noch ein anderer Text in syslog!, 0x%08X, %d", 0xAFFE, 4711 );
+   syslog( 3, "D: Und noch was in syslog!, %u, %_9d, %d, %d, %d", -4711, -4711, 100, 200, 300 );
    mprintf( "\nText: \"%s\"\nAddress: 0x%p\n", text, text );
 
    while( true );
