@@ -22,7 +22,9 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 SOURCE += logd_cmdline.cpp
 SOURCE += logd_core.cpp
+SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
+SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu_fe.cpp
@@ -33,6 +35,8 @@ INCLUDE_DIRS += $(EB_SRC)
 
 DEFINES += CONFIG_AUTODOC_OPTION
 DEFINES += CONFIG_SCU_USE_DDR3
+DEFINES += _GNU_SOURCE
+
  USE_STATIC_LIBS := 1
 
 ifdef USE_STATIC_LIBS
@@ -46,8 +50,9 @@ endif
 LIBS += stdc++
 
 DEBUG = 1
+DEFINES += DEBUGLEVEL
 
-CALL_ARGS = scuxl0035 -v
+CALL_ARGS = scuxl0035 -n # -vH
 
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)

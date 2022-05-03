@@ -30,7 +30,7 @@ using namespace std;
 using namespace CLOP;
 using namespace Scu;
 
-#define DEFAULT_INTERVAL 1
+#define DEFAULT_INTERVAL 1000
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing the command line options.
@@ -91,7 +91,9 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                  "Usage on ASL:\n\t"
               << poParser->getProgramName() << " [options] <SCU URL>\n"
                  "Usage on SCU:\n\t"
-              << poParser->getProgramName() << " [options]\n"
+              << poParser->getProgramName() << " [options]\n\n"
+                 "The key 'Esc' terminates this program\n\n"
+                 "Options:"
               << endl;
          poParser->list( cout );
          ::exit( EXIT_SUCCESS );
@@ -177,11 +179,11 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
       .m_id       = 0,
-      .m_shortOpt = 'i',
+      .m_shortOpt = 'I',
       .m_longOpt  = "interval",
-      .m_helpText = "PARAM=\"<new poll interval in seconds>\"\n"
+      .m_helpText = "PARAM=\"<new poll interval in milliseconds>\"\n"
                     "Overwrites the default interval of " TO_STRING( DEFAULT_INTERVAL )
-                    " seconds."
+                    " milliseconds."
    },
    {
       OPT_LAMBDA( poParser,
@@ -192,7 +194,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
          if( filter >= BIT_SIZEOF( FILTER_FLAG_T ) )
          {
             ERROR_MESSAGE( "Filter value " << filter << " out of range from 0 to "
-                           << BIT_SIZEOF( FILTER_FLAG_T ) -1 << "!" );
+                           << BIT_SIZEOF( FILTER_FLAG_T ) - 1 << "!" );
             return -1;
          }
          static_cast<CommandLine*>(poParser)->m_filterFlags |= 1 << filter;
@@ -216,9 +218,34 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     " becomes forwarded.\n\n"
                     "NOTE:\nWhen this option is omitted,\n"
                     "then all log-messages becomes forwarded."
-
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_printFilter = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'p',
+      .m_longOpt  = "print-filter",
+      .m_helpText = "Prints the filter value at the begin of each item.\n"
+                    "That is the first parameter of the LM32 function: "
+                    "\"syslog\""
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_exit = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'e',
+      .m_longOpt  = "exit",
+      .m_helpText = "Exit after read, otherwise the program will run in a "
+                    "polling loop until the Esc-key has pressed."
    }
-
 }; // CommandLine::c_optList// CommandLine::c_optList
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -249,9 +276,13 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noTimestamp( false )
    ,m_humanTimestamp( false )
    ,m_isForConsole( false )
+   ,m_printFilter( false )
+   ,m_exit( false )
    ,m_interval( DEFAULT_INTERVAL )
    ,m_filterFlags( 0 )
 {
+   DEBUG_MESSAGE( __FUNCTION__ );
+
    if( m_isOnScu )
       m_scuUrl = "dev/wbm0";
    add( c_optList );
@@ -262,6 +293,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
  */
 CommandLine::~CommandLine( void )
 {
+   DEBUG_MESSAGE( __FUNCTION__ );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -294,6 +326,7 @@ int CommandLine::onArgument( void )
  */
 std::string& CommandLine::operator()( void )
 {
+   DEBUG_MESSAGE( "Parsing of commandline" );
    if( PARSER::operator()() < 0 )
       ::exit( EXIT_FAILURE );
 
@@ -327,5 +360,20 @@ int CommandLine::onErrorUnrecognizedLongOption( const std::string& unrecognized 
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+int CommandLine::onErrorShortMissingRequiredArg( void )
+{
+   ERROR_MESSAGE( "Missing argument of option: -" << getCurrentOption()->m_shortOpt );
+   return -1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int CommandLine::onErrorLongMissingRequiredArg( void )
+{
+   ERROR_MESSAGE( "Missing argument of option: --" << getCurrentOption()->m_longOpt );
+   return -1;
+}
 
 //================================== EOF ======================================

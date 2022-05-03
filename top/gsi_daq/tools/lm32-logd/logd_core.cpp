@@ -29,6 +29,7 @@
  #include <scu_mmu_tag.h>
  #include <daq_calculations.hpp>
  #include <daqt_messages.hpp>
+ #include <daqt_read_stdin.hpp>
  #include "logd_core.hpp"
 #endif
 using namespace Scu;
@@ -46,6 +47,8 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    ,m_maxItems( 10 )
    ,m_pMiddleBuffer( nullptr )
 {
+   DEBUG_MESSAGE( __FUNCTION__ );
+
    if( !m_oMmu.isPresent() )
    {
       throw std::runtime_error( "MMU not present!" );
@@ -108,18 +111,9 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
  */
 Lm32Logd::~Lm32Logd( void )
 {
+   DEBUG_MESSAGE( __FUNCTION__ );
    if( m_pMiddleBuffer != nullptr )
       delete[] m_pMiddleBuffer;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void Lm32Logd::operator()( void )
-{
-  // std::string str;
-  // uint n = readStringFromLm32( str, 0x100020f8 );
-  // std::cout << "Zeichen: " << n << ", Text: " << str << std::endl;
-   readItems();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -136,6 +130,15 @@ void Lm32Logd::updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& rAdmin )
    {
       throw std::runtime_error( "LM32 syslog fifo is corrupt!" );
    }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void Lm32Logd::setResponse( uint n )
+{
+   m_oMmu.getEb()->write( m_fifoAdminBase + offsetof( SYSLOG_FIFO_ADMIN_T, admin.wasRead ),
+                          static_cast<eb_user_data_t>(&n),
+                          EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
 }
 
 constexpr uint HIGHST_ADDR = 2 * LM32_OFFSET;
@@ -177,6 +180,8 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
  */
 void Lm32Logd::readItems( void )
 {
+   DEBUG_MESSAGE(__FUNCTION__);
+
    SYSLOG_FIFO_ADMIN_T fifoAdmin;
 
    updateFiFoAdmin( fifoAdmin );
@@ -206,12 +211,14 @@ void Lm32Logd::readItems( void )
       len   -= lenToEnd;
    }
    readItems( pData, len );
+   setResponse( readTotalLen );
+
 
    for( uint i = 0; i < numOfItems; i++ )
    {
       std::string output;
       evaluateItem( output, m_pMiddleBuffer[i] );
-      cout << output << std::endl;
+      cout << output << std::flush;
    }
 
    delete[] m_pMiddleBuffer;
@@ -252,15 +259,32 @@ inline bool Lm32Logd::isDecDigit( const char c )
  */
 void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item )
 {
- //  if( item.filter > BIT_SIZEOF( Lm32Logd::FILTER_FLAG_T ) )
- //  {
- //     WARNING_MESSAGE( "Filter value " << item.filter <<  " out of range!" );
- //  }
+   DEBUG_MESSAGE(__FUNCTION__);
+
+   if( item.filter >= BIT_SIZEOF( CommandLine::FILTER_FLAG_T ) )
+   {
+      ERROR_MESSAGE( "Filter value " << item.filter <<  " out of range!" );
+      return;
+   }
+
+   if( m_rCmdLine.getFilterFlags() != 0 )
+   {
+      if( (m_rCmdLine.getFilterFlags() & (1 << item.filter)) == 0 )
+         return;
+   }
 
    if( m_lastTimestamp >= item.timestamp )
    {
       ERROR_MESSAGE( "Invalid timestamp: " << item.timestamp );
       return;
+   }
+
+   if( m_rCmdLine.isPrintFilter() )
+   {
+      std::stringstream stream;
+      stream << std::setw( 2 ) << std::setfill( ' ' ) << item.filter
+             << ", ";
+      rOutput += stream.str();
    }
 
    m_lastTimestamp = item.timestamp;
@@ -479,6 +503,38 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
       }
       while( next );
    } /* for( uint i = 0; i < format.length(); i++ ) */
+
+   if( !m_rCmdLine.isForConsole() )
+      rOutput += '\n';
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void Lm32Logd::operator()( void )
+{
+   DEBUG_MESSAGE( __FUNCTION__ );
+
+   if( m_rCmdLine.isSingleShoot() )
+   {
+      DEBUG_MESSAGE( "Single shoot is active" );
+      readItems();
+      return;
+   }
+
+   int key;
+   Terminal oTerminal;
+   uint intervalTime = 0;
+   while( (key = Terminal::readKey()) != '\e')
+   {
+      const uint it = daq::getSysMicrosecs();
+      if( it > intervalTime )
+      {
+         intervalTime = it + m_rCmdLine.getPollInterwalTime() * 1000;
+         readItems();
+      }
+      ::usleep( 100 );
+   }
+   DEBUG_MESSAGE( "Loop left by Esc" );
 }
 
 //================================== EOF ======================================

@@ -24,9 +24,14 @@
  */
 #include <exception>
 #include <cstdlib>
+#include <unistd.h>
+#include <string.h>
 #include <daqt_messages.hpp>
+#include <find_process.h>
 #include "logd_cmdline.hpp"
 #include "logd_core.hpp"
+
+#include <stdio.h>
 
 using namespace std;
 using namespace Scu;
@@ -39,6 +44,34 @@ void onUnexpectedException( void )
    throw 0;     // throws int (in exception-specification)
 }
 
+extern "C"
+{
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC int onFoundProcess( OFP_ARG_T* pArg )
+{
+   DEBUG_MESSAGE( __FUNCTION__ );
+   if( pArg->pid == getpid() )
+      return 0; // Process has found himself. Program continue.
+
+   CommandLine* poCmdLine = static_cast<CommandLine*>(pArg->pUser);
+   cout << pArg->pid << " url = " << poCmdLine->getScuUrl() << endl;
+
+
+   uint8_t* currentArg = pArg->commandLine.buffer;
+   for( uint i = 0; i < pArg->commandLine.argc; i++ )
+   {
+      cout << currentArg << endl;
+      currentArg += strlen( reinterpret_cast<char*>(currentArg) );
+   }
+   printf( "\n" );
+
+   return 0;
+}
+
+} /* extern "C" */
+
 /*! ---------------------------------------------------------------------------
  */
 int main( int argc, char** ppArgv )
@@ -48,7 +81,10 @@ int main( int argc, char** ppArgv )
    try
    {
       CommandLine oCmdLine( argc, ppArgv );
-      mmuEb::EtherboneConnection ebc( oCmdLine() );
+      oCmdLine();
+      ::findProcesses( ppArgv[0], onFoundProcess, &oCmdLine, FPROC_MODE_T(FPROC_BASENAME) );
+                       //static_cast<FPROC_MODE_T>(FPROC_BASENAME | FPROC_RLINK) );
+      mmuEb::EtherboneConnection ebc( oCmdLine.getScuUrl() );
       Lm32Logd oLog( ebc, oCmdLine );
       oLog();
    }

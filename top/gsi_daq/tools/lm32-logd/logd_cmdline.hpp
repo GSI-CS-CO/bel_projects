@@ -46,6 +46,8 @@ private:
    bool          m_noTimestamp;
    bool          m_humanTimestamp;
    bool          m_isForConsole;
+   bool          m_printFilter;
+   bool          m_exit;
    uint          m_interval;
    FILTER_FLAG_T m_filterFlags;
    std::string   m_scuUrl;
@@ -88,7 +90,17 @@ public:
       return m_isForConsole;
    }
 
-   uint getIntervalTime( void )
+   bool isPrintFilter( void )
+   {
+      return m_printFilter;
+   }
+
+   bool isSingleShoot( void )
+   {
+      return m_exit;
+   }
+
+   uint getPollInterwalTime( void )
    {
       return m_interval;
    }
@@ -107,6 +119,8 @@ private:
    int onArgument( void ) override;
    int onErrorUnrecognizedShortOption( char unrecognized ) override;
    int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
+   int onErrorShortMissingRequiredArg( void ) override;
+   int onErrorLongMissingRequiredArg( void ) override;
 };
 
 } // namespace Scu
