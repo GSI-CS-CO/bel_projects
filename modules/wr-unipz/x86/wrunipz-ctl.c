@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Apr-2022
+ *  version : 03-May-2022
  *
  *  command-line interface for wrunipz
  *
@@ -110,6 +110,14 @@ static void help(void)
   fprintf(stderr, "                      '                '       '- '1': PZ is active\n");
   fprintf(stderr, "                      '                '- '1': messages for this vacc are played\n");
   fprintf(stderr, "                      '- # of UNILAC cycles\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "for debugging purposes, the firmware writes all events received (via internal MIL bus) from the Superpulszentrale to its own ECA:\n");
+  fprintf(stderr, "- FID  : 0xc\n");
+  fprintf(stderr, "- GID  : 0xafe\n");
+  fprintf(stderr, "- EvtNo: evtno\n");
+  fprintf(stderr, "- SID  : vacc\n");
+  fprintf(stderr, "- param: evtdata\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
   wrunipz_version_library(&version);
