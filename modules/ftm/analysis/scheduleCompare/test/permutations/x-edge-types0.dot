@@ -1,0 +1,6 @@
+digraph "x-edge-types0" {
+name="x-edge-types0"
+node [type=tmsg]
+a -> b [type=defdst]
+a -> c [type=altdst]
+}

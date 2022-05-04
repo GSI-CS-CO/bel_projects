@@ -36,5 +36,7 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotfile2, configuration
 int testSingleGraph(std::string dotFile1, configuration& config);
 boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& config);
 std::string getGraphName(ScheduleGraph& g);
-void listVertexProtocols(ScheduleGraph& graph);
+void listVertexProtocols(ScheduleGraph& graph, const std::string prefix);
+void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix);
+void switchCompareNames(ScheduleGraph& graph, const bool flag);
 #endif

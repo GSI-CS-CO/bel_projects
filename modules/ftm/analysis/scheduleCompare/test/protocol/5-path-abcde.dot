@@ -1,0 +1,6 @@
+digraph "5-path-abcde" {
+name="5-path-abcde"
+node [type=tmsg]
+edge [type=xy]
+a -> b -> c -> d -> e
+}

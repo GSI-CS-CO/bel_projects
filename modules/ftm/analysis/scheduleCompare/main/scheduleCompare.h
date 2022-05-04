@@ -11,12 +11,15 @@ const int MISSING_ARGUMENT = 12;
 const int FILE_NOT_FOUND = 13;
 const int USAGE_MESSAGE = 14;
 const int PARSE_ERROR = 15;
-const int TEST_SUCCESS = 16;
-const int TEST_FAIL = 17;
+const int PARSE_ERROR_GRAPHVIZ = 16;
+const int TEST_SUCCESS = 17;
+const int TEST_FAIL = 18;
 
 struct configuration {
   // option -c
   bool check = false;
+  // option -n
+  bool CompareNames = true;
   // option -s
   bool silent = false;
   // option -vv
