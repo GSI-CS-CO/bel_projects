@@ -307,7 +307,7 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
 
   memcpy(addr, &raw, ETH_ALEN);
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+  for (int i = 0; i < N_MPS_CHANNELS; ++i) {
     if (addr_equal(addr, buf->prot.addr)) {
       if (buf->prot.idx == idx) {
         buf->pending = buf->prot.flag ^ flag;
@@ -317,8 +317,8 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
         return buf;
       }
     }
-    else
-      ++buf;
+    ++buf;
+  }
 
   return 0;
 }
