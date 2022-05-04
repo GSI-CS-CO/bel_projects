@@ -11,6 +11,8 @@ txscu="scuxl0396.$domain" # 00:26:7b:00:06:d7
 sleep_sec=10
 unset option username userpasswd verbose
 
+fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
+
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Run basic test to check timing message transfer between 2 SCUs."
@@ -44,7 +46,7 @@ if [ -z "$userpasswd" ]; then
 fi
 
 echo -e "\nset up nodes\n------------"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx"
+timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX"
 timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && setup_mpstx"
 
 echo 'start test4 (RX, TX)'

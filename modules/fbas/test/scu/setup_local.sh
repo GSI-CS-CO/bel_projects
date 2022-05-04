@@ -188,6 +188,7 @@ load_fw() {
 
 configure_node() {
     # $1 - node type (DEV_RX or DEV_TX)
+    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
 
     check_node "$1"
 
@@ -209,21 +210,60 @@ configure_node() {
         eb-read $device $addr_get_node_type/4
         wait_seconds 1
 
-        echo "tell LM32 to set the sender IDs"
-        # sender ID of TX and other nodes
-        mac_list="$mac_tx_node $mac_any_node"
-        i=0
-        for mac in $mac_list; do
-            pos=$(( $i << 56 ))                               # position in RX buffer
-            senderid=$(( $pos + $mac ))                       # sender ID = position + MAC
-            senderid=$(printf "0x%x" $senderid)
-            eb-write -q $device $addr_senderid/8 $senderid
-            eb-read -q $device $addr_senderid/8
-            eb-write $device $addr_cmd/4 $instr_load_senderid
-            i=$(( $i + 1 ))
-        done
-        wait_seconds 1
+        if [ -n "$2" ]; then
+            set_senderid "$2"
+        fi
     fi
+}
+
+set_senderid() {
+    # $1 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
+
+    # SENDER_TX - only TX node
+    # SENDER_ANY - only any nodes
+    # SENDER_ALL - TX and any nodes
+
+    first_idx=1
+    last_idx=15
+    unset idx_mac_list  # list with idx_mac
+
+    if [ "$1" == "SENDER_TX" ]; then
+        idx_mac_list="$mac_tx_node"
+    elif [ "$1" == "SENDER_ALL" ] || [ "$1" == "SENDER_ANY" ]; then
+        if [ "$1" == "SENDER_ALL" ]; then
+            idx_mac_list="$mac_tx_node"
+            first_idx=$(( $first_idx - 1 ))
+            last_idx=$(( $last_idx - 1 ))
+        else
+            idx_mac_list="$mac_any_node"
+        fi
+
+        # idx is used to specify an MPS channel of the same sender
+        for i in $(seq $first_idx $last_idx); do
+            idx=$(( $i << 48 ))
+            idx_mac=$(( $idx + $mac_any_node ))
+            idx_mac=$(printf "0x%x" $idx_mac)
+            idx_mac_list="$idx_mac_list $idx_mac"
+        done
+    else
+        return
+    fi
+
+    echo "tell LM32 to set the sender IDs"
+
+    device=$DEV_RX
+    i=0
+    for idx_mac in $idx_mac_list; do
+        pos=$(( $i << 56 ))                               # position in RX buffer
+        senderid=$(( $pos + $idx_mac ))                   # sender ID = position + (idx + MAC)
+        senderid=$(printf "0x%x" $senderid)
+        eb-write -q $device $addr_senderid/8 $senderid
+        eb-read -q $device $addr_senderid/8
+        eb-write $device $addr_cmd/4 $instr_load_senderid
+        i=$(( $i + 1 ))
+        sleep 0.2
+    done
+
 }
 
 make_node_ready() {
@@ -304,12 +344,13 @@ setup_mpstx() {
 
 setup_mpsrx() {
     # $1 - LM32 firmware
+    # $2 - sender node groups
 
     echo "load firmware"
     load_fw "DEV_RX" "$1"
 
     echo "CONFIGURE state "
-    configure_node "DEV_RX"
+    configure_node "DEV_RX" $2
 
     echo "OPREADY state "
     make_node_ready "DEV_RX"
@@ -587,6 +628,7 @@ do_test2() {
 
 reset_node() {
     # $1 - node type (DEV_TX or DEV_RX)
+    # $2 - sender node groups
 
     check_node "$1"
 
@@ -603,7 +645,7 @@ reset_node() {
     sleep 1
 
     echo "CONFIGURE state "
-    configure_node "$1"
+    configure_node "$1" "$2"
 
     echo "OPREADY state "
     make_node_ready "$1"

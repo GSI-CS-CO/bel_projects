@@ -111,7 +111,7 @@ for rate in ${all_msg_rates[*]}; do
 done
 
 echo -e "\nset up '${rxscu%%.*}'\n------------"
-timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_rxscu"
+timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY"
 
 # deploy the specified schedule file
 echo -e "\ndeploy '$sched_filename'\n------------"
@@ -128,7 +128,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # reset the FW in receiver node and enable MPS task
     echo -e "\nreset '${rxscu%%.*}'\n------------"
-    timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && reset_node DEV_RX"
+    timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && reset_node DEV_RX SENDER_ANY"
 
     # enable MPS task of rxscu
     timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && start_test4 \$DEV_RX"
