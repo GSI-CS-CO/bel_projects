@@ -1,33 +1,33 @@
 %%%% ID Fields
 \newglossaryentry{id:id}{
 name={id},
-description={The whole ID field of a timing event. Can be used instead of the subid fields (evtno, gid, etc)},
+description={ID field of a timing event, used to apply ECA rules. Subid field sets can be used instead (evtno, gid, etc)},
 type=id}
 
 
 \newglossaryentry{id:fid}{
 name={fid},
-description={Format this timing event ID follows. Currently only format 1 is supported},
+description={Format of the ID. Currently only format 1 is supported},
 type=id}
 
 \newglossaryentry{id:gid}{
 name={gid},
-description={Group ID this timing event belongs to},
+description={Event group this event is assigned to},
 type=id}
 
 \newglossaryentry{id:evtno}{
 name={evtno},
-description={The event number this timing event belongs to},
+description={Event number assigned to event},
 type=id}
 
 \newglossaryentry{id:sid}{
 name={sid},
-description={ID of the sequence this timing event belongs to},
+description={Sequence this event belongs to},
 type=id}
 
 \newglossaryentry{id:bpid}{
 name={bpid},
-description={ID of the beamprocess this timing event belongs to},
+description={beamprocess this event belongs to},
 type=id}
 
 %\newglossaryentry{id:flags}{
@@ -36,25 +36,32 @@ type=id}
 %valtype={u1b},
 %type=id}
 
-\newglossaryentry{id:beamin}{
-name={beamin},
-description={Marks this node as an exit point to beamprocess \emph{X}. A node can belong to only one beamprocess, part of the ID field of a timing event.},
+
+
+\newglossaryentry{id:bpcstart}{
+name={bpcstart},
+description={Event is startpoint to beam productions chain \emph{X}},
 type=id}
 
-%newglossaryentry{id:res}{
-%ame={res},
-%escription={Originally reserved, now hijacked to host \gls{id:vacc} and VAcc fields.},
-%altype={u6b},
-%ype=id}
+
+\newglossaryentry{id:beamin}{
+name={beamin},
+description={Event is startpoint to beamprocess \emph{Y}},
+type=id}
+
+\newglossaryentry{id:res}{
+name={res},
+description={Originally reserved, now assigned to host \gls{id:vacc} and \gls{id:reqnobeam} fields.},
+type=id}
 
 \newglossaryentry{id:reqnobeam}{
 name={reqnobeam},
-description={Flag allowing requesting to run this event without beam},
+description={If true, run this event without beam},
 type=id}
 
 \newglossaryentry{id:vacc}{
 name={vacc},
-description={Virtual accelerator descriptor field},
+description={Virtual accelerator the event belongs to},
 type=id}
 
 

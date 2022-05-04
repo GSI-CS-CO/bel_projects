@@ -19,31 +19,53 @@
 \newcommand{\attrib}[1]{\gls*{#1} & \glsdesc*{#1}\\}
 
 \newcommand{\attribtable}[5]{
-  {\Huge #1}\\
+\noindent
+  \begin{tabularx}{\textwidth}{X}
+  \huge{\gls*{#1}}\\
+    \toprule
+    \glsdesc*{#1}\\
+    \bottomrule
+  \end{tabularx}
+  \vspace{1ex}\\
   \renewcommand{\arraystretch}{1.25}
-  \begin{tabularx}{\textwidth}{>{\bfseries}lX}
-  \toprule
-  Mandatory Attributes&\\
+  \begin{tabularx}{\textwidth}{lX}
+  
+  \bfseries{Mandatory Attributes}&\\
   \midrule
-  \gls*{sched:type} & Must be \MakeLowercase{#1}, obviously. See \gls{sched:type}\\
+  \gls*{sched:type} & Must be \MakeLowercase{\gls*{#1}}. See \gls{sched:type}\\
   \attrib{sched:cpu}
   \attrib{sched:pattern}
   #2
-  Optional Attributes&\\
+  \bfseries{Optional Attributes}&\\
   \midrule
   #3
   \end{tabularx} 
-  \begin{tabularx}{\textwidth}{>{\bfseries}lrX}
-  Outgoing Edges&Qty\\
+ 
+  \newpage
+  \noindent
+  \begin{tabularx}{\textwidth}{X}
+  \huge{\gls*{#1}}\\
+    \toprule
+    \glsdesc*{#1}\\
+    \bottomrule
+  \end{tabularx}
+  \vspace{1ex}\\
+  \begin{tabularx}{\textwidth}{lrX}
+  \bfseries{Outgoing Edges}&\bfseries{Qty}\\
   \midrule
   #4
-  Incoming Edges&Qty\\
+  \bfseries{Incoming Edges}&\bfseries{Qty}\\
   \midrule
   #5
-  \end{tabularx}  
+  \end{tabularx}
+  \newpage
 }
+
 \newpage
-\attribtable{Block}{
+\section{Schedule Nodes}
+\vspace*{2cm}
+
+\attribtable{sched:type:block}{
   \attrib{sched:tperiod}
 }{
   \attrib{sched:patentry}
@@ -57,16 +79,133 @@
 }{
   \shortedge{edge:defdst}{0..n}
   \shortedge{edge:altdst}{0..n}
+  \edge{edge:target}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
 }
-\vspace*{2em}
 
-\attribtable{Timing Message}{
-  \attrib{sched:cpu}
+
+\attribtable{sched:type:blockalign}{
   \attrib{sched:tperiod}
 }{
-  \attrib{sched:cpu}
-  \attrib{sched:tperiod}
-}{}{}
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:qlo}
+  \attrib{sched:qhi}
+  \attrib{sched:qil}
+}{
+  \edge{edge:defdst}{0..1}
+  \edge{edge:altdst}{0..10}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \shortedge{edge:altdst}{0..n}
+  \edge{edge:target}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
+
+\attribtable{sched:type:tmsg}{
+  \attrib{sched:toffs}
+  \attrib{id:id}
+  \attrib{id:fid}
+  \attrib{id:gid}
+  \attrib{id:evtno}
+  \attrib{id:sid}
+  \attrib{id:bpid}
+  \attrib{id:reqnobeam}
+  \attrib{id:vacc}
+  \attrib{sched:par}
+
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:tef}
+}{
+  \edge{edge:defdst}{1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
+
+
+\attribtable{sched:type:flow}{
+  \attrib{sched:toffs}
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:prio}
+  \attrib{sched:vabs}
+  \attrib{sched:tvalid}
+  \attrib{sched:qty}
+  \attrib{sched:permanent}
+}{
+  \edge{edge:defdst}{1}
+  \edge{edge:target}{1}
+  \edge{edge:flowdst}{0..1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
+
+\attribtable{sched:type:flush}{
+  \attrib{sched:toffs}
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:prio}
+  \attrib{sched:vabs}
+  \attrib{sched:tvalid}
+}{
+  \edge{edge:defdst}{1}
+  \edge{edge:target}{1}
+  \edge{edge:flowdst}{0..1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
+
+\attribtable{sched:type:wait}{
+  \attrib{sched:toffs}
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:prio}
+  \attrib{sched:vabs}
+  \attrib{sched:tvalid}
+  \attrib{sched:twait}
+}{
+  \edge{edge:defdst}{1}
+  \edge{edge:target}{1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
+
+\attribtable{sched:type:noop}{
+  \attrib{sched:toffs}
+}{
+  \attrib{sched:patentry}
+  \attrib{sched:patexit}
+  \attrib{sched:prio}
+  \attrib{sched:vabs}
+  \attrib{sched:tvalid}
+  \attrib{sched:qty}
+}{
+  \edge{edge:defdst}{1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+}
 
 %\glsadd{n_dest}
 \printglossary[type=sched, style=symbvaltypelong, nonumberlist]   % list of symbols

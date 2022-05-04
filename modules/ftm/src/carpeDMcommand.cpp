@@ -145,7 +145,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     }
 
     //FIMXE hack to test compile
-    uint8_t thr = 0;
+    uint8_t thr __attribute__((unused)) = 0;
 
     //Origin 
     if (type == dnt::sCmdOrigin)   {

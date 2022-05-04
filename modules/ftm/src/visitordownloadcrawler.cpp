@@ -41,6 +41,9 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr;
 
+  try {
+    
+  
 
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   //if the block has no destination list, set default destination ourself
@@ -53,7 +56,10 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_HI]), g);
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
-
+  
+  } catch (std::runtime_error const& err) {
+   std::cerr << "Failed to create Block <" << g[v].name << " edges: " << err.what() << std::endl;
+  } 
 }
 
 void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
