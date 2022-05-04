@@ -4,6 +4,8 @@
 # DM - pexaria28/32 (dev/wbm1, dev/wbm0) @tsl014
 # RX SCU - scuxl0497
 
+# [1] https://stackoverflow.com/questions/5799303/print-a-character-repeatedly-in-bash
+
 domain=$(hostname -d)             # domain name of local host
 rxscu="scuxl0497.$domain"         # RX SCU
 datamaster="tsl014"               # Data Master
@@ -18,8 +20,8 @@ if [ "$localhost" != "$mngmaster" ]; then
 fi
 dst_sched_dir="fbas/test/dm"      # destination directory for DM schedules
 
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid | ovf | average | min | max | ovf |"
+res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
+res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
 
 # timing message rates that should be measured
 primary_msg_rates=(300 600 1000 1200 1500 3000 6000) # fixed tmg msg rates [Hz]
@@ -148,7 +150,7 @@ for rate in ${all_msg_rates[*]}; do
     t_period_float=$(echo "$t_period/1000" | bc -l)           # message period [us]
     rate_float=$(echo "$rate/1000" | bc -l)                   # message rate [KHz]
     d_rate_float=$(echo "$rate*$tmg_msg_len/1000000" | bc -l) # data rate [Mbps]
-    sel_counts=$(echo $counts | cut -d' ' -f2-6)              # ignore 1st, 7th and 8th elements (number of TX msgs, MPS flags and RX msgs)
+    sel_counts=$(echo $counts | cut -d' ' -f2-8)              # ignore 1st element (number of TX msgs)
 
     unset new_line
     new_line+=$(printf "|%10.3f " $t_period_float)
@@ -186,7 +188,9 @@ for rate in ${all_msg_rates[*]}; do
 done
 
 echo "$sched_filename $fw_rxscu $localhost ($(date))"
-#echo "$res_header_console"
-echo "$res_header_wiki"
-echo "---------------------------------------------------------------------------"
+echo "$res_header_console"
+#echo "$res_header_wiki"
+chars=${#res_header_console}
+printf "%0.s-" $(seq 1 $chars) # one-liner to print a given number of '-' [1]
+printf "\n"
 echo -e "$results"

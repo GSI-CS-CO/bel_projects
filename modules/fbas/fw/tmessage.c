@@ -366,7 +366,7 @@ void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
   if (verbose) {
     DBPRINT1("tmessage: sender ID: ");
     for (int i = 0; i < ETH_ALEN; i++)
-      DBPRINT1("%x ", msg->prot.addr[i]);
+      DBPRINT1("%02x", msg->prot.addr[i]);
     DBPRINT1("\n");
   }
 }

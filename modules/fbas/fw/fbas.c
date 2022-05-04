@@ -358,7 +358,7 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
   uint8_t pos = *pSenderId >> 56;         // position of MPS message buffer
 
   if (pos >= N_MPS_CHANNELS) {
-    DBPRINT1("fbas%d: %d position out of range!\n", nodeType, pos);
+    DBPRINT1("fbas%d: pos %d in %llx is out of range!\n", nodeType, pos, *pSenderId);
     return COMMON_STATUS_ERROR;
   }
 
