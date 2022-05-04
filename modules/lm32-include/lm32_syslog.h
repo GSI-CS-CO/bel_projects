@@ -30,6 +30,7 @@
 #endif
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <scu_mmu_lm32.h>
 #include <lm32_syslog_common.h>
 
@@ -37,18 +38,27 @@
 extern "C" {
 #endif
 
-
-MMU_STATUS_T syslogInit( unsigned int numOfItems );
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Initializes the LM32 logging system.
+ * @see SCU_MMU
+ * @param numOfItems Number of log items which shall be reserved in DDR3-RAM.
+ * @retval OK Success
+ * @retval ALREADY_PRESENT Memory for log items has already be reserved,
+ *                         therefore the value of argument numOfItems remains
+ *                         without effect. 
+ */
+MMU_STATUS_T lm32LogInit( unsigned int numOfItems );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
  */
-void syslog( uint32_t priority, const char* format, ... );
+void lm32Log( const unsigned int filter, const char* format, ... );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
  */
-//void vsyslog( uint32_t priority, const char* format, va_list ap );
+void vLm32log( const unsigned int filter, const char* format, va_list ap );
 
 #ifdef __cplusplus
 }

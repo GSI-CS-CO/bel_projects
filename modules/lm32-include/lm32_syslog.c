@@ -22,13 +22,16 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+//#define CONFIG_DEBUG_LM32LOG
 #ifndef __DOCFSM__
  #include <scu_wr_time.h>
  #include <lm32_syslog.h>
  #include <scu_mmu_tag.h>
  #include <lm32Interrupts.h>
  #include <dbg.h>
-#include <mprintf.h>
+ #ifdef CONFIG_DEBUG_LM32LOG
+  #include <mprintf.h>
+ #endif
 #endif
 
 MMU_OBJ_T g_mmuObj;
@@ -78,7 +81,7 @@ STATIC void syslogReadFifoAdmin( SYSLOG_FIFO_ADMIN_T* pAdmin )
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
  */
-MMU_STATUS_T syslogInit( unsigned int numOfItems )
+MMU_STATUS_T lm32LogInit( unsigned int numOfItems )
 {
    MMU_STATUS_T status;
 
@@ -95,7 +98,7 @@ MMU_STATUS_T syslogInit( unsigned int numOfItems )
    if( status != OK )
       return status;
 
-   SYSLOG_FIFO_ADMIN_T fifoAdmin =
+   const SYSLOG_FIFO_ADMIN_T fifoAdmin =
    {
       .admin.indexes.offset   = mg_adminOffset + SYSLOG_FIFO_ADMIN_SIZE,
       .admin.indexes.capacity = numOfItems     - SYSLOG_FIFO_ADMIN_SIZE,
@@ -115,6 +118,7 @@ MMU_STATUS_T syslogInit( unsigned int numOfItems )
 
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
  */
 STATIC inline void syslogPushItem( const SYSLOG_FIFO_ITEM_T* pItem )
 {
@@ -149,6 +153,7 @@ STATIC inline void syslogPushItem( const SYSLOG_FIFO_ITEM_T* pItem )
 
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
  * @brief Returns true if the character is a decimal digit.
  */
 STATIC inline bool isDecDigit( const char c )
@@ -156,6 +161,10 @@ STATIC inline bool isDecDigit( const char c )
    return (c >= '0') && (c <= '9');
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Returns true if the character can be used as a fill-character.
+ */
 STATIC inline bool isPaddingChar( const char c )
 {
    switch( c )
@@ -171,14 +180,7 @@ STATIC inline bool isPaddingChar( const char c )
    return false;
 }
 
-
 #define FSM_DECLARE_STATE( newState, attr... ) newState
-#define FSM_INIT_FSM( initState, attr... ) STATE_T state = initState
-#define FSM_TRANSITION( target, attr... ) { state = target; break; }
-#define FSM_TRANSITION_NEXT( target, attr... ) { state = target; next = true; break; }
-#define FSM_TRANSITION_SELF( attr...) break
-
-STATIC_ASSERT( sizeof(char*) == sizeof(uint32_t) );
 
 typedef enum
 {
@@ -188,32 +190,68 @@ typedef enum
    FSM_DECLARE_STATE( PARAM, color=magenta )
 } STATE_T;
 
+#ifdef CONFIG_DEBUG_LM32LOG
+ /*! ------------------------------------------------------------------------
+  * @ingroup LM32_LOG
+  * @brief Prints the actual state of the FSM within vsyslog.
+  * @note For debug purposes only!
+  */
+ STATIC const char* state2String( const STATE_T state )
+ {
+   
+    #define CASE_STATE( s ) case s: return #s;
+   
+    switch( state )
+    {
+       CASE_STATE( NORMAL )
+       CASE_STATE( PADDING_CHAR )
+       CASE_STATE( PADDING_SIZE )
+       CASE_STATE( PARAM )
+    }
+    return "unknown";
+ }
 
+ #define FSM_TRANSITION_NEXT( target, attr... ) \
+ {                                              \
+    mprintf( "C = '%c' %s -> %s\n",             \
+             *format,                           \
+             state2String( state ),             \
+             state2String( target ) );          \
+    state = target;                             \
+    next = true;                                \
+    break;                                      \
+ }
+ 
+ #define FSM_TRANSITION( target, attr... )      \
+ {                                              \
+    mprintf( "C = '%c' %s -> %s\n",             \
+             *format,                           \
+             state2String( state ),             \
+             state2String( target ) );          \
+    state = target;                             \
+    break;                                      \
+ }
 
-#if 1
-void printStates( STATE_T state )
-{
-   char* str = "unknown";
-   #define _CASE_STATE( s ) s: str = #s; break;
-   #define CASE_STATE( s ) _CASE_STATE( s )
-   switch( state )
-   {
-      //_CASE_STATE( NORMAL )
-      case NORMAL:       str = "NORMAL";       break;
-      case PADDING_CHAR: str = "PADDING_CHAR"; break;
-      case PADDING_SIZE: str = "PADDING_SIZE"; break;
-      case PARAM:        str = "PARAM";        break;
-   }
-   mprintf( "State: %s\n", str );
-}
+#else
+ #define FSM_TRANSITION( target, attr... ) { state = target; break; }
+ #define FSM_TRANSITION_NEXT( target, attr... ) { state = target; next = true; break; }
 #endif
+
+#define FSM_INIT_FSM( initState, attr... ) STATE_T state = initState
+#define FSM_TRANSITION_SELF( attr...) break
+
+STATIC_ASSERT( sizeof(char*) == sizeof(uint32_t) );
 
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
+ * @todo Why -O0 or -O1 only?
  */
-STATIC void inline vsyslog( uint32_t filter, const char* format, va_list ap )
+OPTIMIZE( "-O1"  )
+void vLm32log( const unsigned int filter, const char* format, va_list ap )
 {
-   mprintf( "'%s' %s\n", format, __func__ );
+#ifdef CONFIG_DEBUG_LM32LOG
+   mprintf( "%s( %u, %s )\n",  __func__, filter, format );
+#endif
 
    const uint64_t timestamp = getWrSysTimeSafe();
 
@@ -230,34 +268,34 @@ STATIC void inline vsyslog( uint32_t filter, const char* format, va_list ap )
    };
 
    FSM_INIT_FSM( NORMAL, color=blue );
-   unsigned int ai = 0;
-   while( (*format != '\0') && (ai < ARRAY_SIZE(item.param)) )
+   
+   for( unsigned int i = 0; (*format != '\0') && (i < ARRAY_SIZE(item.param)); format++ )
    {
-      mprintf( "'%c'", *format );
       bool next;
       do
-      {
+      {  /*
+          * Becones 'true' within macro FSM_TRANSITION_NEXT.
+          */
          next = false;
-         printStates( state );
          switch( state )
          {
             case NORMAL:
             {
                if( *format == '%' )
-                  FSM_TRANSITION( PADDING_CHAR );
+                  FSM_TRANSITION( PADDING_CHAR, label='%' );
                FSM_TRANSITION_SELF();
             }
 
             case PADDING_CHAR:
             {
                if( *format == '%' )
-                  FSM_TRANSITION( NORMAL );
+                  FSM_TRANSITION( NORMAL, label='%' );
 
                if( isPaddingChar( *format ) )
-                  FSM_TRANSITION( PADDING_SIZE );
+                  FSM_TRANSITION( PADDING_SIZE, label='padding' );
 
                if( isDecDigit( *format ) )
-                  FSM_TRANSITION_NEXT( PADDING_SIZE );
+                  FSM_TRANSITION_NEXT( PADDING_SIZE, label='or dec digit' );
 
                FSM_TRANSITION_NEXT( PARAM );
             }
@@ -265,13 +303,12 @@ STATIC void inline vsyslog( uint32_t filter, const char* format, va_list ap )
             case PADDING_SIZE:
             {
                if( isDecDigit( *format ) )
-                  FSM_TRANSITION_SELF();
+                  FSM_TRANSITION_SELF( label='dec digit');
                FSM_TRANSITION_NEXT( PARAM );
             }
 
             case PARAM:
             {
-               mprintf( "Type: %c\n", *format );
                switch( *format )
                {
                   case 'S': /* No break here! */
@@ -288,33 +325,40 @@ STATIC void inline vsyslog( uint32_t filter, const char* format, va_list ap )
                   case 'b':
                #endif
                   {
-
-                     item.param[ai] = va_arg( ap, typeof(item.param[0]) );
-                     mprintf( "Param[%u] = 0x%08X, %d\n", ai, item.param[ai], item.param[ai] );
-                     ai++;
-                     break;
+                    item.param[i++] = va_arg( ap, typeof(item.param[0]) );
+                    break;
                   }
                }
+              #ifdef CONFIG_DEBUG_LM32LOG
+               mprintf( "Param[%u] = 0x%08X, %d\n", i-1, item.param[i-1], item.param[i-1] );
+              #endif
+  
                FSM_TRANSITION( NORMAL );
             }
-         }
+         } /* switch( state ) */
       }
       while( next );
-      format++;
-   }
+   } /* for() */
 
    syslogPushItem( &item );
+
+#ifdef CONFIG_DEBUG_LM32LOG
+   mprintf( "\n" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  * @see lm32_syslog.h
  */
-void syslog( uint32_t filter, const char* format, ... )
+void lm32Log( const unsigned int filter, const char* format, ... )
 {
-   //mprintf( "'%s' %s\n", format, __func__ );
+#ifdef CONFIG_DEBUG_LM32LOG
+   mprintf( "%s( %u, %s )\n",  __func__, filter, format );
+#endif
    va_list ap;
+
    va_start( ap, format );
-   vsyslog( filter, format, ap );
+   vLm32log( filter, format, ap );
    va_end( ap );
 }
 
