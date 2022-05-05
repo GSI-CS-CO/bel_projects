@@ -32,6 +32,9 @@
  #include <daqt_read_stdin.hpp>
  #include "logd_core.hpp"
 #endif
+
+
+
 using namespace Scu;
 using namespace std;
 
@@ -47,7 +50,7 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    ,m_maxItems( 10 )
    ,m_pMiddleBuffer( nullptr )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
+   DEBUG_MESSAGE_M_FUNCTION("");
 
    if( !m_oMmu.isPresent() )
    {
@@ -111,7 +114,7 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
  */
 Lm32Logd::~Lm32Logd( void )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
+   DEBUG_MESSAGE_M_FUNCTION("");
    if( m_pMiddleBuffer != nullptr )
       delete[] m_pMiddleBuffer;
 }
@@ -136,6 +139,8 @@ void Lm32Logd::updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& rAdmin )
  */
 void Lm32Logd::setResponse( uint n )
 {
+   DEBUG_MESSAGE_M_FUNCTION( n );
+
    m_oMmu.getEb()->write( m_fifoAdminBase + offsetof( SYSLOG_FIFO_ADMIN_T, admin.wasRead ),
                           static_cast<eb_user_data_t>(&n),
                           EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
@@ -147,21 +152,29 @@ constexpr uint HIGHST_ADDR = 2 * LM32_OFFSET;
  */
 uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
 {
+   DEBUG_MESSAGE_M_FUNCTION("");
+
    if( !gsi::isInRange( addr, LM32_OFFSET, HIGHST_ADDR ) )
    {
       throw std::runtime_error( "String address is corrupt!" );
    }
 
+ #ifdef DEBUGLEVEL
+   const uint oldLen = rStr.length();
+ #endif
+
    char buffer[16];
    uint ret = 0;
-
    while( true )
    {
       readLm32( buffer, sizeof( buffer ), addr );
       for( uint i = 0; i < sizeof( buffer ); i++ )
       {
          if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
+         {
+            DEBUG_MESSAGE( "received string: \"" << rStr.substr(oldLen) << "\"" );
             return ret;
+         }
 
          if( !m_rCmdLine.isForConsole() && ((buffer[i] == '\n') || (buffer[i] == '\r')) )
          {
@@ -180,7 +193,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
  */
 void Lm32Logd::readItems( void )
 {
-   DEBUG_MESSAGE(__FUNCTION__);
+   DEBUG_MESSAGE_M_FUNCTION("");
 
    SYSLOG_FIFO_ADMIN_T fifoAdmin;
 
@@ -259,7 +272,7 @@ inline bool Lm32Logd::isDecDigit( const char c )
  */
 void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item )
 {
-   DEBUG_MESSAGE(__FUNCTION__);
+   DEBUG_MESSAGE_M_FUNCTION("");
 
    if( item.filter >= BIT_SIZEOF( CommandLine::FILTER_FLAG_T ) )
    {
@@ -512,7 +525,7 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
  */
 void Lm32Logd::operator()( void )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
+   DEBUG_MESSAGE_M_FUNCTION("");
 
    if( m_rCmdLine.isSingleShoot() )
    {
@@ -532,7 +545,7 @@ void Lm32Logd::operator()( void )
          intervalTime = it + m_rCmdLine.getPollInterwalTime() * 1000;
          readItems();
       }
-      ::usleep( 100 );
+      ::usleep( 1000 );
    }
    DEBUG_MESSAGE( "Loop left by Esc" );
 }

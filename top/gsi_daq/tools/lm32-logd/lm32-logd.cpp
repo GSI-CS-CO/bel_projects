@@ -26,12 +26,12 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
+#include <errno.h>
 #include <daqt_messages.hpp>
 #include <find_process.h>
 #include "logd_cmdline.hpp"
 #include "logd_core.hpp"
-
-#include <stdio.h>
 
 using namespace std;
 using namespace Scu;
@@ -44,29 +44,73 @@ void onUnexpectedException( void )
    throw 0;     // throws int (in exception-specification)
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void handleConcurrentRunningInstance( OFP_ARG_T* pArg )
+{
+   CommandLine* poCmdLine = static_cast<CommandLine*>(pArg->pUser);
+
+   if( poCmdLine->isKill() )
+   {
+      if( poCmdLine->isVerbose() )
+         cout << "killing concurrent process with PID: " << pArg->pid << endl;
+
+      if( ::kill( pArg->pid, SIGTERM ) == -1 )
+      {
+         ERROR_MESSAGE( "Unable to terminate the concurrent running process:"
+                        " PID: " << pArg->pid << " errno: " << errno );
+         ::exit( EXIT_FAILURE );
+      }
+      return;
+   }
+
+   ERROR_MESSAGE( "Concurrent process with PID: " << pArg->pid <<
+                  " is already running!" );
+
+   ::exit( EXIT_FAILURE );
+}
+
 extern "C"
 {
 
 /*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by function findProcesses().
  */
 STATIC int onFoundProcess( OFP_ARG_T* pArg )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
-   if( pArg->pid == getpid() )
+   DEBUG_MESSAGE_FUNCTION("OFP_ARG_T*");
+
+   if( pArg->pid == ::getpid() )
       return 0; // Process has found himself. Program continue.
 
+   DEBUG_MESSAGE( "Concurrent process with PID: " << pArg->pid << " found." );
+
    CommandLine* poCmdLine = static_cast<CommandLine*>(pArg->pUser);
-   cout << pArg->pid << " url = " << poCmdLine->getScuUrl() << endl;
 
-
-   uint8_t* currentArg = pArg->commandLine.buffer;
-   for( uint i = 0; i < pArg->commandLine.argc; i++ )
+   if( poCmdLine->isRuningOnScu() )
    {
-      cout << currentArg << endl;
-      currentArg += strlen( reinterpret_cast<char*>(currentArg) );
+      handleConcurrentRunningInstance( pArg );
+      return 0;
    }
-   printf( "\n" );
 
+   const string scuName = poCmdLine->getScuUrl().substr(poCmdLine->getScuUrl().find_first_of('/')+1);
+   cout << pArg->pid << " SCU = " << scuName << endl;
+
+   /*
+    * Evaluating the command line of the concurrent running process.
+    */
+   char* currentArg = reinterpret_cast<char*>(pArg->commandLine.buffer);
+   for( uint i = 0; i < pArg->commandLine.argc; i++, currentArg += ::strlen( currentArg ) + 1 )
+   {
+      if( *currentArg == '-' )
+         continue;
+
+      string cScuName = currentArg;
+      cScuName = cScuName.substr(cScuName.find_first_of('/')+1);
+      cout << cScuName << endl;
+      if( scuName == cScuName )
+         handleConcurrentRunningInstance( pArg );
+   }
    return 0;
 }
 
@@ -76,6 +120,7 @@ STATIC int onFoundProcess( OFP_ARG_T* pArg )
  */
 int main( int argc, char** ppArgv )
 {
+   DEBUG_MESSAGE_FUNCTION("");
    set_unexpected( onUnexpectedException );
 
    try

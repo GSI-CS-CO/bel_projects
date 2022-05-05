@@ -268,7 +268,7 @@ void vLm32log( const unsigned int filter, const char* format, va_list ap )
    };
 
    FSM_INIT_FSM( NORMAL, color=blue );
-   
+
    for( unsigned int i = 0; (*format != '\0') && (i < ARRAY_SIZE(item.param)); format++ )
    {
       bool next;

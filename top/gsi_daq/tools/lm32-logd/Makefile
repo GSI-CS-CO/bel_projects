@@ -52,7 +52,7 @@ LIBS += stdc++
 DEBUG = 1
 DEFINES += DEBUGLEVEL
 
-CALL_ARGS = scuxl0035 -n # -vH
+CALL_ARGS = scuxl0035 -nk # -vH
 
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)

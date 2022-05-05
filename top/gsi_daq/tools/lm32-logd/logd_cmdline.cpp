@@ -210,9 +210,9 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                     " with different values,\n"
                     "from which an OR link is created.\n\n"
                     "E.g. code in LM32:\n"
-                    "   syslog( 1, \"Log-text A\" );\n"
-                    "   syslog( 2, \"Log-text B\" );\n"
-                    "   syslog( 3, \"Log-text C\" );\n\n"
+                    "   lm32Log( 1, \"Log-text A\" );\n"
+                    "   lm32Log( 2, \"Log-text B\" );\n"
+                    "   lm32Log( 3, \"Log-text C\" );\n\n"
                     "Commandline: -f1 -f3\n"
                     "In this example only \"Log-text A\" and \"Log-text B\""
                     " becomes forwarded.\n\n"
@@ -231,7 +231,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_longOpt  = "print-filter",
       .m_helpText = "Prints the filter value at the begin of each item.\n"
                     "That is the first parameter of the LM32 function: "
-                    "\"syslog\""
+                    "\"lm32Log\""
    },
    {
       OPT_LAMBDA( poParser,
@@ -245,6 +245,18 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_longOpt  = "exit",
       .m_helpText = "Exit after read, otherwise the program will run in a "
                     "polling loop until the Esc-key has pressed."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_kill = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'k',
+      .m_longOpt  = "kill",
+      .m_helpText = "Terminates a concurrent running process of this program."
    }
 }; // CommandLine::c_optList// CommandLine::c_optList
 
@@ -278,10 +290,11 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_isForConsole( false )
    ,m_printFilter( false )
    ,m_exit( false )
+   ,m_kill( false )
    ,m_interval( DEFAULT_INTERVAL )
    ,m_filterFlags( 0 )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
+   DEBUG_MESSAGE_M_FUNCTION("");
 
    if( m_isOnScu )
       m_scuUrl = "dev/wbm0";
@@ -293,13 +306,15 @@ CommandLine::CommandLine( int argc, char** ppArgv )
  */
 CommandLine::~CommandLine( void )
 {
-   DEBUG_MESSAGE( __FUNCTION__ );
+   DEBUG_MESSAGE_M_FUNCTION("");
 }
 
 /*! ---------------------------------------------------------------------------
  */
 int CommandLine::onArgument( void )
 {
+   DEBUG_MESSAGE_M_FUNCTION("");
+
    if( m_isOnScu )
    {
       WARNING_MESSAGE( "Program is running on SCU, therefore the argument \""

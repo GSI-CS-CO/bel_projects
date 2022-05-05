@@ -71,6 +71,7 @@ private:
 
    void readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len )
    {
+      DEBUG_MESSAGE_M_FUNCTION( " len = " << len );
       m_oMmu.getEb()->read( m_oMmu.getBase() +
                                sysLogFifoGetReadIndex( &m_fiFoAdmin ) *
                                sizeof(mmu::RAM_PAYLOAD_T),

@@ -48,6 +48,7 @@ private:
    bool          m_isForConsole;
    bool          m_printFilter;
    bool          m_exit;
+   bool          m_kill;
    uint          m_interval;
    FILTER_FLAG_T m_filterFlags;
    std::string   m_scuUrl;
@@ -98,6 +99,11 @@ public:
    bool isSingleShoot( void )
    {
       return m_exit;
+   }
+
+   bool isKill( void )
+   {
+      return m_kill;
    }
 
    uint getPollInterwalTime( void )

@@ -37,11 +37,36 @@
              << args << ESC_NORMAL << std::endl
 
 #ifdef DEBUGLEVEL
+   #include <cxxabi.h>
+   #include <string>
+
    #define DEBUG_MESSAGE( args... )                                           \
       std::cerr << ESC_FG_YELLOW "DBG: "                                      \
                 << args << ESC_NORMAL << std::endl
+
+   #define DEBUG_MESSAGE_FUNCTION( args... )                                  \
+   {                                                                          \
+      std::string __f = __FILE__;                                             \
+      DEBUG_MESSAGE( __FUNCTION__ <<  "(" << args << ")"                      \
+                     << " line: " << __LINE__                                 \
+                     << " file: " << __f.substr(__f.find_last_of('/')+1));    \
+   }
+
+   #define DEBUG_MESSAGE_M_FUNCTION( args... )                                \
+   {                                                                          \
+      std::string __f = __FILE__;                                             \
+      int __s;                                                                \
+      std::string __c = abi::__cxa_demangle( typeid(this).name(),             \
+                                             nullptr, nullptr, &__s );        \
+      __c.pop_back();                                                         \
+      DEBUG_MESSAGE( __c << "::" << __FUNCTION__ << "(" << args << ")"        \
+                     << " line: " << __LINE__                                 \
+                     << " file: " << __f.substr(__f.find_last_of('/')+1));    \
+   }
 #else
    #define DEBUG_MESSAGE( args... )
+   #define DEBUG_MESSAGE_FUNCTION( args... )
+   #define DEBUG_MESSAGE_M_FUNCTION( args... )
 #endif
 
 #endif // ifndef _DAQT_MESSAGES_HPP
