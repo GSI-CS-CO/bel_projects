@@ -78,6 +78,9 @@ public:
   const vBuf& getBmp()           const { return bmp; }
 
   uint32_t getFreeChunkQty()  const { return pool.size(); }
+  uint32_t getTotalChunkQty() const { return nodeQty; }
+  uint32_t getUsedChunkQty() const { return nodeQty-pool.size(); }
+
   uint32_t getTotalSpace()    const { return nodeQty * _MEM_BLOCK_SIZE; }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }
   uint32_t getUsedSpace()     const { return nodeQty - (pool.size() * _MEM_BLOCK_SIZE); }
