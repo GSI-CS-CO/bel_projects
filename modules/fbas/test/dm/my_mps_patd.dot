@@ -12,9 +12,9 @@ edge [type="defdst"];
 
 C3_A0 [type="flow",  patentry=1, toffs=0, qty="999", tvalid="0", vabs="true"];
 // par contains MPS protocol: MAC address (6) + index (1) + flag (1)
-M3_A1 [type="tmsg",  patentry=1, toffs=0,       fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x0000000000000601"];
-M3_A2 [type="tmsg",              toffs=100000,   fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x0000000000000701"];
-B3_A3 [type="block", patexit=1,  tperiod=200000, qlo="true"];
+M3_A1 [type="tmsg",  patentry=1, toffs=300000,  fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0601"];
+M3_A2 [type="tmsg",              toffs=350000,  fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0701"];
+B3_A3 [type="block", patexit=1,  tperiod=400000, qlo="true"];
 
 C3_A0 -> M3_A1 -> M3_A2 -> B3_A3;
 B3_A3 -> M3_A1 [type="altdst"];

@@ -49,8 +49,8 @@ export instr_st_ow_dly=0x33     # store the one-way delay measurement results to
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
 
-export senderid_tx_node="0x000000267b0004da" # sender ID of TX node
-export senderid_dm_node="0x010000267b0004dc" # sender ID of DM node
+export mac_tx_node="0x00267b0004da" # sender ID of TX node
+export mac_any_node="0xffffffffffff" # sender ID of any node
 
 export evt_mps_flag_any="0xffffeeee00000000" # generator event for MPS flags
 export  evt_mps_flag_ok="0xffffeeee00000001" # event to generate the MPS OK flag
@@ -245,6 +245,7 @@ load_fw() {
 
 configure_node() {
     # $1 - device (FBASRX or FBASTX)
+    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
 
     check_node "$1"
 
@@ -276,19 +277,59 @@ configure_node() {
         # wrc output:
         #   00000001
 
-        echo "tell LM32 to set the sender IDs"
-        # sender ID of TX node
-        eb-write -q $1 $addr_senderid/8 $senderid_tx_node
-        eb-read -q $1 $addr_senderid/8
-        eb-write $1 $addr_cmd/4 $instr_load_senderid
-        wait_seconds 1
-
-        # sender ID of DM node
-        eb-write -q $1 $addr_senderid/8 $senderid_dm_node
-        eb-read -q $1 $addr_senderid/8
-        eb-write $1 $addr_cmd/4 $instr_load_senderid
-        wait_seconds 1
+        # set sender IDs
+        set_senderid "$2"
     fi
+}
+
+set_senderid() {
+    # $1 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
+
+    # SENDER_TX - only TX node
+    # SENDER_ANY - only any nodes
+    # SENDER_ALL - TX and any nodes
+
+    first_idx=1
+    last_idx=15
+    unset idx_mac_list  # list with idx_mac
+
+    if [ "$1" == "SENDER_TX" ]; then
+        idx_mac_list="$mac_tx_node"
+    elif [ "$1" == "SENDER_ALL" ] || [ "$1" == "SENDER_ANY" ]; then
+        if [ "$1" == "SENDER_ALL" ]; then
+            idx_mac_list="$mac_tx_node"
+            first_idx=$(( $first_idx - 1 ))
+            last_idx=$(( $last_idx - 1 ))
+        else
+            idx_mac_list="$mac_any_node"
+        fi
+
+        # idx is used to specify an MPS channel of the same sender
+        for i in $(seq $first_idx $last_idx); do
+            idx=$(( $i << 48 ))
+            idx_mac=$(( $idx + $mac_any_node ))
+            idx_mac=$(printf "0x%x" $idx_mac)
+            idx_mac_list="$idx_mac_list $idx_mac"
+        done
+    else
+        return
+    fi
+
+    echo "tell LM32 to set the sender IDs"
+
+    device=$FBASRX
+    i=0
+    for idx_mac in $idx_mac_list; do
+        pos=$(( $i << 56 ))                               # position in RX buffer
+        senderid=$(( $pos + $idx_mac ))                   # sender ID = position + (idx + MAC)
+        senderid=$(printf "0x%x" $senderid)
+        eb-write -q $device $addr_senderid/8 $senderid
+        eb-read -q $device $addr_senderid/8
+        eb-write $device $addr_cmd/4 $instr_load_senderid
+        i=$(( $i + 1 ))
+        sleep 0.2
+    done
+
 }
 
 make_node_ready() {
@@ -380,12 +421,13 @@ setup_fbastx() {
 
 setup_fbasrx() {
     # $1 - firmware filename supplied externally
+    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
 
     echo "set up RX node"
     load_fw "$FBASRX" "$1"
 
     echo "CONFIGURE state "
-    configure_node "$FBASRX"
+    configure_node "$FBASRX" "$2"
 
     echo "OPREADY state "
     make_node_ready "$FBASRX"
@@ -405,6 +447,7 @@ setup_fbasrx() {
 
 reset_node() {
     # $1 - device (FBASTX or FBASRX)
+    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
 
     check_node "$1"
 
@@ -423,7 +466,7 @@ reset_node() {
     wait_seconds 1
 
     echo "CONFIGURE state "
-    configure_node "$1"
+    configure_node "$1" "$2"
 
     echo "OPREADY state "
     make_node_ready "$1"
@@ -656,7 +699,7 @@ report_two_senders_result() {
         result="FAILED"
     fi
 
-    echo "Result of two_senders test: $result"
+    echo "Test result: --- $result ---"
     echo "Received: $rx_count of $tx_count"
 }
 
@@ -746,6 +789,7 @@ read_counters() {
     addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
     set msg_cnt eca_vld eca_ovf   # labels as positional arguments ($1 $2 $3)
 
+    printf "\n"
     for addr in $addr_val; do
         cnt=$(eb-read $device $addr/4)  # get counter value
         printf "%s @ %s: %d (0x%s)\n" $1 $addr 0x$cnt $cnt

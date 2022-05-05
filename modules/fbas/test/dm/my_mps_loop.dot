@@ -6,9 +6,9 @@ edge [type="defdst"];
 
 // par contains MPS protocol: MAC address (6) + index (1) + flag (1)
 // where flag (1=OK, 2=NOK, 3=TEST)
-M_A0 [type="tmsg",  patentry=1, toffs=0,        fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x0000000000000001"];
-M_A1 [type="tmsg",              toffs=100000,   fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0x0000000000000101"];
-B_A2 [type="block", patexit=1,  tperiod=200000, qlo="true"];
+M_A0 [type="tmsg",  patentry=1, toffs=0,        fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0001"];
+M_A1 [type="tmsg",              toffs=50000,    fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0101"];
+B_A2 [type="block", patexit=1,  tperiod=400000, qlo="true"];
 
 M_A0 -> M_A1 -> B_A2 -> M_A0;
 }
