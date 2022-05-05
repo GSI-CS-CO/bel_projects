@@ -13,14 +13,14 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     fileName = self.schedules_folder + 'memory_full.dot'
     self.generate_schedule(fileName, 1874)
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
+        fileName), [250], linesCout=2, linesCerr=2)
     self.deleteFile(fileName)
 
   def test_memory_full_bad1(self):
     fileName = self.schedules_folder + 'memory_full.dot'
     self.generate_schedule(fileName, 1870)
     self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
+        fileName), [250], linesCout=2, linesCerr=2)
     self.deleteFile(fileName)
 
   def test_memory_full_ok(self):
