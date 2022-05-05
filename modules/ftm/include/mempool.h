@@ -77,6 +77,12 @@ public:
   void setBmp(const vBuf& aBmp) { bmp = aBmp;}
   const vBuf& getBmp()           const { return bmp; }
 
+  uint32_t getFreeBmpBits() const;
+  uint32_t getTotalBmpBits() const {return bmpBits;}
+  uint32_t getTotalBmpSize() const {return bmpSize;}
+  uint32_t getUsedBmpBits() const;
+  void debugBmpShow() const;
+
   uint32_t getFreeChunkQty()  const { return pool.size(); }
   uint32_t getTotalChunkQty() const { return nodeQty; }
   uint32_t getUsedChunkQty() const { return nodeQty-pool.size(); }

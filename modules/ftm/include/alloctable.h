@@ -135,9 +135,16 @@ public:
   uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
   uint32_t getFreeSpace(uint8_t cpu)     const { return vPool[cpu].getFreeSpace(); }
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
+  
   uint32_t getFreeChunkQty(uint8_t cpu)  const { return vPool[cpu].getFreeChunkQty(); }
   uint32_t getTotalChunkQty(uint8_t cpu) const { return vPool[cpu].getTotalChunkQty(); }
   uint32_t getUsedChunkQty(uint8_t cpu)  const { return vPool[cpu].getUsedChunkQty(); }
+
+  uint32_t getFreeBmpBits(uint8_t cpu) const { return vPool[cpu].getFreeBmpBits();}
+  uint32_t getTotalBmpBits(uint8_t cpu) const { return vPool[cpu].getTotalBmpBits();}
+  uint32_t getTotalBmpSize(uint8_t cpu) const { return vPool[cpu].getTotalBmpSize();}
+  uint32_t getUsedBmpBits(uint8_t cpu) const { return vPool[cpu].getUsedBmpBits();}
+  void debugBmpShow(uint8_t cpu) const { vPool[cpu].debugBmpShow();}
 
   void syncBmpsToPools(); // generate BMP from Pool
   void recreatePools(AllocPoolMode mode);

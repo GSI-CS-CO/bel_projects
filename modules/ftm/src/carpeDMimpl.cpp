@@ -191,10 +191,20 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
 
   void CarpeDM::CarpeDMimpl::showMemSpace() {
-    sLog << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free" << std::setw(11) << "cTotal" << std::setw(11) << "cFree"  << std::setw(11) << "cUsed" << std::endl;
+    sLog << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free";
+    if (verbose) {
+      sLog << std::setw(11) << "cTotal" << std::setw(11) << "cFree"  << std::setw(11) << "cUsed";
+      sLog << std::setw(11) << "bmpTotal" << std::setw(11) << "bmpFree"  << std::setw(11) << "bmpUsed";
+      sLog << std::setw(11) << "bmpBytes";
+    }
+    sLog << std::endl;
     for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
       sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x)    << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
-      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
+      if (verbose) {
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
+      }  
       sLog << std::endl;
     }
   }
