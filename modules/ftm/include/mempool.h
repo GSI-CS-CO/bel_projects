@@ -56,7 +56,7 @@ public:
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
           bmpOffs(sharedOffs + _SHCTL_END_),
           startOffs(bmpOffs + bmpSize),
-          endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
+          endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE - bmpSize)),
           bmp(bmpSize)
           { init();  }
 
