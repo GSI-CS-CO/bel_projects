@@ -47,7 +47,6 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    :m_rCmdLine( rCmdLine )
    ,m_oMmu( &roEtherbone )
    ,m_lastTimestamp( 0 )
-   ,m_maxItems( 10 )
    ,m_pMiddleBuffer( nullptr )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
@@ -116,7 +115,10 @@ Lm32Logd::~Lm32Logd( void )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
    if( m_pMiddleBuffer != nullptr )
+   {
+      DEBUG_MESSAGE( "Deleting reserved memory for middle buffer." );
       delete[] m_pMiddleBuffer;
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -191,6 +193,22 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
 
 /*! ---------------------------------------------------------------------------
  */
+void Lm32Logd::readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len )
+{
+   DEBUG_MESSAGE_M_FUNCTION( " len = " << len );
+   DEBUG_MESSAGE( "Read-index: " << sysLogFifoGetReadIndex( &m_fiFoAdmin ) );
+
+   m_oMmu.getEb()->read( m_oMmu.getBase() +
+                            sysLogFifoGetReadIndex( &m_fiFoAdmin ) *
+                            sizeof(mmu::RAM_PAYLOAD_T),
+                         pData,
+                         EB_DATA32 | EB_LITTLE_ENDIAN,
+                         len * sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(uint32_t) );
+   sysLogFifoAddToReadIndex( &m_fiFoAdmin, len );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void Lm32Logd::readItems( void )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
@@ -210,32 +228,41 @@ void Lm32Logd::readItems( void )
 
    m_fiFoAdmin = fifoAdmin;
 
-   const uint readTotalLen = min( size, static_cast<uint>(m_maxItems * SYSLOG_FIFO_ITEM_SIZE) );
+   if( m_pMiddleBuffer == nullptr )
+   {
+      DEBUG_MESSAGE( "Allocating middle buffer for a maximum of "
+                     << m_rCmdLine.getMaxItems() << " log-messages." );
+      m_pMiddleBuffer = new SYSLOG_FIFO_ITEM_T[m_rCmdLine.getMaxItems() * SYSLOG_FIFO_ITEM_SIZE];
+   }
+
+   const uint readTotalLen = min( size, static_cast<uint>(m_rCmdLine.getMaxItems() * SYSLOG_FIFO_ITEM_SIZE) );
    uint len = readTotalLen;
    const uint numOfItems = readTotalLen / SYSLOG_FIFO_ITEM_SIZE;
-   assert( m_pMiddleBuffer == nullptr );
-   m_pMiddleBuffer = new SYSLOG_FIFO_ITEM_T[numOfItems*10]; //TODO: WHY??
+
    SYSLOG_FIFO_ITEM_T* pData = m_pMiddleBuffer;
+
    uint lenToEnd = sysLogFifoGetUpperReadSize( &m_fiFoAdmin );
    if( lenToEnd < readTotalLen )
    {
+      //TODO It seems to be a problem sometimes.
+      DEBUG_MESSAGE( "reading first part"  );
       readItems( pData, lenToEnd );
       pData += lenToEnd;
       len   -= lenToEnd;
    }
+   assert( sysLogFifoGetUpperReadSize( &m_fiFoAdmin ) >= readTotalLen );
    readItems( pData, len );
    setResponse( readTotalLen );
 
-
+   DEBUG_MESSAGE( "received: " << numOfItems << " items" );
    for( uint i = 0; i < numOfItems; i++ )
    {
       std::string output;
       evaluateItem( output, m_pMiddleBuffer[i] );
+
+      //TODO Determining which target.
       cout << output << std::flush;
    }
-
-   delete[] m_pMiddleBuffer;
-   m_pMiddleBuffer = nullptr;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -523,7 +550,7 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
 /*! ---------------------------------------------------------------------------
  */
-void Lm32Logd::operator()( void )
+void Lm32Logd::operator()( const bool& rExit )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
 
@@ -534,10 +561,9 @@ void Lm32Logd::operator()( void )
       return;
    }
 
-   int key;
    Terminal oTerminal;
    uint intervalTime = 0;
-   while( (key = Terminal::readKey()) != '\e')
+   while( !rExit && (Terminal::readKey() != '\e') )
    {
       const uint it = daq::getSysMicrosecs();
       if( it > intervalTime )
@@ -547,7 +573,7 @@ void Lm32Logd::operator()( void )
       }
       ::usleep( 1000 );
    }
-   DEBUG_MESSAGE( "Loop left by Esc" );
+   DEBUG_MESSAGE( "Loop left by " << (rExit? "SIGTERM":"Esc") );
 }
 
 //================================== EOF ======================================

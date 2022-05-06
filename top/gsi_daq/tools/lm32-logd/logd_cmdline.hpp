@@ -49,7 +49,9 @@ private:
    bool          m_printFilter;
    bool          m_exit;
    bool          m_kill;
+   bool          m_killOnly;
    uint          m_interval;
+   uint          m_maxItemsPerInterval;
    FILTER_FLAG_T m_filterFlags;
    std::string   m_scuUrl;
 
@@ -106,9 +108,19 @@ public:
       return m_kill;
    }
 
+   bool isKillOnly( void )
+   {
+      return m_killOnly;
+   }
+
    uint getPollInterwalTime( void )
    {
       return m_interval;
+   }
+
+   uint getMaxItems( void )
+   {
+      return m_maxItemsPerInterval;
    }
 
    std::string& getScuUrl( void )

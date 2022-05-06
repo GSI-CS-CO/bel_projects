@@ -31,6 +31,7 @@ using namespace CLOP;
 using namespace Scu;
 
 #define DEFAULT_INTERVAL 1000
+#define DEFAULT_MAX_ITEMS 10
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing the command line options.
@@ -89,7 +90,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
          cout << "Daemon for forwarding log-messages of a LM32-application.\n"
                  "(c) 2022 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n\n"
                  "Usage on ASL:\n\t"
-              << poParser->getProgramName() << " [options] <SCU URL>\n"
+              << poParser->getProgramName() << " [options] <SCU URL>\n\n"
                  "Usage on SCU:\n\t"
               << poParser->getProgramName() << " [options]\n\n"
                  "The key 'Esc' terminates this program\n\n"
@@ -257,7 +258,38 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'k',
       .m_longOpt  = "kill",
       .m_helpText = "Terminates a concurrent running process of this program."
-   }
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_killOnly = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'K',
+      .m_longOpt  = "killonly",
+      .m_helpText = "Terminates a concurrent running process of this program"
+                    " and exit."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         uint maxItems;
+         if( readInteger( maxItems, poParser->getOptArg() ) )
+            return -1;
+         static_cast<CommandLine*>(poParser)->m_maxItemsPerInterval = maxItems;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'm',
+      .m_longOpt  = "maxitems",
+      .m_helpText = "PARAM=\"<number of maximum message-items per interval>\"\n"
+                    "Overwrites the default number of maximum items per interval of "
+                    TO_STRING(DEFAULT_MAX_ITEMS) " with a new value."
+
+   },
 }; // CommandLine::c_optList// CommandLine::c_optList
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -291,7 +323,9 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_printFilter( false )
    ,m_exit( false )
    ,m_kill( false )
+   ,m_killOnly( false )
    ,m_interval( DEFAULT_INTERVAL )
+   ,m_maxItemsPerInterval( DEFAULT_MAX_ITEMS )
    ,m_filterFlags( 0 )
 {
    DEBUG_MESSAGE_M_FUNCTION("");

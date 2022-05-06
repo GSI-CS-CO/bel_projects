@@ -43,7 +43,6 @@ class Lm32Logd
    mmu::MMU_ADDR_T      m_offset;
    std::size_t          m_capacity;
    uint64_t             m_lastTimestamp;
-   uint                 m_maxItems;
    SYSLOG_FIFO_ADMIN_T  m_fiFoAdmin;
 
    SYSLOG_FIFO_ITEM_T*  m_pMiddleBuffer;
@@ -52,7 +51,7 @@ public:
    Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
    ~Lm32Logd( void );
 
-   void operator()( void );
+   void operator()( const bool& rExit );
 
    uint64_t getLastTimestamp( void )
    {
@@ -69,23 +68,13 @@ private:
                             EB_BIG_ENDIAN | format, len );
    }
 
-   void readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len )
-   {
-      DEBUG_MESSAGE_M_FUNCTION( " len = " << len );
-      m_oMmu.getEb()->read( m_oMmu.getBase() +
-                               sysLogFifoGetReadIndex( &m_fiFoAdmin ) *
-                               sizeof(mmu::RAM_PAYLOAD_T),
-                            pData,
-                            EB_DATA32 | EB_LITTLE_ENDIAN,
-                            len * sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(uint32_t) );
-      sysLogFifoAddToReadIndex( &m_fiFoAdmin, len );
-   }
-
    uint readStringFromLm32( std::string& rStr, uint addr );
 
    void updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& );
 
    void setResponse( uint n );
+
+   void readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len );
 
    void readItems( void );
 

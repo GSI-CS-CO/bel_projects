@@ -36,6 +36,8 @@
 using namespace std;
 using namespace Scu;
 
+STATIC bool g_exit = false;
+
 /*! ---------------------------------------------------------------------------
  */
 void onUnexpectedException( void )
@@ -50,7 +52,7 @@ STATIC void handleConcurrentRunningInstance( OFP_ARG_T* pArg )
 {
    CommandLine* poCmdLine = static_cast<CommandLine*>(pArg->pUser);
 
-   if( poCmdLine->isKill() )
+   if( poCmdLine->isKill() || poCmdLine->isKillOnly() )
    {
       if( poCmdLine->isVerbose() )
          cout << "killing concurrent process with PID: " << pArg->pid << endl;
@@ -61,6 +63,8 @@ STATIC void handleConcurrentRunningInstance( OFP_ARG_T* pArg )
                         " PID: " << pArg->pid << " errno: " << errno );
          ::exit( EXIT_FAILURE );
       }
+      if( poCmdLine->isKillOnly() )
+         ::exit( EXIT_SUCCESS );
       return;
    }
 
@@ -94,7 +98,6 @@ STATIC int onFoundProcess( OFP_ARG_T* pArg )
    }
 
    const string scuName = poCmdLine->getScuUrl().substr(poCmdLine->getScuUrl().find_first_of('/')+1);
-   cout << pArg->pid << " SCU = " << scuName << endl;
 
    /*
     * Evaluating the command line of the concurrent running process.
@@ -114,6 +117,19 @@ STATIC int onFoundProcess( OFP_ARG_T* pArg )
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by the linux kernel, when this
+ *        process a signal has been received.
+ *
+ * This is the case, when for example a concurrent process has sent SIGTERM.
+ * @see handleConcurrentRunningInstance
+ */
+STATIC void onOsSignal( int sigNo )
+{
+   DEBUG_MESSAGE_FUNCTION( sigNo );
+   g_exit = (sigNo == SIGTERM);
+}
+
 } /* extern "C" */
 
 /*! ---------------------------------------------------------------------------
@@ -127,11 +143,18 @@ int main( int argc, char** ppArgv )
    {
       CommandLine oCmdLine( argc, ppArgv );
       oCmdLine();
+
       ::findProcesses( ppArgv[0], onFoundProcess, &oCmdLine, FPROC_MODE_T(FPROC_BASENAME) );
                        //static_cast<FPROC_MODE_T>(FPROC_BASENAME | FPROC_RLINK) );
+      if( ::signal( SIGTERM, onOsSignal ) == SIG_ERR )
+         WARNING_MESSAGE( "Can't install the signal handling for SIGTERM !" );
+
       mmuEb::EtherboneConnection ebc( oCmdLine.getScuUrl() );
       Lm32Logd oLog( ebc, oCmdLine );
-      oLog();
+      oLog( g_exit );
+      if( oCmdLine.isVerbose() )
+         cout << "Process: \"" << oCmdLine.getProgramName() << "\" terminated by "
+              << (g_exit? "SIGTERM":"user") << "." << endl;
    }
    catch( std::exception& e )
    {

@@ -24,12 +24,16 @@
  */
 #include <stdlib.h>
 #include <daqt_read_stdin.hpp>
+#include <daqt_messages.hpp>
 
 /*! ---------------------------------------------------------------------------
  */
 Terminal::Terminal( void )
 {
+   DEBUG_MESSAGE_M_FUNCTION("");
+
    struct termios newTerminal;
+
    ::tcgetattr( STDIN_FILENO, &m_originTerminal );
    newTerminal = m_originTerminal;
    newTerminal.c_lflag     &= ~(ICANON | ECHO);  /* Disable canonic mode and echo.*/
@@ -42,6 +46,7 @@ Terminal::Terminal( void )
  */
 Terminal::~Terminal( void )
 {
+   DEBUG_MESSAGE_M_FUNCTION("");
    ::tcsetattr( STDIN_FILENO, TCSANOW, &m_originTerminal );
 }
 
@@ -49,7 +54,7 @@ Terminal::~Terminal( void )
  */
 int Terminal::readKey( void )
 {
-   int inKey = 0;
+   int inKey;
    fd_set rfds;
 
    struct timeval sleepTime = {0, 10};
@@ -60,6 +65,7 @@ int Terminal::readKey( void )
       ::read( STDIN_FILENO, &inKey, sizeof( inKey ) );
    else
       inKey = 0;
+
    return (inKey & 0xFF);
 }
 

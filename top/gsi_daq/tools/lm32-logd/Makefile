@@ -50,9 +50,9 @@ endif
 LIBS += stdc++
 
 DEBUG = 1
-DEFINES += DEBUGLEVEL
+#DEFINES += DEBUGLEVEL
 
-CALL_ARGS = scuxl0035 -nk # -vH
+CALL_ARGS = scuxl0035 -nkv -I200 # -vH
 
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
