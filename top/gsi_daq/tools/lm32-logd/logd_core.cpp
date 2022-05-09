@@ -161,10 +161,6 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       throw std::runtime_error( "String address is corrupt!" );
    }
 
- #ifdef DEBUGLEVEL
-   const uint oldLen = rStr.length();
- #endif
-
    char buffer[16];
    uint ret = 0;
    while( true )
@@ -174,7 +170,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       {
          if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
          {
-            DEBUG_MESSAGE( "received string: \"" << rStr.substr(oldLen) << "\"" );
+            DEBUG_MESSAGE( "received string: \"" << rStr.substr(rStr.length()-ret) << "\"" );
             return ret;
          }
 
@@ -200,12 +196,13 @@ void Lm32Logd::readItems( SYSLOG_FIFO_ITEM_T* pData, const uint len )
 
    m_oMmu.getEb()->read( m_oMmu.getBase() +
                             sysLogFifoGetReadIndex( &m_fiFoAdmin ) *
-                            sizeof(mmu::RAM_PAYLOAD_T),
+                            sizeof(SYSLOG_MEM_ITEM_T),
                          pData,
                          EB_DATA32 | EB_LITTLE_ENDIAN,
                          len * sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(uint32_t) );
    sysLogFifoAddToReadIndex( &m_fiFoAdmin, len );
 }
+
 
 /*! ---------------------------------------------------------------------------
  */
@@ -232,7 +229,7 @@ void Lm32Logd::readItems( void )
    {
       DEBUG_MESSAGE( "Allocating middle buffer for a maximum of "
                      << m_rCmdLine.getMaxItems() << " log-messages." );
-      m_pMiddleBuffer = new SYSLOG_FIFO_ITEM_T[m_rCmdLine.getMaxItems() * SYSLOG_FIFO_ITEM_SIZE];
+      m_pMiddleBuffer = new SYSLOG_FIFO_ITEM_T[ m_rCmdLine.getMaxItems() * SYSLOG_FIFO_ITEM_SIZE ];
    }
 
    const uint readTotalLen = min( size, static_cast<uint>(m_rCmdLine.getMaxItems() * SYSLOG_FIFO_ITEM_SIZE) );
@@ -244,10 +241,9 @@ void Lm32Logd::readItems( void )
    uint lenToEnd = sysLogFifoGetUpperReadSize( &m_fiFoAdmin );
    if( lenToEnd < readTotalLen )
    {
-      //TODO It seems to be a problem sometimes.
       DEBUG_MESSAGE( "reading first part"  );
       readItems( pData, lenToEnd );
-      pData += lenToEnd;
+      pData += (lenToEnd / SYSLOG_FIFO_ITEM_SIZE);
       len   -= lenToEnd;
    }
    assert( sysLogFifoGetUpperReadSize( &m_fiFoAdmin ) >= readTotalLen );
@@ -358,8 +354,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
    };
 
    FSM_INIT_FSM( NORMAL, color=blue );
-   char paddingChar;
-   uint paddingSize;
+   char paddingChar = ' ';
+   uint paddingSize = 0;
 
    uint ai = 0;
    uint base = 10;

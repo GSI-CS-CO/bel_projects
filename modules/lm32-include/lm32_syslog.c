@@ -198,9 +198,8 @@ typedef enum
   */
  STATIC const char* state2String( const STATE_T state )
  {
-   
     #define CASE_STATE( s ) case s: return #s;
-   
+
     switch( state )
     {
        CASE_STATE( NORMAL )

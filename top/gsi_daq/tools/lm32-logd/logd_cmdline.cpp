@@ -198,6 +198,8 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                            << BIT_SIZEOF( FILTER_FLAG_T ) - 1 << "!" );
             return -1;
          }
+         if( (static_cast<CommandLine*>(poParser)->m_filterFlags & (1 << filter)) != 0 )
+            WARNING_MESSAGE( "Filter value " << filter << " is already defined." );
          static_cast<CommandLine*>(poParser)->m_filterFlags |= 1 << filter;
          return 0;
       }),
@@ -278,6 +280,12 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
          uint maxItems;
          if( readInteger( maxItems, poParser->getOptArg() ) )
             return -1;
+         if( maxItems < 1 )
+         {
+            ERROR_MESSAGE( "A maximum of " << maxItems << " items to read per interval"
+                           " isn't meaningful!" );
+            return -1;
+         }
          static_cast<CommandLine*>(poParser)->m_maxItemsPerInterval = maxItems;
          return 0;
       }),
@@ -288,9 +296,8 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_helpText = "PARAM=\"<number of maximum message-items per interval>\"\n"
                     "Overwrites the default number of maximum items per interval of "
                     TO_STRING(DEFAULT_MAX_ITEMS) " with a new value."
-
-   },
-}; // CommandLine::c_optList// CommandLine::c_optList
+   }
+}; // CommandLine::c_optList
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
