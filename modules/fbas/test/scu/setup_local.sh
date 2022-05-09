@@ -292,7 +292,7 @@ configure_tr() {
 
         echo "configure ECA: set FBAS_WR_EVT, FBAS_WR_FLG for LM32 channel, tag 0x24 and 0x25"
         saft-ecpu-ctl tr0 -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
-        saft-ecpu-ctl tr-1 -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
+        saft-ecpu-ctl tr0 -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
 
         echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
         saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
