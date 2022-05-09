@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Apr-2022
+ *  version : 09-May-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000400                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000401                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -255,7 +255,6 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
   int64_t first_tStamp_ns = tStamp[1];         // always discard tStamp[0]
   int64_t correction = 0;
 
-
   // Special case if the sampling point has index=1: the sample_dt_as of this point is always 0.
   // In all other cases the sample_dt_as is set in the for(n = 2;... loop below.
   if (sample_number == 1) {
@@ -311,7 +310,6 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
     }
   }
 
-
   if (sample_good) {
     *phase_ns = tStamp[sample_number];
     *fractional_phase_as = sample_dt_as-(max_dt_as+min_dt_as)/2 - correction;
@@ -336,6 +334,7 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
     //                                                            // interval [-phase_error_as, +phase_error_as] around fractional_phase_as
     return COMMON_STATUS_OK;
   }
+  //pp_printf("nsamples %d, sample_number %d, tstamp_good %d, sample_good %d\n", nSamples, sample_number, tStamp_good, sample_good);
   return B2B_STATUS_PHASEFAILED;
 } // phaseFitSubNs
 
@@ -355,6 +354,8 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
 
   uint64_t phase_ns;        // phase value in ns as calculated by phaseFitSubNs
   int64_t  dummy;           // value ignored
+
+  int32_t  status;
     
 
   /* int32_t  test;
@@ -388,7 +389,8 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
     //pp_printf("ohps,  delta %d, usedIDX %d\n", delta, usedIdx);
     return B2B_STATUS_PHASEFAILED;
   }
-  phaseFitSubNs(period, nSamples, &phase_ns, phase_125ps, &dummy, confidence_as);
+
+  status = phaseFitSubNs(period, nSamples, &phase_ns, phase_125ps, &dummy, confidence_as);
   dummy = dummy/1000000;
   //pp_printf("fraction %d [ps]\n", dummy);
 
@@ -398,7 +400,7 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
   pp_printf("phasefit time: %d\n", test);
   */
 
-  return COMMON_STATUS_OK;
+  return status;
 } //phaseFit
 
 
@@ -517,6 +519,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagMatchDone    = 0;
       flagPhaseDone    = 0;
       flagPMError      = 0x0;
+      tH1_125ps        = 0x6fffffffffffffff;
 
       nSamples                              = NSAMPLES;
       if (TH1_as >  2000000000000) nSamples = NSAMPLES >> 1;          // use only half the sample for nue < 500 kHz
@@ -528,7 +531,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
 
       if (nInput > 2) insertionSort(tStamp, nInput);                  // for 11 timestamps, this is below 10us
-      if ((nInput < 3) || (phaseFit(TH1_as, nInput, &tH1_125ps, &dt, &confidence_as) != COMMON_STATUS_OK)) {
+      if (phaseFit(TH1_as, nInput, &tH1_125ps, &dt, &confidence_as) != COMMON_STATUS_OK) {
         tH1_125ps = 0x7fffffffffffffff;
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
