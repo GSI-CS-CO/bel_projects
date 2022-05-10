@@ -10,7 +10,7 @@
 ###############################################################################
 
 DEFINES += VERSION=1.0
-FOR_SCU := 1
+FOR_SCU_AND_ACC := 1
 MIAN_MODULE := mem-mon.cpp
 
 INCLUDE_DIRS += $(BASE_DIR)

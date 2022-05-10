@@ -32,6 +32,7 @@ using namespace Scu;
 
 #define DEFAULT_INTERVAL 1000
 #define DEFAULT_MAX_ITEMS 10
+#define DEFAULT_TARGET "/var/log/lm32.log"
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing the command line options.
@@ -87,8 +88,16 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         cout << "Daemon for forwarding log-messages of a LM32-application.\n"
+         cout << "\nDaemon for forwarding log-messages of a LM32-application.\n"
                  "(c) 2022 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n\n"
+                 "It monitors messages sent by an LM32 application by this function:\n\n"
+                 ESC_BOLD
+                 "void lm32Log( const unsigned int filter, const char* format, ... );\n\n"
+                 ESC_NORMAL
+                 "respectively:\n\n"
+                 ESC_BOLD
+                 "void vLm32log( const unsigned int filter, const char* format, va_list ap );\n\n"
+                 ESC_NORMAL
                  "Usage on ASL:\n\t"
               << poParser->getProgramName() << " [options] <SCU URL>\n\n"
                  "Usage on SCU:\n\t"
@@ -97,6 +106,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                  "Options:"
               << endl;
          poParser->list( cout );
+         cout << endl;
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
@@ -121,14 +131,56 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         static_cast<CommandLine*>(poParser)->m_daemonize = true;
+         if( static_cast<CommandLine*>(poParser)->m_verbose )
+         {
+            cout << "Version: " TO_STRING( VERSION )
+                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
+         }
+         else
+         {
+            cout << TO_STRING( VERSION ) << endl;
+         }
+         ::exit( EXIT_SUCCESS );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
+      .m_shortOpt = 'V',
+      .m_longOpt  = "version",
+      .m_helpText = "Print the software version and exit."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         if( !static_cast<CommandLine*>(poParser)->m_isOnScu )
+         {
+            ERROR_MESSAGE( "Daemonizing only on SCU possible!" );
+            return -1;
+         }
+         std::string& logFile = static_cast<CommandLine*>(poParser)->m_logFile;
+         if( !logFile.empty() )
+         {
+            ERROR_MESSAGE( "Multiple set of log file!" );
+            return -1;
+         }
+         if( poParser->isOptArgPersent() )
+         {
+            logFile = poParser->getOptArg();
+         }
+         else
+         {
+            logFile = DEFAULT_TARGET;
+         }
+         return 0;
+      }),
+      .m_hasArg   = OPTION::OPTIONAL_ARG,
+      .m_id       = 0,
       .m_shortOpt = 'd',
       .m_longOpt  = "daemonize",
-      .m_helpText = "Process will run as daemon."
+      .m_helpText = "Process will run as daemon if it runs on a SCU.\n"
+                    "The optional parameter PARAM can be used to set a target"
+                    " logfile.\nIf not set, then the default file \""
+                    DEFAULT_TARGET "\" will used."
    },
    {
       OPT_LAMBDA( poParser,
@@ -322,7 +374,6 @@ bool CommandLine::readInteger( uint& rValue, const string& roStr )
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,m_verbose( false )
-   ,m_daemonize( false )
    ,m_isOnScu( isRunningOnScu() )
    ,m_noTimestamp( false )
    ,m_humanTimestamp( false )
@@ -396,6 +447,11 @@ std::string& CommandLine::operator()( void )
       WARNING_MESSAGE( "Timestamp will not printed, therefore"
                        " the option for human readable timestamp"
                        " has no effect!" );
+
+   if( isVerbose() && !m_logFile.empty() )
+   {
+      std::cout << "Log-target is: \"" << m_logFile << "\"." << std::endl;
+   }
 
    return m_scuUrl;
 }

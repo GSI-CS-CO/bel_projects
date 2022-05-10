@@ -168,6 +168,7 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
    }
 }; // CommandLine::c_optList
 
+
 /*! ---------------------------------------------------------------------------
  */
 CommandLine::CommandLine( int argc, char** ppArgv )

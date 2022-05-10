@@ -42,11 +42,46 @@ constexpr uint LM32_OFFSET = 0x10000000;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
+ * @brief Central output function.
+ */
+int Lm32Logd::StringBuffer::sync( void )
+{
+   if( m_rParent.m_rCmdLine.isDemonize() )
+   {
+      if( m_rParent.m_logfile.is_open() )
+      {
+         if( m_rParent.m_isError )
+            m_rParent.m_logfile << "ERROR: lm32-logd self: " << str() << endl;
+         else
+            m_rParent.m_logfile << str() << endl;
+      }
+      else
+      {
+         //TODO syslog()
+      }
+   }
+   else
+   {
+      if( m_rParent.m_isError )
+         ERROR_MESSAGE( str() );
+      else
+         std::cout << str() << std::flush;
+   }
+   str("");
+   m_rParent.m_isError = false;
+   return std::stringbuf::sync();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
  */
 Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine )
-   :m_rCmdLine( rCmdLine )
+   :std::iostream( &m_oStrgBuffer )
+   ,m_oStrgBuffer( *this )
+   ,m_rCmdLine( rCmdLine )
    ,m_oMmu( &roEtherbone )
    ,m_lastTimestamp( 0 )
+   ,m_isError( false )
    ,m_pMiddleBuffer( nullptr )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
@@ -255,9 +290,7 @@ void Lm32Logd::readItems( void )
    {
       std::string output;
       evaluateItem( output, m_pMiddleBuffer[i] );
-
-      //TODO Determining which target.
-      cout << output << std::flush;
+      *this << output << std::flush;
    }
 }
 
@@ -299,7 +332,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
    if( item.filter >= BIT_SIZEOF( CommandLine::FILTER_FLAG_T ) )
    {
-      ERROR_MESSAGE( "Filter value " << item.filter <<  " out of range!" );
+      m_isError = true;
+      *this << "Filter value " << item.filter <<  " out of range!" << std::flush;
       return;
    }
 
@@ -311,7 +345,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
    if( m_lastTimestamp >= item.timestamp )
    {
-      ERROR_MESSAGE( "Invalid timestamp: " << item.timestamp );
+      m_isError = true;
+      *this << "Invalid timestamp: " << item.timestamp << std::flush;
       return;
    }
 
@@ -424,10 +459,14 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                      if( gsi::isInRange( item.param[ai], LM32_OFFSET, HIGHST_ADDR ) )
                         readStringFromLm32( rOutput, item.param[ai] );
                      else
-                        ERROR_MESSAGE( "String address of parameter " << (ai+1)
-                                       << " is invalid: 0x"
-                                       << std::hex  << std::uppercase << std::setfill('0')
-                                       << std::setw( 8 ) << item.param[ai] << std::dec << " !" );
+                     {
+                        m_isError = true;
+                        *this << "String address of parameter " << (ai+1)
+                              << " is invalid: 0x"
+                              << std::hex  << std::uppercase << std::setfill('0')
+                              << std::setw( 8 ) << item.param[ai] << std::dec << " !"
+                              << std::flush;
+                     }
                      ai++;
                      done = true;
                      break;

@@ -41,7 +41,6 @@ private:
    static OPT_LIST_T c_optList;
 
    bool          m_verbose;
-   bool          m_daemonize;
    const bool    m_isOnScu;
    bool          m_noTimestamp;
    bool          m_humanTimestamp;
@@ -54,6 +53,7 @@ private:
    uint          m_maxItemsPerInterval;
    FILTER_FLAG_T m_filterFlags;
    std::string   m_scuUrl;
+   std::string   m_logFile;
 
    static bool readInteger( uint&, const std::string& );
 
@@ -70,7 +70,7 @@ public:
 
    bool isDemonize( void )
    {
-      return m_daemonize;
+      return !m_logFile.empty();
    }
 
    bool isRuningOnScu( void )
@@ -126,6 +126,11 @@ public:
    std::string& getScuUrl( void )
    {
       return m_scuUrl;
+   }
+
+   std::string& getLogfileName( void )
+   {
+      return m_logFile;
    }
 
    FILTER_FLAG_T getFilterFlags( void )

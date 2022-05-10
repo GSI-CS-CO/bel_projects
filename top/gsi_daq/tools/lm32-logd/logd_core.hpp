@@ -25,6 +25,10 @@
 #ifndef _LOGD_CORE_HPP
 #define _LOGD_CORE_HPP
 
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <fstream>
 #include <scu_mmu_fe.hpp>
 #include <lm32_syslog_common.h>
 #include "logd_cmdline.hpp"
@@ -34,8 +38,20 @@ namespace Scu
 {
 
 ///////////////////////////////////////////////////////////////////////////////
-class Lm32Logd
+class Lm32Logd: public std::iostream
 {
+   class StringBuffer: public std::stringbuf
+   {
+      Lm32Logd&   m_rParent;
+
+   public:
+      StringBuffer( Lm32Logd& rParent )
+         :m_rParent( rParent ) {}
+
+      int sync( void ) override;
+   };
+
+   StringBuffer         m_oStrgBuffer;
    CommandLine&         m_rCmdLine;
    mmu::Mmu             m_oMmu;
    uint                 m_lm32Base;
@@ -43,9 +59,11 @@ class Lm32Logd
    mmu::MMU_ADDR_T      m_offset;
    std::size_t          m_capacity;
    uint64_t             m_lastTimestamp;
+   bool                 m_isError;
    SYSLOG_FIFO_ADMIN_T  m_fiFoAdmin;
 
    SYSLOG_FIFO_ITEM_T*  m_pMiddleBuffer;
+   std::ofstream        m_logfile;
 
 public:
    Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
@@ -58,14 +76,18 @@ public:
       return m_lastTimestamp;
    }
 
+   void setError( void )
+   {
+      m_isError = true;
+   }
+
 private:
    void readLm32( char* pData,
                   const std::size_t len,
-                  const std::size_t offset = 0,
-                  const etherbone::format_t format = EB_DATA8 )
+                  const std::size_t offset )
    {
       m_oMmu.getEb()->read( m_lm32Base + offset, pData,
-                            EB_BIG_ENDIAN | format, len );
+                            EB_BIG_ENDIAN | EB_DATA8, len );
    }
 
    uint readStringFromLm32( std::string& rStr, uint addr );

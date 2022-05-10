@@ -48,10 +48,16 @@ PUBLIC_TARGET ?= /common/usr/cscofe/bin/
 PUBLIC_SCU_TARGET ?= /common/export/nfsinit/global/tools/
 .PHONY: public
 public: $(BIN_FILE)
-	cp -u $(BIN_FILE) $(PUBLIC_TARGET)
+ifdef FOR_SCU_AND_ACC
+	cp -u $(BIN_FILE) $(PUBLIC_SCU_TARGET)
+	ln -sf $(PUBLIC_SCU_TARGET)$(notdir $(BIN_FILE)) $(PUBLIC_TARGET)
+else
 ifdef FOR_SCU
 	cp -u $(BIN_FILE) $(PUBLIC_SCU_TARGET)
-endif
-endif
+else
+	cp -u $(BIN_FILE) $(PUBLIC_TARGET)
+endif # ifdef FOR_SCU
+endif # ifdef FOR_SCU_AND_ACC
+endif # ifeq ($(shell echo $${HOSTNAME:0:5}), asl74)
 
 #=================================== EOF ======================================

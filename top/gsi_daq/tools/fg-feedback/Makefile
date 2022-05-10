@@ -10,7 +10,7 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += VERSION=2.11
-FOR_SCU := 1
+FOR_SCU_AND_ACC := 1
 
 
 #DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ

@@ -10,7 +10,12 @@
 ###############################################################################
 
 DEFINES += VERSION=0.1
-FOR_SCU := 1
+FOR_SCU_AND_ACC := 1
+
+#DEBUG = 1
+#DEFINES += DEBUGLEVEL
+
+
 MIAN_MODULE := lm32-logd.cpp
 
 INCLUDE_DIRS += $(BASE_DIR)
@@ -49,10 +54,8 @@ endif
 
 LIBS += stdc++
 
-DEBUG = 1
-#DEFINES += DEBUGLEVEL
 
-CALL_ARGS = scuxl0035 -nkv -I200 # -vH
+CALL_ARGS = scuxl0035 -Hkv -I200 -m1000 # -vH
 
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)

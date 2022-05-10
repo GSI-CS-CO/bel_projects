@@ -34,6 +34,12 @@
 #include <scu_mmu_lm32.h>
 #include <lm32_syslog_common.h>
 
+/*!
+ * @defgroup LM32_LOG
+ * @brief Logging system for LM32 applications which can be monitored by
+ *        the linux application lm32-logd.
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,11 +58,37 @@ MMU_STATUS_T lm32LogInit( unsigned int numOfItems );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
+ * @brief Sends a log message which can be received by the linux application
+ *        "lm32-logd".
+ *
+ * The parameter is similar like like the printf function, except the optional
+ * parameters are limited by 4, all further parameters becomes ignored. \n
+ * Following parameter types are possible:\n
+ * %%s, %%S String. \n
+ * %%c Single character. \n
+ * %%X Hexadecimal upper case. \n
+ * %%x Hexadecimal lower case. \n
+ * %%p Pointer (32-bit hexadecimal number with leading zeros).\n
+ * %%d, %%i Signed decimal number. \n
+ * %%u Unsigned decimal number. \n
+ * %%o Octal number. \n
+ * %%b Binary number (not ANSI-conform). \n
+ *
+ * @note CAUTION: The function lm32LogInit has to be invoked successfully
+ *                before!
+ * @see lm32LogInit
+ *
+ * @param filter Filter value in the range form 0 to 31 the filter
+ *               becomes determined by the option "-f<filter>" of the
+ *               linux application "lm32-logd".
+ * @param format Format-string similar like printf().
  */
 void lm32Log( const unsigned int filter, const char* format, ... );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
+ * @brief Function becomes invoked by lm32log().
+ * @see lm32Log
  */
 void vLm32log( const unsigned int filter, const char* format, va_list ap );
 

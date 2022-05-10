@@ -153,7 +153,7 @@ int main( int argc, char** ppArgv )
       Lm32Logd oLog( ebc, oCmdLine );
       oLog( g_exit );
       if( oCmdLine.isVerbose() )
-         cout << "Process: \"" << oCmdLine.getProgramName() << "\" terminated by "
+         oLog << "Process: \"" << oCmdLine.getProgramName() << "\" terminated by "
               << (g_exit? "SIGTERM":"user") << "." << endl;
    }
    catch( std::exception& e )
