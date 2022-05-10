@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-03-29}
+\Large{Last change: 2022-05-10}
 \end{center}
 \vfill
 \end{titlepage}
@@ -60,57 +60,89 @@ To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make
 For some tests the result is not checked.
 These are considered as OK if no exception occurs.}
 \centering
-\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
+\begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test                          & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
-dmPerformance                 &   x        &   T             &   x           &   -              &   -                \\ \hline
-test\_addDownloadCompare.py   &   T        &   T             &   T           &   x              &   -                \\ \hline
-test\_async.py                &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_basic.py                &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_booster\_startthread.py &   x        &   T             &   T           &   x              &   x                \\ \hline
-test\_bpcStart.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_coupling.py             &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_dm\_cmd.py              &   T        &   x             &   x           &   x              &   x                \\ \hline
-test\_dmThreads.py            &   x        &   x             &   T           &   x              &   x                \\ \hline
-test\_environment.py          &   -        &   -             &   -           &   x              &   x                \\ \hline
-test\_fid7.py                 &   x        &   x             &   T           &   x              &   x                \\ \hline
-test\_flowpattern.py          &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_flow.py                 &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_loop.py                 &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_parallelBranch.py       &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_pps.py                  &   x        &   T             &   x           &   x              &   -                \\ \hline
-test\_prio\_and\_type.py      &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_run\_all\_single.py     &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_run\_cpu0\_single.py    &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_safe2remove.py          &   x        &   T             &   T           &   x              &   x                \\ \hline
-test\_schedules.py            &   x        &   x             &   T           &   x              &   -                \\ \hline
-test\_singleEdgeTest.py       &   -        &   T             &   -           &   -              &   x                \\ \hline
-test\_start\_stop\_abort.py   &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_switch.py               &   x        &   T             &   x           &   x              &   x                \\ \hline
-test\_zzz\_finish.py          &   x        &   T             &   x           &   x              &   -                \\ \hline
+Test                          & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance                 &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
+test\_addDownloadCompare.py   &  5                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_altDestinations.py      &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_basic.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_booster\_startthread.py &  7                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py            &  9                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd.py              &  24                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_environment.py          &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_fid7.py                 &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_flow.py                 &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flowpattern.py          &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flush.py                &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_loop.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_memory.py               &  10                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   -                 \\ \hline
+test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_safe2remove.py          &  17                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_schedules.py            &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
+test\_start\_stop\_abort.py   &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   -                 \\ \hline
 \end{tabular}
 
 \end{table}
 \chapter{The Tests}
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
-The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
-then adds another schedule. This is done for a small schedule and a larger schedule. The test is ok if all commands
-work. There is no check for this.
+The test starts a schedule on a clean data master, checks if some part of 
+the schedule is removable, removes it and then adds another schedule. 
+This is done for a small schedule and a larger schedule. The test is ok 
+if all commands work. There is no check for this.
 
 \section{test\_addDownloadCompare.py}
-\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
-The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
-There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
+\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent 
+to the schedule which is downloaded form the datamaster firmware.
+The test steps are: clear the datamaster, add a schedule, start all 
+pattern, download the schedule, compare both schedules with 
+\texttt{scheduleCompare}. There should be no difference with 
+\texttt{scheduleCompare}. Each test case uses a different schedule.
 
-This test requires \texttt{scheduleCompare} to be installed. This tool checks that two dot-files represent the same schedule. For installation use branch
-origin/dm-analysis. The tool is build with make in folder modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo make install in the same folder.
+This test requires \texttt{scheduleCompare} to be installed. This tool 
+checks that two dot-files represent the same schedule. For installation 
+use branch origin/dm-analysis. The tool is build with make in folder 
+modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo 
+make install in the same folder.
+
+\section{test\_altDestinations.py}
+\texttt{test\_altDestinations} tests the limit of 10 edges of type 
+\texttt{altdst} for a block node.
+The schedule \texttt{altdst-flow-10.dot} has one block, ten flow commands 
+and ten messages. each flow command changes flow to another message. 
+The test adds this schedule and starts the pattern in this schedule. 
+The test checks that messages are produced.
+
+The schedule \texttt{altdst-flow-11.dot} is similar to the one obove, 
+but with 11 flow nodes and 11 messages. Adding this schedule fails.
+The test checks for the correct error response.
+
+The schedule \texttt{altdst-flow-10.dot} has one block and ten messages.
+The test switches through all messages and checks with snoop that the
+correct messages are send.
+
+The schedule \texttt{altdst-flow-11.dot} has one block and 11 messages.
+This schedule cannot be added to the data master. The test checks for 
+the correct error response.
+
 \section{test\_async.py}
 This test was \texttt{full\_test/dynamic/async}.
 \begin{enumerate}
 	\item Purpose of Test
 
-	For a schedule asynchronous clear a block, change the destination to a timing message and check that all nodes are visited.
+	For a schedule asynchronous clear a block, change the destination to 
+  a timing message and check that all nodes are visited.
 
 	See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
 	\item Test Actions
@@ -155,6 +187,9 @@ This test was \texttt{full\_test/static/basic}.
 
 	The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
 \end{enumerate}
+
+\section{test\_booster\_startthread.py}
+TODO
 
 \section{test\_bpcStart.py}
 \texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
@@ -252,6 +287,33 @@ This test is based on \texttt{full\_test/dynamic/branch/single}.
 
 	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
 \end{enumerate}
+
+\section{test\_flush.py}
+Tests various variants of the flush command. The schedules use timing messages, flow and flush commands, and blocks.
+The flow commands are used to fill the command queues of the block. They switch to different timing messages, which
+differ in the parameter value.
+
+Naming of the tests:
+test\_flow\_flushX\_prioY, where
+X are the queues to flush. Allowed values: None, 0, 1, 2, 01, 02, 12, 123.
+Y is the priority of the flush. Allowed values: 0, 1, 2.
+Naming of patterns:
+P-queueX-prioY, where X and Y as described above.
+
+Schedules used:
+schedules/flush-queue01-prio0.dot
+schedules/flush-queue01-prio1.dot
+schedules/flush-queue01-prio2.dot
+schedules/flush-queue23-prio0.dot
+schedules/flush-queue23-prio1.dot
+schedules/flush-queue23-prio2.dot
+
+Structure of each test:
+add the schedule, start the pattern twice. The second startpattern executes the commands which are written
+to the queues on first startpattern.
+Check for flushed queues and the executed flush command after a delay of 0.1 seconds.
+Four tests use the same schedule to minimize the numer of schedules. Each schedule uses 4 CPUs.
+
 \section{test\_loop.py}
 This test was \texttt{full\_test/dynamic/loop}.
 \begin{enumerate}
@@ -274,20 +336,46 @@ This test was \texttt{full\_test/dynamic/loop}.
 
 	In the end all blocks are visited.
 \end{enumerate}
+\section{test\_memory.py}
+Four tests add two large schedule into the datamaster. This works fine. 
+Then a third schedule is loaded, in each test for a different CPU. This 
+should fail with return code 250.
+
+Four additional tests check the memory limit mor precisely. These tests
+use generated schedules just with a given nuber of blocks. Each block 
+has its own pattern. A test with the theoretical limit of 1874 blocks 
+fails. A similar test with 1869 blocks is Ok, while a test with one 
+further block detects a failure. Also, a test with 1875 blocks detects a 
+failure. These four tests use CPU 0.
+
+Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869 
+blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses 
+one additional block on CPU 3.
+
+\section{test\_parallelBranch.py}
+Use schedule \texttt{branch1.dot} to test branching with flow commands
+with absolute time offset. The checks use snoop for specific event numbers.
+The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
+
 \section{test\_pps.py}
-\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a schedule which sends two timing messages every second.
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a 
+schedule which sends two timing messages every second.
 \section{test\_prio\_and\_type.py}
 This test was \texttt{full\_test/static/prio\_and\_type}.
 \begin{enumerate}
 	\item Purpose of Test
 
-The test checks the relative and the absolute time values for two nodes in a four node pattern.
-See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for the test pattern
-and \ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} for the test pattern with meta nodes,
+The test checks the relative and the absolute time values for two nodes 
+in a four node pattern.
+See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for 
+the test pattern and 
+\ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} 
+for the test pattern with meta nodes,
 displaying the priority queues.
 	\item Test Actions
 
-	Add the pattern, check the relative time values. Clear the data master. Add the pattern again and check the absolute time values.
+	Add the pattern, check the relative time values. Clear the data master. 
+  Add the pattern again and check the absolute time values.
     \begin{figure}
         \centering
         \includegraphics{TestPattern/static_prio_and_type.pdf}
@@ -314,8 +402,9 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 	See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
 	\item Test Actions
 
-	Add a schedule with four blocks to the data master. For each CPU, check that no block is visited. Then start
-	a pattern for one CPU and check that the block specific for this pattern is visited.
+	Add a schedule with four blocks to the data master. For each CPU, 
+  check that no block is visited. Then start a pattern for one CPU and 
+  check that the block specific for this pattern is visited.
     \begin{figure}
         \centering
         \includegraphics{TestPattern/dynamic_basic_run_all_single.pdf}
@@ -331,13 +420,17 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
 	\item Purpose of Test
 
-    Add the test schedule to the data master, start patterns and check which nodes were visited.
+    Add the test schedule to the data master, start patterns and check 
+    which nodes were visited.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test} for the test pattern.
+	See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test} 
+  for the test pattern.
 	\item Test Actions
 
-    First check that no block is visited. Start pattern 'IN0'. Check that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
-    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and 'BLOCK\_IN1' are visited.
+    First check that no block is visited. Start pattern 'IN0'. Check 
+    that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
+    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and 
+    'BLOCK\_IN1' are visited.
     \begin{figure}
         \centering
         \includegraphics{TestPattern/dynamic_basic_run_cpu0_single.pdf}
@@ -362,6 +455,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \item Check status of remaining schedule.
 \end{enumerate}
 These test steps are applied to a bunch of schedules.
+The schedules use 1 to 4 CPUs whith 1, 2, 4, and 9 pattern beside the default pattern. There are 1, 10, or 150 blocks per pattern.
 \section{test\_schedules.py}
 \texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
 
@@ -406,10 +500,50 @@ This test was \texttt{full\_test/dynamic/switch}.
 \section{dm\_testbench.py}
 \texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.
 \begin{enumerate}
-\item startpattern(data\_master, pattern\_file)
-    Connect to the given data master and load the pattern file (dot format).
+\item setUpClass(self)
+TODO
+\item setUp(self)
+TODO
+\item initDatamaster(self)
+TODO
+\item addSchedule(self, scheduleFile)
+TODO
+\item startPattern(self, scheduleFile)
+    Connect to the given data master and load the schedule file (dot format).
     The data master is halted, cleared, and statistics is reset.
     Search for the first pattern in the data master with 'dm-sched' and start it.
+\item startPattern(self, scheduleFile, pattern='')
+TODO
+\item startAllPattern(self, scheduleFile, pattern='', onePattern=False, start=True)
+TODO
+\item startAndCheckSubprocess(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1)
+TODO
+\item startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1)
+TODO
+\item startAndGetSubprocessOutput(self, argumentsList, expectedReturnCode=[-1], linesCout=-1, linesCerr=-1)
+TODO
+\item removePaintedFlags(self, dotLines)
+TODO
+\item compareExpectedResult(self, fileCurrent, fileExpected, exclude='')
+TODO
+\item compareExpectedOutput(self, output, fileExpected, exclude='', excludeField='', delete=[])
+TODO
+\item getSnoopCommand(self, duration)
+TODO
+\item snoopToCsv(self, csvFileName, duration=1)
+TODO
+\item snoopToCsvWithAction(self, csvFileName, action, duration=1)
+TODO
+\item analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict())
+TODO
+\item analyseDmCmdOutput(self, threadsToCheck=0)
+TODO
+\item checkRunningThreadsCmd(self, messageInterval=1.0)
+TODO
+\item delay(self, duration)
+TODO
+\item deleteFile(self, fileName)
+TODO
 \end{enumerate}
 
 \subsection{Structure of Description}
