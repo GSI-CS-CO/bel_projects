@@ -20,7 +20,7 @@ class UnitEnvironment(dm_testbench.DmTestbench):
     "['Usage: dm-cmd [OPTION] <etherbone-device> <command> [target node] [parameter] ']"
     The important part is between 'Usage:' and '[Option]'. This is the used binary.
     """
-    process = subprocess.run([self.binary_dm_cmd, '-h'], stderr=subprocess.PIPE, check=True, universal_newlines=True)
+    process = subprocess.run([self.binaryDmCmd, '-h'], stderr=subprocess.PIPE, check=True, universal_newlines=True)
     findall = re.findall(r'../bin/dm-cmd', process.stderr)
     self.assertTrue(len(findall) > 0, f'Called dm-cmd: {re.findall("Usage:.*", process.stderr)}')
     self.assertEqual(findall[0], '../bin/dm-cmd', f'Called dm-cmd: {re.findall("Usage:.*", process.stderr)}')
@@ -35,7 +35,7 @@ class UnitEnvironment(dm_testbench.DmTestbench):
     "['Usage: dm-sched [OPTION] <etherbone-device> <command> [target node] [parameter] ']"
     The important part is between 'Usage:' and '[Option]'. This is the used binary.
     """
-    process = subprocess.run([self.binary_dm_sched, '-h'], stderr=subprocess.PIPE, check=True, universal_newlines=True)
+    process = subprocess.run([self.binaryDmSched, '-h'], stderr=subprocess.PIPE, check=True, universal_newlines=True)
     findall = re.findall(r'../bin/dm-sched', process.stderr)
     self.assertTrue(len(findall) > 0, f'Called dm-sched: {re.findall("Usage:.*", process.stderr)}')
     self.assertEqual(findall[0], '../bin/dm-sched', f'Called dm-sched: {re.findall("Usage:.*", process.stderr)}')
@@ -51,7 +51,7 @@ class UnitEnvironment(dm_testbench.DmTestbench):
     or
     "Called libcarpedm: ['libcarpedm.so => not found']"
     """
-    processWhich = subprocess.run(['which', self.binary_dm_cmd], stdout=subprocess.PIPE, check=True, universal_newlines=True)
+    processWhich = subprocess.run(['which', self.binaryDmCmd], stdout=subprocess.PIPE, check=True, universal_newlines=True)
     processLdd = subprocess.run(['ldd', processWhich.stdout[:-1]], stdout=subprocess.PIPE, check=True, universal_newlines=True)
     processGrep = subprocess.run(['grep' , 'libcarpedm'], input=processLdd.stdout, stdout=subprocess.PIPE, check=True, universal_newlines=True)
     self.assertTrue('../lib/libcarpedm.so' in processGrep.stdout, f'Called libcarpedm: {re.findall("libcarpedm.*", processLdd.stdout)}')

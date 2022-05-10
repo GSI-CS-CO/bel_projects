@@ -11,6 +11,6 @@ class UnitTestCoupling(dm_testbench.DmTestbench):
     self.addSchedule('static-coupling-schedule0.dot')
     self.addSchedule('static-coupling-schedule1.dot')
     download_file = 'download.dot'
-    self.startAndCheckSubprocess([self.binary_dm_sched, self.datamaster, 'status', '-o', download_file])
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', download_file])
     self.compareExpectedResult(download_file, self.schedules_folder + 'static-coupling-comp.dot')
     self.deleteFile(download_file)

@@ -24,18 +24,18 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
   def safe2removeTestcase(self, dot_file1, pattern_to_remove):
     start = dt.now()
     self.startPattern(dot_file1 + '.dot', pattern_to_remove)
-    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'chkrem', pattern_to_remove))
     duration = dt.now() - start
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
     self.deleteFile('debug.dot')
     start2 = dt.now()
-    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'abortpattern', pattern_to_remove))
-    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'chkrem', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abortpattern', pattern_to_remove))
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'chkrem', pattern_to_remove))
     duration += dt.now() - start2
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-safe.dot', 'Created')
     start3 = dt.now()
-    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
-    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', 'status.dot'))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', 'status.dot'))
     duration += dt.now() - start3
     self.compareExpectedResult('status.dot', self.schedules_folder + dot_file1 + '-status.dot')
     return duration
@@ -46,7 +46,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
   def safe2removeTestcasePerformance(self, dot_file1, limit):
     start = dt.now()
     duration1 = self.safe2removeTestcase(dot_file1, 'G1_P1')
-    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add', self.schedules_folder + 'g1_p1_update_schedule.dot'))
     duration = dt.now() - start
     self.assertGreater(limit, duration1, f'Duration of test too long, duration: {duration1}, limit: {limit}, over all duration: {duration}.')
 

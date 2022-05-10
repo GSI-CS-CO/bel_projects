@@ -12,7 +12,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 3)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
+        checkValues={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
@@ -23,7 +23,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 15)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
+        checkValues={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
@@ -34,7 +34,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 10)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '1'})
+        checkValues={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '1'})
     self.deleteFile(file_name)
 
   def test_threeThreads3(self):
@@ -43,7 +43,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 3)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        check_values={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
+        checkValues={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
     self.deleteFile(file_name)
 
   def test_booster_all_threads(self):
@@ -52,8 +52,8 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     parameter_column = 20
     self.snoopToCsv(file_name, 1)
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>9'})
-    self.analyse_dm_cmd_output(0xFF)
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>9'})
+    self.analyseDmCmdOutput(0xFF)
     self.deleteFile(file_name)
 
   def test_booster_thread_0_loop(self):
@@ -64,7 +64,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.analyseFrequencyFromCsv(file_name, column_Param)
     # assert that there are more than 61 tmsg in 3 seconds with EVTNO 0x0001.
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>60'})
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>60'})
     self.deleteFile(file_name)
 
   def test_booster_thread_0(self):
@@ -75,5 +75,5 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.analyseFrequencyFromCsv(file_name, parameter_column)
     # assert that there are more than 2999 tmsg in 3 seconds with EVTNO 0x0001.
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO, check_values={'0x0001': '>2990'})
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>2990'})
     self.deleteFile(file_name)

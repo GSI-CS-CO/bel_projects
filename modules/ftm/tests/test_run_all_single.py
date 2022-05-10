@@ -11,11 +11,11 @@ class UnitTestRunAllSingle(dm_testbench.DmTestbench):
     Check again the visited nodes.
     """
     self.addSchedule('dynamic-basic-run_all_single-schedule.dot')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-run_all_single-expected-0-0.txt')
-    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C' + number))
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C' + number))
     self.delay(0.1)
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-run_all_single-expected-' + number + '-2.txt')
 
   def test_dynamic_run_cpu0(self):

@@ -7,19 +7,19 @@ class UnitTestFlowpattern(dm_testbench.DmTestbench):
 
   def common_dynamic_branch_single_tvalid(self, delay=0.0, options=[]):
     self.startPattern('dynamic-branch-single-schedule.dot', 'IN_C0')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-0-0.txt')
-    argumentList = [self.binary_dm_cmd, self.datamaster, 'flowpattern', 'IN_C0', 'B']
+    argumentList = [self.binaryDmCmd, self.datamaster, 'flowpattern', 'IN_C0', 'B']
     argumentList.extend(options)
     self.startAndCheckSubprocess(argumentList)
     if delay > 0.0:
       self.delay(delay)
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
-    self.startAndCheckSubprocess((self.binary_dm_cmd, self.datamaster, 'startpattern', 'IN_C0'))
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_sched, self.datamaster, 'rawvisited'))
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binary_dm_cmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
 
   def test_dynamic_branch_single_tvalid_rel_0(self):

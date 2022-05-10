@@ -8,11 +8,11 @@ Download status of datamaster
 Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
-  def addDownloadCompareSchedule(self, schedule_file):
+  def addDownloadCompareSchedule(self, scheduleFile):
     status_file = 'status.dot'
-    self.startAllPattern(schedule_file)
-    self.startAndCheckSubprocess((self.binary_dm_sched, self.datamaster, 'status', '-o', status_file))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + schedule_file, status_file))
+    self.startAllPattern(scheduleFile)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', status_file))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, status_file))
     self.deleteFile(status_file)
 
   def test_aScheduleTmsg1(self):
