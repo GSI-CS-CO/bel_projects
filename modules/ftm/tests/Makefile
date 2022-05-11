@@ -19,12 +19,12 @@ OPTIONS ?=
 test:
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
-		python3 -m pytest $(IGNORE) $(OPTIONS)
+		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)
 
 remote:
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
 		SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ \
-		python3 -m pytest $(IGNORE) $(OPTIONS)
+		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)
 
 test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
