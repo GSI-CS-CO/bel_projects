@@ -726,7 +726,7 @@ Modul: ifa8_X
    B_out_en => B_OUT_en,
    C_out_en => C_OUT_en,
 
-   nEmpf_en     =>'1', --  RCV Register darf im LAN-Modul beschrieben werden
+   nEmpf_en     =>'1',           --  RCV Register darf im LAN-Modul beschrieben werden
 
    EPIOS_CSn    => EPIOS_CSn,
    EPIOS_Adr    => EPIOS_Adr_reg, --stabile Adresse

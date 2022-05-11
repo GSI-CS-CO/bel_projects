@@ -207,15 +207,24 @@ SIGNAL   No_VW_p        : STD_LOGIC:= '0';
 SIGNAL   Data_not_Eq    : STD_LOGIC:= '0';
 SIGNAL   CMD_not_Eq     : STD_LOGIC:= '0';
 
+SIGNAL   En_MIL_Input   : STD_LOGIC:= '0';
+SIGNAL   MIL_InL_N   	: STD_LOGIC:= '0'; --local mil input
+SIGNAL   MIL_InL_P   	: STD_LOGIC:= '0'; --local mil input
 
 -------------------------------------------------
 begin
---Eingangpuffer gleich mit Decoderbaustein verbinden
-A_ME_BOI <= A_MIL1_BOI_p;
-A_ME_BZI <= A_MIL1_BZI_n;
 
---Durchschleifen von BOI,BZI um MIL_BUSY zu generieren
-MIL_BUSY <=A_MIL1_BOI_P xor A_MIL1_BZI_N; --Zeigt an, ob der MIL-Bus belegt ist -- vk: Debouncer notwendig?
+--Eingangspuffer mit Decoderbaustein verbinden
+
+A_ME_BOI <=MIL_InL_P;
+A_ME_BZI <=MIL_InL_N;
+
+
+MIL_InL_P <= A_MIL1_BOI_p when En_MIL_Input='0' else '0';
+MIL_InL_N <= A_MIL1_BZI_n when En_MIL_Input='0' else '0';
+
+--Durchschleifen von BOI,BZI, um MIL_BUSY zu generieren
+MIL_BUSY <=MIL_InL_N xor MIL_InL_P; --Zeigt an, ob der MIL-Bus belegt ist -- vk: Debouncer notwendig?
 
 Aio6408D:A6408_decoder
   Port map
@@ -305,8 +314,8 @@ GENERIC MAP(CLK_in_Hz => 24000000,
 PORT MAP(
       sys_clk => sys_clk,
       sys_reset      => sys_reset,
-      M_in_p         => A_MIL1_BOI_P, --vk fixed
-      M_in_n         => A_MIL1_BZI_n,
+      M_in_p         => MIL_InL_P, --vk fixed
+      M_in_n         => MIL_InL_N,
       RD_MIL         => mm_rcv_rdy,
       Clr_No_VW_Cnt  => CLR_ME_VW_Err,
       Clr_Not_Equal_Cnt => CLR_ME_Data_Err,
@@ -352,7 +361,8 @@ PORT MAP(
 
   --mux2:
   A_MIL1_OUT_en   <= Send_MIL_en    when nsel_6408 = '0' else not nsel_mil_drv;
-  A_MIL1_nIN_ENA  <= Send_MIL_en    when nsel_6408 = '0' else not nsel_mil_rcv;
+  A_MIL1_nIN_ENA  <= '0'; --immer im FPGA mithorchen
+  En_MIL_Input    <= Send_MIL_en    when nsel_6408 = '0' else not nsel_mil_rcv;
   A_MIL1_nBOO     <= not BZO_out    when nsel_6408 = '0' else BZO_vhdl_out;
   A_MIL1_nBZO     <= not BOO_out    when nsel_6408 = '0' else BOO_vhdl_out;
 

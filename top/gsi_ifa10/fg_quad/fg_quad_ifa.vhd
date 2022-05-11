@@ -21,7 +21,7 @@ entity fg_quad_ifa is
 
 
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
-    nReset:             in    std_logic;
+    sys_reset:          in    std_logic;
     ext_trigger:        in    std_logic;                      -- external trigger for ramp start
 
     user_rd_active:     out   std_logic;                      -- '1' = read data available
@@ -33,7 +33,7 @@ entity fg_quad_ifa is
     sw_out:             out   std_logic_vector(31 downto 8);  -- function generator output
     sw_strobe:          out   std_logic;
     gate_o_bc:          out   std_logic;
-    fg_version:         out   std_logic_vector(6 downto 0)
+    fg_version:         out   std_logic_vector(7 downto 0)
    );
 end entity;
 
@@ -112,8 +112,12 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal fc_edge1    : std_logic;
   signal fc_edge2    : std_logic;
   signal fc_str_edge : std_logic;
+  signal nReset      : std_logic;
 
 begin
+
+nReset <= not sys_reset;
+
   quad_fg: fg_quad_datapath
     generic map (
       ClK_in_hz => clk_in_hz,
@@ -456,7 +460,7 @@ begin
 end process;
 
 nirq        <= not or_reduce(irq_act_reg(1 downto 0)); -- signal as long as one irq is active
-fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
+fg_version  <= std_logic_vector(to_unsigned(fw_version, 8));
 sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
 
 end architecture;

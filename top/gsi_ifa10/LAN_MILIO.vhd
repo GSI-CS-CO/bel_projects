@@ -72,7 +72,7 @@ entity LAN_MILIO is
     RCV_RDY_in    : in  STD_LOGIC;
     RCV_Error_in  : in  STD_LOGIC;
 
-    nLED          : in  STD_LOGIC_VECTOR(24 DOWNTO 0);
+    nLED          : in  STD_LOGIC_VECTOR(27 DOWNTO 0);
     V_Ain         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
     V_Bin         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
     V_Cin         : in  STD_LOGIC_VECTOR(32 DOWNTO 1);
@@ -85,7 +85,6 @@ entity LAN_MILIO is
     nINL          : in  STD_LOGIC;
     nDRDY         : in  STD_LOGIC;
     nDRQ          : in  STD_LOGIC;
-    MB_VERS       : in  STD_LOGIC_VECTOR(7 DOWNTO 0);
 
     IN_NINL       : in  STD_LOGIC;
     IN_NRDY       : in  STD_LOGIC;
@@ -103,7 +102,15 @@ entity LAN_MILIO is
 
     n_enInputs    : in STD_LOGIC;
     n_enOutputs   : in STD_LOGIC;
-    sel_Mode      : in STD_LOGIC_VECTOR(2 DOWNTO 0) --selected mode
+    HW_SEL_Mode   : in STD_LOGIC_VECTOR(3 DOWNTO 0); --selected mode
+    
+    IFA_ID        : in STD_LOGIC_VECTOR(7 DOWNTO 0);
+    IFA_VERS      : in STD_LOGIC_VECTOR(7 DOWNTO 0);
+    
+    Sweep_VERS    : in STD_LOGIC_VECTOR(7 DOWNTO 0);
+    MB_VERS       : in STD_LOGIC_VECTOR(7 DOWNTO 0);
+    FG_VERS       : in STD_LOGIC_VECTOR(7 DOWNTO 0);
+    FB_VERS       : in STD_LOGIC_VECTOR(7 DOWNTO 0)
 
  );
 
@@ -220,9 +227,13 @@ CONSTANT C_RD_FCIO1     : STD_LOGIC_VECTOR(7 downto 0) := x"D4";
 CONSTANT C_RD_FCIO2     : STD_LOGIC_VECTOR(7 downto 0) := x"D5";
 
 
-CONSTANT C_RD_FPGAVERS  : STD_LOGIC_VECTOR(7 downto 0) := x"C0";  -- Get FPGA_Version / MB_VERS
+CONSTANT C_RD_FPGAIDVERS : STD_LOGIC_VECTOR(7 downto 0) := x"C0";  -- Get FPGA_Version / IFA _ID
 
-CONSTANT C_RD_BUSIQ_SEL : STD_LOGIC_VECTOR(7 downto 0) := x"C1";  -- Get BusIRQ_status and SEL_Value
+CONSTANT C_RD_BUSIQ_SEL  : STD_LOGIC_VECTOR(7 downto 0) := x"C1";  -- Get BusIRQ_status and SEL_Value
+
+CONSTANT C_RD_SWEEPFGVERS: STD_LOGIC_VECTOR(7 downto 0) := x"C2";  -- Get Sweep_VERS / FG_VERS
+
+CONSTANT C_RD_FBMBVERS   : STD_LOGIC_VECTOR(7 downto 0) := x"C3";  -- Get FB_Version /MB_VERS
 --
 --CONSTANT C_WR_OE        : STD_LOGIC_VECTOR(7 downto 0) := x"39";
 --CONSTANT C_RD_OE        : STD_LOGIC_VECTOR(7 downto 0) := x"A9";
@@ -255,10 +266,10 @@ signal EPIOS_RD1      : std_logic := '0'; -- speichert RD-Pulse --explicit! issu
 
 signal sel_LANorMIL   : std_logic := '0'; -- -0- MIL 1-LAN
 
-signal MIL_RCV_L     : STD_LOGIC_VECTOR(15 downto 0) := ( others =>'0');
-signal CMD_RCV_L     : std_logic := '0';
-signal RCV_RDY_L     : std_logic := '0';
-signal RCV_Err_L     : std_logic := '0';
+signal MIL_RCV_L      : STD_LOGIC_VECTOR(15 downto 0) := ( others =>'0');
+signal CMD_RCV_L      : std_logic := '0';
+signal RCV_RDY_L      : std_logic := '0';
+signal RCV_Err_L      : std_logic := '0';
 
 --type read_states is (
 --  RD_0,
@@ -373,7 +384,7 @@ epiosrd_MIL_IOREG: process(sys_clk,sys_reset,EPIOS_RD1,EPIOS_RD,EPIOS_adr,EPIO_R
                               EPIOS_Dataout<= not nLED(15 downto 0);
 
             when C_RD_LED1=>
-                              EPIOS_Dataout(8 downto 0) <= not nLED(24 downto 16);
+                              EPIOS_Dataout(11 downto 0) <= not nLED(27 downto 16);
 
             when C_RD_VGDIR0 =>
                               EPIOS_Dataout  <= VG_Control(15 downto 0);
@@ -386,7 +397,7 @@ epiosrd_MIL_IOREG: process(sys_clk,sys_reset,EPIOS_RD1,EPIOS_RD,EPIOS_adr,EPIO_R
 
             when C_RD_VGOE1 =>
                               EPIOS_Dataout(8 downto 0) <= VG_Control_E(24 downto 16);
-                              EPIOS_Dataout(9) <= n_enInputs;
+                              EPIOS_Dataout(9)  <= n_enInputs;
                               EPIOS_Dataout(10) <= n_enOutputs;
 
             when C_RD_MODE=>
@@ -398,11 +409,17 @@ epiosrd_MIL_IOREG: process(sys_clk,sys_reset,EPIOS_RD1,EPIOS_RD,EPIOS_adr,EPIO_R
             when C_RD_NIRQ =>
                               EPIOS_Dataout(2 downto 0) <= nINL & nDRDY & nDRQ;
 
-            when C_RD_FPGAVERS =>
-                              EPIOS_Dataout <= "00000000" & MB_VERS;
+            when C_RD_FPGAIDVERS =>
+                              EPIOS_Dataout <= IFA_VERS & IFA_ID;
 
+            when C_RD_SWEEPFGVERS =>
+                              EPIOS_Dataout <= Sweep_VERS & FG_VERS;
+
+            when C_RD_FBMBVERS => 
+                              EPIOS_Dataout <= MB_VERS & FB_VERS;
+            
             when C_RD_BUSIQ_SEL  =>
-                              EPIOS_Dataout <= "00000" & sel_Mode &"0" & IN_NINL & IN_NRDY & IN_NDRQ & A_SEL_B;
+                              EPIOS_Dataout <= "0000" & HW_SEL_Mode &"0" & IN_NINL & IN_NRDY & IN_NDRQ & A_SEL_B;
 
             when C_RD_AIO1       =>
                               EPIOS_Dataout <= v_A_IO(16 downto 1);
@@ -421,7 +438,6 @@ epiosrd_MIL_IOREG: process(sys_clk,sys_reset,EPIOS_RD1,EPIOS_RD,EPIOS_adr,EPIO_R
 
             when C_RD_CIO2       =>
                               EPIOS_Dataout <= v_C_IO(32 downto 17);
-
 
             when C_RD_FAIO1      =>
                               EPIOS_Dataout <= f_A_IO(16 downto 1);

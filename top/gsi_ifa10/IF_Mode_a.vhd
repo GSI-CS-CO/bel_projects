@@ -87,9 +87,9 @@ signal v_FG203B_Mode : STD_LOGIC :='0' ;
 signal v_FG211_Mode  : STD_LOGIC :='0' ;
 
 
- --signal Sweep_En    :  std_logic:='1';     -- Sweeper-Modul Enable
-  -- signal FG_En       : std_logic:='1';     -- Funktionsg. Enable
-   -- signal FG_DDS_En   : std_logic:='1';     -- Funktionsg. mit DDS-Interface Enable
+--signal Sweep_En    :  std_logic:='1';     -- Sweeper-Modul Enable
+-- signal FG_En       : std_logic:='1';     -- Funktionsg. Enable
+-- signal FG_DDS_En   : std_logic:='1';     -- Funktionsg. mit DDS-Interface Enable
 
 
 begin
