@@ -29,6 +29,7 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+#include <daqt_read_stdin.hpp>
 #include <scu_mmu_fe.hpp>
 #include <lm32_syslog_common.h>
 #include "logd_cmdline.hpp"
@@ -60,10 +61,13 @@ class Lm32Logd: public std::iostream
    std::size_t          m_capacity;
    uint64_t             m_lastTimestamp;
    bool                 m_isError;
+   bool                 m_isSyslogOpen;
    SYSLOG_FIFO_ADMIN_T  m_fiFoAdmin;
 
    SYSLOG_FIFO_ITEM_T*  m_pMiddleBuffer;
    std::ofstream        m_logfile;
+
+   Terminal*            m_poTerminal;
 
 public:
    Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLine );
@@ -101,6 +105,8 @@ private:
    void readItems( void );
 
    void evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& item );
+
+   int readKey( void );
 
    static bool isPaddingChar( const char c );
    static bool isDecDigit( const char c );

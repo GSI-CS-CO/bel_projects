@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <daqt_messages.hpp>
 #include <find_process.h>
@@ -134,6 +136,47 @@ STATIC void onOsSignal( int sigNo )
 
 /*! ---------------------------------------------------------------------------
  */
+STATIC void daemonize( void )
+{
+   DEBUG_MESSAGE_FUNCTION("");
+
+   pid_t pid = ::fork();
+   if( pid < 0 )
+   {
+      ERROR_MESSAGE( "Unable to fork!" );
+      ::exit( EXIT_FAILURE );
+   }
+
+   if( pid > 0 )
+   {
+      DEBUG_MESSAGE( "Terminating parent process with PID: " << ::getpid() );
+      ::exit( EXIT_SUCCESS );
+   }
+
+   if( ::setsid() < 0 )
+   {
+      ERROR_MESSAGE( "Unable to get the session leader for the child process" );
+      ::exit( EXIT_FAILURE );
+   }
+
+   ::signal( SIGCHLD, SIG_IGN );
+   ::signal( SIGHUP,  SIG_IGN );
+
+   ::umask( 0 );
+
+   ::chdir( "/" );
+
+   ::close( 0 );
+   ::close( 1 );
+#ifndef DEBUGLEVEL
+   ::close( 2 );
+#endif
+   DEBUG_MESSAGE( "Process daemonized! PDD: " << ::getpid() );
+}
+
+
+/*! ---------------------------------------------------------------------------
+ */
 int main( int argc, char** ppArgv )
 {
    DEBUG_MESSAGE_FUNCTION("");
@@ -151,6 +194,10 @@ int main( int argc, char** ppArgv )
 
       mmuEb::EtherboneConnection ebc( oCmdLine.getScuUrl() );
       Lm32Logd oLog( ebc, oCmdLine );
+
+      if( oCmdLine.isDemonize() )
+         daemonize();
+
       oLog( g_exit );
       if( oCmdLine.isVerbose() )
          oLog << "Process: \"" << oCmdLine.getProgramName() << "\" terminated by "

@@ -49,6 +49,7 @@ private:
    bool          m_exit;
    bool          m_kill;
    bool          m_killOnly;
+   bool          m_isDaemonized;
    uint          m_interval;
    uint          m_maxItemsPerInterval;
    FILTER_FLAG_T m_filterFlags;
@@ -70,7 +71,7 @@ public:
 
    bool isDemonize( void )
    {
-      return !m_logFile.empty();
+      return m_isDaemonized;
    }
 
    bool isRuningOnScu( void )
@@ -144,6 +145,8 @@ private:
    int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
    int onErrorShortMissingRequiredArg( void ) override;
    int onErrorLongMissingRequiredArg( void ) override;
+   int onErrorShortOptionalArg( void ) override;
+   int onErrorlongOptionalArg( void ) override;
 };
 
 } // namespace Scu

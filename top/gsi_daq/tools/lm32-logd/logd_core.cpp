@@ -26,10 +26,10 @@
  #include <iomanip>
  #include <iostream>
  #include <sstream>
+ #include <syslog.h>
  #include <scu_mmu_tag.h>
  #include <daq_calculations.hpp>
  #include <daqt_messages.hpp>
- #include <daqt_read_stdin.hpp>
  #include "logd_core.hpp"
 #endif
 
@@ -55,9 +55,18 @@ int Lm32Logd::StringBuffer::sync( void )
          else
             m_rParent.m_logfile << str() << endl;
       }
-      else
+      else if( m_rParent.m_isSyslogOpen )
       {
-         //TODO syslog()
+         if( m_rParent.m_isError )
+         {
+            string msg = "ERROR: lm32-logd self: ";
+            msg += str();
+            ::syslog( LOG_ERR, msg.c_str() );
+         }
+         else
+         {
+            ::syslog( LOG_NOTICE, str().c_str() );
+         }
       }
    }
    else
@@ -82,9 +91,37 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    ,m_oMmu( &roEtherbone )
    ,m_lastTimestamp( 0 )
    ,m_isError( false )
+   ,m_isSyslogOpen( false )
    ,m_pMiddleBuffer( nullptr )
+   ,m_poTerminal( nullptr )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
+
+   if( m_rCmdLine.isDemonize() )
+   {
+      if( m_rCmdLine.getLogfileName().empty() )
+      {
+         DEBUG_MESSAGE( "Opening syslog" );
+         ::openlog( "LM32", LOG_PID, LOG_DAEMON );
+         m_isSyslogOpen = true;
+      }
+      else
+      {
+         DEBUG_MESSAGE( "Opening file: " << m_rCmdLine.getLogfileName() );
+         m_logfile.open( m_rCmdLine.getLogfileName(), ios::out | ios::app  );
+         if( !m_logfile.is_open() )
+         {
+            string msg = "Unable to open ";
+            msg += m_rCmdLine.getLogfileName();
+            throw std::runtime_error( msg );
+         }
+      }
+   }
+   else
+   {
+      assert( m_poTerminal == nullptr );
+      m_poTerminal = new Terminal;
+   }
 
    if( !m_oMmu.isPresent() )
    {
@@ -99,10 +136,10 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
 
    if( m_rCmdLine.isVerbose() )
    {
-      cout << "Found MMU-tag:  0x" << hex << uppercase << setw( 4 ) << setfill('0')
-           << mmu::TAG_LM32_LOG << dec
-           << "\nAddress:        " << m_offset
-           << "\nCapacity:       " << m_capacity << endl;
+      cout << "Found MMU-tag:  0x" << std::hex << std::uppercase << setw( 4 ) << setfill('0')
+            << (int)mmu::TAG_LM32_LOG << std::dec
+            << "\nAddress:        " << m_offset
+            << "\nCapacity:       " << m_capacity << endl;
    }
 
    m_fifoAdminBase = m_offset * sizeof(mmu::RAM_PAYLOAD_T) + m_oMmu.getBase();
@@ -113,7 +150,7 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    if( m_rCmdLine.isVerbose() )
    {
       cout << "Begin:          " << m_offset
-         << "\nMax. log items: " << m_capacity / SYSLOG_FIFO_ITEM_SIZE << endl;
+            << "\nMax. log items: " << m_capacity / SYSLOG_FIFO_ITEM_SIZE << endl;
    }
 
    m_fiFoAdmin.admin.indexes.offset   = 0;
@@ -126,8 +163,8 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
    if( m_rCmdLine.isVerbose() )
    {
       cout << "At the moment "
-           << sysLogFifoGetItemSize( &m_fiFoAdmin )
-           << " Log-items in FiFo." << endl;
+            << sysLogFifoGetItemSize( &m_fiFoAdmin )
+            << " Log-items in FiFo." << endl;
    }
 
    m_lm32Base = m_oMmu.getEb()->findDeviceBaseAddress( mmuEb::gsiId,
@@ -154,6 +191,25 @@ Lm32Logd::~Lm32Logd( void )
       DEBUG_MESSAGE( "Deleting reserved memory for middle buffer." );
       delete[] m_pMiddleBuffer;
    }
+   if( m_poTerminal != nullptr )
+   {
+      delete m_poTerminal;
+   }
+   if( m_isSyslogOpen )
+   {
+      DEBUG_MESSAGE( "Closing syslog." );
+      ::closelog();
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int Lm32Logd::readKey( void )
+{
+   if( m_poTerminal == nullptr )
+      return 0;
+
+   return Terminal::readKey();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -421,6 +477,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                if( format[i] == '%' )
                {
                   rOutput += format[i];
+                  if( m_isSyslogOpen )
+                     rOutput += format[i];
                   FSM_TRANSITION( NORMAL, label='char == %', color=blue );
                }
                if( isPaddingChar( format[i] ) )
@@ -535,6 +593,7 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
 
                bool     isNegative = false;
                uint32_t value = item.param[ai++];
+               STATIC_ASSERT( sizeof(value) == sizeof(item.param[0]) );
                if( signum && ((value & (1 << (BIT_SIZEOF(value)-1))) != 0) )
                {
                   value = -value;
@@ -579,8 +638,16 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
       while( next );
    } /* for( uint i = 0; i < format.length(); i++ ) */
 
-   if( !m_rCmdLine.isForConsole() )
-      rOutput += '\n';
+   if( m_rCmdLine.isForConsole() )
+      return;
+
+   if( m_isSyslogOpen )
+      return;
+
+   if( m_logfile.is_open() )
+      return;
+
+   rOutput += '\n';
 }
 
 /*! ---------------------------------------------------------------------------
@@ -596,9 +663,8 @@ void Lm32Logd::operator()( const bool& rExit )
       return;
    }
 
-   Terminal oTerminal;
    uint intervalTime = 0;
-   while( !rExit && (Terminal::readKey() != '\e') )
+   while( !rExit && (readKey() != '\e') )
    {
       const uint it = daq::getSysMicrosecs();
       if( it > intervalTime )

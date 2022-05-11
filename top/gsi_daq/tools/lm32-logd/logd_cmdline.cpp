@@ -59,6 +59,8 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                cout << '-' << pOption->m_shortOpt;
                if( pOption->m_hasArg == OPTION::REQUIRED_ARG )
                   cout << " ARG";
+               if( pOption->m_hasArg == OPTION::OPTIONAL_ARG )
+                  cout << " = ARG";
                if( !pOption->m_longOpt.empty() )
                   cout << ", ";
             }
@@ -67,6 +69,8 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
                cout << "--" << pOption->m_longOpt;
                if( pOption->m_hasArg == OPTION::REQUIRED_ARG )
                   cout << " ARG";
+               if( pOption->m_hasArg == OPTION::OPTIONAL_ARG )
+                  cout << " = ARG";
             }
             cout << ']';
          }
@@ -157,30 +161,31 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
             ERROR_MESSAGE( "Daemonizing only on SCU possible!" );
             return -1;
          }
-         std::string& logFile = static_cast<CommandLine*>(poParser)->m_logFile;
-         if( !logFile.empty() )
+
+         if( static_cast<CommandLine*>(poParser)->m_isDaemonized )
          {
-            ERROR_MESSAGE( "Multiple set of log file!" );
+            ERROR_MESSAGE( "Multiple set of daemonizing!" );
             return -1;
          }
          if( poParser->isOptArgPersent() )
          {
-            logFile = poParser->getOptArg();
+            static_cast<CommandLine*>(poParser)->m_logFile = poParser->getOptArg();
          }
-         else
-         {
-            logFile = DEFAULT_TARGET;
-         }
+         static_cast<CommandLine*>(poParser)->m_isDaemonized = true;
          return 0;
       }),
       .m_hasArg   = OPTION::OPTIONAL_ARG,
       .m_id       = 0,
       .m_shortOpt = 'd',
       .m_longOpt  = "daemonize",
-      .m_helpText = "Process will run as daemon if it runs on a SCU.\n"
+      .m_helpText = "Process will run as daemon"
+                    " (" ESC_BOLD "d" ESC_NORMAL "isk"
+                    " " ESC_BOLD "a" ESC_NORMAL "nd" ESC_BOLD " e"
+                    ESC_NORMAL "xecution " ESC_BOLD "mon" ESC_NORMAL "itor)"
+                    " if it runs on a SCU.\n"
                     "The optional parameter PARAM can be used to set a target"
-                    " logfile.\nIf not set, then the default file \""
-                    DEFAULT_TARGET "\" will used."
+                    " logfile.\nIf PARAM not set, then the LM32 messages becomes"
+                    " written in Linux-syslog."
    },
    {
       OPT_LAMBDA( poParser,
@@ -382,6 +387,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_exit( false )
    ,m_kill( false )
    ,m_killOnly( false )
+   ,m_isDaemonized( false )
    ,m_interval( DEFAULT_INTERVAL )
    ,m_maxItemsPerInterval( DEFAULT_MAX_ITEMS )
    ,m_filterFlags( 0 )
@@ -485,6 +491,22 @@ int CommandLine::onErrorShortMissingRequiredArg( void )
 int CommandLine::onErrorLongMissingRequiredArg( void )
 {
    ERROR_MESSAGE( "Missing argument of option: --" << getCurrentOption()->m_longOpt );
+   return -1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int CommandLine::onErrorShortOptionalArg( void )
+{
+   ERROR_MESSAGE( "Missing argument after '=' of option: -" << getCurrentOption()->m_shortOpt );
+   return -1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int CommandLine::onErrorlongOptionalArg( void )
+{
+   ERROR_MESSAGE( "Missing argument after '=' of option --" << getCurrentOption()->m_longOpt );
    return -1;
 }
 
