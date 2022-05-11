@@ -6,8 +6,9 @@
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 sleep_sec=20
+fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
 
-unset username userpasswd
+unset username userpasswd verbose
 
 usage() {
     echo "Usage: $0 [OPTION]"
@@ -19,11 +20,12 @@ usage() {
     echo "  -p <userpasswd>        user password"
     echo "  -h                     display this help and exit"
 }
-while getopts 'hu:p:' c; do
+while getopts 'hu:p:v' c; do
     case $c in
         h) usage; exit 1 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
+        v) verbose="yes" ;;
     esac
 done
 
@@ -37,14 +39,15 @@ if [ -z "$userpasswd" ]; then
 fi
 
 echo -e "\nset up '${rxscu%%.*}'\n------------"
-timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL"
 
 # enable MPS task of rxscu
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && start_test4 \$DEV_RX"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$DEV_RX"
 
 echo "wait $sleep_sec seconds (start Xenabay schedule now)"
 echo "------------"
 sleep $sleep_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
-timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX && result_ow_delay \$DEV_RX \$addr_cnt1"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && \
+    read_counters \$DEV_RX $verbose && result_ow_delay \$DEV_RX $verbose"

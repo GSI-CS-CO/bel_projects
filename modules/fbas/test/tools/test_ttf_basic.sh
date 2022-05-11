@@ -11,7 +11,7 @@ txscu="scuxl0396.$domain" # 00:26:7b:00:06:d7
 sleep_sec=10
 unset option username userpasswd verbose
 
-fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
+fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
 
 usage() {
     echo "Usage: $0 [OPTION]"
@@ -46,13 +46,13 @@ if [ -z "$userpasswd" ]; then
 fi
 
 echo -e "\nset up nodes\n------------"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && setup_mpstx"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && setup_mpstx"
 
 echo 'start test4 (RX, TX)'
 echo "-----------"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$DEV_RX"
-timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$DEV_TX"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$DEV_RX"
+timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$DEV_TX"
 
 echo "wait $sleep_sec seconds (start Xenabay schedule now)"
 echo "------------"
@@ -61,8 +61,8 @@ sleep $sleep_sec  # wait for given seconds
 echo 'stop test4 (TX, RX)'
 echo "----------"
 echo -n "TX: "
-timeout 10 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$DEV_TX && \
+timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$DEV_TX && \
     read_counters \$DEV_TX $verbose"
 echo -n "RX: "
-timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && \
+timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && \
     read_counters \$DEV_RX $verbose && result_ow_delay \$DEV_RX $verbose"
