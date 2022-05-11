@@ -1,0 +1,53 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_A[cpu="1", flags="0x00108107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_B[cpu="1", flags="0x00108107", type="block", tperiod="100000000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_MAIN[cpu="1", flags="0x00108107", type="block", tperiod="1000000000", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Evt_A[cpu="1", flags="0x00002102", type="tmsg", toffs="1000", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000002000000000", par="0x0000000000000002", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_B[cpu="1", flags="0x00002102", type="tmsg", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="3", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000003000000000", par="0x0000000000000003", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_MAIN[cpu="1", flags="0x00000102", type="tmsg", toffs="20000", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="1", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000001000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green"];
+Ori_T1_A[cpu="1", flags="0x0000200d", type="origin", toffs="0", pattern="MAIN", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="1", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Ori_T2_A[cpu="1", flags="0x0000000d", type="origin", toffs="0", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="2", shape     = "octagon", color  = "cyan", fillcolor = "white"];
+Ori_T3_B[cpu="1", flags="0x0000000d", type="origin", toffs="0", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="3", shape     = "octagon", color  = "cyan", fillcolor = "white"];
+StThrT1[cpu="1", flags="0x0000000e", type="startthread", toffs="235", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", startoffs="0", thread="1", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+StThrT2[cpu="1", flags="0x0000000e", type="startthread", toffs="235", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", startoffs="10000000", thread="2", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+StThrT3[cpu="1", flags="0x0000000e", type="startthread", toffs="10000", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", startoffs="0", thread="3", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+B_A_QBl_Lo[cpu="1", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_A_Qb_Lo0[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_A_Qb_Lo1[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_A_ListDst[cpu="1", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_B_QBl_Lo[cpu="1", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_B_Qb_Lo0[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_B_Qb_Lo1[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_B_ListDst[cpu="1", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_QBl_Lo[cpu="1", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_Qb_Lo0[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_Qb_Lo1[cpu="1", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_ListDst[cpu="1", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_A->B_A_ListDst [type="listdst", color = "gray"];
+B_A->B_A_QBl_Lo [type="priolo", color = "gray"];
+B_B->B_B_ListDst [type="listdst", color = "gray"];
+B_B->B_B_QBl_Lo [type="priolo", color = "gray"];
+StThrT1->StThrT2 [type="defdst", color = "red"];
+B_MAIN->B_MAIN_ListDst [type="listdst", color = "gray"];
+B_MAIN->B_MAIN_QBl_Lo [type="priolo", color = "gray"];
+Evt_A->B_A [type="defdst", color = "red"];
+Evt_B->B_B [type="defdst", color = "red"];
+Evt_MAIN->B_MAIN [type="defdst", color = "red"];
+Ori_T1_A->Ori_T2_A [type="defdst", color = "red"];
+Ori_T1_A->Evt_A [type="origindst", color = "gray"];
+Ori_T2_A->Ori_T3_B [type="defdst", color = "red"];
+Ori_T2_A->Evt_A [type="origindst", color = "gray"];
+Ori_T3_B->StThrT1 [type="defdst", color = "red"];
+Ori_T3_B->Evt_B [type="origindst", color = "gray"];
+StThrT2->StThrT3 [type="defdst", color = "red"];
+StThrT3->Evt_MAIN [type="defdst", color = "red"];
+B_B_QBl_Lo->B_B_Qb_Lo0 [type="meta", color = "gray"];
+B_B_QBl_Lo->B_B_Qb_Lo1 [type="meta", color = "gray"];
+B_MAIN_QBl_Lo->B_MAIN_Qb_Lo0 [type="meta", color = "gray"];
+B_MAIN_QBl_Lo->B_MAIN_Qb_Lo1 [type="meta", color = "gray"];
+B_A_QBl_Lo->B_A_Qb_Lo0 [type="meta", color = "gray"];
+B_A_QBl_Lo->B_A_Qb_Lo1 [type="meta", color = "gray"];
+B_MAIN->Ori_T1_A [type="defdst", color = "red"];
+}

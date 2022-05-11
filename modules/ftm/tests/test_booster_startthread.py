@@ -6,7 +6,7 @@ Class collects unit tests for startthread nodes and origin nodes.
 """
 class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
 
-  def test_threeThreads(self):
+  def test_threeThreads0(self):
     self.startPattern('booster_startthread.dot', 'MAIN')
     file_name = 'snoop_startthread.csv'
     self.snoopToCsv(file_name, 3)
