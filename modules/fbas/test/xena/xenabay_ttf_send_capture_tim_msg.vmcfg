@@ -29,7 +29,12 @@
           },
           {
             "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
-            "ModuleIndex": 0,
+            "ModuleIndex": 4,
+            "PortIndex": 0
+          },
+          {
+            "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+            "ModuleIndex": 4,
             "PortIndex": 1
           }
         ],
@@ -269,13 +274,32 @@
               },
               "P_f9192168-da72-4082-ad35-240777b3abad_0_1": {
                 "PortGroup": "UNDEFINED",
+                "SavedPropertyValueMap": {},
+                "FullInfo": "Port 0 'Unknown'",
+                "ResourceIndex": 0,
+                "ItemId": "aaa4c5d7-bb5e-447f-851d-d871d28e3baa",
+                "ParentId": ""
+              },
+              "P_f9192168-da72-4082-ad35-240777b3abad_4_0": {
+                "PortGroup": "UNDEFINED",
+                "SavedPropertyValueMap": {
+                  "P_COMMENT": "50,6F,72,74,20,6E,75,6D,62,65,72,20,30",
+                  "P_SPEEDSELECTION": "03"
+                },
+                "FullInfo": "Port 0 'Unknown'",
+                "ResourceIndex": 0,
+                "ItemId": "4f3b9b99-a703-402c-98b5-1ce1909df385",
+                "ParentId": ""
+              },
+              "P_f9192168-da72-4082-ad35-240777b3abad_4_1": {
+                "PortGroup": "UNDEFINED",
                 "SavedPropertyValueMap": {
                   "P_COMMENT": "50,6F,72,74,20,6E,75,6D,62,65,72,20,31",
                   "P_SPEEDSELECTION": "03"
                 },
                 "FullInfo": "Port 0 'Unknown'",
                 "ResourceIndex": 0,
-                "ItemId": "aaa4c5d7-bb5e-447f-851d-d871d28e3baa",
+                "ItemId": "05e96f17-c25b-4bc4-8431-c4eb849b18c5",
                 "ParentId": ""
               }
             },
@@ -335,23 +359,24 @@
                 {
                   "OperType": "SetParamValue",
                   "ParamType": "PS_RATEL2BPS",
-                  "OperValue": 300.0,
+                  "OperValue": 30000.0,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "StreamId": 0,
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
-                  "AllTargetsSelected": false,
+                  "AllTargetsSelected": true,
                   "FullInfo": "Set Parameter Value",
                   "Operations": [],
                   "ItemId": "5eb7d82d-a083-43d7-93f4-c8c207a9c810",
@@ -363,20 +388,20 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Enable Stream",
                   "Operations": [],
                   "ItemId": "4d761ec6-cb95-4ea0-9e5a-94bb7c38ea44",
@@ -388,13 +413,13 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Start Traffic",
                   "Operations": [],
                   "ItemId": "3f9a26c2-91b2-4996-83a1-fa7096aceb60",
@@ -418,13 +443,13 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Stop Traffic",
                   "Operations": [],
                   "ItemId": "8402feb5-3bef-41dd-a9a1-ecc644a7dbbf",
@@ -436,20 +461,20 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Disable Stream",
                   "Operations": [],
                   "ItemId": "ec7aa0e3-5b03-4465-8ae8-f5faa8ba522c",
@@ -464,21 +489,22 @@
               "Operations": [
                 {
                   "OperType": "SetParamValue",
-                  "ParamType": "PS_RATEL2BPS",
-                  "OperValue": 300.0,
+                  "ParamType": "PS_RATEPPS",
+                  "OperValue": 30.0,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "StreamId": 0,
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "AllTargetsSelected": false,
@@ -493,20 +519,21 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "StreamId": 0,
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Enable Stream",
                   "Operations": [],
                   "ItemId": "4d761ec6-cb95-4ea0-9e5a-94bb7c38ea44",
@@ -518,13 +545,13 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Start Traffic",
                   "Operations": [],
                   "ItemId": "3f9a26c2-91b2-4996-83a1-fa7096aceb60",
@@ -548,13 +575,13 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Stop Traffic",
                   "Operations": [],
                   "ItemId": "8402feb5-3bef-41dd-a9a1-ecc644a7dbbf",
@@ -566,20 +593,20 @@
                   "OperValue": null,
                   "PortTargetList": [
                     {
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
                   "StreamTargetList": [
                     {
                       "StreamId": 0,
-                      "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
-                      "ModuleIndex": 0,
-                      "PortIndex": 1
+                      "ChassisId": "f9192168-da72-4082-ad35-240777b3abad",
+                      "ModuleIndex": 4,
+                      "PortIndex": 0
                     }
                   ],
-                  "AllTargetsSelected": true,
+                  "AllTargetsSelected": false,
                   "FullInfo": "Disable Stream",
                   "Operations": [],
                   "ItemId": "ec7aa0e3-5b03-4465-8ae8-f5faa8ba522c",
@@ -593,7 +620,7 @@
           ]
         },
         "ChimeraPortAssocContainer": {
-          "Modified": "2022-03-17T09:49:49.1177305+01:00",
+          "Modified": "2022-05-10T11:49:10.6716171+02:00",
           "ChimeraPortAssociations": []
         },
         "ItemId": "aabadcc3-198d-474a-8427-cc2a07be6bf7",
@@ -603,7 +630,7 @@
     ]
   },
   "FormatVersion": 1,
-  "ApplicationVersion": "1.77.7853.2 (1.77.7853.2)",
+  "ApplicationVersion": "1.78.7975.1 (1.78.7975.1)",
   "ItemId": "c04d9fd3-778a-4de8-b2cf-62dfcd084c35",
   "ParentId": "",
   "FullInfo": ""
