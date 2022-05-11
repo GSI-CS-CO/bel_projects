@@ -189,15 +189,20 @@ This test was \texttt{full\_test/static/basic}.
 \end{enumerate}
 
 \section{test\_booster\_startthread.py}
-\texttt{test\_booster\_startthread.py} tests schedules with nodes of type \texttt{startthread}.
+\texttt{test\_booster\_startthread.py} tests schedules with nodes of 
+type \texttt{origin} and type \texttt{startthread}.
 \begin{enumerate}
 \item \texttt{test\_threeThreads0}
 Use schedule \texttt{booster\_startthread.dot} (see~\ref{fig:Schedule_booster_startthread-0}),
-which has three pattern (MAIN, A, B).
+which has three pattern (MAIN, A, B). The schedule runs on CPU 1, thread 0. 
+It starts threads 1, 2, and 3- Thread 1 and 2 trigger a message with parameter 2, 
+while thread 3 triggers a message with paramter 3. The test result is 
+checked with a snoop for 1 second. The correct timeline of the messages 
+is not checked.
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-0-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \includegraphics*[width=0.9\textwidth,keepaspectratio]{TestPattern/booster_startthread-0-s.pdf}
+        \caption{Schedule for test of origin and startthread with three threads}
         \label{fig:Schedule_booster_startthread-0}
     \end{figure}
 \item \texttt{test\_threeThreads1}

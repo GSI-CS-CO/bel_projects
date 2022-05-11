@@ -7,12 +7,12 @@ Class collects unit tests for startthread nodes and origin nodes.
 class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
 
   def test_threeThreads0(self):
-    self.startPattern('booster_startthread.dot', 'MAIN')
-    file_name = 'snoop_startthread.csv'
-    self.snoopToCsv(file_name, 3)
+    self.startPattern('booster_startthread-0.dot', 'MAIN')
+    file_name = 'snoop_startthread-0.csv'
+    self.snoopToCsv(file_name, 1)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        checkValues={'0x0001': '>0', '0x0002': '>0', '0x0003': '>0'})
+        checkValues={'0x0000': '>9', '0x0002': '>20', '0x0003': '>10'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
