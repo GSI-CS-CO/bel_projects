@@ -6,6 +6,10 @@
 
 # [1] https://stackoverflow.com/questions/5799303/print-a-character-repeatedly-in-bash
 
+abs_path=$(readlink -f "$0")
+dir_name=${abs_path%/*}
+source $dir_name/test_ttf_basic.sh -s  # source the specified script
+
 domain=$(hostname -d)             # domain name of local host
 rxscu="scuxl0497.$domain"         # RX SCU
 datamaster="tsl014"               # Data Master
@@ -30,8 +34,6 @@ all_msg_rates=() # all msg rates
 
 tmg_msg_len=880  # timing message length [bits]
 
-unset username userpasswd sched_filename is_msg_rate_limited
-
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Test to determine the maximum data rate for receiver"
@@ -47,6 +49,10 @@ usage() {
     echo
     echo "Example (@tsl001): ./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f fbas.scucontrol.bin"
 }
+
+unset username userpasswd sched_filename is_msg_rate_limited
+unset OPTIND
+
 while getopts 'hu:p:s:f:m' c; do
     case $c in
         h) usage; exit 1 ;;
@@ -77,6 +83,18 @@ if [ ! -f $sched_dir/$sched_filename ]; then
     echo "'$sched_filename' not found in '$sched_dir'. Exit"
     exit 1
 fi
+
+echo "check deployment"
+echo "----------------"
+
+filenames="$fw_rxscu $script_rxscu"
+
+for filename in $filenames; do
+    timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
+    result=$?
+    report_check $result $filename $rxscu
+done
+echo
 
 # complete an array with all timing message rates
 index=0

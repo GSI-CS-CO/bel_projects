@@ -1,10 +1,14 @@
 #!/bin/bash
 
+abs_path=$(readlink -f "$0")
+dir_name=${abs_path%/*}
+source $dir_name/test_ttf_basic.sh -s  # source the specified script
+
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
 fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
-unset username userpasswd option verbose
+fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
 
 usage() {
 
@@ -43,6 +47,15 @@ pre_check() {
 }
 
 setup_nodes() {
+    echo -e "\n--- check deployment ---\n"
+
+    filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
+
+    for filename in $filenames; do
+        timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
+        result=$?
+        report_check $result $filename $rxscu
+    done
 
     echo -e "\n--- setup RX node ---\n"
     timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_def SENDER_TX"
@@ -106,6 +119,9 @@ measure_ttl() {
     echo -e "\n--- report TTL measurement ---\n"
     sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
 }
+
+unset username userpasswd option verbose
+unset OPTIND
 
 while getopts 'hyu:p:v' c; do
     case $c in
