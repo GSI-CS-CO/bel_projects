@@ -39,6 +39,10 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
         return compareQinfo(v1, v2);
       } else if ("switch" == v1.type) {
         return compareSwitch(v1, v2);
+      } else if ("origin" == v1.type) {
+        return compareOrigin(v1, v2);
+      } else if ("startthread" == v1.type) {
+        return compareStartthread(v1, v2);
       } else if ("tmsg" == v1.type) {
         //~ std::cout << "--V tmsg " << compareTmsg(v1, v2) << std::endl;
         return compareTmsg(v1, v2);
@@ -280,6 +284,30 @@ int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex
     return result;
   }
   result = compareValues(v1.dst, v2.dst, "dst", valueType::STRING);
+  return result;
+}
+
+int ScheduleVertex::compareOrigin(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = -1;
+  result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.thread, v2.thread, "thread", valueType::STRING);
+  return result;
+}
+
+int ScheduleVertex::compareStartthread(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = -1;
+  result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.startoffs, v2.startoffs, "startoffs", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.thread, v2.thread, "thread", valueType::STRING);
   return result;
 }
 

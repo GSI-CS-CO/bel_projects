@@ -42,6 +42,8 @@ class ScheduleVertex {
   std::string bpentry = std::string("");
   std::string bpexit = std::string("");
   std::string permanent = std::string("");
+  std::string thread = std::string("");
+  std::string startoffs = std::string("");
   // for syntax check of dot files:
   std::string cpu = std::string("");
   std::string qty = std::string("");
@@ -78,6 +80,8 @@ class ScheduleVertex {
   int compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareOrigin(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareStartthread(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareBoolean(const std::string& bool1, const std::string& bool2);
