@@ -14,12 +14,13 @@ IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformanc
 # Example: OPTIONS=--runslow   this runs also the slow tests.
 # Example: OPTIONS="-rP"       show stdout for all tests.
 # Example: OPTIONS="-k <test name pattern>" run only tests which match the pattern in the test name.
+# Example: OPTIONS=" --junitxml=dm-test-result.xml" generate a report on failed or passed tests.
 OPTIONS ?=
 
 test:
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
-		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)
+		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH)" \
