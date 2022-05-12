@@ -3,6 +3,7 @@
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
+fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
 unset username userpasswd option verbose
 
 usage() {
@@ -42,8 +43,9 @@ pre_check() {
 }
 
 setup_nodes() {
+
     echo -e "\n--- setup RX node ---\n"
-    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx"
+    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_def SENDER_TX"
     if [ $? -ne 0 ]; then
         echo "Error: cannot set up ${rxscu%%.*} -> timed out"
         exit 1
