@@ -20,10 +20,10 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startPattern('booster_startthread-1.dot', 'BOOST_REQ')
     file_name = 'snoop_startthread-1.csv'
     parameter_column = 20
-    self.snoopToCsv(file_name, 15)
+    self.snoopToCsv(file_name, 2)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        checkValues={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1'})
+        checkValues={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1', '0x0160': '>0'})
     self.deleteFile(file_name)
 
   @pytest.mark.slow
