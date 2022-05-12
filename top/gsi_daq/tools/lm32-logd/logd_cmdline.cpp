@@ -398,6 +398,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
       m_scuUrl = "dev/wbm0";
    add( c_optList );
    sortShort();
+
+   operator()();
 }
 
 /*! ---------------------------------------------------------------------------

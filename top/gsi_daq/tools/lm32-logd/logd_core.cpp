@@ -46,27 +46,23 @@ constexpr uint LM32_OFFSET = 0x10000000;
  */
 int Lm32Logd::StringBuffer::sync( void )
 {
+   static const char* errorMessage = "ERROR: lm32-logd self: ";
+
    if( m_rParent.m_rCmdLine.isDemonize() )
    {
       if( m_rParent.m_logfile.is_open() )
       {
          if( m_rParent.m_isError )
-            m_rParent.m_logfile << "ERROR: lm32-logd self: " << str() << endl;
+            m_rParent.m_logfile << errorMessage << str() << std::flush;
          else
-            m_rParent.m_logfile << str() << endl;
+            m_rParent.m_logfile << str() << std::flush;
       }
       else if( m_rParent.m_isSyslogOpen )
       {
          if( m_rParent.m_isError )
-         {
-            string msg = "ERROR: lm32-logd self: ";
-            msg += str();
-            ::syslog( LOG_ERR, msg.c_str() );
-         }
+            ::syslog( LOG_ERR, "%s%s", errorMessage, str().c_str() );
          else
-         {
-            ::syslog( LOG_NOTICE, str().c_str() );
-         }
+            ::syslog( LOG_NOTICE, "%s", str().c_str() );
       }
    }
    else
@@ -402,7 +398,8 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
    if( m_lastTimestamp >= item.timestamp )
    {
       m_isError = true;
-      *this << "Invalid timestamp: " << item.timestamp << std::flush;
+      *this << "Invalid timestamp: last: " << m_lastTimestamp
+            << ", actual: " << item.timestamp << std::flush;
       return;
    }
 
@@ -431,6 +428,16 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
          rOutput += std::to_string(item.timestamp);
       }
       rOutput += ": ";
+   }
+
+   if( !gsi::isInRange( item.format, LM32_OFFSET, HIGHST_ADDR ) )
+   {
+      m_isError = true;
+      *this << "Address of format string is invalid: 0x"
+            << std::hex << std::uppercase << std::setfill('0')
+            << std::setw( 8 ) << item.format << std::dec << " !"
+            << std::flush;
+      return;
    }
 
    std::string format;
@@ -477,8 +484,6 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
                if( format[i] == '%' )
                {
                   rOutput += format[i];
-                  if( m_isSyslogOpen )
-                     rOutput += format[i];
                   FSM_TRANSITION( NORMAL, label='char == %', color=blue );
                }
                if( isPaddingChar( format[i] ) )
@@ -642,9 +647,6 @@ void Lm32Logd::evaluateItem( std::string& rOutput, const SYSLOG_FIFO_ITEM_T& ite
       return;
 
    if( m_isSyslogOpen )
-      return;
-
-   if( m_logfile.is_open() )
       return;
 
    rOutput += '\n';

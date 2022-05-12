@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <string.h>
 #include <daqt_messages.hpp>
 #include <find_process.h>
 #include "logd_cmdline.hpp"
@@ -80,7 +81,8 @@ extern "C"
 {
 
 /*! ---------------------------------------------------------------------------
- * @brief Callback function becomes invoked by function findProcesses().
+ * @brief Callback function becomes invoked by function findProcesses(),
+ *        when a concurrent running process has found.
  */
 STATIC int onFoundProcess( OFP_ARG_T* pArg )
 {
@@ -112,7 +114,6 @@ STATIC int onFoundProcess( OFP_ARG_T* pArg )
 
       string cScuName = currentArg;
       cScuName = cScuName.substr(cScuName.find_first_of('/')+1);
-      cout << cScuName << endl;
       if( scuName == cScuName )
          handleConcurrentRunningInstance( pArg );
    }
@@ -135,6 +136,7 @@ STATIC void onOsSignal( int sigNo )
 } /* extern "C" */
 
 /*! ---------------------------------------------------------------------------
+ * @brief Daemonizes the application.
  */
 STATIC void daemonize( void )
 {
@@ -143,10 +145,9 @@ STATIC void daemonize( void )
    pid_t pid = ::fork();
    if( pid < 0 )
    {
-      ERROR_MESSAGE( "Unable to fork!" );
+      ERROR_MESSAGE( "Unable to fork! " << ::strerror( errno ) );
       ::exit( EXIT_FAILURE );
    }
-
    if( pid > 0 )
    {
       DEBUG_MESSAGE( "Terminating parent process with PID: " << ::getpid() );
@@ -155,16 +156,34 @@ STATIC void daemonize( void )
 
    if( ::setsid() < 0 )
    {
-      ERROR_MESSAGE( "Unable to get the session leader for the child process" );
+      ERROR_MESSAGE( "Unable to get the session leader for the child process!  "
+                     << ::strerror( errno ) );
       ::exit( EXIT_FAILURE );
    }
 
-   ::signal( SIGCHLD, SIG_IGN );
-   ::signal( SIGHUP,  SIG_IGN );
+   if( ::signal( SIGCHLD, SIG_IGN ) == SIG_ERR )
+   {
+      ERROR_MESSAGE( "Unable to disable signal SIGCHLD !  "
+                     << ::strerror( errno ) );
+      ::exit( EXIT_FAILURE );
+   }
+
+   if( ::signal( SIGHUP,  SIG_IGN ) == SIG_ERR )
+   {
+      ERROR_MESSAGE( "Unable to disable signal SIGHUP !  "
+                     << ::strerror( errno ) );
+      ::exit( EXIT_FAILURE );
+   }
 
    ::umask( 0 );
 
-   ::chdir( "/" );
+   if( ::chdir( "/" ) < 0 )
+   {
+      ERROR_MESSAGE( "Unable to change in directory \"/\" !  "
+                     << ::strerror( errno ) );
+
+      ::exit( EXIT_FAILURE );
+   }
 
    ::close( 0 );
    ::close( 1 );
@@ -185,15 +204,38 @@ int main( int argc, char** ppArgv )
    try
    {
       CommandLine oCmdLine( argc, ppArgv );
-      oCmdLine();
 
-      ::findProcesses( ppArgv[0], onFoundProcess, &oCmdLine, FPROC_MODE_T(FPROC_BASENAME) );
-                       //static_cast<FPROC_MODE_T>(FPROC_BASENAME | FPROC_RLINK) );
+      {
+        /*
+         * Checking whether a concurrent instance of this application is
+         * already running.
+         */
+         const int status = ::findProcesses( ppArgv[0],
+                                             onFoundProcess,
+                                             &oCmdLine,
+                                             static_cast<FPROC_MODE_T>(FPROC_BASENAME) );
+
+         if( status < 0 )
+         {
+            ERROR_MESSAGE( "Error in finding concurrent process!" );
+            ::exit( EXIT_FAILURE );
+         }
+
+         if( oCmdLine.isKillOnly() )
+         {
+            if( status == 1 )
+                WARNING_MESSAGE( "No concurrent process found!" );
+
+            ::exit( EXIT_SUCCESS );
+         }
+      }
+
       if( ::signal( SIGTERM, onOsSignal ) == SIG_ERR )
-         WARNING_MESSAGE( "Can't install the signal handling for SIGTERM !" );
+         WARNING_MESSAGE( "Can't install the signal handling for SIGTERM ! "
+                          << ::strerror( errno ) );
 
-      mmuEb::EtherboneConnection ebc( oCmdLine.getScuUrl() );
-      Lm32Logd oLog( ebc, oCmdLine );
+      mmuEb::EtherboneConnection oEbc( oCmdLine.getScuUrl() );
+      Lm32Logd oLog( oEbc, oCmdLine );
 
       if( oCmdLine.isDemonize() )
          daemonize();
