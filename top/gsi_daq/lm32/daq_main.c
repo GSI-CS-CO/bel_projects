@@ -295,6 +295,9 @@ void forEachScuDaqDevice( void )
 void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
   // DEBUG_FEEDBACK_ON_OFF();
+#ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_DEBUG, "%s( %d, %d )", __func__, slot, fgNum );
+#endif
    criticalSectionEnter();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
    criticalSectionExit();
@@ -331,7 +334,10 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
  */
 void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
-   DEBUG_FEEDBACK_ON_OFF();
+   //DEBUG_FEEDBACK_ON_OFF();
+#ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_DEBUG, "%s( %d, %d )", __func__, slot, fgNum );
+#endif
    criticalSectionEnter();
    DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
    criticalSectionExit();

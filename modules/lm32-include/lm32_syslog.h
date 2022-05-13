@@ -81,6 +81,7 @@ MMU_STATUS_T lm32LogInit( unsigned int numOfItems );
  * @param filter Filter value in the range form 0 to 31 the filter
  *               becomes determined by the option "-f<filter>" of the
  *               linux application "lm32-logd".
+ *               @see LOG_FILTER_T
  * @param format Format-string similar like printf().
  */
 void lm32Log( const unsigned int filter, const char* format, ... );

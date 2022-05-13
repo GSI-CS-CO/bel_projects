@@ -13,7 +13,8 @@ TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 
- USE_HISTORY=1
+# USE_HISTORY=1
+ USE_LM32LOG=1
  USE_MMU := 1
  SCU_MIL := 1
 # MIL_GAP := 1
@@ -27,7 +28,16 @@ TARGET         := scu_control
 BASE_VERSION = 4
 
 
- NEW_ADDAC_HANDSHAKE := 1
+NEW_ADDAC_HANDSHAKE := 1
+
+ifdef USE_HISTORY
+ ifdef USE_LM32LOG
+  $(error Either History or LM32-logsystem but not both! )
+ endif
+endif
+ifdef USE_LM32LOG
+  USE_MMU := 1
+endif
 
 ifdef NEW_ADDAC_HANDSHAKE
  DEFINES += _CONFIG_WAS_READ_FOR_ADDAC_DAQ
@@ -47,7 +57,7 @@ DEFINES += _SCU_CONTROL_CONFIG_H
  DEFINES += _CONFIG_NEW
 
 DEFINES += FG_VERSION=$(BASE_VERSION)
-VERSION_STR = $(BASE_VERSION)".4.0"
+VERSION_STR = $(BASE_VERSION)".5.0"
 
 ifdef NEW_ADDAC_HANDSHAKE
  VERSION_STR += "*"
@@ -114,6 +124,10 @@ ifdef USE_HISTORY
   DEFINES += CONFIG_USE_HISTORY
   VERSION_STR += "+HST"
 endif
+ifdef USE_LM32LOG
+  DEFINES += CONFIG_USE_LM32LOG
+  VERSION_STR += "+LOG"
+endif
 ifdef ADDAC_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
@@ -163,6 +177,9 @@ endif
 ifdef USE_HISTORY
   SOURCE += $(SCU_DIR)/history.c
 endif
+ifdef USE_LM32LOG
+  SOURCE += $(SCU_LIB_SRC_DIR)/lm32_syslog.c
+endif
 ifdef USE_SCU_EXTERN_RAM
   DEFINES += CONFIG_SCU_USE_DDR3
 endif
@@ -190,6 +207,9 @@ ifdef MIL_IN_TIMER_INTERRUPT
 endif
 ifdef USE_MMU
    DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_mmu_tag.h
+endif
+ifdef USE_LM32LOG
+   DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_syslog_common.h
 endif
 
 # CODE_OPTIMIZATION = 2

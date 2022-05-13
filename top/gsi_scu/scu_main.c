@@ -104,8 +104,11 @@ volatile uint32_t*     g_pMil_irq_base    = NULL;
  */
 void die( const char* pErrorMessage )
 {
-   mprintf( ESC_ERROR "\nERROR: \"%s\"\n+++ LM32 stopped! +++\n" ESC_NORMAL,
-            pErrorMessage );
+   static const char* text = ESC_ERROR "\nPanic: \"%s\"\n+++ LM32 stopped! +++\n" ESC_NORMAL;
+   mprintf( text, pErrorMessage );
+#ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_ERROR, text, pErrorMessage );
+#endif
 #ifndef CONFIG_REINCERNATE
    while( true );
 #else
@@ -595,6 +598,27 @@ void main( void )
              pMyMsi,
              sizeof( SCU_SHARED_DATA_T )
           );
+#ifdef CONFIG_USE_MMU
+  MMU_STATUS_T status;
+#endif
+#if defined( CONFIG_USE_MMU ) && !defined( CONFIG_USE_LM32LOG )
+  MMU_OBJ_T mmu;
+  status = mmuInit( &mmu ) != OK )
+#endif
+#ifdef CONFIG_USE_LM32LOG
+  status = lm32LogInit( 20 );
+#endif
+#ifdef CONFIG_USE_MMU
+  mprintf( "\nMMU- status: %s\n", mmuStatus2String( status ) );
+  if( !mmuIsOkay( status ) )
+  {
+     mprintf( ESC_ERROR "ERROR Unable to get DDR3- RAM!\n" ESC_NORMAL );
+     while( true );
+  }
+#ifdef CONFIG_USE_MMU
+  lm32Log( LM32_LOG_INFO, "scu_control started, resets = %u", __reset_count );
+#endif
+#endif
 
 #ifdef CONFIG_MIL_FG
    milInitTasks();
@@ -634,12 +658,6 @@ void main( void )
    initAndScan();
    //print_regs();
 #ifdef CONFIG_USE_MMU
-   MMU_OBJ_T mmu;
-   if( mmuInit( &mmu ) != OK )
-   {
-      die( "Unable to get DDR3- RAM for MMU!" );
-   }
-   MMU_STATUS_T status;
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
    STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.sDaq.ringAdmin.indexes.offset) );

@@ -92,7 +92,9 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    * When debug mode active only.
    */
    printSwIrqCode( code, value );
-
+#ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_DEBUG, "MSI command: %s( %u )", fgCommand2String( code ), value );
+#endif
 #ifdef CONFIG_USE_HISTORY
    if( code != FG_OP_PRINT_HISTORY )
       hist_addx( HISTORY_XYZ_MODULE, fgCommand2String( code ), value );
@@ -116,7 +118,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          * In the case of a detected parameter error this function
          * becomes terminated.
          */
+      #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_ERROR,"Value %d out of range!", value );
+      #else
          mprintf( ESC_ERROR "Value %d out of range!\n" ESC_NORMAL, value );
+      #endif
       #ifdef CONFIG_USE_HISTORY
          hist_addx( HISTORY_XYZ_MODULE, "ERROR: Value out of range!", value );
       #endif
@@ -155,7 +161,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
       #ifdef _CONFIG_VARIABLE_MIL_GAP_READING
          g_gapReadingTime = value;
       #else
+       #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_ERROR, "No variable MIL gap reading support!" );
+       #else
          mprintf( ESC_ERROR "No variable MIL gap reading support!\n" ESC_NORMAL );
+       #endif
       #endif
          break;
       }
@@ -193,7 +203,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
        #ifdef CONFIG_MIL_FG
          fgMilClearHandlerState( value );
        #else
-         mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
+        #ifdef CONFIG_USE_LM32LOG
+          lm32Log( lm32Log( LM32_LOG_ERROR, "No MIL support!" );
+        #else
+          mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
+        #endif
        #endif
          break;
       }
@@ -208,7 +222,11 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
        #ifdef CONFIG_USE_HISTORY
          hist_print( true );
        #else
+        #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_WARNING, "No history support! " );
+        #else
          mprintf( ESC_ERROR "No history!\n" ESC_NORMAL );
+        #endif
        #endif
          break;
       }

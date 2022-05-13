@@ -31,7 +31,7 @@ using namespace CLOP;
 using namespace Scu;
 
 #define DEFAULT_INTERVAL 1000
-#define DEFAULT_MAX_ITEMS 10
+#define DEFAULT_MAX_ITEMS 100
 #define DEFAULT_TARGET "/var/log/lm32.log"
 
 /*! ---------------------------------------------------------------------------

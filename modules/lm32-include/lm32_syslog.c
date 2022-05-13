@@ -268,6 +268,9 @@ void vLm32log( const unsigned int filter, const char* format, va_list ap )
 
    FSM_INIT_FSM( NORMAL, color=blue );
 
+   /*
+    * Parsing the format-string whether including additional arguments.
+    */
    for( unsigned int i = 0; (*format != '\0') && (i < ARRAY_SIZE(item.param)); format++ )
    {
       bool next;
@@ -324,8 +327,8 @@ void vLm32log( const unsigned int filter, const char* format, va_list ap )
                   case 'b':
                #endif
                   {
-                    item.param[i++] = va_arg( ap, typeof(item.param[0]) );
-                    break;
+                     item.param[i++] = va_arg( ap, typeof(item.param[0]) );
+                     break;
                   }
                }
               #ifdef CONFIG_DEBUG_LM32LOG

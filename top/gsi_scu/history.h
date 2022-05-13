@@ -113,6 +113,7 @@ void hist_disableSubsystem( const uint32_t bit);
  * @param msg Pointer to the constant message string.
  * @param data
  */
+GSI_DEPRECATED
 void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T data);
 
 /*! ---------------------------------------------------------------------------
@@ -120,6 +121,7 @@ void hist_addx( const uint32_t subsystem, const char *msg, const HIST_VALUE_T da
  * @brief Adds a history item to the history buffer
  * @param msg Pointer to the constant message string.
  */
+GSI_DEPRECATED
 STATIC inline void hist_add( const uint32_t subsystem, const char *msg )
 {
    hist_addx( subsystem, msg, HIST_NOVAL );

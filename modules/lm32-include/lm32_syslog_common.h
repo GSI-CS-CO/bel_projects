@@ -46,6 +46,37 @@ namespace Scu
 {
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @brief Filter-values for the first parameter of function lm32Log
+ *
+ * The forwarding of LOG-messages becomes determined by the command line option
+ * -f respectively --filter of the linuy daemon "lm32-logd"
+ */
+typedef enum
+{
+   /*!
+    * @brief Error messages
+    */
+   LM32_LOG_ERROR    = 0,
+
+   /*!
+    * @brief Warning messages
+    */
+   LM32_LOG_WARNING  = 1,
+
+   /*!
+    * @brief Information messages
+    */
+   LM32_LOG_INFO     = 2,
+
+   /*!
+    * @brief Debug messages
+    */
+   LM32_LOG_DEBUG    = 3
+} LOG_FILTER_T;
+
+
 #ifdef CONFIG_SCU_USE_DDR3
    typedef DDR3_PAYLOAD_T SYSLOG_MEM_ITEM_T;
 #endif
