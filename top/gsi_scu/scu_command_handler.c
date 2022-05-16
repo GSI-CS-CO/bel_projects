@@ -204,7 +204,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          fgMilClearHandlerState( value );
        #else
         #ifdef CONFIG_USE_LM32LOG
-          lm32Log( lm32Log( LM32_LOG_ERROR, "No MIL support!" );
+          lm32Log( LM32_LOG_ERROR, "No MIL support!" );
         #else
           mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
         #endif
