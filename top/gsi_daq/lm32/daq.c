@@ -738,11 +738,12 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
       {
+         const char* text = ESC_WARNING
+                            "No DAQ-channel %u found on slave %u !\n"
+                            ESC_NORMAL;
+         lm32Log( LM32_LOG_WARNING, text, channel, slot );
        #ifndef CONFIG_NO_DAQ_INFO_PRINT
-         mprintf( ESC_WARNING
-                  "No DAQ-channel %u found on slave %u !\n"
-                  ESC_NORMAL,
-                  channel, slot );
+         mprintf( text, channel, slot );
        #endif
          continue; /* Supposing this channel isn't present. */
       }
@@ -760,10 +761,14 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
                 daqChannelGetSlot( pCurrentChannel ) );
 
       pThis->maxChannels++;
+      const char* text = ESC_FG_CYAN
+                         "%s-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
+                         ESC_NORMAL;
+      lm32Log( LM32_LOG_INFO, text, daqDeviceTypeToString( pThis->type ),
+               channel, daqChannelGetSlot( pCurrentChannel ),
+               pCurrentChannel );
     #ifndef CONFIG_NO_DAQ_INFO_PRINT
-      mprintf( ESC_FG_CYAN
-               "%s-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
-               ESC_NORMAL,
+      mprintf( text,
                daqDeviceTypeToString( pThis->type ),
                channel, daqChannelGetSlot( pCurrentChannel ),
                pCurrentChannel

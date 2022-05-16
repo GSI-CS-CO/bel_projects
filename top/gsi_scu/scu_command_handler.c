@@ -92,9 +92,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    * When debug mode active only.
    */
    printSwIrqCode( code, value );
-#ifdef CONFIG_USE_LM32LOG
-   lm32Log( LM32_LOG_DEBUG, "MSI command: %s( %u )", fgCommand2String( code ), value );
-#endif
+   lm32Log( LM32_LOG_CMD, "MSI command: %s( %u )", fgCommand2String( code ), value );
 #ifdef CONFIG_USE_HISTORY
    if( code != FG_OP_PRINT_HISTORY )
       hist_addx( HISTORY_XYZ_MODULE, fgCommand2String( code ), value );

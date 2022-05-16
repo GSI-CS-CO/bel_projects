@@ -603,10 +603,10 @@ void main( void )
 #endif
 #if defined( CONFIG_USE_MMU ) && !defined( CONFIG_USE_LM32LOG )
   MMU_OBJ_T mmu;
-  status = mmuInit( &mmu ) != OK )
+  status = mmuInit( &mmu );
 #endif
 #ifdef CONFIG_USE_LM32LOG
-  status = lm32LogInit( 20 );
+  status = lm32LogInit( 1000 );
 #endif
 #ifdef CONFIG_USE_MMU
   mprintf( "\nMMU- status: %s\n", mmuStatus2String( status ) );
@@ -714,10 +714,12 @@ void main( void )
    
    initInterrupt();
 
-   mprintf( ESC_FG_GREEN ESC_BOLD
-            "\n *** Initialization done, going in endless loop... ***\n\n"
-            ESC_NORMAL
-          );
+   const char* text = ESC_FG_GREEN ESC_BOLD
+                      "\n *** Initialization done, going in endless loop... ***\n\n"
+                      ESC_NORMAL;
+   lm32Log( LM32_LOG_INFO, text );
+   mprintf( text );
+      
    while( true )
    {
       if( _endram != STACK_MAGIC )

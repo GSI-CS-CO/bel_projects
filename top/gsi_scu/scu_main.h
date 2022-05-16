@@ -57,10 +57,7 @@
 #include "eca_queue_type.h"
 
 #include "history.h"
-
-#ifdef CONFIG_USE_LM32LOG
- #include <lm32_syslog.h>
-#endif
+#include <scu_syslog.h>
 
 #include "scu_circular_buffer.h"
 #include "event_measurement.h"

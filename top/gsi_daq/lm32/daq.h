@@ -52,6 +52,7 @@
   #include <scu_function_generator.h>
   #include <sw_queue.h>
  #endif
+ #include <scu_syslog.h>
 #endif
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL

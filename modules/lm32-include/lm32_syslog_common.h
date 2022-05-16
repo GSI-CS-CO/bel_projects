@@ -54,8 +54,7 @@ namespace Scu
  * -f respectively --filter of the linuy daemon "lm32-logd"
  */
 typedef enum
-{
-   /*!
+{  /*!
     * @brief Error messages
     */
    LM32_LOG_ERROR    = 0,
@@ -71,9 +70,14 @@ typedef enum
    LM32_LOG_INFO     = 2,
 
    /*!
+    * @brief Command (OP-code) messages
+    */
+   LM32_LOG_CMD      = 3,
+
+   /*!
     * @brief Debug messages
     */
-   LM32_LOG_DEBUG    = 3
+   LM32_LOG_DEBUG    = 4
 } LOG_FILTER_T;
 
 
@@ -81,7 +85,7 @@ typedef enum
    typedef DDR3_PAYLOAD_T SYSLOG_MEM_ITEM_T;
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
  * @brief Type for administration of the FiFo.
  */
@@ -99,14 +103,14 @@ typedef struct PACKED_SIZE
 
 STATIC_ASSERT( sizeof(SYSLOG_FIFO_ADMIN_T) % sizeof(SYSLOG_MEM_ITEM_T) == 0 );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Size of fifo administration object in smallest addressable memory
  *        items.
  */
-STATIC const size_t SYSLOG_FIFO_ADMIN_SIZE = (sizeof(SYSLOG_FIFO_ADMIN_T) / sizeof(SYSLOG_MEM_ITEM_T));
+STATIC const 
+size_t SYSLOG_FIFO_ADMIN_SIZE = (sizeof(SYSLOG_FIFO_ADMIN_T) / sizeof(SYSLOG_MEM_ITEM_T));
 
-
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
  * @brief Type of a single log item.
  */
@@ -134,12 +138,12 @@ typedef struct PACKED_SIZE
 
 STATIC_ASSERT( sizeof(SYSLOG_FIFO_ITEM_T) % sizeof(SYSLOG_MEM_ITEM_T) == 0 );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Size of a fifo item object in smallest addressable memory
  *        items.
  */
-STATIC const size_t SYSLOG_FIFO_ITEM_SIZE = (sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(SYSLOG_MEM_ITEM_T));
-
+STATIC const 
+size_t SYSLOG_FIFO_ITEM_SIZE = (sizeof(SYSLOG_FIFO_ITEM_T) / sizeof(SYSLOG_MEM_ITEM_T));
 
 /*! ---------------------------------------------------------------------------
  * @ingroup LM32_LOG
