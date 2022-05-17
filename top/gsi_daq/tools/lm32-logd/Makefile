@@ -52,7 +52,7 @@ endif
 
 LIBS += stdc++
 
-CALL_ARGS = scuxl0035 -Hkv -I200 -m1000 # -vH
+CALL_ARGS = scuxl0035 -Hkv -I200 -m1000
 
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)

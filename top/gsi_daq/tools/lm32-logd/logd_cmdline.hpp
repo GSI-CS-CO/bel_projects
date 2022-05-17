@@ -45,6 +45,7 @@ private:
    bool          m_noTimestamp;
    bool          m_humanTimestamp;
    bool          m_isForConsole;
+   bool          m_escSequences;
    bool          m_printFilter;
    bool          m_exit;
    bool          m_kill;
@@ -92,6 +93,11 @@ public:
    bool isForConsole( void )
    {
       return m_isForConsole;
+   }
+
+   bool isAllowedEscSequences( void )
+   {
+      return m_escSequences;
    }
 
    bool isPrintFilter( void )

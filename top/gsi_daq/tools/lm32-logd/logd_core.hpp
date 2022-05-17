@@ -86,13 +86,8 @@ public:
    }
 
 private:
-   void readLm32( char* pData,
-                  const std::size_t len,
-                  const std::size_t offset )
-   {
-      m_oMmu.getEb()->read( m_lm32Base + offset, pData,
-                            EB_BIG_ENDIAN | EB_DATA8, len );
-   }
+   void readLm32( char* pData, std::size_t len,
+                  const std::size_t offset );
 
    uint readStringFromLm32( std::string& rStr, uint addr );
 

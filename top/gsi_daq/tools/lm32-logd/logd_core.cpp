@@ -33,6 +33,11 @@
  #include "logd_core.hpp"
 #endif
 
+#define FSM_DECLARE_STATE( newState, attr... ) newState
+#define FSM_INIT_FSM( initState, attr... ) STATE_T state = initState
+#define FSM_TRANSITION( target, attr... ) { state = target; break; }
+#define FSM_TRANSITION_NEXT( target, attr... ) { state = target; next = true; break; }
+#define FSM_TRANSITION_SELF( attr...) break
 
 
 using namespace Scu;
@@ -235,7 +240,30 @@ void Lm32Logd::setResponse( uint n )
                           EB_DATA32 | EB_LITTLE_ENDIAN, 2 );
 }
 
-constexpr uint HIGHST_ADDR = 2 * LM32_OFFSET;
+constexpr uint LM32_MEM_SIZE = 147456;
+constexpr uint HIGHST_ADDR = LM32_MEM_SIZE + LM32_OFFSET;
+
+/*! ---------------------------------------------------------------------------
+ */
+void Lm32Logd::readLm32( char* pData, std::size_t len, const std::size_t offset )
+{
+   DEBUG_MESSAGE_M_FUNCTION("");
+
+   if( (offset-LM32_OFFSET + len) >= LM32_MEM_SIZE )
+   {
+      DEBUG_MESSAGE( "End of memory, can't read full length of: " << len );
+      len -= (offset-LM32_OFFSET + len) - LM32_MEM_SIZE;
+   }
+
+   m_oMmu.getEb()->read( m_lm32Base + offset, pData, EB_BIG_ENDIAN | EB_DATA8, len );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool Lm32Logd::isDecDigit( const char c )
+{
+   return gsi::isInRange( c, '0', '9');
+}
 
 /*! ---------------------------------------------------------------------------
  */
@@ -248,6 +276,16 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
       throw std::runtime_error( "String address is corrupt!" );
    }
 
+   enum STATE_T
+   {
+      FSM_DECLARE_STATE( NO_ESC,      color=blue ),
+      FSM_DECLARE_STATE( ESC_CHAR,    color=green ),
+      FSM_DECLARE_STATE( ESC_FIRST,   color=cyan ),
+      FSM_DECLARE_STATE( ESC_DIGIT,   color=magenta ),
+      FSM_DECLARE_STATE( ESC_OP_CODE, color=red )
+   };
+
+   FSM_INIT_FSM( NO_ESC, color=blue );
    char buffer[16];
    uint ret = 0;
    while( true )
@@ -260,15 +298,68 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
             DEBUG_MESSAGE( "received string: \"" << rStr.substr(rStr.length()-ret) << "\"" );
             return ret;
          }
-
-         if( !m_rCmdLine.isForConsole() && ((buffer[i] == '\n') || (buffer[i] == '\r')) )
+         /*
+          * FSM for filtering out escape sequences if demanded.
+          */
+         bool next;
+         do
          {
-            if( buffer[i] == '\n')
-               rStr += ' ';
+            next = false;
+            switch( state )
+            {
+               case NO_ESC:
+               {
+                  if( !m_rCmdLine.isForConsole() )
+                  {
+                     if( (buffer[i] == '\n') || (buffer[i] == '\r') )
+                     {
+                        if( buffer[i] == '\n')
+                        {
+                           rStr += ' ';
+                           ret++;
+                        }
+                        FSM_TRANSITION_SELF( color=blue );
+                     }
+                     if( (buffer[i] == '\e') && !m_rCmdLine.isAllowedEscSequences() )
+                     {
+                        FSM_TRANSITION( ESC_CHAR, color=green, label='Esc' );
+                     }
+                  }
+                  rStr += buffer[i];
+                  ret++;
+                  FSM_TRANSITION_SELF();
+               }
+               case ESC_CHAR:
+               {
+                  if( buffer[i] == '[' )
+                     FSM_TRANSITION( ESC_FIRST, label ='[' );
+
+                  FSM_TRANSITION( NO_ESC );
+               }
+               case ESC_FIRST:
+               {
+                  if( isDecDigit( buffer[i] ) )
+                     FSM_TRANSITION( ESC_DIGIT, label='0-9' );
+
+                  FSM_TRANSITION_NEXT( ESC_OP_CODE );
+               }
+               case ESC_DIGIT:
+               {
+                  if( isDecDigit( buffer[i] ) )
+                     FSM_TRANSITION_SELF( label ='0-9');
+
+                  FSM_TRANSITION_NEXT( ESC_OP_CODE );
+               }
+               case ESC_OP_CODE:
+               {
+                  if( (buffer[i] == ';') || isDecDigit( buffer[i] ) )
+                     FSM_TRANSITION( ESC_DIGIT, label='0-9 or ;' );
+
+                  FSM_TRANSITION( NO_ESC );
+               }
+            }
          }
-         else
-            rStr += buffer[i];
-         ret++;
+         while( next );
       }
       addr += sizeof( buffer );
    }
@@ -362,19 +453,6 @@ inline bool Lm32Logd::isPaddingChar( const char c )
    }
    return false;
 }
-
-/*! ---------------------------------------------------------------------------
- */
-inline bool Lm32Logd::isDecDigit( const char c )
-{
-   return gsi::isInRange( c, '0', '9');
-}
-
-#define FSM_DECLARE_STATE( newState, attr... ) newState
-#define FSM_INIT_FSM( initState, attr... ) STATE_T state = initState
-#define FSM_TRANSITION( target, attr... ) { state = target; break; }
-#define FSM_TRANSITION_NEXT( target, attr... ) { state = target; next = true; break; }
-#define FSM_TRANSITION_SELF( attr...) break
 
 /*! ---------------------------------------------------------------------------
  */

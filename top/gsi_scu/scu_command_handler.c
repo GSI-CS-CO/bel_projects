@@ -92,7 +92,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
    * When debug mode active only.
    */
    printSwIrqCode( code, value );
-   lm32Log( LM32_LOG_CMD, "MSI command: %s( %u )", fgCommand2String( code ), value );
+   lm32Log( LM32_LOG_CMD, "MSI command: %s( %u )\n", fgCommand2String( code ), value );
 #ifdef CONFIG_USE_HISTORY
    if( code != FG_OP_PRINT_HISTORY )
       hist_addx( HISTORY_XYZ_MODULE, fgCommand2String( code ), value );
@@ -117,7 +117,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          * becomes terminated.
          */
       #ifdef CONFIG_USE_LM32LOG
-         lm32Log( LM32_LOG_ERROR,"Value %d out of range!", value );
+         lm32Log( LM32_LOG_ERROR,"Value %d out of range!\n", value );
       #else
          mprintf( ESC_ERROR "Value %d out of range!\n" ESC_NORMAL, value );
       #endif
@@ -202,7 +202,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          fgMilClearHandlerState( value );
        #else
         #ifdef CONFIG_USE_LM32LOG
-          lm32Log( LM32_LOG_ERROR, "No MIL support!" );
+          lm32Log( LM32_LOG_ERROR, "No MIL support!\n" );
         #else
           mprintf( ESC_ERROR "No MIL support!\n" ESC_NORMAL );
         #endif
@@ -221,7 +221,7 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
          hist_print( true );
        #else
         #ifdef CONFIG_USE_LM32LOG
-         lm32Log( LM32_LOG_WARNING, "No history support! " );
+         lm32Log( LM32_LOG_WARNING, "No history support!\n" );
         #else
          mprintf( ESC_ERROR "No history!\n" ESC_NORMAL );
         #endif
@@ -231,9 +231,15 @@ ONE_TIME_CALL void saftLibCommandHandler( void )
 
       default:
       {
-         mprintf( ESC_ERROR
-                  "Error: Unknown SAFT command! op-code: 0x%X, value: 0x%X\n"
+      #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_ERROR, ESC_ERROR
+                  "Error: Unknown MSI-command! op-code: 0x04%X, value: 0x%04X\n"
                   ESC_NORMAL, code, value );
+      #else
+         mprintf( ESC_ERROR
+                  "Error: Unknown MSI-command! op-code: 0x%X, value: 0x%X\n"
+                  ESC_NORMAL, code, value );
+      #endif
          break;
       }
    }

@@ -832,7 +832,7 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
    {
       if( g_operationTab[i].code == GET_SHARED().operation.code )
       {
-         lm32Log( LM32_LOG_CMD, "DAQ command: %s( %u, %u )",
+         lm32Log( LM32_LOG_CMD, "DAQ command: %s( %u, %u )\n",
                   logDaqCmd2String( g_operationTab[i].code ),
                   GET_SHARED().operation.ioData.location.deviceNumber,
                   GET_SHARED().operation.ioData.location.channel
@@ -853,7 +853,7 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
    { /*
       * No, making known this for the Linux host.
       */
-      lm32Log( LM32_LOG_ERROR, "Unknown DAQ command!" );
+      lm32Log( LM32_LOG_ERROR, "Unknown DAQ command!\n" );
       DBPRINT1( "DBG: DAQ_RET_ERR_UNKNOWN_OPERATION\n" );
       GET_SHARED().operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
    }

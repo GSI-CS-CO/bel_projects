@@ -222,9 +222,25 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_shortOpt = 'c',
       .m_longOpt  = "console",
       .m_helpText = "Console mode: line feed \"\\n\" becomes printed.\n"
-                    "Otherwise it becomes replaced by space character and \"\\r\" will ignored.\n\n"
+                    "Otherwise it becomes replaced by space character and \"\\r\" will ignored.\n"
+                    "Terminal control sequences after '\\e' (respectively escape sequences)"
+                    " will not filtered out es well.\n\n"
                     "NOTE:\n"
                     "It is recommended to use this option in combination with option -n --notime."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_escSequences = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'a',
+      .m_longOpt  = "allow-esc-sequences",
+      .m_helpText = "Allows terminal control sequences after '\\e' (respectively escape sequences)"
+                    " in logging mode.\n"
+                    "Otherwise these sequences becomes filtered out."
    },
    {
       OPT_LAMBDA( poParser,
@@ -383,6 +399,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_noTimestamp( false )
    ,m_humanTimestamp( false )
    ,m_isForConsole( false )
+   ,m_escSequences( false )
    ,m_printFilter( false )
    ,m_exit( false )
    ,m_kill( false )

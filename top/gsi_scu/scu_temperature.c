@@ -11,6 +11,7 @@
 #include "dow_crc.h"
 #include "w1.h"
 #include "dbg.h"
+#include <scu_syslog.h>
 
 /*!
  * @brief Object contains the base pointer of one wire connection
@@ -39,7 +40,9 @@ void readTemperatureFromDevices( const int bus, uint64_t* pId, uint32_t* pTemper
    if( w1_scan_bus( &wrpc_w1_bus ) <= 0 )
    {
     #ifdef DEBUG
-      mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail );
+      const char* text = "No devices found on bus %d\n";
+      mprintf( text, wrpc_w1_bus.detail );
+      lm32Log( LM32_LOG_WARNING, text, wrpc_w1_bus.detail );
     #endif
       return;
    }
@@ -50,26 +53,34 @@ void readTemperatureFromDevices( const int bus, uint64_t* pId, uint32_t* pTemper
 
       if( pData->rom == 0 )
          continue;
-      if(( calc_crc( (int)(pData->rom >> BIT_SIZEOF(uint32_t) ),
-                     (int)pData->rom)) != 0 )
+      if(( calc_crc( (int)GET_UPPER_HALF( pData->rom ), (int)pData->rom)) != 0 )
          continue;
-      #ifdef DEBUG
-      mprintf( "bus,device (%d,%d): 0x%08X%08X ",
-                wrpc_w1_bus.detail,
-                i, (int)(pData->rom >> BIT_SIZEOF(uint32_t)),
-                (int)pData->rom );
-      #endif
+    #ifdef DEBUG
+      const char* text = "bus,device (%d,%d): 0x%08X%08X ";
+      mprintf( text,
+               wrpc_w1_bus.detail,
+               i,
+               (int)GET_UPPER_HALF( pData->rom ),
+               (int)GET_LOWER_HALF( pData->rom ) );
+      lm32Log( LM32_LOG_INFO, text,
+               wrpc_w1_bus.detail,
+               i,
+               (int)GET_UPPER_HALF( pData->rom ),
+               (int)GET_LOWER_HALF( pData->rom ) );
+    #endif
       if( (char)pData->rom == 0x42 )
       {
          *pId = pData->rom;
          int tvalue = w1_read_temp(pData, 0);
          *pTemperature = (tvalue >> 12); //full precision with 1/16 degree C
        #ifdef DEBUG
-         mprintf("temperature: %d°C", tvalue >> 16); //show only integer part for debug
+         const char* text = "temperature: %d°C\n";
+         mprintf( text, (int)GET_UPPER_HALF( tvalue )); //show only integer part for debug
+         lm32Log( LM32_LOG_INFO, text, (int)GET_UPPER_HALF( tvalue ));
        #endif
       }
       #ifdef DEBUG
-      mprintf("\n");
+      //mprintf("\n");
       #endif
    }
 }
