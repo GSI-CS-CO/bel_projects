@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-05-10}
+\Large{Last change: 2022-05-17}
 \end{center}
 \vfill
 \end{titlepage}
@@ -97,34 +97,34 @@ test\_zzz\_finish.py          &  1                  &   x        &   T          
 \chapter{The Tests}
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
-The test starts a schedule on a clean data master, checks if some part of 
-the schedule is removable, removes it and then adds another schedule. 
-This is done for a small schedule and a larger schedule. The test is ok 
+The test starts a schedule on a clean data master, checks if some part of
+the schedule is removable, removes it and then adds another schedule.
+This is done for a small schedule and a larger schedule. The test is ok
 if all commands work. There is no check for this.
 
 \section{test\_addDownloadCompare.py}
-\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent 
+\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent
 to the schedule which is downloaded form the datamaster firmware.
-The test steps are: clear the datamaster, add a schedule, start all 
-pattern, download the schedule, compare both schedules with 
-\texttt{scheduleCompare}. There should be no difference with 
+The test steps are: clear the datamaster, add a schedule, start all
+pattern, download the schedule, compare both schedules with
+\texttt{scheduleCompare}. There should be no difference with
 \texttt{scheduleCompare}. Each test case uses a different schedule.
 
-This test requires \texttt{scheduleCompare} to be installed. This tool 
-checks that two dot-files represent the same schedule. For installation 
-use branch origin/dm-analysis. The tool is build with make in folder 
-modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo 
+This test requires \texttt{scheduleCompare} to be installed. This tool
+checks that two dot-files represent the same schedule. For installation
+use branch origin/dm-analysis. The tool is build with make in folder
+modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
 make install in the same folder.
 
 \section{test\_altDestinations.py}
-\texttt{test\_altDestinations} tests the limit of 10 edges of type 
+\texttt{test\_altDestinations} tests the limit of 10 edges of type
 \texttt{altdst} for a block node.
-The schedule \texttt{altdst-flow-10.dot} has one block, ten flow commands 
-and ten messages. each flow command changes flow to another message. 
-The test adds this schedule and starts the pattern in this schedule. 
+The schedule \texttt{altdst-flow-10.dot} has one block, ten flow commands
+and ten messages. each flow command changes flow to another message.
+The test adds this schedule and starts the pattern in this schedule.
 The test checks that messages are produced.
 
-The schedule \texttt{altdst-flow-11.dot} is similar to the one obove, 
+The schedule \texttt{altdst-flow-11.dot} is similar to the one obove,
 but with 11 flow nodes and 11 messages. Adding this schedule fails.
 The test checks for the correct error response.
 
@@ -133,49 +133,49 @@ The test switches through all messages and checks with snoop that the
 correct messages are send.
 
 The schedule \texttt{altdst-flow-11.dot} has one block and 11 messages.
-This schedule cannot be added to the data master. The test checks for 
+This schedule cannot be added to the data master. The test checks for
 the correct error response.
 
 \section{test\_async.py}
 This test was \texttt{full\_test/dynamic/async}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	For a schedule asynchronous clear a block, change the destination to 
+  For a schedule asynchronous clear a block, change the destination to
   a timing message and check that all nodes are visited.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
+  \item Test Actions
 
-	Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The
-	nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with
-	\texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}.
-	Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this
-	with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all
-	nodes are visited and no blocks are locked (with \texttt{showlocks}).
+  Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The
+  nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with
+  \texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}.
+  Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this
+  with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all
+  nodes are visited and no blocks are locked (with \texttt{showlocks}).
     \begin{figure}
         \centering
         \includegraphics{TestPattern/dynamic_async.pdf}
         \caption{Pattern for the dynamic async test}
         \label{fig:Pattern_for_the_dynamic_async_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	Check that node 'MSG\_A' is visited after changing the destination of the flow.
+  Check that node 'MSG\_A' is visited after changing the destination of the flow.
 \end{enumerate}
 \section{test\_basic.py}
 This test was \texttt{full\_test/static/basic}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
-	is loaded into data master and removed afterwards.
+  This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
+  is loaded into data master and removed afterwards.
 
-	\item Test Actions
+  \item Test Actions
 
-	On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
-	that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
-	end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
+  On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
+  that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
+  end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
 
     \begin{figure}
         \centering
@@ -183,30 +183,31 @@ This test was \texttt{full\_test/static/basic}.
         \caption{Pattern for the static basic test}
         \label{fig:Pattern_for_the_static_basic_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
+  The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
 \end{enumerate}
 
 \section{test\_booster\_startthread.py}
-\texttt{test\_booster\_startthread.py} tests schedules with nodes of 
+\texttt{test\_booster\_startthread.py} tests schedules with nodes of
 type \texttt{origin} and type \texttt{startthread}.
 \begin{enumerate}
 \item \texttt{test\_threeThreads0}
 Use schedule \texttt{booster\_startthread.dot} (see~\ref{fig:Schedule_booster_startthread-0}),
-which has three pattern (MAIN, A, B). The schedule runs on CPU 1, thread 0. 
-It starts threads 1, 2, and 3- Thread 1 and 2 trigger a message with parameter 2, 
-while thread 3 triggers a message with paramter 3. The test result is 
-checked with a snoop for 1 second. The correct timeline of the messages 
+which has three pattern (MAIN, A, B). The schedule runs on CPU 1, thread 0.
+It starts threads 1, 2, and 3- Thread 1 and 2 trigger a message with parameter 2,
+while thread 3 triggers a message with paramter 3. The test result is
+checked with a snoop for 1 second. The correct timeline of the messages
 is not checked.
     \begin{figure}
         \centering
         \includegraphics*[width=0.9\textwidth,keepaspectratio]{TestPattern/booster_startthread-0-s.pdf}
-        \caption{Schedule for test of origin and startthread with three threads}
+        \caption{Schedule for test of origin and startthread with three
+        threads, originated by three origin nodes}
         \label{fig:Schedule_booster_startthread-0}
     \end{figure}
 \item \texttt{test\_threeThreads1}
-Use schedule \texttt{booster\_startthread-1.dot} (see~\ref{fig:Schedule_booster_startthread-1}), 
+Use schedule \texttt{booster\_startthread-1.dot} (see~\ref{fig:Schedule_booster_startthread-1}),
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
@@ -214,7 +215,7 @@ Use schedule \texttt{booster\_startthread-1.dot} (see~\ref{fig:Schedule_booster_
         \label{fig:Schedule_booster_startthread-1}
     \end{figure}
 \item \texttt{test\_threeThreads2}
-Use schedule \texttt{booster\_startthread-2.dot} (see~\ref{fig:Schedule_booster_startthread-2}), 
+Use schedule \texttt{booster\_startthread-2.dot} (see~\ref{fig:Schedule_booster_startthread-2}),
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
@@ -222,7 +223,7 @@ Use schedule \texttt{booster\_startthread-2.dot} (see~\ref{fig:Schedule_booster_
         \label{fig:Schedule_booster_startthread-2}
     \end{figure}
 \item \texttt{test\_threeThreads3}
-Use schedule \texttt{booster\_startthread-3.dot} (see~\ref{fig:Schedule_booster_startthread-3}), 
+Use schedule \texttt{booster\_startthread-3.dot} (see~\ref{fig:Schedule_booster_startthread-3}),
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
@@ -234,33 +235,33 @@ Use schedule \texttt{booster-all-threads.dot} (see~\ref{fig:Schedule_booster_all
 which has one pattern MAIN.
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_all_threads-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \includegraphics*[width=0.98\textwidth,keepaspectratio]{TestPattern/booster_all_threads-s.pdf}
+        \caption{Schedule for test of origin and startthread with all 8 threads of CPU 0}
         \label{fig:Schedule_booster_all_threads}
     \end{figure}
 The pattern runs on CPU 0, thread 0 and starts threads 1 to 7 on CPU 0.
 MAIN has a timing message and a block in a loop. One timing message every 0.1 sec.
 \item \texttt{test\_booster\_thread\_0\_loop}
 Use schedule \texttt{booster-thread-0-loop.dot} (see~\ref{fig:Schedule_booster_thread_0_loop}),
-which has one pattern MAIN.
+which has one pattern MAIN and starts thread 0 in a loop. This is a
+theoretical setup to test that starting a running thread again does not
+crash.
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_thread_0_loop-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \includegraphics*[width=0.7\textwidth,keepaspectratio]{TestPattern/booster_thread_0_loop-s.pdf}
+        \caption{Schedule for startthread in a loop}
         \label{fig:Schedule_booster_thread_0_loop}
     \end{figure}
 \item \texttt{test\_booster\_thread\_0}
-Use schedule \texttt{booster-all-threads.dot} (see~\ref{fig:Schedule_booster_thread_0}),
+Use schedule \texttt{booster-thread-0.dot} (see~\ref{fig:Schedule_booster_thread_0}),
 which has one pattern MAIN.
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \includegraphics*[width=0.55\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
+        \caption{Schedule for starting thread 0 once}
         \label{fig:Schedule_booster_thread_0}
     \end{figure}
 \end{enumerate}
-% booster_all_threads.dot      booster_startthread-2-s.dot  booster_startthread-s.dot    booster_thread_0_loop-s.dot  
-% booster_startthread-1-s.dot  booster_startthread-3-s.dot  booster_startthread-s.pdf    booster_thread_0-s.dot       
 
 \section{test\_bpcStart.py}
 \texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
@@ -270,14 +271,14 @@ In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcsta
 \section{test\_coupling.py}
 This test was \texttt{full\_test/dynamic/coupling}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	This test enlarges an existing pattern with a second pattern with edges into the first
-	pattern. See Figure~\ref{fig:Pattern_for_the_static_coupling_test} for the test patterns.
-	\item Test Actions
+  This test enlarges an existing pattern with a second pattern with edges into the first
+  pattern. See Figure~\ref{fig:Pattern_for_the_static_coupling_test} for the test patterns.
+  \item Test Actions
 
-	First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added.
-	This pattern contains edges into the first pattern.
+  First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added.
+  This pattern contains edges into the first pattern.
     \begin{figure}
         \centering
         \includegraphics{TestPattern/static_coupling1.pdf}
@@ -285,10 +286,10 @@ This test was \texttt{full\_test/dynamic/coupling}.
         \caption{Pattern for the static coupling test before and after coupling}
         \label{fig:Pattern_for_the_static_coupling_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is
-	compared to an expected dot-file.
+  After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is
+  compared to an expected dot-file.
 \end{enumerate}
 
 \section{test\_dm\_cmd.py}
@@ -315,14 +316,14 @@ from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \t
 \section{test\_flow.py}
 This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	Test that the flow command switches from one block to another.
+  Test that the flow command switches from one block to another.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+  \item Test Actions
 
-	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+  Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
         change the flow with the flow command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flow
         command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flow
         command is processed in the low priority queue and node 'BLOCK\_B' is visited.
@@ -334,29 +335,29 @@ This test is based on \texttt{full\_test/dynamic/branch/single}, using flow inst
         \caption{Pattern for the dynamic branch single test}
         \label{fig:Pattern_for_the_dynamic_branch_single_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+  Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
 \end{enumerate}
 \section{test\_flowpattern.py}
 This test is based on \texttt{full\_test/dynamic/branch/single}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	Test that the flow command switches from one block to another.
+  Test that the flow command switches from one block to another.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+  \item Test Actions
 
-	Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+  Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
         change the flow with the flowpattern command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flowpattern
         command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flowpattern
         command is processed in the low priority queue and node 'BLOCK\_B' is visited.
 
   Test the four combinations of relative VTIME, absolute VTIME and immediate vs. delayed (one second) execution.
-	\item Success Criteria
+  \item Success Criteria
 
-	Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+  Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
 \end{enumerate}
 
 \section{test\_flush.py}
@@ -388,12 +389,12 @@ Four tests use the same schedule to minimize the numer of schedules. Each schedu
 \section{test\_loop.py}
 This test was \texttt{full\_test/dynamic/loop}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
         Test loop with flow initializer.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_loop_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_loop_test} for the test pattern.
+  \item Test Actions
 
         Add a schedule and start pattern 'IN\_A'. Check the visited nodes. Nodes 'INIT\_A0', 'BLOCK\_LOOP', and 'BLOCK\_EXIT'
         should be visited. Start pattern 'IN\_B' and check the visited nodes. All nodes should be visited.
@@ -403,24 +404,24 @@ This test was \texttt{full\_test/dynamic/loop}.
         \caption{Pattern for the dynamic loop test}
         \label{fig:Pattern_for_the_dynamic_loop_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	In the end all blocks are visited.
+  In the end all blocks are visited.
 \end{enumerate}
 \section{test\_memory.py}
-Four tests add two large schedule into the datamaster. This works fine. 
-Then a third schedule is loaded, in each test for a different CPU. This 
+Four tests add two large schedule into the datamaster. This works fine.
+Then a third schedule is loaded, in each test for a different CPU. This
 should fail with return code 250.
 
 Four additional tests check the memory limit mor precisely. These tests
-use generated schedules just with a given nuber of blocks. Each block 
-has its own pattern. A test with the theoretical limit of 1874 blocks 
-fails. A similar test with 1869 blocks is Ok, while a test with one 
-further block detects a failure. Also, a test with 1875 blocks detects a 
+use generated schedules just with a given nuber of blocks. Each block
+has its own pattern. A test with the theoretical limit of 1874 blocks
+fails. A similar test with 1869 blocks is Ok, while a test with one
+further block detects a failure. Also, a test with 1875 blocks detects a
 failure. These four tests use CPU 0.
 
-Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869 
-blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses 
+Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869
+blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses
 one additional block on CPU 3.
 
 \section{test\_parallelBranch.py}
@@ -429,23 +430,23 @@ with absolute time offset. The checks use snoop for specific event numbers.
 The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
 
 \section{test\_pps.py}
-\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a 
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
 schedule which sends two timing messages every second.
 \section{test\_prio\_and\_type.py}
 This test was \texttt{full\_test/static/prio\_and\_type}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-The test checks the relative and the absolute time values for two nodes 
+The test checks the relative and the absolute time values for two nodes
 in a four node pattern.
-See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for 
-the test pattern and 
-\ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes} 
+See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for
+the test pattern and
+\ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
 for the test pattern with meta nodes,
 displaying the priority queues.
-	\item Test Actions
+  \item Test Actions
 
-	Add the pattern, check the relative time values. Clear the data master. 
+  Add the pattern, check the relative time values. Clear the data master.
   Add the pattern again and check the absolute time values.
     \begin{figure}
         \centering
@@ -459,22 +460,22 @@ displaying the priority queues.
         \caption{Pattern for the static priority and type test with meta nodes}
         \label{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	Two checks of the time values with \texttt{dm-cmd rawqueue}.
+  Two checks of the time values with \texttt{dm-cmd rawqueue}.
 \end{enumerate}
 \section{test\_run\_all\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
     Run a very basic schedule on all four CPUs.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
+  \item Test Actions
 
-	Add a schedule with four blocks to the data master. For each CPU, 
-  check that no block is visited. Then start a pattern for one CPU and 
+  Add a schedule with four blocks to the data master. For each CPU,
+  check that no block is visited. Then start a pattern for one CPU and
   check that the block specific for this pattern is visited.
     \begin{figure}
         \centering
@@ -482,25 +483,25 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
         \caption{Pattern for the dynamic run all test}
         \label{fig:Pattern_for_the_dynamic_run_all_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	For each pattern the correct CPU is used.
+  For each pattern the correct CPU is used.
 \end{enumerate}
 \section{test\_run\_cpu0\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-    Add the test schedule to the data master, start patterns and check 
+    Add the test schedule to the data master, start patterns and check
     which nodes were visited.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test} 
+  See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
   for the test pattern.
-	\item Test Actions
+  \item Test Actions
 
-    First check that no block is visited. Start pattern 'IN0'. Check 
+    First check that no block is visited. Start pattern 'IN0'. Check
     that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
-    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and 
+    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and
     'BLOCK\_IN1' are visited.
     \begin{figure}
         \centering
@@ -508,9 +509,9 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
         \caption{Pattern for the dynamic run CPU 0 single test}
         \label{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	In the end all blocks are visited.
+  In the end all blocks are visited.
 \end{enumerate}
 
 \section{test\_safe2remove.py}
@@ -535,12 +536,12 @@ The schedules use 1 to 4 CPUs whith 1, 2, 4, and 9 pattern beside the default pa
 \section{test\_start\_stop\_abort.py}
 This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
     First part: Start and abort a pattern. Second part: Start and stop a pattern.
 
-	See Figure~\ref{fig:Pattern_for_the_dynamic_start_stop_abort_test} for the test pattern.
-	\item Test Actions
+  See Figure~\ref{fig:Pattern_for_the_dynamic_start_stop_abort_test} for the test pattern.
+  \item Test Actions
 
     Add a schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
     Abort the pattern 'IN\_C0'. Check the visited nodes for the pattern. The second part is similar.
@@ -552,20 +553,20 @@ This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
         \caption{Pattern for the dynamic start stop abort test}
         \label{fig:Pattern_for_the_dynamic_start_stop_abort_test}
     \end{figure}
-	\item Success Criteria
+  \item Success Criteria
 
-	Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
-	stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
+  Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
+  stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
 \end{enumerate}
 
 \section{test\_switch.py}
 This test was \texttt{full\_test/dynamic/switch}.
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	Test not working, needs set up.
-	\item Test Actions
-	\item Success Criteria
+  Test not working, needs set up.
+  \item Test Actions
+  \item Success Criteria
 \end{enumerate}
 \chapter{Common Components}
 \section{dm\_testbench.py}
@@ -619,17 +620,17 @@ TODO
 
 \subsection{Structure of Description}
 \begin{enumerate}
-	\item Purpose of Test
+  \item Purpose of Test
 
-	What is the objective of this test?
-	\item Prerequisites of Test
+  What is the objective of this test?
+  \item Prerequisites of Test
 
-	What is the setting of the test?
-	\item Test Actions
+  What is the setting of the test?
+  \item Test Actions
 
-	List the actions of the test. This includes the graphs of the test pattern.
-	\item Success Criteria
+  List the actions of the test. This includes the graphs of the test pattern.
+  \item Success Criteria
 
-	What is checked to state a successful test?
+  What is checked to state a successful test?
 \end{enumerate}
 \end{document}
