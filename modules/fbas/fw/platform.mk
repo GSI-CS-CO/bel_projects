@@ -10,8 +10,12 @@ export RAM_SIZE  := $(shell grep -m1 RAM_SIZE  $(PLATFMAKEFILE) | cut -d'=' -f2 
 # obtain the number of MPS channels
 FBAS_CMN_HDR_FILE:= fbas_common.h
 N_MPS_CH         := $(shell grep -m1 N_MPS_CHANNELS $(FBAS_CMN_HDR_FILE) | tr -s ' ' | cut -d' ' -f3)
-ifneq ($(N_MPS_CH), 1)
-  export N_MPS_CH
+ifneq ($(N_MPS_CH),1)
+  ifeq ($(TARGET),fbas)
+    export N_MPS_CH
+  else
+    undefine N_MPS_CH
+  endif
 else
   undefine N_MPS_CH
 endif
@@ -20,10 +24,12 @@ $(info    N_MPS       is $(N_MPS_CH))
 
 CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
-SRC_FILES     = $(PATHFW)/$(TARGET).c $(PATHFW)/tmessage.c  \
-		$(PATHFW)/ioctl.c $(PATHFW)/measure.c       \
-		$(PATHFW)/timer.c $(PATHFW)/fwlib.c \
-		$(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+SRC_FILES     = $(PATHFW)/$(TARGET).c  \
+		$(PATHFW)/fwlib.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+
+ifeq ($(TARGET),fbas)
+  SRC_FILES  += $(PATHFW)/tmessage.c $(PATHFW)/ioctl.c $(PATHFW)/measure.c $(PATHFW)/timer.c
+endif
 
 $(info    >>>>)
 $(info    building is done by importing the following data from $(PLATFMAKEFILE):)

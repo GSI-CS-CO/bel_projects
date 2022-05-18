@@ -18,10 +18,12 @@ PLATFPATHPEX5       := ../../../syn/gsi_pexarria5/control
 
 .PHONY: fwbin
 fwbin:
-	@echo --- build $@ for platform $(PLATFPATHSCU3)
+	@echo --- build $(TARGET) for platform $(PLATFPATHSCU3)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) $@
-	@echo --- build $@ for platform $(PLATFPATHPEX5)
+ifeq ($(TARGET),fbas)
+	@echo --- build $(TARGET) for platform $(PLATFPATHPEX5)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) $@
+endif
 
 # ram.ld is built recursively from platform.mk
 .PHONY: ram.ld
