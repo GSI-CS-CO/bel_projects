@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-05-17}
+\Large{Last change: 2022-05-18}
 \end{center}
 \vfill
 \end{titlepage}
@@ -97,7 +97,7 @@ test\_zzz\_finish.py          &  1                  &   x        &   T          
 \chapter{The Tests}
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
-The test starts a schedule on a clean data master, checks if some part of
+The test starts a schedule on a clean datamaster, checks if some part of
 the schedule is removable, removes it and then adds another schedule.
 This is done for a small schedule and a larger schedule. The test is ok
 if all commands work. There is no check for this.
@@ -133,7 +133,7 @@ The test switches through all messages and checks with snoop that the
 correct messages are send.
 
 The schedule \texttt{altdst-flow-11.dot} has one block and 11 messages.
-This schedule cannot be added to the data master. The test checks for
+This schedule cannot be added to the datamaster. The test checks for
 the correct error response.
 
 \section{test\_async.py}
@@ -169,13 +169,13 @@ This test was \texttt{full\_test/static/basic}.
   \item Purpose of Test
 
   This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
-  is loaded into data master and removed afterwards.
+  is loaded into datamaster and removed afterwards.
 
   \item Test Actions
 
-  On a cleared data master the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
+  On a cleared datamaster the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
   that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
-  end \texttt{dem-sched status} is used to check that no pattern is present on the data master.
+  end \texttt{dem-sched status} is used to check that no pattern is present on the datamaster.
 
     \begin{figure}
         \centering
@@ -193,9 +193,10 @@ This test was \texttt{full\_test/static/basic}.
 type \texttt{origin} and type \texttt{startthread}.
 \begin{enumerate}
 \item \texttt{test\_threeThreads0}
-Use schedule \texttt{booster\_startthread.dot} (see~\ref{fig:Schedule_booster_startthread-0}),
+Use schedule \texttt{booster\_startthread.dot} \\
+ (see~\ref{fig:Schedule_booster_startthread-0}),
 which has three pattern (MAIN, A, B). The schedule runs on CPU 1, thread 0.
-It starts threads 1, 2, and 3- Thread 1 and 2 trigger a message with parameter 2,
+It starts threads 1, 2, and 3. Thread 1 and 2 trigger a message with parameter 2,
 while thread 3 triggers a message with paramter 3. The test result is
 checked with a snoop for 1 second. The correct timeline of the messages
 is not checked.
@@ -207,23 +208,44 @@ is not checked.
         \label{fig:Schedule_booster_startthread-0}
     \end{figure}
 \item \texttt{test\_threeThreads1}
-Use schedule \texttt{booster\_startthread-1.dot} (see~\ref{fig:Schedule_booster_startthread-1}),
+Use schedule \texttt{booster\_startthread-1.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-1}) to test
+origin nodes. The test starts pattern BOOST\_REQ and snoops timing messages
+for two seconds. The result is checked for the event numbers
+0x0100 (more than 7), 0x0200 (at least one), 0x0102 (exactly one),
+0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-1}
     \end{figure}
 \item \texttt{test\_threeThreads2}
-Use schedule \texttt{booster\_startthread-2.dot} (see~\ref{fig:Schedule_booster_startthread-2}),
+Use schedule \texttt{booster\_startthread-2.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-2}) to test
+origin nodes. The test starts pattern BOOST\_REQ and snoops timing messages
+for three seconds. The result is checked for the event numbers
+0x0100 (more than 7), 0x0200 (at least one), 0x0102 (exactly one),
+0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
-        \caption{Schedule for test of origin and startthread}
+        \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-2}
     \end{figure}
 \item \texttt{test\_threeThreads3}
-Use schedule \texttt{booster\_startthread-3.dot} (see~\ref{fig:Schedule_booster_startthread-3}),
+Use schedule \texttt{booster\_startthread-3.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-3}),
+to test origin and startthread nodes. The test starts pattern MAIN and snoops timing messages
+for three seconds. The result is checked for the event numbers
+0x0001 (at least one), 0x0002 (at least one), and 0x0003 (at least one).
+Event number 0x0001 indicates thread 1, event number 0x0002 indicates thread 2, Event number 0x0003 indicates thread 3.
+With saft-ctl snoop there are 4 timing messages each second after starting pattern MAIN.
+First a message with evtno=0x0003, then two messages with evtno=0x0002 1µs later, one of these is delayed.
+20µs later we get a message with evtno=0x0001.
+tperiod=1s in block B\_MAIN defines the tact of one second. tperiod of the blocks B\_A and B\_B are not relevant.
+The delay of evtno=0x0002 with 1µs is defined by toffs=1000. The delay of evtno=0x0001 is defined by toffs=20000.
+What is the effect of toffs and startoffs defined in the three startthread nodes?
     \begin{figure}
         \centering
         \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
@@ -242,7 +264,7 @@ which has one pattern MAIN.
 The pattern runs on CPU 0, thread 0 and starts threads 1 to 7 on CPU 0.
 MAIN has a timing message and a block in a loop. One timing message every 0.1 sec.
 \item \texttt{test\_booster\_thread\_0\_loop}
-Use schedule \texttt{booster-thread-0-loop.dot} (see~\ref{fig:Schedule_booster_thread_0_loop}),
+Use schedule \\ \texttt{booster-thread-0-loop.dot} (see~\ref{fig:Schedule_booster_thread_0_loop}),
 which has one pattern MAIN and starts thread 0 in a loop. This is a
 theoretical setup to test that starting a running thread again does not
 crash.
@@ -253,8 +275,8 @@ crash.
         \label{fig:Schedule_booster_thread_0_loop}
     \end{figure}
 \item \texttt{test\_booster\_thread\_0}
-Use schedule \texttt{booster-thread-0.dot} (see~\ref{fig:Schedule_booster_thread_0}),
-which has one pattern MAIN.
+Use schedule \texttt{booster-thread-0.dot} \\
+(see~\ref{fig:Schedule_booster_thread_0}), which has one pattern MAIN.
     \begin{figure}
         \centering
         \includegraphics*[width=0.55\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
@@ -265,7 +287,8 @@ which has one pattern MAIN.
 
 \section{test\_bpcStart.py}
 \texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
-The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
+The test schedule sends two timing messages with \\
+\texttt{bpcstart=True} and \texttt{bpcstart=1}.
 With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
 In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
 \section{test\_coupling.py}
@@ -372,12 +395,12 @@ Y is the priority of the flush. Allowed values: 0, 1, 2.
 Naming of patterns:
 P-queueX-prioY, where X and Y as described above.
 
-Schedules used:
-schedules/flush-queue01-prio0.dot
-schedules/flush-queue01-prio1.dot
-schedules/flush-queue01-prio2.dot
-schedules/flush-queue23-prio0.dot
-schedules/flush-queue23-prio1.dot
+Schedules used:\\
+schedules/flush-queue01-prio0.dot\\
+schedules/flush-queue01-prio1.dot\\
+schedules/flush-queue01-prio2.dot\\
+schedules/flush-queue23-prio0.dot\\
+schedules/flush-queue23-prio1.dot\\
 schedules/flush-queue23-prio2.dot
 
 Structure of each test:
@@ -400,7 +423,7 @@ This test was \texttt{full\_test/dynamic/loop}.
         should be visited. Start pattern 'IN\_B' and check the visited nodes. All nodes should be visited.
     \begin{figure}
         \centering
-        \includegraphics{TestPattern/dynamic_loop.pdf}
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/dynamic_loop.pdf}
         \caption{Pattern for the dynamic loop test}
         \label{fig:Pattern_for_the_dynamic_loop_test}
     \end{figure}
@@ -446,7 +469,7 @@ for the test pattern with meta nodes,
 displaying the priority queues.
   \item Test Actions
 
-  Add the pattern, check the relative time values. Clear the data master.
+  Add the pattern, check the relative time values. Clear the datamaster.
   Add the pattern again and check the absolute time values.
     \begin{figure}
         \centering
@@ -474,7 +497,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
   See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
   \item Test Actions
 
-  Add a schedule with four blocks to the data master. For each CPU,
+  Add a schedule with four blocks to the datamaster. For each CPU,
   check that no block is visited. Then start a pattern for one CPU and
   check that the block specific for this pattern is visited.
     \begin{figure}
@@ -492,7 +515,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
   \item Purpose of Test
 
-    Add the test schedule to the data master, start patterns and check
+    Add the test schedule to the datamaster, start patterns and check
     which nodes were visited.
 
   See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
@@ -517,7 +540,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \section{test\_safe2remove.py}
 \texttt{test\_safe2remove.py} tests to remove a pattern from a running schedule. Test steps:
 \begin{enumerate}
-\item Clear data master
+\item Clear datamaster
 \item Add schedule
 \item Start pattern 'G1\_P1'
 \item Check removal of one pattern, should fail while pattern is running.
@@ -549,7 +572,7 @@ This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
     Stop the pattern 'IN\_C0'. Check the visited nodes for the pattern.
     \begin{figure}
         \centering
-        \includegraphics{TestPattern/dynamic_basic_start_stop_abort.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/dynamic_basic_start_stop_abort.pdf}
         \caption{Pattern for the dynamic start stop abort test}
         \label{fig:Pattern_for_the_dynamic_start_stop_abort_test}
     \end{figure}
@@ -573,49 +596,201 @@ This test was \texttt{full\_test/dynamic/switch}.
 \texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.
 \begin{enumerate}
 \item setUpClass(self)
-TODO
+
+Read environment variables for the datamaster and the test binaries.
+\begin{itemize}
+\item TEST\_BINARY\_DM\_CMD sets the binary for dm-cmd. Default is just
+\texttt{dm-cmd}, the installed tool.
+\item TEST\_BINARY\_DM\_SCHED sets the binary for dm-sched. Default is just
+\texttt{dm-sched}, the installed tool.
+\item DATAMASTER set the datamaster device. Example: \texttt{dev/wbm0} or
+\texttt{tcp/fel0069.acc}. There is no default. This method stops with a
+KeyError if the environment variable DATAMASTER is not set.
+\item TEST\_SCHEDULES set the folder for schedules. Default is \\
+ \texttt{schedules/}.
+\item SNOOP\_COMMAND set the snoop command. Default is \\
+\texttt{saft-ctl tr0 -xv snoop 0 0 0}.
+\end{itemize}
+Usually the binaries for dm-cmd and dm-sched together with the libcarpedm
+are used from the build of the test repository in folders \texttt{modules/ftm/bin}
+and \texttt{modules/ftm/lib}. This is configured in the Makefile.
 \item setUp(self)
-TODO
+
+Call \texttt{self.initDatamaster()}.
 \item initDatamaster(self)
-TODO
+
+The datamaster is halted, cleared, and statistics is reset with
+\texttt{dm-cmd reset all}.
 \item addSchedule(self, scheduleFile)
-TODO
+
+Add the \texttt{scheduleFile} to the datamaster with the command
+\texttt{dm-sched DATAMASTER add scheduleFile}. Does not start a pattern.
 \item startPattern(self, scheduleFile)
-    Connect to the given data master and load the schedule file (dot format).
-    The data master is halted, cleared, and statistics is reset.
-    Search for the first pattern in the data master with 'dm-sched' and start it.
+
+Connect to the given datamaster and load the schedule file (dot format).
+Search for the first pattern in the datamaster with 'dm-sched' and start it.
 \item startPattern(self, scheduleFile, pattern='')
-TODO
-\item startAllPattern(self, scheduleFile, pattern='', onePattern=False, start=True)
-TODO
-\item startAndCheckSubprocess(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1)
-TODO
-\item startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1)
-TODO
-\item startAndGetSubprocessOutput(self, argumentsList, expectedReturnCode=[-1], linesCout=-1, linesCerr=-1)
-TODO
+
+Add the \texttt{scheduleFile} to the datamaster with the command
+\texttt{dm-sched DATAMASTER add scheduleFile}. Start the given pattern.
+The default for the pattern name is empty.
+\item startAllPattern(self, scheduleFile, pattern='', onePattern=False,\\ start=True)
+
+Connect to the given datamaster and load the schedule file (dot format).
+If a pattern is given, start this pattern.
+Otherwise, scan the output of dm-sched for pattern names and start the
+first pattern (onePattern = True) or all pattern (onePattern = False).
+All calls to dm-cmd and dm-sched are checked for the return code. The method
+stops of the return code is not 0.
+
+\item startAndCheckSubprocess(self, argumentsList, expectedReturnCode =
+[0], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. The output on stdout or stderr is lost.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
+Examples for calls of this method are in \texttt{dm\_testbench.py}.
+\item startAndGetSubprocessStdout(self, argumentsList, \\
+expectedReturnCode = [0], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. Return stdout as a list of lines.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
+\item startAndGetSubprocessOutput(self, argumentsList, \\
+expectedReturnCode = [-1], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. The output on stdout or stderr is return as a list of two
+lists of lines.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
 \item removePaintedFlags(self, dotLines)
-TODO
+
+From the dotLines remove all which indicates that a node is visited.
+This ist needed for the comparison with expected output. In the flags
+attribute, flags="0xnnnnn1nn" is replaced by flags="0xnnnnn0nn". In addition,
+fillcolor green ist replaced by white and other layout attributes are
+deleted. dotLines is created from 'dm-sched -o output-file'. Method
+is used by compareExpectedResult and compareExpectedOutput.
 \item compareExpectedResult(self, fileCurrent, fileExpected, exclude='')
-TODO
-\item compareExpectedOutput(self, output, fileExpected, exclude='', excludeField='', delete=[])
-TODO
+
+Compare two dot files. fileCurrent is the file from the current test run.
+fileExpected is the file with the expected result. exclude may contain
+a word. If this word occures in a line of the current file, this line is
+removed before the comparison. Next step is to remove the 'painted flag'
+from the current file. Assert that a unified diff has no lines.
+\item compareExpectedOutput(self, output, fileExpected, exclude='', \\
+excludeField='', delete=[])
+
+Compare the output from the current test run with the
+fileExpected which is the file with the expected result. exclude may contain
+a word. If this word occures in a line of the current file, this line is
+removed before the comparison. Next step is to remove the lines numbered
+in the list 'delete' from the current output and the expected file.
+Next step is to remove the rest of the line when 'excludeField' is found
+in a line. This is used to remove timestamps from the current output and
+the expected file. Last step is to remove the 'painted flag'
+from the current output. Assert that a unified diff has no lines.
 \item getSnoopCommand(self, duration)
-TODO
+
+Get the snoop command with the duration given in seconds.
 \item snoopToCsv(self, csvFileName, duration=1)
-TODO
+
+Run the snoop command for duration seconds and store the output in
+csvFileName. Since the duration of saft-ctl snoop is measured in seconds,
+but not fractions of a second, the duration is an integer.
 \item snoopToCsvWithAction(self, csvFileName, action, duration=1)
-TODO
-\item analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict())
-TODO
+
+Run the snoop command for duration seconds and store the output in
+csvFileName. Since the duration of saft-ctl snoop is measured in seconds,
+but not fractions of a second, the duration is an integer.
+
+While snoop runs in a separate thread, the method 'action' is called.
+This method should return before snoop ends.
+\item analyseFrequencyFromCsv(self, csvFileName, column = 20, printTable
+ = True, checkValues = dict())
+
+Analyse a file output of 'saft-ctl snoop' as a csv file.
+\begin{enumerate}
+\item csvFileName
+
+The file name of the csv file.
+\item column
+
+The number of the column to analyse. Default column is 20 (parameter of
+the timing message). Column for EVTNO is 8.
+\item printTable
+
+If True, the occurrences of all values in 'column' are printed.
+\item checkValues
+
+checkValues is a dictionary of key-value pairs to check. Key is a value
+in the column and value is the required frequency.
+The value can be '>n', '<n', '=n', 'n' (which is the same as '=n').
+Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001
+occurs in 62 lines of the file to analyse.
+Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002
+occurs at least once in the file to analyse.
+\end{enumerate}
 \item analyseDmCmdOutput(self, threadsToCheck=0)
-TODO
+
+Run 'dm-cmd' with default action which shows the running threads and
+the message counts. threadsToCheck is an integer, where 32 bits are used
+as a bit mask. Each bit indicates a thread of 8 threads for 4 CPUs.
+A thread is considered running if the output line for that thread contains 'yes'.
+A list of (key, message counts) is returned. Keys of this list are numbers xy,
+where x is the CPU number, y is the thread number, both single digits.
+If a thread hangs, dm-cmd may show 'yes' for this thread running, but the
+thread is in undefined status. To avoid this, use the method 'checkRunningThreadsCmd'.
 \item checkRunningThreadsCmd(self, messageInterval=1.0)
-TODO
+
+Use analyseDmCmdOutput twice with a delay of messageInterval in between.
+Assert that the message counts increase with the second call and are greater
+than 0 on the first call.
 \item delay(self, duration)
-TODO
+
+Sleep for 'duration' seconds. 'duration' is a float.
 \item deleteFile(self, fileName)
-TODO
+
+Delete the file with name 'fileName'.
 \end{enumerate}
 
 \subsection{Structure of Description}
