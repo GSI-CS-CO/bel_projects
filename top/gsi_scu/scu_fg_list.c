@@ -42,21 +42,13 @@ void printFgs( void )
        */
       if( pFgMacro->outputBits == 0 )
          break;
-      const char* text = ESC_FG_CYAN ESC_BOLD
-                         "fg-%d-%d\tver: %d output-bits: %d\n" ESC_NORMAL;
-      lm32Log( LM32_LOG_INFO, text, 
-                              pFgMacro->socket,
-                              pFgMacro->device,
-                              pFgMacro->version,
-                              pFgMacro->outputBits
-             );
 
-      mprintf( text,
-               pFgMacro->socket,
-               pFgMacro->device,
-               pFgMacro->version,
-               pFgMacro->outputBits
-             );
+      scuLog( LM32_LOG_INFO, ESC_FG_CYAN ESC_BOLD
+              "fg-%d-%d\tver: %d output-bits: %d\n" ESC_NORMAL,
+              pFgMacro->socket,
+              pFgMacro->device,
+              pFgMacro->version,
+              pFgMacro->outputBits );
    }
 }
 

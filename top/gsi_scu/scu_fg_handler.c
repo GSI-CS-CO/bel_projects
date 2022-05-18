@@ -281,6 +281,9 @@ inline void addacFgDisableIrq( const void* pScuBus,
 #endif
 }
 
+/*! --------------------------------------------------------------------------
+ * @see scu_fg_handler.h
+ */
 inline void addacFgDisable( const void* pScuBus,
                             const unsigned int slot,
                             const unsigned int dev )
@@ -331,6 +334,9 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
    {
       hist_addx( HISTORY_XYZ_MODULE, "ADDAC-FG buffer empty, no parameter sent",
                  pThis->cntrl_reg.bv.number );
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR
+               "ERROR: Buffer of ADDAC-FG no: %u is empty!\n" ESC_NORMAL,
+               pThis->cntrl_reg.bv.number );
       return false;
    }
 
@@ -360,8 +366,14 @@ void handleAdacFg( const unsigned int slot,
 
    if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
-      mprintf( ESC_ERROR"%s: Channel of ADAC FG out of range: %d\n"ESC_NORMAL,
+   #ifdef CONFIG_USE_LM32LOG
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR 
+               "%s: Channel of ADAC FG out of range: %d\n" ESC_NORMAL,
                __func__, channel );
+   #else
+      mprintf( ESC_ERROR "%s: Channel of ADAC FG out of range: %d\n" ESC_NORMAL,
+               __func__, channel );
+   #endif
       return;
    }
 

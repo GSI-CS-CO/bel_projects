@@ -102,15 +102,32 @@ volatile uint32_t*     g_pMil_irq_base    = NULL;
 /*! ---------------------------------------------------------------------------
  * @see scu_main.h
  */
+OPTIMIZE( "-O1"  )
+void scuLog( const unsigned int filter, const char* format, ... )
+{
+   va_list ap;
+
+   va_start( ap, format );
+   vprintf( format, ap );
+   va_end( ap );
+#ifdef CONFIG_USE_LM32LOG
+   va_start( ap, format );
+   vLm32log( filter, format, ap );
+   va_end( ap );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_main.h
+ */
 void die( const char* pErrorMessage )
 {
-   static const char* text = ESC_ERROR "\nPanic: \"%s\"\n+++ LM32 stopped! +++\n" ESC_NORMAL;
-   mprintf( text, pErrorMessage );
-   lm32Log( LM32_LOG_ERROR, text, pErrorMessage );
+   scuLog( LM32_LOG_ERROR, ESC_ERROR
+           "\nPanic: \"%s\"\n+++ LM32 stopped! +++\n" ESC_NORMAL, pErrorMessage );
 #ifndef CONFIG_REINCERNATE
    while( true );
 #else
-   mprintf( "...continued...\n" );
+   scuLog( "...continued...\n" );
 #endif
 }
 
@@ -159,14 +176,11 @@ STATIC inline void queuePollAlarm( void )
 #ifdef CONFIG_MIL_FG
    QEUE2STRING( g_queueMilFg );
 #endif
-
    #undef QEUE2STRING
 
-   const char* text = ESC_ERROR
-            "ERROR: Queue \"%s\" has overflowed! Capacity: %d\n"
-            ESC_NORMAL;
-   mprintf( text, str, queueGetMaxCapacity( pOverflowedQueue ) );
-   lm32Log( LM32_LOG_ERROR, text, str, queueGetMaxCapacity( pOverflowedQueue ) );
+   scuLog( LM32_LOG_ERROR, ESC_ERROR
+           "ERROR: Queue \"%s\" has overflowed! Capacity: %d\n"
+           ESC_NORMAL, str, queueGetMaxCapacity( pOverflowedQueue ) );
 }
 #else
    #define queuePollAlarm()
@@ -220,9 +234,8 @@ void tellMailboxSlot( void )
    if( slot == -1 )
       die( "No free slots in MsgBox left!" );
 
-   const char* text = ESC_FG_MAGENTA "Configured slot %d in MsgBox\n" ESC_NORMAL;
-   mprintf( text, slot );
-   lm32Log( LM32_LOG_INFO, text, slot );
+   scuLog( LM32_LOG_INFO, 
+           ESC_FG_MAGENTA "Configured slot %d in MsgBox\n" ESC_NORMAL, slot );
    g_shared.oSaftLib.oFg.mailBoxSlot = slot;
 }
 
@@ -433,12 +446,10 @@ ONE_TIME_CALL void initInterrupt( void )
       SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
       if( (unsigned int)pTimer == ERROR_NOT_FOUND )
       {
-         const char* text =  ESC_WARNING
-                  "WARNING: No LM32-timer-macro for MIL-FGs found,"
-                  " polling will used for them!"
-                  ESC_NORMAL;
-         mprintf( text );
-         lm32Log( LM32_LOG_WARNING, text );
+         scuLog( LM32_LOG_WARNING, ESC_WARNING
+                 "WARNING: No LM32-timer-macro for MIL-FGs found,"
+                 " polling will used for them!"
+                 ESC_NORMAL );
       }
       else
       { /*
@@ -453,9 +464,7 @@ ONE_TIME_CALL void initInterrupt( void )
  #else
    STATIC_ASSERT( MAX_LM32_INTERRUPTS == 1 );
  #endif
-   const char* text = "IRQ table configured: 0b%b\n";
-   mprintf( text, irqGetMaskRegister() );
-   lm32Log( LM32_LOG_INFO, text, irqGetMaskRegister() );
+   scuLog( LM32_LOG_INFO, "IRQ table configured: 0b%b\n", irqGetMaskRegister() );
    irqEnable();
    IRQ_ASSERT( irqGetAtomicNestingCount() == 0 );
 #endif
@@ -501,14 +510,11 @@ void _onException( const uint32_t sig )
       _CASE_SIGNAL( SIGSEGV )
       default: str = "unknown"; break;
    }
-   const char* text = ESC_ERROR "Exception occurred: %d -> %s\n"
-                    #ifdef CONFIG_STOP_ON_LM32_EXCEPTION
-                      "System stopped!\n"
-                    #endif
-                      ESC_NORMAL;
-
-   mprintf( text, sig, str );
-   lm32Log( LM32_LOG_ERROR, text, sig, str );
+   scuLog( LM32_LOG_ERROR, ESC_ERROR "Exception occurred: %d -> %s\n"
+                                  #ifdef CONFIG_STOP_ON_LM32_EXCEPTION
+                                     "System stopped!\n"
+                                  #endif
+                           ESC_NORMAL, sig, str );
 #ifdef CONFIG_STOP_ON_LM32_EXCEPTION
    irqDisable();
    while( true );
@@ -583,9 +589,8 @@ ONE_TIME_CALL void printCpuId( void )
    if( (int)cpu_info_base == ERROR_NOT_FOUND )
       die( "No CPU INFO ROM found!" );
 
-   const char* text = "CPU ID: 0x%04X\nNumber MSI endpoints: %d\n";
-   mprintf( text, cpu_info_base[0], cpu_info_base[1] );
-   lm32Log( LM32_LOG_INFO, text, cpu_info_base[0], cpu_info_base[1] );
+   scuLog( LM32_LOG_INFO, "CPU-ID: 0x%04X\nNumber MSI endpoints: %d\n",
+           cpu_info_base[0], cpu_info_base[1] );
 }
 
 /*================================ MAIN =====================================*/
@@ -652,9 +657,7 @@ void main( void )
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
       die( "No SYS_CON found!" );
-   text = "SYS_CON found on addr: 0x%p\n";
-   mprintf( text, BASE_SYSCON );
-   lm32Log( LM32_LOG_INFO, text, BASE_SYSCON );
+   scuLog( LM32_LOG_INFO, "SYS_CON found on addr: 0x%p\n", BASE_SYSCON );
   /*!
    * Will need by usleep_init()
    */
@@ -663,23 +666,11 @@ void main( void )
 
    printCpuId();
 
-   text = "g_oneWireBase.pWr is:   0x%p\n";
-   mprintf( text, g_oneWireBase.pWr );
-   lm32Log( LM32_LOG_INFO, text, g_oneWireBase.pWr );
-
-   text = "g_oneWireBase.pUser is: 0x%p\n";
-   mprintf( text, g_oneWireBase.pUser  );
-   lm32Log( LM32_LOG_INFO, text, g_oneWireBase.pUser );
-
-   text = "g_pScub_irq_base is:    0x%p\n";
-   mprintf( text, g_pScub_irq_base );
-   lm32Log( LM32_LOG_INFO, text, g_pScub_irq_base );
-
+   scuLog( LM32_LOG_INFO, "g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr );
+   scuLog( LM32_LOG_INFO, "g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser );
+   scuLog( LM32_LOG_INFO, "g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base );
 #ifdef CONFIG_MIL_FG
-   text = "g_pMil_irq_base is:     0x%p\n";
-   mprintf( text, g_pMil_irq_base );
-   lm32Log( LM32_LOG_INFO, text, g_pMil_irq_base );
-
+   scuLog( LM32_LOG_INFO, "g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base );
    initEcaQueue();
 #endif
 
@@ -713,9 +704,8 @@ void main( void )
    #pragma GCC diagnostic pop
   #endif
  #endif
-   text = "MMU-Tag 0x%04X for ADDAC-DAQ-buffer: %s\n";
-   mprintf( text, TAG_ADDAC_DAQ, mmuStatus2String( status ) );
-   lm32Log( LM32_LOG_INFO, text, TAG_ADDAC_DAQ, mmuStatus2String( status ) );
+   scuLog( LM32_LOG_INFO, "MMU-Tag 0x%04X for ADDAC-DAQ-buffer: %s\n",
+           TAG_ADDAC_DAQ, mmuStatus2String( status ) );
  #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
    STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.mDaq.memAdmin.indexes.offset) );
    STATIC_ASSERT( sizeof(size_t) == sizeof(g_shared.mDaq.memAdmin.indexes.capacity) );
@@ -726,51 +716,40 @@ void main( void )
                       (size_t*)&g_shared.mDaq.memAdmin.indexes.capacity,
                       true );
    #pragma GCC diagnostic pop
-   text = "MMU-Tag 0x%04X for MIL-DAQ-buffer:   %s\n";
-   mprintf( text, TAG_MIL_DAQ, mmuStatus2String( status ) );
-   lm32Log( LM32_LOG_INFO, text, TAG_MIL_DAQ, mmuStatus2String( status ) );
+   scuLog( LM32_LOG_INFO, "MMU-Tag 0x%04X for MIL-DAQ-buffer:   %s\n",
+           TAG_MIL_DAQ, mmuStatus2String( status ) );
  #endif
 #endif /* CONFIG_USE_MMU */
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   {
-      text =               "ADDAC-DAQ buffer offset:   %5u item\n";
-      const char* text2 = "ADDAC-DAQ buffer capacity: %5u item\n";
  #ifdef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
-      mprintf( text, g_shared.sDaq.ringAdmin.indexes.offset );
-      lm32Log( LM32_LOG_INFO, text, g_shared.sDaq.ringAdmin.indexes.offset );
-      mprintf( text2, g_shared.sDaq.ringAdmin.indexes.capacity );
-      lm32Log( LM32_LOG_INFO, text2, g_shared.sDaq.ringAdmin.indexes.capacity );
+   scuLog( LM32_LOG_INFO, "ADDAC-DAQ buffer offset:   %5u item\n",
+           g_shared.sDaq.ringAdmin.indexes.offset );
+   scuLog( LM32_LOG_INFO, "ADDAC-DAQ buffer capacity: %5u item\n",
+           g_shared.sDaq.ringAdmin.indexes.capacity );
  #else
-      mprintf( text, g_shared.sDaq.ramIndexes.ringIndexes.offset );
-      lm32Log( LM32_LOG_INFO, text, g_shared.sDaq.ramIndexes.ringIndexes.offset );
-      mprintf( text2, g_shared.sDaq.ramIndexes.ringIndexes.capacity );
-      lm32Log( LM32_LOG_INFO, text2, g_shared.sDaq.ramIndexes.ringIndexes.capacity );
+   scuLog( LM32_LOG_INFO, "ADDAC-DAQ buffer offset:   %5u item\n",
+           g_shared.sDaq.ramIndexes.ringIndexes.offset );
+   scuLog( LM32_LOG_INFO, "ADDAC-DAQ buffer capacity: %5u item\n",
+           g_shared.sDaq.ramIndexes.ringIndexes.capacity );
  #endif
-   }
 #endif
 
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
-   text = "MIL-DAQ buffer offset:     %5u item\n";
-   mprintf( text, g_shared.mDaq.memAdmin.indexes.offset );
-   lm32Log( LM32_LOG_INFO, text, g_shared.mDaq.memAdmin.indexes.offset );
-
-   text = "MIL-DAQ buffer capacity:   %5u item\n";
-   mprintf( text, g_shared.mDaq.memAdmin.indexes.capacity );
-   lm32Log( LM32_LOG_INFO, text, g_shared.mDaq.memAdmin.indexes.capacity );
+   scuLog( LM32_LOG_INFO, "MIL-DAQ buffer offset:     %5u item\n",
+           g_shared.mDaq.memAdmin.indexes.offset );
+   
+   scuLog( LM32_LOG_INFO, "MIL-DAQ buffer capacity:   %5u item\n",
+           g_shared.mDaq.memAdmin.indexes.capacity );
 #endif
 
-   text = "Found MIL function generators: %d\n";
-   mprintf( text, milGetNumberOfFg() );
-   lm32Log( LM32_LOG_INFO, text, milGetNumberOfFg() );
-
+   scuLog( LM32_LOG_INFO, "Found MIL function generators: %d\n", milGetNumberOfFg() );
+ 
    initInterrupt();
 
-   text = ESC_FG_GREEN ESC_BOLD
-          "\n *** Initialization done, going in endless loop... ***\n\n"
-          ESC_NORMAL;
-   lm32Log( LM32_LOG_INFO, text );
-   mprintf( text );
+   scuLog( LM32_LOG_INFO, ESC_FG_GREEN ESC_BOLD
+           "\n *** Initialization done, going in endless loop... ***\n\n"
+           ESC_NORMAL );
 
    while( true )
    {

@@ -142,6 +142,14 @@ extern TIME_MEASUREMENT_T g_irqTimeMeasurement;
   #define ADDR_DEVBUS 0x20
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup LM32_LOG
+ * @ingroup PRINTF
+ * @brief Sends a log-message via vLm32Log() and vprintf().
+ * @note This function is only during the initialization allowed! 
+ */
+void scuLog( const unsigned int filter, const char* format, ... );
+
 #define CONFIG_QUEUE_ALARM
 
 #ifdef CONFIG_QUEUE_ALARM

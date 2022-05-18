@@ -159,6 +159,8 @@ void fgDisableChannel( const unsigned int channel )
    if( pFgRegs->state == STATE_ACTIVE )
    {    // hw is running
       hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
+      lm32Log( LM32_LOG_DEBUG, "Flush circular buffer of channel: %u\n",
+               channel );
       pFgRegs->rd_ptr = pFgRegs->wr_ptr;
    }
    else

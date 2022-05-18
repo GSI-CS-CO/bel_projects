@@ -213,6 +213,7 @@ ifdef USE_MMU
 endif
 ifdef USE_LM32LOG
    DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_syslog_common.h
+   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_syslog.h
 endif
 
 # CODE_OPTIMIZATION = 2

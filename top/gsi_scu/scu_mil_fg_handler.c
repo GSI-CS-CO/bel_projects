@@ -13,6 +13,7 @@
   #ifdef CONFIG_MIL_DAQ_USE_RAM
     #include <daq_main.h>
   #endif
+  #include <scu_syslog.h>
 #endif
 
 #include "scu_mil_fg_handler.h"
@@ -99,7 +100,6 @@ STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
  * @param slot Slot-number in the case the mil connection is established via
  *             SCU-Bus
  * @param msg String containing additional message text.
- * @todo Push it in history.
  */
 STATIC void milPrintDeviceError( const int status, const int slot, const char* msg )
 {
@@ -115,14 +115,24 @@ STATIC void milPrintDeviceError( const int status, const int slot, const char* m
      __MSG_ITEM( RCV_TASK_ERR );
      default:
      {
+     #ifdef CONFIG_USE_LM32LOG
+        lm32Log( LM32_LOG_ERROR, "%s%d failed with code %d" ESC_NORMAL "\n",
+                                 pText, slot, status);
+     #else
         mprintf( "%s%d failed with code %d" ESC_NORMAL "\n",
                  pText, slot, status);
+     #endif
         return;
      }
   }
   #undef __MSG_ITEM
+#ifdef CONFIG_USE_LM32LOG
+  lm32Log( LM32_LOG_ERROR, "%s%d failed with message %s, %s" ESC_NORMAL "\n",
+                           pText, slot, pMessage, msg);
+#else
   mprintf( "%s%d failed with message %s, %s" ESC_NORMAL "\n",
            pText, slot, pMessage, msg);
+#endif
 }
 
 
@@ -316,7 +326,7 @@ inline bool milHandleClearHandlerState( const void* pScuBus,
       {
          s_clearIsActive |= slaveFlags;
          fgMilClearHandlerState( socket );
-         hist_addx( HISTORY_XYZ_MODULE, "fgMilClearHandlerState", socket );
+         hist_addx( HISTORY_XYZ_MODULE, __func__, socket );
          return true;
       }
    }
@@ -616,6 +626,7 @@ void dbgPrintMilTaskData( void )
  */
 void fgMilClearHandlerState( const unsigned int socket )
 {
+   lm32Log( LM32_LOG_DEBUG, "%s( %u )\n", __func__, socket );
    if( isMilScuBusFg( socket ) )
    {
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
@@ -738,7 +749,13 @@ STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
    if( lastTime > 0 )
    {
       if( (timestamp - lastTime) > 100000000ULL )
+      {
+      #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_WARNING, ESC_WARNING "Time-gap: %d" ESC_NORMAL "\n", count++ );
+      #else
          mprintf( ESC_WARNING "Time-gap: %d" ESC_NORMAL "\n", count++ );
+      #endif
+      }
    }
    lastTime = timestamp;
 #endif
@@ -826,11 +843,20 @@ STATIC inline void pushDaqData( FG_MACRO_T fgMacro,
  */
 STATIC void printTimeoutMessage( register MIL_TASK_DATA_T* pMilTaskData )
 {
-   mprintf( ESC_WARNING "timeout %s: state %s, taskid %d index %d" ESC_NORMAL"\n",
+#ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_ERROR, ESC_ERROR
+            "ERROR: Timeout %s: state %s, taskid %d index %d" ESC_NORMAL"\n",
             (pMilTaskData->lastMessage.slot != 0)? "dev_sio_handler" : "dev_bus_handler",
             state2string( pMilTaskData->state ),
             getMilTaskId( pMilTaskData ),
             pMilTaskData->lastChannel );
+#else
+   mprintf( ESC_ERROR "ERROR: Timeout %s: state %s, taskid %d index %d" ESC_NORMAL"\n",
+            (pMilTaskData->lastMessage.slot != 0)? "dev_sio_handler" : "dev_bus_handler",
+            state2string( pMilTaskData->state ),
+            getMilTaskId( pMilTaskData ),
+            pMilTaskData->lastChannel );
+#endif
 }
 
 #ifndef __DOXYGEN__
@@ -970,6 +996,9 @@ STATIC inline void feedMilFg( const unsigned int socket,
                 &g_shared.oSaftLib.oFg.aRegs[0], channel, &pset ) )
    {
       hist_addx(HISTORY_XYZ_MODULE, "MIL-FG buffer empty, no parameter sent", socket);
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR
+              "ERROR: Buffer of fg-%u-%u is empty! Channel: %u\n"
+              ESC_NORMAL, socket, devNum, channel );
       return;
    }
 
@@ -1040,8 +1069,15 @@ void handleMilFg( const unsigned int socket,
 
    if( channel >= ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) )
    {
-      mprintf( ESC_ERROR "%s: Channel of MIL-FG out of range: %d\n" ESC_NORMAL,
+   #ifdef CONFIG_USE_LM32LOG
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR
+               "ERROR: %s: Channel of MIL-FG out of range: %d\n" ESC_NORMAL,
                __func__, channel );
+   #else
+      mprintf( ESC_ERROR 
+               "ERROR: %s: Channel of MIL-FG out of range: %d\n" ESC_NORMAL,
+               __func__, channel );
+   #endif
       return;
    }
 
@@ -1538,8 +1574,15 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
 
       default: /* Should never be reached! */
       {
-         mprintf( ESC_ERROR "Unknown FSM-state of %s(): %d !\n" ESC_NORMAL,
+      #ifdef CONFIG_USE_LM32LOG
+         lm32Log( LM32_LOG_ERROR, ESC_ERROR
+                                  "ERROR: Unknown FSM-state of %s(): %d !\n" ESC_NORMAL,
+                                  __func__, pMilData->state );
+
+      #else
+         mprintf( ESC_ERROR "ERROR: Unknown FSM-state of %s(): %d !\n" ESC_NORMAL,
                   __func__, pMilData->state );
+      #endif
          FSM_INIT_FSM( ST_WAIT, label='Initializing', color=blue );
          break;
       }

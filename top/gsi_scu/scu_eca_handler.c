@@ -48,26 +48,22 @@ void initEcaQueue( void )
    if( valCnt != 0 )
    {
       const unsigned int cleared = ecaClearQueue( g_eca.pQueue, valCnt );
-      const char* text = ESC_FG_MAGENTA
-               "Pending actions: %d\n"
-               "Cleared actions: %d\n"
-               ESC_NORMAL;
-      mprintf( text, valCnt, cleared );
-      lm32Log( LM32_LOG_INFO, text, valCnt, cleared );
+      scuLog( LM32_LOG_INFO, ESC_FG_MAGENTA
+              "Pending actions: %d\n"
+              "Cleared actions: %d\n"
+              ESC_NORMAL, valCnt, cleared );
    }
    ecaControlSetMsiLM32TargetAddress( g_eca.pControl, (void*)pMyMsi, true );
 #endif
    //!@todo Check this story with ECA-tag...
    //g_eca.tag = g_eca.pQueue->tag;
-   const char* text = ESC_FG_MAGENTA
+   scuLog( LM32_LOG_INFO, ESC_FG_MAGENTA
             "ECA queue found at: 0x%p.\n"
          #ifdef _CONFIG_ECA_BY_MSI
             "MSI for ECA installed.\n"
          #endif
-            "Waiting for ECA with tag 0x%08X...\n"
-            ESC_NORMAL;
-   mprintf( text, g_eca.pQueue, g_eca.tag );
-   lm32Log( LM32_LOG_INFO, text, g_eca.pQueue, g_eca.tag );
+            "Waiting for ECA with tag 0x%08X ...\n"
+            ESC_NORMAL, g_eca.pQueue, g_eca.tag );
 }
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
