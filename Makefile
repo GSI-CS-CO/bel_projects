@@ -23,6 +23,7 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
+PATH:=$(PWD)/riscv-toolchain/bin:$(PATH)
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -198,11 +199,21 @@ toolchain:	lm32-elf-gcc.tar.xz
 toolchain-clean::
 	rm -rf toolchain
 
+riscv-toolchain-download:
+	wget https://ohwr.org/project/wrpc-sw/wikis/uploads/e445916c27cc49cc62a370aded9cacb2/riscv_gcc_11_1_0.tar.xz -O riscv_gcc.tar.xz
+
+riscv-toolchain:	riscv-toolchain-download
+	tar xvJf riscv_gcc.tar.xz
+	mv riscv riscv-toolchain
+
+riscv-toolchain-clean::
+	rm -rf riscv-toolchain
+
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone toolchain wrpc-sw-config
+firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
