@@ -98,7 +98,7 @@ uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GP
 
 // application-specific function prototypes
 static void init();
-static void initSharedMem();
+static void initSharedMem(uint32_t *sharedSize);
 static void initMpsData();
 static void initIrqTable();
 static void printSrcAddr();
