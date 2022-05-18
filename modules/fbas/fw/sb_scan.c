@@ -145,11 +145,11 @@ status_t probeSbSlave(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId
       *slaves |= (uint32_t)(0x1) << slot;
 
       u16val  = *(pMaster + (slot << 16) + SBS_CLK_10K); // get macro clock of a SCU bus slave
-      DBPRINT3("sb_scan: clk (x10K)=%d\n", u16val);
+      DBPRINT1("sb_scan: clk (x10K)=%d\n", u16val);
     }
   }
 
-  DBPRINT3("sb_scan: slaves=%08x\n", *slaves);
+  DBPRINT1("sb_scan: slaves=%08x\n", *slaves);
   return COMMON_STATUS_OK;
 }
 
@@ -176,7 +176,7 @@ void probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slaves, uint32_t* pSha
 
       *(pSharedDest + SBS_EXT_CID_SYS + u8val - 1) = u32val;
     }
-    DBPRINT3("sb_scan: slot%d: reg=%x, sys=%04x, grp=%04x\n",u8val, SBS_EXT_CID_SYS, u16val, u16val2);
+    DBPRINT1("sb_scan: slot%d: reg=%x, sys=%04x, grp=%04x\n",u8val, SBS_EXT_CID_SYS, u16val, u16val2);
   }
 }
 
@@ -196,7 +196,7 @@ status_t readSbSlaveReg(volatile uint16_t* pSlave, regset_t* regset, uint16_t *p
   for (i = 0; i < regset->len; ++i)
     *(pData + i) = *(pSlave + regset->base + regset->offset + i);
 
-  DBPRINT3("sb_scan: sb=%x, base=%x, off=%x, len=%x\n",
+  DBPRINT1("sb_scan: sb=%x, base=%x, off=%x, len=%x\n",
       pSlave, regset->base, regset->offset, regset->len);
   return COMMON_STATUS_OK;
 }
@@ -271,9 +271,9 @@ void initSharedMem(uint32_t *sharedSize)
   pSharedSetSbSlaves = (uint32_t *)(pShared + (FBAS_SHARED_SET_SBSLAVES >> 2));
   pSharedGetSbSlaves = (uint32_t *)(pShared + (FBAS_SHARED_GET_SBSLAVES >> 2));
   pSharedGetSbStd = (uint32_t *)(pShared + (FBAS_SHARED_GET_SBSTDBEGIN >> 2));
-  DBPRINT3("sb_scan: SHARED_SET_SBSLAVES 0x%08x\n", pSharedSetSbSlaves);
-  DBPRINT3("sb_scan: SHARED_GET_SBSLAVES 0x%08x\n", pSharedGetSbSlaves);
-  DBPRINT3("sb_scan: SHARED_GET_SBSTDBEGIN 0x%08x\n", pSharedGetSbStd);
+  DBPRINT1("sb_scan: SHARED_SET_SBSLAVES 0x%08x\n", pSharedSetSbSlaves);
+  DBPRINT1("sb_scan: SHARED_GET_SBSLAVES 0x%08x\n", pSharedGetSbSlaves);
+  DBPRINT1("sb_scan: SHARED_GET_SBSTDBEGIN 0x%08x\n", pSharedGetSbStd);
 
 }
 
@@ -362,11 +362,11 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
             }
           }
 
-          DBPRINT3("sb_scan: DIOB cfg %08x, sts %08x\n",
+          DBPRINT1("sb_scan: DIOB cfg %08x, sts %08x\n",
               (pSharedGetSbStd + (FBAS_SHARED_GET_SBCFGDIOB >> 2)),
               (pSharedGetSbStd + (FBAS_SHARED_GET_SBSTSDIOB >> 2)));
         } else
-          DBPRINT3("sb_scan: probe failed!\n");
+          DBPRINT1("sb_scan: probe failed!\n");
         break;
       case FBAS_CMD_PROBE_SB_USER:       // probe a slave card (CID must be provided in shared mem)
         u32val = *pSharedSetSbSlaves;
@@ -378,12 +378,12 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
             *pSharedGetSbSlaves = sbSlaves;
             probeSbSlaveExt(pSbMaster, sbSlaves, pSharedGetSbStd);
           } else
-            DBPRINT3("sb_scan: probe failed!\n");
+            DBPRINT1("sb_scan: probe failed!\n");
         } else
-          DBPRINT3("sb_scan: invalid CID (sys=%x, grp=%x)\n", u16val, u16val2);
+          DBPRINT1("sb_scan: invalid CID (sys=%x, grp=%x)\n", u16val, u16val2);
         break;
       default:
-        DBPRINT3("sb_scan: received unknown command '0x%08x'\n", cmd);
+        DBPRINT1("sb_scan: received unknown command '0x%08x'\n", cmd);
         break;
     } // switch
   } // if command
@@ -411,7 +411,7 @@ uint32_t getEndpointInfo()
   if (status != COMMON_STATUS_OK) return status;
 
   pSbMaster = fwlib_getSbMaster();
-  DBPRINT3("sb_scan: pECAQ=%08x, pIOCtrl=%08x, pSbMaster=%08x\n", pECAQ, pIOCtrl, pSbMaster);
+  DBPRINT1("sb_scan: pECAQ=%08x, pIOCtrl=%08x, pSbMaster=%08x\n", pECAQ, pIOCtrl, pSbMaster);
 
   status = extern_entryActionConfigured();      // get NIC data
   if (status != COMMON_STATUS_OK) return status;
