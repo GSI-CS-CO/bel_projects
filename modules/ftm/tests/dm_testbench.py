@@ -222,10 +222,12 @@ class DmTestbench(unittest.TestCase):
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
-    Prints (if printtable=True) the table of values, counters, and frequency over the whole time span.
+    Prints (if printTable=True) the table of values, counters, and frequency over the whole time span.
     Column for EVTNO is 8.
     checkValues is a dictionary of key-value pairs to check. Key is a value in the column and value is the required frequency.
+    The value can be '>n', '<n', '=n', 'n' (which is the same as '=n').
     Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001 occurs in 62 lines of the file to analyse.
+    Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002 occurs at least once in the file to analyse.
     """
     line_count = 0
     maxTime = datetime.datetime.strptime("2000-01-01", '%Y-%m-%d')
@@ -281,6 +283,8 @@ class DmTestbench(unittest.TestCase):
           try:
             if str(checkValues[item])[0] == '>':
               self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater: is:{listCounter[item]} expected:{checkValues[item]}')
+            elif str(checkValues[item])[0] == '<':
+              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
               self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
