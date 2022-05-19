@@ -245,7 +245,7 @@ constexpr uint HIGHST_ADDR = LM32_MEM_SIZE + LM32_OFFSET;
 
 /*! ---------------------------------------------------------------------------
  */
-void Lm32Logd::readLm32( char* pData, std::size_t len, const std::size_t offset )
+uint Lm32Logd::readLm32( char* pData, std::size_t len, const std::size_t offset )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
 
@@ -256,6 +256,8 @@ void Lm32Logd::readLm32( char* pData, std::size_t len, const std::size_t offset 
    }
 
    m_oMmu.getEb()->read( m_lm32Base + offset, pData, EB_BIG_ENDIAN | EB_DATA8, len );
+
+   return len;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -290,8 +292,8 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
    uint ret = 0;
    while( true )
    {
-      readLm32( buffer, sizeof( buffer ), addr );
-      for( uint i = 0; i < sizeof( buffer ); i++ )
+      const uint len = readLm32( buffer, sizeof( buffer ), addr );
+      for( uint i = 0; i < len; i++ )
       {
          if( (buffer[i] == '\0') || (addr + i >= HIGHST_ADDR) )
          {
