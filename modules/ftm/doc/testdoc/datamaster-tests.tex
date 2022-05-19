@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-05-18}
+\Large{Last change: 2022-05-19}
 \end{center}
 \vfill
 \end{titlepage}
@@ -81,7 +81,7 @@ test\_flush.py                &  24                 &   x        &   T          
 test\_loop.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_memory.py               &  10                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   -                 \\ \hline
+test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
@@ -90,7 +90,7 @@ test\_schedules.py            &  2                  &   x        &   x          
 test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
 test\_start\_stop\_abort.py   &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   -                 \\ \hline
+test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 \end{tabular}
 
 \end{table}
@@ -334,7 +334,9 @@ produces 32 messages per second.
 from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
 
 \section{test\_fid7.py}
-\texttt{test\_fid7.py} tests the fix for the format id 7 bug.
+\texttt{test\_fid7.py} tests the fix for the format id 7 bug. This bug
+was: under some conditions an illegal format id 7 was in the message.
+The test checks that ony format id 1 is in the snooped messages.
 
 \section{test\_flow.py}
 This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
@@ -436,7 +438,7 @@ Four tests add two large schedule into the datamaster. This works fine.
 Then a third schedule is loaded, in each test for a different CPU. This
 should fail with return code 250.
 
-Four additional tests check the memory limit mor precisely. These tests
+Four additional tests check the memory limit more precisely. These tests
 use generated schedules just with a given nuber of blocks. Each block
 has its own pattern. A test with the theoretical limit of 1874 blocks
 fails. A similar test with 1869 blocks is Ok, while a test with one
@@ -454,7 +456,8 @@ The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
 
 \section{test\_pps.py}
 \texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
-schedule which sends two timing messages every second.
+schedule which sends two timing messages every second. The test checks
+with 'saft-ctl snoop' the timing messages.
 \section{test\_prio\_and\_type.py}
 This test was \texttt{full\_test/static/prio\_and\_type}.
 \begin{enumerate}
@@ -583,17 +586,33 @@ This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
 \end{enumerate}
 
 \section{test\_switch.py}
-This test was \texttt{full\_test/dynamic/switch}.
+This test was \texttt{full\_test/dynamic/switch}. The schedule \\
+\texttt{dynamic-switch-schedule.dot} is used.
 \begin{enumerate}
   \item Purpose of Test
 
-  Test not working, needs set up.
+  Test the switch command.
   \item Test Actions
+
+  After loading the schedule check with 'dm-sched rawvisited' that no node
+  is visited. Then start pattern IN0. Check the visited nodes. Then start
+  pattern IN1 and check the visited nodes. Use a command schedule to
+  switch to destination pattern B and check again the visited nodes.
   \item Success Criteria
+
+  The correct nodes are visited after each step.
 \end{enumerate}
+
+\section{test\_zzz\_finish.py}
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
+schedule which sends two timing messages every second. The test checks
+with 'saft-ctl snoop' the timing messages. This test should be the last
+in the whole test suite to leave the datamaster with a defined schedule.
+
 \chapter{Common Components}
 \section{dm\_testbench.py}
-\texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.
+\texttt{dm\_testbench.py} is a collection of Python functions for use
+in other test scripts.
 \begin{enumerate}
 \item setUpClass(self)
 
@@ -612,8 +631,9 @@ KeyError if the environment variable DATAMASTER is not set.
 \texttt{saft-ctl tr0 -xv snoop 0 0 0}.
 \end{itemize}
 Usually the binaries for dm-cmd and dm-sched together with the libcarpedm
-are used from the build of the test repository in folders \texttt{modules/ftm/bin}
-and \texttt{modules/ftm/lib}. This is configured in the Makefile.
+are used from the build of the test repository in folders \\
+\texttt{modules/ftm/bin} and \texttt{modules/ftm/lib}. This is
+configured in the Makefile.
 \item setUp(self)
 
 Call \texttt{self.initDatamaster()}.
@@ -764,11 +784,16 @@ If True, the occurrences of all values in 'column' are printed.
 
 checkValues is a dictionary of key-value pairs to check. Key is a value
 in the column and value is the required frequency.
-The value can be '>n', '<n', '=n', 'n' (which is the same as '=n').
+The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'.
+The syntax '<n' fails if there are no occurrences.
+Checks for intevalls are not possible since checkValues is a dictionary
+and keys occur at most once.
 Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001
 occurs in 62 lines of the file to analyse.
 Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002
 occurs at least once in the file to analyse.
+Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does
+NOT occur in the file to analyse.
 \end{enumerate}
 \item analyseDmCmdOutput(self, threadsToCheck=0)
 
@@ -793,7 +818,7 @@ Sleep for 'duration' seconds. 'duration' is a float.
 Delete the file with name 'fileName'.
 \end{enumerate}
 
-\subsection{Structure of Description}
+\section{Structure of Description}
 \begin{enumerate}
   \item Purpose of Test
 
