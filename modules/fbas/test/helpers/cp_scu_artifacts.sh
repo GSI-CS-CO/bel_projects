@@ -51,7 +51,7 @@ lm32_fw="lm32/fbas*.scucontrol.bin lm32/sb_scan.scucontrol.bin"
 domain=$(hostname -d)
 
 # shell scripts to control MPS SCU
-scu_tools="scu/*.sh"
+scu_tools="scu/*.sh scu/*.sched"
 
 # EB tool not available in ramdisk (eg., gw v6.0.1)
 ebfwload="eb-fwload"

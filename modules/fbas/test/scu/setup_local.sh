@@ -650,3 +650,15 @@ reset_node() {
     echo "OPREADY state "
     make_node_ready "$1"
 }
+
+###################
+# Inject the MPS events locally
+#
+# Use saft-dm to inject the MPS events
+###################
+inject_mps_events() {
+    # $1 - iteration of schedule
+    # $2 - filename with the MPS event schedule
+
+    saft-dm bla -fp -n $1 $2
+}
