@@ -45,7 +45,7 @@ prj_dir="${PWD/fbas*/fbas}"
 tr_gw="v6.1.2"
 
 # SCU FW (independent from gateware version, built by devel host)
-lm32_fw="lm32/fbas*.scucontrol.bin"
+lm32_fw="lm32/fbas*.scucontrol.bin lm32/sb_scan.scucontrol.bin"
 
 # SCU provided by user
 domain=$(hostname -d)

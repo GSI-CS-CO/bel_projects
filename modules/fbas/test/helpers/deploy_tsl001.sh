@@ -41,7 +41,7 @@ hostname+=.$domain
 
 # local deployment
 rsync $rsync_opts --include='fbas.*.bin' --include='fbas16.*.bin' \
-    --exclude='*' "$build_dir/" "$lm32_fw_dir/"
+    --include='sb_scan*.bin' --exclude='*' "$build_dir/" "$lm32_fw_dir/"
 
 # remote deployment
 rsync $rsync_opts \
