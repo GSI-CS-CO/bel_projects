@@ -28,7 +28,7 @@ ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
 export PATH
-CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
+CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-unknown-elf-"
 export CROSS_COMPILE_RISCV
 EB_TOOLS_WRPC_SW=no
 export EB_TOOLS_WRPC_SW
