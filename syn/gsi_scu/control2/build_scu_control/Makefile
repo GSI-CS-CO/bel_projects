@@ -18,7 +18,7 @@ TARGET         := scu_control
  USE_MMU := 1
  SCU_MIL := 1
 # MIL_GAP := 1
- MIL_DAQ_USE_DDR3 := 1
+# MIL_DAQ_USE_DDR3 := 1
 # MIL_IN_TIMER_INTERRUPT := 1
  
  ADDAC_DAQ := 1
@@ -70,6 +70,7 @@ ifeq ($(BASE_VERSION), 3)
   DEFINES += CONFIG_FW_VERSION_3
 endif
 
+DEFINES += CONFIG_USE_FG_MSI_TIMEOUT
 
 ifdef MIL_IN_TIMER_INTERRUPT
  DEFINES += MAX_LM32_INTERRUPTS=2
@@ -260,7 +261,7 @@ endif
 # SCU_URL = scuxl0202
 # SCU_URL = scuxl0305
 # SCU_URL = scuxl0331
-# SCU_URL = scuxl0162   # with MIL and ADDAC
+ SCU_URL = scuxl0162   # with MIL and ADDAC
 # SCU_URL = scuxl0336  # DIOB-test
  # ACU-test
 

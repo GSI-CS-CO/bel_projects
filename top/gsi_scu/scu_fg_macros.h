@@ -21,6 +21,11 @@
 extern "C" {
 #endif
 
+#ifndef MSI_TIMEOUT
+   #define MSI_TIMEOUT 10
+#endif
+
+#define MSI_TIMEOUT_OFFSET (MSI_TIMEOUT * 1000000000ULL)
 
 /*!
  * @brief Control register of function generator.
@@ -127,12 +132,42 @@ uint16_t getFgShiftRegValue( const FG_PARAM_SET_T* pPset )
  */
 typedef struct
 {
-  // uint64_t timeout;
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   uint64_t timeout;      /*!<@brief MSI timeout value. */
+#endif
 #ifdef CONFIG_USE_SENT_COUNTER
    uint32_t param_sent;   /*!<@brief Sent counter */
 #endif
    int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
 } FG_CHANNEL_T;
+
+extern FG_CHANNEL_T g_aFgChannels[];
+
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+/*! ---------------------------------------------------------------------------
+ * @brief Restarts respectively resets the watchdog timer of a given channel.
+ */
+STATIC inline void wdtReset( const unsigned int channel )
+{
+   FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
+   g_aFgChannels[channel].timeout = getWrSysTimeSafe() + MSI_TIMEOUT_OFFSET;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Disables the watchdog timer of the given channel.
+ */
+STATIC inline void wdtDisable( const unsigned int channel )
+{
+   FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
+   g_aFgChannels[channel].timeout = 0LL;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Polls all activated watchdog timers and gives a error-message
+ *        on LM32 syslog if en timeout was happened.
+ */
+void wdtPoll( void );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief disables the generation of irqs for the specified channel

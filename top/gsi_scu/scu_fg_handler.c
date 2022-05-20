@@ -347,6 +347,11 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
                   &pset,
                   (pThis->cntrl_reg.i16 & FG_NUMBER) |
                   ((pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) );
+
+ #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtReset( pThis->cntrl_reg.bv.number );
+ #endif
+
    return true;
 }
 

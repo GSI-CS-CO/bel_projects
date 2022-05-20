@@ -363,7 +363,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
          }
          while( next );
       }
-      addr += sizeof( buffer );
+      addr += len;
    }
 }
 

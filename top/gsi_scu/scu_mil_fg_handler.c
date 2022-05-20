@@ -113,13 +113,16 @@ STATIC void milPrintDeviceError( const int status, const int slot, const char* m
      __MSG_ITEM( RCV_ERROR );
      __MSG_ITEM( RCV_TIMEOUT );
      __MSG_ITEM( RCV_TASK_ERR );
+     __MSG_ITEM( RCV_PARITY );
+     __MSG_ITEM( ERROR );
+     __MSG_ITEM( RCV_TASK_BSY );
      default:
      {
      #ifdef CONFIG_USE_LM32LOG
-        lm32Log( LM32_LOG_ERROR, "%s%d failed with code %d" ESC_NORMAL "\n",
-                                 pText, slot, status);
+        lm32Log( LM32_LOG_ERROR, "%s%d failed with code %d, message: %s" ESC_NORMAL "\n",
+                                 pText, slot, status, msg);
      #else
-        mprintf( "%s%d failed with code %d" ESC_NORMAL "\n",
+        mprintf( "%s%d failed with code %d, message: %s" ESC_NORMAL "\n",
                  pText, slot, status);
      #endif
         return;
@@ -371,7 +374,7 @@ inline void milFgPrepare( const void* pScuBus,
       * Set MIL-DAC in FG mode
       */
       scub_write_mil( (volatile unsigned short*) pScuBus, slot, 0x1, FC_IFAMODE_WR | dev );
-      
+
       return;
    }
 
@@ -441,7 +444,7 @@ inline void milFgStart( const void* pScuBus,
    write_mil_blk( (volatile unsigned int*)pMilBus,
                   (short*)&milFgRegs,
                   FC_BLK_WR | dev );
-   
+
    /*
     * Still in block mode !
     */
@@ -1034,6 +1037,9 @@ STATIC inline void feedMilFg( const unsigned int socket,
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
+ #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtReset( channel );
+ #endif
  #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
  #endif

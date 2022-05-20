@@ -757,6 +757,9 @@ void main( void )
          die( "Stack overflow!" );
       schedule();
       queuePollAlarm();
+   #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+      wdtPoll();
+   #endif
    }
 }
 

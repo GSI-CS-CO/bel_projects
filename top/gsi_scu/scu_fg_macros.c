@@ -40,13 +40,44 @@ typedef enum
  *        Non shared memory part for each function generator channel.
  */
 FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] =
-#ifdef CONFIG_USE_SENT_COUNTER
-   {{0,0}};
-#else
-   {{0}};
-#endif
+{
+   {
+    #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+      .timeout      = 0L,
+    #endif
+    #ifdef CONFIG_USE_SENT_COUNTER
+      .param_sent   = 0,
+    #endif
+      .last_c_coeff = 0
+   }
+};
 
 STATIC_ASSERT( ARRAY_SIZE(g_aFgChannels) == MAX_FG_CHANNELS );
+
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+/*! ---------------------------------------------------------------------------
+ */
+void wdtPoll( void )
+{
+   const uint64_t currentTime = getWrSysTimeSafe();
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aFgChannels ); i++ )
+   {
+      const uint64_t timeout = g_aFgChannels[i].timeout;
+      if( timeout == 0LL )
+         continue;
+      if( currentTime <= timeout )
+         continue;
+      g_aFgChannels[i].timeout = 0LL;
+   #ifdef CONFIG_USE_LM32LOG
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR
+               "ERROR: MSI-timeout on FG- channel: %u !\n" ESC_NORMAL, i );
+   #else
+      mprintf( ESC_ERROR
+               "ERROR: MSI-timeout on FG- channel: %u !\n" ESC_NORMAL, i );
+   #endif
+   }
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
@@ -54,6 +85,10 @@ STATIC_ASSERT( ARRAY_SIZE(g_aFgChannels) == MAX_FG_CHANNELS );
 void fgEnableChannel( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
+
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtReset( channel );
+#endif
 
    const unsigned int socket = getSocket( channel );
    const unsigned int dev    = getDevice( channel );
@@ -112,10 +147,10 @@ void fgEnableChannel( const unsigned int channel )
    #endif
    } /* if( cbRead( ... ) != 0 ) */
 
- // reset watchdog
- //  g_aFgChannels[channel].timeout = 0;
 
    sendSignalArmed( channel );
+
+
 }
 
 /*! ---------------------------------------------------------------------------
@@ -124,6 +159,10 @@ void fgEnableChannel( const unsigned int channel )
 void fgDisableChannel( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
+
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtDisable( channel );
+#endif
 
    FG_CHANNEL_REG_T* pFgRegs = &g_shared.oSaftLib.oFg.aRegs[channel];
 
