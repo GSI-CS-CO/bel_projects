@@ -28,7 +28,7 @@ ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
 export PATH
-CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-unknown-elf-"
+CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
 export CROSS_COMPILE_RISCV
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
@@ -247,10 +247,11 @@ riscv-toolchain-download:
 
 riscv-toolchain:	riscv-toolchain-download
 	test -d riscv-toolchain || tar xvJf riscv_gcc.tar.xz
-	test -d risc-v && mv riscv riscv-toolchain || true
+	test -d riscv && mv riscv riscv-toolchain || true
 
 riscv-toolchain-clean::
-	rm -rf riscv-toolchain
+	rm -rf riscv_gcc.tar.xz || true
+	rm -rf riscv-toolchain || true
 
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
