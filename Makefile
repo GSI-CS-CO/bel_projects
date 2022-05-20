@@ -255,7 +255,7 @@ riscv-toolchain-clean::
 
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
-		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig-wrpc-v5
+		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
