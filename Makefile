@@ -30,6 +30,8 @@ PATH:=$(PWD)/toolchain/bin:$(PATH)
 export PATH
 CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
 export CROSS_COMPILE_RISCV
+EB_TOOLS_WRPC_SW=no
+export EB_TOOLS_WRPC_SW
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
