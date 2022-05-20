@@ -19,7 +19,7 @@ if false; then
 
 # use explicit names instead
 else
-    for d in ip_cores/wrpc-sw ip_cores/fpga-config-space; do
+    for d in ip_cores/wrpc-sw ip_cores/wr-cores ip_cores/fpga-config-space; do
 	(cd $d && do_submod)
     done
 fi
