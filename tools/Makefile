@@ -5,7 +5,8 @@ ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
-TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
+#TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
+TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
 USE_RPATH ?= yes
 
@@ -17,7 +18,8 @@ else
 LIBS        ?= -letherbone -lm
 endif
 
-all:	$(TARGETS) monitoring
+#all:	$(TARGETS) monitoring
+all:	$(TARGETS)
 
 clean:  monitoring-clean
 	rm -f $(TARGETS)
