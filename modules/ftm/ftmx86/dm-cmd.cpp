@@ -50,10 +50,11 @@ static void help(const char *program) {
   fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
   //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
   fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
-  fprintf(stderr, "  halt                      Immediately aborts all threads on all CPUs\n");
-  fprintf(stderr, "  lock <target>             Locks all queues of a block, making them invisible to the DM and allowing modification during active runtime\n");
-  fprintf(stderr, "  clear <target>            Clears all queues of a locked block allowing modification/refill during active runtime\n");
-  fprintf(stderr, "  unlock <target>           Unlocks all queues of a block, making them visible to the DM\n");
+  fprintf(stderr, "  halt                      Immediately aborts all threads on all CPUs.\n");
+  fprintf(stderr, "  lock <target>             Locks all queues of a block for asynchronous queue manipulation mode. This makes the queues invisible to the DM and allowing modification during active runtime.\n");
+  fprintf(stderr, "                            ACTIVE LOCK MEANS DM WILL NEITHER WRITE TO NOR READ FROM THIS BLOCK'S QUEUES!\n");
+  fprintf(stderr, "  clear <target>            Clears all queues of a locked block allowing modification/refill during active runtime.\n");
+  fprintf(stderr, "  unlock <target>           Unlocks all queues of a block, making them visible to the DM.\n");
   //fprintf(stderr, "  force                     Force cursor to match origin\n");
   fprintf(stderr, "  asyncflush <target>  <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an locked block of the schedule\n");
   fprintf(stderr, "  unlock <target>                               Unlocks a block from asynchronous queue manipulation mode\n");
