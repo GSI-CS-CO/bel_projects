@@ -4,22 +4,22 @@ import os
 """Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
 
-Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
+Prerequisite: datamaster must have a node with name B_PPS. Therefore, dm_cmd.dot is started.
 """
 class TestDmCmd(dm_testbench.DmTestbench):
   @classmethod
   def setUpClass(cls):
     super().setUpClass()
-    TestDmCmd.ppsPatternStarted = False
+    TestDmCmd.dmCmdPatternStarted = False
 
 
   def setUp(self):
-    """Set up for all test cases in this class: start pps pattern.
+    """Set up for all test cases in this class: start dm_cmd pattern.
     """
-    if not TestDmCmd.ppsPatternStarted:
+    if not TestDmCmd.dmCmdPatternStarted:
       self.initDatamaster()
-      self.startPattern('pps.dot')
-      TestDmCmd.ppsPatternStarted = True
+      self.startPattern('dm_cmd.dot')
+      TestDmCmd.dmCmdPatternStarted = True
 
   def targetName_missing(self, command):
     """Common method for test cases with missing target name.
