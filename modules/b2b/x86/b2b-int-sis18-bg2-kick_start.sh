@@ -81,9 +81,9 @@ saft-io-ctl $SDTRIG -n IO3 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl $SDTRIG -n IO3 -c 0x112c804000000000 0xfffffff000000000 1000 0x0 0 -u 
 
 # generate test pulses upon CMD_B2B_TRIGGEREXT
-saft-io-ctl $SDTRIGTEST -n IO1 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIGTEST -n IO1 -c 0x112c804000000000 0xfffffff000000000 2420 0x0 1 -u
-saft-io-ctl $SDTRIGTEST -n IO1 -c 0x112c804000000000 0xfffffff000000000 2620 0x0 0 -u 
 saft-io-ctl $SDTRIGTEST -n IO2 -o 1 -t 0 -a 1
-saft-io-ctl $SDTRIGTEST -n IO2 -c 0x112c804000000000 0xfffffff000000000 3670 0x0 1 -u
-saft-io-ctl $SDTRIGTEST -n IO2 -c 0x112c804000000000 0xfffffff000000000 3870 0x0 0 -u 
+saft-io-ctl $SDTRIGTEST -n IO2 -c 0x112c804000000000 0xfffffff000000000 2420 0x0 1 -u
+saft-io-ctl $SDTRIGTEST -n IO2 -c 0x112c804000000000 0xfffffff000000000 2620 0x0 0 -u 
+saft-io-ctl $SDTRIGTEST -n IO1 -o 1 -t 0 -a 1
+saft-io-ctl $SDTRIGTEST -n IO1 -c 0x112c804000000000 0xfffffff000000000 3670 0x0 1 -u
+saft-io-ctl $SDTRIGTEST -n IO1 -c 0x112c804000000000 0xfffffff000000000 3870 0x0 0 -u 
