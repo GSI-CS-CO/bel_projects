@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-May-2022
+ *  version : 10-May-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -354,17 +354,10 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
 
   uint64_t phase_ns;        // phase value in ns as calculated by phaseFitSubNs
   int64_t  dummy;           // value ignored
-
   int32_t  status;
-    
-
-  /* int32_t  test;
-   uint64_t t1,t2; */
 
   if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // this does not make sense
   if (nSamples < 3)           return B2B_STATUS_PHASEFAILED;           // have at least three samples
-
-  /* t1 = getSysTime(); */
 
   // select timestamp in the middle (never use the first TS)
   usedIdx  = nSamples >> 1;                                            // this is safe as we have at least three samples
@@ -376,29 +369,21 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uin
   delta    = diff % periodNs;                                          // difference is multiple of period? (missing timestamp possible)!
   if (delta > (periodNs >> 1)) *dt = periodNs - delta;
   else                         *dt = delta;
-
-  /*
-  tmp = tStamp[nSamples - 1];
-  for(i=0; i<nSamples;i++) {
-    test = (int32_t)(tmp - tStamp[i]);
-    pp_printf(" %d", test);
-  }
-  pp_printf("\n"); */
-  
   if (*dt > maxDelta) {
     //pp_printf("ohps,  delta %d, usedIDX %d\n", delta, usedIdx);
     return B2B_STATUS_PHASEFAILED;
-  }
+  } // if *dt
 
+  // phase fit
   status = phaseFitSubNs(period, nSamples, &phase_ns, phase_125ps, &dummy, confidence_as);
-  dummy = dummy/1000000;
-  //pp_printf("fraction %d [ps]\n", dummy);
+  dummy  = dummy/1000000;
 
-  /*
-  t2 = getSysTime();
-  test = (int32_t)(t2 -t1);
-  pp_printf("phasefit time: %d\n", test);
-  */
+  // if phase fit failed: plan B
+  if (status != COMMON_STATUS_OK) {
+    *phase_125ps   = fwlib_tns2t125ps(tStamp[usedIdx]);                // just grab a timestamp in the middle
+    *confidence_as = 2 * 1000000000;                                   // set to 2 ns
+    status         = COMMON_STATUS_OK;                                 // assume this is ok ...
+  } // if status
 
   return status;
 } //phaseFit
@@ -532,7 +517,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       if (nInput > 2) insertionSort(tStamp, nInput);                  // for 11 timestamps, this is below 10us
       if (phaseFit(TH1_as, nInput, &tH1_125ps, &dt, &confidence_as) != COMMON_STATUS_OK) {
-        tH1_125ps = 0x7fffffffffffffff;
+        tH1_125ps     = 0x7fffffffffffffff;
+        confidence_as = 1000000000000;                    
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
         if (nInput < 3) status = B2B_STATUS_NORF;
