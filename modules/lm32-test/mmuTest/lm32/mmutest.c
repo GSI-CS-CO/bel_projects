@@ -2,6 +2,8 @@
 #include <mprintf.h>
 #include <eb_console_helper.h>
 #include <lm32_hexdump.h>
+#include <scu_lm32Timer.h>
+#include <lm32Interrupts.h>
 #include <string.h>
 #include <scu_mmu_lm32.h>
 
@@ -11,6 +13,9 @@ MMU_OBJ_T g_mmuObj;
 extern const uint32_t MMU_MAGIC;
 extern const MMU_ADDR_T MMU_LIST_START;
 
+
+STATIC_ASSERT( sizeof(unsigned int) == sizeof(uint32_t) );
+STATIC_ASSERT( sizeof(unsigned short) == sizeof(uint16_t) );
 
 void testAdd( const MMU_TAG_T tag, size_t len, const bool create )
 {
@@ -70,7 +75,7 @@ void main( void )
    hexdump( &item1, sizeof( item1 ) );
 
 #if 1
-  // mmuDelete();
+   mmuDelete();
 
    mprintf( "MMU present?: %s\n", mmuIsPresent()? "yes": "no"  );
 

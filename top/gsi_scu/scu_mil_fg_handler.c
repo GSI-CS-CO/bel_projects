@@ -1037,12 +1037,14 @@ STATIC inline void feedMilFg( const unsigned int socket,
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
- #ifdef CONFIG_USE_FG_MSI_TIMEOUT
-   wdtReset( channel );
- #endif
  #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
  #endif
+
+ #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtReset( channel );
+ #endif
+
    if( status != OKAY )
    {
       milPrintDeviceError( status, getFgSlotNumber( socket ), __func__ );
@@ -1665,7 +1667,7 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
          pMilData->timeoutCounter = 0;
          break;
       }
-      
+
       case ST_FETCH_DATA:
       { 
          FOR_EACH_FG( channel )

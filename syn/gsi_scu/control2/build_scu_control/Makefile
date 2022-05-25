@@ -22,7 +22,7 @@ TARGET         := scu_control
 # MIL_IN_TIMER_INTERRUPT := 1
  
  ADDAC_DAQ := 1
-# DIOB_WITH_DAQ := 1
+ DIOB_WITH_DAQ := 1
 # DEFINES += _CONFIG_DBG_MIL_TASK
 
 BASE_VERSION = 4
@@ -261,7 +261,7 @@ endif
 # SCU_URL = scuxl0202
 # SCU_URL = scuxl0305
 # SCU_URL = scuxl0331
- SCU_URL = scuxl0162   # with MIL and ADDAC
+# SCU_URL = scuxl0162   # with MIL and ADDAC
 # SCU_URL = scuxl0336  # DIOB-test
  # ACU-test
 
