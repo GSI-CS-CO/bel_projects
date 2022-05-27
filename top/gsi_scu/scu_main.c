@@ -292,7 +292,7 @@ ONE_TIME_CALL void onScuBusEvent( const unsigned int slot )
          };
 
         /*!
-         * @see milDeviceHandler
+         * @see milTask
          */
          pushInQueue( &g_queueMilFg, &milMsg );
       }

@@ -115,7 +115,7 @@ typedef struct
  *    int some;
  *    int others;
  * } MY_STRUCT_WITH_QUEUE_T;
- * 
+ *
  * MY_STRUCT_WITH_QUEUE_T myStruct = 
  * {
  *    QUEUE_STATIC_MEMBER_INITIALIZER( myQueue, 42, ITEM_TYP ),
@@ -130,7 +130,7 @@ typedef struct
 #define QUEUE_IMPLEMENT( name, maxCapacity, ITEM_TYP )                        \
    QUEUE_ALLOC_STATIC_MEM( name, maxCapacity, ITEM_TYP );                     \
    SW_QUEUE_T name
-   
+
 /*! ---------------------------------------------------------------------------
  * @brief Creates a queue object in the .data memory segment.
  * 
@@ -241,7 +241,7 @@ void queueCreate( SW_QUEUE_T* pThis,
  *    int some;
  *    int others;
  * } MY_STRUCT_WITH_QUEUE_T;
- * 
+ *
  * void main( void )
  * {
  *    MY_STRUCT_WITH_QUEUE_T myStructWithQueue;

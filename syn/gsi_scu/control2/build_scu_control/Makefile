@@ -26,7 +26,7 @@ TARGET         := scu_control
 # DEFINES += _CONFIG_DBG_MIL_TASK
 
 BASE_VERSION = 4
-SUB_VERSION =5.0
+SUB_VERSION =5.1
 
 NEW_ADDAC_HANDSHAKE := 1
 
@@ -261,7 +261,7 @@ endif
 # SCU_URL = scuxl0202
 # SCU_URL = scuxl0305
 # SCU_URL = scuxl0331
-# SCU_URL = scuxl0162   # with MIL and ADDAC
+ SCU_URL = scuxl0162   # with MIL and ADDAC
 # SCU_URL = scuxl0336  # DIOB-test
  # ACU-test
 
