@@ -261,7 +261,8 @@ wrpc-sw-config::
 
 firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
-	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
+	#$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
+	@echo "Skipping firmware..."
 else
 	@echo "Info: Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
