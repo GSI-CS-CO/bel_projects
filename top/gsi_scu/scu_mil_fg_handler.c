@@ -1015,7 +1015,6 @@ STATIC inline void feedMilFg( const unsigned int socket,
   //                                  (pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) ;
    setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & FG_NUMBER) |
                                     ((pset.control.i32 & (PSET_STEP | PSET_FREQU)) << 10) );
-   int status;
  #if __GNUC__ >= 9
    #pragma GCC diagnostic push
    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -1024,29 +1023,23 @@ STATIC inline void feedMilFg( const unsigned int socket,
    { /*
       * Send FG-data via MIL-extention adapter.
       */
-      status = write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
+       write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
                               FC_BLK_WR | devNum );
    }
    else
    { /*
       * Send FG-data via SCU-bus-slave MIL adapter "SIO"
       */
-      status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
+      scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
  #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
  #endif
 
- #ifdef CONFIG_USE_FG_MSI_TIMEOUT
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
    wdtReset( channel );
- #endif
-
-   if( status != OKAY )
-   {
-      milPrintDeviceError( status, getFgSlotNumber( socket ), __func__ );
-      return;
-   }
+#endif
 #ifdef CONFIG_USE_SENT_COUNTER
    g_aFgChannels[channel].param_sent++;
 #endif
@@ -1135,7 +1128,7 @@ void handleMilFg( const unsigned int socket,
  * @see milDeviceHandler
  */
 STATIC inline
-int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
+void milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
                        const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->lastMessage.slot != INVALID_SLAVE_NR );
@@ -1158,12 +1151,11 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
 #if 1
    if( pMilTaskData->lastMessage.slot != 0 )
    {
-      return scub_write_mil( g_pScub_base, pMilTaskData->lastMessage.slot,
-                                                    0,  dev | FC_IRQ_ACT_WR );
+      scub_write_mil( g_pScub_base, pMilTaskData->lastMessage.slot,
+                                    0,  dev | FC_IRQ_ACT_WR );
+      return;
    }
-   return write_mil( g_pScu_mil_base, 0, dev | FC_IRQ_ACT_WR );
-#else
-  return OKAY;
+   write_mil( g_pScu_mil_base, 0, dev | FC_IRQ_ACT_WR );
 #endif
 }
 
@@ -1340,30 +1332,17 @@ bool milQueuePop( MIL_TASK_DATA_T* pMilData  )
  *       Solution proposal: Linux-host resp. SAFTLIB shall send a
  *       "function-generator-announcement-signal", before the function generator
  *       issued a new analog signal.
-
+ *
  * @param pMilData Pointer to a single element of array: g_aMilTaskData
  */
 STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
 {
    bool next;
    do
-   {  /*
-       * Flag becomes true within the macro FSM_TRANSITION_SELF().
+   {  /*!
+       * @brief Flag becomes true within the macro FSM_TRANSITION_SELF().
        */
       next = false;
-
-      /*!
-       * @brief Currently channel number for loop-macros FOR_EACH_FG and
-       *        FOR_EACH_FG_CONTINUING
-       * @see FOR_EACH_FG
-       * @see FOR_EACH_FG_CONTINUING
-       */
-      unsigned int channel;
-
-      /*!
-       * @brief Return value of the MIL-access functions.
-       */
-      int status = OKAY;
 
       /*!
        * @brief Holds the actual state of the FSM.
@@ -1376,9 +1355,13 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
       switch( lastState )
       {
          case ST_WAIT:
-         {
+         { /*
+            * Did the interrupt handler put a message in the queue?
+            */
             if( milQueuePop( pMilData ) )
-            {
+            { /*
+               * Yes, the message has been moved from the queue.
+               */
             #ifdef CONFIG_USE_INTERRUPT_TIMESTAMP
                pMilData->irqDurationTime = irqGetTimeSinceLastInterrupt();
             #endif
@@ -1402,6 +1385,7 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
             {
                const uint64_t time = getWrSysTimeSafe();
                bool isInGap = false;
+               unsigned int channel;
                FOR_EACH_FG( channel )
                {
                   if( !fgIsStarted( channel ) )
@@ -1463,6 +1447,8 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
             /*
              * fetch status from dev bus controller;
              */
+            int status = OKAY;
+            unsigned int channel;
             FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
             { /*
                * Reset old IRQ-flags
@@ -1493,6 +1479,8 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
          { /*
             * handle irqs for ifas with active pending regs; non blocking write
             */
+            unsigned int active = 0;
+            unsigned int channel;
             FOR_EACH_FG( channel )
             {
                if( isNoIrqPending( pMilData, channel ) )
@@ -1506,12 +1494,15 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
                 * Writing the next polynomial data set to the concerning function
                 * generator in non blocking mode.
                 */
-               status = milHandleAndWrite( pMilData, channel );
-               if( status != OKAY )
-                  milPrintDeviceError( status, pMilData->lastMessage.slot, state2string( lastState ) );
+               milHandleAndWrite( pMilData, channel );
+               active++;
+            }
+            if( active == 0 )
+            {
+               FSM_TRANSITION( ST_WAIT, color=blue, label='no IRQ pending' );
             }
             if( channel == 0 )
-               milPrintDeviceError( status, pMilData->lastMessage.slot, "No interrupt pending!" );
+               milPrintDeviceError( OKAY, pMilData->lastMessage.slot, "No interrupt pending!" );
             //FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
             FSM_TRANSITION_NEXT( ST_FETCH_DATA, color=green );
          } /* end case ST_HANDLE_IRQS */
@@ -1542,6 +1533,8 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
            /*
             * fetch DAQ data
             */
+            int status = OKAY;
+            unsigned int channel;
             FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
             {
                if( isNoIrqPending( pMilData, channel ) )
@@ -1629,6 +1622,7 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
             if( g_gapReadingTime == 0 )
                break;
          #endif
+            unsigned int channel;
             FOR_EACH_FG( channel )
             {
                if( (mg_aReadGap[channel].pTask != pMilData) && isNoIrqPending( pMilData, channel ))
@@ -1659,6 +1653,8 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
          { /*
             * Requesting of all IRQ-pending registers.
             */
+            int status = OKAY;
+            unsigned int channel;
             FOR_EACH_FG( channel )
             {
                if( fgIsStopped( channel ) )
@@ -1678,6 +1674,7 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
 
          case ST_FETCH_DATA:
          {
+            unsigned int channel;
             FOR_EACH_FG( channel )
             {
                if( isNoIrqPending( pMilData, channel ) )
@@ -1696,7 +1693,7 @@ STATIC inline ALWAYS_INLINE void milTask( MIL_TASK_DATA_T* pMilData  )
             #endif
                   pMilData->aFgChannels[channel].daqTimestamp = pMilData->lastMessage.time;
 
-               status = milSetTask( pMilData, channel );
+               const int status = milSetTask( pMilData, channel );
                if( status != OKAY )
                   milPrintDeviceError( status, pMilData->lastMessage.slot, state2string( pMilData->state ) );
             }
