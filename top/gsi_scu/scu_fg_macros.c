@@ -62,18 +62,27 @@ void wdtPoll( void )
    const uint64_t currentTime = getWrSysTimeSafe();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aFgChannels ); i++ )
    {
-      const uint64_t timeout = g_aFgChannels[i].timeout;
+      criticalSectionEnter();
+      volatile const uint64_t timeout = g_aFgChannels[i].timeout;
+      criticalSectionExit();
+
       if( timeout == 0LL )
          continue;
       if( currentTime <= timeout )
          continue;
+
+      criticalSectionEnter();
       g_aFgChannels[i].timeout = 0LL;
+      criticalSectionExit();
+
    #ifdef CONFIG_USE_LM32LOG
       lm32Log( LM32_LOG_ERROR, ESC_ERROR
-               "ERROR: MSI-timeout on FG- channel: %u !\n" ESC_NORMAL, i );
+               "ERROR: MSI-timeout on fg-%u-%u channel: %u !\n" ESC_NORMAL,
+               getSocket(i), getDevice(i), i );
    #else
       mprintf( ESC_ERROR
-               "ERROR: MSI-timeout on FG- channel: %u !\n" ESC_NORMAL, i );
+               "ERROR: MSI-timeout on fg-%u-%u channel: %u !\n" ESC_NORMAL,
+               getSocket(i), getDevice(i), i );
    #endif
    }
 }
@@ -86,12 +95,17 @@ void fgEnableChannel( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_aFgChannels ) );
 
-#ifdef CONFIG_USE_FG_MSI_TIMEOUT
-   wdtReset( channel );
-#endif
 
    const unsigned int socket = getSocket( channel );
    const unsigned int dev    = getDevice( channel );
+
+   lm32Log( LM32_LOG_DEBUG, ESC_DEBUG "%s( %u ): fg-%u-%u\n" ESC_NORMAL,
+            __func__, channel, socket, dev );
+
+
+#ifdef CONFIG_USE_FG_MSI_TIMEOUT
+   wdtReset( channel );
+#endif
 
    FG_REGISTER_T* pAddagFgRegs = NULL;
 
@@ -172,6 +186,9 @@ void fgDisableChannel( const unsigned int channel )
    const unsigned int socket = getSocket( channel );
    const unsigned int dev    = getDevice( channel );
 
+   lm32Log( LM32_LOG_DEBUG, ESC_DEBUG "%s( %u ): fg-%u-%u\n" ESC_NORMAL,
+            __func__, channel, socket, dev );
+
 #ifdef CONFIG_MIL_FG
    int status;
    if( isAddacFg( socket ) )
@@ -198,8 +215,9 @@ void fgDisableChannel( const unsigned int channel )
    if( pFgRegs->state == STATE_ACTIVE )
    {    // hw is running
       hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
-      lm32Log( LM32_LOG_DEBUG, "Flush circular buffer of channel: %u\n",
-               channel );
+      lm32Log( LM32_LOG_DEBUG, ESC_DEBUG
+               "Flush circular buffer of fg-%u-%u channel: %u\n" ESC_NORMAL,
+               socket, dev, channel );
       pFgRegs->rd_ptr = pFgRegs->wr_ptr;
    }
    else

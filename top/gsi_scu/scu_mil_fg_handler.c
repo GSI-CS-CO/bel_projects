@@ -507,7 +507,7 @@ inline int milFgDisable( const void* pScuBus,
       if( (status = scub_read_mil( (volatile unsigned short*) pScuBus, slot,
            &data, FC_CNTRL_RD | dev)) != OKAY )
       {
-         milPrintDeviceError( status, slot, "disarm hw 3" );
+         milPrintDeviceError( status, slot, __func__ );
          return status;
       }
 
@@ -521,14 +521,14 @@ inline int milFgDisable( const void* pScuBus,
    if( (status = read_mil( (volatile unsigned int*)pMilBus, &data,
                            FC_CNTRL_RD | dev)) != OKAY )
    {
-      milPrintDeviceError( status, 0, "disarm hw 1" );
+      milPrintDeviceError( status, 0, __func__ );
       return status;
    }
 
    write_mil( (volatile unsigned int*)pMilBus,
                data & ~(0x2),
               FC_CNTRL_WR | dev );
-   
+
    return status;
 }
 
@@ -629,12 +629,12 @@ void dbgPrintMilTaskData( void )
  */
 void fgMilClearHandlerState( const unsigned int socket )
 {
-   lm32Log( LM32_LOG_DEBUG, "%s( %u )\n", __func__, socket );
+   lm32Log( LM32_LOG_DEBUG, ESC_DEBUG "%s( %u )\n" ESC_NORMAL, __func__, socket );
    if( isMilScuBusFg( socket ) )
    {
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       const MIL_QEUE_T milMsg = 
-      { 
+      {
          .slot = getFgSlotNumber( socket ),
          .time = getWrSysTimeSafe()
       };

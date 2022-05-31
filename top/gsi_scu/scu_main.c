@@ -599,7 +599,7 @@ void main( void )
    const char* text;
    text = ESC_BOLD "\nStart of \"" TO_STRING(TARGET_NAME) "\"" ESC_NORMAL
            ", Version: " TO_STRING(SW_VERSION) "\n"
-           "Compiler: "COMPILER_VERSION_STRING"\n"
+           "Compiler: "COMPILER_VERSION_STRING" Std: " TO_STRING(__STDC_VERSION__) "\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Resets: %u\n"
            "Found MsgBox at 0x%p. MSI Path is 0x%p\n"
@@ -738,7 +738,6 @@ void main( void )
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_MIL_DAQ_USE_RAM )
    scuLog( LM32_LOG_INFO, "MIL-DAQ buffer offset:     %5u item\n",
            g_shared.mDaq.memAdmin.indexes.offset );
-   
    scuLog( LM32_LOG_INFO, "MIL-DAQ buffer capacity:   %5u item\n",
            g_shared.mDaq.memAdmin.indexes.capacity );
 #endif

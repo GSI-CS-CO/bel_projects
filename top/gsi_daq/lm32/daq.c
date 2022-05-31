@@ -507,8 +507,13 @@ void daqDevicePutFeedbackSwitchCommand( register DAQ_DEVICE_T* pThis,
    const DAQ_ACTION_ITEM_T act = { .action = what, .fgNumber = fgNumber };
    if( !queuePush( &pThis->feedback.aktionBuffer, &act ) )
    {
+   #ifdef CONFIG_USE_LM32LOG
+      lm32Log( LM32_LOG_ERROR, ESC_ERROR "ERROR: DAQ command buffer of slot %u full!\n" ESC_NORMAL,
+               daqDeviceGetSlot( pThis ) );
+   #else
       mprintf( ESC_ERROR "Error: DAQ command buffer of slot %u full!\n" ESC_NORMAL,
                daqDeviceGetSlot( pThis ) );
+   #endif
    }
 }
 

@@ -211,7 +211,7 @@ typedef struct
    *        when value > 0. When 0 then the the MIL extention is concerned.
    */
    unsigned int  slot;
-   
+
    /*!
     * @brief Moment of interrupt which fills the queue of this object.
     */

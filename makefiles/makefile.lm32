@@ -15,7 +15,9 @@ MEM_ALIGN     := 4
 DEFINES       += __MEM_ALIGN=$(MEM_ALIGN)
 OUTPUT_FORMAT ?= binary
 
-CC      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc -std=gnu99
+GNUC_STD ?= gnu17
+
+CC      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc -std=$(GNUC_STD)
 CXX     = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
 LD      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc
 OBJCPY  = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)objcopy

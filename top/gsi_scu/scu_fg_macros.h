@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #ifndef MSI_TIMEOUT
-   #define MSI_TIMEOUT 10
+   #define MSI_TIMEOUT 3
 #endif
 
 #define MSI_TIMEOUT_OFFSET (MSI_TIMEOUT * 1000000000ULL)
@@ -215,7 +215,8 @@ STATIC inline void makeStop( const unsigned int channel )
 
 #ifndef CONFIG_LOG_ALL_SIGNALS
    hist_addx( HISTORY_XYZ_MODULE, signal2String( signal ), channel );
-   lm32Log( LM32_LOG_DEBUG, "Signal: %s, channel: %u\n",
+   lm32Log( LM32_LOG_DEBUG, ESC_DEBUG
+            "Signal: %s, channel: %u\n" ESC_NORMAL,
             signal2String( signal ), channel );
 #endif
 }
