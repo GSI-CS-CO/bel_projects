@@ -156,6 +156,8 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_tmr_Base_Addr:       unsigned(15 downto 0):=  x"0330";  -- Timer
     CONSTANT c_fg_2_Base_Addr:      unsigned(15 downto 0):=  x"0340";  -- FG2
     CONSTANT c_Conf_Sts1_Base_Addr:              Integer := 16#0500#;  -- Status-Config-Register 
+
+    CONSTANT c_AW_Port1_Base_Addr:               Integer := 16#0510#;  -- Anwender I/O-Register
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
@@ -264,7 +266,38 @@ component config_status
       );
 end component config_status;
 
+component aw_io_reg
+  generic ( AW_Base_addr:   integer;
+            CLK_sys_in_Hz:  integer);
+  port (
+        Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
+        Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus
+        Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
+        Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
+        Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
+        Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
+        Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
+        clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
+        Ena_every_1us:        in   std_logic;                        -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
+        nReset:               in   std_logic;
 
+        SCU_AW_Input_Reg:     in   t_IO_Reg_1_to_7_Array;            -- Input-Port's  zum SCU-Bus
+        SCU_AW_Output_Reg:    out  t_IO_Reg_1_to_7_Array;            -- Output-Port's vom SCU-Bus
+
+        AWOut_Reg1_wr:        out  std_logic;                        -- Daten-Reg. AWOut1
+        AWOut_Reg2_wr:        out  std_logic;                        -- Daten-Reg. AWOut2
+        AWOut_Reg3_wr:        out  std_logic;                        -- Daten-Reg. AWOut3
+        AWOut_Reg4_wr:        out  std_logic;                        -- Daten-Reg. AWOut4
+        AWOut_Reg5_wr:        out  std_logic;                        -- Daten-Reg. AWOut5
+        AWOut_Reg6_wr:        out  std_logic;                        -- Daten-Reg. AWOut6
+        AWOut_Reg7_wr:        out  std_logic;                        -- Daten-Reg. AWOut7
+
+        Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
+        Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
+        Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
+        LA:                   out  std_logic_vector(15 downto 0)
+      );
+end component aw_io_reg;
 
 component tag_ctrl
   generic ( TAG_Base_addr  : integer );
@@ -618,6 +651,19 @@ end component;
   signal SCU_AW_Output_Reg:         t_IO_Reg_1_to_7_Array;  -- Output-Register from SCU-Bus
   signal AW_Output_Reg:             t_IO_Reg_1_to_7_Array;  -- Output-Register to the Piggys
 
+  signal AWOut_Reg1_Wr:         std_logic;
+  signal AWOut_Reg2_Wr:         std_logic;
+  signal AWOut_Reg3_Wr:         std_logic;
+  signal AWOut_Reg4_Wr:         std_logic;
+  signal AWOut_Reg5_Wr:         std_logic;
+  signal AWOut_Reg6_Wr:         std_logic;
+  signal AWOut_Reg7_Wr:         std_logic;
+
+  signal AW_Port1_rd_active:    std_logic;
+  signal AW_Port1_Dtack:        std_logic;
+  signal AW_Port1_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal Tag_Reg_Conf_Err:      std_logic;
+  signal LA_AW_Port1:           std_logic_vector(15 downto 0);
 
 --------------------------- Ctrl1 ----------------------------------------------------------------------
 
@@ -1020,6 +1066,43 @@ port map  (
       );
 
 
+      AW_Port1: aw_io_reg
+generic map(
+      CLK_sys_in_Hz =>  125000000,
+      AW_Base_addr =>   c_AW_Port1_Base_Addr
+           )
+port map  (
+
+      Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,    -- latched address from SCU_Bus
+      Data_from_SCUB_LA   =>  Data_from_SCUB_LA,   -- latched data from SCU_Bus
+      Ext_Adr_Val         =>  Ext_Adr_Val,         -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active       =>  Ext_Rd_active,       -- '1' => Rd-Cycle is active
+      Ext_Rd_fin          =>  Ext_Rd_fin,          -- marks end of read cycle, active one for one clock period of sys_clk
+      Ext_Wr_active       =>  Ext_Wr_active,       -- '1' => Wr-Cycle is active
+      Ext_Wr_fin          =>  SCU_Ext_Wr_fin,      -- marks end of write cycle, active one for one clock period of sys_clk
+      clk                 =>  clk_sys,             -- should be the same clk, used by SCU_Bus_Slave
+      Ena_every_1us       =>  Ena_every_1us,       -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
+      nReset              =>  rstn_sys,
+
+      SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,    -- Input-Port's  zum SCU-Bus
+      SCU_AW_Output_Reg   =>  SCU_AW_Output_Reg,   -- Output-Port's vom SCU-Bus
+
+      AWOut_Reg1_wr       =>  AWOut_Reg1_wr,       -- Daten-Reg. AWOut1
+      AWOut_Reg2_wr       =>  AWOut_Reg2_wr,       -- Daten-Reg. AWOut2
+      AWOut_Reg3_wr       =>  AWOut_Reg3_wr,       -- Daten-Reg. AWOut3
+      AWOut_Reg4_wr       =>  AWOut_Reg4_wr,       -- Daten-Reg. AWOut4
+      AWOut_Reg5_wr       =>  AWOut_Reg5_wr,       -- Daten-Reg. AWOut5
+      AWOut_Reg6_wr       =>  AWOut_Reg6_wr,       -- Daten-Reg. AWOut6
+      AWOut_Reg7_wr       =>  AWOut_Reg7_wr,       -- Daten-Reg. AWOut7
+
+      Rd_active           =>  AW_Port1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
+      Dtack_to_SCUB       =>  AW_Port1_Dtack,           -- connect read sources to SCUB-Macro
+      Data_to_SCUB        =>  AW_Port1_data_to_SCUB,    -- connect Dtack to SCUB-Macro
+      LA                  =>  LA_AW_Port1
+      );
+
+
+
 
 Tag_Ctrl1: tag_ctrl
 generic map(
@@ -1167,7 +1250,7 @@ port map  (
     
 
 testport_mux: process (A_SEL, AW_Config1, AW_Input_Reg, AW_Output_Reg, LA_Tag_Ctrl1,
-                       LA_Conf_Sts1, Timing_Pattern_RCV,
+                       LA_AW_Port1, LA_Conf_Sts1, Timing_Pattern_RCV,
                        Timing_Pattern_LA, test_port_in_0, test_clocks, uart_txd_out,
                        Ext_Rd_active, Ext_Rd_fin, Ext_Rd_Fin_ovl, Ext_Wr_active, SCU_Ext_Wr_fin, Ext_Wr_fin_ovl
                        )
@@ -1186,8 +1269,8 @@ begin
     when X"8" => test_out <= LA_Tag_Ctrl1;   -- Logic analyser Signals "LA_Tag_Ctrl1"
 
     when X"9" => test_out <= LA_Conf_Sts1;
---
-
+    when X"A" => test_out <= LA_AW_Port1; 
+    --
     when X"B" => test_out <= X"00"&
                               '0' &
                               '0' &
@@ -1490,6 +1573,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         wb_scu_rd_active,         wb_scu_data_to_SCUB,
                         FG_1_rd_active,           FG_1_data_to_SCUB,
                         FG_2_rd_active,           FG_2_data_to_SCUB,
+                        AW_Port1_rd_active,       AW_Port1_data_to_SCUB,
                         Tag_Ctrl1_rd_active,      Tag_Ctrl1_data_to_SCUB,
                         Conf_Sts1_rd_active,      Conf_Sts1_data_to_SCUB,
                         tmr_rd_active,            tmr_data_to_SCUB,
@@ -1526,7 +1610,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
 
 -------------- Dtack_to_SCUB -----------------------------
 
-    Dtack_to_SCUB <= ( tmr_dtack  or FG_1_dtack   or  FG_2_dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
+    Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack or FG_1_dtack   or  FG_2_dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                          IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_Dtack);
 
 
@@ -2147,7 +2231,16 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
                                                   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12
                                                       AW_IOBP_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_Output <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
+                                                    ------------------------------------------------------------------
+                                                    --- AW_Config register assigment to be defined
+                                                    ------------------------------------------------------------------
+                                                      if AW_Config2(1 downto 0) ="00" then -- correct values to be checked
+
+                                                        IOBP_Output <= INTL_Output;
+                                                      else
+                                                        IOBP_Output <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
+                                                      end if;
+                                                      --------------------------------------------------------------------
                                                     --  PIO_OUT_SLOT_12 <= IOBP_Output;
                                                         
                                                       PIO_OUT_SLOT_12 <= INTL_Output;
@@ -2241,7 +2334,8 @@ p_stecker: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_t
             UIO_SYNC, UIO_SYNC1, UIO_ENA, UIO_ENA_SYNC, UIO_OUT, UIO_OUT_SYNC, UIO,
             hp_la_o, local_clk_is_running, clk_blink,
             s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, s_nLED_User1_o, s_nLED_User2_o, s_nLED_User3_o,
-            Tag_Sts, Timing_Pattern_LA, Tag_Aktiv,           
+            Tag_Sts, Timing_Pattern_LA, Tag_Aktiv,  
+            AWOut_Reg1_wr, AWOut_Reg2_wr,         
             IOBP_Masken_Reg1, IOBP_Masken_Reg2, IOBP_Masken_Reg3, IOBP_Masken_Reg4, IOBP_Masken_Reg5, IOBP_Masken_Reg6, IOBP_Masken_Reg7, 
             IOBP_LED_ID_Bus_i, IOBP_LED_ID_Bus_o, IOBP_ID, IOBP_LED_En, IOBP_STR_rot_o, IOBP_STR_gruen_o, IOBP_STR_ID_o,
             IOBP_Id_Reg1, IOBP_Id_Reg2, IOBP_Id_Reg3, IOBP_Id_Reg4, IOBP_Id_Reg5, IOBP_Id_Reg6,           
