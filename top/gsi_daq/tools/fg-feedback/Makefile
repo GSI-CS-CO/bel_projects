@@ -9,7 +9,7 @@
 ## Date:     09.10.2020                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=2.11
+DEFINES += VERSION=2.12
 FOR_SCU_AND_ACC := 1
 
 

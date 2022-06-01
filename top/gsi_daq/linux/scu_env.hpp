@@ -1,6 +1,6 @@
 /*!
  * @file scu_env.hpp
- * @brief Checks environment variable whether application is running on SCU
+ * @brief Checks whether the application is running on SCU
  *
  * @note Header only.
  *
@@ -26,6 +26,8 @@
  */
 #ifndef _SCU_ENV_HPP
 #define _SCU_ENV_HPP
+
+#if 0
 
 #include <daq_exception.hpp>
 #include <stdlib.h>
@@ -63,6 +65,26 @@ bool isRunningOnScu( void )
 }
 
 } // namespace Scu
+
+#else
+
+#include <unistd.h>
+
+namespace Scu
+{
+
+/*! ---------------------------------------------------------------------------
+ * @brief Checks whether the application is running on SCU or not.
+ * @retval true Application is running on SCU.
+ * @retval false Application doesn't run on SCU.
+ */
+inline bool isRunningOnScu( void )
+{
+   return ::access( "/dev/wbm0", F_OK ) == 0;
+}
+
+} // namespace Scu
+#endif
 
 #endif // #ifndef _SCU_ENV_HPP
 //================================== EOF ======================================

@@ -9,7 +9,7 @@
 ## Date:     12.04.2022                                                      ##
 ###############################################################################
 
-DEFINES += VERSION=1.0
+DEFINES += VERSION=1.1
 FOR_SCU_AND_ACC := 1
 MIAN_MODULE := mem-mon.cpp
 
