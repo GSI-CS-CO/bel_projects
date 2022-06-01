@@ -261,7 +261,7 @@ class DmTestbench(unittest.TestCase):
             maxLengthKey = len(key)
           if len(str(value)) > maxLengthValue:
             maxLengthValue = len(str(value))
-          if "!delayed" in key or "!conflict" in key:
+          if "!delayed" in key or "!conflict" in key or "!late" in key:
             alignKeys = True
         print()
         print(f'{"Value":^{maxLengthKey+1}s}  {"Count":>{maxLengthValue}s}   {"Frequency":>9s}')
@@ -272,6 +272,8 @@ class DmTestbench(unittest.TestCase):
             keyAligned = key + "         "
           if "!delayed" in key:
             keyAligned = key + " "
+          if "!late" in key:
+            keyAligned = key + "    "
           if timeSpan > 0:
             print(f'{keyAligned:>{maxLengthKey + 1}s}: {value:{maxLengthValue}d} {value/timeSpan:9.3f}Hz')
           else:
