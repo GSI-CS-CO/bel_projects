@@ -160,7 +160,7 @@ OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 OPT_DEFINES += -DGIT_REVISION="$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
 
-OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
+OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(notdir $(_SOURCE))))
 DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep
 
 ifeq ($(DEBUG), 1)
@@ -227,25 +227,40 @@ endif
 # TODO Following rule could be made a bit better...
 #
 $(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
-	$(QUIET)(for i in $(_SOURCE); do \
-		printf "$(WORK_DIR)/"; \
-		case "$${i##*.}" in \
-		"cpp"|"CPP"|"cc"|"CC"|"cxx"|"CXX") \
-			$(CXX) -MM $(CXX_ARG) "$$i"; \
-			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
-			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
-		;; \
-		"c"|"C") \
-			$(CC) -MM $(CC_ARG) "$$i"; \
-			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
-			printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
-		;; \
-		"s"|"S") \
-			$(AS) -MM $(AS_ARG) "$$i"; \
-			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
-			printf '\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
-		;; \
-		esac; \
+	$(QUIET)(for i in $(_SOURCE); do                                       \
+		printf "$(WORK_DIR)/";                                         \
+		case "$${i##*.}" in                                            \
+		"cpp"|"CPP"|"cc"|"CC"|"cxx"|"CXX")                             \
+			x=$$($(CXX) -MM $(CC_ARG) "$$i");                      \
+			if [ "$$?" != "0" ];                                   \
+			then                                                   \
+			   echo :;  # prevents a makefile syntax error         \
+			else                                                   \
+			   echo $${x/.o:/.$${i##*.}.o:} | sed 's/\\/\\\n/g';   \
+			fi;                                                    \
+			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n';    \
+		;;                                                             \
+		"c"|"C")                                                       \
+			x=$$($(CC) -MM $(CC_ARG) "$$i");                       \
+			if [ "$$?" != "0" ];                                   \
+			then                                                   \
+			   echo :;  # prevents a makefile syntax error         \
+			else                                                   \
+			   echo $${x/.o:/.$${i##*.}.o:} | sed 's/\\/\\\n/g';   \
+			fi;                                                    \
+			printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n';      \
+		;;                                                             \
+		"s"|"S")                                                       \
+			x=$$($(AS) -MM $(CC_ARG) "$$i");                       \
+			if [ "$$?" != "0" ];                                   \
+			then                                                   \
+			   echo :;  # prevents a makefile syntax error         \
+			else                                                   \
+			   echo $${x/.o:/.$${i##*.}.o:} | sed 's/\\/\\\n/g';   \
+			fi;                                                    \
+			printf '\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n';      \
+		;;                                                             \
+		esac;                                                          \
 	done) > $(DEPENDFILE);
 
 
