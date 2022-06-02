@@ -1,32 +1,30 @@
+############################
+# Version Numbers to build #
+############################
 
-#hack for fuckin lib chaos (both on asl cluster and my computer... )
+VERSION_FW     = 8.0.4
+VERSION_TOOL   = 0.36.3
+
+############################
+# ASL build paths          #
+############################
 
 ifeq ($(findstring asl,$(shell hostname)),asl)
-  EB_INC        =-I/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/include
-  EB_LIB        =/common/export/timing-rte/tg-fallout-v6.0.1/x86_64/lib/libetherbone.so
-else
-  EB_LIB        =-letherbone
+  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
+  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+  EB_LIB	=$(EBPATH)/lib/libetherbone.so
+  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
+  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
+  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 endif
 
-# support for installations with /opt/usr
-OPTPATH       ?= NO
+############################
+# Default build settings   #
+# ##########################
 
-ifneq ($(OPTPATH), NO)
-EB_INC        =-I$(OPTPATH)/include
-EB_LIB        =$(OPTPATH)/lib/libetherbone.so
-endif
-
-SER_LIB         =-lboost_serialization
-GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
-
-VERSION_FW     = 8.0.3
-VERSION_TOOL   = 0.36.0
-
-BUILD_DATE     = $(shell date +'%Y%m%d')
-BUILD_ID_ROM_ADR = 0x100
-BUILD_ID_ROM_SIZE = 0x400
-
+BOOSTPATH 	?=/usr
+EBPATH		?=/usr/local
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
@@ -40,8 +38,17 @@ TOOLPATH       ?= $(FTMPATH)/ftmx86
 PREFIX         ?= /usr/local
 INSTALLPATH     = $(PREFIX)/bin
 
+EB_LIB		?=-letherbone
+SER_LIB		?=-lboost_serialization
+GRAPH_LIB	?=-lboost_graph
+RE_LIB		?=-lboost_regex
+
+BUILD_DATE     = $(shell date +'%Y%m%d')
+BUILD_ID_ROM_ADR = 0x100
+BUILD_ID_ROM_SIZE = 0x400
+
 T_CXX           = g++
-T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(DIAGPATH) -I$(LZMAPATH) -Wall -O 
+T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O 
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
@@ -56,7 +63,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
+T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB) $(RE_LIB)
 EXECS           = dm-sched dm-cmd 
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
@@ -74,7 +81,7 @@ carpeDM.o: $(SRCPATH)/carpeDM.cpp
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@
 
 %.o: 	$(SRCPATH)/%.cpp
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ 
 
 %.o: 	$(LZMAPATH)/%.c
 	$(T_CC) $(T_CFLAGS) -fPIC -c $^ -o $@
