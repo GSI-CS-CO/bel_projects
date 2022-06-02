@@ -284,21 +284,19 @@ class DmTestbench(unittest.TestCase):
           print(f'{"All":>{maxLengthKey + 1}s}: {line_count:{maxLengthValue}d}, time span: {timeSpan:0.6f}sec')
       if len(checkValues) > 0:
         for item in checkValues:
-          try:
+          if str(checkValues[item]) == '=0' or str(checkValues[item]) == '<1':
+            self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
+          elif item in listCounter.keys():
             if str(checkValues[item])[0] == '>':
               self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater: is:{listCounter[item]} expected:{checkValues[item]}')
-            elif str(checkValues[item]) == '=0' or str(checkValues[item]) == '<1':
-              self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
             elif str(checkValues[item])[0] == '<':
               self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
               self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
               self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual: is:{listCounter[item]} expected:{checkValues[item]}')
-          except KeyError as keyError:
-            self.fail(f'KeyError: expected value not found {keyError}')
-          except:
-            raise
+          else:
+            self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
   def analyseDmCmdOutput(self, threadsToCheck=0):
     outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
