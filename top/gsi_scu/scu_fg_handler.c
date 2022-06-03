@@ -335,8 +335,11 @@ ONE_TIME_CALL bool feedAdacFg( FG_REGISTER_T* pThis )
       hist_addx( HISTORY_XYZ_MODULE, "ADDAC-FG buffer empty, no parameter sent",
                  pThis->cntrl_reg.bv.number );
       lm32Log( LM32_LOG_ERROR, ESC_ERROR
-               "ERROR: Buffer of ADDAC-FG no: %u is empty!\n" ESC_NORMAL,
-               pThis->cntrl_reg.bv.number );
+               "ERROR: Buffer of ADDAC-FG: fg-%u-%u, channel: %u is empty!\n" ESC_NORMAL,
+               getSocket(pThis->cntrl_reg.bv.number),
+               getDevice(pThis->cntrl_reg.bv.number),
+               pThis->cntrl_reg.bv.number
+             );
       return false;
    }
 

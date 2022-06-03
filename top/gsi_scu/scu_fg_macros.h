@@ -216,8 +216,11 @@ STATIC inline void makeStop( const unsigned int channel )
 #ifndef CONFIG_LOG_ALL_SIGNALS
    hist_addx( HISTORY_XYZ_MODULE, signal2String( signal ), channel );
    lm32Log( LM32_LOG_DEBUG, ESC_DEBUG
-            "Signal: %s, channel: %u\n" ESC_NORMAL,
-            signal2String( signal ), channel );
+            "Signal: %s, fg-%u-%u, channel: %u\n" ESC_NORMAL,
+            signal2String( signal ),
+            getSocket( channel ),
+            getDevice( channel ),
+            channel );
 #endif
 }
 
