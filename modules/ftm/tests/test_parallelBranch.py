@@ -13,6 +13,7 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
   perNanosecond = 1000000000 # 10**9
 
   def doBranch(self):
+    self.delay(0.1)
     if self.diag:
       diag1 = self.startAndGetSubprocessStdout([self.binaryDmCmd, self.datamaster, 'diag'])
     output = self.startAndGetSubprocessStdout([self.binaryDmCmd, self.datamaster, 'deadline'])
