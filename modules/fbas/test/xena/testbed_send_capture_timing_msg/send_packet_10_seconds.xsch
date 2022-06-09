@@ -1,0 +1,130 @@
+{
+  "Operations": [
+    {
+      "OperType": "SetParamValue",
+      "ParamType": "PS_RATEL2BPS",
+      "OperValue": 300.0,
+      "PortTargetList": [
+        {
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "StreamTargetList": [
+        {
+          "StreamId": 0,
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "AllTargetsSelected": false,
+      "FullInfo": "Set Parameter Value",
+      "Operations": [],
+      "ItemId": "5eb7d82d-a083-43d7-93f4-c8c207a9c810",
+      "ParentId": ""
+    },
+    {
+      "OperType": "EnableStream",
+      "ParamType": 0,
+      "OperValue": null,
+      "PortTargetList": [
+        {
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "StreamTargetList": [
+        {
+          "StreamId": 0,
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "AllTargetsSelected": false,
+      "FullInfo": "Enable Stream",
+      "Operations": [],
+      "ItemId": "4d761ec6-cb95-4ea0-9e5a-94bb7c38ea44",
+      "ParentId": ""
+    },
+    {
+      "OperType": "StartTraffic",
+      "ParamType": 0,
+      "OperValue": null,
+      "PortTargetList": [
+        {
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "StreamTargetList": [],
+      "AllTargetsSelected": false,
+      "FullInfo": "Start Traffic",
+      "Operations": [],
+      "ItemId": "3f9a26c2-91b2-4996-83a1-fa7096aceb60",
+      "ParentId": ""
+    },
+    {
+      "OperType": "Wait",
+      "ParamType": 0,
+      "OperValue": 10.0,
+      "PortTargetList": [],
+      "StreamTargetList": [],
+      "AllTargetsSelected": true,
+      "FullInfo": "Wait Period",
+      "Operations": [],
+      "ItemId": "34072d55-f533-4e27-aa4a-3e377d7e8584",
+      "ParentId": ""
+    },
+    {
+      "OperType": "StopTraffic",
+      "ParamType": 0,
+      "OperValue": null,
+      "PortTargetList": [
+        {
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "StreamTargetList": [],
+      "AllTargetsSelected": false,
+      "FullInfo": "Stop Traffic",
+      "Operations": [],
+      "ItemId": "8402feb5-3bef-41dd-a9a1-ecc644a7dbbf",
+      "ParentId": ""
+    },
+    {
+      "OperType": "DisableStream",
+      "ParamType": 0,
+      "OperValue": null,
+      "PortTargetList": [
+        {
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "StreamTargetList": [
+        {
+          "StreamId": 0,
+          "ChassisId": "6098353e-e16d-4dcb-846d-017897ce1a1e",
+          "ModuleIndex": 0,
+          "PortIndex": 1
+        }
+      ],
+      "AllTargetsSelected": false,
+      "FullInfo": "Disable Stream",
+      "Operations": [],
+      "ItemId": "ec7aa0e3-5b03-4465-8ae8-f5faa8ba522c",
+      "ParentId": ""
+    }
+  ],
+  "ItemId": "3d9e7729-57a3-40b4-8687-bf8ed9dce80d",
+  "ParentId": "",
+  "FullInfo": "send_packet_10_seconds"
+}
