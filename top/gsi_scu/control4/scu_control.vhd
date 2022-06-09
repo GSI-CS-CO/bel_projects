@@ -44,10 +44,10 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB : inout std_logic;
-    onewire_ext: inout std_logic;        -- to extension board
-    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire
-    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB       : inout std_logic;
+    onewire_ext      : inout std_logic; -- to extension board
+    onewire_ext_splz : out   std_logic;   --Strong Pull-Up for Onewire
+    OneWire_CB_splz  : out   std_logic;   --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -83,80 +83,78 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nSys_Reset    : in      std_logic;  -- Reset From ComX
-    user_btn      : in      std_logic;  --User Button
-    f2f           : inout   std_logic_vector (7 downto 0);  -- Connection to MAX10 FPGA
-    serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
-    serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
-    rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
-    rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
+    nSys_Reset    : in    std_logic;  -- Reset From ComX
+    user_btn      : in    std_logic;  -- User Button
+    f2f           : inout std_logic_vector (7 downto 0); -- Connection to MAX10 FPGA
+    serial_cb_out : out   std_logic_vector (1 downto 0); -- Serial to Backplane
+    serial_cb_in  : in    std_logic_vector (1 downto 0); -- Serial to Backplane
+    rear_in       : in    std_logic_vector (1 downto 0); -- GPIO to Backplane
+    rear_out      : out   std_logic_vector (1 downto 0); -- GPIO to Backplane
 
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
-    scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-
+    scu_cb_version : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    fastIO_p_i : in    std_logic_vector(2 downto 0);
-    fastIO_n_i : in    std_logic_vector(2 downto 0);
-    fastIO_p_o : out   std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
-
-	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
-    lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
+    fastIO_p_i : in  std_logic_vector(2 downto 0);
+    fastIO_n_i : in  std_logic_vector(2 downto 0);
+    fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
+    lemo_out   : out std_logic_vector(3 downto 0); --Isolated Onboard TTL OUT
+    lemo_in    : in  std_logic_vector(1 downto 0); --Isolated OnBoard TTL IN
 
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
-    ext_ch           : inout std_logic_vector(21 downto 0);
-    ext_id           : in std_logic_vector   (3 downto 0);
+    ext_ch : inout std_logic_vector(21 downto 0);
+    ext_id : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd            : out   std_logic;
-    slwr            : out   std_logic;
-    fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    ctl             : in    std_logic_vector(2 downto 0);
-    uclk            : in    std_logic;
-    ures            : out   std_logic;
+    slrd : out   std_logic;
+    slwr : out   std_logic;
+    fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    ctl  : in    std_logic_vector(2 downto 0);
+    uclk : in    std_logic;
+    ures : out   std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_led_pps  : out std_logic := '1';
-    user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
-    wr_rgb_led  : out std_logic_vector(2 downto 0) := (others => '1');
-    lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
+    wr_led_pps : out std_logic := '1';
+    user_led_0 : out std_logic_vector(2 downto 0) := (others => '1');
+    wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1');
+    lemo_led   : out std_logic_vector(5 downto 0) := (others => '1');
 
-	 -----------------------------------------------------------------------
+    -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
     -----------------------------------------------------------------------
-    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
-    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    psram_clk          : out   std_logic := 'Z';
-    psram_advn         : out   std_logic := 'Z';
-    psram_cre          : out   std_logic := 'Z';
-    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen          : out   std_logic := 'Z';
-    psram_wen          : out   std_logic := 'Z';
-    psram_ubn          : out   std_logic := 'Z';
-    psram_lbn          : out   std_logic := 'Z';
-    psram_wait         : in    std_logic; -- DDR magic
+    psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk  : out   std_logic := 'Z';
+    psram_advn : out   std_logic := 'Z';
+    psram_cre  : out   std_logic := 'Z';
+    psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen  : out   std_logic := 'Z';
+    psram_wen  : out   std_logic := 'Z';
+    psram_ubn  : out   std_logic := 'Z';
+    psram_lbn  : out   std_logic := 'Z';
+    psram_wait : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
     -- Fast-SRAM (2x 16Mbit)
     -----------------------------------------------------------------------
-    sram_a            : out   std_logic_vector(19 downto 0) := (others => 'Z');
-    sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    sram_csn          : out   std_logic_vector(1 downto 0) := (others => '1');
-    sram_oen          : out   std_logic_vector(1 downto 0) := (others => '1');
-    sram_wen          : out   std_logic := 'Z';
-    sram_lbn          : out   std_logic := 'Z';
-    sram_ubn          : out   std_logic := 'Z';
+    sram_a   : out   std_logic_vector(19 downto 0) := (others => 'Z');
+    sram_dq  : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    sram_csn : out   std_logic_vector(1 downto 0) := (others => '1');
+    sram_oen : out   std_logic_vector(1 downto 0) := (others => '1');
+    sram_wen : out   std_logic := 'Z';
+    sram_lbn : out   std_logic := 'Z';
+    sram_ubn : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -188,11 +186,11 @@ architecture rtl of scu_control is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(6 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(2 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(2 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(2 downto 0);
-  signal s_lvds_term    : std_logic_vector(2 downto 0);
+  signal s_gpio_o    : std_logic_vector(6 downto 0);
+  signal s_lvds_p_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_n_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_p_o  : std_logic_vector(2 downto 0);
+  signal s_lvds_term : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -201,6 +199,13 @@ architecture rtl of scu_control is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
+
+  signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
@@ -222,39 +227,41 @@ architecture rtl of scu_control is
     ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX SCU4";
-  constant c_project       : string := "scu_control";
-  constant c_cores         : natural:= 1;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_family       : string := "Arria 10 GX SCU4";
+  constant c_project      : string := "scu_control";
+  constant c_cores        : natural:= 1;
+  constant c_initf_name   : string := c_project & "_stub.mif";
+  constant c_profile_name : string := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
 
 begin
 
   main : monster
     generic map(
-      g_family           => c_family,
-      g_project          => c_project,
-      g_flash_bits       => 25, -- !!! TODO: Check this
-      g_psram_bits       => c_psram_bits,
-      g_gpio_in          => 2,
-      g_gpio_out         => 7,
-      g_lvds_in          => 3,
-      g_lvds_out         => 3,
-      g_en_scubus        => true,
-      g_en_pcie          => true,
-      g_en_tlu           => false,
-      g_en_usb           => true,
-      g_en_psram         => true,
-      g_io_table         => io_mapping_table,
-      g_en_tempsens      => false,
-      g_a10_use_sys_fpll => false,
-      g_a10_use_ref_fpll => false,
-      g_lm32_cores       => c_cores,
-      g_lm32_ramsizes    => c_lm32_ramsizes/4,
-      g_lm32_init_files  => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_asmi          => true
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25, -- !!! TODO: Check this
+      g_psram_bits         => c_psram_bits,
+      g_gpio_in            => 2,
+      g_gpio_out           => 7,
+      g_lvds_in            => 3,
+      g_lvds_out           => 3,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 1,
+      g_en_scubus          => true,
+      g_en_pcie            => true,
+      g_en_tlu             => false,
+      g_en_usb             => true,
+      g_en_psram           => true,
+      g_io_table           => io_mapping_table,
+      g_en_tempsens        => false,
+      g_a10_use_sys_fpll   => false,
+      g_a10_use_ref_fpll   => false,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -301,7 +308,14 @@ begin
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o,
-      --FX2 USB
+      -- I2C
+      i2c_scl_pad_i            => s_i2c_scl_pad_in,
+      i2c_scl_pad_o            => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o         => s_i2c_scl_padoen,
+      i2c_sda_pad_i            => s_i2c_sda_pad_in,
+      i2c_sda_pad_o            => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o         => s_i2c_sda_padoen,
+      -- FX2 USB
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
       usb_speed_i             => pa(0),
@@ -315,7 +329,7 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
-      --PSRAM TODO: Multi Chip
+      -- PSRAM TODO: Multi Chip
       ps_clk                 => psram_clk,
       ps_addr                => psram_a,
       ps_data                => psram_dq,
@@ -330,26 +344,31 @@ begin
       hw_version             => x"0000000" & not scu_cb_version);
 
   -- LEDs
-  wr_led_pps              <= not s_led_pps;                            -- white = PPS
-  wr_rgb_led(0)           <= not s_led_link_act;                       -- WR-RGB Red
-  wr_rgb_led(1)           <= not s_led_track;                          -- WR-RGB Green
-  wr_rgb_led(2)           <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
-  user_led_0              <= not s_gpio_o(2 downto 0);
+  wr_led_pps    <= not s_led_pps;                            -- white = PPS
+  wr_rgb_led(0) <= not s_led_link_act;                       -- WR-RGB Red
+  wr_rgb_led(1) <= not s_led_track;                          -- WR-RGB Green
+  wr_rgb_led(2) <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
+  user_led_0    <= not s_gpio_o(2 downto 0);
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
-    s_lvds_p_i(i)      <= fastIO_p_i(i);
-    s_lvds_n_i(i)      <= fastIO_n_i(i);
-    fastIO_p_o(i)      <= s_lvds_p_o(i);
+    s_lvds_p_i(i) <= fastIO_p_i(i);
+    s_lvds_n_i(i) <= fastIO_n_i(i);
+    fastIO_p_o(i) <= s_lvds_p_o(i);
   end generate;
-
   lemo_out <= not s_gpio_o(6 downto 3);
 
-
+  -- OneWire 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
   --Extension Piggy
   ext_ch(21 downto 19) <= s_lvds_term;
+
+  -- I2C to ATXMEGA
+  f2f(3)              <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  f2f(2)              <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= f2f(3);
+  s_i2c_sda_pad_in(1) <= f2f(2);
 
 end rtl;
