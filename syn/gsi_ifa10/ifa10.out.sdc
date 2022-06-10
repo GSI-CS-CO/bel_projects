@@ -19,7 +19,7 @@
 ## PROGRAM "Quartus Prime"
 ## VERSION "Version 18.1.0 Build 625 09/12/2018 SJ Lite Edition"
 
-## DATE    "Tue Sep 28 15:51:24 2021"
+## DATE    "Mon May 23 13:48:47 2022"
 
 ##
 ## DEVICE  "10M50DAF672C7G"
@@ -38,6 +38,7 @@ set_time_format -unit ns -decimal_places 3
 # Create Clock
 #**************************************************************
 
+create_clock -name {altera_reserved_tck} -period 100.000 -waveform { 0.000 50.000 } [get_ports {altera_reserved_tck}]
 create_clock -name {A_CLK_50MHz} -period 20.000 -waveform { 0.000 10.000 } [get_ports {A_CLK_50MHz}]
 create_clock -name {A_EXT_CLK} -period 100.000 -waveform { 0.000 50.000 } [get_ports { A_EXT_CLK }]
 create_clock -name {A_CLK_24MHz} -period 41.666 -waveform { 0.000 20.833 } [get_ports {A_CLK_24MHz}]
@@ -82,10 +83,10 @@ set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.000  
-set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
-set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_CLK_24MHz}]  0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {A_CLK_24MHz}]  0.000  
+set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
+set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_EXT_CLK}] -setup 0.000  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_EXT_CLK}] -hold 0.020  
 set_clock_uncertainty -rise_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {A_EXT_CLK}] -setup 0.000  
@@ -96,10 +97,10 @@ set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.000  
-set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
-set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_CLK_24MHz}]  0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {A_CLK_24MHz}]  0.000  
+set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
+set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_EXT_CLK}] -setup 0.000  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -rise_to [get_clocks {A_EXT_CLK}] -hold 0.020  
 set_clock_uncertainty -fall_from [get_clocks {A_EXT_CLK}] -fall_to [get_clocks {A_EXT_CLK}] -setup 0.000  
@@ -607,6 +608,7 @@ set_output_delay -add_delay  -clock [get_clocks {ClkTimer|PLL_1_inst|altpll_comp
 # Set Clock Groups
 #**************************************************************
 
+set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}] 
 
 
 #**************************************************************
@@ -614,6 +616,7 @@ set_output_delay -add_delay  -clock [get_clocks {ClkTimer|PLL_1_inst|altpll_comp
 #**************************************************************
 
 set_false_path  -from  [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}]  -to  [get_clocks *]
+set_false_path  -from  [get_clocks {A_EXT_CLK}]  -to  [get_clocks {ClkTimer|PLL_1_inst|altpll_component|auto_generated|pll1|clk[0]}]
 
 
 #**************************************************************

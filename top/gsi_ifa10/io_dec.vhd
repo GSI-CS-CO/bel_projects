@@ -95,44 +95,44 @@ architecture arch of io_dec is
   constant c_rd_blockmode  : std_logic_vector(7 downto 0) := x"8f"; -- read blockmode address
   constant c_wr_blockmode  : std_logic_vector(7 downto 0) := x"6b"; -- write parameter set to fg
 
-  signal s_ifk_adr_ok      : std_logic;
-  signal s_brc_adr_ok      : std_logic;
-  signal s_rd_blk_mode_ok  : std_logic;
-  signal s_virt_ifk_adr_ok : std_logic;
- -- signal s_mb_virt_adr_ok  : std_logic;
-  signal s_mb_virt_adr     : std_logic_vector(3 downto 0);
-  signal s_ifk_sel         : std_logic;
-  signal s_broadcast       : std_logic;
-  signal s_fc_str          : std_logic;
-  signal s_fc_str_syn      : std_logic;
+  signal s_ifk_adr_ok      : std_logic := '0';
+  signal s_brc_adr_ok      : std_logic := '0';
+  signal s_rd_blk_mode_ok  : std_logic := '0';
+  signal s_virt_ifk_adr_ok : std_logic := '0';
+  signal s_mb_virt_adr     : std_logic_vector(3 downto 0) := (others => '0');
+  
+  signal s_broadcast       : std_logic := '0';
+  signal s_fc_str          : std_logic := '0';
+  signal s_fc_str_syn      : std_logic := '0';
   signal s_fc_cnt          : integer range 0 to c_cnt_max   := 0;
-  signal s_fc_cnt_en       : std_logic;
-  signal s_fc              : std_logic_vector(7 downto 0);
-  signal s_data_str        : std_logic;
+  signal s_fc_cnt_en       : std_logic := '0';
+  signal s_fc              : std_logic_vector(7 downto 0):=(others => '0');
+  signal s_data_str        : std_logic := '0';
   signal s_wr_mil_comb     : std_logic;
-  signal s_wr_mil1         : std_logic;
-  signal s_wr_mil2         : std_logic;
+  signal s_wr_mil1         : std_logic :='1';
+  signal s_wr_mil2         : std_logic :='1';
   signal s_wr_mil          : std_logic;
-  signal s_reg_clear       : std_logic;
-  signal s_fc_wr           : std_logic;
-  signal s_fc_rd           : std_logic;
-  signal s_bus_fc_str      : std_logic;
-  signal s_di              : std_logic_vector(15 downto 0);
-  signal s_sw_int          : std_logic_vector(15 downto 0);
-  signal s_wr_blk_mode_ok  : std_logic;
-  signal send_str          : std_logic :='0';                     -- starts data transmit
+  signal s_reg_clear       : std_logic :='0';
+  signal s_fc_wr           : std_logic :='0';
+  signal s_fc_rd           : std_logic :='0';
+  signal s_bus_fc_str      : std_logic :='0';
+  signal s_di              : std_logic_vector(15 downto 0):=(others => '0');
+  signal s_sw_int          : std_logic_vector(15 downto 0):=(others => '0');
+  signal s_wr_blk_mode_ok  : std_logic :='0';
+  signal send_str          : std_logic :='0';      -- starts data transmit
 
-
-  signal n_ex_send_ena     : std_logic;                     -- enable for external transmitter control (Modulbus, IO-Bus, Blockmode or Piggy)
-  signal n_ex_send_str     : std_logic;                     -- starts transmitting of data in external control mode (Modulbus, IO-Bus, Blockmode or Piggy)
+  signal n_ex_send_ena     : std_logic :='1';		-- enable for external transmitter control (Modulbus, IO-Bus, Blockmode or Piggy)
+  signal n_ex_send_str     : std_logic :='1';      -- starts transmitting of data in external control mode (Modulbus, IO-Bus, Blockmode or Piggy)
 
 
 begin
 
   -- adr decoder, low byte of the command word is the address
-  ifk_adr: process(sys_clk, adr, mil_rcv_d)
+  ifk_adr: process(sys_clk,sys_reset, adr, mil_rcv_d)
   begin
-    if rising_edge(sys_clk) then
+    if sys_reset = '1' then
+		s_ifk_adr_ok <= '0';
+    elsif rising_edge(sys_clk) then
       if adr = mil_rcv_d(7 downto 0) then
         s_ifk_adr_ok <= '1';
       else
@@ -141,9 +141,11 @@ begin
     end if;
   end process;
 
-  brc_adr: process(sys_clk, mil_rcv_d)
+  brc_adr: process(sys_clk,sys_reset, mil_rcv_d)
   begin
-    if rising_edge(sys_clk) then
+    if sys_reset = '1' then
+		s_brc_adr_ok <= '0';
+    elsif rising_edge(sys_clk) then
       if c_broadcast_adr = mil_rcv_d(7 downto 0) then --adr ==0xFF?
         s_brc_adr_ok <= '1';
       else
@@ -152,9 +154,12 @@ begin
     end if;
   end process;
 
-  rd_blk_mode_ok: process(sys_clk, s_fc)
+  rd_blk_mode_ok: process(sys_clk,sys_reset, s_fc)
   begin
-    if rising_edge(sys_clk) then
+  
+	 if sys_reset = '1' then
+		s_rd_blk_mode_ok <= '0';
+    elsif rising_edge(sys_clk) then
       if c_rd_blockmode = s_fc then
         s_rd_blk_mode_ok <= '1';
       else
@@ -163,9 +168,11 @@ begin
     end if;
   end process;
 
-  wr_blk_mode_ok: process(sys_clk, s_fc)
+  wr_blk_mode_ok: process(sys_clk,sys_reset, s_fc)
   begin
-    if rising_edge(sys_clk) then
+	 if sys_reset = '1' then  
+		s_wr_blk_mode_ok <= '0';
+    elsif rising_edge(sys_clk) then
       if c_wr_blockmode = s_fc then
         s_wr_blk_mode_ok <= '1';
       else
@@ -176,10 +183,14 @@ begin
 
 
   -- decoder for virt interface card adr, low byte of the command word is the address
-  virt_ifk_adr: process(sys_clk)
+  virt_ifk_adr: process(sys_clk,sys_reset,mb_grp_cnt)
   begin
-    if rising_edge(sys_clk) then
-  --    s_mb_virt_adr_ok <= '0';
+  
+	 if sys_reset = '1' then
+		s_mb_virt_adr <= x"0";	
+	   s_virt_ifk_adr_ok <= '0';	
+    elsif rising_edge(sys_clk) then
+	   s_virt_ifk_adr_ok <= '0';
       case mb_grp_cnt is
 
         when x"f" =>
@@ -205,6 +216,7 @@ begin
             s_virt_ifk_adr_ok <= '1';
             s_mb_virt_adr <= x"1";
           end if;
+			 
         when others =>
           if mil_rcv_d(7 downto 0) = adr(7 downto 0) then
             s_virt_ifk_adr_ok <= '1';
@@ -214,9 +226,7 @@ begin
     end if;
   end process;
 
-  -- interface card selected
-  s_ifk_sel <= s_ifk_adr_ok and rcv_rdy;
-
+  
   brc_reg: process(sys_clk, sys_reset, rcv_rdy, cmd_rcv)
   begin
     if sys_reset = '1' then
@@ -237,13 +247,14 @@ begin
     end if;
   end process;
 
-  fc_str_reg: process(sys_clk, sys_reset, rcv_rdy, cmd_rcv, s_ifk_adr_ok, s_brc_adr_ok, broadcast_en)
+  fc_str_reg: process(sys_clk, sys_reset, rcv_rdy, cmd_rcv, s_ifk_adr_ok, s_brc_adr_ok, broadcast_en,s_wr_blk_mode_ok,s_virt_ifk_adr_ok)
   begin
     if sys_reset = '1' then
       s_fc_str_syn <= '0';
     elsif rising_edge(sys_clk) then
       s_fc_str_syn <= (((s_brc_adr_ok and broadcast_en) or s_ifk_adr_ok or s_virt_ifk_adr_ok) and cmd_rcv and rcv_rdy)
-                      or (s_wr_blk_mode_ok and cmd_rcv and rcv_rdy);
+                      or (s_wr_blk_mode_ok and cmd_rcv and rcv_rdy and s_ifk_adr_ok);
+							 
     end if;
   end process;
 
@@ -352,8 +363,8 @@ out_data_reg: process(sys_clk,sys_reset)
     end if;
    end process out_data_reg;
 
-
-ifk_sel         <= s_ifk_sel;
+-- interface card selected
+ifk_sel         <= s_ifk_adr_ok and rcv_rdy;
 
 wr_mil          <= s_wr_mil;
 
@@ -410,13 +421,16 @@ end process;
 s_wr_mil_comb <= '1' when  (s_broadcast = '0' and
                       ((n_ex_send_ena = '1' and send_str = '1' and s_fc_cnt = c_ee and s_rd_blk_mode_ok = '0') or
                        (n_ex_send_ena = '0' and n_ex_send_str = '0')))  else '0';
+							  
+							  
+							  
 
 --Timingfrage: Ab Wann stehen die Daten fürs Senden zur Verfügung?
 --or (nFG1x2_Send_Ena ='0' and nFG1x2_Send_Str= '0')
 -- or (FG122_Mode='1' and )
 --  transmit with external transmit control
 -- (MB/IO-Bus, Blockmode or Piggy)
-wr_mil_edge: process(sys_clk, sys_reset,s_wr_mil_comb,s_wr_mil1)
+wr_mil_edge: process(sys_clk, sys_reset)
 begin
  if sys_reset = '1' then
    s_wr_mil1 <= '0';

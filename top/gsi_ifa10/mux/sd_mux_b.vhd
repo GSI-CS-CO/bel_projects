@@ -6,7 +6,7 @@
 -- Design Name:
 -- Module Name:    sd_mux_b - Behavioral
 -- Project Name:   ifa10
--- Target Devices:  MAX10
+-- Target Devices: MAX10
 -- Tool versions:  Quartus 16 +
 
 -- Description:

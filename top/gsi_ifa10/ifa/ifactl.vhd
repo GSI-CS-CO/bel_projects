@@ -302,8 +302,6 @@ end process;
           when x"c8" =>
             s_rd_sts <= '1';
 
-
-
           when c_rd_echo =>
             s_rd_echo <= '1';
 

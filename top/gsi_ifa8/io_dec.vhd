@@ -154,7 +154,7 @@ begin
   virt_ifk_adr: process(clk)
   begin
     if rising_edge(clk) then
-      s_mb_virt_adr_ok <= '0';
+      --s_mb_virt_adr_ok <= '0';
 
       case mb_grp_cnt is
 
@@ -237,7 +237,6 @@ begin
         s_fc_cnt_en <= '1';
       end if;
       
-
       if ena_every_100ns = '1' and s_fc_cnt_en = '1' then
         if s_fc_cnt = c_cnt_max then
           s_fc_cnt    <= 0;
@@ -271,7 +270,7 @@ begin
       else
         s_reg_clear <= '0';
       end if;
-		
+      
     end if;
   end process fc_cnt;
   

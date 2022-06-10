@@ -180,7 +180,7 @@ signal man_cmd_rcv      : std_logic:= '0';
 signal rcv_d            : std_logic_vector(15 downto 0);
 
 signal Send_MIL_en      : std_logic:= '0';
-signal nman_rcv_en      : std_logic;
+--signal nman_rcv_en      : std_logic;
 signal man_rcv_err      : std_logic;
 signal nsel_mil_rcv     : std_logic;
 signal mm_cmd_rcv       : std_logic;
