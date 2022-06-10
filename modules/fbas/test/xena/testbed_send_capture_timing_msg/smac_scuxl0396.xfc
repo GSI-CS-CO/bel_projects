@@ -1,0 +1,14 @@
+;XENAPORT
+;FormatVersion: 2
+;Savedby: ValkyrieManager (v1.77.7853.2)
+;Testbed: Capture_timing_msg
+;Chassis: New chassis S.427, D.38)
+;ChassisSerial: 7711642
+;ModuleModel: M6SFP
+;Port: 0/0
+PM_INDICES  0
+PM_PROTOCOL  [0]  ETHERNET
+PM_POSITION  [0]  6
+PM_MATCH  [0]  0xFFFFFFFFFFFF0000 0x00267B0006D70000
+PL_INDICES
+PF_INDICES
