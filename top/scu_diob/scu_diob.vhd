@@ -844,8 +844,8 @@ signal    Interlock_IN:       std_logic_vector(8 downto 0) := (others =>'0');  -
 signal    gate_in_ena:        std_logic :='0';
 signal    gate_error:         std_logic_vector(1 downto 0);
 signal    Gate_In_Mtx:        std_logic_vector (7 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control #
-signal    out_up_IL:             std_logic_vector (26 downto 0);  -- outputs of the Magnitude comparators of the up_down counters
-signal    out_down_IL:             std_logic_vector (26 downto 0);
+signal    out_up_IL:             std_logic_vector (27 downto 0);  -- outputs of the Magnitude comparators of the up_down counters
+signal    out_down_IL:             std_logic_vector (27 downto 0);
 type Test_DATA is array (0 to 6)
         of std_logic_vector(7 downto 0);
   constant Test_In_Mtx : Test_DATA :=
@@ -1838,7 +1838,7 @@ counter0_4: for i in 0 to 4 generate
     )
     port map (
         CLK     => clk_sys,      -- Clock
-        nRST         => rstn_sys,      -- Reset
+        nRST         =>  AW_Config1(6),      -- Reset
         CLEAR       => '0',      -- Clear counter register to be defined by the control register
         LOAD        => '1',     -- Load counter register to be defined by the control register
         ENABLE      => gate_in_Mtx(i),      -- Enable count operation
@@ -1862,7 +1862,7 @@ counter0_4: for i in 0 to 4 generate
     )
     port map (
         CLK     => clk_sys,      -- Clock
-        nRST         => rstn_sys,      -- Reset
+        nRST         =>  AW_Config1(6),      -- Reset
         CLEAR       => '0',      -- Clear counter register to be defined by the control register
         LOAD        => '1',     -- Load counter register to be defined by the control register
         ENABLE      => gate_in_Mtx(i),      -- Enable count operation
@@ -1885,20 +1885,20 @@ counter0_4: for i in 0 to 4 generate
       )
       port map (
           CLK     => clk_sys,      -- Clock
-          nRST         => rstn_sys,      -- Reset
+          nRST         => AW_Config1(6),      -- Reset
           CLEAR       => '0',      -- Clear counter register to be defined by the control register
           LOAD        => '1',     -- Load counter register to be defined by the control register
           ENABLE      => gate_in_Mtx(0),      -- Enable count operation
           UP_IN       => In_Mtx(0)(5 downto 0),   -- Load counter register up input
-          DOWN_IN    => In_Mtx(5)(11 downto 6),  -- Load counter register down input
+          DOWN_IN    => In_Mtx(5)(5 downto 0),  -- Load counter register down input
           UP_OVERFLOW    => out_up_IL(13),    -- UP_Counter overflow
           DOWN_OVERFLOW  => out_down_IL(13)    -- Down_Counter overflow
       
       );
  
 
-   counter14_18: for i in 1 to 5 generate
-  counter_14_18: up_down_counter 
+   counter14_16: for i in 1 to 3 generate
+  counter_14_16: up_down_counter 
     generic map(
     	n             => 6,        -- Counter_input width
       WIDTH         => 20,    -- Counter width
@@ -1908,7 +1908,7 @@ counter0_4: for i in 0 to 4 generate
     )
     port map (
         CLK     => clk_sys,      -- Clock
-        nRST         => rstn_sys,      -- Reset
+        nRST         => AW_Config1(6),      -- Reset
         CLEAR       => '0',      -- Clear counter register to be defined by the control register
         LOAD        => '1',     -- Load counter register to be defined by the control register
         ENABLE      => gate_in_Mtx(i),      -- Enable count operation
@@ -1918,10 +1918,9 @@ counter0_4: for i in 0 to 4 generate
         DOWN_OVERFLOW  => out_down_IL(i+13)     -- Down_Counter overflow
     
     );
-    end generate counter14_18;
+    end generate counter14_16;
 
-    counter19_21: for i in 2 to 4 generate
-    counter_pool_section3_i: up_down_counter 
+    counter_17: up_down_counter 
       generic map(
         n             => 6,        -- Counter_input width
         WIDTH         => 20,    -- Counter width
@@ -1931,20 +1930,42 @@ counter0_4: for i in 0 to 4 generate
       )
       port map (
           CLK     => clk_sys,      -- Clock
-          nRST         => rstn_sys,      -- Reset
+          nRST         => AW_Config1(6),      -- Reset
+          CLEAR       => '0',      -- Clear counter register to be defined by the control register
+          LOAD        => '1',     -- Load counter register to be defined by the control register
+          ENABLE      => gate_in_Mtx(0),      -- Enable count operation
+          UP_IN       => In_Mtx(3)(11 downto 6),   -- Load counter register up input
+          DOWN_IN    => In_Mtx(5)(11 downto 6),  -- Load counter register down input
+          UP_OVERFLOW    => out_up_IL(17),    -- UP_Counter overflow
+          DOWN_OVERFLOW  => out_down_IL(17)    -- Down_Counter overflow
+      
+      );
+
+    counter_18_20: for i in 2 to 4 generate
+    counter18_20: up_down_counter 
+      generic map(
+        n             => 6,        -- Counter_input width
+        WIDTH         => 20,    -- Counter width
+        pos_threshold => 262144,
+        neg_threshold =>-262144
+          
+      )
+      port map (
+          CLK     => clk_sys,      -- Clock
+          nRST         => AW_Config1(6),      -- Reset
           CLEAR       => '0',      -- Clear counter register to be defined by the control register
           LOAD        => '1',     -- Load counter register to be defined by the control register
           ENABLE      => gate_in_Mtx(i),      -- Enable count operation
           UP_IN       => In_Mtx(i-2)(5 downto 0),   -- Load counter register up input
           DOWN_IN    => In_Mtx(i)(5 downto 0),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(i+19),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(i+19)     -- Down_Counter overflow
+          UP_OVERFLOW    => out_up_IL(i+16),    -- UP_Counter overflow
+          DOWN_OVERFLOW  => out_down_IL(i+16)     -- Down_Counter overflow
       
       );
-      end generate counter19_21;
+      end generate counter_18_20;
 
-      counter22_24: for i in 2 to 4 generate
-    counter_pool_section3_i: up_down_counter 
+      counter_21_22: for i in 2 to 3 generate
+    counter21_22: up_down_counter 
       generic map(
         n             => 6,        -- Counter_input width
         WIDTH         => 20,    -- Counter width
@@ -1954,17 +1975,63 @@ counter0_4: for i in 0 to 4 generate
       )
       port map (
           CLK     => clk_sys,      -- Clock
-          nRST         => rstn_sys,      -- Reset
+          nRST         => AW_Config1(6),      -- Reset
           CLEAR       => '0',      -- Clear counter register to be defined by the control register
           LOAD        => '1',     -- Load counter register to be defined by the control register
           ENABLE      => gate_in_Mtx(i),      -- Enable count operation
           UP_IN       => In_Mtx(i-2)(11 downto 6),   -- Load counter register up input
           DOWN_IN    => In_Mtx(i)(11 downto 6),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(i+22),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(i+22)     -- Down_Counter overflow
+          UP_OVERFLOW    => out_up_IL(i+19),    -- UP_Counter overflow
+          DOWN_OVERFLOW  => out_down_IL(i+19)     -- Down_Counter overflow
       
       );
-      end generate counter22_24;
+      end generate counter_21_22;
+      
+      counter_23_25: for i in 0 to 2 generate
+      counter23_25: up_down_counter 
+        generic map(
+          n             => 6,        -- Counter_input width
+          WIDTH         => 20,    -- Counter width
+          pos_threshold => 262144,
+          neg_threshold =>-262144
+            
+        )
+        port map (
+            CLK     => clk_sys,      -- Clock
+            nRST         => AW_Config1(6),      -- Reset
+            CLEAR       => '0',      -- Clear counter register to be defined by the control register
+            LOAD        => '1',     -- Load counter register to be defined by the control register
+            ENABLE      => gate_in_Mtx(i),      -- Enable count operation
+            UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
+            DOWN_IN    => In_Mtx(i+1)(5 downto 0),  -- Load counter register down input
+            UP_OVERFLOW    => out_up_IL(i+23),    -- UP_Counter overflow
+            DOWN_OVERFLOW  => out_down_IL(i+23)     -- Down_Counter overflow
+        
+        );
+        end generate counter_23_25;
+
+        counter_26_27: for i in 0 to 1 generate
+      counter26_27: up_down_counter 
+        generic map(
+          n             => 6,        -- Counter_input width
+          WIDTH         => 20,    -- Counter width
+          pos_threshold => 262144,
+          neg_threshold =>-262144
+            
+        )
+        port map (
+            CLK     => clk_sys,      -- Clock
+            nRST         => AW_Config1(6),      -- Reset
+            CLEAR       => '0',      -- Clear counter register to be defined by the control register
+            LOAD        => '1',     -- Load counter register to be defined by the control register
+            ENABLE      => gate_in_Mtx(i),      -- Enable count operation
+            UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
+            DOWN_IN    => In_Mtx(i+1)(11 downto 6),  -- Load counter register down input
+            UP_OVERFLOW    => out_up_IL(i+26),    -- UP_Counter overflow
+            DOWN_OVERFLOW  => out_down_IL(i+26)     -- Down_Counter overflow
+        
+        );
+        end generate counter_26_27;
 
 Interlock_output_process: process(rstn_sys, clk_sys)
 
@@ -1981,11 +2048,11 @@ Interlock_output_process: process(rstn_sys, clk_sys)
          INTL_Output(2) <= not(out_up_IL(0) or out_up_IL(1) or out_up_IL(2) or out_up_IL(3) or out_up_IL(4) or out_up_IL(5) or out_up_IL(6) or out_up_IL(7) or out_up_IL(8) or out_up_IL(9) or out_up_IL(10) or
                               out_up_IL(11) or out_up_IL(12) or out_up_IL(13)); 
          INTL_Output(3) <= not( out_up_IL(14) or out_up_IL(15) or out_up_IL(16) or out_up_IL(16) or out_up_IL(18) or out_up_IL(19) or out_up_IL(20) or out_up_IL(21) or out_up_IL(22) or out_up_IL(23) or
-                                out_up_IL(24)or out_up_IL(25)or out_up_IL(26)); 
+                                out_up_IL(24)or out_up_IL(25)or out_up_IL(26)or out_up_IL(27)); 
          INTL_Output(4) <= not(out_down_IL(0) or out_down_IL(1) or out_down_IL(2) or out_down_IL(3) or out_down_IL(4) or out_down_IL(5) or out_down_IL(6) or out_down_IL(7) or out_down_IL(8) or out_down_IL(9) 
                                 or out_down_IL(10) or out_down_IL(11) or out_down_IL(12) or out_down_IL(13) );
          INTL_Output(5) <= not(out_down_IL(14) or out_down_IL(15) or out_down_IL(16) or out_down_IL(16) or out_down_IL(18) or out_down_IL(19) or out_down_IL(20) or out_down_IL(21) or out_down_IL(22) or 
-                                out_down_IL(23)or out_down_IL(24)or out_down_IL(25)or out_down_IL(26)); 
+                                out_down_IL(23)or out_down_IL(24)or out_down_IL(25)or out_down_IL(26)or out_down_IL(27)); 
      
     end if;
   end process;
