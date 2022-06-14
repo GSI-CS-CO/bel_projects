@@ -4,7 +4,14 @@ CXXFLAGS = -g -std=c++11 -fPIC -Wall
 LDFLAGS = -Wl,-rpath,/usr/local/lib
 LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
 
-PREFIX         ?= /usr/local
+# check that make runs with  sudo rights
+RIGHTS := $(shell id -u)
+
+ifeq ($(RIGHTS),0)
+  PREFIX         ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
 INSTALLPATH     = $(PREFIX)/bin
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
