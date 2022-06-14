@@ -94,8 +94,8 @@ HOST ?= $(SCU_URL)
 #CALL_ARGS         ?=  $(HOST) -PrC 3 1 3 2 9 1 9 2
 #CALL_ARGS         ?= $(HOST) -n
 
-#CALL_ARGS         ?=  $(HOST) -C 4 2
-CALL_ARGS = $(HOST) -vy=1000
+CALL_ARGS         ?= -N $(HOST) -C 4 2
+#CALL_ARGS = $(HOST) -vy=1000
 # CALL_ARGS         ?= -vV
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
