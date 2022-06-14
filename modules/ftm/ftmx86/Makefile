@@ -35,7 +35,14 @@ BINPATH         = $(FTMPATH)/bin
 LIBPATH         = $(FTMPATH)/lib
 FWPATH         ?= $(FTMPATH)/ftmfw
 TOOLPATH       ?= $(FTMPATH)/ftmx86
-PREFIX         ?= /usr/local
+# check that make runs with  sudo rights
+RIGHTS := $(shell id -u)
+
+ifeq ($(RIGHTS),0)
+  PREFIX ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
 INSTALLPATH     = $(PREFIX)/bin
 
 EB_LIB		?=-letherbone
@@ -48,7 +55,7 @@ BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
 
 T_CXX           = g++
-T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O 
+T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
@@ -64,7 +71,7 @@ TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMA
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
 T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB) $(RE_LIB)
-EXECS           = dm-sched dm-cmd 
+EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
@@ -81,7 +88,7 @@ carpeDM.o: $(SRCPATH)/carpeDM.cpp
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@
 
 %.o: 	$(SRCPATH)/%.cpp
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ 
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@
 
 %.o: 	$(LZMAPATH)/%.c
 	$(T_CC) $(T_CFLAGS) -fPIC -c $^ -o $@
@@ -95,7 +102,7 @@ libcarpedm.so: $(T_OBJECTS)
 libdmtest.so: $(TEST_OBJECTS)
 	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ $^ $(T_LIBS)
 	mkdir -p $(LIBPATH)
-	cp $@ $(LIBPATH)	
+	cp $@ $(LIBPATH)
 
 install: $(BINS)
 	cp $(BINS) $(INSTALLPATH)
