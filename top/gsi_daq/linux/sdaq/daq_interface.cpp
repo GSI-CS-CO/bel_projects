@@ -187,10 +187,10 @@ const std::string DaqInterface::getLastReturnCodeString( void )
  */
 bool DaqInterface::isFgIntegrated( void ) const
 {
-   if( getEbAccess()->getAddacDaqOffset() != DaqAccess::INVALID_OFFSET )
-      throw( "Neither DAQ-application nor FG-application running!" );
+   if( getEbAccess()->getAddacDaqOffset() == DaqAccess::INVALID_OFFSET )
+      throw DaqException( "Neither DAQ-application nor FG-application running!" );
 
-   return getEbAccess()->getAddacDaqOffset() > 0;
+   return getEbAccess()->getAddacDaqOffset() > offsetof( DAQ_SHARED_IO_T, magicNumber );
 }
 
 
