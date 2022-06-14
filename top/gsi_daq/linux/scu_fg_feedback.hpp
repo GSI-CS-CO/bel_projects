@@ -703,6 +703,8 @@ private:
       void onDataTimeout( void ) override;
 
       void onDataError( void ) override;
+
+      void onErrorDescriptor( const daq::DAQ_DESCRIPTOR_T& roDescriptor ) override;
    }; // class AddacAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
@@ -1223,6 +1225,14 @@ protected:
    virtual void onDataTimeout( const bool isMil ) {}
 
    virtual void onDataError( const bool isMil );
+
+   /*!
+    * @brief Optional callback function becomes invoked when a erroneous
+    *        device descriptor has been received.
+    * @note When this function will not overwritten than an exception
+    *       becomes triggered if becomes invoked.
+    */
+   virtual void onErrorDescriptor( const daq::DAQ_DESCRIPTOR_T& roDescriptor );
 }; // class FgFeedbackAdministration
 
 /*! ---------------------------------------------------------------------------

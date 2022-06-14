@@ -421,6 +421,14 @@ static int ramReadPoll( const DDR3_T* pThis UNUSED, uint count )
 } // extern "C"
 #endif // ifdef CONFIG_SCU_USE_DDR3
 
+/*! ---------------------------------------------------------------------------
+ */
+void DaqAdministration::onErrorDescriptor( const DAQ_DESCRIPTOR_T& roDescriptor )
+{
+   throw( DaqException( "Erroneous descriptor" ) );
+}
+
+
 #ifndef _CONFIG_WAS_READ_FOR_ADDAC_DAQ
 /*! ---------------------------------------------------------------------------
  */
@@ -544,7 +552,7 @@ uint DaqAdministration::distributeData( void )
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
       sendUnlockRamAccess();
-      throw( DaqException( "Erroneous descriptor" ) );
+      onErrorDescriptor( probe.descriptor );
    }
 
    std::size_t wordLen;
@@ -667,8 +675,7 @@ uint DaqAdministration::distributeData( void )
     */
    if( !::daqDescriptorVerifyMode( &probe.descriptor ) )
    {
-      // TODO virtual function instead a exception.
-      throw( DaqException( "Erroneous descriptor" ) );
+      onErrorDescriptor( probe.descriptor );
    }
 
    /*!

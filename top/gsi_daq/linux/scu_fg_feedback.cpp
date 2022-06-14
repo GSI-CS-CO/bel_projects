@@ -785,6 +785,13 @@ void FgFeedbackAdministration::AddacAdministration::onDataError( void )
    m_pParent->onDataError( false );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::AddacAdministration::onErrorDescriptor( const daq::DAQ_DESCRIPTOR_T& roDescriptor )
+{
+   m_pParent->onErrorDescriptor( roDescriptor );
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 #ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
@@ -1051,6 +1058,13 @@ void FgFeedbackAdministration::onDataError( const bool isMil )
    }
 #endif
    m_oAddacDaqAdmin.daq::DaqAdministration::onDataError();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void FgFeedbackAdministration::onErrorDescriptor( const daq::DAQ_DESCRIPTOR_T& roDescriptor )
+{
+   m_oAddacDaqAdmin.daq::DaqAdministration::onErrorDescriptor( roDescriptor );
 }
 
 #ifdef CONFIG_EB_TIME_MEASSUREMENT

@@ -1069,7 +1069,16 @@ public:
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return daqDescriptorGetTimeBase( m_poCurrentDescriptor );
    }
-   
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Optional callback function becomes invoked when a erroneous
+    *        device descriptor has been received.
+    * @note When this function will not overwritten than an exception
+    *       becomes triggered if becomes invoked.
+    */
+   virtual void onErrorDescriptor( const DAQ_DESCRIPTOR_T& roDescriptor );
+
 protected:
    virtual void onUnregistered( DAQ_DESCRIPTOR_T& roDescriptor ) {}
 
