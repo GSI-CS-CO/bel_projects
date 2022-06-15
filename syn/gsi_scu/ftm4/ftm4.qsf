@@ -27,7 +27,6 @@ set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 0.95V
-set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
 set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
 set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
