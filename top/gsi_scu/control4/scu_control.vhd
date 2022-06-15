@@ -358,7 +358,7 @@ begin
   end generate;
   lemo_out <= not s_gpio_o(6 downto 3);
 
-  -- OneWire 
+  -- OneWire
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
@@ -370,5 +370,13 @@ begin
   f2f(2)              <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
   s_i2c_scl_pad_in(1) <= f2f(3);
   s_i2c_sda_pad_in(1) <= f2f(2);
+
+  -- Misc. pins to ATXMEGA
+  f2f(0) <= 'Z';
+  f2f(1) <= 'Z';
+  f2f(4) <= 'Z';
+  f2f(5) <= 'Z';
+  f2f(6) <= 'Z';
+  f2f(7) <= 'Z';
 
 end rtl;
