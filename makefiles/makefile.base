@@ -278,7 +278,9 @@ lsrc:
 
 .PHONY: ldep
 ldep: $(WORK_DIR) $(DEPENDFILE)
-	$(QUIET) cat $(DEPENDFILE) | grep -v ':' | grep -v '@' | tr -d '\\'
+	$(QUIET) cat $(DEPENDFILE) | grep -v ':' | grep -v '@' | \
+	tr -d '\\' | awk NF | sort | awk '{print $$1}' | uniq
+
 
 .PHONY: incdirs
 incdirs:
