@@ -167,8 +167,7 @@ Error: hdlmake AttributeError: module object has no attribute vendor or hdlmake 
 
 Solution: In case a simple "make" does not fix this:
 ```
-apt-get install python-setuptools
-./install-hdlmake.sh
+make hdlmake_install
 ```
 
 #### Tool hdlmake not found (Python 2.7)
@@ -205,7 +204,7 @@ Solution: Just install the right setuptools:
 
 ```
 sudo apt-get install python3-setuptools # Python 3.X
-sudo apt-get install python-setuptool # Python 2.X
+sudo apt-get install python-setuptools # Python 2.X
 ```
 
 ## Git

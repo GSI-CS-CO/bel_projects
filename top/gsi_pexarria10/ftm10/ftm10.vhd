@@ -101,10 +101,11 @@ entity ftm10 is
     usb_ures_o   : out   std_logic;
     usb_uclkin_i : in    std_logic;
 
+    -- ATXMega (F2F) previously CPLD
     -----------------------------------------------------------------------
-    -- CPLD (F2F)
-    -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(7 downto 0);
+    cpld_io     : inout std_logic_vector(5 downto 0);
+    f2f_i2c_scl : inout std_logic;
+    f2f_i2c_sda : inout std_logic;
 
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
@@ -172,19 +173,19 @@ architecture rtl of ftm10 is
 
   signal s_sfp_disable : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(7 downto 0);
-  signal s_gpio_i   : std_logic_vector(7 downto 0);
+  signal s_gpio_o   : std_logic_vector(5 downto 0);
+  signal s_gpio_i   : std_logic_vector(5 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
   signal s_lvds_n_o : std_logic_vector(19 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
-  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
-  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -194,7 +195,7 @@ architecture rtl of ftm10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 27) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -204,28 +205,26 @@ architecture rtl of ftm10 is
     ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO4  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+    ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO4  ",  IO_I2C_USB_C,    false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO5  ",  IO_I2C_USB_C,    false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO1  ",  IO_I2C_USB_C,    false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO2  ",  IO_I2C_USB_C,    false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO3  ",  IO_I2C_USB_C,    false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO4  ",  IO_I2C_USB_C,    false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO5  ",  IO_I2C_USB_C,    false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO1  ",  IO_I2C_USB_C,    false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO2  ",  IO_I2C_USB_C,    false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO3  ",  IO_I2C_USB_C,    false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO4  ",  IO_I2C_USB_C,    false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO5  ",  IO_I2C_USB_C,    false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO1  ",  IO_I2C_USB_C,    false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO2  ",  IO_I2C_USB_C,    false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO3  ",  IO_I2C_USB_C,    false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO4  ",  IO_I2C_USB_C,    false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
 
   constant c_family        : string := "Arria 10 GX FTM10";
@@ -243,10 +242,10 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_inout         => 8,
+      g_gpio_inout         => 6,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
+      g_num_i2c_interfaces => 6,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
@@ -390,18 +389,24 @@ begin
   end generate;
 
     -- I2C
-    interfaces : for i in 1 to 5 generate
-      i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-      i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-      s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-      s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+    interfaces : for i in 2 to 6 generate
+      i2c_scl_pad_io(i-1) <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+      i2c_sda_pad_io(i-1) <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+      s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i-1);
+      s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i-1);
     end generate;
 
     -- CPLD
-    s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
-    cpld_con : for i in 0 to 7 generate
+    s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
+    cpld_con : for i in 0 to 5 generate
       cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
     end generate;
+
+    -- I2C to ATXMega
+    f2f_i2c_scl         <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+    f2f_i2c_sda         <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+    s_i2c_scl_pad_in(1) <= f2f_i2c_scl ;
+    s_i2c_sda_pad_in(1) <= f2f_i2c_sda;
 
   -- OneWire
     OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled

@@ -36,7 +36,7 @@ package monster_pkg is
   type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED, IO_VIRTUAL);
   type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
   type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM, IO_CMOS);
-  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN, IO_LIBERA_TRIG_OE, IO_MTCA4_BPL_BUF_OE);
+  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN, IO_LIBERA_TRIG_OE, IO_MTCA4_BPL_BUF_OE, IO_I2C_USB_C);
 
   type t_io_mapping_table is
     record                                               -- Byte(s) = Bit(s)
@@ -514,6 +514,7 @@ package body monster_pkg is
         when IO_MTCA4_FAILSAFE_EN  => special := 4;
         when IO_LIBERA_TRIG_OE     => special := 5;
         when IO_MTCA4_BPL_BUF_OE   => special := 6;
+        when IO_I2C_USB_C          => special := 7;
         when others                => special := 63;
       end case;
       result(i).info_special := std_logic_vector(to_unsigned(special, result(i).info_special'length));
