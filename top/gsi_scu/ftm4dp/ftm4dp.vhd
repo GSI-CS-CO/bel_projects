@@ -206,6 +206,13 @@ architecture rtl of ftm4dp is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
+  signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 8) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -231,27 +238,29 @@ begin
 
   main : monster
     generic map(
-      g_family           => c_family,
-      g_project          => c_project,
-      g_flash_bits       => 25, -- !!! TODO: Check this
-      g_psram_bits       => c_psram_bits,
-      g_gpio_in          => 2,
-      g_gpio_out         => 7,
-      g_en_scubus        => true,
-      g_en_pcie          => true,
-      g_en_tlu           => false,
-      g_en_usb           => true,
-      g_en_psram         => true,
-      g_io_table         => io_mapping_table,
-      g_en_tempsens      => false,
-      g_a10_use_sys_fpll => false,
-      g_a10_use_ref_fpll => false,
-      g_dual_port_wr     => true,
-      g_lm32_cores       => c_cores,
-      g_lm32_ramsizes    => c_lm32_ramsizes/4,
-      g_lm32_init_files  => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_asmi          => true
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25, -- !!! TODO: Check this
+      g_psram_bits         => c_psram_bits,
+      g_gpio_in            => 2,
+      g_gpio_out           => 7,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 1,
+      g_en_scubus          => true,
+      g_en_pcie            => true,
+      g_en_tlu             => false,
+      g_en_usb             => true,
+      g_en_psram           => true,
+      g_io_table           => io_mapping_table,
+      g_en_tempsens        => false,
+      g_a10_use_sys_fpll   => false,
+      g_a10_use_ref_fpll   => false,
+      g_dual_port_wr       => true,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -303,6 +312,13 @@ begin
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o,
+      -- I2C
+      i2c_scl_pad_i            => s_i2c_scl_pad_in,
+      i2c_scl_pad_o            => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o         => s_i2c_scl_padoen,
+      i2c_sda_pad_i            => s_i2c_sda_pad_in,
+      i2c_sda_pad_o            => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o         => s_i2c_sda_padoen,
       --FX2 USB
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
@@ -349,5 +365,19 @@ begin
   -- SFP management
   sfp_tx_disable_o     <= s_sfp_disable;
   ext_ch(3)            <= '0'; -- Get a second bit for aux. phy
+
+  -- I2C to ATXMEGA
+  f2f(3)              <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  f2f(2)              <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= f2f(3);
+  s_i2c_sda_pad_in(1) <= f2f(2);
+
+  -- Misc. pins to ATXMEGA
+  f2f(0) <= 'Z';
+  f2f(1) <= 'Z';
+  f2f(4) <= 'Z';
+  f2f(5) <= 'Z';
+  f2f(6) <= 'Z';
+  f2f(7) <= 'Z';
 
 end rtl;
