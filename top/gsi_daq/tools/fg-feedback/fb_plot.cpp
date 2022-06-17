@@ -80,7 +80,9 @@ void Plot::plot( void )
       *this << " Single shoot!";
    *this << " Throttle: (timeout " << pAdmin->getThrottleTimeout() << " ms"
             ", threshold " << pAdmin->getThrottleThreshold() << ")";
+#ifdef CONFIG_MIL_FG
    if( !m_pParent->getParent()->isMil() )
+#endif
       *this << " Pairing: "
             << (pAdmin->isPairingBySequence()? "sequence" : "timestamp");
    *this << endl;
