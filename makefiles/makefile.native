@@ -61,6 +61,7 @@ endif
 
 .PHONY: run
 run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
+	$(QUIET) echo -e '[ executing ]\t$(BIN_FILE) $(CALL_ARGS)';
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
 	$(BIN_FILE) $(CALL_ARGS) )
 
@@ -74,6 +75,7 @@ DBG_ARGS = -a "$(CALL_ARGS)"
 endif
 
 dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
+	$(QUIET) echo -e '[ debugging ]\t$(BIN_FILE) $(CALL_ARGS)';
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
 	$(DEBUG_GUI) $(BIN_FILE) $(DBG_ARGS))
 
