@@ -734,6 +734,20 @@ vector<OPTION> CommandLine::c_optList =
                     "In this case set- and actual values becomes printed directly on standard out.\n"
                     "NOTE: The graphic output becomes also suppressed when the hardware doesn't support it.\n"
                     "      E.g.: This program runs directly on a SCU."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_pairingBySequence = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'q',
+      .m_longOpt  = "sequence",
+      .m_helpText = "Pairing of set and actual value for non-MIL DAQs will made by"
+                    " block- sequence number of the device descriptor,\n"
+                    "by default the pairing will made by WR- timestamp."
    }
 };
 
@@ -817,6 +831,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_zoomYAxis( false )
    ,m_exitOnError( false )
    ,m_noPlot( false )
+   ,m_pairingBySequence( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_plotInterval( DEFAULT_PLOT_INTERVAL )
    ,m_throttleThreshold( DEFAULT_THROTTLE_THRESHOLD )
@@ -890,6 +905,7 @@ AllDaqAdministration* CommandLine::operator()( void )
 
    if( m_poAllDaq != nullptr )
    {
+      m_poAllDaq->setPairingBySequence( m_pairingBySequence );
       m_poAllDaq->setThrottleThreshold( m_throttleThreshold );
       m_poAllDaq->setThrottleTimeout( m_throttleTimeout );
       m_poAllDaq->setMaxEbCycleDataLen( m_maxEbCycleDataLen );

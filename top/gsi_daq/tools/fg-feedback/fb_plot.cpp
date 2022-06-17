@@ -79,7 +79,11 @@ void Plot::plot( void )
    if( m_pParent->isSingleShoot() )
       *this << " Single shoot!";
    *this << " Throttle: (timeout " << pAdmin->getThrottleTimeout() << " ms"
-            ", threshold " << pAdmin->getThrottleThreshold() << ")" << endl;
+            ", threshold " << pAdmin->getThrottleThreshold() << ")";
+   if( !m_pParent->getParent()->isMil() )
+      *this << " Pairing: "
+            << (pAdmin->isPairingBySequence()? "sequence" : "timestamp");
+   *this << endl;
 
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
          << " ns; interval min: " << (m_pParent->m_minTime / MILISECS_PER_NANOSEC)

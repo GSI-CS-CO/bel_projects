@@ -86,6 +86,7 @@ class CommandLine: public PARSER
    bool                       m_zoomYAxis;
    bool                       m_exitOnError;
    bool                       m_noPlot;
+   bool                       m_pairingBySequence;
    float                      m_xAxisLen;
    uint                       m_plotInterval;
    uint                       m_throttleThreshold;
@@ -205,6 +206,11 @@ public:
    bool doNotPlot( void ) const
    {
       return m_noPlot;
+   }
+
+   bool isPairingBySequence( void )
+   {
+      return m_pairingBySequence;
    }
 
    uint getPollInterwalTime( void )

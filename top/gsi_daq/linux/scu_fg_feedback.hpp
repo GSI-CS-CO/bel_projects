@@ -681,18 +681,50 @@ private:
    class AddacAdministration: public daq::DaqAdministration
    {
       FgFeedbackAdministration* m_pParent;
+
+      /*!
+       * @brief If true than the pairing of actual- and set- values
+       *        for non-MIL DAQs will made by the block- sequence number.
+       */
+      bool                      m_pairingBySequence;
+
    public:
       AddacAdministration( FgFeedbackAdministration* pParent, DaqEb::EtherboneConnection* poEtherbone )
         :daq::DaqAdministration( poEtherbone, false, false )
         ,m_pParent( pParent )
+        ,m_pairingBySequence( false )
       {
       }
 
       AddacAdministration( FgFeedbackAdministration* pParent, DaqAccess* poEbAccess )
         :daq::DaqAdministration( poEbAccess, false, false )
         ,m_pParent( pParent )
+        ,m_pairingBySequence( false )
       {
       }
+
+      /*!
+       * @brief Enables or disables the pairing of set and actual values
+       *        of non-MIL DAQs by sequence number.
+       * @param pairingBySequence If true than the pairing by sequence number
+       *                          is active, else the pairing will made by
+       *                          the timestamp.
+       */
+      void setPairingBySequence( const bool pairingBySequence )
+      {
+         m_pairingBySequence = pairingBySequence;
+      }
+
+      /*!
+       * @brief Asks whether the pairing of set and actual values
+       *        of non-MIL DAQs  will made by sequence number
+       *        or by timestamp.
+       */
+      bool isPairingBySequence( void )
+      {
+         return m_pairingBySequence;
+      }
+
 
       void onDataReadingPause( void ) override;
 
@@ -806,6 +838,28 @@ public:
    daq::EbRamAccess* getEbAccess( void )
    {
       return m_oAddacDaqAdmin.getEbAccess();
+   }
+
+   /*!
+    * @brief Enables or disables the pairing of set and actual values
+    *        of non-MIL DAQs by sequence number.
+    * @param pairingBySequence If true than the pairing by sequence number
+    *                          is active, else the pairing will made by
+    *                          the timestamp.
+    */
+   void setPairingBySequence( const bool pairingBySequence )
+   {
+      m_oAddacDaqAdmin.setPairingBySequence( pairingBySequence );
+   }
+
+   /*!
+    * @brief Asks whether the pairing of set and actual values
+    *        of non-MIL DAQs  will made by sequence number
+    *        or by timestamp.
+    */
+   bool isPairingBySequence( void )
+   {
+      return m_oAddacDaqAdmin.isPairingBySequence();
    }
 
    /*!

@@ -244,7 +244,7 @@ FgFeedbackChannel::AddacFb::~AddacFb( void )
 {
 }
 
-//#define _CONFIG_COMPARE_SEQUENCE_NR
+#define _CONFIG_COMPARE_SEQUENCE_NR
 
 /*! ---------------------------------------------------------------------------
  * @brief Forwarding of actual- and set- values to the higher software-layer
@@ -262,36 +262,6 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
    DEBUG_MESSAGE( "set sequence: " << static_cast<uint>(m_oReceiveSetValue.getSequence()) );
    DEBUG_MESSAGE( "act sequence: " << static_cast<uint>(m_oReceiveActValue.getSequence()) );
-#ifdef _CONFIG_COMPARE_SEQUENCE_NR
-   #warning "Synchonizing by sequence-number is deprecated!"
-   /*
-    * One of both channels has received first, in this case it has to be wait
-    * for the second channel.
-    * This will accomplished by comparing the sequence numbers.
-    */
-   const uint sequenceDeviation = ::abs( m_oReceiveSetValue.getSequence() -
-                                         m_oReceiveActValue.getSequence() );
-   if( sequenceDeviation != 0 )
-   {
-      if( sequenceDeviation == 1 || sequenceDeviation == static_cast<daq::DAQ_SEQUENCE_T>(~0) )
-      { /*
-         * A sequence number deviation of one means that at the moment only one channel has
-         * received a new data block, therefore it must be wait for the incoming block
-         * of the other channel.
-         * This will happen every second function call in normal operation.
-         */
-         return;
-      }
-
-      /*
-       * Throwing a exception if following function will not be overwritten.
-       */
-      m_pParent->onActSetBlockDeviation( m_oReceiveSetValue.getSequence(),
-                                         m_oReceiveActValue.getSequence() );
-
-      return;
-   }
-#endif // ifdef _CONFIG_COMPARE_SEQUENCE_NR
 
    /*
     * Safety check: The data length of both blocks have to be equal!
@@ -320,28 +290,61 @@ void FgFeedbackChannel::AddacFb::finalizeBlock( void )
 
    uint64_t timeStampSetVal = m_oReceiveSetValue.getTimestamp();
 
-#ifndef _CONFIG_COMPARE_SEQUENCE_NR
-   const uint64_t timeStampActVal = m_oReceiveActValue.getTimestamp();
-   const uint diff = ::abs( static_cast<int64_t>(timeStampActVal - timeStampSetVal));
-   if( diff > (2 * m_oReceiveSetValue.getSampleTime() ) )
+   if( m_pParent->m_pParent->m_pParent->isPairingBySequence() )
    { /*
-      * Is the time deviation between set- and actual- value-block
-      * greater than a specific value, then it have to be wait for the
-      * incoming block of the other channel.
-      * Therefore this function will be terminated here.
-      * This will happen every second function call in normal operation.
+      * +++ Pairing by sequence number +++
+      * One of both channels has received first, in this case it has to be wait
+      * for the second channel.
+      * This will accomplished by comparing the sequence numbers.
       */
-      return;
+      const uint sequenceDeviation = ::abs( m_oReceiveSetValue.getSequence() -
+                                            m_oReceiveActValue.getSequence() );
+      if( sequenceDeviation != 0 )
+      {
+         if( sequenceDeviation == 1 || sequenceDeviation == static_cast<daq::DAQ_SEQUENCE_T>(~0) )
+         { /*
+            * A sequence number deviation of one means that at the moment only one channel has
+            * received a new data block, therefore it must be wait for the incoming block
+            * of the other channel.
+            * This will happen every second function call in normal operation.
+            */
+            return;
+         }
+
+         /*
+          * Throwing a exception if following function will not be overwritten.
+          */
+         m_pParent->onActSetBlockDeviation( m_oReceiveSetValue.getSequence(),
+                                            m_oReceiveActValue.getSequence() );
+
+         return;
+      }
    }
- #ifdef _CONFIG_PATCH_PHASE
-   if( diff > m_oReceiveSetValue.getSampleTime() )
- #else
-   if( diff > 0 )
- #endif
-   {
-      m_pParent->onActSetTimestampDeviation( timeStampSetVal, timeStampActVal );
+   else
+   { /*
+      * +++ Pairing by timestamp +++
+      */
+      const uint64_t timeStampActVal = m_oReceiveActValue.getTimestamp();
+      const uint diff = ::abs( static_cast<int64_t>(timeStampActVal - timeStampSetVal));
+      if( diff > (2 * m_oReceiveSetValue.getSampleTime() ) )
+      { /*
+         * Is the time deviation between set- and actual- value-block
+         * greater than a specific value, then it have to be wait for the
+         * incoming block of the other channel.
+         * Therefore this function will be terminated here.
+         * This will happen every second function call in normal operation.
+         */
+         return;
+      }
+    #ifdef _CONFIG_PATCH_PHASE
+      if( diff > m_oReceiveSetValue.getSampleTime() )
+    #else
+      if( diff > 0 )
+    #endif
+      {
+         m_pParent->onActSetTimestampDeviation( timeStampSetVal, timeStampActVal );
+      }
    }
-#endif
 
    /*
     * Forwarding of set- and actual- values to the higher software layer.
