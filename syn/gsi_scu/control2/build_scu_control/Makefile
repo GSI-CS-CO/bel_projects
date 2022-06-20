@@ -174,8 +174,8 @@ ifdef ADDAC_DAQ
   SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
   SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
   SOURCE += $(DAQ_LM32_DIR)/daq_main.c
-  DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
-  DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
+#  DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+#  DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
   USE_SCU_EXTERN_RAM := 1
 endif
 ifdef USE_HISTORY
@@ -200,21 +200,21 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 # ADDITIONAL_HEADDER_IN_BUILD_ID = $(SCU_DIR)/scu_shared_mem.h
 
 # For DOXYGEN only, header files which doesn't have a appropriate C-file.
-DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
-DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
-DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
+#DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
+#DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
+#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
+#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
+#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
+#DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
 ifdef MIL_IN_TIMER_INTERRUPT
-   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
+#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
 endif
 ifdef USE_MMU
-   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_mmu_tag.h
+#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_mmu_tag.h
 endif
 ifdef USE_LM32LOG
-   DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_syslog_common.h
-   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_syslog.h
+#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_syslog_common.h
+#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_syslog.h
 endif
 
 # CODE_OPTIMIZATION = 2
@@ -254,7 +254,7 @@ endif
 ### SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
 # SCU_URL = scuxl0192
-SCU_URL = scuxl0212
+#SCU_URL = scuxl0212
 # SCU_URL = scuxl0331
 # SCU_URL = scuxl0025
 # SCU_URL = scuxl0328

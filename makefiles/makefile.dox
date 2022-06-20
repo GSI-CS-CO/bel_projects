@@ -2356,7 +2356,11 @@ DOX_DOT_CLEANUP            ?= YES
 
 ###############################################################################
 ${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY} ${DOX_ADDITIONAL_DEPENDENCIES}
+ifdef DOX_FILE_APPEND
+	@echo 'DOXYFILE_ENCODING         = ${DOX_DOXYFILE_ENCODING}'      >> ${DOXY_CFG_FILE}
+else
 	@echo 'DOXYFILE_ENCODING         = ${DOX_DOXYFILE_ENCODING}'       > ${DOXY_CFG_FILE}
+endif
 	@echo 'PROJECT_NAME              = ${DOX_PROJECT_NAME}'           >> ${DOXY_CFG_FILE}
 	@echo 'PROJECT_NUMBER            = ${DOX_PROJECT_NUMBER}'         >> ${DOXY_CFG_FILE}
 	@echo 'PROJECT_BRIEF             = ${DOX_PROJECT_BRIEF}'          >> ${DOXY_CFG_FILE}
@@ -2438,7 +2442,7 @@ ${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY} ${DOX_ADDITIONAL_DEPENDENCIES}
 	@echo 'WARN_NO_PARAMDOC          = ${DOX_WARN_NO_PARAMDOC}'       >> ${DOXY_CFG_FILE}
 	@echo 'WARN_FORMAT               = ${DOX_WARN_FORMAT}'            >> ${DOXY_CFG_FILE}
 	@echo 'WARN_LOGFILE              = ${DOX_WARN_LOGFILE}'           >> ${DOXY_CFG_FILE}
-	@echo 'INPUT                     = ${DOX_INPUT}'                  >> ${DOXY_CFG_FILE}
+	@echo 'INPUT                    += ${DOX_INPUT}'                  >> ${DOXY_CFG_FILE}
 	@echo 'INPUT_ENCODING            = ${DOX_INPUT_ENCODING}'         >> ${DOXY_CFG_FILE}
 	@echo 'FILE_PATTERNS             = ${DOX_FILE_PATTERNS}'          >> ${DOXY_CFG_FILE}
 	@echo 'RECURSIVE                 = ${DOX_RECURSIVE}'              >> ${DOXY_CFG_FILE}

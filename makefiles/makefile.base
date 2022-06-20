@@ -278,9 +278,8 @@ lsrc:
 
 .PHONY: ldep
 ldep: $(WORK_DIR) $(DEPENDFILE)
-	$(QUIET) cat $(DEPENDFILE) | grep -v ':' | grep -v '@' | \
+	$(QUIET) cat $(DEPENDFILE) | sed 's/:/:\n/g'| grep -v ':' | grep -v '@' | \
 	tr -d '\\' | awk NF | sort | awk '{print $$1}' | uniq
-
 
 .PHONY: incdirs
 incdirs:
@@ -309,26 +308,38 @@ rebuild: clean
 -include $(DEPENDFILE)
 
 #-------------------------------- Doxygen -------------------------------------
-DOX_PROJECT_NAME          ?= "$(shell echo $(TARGET) | tr '_' ' ' )"
-DOX_INPUT                 += $(patsubst %.c,%.h, $(SOURCE))
-DOX_INPUT                 += $(patsubst %.cpp,%.h, $(SOURCE))
-DOX_INPUT                 += $(patsubst %.cpp,%.hpp, $(SOURCE))
-DOX_INPUT                 += $(SOURCE)
-DOX_INPUT                 += $(MAKEFILE_DIR)/makefile.base
-DOX_TYPEDEF_HIDES_STRUCT  ?= "YES"
-DOX_INLINE_INHERITED_MEMB ?= "YES"
-DOX_OPTIMIZE_OUTPUT_FOR_C ?= "YES"
-DOX_EXTRACT_ALL           ?= "YES"
-DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
-DOX_RECURSIVE             ?= "NO"
-DOX_INLINE_SOURCES        ?= "NO"
-DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
-DOX_MACRO_EXPANSION       ?= "NO"
-DOX_EXTRACT_STATIC        ?= "YES"
-DOX_PREDEFINED            += $(DEFINES)
+
+.PHONY: doxinput
+doxinput: $(DEPENDFILE)
+	@echo 'INPUT                    = \'                 > ${DOXY_CFG_FILE}
+	@cat $(DEPENDFILE) | sed 's/:/:\n/g' | grep -v ':' | \
+	     grep -v '@' | tr -d '\\' | \
+	     awk NF | sort | awk '{print $$1}' | uniq | \
+	     tr '\n' ' '                                    >> ${DOXY_CFG_FILE}
+	@echo                                               >> ${DOXY_CFG_FILE}
+
+DOX_FILE_APPEND             := 1
+DOX_ADDITIONAL_DEPENDENCIES += doxinput
+DOX_PROJECT_NAME            ?= "$(shell echo $(TARGET) | tr '_' ' ' )"
+#DOX_INPUT                 += $(patsubst %.c,%.h, $(SOURCE))
+#DOX_INPUT                 += $(patsubst %.cpp,%.h, $(SOURCE))
+#DOX_INPUT                 += $(patsubst %.cpp,%.hpp, $(SOURCE))
+#DOX_INPUT                 += $(SOURCE)
+DOX_INPUT                  += $(MAKEFILE_DIR)/makefile.base
+DOX_TYPEDEF_HIDES_STRUCT   ?= "YES"
+DOX_INLINE_INHERITED_MEMB  ?= "YES"
+DOX_OPTIMIZE_OUTPUT_FOR_C  ?= "YES"
+DOX_EXTRACT_ALL            ?= "YES"
+DOX_FORCE_LOCAL_INCLUDES   ?= "YES"
+DOX_RECURSIVE              ?= "NO"
+DOX_INLINE_SOURCES         ?= "NO"
+DOX_FORCE_LOCAL_INCLUDES   ?= "YES"
+DOX_MACRO_EXPANSION        ?= "NO"
+DOX_EXTRACT_STATIC         ?= "YES"
+DOX_PREDEFINED             += $(DEFINES)
  DOX_PREDEFINED            += "STATIC_ASSERT( cond )=void"
-DOX_REFERENCES_RELATION   ?= "YES"
-DOXY_CFG_FILE             ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
+DOX_REFERENCES_RELATION    ?= "YES"
+DOXY_CFG_FILE              ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
 
 DOX_MAKEFILE ?= $(MAKEFILE_DIR)/makefile.dox
 
