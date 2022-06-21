@@ -451,61 +451,55 @@ end component;
     );
   end component diob_sync;
 
- component BLM_gate_timing_seq is
-
-    generic (
-      freq    : natural range 500 TO 125000000 := 125000000;
-      hold    : integer range 2 TO 10:= 2;
-      n       : integer range 0 TO 11 :=4
-    );
-    port(
-      clk_i : in std_logic;          -- chip-internal pulsed clk signal
-      rstn_i : in std_logic;        -- reset signal
-      gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
-      initialize : in std_logic;     -- enable '1' for input connected to the counter
-      timeout_error : out std_logic; -- gate doesn't start within the given timeout
-      gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
-    );
-    end component BLM_gate_timing_seq;
-
-    component BLM_watchdog is
-      generic (
-          freq    : natural range 500 TO 125000000 := 1250000000;
-          hold    : integer range 2 TO 10:= 2;
-          n       : integer range 0 TO 6 :=6
-      );
-      port(
-          clk_i : in std_logic;     -- chip-internal pulsed clk signal
-          rstn_i : in std_logic;   -- reset signal
-          in_watchdog : in std_logic_vector(n-1 downto 0);     -- input signal
-          ena_i : in std_logic;     -- enable '1' for input connected to the counter
-          INTL_out: out std_logic   -- interlock output for signal that doesn't change for a given time (2 clocks)
+ component Beam_Loss_check is
+  generic (
+    m            : integer := 8;       -- gate input width
+      WIDTH        : integer := 20;      -- Counter width
+      pos_threshold: integer:= 262144;
+      neg_threshold: integer:= -262144
       
-      );
-      end component BLM_watchdog;
-      
-      component up_down_counter is
-        generic (
-          n            : integer :=6;        -- Counter_input width
-          WIDTH        : integer := 20;      -- Counter width
-          pos_threshold: integer:= 262144;
-          neg_threshold: integer:= -262144
-            
-        );
-        port (
-            CLK         : in std_logic;      -- Clock
-            nRST         : in std_logic;      -- Reset
-            CLEAR       : in std_logic;      -- Clear counter register
-            LOAD        : in std_logic;      -- Load counter register
-            ENABLE      : in std_logic;      -- Enable count operation
-            UP_IN       : in std_logic_vector(n-1 downto 0);    -- Load counter register up input
-            DOWN_IN     : in std_logic_vector(n-1 downto 0);    -- Load counter register down input
-            UP_OVERFLOW    : out std_logic ;     -- UP_Counter overflow
-            DOWN_OVERFLOW    : out std_logic      -- UP_Counter overflow
-        
-        );
-        end component up_down_counter;
+  );
+  port (
+      clk_sys       : in std_logic;      -- Clock
+      rstn_sys      : in std_logic;      -- Reset
+      CLEAR         : in std_logic;      -- Clear counter register
+      LOAD          : in std_logic;      -- Load counter register
+      watchdog_ena  : in std_logic_vector( 8 downto 0);      
+      gate_in_ena   : in std_logic;
+      Gate_Mtx      : in std_logic_vector (m-1 downto 0);
+      In_Mtx       : in t_IO_Reg_0_to_7_Array; 
+      INTL_Output   : out std_logic_vector(5 downto 0) 
+  
+  );
+  end component Beam_Loss_check;
 
+  component front_board_id is 
+
+Port ( clk : in STD_LOGIC;
+       nReset : in STD_LOGIC;
+       Deb_Sync : in STD_LOGIC_VECTOR(65 downto 0);
+       Deb_out   :in STD_LOGIC_VECTOR(65 downto 0);
+
+       IOBP_Masken_Reg1 : in STD_LOGIC_VECTOR(15 downto 0);
+       IOBP_Masken_Reg2 : in STD_LOGIC_VECTOR(15 downto 0);
+       IOBP_Masken_Reg3 : in STD_LOGIC_VECTOR(15 downto 0);
+       IOBP_Masken_Reg4 : in STD_LOGIC_VECTOR(15 downto 0);
+       IOBP_Masken_Reg5 : in STD_LOGIC_VECTOR(15 downto 0);
+       IOBP_Masken_Reg6 : in STD_LOGIC_VECTOR(15 downto 0);
+       PIO_SYNC         : in STD_LOGIC_VECTOR(142 DOWNTO 20);
+       IOBP_ID          : in t_id_array;
+       INTL_Output      : in std_logic_vector(5 downto 0);
+       AW_Output_Reg    : in std_logic_vector(5 downto 0);
+       config           : in std_logic_vector(1 downto 0);
+       AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
+       IOBP_Output     : out std_logic_vector(5 downto 0);     
+       IOBP_Input     : out t_IOBP_array;
+       IOBP_Aktiv_LED_i   : out t_led_array;
+       OUT_SLOT         : out std_logic_vector(5 downto 0);
+       ENA_SLOT         : out std_logic_vector(5 downto 0);
+       IOBP_Sel_LED     : out t_led_array
+);
+end component front_board_id;
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
 --  +============================================================================================================================+
@@ -713,9 +707,6 @@ end component;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal IOBP_Output_Readback:    t_IO_Reg_0_to_7_Array;
-
-
-TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
 signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
@@ -733,9 +724,7 @@ signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
   signal IOBP_in_data_to_SCUB:    std_logic_vector(15 downto 0);
   signal IOBP_in_rd_active:       std_logic;
   signal IOBP_in_Dtack:           std_logic;
-  TYPE   t_led_array        is array (1 to 12) of std_logic_vector(6 downto 1);
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
-  TYPE   t_id_array         is array (1 to 12) of std_logic_vector(7 downto 0);
   signal IOBP_ID:           t_id_array;     -- IDs of the "Slave-Boards"deb_out:    std_logic_vector(65 downto 0);
   signal IOBP_Aktiv_LED_i:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
   signal IOBP_Aktiv_LED_o:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
@@ -839,13 +828,10 @@ signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 
 signal    In_Mtx:             t_IO_Reg_0_to_7_Array;  -- outputs of the input stage logic
 signal    Gate_Mtx:           std_logic_vector (11 downto 0):= (OTHERS => '0');  -- gate signals 
-signal    watchdog_ena:       std_logic :='0';
-signal    Interlock_IN:       std_logic_vector(8 downto 0) := (others =>'0');  -- outputs of the input stage logic
+signal    watchdog_ena:       std_logic_vector( 8 downto 0):= (OTHERS => '0');
 signal    gate_in_ena:        std_logic :='0';
-signal    gate_error:         std_logic_vector(1 downto 0);
 signal    Gate_In_Mtx:        std_logic_vector (7 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control #
-signal    out_up_IL:             std_logic_vector (47 downto 0);  -- outputs of the Magnitude comparators of the up_down counters
-signal    out_down_IL:             std_logic_vector (47 downto 0);
+
 type Test_DATA is array (0 to 6)
         of std_logic_vector(7 downto 0);
   constant Test_In_Mtx : Test_DATA :=
@@ -1648,642 +1634,50 @@ IOBP_In_LEDn:  for J in 1 to 12 generate
                   end generate IOBP_In_LEDn;
 --
 
-
-----------------Input watchdog ------------------------------------------------------------------------
-input1up_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(0)(5 downto 0),
-      ena_i =>    watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (0)-- interlock output for signal that doesn't change for a given time (2 clocks)
-     
-  );
-
-  input1down_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(0)(11 downto 6),
-      ena_i =>   watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (1)-- interlock output for signal that doesn't change for a given time (2 clocks)
-
-  );
-
-  input2up_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(1)(5 downto 0),
-      ena_i =>     watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (2)-- interlock output for signal that doesn't change for a given time (2 clocks)
-   
-  );
-
-  input2down_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(1)(11 downto 6),
-      ena_i =>     watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (3)-- interlock output for signal that doesn't change for a given time (2 clocks)
-    
-  );
-
-input3up_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(2)(5 downto 0),
-      ena_i =>   watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (4)-- interlock output for signal that doesn't change for a given time (2 clocks)
-     
-  );
-
-  input3down_watchdog: BLM_watchdog 
+BML_Module: Beam_Loss_check 
   generic map (
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(2)(11 downto 6),
-      ena_i =>   watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (5)-- interlock output for signal that doesn't change for a given time (2 clocks)
-      
-  );
-
-  input4up_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(3)(5 downto 0),
-      ena_i =>    watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (6)-- interlock output for signal that doesn't change for a given time (2 clocks)
-     
-  );
-
-  input4down_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(3)(11 downto 6),
-      ena_i =>    watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (7)-- interlock output for signal that doesn't change for a given time (2 clocks)
-     
-  );
-
- input5up_watchdog: BLM_watchdog 
-  generic map(
-      freq   => 125000000,
-      hold   => 2,
-      n      => 6
-  )
-  port map(
-      clk_i => clk_sys,  
-      rstn_i => rstn_sys,   -- reset signal
-      in_watchdog => In_Mtx(4)(5 downto 0),
-      ena_i =>   watchdog_ena,  -- enable for input connected to the counter
-      INTL_out =>   Interlock_IN (8)-- interlock output for signal that doesn't change for a given time (2 clocks)
-     
-  );
-
-  gate_board1: BLM_gate_timing_seq
-
-    generic map (
-      freq     => 125000000,
-      hold     => 2,
-      n        => 4
-    )
-    port map(
-      clk_i => clk_sys,         -- chip-internal pulsed clk signal
-      rstn_i => rstn_sys,         -- reset signal
-      gate_in => Gate_Mtx(3 downto 0),       -- input signal
-      initialize => gate_in_ena,  -- enable '1' for input connected to the counter
-      timeout_error => gate_error(0), -- gate doesn't start within the given timeout
-      gate_out => gate_In_Mtx(3 downto 0)       -- out gate signal
-    );
-   
-
-gate_board2: BLM_gate_timing_seq
-
-  generic map (
-    freq     => 125000000,
-    hold     => 2,
-    n        => 4
-  )
-  port map(
-    clk_i => clk_sys,         -- chip-internal pulsed clk signal
-    rstn_i => rstn_sys,         -- reset signal
-    gate_in => Gate_Mtx (3 downto 0),       -- input signal
-    initialize => gate_in_ena,  -- enable '1' for input connected to the counter
-    timeout_error => gate_error(1), -- gate doesn't start within the given timeout
-    gate_out => gate_In_Mtx(7 downto 4)       -- out gate signal
-  );
-  
-
-  ---------------------------------------------------------------------------------------------------------
-  ---- counter pool ----------------------------------------------------------------------------------------
-  ----------------------------------------------------------------------------------------------------------
-
-  ---------------------------------------------------------------------------------------------------------
-  ---- counter pool ----------------------------------------------------------------------------------------
-  ----------------------------------------------------------------------------------------------------------
-
-counter0_4: for i in 0 to 4 generate
-  counter_0_4: up_down_counter 
-    generic map(
-    	n             => 6,        -- Counter_input width
-      WIDTH         => 20,    -- Counter width
+      m => 8,       -- gate input width
+      WIDTH => 20,      -- Counter width
       pos_threshold => 262144,
-      neg_threshold =>-262144
-        
-    )
-    port map (
-        CLK     => clk_sys,      -- Clock
-        nRST         =>  AW_Config1(6),      -- Reset
-        CLEAR       => '0',      -- Clear counter register to be defined by the control register
-        LOAD        => '1',     -- Load counter register to be defined by the control register
-        ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-        UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-        DOWN_IN    => In_Mtx(i)(11 downto 6),  -- Load counter register down input
-        UP_OVERFLOW    => out_up_IL(i),    -- UP_Counter overflow
-        DOWN_OVERFLOW  => out_down_IL(i)    -- Down_Counter overflow
-    
-    );
-    end generate counter0_4;
-
-
-  counter5_12:for i in 0 to 7 generate
-  counter_5_12: up_down_counter 
-    generic map(
-    	n             => 6,        -- Counter_input width
-      WIDTH         => 20,    -- Counter width
-      pos_threshold => 262144,
-      neg_threshold =>-262144
-        
-    )
-    port map (
-        CLK     => clk_sys,      -- Clock
-        nRST         =>  AW_Config1(6),      -- Reset
-        CLEAR       => '0',      -- Clear counter register to be defined by the control register
-        LOAD        => '1',     -- Load counter register to be defined by the control register
-        ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-        UP_IN       => In_Mtx(7-i)(5 downto 0),   -- Load counter register up input
-        DOWN_IN    => In_Mtx(i)(11 downto 6),  -- Load counter register down input
-        UP_OVERFLOW    => out_up_IL(i+5),    -- UP_Counter overflow
-        DOWN_OVERFLOW  => out_down_IL(i+5)   -- Down_Counter overflow
-    
-    );
-    end generate counter5_12;
-
-
-    counter_13: up_down_counter 
-      generic map(
-        n             => 6,        -- Counter_input width
-        WIDTH         => 20,    -- Counter width
-        pos_threshold => 262144,
-        neg_threshold =>-262144
-          
-      )
-      port map (
-          CLK     => clk_sys,      -- Clock
-          nRST         => AW_Config1(6),      -- Reset
-          CLEAR       => '0',      -- Clear counter register to be defined by the control register
-          LOAD        => '1',     -- Load counter register to be defined by the control register
-          ENABLE      => gate_in_Mtx(0),      -- Enable count operation
-          UP_IN       => In_Mtx(0)(5 downto 0),   -- Load counter register up input
-          DOWN_IN    => In_Mtx(5)(5 downto 0),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(13),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(13)    -- Down_Counter overflow
-      
-      );
- 
-
-   counter14_16: for i in 1 to 3 generate
-  counter_14_16: up_down_counter 
-    generic map(
-    	n             => 6,        -- Counter_input width
-      WIDTH         => 20,    -- Counter width
-      pos_threshold => 262144,
-      neg_threshold =>-262144
-        
-    )
-    port map (
-        CLK     => clk_sys,      -- Clock
-        nRST         => AW_Config1(6),      -- Reset
-        CLEAR       => '0',      -- Clear counter register to be defined by the control register
-        LOAD        => '1',     -- Load counter register to be defined by the control register
-        ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-        UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-        DOWN_IN    => In_Mtx(i-1)(11 downto 6),  -- Load counter register down input
-        UP_OVERFLOW    => out_up_IL(i+13),    -- UP_Counter overflow
-        DOWN_OVERFLOW  => out_down_IL(i+13)     -- Down_Counter overflow
-    
-    );
-    end generate counter14_16;
-
-    counter_17: up_down_counter 
-      generic map(
-        n             => 6,        -- Counter_input width
-        WIDTH         => 20,    -- Counter width
-        pos_threshold => 262144,
-        neg_threshold =>-262144
-          
-      )
-      port map (
-          CLK     => clk_sys,      -- Clock
-          nRST         => AW_Config1(6),      -- Reset
-          CLEAR       => '0',      -- Clear counter register to be defined by the control register
-          LOAD        => '1',     -- Load counter register to be defined by the control register
-          ENABLE      => gate_in_Mtx(0),      -- Enable count operation
-          UP_IN       => In_Mtx(3)(11 downto 6),   -- Load counter register up input
-          DOWN_IN    => In_Mtx(5)(11 downto 6),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(17),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(17)    -- Down_Counter overflow
-      
-      );
-
-    counter_18_20: for i in 2 to 4 generate
-    counter18_20: up_down_counter 
-      generic map(
-        n             => 6,        -- Counter_input width
-        WIDTH         => 20,    -- Counter width
-        pos_threshold => 262144,
-        neg_threshold =>-262144
-          
-      )
-      port map (
-          CLK     => clk_sys,      -- Clock
-          nRST         => AW_Config1(6),      -- Reset
-          CLEAR       => '0',      -- Clear counter register to be defined by the control register
-          LOAD        => '1',     -- Load counter register to be defined by the control register
-          ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-          UP_IN       => In_Mtx(i-2)(5 downto 0),   -- Load counter register up input
-          DOWN_IN    => In_Mtx(i)(5 downto 0),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(i+16),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(i+16)     -- Down_Counter overflow
-      
-      );
-      end generate counter_18_20;
-
-      counter_21_22: for i in 2 to 3 generate
-    counter21_22: up_down_counter 
-      generic map(
-        n             => 6,        -- Counter_input width
-        WIDTH         => 20,    -- Counter width
-        pos_threshold => 262144,
-        neg_threshold =>-262144
-          
-      )
-      port map (
-          CLK     => clk_sys,      -- Clock
-          nRST         => AW_Config1(6),      -- Reset
-          CLEAR       => '0',      -- Clear counter register to be defined by the control register
-          LOAD        => '1',     -- Load counter register to be defined by the control register
-          ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-          UP_IN       => In_Mtx(i-2)(11 downto 6),   -- Load counter register up input
-          DOWN_IN    => In_Mtx(i)(11 downto 6),  -- Load counter register down input
-          UP_OVERFLOW    => out_up_IL(i+19),    -- UP_Counter overflow
-          DOWN_OVERFLOW  => out_down_IL(i+19)     -- Down_Counter overflow
-      
-      );
-      end generate counter_21_22;
-      
-      counter_23_25: for i in 0 to 2 generate
-      counter23_25: up_down_counter 
-        generic map(
-          n             => 6,        -- Counter_input width
-          WIDTH         => 20,    -- Counter width
-          pos_threshold => 262144,
-          neg_threshold =>-262144
-            
-        )
-        port map (
-            CLK     => clk_sys,      -- Clock
-            nRST         => AW_Config1(6),      -- Reset
-            CLEAR       => '0',      -- Clear counter register to be defined by the control register
-            LOAD        => '1',     -- Load counter register to be defined by the control register
-            ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-            UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-            DOWN_IN    => In_Mtx(i+1)(5 downto 0),  -- Load counter register down input
-            UP_OVERFLOW    => out_up_IL(i+23),    -- UP_Counter overflow
-            DOWN_OVERFLOW  => out_down_IL(i+23)     -- Down_Counter overflow
-        
-        );
-        end generate counter_23_25;
-
-        counter_26_27: for i in 0 to 1 generate
-      counter26_27: up_down_counter 
-        generic map(
-          n             => 6,        -- Counter_input width
-          WIDTH         => 20,    -- Counter width
-          pos_threshold => 262144,
-          neg_threshold =>-262144
-            
-        )
-        port map (
-            CLK     => clk_sys,      -- Clock
-            nRST         => AW_Config1(6),      -- Reset
-            CLEAR       => '0',      -- Clear counter register to be defined by the control register
-            LOAD        => '1',     -- Load counter register to be defined by the control register
-            ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-            UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
-            DOWN_IN    => In_Mtx(i+1)(11 downto 6),  -- Load counter register down input
-            UP_OVERFLOW    => out_up_IL(i+26),    -- UP_Counter overflow
-            DOWN_OVERFLOW  => out_down_IL(i+26)     -- Down_Counter overflow
-        
-        );
-        end generate counter_26_27;
-
-        counter_28_30: for i in 0 to 2 generate
-        counter28_30: up_down_counter 
-          generic map(
-            n             => 6,        -- Counter_input width
-            WIDTH         => 20,    -- Counter width
-            pos_threshold => 262144,
-            neg_threshold =>-262144
-              
-          )
-          port map (
-              CLK     => clk_sys,      -- Clock
-              nRST         => AW_Config1(6),      -- Reset
-              CLEAR       => '0',      -- Clear counter register to be defined by the control register
-              LOAD        => '1',     -- Load counter register to be defined by the control register
-              ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-              UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-              DOWN_IN    => In_Mtx(i+1)(11 downto 6),  -- Load counter register down input
-              UP_OVERFLOW    => out_up_IL(i+28),    -- UP_Counter overflow
-              DOWN_OVERFLOW  => out_down_IL(i+28)     -- Down_Counter overflow
-          
-          );
-          end generate counter_28_30;
-
-          counter_31_33: for i in 0 to 2 generate
-      
-        counter31_33: up_down_counter 
-          generic map(
-            n             => 6,        -- Counter_input width
-            WIDTH         => 20,    -- Counter width
-            pos_threshold => 262144,
-            neg_threshold =>-262144
-              
-          )
-          port map (
-              CLK     => clk_sys,      -- Clock
-              nRST         => AW_Config1(6),      -- Reset
-              CLEAR       => '0',      -- Clear counter register to be defined by the control register
-              LOAD        => '1',     -- Load counter register to be defined by the control register
-              ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-              UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
-              DOWN_IN    => In_Mtx(i+2)(5 downto 0),  -- Load counter register down input
-              UP_OVERFLOW    => out_up_IL(i+31),    -- UP_Counter overflow
-              DOWN_OVERFLOW  => out_down_IL(i+31)     -- Down_Counter overflow
-          
-          );
-
-          end generate counter_31_33; 
-
-          counter_34_35: for i in 0 to 1 generate
-      
-          counter34_35: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+3)(5 downto 0),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+34),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+34)     -- Down_Counter overflow
-            
-            );
+      neg_threshold => -262144   
+  )
+  port map(
+      clk_sys      => clk_sys,    -- Clock
+      rstn_sys     => rstn_sys,     -- Reset
+      CLEAR        => AW_Config1(6),    
+      LOAD         =>  '1',-- Load counter register
+      watchdog_ena => watchdog_ena,
+      gate_in_ena  => gate_in_ena, 
+      Gate_Mtx     => gate_Mtx(7 downto 0), 
+      In_Mtx       => In_Mtx,
+      INTL_Output  => INTL_Output
   
-            end generate counter_34_35; 
+  );
 
-
-          counter_36_37: for i in 0 to 1 generate
-      
-          counter36_37: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+3)(11 downto 6),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+36),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+36)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_36_37;
-            
-            counter_38_39: for i in 0 to 1 generate
-
-            counter38_39: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+3)(11 downto 6),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+38),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+38)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_38_39; 
-
-            counter_40_41: for i in 0 to 1 generate
-
-            counter40_41: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+4)(5 downto 0),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+40),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+40)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_40_41; 
-
-            counter_42_43: for i in 0 to 1 generate
-
-            counter42_43: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+4)(5 downto 0),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+42),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+42)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_42_43; 
-
-            counter_44_45: for i in 0 to 1 generate
-
-            counter44_45: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(5 downto 0),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+2)(11 downto 6),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+44),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+44)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_44_45; 
-
-            counter_46_47: for i in 0 to 1 generate
-
-            counter46_47: up_down_counter 
-            generic map(
-              n             => 6,        -- Counter_input width
-              WIDTH         => 20,    -- Counter width
-              pos_threshold => 262144,
-              neg_threshold =>-262144
-                
-            )
-            port map (
-                CLK     => clk_sys,      -- Clock
-                nRST         => AW_Config1(6),      -- Reset
-                CLEAR       => '0',      -- Clear counter register to be defined by the control register
-                LOAD        => '1',     -- Load counter register to be defined by the control register
-                ENABLE      => gate_in_Mtx(i),      -- Enable count operation
-                UP_IN       => In_Mtx(i)(11 downto 6),   -- Load counter register up input
-                DOWN_IN    => In_Mtx(i+3)(5 downto 0),  -- Load counter register down input
-                UP_OVERFLOW    => out_up_IL(i+46),    -- UP_Counter overflow
-                DOWN_OVERFLOW  => out_down_IL(i+46)     -- Down_Counter overflow
-            
-            );
-  
-            end generate counter_46_47; 
-        
-Interlock_output_process: process(rstn_sys, clk_sys)
-
-
-  begin
-    if  ( not rstn_sys    = '1') then
-      for i in 0 to 5 loop
-        INTL_Output(i) <= '0';
-        end loop;
-    elsif (rising_edge(clk_sys)) then
-      
-         INTL_Output(0) <= not(Interlock_IN(0) or Interlock_IN(1) or Interlock_IN(2) or Interlock_IN(3) or Interlock_IN(4) or Interlock_IN(5) or Interlock_IN(6) or Interlock_IN(7) or Interlock_IN(8));
-         INTL_Output(1) <= gate_error(0) nor gate_error(1);
-         INTL_Output(2) <= not(out_up_IL(0) or out_up_IL(1) or out_up_IL(2) or out_up_IL(3) or out_up_IL(4) or out_up_IL(5) or out_up_IL(6) or out_up_IL(7) or out_up_IL(8) or out_up_IL(9) or out_up_IL(10) 
-                             or  out_up_IL(11) or out_up_IL(12) or out_up_IL(13)or out_up_IL(14) or out_up_IL(15) or out_up_IL(16) or out_up_IL(17) or out_up_IL(18) or out_up_IL(19) or out_up_IL(20) or 
-                             out_up_IL(21)or out_up_IL(22) or out_up_IL(23) or out_up_IL(24)); 
-         INTL_Output(3) <= not(  out_up_IL(25) or out_up_IL(26) or out_up_IL(27) or out_up_IL(28) or out_up_IL(29) or out_up_IL(30) or out_up_IL(31)or out_up_IL(32)or out_up_IL(33) or out_up_IL(34)or 
-                                out_up_IL(35)or out_up_IL(36)or out_up_IL(37)or out_up_IL(38)or out_up_IL(39)or out_up_IL(40)or out_up_IL(41)or out_up_IL(42)or out_up_IL(43)or out_up_IL(44)or out_up_IL(45)or 
-                                out_up_IL(46)or out_up_IL(47));
-         INTL_Output(4) <= not(out_down_IL(0) or out_down_IL(1) or out_down_IL(2) or out_down_IL(3) or out_down_IL(4) or out_down_IL(5) or out_down_IL(6) or out_down_IL(7) or out_down_IL(8) or out_down_IL(9) 
-                                or out_down_IL(10) or out_down_IL(11) or out_down_IL(12) or out_down_IL(13) or out_down_IL(14) or out_down_IL(15) or out_down_IL(16) or out_down_IL(17) or out_down_IL(18) or 
-                                out_down_IL(19) or out_down_IL(20) or out_down_IL(21)or out_down_IL(22) or  out_down_IL(23)or out_down_IL(24));
-         INTL_Output(5) <= not(  out_down_IL(25)or out_down_IL(26)or out_down_IL(27) or out_down_IL(28) or out_down_IL(29) or out_down_IL(30) or out_down_IL(31)or 
-                                out_down_IL(32)or out_down_IL(33) or out_down_IL(34)or out_down_IL(35)or out_down_IL(36)or out_down_IL(37)or out_down_IL(38)or out_down_IL(39)or out_down_IL(40)or out_down_IL(41)or 
-                                out_down_IL(42)or out_down_IL(43)or out_down_IL(44)or out_down_IL(45)or out_down_IL(46)or out_down_IL(47)); 
-     
-    end if;
-  end process;
+front_board_id_Module: front_board_id 
+port map ( clk               => clk_sys,
+           nReset            => rstn_sys,
+           Deb_Sync          => Deb_Sync66,
+           Deb_out           => Deb66_out,
+           IOBP_Masken_Reg1  => IOBP_Masken_Reg1,
+           IOBP_Masken_Reg2  => IOBP_Masken_Reg2,
+           IOBP_Masken_Reg3  => IOBP_Masken_Reg3,
+           IOBP_Masken_Reg4  => IOBP_Masken_Reg4,
+           IOBP_Masken_Reg5  => IOBP_Masken_Reg5,
+           IOBP_Masken_Reg6  => IOBP_Masken_Reg6,
+           PIO_SYNC          => PIO_SYNC(142 DOWNTO 20),
+           IOBP_ID           => IOBP_ID,
+           INTL_Output       => INTL_Output,
+           AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
+           config            => AW_Config2(1 downto 0),
+           AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
+           IOBP_Output       => IOBP_Output,
+           IOBP_Input        => IOBP_Input,
+           IOBP_Aktiv_LED_i    => IOBP_Aktiv_LED_i,
+           OUT_SLOT          => PIO_OUT_SLOT_12,
+           ENA_SLOT          => PIO_ENA_SLOT_12, 
+           IOBP_Sel_LED      => IOBP_Sel_LED
+);
 
      -------------------------------------------------------------------------------------------------------
      ------------------------------ Loop für LED_Output's und ID read --------------------------------------
@@ -2365,270 +1759,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
   end process P_IOBP_LED_ID_Loop;
 
 
-  ID_Front_Board_proc: process (clk_sys, rstn_sys)
-
-  begin
-
-      if (not  rstn_sys= '1')    then
-          for i in 1 to 12 loop
-              conf_reg(i)<= (others => '0' );
-          end loop;
-
-          IOBP_slot_state <= IOBP_slot_idle;
-
-      elsif (clk_sys'EVENT AND clk_sys = '1') then
-
-          case IOBP_slot_state is
-
-              when IOBP_slot_idle	=>
-                                              IOBP_slot_state <= IOBP_slot1;
-
-              when IOBP_slot1=>			    conf_reg(1)<= IOBP_ID(1);
-                                              case conf_reg(1) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 1
-                                                      AW_IOBP_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync66( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(1)  <=  Deb66_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(1)  <= ( PIO_SYNC(56),  PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
-                                                      IOBP_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
-                                                      
-                                                  when "00000100" => -- 6 LWL  Input Modul in slot 1
-                                                      AW_IOBP_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync66( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(1)  <=  Deb66_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(1)  <= ( PIO_SYNC(56),  PIO_SYNC(60),  PIO_SYNC(62),  PIO_SYNC(52),  PIO_SYNC(54),  PIO_SYNC(58));
-                                                      IOBP_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
-
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot2;
-
-              when IOBP_slot2=>			    conf_reg(2)<= IOBP_ID(2);
-                                        case conf_reg(2) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 2
-                                                      AW_IOBP_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync66( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(2)  <=   Deb66_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(2)  <=( PIO_SYNC(96),  PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
-                                                      IOBP_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
-                                                      
-                                                  when "00000100" => -- 6 LWL Input Modul in slot 2
-                                                      AW_IOBP_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync66( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(2)  <=   Deb66_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(2)  <=( PIO_SYNC(96),  PIO_SYNC(100), PIO_SYNC(102), PIO_SYNC(92),  PIO_SYNC(94),  PIO_SYNC(98));
-                                                      IOBP_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
-
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot3;
-
-              when IOBP_slot3=>			    conf_reg(3)<= IOBP_ID(3);
-                                            case conf_reg(3) is
-                                                when "00000011"  => -- 6 LEMO Input Modul in slot 3
-                                                      AW_IOBP_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync66( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(3)  <=   Deb66_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(3)  <=( PIO_SYNC(73),  PIO_SYNC(79),  PIO_SYNC(71),  PIO_SYNC(77),  PIO_SYNC(69),  PIO_SYNC(75));
-                                                      IOBP_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
-
-                                                when  "00000100" => -- 6 LWL Input Modul in slot 3
-                                                      AW_IOBP_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync66( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(3)  <=   Deb66_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(3)  <=( PIO_SYNC(73),  PIO_SYNC(77),  PIO_SYNC(79),  PIO_SYNC(69),  PIO_SYNC(71),  PIO_SYNC(75));
-                                                      IOBP_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
-      
-                                                when others     =>  NULL;
-                                            end case;
-
-                                              IOBP_slot_state <= IOBP_slot4;
-
-               when IOBP_slot4=>			    conf_reg(4)<= IOBP_ID(4);
-                                            case conf_reg(4) is
-                                              when "00000011"  => -- 6 LEMO Input Modul in slot 4
-                                                      AW_IOBP_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync66( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(4)  <=   Deb66_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
-                                                      IOBP_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
-                                                      IOBP_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
-
-                                                      when "00000100" => -- 6 LWL Input Modul in slot 4
-                                                      AW_IOBP_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync66( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(4)  <=   Deb66_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
-                                                      IOBP_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(91), PIO_SYNC(93), PIO_SYNC(105), PIO_SYNC(103), PIO_SYNC(89));
-                                                      IOBP_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
-                 
-                                                  when others     =>  NULL;
-                                            end case;
-
-                                              IOBP_slot_state <= IOBP_slot5;
-
-              when IOBP_slot5=>			    conf_reg(5)<= IOBP_ID(5);
-                                              case conf_reg(5) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 5
-                                                      AW_IOBP_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync66( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(5)  <=   Deb66_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(5)  <= ( PIO_SYNC(53),  PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
-                                                      IOBP_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
-
-                                                    when "00000100" => -- 6 LWL Input Modul in slot 5
-                                                      AW_IOBP_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync66( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(5)  <=   Deb66_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
-                                                      IOBP_Input(5)  <= ( PIO_SYNC(53),  PIO_SYNC(61),  PIO_SYNC(63),  PIO_SYNC(57),  PIO_SYNC(55),  PIO_SYNC(59));
-                                                      IOBP_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
-
-                                              when others     =>  NULL;
-                                          end case;
-
-                                              IOBP_slot_state <= IOBP_slot6;
-
-              when IOBP_slot6=>			    conf_reg(6)<= IOBP_ID(6);
-                                              case conf_reg(6) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 6
-                                                      AW_IOBP_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync66( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(6)  <=    Deb66_out(35 DOWNTO 30);
-                                                      IOBP_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
-                                                      IOBP_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
-
-                                                      when "00000100" => -- 6 LWL Input Modul in slot 6
-                                                      AW_IOBP_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync66( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(6)  <=    Deb66_out(35 DOWNTO 30);
-                                                      IOBP_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(109), PIO_SYNC(111), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(107));
-                                                      IOBP_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
-
-                                          when others     =>  NULL;
-                                      end case;
-
-                                              IOBP_slot_state <= IOBP_slot7;
-
-              when IOBP_slot7=>			    conf_reg(7)<= IOBP_ID(7);
-                                              case conf_reg(7) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 7
-                                                      AW_IOBP_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync66( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(7)  <=    Deb66_out(41 DOWNTO 36);
-                                                      IOBP_Input(7)  <= ( PIO_SYNC(35),  PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
-                                                      IOBP_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
-
-                                                  when  "00000100" => -- 6 LWL Input Modul in slot 7
-                                                      AW_IOBP_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync66( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(7)  <=    Deb66_out(41 DOWNTO 36);
-                                                      IOBP_Input(7)  <= ( PIO_SYNC(35),  PIO_SYNC(43),  PIO_SYNC(45),  PIO_SYNC(39),  PIO_SYNC(37),  PIO_SYNC(41));
-                                                      IOBP_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
-
-                                               
-                                          when others     =>  NULL;
-                                      end case;
-
-                                              IOBP_slot_state <= IOBP_slot8;
-
-              when IOBP_slot8=>			    conf_reg(8)<= IOBP_ID(8);
-                                              case conf_reg(8) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 8
-                                                      AW_IOBP_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync66( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(8)  <=    Deb66_out(47 DOWNTO 42);
-                                                      IOBP_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
-                                                      IOBP_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
-                                                      
-                                                  when "00000100" => -- 6 LWL Input Modul in slot 8
-                                                      AW_IOBP_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync66( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
-                                                      IOBP_Aktiv_LED_i(8)  <=    Deb66_out(47 DOWNTO 42);
-                                                      IOBP_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(141), PIO_SYNC(139), PIO_SYNC(125));
-                                                      IOBP_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
-                                                
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot9;
-
-              when IOBP_slot9=>			    conf_reg(9)<= IOBP_ID(9);
-                                              case conf_reg(9) is
-                                                  when "00000011"  => -- 6 LEMO Input Modul in slot 9
-                                                      AW_IOBP_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync66(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(9)  <=    Deb66_out(53 DOWNTO 48);
-                                                      IOBP_Input(9)  <= ( PIO_SYNC(30),  PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
-                                                      IOBP_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
-
-                                                  when "00000100" => -- 6 LWL Input Modul in slot 9
-                                                      AW_IOBP_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync66(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
-                                                      IOBP_Aktiv_LED_i(9)  <=    Deb66_out(53 DOWNTO 48);
-                                                      IOBP_Input(9)  <= ( PIO_SYNC(30),  PIO_SYNC(22),  PIO_SYNC(20),  PIO_SYNC(26),  PIO_SYNC(28),  PIO_SYNC(24));
-                                                      IOBP_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
- 
-                                                  when others     =>  NULL;
-                                                  
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot10;
-
-              when IOBP_slot10=>			    conf_reg(10)<= IOBP_ID(10);
-                                              case conf_reg(10) is
-                                                when "00000011"  => -- 6 LEMO Input Modul in slot 10
-                                                AW_IOBP_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync66(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
-                                                IOBP_Aktiv_LED_i(10)  <=    Deb66_out(59 DOWNTO 54);
-                                                IOBP_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
-                                                IOBP_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
-
-                                            when "00000100" => -- 6 LWL Input Modul in slot 10
-                                                AW_IOBP_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync66(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
-                                                IOBP_Aktiv_LED_i(10)  <=    Deb66_out(59 DOWNTO 54);
-                                                IOBP_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(140), PIO_SYNC(138), PIO_SYNC(126), PIO_SYNC(128), PIO_SYNC(142));
-                                                IOBP_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
-
-           
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot11;
-
-              when IOBP_slot11=>			    conf_reg(11)<= IOBP_ID(11);
-                                              case conf_reg(11) is
-                                                  
-                                                when "00000011" => -- 6 LEMO Input Modul in slot 11
-                                                AW_IOBP_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync66(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                IOBP_Aktiv_LED_i(11)  <=    Deb66_out(65 DOWNTO 60);
-                                                IOBP_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
-                                                IOBP_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
-
-                                                when "00000100" => -- 6 LWL Input Modul in slot 11
-                                                AW_IOBP_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync66(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                IOBP_Aktiv_LED_i(11)  <=    Deb66_out(65 DOWNTO 60);
-                                                IOBP_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(40), PIO_SYNC(38), PIO_SYNC(44), PIO_SYNC(46), PIO_SYNC(42));
-                                                IOBP_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
-
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot12;
-
-              when IOBP_slot12=>			    conf_reg(12)<= IOBP_ID(12);
-                                              case conf_reg(12) is
-                                                  
-                                                  when "00000101"  | "00000110" => -- Output Modul in slot 12
-                                                      AW_IOBP_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
-                                                    ------------------------------------------------------------------
-                                                    --- AW_Config register assigment to be defined
-                                                    ------------------------------------------------------------------
-                                                      if AW_Config2(1 downto 0) ="00" then -- correct values to be checked
-
-                                                        IOBP_Output <= INTL_Output;
-                                                      else
-                                                        IOBP_Output <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
-                                                      end if;
-                                                      --------------------------------------------------------------------
-                                                    --  PIO_OUT_SLOT_12 <= IOBP_Output;
-                                                        
-                                                      PIO_OUT_SLOT_12 <= INTL_Output;
-                                                      PIO_ENA_SLOT_12 <= std_logic_vector'("111111");
-                                                    --  IOBP_Aktiv_LED_i(12)  <=  IOBP_Output;
-                                                      IOBP_Aktiv_LED_i(12)  <=  INTL_Output;
-                                                      IOBP_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
-
-                                                  when others     =>  NULL;
-                                              end case;
-
-                                              IOBP_slot_state <= IOBP_slot_idle;
-
-                   when others =>           IOBP_slot_state <= IOBP_slot_idle;
-          end case;
-
-    end if;
-   end process ID_Front_Board_proc;
 
 --  ###############################################################################################################################
 --  #####                                                                                                                     #####
