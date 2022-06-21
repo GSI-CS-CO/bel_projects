@@ -19,7 +19,12 @@ files = [
    "atr_puls_n.vhd",
    "atr_timeout.vhd",
    "fg901040.vhd",
-   "in_reg.vhd"
+   "in_reg.vhd",
+   "BLM_watchdog.vhd",
+   "BLM_gate_timing_seq.vhd",
+   "up_down_counter.vhd",
+   "Beam_Loss_check.vhd",
+   "front_board_id_v0.vhd"
 ]
 
 modules = {
