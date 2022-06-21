@@ -178,6 +178,33 @@ void wdtPoll( void );
 void fgDisableInterrupt( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MAILBOX
+ * @brief Send a signal back to the Linux-host (SAFTLIB)
+ * @param sig Signal
+ * @param channel Concerning channel number.
+ */
+STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
+{
+   STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
+
+   ATOMIC_SECTION()
+      MSI_BOX_SLOT_ACCESS( g_shared.oSaftLib.oFg.aRegs[channel].mbx_slot, signal ) = sig;
+
+#ifdef CONFIG_DEBUG_FG_SIGNAL
+ #ifdef CONFIG_USE_LM32LOG
+   lm32Log( LM32_LOG_DEBUG, ESC_DEBUG
+                            "Signal: %s, channel: %d sent\n" ESC_NORMAL,
+            signal2String( sig ), channel );
+ #else
+   #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
+   mprintf( ESC_DEBUG "Signal: %s, channel: %d sent\n" ESC_NORMAL,
+            signal2String( sig ), channel );
+ #endif
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Send signal REFILL to the SAFTLIB when the fifo level has
  *        the threshold reached. Helper function of function handleMacros().
  * @see handleMacros

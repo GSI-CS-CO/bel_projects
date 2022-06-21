@@ -175,38 +175,10 @@ void pushInQueue( SW_QUEUE_T* pThis, const void* pItem );
  */
 void die( const char* pErrorMessage );
 
-
 /*! ---------------------------------------------------------------------------
  * @brief Scans for function generators on mil extension and scu bus.
  */
 void scanFgs( void );
-
-
-//#define CONFIG_DEBUG_FG_SIGNAL
-/*! ---------------------------------------------------------------------------
- * @ingroup MAILBOX
- * @brief Send a signal back to the Linux-host (SAFTLIB)
- * @param sig Signal
- * @param channel Concerning channel number.
- */
-STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
-{
-   STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.oSaftLib.oFg.aRegs ) );
-
-   ATOMIC_SECTION()
-      MSI_BOX_SLOT_ACCESS( g_shared.oSaftLib.oFg.aRegs[channel].mbx_slot, signal ) = sig;
-
-#ifdef CONFIG_LOG_ALL_SIGNALS
-   hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
-#endif
-
-#ifdef CONFIG_DEBUG_FG_SIGNAL
-   #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
-   mprintf( ESC_DEBUG "Signal: %s, channel: %d sent\n" ESC_NORMAL,
-            signal2String( sig ), channel );
-#endif
-}
 
 #ifdef __cplusplus
 }
