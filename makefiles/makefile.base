@@ -321,10 +321,6 @@ doxinput: $(DEPENDFILE)
 DOX_FILE_APPEND             := 1
 DOX_ADDITIONAL_DEPENDENCIES += doxinput
 DOX_PROJECT_NAME            ?= "$(shell echo $(TARGET) | tr '_' ' ' )"
-#DOX_INPUT                 += $(patsubst %.c,%.h, $(SOURCE))
-#DOX_INPUT                 += $(patsubst %.cpp,%.h, $(SOURCE))
-#DOX_INPUT                 += $(patsubst %.cpp,%.hpp, $(SOURCE))
-#DOX_INPUT                 += $(SOURCE)
 DOX_INPUT                  += $(MAKEFILE_DIR)/makefile.base
 DOX_TYPEDEF_HIDES_STRUCT   ?= "YES"
 DOX_INLINE_INHERITED_MEMB  ?= "YES"
