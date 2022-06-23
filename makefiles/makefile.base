@@ -279,7 +279,7 @@ lsrc:
 .PHONY: ldep
 ldep: $(WORK_DIR) $(DEPENDFILE)
 	$(QUIET) cat $(DEPENDFILE) | sed 's/:/:\n/g'| grep -v ':' | grep -v '@' | \
-	tr -d '\\' | awk NF | sort | awk '{print $$1}' | uniq
+	tr -d '\\' | tr ' ' '\n' | awk NF | sort | uniq
 
 .PHONY: incdirs
 incdirs:
@@ -313,8 +313,8 @@ rebuild: clean
 doxinput: $(DEPENDFILE)
 	@echo 'INPUT                    = \'                 > ${DOXY_CFG_FILE}
 	@cat $(DEPENDFILE) | sed 's/:/:\n/g' | grep -v ':' | \
-	     grep -v '@' | tr -d '\\' | \
-	     awk NF | sort | awk '{print $$1}' | uniq | \
+	     grep -v '@' | tr -d '\\' | tr ' ' '\n' | \
+	     awk NF | sort | uniq | \
 	     tr '\n' ' '                                    >> ${DOXY_CFG_FILE}
 	@echo                                               >> ${DOXY_CFG_FILE}
 

@@ -13,20 +13,6 @@
 
 CPU     := $(shell uname -m)
 
-CC      = $(GCC_BIN_DIR)gcc -std=c99
-CXX     = $(GCC_BIN_DIR)g++ -std=c++11
-LD      = $(GCC_BIN_DIR)gcc
-OBJCPY  = $(GCC_BIN_DIR)objcopy
-OBJDUMP = $(GCC_BIN_DIR)objdump
-SIZE    = $(GCC_BIN_DIR)size
-AS      = $(GCC_BIN_DIR)gcc
-AR      = $(GCC_BIN_DIR)gcc-ar rcs
-CPP     = $(CC) -E
-NM      = $(GCC_BIN_DIR)nm
-STRIP   = $(GCC_BIN_DIR)strip
-STRINGS = $(GCC_BIN_DIR)strings
-
-
 ifdef SHARED_OBJECT
   ifdef STATIC_LIBRARY
     $(error Define SHARED_OBJECT or STATIC_LIBRARY but not both! )
@@ -50,6 +36,21 @@ LD_FLAGS += $(ARG_LIBS)
 DOX_INPUT += $(MAKEFILE_DIR)/makefile.native
 
 include $(MAKEFILE_DIR)/makefile.base
+
+CC      = $(GCC_BIN_DIR)gcc -std=c11
+CXX     = $(GCC_BIN_DIR)g++ -std=c++11
+LD      = $(GCC_BIN_DIR)gcc
+OBJCPY  = $(GCC_BIN_DIR)objcopy
+OBJDUMP = $(GCC_BIN_DIR)objdump
+SIZE    = $(GCC_BIN_DIR)size
+AS      = $(GCC_BIN_DIR)gcc
+AR      = $(GCC_BIN_DIR)gcc-ar rcs
+CPP     = $(CC) -E
+NM      = $(GCC_BIN_DIR)nm
+STRIP   = $(GCC_BIN_DIR)strip
+STRINGS = $(GCC_BIN_DIR)strings
+
+
 
 ifndef IS_LIBRARY
 $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
