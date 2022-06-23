@@ -199,23 +199,6 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 # ADDITIONAL_HEADDER_IN_BUILD_ID = $(SCU_DIR)/scu_shared_mem.h
 
-# For DOXYGEN only, header files which doesn't have a appropriate C-file.
-#DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
-#DOX_INPUT += $(SCU_DIR)/scu_function_generator.h
-#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
-#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_wr_time.h
-#DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
-#DOX_INPUT += $(DAQ_DIR)/daq_ring_admin.h
-ifdef MIL_IN_TIMER_INTERRUPT
-#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
-endif
-ifdef USE_MMU
-#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_mmu_tag.h
-endif
-ifdef USE_LM32LOG
-#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_syslog_common.h
-#   DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_syslog.h
-endif
 
 # CODE_OPTIMIZATION = 2
  CODE_OPTIMIZATION = s
