@@ -227,6 +227,13 @@ architecture rtl of pci_control is
   signal butis_clk_200 : std_logic;
   signal butis_t0_ts   : std_logic;
 
+  signal s_i2c_scl_pad_out  : std_logic_vector(4 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(4 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(4 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(4 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(4 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(4 downto 1);
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -246,10 +253,10 @@ architecture rtl of pci_control is
     ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
-  constant c_family    : string := "Arria V";
-  constant c_project   : string := "pci_control";
+  constant c_family        : string := "Arria V";
+  constant c_project       : string := "pci_control";
   constant c_cores         : natural:= 1;
-  constant c_initf_name 	: string := c_project & "_stub.mif";
+  constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
   -- multiple init files for n processors are to be seperated by semicolon ';'
@@ -258,29 +265,31 @@ begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_flash_bits        => 25,
-      g_gpio_out          => 8,
-      g_lvds_in           => 2,
-      g_lvds_out          => 0,
-      g_lvds_inout        => 3,
-      g_fixed             => 2,
-      g_lvds_invert       => true,
-      g_en_pcie           => true,
-      g_en_usb            => true,
-      g_en_lcd            => true,
-      g_en_user_ow        => true,
-      g_en_tempsens       => true,
-      g_delay_diagnostics => true,
-      g_en_timer          => true,
-      g_en_eca_tap        => true,
-      g_io_table          => io_mapping_table,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_asmi           => false
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25,
+      g_gpio_out           => 8,
+      g_lvds_in            => 2,
+      g_lvds_out           => 0,
+      g_lvds_inout         => 3,
+      g_fixed              => 2,
+      g_lvds_invert        => true,
+      g_en_pcie            => true,
+      g_en_usb             => true,
+      g_en_lcd             => true,
+      g_en_user_ow         => true,
+      g_en_tempsens        => true,
+      g_delay_diagnostics  => true,
+      g_en_timer           => true,
+      g_en_eca_tap         => true,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 4,
+      g_io_table           => io_mapping_table,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => false
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -316,6 +325,12 @@ begin
       led_link_act_o          => led_link_act,
       led_track_o             => led_track,
       led_pps_o               => led_pps,
+      i2c_scl_pad_i           => s_i2c_scl_pad_in,
+      i2c_scl_pad_o           => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o        => s_i2c_scl_padoen,
+      i2c_sda_pad_i           => s_i2c_sda_pad_in,
+      i2c_sda_pad_o           => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o        => s_i2c_sda_padoen,
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET,
       pcie_rx_i               => pcie_rx_i,
@@ -428,5 +443,26 @@ begin
 
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');
+
+  -- I2C
+  p1 <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  n1 <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= p1;
+  s_i2c_sda_pad_in(1) <= n1;
+
+  p2 <= s_i2c_scl_pad_out(2) when (s_i2c_scl_padoen(2) = '0') else 'Z';
+  n2 <= s_i2c_sda_pad_out(2) when (s_i2c_sda_padoen(2) = '0') else 'Z';
+  s_i2c_scl_pad_in(2) <= p2;
+  s_i2c_sda_pad_in(2) <= n2;
+
+  p3 <= s_i2c_scl_pad_out(3) when (s_i2c_scl_padoen(3) = '0') else 'Z';
+  n3 <= s_i2c_sda_pad_out(3) when (s_i2c_sda_padoen(3) = '0') else 'Z';
+  s_i2c_scl_pad_in(3) <= p3;
+  s_i2c_sda_pad_in(3) <= n3;
+
+  p4 <= s_i2c_scl_pad_out(4) when (s_i2c_scl_padoen(4) = '0') else 'Z';
+  n4 <= s_i2c_sda_pad_out(4) when (s_i2c_sda_padoen(4) = '0') else 'Z';
+  s_i2c_scl_pad_in(4) <= p4;
+  s_i2c_sda_pad_in(4) <= n4;
 
 end rtl;
