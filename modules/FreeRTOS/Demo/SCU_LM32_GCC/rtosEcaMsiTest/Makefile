@@ -8,7 +8,7 @@
 ## Author:  Ulrich Becker                                                    ##
 ## Date:    09.04.2020                                                       ##
 ###############################################################################
-REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
+
 
 MIAN_MODULE := rtosEcaMsiTest.c
 
@@ -33,7 +33,7 @@ CODE_OPTIMIZATION = s
  DEFINES += CONFIG_RTOS_PEDANTIC_CHECK
  DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
 
- DEFINES += CONFIG_IRQ_RESET_IP_AFTER
+# DEFINES += CONFIG_IRQ_RESET_IP_AFTER
 # Only interrupt 0 and 1 will be used therefore the interrupt vector table
 # can be reduced form the maximum of 32 to two items.
 DEFINES += MAX_LM32_INTERRUPTS=2
@@ -43,8 +43,6 @@ DEFINES += MAX_LM32_INTERRUPTS=2
 # into a smaller size.
 STACK_SIZE := 256
 
-# For DOXYGEN only, header files which doesn't have a appropriate C-file.
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
-
+REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

@@ -174,7 +174,7 @@ STATIC inline void ecaHandler( void )
       if( !ecaIsValid( g_pEcaQueue ) )
          continue;
 
-      ECA_QUEUE_ITEM_T ecaItem = *g_pEcaQueue;
+      const ECA_QUEUE_ITEM_T ecaItem = *g_pEcaQueue;
 
       ecaPop( g_pEcaQueue );
 

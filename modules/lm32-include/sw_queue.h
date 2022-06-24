@@ -148,9 +148,9 @@ typedef struct
  *    int b;
  *    int c;
  * } MY_ITEM_T;
- * 
+ *
  * QUEUE_CREATE_STATIC( myQueue, 42, MY_ITEM_T );
- * 
+ *
  * void main( void )
  * {
  *    queueReset( &myQueue );
@@ -193,7 +193,7 @@ void queueCreateOffset( SW_QUEUE_T* pThis,
  *    int b;
  *    int c;
  * } MY_ITEM_T;
- * 
+ *
  * #define MY_CAPACITY 42
  * uint8_t myBuffer[MY_CAPACITY * sizeof(MY_ITEM_T)];
  * SW_QUEUE_T myQueue;
@@ -245,7 +245,7 @@ void queueCreate( SW_QUEUE_T* pThis,
  * void main( void )
  * {
  *    MY_STRUCT_WITH_QUEUE_T myStructWithQueue;
- * 
+ *
  *    myStructWithQueue.some   = 4711;
  *    myStructWithQueue.others = -815;
  *    QUEUE_INIT_MEMBER( &myStructWithQueue, myQueue, MY_ITEM_T );
