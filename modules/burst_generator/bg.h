@@ -15,6 +15,8 @@
 #include "fg.h" // included in cb.h
 #include "cb.h" // add_msg()
 
+typedef uint32_t status_t;
+
 #define toU64(hi32, lo32, r64) { r64 = ((uint64_t)(hi32)) << 32; r64 |= (lo32); }
 #define hiU32(u64)  ((uint32_t)(((u64) >> 32) & 0xFFFFFFFF))
 #define loU32(u64)  ((uint32_t)((u64) & 0xFFFFFFFF))
@@ -35,31 +37,40 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
-#define SHARED_MB_SLOT    0x04UL
-#define SHARED_MB_SLOT_H  0x0CUL
-#define SHARED_CMD        0x10UL
-#define SHARED_INPUT      0x20UL
+#define BG_SHARED_BEGIN         COMMON_SHARED_END
+#define BG_SHARED_MB_SLOT_LM32  BG_SHARED_BEGIN + 0x04UL  // Mailbox slot for LM32
+#define BG_SHARED_MB_SLOT_HOST  BG_SHARED_BEGIN + 0x0CUL  // Mailbox slot for the host
+#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Command buffer
+#define BG_SHARED_INPUT         BG_SHARED_BEGIN + 0x20UL  // Command argument buffer
+#define BG_SHARED_END           BG_SHARED_BEGIN + 0x40UL  // End of the shared memory
 #define MB_SLOT_CFG_FREE  0xFFFFFFFFUL
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
+#define BG_FW_VERSION     0x000100   // 0xMMmmRR, M-major, m-minor, R-revision
+#define BG_TAG            "bg"
 
 #define N_BURSTS          17    // maximum number of bursts can be generated, but bursts 1..N_BURSTS-1 are used
-#define N_TASKS           N_BURSTS + 1    // number of all periodic tasks (N_BURSTS + 1 host MSI handler)
+#define N_TASKS           N_BURSTS    // number of all periodic tasks
 #define N_BURST_INFO      10    // the length of burst info (id, io_type, io_idx, start_h32/l32, stop_h32/l32, cycle_h32/l32, flag)
 
 /* user commands for the burst generator */
-#define CMD_SHOW_ALL      0x1UL
-#define CMD_GET_PARAM     0x2UL
-#define CMD_GET_CYCLE     0x3UL
-#define CMD_LS_BURST      0x4UL  // list burst (ids or burst info)
-#define CMD_MK_BURST      0x5UL  // declare new burst
-#define CMD_RM_BURST      0x6UL  // remove burst
-#define CMD_DE_BURST      0x7UL  // dis/enable burst
-#define CMD_RD_MSI_ECPU   0x10UL
-#define CMD_RD_ECPU_CHAN  0x11UL
-#define CMD_RD_ECPU_QUEUE 0x12UL
-#define CMD_LS_FW_ID      0x13UL // list the firmware id
+#define CMD_SHOW_ALL      0x21UL
+#define CMD_GET_PARAM     0x22UL
+#define CMD_GET_CYCLE     0x23UL
+#define CMD_LS_BURST      0x24UL  // list burst (ids or burst info)
+#define CMD_MK_BURST      0x25UL  // declare new burst
+#define CMD_RM_BURST      0x26UL  // remove burst
+#define CMD_DE_BURST      0x27UL  // dis/enable burst
+#define CMD_RD_MSI_ECPU   0x30UL
+#define CMD_RD_ECPU_CHAN  0x31UL
+#define CMD_RD_ECPU_QUEUE 0x32UL
+#define CMD_LS_FW_ID      0x33UL // list the firmware id
+
+#define CMD_DIAG_TOGGLE_MEASUREMENT        0x40 // toggle diagnostic measurements
+#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION 0x41 // print the elapsed time to handle MSIs
+#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG   0x42 // print IO event control and configuration table
+#define CMD_DIAG_PRINT_TASK_INTERVAL       0x43 // print the task interval
 
 /* definitions of timing messages & ECA actions */
 #define ECA_FG_MOSTFULL   0x00060000UL  // ECA mostfull flag
