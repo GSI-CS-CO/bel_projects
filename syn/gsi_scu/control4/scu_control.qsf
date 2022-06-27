@@ -27,7 +27,7 @@ set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 0.95V
-set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
 set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
@@ -68,6 +68,8 @@ set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_scu4/ref_fpll
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_scu4/ref_pll10/ref_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_scu4/sys_pll10/sys_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/remote_update/asmi10/asmi10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
 set_global_assignment -name SEED 97
@@ -509,6 +511,9 @@ set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd -
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/local_125_to_12p5.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/local_20_to_12p5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_16_4.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_256_8.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_64_6.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/slave_clk_switch.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/sys_clk_or_local_clk.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/tmr_scu_bus.vhd -library work
@@ -560,6 +565,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_qu
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_ifa.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_statistics.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/ring_buffer.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/wbmstr_core.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd -library work

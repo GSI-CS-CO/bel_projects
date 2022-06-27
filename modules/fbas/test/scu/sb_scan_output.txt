@@ -1,0 +1,110 @@
+1. verify if the firmware runs in LM32
+
+[root@scuxl0411 ~]# eb-info -w dev/wbm0
+Project     : scu_control
+Platform    : scu3 +comexpress
+FPGA model  : Arria II GX (ep2agx125ef29c5)
+Source info : fallout-3847
+Build type  : fallout-v6.1.2
+Build date  : Mon Aug 09 09:36:32 CEST 2021
+Prepared by : Timing Group Jenkins <csco-tg@gsi.de>
+Prepared on : tsl021.acc.gsi.de
+OS version  : CentOS Linux release 7.9.2009 (Core), kernel 3.10.0-1160.36.2.el7.x86_64
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+
+  33b311a Merge pull request #287 from GSI-CS-CO/dm-fallout-tests
+  79bfcd2 datamaster-tests.tex: add hint to install scheduleCompare as a prerequisite.
+  5a22eb0 Makefile: use python3 explicitly. Tests do not run with python2.
+  0113dcd Merge branch 'fallout' into dm-fallout-tests
+  f6369d7 test_safe2remove.py: use longer duration for some long running performance tests, 3. try
+
+Detecting Firmwares ...
+
+Found 2 RAMs, 1 holding a Firmware ID
+
+
+********************
+* RAM @ 0x20140000 *
+********************
+UserLM32
+Stack Status:  okok
+Project     : sb_scan
+Version     : 00.01.00
+Platform    : scucontrol
+Build Date  : Thu May 19 12:08:00 CEST 2022
+Prepared by : ebold Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
+Prepared on : acopc017
+OS Version  : Linux Mint 20.3  Linux 5.4.0-110-generic x86_64
+GCC Version : lm32-elf-gcc(GCC)4.5.3 (build 190527-673a32-f3d6)
+IntAdrOffs  : 0x10000000
+SharedOffs  : 0x500
+SharedSize  : 8K
+FW-ID ROM will contain:
+
+   5c170f4f sb_scan: update the deploy and test scripts
+   b5552b04 sb_scan: update Makefile to ignore the MPS channels
+   447f3d8c sb_scan: allow more debug output
+   6eda73b7 sb_scan: update of the library function
+   1147ea46 fbas: fixed a function prototype
+*****
+
+2. (re)-start firmware
+
+[root@scuxl0411 ~]# ./run_sb_scan.sh
+
+3. show the firmware debug output on another shell
+
+[root@scuxl0411 ~]# eb-console dev/wbm0
+Connected to uart at address 60500
+Target BRG at base 0xa0000000 0xa0100000  entry 0
+Target DEV at 0xa0140000
+Target DEV at 0xa0180000
+sb_scan: CPU RAM External 0x20140000, begin shared 0x00000500, command 0x20140508
+sb_scan: app specific shared begin 0x10000500
+sb_scan: SHARED_SET_SBSLAVES 0x10000698
+sb_scan: SHARED_GET_SBSLAVES 0x100006a8
+sb_scan: SHARED_GET_SBSTDBEGIN 0x100006ac
+common-fwlib: 788 bytes of shared mem are actually used
+
+common-fwlib: ***** firmware sb_scan v000100 started from scratch *****
+common-fwlib: fwlib_init, shared size [bytes], common part 392, total 788
+common-fwlib: cpuRamExternal 0x20140000,  cpuRamExternalData4EB 0x20140544
+
+Target DEV at 0xa0000080
+Target DEV at 0x80000000
+Target DEV at 0x80060300
+Target DEV at 0x80060100
+Target DEV at 0xa0010000
+Target DEV at 0xa0000040
+Target DEV at 0x80008000
+Target DEV at 0x80400000
+sb_scan: pECAQ=80000000, pIOCtrl=a0010000, pSbMaster=80400000
+sb_scan: MAC=00:26:7b:00:06:eb, IP=192.168.161.165
+common-fwlib: changed to state 1
+Target DEV at 0xa0000080
+Target DEV at 0x80000000
+Target DEV at 0x80060300
+Target DEV at 0x80060100
+Target DEV at 0xa0010000
+Target DEV at 0xa0000040
+Target DEV at 0x80008000
+Target DEV at 0x80400000
+common-fwlib: changed to state 2
+sb_scan: received unknown command '0x00000001'
+common-fwlib: changed to state 3
+sb_scan: received unknown command '0x00000002'
+common-fwlib: changed to state 4
+sb_scan: slaves=00000000
+sb_scan: slot1: reg=7, sys=dead, grp=0000
+sb_scan: slot2: reg=7, sys=dead, grp=0000
+sb_scan: slot3: reg=7, sys=dead, grp=0000
+sb_scan: slot4: reg=7, sys=dead, grp=0000
+sb_scan: slot5: reg=7, sys=dead, grp=0000
+sb_scan: slot6: reg=7, sys=dead, grp=0000
+sb_scan: slot7: reg=7, sys=dead, grp=0000
+sb_scan: slot8: reg=7, sys=dead, grp=0000
+sb_scan: slot9: reg=7, sys=dead, grp=0000
+sb_scan: slot10: reg=7, sys=dead, grp=0000
+sb_scan: slot11: reg=7, sys=dead, grp=0000
+sb_scan: slot12: reg=7, sys=dead, grp=0000
+sb_scan: DIOB cfg 1000091c, sts 10000924
