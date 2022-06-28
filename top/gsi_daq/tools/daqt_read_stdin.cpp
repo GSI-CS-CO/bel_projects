@@ -52,6 +52,13 @@ Terminal::~Terminal( void )
 
 /*! ---------------------------------------------------------------------------
  */
+void Terminal::reset( void )
+{
+   ::tcsetattr( STDIN_FILENO, TCSANOW, &m_originTerminal );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 int Terminal::readKey( void )
 {
    int inKey;

@@ -51,6 +51,8 @@ private:
    bool          m_kill;
    bool          m_killOnly;
    bool          m_isDaemonized;
+   bool          m_addBuildId;
+   bool          m_readBuildId;
    uint          m_interval;
    uint          m_maxItemsPerInterval;
    FILTER_FLAG_T m_filterFlags;
@@ -118,6 +120,16 @@ public:
    bool isKillOnly( void )
    {
       return m_killOnly;
+   }
+
+   bool isAddBuildId( void )
+   {
+      return m_addBuildId;
+   }
+
+   bool isReadBuildId( void )
+   {
+      return m_readBuildId;
    }
 
    uint getPollInterwalTime( void )

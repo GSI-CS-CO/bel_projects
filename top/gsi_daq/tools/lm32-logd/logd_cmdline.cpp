@@ -369,6 +369,34 @@ CommandLine::OPT_LIST_T CommandLine::c_optList =
       .m_helpText = "PARAM=\"<number of maximum message-items per interval>\"\n"
                     "Overwrites the default number of maximum items per interval of "
                     TO_STRING(DEFAULT_MAX_ITEMS) " with a new value."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_addBuildId = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'b',
+      .m_longOpt  = "add-build-id",
+      .m_helpText = "Adds the build identification string of the LM32- application\n"
+                    "at the top of the log-file."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_readBuildId = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'B',
+      .m_longOpt  = "read-build-id",
+      .m_helpText = "Reads the build identification string of the LM32- application\n"
+                    "and exit.\n"
+                    "NOTE: This option will work in any cases doesn't matter as the LM32- application\n"
+                    "supports the logging or not."
    }
 }; // CommandLine::c_optList
 
@@ -405,6 +433,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_kill( false )
    ,m_killOnly( false )
    ,m_isDaemonized( false )
+   ,m_addBuildId( false )
+   ,m_readBuildId( false )
    ,m_interval( DEFAULT_INTERVAL )
    ,m_maxItemsPerInterval( DEFAULT_MAX_ITEMS )
    ,m_filterFlags( 0 )

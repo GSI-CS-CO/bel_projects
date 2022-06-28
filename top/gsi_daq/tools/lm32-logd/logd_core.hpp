@@ -89,7 +89,7 @@ private:
    uint readLm32( char* pData, std::size_t len,
                   const std::size_t offset );
 
-   uint readStringFromLm32( std::string& rStr, uint addr );
+   uint readStringFromLm32( std::string& rStr, uint addr, const bool = false );
 
    void updateFiFoAdmin( SYSLOG_FIFO_ADMIN_T& );
 

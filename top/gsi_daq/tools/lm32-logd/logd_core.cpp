@@ -43,7 +43,8 @@
 using namespace Scu;
 using namespace std;
 
-constexpr uint LM32_OFFSET = 0x10000000;
+constexpr uint LM32_OFFSET   = 0x10000000;
+constexpr uint BUILD_ID_ADDR = LM32_OFFSET + 0x100;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -124,14 +125,51 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
       m_poTerminal = new Terminal;
    }
 
+   m_lm32Base = m_oMmu.getEb()->findDeviceBaseAddress( mmuEb::gsiId,
+                                                       mmuEb::lm32_ram_user );
+
+   /*
+    * The string addresses of LM32 comes from the perspective of the LM32.
+    * Therefore a offset correction has to made here.
+    */
+   if( m_lm32Base < LM32_OFFSET )
+   {
+      if( m_poTerminal != nullptr )
+         m_poTerminal->reset();
+
+      throw std::runtime_error( "LM32 base address is corrupt!" );
+   }
+   m_lm32Base -= LM32_OFFSET;
+
+   if( m_rCmdLine.isReadBuildId() || m_rCmdLine.isAddBuildId() )
+   {
+      std::string idStr;
+
+      readStringFromLm32( idStr, BUILD_ID_ADDR, true );
+      if( m_rCmdLine.isReadBuildId() )
+      {
+         cout << idStr << endl;
+         if( m_poTerminal != nullptr )
+            m_poTerminal->reset();
+         ::exit( EXIT_SUCCESS );
+      }
+
+      *this << idStr << std::flush;
+   }
+
+
    if( !m_oMmu.isPresent() )
    {
+      if( m_poTerminal != nullptr )
+         m_poTerminal->reset();
       throw std::runtime_error( "MMU not present!" );
    }
 
    mmu::MMU_STATUS_T status = m_oMmu.allocate( mmu::TAG_LM32_LOG, m_offset, m_capacity );
    if( status != mmu::OK )
    {
+      if( m_poTerminal != nullptr )
+         m_poTerminal->reset();
       throw std::runtime_error( m_oMmu.status2String( status ) );
    }
 
@@ -167,19 +205,6 @@ Lm32Logd::Lm32Logd( mmuEb::EtherboneConnection& roEtherbone, CommandLine& rCmdLi
             << sysLogFifoGetItemSize( &m_fiFoAdmin )
             << " Log-items in FiFo." << endl;
    }
-
-   m_lm32Base = m_oMmu.getEb()->findDeviceBaseAddress( mmuEb::gsiId,
-                                                       mmuEb::lm32_ram_user );
-
-   /*
-    * The string addresses of LM32 comes from the perspective of the LM32.
-    * Therefore a offset correction has to made here.
-    */
-   if( m_lm32Base < LM32_OFFSET )
-   {
-      throw std::runtime_error( "LM32 base address is corrupt!" );
-   }
-   m_lm32Base -= LM32_OFFSET;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -269,7 +294,7 @@ inline bool Lm32Logd::isDecDigit( const char c )
 
 /*! ---------------------------------------------------------------------------
  */
-uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
+uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr, const bool alwaysLinefeed )
 {
    DEBUG_MESSAGE_M_FUNCTION("");
 
@@ -311,7 +336,7 @@ uint Lm32Logd::readStringFromLm32( std::string& rStr, uint addr )
             {
                case NO_ESC:
                {
-                  if( !m_rCmdLine.isForConsole() )
+                  if( !m_rCmdLine.isForConsole() && !alwaysLinefeed )
                   {
                      if( (buffer[i] == '\n') || (buffer[i] == '\r') )
                      {

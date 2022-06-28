@@ -35,6 +35,7 @@ class Terminal
 public:
    Terminal( void );
    ~Terminal( void );
+   void reset( void );
    static int readKey( void );
 };
 

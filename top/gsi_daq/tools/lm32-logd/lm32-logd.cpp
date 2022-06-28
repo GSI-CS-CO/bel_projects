@@ -205,6 +205,7 @@ int main( int argc, char** ppArgv )
    {
       CommandLine oCmdLine( argc, ppArgv );
 
+      if( !oCmdLine.isReadBuildId() )
       {
         /*
          * Checking whether a concurrent instance of this application is
