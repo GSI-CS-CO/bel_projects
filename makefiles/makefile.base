@@ -156,9 +156,11 @@ DEPLOY_DIR    ?= ./deploy_$(CPU)
 WORK_DIR      ?= $(DEPLOY_DIR)/work
 TARGET_DIR    ?= $(DEPLOY_DIR)/result
 
+GIT_REVISION := "$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
+
 OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
-OPT_DEFINES += -DGIT_REVISION="$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
+OPT_DEFINES += -DGIT_REVISION=$(GIT_REVISION)
 
 OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(notdir $(_SOURCE))))
 DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep

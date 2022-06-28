@@ -259,12 +259,6 @@ CBR_FLGS = $(CFLAGS)
 CBR_KRNL := $$(uname -mrs)
 CBR_OS   := $$(lsb_release -d -s | tr -d '"')
 CBR_PF   := SCU 3
-CBR_GIT1 := $$(git log HEAD~0 --oneline --decorate=no -n 1 | cut -c1-100)
-CBR_GIT2 := $$(git log HEAD~1 --oneline --decorate=no -n 1 | cut -c1-100)
-CBR_GIT3 := $$(git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100)
-CBR_GIT4 := $$(git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100)
-CBR_GIT5 := $$(git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100)
-
 
 CBR  = "/*!\n"
 CBR += " * @defgroup $(DOX_GEN_GROUP_NAME)\n"
@@ -290,6 +284,7 @@ CBR += "const char BUILDID build_id_rom[] = \""'\\'"\n"
 CBR += "UserLM32"'\\n\\'"\n"
 CBR += "Project     : $(TARGET)"'\\n\\'"\n"
 CBR += "Version     : $(VERSION)"'\\n\\'"\n"
+CBR += "Git-revision: "$(GIT_REVISION)'\\n\\'"\n"
 CBR += "Platform    : $(CBR_PF)"'\\n\\'"\n"
 CBR += "Build Date  : $(CBR_DATE)"'\\n\\'"\n"
 CBR += "Prepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\n"
@@ -304,13 +299,7 @@ CBR += "Opt. level  : $(CODE_OPTIMIZATION), LTO: $(LTO_INFO)"'\\n\\'"\n"
 CBR += "IntAdrOffs  : $(INTADR_OFFS)"'\\n\\'"\n"
 CBR += "SharedOffs  : $(SHARED_START)"'\\n\\'"\n"
 CBR += "SharedSize  : $(SHARED_SIZE)"'\\n\\'"\n"
-CBR += "StackSize   : $(STACK_SIZE)"'\\n\\'"\n"
-CBR += "FW-ID ROM will contain:"'\\n\\'"\n"
-CBR += "   $(CBR_GIT1)"'\\n\\'"\n"
-CBR += "   $(CBR_GIT2)"'\\n\\'"\n"
-CBR += "   $(CBR_GIT3)"'\\n\\'"\n"
-CBR += "   $(CBR_GIT4)"'\\n\\'"\n"
-CBR += "   $(CBR_GIT5)"'\\n\\'"\n\";\n\n"
+CBR += "StackSize   : $(STACK_SIZE)"'\\n";'"\n"
 CBR += "/*!@}*/\n"
 
 SHARED_MAP_HEADDER ?= shared_mmap.h
@@ -361,11 +350,6 @@ LD_FLAGS += -nostdlib
 _LD_FLAGS ?= $(LD_FLAGS) -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
 # ------------ Additional defines for Doxygen ---------------------------------
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_assert.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/helper_macros.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32_macros.h
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32signal.h
-DOX_INPUT += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)
 DOX_INPUT += $(WORK_DIR)/$(LINKER_SCRIPT)
 DOX_INPUT += $(MAKEFILE_DIR)/makefile.scu
 # -------------- End of defines for Doxygen -----------------------------------
