@@ -24,7 +24,7 @@ RTOS_USING_HEAP = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
-CODE_OPTIMIZATION = s
+CODE_OPTIMIZATION = 2
 
 
 # When the following compiler switch is defined, then the assert-macros
@@ -32,6 +32,8 @@ CODE_OPTIMIZATION = s
 # Meaningful in debug mode.
  DEFINES += CONFIG_RTOS_PEDANTIC_CHECK
  DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
+ DEFINES += CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+# DEFINES += CONFIG_DISABLE_CRITICAL_SECTION
 
 # DEFINES += CONFIG_IRQ_RESET_IP_AFTER
 # Only interrupt 0 and 1 will be used therefore the interrupt vector table

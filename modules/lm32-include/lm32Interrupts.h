@@ -314,11 +314,11 @@ STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
  */
 STATIC inline ALWAYS_INLINE void _irqEnable( void )
 {
-//#ifdef CONFIG_RTOS
-//     irqSetEnableRegister( IRQ_IE );
-//#else
+#ifdef CONFIG_RTOS___
+   irqSetEnableRegister( IRQ_IE );
+#else
    irqSetEnableRegister( irqGetEnableRegister() | IRQ_IE );
-//#endif
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -333,7 +333,7 @@ STATIC inline ALWAYS_INLINE void _irqEnable( void )
 STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
 #ifndef CONFIG_DISABLE_CRITICAL_SECTION
- #ifdef CONFIG_RTOS__
+ #ifdef CONFIG_RTOS
    irqSetEnableRegister( 0 );
  //  volatile const uint32_t im = irqGetMaskRegister();
  //  irqSetMaskRegister( 0 );
