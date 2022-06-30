@@ -1,16 +1,14 @@
 ###############################################################################
 ##                                                                           ##
-##         Makefile for FreeRTOS associated with ECA-MSI on SCU-LM32         ##
+## Makefile for FreeRTOS associated with ECA-MSI on SCU-LM32 using sw_queue  ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:    FreeRTOS/Demo/SCU_LM32_GCC/rtosEcaMsiTest/Makefile               ##
+## File:    FreeRTOS/Demo/SCU_LM32_GCC/rtosEcaMsiTest2/Makefile              ##
 ## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
 ## Author:  Ulrich Becker                                                    ##
 ## Date:    09.04.2020                                                       ##
 ###############################################################################
-
-
-MIAN_MODULE := rtosEcaMsiTest.c
+MIAN_MODULE := rtosEcaMsiTest2.c
 
 # The following flag is essential so that the build system adds the
 # FreeRTOS sources to this project.
@@ -19,6 +17,8 @@ USE_RTOS = 1
 # Additional module(s)
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
+SOURCE += $(SCU_LIB_SRC_DIR)/sw_queue.c
+SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
 
 RTOS_USING_HEAP = 1
 

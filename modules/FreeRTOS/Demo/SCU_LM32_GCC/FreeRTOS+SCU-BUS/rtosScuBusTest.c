@@ -24,7 +24,7 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
-// #define CONFIG_SCU_ATOMIC_SECTION
+ #define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
@@ -222,7 +222,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 
    return pdPASS;
 }
-
+extern const char build_id_rom[];
 /*! ---------------------------------------------------------------------------
  * @brief The main function, what else...
  */
@@ -237,6 +237,7 @@ void main( void )
             "IRQ-nesting count: %d\n", irqGetAtomicNestingCount()
           );
 
+   mprintf( "build-id: %p\n", build_id_rom );
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
                       "Status: %d\n" ESC_NORMAL, status );

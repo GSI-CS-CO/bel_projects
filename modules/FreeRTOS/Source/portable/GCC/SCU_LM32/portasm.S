@@ -21,6 +21,9 @@
 
 /*!
  * @brief Pointer to current Task Control Block.
+ *
+ * We require the address of the pxCurrentTCB variable, but don't want to know
+ * any details of its type.
  * @see task.c
  */
 #ifdef __DOXYGEN__
@@ -226,8 +229,8 @@ void vStartFirstTask( void ) {}
 vStartFirstTask:
    LOAD_ADDR r1, __atomic_section_nesting_count
    sw        (r1+0), r0       /* __atomic_section_nesting_count = 0; */
-   mvi       r1, EIE
-   wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
+   mvi       r1, EIE          /* Setting EIE bit enabling the IRQs by "eret" */
+   wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret" */
    RESTORE_CONTEXT
    lw        r1, __R1         /* Load Register R1 back */
    addi      sp, sp, SP_CORR  /* Correct Stack pointer */
@@ -250,12 +253,12 @@ vPortYield:
    bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused by LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
-#if 0
+#if 1
    LOAD_VAR  r1, __atomic_section_nesting_count
-   bne       r1, r0, L_NOT_ENABLE
+   bne       r1, r0, L_NOT_ENABLE /* Jump to L_NOT_ENABLE if nesting count not zero */
 #endif
-   mvi       r1, EIE
-   wcsr      ie, r1             /* Setting EIE bit enabling the IRQs by "eret"*/
+   mvi       r1, EIE            /* Setting EIE bit enabling the IRQs by "eret" */
+   wcsr      ie, r1             /* Setting EIE bit enabling the IRQs by "eret" */
 L_NOT_ENABLE:
    lw        r1, __R1           /* Load register R1 back */
    addi      sp, sp, SP_CORR    /* Correct stack pointer */

@@ -239,7 +239,11 @@ void vStartFirstTask( void );
  */
 void vPortYield( void );
 
-#define portYIELD()          vPortYield()
+//#define portYIELD()          vPortYield()
+STATIC inline ALWAYS_INLINE void portYIELD( void )
+{
+   vPortYield();
+}
 
 #ifdef __cplusplus
 }
