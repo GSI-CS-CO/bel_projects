@@ -55,13 +55,14 @@ private:
   EbWrapper ebd = EbWrapper(sLog, sErr, verbose, debug);
   LockManager lm = LockManager(ebd, hm, ct, atDown); //get us an instance of the lock manager
 
-  void updateListDstStaging(vertex_t v);
+  void updateListDstStaging(vertex_t vStart);
   void updateStaging(vertex_t v, edge_t e);
   void pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s);
   void generateBlockMeta(Graph& g);
-  void generateDstLst(Graph& g, vertex_t v);
+  void generateDstLst(Graph& g, vertex_t v, unsigned dstCnt);
   void generateQmeta(Graph& g, vertex_t v, int prio);
   void generateMgmtData();
+  void resizeDstLsts(Graph& g, AllocTable& at);
 
   void addition(Graph& g);
   void subtraction(Graph& g);

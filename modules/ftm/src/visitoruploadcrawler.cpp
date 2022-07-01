@@ -305,19 +305,44 @@ vAdr VisitorUploadCrawler::getFlushOvr() const {
 }
 
 vAdr VisitorUploadCrawler::getListDst() const {
-  vAdr ret;
-  Graph::in_edge_iterator in_begin, in_end;
-  vertex_t vp;
+  vAdr ret, aux;
+  bool searchParent = true;  
+  unsigned hops = 0;
+  vertex_t vp, v_child = v;
+  //get the parent block
+  while(hops <= ((altDstMax + dstListCapacity -1) / dstListCapacity) ) { // max number of hops must be less than max depth of dstLinked List
+    
+    Graph::in_edge_iterator in_begin, in_end;
+    boost::tie(in_begin, in_end) = in_edges(v_child,g);
+    if( (in_begin == in_end) || (g[*in_begin].type != det::sDstList) ){break;} // no edges or bad edge type found
+    vp = source(*in_begin,g);
+    if( g[vp].np->isBlock() ) {searchParent = false; break;} // found the parent block ?
+    v_child = vp;
+    hops++; // count the LL hops
+  }
 
-  //get the parent. there shall be only one, a block (no check for that right now, sorry)
-  boost::tie(in_begin, in_end) = in_edges(v,g);
-  vp = source(*in_begin,g);
+  if(searchParent) throw std::runtime_error(  exIntro + "DstList Node " + g[v].name + " seems to have no ancestor block!\n");
 
-  //search for default destination
-  childrenAdrs(getChildrenByEdgeType(vp, det::sDefDst), ret);
+  //std::cout << "This dstLst is at hop " << hops << std::endl;
 
-  //search parent blocks alternative destinations
-  childrenAdrs(getChildrenByEdgeType(vp, det::sAltDst), ret, 0, 9);
+  //get dstLst own dstLst-child
+  Graph::out_edge_iterator out_begin, out_end;
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  childrenAdrs(getChildrenByEdgeType(v, det::sDstList), ret, 1, 1);
+
+  // Browse Parent Block Destinations
+  childrenAdrs(getChildrenByEdgeType(vp, det::sDefDst), aux); //search for default destination  
+  childrenAdrs(getChildrenByEdgeType(vp, det::sAltDst), aux, 0, altDstMax); //search alternative destinations
+   //get corresponding altDst vector slice for this partial node
+  vAdr::iterator sliceLowerBound = aux.begin() + (hops + 0) * dstListCapacity;
+  vAdr::iterator sliceUpAux      = aux.begin() + (hops + 1) * dstListCapacity;
+  vAdr::iterator sliceUpperBound = (std::distance(aux.end(), sliceUpAux) >= 0) ? aux.end() : sliceUpAux; // if slice end >= end of adr vector, use end of adr vector
+
+  //std::cout << "Aux size is " << aux.size() << " slice lower " << std::distance(aux.begin(), sliceLowerBound) << " slice upper " << std::distance(aux.begin(), sliceUpperBound) << std::endl;
+
+  ret.insert(ret.end(), sliceLowerBound, sliceUpperBound);
+
+  //std::cout << "ret size is " << ret.size() << std::endl;
 
   return ret;
 

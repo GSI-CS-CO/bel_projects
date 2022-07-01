@@ -3,7 +3,7 @@
 ############################
 
 VERSION_FW     = 8.0.4
-VERSION_TOOL   = 0.36.3
+VERSION_TOOL   = 0.37.0
 
 ############################
 # ASL build paths          #

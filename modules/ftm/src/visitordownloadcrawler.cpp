@@ -37,25 +37,77 @@ void VisitorDownloadCrawler::setDefDst() const {
 
 }
 
+bool VisitorDownloadCrawler::setAltDsts(const uint32_t defAdr)  const { 
+  unsigned hops = 0;
+  vertex_t v_parent = v, v_child, v_Block = v;
+  bool defaultListed = false;
+  
+    // iterate over dstList LL
+  while(hops <= ((altDstMax + dstListCapacity -1) / dstListCapacity) ) { // max number of hops must be less than max depth of dstLinked List
+    Graph::out_edge_iterator out_begin, out_end;
+    boost::tie(out_begin, out_end) = out_edges(v_parent,g);
+    if( (out_begin == out_end) || (g[*out_begin].type != det::sDstList) ){break;} // no edges or bad edge type found
+    v_child = target(*out_begin,g);
+
+    //add all found altDst edges to parent Block
+    for (ptrdiff_t offs = DST_ARRAY; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
+      uint32_t tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>( ((AllocMeta*)&(*(at.lookupVertex(v_child))))->b + offs ));
+  
+      if (tmpAdr != LM32_NULL_PTR) { //if the address is not null, add anything altDst edge
+        try {
+          auto x = at.lookupAdr(cpu, tmpAdr);
+          if (tmpAdr != defAdr) { boost::add_edge(v_Block, x->v, (myEdge){det::sAltDst}, g); } //if altDst address it matches defdest address, don't add again
+          else                  {defaultListed = true;}
+        } catch (...) {
+          if (!ct.isOk(ct.lookup(g[v_Block].name)) || (tmpAdr != defAdr)) { throw; }
+          else {sLog << "visitDstList: Node <" << g[v_Block].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
+  
+        }
+      } 
+    }
+    
+    v_parent = v_child;
+    hops++; // count the LL hops
+  }
+ 
+  return defaultListed;
+
+}
+
 void VisitorDownloadCrawler::visit(const Block& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr;
+  uint32_t defAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)(b + NODE_DEF_DEST_PTR)));
+  bool defaultListed;
 
   try {
     
-  
+    //if the block has a altDst list, process it and set altDsts
+    tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
+    if (tmpAdr != LM32_NULL_PTR) { 
+      boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDstList), g); 
+      defaultListed = setAltDsts(defAdr);
+    } else {
+      defaultListed = true;
+    }
 
-  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
-  //if the block has no destination list, set default destination ourself
-  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDstList), g); }
-  else setDefDst();
+    // set defdst
+    if (defAdr != LM32_NULL_PTR) {
+        std::string sType = defaultListed ? det::sDefDst : det::sBadDefDst;
+      try {
+        auto x = at.lookupAdr(cpu, defAdr);
+        boost::add_edge(v, x->v, (myEdge){sType}, g);
+      } catch(...) {
+        boost::add_edge(v, v, (myEdge){det::sBadDefDst}, g);
+      }
+    } 
 
-  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_IL]), g);
-  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_HI]), g);
-  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
+    tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_IL]), g);
+    tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_HI]), g);
+    tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
   
   } catch (std::runtime_error const& err) {
    std::cerr << "Failed to create Block <" << g[v].name << " edges: " << err.what() << std::endl;
@@ -204,7 +256,7 @@ void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
 
 void VisitorDownloadCrawler::visit(const CmdQBuffer& el) const {
 }
-
+/*
 void VisitorDownloadCrawler::visit(const DestList& el) const {
   vertex_t vPblock;
   Graph::in_edge_iterator in_begin, in_end;
@@ -258,8 +310,20 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
   }
 
 }
+*/
 
+void VisitorDownloadCrawler::visit(const DestList& el) const {
+  //create edge to own possible child
+  uint32_t auxAdr = writeBeBytesToLeNumber<uint32_t>(b + NODE_DEF_DEST_PTR);
+  uint32_t tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, cpu, auxAdr);
 
+  if (tmpAdr != LM32_NULL_PTR) {
+    auto x = at.lookupAdr(cpu, tmpAdr);
+    boost::add_edge(v, x->v, myEdge(det::sDstList), g);
+
+  }
+
+}
 
 
 

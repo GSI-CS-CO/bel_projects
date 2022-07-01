@@ -48,6 +48,10 @@ namespace CluTime {
 
 const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when testmode is on to speed coverage test
 
+const unsigned dstListCapacity = 9;
+const unsigned altDstMax       = 17;
+
+
 
 /** @name Operator overload collcetion for std::vector
  * Templated helper functions for easy concatenation std::vector

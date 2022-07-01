@@ -107,16 +107,21 @@ using namespace DotStr::Misc;
 
 
 
-  void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v) {
-    const std::string name = g[v].name + dnm::sDstListSuffix;
-    hm.add(name);
-
-
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
-    //FIXME add to grouptable
-    g[vD].patName = g[v].patName;
-    gt.setPattern(g[vD].name, g[vD].patName, false, false);
-    boost::add_edge(v,   vD, myEdge(det::sDstList), g);
+  void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v, unsigned dstCnt) {
+    const std::string basename = g[v].name + dnm::sDstListSuffix;
+    vertex_t v_parent = v;
+    
+    for(unsigned i = 0; i < ((dstCnt + 1 + dstListCapacity-1) / (dstListCapacity)); i++) {
+      vertex_t v_child;
+      std::string name = basename + "_" + std::to_string(i);
+      
+      hm.add(name);
+      v_child = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+      g[v_child].patName = g[v].patName;
+      gt.setPattern(g[v_child].name, g[v_child].patName, false, false);
+      boost::add_edge(v_parent, v_child, myEdge(det::sDstList), g);
+      v_parent = v_child;
+    }  
   }
 
   void CarpeDM::CarpeDMimpl::generateQmeta(Graph& g, vertex_t v, int prio) {
@@ -157,58 +162,67 @@ using namespace DotStr::Misc;
    */
   void CarpeDM::CarpeDMimpl::generateBlockMeta(Graph& g) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
-
+    
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       std::string cmp = g[v].type;
+      
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
         //std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
+        bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false, 
+              genHi       = s2u<bool>(g[v].qHi),  hasHi = false,
+              genLo       = s2u<bool>(g[v].qLo),  hasLo = false,
+              hasDstLst = false;
 
-        bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasMultiDst, hasDstLst;
-        try{
-              genIl = s2u<bool>(g[v].qIl);  hasIl = false;
-              genHi = s2u<bool>(g[v].qHi);  hasHi = false;
-              genLo = s2u<bool>(g[v].qLo);  hasLo = false;
-              hasMultiDst = false; hasDstLst = false;
-        } catch (std::runtime_error const& err) {
-          throw std::runtime_error( "Parser error when processing node <" + g[v].name + ">. Cause: " + err.what());
-        }
+        unsigned hasMultiDst = 0;      
 
         for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-        {
+        { 
+          
           if (g[*out_cur].type == det::sQPrio[PRIO_IL]) hasIl       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_HI]) hasHi       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_LO]) hasLo       = true;
-          if (g[*out_cur].type == det::sAltDst)         hasMultiDst = true;
+          if (g[*out_cur].type == det::sAltDst)         hasMultiDst++;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
+
         //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v); }
+        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v, hasMultiDst);         }
+
       }
-    }
+    }  
   }
 
-  void CarpeDM::CarpeDMimpl::updateListDstStaging(vertex_t v) {
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
+  void CarpeDM::CarpeDMimpl::updateListDstStaging(vertex_t vStart) {
     Graph& g = gUp;
     AllocTable& at = atUp;
-    // the changed edge leads to Alternative Dst, find and stage the block's dstList
-    boost::tie(out_begin, out_end) = out_edges(v,g);
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (g[*out_cur].type == det::sDstList) {
-        auto dst = at.lookupVertex(target(*out_cur, g));
-        at.setStaged(dst);
-        //std::cout << "staged " << g[dst->v].name  << std::endl;
-        // if we found a Dst List, stage it
-        break;
+    // the changed edge leads to Alternative Dst, find and stage the block's dstLists
+    bool checkForDstList = true;
+    vertex_t v = vStart;
+
+    while (checkForDstList) {
+      checkForDstList = false;
+
+      Graph::out_edge_iterator out_begin, out_end, out_cur;
+      boost::tie(out_begin, out_end) = out_edges(v,g);  
+      for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+        if (g[*out_cur].type == det::sDstList) {
+          auto dst = at.lookupVertex(target(*out_cur, g));
+          at.setStaged(dst); 
+          //std::cout << "staged " << g[dst->v].name  << std::endl; 
+          // if we found a Dst List, stage it
+          checkForDstList = true;
+          v = dst->v;
+          break;
+        }
       }
-    }
+    }  
   }
 
   void CarpeDM::CarpeDMimpl::updateStaging(vertex_t v, edge_t e)  {
@@ -269,7 +283,7 @@ using namespace DotStr::Misc;
     uint8_t cpu;
     int allocState;
 
-
+    resizeDstLsts(gUp, atUp); // if the number of altDsts changed, dst Linked Lists must be resized as well
 
     //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -519,6 +533,103 @@ using namespace DotStr::Misc;
         pushMetaNeighbours(w, g, s);
       } else {
         //sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl;
+      }
+    }
+  }
+
+  //if a Block's number of altDsts changed, the number of dstList nodes can change as well
+  void CarpeDM::CarpeDMimpl::resizeDstLsts(Graph& g, AllocTable& at) {
+    if(verbose) sLog << "Resizing destination lists to fit" << std::endl;
+
+    // two possible work order structures: list of nodes to be deleted OR generated. We need to aggregate deletion so descriptors stay valid
+    vertex_set_t                  toDelete;
+
+    //find all staged blocks
+    BOOST_FOREACH( vertex_t v, vertices(g)) {
+      if (g[v].np == nullptr) {continue;} // if it doesn't have a data object, it didn't exist before and doesnt need to be resized.
+      if (!g[v].np->isBlock()) {continue;} // if it's not a block, we skip. Staging is not significant here !!!
+      //get number of necessary entries to accommodate altDst + defDst
+      unsigned reqEntries = 0; 
+      bool hasNoDstList = true;
+      Graph::out_edge_iterator out_begin, out_end, out_cur;
+      boost::tie(out_begin, out_end) = out_edges(v,g);
+      for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+        if ((g[*out_cur].type == det::sDefDst) || (g[*out_cur].type == det::sAltDst)) { reqEntries++; }
+        if (g[*out_cur].type == det::sDstList) hasNoDstList = false;
+      }
+      if (hasNoDstList) continue; // it has no dstLst, skip
+
+      //get existing dstList Nodes
+      std::vector<vertex_t> vLL;
+      vertex_t v_parent = v, v_child;
+      bool followLL = true;
+      while(followLL) {  
+        followLL = false;
+        boost::tie(out_begin, out_end) = out_edges(v_parent,g);
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+          if (g[*out_cur].type == det::sDstList) {
+            v_child = target(*out_cur, g);
+            followLL = true; vLL.push_back(v_child);
+            v_parent = v_child; 
+          }
+        }
+      }
+
+      // calc required dstLstNodes. dstLsts cannot get smaller than a single node, or we'd need to modify the block (dstLst pointer) during runtime (possibly unsafe).
+      unsigned reqLLNodes = (reqEntries + dstListCapacity -1) / dstListCapacity; 
+      reqLLNodes = reqLLNodes ? reqLLNodes : 1;
+
+      if (vLL.size() > reqLLNodes ) { // delete surplus nodes
+        if(verbose) sLog << g[v].name << " needs " << reqEntries << " entries = " << reqLLNodes << " LL nodes. Currently have " << vLL.size() << ", deleting " << (vLL.size() - reqLLNodes) << std::endl;
+        auto itVll = vLL.begin() + reqLLNodes;
+        while(itVll != vLL.end()) {
+          toDelete.insert(*itVll); //marks surplus nodes for later deletion
+          ++itVll;
+        }  
+      
+      } else if (vLL.size() < reqLLNodes ) { // add missing nodes
+        if(verbose) sLog << g[v].name << " needs " << reqEntries << " entries = " << reqLLNodes << " LL nodes. Currently have " << vLL.size() << ", generating " << (reqLLNodes - vLL.size());
+        if(verbose) sLog << " at " << ( vLL.size() ? g[vLL.back()].name : g[v].name ) << std::endl;
+
+        //generate missing nodes (right now, no sense in doing it later)
+        const std::string basename = g[v].name + dnm::sDstListSuffix;
+        vertex_t v_parent = vLL.back();
+    
+        for(unsigned i = vLL.size(); i < reqLLNodes; i++) {
+          vertex_t v_child;
+          std::string name = basename + "_" + std::to_string(i);
+          hm.add(name);
+          if(verbose) sLog << "adding " << name << std::endl;
+          v_child = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+          g[v_child].patName = g[v].patName;
+          gt.setPattern(g[v_child].name, g[v_child].patName, false, false);
+          boost::add_edge(v_parent, v_child, myEdge(det::sDstList), g);
+          v_parent = v_child;
+        }  
+      } else {
+        if(verbose) sLog << g[v].name << " is fine. Needs " << reqEntries << " entries = " << reqLLNodes << " LL nodes. Currently have " << vLL.size() << std::endl;
+      }
+
+    }
+
+    //delete surplus nodes in one go
+    if (toDelete.size()) { 
+      vertex_map_t vertexMap;
+      BOOST_FOREACH( vertex_t v, vertices(gUp) ) vertexMap[v] = v;  
+      for(auto& vd : toDelete ) {
+        if(verbose) sLog << "deleting " << g[vertexMap[vd]].name << std::endl;
+        at.deallocate(g[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
+        hm.remove(g[vertexMap[vd]].name);
+        gt.remove<Groups::Node>(g[vertexMap[vd]].name); 
+        boost::clear_vertex(vertexMap[vd], g); 
+        boost::remove_vertex(vertexMap[vd], g); 
+        for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > vd) updateMapIt.second--; }
+      }
+      //update alloctable descriptors
+      std::vector<amI> itAtVec; //because elements change order during repair loop, we need to store iterators first
+      for( amI it = at.getTable().begin(); it != at.getTable().end(); it++) { itAtVec.push_back(it); }
+      for( auto itIt : itAtVec ) {  //now we can safely iterate over the alloctable iterators
+        at.modV(itIt, vertexMap[itIt->v]);
       }
     }
   }
