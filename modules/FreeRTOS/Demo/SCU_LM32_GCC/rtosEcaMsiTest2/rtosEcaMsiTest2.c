@@ -23,18 +23,24 @@
  * @code
  *  saft-ecpu-ctl tr0 -d -c 0x1122334455667788 0xFFFFFFFFFFFFFFFF 0 0x42
  * @endcode
- *  - debug firmware output
+ *  - open LM32 console:
  * @code
  *  eb-console dev/wbm0
+ * @endcode
+ * - and/or invoke the LM32-log daemon:
+ * @code
+ *  lm32-logd -kbnc
  * @endcode
  *  - inject timing message (invoke on the second terminal)
  * @code
  *  saft-ctl tr0 inject 0x1122334455667788 0x8877887766556642 0
  * @endcode
+ * @note The software fan as still alive signal is only in LM32-console visible!
  *
  */
 #include <eb_console_helper.h>
 #include <lm32signal.h>
+#include <scu_syslog.h>
 #include <scu_msi.h>
 #include <eca_queue_type.h>
 #include <scu_wr_time.h>
@@ -44,6 +50,11 @@
 
 #ifndef CONFIG_RTOS
    #error "This project provides FreeRTOS"
+#endif
+
+#ifndef CONFIG_USE_LM32LOG
+   #define LM32_LOG_INFO  0
+   #define LM32_LOG_ERROR 0
 #endif
 
 /*!
@@ -66,9 +77,35 @@ ECA_CONTROL_T* g_pEcaCtl;
  */
 ECA_QUEUE_ITEM_T* g_pEcaQueue;
 
+/*!
+ * @brief Creating a message queue between interrupt routine (top half)
+ *        and user task (bottom half).
+ */
+QUEUE_CREATE_STATIC( g_msgQueue, 5, sizeof( MSI_ITEM_T ) );
 
-QUEUE_CREATE_STATIC( g_msgQueue,  5, sizeof( MSI_ITEM_T ) );
+/*!
+ * @brief Overflow counter, it becomes incremented when the message queue is full
+ *        and unable to store any further messages,
+ */
+unsigned int g_overfolwCount = 0;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Unified output function for LM32-console an lM32-syslog.
+ */
+OPTIMIZE( "-O0"  )
+void scuLog( const unsigned int filter, const char* format, ... )
+{
+   va_list ap;
+
+   va_start( ap, format );
+   vprintf( format, ap );
+   va_end( ap );
+#ifdef CONFIG_USE_LM32LOG
+   va_start( ap, format );
+   vLm32log( filter, format, ap );
+   va_end( ap );
+#endif
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Callback function becomes invoked by LM32 when an exception appeared.
@@ -87,7 +124,7 @@ void _onException( const uint32_t sig )
          _CASE_SIGNAL( SIGSEGV )
          default: str = "unknown"; break;
       }
-      mprintf( ESC_ERROR "%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
+      mprintf( ESC_ERROR "\n%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
    }
 }
 
@@ -99,9 +136,9 @@ STATIC inline void clearActions( void )
    uint32_t valCnt = ecaControlGetAndResetLM32ValidCount( g_pEcaCtl );
    if( valCnt != 0 )
    {
-      mprintf( "pending actions: %d\n", valCnt );
+      scuLog( LM32_LOG_INFO, "pending actions: %d\n", valCnt );
       valCnt = ecaClearQueue( g_pEcaQueue, valCnt ); // pop pending actions
-      mprintf( "cleared actions: %d\n", valCnt );
+      scuLog( LM32_LOG_INFO, "cleared actions: %d\n", valCnt );
    }
 }
 
@@ -116,7 +153,7 @@ STATIC inline void configureEcaMsiForLM32( void )
 {
    clearActions();   // clean ECA queue and channel from pending actions
    ecaControlSetMsiLM32TargetAddress( g_pEcaCtl, (void*)pMyMsi, true );
-   mprintf( "MSI path (ECA -> LM32)           : enabled\n"
+   scuLog( LM32_LOG_INFO, "MSI path (ECA -> LM32)           : enabled\n"
            "\tECA channel = %d\n\tdestination = 0x%08X\n",
             ECA_SELECT_LM32_CHANNEL, (uint32_t)pMyMsi);
 }
@@ -130,12 +167,13 @@ STATIC inline void configureEcaMsiForLM32( void )
  * - pop pending actions from ECA queue connected to this action channel
  */
 STATIC void onIrqEcaEvent( const unsigned int intNum,
-                           const void* pContext )
+                           const void* pContext UNUSED )
 {
    MSI_ITEM_T m;
 
    while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
-      queuePush( &g_msgQueue, &m );
+      if( !queuePush( &g_msgQueue, &m ) )
+         g_overfolwCount++;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -146,7 +184,7 @@ STATIC inline void ecaHandler( void )
    static unsigned int s_count = 0;
 
    const unsigned int pending = ecaControlGetAndResetLM32ValidCount( g_pEcaCtl );
-   mprintf( "valid:\t%d\n", pending );
+   scuLog( LM32_LOG_INFO, "valid:\t%d\n", pending );
    for( unsigned int i = 0; i < pending; i++ )
    {
       if( !ecaIsValid( g_pEcaQueue ) )
@@ -161,24 +199,35 @@ STATIC inline void ecaHandler( void )
        */
       if( ecaItem.tag != MY_ACT_TAG )
       {
-         mprintf( "%s: unknown tag: %d\n", __func__, ecaItem.tag );
+         scuLog( LM32_LOG_INFO, "%s: unknown tag: %d\n", __func__, ecaItem.tag );
          continue;
       }
 
-      mprintf( ESC_FG_YELLOW ESC_BOLD
-               "%s: id: 0x%08x%08x\n"
-               "deadline:       0x%08X%08X\n"
-               "param:          0x%08X%08X\n"
-               "flag:           0b%08b\n"
-               ESC_FG_BLUE
-               "count:          %u\n" ESC_NORMAL,
+      /*
+       * At the moment the function vLm32log() can only process 4 additional
+       * parameters at a time, therefore the following output is divided
+       * in three parts.
+       */
+      scuLog( LM32_LOG_INFO,  ESC_FG_YELLOW ESC_BOLD
+               "%s(): id: 0x%08x%08x\n"
+              ESC_NORMAL,
                __func__,
-               ecaItem.eventIdH,  ecaItem.eventIdL,
+               ecaItem.eventIdH,  ecaItem.eventIdL
+            );
+      scuLog( LM32_LOG_INFO,  ESC_FG_YELLOW ESC_BOLD
+               "deadline:         0x%08X%08X\n"
+               "param:            0x%08X%08X\n"
+               ESC_NORMAL,
                ecaItem.deadlineH, ecaItem.deadlineL,
-               ecaItem.paramH,    ecaItem.paramL,
+               ecaItem.paramH,    ecaItem.paramL
+            );
+      scuLog( LM32_LOG_INFO,  ESC_FG_YELLOW ESC_BOLD
+               "flag:             0b%b\n"
+               ESC_FG_BLUE
+               "count:            %u\n" ESC_NORMAL,
                ecaItem.flags,
                ++s_count
-             );
+            );
    }
 }
 
@@ -188,57 +237,74 @@ STATIC inline void ecaHandler( void )
  */
 STATIC void vTaskEcaMain( void* pvParameters UNUSED )
 {
-   mprintf( ESC_BOLD ESC_FG_CYAN "Function \"%s()\" of task \"%s\" started\n"
-            ESC_NORMAL,
+#ifdef CONFIG_USE_LM32LOG
+   const MMU_STATUS_T status = lm32LogInit( 1000 );
+   mprintf( "\nMMU- status: %s\n", mmuStatus2String( status ) );
+   if( !mmuIsOkay( status ) )
+   {
+      mprintf( ESC_ERROR "ERROR Unable to get DDR3- RAM!\n" ESC_NORMAL );
+      vTaskEndScheduler();
+   }
+#endif
+
+   scuLog( LM32_LOG_INFO, ESC_BOLD ESC_FG_CYAN
+                          "Function \"%s()\" of task \"%s\" started\n"
+                          ESC_NORMAL,
             __func__, pcTaskGetName( NULL ) );
 
    if( pEca == NULL )
    {
-      mprintf( ESC_ERROR "Could not find the ECA event input. Exit!\n" ESC_NORMAL);
+      scuLog( LM32_LOG_ERROR, ESC_ERROR
+                              "Could not find the ECA event input. Exit!\n"
+                              ESC_NORMAL);
       vTaskEndScheduler();
    }
-   mprintf("ECA event input                  @ 0x%p\n", pEca );
-   mprintf("MSI destination addr for LM32    : 0x%p\n", pMyMsi );
+   scuLog( LM32_LOG_INFO, "ECA event input                  @ 0x%p\n", pEca );
+   scuLog( LM32_LOG_INFO, "MSI destination addr for LM32    : 0x%p\n", pMyMsi );
 
    g_pEcaCtl = ecaControlGetRegisters();
    if( g_pEcaCtl == NULL )
    {
-      mprintf( ESC_ERROR "Could not find the ECA channel control. Exit!\n"
-               ESC_NORMAL );
+      scuLog( LM32_LOG_ERROR,
+              ESC_ERROR
+              "Could not find the ECA channel control. Exit!\n"
+              ESC_NORMAL );
       vTaskEndScheduler();
    }
-   mprintf( "ECA channel control              @ 0x%p\n", g_pEcaCtl );
+   scuLog( LM32_LOG_INFO, "ECA channel control              @ 0x%p\n", g_pEcaCtl );
 
    g_pEcaQueue = ecaGetLM32Queue();
    if( g_pEcaQueue == NULL )
    {
-      mprintf( ESC_ERROR "Could not find the ECA queue connected"
-                         " to eCPU action channel. Exit!\n" ESC_NORMAL );
+      scuLog( LM32_LOG_ERROR,
+              ESC_ERROR
+              "Could not find the ECA queue connected"
+              " to eCPU action channel. Exit!\n" ESC_NORMAL );
       vTaskEndScheduler();
    }
-   mprintf( "ECA queue to LM32 action channel @ 0x%08p\n", g_pEcaQueue );
+   scuLog( LM32_LOG_INFO, "ECA queue to LM32 action channel @ 0x%08p\n", g_pEcaQueue );
 
    configureEcaMsiForLM32();
 
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onIrqEcaEvent );
-   mprintf( "Installing of ECA interrupt is done.\n" );
+   scuLog( LM32_LOG_INFO, "Installing of ECA interrupt is done.\n" );
 
 
    unsigned int i = 0;
    const char fan[] = { '|', '/', '-', '\\' };
-   uint64_t fanTime = 0L;
-   mprintf( ESC_BOLD "Entering task main loop and waiting for MSI ...\n" ESC_NORMAL );
+   TickType_t fanTime = 0;
+   lm32Log( LM32_LOG_INFO, "NOTE: The software fan as still alive signal is only in LM32-console visible!\n" );
+   scuLog( LM32_LOG_INFO, ESC_BOLD "Entering task main loop and waiting for MSI ...\n" ESC_NORMAL );
    while( true )
    {
       MSI_ITEM_T m;
       if( queuePopSave( &g_msgQueue, &m ) )
-      {
-         mprintf( "\nMessages in queue: %u\n", queueGetSizeSave( &g_msgQueue ) );
-        /*
+      { /*
          * At least one message has been received...
          */
-         mprintf( ESC_FG_MAGENTA
-                  "MSI:\t0x%08X\n"
+         scuLog( LM32_LOG_INFO,
+                 ESC_FG_MAGENTA
+                  "\nMSI:\t0x%08X\n"
                   "Adr:\t0x%08X\n"
                   "Sel:\t0x%02X\n"
                   ESC_NORMAL,
@@ -252,17 +318,31 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
             */
             ecaHandler();
          }
+         scuLog( LM32_LOG_INFO, "\nMessages in queue: %u\n", queueGetSizeSave( &g_msgQueue ) );
+
+         criticalSectionEnter();
+         const unsigned int overflowCount = g_overfolwCount;
+         criticalSectionExit();
+         if( overflowCount > 0 )
+         {
+            scuLog( LM32_LOG_INFO,
+                    ESC_ERROR "Message buffer overflow: %u\n" ESC_NORMAL, overflowCount );
+            criticalSectionEnter();
+            g_overfolwCount = 0;
+            criticalSectionExit();
+         }
       }
       else
       {
-         const uint64_t time = getWrSysTime();
-         if( fanTime <= time )
+         const TickType_t tick = xTaskGetTickCount();
+         if( fanTime <= tick )
          {
-            fanTime = time + 1000000000UL / 4;
+            fanTime = tick + pdMS_TO_TICKS( 250 );
             mprintf( ESC_BOLD "\r%c" ESC_NORMAL, fan[i++] );
             i %= ARRAY_SIZE( fan );
          }
       }
+
       vPortYield();
    }
 }
