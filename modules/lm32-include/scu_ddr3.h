@@ -174,7 +174,11 @@ typedef struct
 #endif
 } DDR3_T;
 
-#ifndef CONFIG_RTOS
+#ifdef CONFIG_RTOS
+  #include <lm32Interrupts.h>
+  #define ddr3Lock()   criticalSectionEnter()
+  #define ddr3Unlock() criticalSectionExit()
+#else
  /*
   * Dummy functions when FreeRTOS will not used.
   */

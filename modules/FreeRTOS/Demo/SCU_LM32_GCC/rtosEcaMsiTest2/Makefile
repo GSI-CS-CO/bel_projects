@@ -14,12 +14,21 @@ MIAN_MODULE := rtosEcaMsiTest2.c
 # FreeRTOS sources to this project.
 USE_RTOS = 1
 
+USE_LM32LOG = 1
+
 # Additional module(s)
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 SOURCE += $(SCU_LIB_SRC_DIR)/sw_queue.c
 SOURCE += $(SCU_LIB_SRC_DIR)/circular_index.c
-
+ifdef USE_LM32LOG
+  SOURCE += $(SCU_LIB_SRC_DIR)/lm32_syslog.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu_lm32.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_mmu.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
+  DEFINES += CONFIG_SCU_USE_DDR3
+  DEFINES += CONFIG_USE_LM32LOG
+endif
 RTOS_USING_HEAP = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)

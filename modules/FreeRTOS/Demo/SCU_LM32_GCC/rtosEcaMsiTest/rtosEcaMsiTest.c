@@ -302,7 +302,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    mprintf( "Creating task \"%s\"\n", taskName );
    status = xTaskCreate( vTaskEcaMain,
                          taskName,
-                         configMINIMAL_STACK_SIZE * 4,
+                         configMINIMAL_STACK_SIZE * 2,
                          NULL,
                          tskIDLE_PRIORITY + 1,
                          NULL
