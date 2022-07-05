@@ -88,7 +88,7 @@ void initSharedBuffers(void);                      // initialize the command and
 void buildTimingMsg(uint32_t *msg, uint32_t id);   // build timing message
 void injectTimingMsg(uint32_t *msg);               // inject timing message to ECA event input
 void ecaHandler(uint32_t);                         // pop pending eCPU actions from ECA queue
-void cmdHandler(uint32_t *reqState, uint32_t cmd); // handle user command received from the host
+void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd); // handle user command received from the host
 
 int ecaMsiHandler(int id);           // handler for the ECA MSIs
 int hostMsiHandler(int id);          // handler for the host MSIs
@@ -506,7 +506,7 @@ int ecaMsiHandler(int id)
     tElapsed[1] = getSysTime();
     tElapsed[2] = tElapsed[1];
     uint32_t cnt = 0;
-    //mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
+    //mprintf("\nMSI 0x%08x (h16: 0-3 fail, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
 
     switch (m.msg & ECA_FG_MASK)
     {
@@ -1235,7 +1235,7 @@ void execHostCmd(int32_t cmd)
 	result = STATUS_ERR;
     }
 
-    cmd = (result << 16) | (cmd & 0x0000FFFF); // both instruction result and instruction code are sent by MSI
+    cmd = (result << 16) | (cmd & CMD_MASK); // both instruction result and instruction code are sent by MSI
     respondToHost((uint32_t)cmd);
   }
 }
@@ -1259,13 +1259,23 @@ int hostMsiHandler(int id)
 /*******************************************************************************
  * \brief Handle user commands received from the host
  *
+ * Handle user commands in the 'configured' state only.
+ * Otherwise, commands are denied.
+ *
+ * \param[in] actState Actual state
  * \param[in] reqState Requested state
  * \param[in] cmd      User command code
  *
  ******************************************************************************/
-void cmdHandler(uint32_t *reqState, uint32_t cmd)
+void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
 {
-  execHostCmd(cmd);
+  if (*actState == COMMON_STATE_CONFIGURED) {  // 'configured' state
+    execHostCmd(cmd);
+  }
+  else {                                       // other states
+    uint32_t response = (STATUS_ERR << 16) | (cmd & CMD_MASK); // instruction result and instruction code are sent by MSI
+    respondToHost((uint32_t)response);
+  }
 }
 
 /*******************************************************************************
@@ -1649,7 +1659,7 @@ int main(void) {
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
     fwlib_cmdHandler(&reqState, &cmd);                                 // check for common commands and possibly request state changes
-    cmdHandler(&reqState, cmd);                                        // check for project relevant commands
+    cmdHandler(&actState, &reqState, cmd);                             // check for project relevant commands
     status = COMMON_STATUS_OK;                                         // reset status for each iteration
     status = fwlib_changeState(&actState, &reqState, status);          // handle requested state changes
     switch(actState) {                                                 // state specific do actions

@@ -65,7 +65,8 @@ extern uint32_t*       _startshared[];
 #define CMD_RD_MSI_ECPU   0x30UL
 #define CMD_RD_ECPU_CHAN  0x31UL
 #define CMD_RD_ECPU_QUEUE 0x32UL
-#define CMD_LS_FW_ID      0x33UL // list the firmware id
+#define CMD_LS_FW_ID      0x33UL   // list the firmware id
+#define CMD_MASK          0xFFFFUL // command mask
 
 #define CMD_DIAG_TOGGLE_MEASUREMENT        0x40 // toggle diagnostic measurements
 #define CMD_DIAG_PRINT_MSI_HANDLE_DURATION 0x41 // print the elapsed time to handle MSIs
