@@ -232,6 +232,13 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
   signal s_lvds_term    : std_logic_vector(11 downto 1);
 
+  signal s_i2c_scl_pad_out  : std_logic_vector(2 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(2 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(2 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(2 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(2 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(2 downto 1);
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -273,32 +280,34 @@ begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_flash_bits        => 25,
-      g_psram_bits        => c_psram_bits,
-      g_gpio_in           => 4,
-      g_gpio_out          => 4,
-      g_lvds_in           => 3,
-      g_lvds_out          => 3,
-      g_lvds_inout        => 8,
-      g_fixed             => 3,
-      g_en_pcie           => true,
-      g_en_usb            => true,
-      g_en_ssd1325        => true,
-      g_en_nau8811        => true,
-      g_en_psram          => true,
-      g_en_user_ow        => true,
-      g_en_tempsens       => true,
-      g_delay_diagnostics => true,
-      g_en_timer          => true,
-      g_en_eca_tap        => true,
-      g_en_asmi           => false,
-      g_io_table          => io_mapping_table,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25,
+      g_psram_bits         => c_psram_bits,
+      g_gpio_in            => 4,
+      g_gpio_out           => 4,
+      g_lvds_in            => 3,
+      g_lvds_out           => 3,
+      g_lvds_inout         => 8,
+      g_fixed              => 3,
+      g_en_pcie            => true,
+      g_en_usb             => true,
+      g_en_ssd1325         => true,
+      g_en_nau8811         => true,
+      g_en_psram           => true,
+      g_en_user_ow         => true,
+      g_en_tempsens        => true,
+      g_delay_diagnostics  => true,
+      g_en_timer           => true,
+      g_en_eca_tap         => true,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 2,
+      g_en_asmi            => false,
+      g_io_table           => io_mapping_table,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -429,5 +438,16 @@ begin
 
   -- Wires to CPLD, currently unused
   con_io <= (others => 'Z');
+
+  -- I2C
+  sd_dat0 <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  sd_dat1 <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= sd_dat0;
+  s_i2c_sda_pad_in(1) <= sd_dat1;
+
+  sd_dat2 <= s_i2c_scl_pad_out(2) when (s_i2c_scl_padoen(2) = '0') else 'Z';
+  sd_dat3 <= s_i2c_sda_pad_out(2) when (s_i2c_sda_padoen(2) = '0') else 'Z';
+  s_i2c_scl_pad_in(2) <= sd_dat2;
+  s_i2c_sda_pad_in(2) <= sd_dat3;
 
 end rtl;
