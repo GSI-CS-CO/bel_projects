@@ -47,7 +47,7 @@ There's two options how to use dot visualisation. If you are interested in viewi
 If you need renderings of a graph for documentation or want more control over all the render parameters, you should use the graphviz tools directly on the command line.
 
 \paragraph{Installing all prerequisites}
-First, we need to install the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp) 
+First, we need to install the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp)
 
 \begin{lstlisting}[style = customshell]
 $ sudo apt-get install graphviz
@@ -115,7 +115,7 @@ The arrow keys can be used for scrolling, as can the pressed middle mouse button
 In addition, the toolbar buttons can be used to control zoom.
 %
 \paragraph{Copy Name}
-A right click on a node will copy its name to the clipboard. 
+A right click on a node will copy its name to the clipboard.
 %
 \paragraph{Inspection Window}
 Clicking the info button in the toolbar will open the IW. Left clicking a node or edge will show its bundled properties. The window contains three columns, description, tag and value.
@@ -126,7 +126,7 @@ time is not shown as a integer of nanoseconds \SI{1003000}{\nano\second}, but as
 The toolbar provides a text search field to search for nodes and edges.
 $<$Enter$>$ begins the search and will zoom/scroll in the group of found nodes or edges. All found items are highlighted in light red.
 Text search also allows the use of regular expressions.
-For example, 
+For example,
 \begin{lstlisting}[style = customtext]
 SIS18_RING_.*00.
 \end{lstlisting}
@@ -134,11 +134,11 @@ will search for all node names starting with \emph{SIS18\_RING} and ending in \e
 \vskip\baselineskip
 When the inspection window is active, text search will also search bundled properties. They are stored internally as strings of the format $<$key=value$>$ and can be searched as such.
 Regular expressions are very powerful when used as boolean connections of search criteria.
-For example, 
+For example,
 \begin{lstlisting}[style = customtext]
 gid=300|gid=508
 \end{lstlisting}
-will search for all nodes belonging to group ID \emph{300} or \emph{508}, while 
+will search for all nodes belonging to group ID \emph{300} or \emph{508}, while
 \begin{lstlisting}[style = customtext]
 (?=.*gid=300)(?=.*evtno=258)
 \end{lstlisting}
@@ -235,6 +235,7 @@ Congratulations, you just ran your very first accelerator schedule with carpeDM 
 
 carpeDM comes with two command line tools, \emph{dm-sched} and \emph{dm-cmd}. dm-sched is responsible for schedule upload, download and manipulation. dm-cmd covers manual thread and flow control, status queries, runtime diagnostics and node and queue inspection. For detailed help, call either with the \enquote{-h} flag.
 
+\input{dm_command_line_tools}
 to be continued\dots
 
 \section{Schedules}
@@ -271,14 +272,22 @@ Blocks provide three functions in one. First, they carry a timespan or period, w
 
 \newpage
 \section{Flow Control}
-Like other program languanges, carpeDM schedules support branches and loops. There is no generic conditional conditional check when deciding wether to take a branch though. Instead, a message inbox,
+Like other program languanges, carpeDM schedules support branches and loops. There is no generic conditional conditional
+check when deciding wether to take a branch though. Instead, a message inbox,
 the command queue, is checked for new orders. This means that commands are queued at the point in the graph where the change is to be made.
-To allow parrallel operation, there are as many command queues as there are points of decision. Points of decision are always of the \enquote{block} type, but blocks are not always points of decision.
+To allow parrallel operation, there are as many command queues as there are points of decision. Points of decision are
+always of the \enquote{block} type, but blocks are not always points of decision.
 
 \subsection{Blocks and Changes during Runtime}
-For blocks to be used dynamically, they need to act as a sink for commands. This is enabled by adding command queues to the block. Up to three priorities are supported, forming a single priority queue. When a block is processed, it will only ever execute a single command and will always choose the highest priority pending.
+For blocks to be used dynamically, they need to act as a sink for commands. This is enabled by adding command queues to the
+block. Up to three priorities are supported, forming a single priority queue. When a block is processed, it will only ever
+execute a single command and will always choose the highest priority pending.
 \par
-Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain command type can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{xxx2}.
+Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain
+command types can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions
+which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command
+every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from
+the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{subsec:Loop-Example}.
 
 \begin{figure}[H]
   \centering
@@ -488,7 +497,7 @@ Static commands introduce a possible race condition within the DM, because the 1
   \item{DM CPUs: obeys locks}
   \begin{itemize}
    \item{Locks are non-blocking}
-   \item{treat static commands to a write-locked block as Noop} 
+   \item{treat static commands to a write-locked block as Noop}
    \item{skip queues of read-locked blocks, use default successor}
   \end{itemize}
 \end{itemize}
@@ -500,8 +509,8 @@ Static commands introduce a possible race condition within the DM, because the 1
 
 
 \paragraph{Mechanism}
-The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity. 
-Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Updating the indices of different priorities from the host side would therefore still access the same word and cause a race condition. Lock flags are read/write to the host and read only to the DM. 
+The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity.
+Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Updating the indices of different priorities from the host side would therefore still access the same word and cause a race condition. Lock flags are read/write to the host and read only to the DM.
 %FIXME WTF does this mean ?
 Not all modules can be combined as producers and consumers of commands when sharing a block/queue. There are several valid combinations which will produce orderly behaviour.
 As mentioned in the above list, it is not the responsibility of the host (ie. Generator FESA class with carpeDM library)
@@ -520,7 +529,7 @@ to assign or validate the constellation of command producers and consumers per b
 \end{tabular}
 
 
-\paragraph{Sequence} 
+\paragraph{Sequence}
 The host sets a lock, and checks the queue indices in regular intervals until no more changes are observed between checks. It is then certain that all ongoing DM actions (which might have been begun before the lock flags were visible) are concluded. The duration of host actions \SI{}{\milli\second} is three to four orders of magnitude longer than DM actions (\SI{}{\micro\second}), so a wait time in the low millisecond range between checks is sufficient. Once the lock flags are certain to be visible, the DM firmware will ensure that the locked block's queues are not modified. After the host has written to the queue, it clears the block's lock flags, allowing the DM to modify queues again.
 
 
@@ -530,6 +539,7 @@ The host sets a lock, and checks the queue indices in regular intervals until no
 
 
 \subsection{Counter Loop Example}
+\label{subsec:Loop-Example}
 %
 \begin{figure}[H]
    \centering
@@ -583,3 +593,30 @@ Figure~\ref{fig:excntloop-alternate} shows how to achieve this with static flow 
 The default pattern will run in a loop. If made to flow to pattern A, pattern A will then send a command to the default pattern to go to pattern B next.
 After one execution of the default pattern, B is executed, sending a command to the default pattern with pattern A as the successor, and so on.
 To leave this sequence, one would send a flush command to the default pattern at medium priority, after which the schedule would loop the default pattern.
+
+\subsection{Priority Queues}
+A block node may have three command queues with different priority: low, high, and inter lock. Each of these queues has four places for commands.
+\begin{center}
+  \begin{tabular}{| l | l | l |}
+    \hline
+Attribute & Description & Value Range \\ \hline
+PRIO\_AVL & & \\ \hline
+RI & read index in queue & 0..3 \\ \hline
+WI & write index in queue & 0..3 \\ \hline
+PC & & \\ \hline
+PEN & command is pending & 0..1 (False, True) \\ \hline
+ORPH & command queue has been deleted, & 0..1 (False, True) \\
+& command is orphaned & \\ \hline
+VABS & valid time is an absolute time & \\ \hline
+VTIME & valid time & \\ \hline
+TYPE & type of command (number) & \\ \hline
+STYPE & type of command (string) & \\ \hline
+QTY & repetition quantity of command & \\ \hline
+FLOWDST & flow destination node & \\ \hline
+FLOWDSTPAT & flow destination pattern & \\ \hline
+PERMA & command effect is permanent & 0..1 (False, True) \\ \hline
+FPRIO & &  \\ \hline
+WABS & wait time is absolute (only for wait commands) & \\ \hline
+WTIME & wait time (only for wait commands) & \\ \hline
+  \end{tabular}
+\end{center}
