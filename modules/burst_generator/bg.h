@@ -73,6 +73,36 @@ extern uint32_t*       _startshared[];
 #define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG   0x42 // print IO event control and configuration table
 #define CMD_DIAG_PRINT_TASK_INTERVAL       0x43 // print the task interval
 
+/* offsets of arguments in the user commands */
+enum ARGS_CMD_GET_PARAM {
+  GET_PARAM_ID,           // burst ID
+  GET_PARAM_SETUP,        // timer period for burst burst head, ns
+  GET_PARAM_N_CONDITION,  // number of conditions in a block
+  GET_PARAM_PERIOD,       // block period, ns
+  GET_PARAM_FLAG,         // burst flag
+  GET_PARAM_VERBOSE,      // verbose
+  N_GET_PARAM
+};
+
+enum ARGS_CMD_GET_CYCLE {
+  GET_CYCLE_ID,           // burst ID
+  GET_CYCLE_N_CYCLE_H32,  // number of block cycles, high32
+  GET_CYCLE_N_CYCLE_L32,  // number of block cycles, low32
+  GET_CYCLE_VERBOSE,      // verbose
+  N_GET_CYCLE
+};
+
+enum ARGS_CMD_MK_BURST {
+  MK_BURST_ID,            // burst ID
+  MK_BURST_IO,            // target IO (io_type << 16 | io_index)
+  MK_BURST_START_EVT_H32, // start event ID, high32
+  MK_BURST_START_EVT_L32, // start event ID, low32
+  MK_BURST_STOP_EVT_H32,  // stop event ID, high32
+  MK_BURST_STOP_EVT_L32,  // stop event ID, low32
+  MK_BURST_VERBOSE,       // verbose
+  N_MK_BURST
+};
+
 /* definitions of timing messages & ECA actions */
 #define ECA_FG_MOSTFULL   0x00060000UL  // ECA mostfull flag
 #define ECA_FG_OVERFLOW   0x00050000UL  // ECA overflow flag (overflow cnt)
@@ -147,6 +177,7 @@ typedef struct {
   uint8_t  io_index;     /* IO port index, info_index of t_io_mapping_table in monster_pkg.vhd */
   uint64_t trigger;      /* trigger event ID */
   uint64_t toggle;       /* toggling event ID */
+  uint64_t setup;        /* time period needed for burst head, ns */
   int64_t  cycle;        /* handler-specific: number of cycles */
   uint64_t period;       /* handler-specific: period in ns */
   uint64_t deadline;     /* handler-specific: deadline */
