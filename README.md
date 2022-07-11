@@ -58,6 +58,7 @@ This will build VME and PCI(e) drivers.
 ```
 make driver
 (optional) make driver-install
+(optional - build wishbone-serial.ko) make driver/driver-install WISHBONE_SERIAL=y
 ```
 
 ## Etherbone
