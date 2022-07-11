@@ -127,7 +127,11 @@ sudo apt install libpng12-0
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
-Solution: Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
+Solution: Change your LC_NUMERIC setting: 
+
+```
+export LC_NUMERIC="en_US.UTF-8"
+```
 
 ### Tool qsys-generate
 Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or directory
