@@ -137,7 +137,7 @@ Diagnostics:
 \subsection{Tool dm-sched}
 \label{Tool_dm-sched}
 \begin{lstlisting}[style = helptext]
-dm-sched v0.33.4, build date 20200206
+dm-sched v0.36.3, build date 20220602
 Creates Binary Data for the DataMaster (DM) from Schedule Graphs
 (.dot files) and uploads/downloads to/from CPU Core <m> of the
 DM (CPU currently specified in schedule as cpu=<m>).
@@ -161,6 +161,8 @@ Commands:
                          the input file from the DM, nodes with
                          hashes (names) not present on the DM
                          will be ignored.
+  rawvisited             Show 'visited' (1) / 'not visited' (0)
+                         for all nodes.
   chkrem     <.dot file> Checks if all patterns in given dot can
                          be removed safely
   -n                     No verify, status will not be read after
