@@ -26,7 +26,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
-  fprintf(stderr, "  -i command .dot file      Run commands from dot file\n");
+  fprintf(stderr, "  -i <command .dot file>    Run commands from dot file\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
   fprintf(stderr, "  clearstats                Clear all status and statistics info\n");
@@ -61,7 +61,7 @@ static void help(const char *program) {
   fprintf(stderr, "  showlocks                                     Lists all currently locked blocks\n");
   fprintf(stderr, "  staticflush <target> <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) block of the schedule\n");
   fprintf(stderr, "  staticflushpattern <pattern> <prios>          Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) pattern of the schedule\n");
-  fprintf(stderr, "  rawvisited <target>       Show 1 for a visited node, 0 for not visited.\n");
+  fprintf(stderr, "  rawvisited [<target>]    Show 1 for a visited node, 0 for not visited. If no target node is given, show all nodes.\n");
   fprintf(stderr, "\nQueued commands (viable options in square brackets):\n");
   fprintf(stderr, "  stop <target>                        [laps]   Request stop at selected block (flow to idle)\n");
   fprintf(stderr, "  stoppattern  <pattern>               [laps]   Request stop of selected pattern\n");
