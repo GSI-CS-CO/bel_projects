@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-July-2021
+ *  version : 18-Feb-2022
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000301
+#define B2BLIB_VERSION 0x000318
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -197,12 +197,25 @@ extern "C" {
     int32_t  inj_monRemMin;
     int32_t  inj_monRemMax;
   } diagstat_t;
+
+  typedef struct {
+    double   nueSet;                                   // DDS set value; just a crosscheck [Hz]
+    double   nueGet;                                   // DDS measured value [Hz]
+    double   nueDiff;                                  // difference nue - nueSet [Hz]
+    double   nueErr;                                   // uncertainty of measured nue [Hz]
+    double   nuerChi2;                                 // reduced chi square
+    double   nueSlope;                                 // slope of measuared values [kHz/s], should be 0
+    double   nueSlopeErr;                              // uncertainty of measured slope
+    int32_t  nSeries;                                  // # of data series, a series contains multiple timestamps
+    int32_t  nTS;                                      // # total number of time stamps used for calculus
+    int32_t  nBadTS;                                   // # total number of bad (= dropped) time stamps
+  } nueMeas_t; 
     
   // ---------------------------------
   // helper routines
   // ---------------------------------
   
-  // get host system time (us)
+  // get host system time [ns]
   uint64_t b2b_getSysTime();
 
   // convert status code to status text
@@ -218,10 +231,14 @@ extern "C" {
   double b2b_flsa2fdds(double flsa                             // LSA frequency [Hz]
                        );
   //convert timestamp to seconds and nanoseconds
-  void b2b_t2secs(uint64_t ts,                                 // timestamp
+  void b2b_t2secs(uint64_t ts,                                 // timestamp [ns]
                   uint32_t *secs,                              // seconds
                   uint32_t *nsecs                              // nanosecons
                   );
+
+  // enable debugging to trace library activity (experimental)
+  void b2b_debug(uint32_t flagDebug                            // 1: debug on; 0: debug off
+                 );
   
   // ---------------------------------
   // communication with lm32 firmware

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Jul-2021
+ *  version : 18-Feb-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,16 +38,16 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000301                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000318                                       // make this consistent with makefile
 
-/* standard includes */
+// standard includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
 
-/* includes specific for bel_projects */
+// includes specific for bel_projects
 #include "dbg.h"                                                        // debug outputs
 #include <stack.h>                                                      // stack check
 #include "ebm.h"                                                        // EB master
@@ -56,7 +56,7 @@
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 
-/* includes for this project */
+// includes for this project 
 #include <common-defs.h>                                                // common defs for firmware
 #include <common-fwlib.h>                                               // common routines for firmware
 #include <b2b.h>                                                        // specific defs for b2b
@@ -97,7 +97,7 @@ void init() // typical init for lm32
 
 
 // determine address and clear shared mem
-void initSharedMem(uint32_t *reqState)
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -121,28 +121,37 @@ void initSharedMem(uint32_t *reqState)
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
   if (idx == 0) {
     *reqState = COMMON_STATE_FATAL;
-    DBPRINT1("dm-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+    DBPRINT1("b2b-pm: fatal error - did not find LM32-CB-CLUSTER!\n");
   } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if (idx == 0) {
     *reqState = COMMON_STATE_FATAL;
-    DBPRINT1("dm-unipz: fatal error - did not find THIS CPU!\n");
+    DBPRINT1("b2b-pm: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("b2b-pm: CPU RAM External 0x%08x, begin shared 0x%08x\n", (unsigned int)cpuRamExternal, (unsigned int)SHARED_OFFS);
+  DBPRINT2("b2b-pm: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("b2b-pm: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("b2b-pm: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  DBPRINT2("b2b-pm: fw specific shared begin 0x%08x\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (B2B_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-pm: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
+  DBPRINT2("b2b-pm: fw specific shared end   0x%08x\n", pSharedTemp);
+
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("b2b-pm: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
 } // initSharedMem 
 
 
@@ -185,14 +194,14 @@ uint32_t extern_entryActionOperation()
   uint64_t eDummy;
   uint64_t pDummy;
   uint32_t fDummy;
-  uint32_t flagDummy;
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
 
   // clear diagnostics
   fwlib_clearDiag();             
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-pm: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // init get values
@@ -240,12 +249,12 @@ uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t 
   uint64_t tmp;          // helper variable
 
   int32_t  test;
-  uint64_t t1,t2;
+  /* uint64_t t1,t2; */
 
   if (period  == 0)           return B2B_STATUS_PHASEFAILED;           // this does not make sense
   if (nSamples < 3)           return B2B_STATUS_PHASEFAILED;           // have at least three samples
 
-  t1 = getSysTime();
+  /* t1 = getSysTime(); */
 
   // select timestamp in the middle (never use the first TS)
   usedIdx  = nSamples >> 1;                                            // this is safe as we have at least three samples
@@ -296,7 +305,10 @@ int acquireTimestamps(uint64_t *ts,                           // array of timest
   uint64_t recEvtId;                                          // received EvtId
   uint64_t recParam;                                          // received Parameter
   uint32_t recTEF;                                            // received TEF
-  uint32_t flagIsLate;                                        // is late?
+  uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t flagIsEarly;                                       // flag 'early'
+  uint32_t flagIsConflict;                                    // flag 'conflict'
+  uint32_t flagIsDelayed;                                     // flag 'delayed'
 
   *nRec = 0;
 
@@ -305,7 +317,7 @@ int acquireTimestamps(uint64_t *ts,                           // array of timest
   fwlib_ioCtrlSetGate(0, io);                                 // disable input gate 
   
   while (*nRec < nReq) {
-    ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+    ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
     if (ecaAction == tag) {ts[*nRec] = recDeadline; (*nRec)++;}
     if (ecaAction == B2B_ECADO_TIMEOUT) break; 
   } // while nInput
@@ -321,6 +333,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 {
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t flagIsEarly;                                       // flag 'early'
+  uint32_t flagIsConflict;                                    // flag 'conflict'
+  uint32_t flagIsDelayed;                                     // flag 'delayed'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -367,7 +382,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   status    = actStatus;
   sendEvtNo = 0x0;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
@@ -391,8 +406,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       dtDiag           = 0x7fffffff;
       flagPMError      = 0x0;
 
-      if (TH1 > 2000000000000) nSamples = NSAMPLES >> 1;             // use only half the sample for nue > 1MHz
-      else                     nSamples = NSAMPLES;
+      nSamples                           = NSAMPLES;
+      if (TH1 >  2000000000000) nSamples = NSAMPLES >> 1;            // use only half the sample for nue < 500 kHz
+      if (TH1 > 25000000000000) nSamples = 3;                        // use minimum for nue 40 kHz
       TMeas           = (uint64_t)(nSamples)*(TH1 / 1000000000);     // window for acquiring timestamps [ns]
       TMeasUs         = (int32_t)(TMeas / 1000) + 1;                 // add 1 us to avoid a too short window
       
@@ -424,7 +440,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
 
-        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGER;         // ECA is configured to pre-trigger ahead of time!!!
+        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
         nInput  = 0;
         TWait   = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
         TWaitUs = (TWait / 1000 - 10);                                // the '-10' is a fudge thing
@@ -456,7 +472,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDINJ :
       if (!sendEvtNo) 
         sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
-      if(!flagPMError) {                                              // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
+      /* if(!flagPMError) {  enable this again for improved frequency measurement */       // this case only makes sense if cases  B2B_ECADO_B2B_PMEXT/INJ succeeded
 
         recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
         recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
@@ -485,7 +501,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendParam   |= (uint64_t)( dtMatch & 0xffffffff);             // low word; match diagnostic
         sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
-      } // if not pm error
+        /*}*/ // if not pm error
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
 
@@ -509,6 +525,7 @@ int main(void) {
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
   uint32_t dummy1;                              // dummy parameter
+  uint32_t sharedSize;                          // size of shared memory
   uint32_t *buildID;                            // build ID of lm32 firmware
  
   // init local variables
@@ -521,8 +538,8 @@ int main(void) {
   nTransfer      = 0;
 
   init();                                                                     // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "b2b-pm", B2BPM_FW_VERSION); // init common stuff
-  initSharedMem(&reqState);                                                   // initialize shared memory
+  initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "b2b-pm", B2BPM_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                          // clear common diagnostics data
   
   while (1) {
