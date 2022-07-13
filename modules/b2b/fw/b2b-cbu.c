@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Dec-2021
+ *  version : 06-Jun-2022
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000318                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000342                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -485,6 +485,7 @@ void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
     case ESR_B2B_CRYRING :
       *nExt = 2;
       *nInj = 1;
+      break;
     default :
       *nExt = 1;
       *nInj = 1;
