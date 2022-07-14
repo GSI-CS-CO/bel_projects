@@ -10,7 +10,7 @@ digraph "altdst-10" {
   Msg07 [type=tmsg par=7 evtno=17]
   Msg08 [type=tmsg par=8 evtno=18]
   Msg09 [type=tmsg par=9 evtno=19]
-  Block [type=block tperiod=10000000 patentry=1 patexit=1 qlo=1]
+  Block [type=block tperiod=10000000 patentry=1 patexit=1]
   Block -> Block [type=defdst]
   Msg00 -> Block [type=defdst]
   Msg01 -> Block [type=defdst]
