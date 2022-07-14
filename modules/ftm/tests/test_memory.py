@@ -183,41 +183,21 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     self.deleteFile(fileName)
 
   def test_memory_full_msg_infinite_loop_ok(self):
-    """ The schedule has 962 tmsg nodes. This is the largest number
-    allowed before exception occurs.
-    963: return code -11
-    965: return code -6, "terminate called after throwing an instance of 'boost::archive::archive_exception'", '  what():  input stream error'
+    """ The schedule has 1000 tmsg nodes. Test that the limit of 1000 for
+    the iteration count works.
+    If the pattern name is longer than 24 chars we get exceptions depending
+    on the length of the pattern name and the number of nodes.
+    963 nodes: return code -11
+    965 nodes: return code -6, "terminate called after throwing an instance of 'boost::archive::archive_exception'", '  what():  input stream error'
+    970 nodes: stderr: ['*** stack smashing detected ***: terminated']
     """
     fileName = self.schedules_folder + 'memory_full_msg_infinte_loop_ok.dot'
-    patternName = 'PatternMsgInfiniteLoopOK'
-    self.generate_schedule_msg(fileName, patternName, 962, split=False)
+    patternName = 'PatMsgInfiniteLoopOK'
+    self.generate_schedule_msg(fileName, patternName, 1000, split=False)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
         [0], linesCout=1, linesCerr=0)
-    self.deleteFile(fileName)
-
-  def test_memory_full_msg_infinite_loop_6(self):
-    """ The schedule has 970 tmsg nodes. This results in a return code -6
-    for dm-sched add. Unexpected error.
-    stderr: ['*** stack smashing detected ***: terminated']
-    """
-    fileName = self.schedules_folder + 'memory_full_msg_infinte_loop_6.dot'
-    patternName = 'PatternMsgInfiniteLoopOK'
-    self.generate_schedule_msg(fileName, patternName, 970, split=False)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [-6], linesCout=0, linesCerr=1)
-    self.deleteFile(fileName)
-
-  def test_memory_full_msg_infinite_loop_11(self):
-    """ The schedule has 1000 tmsg nodes. This is the largest number allowed before the
-    infinite loop error message occurs. Results in SEGV (return code -11).
-    """
-    fileName = self.schedules_folder + 'memory_full_msg_infinte_loop_11.dot'
-    patternName = 'PatternMsgInfiniteLoopOK'
-    self.generate_schedule_msg(fileName, patternName, 1000, split=False)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [-11], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
 
   def test_memory_full_msg_infinite_loop_fail(self):
