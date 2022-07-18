@@ -83,19 +83,19 @@ entity ftm4dp is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nSys_Reset    : in      std_logic;  -- Reset From ComX
-    user_btn      : in      std_logic;  --User Button
-    f2f           : inout   std_logic_vector (7 downto 0);  -- Connection to MAX10 FPGA
-    serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
-    serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
-    rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
-    rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
+    nSys_Reset    : in      std_logic;                     -- Reset From ComX
+    user_btn      : in      std_logic;                     -- User Button
+    avr_sda       : inout   std_logic;                     -- I2C Connection to AVR MCU
+    avr_scl       : inout   std_logic;                     -- I2C Connection to AVR MCU
+    serial_cb_out : out     std_logic_vector (1 downto 0); -- Serial to Backplane
+    serial_cb_in  : in      std_logic_vector (1 downto 0); -- Serial to Backplane
+    rear_in       : in      std_logic_vector (1 downto 0); -- GPIO to Backplane
+    rear_out      : out     std_logic_vector (1 downto 0); -- GPIO to Backplane
 
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -356,17 +356,9 @@ begin
   ext_ch(3)            <= '0'; -- Get a second bit for aux. phy
 
   -- I2C to ATXMEGA
-  f2f(3)              <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
-  f2f(2)              <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
-  s_i2c_scl_pad_in(1) <= f2f(3);
-  s_i2c_sda_pad_in(1) <= f2f(2);
-
-  -- Misc. pins to ATXMEGA
-  f2f(0) <= 'Z';
-  f2f(1) <= 'Z';
-  f2f(4) <= 'Z';
-  f2f(5) <= 'Z';
-  f2f(6) <= 'Z';
-  f2f(7) <= 'Z';
+  avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= avr_scl;
+  s_i2c_sda_pad_in(1) <= avr_sda;
 
 end rtl;
