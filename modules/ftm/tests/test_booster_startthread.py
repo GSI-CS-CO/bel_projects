@@ -72,3 +72,12 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>2990'})
     self.deleteFile(file_name)
+
+  def test_booster_8_loops(self):
+    self.startPattern('booster-8-loops.dot', 'MAIN')
+    file_name = 'snoop_booster-8-loops.csv'
+    self.snoopToCsv(file_name, 2)
+    # assert that there are more than 20 tmsg in 2 seconds with EVTNO 0x0000 from loop 0.
+    column_EVTNO = 8
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0000': '>19', '0x0001': '>19', '0x0002': '>19', '0x0003': '>19', '0x0004': '>19', '0x0005': '>19', '0x0006': '>19', '0x0007': '>19'})
+    self.deleteFile(file_name)
