@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-05-19}
+\Large{Last change: 2022-07-19}
 \end{center}
 \vfill
 \end{titlepage}
@@ -117,24 +117,28 @@ modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
 make install in the same folder.
 
 \section{test\_altDestinations.py}
-\texttt{test\_altDestinations} tests the limit of 10 edges of type
+\texttt{test\_altDestinations} tests the limit of 9 edges of type
 \texttt{altdst} for a block node.
-The schedule \texttt{altdst-flow-10.dot} has one block, ten flow commands
-and ten messages. each flow command changes flow to another message.
+The schedule \texttt{altdst-flow-9.dot} has one block, nine flow commands
+and nine messages. each flow command changes flow to another message.
 The test adds this schedule and starts the pattern in this schedule.
 The test checks that messages are produced.
 
-The schedule \texttt{altdst-flow-11.dot} is similar to the one obove,
-but with 11 flow nodes and 11 messages. Adding this schedule fails.
+The schedule \texttt{altdst-flow-10.dot} is similar to the one obove,
+but with 10 flow nodes and 10 messages. Adding this schedule fails.
 The test checks for the correct error response.
 
-The schedule \texttt{altdst-flow-10.dot} has one block and ten messages.
+The schedule \texttt{altdst-9.dot} has one block and nine messages.
 The test switches through all messages and checks with snoop that the
 correct messages are send.
 
-The schedule \texttt{altdst-flow-11.dot} has one block and 11 messages.
+The schedule \texttt{altdst-10.dot} has one block and 10 messages.
 This schedule cannot be added to the datamaster. The test checks for
 the correct error response.
+
+The schedule \texttt{test-altdst-missing-node.dot} has one block with 9
+altdst edges and one defdst edge. The test checks that a switch command
+via CMD-schedule works.
 
 \section{test\_async.py}
 This test was \texttt{full\_test/dynamic/async}.
@@ -434,6 +438,9 @@ This test was \texttt{full\_test/dynamic/loop}.
   In the end all blocks are visited.
 \end{enumerate}
 \section{test\_memory.py}
+There are 15 tests to tet the correct memory consumption of the schedules.
+Oversized schedules schuld be rejected to prevent the datamaster being corrupted.
+
 Four tests add two large schedule into the datamaster. This works fine.
 Then a third schedule is loaded, in each test for a different CPU. This
 should fail with return code 250.
@@ -449,6 +456,15 @@ Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869
 blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses
 one additional block on CPU 3.
 
+A group of five tests (\texttt{test\_memory\_full\_msg\_*}) test the memory
+with schedules with timing messages in a loop. Due to validation checks there
+are 1000 messages in one loop allowed. The generator for the schedules
+splits the timing messages into two loops when there are more than 1000 nodes.
+\\ \texttt{test\_memory\_full\_msg\_small} uses 10 timing messages to test the generator.
+\\ \texttt{test\_memory\_full\_msg\_half} uses 900 timing messages for the test.
+\\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
 with absolute time offset. The checks use snoop for specific event numbers.
