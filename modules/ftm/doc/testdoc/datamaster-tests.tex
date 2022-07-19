@@ -437,6 +437,17 @@ This test was \texttt{full\_test/dynamic/loop}.
 
   In the end all blocks are visited.
 \end{enumerate}
+\section{test\_lzma.py}
+There is a bug in the lzma decompression methods. The memory is not correctly allocated.
+This occurs with large schedules and long pattern names. The large schedule contains
+a loop of timing messages connected to one block.
+
+OK test (\texttt{test\_large\_patternname\_ok}): use a schedule with 862 messages and a pattern name of 30 chars.
+This works without an exception, including start of pattern.
+
+Fail test: use a schedule with 1000 messages and a pattern name of 30 chars.
+This does not work. Ends with SEGV (return code -11).
+
 \section{test\_memory.py}
 There are 15 tests to tet the correct memory consumption of the schedules.
 Oversized schedules schuld be rejected to prevent the datamaster being corrupted.

@@ -1,41 +1,33 @@
 import dm_testbench
 import pytest
 
-"""Class tests the memory limit for single CPUs and the whole datamaster.
+"""Class tests the error in decompression which occurs with large
+schedules and log pattern names.
 """
 class UnitTestLzma(dm_testbench.DmTestbench):
 
-  def test_large_patternname(self):
-    fileName = self.schedules_folder + 'lzma_1000_30.dot'
-    self.generate_schedule(fileName, 'PatternName1234567890123456789', 1000)
+  def test_large_patternname_ok(self):
+    """OK test: use a schedule with 862 messages and a pattern name of 30 chars.
+    This works without an exception, including start of pattern.
+    """
+    fileName = self.schedules_folder + 'lzma_862_30_msg.dot'
+    patternName = 'PatternNameMsg4567890123456789'
+    self.generate_schedule_msg(fileName, patternName, 862)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
+        [0], linesCout=1, linesCerr=0)
 
-  def test_large_patternname1(self):
+  def test_large_patternname_fail(self):
+    """Fail test: use a schedule with 1000 messages and a pattern name of 30 chars.
+    This does not work. Ends with SEGV (return code -11).
+    """
     fileName = self.schedules_folder + 'lzma_1000_30_msg.dot'
     self.generate_schedule_msg(fileName, 'PatternNameMsg4567890123456789', 1000)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [-11], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-
-  def generate_schedule(self, fileName, patternName, numberOfBlocks, cpu=0):
-    """ Generates a schedule with numberOfBlocks nodes of type block.
-    This schedule is not intended for running.
-
-    :param fileName: the file to store the schedule.
-    :param numberOfBlocks: number of nodes.
-    :param cpu:  CPU for the schedule (Default value = 0)
-
-    """
-    lines = []
-    lines.append('digraph memFull {')
-    lines.append(f'node [cpu={cpu} type=block  pattern={patternName} tperiod=1000]')
-    for i in range(numberOfBlocks):
-      lines.append(f'Block{cpu}_{i:04d} [pattern=Pattern{cpu}_{i:04d} patentry=1 patexit=1]')
-    lines.append('}')
-    with open(fileName, 'w') as file1:
-      file1.write("\n".join(lines))
 
   def generate_schedule_msg(self, fileName, patternName, numberOfMsgs, cpu=0, split=True, offset=400000):
     """Generate a schedule and write it to a file. The schedule has one block and timing messages.
