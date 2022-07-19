@@ -51,8 +51,22 @@ extern uint32_t*       _startshared[];
 #define BG_TAG            "bg"
 
 #define N_BURSTS          17    // maximum number of bursts can be generated, but bursts 1..N_BURSTS-1 are used
-#define N_TASKS           N_BURSTS    // number of all periodic tasks
-#define N_BURST_INFO      10    // the length of burst info (id, io_type, io_idx, start_h32/l32, stop_h32/l32, cycle_h32/l32, flag)
+
+enum BURST_INFO {                // burst info fields
+  INFO_ID,                        // burst ID
+  INFO_IO_TYPE,                   // IO type
+  INFO_IO_IDX,                    // IO index
+  INFO_START_EVT_H32,             // start event ID, high32
+  INFO_START_EVT_L32,             // start event ID, low32
+  INFO_STOP_EVT_H32,              // stop event ID, high32
+  INFO_STOP_EVT_L32,              // stop event ID, low32
+  INFO_LOOPS_H32,                 // loops/cycles, high32
+  INFO_LOOPS_L32,                 // loops/cycles, low32
+  INFO_ACTION_H32,                // action time, high32
+  INFO_ACTION_L32,                // action time, low32
+  INFO_FLAG,                      // burst flag
+  N_BURST_INFO
+};
 
 /* user commands for the burst generator */
 #define CMD_SHOW_ALL      0x21UL
@@ -183,6 +197,7 @@ typedef struct {
   uint64_t deadline;     /* handler-specific: deadline */
   uint64_t interval;     /* interval of the task */
   uint64_t lasttick;     /* when was the task ran last */
+  uint64_t action;       /* when was the IO action trigged */
   uint64_t failed;       /* task failed timestamp */
   int (*func)(int);     /* pointer to the function of the task */
 } Task_t;

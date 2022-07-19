@@ -106,7 +106,7 @@ enum {
 };
 
 /* task configuration table */
-static Task_t tasks[N_TASKS];
+static Task_t tasks[N_BURSTS];        // each burst is produced by a corresponding task
 static Task_t *pTask = &tasks[0];     // task table pointer
 static uint32_t gBurstsCreated = 0x0; // created bursts, bitwise, bit 0 = burst 1
 static uint32_t gBurstsCycled = 0x0;  // triggered & completed bursts, bitwise, bit 0 = burst 1
@@ -149,65 +149,103 @@ uint32_t statusArray;               // all status infos are ORed bit-wise into s
 uint64_t tElapsed[N_ELAPSED] = {0};
 #define N_ACT_CNT  5                // counters for ECA MSIs
 volatile uint32_t *pSharedActCnt;   // pointer to ECA action counters (located at shared memory)
-#define N_MEASURES  3               // points to measure time interval to execute all io action tasks
-volatile uint64_t tickFirstTask;    // time point to execute the first io action task
-volatile uint64_t intervalCur, intervalMax;   // current and maximum time intervals spent to execute all io action tasks
-volatile uint64_t *pMeasures;       // ticks for each tasks
+
+enum MSR_TASK_PERFORMACE {          // offset for measurements
+  MSR_TICK_FIRST_TASK = 0,          // time point to execute the first IO action task
+  MSR_TASK_INTERVAL = N_BURSTS,     // current interval of all IO action tasks
+  MSR_TASK_INTERVAL_MAX,            // maximum interval of all IO action tasks
+  N_MSR_TASK_PERFORMANCE
+};
+
 int enableSchedulerMeasure = 1;     // control flag to dis/enable the scheduler period measurement (cmd 0x77 toggles it)
+uint64_t msrCnt = 0;                // measurement count, reset with the user command CMD_DIAG_PRINT_TASK_INTERVAL
+uint64_t msrTickActEntr = 0;        // entry time point of IO action task
+uint64_t msrTickActExit = 0;        // exit time point of IO action task
+int taskIdx = 1;                    // current task index, iterate all tasks except a dummy task with index 0
+volatile uint64_t msrTaskTiming[N_MSR_TASK_PERFORMANCE];  // timing performance measurements for all IO action tasks
+uint32_t ecaActCounters[N_ACT_CNT];
 
-static void initSchedulerMeasure(void)
+static void msrInitActionTiming(void)
 {
-  tickFirstTask = intervalCur = intervalMax = 0;
-
   if (pShared) {
-    static uint64_t taskSchedTicks[N_TASKS + N_MEASURES];
-    static uint32_t ecaActCounters[N_ACT_CNT];
-    pMeasures = taskSchedTicks;
     pSharedActCnt = ecaActCounters;
+    msrCnt = 0;
 
-    for (int idx = 0; idx < N_ACT_CNT; ++idx)  // clear ECA action counters
-      *(pSharedActCnt +idx) = 0;
+    // clear ECA action counters and buffer for measurements
+    memset(pSharedActCnt, 0, sizeof(uint32_t) * N_ACT_CNT);
+    memset(msrTaskTiming, 0, sizeof(uint64_t) * N_MSR_TASK_PERFORMANCE);
 
-    for (int idx = 0; idx < (N_TASKS + N_MEASURES); ++idx) // clear buffers for measurements
-      *(pMeasures +idx) = 0;
+    uint32_t offset = (uint32_t)(&msrTaskTiming[1]) - (uint32_t)pShared;
+    mprintf("IO task stats (1..%d) available @ 0x%08x (ext)\n",
+        N_BURSTS-1,
+        (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)));
 
-    mprintf("Built-in measurements are activated.\n");
-    uint32_t offset = (uint32_t)(pMeasures + N_TASKS) - (uint32_t)pShared;
-    mprintf("IO task periods (curr, max) available @ 0x%08x (ext 0x%08x)\n",
-	(uint32_t)(pMeasures + N_TASKS), (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)));
+    offset = (uint32_t)(&msrTaskTiming[N_BURSTS]) - (uint32_t)pShared;
+    mprintf("IO task intervals (current, maximum) available @ 0x%08x (ext)\n",
+	(uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)));
+
+    mprintf("Built-in measurements are %s.\n", enableSchedulerMeasure ? "enabled" : "disabled");
   }
   else {
     pSharedActCnt = 0;
-    pMeasures = 0;
     mprintf("No built-in measurements!\n");
   }
 }
 
-static void doSchedulerMeasure(int taskIdx, uint64_t tick)
+/**
+ * \brief Measure performance of the main loop
+ *
+ * The IO action functions are called to inject internal events
+ * for generating bursts. Because of a strict timing constraint each burst
+ * must be re-triggered within 200 us period. The violation of this period
+ * causes an unexpected termination of bursts.
+ *
+ * Hence, 2 timing factors are measured: task duration and intervals between neighbor tasks.
+ * These will be measured by noting task entry and exit time points.
+ *
+ * \param[in] taskIdx   Task index, 1..N_BURSTS
+ * \param[in] msrTickActEntr  Action entry time point (updated before this function call)
+ * \param[in] msrTickActExit  Action complete time point (updated after this function call)
+ **/
+static void msrMeasureActionTiming(int taskIdx, uint64_t msrTickActEntr, uint64_t msrTickActExit)
 {
-  if (pMeasures == 0)
-    return;
-
   if (enableSchedulerMeasure == 0)
     return;
 
-  //*(pMeasures + taskIdx) = tick;                  // kepp the tick of each task
-  if (taskIdx == 1)                               // keep the tick of the first io task
-  {
-    tickFirstTask = tick;
-    *(pMeasures + N_TASKS + 2) = tick;
-  }
-  else if ((taskIdx +1) == N_TASKS)               // the last io task is done
-  {
-    if (tickFirstTask) {
-      intervalCur = tick - tickFirstTask;         // get time interval to execute all IO action tasks
-      *(pMeasures + N_TASKS) = intervalCur;       // keep the current interval
+  uint64_t value = msrTaskTiming[taskIdx];  // get value of the last measurement
+  uint64_t duration = value & 0xffffffff;   // average duration of the current task
+  uint64_t distance = value >> 32;          // average distance from a previous task
+  uint64_t now = getSysTime();
 
-      if (intervalCur > intervalMax) {
-	intervalMax = intervalCur;
-	*(pMeasures + N_TASKS + 1) = intervalMax; // keep the maximum interval
+  // calculate the average duration of task execution
+  value = now - msrTickActEntr;
+  duration = (value + (duration * msrCnt))/(msrCnt + 1);
+
+  // calculate the average distance to a previous task
+  if (msrTickActExit) {
+    value = now - msrTickActExit;
+    distance = (value + (distance * msrCnt))/(msrCnt + 1);
+  }
+
+  // store the measurements (hi32:distance, lo32:duration)
+  msrTaskTiming[taskIdx] = (distance << 32) | duration;
+
+  // measure the total duration of all tasks (1..N_BURSTS)
+  if (taskIdx == 1)                               // keep the timestamp of the first io task
+  {
+    msrTaskTiming[MSR_TICK_FIRST_TASK] = msrTickActEntr;
+  }
+  else if (taskIdx == (N_BURSTS - 1))             // the last io task is done
+  {
+    if (msrTaskTiming[MSR_TICK_FIRST_TASK]) {
+      msrTaskTiming[MSR_TASK_INTERVAL] = msrTickActEntr - msrTaskTiming[MSR_TICK_FIRST_TASK];   // update time interval to execute all IO action tasks
+
+      if (msrTaskTiming[MSR_TASK_INTERVAL] > msrTaskTiming[MSR_TASK_INTERVAL_MAX]) {            // update the maximum interval
+	msrTaskTiming[MSR_TASK_INTERVAL_MAX] = msrTaskTiming[MSR_TASK_INTERVAL];
       }
     }
+
+    msrCnt++;
   }
 }
 
@@ -396,6 +434,7 @@ int triggerIoActions(int id) {
       (pTask[id].lasttick < now)))               // the only injection in this period
   {
     injectTimingMsg(bufTimMsg);  // inject internal timing message for IO actions
+    pTask[id].action = now;
 
     pTask[id].lasttick = pTask[id].deadline; // update the task timestamp
     pTask[id].deadline += pTask[id].period;  // update deadline for next trigger
@@ -926,10 +965,11 @@ void execHostCmd(int32_t cmd)
 	  mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 	    (uint32_t)(pTask[id].trigger >> 32),  (uint32_t)pTask[id].trigger,
 	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle);
-	  mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x\n",
+	  mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
 	    (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
 	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
-	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline);
+	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
+	    (uint32_t)(pTask[id].action >> 32),   (uint32_t)pTask[id].action);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i < N_BURSTS; ++i) {
@@ -938,10 +978,11 @@ void execHostCmd(int32_t cmd)
 	      mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 		(uint32_t)(pTask[i].trigger >> 32),  (uint32_t)pTask[i].trigger,
 		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle);
-	      mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x\n",
+	      mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
 		(uint32_t)(pTask[i].cycle >> 32),    (uint32_t)pTask[i].cycle,
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
-		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline);
+		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
+                (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action);
 	    }
 	  }
 	}
@@ -1055,15 +1096,17 @@ void execHostCmd(int32_t cmd)
 	  gBurstsCycled = 0; // clear after read
 	}
 	else if (id < N_BURSTS) {
-	  *(pSharedInput +1) = (uint32_t)pTask[id].io_type;  // IO type and index (type << 16| index)
-	  *(pSharedInput +2) = (uint32_t)pTask[id].io_index;
-	  *(pSharedInput +3) = (uint32_t)(pTask[id].trigger >> 32); // trigger event id
-	  *(pSharedInput +4) = (uint32_t)pTask[id].trigger;
-	  *(pSharedInput +5) = (uint32_t)(pTask[id].toggle >> 32); // get toggle event id
-	  *(pSharedInput +6) = (uint32_t)pTask[id].toggle;
-	  *(pSharedInput +7) = (uint32_t)(pTask[id].cycle >> 32); // get cycle count
-	  *(pSharedInput +8) = (uint32_t)pTask[id].cycle;
-	  *(pSharedInput +9) = (uint32_t)pTask[id].flag;
+	  *(pSharedInput + INFO_IO_TYPE)       = (uint32_t)pTask[id].io_type;  // IO type and index (type << 16| index)
+	  *(pSharedInput + INFO_IO_IDX)        = (uint32_t)pTask[id].io_index;
+	  *(pSharedInput + INFO_START_EVT_H32) = (uint32_t)(pTask[id].trigger >> 32); // trigger event id
+	  *(pSharedInput + INFO_START_EVT_L32) = (uint32_t)pTask[id].trigger;
+	  *(pSharedInput + INFO_STOP_EVT_H32)  = (uint32_t)(pTask[id].toggle >> 32); // get toggle event id
+	  *(pSharedInput + INFO_STOP_EVT_L32)  = (uint32_t)pTask[id].toggle;
+	  *(pSharedInput + INFO_LOOPS_H32)     = (uint32_t)(pTask[id].cycle >> 32); // get cycle count
+	  *(pSharedInput + INFO_LOOPS_L32)     = (uint32_t)pTask[id].cycle;
+          *(pSharedInput + INFO_ACTION_H32)    = (uint32_t)(pTask[id].action >> 32); // get action time
+	  *(pSharedInput + INFO_ACTION_L32)    = (uint32_t)pTask[id].cycle;
+	  *(pSharedInput + INFO_FLAG)          = (uint32_t)pTask[id].flag;
 
 	  if (verbose)
 	    printSharedInput(0, N_BURST_INFO);
@@ -1206,28 +1249,37 @@ void execHostCmd(int32_t cmd)
 	break;
 
       case CMD_DIAG_PRINT_TASK_INTERVAL: // print elapsed time between tasks (requires the burst id)
-	mprintf("task ticks\n\tlasttick, failed\n");
+	mprintf("task ticks\n");
+        mprintf("\tid, lasttick, failed\n");
 	id = *pSharedInput;
 	if (id) {
-	  mprintf("\t0x%016Lx, 0x%016Lx\n", pTask[id].lasttick, pTask[id].failed);
+	  mprintf("\t%d, 0x%016Lx, 0x%016Lx\n", id, pTask[id].lasttick, pTask[id].failed);
 	} else {
 	  for (int i = 1; i < N_BURSTS; ++i)
-	    mprintf("\t0x%016Lx, 0x%016Lx\n", pTask[i].lasttick, pTask[i].failed);
+	    mprintf("\t%d, 0x%016Lx, 0x%016Lx\n", i, pTask[i].lasttick, pTask[i].failed);
 	}
+
+        // print all statistics
+        uint64_t sum = 0;
+
+        mprintf("\ttask distance:duration (cnt=%Lu)\n", msrCnt);
+        for (int i = 1; i < N_BURSTS; i++) {
+          mprintf("\t %2d %8x:%8x\n", i, (uint32_t)(msrTaskTiming[i] >> 32), (uint32_t)(msrTaskTiming[i]));
+          sum += msrTaskTiming[i];
+        }
+        mprintf("\t sum %8x:%8x\n", (uint32_t)(sum >> 32), (uint32_t)sum);
+	mprintf("Task intervals: cur=0x%Lx, max=0x%Lx\n", msrTaskTiming[MSR_TASK_INTERVAL], msrTaskTiming[MSR_TASK_INTERVAL_MAX]);
+
+	msrInitActionTiming(); // reset measurements
+
 	break;
 
       case CMD_DIAG_TOGGLE_MEASUREMENT: // dis/enable to measure the task scheduler period
-	mprintf("measure time to run all io tasks\n");
+        mprintf("toggle measurement\n");
 
-	mprintf("\tcurr=0x%Lx, max=0x%Lx\n", intervalCur, intervalMax);
 	enableSchedulerMeasure ^= 1;
 
-	if (enableSchedulerMeasure)
-	  mprintf("\tenabled\n");
-	else {
-	  tickFirstTask = intervalCur = intervalMax = 0; // prepare next measurement
-	  mprintf("\tdisabled\n");
-	}
+        msrInitActionTiming(); // reset measurements
 
 	break;
 
@@ -1538,8 +1590,6 @@ status_t init(void)
  ******************************************************************************/
 uint32_t doActionOperation(uint32_t actStatus)                // actual status of firmware
 {
-  static uint64_t tick;    // current tick
-  static int taskIdx = 1;  // task index, iterate all tasks except a dummy task with index 0
 
   uint32_t status;         // status returned by routines
 
@@ -1551,26 +1601,28 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // Run the continuous tasks always (with interval 'ALWAYS').
   // Run the periodic tasks only if the number of ticks since the last time
   // the task was run is greater than or equal to the task interval.
-  tick = getSysTime();
+  msrTickActEntr = getSysTime();
 
   if (pTask[taskIdx].interval == ALWAYS) {
     // run the continuous task
     (*pTask[taskIdx].func)(taskIdx);
 
-  } else if ((tick - pTask[taskIdx].lasttick) >= pTask[taskIdx].interval) {
+  } else if ((msrTickActEntr - pTask[taskIdx].lasttick) >= pTask[taskIdx].interval) {
     // run the periodic task
     (*pTask[taskIdx].func)(taskIdx);
-    pTask[taskIdx].lasttick = tick;  // save last tick the task was ran
+    pTask[taskIdx].lasttick = msrTickActEntr;  // save timestamp at which the task was ran
   }
 
   ecaMsiHandler(0);                  // handle pending ECA MSI
 
-  doSchedulerMeasure(taskIdx, tick); // measure a time interval to execute all io action tasks
+  msrMeasureActionTiming(taskIdx, msrTickActEntr, msrTickActExit); // measure a time interval to execute all io action tasks
 
   // iterate tasks
   ++taskIdx;
   if (taskIdx == N_BURSTS)
     taskIdx = 1;
+
+  msrTickActExit = getSysTime();             // action completed
 
   return status;
 }
@@ -1587,7 +1639,7 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  initSchedulerMeasure();           // initialize the task scheduler measurement
+  msrInitActionTiming();           // initialize the main loop performance measurement
 
   DBPRINT1(BG_TAG, "configured");
 
