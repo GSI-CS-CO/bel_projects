@@ -22,9 +22,11 @@ files = [
    "in_reg.vhd",
    "BLM_watchdog.vhd",
    "BLM_gate_timing_seq.vhd",
-   "up_down_counter.vhd",
+   "up_down_counter_1bit.vhd",
    "Beam_Loss_check.vhd",
-   "front_board_id_v0.vhd"
+   "front_board_id_v0.vhd",
+   "BLM_counter_pool.vhd",
+   "BLM_Interlock_out.vhd"
 ]
 
 modules = {

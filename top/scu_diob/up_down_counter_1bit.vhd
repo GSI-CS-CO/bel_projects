@@ -5,7 +5,7 @@ USE IEEE.numeric_std.all;
 
 entity up_down_counter is
     generic (
-    	c            : integer range 0 to 6:=1;        -- Counter_input width
+    	--c            : integer :=1;        -- Counter_input width
         WIDTH        : integer := 20;      -- Counter width
         pos_threshold: integer:= 262144;
         neg_threshold: integer:= -262144
@@ -17,8 +17,8 @@ entity up_down_counter is
         CLEAR       : in std_logic;      -- Clear counter register
         LOAD        : in std_logic;      -- Load counter register
         ENABLE      : in std_logic;      -- Enable count operation
-        UP_IN       : in std_logic_vector(c-1 downto 0);    -- Load counter register up input
-        DOWN_IN     : in std_logic_vector(c-1 downto 0);    -- Load counter register down input
+        UP_IN       : in std_logic;    -- Load counter register up input
+        DOWN_IN     : in std_logic;    -- Load counter register down input
         UP_OVERFLOW    : out std_logic ;     -- UP_Counter overflow
         DOWN_OVERFLOW    : out std_logic      -- UP_Counter overflow
     
@@ -51,13 +51,13 @@ begin
             elsif (LOAD = '1') then   
             
              -- Load up counter register
-                UP_D((WIDTH-1) downto c)<= (others =>'0');
-                UP_D((c-1) downto 0)<= UP_IN;
+                UP_D((WIDTH-1) downto 1)<= (others =>'0');
+                UP_D(0)<= UP_IN;
                 up_Counter <= signed('0' & UP_D);
                 
              -- Load down counter register
-                DOWN_D((WIDTH-1) downto c)<= (others =>'0');
-                DOWN_D((c-1) downto 0)<= DOWN_IN;
+                DOWN_D((WIDTH-1) downto 1)<= (others =>'0');
+                DOWN_D(0)<= DOWN_IN;
                 down_Counter <= signed ('1' & DOWN_D);
                 
             elsif ( ENABLE = '1') then                   -- Enable counter
@@ -85,4 +85,5 @@ begin
  end process;
 
 end rtl;
+
 

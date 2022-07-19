@@ -7,11 +7,10 @@ library work;
 use work.gencores_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
-use work.fg_quad_pkg.all;
 use work.scu_diob_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
-
+use work.daq_pkg.all;
 
 
 --  Base_addr    : DIOB-Config-Register1 (all bits can be read and written)
@@ -148,30 +147,23 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_Firmware_Version:    Integer := 0;      -- Firmware_Version
     CONSTANT c_Firmware_Release:    Integer := 29;     -- Firmware_release Stand 19.05.2021 ( + neuer Zwischen-Backplane )
 --  CONSTANT c_Firmware_Release:    Integer := 16#FF#; -- Test-Firmware_release
-
     CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";
     CONSTANT c_lm32_ow_Base_Addr:   unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
-
-    CONSTANT c_fg_1_Base_Addr:      unsigned(15 downto 0):=  x"0300";  -- FG1
     CONSTANT c_tmr_Base_Addr:       unsigned(15 downto 0):=  x"0330";  -- Timer
-    CONSTANT c_fg_2_Base_Addr:      unsigned(15 downto 0):=  x"0340";  -- FG2
     CONSTANT c_Conf_Sts1_Base_Addr:              Integer := 16#0500#;  -- Status-Config-Register 
-
     CONSTANT c_AW_Port1_Base_Addr:               Integer := 16#0510#;  -- Anwender I/O-Register
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
     CONSTANT c_IOBP_READBACK_Base_Addr:          Integer := 16#0670#;  -- IO-Backplane Output Readback Register
-
-
-
+    CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
+    CONSTANT pos_threshold:                         Integer := 16#40000#;   -- positive threshold for Beam Loss Check
+    CONSTANT neg_threshold:                         Integer := 16#40000#;   -- -negative threshold for Beam Loss Check
 --  +============================================================================================================================+
 --  |                                                 CONSTANT                                                                   |
 --  +============================================================================================================================+
 
-
     CONSTANT c_cid_system:     integer range 0 to 16#FFFF#:= 55;     -- extension card: cid_system, CSCOHW=55
-
 
     type ID_CID is record
       ID   : std_logic_vector(7 downto 0);
@@ -183,19 +175,13 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_BP_6LWLI1 :     ID_CID:= (x"04", 75);   ---- SUB-Piggy-ID(coding), B"0000_0100", FG902.110   -- 6x opt In, 
     CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(coding), B"0000_0101", FG902.120   -- 6x opt Out,  
     CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(coding), B"0000_0110", FG902.140   -- 6x lemo Out,  
-
-
     constant  stretch_cnt:    integer := 5;                               -- für LED's
-
-
     constant  Clk_in_ns:      integer  :=  1000000000 /  clk_sys_in_Hz;          -- (=8ns,    @ 125MHz)
     CONSTANT  CLK_sys_in_ps:  INTEGER  := (1000000000 / (CLK_sys_in_Hz / 1000));  --must actually be half-clk
-
     constant  C_Strobe_1us:   integer := 1000 / Clk_in_ns;                       -- Number of clocks for 1us
     constant  C_Strobe_2us:   integer := 2000 / Clk_in_ns;                       -- Number of clocks for 2us
     constant  C_Strobe_3us:   integer := 003000 * 1000 / CLK_sys_in_ps;          -- Number of clocks for the Debounce Time of  3uS
     constant  C_Strobe_7us:   integer := 007000 * 1000 / CLK_sys_in_ps;          -- Number of clocks for the Debounce Time of  7uS
-
 
    TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 16383;
 
@@ -211,8 +197,6 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
                                                  064000 * 1000 / CLK_sys_in_ps,   -- Number of clocks for the Debounce Time of  64uS
                                                  128000 * 1000 / CLK_sys_in_ps);  -- Number of clocks for the Debounce Time of 128uS
 
-
-
   CONSTANT C_Strobe_100ns:  integer range 0 to 16383:= (000100 * 1000 / CLK_sys_in_ps);   -- Number of clocks for the Strobe 100ns
 
   TYPE   t_Integer_Strobe_Array     is array (0 to 7) of integer range 0 to 65535;
@@ -223,11 +207,9 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
 --                                                                   0    2    4    8   16   32   64  128
   constant Sts_Err_Zeit_2_Hoch_n : t_status_error_update_Array := (005, 010, 020, 040, 080, 160, 320, 640);
 
-
 --  +============================================================================================================================+
 --  |                                                    Component                                                               |
 --  +============================================================================================================================+
-
 
 component config_status
   generic ( CS_Base_addr  : integer );
@@ -241,24 +223,20 @@ component config_status
     Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
     clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
     nReset:               in   std_logic;
-
     Diob_Status1:         in   std_logic_vector(15 downto 0);    -- Input-Port 1
     Diob_Status2:         in   std_logic_vector(15 downto 0);    -- Input-Port 2
     AW_Status1:           in   std_logic_vector(15 downto 0);    -- Input-Port 3
     AW_Status2:           in   std_logic_vector(15 downto 0);    -- Input-Port 4
-
     Diob_Config1:         out  std_logic_vector(15 downto 0);    -- Data-Reg. AWOut1
     Diob_Config2:         out  std_logic_vector(15 downto 0);    -- Data-Reg. AWOut2
     AW_Config1:           out  std_logic_vector(15 downto 0);    -- Data-Reg. AWOut3
     AW_Config2:           out  std_logic_vector(15 downto 0);    -- Data-Reg. AWOut4
-
     Mirr_OutReg_Maske:    out  std_logic_vector(15 downto 0);    -- Masking for mirror mode of the source register
     Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Data-Reg. AWOut1
     Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Data-Reg. AWOut2
     AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Data-Reg. AWOut3
     AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Data-Reg. AWOut4
     Clr_Tag_Config:       out  std_logic;                        -- Clear Tag-Configurations-Register
-
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
@@ -393,9 +371,6 @@ COMPONENT in_reg
 END COMPONENT in_reg;
 
 
-
-
-
 component pu_reset
 generic (
     PU_Reset_in_clks : integer
@@ -426,8 +401,6 @@ port  (
 end component;
 
 
-
-
  component diob_debounce
   generic (
     DB_Tst_Cnt: integer := 3;
@@ -451,27 +424,63 @@ end component;
     );
   end component diob_sync;
 
+  COMPONENT daq 
+  generic (
+      Base_addr:          unsigned(15 downto 0);
+      CLK_sys_in_Hz:      integer := 125_000_000;               
+      ch_num:             integer := 16                      
+          );
+  
+  port  (
+        Adr_from_SCUB_LA:    in    std_logic_vector(15 downto 0);
+        Data_from_SCUB_LA:   in    std_logic_vector(15 downto 0);
+        Ext_Adr_Val:         in    std_logic;                    
+        Ext_Rd_active:       in    std_logic;                   
+        Ext_Wr_active:       in    std_logic;                   
+        clk_i:               in    std_logic;                    
+        nReset:              in    std_logic;
+  
+        diob_extension_id:   in    std_logic_vector(15 downto 0);
+  
+        user_rd_active:      out   std_logic;
+        Rd_Port:             out   std_logic_vector(15 downto 0);
+        Dtack:               out   std_logic;                    
+        daq_srq:             out   std_logic;                    
+        HiRes_srq:           out   std_logic;                    
+        Timing_Pattern_LA:   in    std_logic_vector(31 downto 0);
+        Timing_Pattern_RCV:  in    std_logic;                    
+  
+        --daq input channels
+        daq_dat_i:           in    t_daq_dat (1 to ch_num);    
+        daq_ext_trig:        in    t_daq_ctl (1 to ch_num)       
+      );
+      END COMPONENT daq;
+
+
  component Beam_Loss_check is
   generic (
-    m            : integer := 8;       -- gate input width
+      n            : integer range 0 to 110 :=62;        -- counter pool inputs:  hardware inputs plus test signals      
+      m            : integer := 8;       -- gate input width
       WIDTH        : integer := 20;      -- Counter width
-      pos_threshold: integer:= 262144;
-      neg_threshold: integer:= -262144
-      
+      pos_threshold: integer:= pos_threshold;
+      neg_threshold: integer:= -neg_threshold      
   );
   port (
       clk_sys       : in std_logic;      -- Clock
       rstn_sys      : in std_logic;      -- Reset
       CLEAR         : in std_logic;      -- Clear counter register
-      LOAD          : in std_logic;      -- Load counter register
+      LOAD          : in std_logic_vector(n-2 downto 0);     -- Load counter register
       watchdog_ena  : in std_logic_vector( 8 downto 0);      
       gate_in_ena   : in std_logic;
       Gate_Mtx      : in std_logic_vector (m-1 downto 0);
       In_Mtx       : in t_IO_Reg_0_to_7_Array; 
+      test_sig_sel : std_logic_vector(2 downto 0);
+      out_mux_sel  : in std_logic_vector(12 downto 0);
       INTL_Output   : out std_logic_vector(5 downto 0) 
   
   );
   end component Beam_Loss_check;
+ 
 
   component front_board_id is 
 
@@ -479,7 +488,6 @@ Port ( clk : in STD_LOGIC;
        nReset : in STD_LOGIC;
        Deb_Sync : in STD_LOGIC_VECTOR(65 downto 0);
        Deb_out   :in STD_LOGIC_VECTOR(65 downto 0);
-
        IOBP_Masken_Reg1 : in STD_LOGIC_VECTOR(15 downto 0);
        IOBP_Masken_Reg2 : in STD_LOGIC_VECTOR(15 downto 0);
        IOBP_Masken_Reg3 : in STD_LOGIC_VECTOR(15 downto 0);
@@ -536,23 +544,6 @@ end component front_board_id;
 
   signal AWIn_Deb_Time:          integer range 0 to 7;           -- Debounce-Time 2 High "AWIn_Deb_Time", value from DIOB-Config 1
   signal Min_AWIn_Deb_Time:      integer range 0 to 7;           -- Minimal Debounce-Time 2 High"Min_AWIn_Deb_Time"
-
-
-  signal FG_1_dtack:         std_logic;
-  signal FG_1_data_to_SCUB:  std_logic_vector(15 downto 0);
-  signal FG_1_rd_active:     std_logic;
-  signal FG_1_sw:            std_logic_vector(31 downto 0);
-  signal FG_1_strobe:        std_logic;
-  signal FG_1_dreq:          std_logic;
-
-  signal FG_2_dtack:         std_logic;
-  signal FG_2_data_to_SCUB:  std_logic_vector(15 downto 0);
-  signal FG_2_rd_active:     std_logic;
-  signal FG_2_sw:            std_logic_vector(31 downto 0);
-  signal FG_2_strobe:        std_logic;
-  signal FG_2_dreq:          std_logic;
-
-  signal fg_start:           std_logic;
 
   signal tmr_rd_active:      std_logic;
   signal tmr_data_to_SCUB:   std_logic_vector(15 downto 0);
@@ -663,10 +654,7 @@ end component front_board_id;
 
   signal Tag_Maske_Reg:          t_IO_Reg_1_to_7_Array;           -- Tag-Output-Mask for Register 1-7
   signal Tag_Outp_Reg:           t_IO_Reg_1_to_7_Array;           -- Tag-Output-Mask for Register 1-7
-
-  signal Tag_FG_Start:           std_logic;                       -- Start-Puls for the FG
   signal Tag_Sts:                std_logic_vector(15 downto 0);   -- Tag-Status
-
   signal Tag_Ctrl1_rd_active:    std_logic;                       -- read data available at 'Data_to_SCUB'-Tag_Ctrl1
   signal Tag_Ctrl1_Dtack:        std_logic;                       -- connect read sources to SCUB-Macro
   signal Tag_Ctrl1_data_to_SCUB: std_logic_vector(15 downto 0);   -- connect Dtack to SCUB-Macro
@@ -832,17 +820,31 @@ signal    watchdog_ena:       std_logic_vector( 8 downto 0):= (OTHERS => '0');
 signal    gate_in_ena:        std_logic :='0';
 signal    Gate_In_Mtx:        std_logic_vector (7 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control #
 
-type Test_DATA is array (0 to 6)
+type Test_DATA is array (0 to 5)
         of std_logic_vector(7 downto 0);
   constant Test_In_Mtx : Test_DATA :=
-            ("00100000",
-             "01000000",
-             "10000001",
+            (
+             "00100000",
              "00010000",
              "00001000",
              "00000100",
-             "00000010");
+             "00000010",
+             "00000001");
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
+signal count_LOAD: std_logic_vector(60 downto 0);
+-----------------DAQ-Signale---------------------------------------------------------------------------------------------------
+
+constant daq_ch_num: integer := 16;
+signal daq_diob_ID: std_logic_vector(15 downto 0):=x"00FF"; --hard-coded ID Value for DAQ Diob implementation of which bits 3-0 are used 
+
+signal daq_user_rd_active:    std_logic;
+signal daq_data_to_SCUB:           std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
+signal daq_Dtack:             std_logic;                    -- Dtack to SCU Bus Macro
+signal daq_srq:               std_logic;                    -- consolidated irq lines from n daq channels for "channel fifo full"
+signal daq_HiRes_srq:         std_logic;                    -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
+--daq input channels signals
+signal daq_dat:             t_daq_dat (1 to daq_ch_num) := (others => dummy_daq_dat_in);
+signal daq_ext_trig:          t_daq_ctl (1 to daq_ch_num) := (others => dummy_daq_ctl_in);
 --  ###############################################################################################################################
 --  ###############################################################################################################################
 --  #####                                                                                                                     #####
@@ -1116,7 +1118,7 @@ port map  (
       Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,           -- Maximal AWIn-Reg-Number of the application
       Tag_Maske_Reg       =>  Tag_Maske_Reg,             -- Tag-Output-Mask for Register 1-7
       Tag_Outp_Reg        =>  Tag_Outp_Reg,              -- Tag-Output-Mask for Register 1-7
-      Tag_FG_Start        =>  Tag_FG_Start,              -- Start-Puls for the FG
+      Tag_FG_Start        =>  open,              -- Start-Puls for the FG
       Tag_Sts             =>  Tag_Sts,                   -- Tag-Status
       Rd_active           =>  Tag_Ctrl1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
       Data_to_SCUB        =>  Tag_Ctrl1_Data_to_SCUB,    -- connect read sources to SCUB-Macro
@@ -1234,7 +1236,37 @@ port map  (
           Data_to_SCUB       =>  IOBP_in_data_to_SCUB
         );
     
-
+        DAQ_modul: daq
+        GENERIC MAP(
+          Base_addr           =>  to_unsigned(c_DIOB_DAQ_Base_Addr, 16),
+          CLK_sys_in_Hz       => 125000000,        
+          ch_num => daq_ch_num                  
+              )
+        
+        PORT MAP  (
+        
+            Adr_from_SCUB_LA      => ADR_from_SCUB_LA,
+            Data_from_SCUB_LA     => Data_from_SCUB_LA,
+            Ext_Adr_Val           => Ext_Adr_Val,
+            Ext_Rd_active         => Ext_Rd_active,
+            Ext_Wr_active         => Ext_Wr_active,
+            clk_i                 => clk_sys,
+            nReset                => rstn_sys,
+        
+            diob_extension_id     =>  daq_diob_ID,
+            user_rd_active        =>  daq_user_rd_active,   
+            Rd_Port               =>  daq_data_to_SCUB,  
+            Dtack                 =>  daq_Dtack,
+            daq_srq               =>  daq_srq,
+            HiRes_srq             =>  daq_HiRes_srq,   
+            Timing_Pattern_LA     => Timing_Pattern_LA,
+            Timing_Pattern_RCV    => Timing_Pattern_RCV, 
+        
+            --daq input channels
+            daq_dat_i             => daq_dat,
+            daq_ext_trig          =>  daq_ext_trig
+          );
+        
 testport_mux: process (A_SEL, AW_Config1, AW_Input_Reg, AW_Output_Reg, LA_Tag_Ctrl1,
                        LA_AW_Port1, LA_Conf_Sts1, Timing_Pattern_RCV,
                        Timing_Pattern_LA, test_port_in_0, test_clocks, uart_txd_out,
@@ -1253,7 +1285,6 @@ begin
     when X"7" => test_out <= X"000" & '0' & '0' & '1' & uart_txd_out;
 --
     when X"8" => test_out <= LA_Tag_Ctrl1;   -- Logic analyser Signals "LA_Tag_Ctrl1"
-
     when X"9" => test_out <= LA_Conf_Sts1;
     when X"A" => test_out <= LA_AW_Port1; 
     --
@@ -1276,19 +1307,13 @@ begin
   end case;
 end process testport_mux;
 
-
 hp_la_o <=  x"0000";  --test_out(15 downto 0);
-
-
 test_port_in_0 <= x"0000"; --- kein Clock's am Teststecker
-
-
 
 test_clocks <=  X"0"                                                                              -- bit15..12            
               & '0' & '0' & '0' & '0'                                                             -- bit11..8
               & '0' & pll_locked & sys_clk_deviation & sys_clk_deviation_la                       -- bit7..4
               & local_clk_is_running & local_clk_is_bad & sys_clk_is_bad & sys_clk_is_bad_la;     -- bit3..0
-
 
   -- open drain buffer for one wire
         owr_i(0) <= A_OneWire;
@@ -1405,8 +1430,9 @@ port map (
     nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
     Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
     Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
-   intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
-                             & '0'& '0' & '0' &'0'            -- bit 11..8
+   intr_in                 => '0'& '0' & tmr_irq &  daq_srq           -- bit 15..12
+                               & daq_HiRes_srq & '0' & '0' &'0'       -- bit 11..8
+
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
     User_Ready              => '1',
@@ -1475,67 +1501,7 @@ port map (
   debug_serial_o    => uart_txd_out,
   debug_serial_i    => '0');
 
-fg_1: fg_quad_scu_bus
-  generic map (
-    Base_addr => c_fg_1_Base_Addr,
-    clk_in_hz => clk_sys_in_Hz,
-    diag_on_is_1 => 0, -- if 1 then diagnosic information is generated during compilation
-    ACU => false
-    )
-  port map (
 
-    -- SCUB interface
-    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    sysclk            => '0',                   -- in, only used for ACU implementation
-    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
-    Rd_Port           => FG_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
-    user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
-    Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
-    irq               => FG_1_dreq,             -- request of new parameter set
-    tag               => Timing_Pattern_LA,     --
-    tag_valid         => Timing_Pattern_RCV,    --
-    ext_trigger       => Tag_FG_Start,          -- starts the ramping by external signal
-
-    -- fg output
-    sw_out            => FG_1_sw,               -- 32bit output from fg
-    sw_strobe         => FG_1_strobe            -- signals new output data
-  );
-
-fg_2: fg_quad_scu_bus
-  generic map (
-    Base_addr => c_fg_2_Base_Addr,
-    clk_in_hz => clk_sys_in_Hz,
-    diag_on_is_1 => 0, -- if 1 then diagnosic information is generated during compilation
-    ACU => false
-    )
-  port map (
-
-    -- SCUB interface
-    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    sysclk            => '0',                   -- in, only used for ACU implementation
-    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
-    Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
-    user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
-    Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
-    irq               => FG_2_dreq,             -- request of new parameter set
-    tag               => Timing_Pattern_LA,     --
-    tag_valid         => Timing_Pattern_RCV,    --
-    ext_trigger       => Tag_FG_Start,          -- starts the ramping by external signal
-
-    -- fg output
-    sw_out            => FG_2_sw,               -- 32bit output from fg
-    sw_strobe         => FG_2_strobe            -- signals new output data
-  );
 
   tmr: tmr_scu_bus
   generic map (
@@ -1557,52 +1523,46 @@ fg_2: fg_quad_scu_bus
 
 rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         wb_scu_rd_active,         wb_scu_data_to_SCUB,
-                        FG_1_rd_active,           FG_1_data_to_SCUB,
-                        FG_2_rd_active,           FG_2_data_to_SCUB,
                         AW_Port1_rd_active,       AW_Port1_data_to_SCUB,
                         Tag_Ctrl1_rd_active,      Tag_Ctrl1_data_to_SCUB,
                         Conf_Sts1_rd_active,      Conf_Sts1_data_to_SCUB,
                         tmr_rd_active,            tmr_data_to_SCUB,
                         IOBP_msk_rd_active,       IOBP_msk_data_to_SCUB,
                         IOBP_id_rd_active,        IOBP_id_data_to_SCUB,
-                        IOBP_in_rd_active,        IOBP_in_data_to_SCUB
+                        IOBP_in_rd_active,        IOBP_in_data_to_SCUB,
+                        daq_user_rd_active,       daq_data_to_SCUB
                       )
 
 
-  variable sel: unsigned(9 downto 0);
+  variable sel: unsigned(8 downto 0);
 
   begin
-    sel :=  IOBP_in_rd_active  & tmr_rd_active & FG_1_rd_active & FG_2_rd_active & wb_scu_rd_active & clk_switch_rd_active &
+    sel :=  daq_user_rd_active & 
+            IOBP_in_rd_active  & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
             Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
 
   case sel IS
-
-      when "1000000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
-      when "0100000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "0010000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "0001000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "0000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "0000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "0000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "0000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "0000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "0000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "100000000" => Data_to_SCUB <= daq_data_to_SCUB;
+      when "010000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
+      when "001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000010000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
 
       when others      => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
 
-
-
 -------------- Dtack_to_SCUB -----------------------------
 
-    Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack or FG_1_dtack   or  FG_2_dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
-                         IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_Dtack);
-
+    Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
+                         IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_Dtack or daq_Dtack );
 
     A_nDtack <= NOT(SCUB_Dtack);
     A_nSRQ   <= NOT(SCUB_SRQ);
-
 
 --  +============================================================================================================================+
 --  |            §§§                        Anwender-IO: IOBP (INLB12S1)  -- FG902_050                                           |
@@ -1633,23 +1593,37 @@ IOBP_In_LEDn:  for J in 1 to 12 generate
 --                ---------------------------------------------------------------------------
                   end generate IOBP_In_LEDn;
 --
+count_load_ass_proc: process(clk_sys,  rstn_sys)
 
-BML_Module: Beam_Loss_check 
+    begin
+      if (not rstn_sys = '1') then
+        count_LOAD <= (others =>'0');
+      ELSIF (clk_sys'EVENT AND clk_sys = '1' ) THEN
+        for i in 1 to (54) loop
+           count_LOAD(i) <='1';
+        end loop;
+      end if;
+    end process;
+
+BLM_Module: Beam_Loss_check 
   generic map (
+      n => 62,
       m => 8,       -- gate input width
       WIDTH => 20,      -- Counter width
-      pos_threshold => 262144,
-      neg_threshold => -262144   
+      pos_threshold => pos_threshold,
+      neg_threshold => -neg_threshold 
   )
   port map(
       clk_sys      => clk_sys,    -- Clock
       rstn_sys     => rstn_sys,     -- Reset
-      CLEAR        => AW_Config1(6),    
-      LOAD         =>  '1',-- Load counter register
+      CLEAR        => AW_Config1(4),    --not used yet until now
+      LOAD         =>  count_LOAD,-- Load counter register
       watchdog_ena => watchdog_ena,
       gate_in_ena  => gate_in_ena, 
       Gate_Mtx     => gate_Mtx(7 downto 0), 
       In_Mtx       => In_Mtx,
+      test_sig_sel => AW_Config2( 2 downto 0), --AW_Config2 not used yet, now it selects a test signal for the counter_matrix
+      out_mux_sel => AW_Config2(15 downto 3),   --
       INTL_Output  => INTL_Output
   
   );
@@ -1706,7 +1680,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         when led_id_wait      =>  IOBP_LED_En          <=  '1';                --  Output-Enable für LED- ID-Bus
                                   IOBP_state  <= led_id_loop;
 
-
         when led_id_loop      =>  IOBP_LED_ID_Bus_o(7 downto 6)  <=  ("0" & "0");
                                   IOBP_LED_ID_Bus_o(5 downto 0)  <=  IOBP_Aktiv_LED_o(Slave_Loop_cnt)(6 downto 1);   -- Aktiv-LED für Slave zum LED-Port
                                   IOBP_state  <= led_str_rot_h;
@@ -1732,7 +1705,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
 
         when iobp_led_z       =>  IOBP_state  <= iobp_id_str_l;
 
-
         when iobp_id_str_l    =>  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '1';   -- Sel-ID für Slave (Slave_Loop_cnt)
                                   IOBP_state  <= iobp_rd_id;
 
@@ -1741,8 +1713,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
 
         when iobp_id_str_h    =>  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '0';   -- Sel-ID für Slave (Slave_Loop_cnt)
                                   IOBP_state  <= iobp_end;
-
-
 
         when iobp_end         =>  Slave_Loop_cnt <=  Slave_Loop_cnt + 1;       -- Loop +1
 
@@ -1759,8 +1729,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
   end process P_IOBP_LED_ID_Loop;
 
 
-
---  ###############################################################################################################################
+  --  ###############################################################################################################################
 --  #####                                                                                                                     #####
 --  #####                             Input-Muliplexer to SCU-Bus for the Mirror-Mode                                         #####
 --  #####                                                                                                                     #####
@@ -1783,10 +1752,8 @@ begin
 
     --############################# Mirror-Mode ##################################
 
-
       Mirr_AWOut_Reg_Nr      <= to_integer(unsigned(Diob_Config1)( 7 downto 5));      -- Output-Reg. Nr. 1..7
       Mirr_AWIn_Reg_Nr       <= to_integer(unsigned(Diob_Config1)(10 downto 8));      -- Input-Reg. Nr. 1..7
-
 
       For REG_Nr in 1 to 7 loop
 
@@ -1822,9 +1789,7 @@ begin
 
 
 p_stecker: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_tap_clk_250mhz, A_SEL,
-            PIO_SYNC, PIO_SYNC1, PIO_ENA, PIO_ENA_SYNC, PIO_OUT, PIO_OUT_SYNC, PIO,
-            FG_1_sw, FG_1_strobe, FG_2_sw, FG_2_strobe, 
-            CLK_IO,
+            PIO_SYNC, PIO_SYNC1, PIO_ENA, PIO_ENA_SYNC, PIO_OUT, PIO_OUT_SYNC, PIO, CLK_IO,
             AWIn_Deb_Time, Min_AWIn_Deb_Time, 
             DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2,
             AW_Input_Reg,
@@ -2142,11 +2107,10 @@ In_Mtx (3) <= AW_IOBP_Input_Reg(4);
 In_Mtx (4) <= "00"& Test_In_Mtx(0) & AW_IOBP_Input_Reg(5)(5 downto 0);
 In_Mtx (5) <= Test_In_Mtx(2) & Test_In_Mtx(1);
 In_Mtx (6) <= Test_In_Mtx(4) & Test_In_Mtx(3);
-In_Mtx (7) <= Test_In_Mtx(6) & Test_In_Mtx(5);
+In_Mtx (7) <= "00000000" & Test_In_Mtx(5);
 
 Gate_Mtx(5 downto 0) <= AW_IOBP_Input_Reg(5)(11 downto 6);
 Gate_Mtx(11 downto 6) <= AW_IOBP_Input_Reg(6)(5 downto 0);
-
 
 ---output readback
 IOBP_Output_Readback(0) <= "0000000000" & IOBP_Output;
@@ -2157,8 +2121,6 @@ IOBP_Output_Readback(4) <= (OTHERS => '0');
 IOBP_Output_Readback(5) <= (OTHERS => '0');
 IOBP_Output_Readback(6) <= (OTHERS => '0');
 IOBP_Output_Readback(7) <= (OTHERS => '0');
-
-
 
 --################################ Debounce oder Sync Input's  ##################################
 
@@ -2195,8 +2157,19 @@ IF  (Diob_Config1(11) = '1')  THEN Deb_Sync66 <=  Syn66;         -- Dobounce = A
 END IF;
 
 ---------------------------------------------------------------------------------------------------------
+  --################################      daq_channels assignments     ##################################
+    daq_dat(1) <= "0000"& AW_IOBP_Input_Reg(1)(11 downto 0);
+    daq_dat(2) <= "0000"& AW_IOBP_Input_Reg(2)(11 downto 0);
+    daq_dat(3) <= "0000"& AW_IOBP_Input_Reg(3)(11 downto 0);
+    daq_dat(4) <= "0000"& AW_IOBP_Input_Reg(4)(11 downto 0);
+    daq_dat(5) <= "0000"& AW_IOBP_Input_Reg(5)(11 downto 0);
+    daq_dat(6)(5 downto 0) <= AW_IOBP_Input_Reg(6)(5 downto 0);
+    daq_dat(7)(5 downto 0) <= IOBP_Output;
+    daq_diob_ID(15 downto 0)<= "00000000"& c_AW_INLB12S1.ID;
+--############################################################################################################
 
- else
+
+else
    
     extension_cid_system <=  0;  -- extension card: cid_system
     extension_cid_group  <=  0;  -- extension card: cid_group
@@ -2208,7 +2181,6 @@ END IF;
     s_nLED_User1_i       <= '0';        -- LED3 = User 1, -- frei --
     s_nLED_User2_i       <= '0';        -- LED3 = User 2, -- frei --
     s_nLED_User3_i       <= '0';        -- LED3 = User 3, -- frei --
-
 
   -- Output: Anwender-LED's ---
 
