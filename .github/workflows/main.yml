@@ -1,0 +1,48 @@
+name: CI Basic Build
+
+on:
+  push:
+    branches: [ "master", "proposed_master", "fallout", "fallout_github_actions" ]
+  pull_request:
+    branches: [ "master", "proposed_master", "fallout", "fallout_github_actions" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install missing packages
+      run: sudo apt-get -y install automake libreadline-dev docbook-utils build-essential libboost-all-dev pkg-config libsigc++-2.0-dev
+
+    - name: Set PKG_CONFIG_PATH
+      run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+    - name: Install kernel headers and extra modules
+      run: sudo apt-get install linux-headers-$(uname -r) linux-modules-extra-$(uname -r) linux-image-extra-virtual linux-headers-generic
+
+    - name: Create symlinks
+      run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+
+    - name: Setup repository
+      run: make
+
+    - name: Build etherbone
+      run: make etherbone
+
+    - name: Install etherbone
+      run: sudo make etherbone-install
+
+    - name: Build tools
+      run: make tools
+
+    - name: Install tools
+      run: make tools-install
+
+    - name: Build saftlib
+      run: make saftlib -j$(nproc)
+
+    - name: Install saftlib
+      run: sudo make saftlib-install
