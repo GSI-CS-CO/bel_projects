@@ -2,9 +2,9 @@ name: CI Basic Build
 
 on:
   push:
-    branches: [ "master", "proposed_master", "fallout", "fallout_github_actions" ]
+    branches: [ "master", "proposed_master", "fallout" ]
   pull_request:
-    branches: [ "master", "proposed_master", "fallout", "fallout_github_actions" ]
+    branches: [ "master", "proposed_master", "fallout" ]
 
 jobs:
   build:
