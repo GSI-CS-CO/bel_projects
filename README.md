@@ -102,8 +102,8 @@ make microtca
 make pexp
 make pexarria10
 make ftm10
-make ftm4dp     # FTM4 dual port development)
-make a10gx_pcie # Arria10 evaluation board)
+make ftm4dp     # FTM4 dual port development
+make a10gx_pcie # Arria10 evaluation board
 ```
 
 ## Additional Targets
