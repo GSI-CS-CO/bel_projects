@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-07-19}
+\Large{Last change: 2022-07-20}
 \end{center}
 \vfill
 \end{titlepage}
@@ -279,13 +279,32 @@ crash.
         \label{fig:Schedule_booster_thread_0_loop}
     \end{figure}
 \item \texttt{test\_booster\_thread\_0}
-Use schedule \texttt{booster-thread-0.dot} \\
+The schedule consists of three nodes: a startthread for thread 0 (CPU 0), a timing message
+with EVTNO 1, and a block with length 0.1 seconds. The thread 0 starts every 0.001 seconds again,
+thus producing timing messages with 1kHz. The test asserts that there are more than
+2990 tmsg in 3 seconds with EVTNO 0x0001. Use schedule \texttt{booster-thread-0.dot}
 (see~\ref{fig:Schedule_booster_thread_0}), which has one pattern MAIN.
     \begin{figure}
         \centering
         \includegraphics*[width=0.55\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
-        \caption{Schedule for starting thread 0 once}
+        \caption{Schedule for starting thread 0 once every 0.001 seconds}
         \label{fig:Schedule_booster_thread_0}
+    \end{figure}
+\item \texttt{test\_booster\_8\_loops}
+The schedule consists mainly in a loop with origin nodes and startthread nodes for threads 1 to 7.
+This loop runs in thread 0 with a block of length 0.1 seconds and a timing message with EVTNO 0, which
+helps to control that the test is working. Each of the origin nodes is the origin of a sequence of a block,
+a timing message, and a block (no loop). The startthread nodes start threads 1 to 7, repectively.
+Since the EVTNO of the timing messages correspond to the thread numbers, the test can check that
+the thread is started. Since there is no loop for thread 1 to 7 each of these threads runs to idle.
+The threads are started once every 0.1 second from the main loop in thread 0. Thus we have a frequency of 10Hz
+for the messages of each thread. This is checked with a snoop for 2 seconds.
+Use schedule \\ \texttt{booster-8-loops.dot} (see~\ref{fig:Schedule_booster_8_loops}).
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.1\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
+        \caption{Schedule for starting threads 0 to 7 in a main loop}
+        \label{fig:Schedule_booster_8_loops}
     \end{figure}
 \end{enumerate}
 

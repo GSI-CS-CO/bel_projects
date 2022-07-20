@@ -2,12 +2,12 @@
 
 // Test case: start thread 0 on cpu 0.
 // Use one pattern, MAIN with a tmsg and a block not in a loop.
-// One message is emitted every 0.1 seconds.
+// One message is emitted every 0.001 seconds (1kHz).
 
 digraph "booster-thread-0" {
 name="booster-thread-0"
 edge [type=defdst]
-node [cpu=1 fillcolor=white style=filled pattern=MAIN toffs=0]
+node [cpu=0 fillcolor=white style=filled pattern=MAIN toffs=0]
 
 StThrT0 [type=startthread patentry=1 thread=0 startoffs=1000000]
 
