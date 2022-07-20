@@ -249,6 +249,52 @@ static void msrMeasureActionTiming(int taskIdx, uint64_t msrTickActEntr, uint64_
   }
 }
 
+/**
+ * \brief Measure performance of the main loop
+ *
+ * The IO action functions are called to inject internal events
+ * for generating bursts. Because of a strict timing constraint each burst
+ * must be re-triggered within 200 us period. The violation of this period
+ * causes an unexpected termination of bursts.
+ *
+ * This function measures the period of action, where all IO action tasks are run to completion.
+ * The initial duration measurement is ignored.
+ *
+ * \param[in] msrTickActEntr  Action entry time point (updated before this function call)
+ * \param[in] msrTickActExit  Action complete time point (updated after this function call)
+ **/
+static void msrMeasureActionPeriod(uint64_t msrTickActEntr, uint64_t msrTickActExit)
+{
+  if (enableSchedulerMeasure == 0)
+    return;
+
+  uint64_t value = msrTaskTiming[0];        // get value of the last measurement
+  uint64_t duration = value & 0xffffffff;   // average duration of all tasks
+  uint64_t distance = value >> 32;          // average distance from a previous action
+  uint64_t now = getSysTime();
+
+  // calculate the average duration of all tasks
+  value = now - msrTickActEntr;
+  duration = (value + (duration * msrCnt))/(msrCnt + 1);
+
+  // calculate the average distance from a previous action
+  if (msrTickActExit) {
+    value = now - msrTickActExit;
+    distance = (value + (distance * msrCnt))/(msrCnt + 1);
+
+    // determine the extremes
+    msrTaskTiming[MSR_TASK_INTERVAL] = value;   // update time interval to execute all IO action tasks
+
+    if (msrTaskTiming[MSR_TASK_INTERVAL] > msrTaskTiming[MSR_TASK_INTERVAL_MAX])  // update the maximum interval
+      msrTaskTiming[MSR_TASK_INTERVAL_MAX] = msrTaskTiming[MSR_TASK_INTERVAL];
+
+    msrCnt++;
+  }
+
+  // store the measurements (hi32:distance, lo32:duration)
+  msrTaskTiming[0] = (distance << 32) | duration;
+}
+
 void printMsiHandleMeasurement(void)
 {
   mprintf("\tiH  %x:%8x\n", (uint32_t)(tElapsed[0] >> 32), (uint32_t)tElapsed[0]);
@@ -1263,7 +1309,7 @@ void execHostCmd(int32_t cmd)
         uint64_t sum = 0;
 
         mprintf("\ttask distance:duration (cnt=%Lu)\n", msrCnt);
-        for (int i = 1; i < N_BURSTS; i++) {
+        for (int i = 0; i < N_BURSTS; i++) {
           mprintf("\t %2d %8x:%8x\n", i, (uint32_t)(msrTaskTiming[i] >> 32), (uint32_t)(msrTaskTiming[i]));
           sum += msrTaskTiming[i];
         }
@@ -1595,32 +1641,29 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   status = actStatus;
 
-  DBPRINT2("t%d\n", taskIdx);
-
   /* Iterate all tasks except a dummy task with index 0. */
   // Run the continuous tasks always (with interval 'ALWAYS').
   // Run the periodic tasks only if the number of ticks since the last time
   // the task was run is greater than or equal to the task interval.
   msrTickActEntr = getSysTime();
 
-  if (pTask[taskIdx].interval == ALWAYS) {
-    // run the continuous task
-    (*pTask[taskIdx].func)(taskIdx);
+  // iterate all tasks
+  for (taskIdx = 1; taskIdx < N_BURSTS; taskIdx++) {
 
-  } else if ((msrTickActEntr - pTask[taskIdx].lasttick) >= pTask[taskIdx].interval) {
-    // run the periodic task
-    (*pTask[taskIdx].func)(taskIdx);
-    pTask[taskIdx].lasttick = msrTickActEntr;  // save timestamp at which the task was ran
+    if (pTask[taskIdx].interval == ALWAYS) {
+      // run the continuous task
+      (*pTask[taskIdx].func)(taskIdx);
+
+    } else if ((msrTickActEntr - pTask[taskIdx].lasttick) >= pTask[taskIdx].interval) {
+      // run the periodic task
+      (*pTask[taskIdx].func)(taskIdx);
+      pTask[taskIdx].lasttick = msrTickActEntr;  // save timestamp at which the task was ran
+    }
+
+    ecaMsiHandler(0);                  // handle pending ECA MSI
   }
 
-  ecaMsiHandler(0);                  // handle pending ECA MSI
-
-  msrMeasureActionTiming(taskIdx, msrTickActEntr, msrTickActExit); // measure a time interval to execute all io action tasks
-
-  // iterate tasks
-  ++taskIdx;
-  if (taskIdx == N_BURSTS)
-    taskIdx = 1;
+  msrMeasureActionPeriod(msrTickActEntr, msrTickActExit); // measure a time interval to execute all io action tasks
 
   msrTickActExit = getSysTime();             // action completed
 
