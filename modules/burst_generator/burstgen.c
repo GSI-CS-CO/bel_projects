@@ -440,10 +440,10 @@ int triggerIoActions(int id) {
       else
 	pTask[id].cycle = remaining / pTask[id].period + 1;
     }
-
-    if (pTask[id].cycle == 0)        // production cycle is over, cannot trigger!
-      result = STATUS_NOT_READY;
   }
+
+  if (pTask[id].cycle == 0)        // production cycle is over, cannot trigger!
+    result = STATUS_NOT_READY;
 
   if (pTask[id].flag & CTL_EN == CTL_DIS)   // burst is disabled, do not trigger!
     result = STATUS_DISABLED;
