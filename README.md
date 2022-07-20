@@ -10,6 +10,9 @@ GSI Timing Gateware and Tools
   - [Tools (Monitoring and EB-Tools)](#tools-monitoring-and-eb-tools)
   - [Saftlib](#saftlib)
   - [Build Gateware(s)](#build-gatewares)
+  - [Additional Targets](#additional-targets)
+    - [Check Timing Constraints](#check-timing-constraints)
+    - [Sort QSF Files](#sort-qsf-files)
 - [FAQ and Common Problems](#faq-and-common-problems)
   - [Synthesis](#synthesis)
     - [Quartus Version](#quartus-version)
@@ -99,6 +102,21 @@ make microtca
 make pexp
 make pexarria10
 make ftm10
+make ftm4dp     # FTM4 dual port development)
+make a10gx_pcie # Arria10 evaluation board)
+```
+
+## Additional Targets
+### Check Timing Constraints
+```
+make $device-check
+make exploder5-check # example
+```
+
+### Sort QSF Files
+```
+make $device-sort
+make exploder5-sort # example
 ```
 
 # FAQ and Common Problems
