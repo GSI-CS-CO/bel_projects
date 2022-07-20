@@ -200,63 +200,6 @@ static void msrInitActionTiming(void)
  * must be re-triggered within 200 us period. The violation of this period
  * causes an unexpected termination of bursts.
  *
- * Hence, 2 timing factors are measured: task duration and intervals between neighbor tasks.
- * These will be measured by noting task entry and exit time points.
- *
- * \param[in] taskIdx   Task index, 1..N_BURSTS
- * \param[in] msrTickActEntr  Action entry time point (updated before this function call)
- * \param[in] msrTickActExit  Action complete time point (updated after this function call)
- **/
-static void msrMeasureActionTiming(int taskIdx, uint64_t msrTickActEntr, uint64_t msrTickActExit)
-{
-  if (enableSchedulerMeasure == 0)
-    return;
-
-  uint64_t value = msrTaskTiming[taskIdx];  // get value of the last measurement
-  uint64_t duration = value & 0xffffffff;   // average duration of the current task
-  uint64_t distance = value >> 32;          // average distance from a previous task
-  uint64_t now = getSysTime();
-
-  // calculate the average duration of task execution
-  value = now - msrTickActEntr;
-  duration = (value + (duration * msrCnt))/(msrCnt + 1);
-
-  // calculate the average distance to a previous task
-  if (msrTickActExit) {
-    value = now - msrTickActExit;
-    distance = (value + (distance * msrCnt))/(msrCnt + 1);
-  }
-
-  // store the measurements (hi32:distance, lo32:duration)
-  msrTaskTiming[taskIdx] = (distance << 32) | duration;
-
-  // measure the total duration of all tasks (1..N_BURSTS)
-  if (taskIdx == 1)                               // keep the timestamp of the first io task
-  {
-    msrTaskTiming[MSR_TICK_FIRST_TASK] = msrTickActEntr;
-  }
-  else if (taskIdx == (N_BURSTS - 1))             // the last io task is done
-  {
-    if (msrTaskTiming[MSR_TICK_FIRST_TASK]) {
-      msrTaskTiming[MSR_TASK_INTERVAL] = msrTickActEntr - msrTaskTiming[MSR_TICK_FIRST_TASK];   // update time interval to execute all IO action tasks
-
-      if (msrTaskTiming[MSR_TASK_INTERVAL] > msrTaskTiming[MSR_TASK_INTERVAL_MAX]) {            // update the maximum interval
-	msrTaskTiming[MSR_TASK_INTERVAL_MAX] = msrTaskTiming[MSR_TASK_INTERVAL];
-      }
-    }
-
-    msrCnt++;
-  }
-}
-
-/**
- * \brief Measure performance of the main loop
- *
- * The IO action functions are called to inject internal events
- * for generating bursts. Because of a strict timing constraint each burst
- * must be re-triggered within 200 us period. The violation of this period
- * causes an unexpected termination of bursts.
- *
  * This function measures the period of action, where all IO action tasks are run to completion.
  * The initial duration measurement is ignored.
  *
