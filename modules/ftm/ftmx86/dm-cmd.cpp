@@ -340,7 +340,8 @@ int main(int argc, char* argv[]) {
   int opt;
   const char *program = argv[0];
   const char cTypeName[] = "status";
-  const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
+  const char *netaddress, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
+  std::string targetName = {};
   std::string dirname = get_working_path();
 
 
@@ -443,7 +444,7 @@ int main(int argc, char* argv[]) {
     netaddress = argv[optind];
 
     if (optind+1 < argc) typeName        = argv[optind+1];
-    if (optind+2 < argc) targetName      = argv[optind+2];
+    if (optind+2 < argc) targetName      = std::string(argv[optind+2]);
     if (optind+3 < argc) para            = argv[optind+3];
 
   CarpeDM cdm;
@@ -478,8 +479,8 @@ int main(int argc, char* argv[]) {
     std::string tmpGlobalCmds(typeName);
 
     if (tmpGlobalCmds == dnt::sCmdAbort)  {
-      if(( targetName != NULL) && ( targetName != std::string(""))){
-        uint32_t bits = strtol(targetName, NULL, 0);
+      if((!targetName.empty())){
+        uint32_t bits = std::stol(targetName, nullptr, 0);
        cdm.setThrAbort(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1)  );
       } else { cdm.abortThr(ew, cpuIdx, thrIdx); }
       return 0;
@@ -489,7 +490,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (tmpGlobalCmds== "reset") {
-      bool clearStatistic = targetName != NULL && targetName == std::string("all");
+      bool clearStatistic = targetName == std::string("all");
       std::cout << "clear statistic:" << std::boolalpha << clearStatistic << std::endl;
       cdm.softwareReset(clearStatistic);
       return 0;
@@ -555,7 +556,7 @@ int main(int argc, char* argv[]) {
     for (std::string s : commands_with_targetName) {
       // if the command needs a target name, check
       if (cmp == s) {
-        if ((targetName == NULL) || (targetName == std::string(""))) {
+        if ((targetName.empty())) {
           std::cerr << program << ": Target node is NULL, target missing." << std::endl;
           return -1;
         }
@@ -582,7 +583,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "flowpattern")  {
-      if ((targetName == NULL) || ( targetName == std::string("")) || (para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
+      if (( targetName.empty()) || (para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
 
       std::string fromNode = cdm.getPatternExitNode(targetName);
       std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
@@ -600,7 +601,7 @@ int main(int argc, char* argv[]) {
       } else {std::cerr << program << ": Destination Node '" << para << "' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "switchpattern")  {
-      if ((targetName == NULL) || ( targetName == std::string("")) || (para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
+      if (( targetName.empty()) || (para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
 
       std::string fromNode = cdm.getPatternExitNode(targetName);
       std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
@@ -705,11 +706,11 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     else if (cmp == dnt::sCmdOrigin) {
-      if(( targetName != NULL) && ( targetName != std::string(""))){
+      if(( !targetName.empty())){
         if(!(cdm.isInHashDict( targetName)) && targetName != DotStr::Node::Special::sIdle) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.setThrOrigin(ew, cpuIdx, thrIdx, targetName);
       }
-      if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl; return 0;}
+      if( verbose | (targetName.empty()) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl; return 0;}
 
     }
     else if (cmp == "cursor")  {
@@ -734,8 +735,8 @@ int main(int argc, char* argv[]) {
     else if (cmp == dnt::sCmdStart)  {
       //check if a valid origin was assigned before executing
       std::string origin;
-      if(( targetName != NULL) && ( targetName != std::string(""))) {
-        uint32_t bits = strtol(targetName, NULL, 0);
+      if((!targetName.empty())) {
+        uint32_t bits = std::stol(targetName, nullptr, 0);
         for(int i=0; i < _THR_QTY_; i++) {
           if((bits >> i) & 1) {
             origin = cdm.getThrOrigin(cpuIdx, i);
@@ -755,28 +756,29 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
-      if(( targetName != NULL) && ( targetName != std::string(""))) {
+      if (!targetName.empty()) {
         cdm.startPattern(ew, targetName, thrIdx );
-      } else { std::cout << "Missing valid Pattern name" << std::endl; }
-
+      } else {
+        std::cout << "Missing valid pattern name" << std::endl;
+      }
     }
     else if (cmp == "stoppattern")  {
-      if(( targetName != NULL) && ( targetName != std::string(""))) {
+      if (!targetName.empty()) {
         cdm.stopPattern(targetName);
       } else {
-        std::cout << "Missing valid Pattern name" << std::endl;
+        std::cout << "Missing valid pattern name" << std::endl;
       }
      }
     else if (cmp == "abortpattern")  {
-      if(( targetName != NULL) && ( targetName != std::string(""))) {
+      if (!targetName.empty()) {
         cdm.abortPattern(targetName);
       } else {
-        std::cout << "Missing valid Pattern name" << std::endl;
+        std::cout << "Missing valid pattern name" << std::endl;
       }
       return 0;
     }
     else if (cmp == "staticflushpattern")  {
-      if(( targetName != NULL) && ( targetName != std::string(""))) {
+      if(( !targetName.empty())) {
         if ((para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
         cdm.staticFlushPattern(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
@@ -797,7 +799,7 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "rawvisited")  {
       try {
-        if ((targetName == NULL) || (targetName == std::string(""))) {
+        if ((targetName.empty())) {
           cdm.showPaint();
         } else {
           if(!(cdm.isInHashDict(targetName))) {
@@ -817,14 +819,20 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "starttime")  {
-      if(( targetName != NULL) && ( targetName != std::string(""))) { cdm.setThrStartTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
-      else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Starttime " << cdm.getThrStartTime(cpuIdx, thrIdx) << std::endl; return 0;}
-
+      if (!targetName.empty()) {
+        cdm.setThrStartTime(ew, cpuIdx, thrIdx, std::stoll(targetName, nullptr, 0));
+      } else {
+        std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Starttime " << cdm.getThrStartTime(cpuIdx, thrIdx) << std::endl;
+        return 0;
+      }
     }
     else if (cmp == "preptime")  {
-      if(( targetName != NULL) && ( targetName != std::string(""))) { cdm.setThrPrepTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
-      else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Preptime " << cdm.getThrPrepTime(cpuIdx, thrIdx) << std::endl; return 0;}
-
+      if (!targetName.empty()) {
+        cdm.setThrPrepTime(ew, cpuIdx, thrIdx, std::stoll(targetName, nullptr, 0));
+      } else {
+        std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Preptime " << cdm.getThrPrepTime(cpuIdx, thrIdx) << std::endl;
+        return 0;
+      }
     }
     else if (cmp == "deadline")  {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
@@ -852,42 +860,43 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "cfghwdiag") {
-      if( (targetName != NULL) && ( targetName != std::string("")) && (para != NULL) && ( para != std::string(""))) {
-        cdm.configHwDiagnostics(strtoll(targetName, NULL, 0), strtoll(para, NULL, 0));
+      if (!targetName.empty() && (para != NULL) && ( para != std::string(""))) {
+        cdm.configHwDiagnostics(std::stoll(targetName, nullptr, 0), strtoll(para, NULL, 0));
       } else {
-        std::cerr << program << ": Needs valid values for both TAI time observation interval and stall observation interval" << std::endl; return -1;
+        std::cerr << program << ": Needs valid values for both TAI time observation interval and stall observation interval" << std::endl;
+        return -1;
       }
       return 0;
     }
     else if (cmp == "cfgcpudiag") {
-      if((targetName != NULL) && ( targetName != std::string(""))) {
-        cdm.configFwDiagnostics(strtoll(targetName, NULL, 0));
+      if (!targetName.empty()) {
+        cdm.configFwDiagnostics(std::stoll(targetName, nullptr, 0));
       } else {
-        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl;
+        return -1;
       }
       return 0;
     }
     else if (cmp == "gathertime") {
-      if((targetName != NULL) && ( targetName != std::string(""))) {
-        //setPqTgather(strtoll(targetName, NULL, 0));
+      if (!targetName.empty()) {
+        //setPqTgather(std::stoll(targetName, nullptr, 0));
       } else {
         //uint64_t tGather = getPqTgather();
-        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl;
+        return -1;
       }
       return 0;
     }
     else if (cmp == "maxmsg") {
-      if((targetName != NULL) && ( targetName != std::string(""))) {
+      if (!targetName.empty()) {
         //uint64_t maxMsg = getPqMaxMsg();
       } else {
-        //setPqPqMaxMsg(strtoll(targetName, NULL, 0));
-        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+        //setPqPqMaxMsg(std::stoll(targetName, nullptr, 0));
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl;
+        return -1;
       }
       return 0;
     }
-
-
-
 
     //all the block commands set mc, so...
     if ((ew.va.size() > 0) | cdm.lockManagerHasEntries()) {
@@ -899,12 +908,8 @@ int main(int argc, char* argv[]) {
       return 0;
 
     }
-
-
     std::cerr << program << ": " << cmp << " is not a valid command. Type " << program << " -h for help" << std::endl;
-
   }
-
 
   return 0;
 }
