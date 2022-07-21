@@ -997,7 +997,6 @@ void execHostCmd(int32_t cmd)
 	else {
 	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-	  break;
 	}
 	break;
 
@@ -1018,7 +1017,6 @@ void execHostCmd(int32_t cmd)
 	else {
 	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-	  break;
 	}
 	break;
 
@@ -1103,7 +1101,6 @@ void execHostCmd(int32_t cmd)
 	else {
 	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-	  break;
 	}
 	break;
 
@@ -1146,7 +1143,6 @@ void execHostCmd(int32_t cmd)
 	else {
 	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-	  break;
 	}
 	break;
 
@@ -1177,7 +1173,6 @@ void execHostCmd(int32_t cmd)
 	else {
 	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-	  break;
 	}
 	break;
 
@@ -1277,8 +1272,9 @@ void execHostCmd(int32_t cmd)
 	result = STATUS_ERR;
     }
 
-    cmd = (result << 16) | (cmd & CMD_MASK); // both instruction result and instruction code are sent by MSI
-    respondToHost((uint32_t)cmd);
+    l32 = (result << 16) | (cmd & CMD_MASK); // both instruction result and instruction code are sent by MSI
+    mprintf("ret_code: 0x%x\n", l32);
+    respondToHost(l32);
   }
 }
 
@@ -1311,12 +1307,21 @@ int hostMsiHandler(int id)
  ******************************************************************************/
 void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
 {
-  if (*actState == COMMON_STATE_CONFIGURED) {  // 'configured' state
-    execHostCmd(cmd);
+  if (!cmd)        // response to 'null' command has caused 'null' MSIs to host
+    return;
+
+  uint32_t response = cmd;
+  if (cmd <= COMMON_CMD_RESERVEDTILHERE) {
+    response |= (STATUS_OK << 16);             // if common instruction, then respond with OK
+    respondToHost(response);
   }
-  else {                                       // other states
-    uint32_t response = (STATUS_ERR << 16) | (cmd & CMD_MASK); // instruction result and instruction code are sent by MSI
-    respondToHost((uint32_t)response);
+  else {
+    if (*actState == COMMON_STATE_CONFIGURED)  // 'configured' state, execute burst generator instruction
+      execHostCmd(cmd);
+    else {
+      response |= (STATUS_ERR << 16);          // otherwise, return ERROR
+      respondToHost(response);
+    }
   }
 }
 
