@@ -112,3 +112,21 @@ class TestDmCmd(dm_testbench.DmTestbench):
 
   def test_unlock(self):
     self.targetName('unlock')
+
+"""Class collects unit tests for the command line of dm-cmd.
+Tested commands are:
+dm-cmd reset
+dm-cmd reset all
+"""
+class TestDmCmdOther(dm_testbench.DmTestbench):
+  def test_reset(self):
+    """Test 'reset' command
+    """
+    self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'reset'],
+         [0], linesCout=1, linesCerr=0)
+
+  def test_reset_all(self):
+    """Test 'reset all' command
+    """
+    self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'reset', 'all'],
+         [0], linesCout=1, linesCerr=0)
