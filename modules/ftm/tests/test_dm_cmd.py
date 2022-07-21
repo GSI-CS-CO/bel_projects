@@ -1,5 +1,4 @@
 import dm_testbench
-import os
 
 """Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
