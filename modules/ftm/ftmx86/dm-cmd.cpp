@@ -47,8 +47,8 @@ static void help(const char *program) {
   fprintf(stderr, "  queue <target>            Show content of all queues\n");
   fprintf(stderr, "  rawqueue <target>         Dump all meta information of the command queues of the block <target> including commands\n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
-  fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
-  //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
+  //fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
+  //fprintf(stderr, "  cease                     Cease thread at pattern end.\n");
   fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
   fprintf(stderr, "  halt                      Immediately aborts all threads on all CPUs.\n");
   fprintf(stderr, "  lock <target>             Locks all queues of a block for asynchronous queue manipulation mode. This makes the queues invisible to the DM and allowing modification during active runtime.\n");
@@ -63,7 +63,7 @@ static void help(const char *program) {
   fprintf(stderr, "  staticflushpattern <pattern> <prios>          Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) pattern of the schedule\n");
   fprintf(stderr, "  rawvisited [<target>]    Show 1 for a visited node, 0 for not visited. If no target node is given, show all nodes.\n");
   fprintf(stderr, "\nQueued commands (viable options in square brackets):\n");
-  fprintf(stderr, "  stop <target>                        [laps]   Request stop at selected block (flow to idle)\n");
+  fprintf(stderr, "  stop <target>                        [laps]   Request stop at selected block (flow to idle). Block must have low prio queue.\n");
   fprintf(stderr, "  stoppattern  <pattern>               [laps]   Request stop of selected pattern\n");
   fprintf(stderr, "  noop <target>                        [lapq]   Placeholder to stall succeeding commands, has no effect itself\n");
   fprintf(stderr, "  flow <target> <destination node>     [lapqs]  Changes schedule flow to <Destination Node>\n");
@@ -752,7 +752,26 @@ int main(int argc, char* argv[]) {
 
     }
     else if (cmp == dnt::sCmdStop) {
-      cdm.stopNodeOrigin(targetName);
+      if (targetName.empty()) {
+        std::cerr << program << ": Target name is missing" << std::endl;
+      } else if (!cdm.isInHashDict(targetName)) {
+        std::cerr << program << ": Target node '" << targetName << "' was not found on DM" << std::endl;
+      } else  {
+        try {
+          cdm.stopNodeOrigin(targetName);
+        } catch (std::runtime_error const& err) {
+          std::size_t pos = std::string(err.what()).find("Block Node does not have requested queue");
+          if (pos != std::string::npos) {
+            std::cerr << program << ": Block node '" << targetName << "' does not have a low prio queue" << std::endl;
+          } else {
+            pos = std::string(err.what()).find("carpeDMcommand: unknown cpu/adr combo");
+            if (pos != std::string::npos) {
+              std::cerr << program << ": Node '" << targetName << "' is not a block" << std::endl;
+            }
+          }
+        }
+      }
+      return 0;
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
