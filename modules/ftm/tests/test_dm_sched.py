@@ -9,12 +9,28 @@ class TestDmSched(dm_testbench.DmTestbench):
          expectedReturnCode=[0], linesCout=0, linesCerr=25)
 
   def test_sched_default(self):
-    self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster],
-         expectedReturnCode=[0], linesCout=8, linesCerr=0)
+    linesOut = self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster],
+         expectedReturnCode=[0], linesCout=8, linesCerr=0)[0]
+    self.assertEqual(linesOut[0], '')
+    self.assertEqual(linesOut[1], 'Download Table')
+    self.assertEqual(linesOut[2], '')
+    self.assertEqual(linesOut[3], 'Idx   S/R   Cpu   Name   Hash         Int. Adr     Ext. Adr  ')
+    self.assertEqual(linesOut[4], '')
+    self.assertEqual(linesOut[5], '')
+    self.assertEqual(linesOut[6], 'Patterns Entry Exit')
+    self.assertEqual(linesOut[7], '')
 
   def test_sched_status(self):
-    self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'status'],
-         expectedReturnCode=[0], linesCout=8, linesCerr=0)
+    linesOut = self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'status'],
+         expectedReturnCode=[0], linesCout=8, linesCerr=0)[0]
+    self.assertEqual(linesOut[0], '')
+    self.assertEqual(linesOut[1], 'Download Table')
+    self.assertEqual(linesOut[2], '')
+    self.assertEqual(linesOut[3], 'Idx   S/R   Cpu   Name   Hash         Int. Adr     Ext. Adr  ')
+    self.assertEqual(linesOut[4], '')
+    self.assertEqual(linesOut[5], '')
+    self.assertEqual(linesOut[6], 'Patterns Entry Exit')
+    self.assertEqual(linesOut[7], '')
 
   def test_sched_dump(self):
     self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'dump'],
