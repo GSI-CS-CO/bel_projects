@@ -26,7 +26,8 @@ files = [
    "Beam_Loss_check.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool.vhd",
-   "BLM_Interlock_out.vhd"
+   "BLM_Interlock_out.vhd",
+   "IOBP_LED_ID_Module.vhd"
 ]
 
 modules = {
