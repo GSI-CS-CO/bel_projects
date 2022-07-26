@@ -12,7 +12,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, 1)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        checkValues={'0x0000': '>9', '0x0002': '>20', '0x0003': '>10'})
+        checkValues={'0x0000': '>9', '0x0002': '>19', '0x0003': '>10'})
     self.deleteFile(file_name)
 
   def test_threeThreads1(self):
