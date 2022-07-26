@@ -679,6 +679,20 @@ This test was \texttt{full\_test/dynamic/switch}. The schedule \\
   The correct nodes are visited after each step.
 \end{enumerate}
 
+\section{test\_waitloop\_flush.py}
+\texttt{test\_waitloop\_flush.py} uses a schedule with a wait loop to check
+the correctness of the flush command. The schedule contains BLOCK\_LOOP with a low
+prio queue and a high prio queue. On pattern start, a flow command is queue in
+the low prio queue with quantity 10,000. This redirects the pattern to
+BLOCK\_LOOP such that this block is executed 10,000 times in a loop. Also
+on start of pattern, a flush command is queued in the high prio queue with a
+relative valid time of 0.5 seconds. Since BLOCK\_LOOP has a period of 100 µs,
+the flush command breaks the loop after 5011 executions.
+
+The test checks after 0.1 seconds that the flush is not executed, but after 1 second
+it is executed. The timeline of the checks is not precise enough to check
+exactly after 0.5 seconds the execution.
+
 \section{test\_zzz\_finish.py}
 \texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
 schedule which sends two timing messages every second. The test checks
