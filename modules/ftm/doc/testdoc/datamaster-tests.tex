@@ -339,18 +339,48 @@ This test was \texttt{full\_test/dynamic/coupling}.
 \end{enumerate}
 
 \section{test\_dm\_cmd.py}
-\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
-line. These tests are successful when the response is the correct error message and not a core dump.
+\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd.
+Each unit test calls dm-cmd with commands and options and checks the result
+with the output on stdout and stderr. There are also negative tests with
+an invalid command line. These tests are successful when the response is
+the correct error message and not a core dump.
+
+There are five tests for the stop command. The test cases are
+\begin{enumerate}
+\item Test with existing block with low prio queue: result ok.
+\item Test with existing block without low prio queue: result fail.
+\item Test with existing timing event: result fail.
+\item Test with non-existing block: result fail.
+\item Test with no target name: result fail.
+\end{enumerate}
+
+There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. These two tests check for
+return code 0, but not the status of the datamaster.
+
+\section{test\_dm\_sched.py}
+\texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
+with commands and options and checks the result with the output on stdout and stderr.
+
+\begin{enumerate}
+\item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
+\item \texttt{dm-sched $<$datamaster$>$}: check for defualt operation (same as status).
+\item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
+\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
+\item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
+\item \texttt{dm-sched $<$datamaster$>$ clear}: check the clear command.
+\item \texttt{dm-sched $<$datamaster$>$ rawvisited}: check the rawvisited command.
+\item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
+\end{enumerate}
 
 \section{test\_dmThreads.py}
 \texttt{test\_dmThreads.py} tests the firmware with up to 8 threads and up to 4 CPUs.
-For each thread a pattern with one block and one timing message per second is loaded and started. To check that the thread is running,
-\texttt{dm-cmd} is used two times with a delay of one second. The number of messages is extracted from stdout and this number must
-increase for test success.
+For each thread a pattern with one block and one timing message per second is
+loaded and started. To check that the thread is running,
+\texttt{dm-cmd} is used two times with a delay of one second. The number
+of messages is extracted from stdout and this number must increase for test success.
 
-There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs the schedules one 4 CPUs, each with 8 threads. This
-produces 32 messages per second.
+There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs
+the schedules one 4 CPUs, each with 8 threads. This produces 32 messages per second.
 
 \section{test\_environment.py}
 \texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
