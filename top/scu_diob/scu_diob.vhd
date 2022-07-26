@@ -508,6 +508,27 @@ Port ( clk : in STD_LOGIC;
        IOBP_Sel_LED     : out t_led_array
 );
 end component front_board_id;
+
+component IOBP_LED_ID_Module 
+
+port (
+        clk_sys           : in  std_logic;      
+        rstn_sys          : in  std_logic;      
+        Ena_Every_250ns   : in  std_logic; 
+        AW_ID             : in  std_logic_vector(7 downto 0); -- Application_ID
+        IOBP_LED_ID_Bus_i : in  std_logic_vector(7 downto 0);   -- LED_ID_Bus_In
+        IOBP_Aktiv_LED_o  : in  t_led_array;    -- Active LEDs of the "Slave-Boards"
+        IOBP_Sel_LED      : in  t_led_array;    -- Sel-LED of the "Slave-Boards"
+        IOBP_LED_En       : out std_logic; -- Output-Enable for LED -ID-Bus
+        IOBP_STR_rot_o    : out std_logic_vector(12 downto 1);  -- LED-Str Red  for Slave 12-1
+        IOBP_STR_gruen_o  : out std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
+        IOBP_STR_ID_o     : out std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
+        IOBP_LED_ID_Bus_o : out std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
+        IOBP_ID           : out t_id_array     -- IDs of the "Slave-Boards"
+        
+        );
+ end component IOBP_LED_ID_Module;
+
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
 --  +============================================================================================================================+
@@ -598,7 +619,6 @@ end component front_board_id;
   signal s_nLED_inR:      std_logic;   -- LED = interrupt
 
   signal s_nLED:          std_logic_vector(7 downto 0); -- LED's
-  signal s_nLED_Out:      std_logic_vector(7 downto 0); -- LED's
   signal AW_ID:           std_logic_vector(7 downto 0); -- Application_ID
 
 
@@ -713,7 +733,7 @@ signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
   signal IOBP_in_rd_active:       std_logic;
   signal IOBP_in_Dtack:           std_logic;
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
-  signal IOBP_ID:           t_id_array;     -- IDs of the "Slave-Boards"deb_out:    std_logic_vector(65 downto 0);
+  signal IOBP_ID:           t_id_array;     -- IDs of the "Slave-Boards"
   signal IOBP_Aktiv_LED_i:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
   signal IOBP_Aktiv_LED_o:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
 
@@ -725,7 +745,6 @@ signal  Deb66_out:    std_logic_vector(65 downto 0);
 signal IOBP_STR_rot_o:    std_logic_vector(12 downto 1);  -- LED-Str Rot  für Slave 12-1
 signal IOBP_STR_gruen_o:  std_logic_vector(12 downto 1);  -- LED-Str Grün für Slave 12-1
 signal IOBP_STR_ID_o:     std_logic_vector(12 downto 1);  -- ID-Str Grün für Slave 12-1
-signal IOBP_LED_o:        std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
 signal IOBP_LED_ID_Bus_o: std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
 signal IOBP_LED_ID_Bus_i: std_logic_vector(7 downto 0);   -- LED_ID_Bus_In
 signal IOBP_LED_En:       std_logic;                      -- Output-Enable für LED- ID-Bus
@@ -1657,76 +1676,25 @@ port map ( clk               => clk_sys,
      ------------------------------ Loop für LED_Output's und ID read --------------------------------------
      -------------------------------------------------------------------------------------------------------
 
-P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
+     P_IOBP_LED_ID_Loop_module: IOBP_LED_ID_Module 
 
-    begin
-      if (not rstn_sys = '1') then
-        Slave_Loop_cnt       <=   1;                 --  Loop-Counter
-        IOBP_LED_En          <=  '0';                --  Output-Enable für LED- ID-Bus
-        IOBP_STR_rot_o       <=  (others => '0');    --  Led-Strobs 'rot'
-        IOBP_STR_gruen_o     <=  (others => '0');    --  Led-Strobs 'grün'
-        IOBP_STR_id_o        <=  (others => '0');    --  ID-Strobs
+      port map (
+              clk_sys           => clk_sys,      
+              rstn_sys          => rstn_sys,    
+              Ena_Every_250ns   => Ena_Every_250ns,
+              AW_ID             => AW_ID,
+              IOBP_LED_ID_Bus_i => IOBP_LED_ID_Bus_i,
+              IOBP_Aktiv_LED_o  => IOBP_Aktiv_LED_o,
+              IOBP_Sel_LED      => IOBP_Sel_LED,
+              IOBP_LED_En       => IOBP_LED_En,
+              IOBP_STR_rot_o    => IOBP_STR_rot_o,
+              IOBP_STR_gruen_o  => IOBP_STR_gruen_o,
+              IOBP_STR_ID_o     => IOBP_STR_ID_o,
+              IOBP_LED_ID_Bus_o => IOBP_LED_ID_Bus_o,
+              IOBP_ID           => IOBP_ID
+              
+              );
 
-
-    ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_250ns = '1') THEN
---  ELSIF ((rising_edge(clk_sys)) or Ena_Every_100ns)  then
-      case IOBP_state is
-        when IOBP_idle   =>  Slave_Loop_cnt       <=  1;                 -- Loop-Counter
-
-                            if  (AW_ID(7 downto 0) = c_AW_INLB12S1.ID) THEN  IOBP_state  <= led_id_wait;
-                                                                       else  IOBP_state  <= IOBP_idle;
-                            end if;
-
-        when led_id_wait      =>  IOBP_LED_En          <=  '1';                --  Output-Enable für LED- ID-Bus
-                                  IOBP_state  <= led_id_loop;
-
-        when led_id_loop      =>  IOBP_LED_ID_Bus_o(7 downto 6)  <=  ("0" & "0");
-                                  IOBP_LED_ID_Bus_o(5 downto 0)  <=  IOBP_Aktiv_LED_o(Slave_Loop_cnt)(6 downto 1);   -- Aktiv-LED für Slave zum LED-Port
-                                  IOBP_state  <= led_str_rot_h;
-
-        when led_str_rot_h    =>  IOBP_STR_rot_o(Slave_Loop_cnt) <=  '1';   -- Aktiv LED für Slave (Slave_Loop_cnt) zum LED-Port
-                                  IOBP_state  <= led_str_rot_l;
-
-        when led_str_rot_l    =>  IOBP_STR_rot_o(Slave_Loop_cnt) <=  '0';   -- Aktiv LED für Slave (Slave_Loop_cnt) zum LED-Port
-                                  IOBP_state  <= led_gruen;
-
-        when led_gruen        =>  IOBP_LED_ID_Bus_o(7 downto 6)  <=  ("0" & "0");
-                                  IOBP_LED_ID_Bus_o(5 downto 0)  <=  not IOBP_Sel_LED(Slave_Loop_cnt)(6 downto 1);   -- Sel-LED für Slave zum LED-Port
-                                  IOBP_state  <= led_str_gruen_h;
-
-        when led_str_gruen_h  =>  IOBP_STR_gruen_o(Slave_Loop_cnt) <=  '1';   -- Sel-LED für Slave (Slave_Loop_cnt) zum LED-Port
-                                  IOBP_state  <= led_str_gruen_l;
-
-        when led_str_gruen_l  =>  IOBP_STR_gruen_o(Slave_Loop_cnt) <=  '0';   -- Sel-LED für Slave (Slave_Loop_cnt) zum LED-Port
-                                  IOBP_state  <= iobp_led_dis;
-
-        when iobp_led_dis     =>  IOBP_LED_En <=  '0';                        --  Disable Output für LED- ID-Bus
-                                  IOBP_state  <= iobp_led_z;
-
-        when iobp_led_z       =>  IOBP_state  <= iobp_id_str_l;
-
-        when iobp_id_str_l    =>  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '1';   -- Sel-ID für Slave (Slave_Loop_cnt)
-                                  IOBP_state  <= iobp_rd_id;
-
-        when iobp_rd_id       =>  IOBP_ID(Slave_Loop_cnt) <=  IOBP_LED_ID_Bus_i;   -- Sel-ID für Slave (Slave_Loop_cnt)
-                                  IOBP_state  <= iobp_id_str_h;
-
-        when iobp_id_str_h    =>  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '0';   -- Sel-ID für Slave (Slave_Loop_cnt)
-                                  IOBP_state  <= iobp_end;
-
-        when iobp_end         =>  Slave_Loop_cnt <=  Slave_Loop_cnt + 1;       -- Loop +1
-
-                                  if Slave_Loop_cnt < 13 then
-                                    IOBP_state     <= led_id_wait;
-                                  else
-                                    IOBP_state     <= IOBP_idle;
-                                  end if;
-
-        when others           =>  IOBP_state       <= IOBP_idle;
-
-      end case;
-    end if;
-  end process P_IOBP_LED_ID_Loop;
 
 
   --  ###############################################################################################################################
@@ -1787,8 +1755,7 @@ begin
 --  ###############################################################################################################################
 --  ###############################################################################################################################
 
-
-p_stecker: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_tap_clk_250mhz, A_SEL,
+p_stecker: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID,signal_tap_clk_250mhz, A_SEL,
             PIO_SYNC, PIO_SYNC1, PIO_ENA, PIO_ENA_SYNC, PIO_OUT, PIO_OUT_SYNC, PIO, CLK_IO,
             AWIn_Deb_Time, Min_AWIn_Deb_Time, 
             DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2,
