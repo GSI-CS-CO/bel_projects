@@ -129,13 +129,19 @@ class DmTestbench(unittest.TestCase):
     """
     for index, line in enumerate(dotLines):
       dotLines[index] = line.replace('flags="0x00000107"', 'flags="0x00000007"') \
+      .replace('flags="0x00002102"', 'flags="0x00002002"') \
       .replace('flags="0x00002107"', 'flags="0x00002007"') \
+      .replace('flags="0x00008107"', 'flags="0x00008007"') \
       .replace('flags="0x00108107"', 'flags="0x00108007"') \
       .replace('flags="0x00708107"', 'flags="0x00708007"') \
       .replace('flags="0x00100107"', 'flags="0x00100007"') \
       .replace('fillcolor = "green"', 'fillcolor = "white"') \
       .replace('flags="0x00020007"', 'flags="0x00000007"') \
       .replace('flags="0x00020207"', 'flags="0x00000207"') \
+      .replace('flags="0x0002a207"', 'flags="0x0000a207"') \
+      .replace('flags="0x0002a208"', 'flags="0x0000a208"') \
+      .replace('flags="0x0003a207"', 'flags="0x0001a207"') \
+      .replace('flags="0x00022002"', 'flags="0x00002002"') \
       .replace('flags="0x00022007"', 'flags="0x00002007"') \
       .replace('flags="0x00120007"', 'flags="0x00100007"') \
       .replace('flags="0x00120207"', 'flags="0x00100207"') \

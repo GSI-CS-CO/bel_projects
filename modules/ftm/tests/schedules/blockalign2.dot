@@ -1,0 +1,6 @@
+digraph blockAlign1 {
+name=blockAlign1
+BlockA [cpu=0 patentry=1 patexit=1 pattern=A tperiod=1000 type=block]
+BlockAlignB [cpu=0 patentry=1 patexit=1 pattern=A tperiod=1000 type=blockalign]
+BlockA -> BlockAlignB -> BlockA [type=defdst]
+}

@@ -9,7 +9,7 @@ CARPEDM_PATH ?= ../lib/
 TEST_DM_CMD ?= ../bin/dm-cmd
 TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
-IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=schedules/
+IGNORE = --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/
 # pass the command line arguments to pytest
 # Example: OPTIONS=--runslow   this runs also the slow tests.
 # Example: OPTIONS="-rP"       show stdout for all tests.

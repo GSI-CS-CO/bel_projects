@@ -1,0 +1,14 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BlockA[cpu="0", flags="0x0001a207", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", fillcolor = "crimson", fontname="Times-Bold", fontcolor = "cyan", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB[cpu="0", flags="0x0000a208", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA->BlockAlignB [type="defdst", color = "red"];
+BlockAlignB->BlockA [type="defdst", color = "red"];
+}
+//BlockA#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockAlignB#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+
+//Patterns to judge:
+//  A
+//Verdict: FORBIDDEN
