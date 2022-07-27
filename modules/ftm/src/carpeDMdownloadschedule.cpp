@@ -102,25 +102,26 @@ namespace dnt = DotStr::Node::TypeVal;
     vBuf tmpMgmtRecovery = decompress(aux);
 
     if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+    if (tmpMgmtRecovery.size()) {
+      // Rebuild Grouptable
 
-    // Rebuild Grouptable
-
-
-    GroupTable gtTmp;
-    std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
-    if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
-    gt = gtTmp;
-    // Rebuild HashMap from Grouptable
-    hm.clear();
-    for(auto& it : gt.getTable()) {
-      hm.add(it.node);
+      GroupTable gtTmp;
+      std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
+      if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
+      gt = gtTmp;
+      // Rebuild HashMap from Grouptable
+      hm.clear();
+      for(auto& it : gt.getTable()) {
+        hm.add(it.node);
+      }
+      // Rebuild Covenanttable
+      CovenantTable ctTmp;
+      std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
+      if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
+      ct = ctTmp;
+    } else {
+      if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
-    // Rebuild Covenanttable
-    CovenantTable ctTmp;
-    std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
-    if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
-    ct = ctTmp;
-
     // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
     atDown.deallocateAllMgmt();
     // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
