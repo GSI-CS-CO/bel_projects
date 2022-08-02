@@ -89,21 +89,21 @@ For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 ## Build Gateware(s)
 Currently we support a few different form factors.
 ```
-make scu2
-make scu3
-make scu4
-make ftm4
-make vetar2a
-make vetar2a-ee-butis
-make pexarria5
-make exploder5
-make pmc
-make microtca
-make pexp
-make pexarria10
-make ftm10
-make ftm4dp     # FTM4 dual port development
-make a10gx_pcie # Arria10 evaluation board
+make scu2               # Arria II
+make scu3               # Arria II
+make vetar2a            # Arria II
+make vetar2a-ee-butis   # Arria II
+make pexarria5          # Arria V
+make exploder5          # Arria V
+make pmc                # Arria V
+make microtca           # Arria V
+make pexp               # Arria V
+make scu4               # Arria 10
+make pexarria10         # Arria 10
+make ftm10              # Arria 10
+make ftm4               # Arria 10 - optional FTM4 development
+make ftm4dp             # Arria 10 - optional FTM4 dual port development
+make a10gx_pcie         # Arria 10 - Intel evaluation board
 ```
 
 ## Additional Targets
@@ -145,7 +145,7 @@ sudo apt install libpng12-0
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
-Solution: Change your LC_NUMERIC setting: 
+Solution: Change your LC_NUMERIC setting:
 
 ```
 export LC_NUMERIC="en_US.UTF-8"
