@@ -2,9 +2,9 @@ name: CI Basic Build
 
 on:
   push:
-    branches: [ "master", "proposed_master", "fallout" ]
+    branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
   pull_request:
-    branches: [ "master", "proposed_master", "fallout" ]
+    branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
       run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
     - name: Install kernel headers and extra modules
-      run: sudo apt-get install linux-headers-$(uname -r) linux-modules-extra-$(uname -r) linux-image-extra-virtual linux-headers-generic
+      run: sudo apt-get install linux-headers-$(uname -r) linux-modules-extra-$(uname -r) linux-headers-generic
 
     - name: Create symlinks
       run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
