@@ -34,7 +34,7 @@ $ ./fixgit
 \end{lstlisting}
 %
 To build and run carpeDM, you will need the boost libraries $\ge$ 1.5.4 (if you build on the ASL cluster, these are already installed).
-Aditionally, for any visualisation of .dot files, you will also need the graphviz package. 
+Aditionally, for any visualisation of .dot files, you will also need the graphviz package.
 
 \begin{lstlisting}[style = customshell]
 $ sudo apt-get install libboost
@@ -55,7 +55,7 @@ This leaves you with the carpeDM library \emph{libcarpedm.so} and two command li
 \subsection{Installing Visualisation}
 
 \paragraph{From Command Line}
-There are currently two variants of visualising graphs. The first one is very basic and uses the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp) 
+There are currently two variants of visualising graphs. The first one is very basic and uses the graphviz package, which comes with several CLI render programs (dot, neato, fdp, twopi, circo, sfdp)
 If you would like to use the scripts for automatic update on change, you will also need the inotify package.
 
 \begin{lstlisting}[style = customshell]
@@ -135,7 +135,7 @@ time is not shown as a integer of nanoseconds \SI{1003000}{\nano\second}, but as
 The toolbar provides a text search field to search for nodes and edges.
 $<$Enter$>$ begins the search and will zoom/scroll in the group of found nodes or edges. All found items are highlighted in light red.
 Text search also allows the use of regular expressions.
-For example, 
+For example,
 \begin{lstlisting}[style = customtext]
 SIS18_RING_.*00.
 \end{lstlisting}
@@ -143,11 +143,11 @@ will search for all node names starting with \emph{SIS18\_RING} and ending in \e
 \vskip\baselineskip
 When the inspection window is active, text search will also search bundled properties. They are stored internally as strings of the format $<$key=value$>$ and can be searched as such.
 Regular expressions are very powerful when used as boolean connections of search criteria.
-For example, 
+For example,
 \begin{lstlisting}[style = customtext]
 gid=300|gid=508
 \end{lstlisting}
-will search for all nodes belonging to group ID \emph{300} or \emph{508}, while 
+will search for all nodes belonging to group ID \emph{300} or \emph{508}, while
 \begin{lstlisting}[style = customtext]
 (?=.*gid=300)(?=.*evtno=258)
 \end{lstlisting}
@@ -253,15 +253,23 @@ Congratulations, you just ran your very first accelerator schedule with carpeDM 
 There is a lot that goes on between LSA issueing a schedule's source code and there being a stream of timing messages on the network.
 \paragraph{Two worlds}
 Figure~\ref{fig:stack} shows the individual layers of the Datamaster, becoming more real-time from top to bottom. The high level connections to the LSA and Director black boxes provide the input.
-The Generator FESA class, CarpeDM Library and Etherbone Library all run on the Datamaster Server (x86\_64), which runs a standard frontend Linux without real-time extensions. Everything below runs in programmable hardware and is real-time (WR) capable. The default method of communication is using the Wishbone PCIe driver to connect to the server's PEXARIA V board (PCIe Bridge). For testing purposes, carpeDM can also be connected to remote DM hardware over network, using its host platform as a bridge (via socat). We will not go into detail on the Generator FESA class and the Etherbone library. The latter is well documented already~\cite{123}, while the former was intentionally designed as a lightweight middleware wrapper for carpeDM.
+The Generator FESA class, CarpeDM Library and Etherbone Library all run on the Datamaster Server (x86\_64), which runs a standard frontend Linux without real-time extensions. Everything below
+runs in programmable hardware and is real-time (WR) capable. The default method of communication is using the Wishbone PCIe driver to connect to the server's PEXARIA V board (PCIe Bridge).
+For testing purposes, carpeDM can also be connected to remote DM hardware over network, using its host platform as a bridge (via socat). We will not go into detail on the Generator
+FESA class and the Etherbone library.
+The latter is well documented already~\cite{terpstra_etherbone_2012}, while the former was intentionally designed as a lightweight middleware wrapper for carpeDM.
 \paragraph{High level}
-To fit LSA, the graph representation needed to be abstract, flexible and powerful. In order to make the DM sequencer deterministic however, the data structures used on the low level needed to be simple and efficient.
+To fit LSA, the graph representation needed to be abstract, flexible and powerful. In order to make the DM sequencer deterministic however, the data structures used on the low
+level needed to be simple and efficient.
 Lossless bidirectional translation between high level and low level representation was also a requirement.
 \paragraph{Low level}
 The DM HW is the embedded system in charge of creating the stream. There is a strong separation between the actual real-time sequencer,
-which must never be disturbed from outside (no blocking calls) and the command interface. The DM consists of multiple embedded CPUs, each with their own independent RAM. To guarantee that the host does not block the DM HW, each RAM features two completely independent physical ports, removing bus access as a bottleneck. Using techniques borrowed from inter-thread communication models, the command module interacts with the realtime sequencer by message boxes and flags inside the DPRAM.
+which must never be disturbed from outside (no blocking calls) and the command interface. The DM consists of multiple embedded CPUs, each with their own independent RAM. To guarantee
+that the host does not block the DM HW, each RAM features two completely independent physical ports, removing bus access as a bottleneck. Using techniques borrowed from
+inter-thread communication models, the command module interacts with the realtime sequencer by message boxes and flags inside the DPRAM.
 \subsection{Language features}
-carpeDM was designed as a domain specific language, using graphs to represent machine schedules at a high level. The language is not turing complete, but is able to provide conditional branches, nested loops and realtime synchronisation.
+carpeDM was designed as a domain specific language, using graphs to represent machine schedules at a high level. The language is not turing complete, but is able to provide
+conditional branches, nested loops and realtime synchronisation.
 carpeDM then compiles the high level view (graphs) into binary structures. Subgraphs being turned into linked lists, which works well in combination with a lean minimal system.
 The filesystem assigns each graph node a (very small at \SI{52}{\byte}) page in memory, avoiding fragmentation while reaching near optimal memory utilisation.
 The intelligence and space for management is thus placed at the host side, This distinction is strongly needed, as both memory space and computing power for its management is scarce in the FPGA.
@@ -560,7 +568,7 @@ Static commands introduce a possible race condition within the DM, because the 1
   \item{DM CPUs: obeys locks}
   \begin{itemize}
    \item{Locks are non-blocking}
-   \item{treat static commands to a write-locked block as Noop} 
+   \item{treat static commands to a write-locked block as Noop}
    \item{skip queues of read-locked blocks, use default successor}
   \end{itemize}
 \end{itemize}
@@ -572,8 +580,8 @@ Static commands introduce a possible race condition within the DM, because the 1
 
 
 \paragraph{Mechanism}
-The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity. 
-Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Thus, updating the indices of different priorities will access the same word, which would still cause a race condition. Lock flags are read/write to the host and read only to the DM. 
+The command queue lock is a spin lock variant, using a hitherto reserved word within the block's data structure for lock flags and the command queue's read/write indices as indicators of activity.
+Locking of individual queues of a block is not possible, because all read or respectively all write indices are located in a single data word. Thus, updating the indices of different priorities will access the same word, which would still cause a race condition. Lock flags are read/write to the host and read only to the DM.
 Not all modules can be combined as producers and consumers of commands when sharing a block/queue. There are several valid combinations which will produce orderly behaviour.
 As mentioned in the above list, it is not the responsibility of the host (ie. Generator FESA class with carpeDM library)
 to assign or validate the constellation of command producers and consumers per block. This task lies solely with schedule (LSA) and command generation (Director). The following constellations are valid:
@@ -591,7 +599,7 @@ to assign or validate the constellation of command producers and consumers per b
 \end{tabular}
 
 
-\paragraph{Sequence} 
+\paragraph{Sequence}
 The host sets a lock, and checks the queue indices in regular intervals until no more changes are observed between checks. It is then certain that all ongoing DM actions (which might have been begun before the lock flags were visible) are concluded. The duration of host actions \SI{}{\milli\second} is three to four orders of magnitude longer than DM actions (\SI{}{\micro\second}), so a wait time in the low millisecond range between checks is sufficient. Once the lock flags are certain to be visible, the DM firmware will ensure that the locked block's queues are not modified. After the host has written to the queue, it clears the block's lock flags, allowing the DM to modify queues again.
 
 
@@ -754,14 +762,14 @@ are valid DM schedules and aims to give an accurate reasoning when a schedule is
 \end{itemize}
 
 \subsection{Summary}
-The offline verification rule tables and algorithms make sure only valid schedule data will be accepted for upload to the DM. 
+The offline verification rule tables and algorithms make sure only valid schedule data will be accepted for upload to the DM.
 All of the rules listed above except the ones about active schedules in subsection~\ref{ssec:val-on-change} are independent of current DM activity and therefore evaluated \enquote{at compile time}.
 The only exception is the use of absolute time values within schedules, which could become obsolete before upload is achieved. There is currently ($\le$ v0.27.1) no safeguard against the use of stale absolute times.
 Almost all of the rules are not solely good practice, but absolutely necessary to achieve expected behaviour of the DM firmware. However, for certain debug cases, it is possible to bend the rules somewhat without causing havoc in the DM hardware.
 
 \paragraph{Bending the rules for debugging}
 %
-It is possible to create individual late timing messages on purpose for debugging. This can be achieved by specifying negative time offsets for timing messages. The negative offset must have an absolute value greater or equal the correct (fitting into the ascending sequence) time offset. To force the acception of schedules which are in violation of the rules, you must supply the \enquote{-f} (force) flag to dm-sched. 
+It is possible to create individual late timing messages on purpose for debugging. This can be achieved by specifying negative time offsets for timing messages. The negative offset must have an absolute value greater or equal the correct (fitting into the ascending sequence) time offset. To force the acception of schedules which are in violation of the rules, you must supply the \enquote{-f} (force) flag to dm-sched.
 \begin{lstlisting}[style = customshell]
 $ dm-sched <eb-device> add -f <late-message-dot.dot>
 \end{lstlisting}
@@ -955,10 +963,10 @@ Memory is a sparse resource in the DM, as it completely resides within the FPGA.
 \subsection{Graph Data}
 
 \subsection{Meta Data}
-The overhead data present can be divided into two categories. 
+The overhead data present can be divided into two categories.
 \par
 The first is directly linked to the schedule on a local basis and will be called schedule meta data.
-Their meta data forms distinct entities per node and can be read just like any other schedule node. 
+Their meta data forms distinct entities per node and can be read just like any other schedule node.
 These come in the following varieties:
 %
 \begin{itemize}
@@ -983,7 +991,7 @@ It contains the following overhead information:
     \begin{item} Beamprocess name\end{item}
     \begin{item} Node is entry to beam process \end{item}
     \begin{item} Node is exit of beam process \end{item}
-  \end{itemize}  
+  \end{itemize}
   \begin{item} Covenant table \end{item}
 \end{itemize}
 %

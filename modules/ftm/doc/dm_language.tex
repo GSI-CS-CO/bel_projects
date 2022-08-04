@@ -1,8 +1,8 @@
 \chapter{Quick Reference} % Main appendix title
 \sloppy
-\label{AppendixB} 
+\label{AppendixB}
 
-%\DeclareGraphicsExtensions{.pdf,.jpeg,.png,.jpg} 
+%\DeclareGraphicsExtensions{.pdf,.jpeg,.png,.jpg}
 
 
 
@@ -12,24 +12,25 @@
 \glsaddall
 %\printglossary[type=\acronymtype,style=long]  % list of acronyms
 
-\newcommand{\noedge}{-- &  & \\} 
+\newcommand{\noedge}{-- &  & \\}
 \newcommand{\edge}[2]{\gls*{#1} & #2 &\glsdesc*{#1}\\} %glossary tag count
-\newcommand{\shortedge}[2]{\gls*{#1} & #2 & See \gls{#1}\\} 
+\newcommand{\shortedge}[2]{\gls*{#1} & #2 & See \gls{#1}\\}
 \newcommand{\shortattrib}[1]{\gls*{#1} & See \gls{#1}\\}
 \newcommand{\attrib}[1]{\gls*{#1} & \glsdesc*{#1}\\}
 
-\newcommand{\attribtable}[5]{
+\newcommand{\attribtable}[6]{
 \noindent
   \begin{tabularx}{\textwidth}{X}
   \huge{\gls*{#1}}\\
     \toprule
     \glsdesc*{#1}\\
+  \vspace{0.05ex}#6\\
     \bottomrule
   \end{tabularx}
   \vspace{1ex}\\
   \renewcommand{\arraystretch}{1.25}
   \begin{tabularx}{\textwidth}{lX}
-  
+
   \bfseries{Mandatory Attributes}&\\
   \midrule
   \gls*{sched:type} & Must be \MakeLowercase{\gls*{#1}}. See \gls{sched:type}\\
@@ -39,8 +40,8 @@
   \bfseries{Optional Attributes}&\\
   \midrule
   #3
-  \end{tabularx} 
- 
+  \end{tabularx}
+
   \newpage
   \noindent
   \begin{tabularx}{\textwidth}{X}
@@ -82,6 +83,10 @@
   \edge{edge:target}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
+The commands in the priority queues are executed when the block is processed and the deadline passed.
+A block which is marked with patexit=true should have a low priority queue. This is needed to stop
+this block or the pattern of this block.
 }
 
 
@@ -102,6 +107,10 @@
   \edge{edge:target}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
+The commands in the priority queues are executed when the block is processed and the deadline passed.
+A block which is marked with patexit=true should have a low priority queue. This is needed to stop
+this block or the pattern of this block.
 }
 
 \attribtable{sched:type:tmsg}{
@@ -127,6 +136,7 @@
   \edge{edge:altdst}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
 }
 
 
@@ -149,6 +159,7 @@
   \edge{edge:altdst}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
 }
 
 \attribtable{sched:type:flush}{
@@ -168,6 +179,11 @@
   \edge{edge:altdst}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
+The flush command can only flush queues with the same or lower priority.
+If a queue with higher priority has entries, these are executed before the
+flush command because of the higher priority. This means that higher priority
+queues are empty when the flush command is executed.
 }
 
 \attribtable{sched:type:wait}{
@@ -187,6 +203,7 @@
   \edge{edge:altdst}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
 }
 
 \attribtable{sched:type:noop}{
@@ -205,6 +222,49 @@
   \edge{edge:altdst}{0..n}
   \edge{edge:flowdst}{0..n}
   \edge{edge:switchdst}{0..n}
+}{
+}
+
+\attribtable{sched:type:origin}{
+  \attrib{sched:thread}
+}{
+}{
+  \edge{edge:defdst}{0..1}
+  \edge{edge:origindst}{1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+  \edge{edge:origindst}{0..n}
+  \edge{edge:flushovr}{0..n}
+}{
+See also \gls{sched:type:startthread} for details.
+}
+
+\attribtable{sched:type:startthread}{
+  \attrib{sched:startoffs}
+  \attrib{sched:thread}
+}{
+}{
+  \edge{edge:defdst}{0..1}
+}{
+  \shortedge{edge:defdst}{0..n}
+  \edge{edge:altdst}{0..n}
+  \edge{edge:flowdst}{0..n}
+  \edge{edge:switchdst}{0..n}
+  \edge{edge:origindst}{0..n}
+  \edge{edge:flushovr}{0..n}
+}{
+A node of type origin is needed to assign nodes to a thread. All nodes of the same
+pattern or a sequence run on this thread. It is not prohibited to run nodes
+without a pattern name on a thread. If a different pattern starts, patterns in other
+threads continue to run.
+
+It is possible to start a thread multiple times, even from the thread itself. This is
+not recommended. If the startoffs is small, there are many late messages.
+
+A node may be processed in two or more threads.
 }
 
 %\glsadd{n_dest}
@@ -242,17 +302,17 @@ bpentry   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \ch
 bpexit    & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
 beamproc  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 tperiod   & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
-qil       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
-qhi       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
-qlo       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\       
-toffs     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\       
-id        & \checkmark & --         & --         & --         & --         & --         & --         \\       
-tvalid    & --         & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\       
-vabs      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\       
-prio      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\       
-qty       & \checkmark & \checkmark & --         & --         & --         & --         & --         \\       
-twait     & --         & --         & --         & \checkmark & --         & --         & --         \\       
-permanent & --         & --         & \checkmark & \checkmark & --         & --         & --         \\       
+qil       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\
+qhi       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\
+qlo       & --         & --         & \checkmark & --         & --         & \checkmark & --         \\
+toffs     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\
+id        & \checkmark & --         & --         & --         & --         & --         & --         \\
+tvalid    & --         & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         \\
+vabs      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\
+prio      & \checkmark & \checkmark & \checkmark & \checkmark & --         & --         & --         \\
+qty       & \checkmark & \checkmark & --         & --         & --         & --         & --         \\
+twait     & --         & --         & --         & \checkmark & --         & --         & --         \\
+permanent & --         & --         & \checkmark & \checkmark & --         & --         & --         \\
 \hline
 \end{tabular}
 \end{table}
@@ -265,21 +325,21 @@ permanent & --         & --         & \checkmark & \checkmark & --         & -- 
 %\hline
 %cpu               & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
 %thread            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
-%target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\       
-%pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
-%beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+%target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+%pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+%beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark  & \checkmark & \checkmark & \checkmark  \\
 %dest              & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
 %destpattern       & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
 %destbeamproc      & --         & --         & --         & \checkmark & \checkmark & --         & \checkmark  & --         & --         & --          \\
-%qil               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
-%qhi               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
-%qlo               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\       
-%tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
-%vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
-%prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\       
-%qty               & --         & --         & \checkmark & --         & --         & --         & --          & --         & --         & --          \\       
-%twait             & --         & --         & --         & --         & \checkmark & --         & --          & --         & --         & --          \\       
-%permanent         & --         & --         & --         & \checkmark & \checkmark & --         & --          & --         & --         & --          \\       
+%qil               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%qhi               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%qlo               & --         & --         & --         & --         & \checkmark & --         & \checkmark  & --         & --         & --          \\
+%tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\
+%vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\
+%prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark & --          & --         & --         & --          \\
+%qty               & --         & --         & \checkmark & --         & --         & --         & --          & --         & --         & --          \\
+%twait             & --         & --         & --         & --         & \checkmark & --         & --          & --         & --         & --          \\
+%permanent         & --         & --         & --         & \checkmark & \checkmark & --         & --          & --         & --         & --          \\
 %\hline
 %\end{tabular}
 
@@ -295,21 +355,21 @@ permanent & --         & --         & \checkmark & \checkmark & --         & -- 
 \hline
 cpu               & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 thread            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
-target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\       
-pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\ 
-beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\ 
+target            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+pattern           & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+beamproc          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 dest              & --         & --         & --         & \checkmark & \checkmark & --         \\
 destpattern       & --         & --         & --         & \checkmark & \checkmark & --         \\
 destbeamproc      & --         & --         & --         & \checkmark & \checkmark & --         \\
-qil               & --         & --         & --         & --         & \checkmark & --         \\       
-qhi               & --         & --         & --         & --         & \checkmark & --         \\       
-qlo               & --         & --         & --         & --         & \checkmark & --         \\       
-tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
-vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
-prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\       
-qty               & --         & --         & \checkmark & \checkmark & --         & --         \\       
-twait             & --         & --         & --         & --         & --         & \checkmark \\       
-permanent         & --         & --         & --         & \checkmark & --         & --         \\       
+qil               & --         & --         & --         & --         & \checkmark & --         \\
+qhi               & --         & --         & --         & --         & \checkmark & --         \\
+qlo               & --         & --         & --         & --         & \checkmark & --         \\
+tvalid            & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\
+vabs              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\
+prio              & --         & --         & \checkmark & \checkmark & \checkmark & \checkmark \\
+qty               & --         & --         & \checkmark & \checkmark & --         & --         \\
+twait             & --         & --         & --         & --         & --         & \checkmark \\
+permanent         & --         & --         & --         & \checkmark & --         & --         \\
 \hline
 \end{tabular}
 \end{table}
@@ -326,21 +386,21 @@ permanent         & --         & --         & --         & \checkmark & --      
 \hline
 cpu               & \checkmark  & \checkmark & \checkmark & \checkmark  \\
 thread            & \checkmark  & \checkmark & \checkmark & \checkmark  \\
-target            & \checkmark  & \checkmark & \checkmark & \checkmark  \\       
-pattern           & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
-beamproc          & \checkmark  & \checkmark & \checkmark & \checkmark  \\ 
+target            & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+pattern           & \checkmark  & \checkmark & \checkmark & \checkmark  \\
+beamproc          & \checkmark  & \checkmark & \checkmark & \checkmark  \\
 dest              & \checkmark  & --         & --         & --          \\
 destpattern       & \checkmark  & --         & --         & --          \\
 destbeamproc      & \checkmark  & --         & --         & --          \\
-qil               & \checkmark  & --         & --         & --          \\       
-qhi               & \checkmark  & --         & --         & --          \\       
-qlo               & \checkmark  & --         & --         & --          \\       
-tvalid            & --          & --         & --         & --          \\       
-vabs              & --          & --         & --         & --          \\       
-prio              & --          & --         & --         & --          \\       
-qty               & --          & --         & --         & --          \\       
-twait             & --          & --         & --         & --          \\       
-permanent         & --          & --         & --         & --          \\       
+qil               & \checkmark  & --         & --         & --          \\
+qhi               & \checkmark  & --         & --         & --          \\
+qlo               & \checkmark  & --         & --         & --          \\
+tvalid            & --          & --         & --         & --          \\
+vabs              & --          & --         & --         & --          \\
+prio              & --          & --         & --         & --          \\
+qty               & --          & --         & --         & --          \\
+twait             & --          & --         & --         & --          \\
+permanent         & --          & --         & --         & --          \\
 \hline
 \end{tabular}
 \end{table}
@@ -359,14 +419,14 @@ Edge Type & \multicolumn{10}{c|}{Node Type} \\
 \hline
 defdst    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 altdst    & --         & --         & --         & --         & --         & --         & --         & --         & \checkmark & \checkmark \\
-target    & --         & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\       
-flowdst   & --         & --         & \checkmark & --         & --         & --         & --         & --         & --         & -- \\       
-flushovr  & --         & --         & --         & \checkmark & --         & --         & --         & --         & --         & -- \\       
-dynid x   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
-dynpar0   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
-dynpar1   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
-dyntef    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
-dynres    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\       
+target    & --         & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --         & -- \\
+flowdst   & --         & --         & \checkmark & --         & --         & --         & --         & --         & --         & -- \\
+flushovr  & --         & --         & --         & \checkmark & --         & --         & --         & --         & --         & -- \\
+dynid x   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\
+dynpar0   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\
+dynpar1   & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\
+dyntef    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\
+dynres    & \checkmark & --         & --         & --         & --         & --         & --         & --         & --         & -- \\
 \hline
 \end{tabular}
 \end{adjustwidth}
