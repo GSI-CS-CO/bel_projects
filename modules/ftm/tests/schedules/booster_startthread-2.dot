@@ -17,7 +17,7 @@ digraph "booster_startthread-2" {
   BOOST_REQ_010_DMBlk_WaitLoop [type=block tperiod=10000 qlo=1 qhi=1 qil=1]
   BOOST_REQ_010_DMCmd_Wait1s [type=flow tvalid=0, vabs=1 prio=0 qty=100000]
   BOOST_REQ_011 [toffs=32 evtno=39 beamin=1 sid=33 bpid=2]
-  BOOST_REQ_012_DMBlk_InjectionThreadEnd [flags=0x00000007 type=block tperiod=10000]
+  BOOST_REQ_012_DMBlk_InjectionThreadEnd [flags="0x00000007" type=block tperiod=10000]
   BOOST_REQ_013 [toffs=26999976 evtno=256 beamin=1 sid=33 bpid=2]
   BOOST_REQ_014_DMBlk_InjectionThreadOrigin [type=origin toffs=26999984 thread=1]
   BOOST_REQ_015 [toffs=27000000 evtno=354 beamin=1 sid=33 bpid=2 vacc=8 par="0x04120c1000000001" tef=382345234]
