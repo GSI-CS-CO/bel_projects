@@ -5,7 +5,7 @@ Tests for node types origin and startthread.
 """
 class TestOriginStartthread(dm_testbench.DmTestbench):
 
-  def testStrategy(self):
+  def startStopPattern(self):
     """
     """
     # start pattern A
@@ -41,7 +41,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """
     self.addSchedule('threadsStartStop.dot')
     fileName = 'snoop_threadsStartStop.csv'
-    self.snoopToCsvWithAction(fileName, self.testStrategy, 5)
+    self.snoopToCsvWithAction(fileName, self.startStopPattern, 5)
     # analyse column 20 which contains the parameter.
     # check par=0:1, par=1:18, par=2:36, par=3:27, par=4:1 for snoop of 5 seconds.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
