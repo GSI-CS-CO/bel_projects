@@ -8,6 +8,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
   def startStopPattern(self):
     """
     """
+    self.delay(0.1)
     # start pattern A
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     # check that thread 0 has 1 message, threads 1,2,3 are running
@@ -57,6 +58,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """
     self.startPattern('nodeInTwoThreads.dot', 'A')
     fileName = 'snoop_nodeInTwoThreads.csv'
+    self.delay(0.1)
     self.snoopToCsv(fileName, 1)
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
         checkValues={'0x0000000000000000': '>100', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})
