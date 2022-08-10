@@ -525,6 +525,33 @@ splits the timing messages into two loops when there are more than 1000 nodes.
 \\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
 \\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
 \\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
+
+\section{test\_origin\_startthread.py}
+\begin{enumerate}
+\item Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these.
+    The test then starts pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
+    The test stops pattern A1 which stops thread 1
+    The test stops pattern A which stops thread 3
+    The test stops node Block2 which stops thread 2 (there is no pattern on this thread)
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
+        \caption{Schedule to start threads with origins}
+        \label{fig:schedule_origin_startthreads}
+    \end{figure}
+\item This test demonstrates that a node can exist in two threads.
+      Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
+      Thus we have a timing message from Tmsg3 for each timing message from Tmsg1 and Tmsg2.
+      The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
+      thread 1 and 2 every 10ms. Thread 1 and 2 end with Block3.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/nodeInTwoThreads.pdf}
+        \caption{Schedule with a node in two threads}
+        \label{fig:schedule_nodeInTwoThreads}
+    \end{figure}
+\end{enumerate}
+
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
 with absolute time offset. The checks use snoop for specific event numbers.
