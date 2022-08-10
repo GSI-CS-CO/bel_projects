@@ -8,7 +8,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
   def startStopPattern(self):
     """
     """
-    self.delay(0.1)
+    self.delay(0.2)
     # start pattern A
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     # check that thread 0 has 1 message, threads 1,2,3 are running
