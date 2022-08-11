@@ -256,15 +256,15 @@ See also \gls{sched:type:startthread} for details.
   \edge{edge:origindst}{0..n}
   \edge{edge:flushovr}{0..n}
 }{
-A node of type origin is needed to assign nodes to a thread. All nodes of the same
-pattern or a sequence run on this thread. It is not prohibited to run nodes
-without a pattern name on a thread. If a different pattern starts, patterns in other
-threads continue to run.
+A node of type origin is needed to assign a node to a thread as its starting point. It and all following nodes will be run by this thread.
+This will usually be nodes of the same pattern, but it is not prohibited to run nodes without a pattern name on a thread. 
+%Threads run indepentently, 
 
-It is possible to start a thread multiple times, even from the thread itself. This is
-not recommended. If the startoffs is small, there are many late messages.
+It is possible to start a thread multiple times, even from the thread itself. This is not recommended though, as it will introduce heavy jitter to the execution. If the startoffs value is small, this will lead to late messages as well.
 
-A node may be processed in two or more threads.
+Sequences of nodes may be processed in two or more threads. However, sharing command queues (branches, loops) this way is discouraged
+as messages are not exclusive to a thread and are consumed on read.
+
 }
 
 %\glsadd{n_dest}
