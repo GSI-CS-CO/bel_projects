@@ -87,18 +87,7 @@ class DmTestbench(unittest.TestCase):
     The <argumentsList> contains the binary to execute and all arguments in one list.
     Start the binary for the test step with the arguments and check the output on stdout and stderr and the return code as well.
     """
-    # pass cmd and args to the function
-    process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    # get command output and error
-    stdout, stderr = process.communicate()
-    self.assertTrue(process.returncode in expectedReturnCode, f'wrong return code {process.returncode}, expected: {expectedReturnCode}, '
-          + f'Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
-    if linesCerr > -1:
-      lines = stderr.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
-    if linesCout > -1:
-      lines = stdout.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
+    self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)
 
   def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1):
     return self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)[0]

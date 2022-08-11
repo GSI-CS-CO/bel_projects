@@ -1,4 +1,5 @@
 import dm_testbench
+# ~ from datetime import datetime
 
 """
 Tests for node types origin and startthread.
@@ -9,6 +10,10 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """
     """
     self.delay(0.2)
+    # ~ now = datetime.now().time() # time object
+    # ~ print("start of startStopPattern ", now)
+    # ~ line1 = self.startAndGetSubprocessOutput(('ssh', 'root@fel0069.acc', 'eb-mon', '-d', 'dev/wbm1'), [0], 1, 0)
+    # ~ print(f'{line1}')
     # start pattern A
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     # check that thread 0 has 1 message, threads 1,2,3 are running
@@ -42,9 +47,10 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """
     self.addSchedule('threadsStartStop.dot')
     fileName = 'snoop_threadsStartStop.csv'
-    self.snoopToCsvWithAction(fileName, self.startStopPattern, 5)
+    # ~ print("before snoop ", datetime.now().time())
+    self.snoopToCsvWithAction(fileName, self.startStopPattern, 1)
     # analyse column 20 which contains the parameter.
-    # check par=0:1, par=1:18, par=2:36, par=3:27, par=4:1 for snoop of 5 seconds.
+    # check par=0:1, par=1:18, par=2:36, par=3:27, par=4:1 for snoop of 1 second.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
         checkValues={'0x0000000000000000': '1', '0x0000000000000001': '>17', '0x0000000000000002': '>35', '0x0000000000000003': '>26', '0x0000000000000004': '1'})
     self.deleteFile(fileName)
@@ -61,5 +67,5 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     self.delay(0.1)
     self.snoopToCsv(fileName, 1)
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
-        checkValues={'0x0000000000000000': '>100', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})
+        checkValues={'0x0000000000000000': '>99', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})
     self.deleteFile(fileName)
