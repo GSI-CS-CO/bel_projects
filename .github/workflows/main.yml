@@ -20,17 +20,23 @@ jobs:
     - name: Set PKG_CONFIG_PATH
       run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
-    - name: Install kernel headers and extra modules
-      run: sudo apt-get install linux-headers-$(uname -r) linux-headers-generic linux-image-extra-virtual linux-modules-extra-$(uname -r) libusb-dev usbutils --fix-missing
-
-    - name: Create symlinks
-      run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
-
     - name: Environment check
       run: |
         uname -r
         grep -rn "usb_serial_deregister_drivers" . 2>>/dev/null
         modinfo usbserial
+  
+    - name: Install kernel headers and extra modules
+      run: sudo apt-get install linux-headers-$(uname -r) linux-headers-generic linux-image-extra-virtual linux-modules-extra-$(uname -r) libusb-dev usbutils --fix-missing
+
+    - name: Environment check again
+      run: |
+        uname -r
+        grep -rn "usb_serial_deregister_drivers" . 2>>/dev/null
+        modinfo usbserial
+  
+    - name: Create symlinks
+      run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 
     - name: Setup repository
       run: make
