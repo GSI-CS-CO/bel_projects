@@ -26,6 +26,11 @@ jobs:
     - name: Create symlinks
       run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 
+    - name: Environment check
+      run: |
+        grep -rn "usb_serial_deregister_drivers" . 2>>/dev/null
+        modinfo usbserial
+
     - name: Setup repository
       run: make
 
