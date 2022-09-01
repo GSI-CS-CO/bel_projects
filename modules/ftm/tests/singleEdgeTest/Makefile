@@ -1,6 +1,6 @@
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -fprofile-arcs -ftest-coverage
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -fprofile-arcs -ftest-coverage -DBOOST_BIND_GLOBAL_PLACEHOLDERS
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib
 LDLIBS = -L../../lib -lstdc++ -lboost_serialization -lboost_graph -ldmtest -lgcov
