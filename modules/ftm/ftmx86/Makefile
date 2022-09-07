@@ -9,6 +9,14 @@ VERSION_TOOL   = 0.36.3
 # ASL build paths          #
 ############################
 
+ifeq ($(findstring asl75,$(shell hostname)),asl75)
+  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
+  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+  EB_LIB	=$(EBPATH)/lib/libetherbone.so
+  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
+  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
+  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
+else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
@@ -17,7 +25,7 @@ ifeq ($(findstring asl,$(shell hostname)),asl)
   SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
   RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 endif
-
+endif
 ############################
 # Default build settings   #
 # ##########################
