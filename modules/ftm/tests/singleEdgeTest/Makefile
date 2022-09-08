@@ -51,6 +51,9 @@ SingleEdgeTest: SingleEdgeGraph.o SingleEdgeTables.o SingleEdgeTest.o SingleEdge
 clean:
 	rm -f *.o *.gcda *.gcno *.gcov SingleEdgeTest SingleEdgeTest.info
 
+install: SingleEdgeTest
+	cp SingleEdgeTest $(INSTALLPATH)
+
 format:
 	clang-format-10 $(STYLE) -i SingleEdgeTest.h
 	clang-format-10 $(STYLE) -i SingleEdgeTest.cpp

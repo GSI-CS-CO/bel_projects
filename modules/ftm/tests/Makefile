@@ -60,4 +60,15 @@ prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
 
-.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all
+prepare-all:
+	$(MAKE) -C ../ftmx86/ clean
+	$(MAKE) -C ../ftmx86/
+	$(MAKE) -C ../ftmx86/ install
+	$(MAKE) -C ../analysis/scheduleCompare/main/ clean
+	$(MAKE) -C ../analysis/scheduleCompare/main/
+	$(MAKE) -C ../analysis/scheduleCompare/main/ install
+	$(MAKE) -C singleEdgeTest/ clean
+	$(MAKE) -C singleEdgeTest/
+	$(MAKE) -C singleEdgeTest/ install
+
+.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all
