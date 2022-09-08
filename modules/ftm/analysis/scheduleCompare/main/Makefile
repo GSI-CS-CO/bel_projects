@@ -22,7 +22,7 @@ RE_LIB		?=-lboost_regex
 
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include -DBOOST_BIND_GLOBAL_PLACEHOLDERS
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -L../../lib -lstdc++ $(SER_LIB) $(GRAPH_LIB) $(RE_LIB)

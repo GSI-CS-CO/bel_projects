@@ -37,7 +37,7 @@ RE_LIB		?=-lboost_regex
 
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage -DBOOST_BIND_GLOBAL_PLACEHOLDERS
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -L../../lib -lstdc++ $(SER_LIB) $(GRAPH_LIB) $(RE_LIB) -ldmtest -lgcov
