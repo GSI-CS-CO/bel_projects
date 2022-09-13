@@ -222,12 +222,12 @@ architecture rtl of ftm10 is
     ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX FTM10";
-  constant c_project       : string := "ftm10";
-  constant c_cores         : natural:= 4;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_family       : string  := "Arria 10 GX FTM10";
+  constant c_project      : string  := "ftm10";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_profile_name : string  := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
+  constant c_cores        : natural := 4;
 
 begin
 
