@@ -211,12 +211,12 @@ architecture rtl of ftm4dp is
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL)
   );
 
-  constant c_family        : string := "Arria 10 GX FTM4";
-  constant c_project       : string := "scu_control";
-  constant c_cores         : natural:= 1;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_family       : string  := "Arria 10 GX FTM4";
+  constant c_project      : string  := "scu_control";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_profile_name : string  := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
+  constant c_cores        : natural := 4;
 
 begin
 
@@ -236,6 +236,8 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
+      g_lm32_are_ftm       => true,
+      g_lm32_MSIs          => 1,
       g_en_tempsens        => false,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
