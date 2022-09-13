@@ -93,6 +93,7 @@ make scu2               # Arria II
 make scu3               # Arria II
 make vetar2a            # Arria II
 make vetar2a-ee-butis   # Arria II
+make ftm                # Arria V
 make pexarria5          # Arria V
 make exploder5          # Arria V
 make pmc                # Arria V
