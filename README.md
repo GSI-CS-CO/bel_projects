@@ -165,7 +165,7 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 
 ## Build Flow
 ### Required Packages
-Question: Which Packages Are Required?
+Question: Which packages are required?
 
 Answer: You need to have installed the following packages before you can configure and build Etherbone and Saftlib:
 
@@ -179,6 +179,8 @@ Answer: You need to have installed the following packages before you can configu
 - libreadline-dev
 - libsigc++ (saftlib)
 - libboost-dev (saftlib)
+- pkgconfig (saftlib)
+- xsltproc (saftlib)
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
