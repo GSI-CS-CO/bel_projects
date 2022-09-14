@@ -28,6 +28,7 @@ GSI Timing Gateware and Tools
       - [Tool hdlmake not found (Python 2.7)](#tool-hdlmake-not-found-python-27)
     - [Python not found](#python-not-found)
     - [Setuptools not found](#setuptools-not-found)
+    - [Compiling Saftlib](#compiling-saftlib)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -233,6 +234,17 @@ Solution: Just install the right setuptools:
 ```
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptools # Python 2.X
+```
+
+### Compiling Saftlib
+
+Error: Compilation: "Error message: ./configure: line 16708: syntax error near unexpected token 0.23' ./configure: line 16708: PKG_PROG_PKG_CONFIG(0.23)'"
+
+Solution:
+
+```
+sudo apt-get install pkg-config
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
 ## Git
