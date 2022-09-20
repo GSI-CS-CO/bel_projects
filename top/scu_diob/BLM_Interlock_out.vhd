@@ -14,8 +14,8 @@ port (
         DOWN_OVERFLOW    : in t_counter_in_Array  ; 
         gate_error       : in std_logic_vector(11 downto 0);
         Interlock_IN     : in std_logic_vector(53 downto 0);
-        INTL_Output      : out std_logic_vector(5 downto 0);
-        BLM_status_Reg : out std_logic_vector(15 downto 0)
+        INTL_Output      : out std_logic_vector(5 downto 0)--;
+       -- BLM_status_Reg : out std_logic_vector(15 downto 0)
 );
 end BLM_Interlock_out;
 
@@ -30,7 +30,7 @@ architecture rtl of BLM_Interlock_out is
 
 
       signal in_overflow: std_logic_vector(511 downto 0);
-      signal status_Reg: std_logic_vector(15 downto 0);
+     -- signal status_Reg: std_logic_vector(15 downto 0);
       signal out_mux_res: std_logic_vector(5 downto 0);
       signal gate_err_res: std_logic_vector(5 downto 0);
       signal intl_wd_res: std_logic_vector(5 downto 0);
@@ -44,7 +44,7 @@ architecture rtl of BLM_Interlock_out is
                 in_overflow <=   (OTHERS =>  '0');
                 gate_err_res <=   (OTHERS =>  '0');
                 intl_wd_res <=   (OTHERS =>  '0');
-                status_Reg <= (OTHERS =>'0');
+               -- status_Reg <= (OTHERS =>'0');
                 overflow <= (OTHERS =>'0');
                 out_mux_res <= (OTHERS =>'0');
 
@@ -173,10 +173,10 @@ architecture rtl of BLM_Interlock_out is
 
                         end case;
                        -- status_Reg for overflow 
-                  status_Reg(15 downto 14)<= (others => '0');
-                  status_Reg(13 downto 7)<= out_mux_sel(13 downto 7);
-                  status_Reg(6)<=  '0';
-                  status_Reg(5 downto 0) <= overflow;           
+              --    status_Reg(15 downto 14)<= (others => '0');
+              --    status_Reg(13 downto 7)<= out_mux_sel(13 downto 7);
+               --   status_Reg(6)<=  '0';
+               --   status_Reg(5 downto 0) <= overflow;           
                   out_mux_res <= overflow;
                 else
                   if gate_err_res = "000000" then
@@ -186,16 +186,16 @@ architecture rtl of BLM_Interlock_out is
                 -- watchdog_Error_control
      
          -- status_Reg for watchdog Error Control 
-                  status_Reg(15 downto 11)<= (others => '0');
-                  status_Reg(10 downto 7)<= out_mux_sel(4 downto 1);
-                  status_Reg(6)<=  '0';
-                  status_Reg(5 downto 0) <= intl_wd_res;
+              --    status_Reg(15 downto 11)<= (others => '0');
+              --    status_Reg(10 downto 7)<= out_mux_sel(4 downto 1);
+               --   status_Reg(6)<=  '0';
+               --   status_Reg(5 downto 0) <= intl_wd_res;
                   out_mux_res <= intl_wd_res;
                  else
                         
-                 status_Reg(15 downto 7)<= (others => '0');
-                 status_Reg(6) <= out_mux_sel(0);
-                 status_Reg(5 downto 0) <= gate_err_res;
+               --  status_Reg(15 downto 7)<= (others => '0');
+               --  status_Reg(6) <= out_mux_sel(0);
+               --  status_Reg(5 downto 0) <= gate_err_res;
                  out_mux_res <= gate_err_res;
                  end if;
                 end if;
@@ -206,5 +206,5 @@ architecture rtl of BLM_Interlock_out is
 
 
         INTL_Output <= out_mux_res;
-        BLM_status_Reg  <= status_Reg; -- I send a copy of the interlock output to the status register?
+       -- BLM_status_Reg  <= status_Reg; -- I send a copy of the interlock output to the status register?
 end rtl;
