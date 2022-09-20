@@ -6,9 +6,8 @@ USE IEEE.numeric_std.all;
 entity up_down_counter is
     generic (
     	--c            : integer :=1;        -- Counter_input width
-        WIDTH        : integer := 20;      -- Counter width
-        pos_threshold: integer:= 262144;
-        neg_threshold: integer:= -262144
+        WIDTH        : integer := 20      -- Counter width
+
         
     );
     port (
@@ -19,6 +18,8 @@ entity up_down_counter is
         ENABLE      : in std_logic;      -- Enable count operation
         UP_IN       : in std_logic;    -- Load counter register up input
         DOWN_IN     : in std_logic;    -- Load counter register down input
+        pos_threshold: in integer;
+        neg_threshold: in integer;
         UP_OVERFLOW    : out std_logic ;     -- UP_Counter overflow
         DOWN_OVERFLOW    : out std_logic      -- UP_Counter overflow
     

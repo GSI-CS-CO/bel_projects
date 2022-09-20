@@ -28,7 +28,9 @@ files = [
    "BLM_counter_pool.vhd",
    "BLM_Interlock_out.vhd",
    "IOBP_LED_ID_Module.vhd",
-   "p_connector.vhd"
+   "p_connector.vhd",
+   "BLM_in_Multiplexer.vhd",
+   "BLM_gate_timing_seq_elem.vhd"
 ]
 
 modules = {

@@ -241,7 +241,7 @@ begin
               when IOBP_slot10=>			    conf_reg(10)<= IOBP_ID(10);
                                               case conf_reg(10) is
                                                 when "00000011"  => -- 6 LEMO Input Modul in slot 10
-                                                AW_IOBP_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
+                                                AW_IOBP_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
                                                 IOBP_Aktiv_LED_i(10)  <=    Deb_out(59 DOWNTO 54);
                                                 IOBP_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
                                                 IOBP_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10

@@ -64,7 +64,7 @@ port(
   PIO_OUT_SLOT_10        : in std_logic_vector(5 downto 0);
   PIO_OUT_SLOT_11       : in std_logic_vector(5 downto 0);
   PIO_OUT_SLOT_12       : in std_logic_vector(5 downto 0);
-  Test_In_Mtx           : in t_Test_Data;
+
   --------------------------------------------------------------------------------------
   A_TA                   : out std_logic_vector(15 downto 0); -- test port a
   IOBP_LED_ID_Bus_i      : out  std_logic_vector(7 downto 0); 
@@ -97,8 +97,6 @@ port(
   s_nLED_User1_i         : out std_logic;  -- LED3 = User 1
   s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
   s_nLED_User3_i         : out std_logic;
-  In_Mtx                 : out t_IO_Reg_0_to_7_Array;
-  Gate_Mtx               : out std_logic_vector (11 downto 0);
   IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
   Deb_Sync66             : out std_logic_vector(65 downto 0);
   daq_dat                : out t_daq_dat(1 to 7);
@@ -403,17 +401,7 @@ END IF;
 ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
 
 AW_Input_Reg<= AW_IOBP_Input_Reg;
-In_Mtx (0) <= AW_IOBP_Input_Reg(1);
-In_Mtx (1) <= AW_IOBP_Input_Reg(2);
-In_Mtx (2) <= AW_IOBP_Input_Reg(3);
-In_Mtx (3) <= AW_IOBP_Input_Reg(4);
-In_Mtx (4) <= "00"& Test_In_Mtx(0) & AW_IOBP_Input_Reg(5)(5 downto 0);
-In_Mtx (5) <= Test_In_Mtx(2) & Test_In_Mtx(1);
-In_Mtx (6) <= Test_In_Mtx(4) & Test_In_Mtx(3);
-In_Mtx (7) <= "00000000" & Test_In_Mtx(5);
 
-Gate_Mtx(5 downto 0) <= AW_IOBP_Input_Reg(5)(11 downto 6);
-Gate_Mtx(11 downto 6) <= AW_IOBP_Input_Reg(6)(5 downto 0);
 
 ---output readback
 IOBP_Output_Readback(0) <= "0000000000" & IOBP_Output;
