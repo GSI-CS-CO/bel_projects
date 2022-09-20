@@ -19,8 +19,8 @@ port (
     BLM_ena          : in std_logic_vector(31 downto 0);      
     Test_In_Mtx   : in t_Test_Data; 
     AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
-    INTL_Output   : out std_logic_vector(5 downto 0);
-    BLM_status_Reg : out std_logic_vector(15 downto 0)
+    INTL_Output   : out std_logic_vector(5 downto 0)--;
+--    BLM_status_Reg : out std_logic_vector(15 downto 0)
     
 );
 
@@ -109,8 +109,8 @@ component BLM_gate_timing_seq is
                   gate_error       : in std_logic_vector(11 downto 0);
                   Interlock_IN     : in std_logic_vector(53 downto 0);
 
-                  INTL_Output      : out std_logic_vector(5 downto 0);
-                  BLM_status_Reg : out std_logic_vector(15 downto 0)
+                  INTL_Output      : out std_logic_vector(5 downto 0)--;
+           --       BLM_status_Reg : out std_logic_vector(15 downto 0)
           );
           end component BLM_Interlock_out;
 
@@ -226,8 +226,8 @@ Interlock_output: BLM_Interlock_out
           DOWN_OVERFLOW  => DOWN_OVERFLOW,   
           gate_error     => gate_error,
           Interlock_IN   => watchdog_warn,
-          INTL_Output    => INTL_Output,
-          BLM_status_Reg => BLM_status_Reg
+          INTL_Output    => INTL_Output--,
+    --      BLM_status_Reg => BLM_status_Reg
   );
 
   
