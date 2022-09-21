@@ -130,7 +130,7 @@ begin
       clk_i => clk_sys,         -- chip-internal pulsed clk signal
       rstn_i => rstn_sys,         -- reset signal
       gate_in => AW_IOBP_Input_Reg(6)(5 downto 0) & AW_IOBP_Input_Reg(5)(11 downto 6),       -- input signal
-      initialize => BLM_ena(26 downto 15),  -- enable '1' for input connected to the counter
+      initialize => BLM_ena(27 downto 16),  -- enable '1' for input connected to the counter
       timeout_error => gate_error, -- gate doesn't start within the given timeout
       gate_out => gate_In_Mtx(11 downto 0)       -- out gate signal
     );
@@ -163,7 +163,7 @@ begin
        elsif (clk_sys'EVENT AND clk_sys = '1') then
 
             
-            case BLM_ena(14 downto 12) is 
+            case BLM_ena(11 downto 9) is 
 
                 when "000" => test_signal <=  Test_In_Mtx(0);
                 when "001" => test_signal <=  Test_In_Mtx(1);
