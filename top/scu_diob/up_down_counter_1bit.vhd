@@ -72,13 +72,14 @@ begin
             
                 UP_OVERFLOW <='1';
                 up_Counter(WIDTH) <= '0';
-                
+            else up_OVERFLOW <='0';    
             end if;
             
              if (down_Counter = to_signed(neg_threshold,WIDTH-1)) then         -- neg_threshold reached
              
                 DOWN_OVERFLOW <='1';
                 down_Counter(WIDTH) <= '0';                          -- clear down_counter register
+             else DOWN_OVERFLOW <='0';
                 
             end if;
             
