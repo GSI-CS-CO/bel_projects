@@ -12,18 +12,10 @@ VERSION_TOOL   = 0.36.3
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  EB_LIB	=$(EBPATH)/lib/libetherbone.so
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  EB_LIB	=$(EBPATH)/lib/libetherbone.so
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 endif
 endif
 ############################
@@ -53,11 +45,6 @@ else
 endif
 INSTALLPATH     = $(PREFIX)/bin
 
-EB_LIB		?=-letherbone
-SER_LIB		?=-lboost_serialization
-GRAPH_LIB	?=-lboost_graph
-RE_LIB		?=-lboost_regex
-
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
@@ -78,7 +65,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB) $(RE_LIB)
+T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -letherbone -lboost_serialization -lboost_graph -lboost_regex
 EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
