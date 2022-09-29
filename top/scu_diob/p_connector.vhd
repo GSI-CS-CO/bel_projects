@@ -98,7 +98,7 @@ port(
   s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
   s_nLED_User3_i         : out std_logic;
   --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
-  IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
+  --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
   Deb_Sync66             : out std_logic_vector(65 downto 0);
   daq_dat                : out t_daq_dat(1 to 7);
   daq_diob_ID            : out std_logic_vector(15 downto 0)
@@ -405,7 +405,7 @@ AW_Input_Reg<= AW_IOBP_Input_Reg;
 
 
 ---output readback
-IOBP_Output_Readback <= "0000000000" & IOBP_Output;
+--IOBP_Output_Readback <= "0000000000" & IOBP_Output;
 --IOBP_Output_Readback(0) <= "0000000000" & IOBP_Output;
 --IOBP_Output_Readback(1) <= (OTHERS => '0');
 --IOBP_Output_Readback(2) <= (OTHERS => '0');
