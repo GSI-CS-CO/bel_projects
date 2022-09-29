@@ -34,10 +34,13 @@ signal    Gate_In_Mtx:        std_logic_vector (11 downto 0):= (OTHERS => '0'); 
 
 
 signal    count_enable:       std_logic_vector(7 downto 0); 
-signal    UP_IN:              std_logic_vector(n-2 downto 0); 
-signal    DOWN_IN:            std_logic_vector(n-2 downto 0); 
 signal    UP_OVERFLOW:        t_counter_in_Array ; 
 signal    DOWN_OVERFLOW:      t_counter_in_Array ; 
+
+
+signal    gate_UP_OVERFLOW:   t_gate_counter_in_Array;
+signal    gate_DOWN_OVERFLOW: t_gate_counter_in_Array;
+
 signal    test_signal:        std_logic_vector(9 downto 0);
 signal    in_mux:             t_in_array;
 signal    test_signal_sel:    std_logic_vector(2 downto 0); 
@@ -82,18 +85,21 @@ component BLM_gate_timing_seq is
                 
         );
         port (
-            CLK         : in std_logic;      -- Clock
-            nRST         : in std_logic;      -- Reset
-            CLEAR       : in std_logic;      -- Clear counter register
-            LOAD        : in std_logic_vector(7 downto 0);      -- Load counter register
-            ENABLE      : in std_logic_vector(7 downto 0);      -- Enable count operation
-            pos_threshold : in std_logic_vector(31 downto 0);
-            neg_threshold : in std_logic_vector(31 downto 0);
-            VALUE_IN       : in std_logic_vector(63 downto 0);    -- Load counter register input
-            UP_OVERFLOW    : out t_counter_in_Array ;     -- UP_Counter overflow
-            DOWN_OVERFLOW    : out t_counter_in_Array      -- UP_Counter overflow
-        );
-
+          CLK               : in std_logic;      -- Clock
+          nRST              : in std_logic;      -- Reset
+          CLEAR             : in std_logic;      -- Clear counter register
+          LOAD              : in std_logic_vector(7 downto 0);      -- Load counter register
+          ENABLE            : in std_logic_vector(7 downto 0);      -- Enable count operation
+          pos_threshold     : in std_logic_vector(31 downto 0);
+          neg_threshold     : in std_logic_vector(31 downto 0);
+          VALUE_IN          : in std_logic_vector(63 downto 0);    -- Load counter register input
+          GATE_OUT          : in std_logic_vector(11 downto 0);
+          UP_OVERFLOW       : out t_counter_in_Array ;     -- UP_Counter overflow
+          DOWN_OVERFLOW     : out t_counter_in_Array;      -- UP_Counter overflow
+          gate_UP_OVERFLOW  : out t_gate_counter_in_Array;
+          gate_DOWN_OVERFLOW: out t_gate_counter_in_Array
+      );
+  
         end component BLM_counter_pool;
 
         component BLM_Interlock_out is
@@ -106,6 +112,8 @@ component BLM_gate_timing_seq is
                   out_mux_sel      : in std_logic_vector(31 downto 0);
                   UP_OVERFLOW      : in t_counter_in_Array ; 
                   DOWN_OVERFLOW    : in t_counter_in_Array  ; 
+                  gate_UP_OVERFLOW  : out t_gate_counter_in_Array;
+                  gate_DOWN_OVERFLOW: out t_gate_counter_in_Array;
                   gate_error       : in std_logic_vector(11 downto 0);
                   Interlock_IN     : in std_logic_vector(53 downto 0);
 
@@ -132,7 +140,7 @@ begin
       gate_in => AW_IOBP_Input_Reg(6)(5 downto 0) & AW_IOBP_Input_Reg(5)(11 downto 6),       -- input signal
       initialize => BLM_ena(27 downto 16),  -- enable '1' for input connected to the counter
       timeout_error => gate_error, -- gate doesn't start within the given timeout
-      gate_out => gate_In_Mtx(11 downto 0)       -- out gate signal
+      gate_out => gate_In_Mtx       -- out gate signal
     );
    
 
@@ -211,9 +219,14 @@ begin
           pos_threshold =>  pos_threshold,
           neg_threshold =>  neg_threshold,  
           VALUE_IN       => VALUE_IN,    -- Load counter register input
+          GATE_OUT       => gate_In_Mtx,  
           UP_OVERFLOW    => UP_OVERFLOW,    -- UP_Counter overflow
-          DOWN_OVERFLOW  => DOWN_OVERFLOW    -- UP_Counter overflow
+          DOWN_OVERFLOW  => DOWN_OVERFLOW,    -- UP_Counter overflow
+          gate_UP_OVERFLOW  => gate_UP_OVERFLOW,
+          gate_DOWN_OVERFLOW => gate_DOWN_OVERFLOW
       );
+
+
 
 
 Interlock_output: BLM_Interlock_out 
@@ -223,7 +236,9 @@ Interlock_output: BLM_Interlock_out
           nRST         => rstn_sys,
           out_mux_sel  => out_maske_reg,
           UP_OVERFLOW    => UP_OVERFLOW,    
-          DOWN_OVERFLOW  => DOWN_OVERFLOW,   
+          DOWN_OVERFLOW  => DOWN_OVERFLOW,
+          gate_UP_OVERFLOW  => gate_UP_OVERFLOW,
+          gate_DOWN_OVERFLOW => gate_DOWN_OVERFLOW,   
           gate_error     => gate_error,
           Interlock_IN   => watchdog_warn,
           INTL_Output    => INTL_Output--,

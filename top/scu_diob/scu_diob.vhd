@@ -626,7 +626,7 @@ port (
     s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
     s_nLED_User3_i         : out std_logic;
     --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
-    IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
+   -- IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
     Deb_Sync66             : out std_logic_vector(65 downto 0);
     daq_dat                : out t_daq_dat(1 to 7);
     daq_diob_ID            : out std_logic_vector(15 downto 0)
@@ -819,8 +819,8 @@ port (
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
- -- signal IOBP_Output_Readback:    t_IO_Reg_0_to_7_Array;
- signal IOBP_Output_Readback: std_logic_vector(15 downto 0);
+ signal BLM_Status_Reg:    t_IO_Reg_0_to_7_Array;
+ --signal IOBP_Output_Readback: std_logic_vector(15 downto 0);
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
 signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
@@ -996,7 +996,7 @@ signal counter_maske_Reg2:    std_logic_vector(15 downto 0);
 signal out_maske_Reg1:        std_logic_vector(15 downto 0);
 signal out_maske_Reg2:        std_logic_vector(15 downto 0);
 
---signal BLM_status_Reg1:  std_logic_vector(15 downto 0);  
+ 
 signal BLM_st_rd_active:       std_logic;
 signal BLM_st_Dtack:           std_logic;
 signal BLM_st_data_to_SCUB:    std_logic_vector(15 downto 0);
@@ -1379,22 +1379,15 @@ port map  (
           clk                =>  clk_sys,
           nReset             =>  rstn_sys,
     --
-          Reg_In1            =>  IOBP_Output_Readback,
-          Reg_In2            =>  (others =>'0'),
-          Reg_In3            =>  (others =>'0'),
-          Reg_In4            =>  (others =>'0'),
-          Reg_In5            =>  (others =>'0'),
-          Reg_In6            =>  (others =>'0'),
-          Reg_In7            =>  (others =>'0'),
-          Reg_In8            =>  (others =>'0'),
-         -- Reg_In1            =>  IOBP_Output_Readback(0),
-        --  Reg_In2            =>  IOBP_Output_Readback(1),
-        --  Reg_In3            =>  IOBP_Output_Readback(2),
-         -- Reg_In4            =>  IOBP_Output_Readback(3),
-         -- Reg_In5            =>  IOBP_Output_Readback(4),
-         -- Reg_In6            =>  IOBP_Output_Readback(5),
-         -- Reg_In7            =>  IOBP_Output_Readback(6),
-         -- Reg_In8            =>  (IOBP_Output_Readback(7)),
+          Reg_In1            =>  BLM_Status_Reg(0),
+          Reg_In2            =>  BLM_Status_Reg(1),
+          Reg_In3            =>  BLM_Status_Reg(2),
+          Reg_In4            =>  BLM_Status_Reg(3),
+          Reg_In5            =>  BLM_Status_Reg(4),
+          Reg_In6            =>  BLM_Status_Reg(5),
+          Reg_In7            =>  BLM_Status_Reg(6),
+          Reg_In8            =>  BLM_Status_Reg(7),
+
     --
           Reg_rd_active      =>  IOBP_in_rd_active,
           Dtack_to_SCUB      =>  IOBP_in_Dtack,
@@ -2077,7 +2070,7 @@ AW_B12s1_connection: p_connector
     s_nLED_User1_i         => s_nLED_User1_i,
     s_nLED_User2_i         => s_nLED_User2_i,
     s_nLED_User3_i         => s_nLED_User3_i,
-    IOBP_Output_Readback   =>  IOBP_Output_Readback,
+    --IOBP_Output_Readback   =>  BLM_Status_Reg(0),
     Deb_Sync66             => Deb_Sync66,
     daq_dat                => daq_dat(1 to 7),
     daq_diob_ID            => daq_diob_ID
