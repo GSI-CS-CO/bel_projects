@@ -22,12 +22,11 @@ port (
 end BLM_Interlock_out;
 
 architecture rtl of BLM_Interlock_out is
---out_mux_sel 0 for gate error
---out_mux_sel 4..1 for interlock_in
---out_mux_sel 12..6 for input:
--- if out_mux_sel 5 ='0' up_overflow_control
--- if out_mux_sel 5 ='1' down_overflow_control
-
+  -----------------------------------------------------------------------
+--    out_mux_sel  7..0 for gate overflow and input overflow
+--    out_mux_sel 11..8 for interlock_in
+--    out_mux_sel 12    for gate error
+-------------------------------------------------------------------------
 
 
 
@@ -58,33 +57,14 @@ architecture rtl of BLM_Interlock_out is
             
          elsif (CLK'EVENT AND CLK = '1') then  
 
-            m<= to_integer(unsigned(out_mux_sel(13 downto 6)));
+            m<= to_integer(unsigned(out_mux_sel(7 downto 0)));
 
-                --gate_Error_control
-                   if out_mux_sel(0) ='0' then 
-                        gate_err_res <= gate_error(5 downto 0);
-                   else                        
-                        gate_err_res <= gate_error(11 downto 6);
-                   end if;
-
-                   case out_mux_sel(4 downto 1) is
-
-                        when "0000" => intl_wd_res <= Interlock_IN(5 downto 0);
-                        when "0001" => intl_wd_res <= Interlock_IN(11 downto 6);
-                        when "0010" => intl_wd_res <= Interlock_IN(17 downto 12);
-                        when "0011" => intl_wd_res <= Interlock_IN(23 downto 18);
-                        when "0100" => intl_wd_res <= Interlock_IN(29 downto 24);
-                        when "0101" => intl_wd_res <= Interlock_IN(35 downto 30);
-                        when "0110" => intl_wd_res <= Interlock_IN(41 downto 36);
-                        when "0111" => intl_wd_res <= Interlock_IN(47 downto 42);
-                        when "1000" => intl_wd_res <= Interlock_IN(53 downto 48);
-
-                        when others => NULL;
-                  end case;
+          
                   
                 if gate_err_res ="000000" AND intl_wd_res = "000000"  then
 
-                  if out_mux_sel(5)='1' then 
+               
+                    if out_mux_sel(0)='1' then 
 
                         in_overflow <= UP_OVERFLOW(7)&UP_OVERFLOW(6)&UP_OVERFLOW(5)&UP_OVERFLOW(4)&UP_OVERFLOW(3)&UP_OVERFLOW(2)&UP_OVERFLOW(1)&UP_OVERFLOW(0)& 
                                        DOWN_OVERFLOW(7)& DOWN_OVERFLOW(6)& DOWN_OVERFLOW(5)& DOWN_OVERFLOW(4)& DOWN_OVERFLOW(3)& DOWN_OVERFLOW(2)& DOWN_OVERFLOW(1) & DOWN_OVERFLOW(0);
@@ -93,33 +73,66 @@ architecture rtl of BLM_Interlock_out is
                                         gate_DOWN_OVERFLOW(5) & gate_DOWN_OVERFLOW(4) & gate_DOWN_OVERFLOW(3) & gate_DOWN_OVERFLOW(2) & gate_DOWN_OVERFLOW(1) & gate_DOWN_OVERFLOW(0); 
 
                         tot_overflow <= gate_overflow & in_overflow;
-                 end if;  
+                    end if;  
   --------------------- 
-                                
-                for i in 0 to 194 loop
-                 if m = i then 
-                  overflow <= tot_overflow((6*m +5) downto (6*m));
-                end if;
-                end loop;
-                if m = 194 then 
-                  overflow <= "00" & tot_overflow(1167 downto 1164);
-                end if;
+                               
+                    for i in 0 to 84 loop -- in overflow out_mux_sel(7 (6) downto 0)
+                      if m = i then 
+                        overflow <= tot_overflow((6*m +5) downto (6*m));
+                      end if;
+                    end loop;
+
+                      if m = 85 then 
+                       overflow <= "0000"&tot_overflow(511 downto 510);
+                      end if;
+
+
+                    for i in 86 to 194 loop  -- gate overflow out_mux_sel(7 downto 0)
+                      if m = i then 
+                        overflow <= tot_overflow((6*m +5) downto (6*m));
+                      end if;
+                    end loop;
+                
+                     if m = 194 then 
+                       overflow <= "00" & tot_overflow(1167 downto 1164);
+                     end if;
                 
   --------------------     
-                  out_mux_res <= overflow;
-                else
-                  if gate_err_res = "000000" then
+               out_mux_res <= overflow;
 
-                  out_mux_res <= intl_wd_res;
-                 else
-  
+            else  --if gate error or watchdog error
+
+              if gate_err_res = "000000" then
+                 case out_mux_sel(11 downto 8) is
+
+                   when "0000" => intl_wd_res <= Interlock_IN(5 downto 0);
+                   when "0001" => intl_wd_res <= Interlock_IN(11 downto 6);
+                   when "0010" => intl_wd_res <= Interlock_IN(17 downto 12);
+                   when "0011" => intl_wd_res <= Interlock_IN(23 downto 18);
+                   when "0100" => intl_wd_res <= Interlock_IN(29 downto 24);
+                   when "0101" => intl_wd_res <= Interlock_IN(35 downto 30);
+                   when "0110" => intl_wd_res <= Interlock_IN(41 downto 36);
+                   when "0111" => intl_wd_res <= Interlock_IN(47 downto 42);
+                   when "1000" => intl_wd_res <= Interlock_IN(53 downto 48);
+     
+                   when others => NULL;
+                 end case;
+
+                    out_mux_res <= intl_wd_res;
+             else
+                if out_mux_sel(12) ='0' then   
+                   gate_err_res <= gate_error(5 downto 0);
+                else                        
+                    gate_err_res <= gate_error(11 downto 6);
                  end if;
-                end if;
+                out_mux_res <= gate_err_res;
+                
+
+              end if;
+            end if;
          end if;
 
         end process;
-
-
 
         INTL_Output <= out_mux_res;
 
@@ -127,14 +140,14 @@ architecture rtl of BLM_Interlock_out is
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
 
-        BLM_status_reg(0)<= "0000000000" & INTL_Output;
-        BLM_status_reg(1)<= "00"&gate_error(11 downto 6) & "00" & gate_error(5 downto 0);
-        BLM_status_reg(2)<= "00"& interlock_IN(11 downto 6) & "00" & Interlock_IN(5 downto 0);
-        BLM_status_reg(3)<= "00"& interlock_IN(23 downto 18) & "00" & Interlock_IN(17 downto 12);
-        BLM_status_reg(4)<= "00" & interlock_IN(35 downto 30)&"00"& Interlock_IN(29 downto 24);
-        BLM_status_reg(5)<= "00"& interlock_IN(47 downto 42)&"00"& Interlock_IN(41 downto 36);
-        BLM_status_reg(6)<= "0000000000"& interlock_IN(53 downto 48);
-        BLM_status_reg(7)<= "0000000000"& overflow;
+        BLM_status_reg(0)<= "0000000000" & INTL_Output;                                           -- overflow/Interlock/gate error
+        BLM_status_reg(1)<= "00"&gate_error(11 downto 6) & "00" & gate_error(5 downto 0);         -- gate error
+        BLM_status_reg(2)<= "00"& interlock_IN(11 downto 6) & "00" & Interlock_IN(5 downto 0);    -- interlock board 1 and board 2
+        BLM_status_reg(3)<= "00"& interlock_IN(23 downto 18) & "00" & Interlock_IN(17 downto 12); -- interlock board 3 and board 4
+        BLM_status_reg(4)<= "00" & interlock_IN(35 downto 30)&"00"& Interlock_IN(29 downto 24);   -- interlock board 5 and board 6
+        BLM_status_reg(5)<= "00"& interlock_IN(47 downto 42)&"00"& Interlock_IN(41 downto 36);    -- interlock board 7 and board 8
+        BLM_status_reg(6)<= "0000000000"& interlock_IN(53 downto 48);                             -- interlock board 9
+        BLM_status_reg(7)<= "0000000000"& overflow;                                               -- if not interlock and no gate error
 
       
 end rtl;

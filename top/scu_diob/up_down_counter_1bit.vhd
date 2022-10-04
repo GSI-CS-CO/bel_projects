@@ -54,12 +54,13 @@ begin
              -- Load up counter register
                 UP_D((WIDTH-1) downto 1)<= (others =>'0');
                 UP_D(0)<= UP_IN;
-                up_Counter <= signed('0' & UP_D);
-                
+                --up_Counter <= signed('0' & UP_D);
+                up_Counter <= signed(UP_D(WIDTH-1) & UP_D);
+
              -- Load down counter register
                 DOWN_D((WIDTH-1) downto 1)<= (others =>'0');
                 DOWN_D(0)<= DOWN_IN;
-                down_Counter <= signed ('1' & DOWN_D);
+                down_Counter <= signed (DOWN_D(WIDTH-1) & DOWN_D);
                 
             elsif ( ENABLE = '1') then                   -- Enable counter
             
