@@ -21,7 +21,7 @@ architecture rtl of BLM_In_Multiplexer is
   component BLM_watchdog is
       generic (
 
-          hold    : integer range 2 TO 10:= 2
+          hold    : integer range 1 TO 10:= 2
         
       );
       port(
