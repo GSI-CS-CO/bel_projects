@@ -87,9 +87,9 @@ gate_proc: process (clk_i, rstn_i, initialize)
               when timeout_state => 
                 
                 	 timeout_error <='1';
-                	 timeout <= timeout_reset;
+                	 --timeout <= timeout_reset;
                    gate_out <= '0';
-                	gate_state <= idle;
+               -- 	gate_state <= idle;
                 	
               when gate_out_state =>
                 
