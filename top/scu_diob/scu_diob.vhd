@@ -946,18 +946,15 @@ signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 --updated type Test_DATA is array (0 to 7)      of std_logic_vector(9 downto 0);
   constant Test_In_Mtx : t_test_DATA := ---value to be cecked...for now I just added two '0' as LSB
             (
-             "1100110000", -- 25.00 MHz      0
-             "1001100100", -- 18.75 MHz      1
-             "0110011000", -- 12.50 MHz      2
-             --"01001100", --  9.313725 MHz
-             "0011001100", --  6.25 MHz      3
-             --"00011001", --  3.063725 MHz
-             "0000110000", --  1.470588 MHz  4
-            -- "00000110", --  735.2941 kHz
-             "0000010100", --  612.7451 kHz  5
-             --"00000011", --  367.6471 kHz
-             "0000000100", --  122.4490 kHz  6
-             "0000000000");  -- NULL         7
+             "0011001100",    -- 24.9267 MHz    0
+             "0010011001",    -- 18.6951 MHz    1
+             "0001100110",    -- 12.4633 MHz    2
+             "0000110011",    --  6.2317 MHz    3
+             "0000001100",    --  1.4663 MHz    4
+             "0000000101",  --  610.9482 kHz    5 
+             "0000000011",   -- 366.6657 kHz    6 
+             "0000000001"    -- 122.1896 kHz    7
+           );  
              
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
 

@@ -64,7 +64,7 @@ architecture rtl of BLM_Interlock_out is
                 if gate_err_res ="000000" AND intl_wd_res = "000000"  then
 
                
-                    if out_mux_sel(0)='1' then 
+                 --   if out_mux_sel(0)='1' then 
 
                         in_overflow <= UP_OVERFLOW(7)&UP_OVERFLOW(6)&UP_OVERFLOW(5)&UP_OVERFLOW(4)&UP_OVERFLOW(3)&UP_OVERFLOW(2)&UP_OVERFLOW(1)&UP_OVERFLOW(0)& 
                                        DOWN_OVERFLOW(7)& DOWN_OVERFLOW(6)& DOWN_OVERFLOW(5)& DOWN_OVERFLOW(4)& DOWN_OVERFLOW(3)& DOWN_OVERFLOW(2)& DOWN_OVERFLOW(1) & DOWN_OVERFLOW(0);
@@ -73,7 +73,7 @@ architecture rtl of BLM_Interlock_out is
                                         gate_DOWN_OVERFLOW(5) & gate_DOWN_OVERFLOW(4) & gate_DOWN_OVERFLOW(3) & gate_DOWN_OVERFLOW(2) & gate_DOWN_OVERFLOW(1) & gate_DOWN_OVERFLOW(0); 
 
                         tot_overflow <= gate_overflow & in_overflow;
-                    end if;  
+                  --  end if;  
   --------------------- 
                                
                     for i in 0 to 84 loop -- in overflow out_mux_sel(7 (6) downto 0)
