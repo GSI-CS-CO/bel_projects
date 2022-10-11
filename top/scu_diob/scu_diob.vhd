@@ -477,10 +477,9 @@ end component;
       BLM_ena      : in std_logic_vector( 31 downto 0);      
       Test_In_Mtx   : in t_Test_Data; 
       AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
-      INTL_Output   : out std_logic_vector(5 downto 0)--;
-    --  BLM_status_Reg : out std_logic_vector(15 downto 0)
-    
-  );
+      INTL_Output   : out std_logic_vector(5 downto 0);
+      BLM_status_Reg : out t_IO_Reg_0_to_7_Array
+      );
   end component Beam_Loss_check;
  
 
@@ -1859,8 +1858,8 @@ BLM_Module: Beam_Loss_check
       BLM_ena => BLM_ena_Reg2(15 downto 0) & BLM_ena_Reg1(15 downto 0),
       Test_In_Mtx  => Test_In_Mtx,
       AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
-      INTL_Output  => INTL_Output--,
-    --  BLM_status_Reg => BLM_status_Reg1
+      INTL_Output  => INTL_Output,
+    BLM_status_Reg => BLM_status_Reg
   
   );
 
