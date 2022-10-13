@@ -155,12 +155,10 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
-    CONSTANT c_IOBP_READBACK_Base_Addr:          Integer := 16#0670#;  -- IO-Backplane Output Readback Register
+    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
-    --CONSTANT c_BLM_Threshold_Base_Adddr :        Integer := 16#0672#;   -- threshold Beam Loss Check Register
     CONSTANT c_BLM_Masken_Base_Addr     :        Integer := 16#0680#;   -- counter and output Beam Loss Check Register
     CONSTANT c_BLM_constr_Base_Addr     :        Integer := 16#0690#;   --
-   -- CONSTANT c_BLM_status_Base_Addr     :        Integer := 16#0700#; 
 
 
 --  +============================================================================================================================+
@@ -499,7 +497,7 @@ Port ( clk : in STD_LOGIC;
        IOBP_ID          : in t_id_array;
        INTL_Output      : in std_logic_vector(5 downto 0);
        AW_Output_Reg    : in std_logic_vector(5 downto 0);
-       config           : in std_logic_vector(1 downto 0);
+       nBLM_out_ena      : in std_logic;
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
        IOBP_Output     : out std_logic_vector(5 downto 0);     
        IOBP_Input     : out t_IOBP_array;
@@ -1360,9 +1358,9 @@ port map  (
       Data_to_SCUB       =>  IOBP_id_data_to_SCUB
     );
 
-    IOBP_Readout_Reg: in_reg
+    BLM_Status_READBACK_Reg: in_reg
     generic map(
-          Base_addr =>  c_IOBP_READBACK_Base_Addr
+          Base_addr =>  c_Status_READBACK_Base_Addr
           )
     port map  (
           Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
@@ -1878,7 +1876,7 @@ port map ( clk               => clk_sys,
            IOBP_ID           => IOBP_ID,
            INTL_Output       => INTL_Output,
            AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-           config            => AW_Config2(1 downto 0),
+           nBLM_out_ena        => BLM_ena_Reg2(15) or AW_Config2(0), 
            AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
            IOBP_Output       => IOBP_Output,
            IOBP_Input        => IOBP_Input,
