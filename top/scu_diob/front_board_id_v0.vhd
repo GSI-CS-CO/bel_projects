@@ -25,7 +25,7 @@ Port ( clk : in STD_LOGIC;
        IOBP_ID          : in t_id_array;
        INTL_Output      : in std_logic_vector(5 downto 0);
        AW_Output_Reg    : in std_logic_vector(5 downto 0);
-       config           : in std_logic_vector(1 downto 0);
+       nBLM_out_ena      : in std_logic;
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
        IOBP_Output     : out std_logic_vector (5 downto 0);     
        IOBP_Input     : out t_IOBP_array;
@@ -286,19 +286,18 @@ begin
                                                     ------------------------------------------------------------------
                                                     --- AW_Config register assigment to be defined
                                                     ------------------------------------------------------------------
-                                                      if config(1 downto 0) ="00" then -- correct values to be checked
+                                                      if nBLM_out_ena ='0' then -- correct values to be checked
 
                                                         IOBP_Out <= INTL_Output;
                                                       else
                                                         IOBP_Out <= AW_Output_Reg AND not IOBP_Masken_Reg6(11 downto 6);
                                                       end if;
                                                       --------------------------------------------------------------------
-                                                    --  PIO_OUT_SLOT_12 <= IOBP_Output;
                                                         
-                                                      OUT_SLOT <= INTL_Output;
+                                                      OUT_SLOT <= IOBP_Out;
                                                       ENA_SLOT<= std_logic_vector'("111111");
-                                                    --  IOBP_Aktiv_LED_i(12)  <=  IOBP_Output;
-                                                      IOBP_Aktiv_LED_i(12)  <=  INTL_Output;
+                                                      IOBP_Aktiv_LED_i(12)  <=  IOBP_Output;
+                                                    
                                                       IOBP_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
 
                                                   when others     =>  NULL;

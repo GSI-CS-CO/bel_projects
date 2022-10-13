@@ -457,7 +457,7 @@ END IF;
     daq_dat(4) <= "0000"& AW_IOBP_Input_Reg(4)(11 downto 0);
     daq_dat(5) <= "0000"& AW_IOBP_Input_Reg(5)(11 downto 0);
     daq_dat(6)(5 downto 0) <= AW_IOBP_Input_Reg(6)(5 downto 0);
-    daq_dat(7)(5 downto 0) <= IOBP_Output;
+    daq_dat(7)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
     daq_diob_ID(15 downto 0)<= "0000000000010011" ; --"00000000"& c_AW_INLB12S1.ID;
 --############################################################################################################
 
