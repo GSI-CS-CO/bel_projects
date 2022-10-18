@@ -373,17 +373,6 @@ COMPONENT in_reg
 END COMPONENT in_reg;
 
 
-component pu_reset
-generic (
-    PU_Reset_in_clks : integer
-    );
-port  (
-    Clk:      in    std_logic;
-    PU_Res:   out   std_logic
-    );
-end component;
-
-
 
 component zeitbasis
 generic (
@@ -400,7 +389,7 @@ port  (
     Ena_every_1us:    out std_logic;
     Ena_Every_20ms:   out std_logic
     );
-end component;
+end component zeitbasis;
 
 
  component diob_debounce
@@ -415,16 +404,6 @@ end component;
     DB_Out:     out std_logic
     );
   end component diob_debounce;
-
-
- component diob_sync
-  port (
-    Sync_In:    in  std_logic;
-    Reset:      in  std_logic;
-    Clk:        in  std_logic;
-    Sync_Out:   out std_logic
-    );
-  end component diob_sync;
 
   COMPONENT daq 
   generic (
@@ -612,7 +591,7 @@ port (
     IOBP_Id_Reg8           : out    std_logic_vector(15 downto 0);
     Deb66_in               : out     std_logic_vector(65 downto 0);
     Syn66                  : out        std_logic_vector(65 downto 0);
-    AW_Input_Reg           : out   t_IO_Reg_1_to_7_Array;
+    AW_Input_Reg           : out   t_IO_Reg_1_to_8_Array;
     A_Tclk                 : out std_logic;
     extension_cid_group    : out  integer range 0 to 16#FFFF#;
     extension_cid_system   : out integer range 0 to 16#FFFF#;
@@ -625,7 +604,7 @@ port (
     --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
    -- IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
     Deb_Sync66             : out std_logic_vector(65 downto 0);
-    daq_dat                : out t_daq_dat(1 to 7);
+    daq_dat                : out t_daq_dat(1 to 9);
     daq_diob_ID            : out std_logic_vector(15 downto 0)
   
     );
@@ -749,7 +728,7 @@ port (
 --------------------------- AWIn ----------------------------------------------------------------------
 
   signal SCU_AW_Input_Reg:        t_IO_Reg_1_to_7_Array;  -- Input-Register to SCU-Bus
-  signal AW_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggys
+  signal AW_Input_Reg:            t_IO_Reg_1_to_8_Array;  -- Input-Register of the Piggys
 
 
 
@@ -1928,8 +1907,9 @@ begin
 
     IF  (Diob_Config1(3) = '0')  THEN   -- 0 = Default: kein "Mirror-Mode"
 
-      SCU_AW_Input_Reg  <= AW_Input_Reg; -- Input's bleiben unverändert
-      
+    for i in 1 to 7 loop
+      SCU_AW_Input_Reg(i)  <= AW_Input_Reg(i); -- Input's bleiben unverändert
+     end loop; 
     
 
     ELSE
@@ -2066,7 +2046,7 @@ AW_B12s1_connection: p_connector
     s_nLED_User3_i         => s_nLED_User3_i,
     --IOBP_Output_Readback   =>  BLM_Status_Reg(0),
     Deb_Sync66             => Deb_Sync66,
-    daq_dat                => daq_dat(1 to 7),
+    daq_dat                => daq_dat(1 to 9),
     daq_diob_ID            => daq_diob_ID
     );
 
