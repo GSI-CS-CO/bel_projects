@@ -87,7 +87,7 @@ port(
   IOBP_Id_Reg8           : out    std_logic_vector(15 downto 0);
   Deb66_in               : out     std_logic_vector(65 downto 0);
   Syn66                  : out        std_logic_vector(65 downto 0);
-  AW_Input_Reg           : out   t_IO_Reg_1_to_7_Array;
+  AW_Input_Reg           : out   t_IO_Reg_1_to_8_Array;
   A_Tclk                 : out std_logic;
   extension_cid_group    : out  integer range 0 to 16#FFFF#;
   extension_cid_system   : out integer range 0 to 16#FFFF#;
@@ -100,7 +100,7 @@ port(
   --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
   --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
   Deb_Sync66             : out std_logic_vector(65 downto 0);
-  daq_dat                : out t_daq_dat(1 to 7);
+  daq_dat                : out t_daq_dat(1 to 9);
   daq_diob_ID            : out std_logic_vector(15 downto 0)
   
   );
@@ -286,8 +286,8 @@ port(
 
     UIO_OUT(0)  <= '0';
     UIO_ENA(0)  <= '1';       -- Output-Enable für Interlock-Bit
-    AW_Input_Reg(6)   <=  Timing_Pattern_LA(31 downto 16);  -- H-Word vom Timing_Pattern
-    AW_Input_Reg(7)   <=  Timing_Pattern_LA(15 downto 0);   -- L-Word vom Timing_Pattern
+    AW_Input_Reg(7)   <=  Timing_Pattern_LA(31 downto 16);  -- H-Word vom Timing_Pattern
+    AW_Input_Reg(8)   <=  Timing_Pattern_LA(15 downto 0);   -- L-Word vom Timing_Pattern
 
 
  if AW_ID(7 downto 0) = "00010011" then --  c_AW_INLB12S1.ID 
@@ -401,8 +401,9 @@ END IF;
 ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
 ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
 
-AW_Input_Reg<= AW_IOBP_Input_Reg;
-
+for i in 1 to 6 loop
+AW_Input_Reg(i)<= AW_IOBP_Input_Reg(i);
+end loop;
 
 ---output readback
 --IOBP_Output_Readback <= "0000000000" & IOBP_Output;
@@ -457,7 +458,10 @@ END IF;
     daq_dat(4) <= "0000"& AW_IOBP_Input_Reg(4)(11 downto 0);
     daq_dat(5) <= "0000"& AW_IOBP_Input_Reg(5)(11 downto 0);
     daq_dat(6)(5 downto 0) <= AW_IOBP_Input_Reg(6)(5 downto 0);
-    daq_dat(7)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
+    
+    daq_dat(7) <= AW_Input_Reg(7);
+    daq_dat(8) <= AW_Input_Reg(8);
+    daq_dat(9)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
     daq_diob_ID(15 downto 0)<= "0000000000010011" ; --"00000000"& c_AW_INLB12S1.ID;
 --############################################################################################################
 
