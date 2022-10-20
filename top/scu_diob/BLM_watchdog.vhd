@@ -84,7 +84,7 @@ watchdog_proc: process (clk_i, rstn_i, ena_i)
                 
                    INTL_out <='1';
 
-                	
+                   watchdog_state <= idle;
                
                 	 
                 when others => null;
