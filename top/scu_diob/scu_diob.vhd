@@ -60,19 +60,19 @@ use work.daq_pkg.all;
 --                                                                                                                                --
 --      Base_addr +2 : DIOB-Status-Register1 (the status bits are deleted after reading)                                          --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
---      5 |  TAG-ID-Config-Error     | two or more event channels with the same mask and the same output register                 --
---      4 |  OutReg-Select-Error     | in one or more event channels no output register is selected                               --
---      3 |  TriggerReg-Select-Error | in one or more event channels no input register for trigger signal is selected             --
---      2 |  Unknown-OutReg-Select   | in one or more event channels an unsupported output register is selected                   --
---      1 |  Unknown-InReg-Select    | in one or more event channels an unsupported input register is selected                    --
---      0 |  Trigger-Time-Out        | allowed waiting time for external trigger signal has been exceeded (Time-Out)              --
+--     15-6|  free                                                                                                                --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--      5-0|  Tag-Ctrl Status                                                                                                     --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
 --                                                                                                                                --
 --                                                                                                                                --
 --      Base_addr +3 : DIOB-Status-Register2 (the status bits are deleted after reading)                                          --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
---   15-0 |  free                                                                                                                 --
+--   15-8 |  free                                                                                                                 --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
+--    7-0 |  Tag_Active           -- Flag: Bit7 = Tag7 (active) --- Bit0 = Tag0 (active)                                          --                                                                                                        --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+
 --                                                                                                                                --
 --                                                                                                                                --
 --     Base_addr + 4 – Base_addr +6  reserved for expansion                                                                       --
@@ -516,9 +516,6 @@ port (
     PIO_SYNC		  : in STD_LOGIC_VECTOR(150 DOWNTO 16); 
     CLK_IO                 : in std_logic;                      -- Clock for user_I/0
     DIOB_Config1           : in std_logic_vector(15 downto 0);
-    DIOB_Config2           : in std_logic_vector(15 downto 0); 
-    AW_Config1             : in std_logic_vector(15 downto 0);
-    AW_Config2             : in std_logic_vector(15 downto 0);
     AW_Output_Reg          : in t_IO_Reg_1_to_7_Array;          -- Output-Register to the Piggys
     UIO_SYNC		  : in STD_LOGIC_VECTOR(15 DOWNTO 0); 
     hp_la_o                : in std_logic_vector(15 downto 0);
@@ -604,7 +601,7 @@ port (
     --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
    -- IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
     Deb_Sync66             : out std_logic_vector(65 downto 0);
-    daq_dat                : out t_daq_dat(1 to 9);
+    daq_dat                : out t_daq_dat(1 to 7);
     daq_diob_ID            : out std_logic_vector(15 downto 0)
   
     );
@@ -1855,7 +1852,7 @@ port map ( clk               => clk_sys,
            IOBP_ID           => IOBP_ID,
            INTL_Output       => INTL_Output,
            AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-           nBLM_out_ena        => BLM_ena_Reg2(15) or AW_Config2(0), 
+           nBLM_out_ena        => BLM_ena_Reg2(15), 
            AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
            IOBP_Output       => IOBP_Output,
            IOBP_Input        => IOBP_Input,
@@ -1961,9 +1958,6 @@ AW_B12s1_connection: p_connector
     PIO_SYNC		           => PIO_SYNC,
     CLK_IO                 => CLK_IO,
     DIOB_Config1           => DIOB_Config1, 
-    DIOB_Config2           => DIOB_Config2,
-    AW_Config1             => AW_Config1,
-    AW_Config2             => AW_Config2,
     AW_Output_Reg          => AW_Output_Reg,
     UIO_SYNC		           => UIO_SYNC,
     hp_la_o                => hp_la_o,
@@ -2046,7 +2040,7 @@ AW_B12s1_connection: p_connector
     s_nLED_User3_i         => s_nLED_User3_i,
     --IOBP_Output_Readback   =>  BLM_Status_Reg(0),
     Deb_Sync66             => Deb_Sync66,
-    daq_dat                => daq_dat(1 to 9),
+    daq_dat                => daq_dat(1 to 7),
     daq_diob_ID            => daq_diob_ID
     );
 

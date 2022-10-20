@@ -13,9 +13,6 @@ port(
   PIO_SYNC		           : in STD_LOGIC_VECTOR(150 DOWNTO 16); 
   CLK_IO                 : in std_logic;                      -- Clock for user_I/0
   DIOB_Config1           : in std_logic_vector(15 downto 0);
-  DIOB_Config2           : in std_logic_vector(15 downto 0); 
-  AW_Config1             : in std_logic_vector(15 downto 0);
-  AW_Config2             : in std_logic_vector(15 downto 0);
   AW_Output_Reg          : in t_IO_Reg_1_to_7_Array;          -- Output-Register to the Piggys
   UIO_SYNC		           : in STD_LOGIC_VECTOR(15 DOWNTO 0); 
   hp_la_o                : in std_logic_vector(15 downto 0);
@@ -100,7 +97,7 @@ port(
   --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
   --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
   Deb_Sync66             : out std_logic_vector(65 downto 0);
-  daq_dat                : out t_daq_dat(1 to 9);
+  daq_dat                : out t_daq_dat(1 to 7);
   daq_diob_ID            : out std_logic_vector(15 downto 0)
   
   );
@@ -155,7 +152,7 @@ port(
             PIO_SYNC, PIO_ENA,  PIO_OUT,  CLK_IO,
             AWIn_Deb_Time, Min_AWIn_Deb_Time, 
             AW_Input_Reg,
-            DIOB_Config1,    DIOB_Config2,    AW_Config1,    AW_Config2,
+            DIOB_Config1,  
             AW_Output_Reg,
             UIO_SYNC, UIO_ENA,  UIO_OUT,
             hp_la_o, local_clk_is_running, clk_blink,
@@ -459,9 +456,9 @@ END IF;
     daq_dat(5) <= "0000"& AW_IOBP_Input_Reg(5)(11 downto 0);
     daq_dat(6)(5 downto 0) <= AW_IOBP_Input_Reg(6)(5 downto 0);
     
-    daq_dat(7) <= AW_Input_Reg(7);
-    daq_dat(8) <= AW_Input_Reg(8);
-    daq_dat(9)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
+   -- daq_dat(1) <= AW_Input_Reg(7);
+   -- daq_dat(2) <= AW_Input_Reg(8);
+    daq_dat(7)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
     daq_diob_ID(15 downto 0)<= "0000000000010011" ; --"00000000"& c_AW_INLB12S1.ID;
 --############################################################################################################
 
