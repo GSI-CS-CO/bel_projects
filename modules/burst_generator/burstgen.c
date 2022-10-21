@@ -1366,18 +1366,16 @@ void setupMsiHandlers(void)
     }
 
     uint32_t *pMbSlotLm32 = (uint32_t *)pCpuMsiBox + ((mbSlotLm32 * 8) >> 2);
-    mprintf("\nMailbox slot for LM32 (burst generator):\n"
-        "- number=0x%x\n"
-        "- addr (intern)=0x%x\n"
-        "- addr (extern)=0x%x\n",
+    mprintf("\nMailbox config (LM32, burst generator):\n"
+        "- slot=0x%x\n"
+        "- location (ext/intern)=0x%x/%x\n",
 	mbSlotLm32,
-        (uint32_t)(pShared + (BG_SHARED_MB_SLOT_LM32 >> 2)),
-	(uint32_t)(pCpuRamExternal + ((BG_SHARED_MB_SLOT_LM32 + SHARED_OFFS) >> 2)));
-    mprintf("WB addr of LM32 mailbox slot:\n"
-        "- addr (intern)=0x%x\n"
-        "- addr (extern)=0x%x\n",
-        (uint32_t)pMbSlotLm32,
-        (uint32_t)pMbSlotLm32 & 0x7FFFFFFF);
+	(uint32_t)(pCpuRamExternal + ((BG_SHARED_MB_SLOT_LM32 + SHARED_OFFS) >> 2)),
+        (uint32_t)(pShared + (BG_SHARED_MB_SLOT_LM32 >> 2)));
+    mprintf("Shared memory location (holds the LM32 mailbox slot):\n"
+        "- addr (ext/intern)=0x%x/%x\n",
+        (uint32_t)pMbSlotLm32 & 0x7FFFFFFF,
+        (uint32_t)pMbSlotLm32);
   }
 
   configureEcaMsi(1, gEcaChECPU); // ECA MSIs are sent to destination address of pMyMsi
@@ -1390,18 +1388,16 @@ void setupMsiHandlers(void)
     mprintf("Invalid mailbox slot for host = 0x%x\n", mbSlotHost);
   else {
     pMbSlotHost = pCpuMsiBox + (mbSlotHost << 1);
-    mprintf("\nMailbox slot for the host:\n"
+    mprintf("\nMailbox config (host, saftd):\n"
         "- number=0x%x\n"
-        "- addr (intern)=0x%x\n"
-        "- addr (extern)=0x%x\n",
+        "- addr (ext/intern)=0x%x/%x\n",
         mbSlotHost,
-	(uint32_t)(pShared + (BG_SHARED_MB_SLOT_HOST >> 2)),
-	(uint32_t)(pCpuRamExternal + ((BG_SHARED_MB_SLOT_HOST + SHARED_OFFS) >> 2)));
-    mprintf("WB address of host mailbox slot:\n"
-        "- addr (intern)=0x%x\n"
-        "- addr (extern)=0x%x\n",
-        (uint32_t)pMbSlotHost,
-        (uint32_t)pMbSlotHost & 0x7FFFFFFF);
+	(uint32_t)(pCpuRamExternal + ((BG_SHARED_MB_SLOT_HOST + SHARED_OFFS) >> 2)),
+	(uint32_t)(pShared + (BG_SHARED_MB_SLOT_HOST >> 2)));
+    mprintf("Shared memory location (holds the host mailbox slot):\n"
+        "- addr (ext/intern)=0x%x/%x\n",
+        (uint32_t)pMbSlotHost & 0x7FFFFFFF,
+        (uint32_t)pMbSlotHost);
   }
 }
 
