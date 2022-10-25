@@ -23,8 +23,8 @@ endif
 # ##########################
 
 TOP            ?= ../../..
-BOOSTPATH 	?=/usr
-EBPATH		?=/usr/local
+BOOSTPATH      ?=/usr
+EBPATH         ?=/usr/local
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
@@ -108,7 +108,7 @@ clean::
 
 .SECONDEXPANSION:
 $(TOOLS): $$@.cpp libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm $(T_LIBS)
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
 
