@@ -5,7 +5,7 @@
     std::stringstream os;
     boost::archive::text_oarchive oa(os);
     oa << BOOST_SERIALIZATION_NVP(*this);
-    return os.str();
+    return fixArchiveVersion(os.str());
   };
 
 
