@@ -1,126 +1,247 @@
 [*]
-[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Thu Oct 14 11:39:12 2021
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Oct 27 07:54:08 2022
 [*]
-[dumpfile] "i2c_testbench.vcd"
-[dumpfile_mtime] "Thu Oct 14 11:38:01 2021"
-[dumpfile_size] 8370588
+[dumpfile] "i2c_testbench.ghw"
+[dumpfile_mtime] "Thu Oct 27 07:53:39 2022"
+[dumpfile_size] 8736634
 [savefile] "i2c_testbench.gtkw"
-[timestart] 0
-[size] 2560 1360
-[pos] -27 -24
-*-36.486710 272100000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] i2c_testbench.
-[treeopen] i2c_testbench.u_i2c_dut.
-[treeopen] i2c_testbench.u_i2c_dut.u_wrapped_i2c.
+[timestart] 3721100000000
+[size] 1438 1197
+[pos] 1632 1207
+*-32.911709 3727110000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.i2c_testbench.
+[treeopen] top.i2c_testbench.s_wb_slave_in.
+[treeopen] top.i2c_testbench.s_wb_slave_out.
+[treeopen] top.i2c_testbench.xwb_wrapper_no.
+[treeopen] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.
+[treeopen] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.
 [sst_width] 281
-[signals_width] 174
+[signals_width] 255
 [sst_expanded] 1
-[sst_vpaned_height] 419
-@23
-i2c_testbench.sda_pad_io[4:0]
-@22
-i2c_testbench.scl_pad_io[4:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.clk_sys_i
-@22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.dat_out[7:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.int_o
-@22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.resized_addr[31:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.rst
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.rst_n_i
-@22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.scl_pad_i[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.scl_pad_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.scl_padoen_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.sda_pad_i[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.sda_pad_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.sda_padoen_o[4:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_ack_o
-@22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_adr_i[4:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_cyc_i
-@22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_dat_i[31:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_dat_o[31:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_sel_i[3:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_stall_o
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_stb_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wb_we_i
+[sst_vpaned_height] 361
 @200
--
+-Basic Control
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.ack
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.al
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.arst_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.core_en
+top.i2c_testbench.s_rst
+top.i2c_testbench.s_rst_n
+top.i2c_testbench.s_clk
+@200
+-I2C Slave
+@420
+[color] 3
+top.i2c_testbench.s_slave_state
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.cr[7:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.ctr[7:0]
-@28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.done
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.i2c_al
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.i2c_busy
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.iack
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.iack_o
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.ien
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.if_busy
+#{top.i2c_testbench.slave_ack[4:0]} top.i2c_testbench.slave_ack[4] top.i2c_testbench.slave_ack[3] top.i2c_testbench.slave_ack[2] top.i2c_testbench.slave_ack[1] top.i2c_testbench.slave_ack[0]
+#{top.i2c_testbench.last_byte[7:0]} top.i2c_testbench.last_byte[7] top.i2c_testbench.last_byte[6] top.i2c_testbench.last_byte[5] top.i2c_testbench.last_byte[4] top.i2c_testbench.last_byte[3] top.i2c_testbench.last_byte[2] top.i2c_testbench.last_byte[1] top.i2c_testbench.last_byte[0]
+@29
+top.i2c_testbench.s_slave_idle
+@200
+-I2C Interface
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.if_num[3:0]
+#{top.i2c_testbench.s_sda_padoen_out[4:0]} top.i2c_testbench.s_sda_padoen_out[4] top.i2c_testbench.s_sda_padoen_out[3] top.i2c_testbench.s_sda_padoen_out[2] top.i2c_testbench.s_sda_padoen_out[1] top.i2c_testbench.s_sda_padoen_out[0]
+@c00022
+#{top.i2c_testbench.s_sda_pad_out[4:0]} top.i2c_testbench.s_sda_pad_out[4] top.i2c_testbench.s_sda_pad_out[3] top.i2c_testbench.s_sda_pad_out[2] top.i2c_testbench.s_sda_pad_out[1] top.i2c_testbench.s_sda_pad_out[0]
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.inta_o
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.irq_flag
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.irxack
+top.i2c_testbench.s_sda_pad_out[4]
+top.i2c_testbench.s_sda_pad_out[3]
+top.i2c_testbench.s_sda_pad_out[2]
+top.i2c_testbench.s_sda_pad_out[1]
+top.i2c_testbench.s_sda_pad_out[0]
+@1401200
+-group_end
+@c00022
+#{top.i2c_testbench.s_sda_pad_in[4:0]} top.i2c_testbench.s_sda_pad_in[4] top.i2c_testbench.s_sda_pad_in[3] top.i2c_testbench.s_sda_pad_in[2] top.i2c_testbench.s_sda_pad_in[1] top.i2c_testbench.s_sda_pad_in[0]
+@28
+top.i2c_testbench.s_sda_pad_in[4]
+top.i2c_testbench.s_sda_pad_in[3]
+top.i2c_testbench.s_sda_pad_in[2]
+top.i2c_testbench.s_sda_pad_in[1]
+top.i2c_testbench.s_sda_pad_in[0]
+@1401200
+-group_end
+@c00022
+#{top.i2c_testbench.s_scl_padoen_out[4:0]} top.i2c_testbench.s_scl_padoen_out[4] top.i2c_testbench.s_scl_padoen_out[3] top.i2c_testbench.s_scl_padoen_out[2] top.i2c_testbench.s_scl_padoen_out[1] top.i2c_testbench.s_scl_padoen_out[0]
+@28
+top.i2c_testbench.s_scl_padoen_out[4]
+top.i2c_testbench.s_scl_padoen_out[3]
+top.i2c_testbench.s_scl_padoen_out[2]
+top.i2c_testbench.s_scl_padoen_out[1]
+top.i2c_testbench.s_scl_padoen_out[0]
+@1401200
+-group_end
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.prer[15:0]
+#{top.i2c_testbench.s_scl_pad_in[4:0]} top.i2c_testbench.s_scl_pad_in[4] top.i2c_testbench.s_scl_pad_in[3] top.i2c_testbench.s_scl_pad_in[2] top.i2c_testbench.s_scl_pad_in[1] top.i2c_testbench.s_scl_pad_in[0]
+#{top.i2c_testbench.s_scl_pad_out[4:0]} top.i2c_testbench.s_scl_pad_out[4] top.i2c_testbench.s_scl_pad_out[3] top.i2c_testbench.s_scl_pad_out[2] top.i2c_testbench.s_scl_pad_out[1] top.i2c_testbench.s_scl_pad_out[0]
+@800022
+#{top.i2c_testbench.sda_pad_io[4:0]} top.i2c_testbench.sda_pad_io[4] top.i2c_testbench.sda_pad_io[3] top.i2c_testbench.sda_pad_io[2] top.i2c_testbench.sda_pad_io[1] top.i2c_testbench.sda_pad_io[0]
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.rd
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.rst_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.rxack
+top.i2c_testbench.sda_pad_io[4]
+top.i2c_testbench.sda_pad_io[3]
+top.i2c_testbench.sda_pad_io[2]
+top.i2c_testbench.sda_pad_io[1]
+top.i2c_testbench.sda_pad_io[0]
+@1001200
+-group_end
+@800022
+#{top.i2c_testbench.scl_pad_io[4:0]} top.i2c_testbench.scl_pad_io[4] top.i2c_testbench.scl_pad_io[3] top.i2c_testbench.scl_pad_io[2] top.i2c_testbench.scl_pad_io[1] top.i2c_testbench.scl_pad_io[0]
+@28
+top.i2c_testbench.scl_pad_io[4]
+top.i2c_testbench.scl_pad_io[3]
+top.i2c_testbench.scl_pad_io[2]
+top.i2c_testbench.scl_pad_io[1]
+top.i2c_testbench.scl_pad_io[0]
+@1001200
+-group_end
+@200
+-Wishbone
+@28
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_rst_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_clk_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_cyc_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_stb_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_we_i
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.rxr[7:0]
+#{top.i2c_testbench.s_wb_slave_out.dat[31:0]} top.i2c_testbench.s_wb_slave_out.dat[31] top.i2c_testbench.s_wb_slave_out.dat[30] top.i2c_testbench.s_wb_slave_out.dat[29] top.i2c_testbench.s_wb_slave_out.dat[28] top.i2c_testbench.s_wb_slave_out.dat[27] top.i2c_testbench.s_wb_slave_out.dat[26] top.i2c_testbench.s_wb_slave_out.dat[25] top.i2c_testbench.s_wb_slave_out.dat[24] top.i2c_testbench.s_wb_slave_out.dat[23] top.i2c_testbench.s_wb_slave_out.dat[22] top.i2c_testbench.s_wb_slave_out.dat[21] top.i2c_testbench.s_wb_slave_out.dat[20] top.i2c_testbench.s_wb_slave_out.dat[19] top.i2c_testbench.s_wb_slave_out.dat[18] top.i2c_testbench.s_wb_slave_out.dat[17] top.i2c_testbench.s_wb_slave_out.dat[16] top.i2c_testbench.s_wb_slave_out.dat[15] top.i2c_testbench.s_wb_slave_out.dat[14] top.i2c_testbench.s_wb_slave_out.dat[13] top.i2c_testbench.s_wb_slave_out.dat[12] top.i2c_testbench.s_wb_slave_out.dat[11] top.i2c_testbench.s_wb_slave_out.dat[10] top.i2c_testbench.s_wb_slave_out.dat[9] top.i2c_testbench.s_wb_slave_out.dat[8] top.i2c_testbench.s_wb_slave_out.dat[7] top.i2c_testbench.s_wb_slave_out.dat[6] top.i2c_testbench.s_wb_slave_out.dat[5] top.i2c_testbench.s_wb_slave_out.dat[4] top.i2c_testbench.s_wb_slave_out.dat[3] top.i2c_testbench.s_wb_slave_out.dat[2] top.i2c_testbench.s_wb_slave_out.dat[1] top.i2c_testbench.s_wb_slave_out.dat[0]
+#{top.i2c_testbench.s_wb_slave_in.adr[31:0]} top.i2c_testbench.s_wb_slave_in.adr[31] top.i2c_testbench.s_wb_slave_in.adr[30] top.i2c_testbench.s_wb_slave_in.adr[29] top.i2c_testbench.s_wb_slave_in.adr[28] top.i2c_testbench.s_wb_slave_in.adr[27] top.i2c_testbench.s_wb_slave_in.adr[26] top.i2c_testbench.s_wb_slave_in.adr[25] top.i2c_testbench.s_wb_slave_in.adr[24] top.i2c_testbench.s_wb_slave_in.adr[23] top.i2c_testbench.s_wb_slave_in.adr[22] top.i2c_testbench.s_wb_slave_in.adr[21] top.i2c_testbench.s_wb_slave_in.adr[20] top.i2c_testbench.s_wb_slave_in.adr[19] top.i2c_testbench.s_wb_slave_in.adr[18] top.i2c_testbench.s_wb_slave_in.adr[17] top.i2c_testbench.s_wb_slave_in.adr[16] top.i2c_testbench.s_wb_slave_in.adr[15] top.i2c_testbench.s_wb_slave_in.adr[14] top.i2c_testbench.s_wb_slave_in.adr[13] top.i2c_testbench.s_wb_slave_in.adr[12] top.i2c_testbench.s_wb_slave_in.adr[11] top.i2c_testbench.s_wb_slave_in.adr[10] top.i2c_testbench.s_wb_slave_in.adr[9] top.i2c_testbench.s_wb_slave_in.adr[8] top.i2c_testbench.s_wb_slave_in.adr[7] top.i2c_testbench.s_wb_slave_in.adr[6] top.i2c_testbench.s_wb_slave_in.adr[5] top.i2c_testbench.s_wb_slave_in.adr[4] top.i2c_testbench.s_wb_slave_in.adr[3] top.i2c_testbench.s_wb_slave_in.adr[2] top.i2c_testbench.s_wb_slave_in.adr[1] top.i2c_testbench.s_wb_slave_in.adr[0]
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_in
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_oen
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_out
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_ack_o
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_pad_i[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_pad_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.scl_padoen_o[4:0]
+#{top.i2c_testbench.s_wb_slave_in.dat[31:0]} top.i2c_testbench.s_wb_slave_in.dat[31] top.i2c_testbench.s_wb_slave_in.dat[30] top.i2c_testbench.s_wb_slave_in.dat[29] top.i2c_testbench.s_wb_slave_in.dat[28] top.i2c_testbench.s_wb_slave_in.dat[27] top.i2c_testbench.s_wb_slave_in.dat[26] top.i2c_testbench.s_wb_slave_in.dat[25] top.i2c_testbench.s_wb_slave_in.dat[24] top.i2c_testbench.s_wb_slave_in.dat[23] top.i2c_testbench.s_wb_slave_in.dat[22] top.i2c_testbench.s_wb_slave_in.dat[21] top.i2c_testbench.s_wb_slave_in.dat[20] top.i2c_testbench.s_wb_slave_in.dat[19] top.i2c_testbench.s_wb_slave_in.dat[18] top.i2c_testbench.s_wb_slave_in.dat[17] top.i2c_testbench.s_wb_slave_in.dat[16] top.i2c_testbench.s_wb_slave_in.dat[15] top.i2c_testbench.s_wb_slave_in.dat[14] top.i2c_testbench.s_wb_slave_in.dat[13] top.i2c_testbench.s_wb_slave_in.dat[12] top.i2c_testbench.s_wb_slave_in.dat[11] top.i2c_testbench.s_wb_slave_in.dat[10] top.i2c_testbench.s_wb_slave_in.dat[9] top.i2c_testbench.s_wb_slave_in.dat[8] top.i2c_testbench.s_wb_slave_in.dat[7] top.i2c_testbench.s_wb_slave_in.dat[6] top.i2c_testbench.s_wb_slave_in.dat[5] top.i2c_testbench.s_wb_slave_in.dat[4] top.i2c_testbench.s_wb_slave_in.dat[3] top.i2c_testbench.s_wb_slave_in.dat[2] top.i2c_testbench.s_wb_slave_in.dat[1] top.i2c_testbench.s_wb_slave_in.dat[0]
+#{top.i2c_testbench.s_wb_slave_in.sel[3:0]} top.i2c_testbench.s_wb_slave_in.sel[3] top.i2c_testbench.s_wb_slave_in.sel[2] top.i2c_testbench.s_wb_slave_in.sel[1] top.i2c_testbench.s_wb_slave_in.sel[0]
+@200
+-u_i2c_dut
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_in
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_oen
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_out
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_busy
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sda_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sda_out
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sda_in
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.scl_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.scl_out
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.scl_in
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.i2c_al
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.al
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.i2c_busy
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.irq_flag
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.tip
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.irxack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ien
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.core_en
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.iack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wr
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rd
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sto
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sta
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.done
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.iack_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_wacc
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.arst_n
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.inta_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_ack_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_cyc_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_stb_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_we_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.arst_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_rst_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.wb_clk_i
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_pad_i[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_pad_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sda_padoen_o[4:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sr[7:0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_num[3:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_num[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_num[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_num[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.if_num[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.sr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.cr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.rxr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.txr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.ctr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[15:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[15] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[14] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[13] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[12] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[11] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[10] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[9] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[8] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.prer[0]
+@200
+-byte_ctrl
+@420
+[color] 3
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.c_state
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sta
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.sto
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.tip
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.cnt_done
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.host_ack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.go
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.ld
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.shift
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.al
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_txd
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_rxd
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_ack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sda_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sda_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sda_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.scl_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.scl_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.scl_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.i2c_al
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.i2c_busy
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.ack_out
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.cmd_ack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.ack_in
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.write
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.read
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.stop
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.start
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.ena
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.nreset
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.rst
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.clk
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.dcnt[2:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.dcnt[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.dcnt[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.dcnt[0]
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.txr[7:0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[7:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.sr[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_cmd[3:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_cmd[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_cmd[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_cmd[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.core_cmd[0]
+@200
+-bit_ctrl
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_ack_o
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_adr_i[2:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_clk_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_cyc_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.ial
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.slave_wait
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.scl_sync
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.clk_en
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.dsda
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.dscl
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.ssda
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.sscl
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.dscl_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.sda_chk
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.isda_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.iscl_oen
+@420
+[color] 3
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.c_state
+@28
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.sda_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.sda_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.sda_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.scl_oen
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.scl_o
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.scl_i
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.dout
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.din
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.al
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.busy
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd_ack
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.ena
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.nreset
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.rst
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.clk
+@10022
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[15:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[15] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[14] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[13] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[12] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[11] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[10] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[9] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[8] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cnt[0]
 @22
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_dat_i[7:0]
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_dat_o[7:0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd[3:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.cmd[0]
 @28
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_rst_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_stb_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_wacc
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wb_we_i
-i2c_testbench.u_i2c_dut.u_wrapped_i2c.wrapped_i2c.wr
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.ibusy
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.cmd_stop
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.sto_condition
+top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.sta_condition
+@22
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[13:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[13] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[12] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[11] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[10] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[9] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[8] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[7] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[6] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[5] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[4] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[3] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.filter_cnt[0]
+@28
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fsda[2:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fsda[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fsda[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fsda[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fscl[2:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fscl[2] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fscl[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.fscl[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.csda[1:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.csda[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.csda[0]
+#{top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.cscl[1:0]} top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.cscl[1] top.i2c_testbench.xwb_wrapper_no.u_i2c_dut.byte_ctrl.bit_ctrl.bus_status_ctrl.cscl[0]
 [pattern_trace] 1
 [pattern_trace] 0

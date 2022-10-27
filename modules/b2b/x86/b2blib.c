@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-July-2021
+ *  version : 11-Oct-2021
  *
  * library for b2b
  *
@@ -56,11 +56,16 @@
 #define GSI           0x00000651
 #define LM32_RAM_USER 0x54111351
 
+// experimental hackish for debugging
+#define DEBUGFNAME    "/tmp/b2blib.log" // name of logfile
+
 // public variables
 eb_socket_t  eb_socket;                 // EB socket
 eb_address_t lm32_base;                 // lm32
 eb_address_t b2b_cmd;                   // command, write
 eb_address_t b2b_state;                 // state of state machine
+uint32_t     b2b_flagDebug = 0;         // flag debug
+FILE         *logfile = NULL;           // log file 
 
 // application specific stuff
 // set values
@@ -108,7 +113,7 @@ uint64_t b2b_getSysTime()
 {
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+  return tv.tv_sec * (uint64_t)1000000000+ tv.tv_usec * (uint64_t)1000;
 } // b2b_getSysTime()
 
 
@@ -123,6 +128,7 @@ const char* b2b_status_text(uint32_t code)
     case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s", code, "no RF signal detected"); break;
     case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
     case B2B_STATUS_NOKICK               : sprintf(message, "error %d, %s", code, "no kicker signal detected"); break;
+    case B2B_STATUS_BADSETTING           : sprintf(message, "error %d, %s", code, "bad setting data"); break;
     default                              : sprintf(message, "%s", comlib_statusText(code)); break;
   } // switch code
   
@@ -168,7 +174,43 @@ void b2b_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
   *nsecs = (uint32_t)(ts % 1000000000);
   *secs  = (uint32_t)(ts / 1000000000);
 } // b2b_t2secs
-  
+
+
+void b2b_log(char *message){
+  uint64_t ts;
+  uint32_t secs;
+  uint32_t nsecs;
+  uint32_t msecs;
+  char     mess[81];
+  int      len;
+
+  if (!logfile) return;
+
+  ts    = b2b_getSysTime();
+  b2b_t2secs(ts, &secs, &nsecs);
+  msecs = nsecs / 1000000;
+
+  len = strlen(message);
+  if (len > 80) len = 80;
+    
+  strncat(mess, message, len);
+  fprintf(logfile, "%12u.%03u: %s\n", secs, msecs, message);
+  fflush(logfile);
+} // b2b_log
+
+void b2b_debug(uint32_t flagDebug)
+{
+  if (flagDebug > 0) {
+    if (!logfile) logfile = fopen(DEBUGFNAME, "a");
+    if (logfile) b2b_flagDebug = 1;
+    else         b2b_flagDebug = 0;
+  } // if flagdebug
+  else {
+    b2b_flagDebug = 0;
+    if (logfile) fclose(logfile);
+  } // else flagdebug
+} // b2b_debug
+
 
 uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address)
 {
@@ -177,6 +219,9 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
   int                 nDevices;                            // number of instantiated cores
 
+  // b2b_debug(1);                                            /* enable/disable this for implicit debugging */
+  b2b_log("open firmware");
+  
   *ebDevice = 0x0;
   if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (this is a quick hack)
   nDevices = 1;
@@ -230,7 +275,7 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
-  
+
   return COMMON_STATUS_OK;
 } // b2b_firmware_open
 
@@ -240,12 +285,16 @@ uint32_t b2b_firmware_close(uint64_t ebDevice)
   eb_status_t status;
   eb_device_t eb_device;
 
+  b2b_log("close firmware");
+  
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
   
   // close Etherbone device and socket
   if ((status = eb_device_close(eb_device)) != EB_OK) return COMMON_STATUS_EB;
   if ((status = eb_socket_close(eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+
+  b2b_debug(0);
 
   return COMMON_STATUS_OK;
 } // b2b_firmware_close
@@ -368,6 +417,10 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_status_t  eb_status;    // eb status
   uint32_t     gidExt;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
+
+  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
+  // b2b_log("ext upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -409,6 +462,8 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
+  b2b_log(buff);
+  
   return COMMON_STATUS_OK;
 } // b2b_context_ext_upload
 
@@ -419,6 +474,9 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_status_t  eb_status;    // eb status
   uint32_t     gidInj;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
+
+  //b2b_log("inj_upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -453,6 +511,9 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
+  sprintf(buff, "inj_upload: sidExt %u, gid %u", sidExt, gid);
+  b2b_log(buff);
+  
   return COMMON_STATUS_OK;
 } // b2b_context_inj_upload
 
@@ -531,6 +592,8 @@ void b2b_cmd_submit(uint64_t ebDevice)
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2B_CMD_CONFSUBMIT, 0, eb_block);
   usleep(WAITCMDDONE); // wait for command execution to complete
+  b2b_log("cmd_submit done");
+
 } // b2b_cmd_submit
 
 

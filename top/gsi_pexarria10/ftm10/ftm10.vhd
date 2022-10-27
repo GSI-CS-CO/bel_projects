@@ -14,13 +14,8 @@ entity ftm10 is
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_pllref_i     : in std_logic; -- 125 MHz PLL reference
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_sfpref_i     : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator
-
-    clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
     clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -227,12 +222,12 @@ architecture rtl of ftm10 is
     ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX FTM10";
-  constant c_project       : string := "ftm10";
-  constant c_cores         : natural:= 4;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_family       : string  := "Arria 10 GX FTM10";
+  constant c_project      : string  := "ftm10";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_profile_name : string  := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
+  constant c_cores        : natural := 4;
 
 begin
 

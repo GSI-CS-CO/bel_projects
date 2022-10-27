@@ -3,7 +3,7 @@ source settings.sh
 
 # Run
 echo "Removing old files ..."
-for item in $TB_NAME *.o *.vcd *.cf
+for item in $TB_NAME *.o *.vcd *.cf *.ghw
 do
   echo "Removing $item ..."
   rm $item > /dev/null 2>&1
@@ -16,8 +16,7 @@ echo "Elaborating $TB_NAME ..."
 $GHDL_BIN -e --work=work $GHDL_FLAGS $TB_NAME
 
 echo "Starting simulation ..."
-$GHDL_BIN -r $TB_NAME --stop-time=$STOP_TIME --vcd=$VCD_NAME
-
-echo "Hint: View simulation -> $VCD_VIEWER $TB_NAME.vcd &"
+#$GHDL_BIN -r $TB_NAME --stop-time=$STOP_TIME --vcd=$VCD_NAME # --wave=$GDW_NAME
+$GHDL_BIN -r $TB_NAME --stop-time=$STOP_TIME --wave=$GHW_NAME
 
 exit 0
