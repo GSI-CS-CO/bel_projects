@@ -54,6 +54,7 @@
 
 #define OC_I2C_TXR     0x03     /* Transmit byte register             */
 #define OC_I2C_CR      0x04     /* Command register                   */
+#define OC_I2C_IFNUM   0x05     /* Interface number register          */
 
 /* ----- Read-only registers                                          */
 
