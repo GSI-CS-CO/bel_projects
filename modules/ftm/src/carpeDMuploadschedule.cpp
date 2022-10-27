@@ -605,8 +605,8 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::CarpeDMimpl::generateMgmtData() {
-    std::string tmpStrBufGrp = fixArchiveVersion(ct.store());
-    std::string tmpStrBufCov = fixArchiveVersion(ct.store());
+    std::string tmpStrBufGrp = gt.store();
+    std::string tmpStrBufCov = ct.store();
     atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
     std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov;
 
