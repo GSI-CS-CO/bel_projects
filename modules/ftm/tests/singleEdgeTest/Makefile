@@ -3,20 +3,10 @@
 ############################
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
-  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  EB_LIB	=$(EBPATH)/lib/libetherbone.so
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
-  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  EB_LIB	=$(EBPATH)/lib/libetherbone.so
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 endif
 endif
 
@@ -28,19 +18,13 @@ ifeq ($(RIGHTS),0)
 else
   PREFIX ?= $$HOME/.local
 endif
-INSTALLPATH     = $(PREFIX)/bin
-
-EB_LIB		?=-letherbone
-SER_LIB		?=-lboost_serialization
-GRAPH_LIB	?=-lboost_graph
-RE_LIB		?=-lboost_regex
-
+INSTALLPATH = $(PREFIX)/bin
 
 CXX = g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
-LDLIBS = -L../../lib -lstdc++ $(SER_LIB) $(GRAPH_LIB) $(RE_LIB) -ldmtest -lgcov
+LDLIBS = -L../../lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
