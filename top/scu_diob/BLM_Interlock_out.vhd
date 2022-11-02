@@ -31,7 +31,6 @@ architecture rtl of BLM_Interlock_out is
 
 
       signal in_overflow: std_logic_vector(1023 downto 0);
-     -- signal status_Reg: std_logic_vector(15 downto 0);
       signal out_mux_res: std_logic_vector(5 downto 0);
       signal gate_err_res: std_logic_vector(5 downto 0);
       signal intl_wd_res: std_logic_vector(5 downto 0);

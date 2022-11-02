@@ -12,7 +12,6 @@ package scu_diob_pkg is
   TYPE    t_led_array               is array (1 to 12) of std_logic_vector(6 downto 1);
   TYPE    t_id_array                is array (1 to 12) of std_logic_vector(7 downto 0);
   TYPE    t_IOBP_array              is array (1 to 12) of std_logic_vector(5 downto 0);
-  TYPE    t_test_DATA               is array (0 to 7) of std_logic_vector(9 downto 0);
   TYPE    t_IO_Reg_0_to_4_Array     is array (0 to 4)  of std_logic_vector(15 downto 0);
   TYPE    t_in_array                is array (0 to 8) of std_logic_vector(5 downto 0);
   TYPE    t_counter_in_Array        is array (0 to 7)of std_logic_vector(63 downto 0);

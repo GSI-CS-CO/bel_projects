@@ -9,7 +9,6 @@ port(
   clk_i : in std_logic;          -- chip-internal pulsed clk signal
   rstn_i : in std_logic;        -- reset signal
   AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
-  Test_In_Mtx   : in t_Test_Data; 
   watchdog_ena  : in std_logic_vector( 8 downto 0);
   In_Mtx        : out t_in_array;
   INTL_out      : out t_in_array

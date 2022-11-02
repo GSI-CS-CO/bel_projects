@@ -17,7 +17,7 @@ port (
     counter_maske_Reg : in std_logic_vector(31 downto 0);
     out_maske_Reg     : in std_logic_vector(31 downto 0);
     BLM_ena          : in std_logic_vector(31 downto 0);      
-    Test_In_Mtx   : in t_Test_Data; 
+    Test_In_Mtx   : in std_logic_vector(8 downto 0); 
     AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
     INTL_Output   : out std_logic_vector(5 downto 0);
     BLM_status_Reg : out t_IO_Reg_0_to_7_Array
@@ -41,9 +41,9 @@ signal    DOWN_OVERFLOW:      t_counter_in_Array ;
 signal    gate_UP_OVERFLOW:   t_gate_counter_in_Array;
 signal    gate_DOWN_OVERFLOW: t_gate_counter_in_Array;
 
-signal    test_signal:        std_logic_vector(9 downto 0);
+
 signal    in_mux:             t_in_array;
-signal    test_signal_sel:    std_logic_vector(2 downto 0); 
+
 signal    Interlock_wd:       t_in_array;
 signal    watchdog_warn:      std_logic_vector(53 downto 0);
 signal    VALUE_IN:            std_logic_vector(63 downto 0);
@@ -55,6 +55,7 @@ component BLM_In_Multiplexer is
       clk_i : in std_logic;          -- chip-internal pulsed clk signal
       rstn_i : in std_logic;        -- reset signal
       AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
+    
       watchdog_ena  : in std_logic_vector( 8 downto 0);
       In_Mtx        : out t_in_array;
       INTL_out      : out t_in_array
@@ -95,10 +96,10 @@ component BLM_gate_timing_seq is
           neg_threshold     : in std_logic_vector(31 downto 0);
           VALUE_IN          : in std_logic_vector(63 downto 0);    -- Load counter register input
           GATE_OUT          : in std_logic_vector(11 downto 0);
-          UP_OVERFLOW       : out t_counter_in_Array ;     -- UP_Counter overflow
-          DOWN_OVERFLOW     : out t_counter_in_Array;      -- UP_Counter overflow
-          gate_UP_OVERFLOW  : out t_gate_counter_in_Array;
-          gate_DOWN_OVERFLOW: out t_gate_counter_in_Array
+          UP_OVERFLOW       : out t_counter_in_Array ;     -- UP_Counter overflow for the input signals
+          DOWN_OVERFLOW     : out t_counter_in_Array;      -- DOWN_Counter overflow for the input signals
+          gate_UP_OVERFLOW  : out t_gate_counter_in_Array; -- UP_Counter overflow for the gate signals
+          gate_DOWN_OVERFLOW: out t_gate_counter_in_Array  -- DOWN_Counter overflow for the gate signals
       );
   
         end component BLM_counter_pool;
@@ -161,32 +162,18 @@ begin
 
 ---- counter pool ------------------------------------------------------------------------------
 
-BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 1 Test signal pro time (I use Test_in_Mtx(5 downto 0)... the MSB have been defined as "00")
-begin
+BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 8 test signals
+    begin
            if not rstn_sys='1' then 
             count_enable <= (others =>'0');
  --  
-              test_signal <= (others =>'0');
+           
               
               watchdog_warn <= (others =>'0');
               
        elsif (clk_sys'EVENT AND clk_sys = '1') then
 
-            
-            case BLM_ena(11 downto 9) is 
-
-                when "000" => test_signal <=  Test_In_Mtx(0);
-                when "001" => test_signal <=  Test_In_Mtx(1);
-                when "010" => test_signal <=  Test_In_Mtx(2);
-                when "011" => test_signal <=  Test_In_Mtx(3);
-                when "100" => test_signal <=  Test_In_Mtx(4);
-                when "101" => test_signal <=  Test_In_Mtx(5);
-                when "110" => test_signal <=  Test_In_Mtx(6);
-                when "111" => test_signal <=  Test_In_Mtx(7);  
-                when others => null;
-
-            end case;
-
+         
             watchdog_warn <= Interlock_wd(8) & Interlock_wd(7) & Interlock_wd(6) & Interlock_wd(5) & Interlock_wd(4) & Interlock_wd(3) & Interlock_wd(2) & Interlock_wd(1) & Interlock_wd(0);
            
                 if (watchdog_warn = ("000000000000000000000000000000000000000000000000000000")) or (gate_error = "000000000000") then 
@@ -199,7 +186,8 @@ begin
             
         end if;
     end process;
-            VALUE_IN   <= test_signal  & in_mux(8) & in_mux(7) & in_mux(6) & in_mux(5) & in_mux(4) & in_mux(3) & in_mux(2) & in_mux(1) & in_mux(0);
+            VALUE_IN   <= Test_In_Mtx & '0' & in_mux(8) & in_mux(7) & in_mux(6) & in_mux(5) & in_mux(4) & in_mux(3) & in_mux(2) & in_mux(1) & in_mux(0); 
+            --ground and Test signals are sent to the counter pool together with the input signals
 
     
 
