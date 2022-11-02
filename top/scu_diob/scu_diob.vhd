@@ -452,7 +452,7 @@ end component zeitbasis;
       counter_maske_Reg : in std_logic_vector(31 downto 0);
       out_maske_Reg     : in std_logic_vector(31 downto 0);
       BLM_ena      : in std_logic_vector( 31 downto 0);      
-      Test_In_Mtx   : in t_Test_Data; 
+      Test_In_Mtx   : in std_logic_vector(8 downto 0);
       AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
       INTL_Output   : out std_logic_vector(5 downto 0);
       BLM_status_Reg : out t_IO_Reg_0_to_7_Array
@@ -606,6 +606,31 @@ port (
   
     );
     end component p_connector;
+
+    component test_sig_pll is
+      PORT
+      (
+        areset		: IN STD_LOGIC  := '0';
+        inclk0		: IN STD_LOGIC  := '0';
+        c0		: OUT STD_LOGIC ;
+        c1		: OUT STD_LOGIC ;
+        c2		: OUT STD_LOGIC ;
+        c3		: OUT STD_LOGIC ;
+        c4		: OUT STD_LOGIC ;
+        c5		: OUT STD_LOGIC ;
+        c6		: OUT STD_LOGIC 
+      );
+    end component test_sig_pll; 
+
+  component  test_sig1_pll IS
+	PORT
+	(
+		areset		: IN STD_LOGIC  := '0';
+		inclk0		: IN STD_LOGIC  := '0';
+		c0		: OUT STD_LOGIC ;
+		c1		: OUT STD_LOGIC 
+	);
+END component test_sig1_pll;
 
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
@@ -912,23 +937,9 @@ signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+signal Test_In_Mtx:  std_logic_vector(8 downto 0);
+signal test_locked: std_logic;
 
-
-
---type Test_DATA is array (0 to 9)      of std_logic_vector(7 downto 0);
---updated type Test_DATA is array (0 to 7)      of std_logic_vector(9 downto 0);
-  constant Test_In_Mtx : t_test_DATA := ---value to be cecked...for now I just added two '0' as LSB
-            (
-             "0011001100",    -- 24.9267 MHz    0
-             "0010011001",    -- 18.6951 MHz    1
-             "0001100110",    -- 12.4633 MHz    2
-             "0000110011",    --  6.2317 MHz    3
-             "0000001100",    --  1.4663 MHz    4
-             "0000000101",  --  610.9482 kHz    5 
-             "0000000011",   -- 366.6657 kHz    6 
-             "0000000001"    -- 122.1896 kHz    7
-           );  
-             
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
 
 -----------------DAQ-Signale---------------------------------------------------------------------------------------------------
@@ -2043,6 +2054,30 @@ AW_B12s1_connection: p_connector
     daq_dat                => daq_dat(1 to 7),
     daq_diob_ID            => daq_diob_ID
     );
+
+    Test_signals_0_6_gen_mod: test_sig_pll 
+      port map (
+        areset		=> rstn_sys,
+        inclk0		=> clk_sys,     
+        c0      	=> Test_In_Mtx(8),      --25 MHz
+        c1	      => Test_In_Mtx(7),      --20 MHz   
+        c2		    => Test_In_Mtx(6),      --15 MHz  
+        c3	      => Test_In_Mtx(5),      --12.5 MHz    
+        c4	    	=> Test_In_Mtx(4),      --10 MHz 
+        c5		    => Test_In_Mtx(3),      -- 7.5 MHz  
+        c6		    => Test_In_Mtx(2)    -- 6.25 MHz    
+       
+      );
+      
+      Test_signals_1_0_gen_mod: test_sig1_pll 
+      port map
+      (
+        areset		=> rstn_sys,
+        inclk0	  => clk_sys,     
+        c0		    => Test_In_Mtx(1),    -- 4 MHz    
+        c1       	=> Test_In_Mtx(0)    -- 2 MHz    
+      );
+
 
 
 end architecture;

@@ -30,7 +30,9 @@ files = [
    "IOBP_LED_ID_Module.vhd",
    "p_connector.vhd",
    "BLM_in_Multiplexer.vhd",
-   "BLM_gate_timing_seq_elem.vhd"
+   "BLM_gate_timing_seq_elem.vhd",
+   "test_sig_pll.vhd",
+   "test_sig1_pll.vhd"
 ]
 
 modules = {
