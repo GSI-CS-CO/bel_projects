@@ -97,7 +97,7 @@ port(
   --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
   --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
   Deb_Sync66             : out std_logic_vector(65 downto 0);
-  daq_dat                : out t_daq_dat(1 to 7);
+  daq_dat                : out t_daq_dat;
   daq_diob_ID            : out std_logic_vector(15 downto 0)
   
   );
@@ -449,16 +449,9 @@ END IF;
 
 ---------------------------------------------------------------------------------------------------------
   --################################      daq_channels assignments     ##################################
-    daq_dat(1) <= "0000"& AW_IOBP_Input_Reg(1)(11 downto 0);
-    daq_dat(2) <= "0000"& AW_IOBP_Input_Reg(2)(11 downto 0);
-    daq_dat(3) <= "0000"& AW_IOBP_Input_Reg(3)(11 downto 0);
-    daq_dat(4) <= "0000"& AW_IOBP_Input_Reg(4)(11 downto 0);
-    daq_dat(5) <= "0000"& AW_IOBP_Input_Reg(5)(11 downto 0);
-    daq_dat(6)(5 downto 0) <= AW_IOBP_Input_Reg(6)(5 downto 0);
-    
-   -- daq_dat(1) <= AW_Input_Reg(7);
-   -- daq_dat(2) <= AW_Input_Reg(8);
-    daq_dat(7)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
+
+    daq_dat(1)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
+    daq_dat(1)(15 downto 6) <= (others => '0');
     daq_diob_ID(15 downto 0)<= "0000000000010011" ; --"00000000"& c_AW_INLB12S1.ID;
 --############################################################################################################
 

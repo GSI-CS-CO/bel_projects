@@ -47,7 +47,8 @@ signal    in_mux:             t_in_array;
 signal    Interlock_wd:       t_in_array;
 signal    watchdog_warn:      std_logic_vector(53 downto 0);
 signal    VALUE_IN:            std_logic_vector(63 downto 0);
-
+constant ZERO_INTL:  std_logic_vector (watchdog_warn'range) := (others => '0');
+constant ZERO_gate_err:  std_logic_vector (gate_error'range) := (others => '0');
 
 component BLM_In_Multiplexer is
 
@@ -111,7 +112,7 @@ component BLM_gate_timing_seq is
           port (
                   CLK              : in std_logic;      -- Clock
                   nRST             : in std_logic;      -- Reset
-                  out_mux_sel      : in std_logic_vector(31 downto 0);
+                 out_mux_sel      : in std_logic_vector(31 downto 0);
                   UP_OVERFLOW      : in t_counter_in_Array ; 
                   DOWN_OVERFLOW    : in t_counter_in_Array  ; 
                   gate_UP_OVERFLOW  : out t_gate_counter_in_Array;
@@ -176,7 +177,7 @@ BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 8 test signa
          
             watchdog_warn <= Interlock_wd(8) & Interlock_wd(7) & Interlock_wd(6) & Interlock_wd(5) & Interlock_wd(4) & Interlock_wd(3) & Interlock_wd(2) & Interlock_wd(1) & Interlock_wd(0);
            
-                if (watchdog_warn = ("000000000000000000000000000000000000000000000000000000")) or (gate_error = "000000000000") then 
+                if ((watchdog_warn = ZERO_INTL) or (gate_error = ZERO_gate_err)) then 
                 count_enable <=counter_maske_Reg(7 downto 0);
                  
                 else

@@ -601,7 +601,7 @@ port (
     --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
    -- IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
     Deb_Sync66             : out std_logic_vector(65 downto 0);
-    daq_dat                : out t_daq_dat(1 to 7);
+    daq_dat                : out t_daq_dat;
     daq_diob_ID            : out std_logic_vector(15 downto 0)
   
     );
@@ -2051,7 +2051,7 @@ AW_B12s1_connection: p_connector
     s_nLED_User3_i         => s_nLED_User3_i,
     --IOBP_Output_Readback   =>  BLM_Status_Reg(0),
     Deb_Sync66             => Deb_Sync66,
-    daq_dat                => daq_dat(1 to 7),
+    daq_dat                => daq_dat,
     daq_diob_ID            => daq_diob_ID
     );
 
