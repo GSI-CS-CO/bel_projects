@@ -248,7 +248,7 @@ riscv-toolchain-download:
 	test -f riscv_gcc.tgz || wget https://ohwr.org/project/wrpc-sw/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz -O riscv_gcc.tgz
 
 riscv-toolchain:	riscv-toolchain-download
-	test -d riscv-toolchain || tar zxvf riscv_gcc.tgz -o 
+	test -d riscv-toolchain || tar zxvf riscv_gcc.tgz -o
 	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
 
 riscv-toolchain-clean::
@@ -262,7 +262,6 @@ wrpc-sw-config::
 firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
-	@echo "Skipping firmware..."
 else
 	@echo "Info: Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
