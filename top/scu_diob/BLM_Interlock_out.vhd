@@ -29,8 +29,10 @@ architecture rtl of BLM_Interlock_out is
       signal overflow_in: std_logic_vector (1535 downto 0);
       signal m: integer range 0 to 255 :=0;
       signal overflow_cnt: std_logic_vector(7 downto 0);
-
-
+      constant ZERO_OVERFLOW:  std_logic_vector (in_overflow'range) := (others => '0');
+      constant ZERO_gate_OVERFLOW:  std_logic_vector (gate_overflow'range) := (others => '0');
+      signal no_overflow: std_logic;
+      signal no_gate_overflow: std_logic;
       component overflow_ram IS
       PORT
       (
@@ -57,7 +59,8 @@ architecture rtl of BLM_Interlock_out is
 
               overflow_in <= (OTHERS =>'0');
               overflow_cnt <= (OTHERS =>'0');
-     
+              no_overflow <='0';
+              no_gate_overflow <='0';
           
        elsif (CLK'EVENT AND CLK = '1') then  
        
@@ -65,13 +68,21 @@ architecture rtl of BLM_Interlock_out is
         in_overflow <= UP_OVERFLOW(7)&UP_OVERFLOW(6)&UP_OVERFLOW(5)&UP_OVERFLOW(4)&UP_OVERFLOW(3)&UP_OVERFLOW(2)&UP_OVERFLOW(1)&UP_OVERFLOW(0)& 
         DOWN_OVERFLOW(7)& DOWN_OVERFLOW(6)& DOWN_OVERFLOW(5)& DOWN_OVERFLOW(4)& DOWN_OVERFLOW(3)& DOWN_OVERFLOW(2)& DOWN_OVERFLOW(1) & DOWN_OVERFLOW(0);
 
+        if in_overflow = ZERO_OVERFLOW then
+          no_overflow <='1';
+        end if;
+        
+
         gate_overflow <= gate_UP_OVERFLOW(5) & gate_UP_OVERFLOW(4) & gate_UP_OVERFLOW(3) & gate_UP_OVERFLOW(2) & gate_UP_OVERFLOW(1) & gate_UP_OVERFLOW(0) &
          gate_DOWN_OVERFLOW(5) & gate_DOWN_OVERFLOW(4) & gate_DOWN_OVERFLOW(3) & gate_DOWN_OVERFLOW(2) & gate_DOWN_OVERFLOW(1) & gate_DOWN_OVERFLOW(0); 
 
+       if gate_overflow = ZERO_gate_OVERFLOW then
+          no_gate_overflow <='1';
+        end if;
 
         overflow_in(1239 downto 0) <=  gate_error & Interlock_IN & "00" & gate_overflow & "0000" &in_overflow;
         overflow_in(1535 downto 1240) <= (others =>'0');
-    
+       
 
         if out_mux_sel(8) ='1' then 
            m <=0;
@@ -111,8 +122,8 @@ architecture rtl of BLM_Interlock_out is
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
 
-        BLM_status_reg(0)<=  out_mux_sel(7 downto 0) & "00" & INTL_Output;                                    -- out_mux_sel (input dentification) & overflow/Interlock/gate error
-        BLM_status_reg(1)<= "00"&gate_error(11 downto 6) & "00" & gate_error(5 downto 0);         -- gate error
+        BLM_status_reg(0)<=  out_mux_sel(7 downto 0)& no_gate_overflow & no_overflow &  INTL_Output; -- out_mux_sel(7..0) readback, gate_overflow e input_overflow absence, BLM output
+        BLM_status_reg(1)<= "00"& gate_error(11 downto 6) & "00" & gate_error(5 downto 0);         -- gate error
         BLM_status_reg(2)<= "00"& interlock_IN(11 downto 6) & "00" & Interlock_IN(5 downto 0);    -- interlock board 1 and board 2
         BLM_status_reg(3)<= "00"& interlock_IN(23 downto 18) & "00" & Interlock_IN(17 downto 12); -- interlock board 3 and board 4
         BLM_status_reg(4)<= "00" & interlock_IN(35 downto 30)&"00"& Interlock_IN(29 downto 24);   -- interlock board 5 and board 6
