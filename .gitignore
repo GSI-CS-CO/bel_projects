@@ -1,6 +1,7 @@
 gcc-4.5.3-lm32.tar.xz
 lm32-elf-gcc.tar.xz
 riscv_gcc.tar.xz
+riscv_gcc.tgz
 toolchain/
 riscv-toolchain/
 bin/
@@ -39,3 +40,4 @@ greybox_tmp
 buildid.c
 ram.ld
 .hdlmake
+
