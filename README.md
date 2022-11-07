@@ -29,6 +29,7 @@ GSI Timing Gateware and Tools
     - [Python not found](#python-not-found)
     - [Setuptools not found](#setuptools-not-found)
     - [Compiling Saftlib](#compiling-saftlib)
+    - [CC not found](#cc-not-found)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -245,6 +246,18 @@ Solution:
 ```
 sudo apt-get install pkg-config
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
+
+### CC not found
+
+Error: make[1]: cc: No such file or directory
+
+Solution:
+
+```
+which cc # cc: Command not found. 
+update-alternatives --list cc
+which cc # /usr/bin/cc
 ```
 
 ## Git
