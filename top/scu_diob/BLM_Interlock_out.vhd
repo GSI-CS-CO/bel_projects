@@ -12,8 +12,8 @@ port (
         out_mux_sel      : in std_logic_vector(31 downto 0);
         UP_OVERFLOW      : in t_counter_in_Array ; 
         DOWN_OVERFLOW    : in t_counter_in_Array  ; 
-        gate_UP_OVERFLOW  : out t_gate_counter_in_Array;
-        gate_DOWN_OVERFLOW: out t_gate_counter_in_Array;
+        gate_UP_OVERFLOW  : in t_gate_counter_in_Array;
+        gate_DOWN_OVERFLOW: in t_gate_counter_in_Array;
         gate_error       : in std_logic_vector(11 downto 0);
         Interlock_IN     : in std_logic_vector(53 downto 0);
         INTL_Output      : out std_logic_vector(5 downto 0);
