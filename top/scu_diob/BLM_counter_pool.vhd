@@ -55,70 +55,59 @@ signal cnt_UP_IN  : t_counter_in_Array;
 
 signal gate_UP_IN        : t_gate_counter_in_Array;
 signal gate_DOWN_IN      : t_gate_counter_in_Array;
+signal cnt_load: std_logic_vector(7 downto 0);
 
 
 begin
 
 counter_input_process: process (LOAD)
 
+begin
+for i in 0 to 7 loop
+    if LOAD(i)='0' then 
+        cnt_load(i) <='0';
+    else 
+        cnt_load(i) <='1';
+    end if;  
+end loop;
 
-
- begin
-
-  
- case LOAD(7 downto 0) is 
- when "00000001" => --
-                    cnt_UP_IN(0)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(0) <= VALUE_IN(52 downto 0) & VALUE_IN(53 downto 43); --the 10 MSB are tested with a choiced test signals
-
-                    gate_UP_IN(0)  <= GATE_OUT;
-                    gate_DOWN_IN(0) <= GATE_OUT(10 downto 0)& GATE_OUT(11);
+cnt_UP_IN(0)    <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(0)  <= VALUE_IN(52 downto 0) & VALUE_IN(53 downto 43); --the 10 MSB are tested with a choiced test signals
+gate_UP_IN(0)   <= GATE_OUT;
+gate_DOWN_IN(0) <= GATE_OUT(10 downto 0)& GATE_OUT(11);
                     
- when "00000010" =>  --
-                    cnt_UP_IN(1)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(1) <= VALUE_IN(51 downto 0) &  VALUE_IN(53 downto 52) & VALUE_IN(42 downto 33);
+cnt_UP_IN(1)    <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(1)  <= VALUE_IN(51 downto 0) &  VALUE_IN(53 downto 52) & VALUE_IN(42 downto 33);
+gate_UP_IN(1)   <= GATE_OUT;
+gate_DOWN_IN(1) <= GATE_OUT(9 downto 0)& GATE_OUT(11 downto 10);
 
-                    gate_UP_IN(1)  <= GATE_OUT;
-                    gate_DOWN_IN(1) <= GATE_OUT(9 downto 0)& GATE_OUT(11 downto 10);
+cnt_UP_IN(2)    <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(2)  <= VALUE_IN(50 downto 0) & VALUE_IN(53 downto 51) &VALUE_IN(32 downto 23);    
+gate_UP_IN(2)   <= GATE_OUT;
+gate_DOWN_IN(2) <= GATE_OUT(8 downto 0)& GATE_OUT(11 downto 9);
 
- when "00000100" =>  --
-                    cnt_UP_IN(2)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(2) <= VALUE_IN(50 downto 0) & VALUE_IN(53 downto 51) &VALUE_IN(32 downto 23);    
-
-                    gate_UP_IN(2)  <= GATE_OUT;
-                    gate_DOWN_IN(2) <= GATE_OUT(8 downto 0)& GATE_OUT(11 downto 9);
-
-when "00001000" =>  --
-                    cnt_UP_IN(3)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(3) <= VALUE_IN(49 downto 0) & VALUE_IN(53 downto 50) &VALUE_IN(22 downto 13);   
-
-                    gate_UP_IN(3)  <= GATE_OUT;
-                    gate_DOWN_IN(3) <= GATE_OUT(7 downto 0)& GATE_OUT(11 downto 8);
+cnt_UP_IN(3)    <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(3)  <= VALUE_IN(49 downto 0) & VALUE_IN(53 downto 50) &VALUE_IN(22 downto 13);   
+gate_UP_IN(3)   <= GATE_OUT;
+gate_DOWN_IN(3) <= GATE_OUT(7 downto 0)& GATE_OUT(11 downto 8);
                    
-when "00010000" =>  --
-                    cnt_UP_IN(4)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(4) <= VALUE_IN(48 downto 0) & VALUE_IN(53 downto 49) &VALUE_IN(12 downto 3); 
+ cnt_UP_IN(4)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(4)  <= VALUE_IN(48 downto 0) & VALUE_IN(53 downto 49) &VALUE_IN(12 downto 3); 
+gate_UP_IN(4)   <= GATE_OUT;
+gate_DOWN_IN(4) <= GATE_OUT(6 downto 0)& GATE_OUT(11 downto 7);
 
-                    gate_UP_IN(4)  <= GATE_OUT;
-                    gate_DOWN_IN(4) <= GATE_OUT(6 downto 0)& GATE_OUT(11 downto 7);
-
-when "00100000" =>  --
-                    cnt_UP_IN(5)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(5) <= VALUE_IN(47 downto 0) & VALUE_IN(53 downto 48) & (VALUE_IN(2 downto 0)& VALUE_IN(53 downto 47)); 
-
-                    gate_UP_IN(5)  <= GATE_OUT;
-                    gate_DOWN_IN(5) <= GATE_OUT(5 downto 0)& GATE_OUT(11 downto 6);
+cnt_UP_IN(5)    <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(5)  <= VALUE_IN(47 downto 0) & VALUE_IN(53 downto 48) & (VALUE_IN(2 downto 0)& VALUE_IN(53 downto 47)); 
+gate_UP_IN(5)   <= GATE_OUT;
+gate_DOWN_IN(5) <= GATE_OUT(5 downto 0)& GATE_OUT(11 downto 6);
                     
-when "01000000" =>  --
-                    cnt_UP_IN(6)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(6) <= VALUE_IN(46 downto 0) & VALUE_IN(53 downto 47)& VALUE_IN(46 downto 37); 
+cnt_UP_IN(6)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(6) <= VALUE_IN(46 downto 0) & VALUE_IN(53 downto 47)& VALUE_IN(46 downto 37); 
                     
-when "10000000" =>  --
-                    cnt_UP_IN(7)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
-                    cnt_DOWN_IN(7) <= VALUE_IN(45 downto 0) & VALUE_IN(53 downto 46) & VALUE_IN(36 downto 27);
+cnt_UP_IN(7)   <= VALUE_IN(53 downto 0) & VALUE_IN(63 downto 54);
+cnt_DOWN_IN(7) <= VALUE_IN(45 downto 0) & VALUE_IN(53 downto 46) & VALUE_IN(36 downto 27);
 
-when others => NULL;
- end case;
+
  end process;
 
 
@@ -138,7 +127,7 @@ when others => NULL;
         (   CLK           => clk,    -- Clock
             nRST          => nRST,      -- Reset
             CLEAR         => CLEAR,     -- Clear counter register
-            LOAD          => LOAD(i),      -- Load counter register
+            LOAD          => cnt_load(i),      -- Load counter register
             ENABLE        => ENABLE(i),   -- Enable count operation
             pos_threshold => to_integer(signed(pos_threshold)),
             neg_threshold => to_integer(signed(neg_threshold)),
