@@ -39,6 +39,7 @@ GSI Timing Gateware and Tools
     - [Arrow USB Programmer](#arrow-usb-programmer)
     - [Altera/Intel Ethernet Blaster](#alteraintel-ethernet-blaster)
   - [Timing Receiver](#timing-receiver)
+    - [Commissioning](#commissioning)
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
       - [ArriaV Devices](#arriav-devices)
@@ -123,9 +124,9 @@ make exploder5-sort # example
 ```
 
 # FAQ and Common Problems
-
 ## Synthesis
 ### Quartus Version
+
 Question: Which Version of Quartus Do I Need?
 
 Answer: We recommend to use Quartus 18.1.0 (Build 625 09/12/2018 SJ)
@@ -238,7 +239,6 @@ sudo apt-get install python-setuptools # Python 2.X
 ```
 
 ### Compiling Saftlib
-
 Error: Compilation: "Error message: ./configure: line 16708: syntax error near unexpected token 0.23' ./configure: line 16708: PKG_PROG_PKG_CONFIG(0.23)'"
 
 Solution:
@@ -249,7 +249,6 @@ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
 ### CC not found
-
 Error: make[1]: cc: No such file or directory
 
 Solution:
@@ -272,8 +271,8 @@ sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming
-
 ### USB-Blaster Issues
+
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 
 Solution: Create a new symlink:
@@ -283,15 +282,12 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-
 See bel_projects/doc/usbblaster/readme.md
 
 ### Xilinx Platform Cable II
-
 See bel_projects/doc/platform_cable/readme.md
 
 ### Arrow USB Programmer
-
 See bel_projects/doc/arrow_usb_programmer/readme.md
 
 ### Altera/Intel Ethernet Blaster
@@ -303,9 +299,27 @@ Default server port (programmer GUI): 1309
 </pre>
 
 ## Timing Receiver
+### Commissioning
+Configure the SPI flash chip:
+
+```
+eb-config-nv $device 10 4
+```
+
+Format the 1-wire EEPROM:
+
+```
+cd bel_projects/ip_cores/wrpc-sw/tools
+eb-w1-write $device 0 320 < sdb-wrpc.bin
+```
+
+Program FPGA from command line:
+
+```
+quartus_pgm -c 1 -m jtag -o 'p;device.sof'
+```
 
 ### Flashing
-
 Problem: Flashing might fail sometimes on certain devices and host combinations.
 
 Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
