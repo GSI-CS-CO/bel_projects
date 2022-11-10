@@ -156,7 +156,7 @@ begin
       (   CLK           => clk,    -- Clock
           nRST          => nRST,      -- Reset
           CLEAR         => CLEAR,     -- Clear counter register
-          LOAD          => LOAD(i),      -- Load counter register
+          LOAD          => cnt_load(i),      -- Load counter register
           ENABLE        => ENABLE(i),   -- Enable count operation
           pos_threshold => to_integer(signed(pos_threshold)),
           neg_threshold => to_integer(signed(neg_threshold)),
