@@ -94,7 +94,7 @@ package monster_pkg is
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;
       g_lvds_invert          : boolean := false;
-      g_en_tlu               : boolean := true;
+      g_en_tlu               : boolean := false;
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
