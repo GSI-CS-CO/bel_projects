@@ -936,7 +936,7 @@ architecture rtl of monster is
   constant c_loc_embedded_cpu : natural := 2;
   constant c_loc_scubus_tag   : natural := 3;
 
-  constant c_wrc_size         : natural := 196608/4;
+  constant c_wrc_size         : natural := 131072/4;
 
   function f_channel_types return t_nat_array is
     constant c_scu_channel_types : t_nat_array(3 downto 0) := (
