@@ -2,6 +2,7 @@
 #define _SINGLEEDGESTATUS_H_
 
 #include <map>
+#include <string>
 
 class SingleEdgeStatus {
  private:
