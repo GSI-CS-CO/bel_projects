@@ -147,11 +147,10 @@ inline std::string fixArchiveVersion(const std::string& s) {
     //hack to ensure correct boost textarchive version
     //not nice, but I'm fed up to here with the crappy boost archive documentation
     const std::string tag = "serialization::archive ";
-    const std::string myVer = "10"; // Boost Version 1.53 Archiver Version is 10
+    const std::string myVer = "17"; // Boost Version 1.69 Archiver Version is 17
     std::string sRet = s;
     size_t pos = sRet.find(tag, 0) + tag.length();
     sRet.replace(pos, myVer.length(), myVer);
 
     return sRet;
-
 }

@@ -26,6 +26,19 @@ std::string errCode(int status) {
   return errCode;
 }
 
+static void *_lzmaAlloc(ISzAllocPtr, size_t size) {
+  return new uint8_t[size];
+}
+static void _lzmaFree(ISzAllocPtr, void *addr) {
+  if (!addr)
+    return;
+
+  delete[] reinterpret_cast<uint8_t *>(addr);
+}
+
+static ISzAlloc _allocFuncs = {
+  _lzmaAlloc, _lzmaFree
+};
 
 vBuf lzmaCompress(const vBuf& input) {
   vBuf result;

@@ -610,7 +610,6 @@ using namespace DotStr::Misc;
     atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
     std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov;
 
-
     vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
     vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
