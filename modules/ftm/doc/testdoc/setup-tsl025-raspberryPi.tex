@@ -1,0 +1,96 @@
+\documentclass[12pt,a4paper]{report}
+% Language: English
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\newcommand{\ry}{\rotatebox{90}}
+\begin{document}
+
+\begin{titlepage}
+\vspace{2cm}
+\begin{center}
+\Huge{Set up tsl025 Jenkins Server on Raspberry Pi}
+
+\Large{Martin Skorsky}
+
+\Large{Last change: 2022-11-15}
+\end{center}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Install the Raspberian Image}
+Install Raspberry Pi with Image writer:
+https://howchoo.com/pi/install-raspberry-pi-os
+
+Image: Bullseye 64Bit Lite (no Desktop) for Raspberry Pi 4 B.
+
+Use settings in imager to enable ssh
+
+\chapter{Maschine Setup}
+use raspi-config to set locale and timezone
+sudo dpkg-reconfigure locales
+
+Configure time synchronization:
+\begin{verbatim}
+sudo nano /etc/systemd/timesyncd.conf
+Entry: NTP=ntp1.acc.gsi.de
+systemctl restart systemd-timesyncd.service
+\end{verbatim}
+Use sudo apt update / upgrade to update system.
+
+Install git, python3-pip, pytest with apt.
+\chapter{Install the bel\_projects Packages}
+make in bel\_projects, 
+make etherbone + sudo make etherbone-install
+make tools + sudo make tools-install
+\chapter{Install Jenkins}
+sudo apt install openjdk-11-jre
+sudo apt install openjdk-11-jdk-headless
+Use https://pimylifeup.com/jenkins-raspberry-pi/s to install jenkins
+Jenkins initial setup is required. An admin user has been created and a password generated.
+Please use the following password to proceed to installation:
+
+d7361fa952e6467ab59e3f57db8436e3
+
+https://community.jenkins.io/t/job-for-jenkins-service-failed-because-a-\\ timeout-was-exceeded/2443
+
+jenkins.service: set timeout for startup to 300 seconds.
+
+Add user jenkins to sudoers.
+Copy id\_ecdsa to fel0069
+\chapter{Install Boost Libraries}
+\begin{verbatim}
+sudo apt install libboost-graph-dev
+sudo apt install libboost-serialization-dev
+sudo apt install libboost-regex-dev
+\end{verbatim}
+\chapter{Run Jenkins Jobs}
+Versions: python 3.9.2, Boost 1.74, gcc 10.2.1
+\end{document}
