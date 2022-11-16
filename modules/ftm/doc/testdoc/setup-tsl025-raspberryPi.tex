@@ -6,29 +6,6 @@
 \usepackage{xcolor}
 \usepackage{listings}
 
-\lstdefinestyle{dotfiles}{
-  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
-  numbers=left,
-  stepnumber=1,
-  numberstyle=\tiny,
-  numbersep=10pt,
-  captionpos=b,
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  keepspaces=true,
-  columns=flexible,
-  language=C,
-  showstringspaces=false,
-  basicstyle=\scriptsize\ttfamily,
-  keywordstyle=\color{green!40!black},
-  commentstyle=\itshape\color{purple!40!black},
-  identifierstyle=\color{blue},
-  stringstyle=\color{red},
-  tabsize=2,
-  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
-}
-
-\newcommand{\ry}{\rotatebox{90}}
 \begin{document}
 
 \begin{titlepage}
@@ -38,7 +15,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-11-15}
+\Large{Last change: 2022-11-16 \\ Created: 2022-11-15}
 \end{center}
 \vfill
 \end{titlepage}
@@ -51,11 +28,15 @@ https://howchoo.com/pi/install-raspberry-pi-os
 
 Image: Bullseye 64Bit Lite (no Desktop) for Raspberry Pi 4 B.
 
-Use settings in imager to enable ssh
+Use settings in Raspberry imager to enable ssh.
+
+Versions: python 3.9.2, Boost 1.74, gcc 10.2.1
 
 \chapter{Maschine Setup}
-use raspi-config to set locale and timezone
+Use raspi-config to set locale and timezone
+\begin{verbatim}
 sudo dpkg-reconfigure locales
+\end{verbatim}
 
 Configure time synchronization:
 \begin{verbatim}
@@ -65,32 +46,124 @@ systemctl restart systemd-timesyncd.service
 \end{verbatim}
 Use sudo apt update / upgrade to update system.
 
-Install git, python3-pip, pytest with apt.
 \chapter{Install the bel\_projects Packages}
-make in bel\_projects, 
-make etherbone + sudo make etherbone-install
-make tools + sudo make tools-install
+First install all packages needed for bel\_projects. Then build and install
+Etherbone and EB Tools after installing Jenkis and running the first job.
+\begin{verbatim}
+sudo apt install automake autoconf
+sudo apt install git
+sudo apt install libsigc++-2.0-dev libglib2.0-dev
+sudo apt install python3-pip
+sudo apt install xsltproc
+sudo apt install docbook-utils build-essential
+sudo apt install libtool libreadline-dev
+\end{verbatim}
+Follow bel\_projects README for up to date instructions.
+
 \chapter{Install Jenkins}
+Use https://pimylifeup.com/jenkins-raspberry-pi/s to install jenkins.
+\begin{verbatim}
 sudo apt install openjdk-11-jre
 sudo apt install openjdk-11-jdk-headless
-Use https://pimylifeup.com/jenkins-raspberry-pi/s to install jenkins
-Jenkins initial setup is required. An admin user has been created and a password generated.
-Please use the following password to proceed to installation:
-
-d7361fa952e6467ab59e3f57db8436e3
-
-https://community.jenkins.io/t/job-for-jenkins-service-failed-because-a-\\ timeout-was-exceeded/2443
-
-jenkins.service: set timeout for startup to 300 seconds.
-
-Add user jenkins to sudoers.
-Copy id\_ecdsa to fel0069
-\chapter{Install Boost Libraries}
-\begin{verbatim}
-sudo apt install libboost-graph-dev
-sudo apt install libboost-serialization-dev
-sudo apt install libboost-regex-dev
+sudo apt install jenkins
+sudo apt install ant
+sudo apt install junit junit4
+sudo apt install python3-pytest
 \end{verbatim}
+After installation, Jenkins is started automatically by the installation.
+Since the timeout for the start is too short, jenkins.service restarts all over. Use
+\begin{verbatim}
+sudo systemctl edit jenkins
+\end{verbatim}
+to configure the timeout. The command creates \\
+\texttt{/etc/systemd/system/jenkins.service.d/override.conf}.
+Set timeout for startup to 300 seconds.
+\begin{verbatim}
+[Service]
+TimeoutStartSec=300
+\end{verbatim}
+For details see https://community.jenkins.io/t/job-for-jenkins-service-failed-because-a-timeout-was-exceeded/2443
+
+Jenkins initial setup is required. An admin user has been created and a password generated.
+Follow the instructions during setup and on \\
+https://tsl025.acc.gsi.de:8080 for this initial setup.
+
+The Jenkins installation creates a user jenkins. Add user jenkins to sudoers (i.e. add
+jenkins to group sudo and configure that no password is needed).
+\begin{verbatim}
+su -s /bin/bash jenkins
+sudo usermod jenkins -G sudo
+sudo cd /etc/sudoers.d/
+sudo cp 010_pi-nopasswd 010_jenkins-nopasswd
+sudo chmod +w 010_jenkins-nopasswd
+sudo nano 010_jenkins-nopasswd
+sudo chmod -w 010_jenkins-nopasswd
+\end{verbatim}
+
+For convenience customize the profile of user jenkins with .bashrc,\\
+.bash\_logout, .bash\_aliases.
+
+\chapter{Install Boost Libraries}
+For the build of the data master tools we need three Boost libraries including
+headers. These are in the -dev packages.
+\begin{verbatim}
+sudo apt install --install-suggests \
+      libboost-serialization-dev \
+      libboost-graph-dev     libboost-regex-dev
+sudo apt install --install-suggests \
+      libboost-serialization1.74-dev \
+      libboost-graph1.74-dev libboost-regex1.74.0-dev
+sudo apt install --install-suggests \
+      libboost-serialization1.74.0 \
+      libboost-graph1.74.0   libboost-regex1.74.0
+\end{verbatim}
+
 \chapter{Run Jenkins Jobs}
-Versions: python 3.9.2, Boost 1.74, gcc 10.2.1
+Copy the Jenkins job definitions (config.xml) from some backup to the folders
+with the job names below folder \texttt{jobs}.
+\begin{verbatim}
+mkdir Build_and_load_FTM_firmware
+mkdir build_schedule_compare
+mkdir build_tools
+mkdir 'check remote snoop'
+mkdir Datamaster_Tests_dm-summer-update-2022_singleTest
+mkdir Datamaster_Tests_dm-summer-update-2022
+mkdir 'Java Test'
+mkdir test_module_ftm_datamaster
+mkdir test_module_ftm_datamaster_long_run
+mkdir 'test_module_ftm_datamaster_long_run dm-fallout-tests-2'
+\end{verbatim}
+Restart Jenkins such that
+Jenkins reads these definitions.
+
+Start one of the Jenkins jobs which runs data master tests. This will fail on the first run,
+but it clones the git repository. Inside such a repository of bel\_projects run the following
+commands to build an install the data master tools and their prerequisites.
+\begin{verbatim}
+# in workspace folder of the job:
+make
+# for libetherbone and header file:
+make etherbone
+sudo make etherbone-install
+# for eb-reset:
+make tools
+sudo make tools-install
+\end{verbatim}
+For remote snoop commands from the tests copy the ecdsa key for user jenkins to fel0069:
+\begin{verbatim}
+sudo su -s /bin/bash jenkins
+ssh-keygen -t ecdsa
+ssh-copy-id -i /var/lib/jenkins/.ssh/id\_ecdsa.pub \
+      root@fel0069.acc.gsi.de
+\end{verbatim}
+On fell0069.acc.gsi.de copy the key from /etc/dropbear/authorized\_keys to .ssh/authorized\_keys
+\begin{verbatim}
+tail -1 /etc/dropbear/authorized_keys >> .ssh/authorized_keys
+\end{verbatim}
+The following command on tsl0025 checks that the ssh-copy-id was successful.
+\begin{verbatim}
+ssh root@fel0069 'saft-ctl tr1 -xv snoop 0 0 0 1'
+\end{verbatim}
+
+For the Java Test link junit4.jar and hamcrest-all.jar from /usr/share/ant/lib.
 \end{document}
