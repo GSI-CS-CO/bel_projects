@@ -33,7 +33,8 @@ files = [
    "BLM_gate_timing_seq_elem.vhd",
    "test_sig_pll.vhd",
    "test_sig1_pll.vhd",
-   "overflow_ram.vhd"
+   "overflow_ram.vhd",
+   "BLM_value_in_ram.vhd"
 ]
 
 modules = {

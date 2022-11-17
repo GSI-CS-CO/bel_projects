@@ -4,15 +4,12 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity BLM_gate_timing_seq_elem is
 
-generic (
-  
-  hold    : integer range 2 TO 10:= 2
-);
 port(
   clk_i : in std_logic;          -- chip-internal pulsed clk signal
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic;        -- input signal
-  initialize : in std_logic;     -- enable '1' for input connected to the counter
+  gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
+  hold: in std_logic_vector(7 downto 0);
   timeout_error : out std_logic;  -- gate doesn't start within the given timeout
   gate_out: out std_logic        -- out gate signal
 );
@@ -23,13 +20,10 @@ architecture rtl of BLM_gate_timing_seq_elem is
 type   gate_state_t is   (idle, ready, timeout_state, gate_out_state);
 signal gate_state:   gate_state_t:= idle;
 
-constant timeout_reset : unsigned(1 downto 0) := to_unsigned(hold, (2));
+signal timeout_reset : unsigned(7 downto 0); 
 
---signal new_val_wait: unsigned(0 downto 0):= (others =>'0');
---signal timeout : unsigned := timeout_reset;
---signal curr_val   : unsigned(0 downto 0);
 signal new_val_wait: std_logic :='0';
-signal timeout : unsigned(1 downto 0) := timeout_reset;
+signal timeout : unsigned(7 downto 0) := timeout_reset;
 signal curr_val   :std_logic:='0';
 
 
@@ -37,14 +31,14 @@ begin
 
   
 
-  curr_val <= gate_in;
+  curr_val <= gate_in and gate_in_ena;
+timeout_reset <=unsigned(hold); -- to be checked
 
-
-gate_proc: process (clk_i, rstn_i, initialize)
+gate_proc: process (clk_i, rstn_i, gate_in_ena)
 
   begin
 
-      if ((rstn_i= '0') or (initialize='0'))   then
+      if ((rstn_i= '0') or (gate_in_ena)='0')  then
         timeout_error  <= '0';
          gate_state <= idle;
          new_val_wait   <= '0';
@@ -56,7 +50,7 @@ gate_proc: process (clk_i, rstn_i, initialize)
           case gate_state is
 
               when idle =>
-              	        if initialize='0' then
+              	        if curr_val='0' then
                           
                           new_val_wait   <= '0';
       			            else
