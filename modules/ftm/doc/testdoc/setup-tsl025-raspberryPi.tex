@@ -103,6 +103,15 @@ sudo chmod -w 010_jenkins-nopasswd
 For convenience customize the profile of user jenkins with .bashrc,\\
 .bash\_logout, .bash\_aliases.
 
+Add an access token for your Jenkins user in the user profile. This is
+needed for calls to the Jenkins API. Example:
+\begin{verbatim}
+curl -X POST -L --user $1 http://tsl025.acc.gsi.de:8080/ \
+    job/$2/lastBuild/api/json | python3 -m json.tool > \
+    buildResult_$2.json
+\end{verbatim}
+Here, \$1 is the access token and \$2 is the job name.
+
 \chapter{Install Boost Libraries}
 For the build of the data master tools we need three Boost libraries including
 headers. These are in the -dev packages.
