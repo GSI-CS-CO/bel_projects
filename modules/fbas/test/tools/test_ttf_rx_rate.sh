@@ -171,9 +171,9 @@ for rate in ${all_msg_rates[*]}; do
     sel_counts=$(echo $counts | cut -d' ' -f2-8)              # ignore 1st element (number of TX msgs)
 
     unset new_line
-    new_line+=$(printf "|%10.3f " $t_period_float)
-    new_line+=$(printf "|%10.3f " $rate_float)
-    new_line+=$(printf "|%10.3f" $d_rate_float)
+    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f " $t_period_float)
+    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f " $rate_float)
+    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f" $d_rate_float)
     new_line=${new_line//./,}    # replace all 'dot' with 'comma' (for floating point numbers)
     new_line+=$(printf " | %s" $sel_counts)
 
