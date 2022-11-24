@@ -74,7 +74,7 @@ fi
 
 # get username and password to access SCUs
 if [ -z "$username" ]; then
-    read -rp "username to access '${rxscu%%.*}, ${txscu%%.*}': " username
+    read -rp "username to access '${scu_arr[*]}': " username
 fi
 
 if [ -z "$userpasswd" ]; then
