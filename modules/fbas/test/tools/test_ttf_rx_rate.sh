@@ -5,6 +5,7 @@
 # RX SCU - scuxl0497
 
 # [1] https://stackoverflow.com/questions/5799303/print-a-character-repeatedly-in-bash
+# [2] Math arithmetic: how to do calculation in bash?, https://www.shell-tips.com/bash/math-arithmetic-calculation/#gsc.tab=0
 
 abs_path=$(readlink -f "$0")
 dir_name=${abs_path%/*}
@@ -165,16 +166,16 @@ for rate in ${all_msg_rates[*]}; do
     counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
 
     # format values
-    t_period_float=$(echo "$t_period/1000" | bc -l)           # message period [us]
-    rate_float=$(echo "$rate/1000" | bc -l)                   # message rate [KHz]
-    d_rate_float=$(echo "$rate*$tmg_msg_len/1000000" | bc -l) # data rate [Mbps]
-    sel_counts=$(echo $counts | cut -d' ' -f2-8)              # ignore 1st element (number of TX msgs)
+    t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
+    rate_float=$(printf "|%10.3f " "$((10**3 * $rate/1000))e-3")                   # message rate [KHz]
+    d_rate_float=$(printf "|%10.3f" "$((10**3 * $rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
+    sel_counts=$(echo $counts | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
 
     unset new_line
-    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f " $t_period_float)
-    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f " $rate_float)
-    new_line+=$(LC_NUMERIC=en_US.UTF-8; printf "|%10.3f" $d_rate_float)
-    new_line=${new_line//./,}    # replace all 'dot' with 'comma' (for floating point numbers)
+    new_line+=$t_period_float
+    new_line+=$rate_float
+    new_line+=$d_rate_float
+    new_line=${new_line//./,}                # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
     new_line+=$(printf " | %s" $sel_counts)
 
     eca_valid=$(echo "$counts" | cut -d' ' -f2)
