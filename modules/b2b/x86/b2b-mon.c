@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2022
+ *  version : 25-nov-2022
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000319
+#define B2B_MON_VERSION 0x000410
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -60,7 +60,8 @@ const char* program;
 #define  DIMMAXSIZE  1024                 // max size for service names
 #define  SCREENWIDTH 1024                 // width of screen
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
-#define  TINACTIVE   120                  // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
+#define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
+#define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -92,12 +93,12 @@ uint32_t set_mode[NALLSID];                                 // b2b mode
 double   set_extT[NALLSID];                                 // extraction, h=1 period [ns]
 double   set_extNue[NALLSID];                               // extraction, h=1 frequency [Hz]
 uint32_t set_extH[NALLSID];                                 // extraction, harmonic number
-int32_t  set_extCTrig[NALLSID];                             // extraction, kick trigger correction
+double   set_extCTrig[NALLSID];                             // extraction, kick trigger correction
 double   set_injT[NALLSID];                                 // injection ...
 double   set_injNue[NALLSID];
 uint32_t set_injH[NALLSID];
-int32_t  set_injCTrig[NALLSID];
-int32_t  set_cPhase[NALLSID];                               // b2b: phase correction [ns]
+double   set_injCTrig[NALLSID];
+double   set_cPhase[NALLSID];                               // b2b: phase correction [ns]
 double   set_cPhaseD[NALLSID];                              // b2b: phase correction [degree]
 uint32_t set_msecs[NALLSID];                                // CBS deadline, fraction [ms]
 time_t   set_secs[NALLSID];                                 // CBS deadline, time [s]
@@ -179,11 +180,11 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS [Hz] | kick set trg offst probR |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
-  sprintf(emptyK,  "|                     |              |        |    |             |                          |        |        |                                      |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | origin | sid| h1gDDS  set         get(stdev)diff[Hz] |  destn |  phase | kick set trg offst probR dOffst 'ToF'|");
-  sprintf(emptyN,  "|                     |              |        |    |                                        |        |        |                                      |");
-  //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick  set       trg offst probR | destn |    phase | kick  set       trg offst probR dOffst 'ToF'|");
+  sprintf(emptyK,  "|                     |              |       |    |                                 |       |          |                                             |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS  set         get(stdev)diff[Hz] |     destn | kick  set       trg offst probR dOffst 'ToF'|");
+  sprintf(emptyN,  "|                     |              |       |    |                                        |           |                                             |");
+  //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
 
@@ -211,7 +212,7 @@ void buildPrintLine(uint32_t idx)
   char     tmp5[32];
   uint32_t utmp1;
   uint32_t utmp2;
-  int32_t  itmp1;
+  double   dtmp1;
 
   uint32_t sid;
   ring_t   ring;
@@ -235,12 +236,12 @@ void buildPrintLine(uint32_t idx)
   } // switch ring
 
   // pattern name
-  if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);
+  if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);               // invalid
   else {
-    if ((actT - set_secs[idx] - secsOffset) < (time_t)TINACTIVE)
-                                  sprintf(pattern, "%.20s", dicPName[idx]);
-    else                          sprintf(pattern, "%s", TXTUNKWN);
-    if (set_secs[idx] <= 1)       sprintf(pattern, "%s", TXTUNKWN);
+    if ((actT - set_secs[idx] /*- secsOffset*/) < (time_t)TINACTIVE)              
+                                  sprintf(pattern, "%.20s",   dicPName[idx]);
+    else                          sprintf(pattern, "?%.18s?", dicPName[idx]);     // very old, assignment might be wrong
+    if (set_secs[idx] <= 1)       sprintf(pattern, "%s", TXTUNKWN);               // timestamp (probably) invalid
   }
   if (!flagSetValid[idx])         sprintf(pattern, "NO_LINK (DATA)");
 
@@ -257,8 +258,14 @@ void buildPrintLine(uint32_t idx)
   // ignore ancient timestamps
   if (set_secs[idx] <= 1) flagTCBS = 0;
   
-  if (flagTCBS)     {strftime(tmp1, 10, "%H:%M:%S", gmtime(&(set_secs[idx]))); sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);}
-  else               sprintf(tCBS, "---");
+  if (flagTCBS) {
+    if ((actT - set_secs[idx]/* - secsOffset*/) > (time_t)TOLD) sprintf(tCBS, "> 24h"); 
+    else {
+      strftime(tmp1, 10, "%H:%M:%S", gmtime(&(set_secs[idx])));
+      sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);
+    } // else actT
+  } // if flagTCBS
+  else sprintf(tCBS, "---");
 
   if (flagExtNue) {
     if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
@@ -280,8 +287,8 @@ void buildPrintLine(uint32_t idx)
     sprintf(nueMeasExt, "---");
   }
   if (flagB2b) {
-    if ((dicGetval[idx].flagEvtErr >> 3) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                        sprintf(b2b, "%6d", dicDiagval[idx].phaseOffAct);
+    if ((dicGetval[idx].flagEvtErr >> 4) & 0x1) sprintf(b2b, "%s",  TXTERROR);
+    else                                        sprintf(b2b, "%9.3f", dicDiagval[idx].phaseOffAct);
   } // if flagB2B
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
@@ -290,7 +297,11 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%5d",set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct );
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
+      // data invalid
+      if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      else sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
+    } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
     if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
@@ -303,17 +314,21 @@ void buildPrintLine(uint32_t idx)
       if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
       else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
     } //else not ok
-    sprintf(extTrig, "%5d %5s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
+    sprintf(extTrig, "%9.3f %9s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
   if (flagInjTrig) {
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
-      if (flagB2b) itmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-      else         itmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
-      sprintf(tmp1, "%5d", itmp1);
-    }
+      // data invalid
+      if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      else {
+        if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
+        else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+      } // else flag_nok
+      sprintf(tmp1, "%9.3f", dtmp1);
+    } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics    
     if ((dicGetval[idx].flag_nok >> 6) & 0x1) {
@@ -335,12 +350,12 @@ void buildPrintLine(uint32_t idx)
         else                                      sprintf(tmp5, "%5d", utmp2);
       } // if not nok
     } //else not ok
-    sprintf(injTrig, "%5d %5s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
+    sprintf(injTrig, "%9.3f %9s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
   } // if flagExtTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLineK[idx], "|%20s | %12s | %6s | %2d | %11s | %24s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, extNue, extTrig, dest, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s | %6s | %2d | %38s | %6s | %6s | %36s |", pattern, tCBS, origin, sid, nueMeasExt, dest, b2b, injTrig);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %31s |%6s |%9s | %43s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s |%10s | %43s |", pattern, tCBS, origin, sid, nueMeasExt, dest, injTrig);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -506,7 +521,8 @@ void printData(char *name)
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d> | help <h>                                            %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
-  
+
+  // printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("%s\n", title);
   if (flagPrintNue) {
     printf("%s\n", headerN);
@@ -520,8 +536,7 @@ void printData(char *name)
   } // else printNue
   printf("%s\n", footer);
   
-  //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-  //printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
+  // printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
     
   flagPrintNow = 0;
 } // printServices
@@ -622,8 +637,6 @@ int main(int argc, char** argv)
 
   // wait a bit, then rebuild all indices
   usleep(1000000);
-  /*for (i=0; i<NALLSID; i++) buildPrintLine(i);*/
-
   
   while (!quit) {
 

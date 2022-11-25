@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Sep-2021
+ *  version : 25-nov-2022
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000319
+#define B2B_VIEWER_VERSION 0x000410
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -84,12 +84,12 @@ uint32_t set_mode;                                          // b2b mode
 double   set_extT;                                          // extraction, h=1 period [as]
 double   set_extNue;                                        // extraction, h=1 frequency [Hz]
 uint32_t set_extH;                                          // extraction, harmonic number
-int32_t  set_extCTrig;                                      // extraction, kick trigger correction
+double   set_extCTrig;                                      // extraction, kick trigger correction
 double   set_injT;                                          // injection ...
 double   set_injNue;
 uint32_t set_injH;
-int32_t  set_injCTrig;
-int32_t  set_cPhase;                                        // b2b: phase correction [ns]
+double   set_injCTrig;
+double   set_cPhase;                                        // b2b: phase correction [ns]
 double   set_cPhaseD;                                       // b2b: phase correction [degree]
 uint32_t set_msecs;                                         // CBS deadline, fraction [ms]
 time_t   set_secs;                                          // CBS deadline, time [s]
@@ -99,7 +99,7 @@ double   flagB2bValid;                                      // flag b2b data are
 double   b2b_extNue;                                        // extraction, rf frequency [Hz]
 double   b2b_extT;                                          // extraction, rf period [ns]
 double   b2b_extN;                                          // extraction, number of rf periods within beat period
-double   b2b_injNue;                                        // injeciton ...
+double   b2b_injNue;                                        // injection ...
 double   b2b_injT;
 double   b2b_injN;
 double   b2b_diff;                                          // difference of rf periods [ns]
@@ -340,24 +340,24 @@ int printSet(uint32_t sid)
       printf("b2b: %s\n", TXTNA);
       break;
     case 1 :
-      printf("ext: kick  corr %4d ns\n", set_extCTrig);
+      printf("ext: kick  corr %8.3f ns\n", set_extCTrig);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 2 : 
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 3 :
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4 :
-      printf("ext: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %4d ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
-      printf("b2b: phase corr %4d ns       %12.3f °\n", set_cPhase, set_cPhaseD);
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
+      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
       break;
     default :
       ;
@@ -370,7 +370,7 @@ int printSet(uint32_t sid)
 // print diagnostic values
 int printDiag(uint32_t sid)
 {
-  printf("--- diag ---                                 #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
+  printf("--- diag diff DDS ---                        #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -379,20 +379,20 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: 'diff DDS [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: 'diff gDDS  [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("inj [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b: 'diff phase [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else  printf("b2b [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :
@@ -415,7 +415,7 @@ int printKick(uint32_t sid)
       printf("ext: monitor delay [ns] %5d", dicGetval.ext_dKickMon);
       if ((dicGetval.flag_nok >> 2) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
       else                                  printf(", probe delay [ns] %5d\n", dicGetval.ext_dKickProb);
-      printf("     mon h=1 ph [ns] act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
+      printf("     mon h=1 ph [ns] act %4f, ave(sdev) %8.3f(%6.3f), minmax %4f, %4f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
              dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
     } // else flag_nok
   } // else mode == 0
@@ -429,7 +429,7 @@ int printKick(uint32_t sid)
       if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %5s", TXTUNKWN);
       else                                  printf(", probe delay [ns] %5d", dicGetval.inj_dKickProb);
       printf(", diff mon. [ns] %d\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-      printf("     mon h=1 ph [ns] act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
+      printf("     mon h=1 ph [ns] act %4f, ave(sdev) %8.3f(%6.3f), minmax %4f, %4f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
              dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
     } // else flag_nok
   } // else mode < 3
@@ -446,7 +446,7 @@ int printStatus(uint32_t sid)
 
   flagEvtErr  = dicGetval.flagEvtErr | (modeMask   & ~(dicGetval.flagEvtRec));
 
-  printf("--- status (expert) ---                      #b2b %5u, #ext %5u, #inj %5u\n", dicDiagstat.eks_priOffN, dicDiagstat.eks_kteOffN, dicDiagstat.eks_ktiOffN);
+  printf("--- status (expert) ---                      #b2b %5u, #ext %5u, #inj %5u\n", dicDiagstat.cbs_priOffN, dicDiagstat.cbs_kteOffN, dicDiagstat.cbs_ktiOffN);
 
   printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI  PDE  PDI\n");
 
@@ -472,35 +472,35 @@ int printStatus(uint32_t sid)
     printf("KTE-fin [us]: %s\n", TXTNA);
   }
   else {
-    sdevKteFin = sqrt(pow(dicDiagstat.eks_doneOffSdev, 2)+pow(dicDiagstat.eks_kteOffSdev, 2));
+    sdevKteFin = sqrt(pow(dicDiagstat.cbs_doneOffSdev, 2)+pow(dicDiagstat.cbs_kteOffSdev, 2));
     printf("fin-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.eks_doneOffAct/1000.0, dicDiagstat.eks_doneOffAve/1000.0, dicDiagstat.eks_doneOffSdev/1000.0,
-           (double)dicDiagstat.eks_doneOffMin/1000.0, (double)dicDiagstat.eks_doneOffMax/1000.0);
+           (double)dicDiagstat.cbs_doneOffAct/1000.0, dicDiagstat.cbs_doneOffAve/1000.0, dicDiagstat.cbs_doneOffSdev/1000.0,
+           (double)dicDiagstat.cbs_doneOffMin/1000.0, (double)dicDiagstat.cbs_doneOffMax/1000.0);
     printf("KTE-fin [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)(dicDiagstat.eks_kteOffAct-dicDiagstat.eks_doneOffAct)/1000.0, (dicDiagstat.eks_kteOffAve-dicDiagstat.eks_doneOffAve)/1000.0, sdevKteFin/1000.0,
-           (double)(dicDiagstat.eks_kteOffMin-dicDiagstat.eks_doneOffMax)/1000.0, (double)(dicDiagstat.eks_kteOffMax-dicDiagstat.eks_doneOffMin)/1000.0);
+           (double)(dicDiagstat.cbs_kteOffAct-dicDiagstat.cbs_doneOffAct)/1000.0, (dicDiagstat.cbs_kteOffAve-dicDiagstat.cbs_doneOffAve)/1000.0, sdevKteFin/1000.0,
+           (double)(dicDiagstat.cbs_kteOffMin-dicDiagstat.cbs_doneOffMax)/1000.0, (double)(dicDiagstat.cbs_kteOffMax-dicDiagstat.cbs_doneOffMin)/1000.0);
     printf("KTE-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.eks_kteOffAct/1000.0, dicDiagstat.eks_kteOffAve/1000.0, dicDiagstat.eks_kteOffSdev/1000.0,
-           (double)dicDiagstat.eks_kteOffMin/1000.0, (double)dicDiagstat.eks_kteOffMax/1000.0);
+           (double)dicDiagstat.cbs_kteOffAct/1000.0, dicDiagstat.cbs_kteOffAve/1000.0, dicDiagstat.cbs_kteOffSdev/1000.0,
+           (double)dicDiagstat.cbs_kteOffMin/1000.0, (double)dicDiagstat.cbs_kteOffMax/1000.0);
   }
   if (set_mode < 3)
     printf("KTI-CBS [us]: %s\n", TXTNA);
   else
     printf("KTI-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.eks_ktiOffAct/1000.0, dicDiagstat.eks_ktiOffAve/1000.0, dicDiagstat.eks_ktiOffSdev/1000.0,
-           (double)dicDiagstat.eks_ktiOffMin/1000.0, (double)dicDiagstat.eks_ktiOffMax/1000.0);
+           (double)dicDiagstat.cbs_ktiOffAct/1000.0, dicDiagstat.cbs_ktiOffAve/1000.0, dicDiagstat.cbs_ktiOffSdev/1000.0,
+           (double)dicDiagstat.cbs_ktiOffMin/1000.0, (double)dicDiagstat.cbs_ktiOffMax/1000.0);
   if (set_mode <  2)
     printf("t0E-CBS [us]: %s\n", TXTNA);
   else
     printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.eks_preOffAct/1000.0, dicDiagstat.eks_preOffAve/1000.0, dicDiagstat.eks_preOffSdev/1000.0,
-           (double)dicDiagstat.eks_preOffMin/1000.0, (double)dicDiagstat.eks_preOffMax/1000.0);
+           (double)dicDiagstat.cbs_preOffAct/1000.0, dicDiagstat.cbs_preOffAve/1000.0, dicDiagstat.cbs_preOffSdev/1000.0,
+           (double)dicDiagstat.cbs_preOffMin/1000.0, (double)dicDiagstat.cbs_preOffMax/1000.0);
   if (set_mode < 4)
     printf("t0I-CBS [us]: %s\n", TXTNA);
   else
     printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.eks_priOffAct/1000.0, dicDiagstat.eks_priOffAve/1000.0, dicDiagstat.eks_priOffSdev/1000.0,
-           (double)dicDiagstat.eks_priOffMin/1000.0, (double)dicDiagstat.eks_priOffMax/1000.0);
+           (double)dicDiagstat.cbs_priOffAct/1000.0, dicDiagstat.cbs_priOffAve/1000.0, dicDiagstat.cbs_priOffSdev/1000.0,
+           (double)dicDiagstat.cbs_priOffMin/1000.0, (double)dicDiagstat.cbs_priOffMax/1000.0);
   return 12;                                                // 12 lines
 } // printStatus
 
@@ -508,7 +508,7 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  printf("--- rf ---                                               #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
+  printf("--- rf DDS ---                                           #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -516,32 +516,32 @@ int printRf(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'raw gDDS [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: 'raw gDDS [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
-      else printf("inj: 'raw gDDS [ns]' act %4d, ave(sdev) %8.3f(%6.3f), minmax %4d, %4d\n",
+      else printf("inj: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n", TXTNA);
       else {
-           printf("inj:  '   gDDS [Hz]' ave(sdev) %13.6f(%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
-           printf("      '   gDDS [Hz]' estimate  %13.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+           printf("inj: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
+           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :

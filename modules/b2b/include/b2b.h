@@ -3,6 +3,11 @@
 
 #include <common-defs.h>
 
+union fdat_t {                              // easier copying of bytes float from/to int data types
+  uint32_t data;
+  float    f;
+};
+
 // this file is structured in two parts
 // 1st: definitions of general things like error messages
 // 2nd: definitions for data exchange via DP RAM
@@ -141,12 +146,12 @@
 #define B2B_SHARED_GET_TH1INJHI   (B2B_SHARED_GET_NHEXT      + _32b_SIZE_)       // period [as] of h=1 injection, high bits
 #define B2B_SHARED_GET_TH1INJLO   (B2B_SHARED_GET_TH1INJHI   + _32b_SIZE_)       // period of h=1 injection, low bits
 #define B2B_SHARED_GET_NHINJ      (B2B_SHARED_GET_TH1INJLO   + _32b_SIZE_)       // harmonic number of injection RF
-#define B2B_SHARED_GET_CPHASE     (B2B_SHARED_GET_NHINJ      + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns]
-#define B2B_SHARED_GET_CTRIGEXT   (B2B_SHARED_GET_CPHASE     + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns]
-#define B2B_SHARED_GET_CTRIGINJ   (B2B_SHARED_GET_CTRIGEXT   + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns]
+#define B2B_SHARED_GET_CPHASE     (B2B_SHARED_GET_NHINJ      + _32b_SIZE_)       // correction for phase matching ('phase knob') [ns, float]
+#define B2B_SHARED_GET_CTRIGEXT   (B2B_SHARED_GET_CPHASE     + _32b_SIZE_)       // correction for trigger extraction ('extraction kicker knob') [ns, float]
+#define B2B_SHARED_GET_CTRIGINJ   (B2B_SHARED_GET_CTRIGEXT   + _32b_SIZE_)       // correction for trigger injection ('injction kicker knob') [ns, float]
 #define B2B_SHARED_GET_TBEATHI    (B2B_SHARED_GET_CTRIGINJ   + _32b_SIZE_)       // period of beating, high bits
 #define B2B_SHARED_GET_TBEATLO    (B2B_SHARED_GET_TBEATHI    + _32b_SIZE_)       // period of beating, low bits
-#define B2B_SHARED_GET_COMLATENCY (B2B_SHARED_GET_TBEATLO    + _32b_SIZE_)       // latency for messages received from via ECA (tDealine - tNow)) [ns]
+#define B2B_SHARED_GET_COMLATENCY (B2B_SHARED_GET_TBEATLO    + _32b_SIZE_)       // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 #define B2B_SHARED_GET_TKTRIGHI   (B2B_SHARED_GET_COMLATENCY + _32b_SIZE_)       // time of kicker trigger signal, high bits [ns]
 #define B2B_SHARED_GET_TKTRIGLO   (B2B_SHARED_GET_TKTRIGHI   + _32b_SIZE_)       // time of kicker trigger signal, low bits [ns]
 #define B2B_SHARED_GET_DKMON      (B2B_SHARED_GET_TKTRIGLO   + _32b_SIZE_)       // delay of kicker monitor signal [ns], delay is measured from kicker trigger signal

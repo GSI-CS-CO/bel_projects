@@ -9,5 +9,5 @@ HOSTNAME=$(/bin/hostname -s)
 
 log 'start other stuff'
 export DIM_DNS_NODE=asl105
-b2b-serv-raw tr1 -e1 int &
+b2b-serv-raw tr0 -e1 int &
 b2b-analyzer int_esr &
