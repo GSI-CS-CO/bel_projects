@@ -12,7 +12,7 @@ else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   BOOST =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
-  BOOST = /lib/x86_64-linux-gnu
+  BOOST =/lib/x86_64-linux-gnu
 endif
 endif
 
@@ -22,15 +22,17 @@ APPDEPLOY ?=$(BIN)/$(NAME)
 build: clean
 	echo 'build path is' $(APPBUILD)
 	echo 'building ...'
-	cp ../bin $(APPBUILD)/bin
-	cp start-app-$(NAME).sh $(APPBUILD)/bin
-	cp $(EBPATH)/.libs/libetherbone.so.5.1.2 $(APPBUILD)/lib
-	cp $(BOOST)/lib/libboost_graph.so $(APPBUILD)/lib
-	cp $(BOOST)/lib/libboost_serialization.so $(APPBUILD)/lib
-	cp $(BOOST)/lib/libboost_regex.so $(APPBUILD)/lib
-	zip -r $(NAME).zip bin lib
-# ln -sf $APPBUILD/lib/libetherbone.so.5.1.2 $APPBUILD/lib/libetherbone.so.5.1
-# ln -sf $APPBUILD/lib/libetherbone.so.5.1 $APPBUILD/lib/libetherbone.so.5
+	mkdir -p $(APPBUILD)
+	cp -r ../bin/ $(APPBUILD)/bin/
+	cp start-app-$(NAME).sh $(APPBUILD)/bin/
+	cp -r ../lib/ $(APPBUILD)/lib/
+	cp $(EBPATH)/lib/libetherbone.so.5.1.2 $(APPBUILD)/lib/
+	ln -sf $(APPBUILD)/lib/libetherbone.so.5.1.2 $(APPBUILD)/lib/libetherbone.so.5.1
+	ln -sf $(APPBUILD)/lib/libetherbone.so.5.1 $(APPBUILD)/lib/libetherbone.so.5
+	cp $(BOOST)/lib/libboost_graph.so.1.69.0 $(APPBUILD)/lib/
+	cp $(BOOST)/lib/libboost_serialization.so.1.69.0 $(APPBUILD)/lib/
+	cp $(BOOST)/lib/libboost_regex.so.1.69.0 $(APPBUILD)/lib/
+	zip -r $(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
 # cd $APPBUILD
 
 # Example usage: (asl34x)
@@ -43,6 +45,6 @@ deploy:
 
 clean:
 	echo 'cleaning ...'
-	rm -r $(APPBUILD)/$(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
+	rm -rf $(APPBUILD)/$(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
 
 .PHONY: clean build deploy
