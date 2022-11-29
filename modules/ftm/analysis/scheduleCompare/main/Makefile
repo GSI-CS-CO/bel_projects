@@ -4,28 +4,17 @@
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-  GRAPH_LIB	=$(BOOSTPATH)/lib/libboost_graph.so
-  SER_LIB	=$(BOOSTPATH)/lib/libboost_serialization.so
-  RE_LIB	=$(BOOSTPATH)/lib/libboost_regex.so
 endif
 endif
-
-SER_LIB		?=-lboost_serialization
-GRAPH_LIB	?=-lboost_graph
-RE_LIB		?=-lboost_regex
-
 
 CXX = g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
-LDLIBS = -L../../lib -lstdc++ $(SER_LIB) $(GRAPH_LIB) $(RE_LIB)
+LDLIBS = -Wl,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex
 
 # check that make runs with  sudo rights
 RIGHTS := $(shell id -u)
