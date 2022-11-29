@@ -6,18 +6,22 @@
 # 'NAME=dm-monitor-int BIN=dm-monitor make deploy'
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
-  EBPATH  =/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
+  EBPATH =/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
   BOOST =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
+  EBPATH =/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
   BOOST =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
-  BOOST =/lib/x86_64-linux-gnu
+  EBPATH =/usr/local
+  BOOST =$$HOME/dev/boost_1_69_0/stage
 endif
 endif
 
+NAME ?=dm-monitor-int
+BIN ?=dm-monitor
 APPBUILD ?=./$(NAME)
-APPDEPLOY ?=$(BIN)/$(NAME)
+APPDEPLOY ?=/common/usr/timing/htdocs/apps/$(BIN)/$(NAME)
 
 build: clean
 	echo 'build path is' $(APPBUILD)
@@ -27,24 +31,21 @@ build: clean
 	cp start-app-$(NAME).sh $(APPBUILD)/bin/
 	cp -r ../lib/ $(APPBUILD)/lib/
 	cp $(EBPATH)/lib/libetherbone.so.5.1.2 $(APPBUILD)/lib/
-	ln -sf $(APPBUILD)/lib/libetherbone.so.5.1.2 $(APPBUILD)/lib/libetherbone.so.5.1
-	ln -sf $(APPBUILD)/lib/libetherbone.so.5.1 $(APPBUILD)/lib/libetherbone.so.5
+	ln -sf libetherbone.so.5.1.2 $(APPBUILD)/lib/libetherbone.so.5.1
+	ln -sf libetherbone.so.5.1 $(APPBUILD)/lib/libetherbone.so.5
 	cp $(BOOST)/lib/libboost_graph.so.1.69.0 $(APPBUILD)/lib/
 	cp $(BOOST)/lib/libboost_serialization.so.1.69.0 $(APPBUILD)/lib/
 	cp $(BOOST)/lib/libboost_regex.so.1.69.0 $(APPBUILD)/lib/
-	zip -r $(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
-# cd $APPBUILD
+	zip -rm $(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
 
-# Example usage: (asl34x)
-# './deployApp.sh $HOME/consoleApps/b2b b2b-int-sys-mon /common/usr/timing/htdocs/apps'
 deploy:
-	echo 'name is ' $(NAME)
-	echo 'build path is' $(APPBUILD)
-	echo 'deploy path is' $(APPDEPLOY)
+	@echo 'name is ' $(NAME)
+	@echo 'build path is' $(APPBUILD)
+	@echo 'deploy path is' $(APPDEPLOY)
 	cp $(APPBUILD)/$(NAME).zip $(APPDEPLOY)
 
 clean:
-	echo 'cleaning ...'
+	@echo 'cleaning ...'
 	rm -rf $(APPBUILD)/$(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
 
 .PHONY: clean build deploy
