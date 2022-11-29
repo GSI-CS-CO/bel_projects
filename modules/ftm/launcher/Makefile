@@ -42,7 +42,7 @@ deploy:
 	@echo 'name is ' $(NAME)
 	@echo 'build path is' $(APPBUILD)
 	@echo 'deploy path is' $(APPDEPLOY)
-	cp $(APPBUILD)/$(NAME).zip $(APPDEPLOY)
+	cp $(NAME).zip $(APPDEPLOY)
 
 clean:
 	@echo 'cleaning ...'
