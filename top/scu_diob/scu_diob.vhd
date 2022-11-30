@@ -157,7 +157,7 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
     CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
-    CONSTANT c_BLM_Masken_Base_Addr     :        Integer := 16#0680#;   -- counter and output Beam Loss Check Register
+
     CONSTANT c_BLM_constr_Base_Addr     :        Integer := 16#0690#;   --
 
 
@@ -439,7 +439,8 @@ end component zeitbasis;
 
 
  component Beam_Loss_check is
-  generic (
+
+      generic (
       n            : integer range 0 to 110 :=64;        -- counter pool inputs:  hardware inputs plus test signals      
       WIDTH        : integer := 20     -- Counter width
          
@@ -449,13 +450,14 @@ end component zeitbasis;
       rstn_sys          : in std_logic;      -- Reset
       pos_threshold     : in std_logic_vector(31 downto 0);
       neg_threshold     : in std_logic_vector(31 downto 0);
-      counter_maske_Reg : in std_logic_vector(31 downto 0);
-      out_maske_Reg     : in std_logic_vector(31 downto 0);
-      BLM_ena      : in std_logic_vector( 31 downto 0);      
-      Test_In_Mtx   : in std_logic_vector(8 downto 0);
-      AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
-      INTL_Output   : out std_logic_vector(5 downto 0);
-      BLM_status_Reg : out t_IO_Reg_0_to_7_Array
+      BLM_cnt_Reg       : in std_logic_vector(15 downto 0);
+      BLM_out_Reg       : in std_logic_vector(15 downto 0);
+      BLM_in_Reg        : in std_logic_vector(31 downto 0);      
+      Test_In_Mtx       : in std_logic_vector(8 downto 0); 
+      AW_IOBP_Input_Reg : in  t_IO_Reg_1_to_7_Array;
+      INTL_Output       : out std_logic_vector(5 downto 0);
+      BLM_status_Reg    : out t_IO_Reg_0_to_7_Array
+
       );
   end component Beam_Loss_check;
  
@@ -956,26 +958,22 @@ signal daq_HiRes_srq:         std_logic;                    -- consolidated irq 
 signal daq_dat:             t_daq_dat (1 to daq_ch_num) := (others => dummy_daq_dat_in);
 signal daq_ext_trig:          t_daq_ctl (1 to daq_ch_num) := (others => dummy_daq_ctl_in);
 
-signal th_rd_active:    std_logic;
-signal th_data_to_SCUB: std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
-signal th_Dtack:        std_logic;                    -- Dtack to SCU Bus Macro
-
-signal BLM_msk_rd_active:    std_logic;
-signal BLM_msk_data_to_SCUB: std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
-signal BLM_msk_Dtack:        std_logic;                   -- Dtack to SCU Bus Macro
+signal BLM_rd_active:    std_logic;
+signal BLM_data_to_SCUB: std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
+signal BLM_Dtack:        std_logic;                    -- Dtack to SCU Bus Macro
 
 signal pos_thres_Reg1:        std_logic_vector(15 downto 0);
 signal pos_thres_Reg2:        std_logic_vector(15 downto 0);
 signal neg_thres_Reg1:        std_logic_vector(15 downto 0);
 signal neg_thres_Reg2:        std_logic_vector(15 downto 0);
 
-signal BLM_ena_reg1:           std_logic_vector(15 downto 0);    
-signal BLM_ena_reg2:           std_logic_vector(15 downto 0);    
-signal counter_maske_Reg1:    std_logic_vector(15 downto 0);
-signal counter_maske_Reg2:    std_logic_vector(15 downto 0);
+signal BLM_in_reg1:           std_logic_vector(15 downto 0);    
+signal BLM_in_reg2:           std_logic_vector(15 downto 0);    
+signal BLM_cnt_Reg:    std_logic_vector(15 downto 0);
 
-signal out_maske_Reg1:        std_logic_vector(15 downto 0);
-signal out_maske_Reg2:        std_logic_vector(15 downto 0);
+
+signal BLM_out_Reg:        std_logic_vector(15 downto 0);
+
 
  
 signal BLM_st_rd_active:       std_logic;
@@ -1375,7 +1373,7 @@ port map  (
           Data_to_SCUB       =>  IOBP_in_data_to_SCUB
         );
     
-  BLM_Threshold_Reg: io_reg
+  BLM_control_Reg: io_reg
   generic map(
         Base_addr =>  c_BLM_constr_Base_Addr
         )
@@ -1394,72 +1392,16 @@ port map  (
         Reg_IO2            =>  pos_thres_Reg2,
         Reg_IO3            =>  neg_thres_Reg1,
         Reg_IO4            =>  neg_thres_Reg2,
-        Reg_IO5            =>  BLM_ena_Reg1,
-        Reg_IO6            =>  BLM_ena_Reg2,
-        Reg_IO7            =>  open,
-        Reg_IO8            =>  open,
+        Reg_IO5            =>  BLM_in_Reg1,
+        Reg_IO6            =>  BLM_in_Reg2,
+        Reg_IO7            =>  BLM_out_Reg,
+        Reg_IO8            =>  BLM_cnt_Reg,
   --
-        Reg_rd_active      =>  th_rd_active,
-        Dtack_to_SCUB      =>  th_Dtack,
-        Data_to_SCUB       =>  th_data_to_SCUB
+        Reg_rd_active      =>  BLM_rd_active,
+        Dtack_to_SCUB      =>  BLM_Dtack,
+        Data_to_SCUB       =>  BLM_data_to_SCUB
       );
 
---      BLM_Readout_Reg: in_reg
---      generic map(
---            Base_addr =>  c_BLM_status_Base_Addr
- --           )
- --     port map  (
---            Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
---            Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
- --           Ext_Adr_Val        =>  Ext_Adr_Val,
---            Ext_Rd_active      =>  Ext_Rd_active,
- --           Ext_Rd_fin         =>  Ext_Rd_fin,
- --           Ext_Wr_active      =>  Ext_Wr_active,
- --           Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
---            clk                =>  clk_sys,
- --           nReset             =>  rstn_sys,
-      --
- --           Reg_In1            =>  BLM_status_Reg1,
---            Reg_In2            =>  (others =>'0'),
---            Reg_In3            =>  (others =>'0'),
- --           Reg_In4            =>  (others =>'0'),
- --           Reg_In5            =>  (others =>'0'),
- --           Reg_In6            => (others =>'0'),
- --           Reg_In7            =>  (others =>'0'),
- --           Reg_In8            =>  (others =>'0'),
-      --
- --           Reg_rd_active      =>  BLM_st_rd_active,
- --           Dtack_to_SCUB      =>  BLM_st_Dtack,
- --           Data_to_SCUB       =>  BLM_st_data_to_SCUB
- --     );
-      BLM_maske: io_reg
-      generic map(
-            Base_addr =>  c_BLM_Masken_Base_Addr
-            )
-      port map  (
-            Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-            Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-            Ext_Adr_Val        =>  Ext_Adr_Val,
-            Ext_Rd_active      =>  Ext_Rd_active,
-            Ext_Rd_fin         =>  Ext_Rd_fin,
-            Ext_Wr_active      =>  Ext_Wr_active,
-            Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-            clk                =>  clk_sys,
-            nReset             =>  rstn_sys,
-      --
-            Reg_IO1            =>  counter_maske_Reg1,
-            Reg_IO2            =>  counter_maske_Reg2,
-            Reg_IO3            =>  out_maske_Reg1,
-            Reg_IO4            =>  out_maske_Reg2,
-            Reg_IO5            =>  open,
-            Reg_IO6            =>  open,
-            Reg_IO7            =>  open,
-            Reg_IO8            =>  open,
-
-            Reg_rd_active      =>  BLM_msk_rd_active,
-            Dtack_to_SCUB      =>  BLM_msk_Dtack,
-            Data_to_SCUB       =>  BLM_msk_data_to_SCUB
-          );
 
         DAQ_modul: daq
         GENERIC MAP(
@@ -1756,34 +1698,30 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         IOBP_id_rd_active,        IOBP_id_data_to_SCUB,
                         IOBP_in_rd_active,        IOBP_in_data_to_SCUB,
                         daq_user_rd_active,       daq_data_to_SCUB,
-                        th_rd_active,             th_data_to_SCUB,
-                        BLM_msk_rd_active,        BLM_msk_data_to_SCUB--,
-                       -- BLM_st_rd_active,         BLM_st_data_to_SCUB
+                        BLM_rd_active,             BLM_data_to_SCUB
                       )
 
 
-  variable sel: unsigned(10 downto 0);
+  variable sel: unsigned(9 downto 0);
 
   begin
-    sel :=  --BLM_st_rd_active& 
-    th_rd_active  & 
-    BLM_msk_rd_active & daq_user_rd_active & 
+    sel :=  
+    BLM_rd_active  &  daq_user_rd_active & 
             IOBP_in_rd_active  & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
             Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
 
   case sel IS
-      --when "100000000000" => Data_to_SCUB <= BLM_st_data_to_SCUB; 
-      when "10000000000" => Data_to_SCUB <= th_data_to_SCUB;
-      when "01000000000" => Data_to_SCUB <= BLM_msk_data_to_SCUB;
-      when "00100000000" => Data_to_SCUB <= daq_data_to_SCUB;
-      when "00010000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
-      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "00000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "00000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "00000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "00000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "00000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "00000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+ 
+      when "1000000000" => Data_to_SCUB <= BLM_data_to_SCUB;
+      when "0100000000" => Data_to_SCUB <= daq_data_to_SCUB;
+      when "0010000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
+      when "0001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000010000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "0000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "0000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
 
       when others      => Data_to_SCUB <= (others => '0');
     end case;
@@ -1792,7 +1730,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
 -------------- Dtack_to_SCUB -----------------------------
 
     Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
-                         IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_Dtack or daq_Dtack or th_Dtack or BLM_msk_Dtack );
+                         IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_Dtack or daq_Dtack or BLM_Dtack  );
 
     A_nDtack <= NOT(SCUB_Dtack);
     A_nSRQ   <= NOT(SCUB_SRQ);
@@ -1838,14 +1776,14 @@ BLM_Module: Beam_Loss_check
       rstn_sys     => rstn_sys,     -- Reset
       pos_threshold => pos_thres_Reg2 & pos_thres_Reg1,
       neg_threshold => neg_thres_Reg2 & neg_thres_Reg1,
-      counter_maske_Reg => counter_maske_Reg2 & counter_maske_Reg1,
-      out_maske_Reg => out_maske_Reg2 & out_maske_Reg1,
-      BLM_ena => BLM_ena_Reg2(15 downto 0) & BLM_ena_Reg1(15 downto 0),
+      BLM_cnt_Reg => BLM_cnt_Reg,
+      BLM_out_Reg => BLM_out_Reg,
+      BLM_in_Reg => BLM_in_Reg2(15 downto 0) & BLM_in_Reg1(15 downto 0),
       Test_In_Mtx  => Test_In_Mtx,
       AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
       INTL_Output  => INTL_Output,
     BLM_status_Reg => BLM_status_Reg
-  
+
   );
 
 front_board_id_Module: front_board_id 
@@ -1863,7 +1801,7 @@ port map ( clk               => clk_sys,
            IOBP_ID           => IOBP_ID,
            INTL_Output       => INTL_Output,
            AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-           nBLM_out_ena        => BLM_ena_Reg2(15), 
+           nBLM_out_ena        => BLM_out_Reg(15), 
            AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
            IOBP_Output       => IOBP_Output,
            IOBP_Input        => IOBP_Input,

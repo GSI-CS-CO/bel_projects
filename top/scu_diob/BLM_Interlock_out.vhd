@@ -9,11 +9,12 @@ entity BLM_Interlock_out is
 port (
         CLK              : in std_logic;      -- Clock
         nRST             : in std_logic;      -- Reset
-        out_mux_sel      : in std_logic_vector(31 downto 0);
+        out_mux_sel      : in std_logic_vector(15 downto 0);
         UP_OVERFLOW      : in std_logic_vector(255 downto 0);
         DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
         gate_error       : in std_logic_vector(11 downto 0);
         Interlock_IN     : in std_logic_vector(53 downto 0);
+        gate_out        : in std_logic_vector (11 downto 0);
         INTL_Output      : out std_logic_vector(5 downto 0);
         BLM_status_Reg : out t_IO_Reg_0_to_7_Array
 );
@@ -27,7 +28,7 @@ architecture rtl of BLM_Interlock_out is
       signal m: integer range 0 to 255 :=0;
       signal overflow_cnt: std_logic_vector(6 downto 0);
       constant ZERO_OVERFLOW:  std_logic_vector (in_overflow'range) := (others => '0');
-
+      signal gate_signal : std_logic_vector(11 downto 0);
       signal no_overflow: std_logic;
 
       component overflow_ram IS
@@ -104,7 +105,7 @@ architecture rtl of BLM_Interlock_out is
         );
 
         INTL_Output <= overflow;
-
+        gate_signal <= gate_out;
      --------------------------------------------------------------------------------------------------
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
@@ -116,6 +117,7 @@ architecture rtl of BLM_Interlock_out is
         BLM_status_reg(4)<= "00" & interlock_IN(35 downto 30)&"00"& Interlock_IN(29 downto 24);   -- interlock board 5 and board 6
         BLM_status_reg(5)<= "00"& interlock_IN(47 downto 42)&"00"& Interlock_IN(41 downto 36);    -- interlock board 7 and board 8
         BLM_status_reg(6)<= "0000000000"& interlock_IN(53 downto 48);                             -- interlock board 9
+        BLM_status_reg(7) <= "00"& gate_signal(11 downto 7) & "00" & gate_signal(6 downto 0);
       
       
 end rtl;
