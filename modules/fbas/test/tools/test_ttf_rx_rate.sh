@@ -19,11 +19,15 @@ localhost=$(hostname -s)          # local host
 
 fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
 
-sched_dir="${PWD/fbas*/fbas}/dm"  # directory with DM schedules
+sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
 if [ "$localhost" != "$mngmaster" ]; then
     sched_dir="${PWD/fbas*/fbas}/test/dm"
 fi
-dst_sched_dir="fbas/test/dm"      # destination directory for DM schedules
+dst_test_dir="fbas_test"          # destination directory for DM scripts
+src_test_dir="${dir_name%/*}"     # source test directory
+
+ssh_opts="-o StrictHostKeyChecking=no"
+scp_opts="-r"                     # -r recursive copy
 
 res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
 res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
@@ -88,6 +92,14 @@ fi
 echo "check deployment"
 echo "----------------"
 
+timeout 10 ssh "$username@$datamaster" "if [ ! -d "./$dst_test_dir" ]; then mkdir -p ./$dst_test_dir; fi"
+if [ $? -eq 0 ]; then
+    scp $scp_opts "$src_test_dir/tools" "$src_test_dir/dm" $username@$datamaster:./$dst_test_dir/
+else
+    echo "cannot deploy '$dst_test_dir' on $datamaster"
+    exit 2
+fi
+
 filenames="$fw_rxscu $script_rxscu"
 
 for filename in $filenames; do
@@ -133,8 +145,8 @@ echo -e "\nset up '${rxscu%%.*}'\n------------"
 timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY"
 
 # deploy the specified schedule file
-echo -e "\ndeploy '$sched_filename'\n------------"
-scp $sched_dir/$sched_filename $username@$datamaster:~/$dst_sched_dir/
+echo -e "\ndeploy '$sched_filename' to $datamaster in './${dst_test_dir}/dm'\n------------"
+scp $scp_opts $sched_dir/$sched_filename $username@$datamaster:./${dst_test_dir}/dm/
 
 unset results
 for rate in ${all_msg_rates[*]}; do
@@ -154,7 +166,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # start a schedule on DM
     echo -e "\nstart a schedule on '${datamaster}'\n---------"
-    ssh "$username@$datamaster" "source dm.sh && set_value $sched_filename tperiod $t_period && run_pattern $sched_filename"
+    ssh "$username@$datamaster" "source ./${dst_test_dir}/tools/dm.sh && set_value $sched_filename tperiod $t_period && run_pattern $sched_filename"
 
     # disable MPX task of rxscu"
     timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX"
@@ -206,7 +218,7 @@ for rate in ${all_msg_rates[*]}; do
 
 done
 
-echo "$sched_filename $fw_rxscu $localhost ($(date))"
+echo "$sched_filename@$datamaster $fw_rxscu@$rxscu $localhost ($(date))"
 echo "$res_header_console"
 #echo "$res_header_wiki"
 chars=${#res_header_console}
