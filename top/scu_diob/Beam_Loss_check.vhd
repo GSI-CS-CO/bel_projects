@@ -14,13 +14,13 @@ port (
     rstn_sys          : in std_logic;      -- Reset
     pos_threshold     : in std_logic_vector(31 downto 0);
     neg_threshold     : in std_logic_vector(31 downto 0);
-    counter_maske_Reg : in std_logic_vector(31 downto 0);
-    out_maske_Reg     : in std_logic_vector(31 downto 0);
-    BLM_ena          : in std_logic_vector(31 downto 0);      
-    Test_In_Mtx   : in std_logic_vector(8 downto 0); 
-    AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
-    INTL_Output   : out std_logic_vector(5 downto 0);
-    BLM_status_Reg : out t_IO_Reg_0_to_7_Array
+    BLM_cnt_Reg       : in std_logic_vector(15 downto 0);
+    BLM_out_Reg       : in std_logic_vector(15 downto 0);
+    BLM_in_Reg        : in std_logic_vector(31 downto 0);      
+    Test_In_Mtx       : in std_logic_vector(8 downto 0); 
+    AW_IOBP_Input_Reg : in  t_IO_Reg_1_to_7_Array;
+    INTL_Output       : out std_logic_vector(5 downto 0);
+    BLM_status_Reg    : out t_IO_Reg_0_to_7_Array
     
 );
 
@@ -108,12 +108,12 @@ component BLM_gate_timing_seq is
           port (
                   CLK              : in std_logic;      -- Clock
                   nRST             : in std_logic;      -- Reset
-                 out_mux_sel      : in std_logic_vector(31 downto 0);
+                 out_mux_sel      : in std_logic_vector(15 downto 0);
                   UP_OVERFLOW      : in std_logic_vector(255 downto 0);
                   DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
                   gate_error       : in std_logic_vector(11 downto 0);
                   Interlock_IN     : in std_logic_vector(53 downto 0);
-
+                  gate_out        : in std_logic_vector (11 downto 0);
                   INTL_Output      : out std_logic_vector(5 downto 0);
                   BLM_status_Reg : out t_IO_Reg_0_to_7_Array
                   );
@@ -134,8 +134,8 @@ begin
       clk_i => clk_sys,         -- chip-internal pulsed clk signal
       rstn_i => rstn_sys,         -- reset signal
       gate_in => AW_IOBP_Input_Reg(6)(5 downto 0) & AW_IOBP_Input_Reg(5)(11 downto 6),       -- input signal
-      gate_seq_ena => BLM_ena(27 downto 16),  -- enable '1' for input connected to the counter
-      hold_time => counter_maske_Reg(23 downto 16),
+      gate_seq_ena => BLM_in_Reg(28 downto 17),  -- enable '1' for input connected to the counter
+      hold_time => BLM_in_Reg(16 downto 9),
       timeout_error => gate_error, -- gate doesn't start within the given timeout
       gate_out => gate_In_Mtx       -- out gate signal
     );
@@ -148,7 +148,7 @@ begin
       clk_i                => clk_sys,
       rstn_i               => rstn_sys,
       AW_IOBP_Input_Reg    => AW_IOBP_Input_Reg,
-      watchdog_ena         => BLM_ena(8 downto 0),
+      watchdog_ena         => BLM_in_Reg(8 downto 0),
       In_Mtx               => in_mux,
       INTL_out             =>Interlock_wd
     );
@@ -171,7 +171,7 @@ BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 8 test signa
             watchdog_warn <= Interlock_wd(8) & Interlock_wd(7) & Interlock_wd(6) & Interlock_wd(5) & Interlock_wd(4) & Interlock_wd(3) & Interlock_wd(2) & Interlock_wd(1) & Interlock_wd(0);
            
                 if ((watchdog_warn = ZERO_INTL) or (gate_error = ZERO_gate_err)) then 
-                count_enable <=counter_maske_Reg(9 downto 0);
+                count_enable <= BLM_cnt_Reg(9 downto 0);
                  
                 else
                 count_enable <="0000000000";
@@ -195,8 +195,8 @@ BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 8 test signa
 
           CLK         => clk_sys,      -- Clock
           nRST        => rstn_sys,      -- Reset
-          CLEAR       => counter_maske_Reg(10),       -- Clear counter register 
-          LOAD        => counter_maske_Reg(11),      -- Load counter register
+          CLEAR       => BLM_cnt_Reg(10),       -- Clear counter register 
+          LOAD        => BLM_cnt_Reg(11),      -- Load counter register
           ENABLE      => count_enable,     -- Enable count operation
           pos_threshold =>  pos_threshold,
           neg_threshold =>  neg_threshold,  
@@ -215,11 +215,12 @@ Interlock_output: BLM_Interlock_out
   port map(
           CLK          => clk_sys,
           nRST         => rstn_sys,
-          out_mux_sel  => out_maske_reg,
+          out_mux_sel  => BLM_out_reg,
           UP_OVERFLOW    => UP_OVERFLOW,    
           DOWN_OVERFLOW  => DOWN_OVERFLOW,  
           gate_error     => gate_error,
           Interlock_IN   => watchdog_warn,
+          Gate_out       => Gate_In_Mtx,
           INTL_Output    => INTL_Output,
          BLM_status_Reg => BLM_status_Reg
   );
