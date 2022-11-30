@@ -46,6 +46,6 @@ deploy:
 
 clean:
 	@echo 'cleaning ...'
-	rm -rf $(APPBUILD)/$(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
+	rm -rf $(NAME).zip $(APPBUILD)/bin/ $(APPBUILD)/lib/
 
 .PHONY: clean build deploy
