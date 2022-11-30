@@ -117,7 +117,7 @@ architecture rtl of BLM_Interlock_out is
         BLM_status_reg(4)<= "00" & interlock_IN(35 downto 30)&"00"& Interlock_IN(29 downto 24);   -- interlock board 5 and board 6
         BLM_status_reg(5)<= "00"& interlock_IN(47 downto 42)&"00"& Interlock_IN(41 downto 36);    -- interlock board 7 and board 8
         BLM_status_reg(6)<= "0000000000"& interlock_IN(53 downto 48);                             -- interlock board 9
-        BLM_status_reg(7) <= "00"& gate_signal(11 downto 7) & "00" & gate_signal(6 downto 0);
+        BLM_status_reg(7) <= "00"& gate_signal(11 downto 6) & "00" & gate_signal(5 downto 0);
       
       
 end rtl;
