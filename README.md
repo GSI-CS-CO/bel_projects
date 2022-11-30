@@ -226,7 +226,7 @@ sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
 ```
 
-in case you have not sudo rights (ugly workaround):
+In case you have not sudo rights (ugly workaround):
 
 ```
 ln -s /usr/bin/python3 python
