@@ -8,6 +8,8 @@
 # 321/264 - nwt0472
 scu_arr=(scuxl0396 scuxl0497 scuxl0321 scuxl0264 scuxl0329 scuxl0411)
 
+scp_opts="-pv -o StrictHostKeyChecking=no"  # -p: preserve modification time, -v: verbose, -o: SSH options
+
 unset username userpasswd scu option answer
 
 usage() {
@@ -38,7 +40,7 @@ if [ -n "$scu" ]; then
 fi
 
 # project directory path
-prj_dir="${PWD/fbas*/fbas}"
+prj_dir="$HOME"/fbas_test
 
 # actual gateware
 #tr_gw="v6.0.1"
@@ -83,11 +85,33 @@ fi
 
 # Deploy artifacts
 echo -e "\nArtifacts to be deployed:"
-echo "-" $lm32_fw
-echo "-" $scu_tools
+
+unset scu_files
+if [ -d "$prj_dir" ]; then
+    for file in ${lm32_fw[*]} ${scu_tools[*]}; do
+        filepath="$prj_dir/$file"
+        if [ -f "$filepath" ]; then
+            scu_files+="$filepath "
+        fi
+    done
+fi
+
+if [ -n "$scu_files" ]; then
+    for file in ${scu_files[*]}; do
+        echo "- $file"
+    done
+else
+    echo "Nothing to deploy: '$prj_dir' ($lm32_fw $scu_tools). Exit!"
+    exit 2
+fi
 
 if [ "$tr_gw" == "v6.0.1" ]; then
     echo "-" $ebfwload
+fi
+
+# Check if scp supports the '-O' option (use the legacy SCP protocol)
+if scp -O ${scu_files[0]} /dev/null 2>/dev/null; then
+    scp_opts+=" -O"
 fi
 
 # Start deployment
@@ -97,11 +121,11 @@ for item in ${scu_arr[*]}; do
     scu="${item}.$domain"
 
     # deploy LM32 firmware and script (to show progress: redirect output and grep)
-    SSHPASS="$userpasswd" sshpass -e scp -pv "$prj_dir"/$lm32_fw "$prj_dir"/$scu_tools "$username@$scu:~" 2>&1 | grep -v debug
+    SSHPASS="$userpasswd" sshpass -e scp $scp_opts $scu_files "$username@$scu:~" 2>&1 | grep -v debug
 
     # deploy EB tool (required for gw v6.0.1)
     if [ "$tr_gw" == "v6.0.1" ]; then
-        SSHPASS="$userpasswd" sshpass -e scp -pv "$prj_dir/lm32/$tr_gw/$ebfwload" "$username@$scu:/usr/bin/" 2>&1 | grep -v debug
+        SSHPASS="$userpasswd" sshpass -e scp $scp_opts "$prj_dir/$lm32/$tr_gw/$ebfwload" "$username@$scu:/usr/bin/" 2>&1 | grep -v debug
     fi
 
 done
