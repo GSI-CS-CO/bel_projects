@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
 
 library work;
 --use work.monster_pkg.all;
@@ -66,6 +67,21 @@ architecture simulation of testbench is
   constant c_profile_name  : string := "medium_icache_debug";
 
 
+  constant c_uart_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000000f",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"1ac4ca35",
+    version       => x"00000001",
+    date          => x"20221201",
+    name          => "uart-output        ")));
 
   constant c_zero_master : t_wishbone_master_out := (
     cyc => '0',
@@ -149,7 +165,8 @@ architecture simulation of testbench is
 
   type dev_slaves is (
     devs_reset,
-    devs_ftm_cluster
+    devs_ftm_cluster,
+    devs_uart_output
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
   
@@ -159,6 +176,7 @@ architecture simulation of testbench is
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (
     dev_slaves'pos(devs_reset)       => f_sdb_auto_device(c_arria_reset, true),
+    dev_slaves'pos(devs_uart_output) => f_sdb_auto_device(c_uart_sdb,    true),
     dev_slaves'pos(devs_ftm_cluster) => f_sdb_auto_bridge(c_ftm_slaves,  true)
   );
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -254,52 +272,6 @@ begin
       msi_slave_o => top_msi_master_i(top_my_masters'pos(topm_simbridge))
       );
 
-
-
-    --readyn <= 'Z';
-    --fd_io <= fd_o when fd_oen='1' else (others => 'Z');
-    --chip : entity work.ez_usb_chip
-    --  generic map(g_stop_until_client_connects => false)
-    --  port map (
-    --    rstn_i    => usb_rstn,
-    --    wu2_o     => ebcyc,
-    --    readyn_o  => readyn,
-    --    fifoadr_i => fifoadr,
-    --    fulln_o   => fulln,
-    --    emptyn_o  => emptyn,
-    --    sloen_i   => sloen,
-    --    slrdn_i   => slrdn,
-    --    slwrn_i   => slwrn,
-    --    pktendn_i => pktendn,
-    --    fd_io     => fd_io);
-    --usb : ez_usb
-    --  generic map(
-    --    g_sdb_address => c_top_sdb_address,
-    --    g_sys_freq    => 10) -- this is 65000 kHz for g_simulation=false, and 10 kHz for g_simulation=true
-    --  port map(
-    --    clk_sys_i => clk_sys,
-    --    rstn_i    => rstn_sys,
-    --    master_i  => top_bus_slave_o(top_my_masters'pos(topm_usb)),
-    --    master_o  => top_bus_slave_i(top_my_masters'pos(topm_usb)),
-    --    msi_slave_i => top_msi_master_o(top_my_masters'pos(topm_usb)),
-    --    msi_slave_o => top_msi_master_i(top_my_masters'pos(topm_usb)),
-    --    uart_o    => open,--uart_usb,
-    --    uart_i    => '0',--uart_wrc,
-    --    rstn_o    => usb_rstn,
-    --    ebcyc_i   => ebcyc,
-    --    speed_i   => '0',--usb_speed_i,
-    --    shift_i   => '0',--usb_shift_i,
-    --    readyn_i  => readyn,
-    --    fifoadr_o => fifoadr,
-    --    fulln_i   => fulln,
-    --    sloen_o   => sloen,
-    --    emptyn_i  => emptyn,
-    --    slrdn_o   => slrdn,
-    --    slwrn_o   => slwrn,
-    --    pktendn_o => pktendn,
-    --    fd_i      => fd_io,
-    --    fd_o      => fd_o,
-    --    fd_oen_o  => fd_oen);
 
   top_bar : xwb_sdb_crossbar
     generic map(
@@ -426,6 +398,44 @@ begin
       dm_prioq_master_o  => open,
       dm_prioq_master_i  => (ack => '0', err => '0', stall => '0', rty => '0', dat => (others=>'0')));
 
+
+    uart_output: process
+      FILE stdout : text;-- is "cpu_output.txt";
+      variable cpu_output : line;
+    begin
+      file_open(stdout, "uart_output.txt", write_mode);
+      while true loop
+        wait until rising_edge(clk_sys);
+
+        dev_bus_master_i(dev_slaves'pos(devs_uart_output)).ack <= '0';
+        dev_bus_master_i(dev_slaves'pos(devs_uart_output)).err <= '0';
+        dev_bus_master_i(dev_slaves'pos(devs_uart_output)).rty <= '0';
+        dev_bus_master_i(dev_slaves'pos(devs_uart_output)).stall <= '0';
+
+        if  dev_bus_master_o(dev_slaves'pos(devs_uart_output)).cyc = '1' and
+            dev_bus_master_o(dev_slaves'pos(devs_uart_output)).stb = '1' and
+            dev_bus_master_o(dev_slaves'pos(devs_uart_output)).we  = '1' then
+          dev_bus_master_i(dev_slaves'pos(devs_uart_output)).ack <= '1';
+          --report "output => " & character'val(to_integer(unsigned(
+          --  dev_bus_master_o(dev_slaves'pos(devs_uart_output)).dat(7 downto 0)
+          --))); 
+
+          if to_integer(unsigned(dev_bus_master_o(dev_slaves'pos(devs_uart_output)).dat(7 downto 0))) = 10 then
+            writeline(stdout,cpu_output);
+            file_close(stdout);
+            file_open(stdout, "uart_output.txt", append_mode);      
+            --flush(stdout);
+          else
+            write(cpu_output, character'val(to_integer(unsigned(dev_bus_master_o(dev_slaves'pos(devs_uart_output)).dat(7 downto 0)))));
+            file_close(stdout);
+            file_open(stdout, "uart_output.txt", append_mode);      
+            --flush(stdout);
+          end if;
+
+
+        end if;
+      end loop;
+    end process;
 
 end architecture;
 

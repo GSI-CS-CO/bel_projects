@@ -7,15 +7,18 @@ void* memset(void* s, int c, int n) {
 }
 
 
-volatile int x;
-int main() {
-	discoverPeriphery();
+volatile char *uart_out;
 
+void print_str(char *str) {
+	while(*str) {
+		*uart_out = *str++;
+	}
+}
+
+int main() {
+	uart_out = (volatile char*) find_device_adr(GSI, SDB_UART_SIM);
 	for(;;) {
-		for(int i = 0; i < 32; ++i) {
-			int adr = (1<<i);
-			x = *(int*)adr;
-		}
+		print_str("hello, world!\n");
 	}
 	return 0;
 }

@@ -35,7 +35,7 @@ modules = {
     "../../../ip_cores/general-cores/modules/wishbone/wb_register",
     "../../../modules/dm_diag",
     "../../../modules/ftm",
-    "../../../ip_cores/etherbone-core/hdl/eb_sim_core"
+    "./eb_sim_core"
   ]
 }
 
