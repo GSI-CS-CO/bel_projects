@@ -14,13 +14,8 @@ entity ftm4dp is
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_pllref_i     : in std_logic; -- 125 MHz PLL reference
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_sfpref_i     : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator
-
-    clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
     clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -83,19 +78,19 @@ entity ftm4dp is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nSys_Reset    : in      std_logic;  -- Reset From ComX
-    user_btn      : in      std_logic;  --User Button
-    f2f           : inout   std_logic_vector (7 downto 0);  -- Connection to MAX10 FPGA
-    serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
-    serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
-    rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
-    rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
+    nSys_Reset    : in      std_logic;                     -- Reset From ComX
+    user_btn      : in      std_logic;                     -- User Button
+    avr_sda       : inout   std_logic;                     -- I2C Connection to AVR MCU
+    avr_scl       : inout   std_logic;                     -- I2C Connection to AVR MCU
+    serial_cb_out : out     std_logic_vector (1 downto 0); -- Serial to Backplane
+    serial_cb_in  : in      std_logic_vector (1 downto 0); -- Serial to Backplane
+    rear_in       : in      std_logic_vector (1 downto 0); -- GPIO to Backplane
+    rear_out      : out     std_logic_vector (1 downto 0); -- GPIO to Backplane
 
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -144,22 +139,11 @@ entity ftm4dp is
     psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
-    -- Fast-SRAM (2x 16Mbit)
-    -----------------------------------------------------------------------
-    sram_a            : out   std_logic_vector(19 downto 0) := (others => 'Z');
-    sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    sram_csn          : out   std_logic_vector(1 downto 0) := (others => '1');
-    sram_oen          : out   std_logic_vector(1 downto 0) := (others => '1');
-    sram_wen          : out   std_logic := 'Z';
-    sram_lbn          : out   std_logic := 'Z';
-    sram_ubn          : out   std_logic := 'Z';
-
-    -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    --UM_nCSO           : out   std_logic := 'Z';
-    --UM_DCLK           : out   std_logic := 'Z';
+    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    UM_nCSO           : out   std_logic := 'Z';
+    UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - dual phy version)
@@ -227,12 +211,12 @@ architecture rtl of ftm4dp is
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL)
   );
 
-  constant c_family        : string := "Arria 10 GX FTM4";
-  constant c_project       : string := "scu_control";
-  constant c_cores         : natural:= 1;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_family       : string  := "Arria 10 GX FTM4";
+  constant c_project      : string  := "scu_control";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_profile_name : string  := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
+  constant c_cores        : natural := 4;
 
 begin
 
@@ -252,6 +236,8 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
+      g_lm32_are_ftm       => true,
+      g_lm32_MSIs          => 1,
       g_en_tempsens        => false,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
@@ -367,17 +353,9 @@ begin
   ext_ch(3)            <= '0'; -- Get a second bit for aux. phy
 
   -- I2C to ATXMEGA
-  f2f(3)              <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
-  f2f(2)              <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
-  s_i2c_scl_pad_in(1) <= f2f(3);
-  s_i2c_sda_pad_in(1) <= f2f(2);
-
-  -- Misc. pins to ATXMEGA
-  f2f(0) <= 'Z';
-  f2f(1) <= 'Z';
-  f2f(4) <= 'Z';
-  f2f(5) <= 'Z';
-  f2f(6) <= 'Z';
-  f2f(7) <= 'Z';
+  avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= avr_scl;
+  s_i2c_sda_pad_in(1) <= avr_sda;
 
 end rtl;

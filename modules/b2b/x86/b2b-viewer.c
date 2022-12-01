@@ -3,9 +3,9 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Jul-2021
+ *  version : 22-Sep-2021
  *
- * subscribes to and displays status of a b2b transfers
+ * subscribes to and displays status of a b2b transfer
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000301
+#define B2B_VIEWER_VERSION 0x000318
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -132,7 +132,7 @@ static void help(void) {
   fprintf(stderr, "                      'what' 0: set val; 1: get val; .... \n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display information on the B2B system\n");
-  fprintf(stderr, "Example1: '%s sis18 -s7\n", program);
+  fprintf(stderr, "Example1: '%s pro_sis18 -s7'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_VIEWER_VERSION));
@@ -569,10 +569,10 @@ void printData(int flagOnce, uint32_t sid, char *name)
       sprintf(modeStr, "'CMD_B2B_START'");
       break;
     case 2 :
-      sprintf(modeStr, "'bunch 2 fast extraction'");
+      sprintf(modeStr, "'bunch 2 extraction'");
       break;
     case 3 :
-      sprintf(modeStr, "'bunch 2 coasting beam'");
+      sprintf(modeStr, "'bunch 2 coasting'");
       break;
     case 4 :
       sprintf(modeStr, "'bunch 2 bucket'");
@@ -587,7 +587,7 @@ void printData(int flagOnce, uint32_t sid, char *name)
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(tLocal,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m--- b2b viewer (%5s) ---   SID %02d %25s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
+    printf("\033[7m--- b2b viewer (%9s) ---   SID %02d %21s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 
@@ -705,7 +705,7 @@ int main(int argc, char** argv) {
       /*if (once) {sleep(1); quit=1;}                 // wait a bit to get the values */
       printData(once, sid, name);
       if (!quit) {
-        userInput = comlib_getTermChar();
+        userInput = comlib_term_getChar();
         switch (userInput) {
           case 'c' :
             dicCmdClearDiag(prefix, sid);

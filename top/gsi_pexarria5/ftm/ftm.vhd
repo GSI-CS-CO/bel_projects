@@ -248,11 +248,11 @@ architecture rtl of ftm is
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
 
-  constant c_family  : string := "Arria V";
-  constant c_project : string := "ftm";
-  constant c_cores   : natural := 4;
-  constant c_initf_name 	: string := c_project & ".mif";
-  constant c_profile_name  : string := "medium_icache";
+  constant c_family       : string  := "Arria V";
+  constant c_project      : string  := "ftm";
+  constant c_initf_name   : string  := c_project & ".mif";
+  constant c_profile_name : string  := "medium_icache";
+  constant c_cores        : natural := 4;
 
 begin
 

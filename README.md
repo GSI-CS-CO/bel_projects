@@ -10,6 +10,9 @@ GSI Timing Gateware and Tools
   - [Tools (Monitoring and EB-Tools)](#tools-monitoring-and-eb-tools)
   - [Saftlib](#saftlib)
   - [Build Gateware(s)](#build-gatewares)
+  - [Additional Targets](#additional-targets)
+    - [Check Timing Constraints](#check-timing-constraints)
+    - [Sort QSF Files](#sort-qsf-files)
 - [FAQ and Common Problems](#faq-and-common-problems)
   - [Synthesis](#synthesis)
     - [Quartus Version](#quartus-version)
@@ -25,6 +28,7 @@ GSI Timing Gateware and Tools
       - [Tool hdlmake not found (Python 2.7)](#tool-hdlmake-not-found-python-27)
     - [Python not found](#python-not-found)
     - [Setuptools not found](#setuptools-not-found)
+    - [Compiling Saftlib](#compiling-saftlib)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -86,19 +90,35 @@ For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 ## Build Gateware(s)
 Currently we support a few different form factors.
 ```
-make scu2
-make scu3
-make scu4
-make ftm4
-make vetar2a
-make vetar2a-ee-butis
-make pexarria5
-make exploder5
-make pmc
-make microtca
-make pexp
-make pexarria10
-make ftm10
+make scu2               # Arria II
+make scu3               # Arria II
+make vetar2a            # Arria II
+make vetar2a-ee-butis   # Arria II
+make ftm                # Arria V
+make pexarria5          # Arria V
+make exploder5          # Arria V
+make pmc                # Arria V
+make microtca           # Arria V
+make pexp               # Arria V
+make scu4               # Arria 10
+make pexarria10         # Arria 10
+make ftm10              # Arria 10
+make ftm4               # Arria 10 - optional FTM4 development
+make ftm4dp             # Arria 10 - optional FTM4 dual port development
+make a10gx_pcie         # Arria 10 - Intel evaluation board
+```
+
+## Additional Targets
+### Check Timing Constraints
+```
+make $device-check
+make exploder5-check # example
+```
+
+### Sort QSF Files
+```
+make $device-sort
+make exploder5-sort # example
 ```
 
 # FAQ and Common Problems
@@ -127,7 +147,7 @@ sudo apt install libpng12-0
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
-Solution: Change your LC_NUMERIC setting: 
+Solution: Change your LC_NUMERIC setting:
 
 ```
 export LC_NUMERIC="en_US.UTF-8"
@@ -146,7 +166,7 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 
 ## Build Flow
 ### Required Packages
-Question: Which Packages Are Required?
+Question: Which packages are required?
 
 Answer: You need to have installed the following packages before you can configure and build Etherbone and Saftlib:
 
@@ -158,6 +178,10 @@ Answer: You need to have installed the following packages before you can configu
 - build-essential
 - automake
 - libreadline-dev
+- libsigc++ (saftlib)
+- libboost-dev (saftlib)
+- pkgconfig (saftlib)
+- xsltproc (saftlib)
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
@@ -210,6 +234,17 @@ Solution: Just install the right setuptools:
 ```
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptools # Python 2.X
+```
+
+### Compiling Saftlib
+
+Error: Compilation: "Error message: ./configure: line 16708: syntax error near unexpected token 0.23' ./configure: line 16708: PKG_PROG_PKG_CONFIG(0.23)'"
+
+Solution:
+
+```
+sudo apt-get install pkg-config
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
 ## Git
