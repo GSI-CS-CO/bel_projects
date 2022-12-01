@@ -272,7 +272,7 @@ begin
       g_en_lcd              => false,
       g_delay_diagnostics   => true,
       g_en_eca              => false,
-      g_en_asmi             => true
+      g_en_asmi             => true,
       g_io_table            => io_mapping_table,
       g_lm32_are_ftm        => true,
       g_lm32_cores          => c_cores,
