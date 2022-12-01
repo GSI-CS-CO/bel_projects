@@ -120,7 +120,6 @@ entity monster is
     g_a10_en_phy_reconf    : boolean;
     g_en_butis             : boolean;
     g_lm32_cores           : natural;
-    g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
     g_lm32_profiles        : string;
