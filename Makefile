@@ -113,7 +113,7 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs toolchain riscv-toolchain firmware driver
+all:		hdlmake_install etherbone tools sdbfs toolchain riscv-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
