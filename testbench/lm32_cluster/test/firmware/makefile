@@ -8,8 +8,8 @@ firmware.mif: firmware.bin genrammif
 firmware.bin: firmware
 	lm32-elf-objcopy -O binary firmware firmware.bin
 
-firmware: crt0.S firmware.c irq.c aux.c mini_sdb.c sdb_add.c
-	lm32-elf-gcc -std=gnu99 -Wl,-Map=firmware.map -T ram.ld -O4 -o firmware crt0.S firmware.c irq.c aux.c mini_sdb.c sdb_add.c -I.
+firmware: crt0.S firmware.c irq.c aux.c mini_sdb.c sdb_add.c vsprintf-xint.c printf.c
+	lm32-elf-gcc -std=gnu99 -Wl,-Map=firmware.map -T ram.ld -O4 -o firmware crt0.S firmware.c irq.c aux.c mini_sdb.c sdb_add.c vsprintf-xint.c printf.c -I.
 
 
 genrammif: genrammif.c
