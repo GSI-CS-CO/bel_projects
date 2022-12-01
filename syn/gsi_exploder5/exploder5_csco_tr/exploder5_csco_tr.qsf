@@ -123,10 +123,22 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:exploder5_csco_tr.tcl"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/dual_region.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/global_region.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5_networks.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/single_region.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_hip.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie_reconf.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy16.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy8.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy_reconf.qip"
+set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll.qip
 set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll_ref.qip
 set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/arria5_pll.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/dmtd_pll5.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/ref_pll5.qip
+set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name REMOVE_REDUNDANT_LOGIC_CELLS ON
 set_global_assignment -name REPORT_CONNECTIVITY_CHECKS ON
