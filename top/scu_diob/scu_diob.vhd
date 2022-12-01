@@ -157,8 +157,7 @@ architecture scu_diob_arch_for_Beam_Loss_Mon of scu_diob is
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
     CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
-
-    CONSTANT c_BLM_constr_Base_Addr     :        Integer := 16#0690#;   --
+    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#0678#;   --BLM control registers
 
 
 --  +============================================================================================================================+
@@ -816,6 +815,7 @@ END component test_sig1_pll;
   signal IOBP_Masken_Reg5:        std_logic_vector(15 downto 0);
   signal IOBP_Masken_Reg6:        std_logic_vector(15 downto 0);
   signal IOBP_Masken_Reg7:        std_logic_vector(15 downto 0);
+  signal IOBP_Masken_Reg8:        std_logic_vector(15 downto 0);
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
@@ -1308,7 +1308,7 @@ port map  (
       Reg_IO5            =>  IOBP_Masken_Reg5,
       Reg_IO6            =>  IOBP_Masken_Reg6,
       Reg_IO7            =>  IOBP_Masken_Reg7,
-      Reg_IO8            =>  open,
+      Reg_IO8            =>  IOBP_Masken_Reg8,
       Reg_rd_active      =>  IOBP_msk_rd_active,
       Dtack_to_SCUB      =>  IOBP_msk_Dtack,
       Data_to_SCUB       =>  IOBP_msk_data_to_SCUB
@@ -1375,7 +1375,7 @@ port map  (
     
   BLM_control_Reg: io_reg
   generic map(
-        Base_addr =>  c_BLM_constr_Base_Addr
+        Base_addr =>  c_BLM_ctrl_Base_Addr
         )
   port map  (
         Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
