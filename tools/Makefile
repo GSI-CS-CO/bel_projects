@@ -24,7 +24,8 @@ all:	$(TARGETS)
 clean:  monitoring-clean
 	rm -f $(TARGETS)
 
-install: monitoring-install
+#install: monitoring-install
+install:
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
 
