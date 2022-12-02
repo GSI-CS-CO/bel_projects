@@ -138,7 +138,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/remote_update/asmi5/asmi5
 set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 100
+set_global_assignment -name SEED 16
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -317,6 +317,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/c
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_comparator.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dec_8b10b.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_delay_line.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_ds182x_interface.vhd" -library work
@@ -325,6 +326,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/c
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_extend_pulse.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_edge_detect.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_enc_8b10b.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_fsm_watchdog.vhd" -library work
