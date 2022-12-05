@@ -32,7 +32,12 @@ void uart_write_byte(const char c) {
 }
 
 void irq_handler(int id) { 
-	mprintf("irq_handler\n");
+  msi m;
+
+  // send msi threadsafe to main loop
+  m.msg = global_msi.msg;
+  m.adr = global_msi.adr;
+  mprintf("irq %x\n",m.msg);
 }
 
 void init_irq_table() {
@@ -41,7 +46,7 @@ void init_irq_table() {
   irq_set_mask(0x01);
   //msg_buf[IRQ].ring_head = msg_buf[IRQ].ring_tail; // clear msg buffer
   irq_enable();
-  mprintf("IRQ table configured.\n");
+  // mprintf("IRQ table configured.\n");
 }
 
 void discover() {
@@ -57,16 +62,16 @@ void discover() {
     pMyMsi        = (uint32_t*)getMsiAdr(&found_sdb[0]); 
   } 
 
+  pCpuIrqSlave    = find_device_adr(GSI, CPU_MSI_CTRL_IF);
 }
 
 int main() {
 	discover();
 	init_irq_table();
+	puts("start loop\n");
 	for(;;) {
-		puts("hello, world!\n");
-		mprintf("uart=0x%x\n",uart_out);
-		mprintf("pCpuMsiBox=0x%x\n",pCpuMsiBox);
-		mprintf("pMyMsi=0x%x\n",pMyMsi);
+		irq_disable();
+		irq_enable();
 	}
 	irq_disable();
 	return 0;

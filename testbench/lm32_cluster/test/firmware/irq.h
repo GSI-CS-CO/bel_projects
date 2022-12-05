@@ -45,7 +45,7 @@
 
 // #include <inttypes.h>
 #include <stdint.h>
-// #include "pp-printf.h"
+#include "mprintf.h"
 
 #ifndef __GNUC_STDC_INLINE__
 #error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!
@@ -83,7 +83,6 @@ extern volatile msi global_msi;
 
 inline void irq_pop_msi( uint32_t irq_no)
 {
-   
    uint32_t  offset    = (IRQ_OFFS_QUE + (irq_no<<4));    //queue is at 32 + irq_no * 16
    uint32_t* msg_queue = (uint32_t*)(pCpuIrqSlave + (offset >>2));
     global_msi.msg =  *(msg_queue+((uint32_t)IRQ_OFFS_MSG>>2));
