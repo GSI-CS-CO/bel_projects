@@ -1,6 +1,7 @@
 #include "mini_sdb.h"
 #include "pp-printf.h"
 #include "irq.h"
+#include "mprintf.h"
 
 void* memset(void* s, int c, int n) {
 	void *result = s;
@@ -26,6 +27,9 @@ int puts(const char *str) {
 	}
 	return 1;
 }
+void uart_write_byte(const char c) {
+	*uart_out = c;
+}
 
 void my_isr(void) { 
 	//<evaluate global_msi and do something useful> 
@@ -39,8 +43,8 @@ int main() {
 	irq_set_mask(0x01); //Enable used IRQs ...
 	irq_enable(); 
 	for(;;) {
-		puts(".\n");
-		// puts("hello, world!\n");
+		puts("hello, world!\n");
+		mprintf("0x%x\n",uart_out);
 		// pp_printf("at_on!\n");
 		// atomic_on();
 		// pp_printf("at_off!\n");

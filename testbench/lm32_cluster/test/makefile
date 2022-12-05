@@ -156,6 +156,10 @@ eca_sdp.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 wb_irq_slave.vhd: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd
 	sed "s/irq_q(queue_offs)/irq_q(queue_offs mod irq_q'length)/g" $< > $@
 
+
+interact: interact.cpp
+	g++ -o $@ $< `pkg-config saftlib --libs --cflags` -lsaftd-service -lsaftbus-standalone -letherbone
+
 clean:
 	rm -f ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd *.o hdl_sources verilog_sources vhdl_sources work-obj93.cf
 	rm -rf .gvi
