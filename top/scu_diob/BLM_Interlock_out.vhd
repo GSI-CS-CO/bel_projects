@@ -110,7 +110,7 @@ architecture rtl of BLM_Interlock_out is
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
 
-        BLM_status_reg(0)<=  '0'& out_mux_sel(6 downto 0)& '0'& no_overflow &  INTL_Output; -- out_mux_sel(7..0) readback, gate_overflow e input_overflow absence, BLM output
+        BLM_status_reg(0)<=  '0'& out_mux_sel(6 downto 0)& '0'& no_overflow &  INTL_Output; -- out_mux_sel(6..0) readback, gate_overflow e input_overflow absence, BLM output
         BLM_status_reg(1)<= "00"& gate_error(11 downto 6) & "00" & gate_error(5 downto 0);         -- gate error
         BLM_status_reg(2)<= "00"& interlock_IN(11 downto 6) & "00" & Interlock_IN(5 downto 0);    -- interlock board 1 and board 2
         BLM_status_reg(3)<= "00"& interlock_IN(23 downto 18) & "00" & Interlock_IN(17 downto 12); -- interlock board 3 and board 4

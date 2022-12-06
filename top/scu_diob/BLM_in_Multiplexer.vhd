@@ -28,7 +28,7 @@ architecture rtl of BLM_In_Multiplexer is
           rstn_i : in std_logic;   -- reset signal
           in_watchdog : in std_logic;     -- input signal
           ena_i : in std_logic;     -- enable '1' for input connected to the counter
-          INTL_out: out std_logic   -- interlock output for signal that doesn't change for a given time (2 clocks)
+          INTL_out: out std_logic   -- interlock output for signal that doesn't change for a given time 
       
       );
  end component BLM_watchdog;
