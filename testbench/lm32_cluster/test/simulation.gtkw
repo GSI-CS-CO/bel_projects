@@ -1,0 +1,78 @@
+[*]
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Tue Dec  6 16:26:31 2022
+[*]
+[dumpfile] "/home/michael/work/bel_projects_lm32_sim/testbench/lm32_cluster/test/simulation.ghw"
+[dumpfile_mtime] "Tue Dec  6 14:18:57 2022"
+[dumpfile_size] 276386
+[savefile] "/home/michael/work/bel_projects_lm32_sim/testbench/lm32_cluster/test/simulation.gtkw"
+[timestart] 67100000000
+[size] 2283 1075
+[pos] -1 -1
+*-33.993752 143456000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.testbench.
+[treeopen] top.testbench.lm32.g1[0].
+[treeopen] top.testbench.lm32.g1[0].lm32.
+[treeopen] top.testbench.lm32.g1[0].lm32.msi_irq.
+[treeopen] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.
+[treeopen] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.
+[treeopen] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i.
+[treeopen] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i.[0].
+[treeopen] top.testbench.simbridge.
+[sst_width] 491
+[signals_width] 219
+[sst_expanded] 1
+[sst_vpaned_height] 304
+@28
+top.testbench.lm32.g1[0].lm32.r_cyc_atomic
+top.testbench.lm32.g1[0].lm32.msi_slave_i.stb
+top.testbench.lm32.g1[0].lm32.msi_slave_i.cyc
+@22
+#{top.testbench.lm32.g1[0].lm32.s_irq[31:0]} top.testbench.lm32.g1[0].lm32.s_irq[31] top.testbench.lm32.g1[0].lm32.s_irq[30] top.testbench.lm32.g1[0].lm32.s_irq[29] top.testbench.lm32.g1[0].lm32.s_irq[28] top.testbench.lm32.g1[0].lm32.s_irq[27] top.testbench.lm32.g1[0].lm32.s_irq[26] top.testbench.lm32.g1[0].lm32.s_irq[25] top.testbench.lm32.g1[0].lm32.s_irq[24] top.testbench.lm32.g1[0].lm32.s_irq[23] top.testbench.lm32.g1[0].lm32.s_irq[22] top.testbench.lm32.g1[0].lm32.s_irq[21] top.testbench.lm32.g1[0].lm32.s_irq[20] top.testbench.lm32.g1[0].lm32.s_irq[19] top.testbench.lm32.g1[0].lm32.s_irq[18] top.testbench.lm32.g1[0].lm32.s_irq[17] top.testbench.lm32.g1[0].lm32.s_irq[16] top.testbench.lm32.g1[0].lm32.s_irq[15] top.testbench.lm32.g1[0].lm32.s_irq[14] top.testbench.lm32.g1[0].lm32.s_irq[13] top.testbench.lm32.g1[0].lm32.s_irq[12] top.testbench.lm32.g1[0].lm32.s_irq[11] top.testbench.lm32.g1[0].lm32.s_irq[10] top.testbench.lm32.g1[0].lm32.s_irq[9] top.testbench.lm32.g1[0].lm32.s_irq[8] top.testbench.lm32.g1[0].lm32.s_irq[7] top.testbench.lm32.g1[0].lm32.s_irq[6] top.testbench.lm32.g1[0].lm32.s_irq[5] top.testbench.lm32.g1[0].lm32.s_irq[4] top.testbench.lm32.g1[0].lm32.s_irq[3] top.testbench.lm32.g1[0].lm32.s_irq[2] top.testbench.lm32.g1[0].lm32.s_irq[1] top.testbench.lm32.g1[0].lm32.s_irq[0]
+#{top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[31:0]} top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[31] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[30] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[29] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[28] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[27] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[26] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[25] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[24] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[23] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[22] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[21] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[20] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[19] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[18] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[17] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[16] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[15] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[14] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[13] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[12] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[11] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[10] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[9] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[8] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[7] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[6] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[5] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[4] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[3] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[2] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[1] top.testbench.lm32.g1[0].lm32.lm32_core.irq_i[0]
+@201
+-host
+@28
+[color] 2
+top.testbench.simbridge.master_o.cyc
+[color] 2
+top.testbench.simbridge.master_o.stb
+[color] 2
+top.testbench.simbridge.master_i.ack
+[color] 2
+top.testbench.simbridge.master_i.stall
+@200
+-mailbox
+@28
+top.testbench.mailbox.msi_master_o.cyc
+top.testbench.mailbox.msi_master_i.stall
+top.testbench.mailbox.msi_master_o.stb
+top.testbench.mailbox.msi_master_i.ack
+@200
+-slave_i
+@28
+top.testbench.mailbox.bus_slave_i.stb
+top.testbench.mailbox.bus_slave_i.cyc
+top.testbench.mailbox.bus_slave_o.err
+top.testbench.mailbox.bus_slave_o.rty
+top.testbench.mailbox.bus_slave_o.stall
+@200
+-msi_irq
+@28
+top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].stb
+@22
+#{top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[31:0]} top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[31] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[30] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[29] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[28] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[27] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[26] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[25] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[24] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[23] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[22] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[21] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[20] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[19] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[18] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[17] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[16] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[15] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[14] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[13] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[12] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[11] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[10] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[9] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[8] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[7] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[6] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[5] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[4] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[3] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[2] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[1] top.testbench.lm32.g1[0].lm32.msi_irq.irq_slave_i[0].dat[0]
+@200
+-msi_ctl
+@22
+#{top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[31:0]} top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[31] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[30] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[29] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[28] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[27] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[26] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[25] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[24] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[23] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[22] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[21] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[20] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[19] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[18] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[17] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[16] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[15] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[14] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[13] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[12] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[11] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[10] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[9] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[8] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[7] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[6] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[5] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[4] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[3] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[2] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[1] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.dat[0]
+#{top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[31:0]} top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[31] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[30] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[29] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[28] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[27] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[26] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[25] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[24] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[23] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[22] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[21] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[20] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[19] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[18] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[17] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[16] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[15] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[14] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[13] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[12] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[11] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[10] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[9] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[8] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[7] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[6] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[5] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[4] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[3] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[2] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[1] top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.adr[0]
+@28
+top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.we
+top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.stb
+top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.cyc
+top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_o.ack
+top.testbench.lm32.g1[0].lm32.msi_irq.ctrl_slave_i.stb
+[pattern_trace] 1
+[pattern_trace] 0
