@@ -24,7 +24,7 @@ architecture rtl of BLM_Interlock_out is
 
       signal in_overflow: std_logic_vector(511 downto 0);
       signal overflow: std_logic_vector(5 downto 0);
-      signal overflow_in: std_logic_vector (1535 downto 0);
+      signal overflow_in: std_logic_vector (767 downto 0);
       signal m: integer range 0 to 255 :=0;
       signal overflow_cnt: std_logic_vector(6 downto 0);
       constant ZERO_OVERFLOW:  std_logic_vector (in_overflow'range) := (others => '0');
@@ -69,7 +69,7 @@ architecture rtl of BLM_Interlock_out is
         
 
         overflow_in(581 downto 0) <=  gate_error & Interlock_IN  & "0000" &in_overflow;  --2 x 6bit gate values, 9x6bit watchgdog interlock values + 86 x 6 bit values
-        overflow_in(1535 downto 582) <= (others =>'0');
+        overflow_in(767 downto 582) <= (others =>'0');
        
 
         if out_mux_sel(8) ='1' then 
