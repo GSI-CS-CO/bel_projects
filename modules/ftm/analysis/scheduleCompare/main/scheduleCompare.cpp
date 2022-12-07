@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chnstv")) != -1) {
+  while ((opt = getopt(argc, argv, "chnpstv")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -39,6 +39,9 @@ int main(int argc, char* argv[]) {
       case 'c':
         config.check = true;
         break;
+      case 'p':
+        config.compact = true;
+        break;
       case 't':
         config.test = true;
         break;
@@ -57,6 +60,8 @@ int main(int argc, char* argv[]) {
     } else {
       if (config.test) {
         return testSingleGraph(std::string(argv[argc - 1]), config);
+      } else if (config.compact) {
+        return compactSingleGraph(std::string(argv[argc - 1]), config);
       } else {
         // use the last two arguments for the dot files after getopt permuted the arguments.
         return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
@@ -72,6 +77,7 @@ void usage(char* program) {
   std::cerr << "        -c: check dot syntax (stops parsing on all unknown attributes)." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
   std::cerr << "        -n: do not compare names of vertices. Not applicable with option -t." << std::endl;
+  std::cerr << "        -p: compact a single graph: merge two node if the predecessor has only one successor. This replaces a chain with a single node." << std::endl;
   std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
   std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;

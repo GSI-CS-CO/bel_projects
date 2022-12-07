@@ -20,6 +20,8 @@ struct configuration {
   bool check = false;
   // option -n
   bool CompareNames = true;
+  // option -p
+  bool compact = false;
   // option -s
   bool silent = false;
   // option -vv

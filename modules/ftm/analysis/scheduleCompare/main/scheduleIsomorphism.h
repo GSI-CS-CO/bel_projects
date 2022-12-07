@@ -33,9 +33,11 @@ struct nameEqualityFilter {
 };
 
 int scheduleIsomorphic(std::string dotFile1, std::string dotfile2, configuration& config);
+int compactSingleGraph(std::string dotFile1, configuration& config);
 int testSingleGraph(std::string dotFile1, configuration& config);
 boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& config);
 std::string getGraphName(ScheduleGraph& g);
+void setGraphName(ScheduleGraph& g, std::string newName);
 void listVertexProtocols(ScheduleGraph& graph, const std::string prefix);
 void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix);
 void switchCompareNames(ScheduleGraph& graph, const bool flag);

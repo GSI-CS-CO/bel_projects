@@ -8,6 +8,7 @@
 #include "parseSchedule.h"
 #include "printSchedule.h"
 #include "scheduleCompare.h"
+#include "scheduleCompact.h"
 
 template <typename Graph1>
 class iso_callback {
@@ -246,6 +247,30 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
 }
 
 std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, boost::graph_name); }
+
+void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, boost::graph_name, newName); }
+
+int compactSingleGraph(std::string dotFile1, configuration& config) {
+  ScheduleGraph graph1;
+  bool parse1 = false;
+  int result = -1;
+  try {
+    boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
+    parse1 = parseSchedule(dotFile1, graph1, dp1, config);
+    printSchedule("Graph:", graph1, dp1, config);
+  } catch (boost::property_not_found &excep) {
+    std::cerr << "Parsing graph: Property not found" << excep.what() << std::endl;
+    result = PARSE_ERROR;
+  } catch (boost::bad_graphviz_syntax &excep) {
+    std::cerr << "Parsing graph: Bad Graphviz syntax: " << excep.what() << std::endl;
+    result = PARSE_ERROR_GRAPHVIZ;
+  }
+  if (parse1) {
+    return compactGraph(graph1, config);
+  } else {
+    return (result == -1) ? FILE_NOT_FOUND : result;
+  }
+}
 
 int testSingleGraph(std::string dotFile1, configuration& config) {
   ScheduleGraph graph1;

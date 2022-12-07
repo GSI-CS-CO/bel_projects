@@ -30,11 +30,11 @@ STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 .PHONY: clean format doc test
 
-scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o
+scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o scheduleCompact.o
 
 scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h
 
-scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h
+scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h scheduleCompact.h
 
 printSchedule.o: printSchedule.h scheduleCompare.h scheduleIsomorphism.h
 
