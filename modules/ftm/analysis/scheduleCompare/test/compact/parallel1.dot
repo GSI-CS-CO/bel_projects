@@ -1,0 +1,5 @@
+digraph parallel1 {
+name=parallel1
+node1 -> node3
+node1 -> node2 -> node3
+}
