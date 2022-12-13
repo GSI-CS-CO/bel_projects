@@ -7,7 +7,8 @@ use work.simbridge_pkg.all;
 entity simbridge is
   generic (
       g_sdb_address    : t_wishbone_address;
-      g_simbridge_msi  : t_sdb_msi := c_simbridge_msi
+      g_simbridge_msi  : t_sdb_msi := c_simbridge_msi;
+      g_simbridge_poll : integer := 0 -- if /= 1, the bridge needs to be polled for MSIs
     );
   port (
   clk_i       : in  std_logic;
@@ -46,7 +47,7 @@ begin
 
     wait until rising_edge(rstn_i);
     wait until rising_edge(clk_i);
-    eb_simbridge_init(stop_until_connected, 
+    eb_simbridge_init(stop_until_connected, g_simbridge_poll,
                       to_integer(signed(g_sdb_address)), 
                       to_integer(signed(g_simbridge_msi.sdb_component.addr_first)), 
                       to_integer(signed(g_simbridge_msi.sdb_component.addr_last)));
@@ -62,8 +63,15 @@ begin
         end_cyc <= end_cycle;
       end if;
 
+      msi_slave_i_cyc:=msi_slave_i.cyc;
+      msi_slave_i_stb:=msi_slave_i.stb;
+      msi_slave_i_we:=msi_slave_i.we;
+      msi_slave_i_adr:=to_integer(signed(msi_slave_i.adr));
+      msi_slave_i_dat:=to_integer(signed(msi_slave_i.dat));
+      msi_slave_i_sel:=to_integer(signed(msi_slave_i.sel));
       eb_simbridge_msi_slave_in(msi_slave_i_cyc,msi_slave_i_stb,msi_slave_i_we,msi_slave_i_adr,msi_slave_i_dat,msi_slave_i_sel);
       eb_simbridge_master_out(master_o_cyc,master_o_stb,master_o_we,master_o_adr,master_o_dat,master_o_sel,master_o_end_cyc);
+
       if master_o_end_cyc /= 0 then
         end_cycle_request := true;
       end if;
@@ -98,6 +106,12 @@ begin
         end_cycle_request := true;
       end if;
       eb_simbridge_msi_slave_out(msi_slave_o_ack,msi_slave_o_err,msi_slave_o_rty,msi_slave_o_stall,msi_slave_o_dat);
+      msi_slave_o.ack <= msi_slave_o_ack;
+      msi_slave_o.err <= msi_slave_o_err;
+      msi_slave_o.rty <= '0';
+      msi_slave_o.stall <= '0';
+      msi_slave_o.dat <= (others => '0');
+
       if master_i.err = '1' and master_o_cyc = '1' then
         report "err:" & integer'image(master_i_dat);
       end if;
@@ -170,7 +184,8 @@ use work.simbridge_pkg.all;
 entity simbridge_chopped is
   generic (
       g_sdb_address    : t_wishbone_address;
-      g_simbridge_msi  : t_sdb_msi := c_simbridge_msi
+      g_simbridge_msi  : t_sdb_msi := c_simbridge_msi;
+      g_simbridge_poll : integer := 0 -- if /= 1, the bridge needs to be polled for MSIs
     );
   port (
   clk_i       : in  std_logic;
@@ -190,7 +205,7 @@ architecture simulation of simbridge_chopped is
 begin
 
   sb: entity work.simbridge 
-    generic map(g_sdb_address, g_simbridge_msi)
+    generic map(g_sdb_address, g_simbridge_msi, g_simbridge_poll)
     port map(clk_i, rstn_i, master_out, master_in, msi_slave_i, msi_slave_o);
 
   cp: entity work.simbridge_chopper 

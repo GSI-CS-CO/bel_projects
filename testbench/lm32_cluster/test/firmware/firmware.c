@@ -37,7 +37,8 @@ void irq_handler(int id) {
   // send msi threadsafe to main loop
   m.msg = global_msi.msg;
   m.adr = global_msi.adr;
-  mprintf("irq %x\n",m.msg);
+  // mprintf("irq: host_slot is %x\n",m.msg);
+  pCpuMsiBox[(m.msg>>16)*2] = m.msg&0x0000ffff; // send a msg
 }
 
 void init_irq_table() {
@@ -69,6 +70,8 @@ int main() {
 	discover();
 	init_irq_table();
 	puts("start loop\n");
+	mprintf("pCpuMsiBox = 0x%x\n", pCpuMsiBox);
+	mprintf("pMyMsi     = 0x%x\n", pMyMsi);
 	for(;;) {
 		irq_disable();
 		irq_enable();

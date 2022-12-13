@@ -57,7 +57,8 @@ entity testbench is
     g_simulation : boolean := true;
     g_en_simbridge : boolean := true;
     g_lm32_are_ftm : boolean := false;
-    g_delay_diagnostics : boolean := false
+    g_delay_diagnostics : boolean := false;
+    g_polled_ebslave : integer := 0
     );
 end entity;
 
@@ -261,7 +262,8 @@ begin
 
   simbridge : entity work.simbridge_chopped
     generic map(
-        g_sdb_address => c_top_sdb_address
+        g_sdb_address => c_top_sdb_address,
+        g_simbridge_poll => g_polled_ebslave
       )
     port map( 
       clk_i     => clk_sys,

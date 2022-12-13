@@ -99,13 +99,14 @@ public:
 	}
 
 
-	EBslave(bool stop_until_connected, uint32_t sdb_adr, uint32_t msi_addr_first, uint32_t msi_addr_last) 
+	EBslave(bool stop_until_connected, bool polled, uint32_t sdb_adr, uint32_t msi_addr_first, uint32_t msi_addr_last) 
 	{
 		std::cerr << "EBslave: sdb_adr=0x" << std::hex << std::setw(8) << std::setfill('0') << sdb_adr 
                   << "         msi_addr_first=0x" << std::hex << std::setw(8) << std::setfill('0') << msi_addr_first
                   << "         msi_addr_last=0x" << std::hex << std::setw(8) << std::setfill('0') << msi_addr_last
                   << std::endl;
 		_stop_until_connected = stop_until_connected;
+		_polled = polled;
 		eb_sdb_adr       = sdb_adr;
 		eb_msi_adr_first = msi_addr_first;
 		eb_msi_adr_last  = msi_addr_last;
@@ -323,7 +324,7 @@ public:
 								wb_stbs.back().end_cyc = eb_flag_cyc;
 							break;
 							case 0x40: // msi_adr
-								if (msi_queue.size() > 0) {
+								if (msi_queue.size() > 0 && _polled) {
 									msi_adr = msi_queue.front().adr;
 									msi_dat = msi_queue.front().dat;
 									msi_cnt = 1;
@@ -518,6 +519,36 @@ public:
 				std::cerr << "----------------------" << std::endl;
 			}
 		}
+		if (word_count == 0 && !_polled) {
+			// std::cerr << "all bytes sent" << std::endl;
+			for (unsigned i = 0; i < msi_queue.size(); ++i) {
+				std::vector<uint8_t> msi_buffer;
+				uint32_t adr = msi_queue[i].adr;
+				uint32_t dat = msi_queue[i].dat;
+				std::cerr << "send msi ";
+				std::cerr << "adr=0x" << std::hex << std::setw(8) << std::setfill('0') << adr << " ";
+				std::cerr << "dat=0x" << std::hex << std::setw(8) << std::setfill('0') << dat << " ";
+				std::cerr << std::dec << std::endl;
+				
+				msi_buffer.push_back(0xa8);
+				msi_buffer.push_back(0x0f);
+				msi_buffer.push_back(0x01);
+				msi_buffer.push_back(0x00);
+
+				msi_buffer.push_back(adr>>24);
+				msi_buffer.push_back(adr>>16);
+				msi_buffer.push_back(adr>>8);
+				msi_buffer.push_back(adr>>0);
+
+				msi_buffer.push_back(dat>>24);
+				msi_buffer.push_back(dat>>16);
+				msi_buffer.push_back(dat>>8);
+				msi_buffer.push_back(dat>>0);		
+
+				write(pfds[0].fd, (void*)&msi_buffer[0], msi_buffer.size());
+			}
+			msi_queue.clear();
+		}		
 	}
 
 	// should be called on falling_edge(clk)
@@ -572,7 +603,9 @@ public:
 		if (cyc == STD_LOGIC_1 && stb == STD_LOGIC_1) {
 			if (we == STD_LOGIC_1) {
 				msi_slave_out_ack = true;
+				adr = adr&(eb_msi_adr_last-eb_msi_adr_first);
 				msi_queue.push_back(MSI(adr,dat));
+				std::cerr << "got MSI" << std::endl;
 				// ignore sel
 			} else {
 				msi_slave_out_err = true; // msi_slave is write-only!
@@ -652,6 +685,7 @@ private:
 	std::deque<wb_stb> wb_wait_for_acks;
 
 	bool _stop_until_connected;
+	bool _polled;
 };
 
 
@@ -660,8 +694,8 @@ private:
 EBslave *slave;
 
 extern "C" 
-void eb_simbridge_init(int stop_until_connected, int sdb_adr, int msi_addr_first, int msi_addr_last) {
-	slave = new EBslave(stop_until_connected, sdb_adr, msi_addr_first, msi_addr_last);
+void eb_simbridge_init(int stop_until_connected, int polled, int sdb_adr, int msi_addr_first, int msi_addr_last) {
+	slave = new EBslave(stop_until_connected, polled, sdb_adr, msi_addr_first, msi_addr_last);
 }
 
 

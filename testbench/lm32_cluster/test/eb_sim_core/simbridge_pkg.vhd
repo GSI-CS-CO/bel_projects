@@ -20,7 +20,7 @@ package simbridge_pkg is
       --eb_slave_control(master_o_cyc,master_o_stb,master_o_we,master_o_adr,master_o_dat,
       --                 master_i_ack,master_i_err,master_i_rty,master_i_stall_master_i_dat);
 
-  procedure eb_simbridge_init(stop_unitl_connected : in integer; sdb_adr, msi_addr_first, msi_addr_last : in integer);
+  procedure eb_simbridge_init(stop_unitl_connected : in integer; polled : in integer; sdb_adr, msi_addr_first, msi_addr_last : in integer);
   attribute foreign of eb_simbridge_init: procedure is "VHPIDIRECT eb_simbridge_init";
 
   procedure eb_simbridge_master_out(cyc, stb, we : out  std_logic; adr, dat , sel, end_cyc: out integer);
@@ -39,7 +39,7 @@ end package;
 
 package body simbridge_pkg is
 
-  procedure eb_simbridge_init(stop_unitl_connected : in integer; sdb_adr, msi_addr_first, msi_addr_last : in integer) is 
+  procedure eb_simbridge_init(stop_unitl_connected : in integer; polled : in integer; sdb_adr, msi_addr_first, msi_addr_last : in integer) is 
   begin
     assert false report "VHPI" severity failure;
   end procedure;
