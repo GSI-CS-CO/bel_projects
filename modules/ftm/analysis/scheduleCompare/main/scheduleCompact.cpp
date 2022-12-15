@@ -65,7 +65,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
           boost::graph_traits<ScheduleGraph>::vertex_descriptor target1 = target(*out_begin, graph1);
           std::cout << "Out: " << chainIndex << " " << *out_begin << " " << graph1[get(vertex_id, target1)].name << ", " << get(vertex_id, target1) << std::endl;
           chainIndex = get(vertex_id, target1);
-          if (boost::in_degree(chainIndex, graph1) > 1) {
+          if (boost::in_degree(chainIndex, graph1) > 1 || boost::out_degree(chainIndex, graph1) > 1) {
             chainEnd = chainIndex;
             std::cout << "Set chainEnd, chainBegin: " << chainBegin << ", chainEnd: " << chainEnd << std::endl;
           }
