@@ -66,7 +66,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -letherbone -lboost_serialization -lboost_graph -lboost_regex
+T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(EBPATH1)/.libs,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -L$(EBPATH1)/.libs -letherbone -lboost_serialization -lboost_graph -lboost_regex
 EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
