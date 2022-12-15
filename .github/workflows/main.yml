@@ -21,7 +21,7 @@ jobs:
       run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
     - name: Install kernel headers and extra modules
-      run: sudo apt-get install linux-headers-$(uname -r) linux-headers-generic
+      run: sudo apt-get install linux-headers-$(uname -r) linux-headers-generic --fix-missing
 
     - name: Create symlinks
       run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4

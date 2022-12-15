@@ -804,6 +804,8 @@ architecture rtl of monster is
   constant c_loc_embedded_cpu : natural := 2;
   constant c_loc_scubus_tag   : natural := 3;
 
+  constant c_wrc_size         : natural := 131072/4;
+
   function f_channel_types return t_nat_array is
     constant c_scu_channel_types : t_nat_array(3 downto 0) := (
       0 => c_loc_linux,
@@ -1629,7 +1631,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1728,7 +1730,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1827,7 +1829,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1927,7 +1929,7 @@ end generate;
         g_records_for_phy           => FALSE,
         g_pcs_16bit                 => FALSE,
         g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-        g_dpram_size                => 131072/4,
+        g_dpram_size                => c_wrc_size,
         g_interface_mode            => PIPELINED,
         g_address_granularity       => BYTE,
         g_aux_sdb                   => c_etherbone_sdb,
