@@ -804,6 +804,8 @@ architecture rtl of monster is
   constant c_loc_embedded_cpu : natural := 2;
   constant c_loc_scubus_tag   : natural := 3;
 
+  constant c_wrc_size         : natural := 131072/4;
+
   function f_channel_types return t_nat_array is
     constant c_scu_channel_types : t_nat_array(3 downto 0) := (
       0 => c_loc_linux,
@@ -1629,7 +1631,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1728,7 +1730,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1827,7 +1829,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => c_wrc_size,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
@@ -1927,7 +1929,7 @@ end generate;
         g_records_for_phy           => FALSE,
         g_pcs_16bit                 => FALSE,
         g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-        g_dpram_size                => 131072/4,
+        g_dpram_size                => c_wrc_size,
         g_interface_mode            => PIPELINED,
         g_address_granularity       => BYTE,
         g_aux_sdb                   => c_etherbone_sdb,
@@ -3167,16 +3169,21 @@ end generate;
     dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)) <= cc_dummy_slave_out;
   end generate;
   i2c_wrapper_y : if g_en_i2c_wrapper generate
-    i2c_wrapper : xwb_i2c_master
+    i2c_wrapper : i2c_master_top
       generic map (
-        g_interface_mode      => PIPELINED,
-        g_address_granularity => BYTE,
-        g_num_interfaces      => g_num_i2c_interfaces)
+        ARST_LVL         => '0',
+        g_num_interfaces => g_num_i2c_interfaces)
       port map (
-        clk_sys_i    => clk_sys,
-        rst_n_i      => rstn_sys,
-        slave_i      => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)),
-        slave_o      => dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)),
+        wb_clk_i     => clk_sys,
+        wb_rst_i     => not(rstn_sys),
+        arst_i       => '1',
+        wb_adr_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).adr(4 downto 2),
+        wb_dat_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).dat(7 downto 0),
+        wb_dat_o     => dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)).dat(7 downto 0),
+        wb_we_i      => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).we,
+        wb_stb_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).stb,
+        wb_cyc_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).cyc,
+        wb_ack_o     => dev_bus_master_i(dev_slaves'pos(devs_i2c_wrapper)).ack,
         scl_pad_i    => i2c_scl_pad_i,
         scl_pad_o    => i2c_scl_pad_o,
         scl_padoen_o => i2c_scl_padoen_o,

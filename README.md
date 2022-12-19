@@ -10,6 +10,9 @@ GSI Timing Gateware and Tools
   - [Tools (Monitoring and EB-Tools)](#tools-monitoring-and-eb-tools)
   - [Saftlib](#saftlib)
   - [Build Gateware(s)](#build-gatewares)
+  - [Additional Targets](#additional-targets)
+    - [Check Timing Constraints](#check-timing-constraints)
+    - [Sort QSF Files](#sort-qsf-files)
 - [FAQ and Common Problems](#faq-and-common-problems)
   - [Synthesis](#synthesis)
     - [Quartus Version](#quartus-version)
@@ -25,6 +28,8 @@ GSI Timing Gateware and Tools
       - [Tool hdlmake not found (Python 2.7)](#tool-hdlmake-not-found-python-27)
     - [Python not found](#python-not-found)
     - [Setuptools not found](#setuptools-not-found)
+    - [Compiling Saftlib](#compiling-saftlib)
+    - [CC not found](#cc-not-found)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -34,6 +39,7 @@ GSI Timing Gateware and Tools
     - [Arrow USB Programmer](#arrow-usb-programmer)
     - [Altera/Intel Ethernet Blaster](#alteraintel-ethernet-blaster)
   - [Timing Receiver](#timing-receiver)
+    - [Commissioning](#commissioning)
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
       - [ArriaV Devices](#arriav-devices)
@@ -58,6 +64,7 @@ This will build VME and PCI(e) drivers.
 ```
 make driver
 (optional) make driver-install
+(optional - build wishbone-serial.ko) make driver/driver-install WISHBONE_SERIAL=y
 ```
 
 ## Etherbone
@@ -85,25 +92,41 @@ For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 ## Build Gateware(s)
 Currently we support a few different form factors.
 ```
-make scu2
-make scu3
-make scu4
-make ftm4
-make vetar2a
-make vetar2a-ee-butis
-make pexarria5
-make exploder5
-make pmc
-make microtca
-make pexp
-make pexarria10
-make ftm10
+make scu2               # Arria II
+make scu3               # Arria II
+make vetar2a            # Arria II
+make vetar2a-ee-butis   # Arria II
+make ftm                # Arria V
+make pexarria5          # Arria V
+make exploder5          # Arria V
+make pmc                # Arria V
+make microtca           # Arria V
+make pexp               # Arria V
+make scu4               # Arria 10
+make pexarria10         # Arria 10
+make ftm10              # Arria 10
+make ftm4               # Arria 10 - optional FTM4 development
+make ftm4dp             # Arria 10 - optional FTM4 dual port development
+make a10gx_pcie         # Arria 10 - Intel evaluation board
+```
+
+## Additional Targets
+### Check Timing Constraints
+```
+make $device-check
+make exploder5-check # example
+```
+
+### Sort QSF Files
+```
+make $device-sort
+make exploder5-sort # example
 ```
 
 # FAQ and Common Problems
-
 ## Synthesis
 ### Quartus Version
+
 Question: Which Version of Quartus Do I Need?
 
 Answer: We recommend to use Quartus 18.1.0 (Build 625 09/12/2018 SJ)
@@ -126,7 +149,11 @@ sudo apt install libpng12-0
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
-Solution: Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
+Solution: Change your LC_NUMERIC setting:
+
+```
+export LC_NUMERIC="en_US.UTF-8"
+```
 
 ### Tool qsys-generate
 Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or directory
@@ -141,7 +168,7 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 
 ## Build Flow
 ### Required Packages
-Question: Which Packages Are Required?
+Question: Which packages are required?
 
 Answer: You need to have installed the following packages before you can configure and build Etherbone and Saftlib:
 
@@ -153,6 +180,10 @@ Answer: You need to have installed the following packages before you can configu
 - build-essential
 - automake
 - libreadline-dev
+- libsigc++ (saftlib)
+- libboost-dev (saftlib)
+- pkgconfig (saftlib)
+- xsltproc (saftlib)
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
@@ -195,6 +226,13 @@ sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
 ```
 
+In case you have no sudo rights:
+
+```
+ln -s /usr/bin/python3 python
+export PATH=$PATH:$(pwd)
+```
+
 We recommend to use at least Python3.7.
 
 ### Setuptools not found
@@ -205,6 +243,27 @@ Solution: Just install the right setuptools:
 ```
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptools # Python 2.X
+```
+
+### Compiling Saftlib
+Error: Compilation: "Error message: ./configure: line 16708: syntax error near unexpected token 0.23' ./configure: line 16708: PKG_PROG_PKG_CONFIG(0.23)'"
+
+Solution:
+
+```
+sudo apt-get install pkg-config
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
+
+### CC not found
+Error: make[1]: cc: No such file or directory
+
+Solution:
+
+```
+which cc # cc: Command not found. 
+update-alternatives --list cc
+which cc # /usr/bin/cc
 ```
 
 ## Git
@@ -219,8 +278,8 @@ sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming
-
 ### USB-Blaster Issues
+
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 
 Solution: Create a new symlink:
@@ -230,15 +289,12 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-
 See bel_projects/doc/usbblaster/readme.md
 
 ### Xilinx Platform Cable II
-
 See bel_projects/doc/platform_cable/readme.md
 
 ### Arrow USB Programmer
-
 See bel_projects/doc/arrow_usb_programmer/readme.md
 
 ### Altera/Intel Ethernet Blaster
@@ -250,9 +306,27 @@ Default server port (programmer GUI): 1309
 </pre>
 
 ## Timing Receiver
+### Commissioning
+Configure the SPI flash chip:
+
+```
+eb-config-nv $device 10 4
+```
+
+Format the 1-wire EEPROM:
+
+```
+cd bel_projects/ip_cores/wrpc-sw/tools
+eb-w1-write $device 0 320 < sdb-wrpc.bin
+```
+
+Program FPGA from command line:
+
+```
+quartus_pgm -c 1 -m jtag -o 'p;device.sof'
+```
 
 ### Flashing
-
 Problem: Flashing might fail sometimes on certain devices and host combinations.
 
 Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
