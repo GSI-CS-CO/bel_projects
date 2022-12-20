@@ -84,10 +84,10 @@ saft-ecpu-ctl $SDPM -c 0x112c804000000000 0xfffffff000000000 20000 0x804 -dg
 saft-ecpu-ctl $SDPM -c 0x13a0800000000000 0xfffffff000000000 15900000 0x820 -d
 saft-ecpu-ctl $SDPM -c 0x13a1800000000000 0xfffffff000000000 15900000 0x820 -d
 
-# diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
+# diag: generate pulse upon CMD_B2B_START message from SIS18 CBU
 saft-io-ctl $SDPM -n IO2 -o 1 -t 0
-saft-io-ctl $SDPM -n IO2 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDPM -n IO2 -c 0x112c804000000000 0xfffffff000000000 10000000 0x0 0 -u
+saft-io-ctl $SDPM -n IO2 -c 0x112c81f000000000 0xfffffff000000000 500000 0x0 1 -u
+saft-io-ctl $SDPM -n IO2 -c 0x112c81f000000000 0xfffffff000000000 10000000 0x0 0 -u
 
 echo -e b2b: configure $SDCBU as cbu
 ###########################################
@@ -102,9 +102,14 @@ saft-ecpu-ctl $SDCBU -c 0x13a1802000000000 0xfffffff000000000 250000 0x802 -dg
 
 # lm32 listens to CMD_B2B_PRINJ message from injection machine, only required for B2B
 saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 250000 0x803 -dg
+###########################################
+# diag: generate pulse upon CMD_B2B_START
+###########################################
+# no output here; we generate clocks at IO1..IO3 via ../asl/b2b-int-sis18-bg2-cbupm_cg.sh
+#saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
+#saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 0 0x0 1 -u
+#saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 10000000 0x0 0 -u
 
-# diag: generate pulse upon CMD_B2B_START event
-saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO1 -c 0x112c81f000000000 0xfffffff000000000 10000000 0x0 0 -u
-
+# IO1 configured as TLU input (from 'DDS')
+saft-io-ctl $SDPM -n IO1 -o 0 -t 1
+saft-io-ctl $SDPM -n IO1 -b 0xffffa01000000000
