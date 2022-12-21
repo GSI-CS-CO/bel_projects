@@ -27,8 +27,8 @@ EBPATH1 ?=/usr/local/include
 CXX = g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
 
-LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
-LDLIBS = -L../../lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
+LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib,-rpath,../$(EBPATH1)/.libs
+LDLIBS = -L../../lib -L../$(EBPATH1)/.libs -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
