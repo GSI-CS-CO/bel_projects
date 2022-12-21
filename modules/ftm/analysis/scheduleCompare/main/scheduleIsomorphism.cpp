@@ -206,6 +206,13 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   // attributes of vertices
   dp.property("type", boost::get(&ScheduleVertex::type, g));
   dp.property("name", boost::get(&ScheduleVertex::name, g));
+  dp.property("label", boost::get(&ScheduleVertex::label, g));
+  dp.property("pos", boost::get(&ScheduleVertex::pos, g));
+  dp.property("_draw_", boost::get(&ScheduleVertex::_draw_, g));
+  dp.property("_ldraw_", boost::get(&ScheduleVertex::_ldraw_, g));
+  dp.property("_hdraw_", boost::get(&ScheduleVertex::_hdraw_, g));
+  dp.property("height", boost::get(&ScheduleVertex::height, g));
+  dp.property("width", boost::get(&ScheduleVertex::width, g));
   dp.property("tperiod", boost::get(&ScheduleVertex::tperiod, g));
   dp.property("qlo", boost::get(&ScheduleVertex::qlo, g));
   dp.property("qhi", boost::get(&ScheduleVertex::qhi, g));
@@ -242,6 +249,9 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
   // attribute of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
+  dp.property("_draw_", boost::get(&ScheduleEdge::_draw_, g));
+  dp.property("_hdraw_", boost::get(&ScheduleEdge::_hdraw_, g));
+  dp.property("pos", boost::get(&ScheduleEdge::pos, g));
   //  dp.property("name", boost::get(&ScheduleEdge::name, g));
   return dp;
 }

@@ -9,6 +9,9 @@ class ScheduleEdge {
  public:
   std::string name = std::string("");
   std::string type = std::string("");
+  std::string _draw_ = std::string("");
+  std::string _hdraw_ = std::string("");
+  std::string pos = std::string("");
   std::string color = std::string("");
   ScheduleVertex& vertex_source = *(new ScheduleVertex());
   ScheduleVertex& vertex_target = *(new ScheduleVertex());

@@ -6,6 +6,13 @@
 class ScheduleVertex {
  public:
   std::string name = std::string("");
+  std::string label = std::string("");
+  std::string pos = std::string("");
+  std::string _draw_ = std::string("");
+  std::string _ldraw_ = std::string("");
+  std::string _hdraw_ = std::string("");
+  std::string height = std::string("");
+  std::string width = std::string("");
   std::string type = std::string("");
   std::string tperiod = std::string("");
   std::string qlo = std::string("");
