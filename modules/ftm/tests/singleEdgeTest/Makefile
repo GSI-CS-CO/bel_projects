@@ -25,7 +25,7 @@ INSTALLPATH = $(PREFIX)/bin
 EBPATH1 ?=/usr/local/include
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I$(EBPATH1) -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
 
 LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -L../../lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
