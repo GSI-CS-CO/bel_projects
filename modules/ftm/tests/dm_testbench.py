@@ -196,6 +196,13 @@ class DmTestbench(unittest.TestCase):
     # ~ print(f'getSnoopCommand: {snoop_command1}')
     return snoop_command1
 
+  def getEbResetCommand(self):
+    ebResetCommand1 = '../../../tools/eb-reset'
+    if not os.path.isfile(ebResetCommand1):
+      ebResetCommand1 = 'eb-reset'
+    # ~ print(f'getEbResetCommand: {ebResetCommand1}')
+    return ebResetCommand1
+
   def snoopToCsv(self, csvFileName, duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
