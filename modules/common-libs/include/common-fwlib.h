@@ -1,25 +1,54 @@
 #ifndef _COMMON_FWLIB_
 #define _COMMON_FWLIB_
 
+// typedef for treating sub-ns timestamps within the b2b firmware
+// the picosecond part may exceed +-1000, but it is recommended to
+// use fwlib_cleanB2bt for alignment 
+typedef struct{                                      
+  uint64_t ns;                                        // full nanoseconds of time
+  int32_t  ps;                                        // ps fraction of time, should be positive
+  uint32_t dps;                                       // uncertainty [ps]
+} b2bt_t;
+
+
+// aligns fraction of a picosends timestamp to 1ns, useful after adding/sustracting
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
+                       );
+
+
 // project time t1 [ns] to approximately t2 [ns] in multiples of period T [as]; returns projected time [ns]
 uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
                            uint64_t t2,               // time 2 [ns], where t2 > t1
-                           uint64_t Tas               // period T [as]
+                           uint64_t T_as              // period T [as]
                            );
 
 // project time t1 [125ps] to approximately t2 [125ps] in multiples of period T [as]; returns projected time [125 ps]
-uint64_t fwlib_advanceTime125ps(uint64_t t1,          // time 1 [125ps]
-                                uint64_t t2,          // time 2 [125ps], where t2 > t1
-                                uint64_t Tas          // period T [as]
+uint64_t fwlib_advanceTime125ps(uint64_t t1_125ps,    // time 1 [125ps]
+                                uint64_t t2_125ps,    // time 2 [125ps], where t2 > t1
+                                uint64_t T_as         // period T [as]
                                 );
+
+// project time t1 [ps] to approximately t2 [ps] in multiples of period T [as]; returns projected time [ps]
+b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,            // time 1 [ps]
+                           b2bt_t    t2_ps,            // time 2 [ps], where t2 > t1
+                           uint64_t T_as               // period T [as]
+                           );
 
 // convert [ns] to [125 ps], returns t [125 ps]
 uint64_t fwlib_tns2t125ps(uint64_t t                  // time [ns]
                           );
 
 // convert [125ps] to [ns], returns t [ns]
-uint64_t fwlib_t125ps2tns(uint64_t t                  // time [125 ps]
+uint64_t fwlib_t125ps2tns(uint64_t t_125              // time [125 ps]
                           );
+
+// convert [ns] to [ps], returns t [ps]
+b2bt_t fwlib_tns2tps(uint64_t t_ns                    // time [ns]
+                     );
+
+// convert [ps] to [ns], returns t [ns]
+uint64_t fwlib_tps2tns(b2bt_t t_ps                    // time [ps]
+                       );
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();
@@ -158,6 +187,7 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid,              // group ID
 uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
                           uint64_t param,              // parameter field
+                          uint32_t tef,                // TEF field
                           uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
                           );
 
@@ -168,6 +198,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action 
 uint32_t fwlib_ebmWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
                           uint64_t param,              // parameter field
+                          uint32_t tef,                // TEF field
                           uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
                           );
 

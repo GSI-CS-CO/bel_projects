@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Apr-2022
+ *  version : 21-dec-2022
  *
  *  common functions used by various firmware projects
  *  
@@ -218,6 +218,15 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps)
+{
+  while (t_ps.ps <  0   ) {t_ps.ns + 1; t_ps.ps += 1000;}
+  while (t_ps.ps >= 1000) {t_ps.ns - 1; t_ps.ps -= 1000;}
+
+  return t_ps;
+} // alignB2bt
+
+
 uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [ns]
 {
   uint64_t dtns;                // approximate time interval to advance [ns]
@@ -268,21 +277,80 @@ uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas) // advan
 } //fwlib_advanceTime
 
 
+b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
+{
+  uint64_t dt_ps;                    // approximate time interval to advance [ps]
+  uint64_t dt_as;                    // approximate time interval to advance [as]
+  uint64_t nPeriods;                 // # of periods
+  uint64_t interval_as;              // interval [as]
+  uint64_t interval_ps;              // interval [ps]
+  uint64_t interval_ns;              // inverval [ns]
+  b2bt_t   tAdvanced_t;              // result
+  uint64_t twelveO = 1000000000000;  // 12 orders of magnitude
+
+  tAdvanced_t.ns  = 0;
+  tAdvanced_t.ps  = 0;
+  tAdvanced_t.dps = 0;
+
+  if (T_as == 0)                       return tAdvanced_t; // no valid RF period
+  if (t2_t.ns < t1_t.ns)               return tAdvanced_t; // order ok ?
+  if ((t2_t.ns - t1_t.ns) > twelveO)   return tAdvanced_t; // not more than 1s! (~18 s max!)
+
+  dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
+  dt_as           = dt_ps * 1000000;
+  nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
+  interval_as     = nPeriods * T_as;
+  interval_ps     = (uint64_t)((double)interval_as / (double)1000000);
+  interval_ns     = interval_ps / 1000;
+  tAdvanced_t.ns  = t1_t.ns + interval_ns;
+  tAdvanced_t.ps  = t1_t.ps + ((interval_ns * 1000) - interval_ps);
+  tAdvanced_t.dps = t1_t.dps;
+
+  return tAdvanced_t; // [ps]
+} // fwlib_advanceTimePs
+
+
 uint64_t fwlib_tns2t125ps(uint64_t t)
 {
   return (t << 3);
 } // tns2t125ps
 
 
-uint64_t fwlib_t125ps2tns(uint64_t t125ps)
+uint64_t fwlib_t125ps2tns(uint64_t t_125ps)
 {
   uint64_t t;
   
-  t = t125ps >> 3;                               // to [ns]
-  if ((t125ps & 0x7) >= 4) t = t + 1;            // fix rounding
+  t = t_125ps >> 3;                              // to [ns]
+  if ((t_125ps & 0x7) >= 4) t = t + 1;           // fix rounding
 
   return t;
 } // t125ps2tns
+
+
+b2bt_t fwlib_tns2tps(uint64_t t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns  = t_ns;
+  t_ps.ps  = 0;
+  t_ps.dps = 0;
+
+  return t_ps;
+} // tns2tps
+
+
+uint64_t fwlib_tps2tns(b2bt_t t_ps)              // time [ps]
+{
+  uint64_t t_ns;
+  b2bt_t   ts_t;
+
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean 
+
+  t_ns = ts_t.ns;
+  if (ts_t.ps >= 500) t_ns++;                    // rounding
+
+  return t_ns;
+} // tps2tns
 
 
 uint64_t fwlib_wrGetMac()  // get my own MAC
@@ -410,9 +478,9 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid, uint32_t evtno, uint32_t flags, uint32
 // fwlib_buildEvtidV1
 
 
-uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)  
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
@@ -432,7 +500,7 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack Ethernet frame with message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
@@ -458,9 +526,9 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
 } //fwlib_ebmWriteTM
 
 
-uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)  
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
@@ -477,7 +545,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack 32bit words of message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
