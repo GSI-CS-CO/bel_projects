@@ -201,8 +201,16 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
     dp.property("style", boost::get(&ScheduleVertex::style, g));
     dp.property("color", boost::get(&ScheduleEdge::color, g));
   }
-  boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
-  dp.property("name", gname);
+  // attributes of the graph
+  //~ boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
+  boost::ref_property_map<ScheduleGraph*, std::string> gName(boost::get_property(g, &GraphProperties::name));
+  boost::ref_property_map<ScheduleGraph*, std::string> gBb(boost::get_property(g, &GraphProperties::bb));
+  boost::ref_property_map<ScheduleGraph*, std::string> g_draw_(boost::get_property(g, &GraphProperties::_draw_));
+  boost::ref_property_map<ScheduleGraph*, std::string> gXdotversion(boost::get_property(g, &GraphProperties::xdotversion));
+  dp.property("name", gName);
+  dp.property("bb", gBb);
+  dp.property("_draw_", g_draw_);
+  dp.property("xdotversion", gXdotversion);
   // attributes of vertices
   dp.property("type", boost::get(&ScheduleVertex::type, g));
   dp.property("name", boost::get(&ScheduleVertex::name, g));
@@ -256,9 +264,11 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   return dp;
 }
 
-std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, boost::graph_name); }
+//~ std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, boost::graph_name); }
+std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, &GraphProperties::name); }
 
-void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, boost::graph_name, newName); }
+//~ void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, boost::graph_name, newName); }
+void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, &GraphProperties::name, newName); }
 
 int compactSingleGraph(std::string dotFile1, configuration& config) {
   ScheduleGraph graph1;

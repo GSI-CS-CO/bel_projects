@@ -9,13 +9,21 @@
 #include "ScheduleVertex.h"
 #include "scheduleCompare.h"
 
-typedef boost::property<boost::graph_name_t, std::string> GraphProperty;
+//~ typedef boost::property<boost::graph_name_t, std::string> GraphProperty;
+class GraphProperties {
+ public:
+  std::string name = std::string("");
+  std::string xdotversion = std::string("");
+  std::string _draw_ = std::string("");
+  std::string bb = std::string("");
+};
 
 // Using a vecS graphs => the index maps are implicit.
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, ScheduleVertex, ScheduleEdge, GraphProperty> ScheduleGraph;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, ScheduleVertex, ScheduleEdge, GraphProperties> ScheduleGraph;
 
 typedef boost::property_map<ScheduleGraph, std::string ScheduleVertex::*>::type VertexNameMap;
 typedef boost::property_map<ScheduleGraph, std::string ScheduleEdge::*>::type EdgeNameMap;
+//~ typedef boost::property_map<ScheduleGraph, std::string GraphProperties::*>::type GraphNameMap;
 
 template <class VertexNameMap>
 struct nameEqualityFilter {
