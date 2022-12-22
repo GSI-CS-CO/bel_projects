@@ -510,6 +510,7 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
   if ((tH1Ext_t.ns + one_s_ns) < tWant) return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
   
   *tExtract = fwlib_advanceTime(tH1Ext_t.ns, tWant, TH1Ext_as);
+  pp_printf("calc ps %4d\n", tH1Ext_t.ps);
   if (*tExtract == 0)                   return COMMON_STATUS_OUTOFRANGE;
 
   return COMMON_STATUS_OK;

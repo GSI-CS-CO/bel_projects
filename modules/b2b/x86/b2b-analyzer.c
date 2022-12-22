@@ -568,7 +568,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // remainder phase to electronics monitor
     if ((!((dicGetval[sid].flag_nok >> 6) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
-      tmp64 = (tmp64 - dicGetval[sid].ext_phase) 1000000000;                               // difference to measured phase [as]; NB: everyting relative to extraction phase
+      tmp64 = (tmp64 - dicGetval[sid].ext_phase) % 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(inj_monRemN[sid]);
       

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-nov-2022
+ *  version : 23-Dec-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x000410                                   // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000420                                   // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -387,13 +387,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1_125ps;
       sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
-      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
       // send the confidence value of the phase fit to ECA (for monitoring purposes)
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
       sendParam    = confidence_as;
       sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time   
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 1);        // force late message
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
 
       transStat    = dt;
       nTransfer++;
@@ -435,7 +435,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
         sendParam    = confidence_as;
         sendDeadline = getSysTime();                                  // produces a late action but allows explicit monitoring of processing time
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 1);      // force late message
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);   // force late message
       } // if not pm error
       //flagIsLate = 0; /* chk */
       
@@ -476,13 +476,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else               tmp.data = 0x7fffffff;                    // mark as invalid
         sendParam   |= (uint64_t)(tmp.data & 0xffffffff);            // low word; match diagnostic
         sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
         // send the confidence value of the phase fit to ECA (for monitoring purposes)
         sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
         sendParam    = confidence_as;
         sendDeadline = getSysTime();                                 // produces a late action but allows explicit monitoring of processing time
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 1);     // force late message
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);  // force late message
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
 

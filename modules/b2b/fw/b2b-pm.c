@@ -319,7 +319,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   ts_t.dps         = jitter_as        / 1000000;
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
-  //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, *phase_corr_ps, *dt_ps);
+  //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ps, ts_t.dps);
   return COMMON_STATUS_OK;
 } //phaseFitSubNs
 
@@ -652,7 +652,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (nInput > 2) {
           insertionSort(tStamp, nInput);                              // need at least two timestamps
           if (phaseFit(TH1_as, nInput, &tH1Match_t) == COMMON_STATUS_OK) {
-            dtMatch_as  = (reqDeadline - tH1Match_t.ns) * 1000 - tH1Match_t.ps; // difference to trigger [ps]
+            dtMatch_as  = (reqDeadline - tH1Match_t.ns);              // ns
+            //pp_printf("match ns %4d, ps %4d, ", (int32_t)dtMatch_as, (int32_t)tH1Match_t.ps);
+            dtMatch_as  = dtMatch_as * 1000 - tH1Match_t.ps;          // ps
+            //pp_printf("match ps %d\n", (int32_t)dtMatch_as);
             dtMatch_as *= 1000000;                                    // difference [as]
             /* prior 'remainder' one would need to subtract the trigger offset - don't do this here
             remainder   =  Dt % TH1_as;                               // remainder [as]
@@ -698,7 +701,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
             remainder   =  dtPhase_as % TH1_as;                       // remainder [as]
             if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
             else                           dtPhase_as = remainder;
-            flagPhaseDone = 1;
+            flagPhaseDone = 1;          
           } // if phasefit
         } // if nInput
 

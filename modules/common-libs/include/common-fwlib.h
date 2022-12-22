@@ -11,7 +11,7 @@ typedef struct{
 } b2bt_t;
 
 
-// aligns fraction of a picosends timestamp to 1ns, useful after adding/sustracting
+// adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
 

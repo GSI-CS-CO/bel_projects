@@ -177,13 +177,11 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       setval.cPhase          = 0;
       getval.flag_nok        = 0xffffffff;
       getval.ext_phase       = 0;
-      getval.ext_phase_ps    = 0;
       getval.ext_dKickMon    = 0;
       getval.ext_dKickProb   = 0;
       getval.ext_diagPhase   = 0;
       getval.ext_diagMatch   = 0;
       getval.inj_phase       = 0;
-      getval.inj_phase_ps    = 0;
       getval.inj_dKickMon    = 0;
       getval.inj_dKickProb   = 0;
       getval.inj_diagPhase   = 0;
@@ -218,16 +216,15 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
       break;
     case tagPre     :
-      getval.preOff          = (param >> 3) - getval.tCBS;  // convert [125 ps] to [ns]
+      getval.preOff          = param - getval.tCBS;
       getval.ext_phase       = param;
-      getval.ext_phase_ps    = param;
       if (param) getval.flag_nok &= 0xfffffffe;
       flagErr                = ((id & B2B_ERRFLAG_PMEXT) != 0);
       getval.flagEvtErr     |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff          = (param >> 3) - getval.tCBS;  // convert [125 ps] to [ns]
-      getval.inj_phase_125ps = param;
+      getval.priOff          = getval.tCBS;
+      getval.inj_phase       = param;
       if (param) getval.flag_nok &= 0xffffffdf;
       flagErr                = ((id & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr     |= flagErr << tag;

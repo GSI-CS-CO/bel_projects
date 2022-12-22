@@ -148,7 +148,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   // get values
   new  = strGetval;
-  new += sprintf(new, "; %d; %lu", !((dicGetval[sid].flag_nok     ) & 0x1), dicGetval[sid].ext_phase_125ps);
+  new += sprintf(new, "; %d; %lu", !((dicGetval[sid].flag_nok     ) & 0x1), dicGetval[sid].ext_phase);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 1) & 0x1), dicGetval[sid].ext_dKickMon);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 2) & 0x1), dicGetval[sid].ext_dKickProb);
 
@@ -160,7 +160,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
   new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
   
-  new += sprintf(new, "; %d; %lu", !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase_125ps);
+  new += sprintf(new, "; %d; %lu", !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 6) & 0x1), dicGetval[sid].inj_dKickMon);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 7) & 0x1), dicGetval[sid].inj_dKickProb);
 

@@ -220,8 +220,8 @@ uint32_t exitActionError()
 //---------------------------------------------------
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps)
 {
-  while (t_ps.ps <  0   ) {t_ps.ns + 1; t_ps.ps += 1000;}
-  while (t_ps.ps >= 1000) {t_ps.ns - 1; t_ps.ps -= 1000;}
+  while (t_ps.ps < -500) {t_ps.ns -= 1; t_ps.ps += 1000;}
+  while (t_ps.ps >= 500) {t_ps.ns += 1; t_ps.ps -= 1000;}
 
   return t_ps;
 } // alignB2bt
@@ -236,6 +236,7 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2
   uint64_t intervalNs;          // interval [ns]
   uint64_t tAdvanced;           // result
   uint64_t nineO = 1000000000;  // nine order of magnitude
+  uint64_t half;                // helper variable
 
   if (Tas == 0)          return 0;
   if (t2 < t1)           return 0;               // order ok ?
@@ -245,7 +246,9 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2
   dtas       = dtns * nineO;
   nPeriods   = (uint64_t)((double)dtas / (double)Tas) + 1;
   intervalAs = nPeriods * Tas;
-  intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
+  half       = nineO >> 1;
+  intervalNs = intervalAs / nineO;
+  if (intervalAs % nineO > half) intervalNs++;
   tAdvanced  = t1 + intervalNs;
 
   return tAdvanced; // [ns]
@@ -286,6 +289,7 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
   uint64_t interval_ps;              // interval [ps]
   uint64_t interval_ns;              // inverval [ns]
   b2bt_t   tAdvanced_t;              // result
+  uint64_t half;                     // helper variable
   uint64_t twelveO = 1000000000000;  // 12 orders of magnitude
 
   tAdvanced_t.ns  = 0;
@@ -301,7 +305,9 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
   nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
   interval_as     = nPeriods * T_as;
   interval_ps     = (uint64_t)((double)interval_as / (double)1000000);
+  half            = 500;
   interval_ns     = interval_ps / 1000;
+  if (interval_ps % 1000 > half) interval_ns++;
   tAdvanced_t.ns  = t1_t.ns + interval_ns;
   tAdvanced_t.ps  = t1_t.ps + ((interval_ns * 1000) - interval_ps);
   tAdvanced_t.dps = t1_t.dps;
@@ -558,8 +564,8 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   *pEca = idLo;
   *pEca = paramHi;
   *pEca = paramLo;
-  *pEca = tef;
   *pEca = res;
+  *pEca = tef;
   *pEca = deadlineHi;
   *pEca = deadlineLo;
   atomic_off();

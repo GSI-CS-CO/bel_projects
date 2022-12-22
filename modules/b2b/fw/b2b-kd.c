@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Oct-2021
+ *  version : 22-Dec-2022
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000319                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000420                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -374,7 +374,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       status = B2B_STATUS_NOKICK; // ohps, too late!
     } // if getSysTime
 
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
     //fwlib_ioCtrlSetGate(0, 0);  chk                          // disable input gates 
     //fwlib_ioCtrlSetGate(0, 3);  chk
