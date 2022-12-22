@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-nov-2022
+ *  version : 22-dec-2022
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000410
+#define B2BLIB_VERSION 0x000420
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -91,12 +91,12 @@ extern "C" {
   // data type get values; data are in 'native units' used by the lm32 firmware
   typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
-    uint64_t ext_phase_125ps;                          // extraction: phase of h=1 Group DDS [125 ps]
+    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
-    uint64_t inj_phase_125ps;                          // injection : ...
+    uint64_t inj_phase;                                // injection : ...
     int32_t  inj_dKickMon;                             
     int32_t  inj_dKickProb;
     float    inj_diagPhase;

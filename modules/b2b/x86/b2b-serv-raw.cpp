@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-nov-2022
+ *  version : 22-dec-2022
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000410
+#define B2B_SERV_RAW_VERSION 0x000420
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -149,7 +149,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
 
   union  fdat_t       tmp;
 
-  recSid      = ((id    & 0x00000000fff00000) >> 20);
+  recSid      = ((id  & 0x00000000fff00000) >> 20);
   flagLate    = flags & 0x1;
 
   // check ranges
@@ -176,12 +176,14 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       setval.inj_cTrig       = 0;
       setval.cPhase          = 0;
       getval.flag_nok        = 0xffffffff;
-      getval.ext_phase_125ps = 0;
+      getval.ext_phase       = 0;
+      getval.ext_phase_ps    = 0;
       getval.ext_dKickMon    = 0;
       getval.ext_dKickProb   = 0;
       getval.ext_diagPhase   = 0;
       getval.ext_diagMatch   = 0;
-      getval.inj_phase_125ps = 0;
+      getval.inj_phase       = 0;
+      getval.inj_phase_ps    = 0;
       getval.inj_dKickMon    = 0;
       getval.inj_dKickProb   = 0;
       getval.inj_diagPhase   = 0;
@@ -217,7 +219,8 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       break;
     case tagPre     :
       getval.preOff          = (param >> 3) - getval.tCBS;  // convert [125 ps] to [ns]
-      getval.ext_phase_125ps = param;
+      getval.ext_phase       = param;
+      getval.ext_phase_ps    = param;
       if (param) getval.flag_nok &= 0xfffffffe;
       flagErr                = ((id & B2B_ERRFLAG_PMEXT) != 0);
       getval.flagEvtErr     |= flagErr << tag;
