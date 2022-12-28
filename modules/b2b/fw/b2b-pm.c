@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 28-dec-2022
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -89,7 +89,7 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 21                     // # of timestamps for sampling h=1
+#define NSAMPLES 31                     // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
 
 void init() // typical init for lm32
@@ -242,7 +242,8 @@ void insertionSort(uint64_t *stamps, int n) {
 // perform fit of phase with sub-ns
 int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   int64_t  one_ns_as        = 1000000000;   // conversion ns to as
-  int64_t  max_diff_as = TH1_as >> 2;       // maximum diference shall be a quarter of the rf-period
+  int64_t  max_diff_as = TH1_as >> 2;       // maximum difference shall be a quarter of the rf-period
+  
   int      i;
   uint64_t tFirst_ns;                       // first timestamp [ns]
   //uint64_t nPeriods;                      // number of rf periods
@@ -254,6 +255,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   int64_t  ave_deviation_as;                // average of all deviations [as]
   int64_t  max_deviation_as;                // maximum of all deviations [as]
   int64_t  min_deviation_as;                // minimum of all deviations [as]
+  int64_t  subnsfit_dev_as;                 // sub-ns-fit deviation [as]
   uint32_t jitter_as;                       // jitter
   b2bt_t   ts_t;                            // timestamp [ps]
   int      nGood;                           // number of good timestamps
@@ -312,10 +314,12 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
 
   // calculate average and jitter (= a quarter of the max-min window)
   ave_deviation_as = sum_deviation_as / nGood;
+  subnsfit_dev_as  = (max_deviation_as + min_deviation_as) >> 1; 
   jitter_as        = ((uint32_t)(max_deviation_as - min_deviation_as)) >> 2;
   // calculate a phase value and convert to ps
   ts_t.ns          = tFirst_ns;
-  ts_t.ps          = ave_deviation_as / 1000000;
+  ts_t.ps          = ave_deviation_as / 1000000;     // average fit
+  //ts_t.ps          = subnsfit_dev_as  / 1000000;     // sub-ns fit
   ts_t.dps         = jitter_as        / 1000000;
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
@@ -663,6 +667,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
             else                           dtMatch_as = remainder;*/
             // hack
             flagMatchDone = 1;
+            // hack for testing
+            //tH1_t = tH1Match_t;
             // tmp1 = (int32_t)(dtMatch_as / 125000000); pp_printf("match2 [125 ps] %08d\n", tmp1);
           } // if phasefit
         } // if nInput
@@ -684,48 +690,48 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (!sendEvtNo) 
         sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
 
-        recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
-        recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
-        recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
+      recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
+      recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
+      recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
+      
+      nInput          = 0;
 
-        nInput          = 0;
-
-        acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
-        //pp_printf("nInput %d \n", nInput);
-        // find closest timestamp
-        if (nInput > 2) {
-          insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Phase_t) == COMMON_STATUS_OK) {
-            dtPhase_as   = (tH1Phase_t.ns - tH1_t.ns) * 1000000000;   // difference [as]
-            dtPhase_as  += (tH1Phase_t.ps - tH1_t.ps) * 1000000;
-            remainder   =  dtPhase_as % TH1_as;                       // remainder [as]
-            if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
-            else                           dtPhase_as = remainder;
-            flagPhaseDone = 1;          
-          } // if phasefit
-        } // if nInput
-
-        // send command: transmit diagnostic information to the network
-        sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
-        if (flagPhaseDone) tmp.f = (float)dtPhase_as / 1000000000.0; // convert to float [ns]
-        else               tmp.data = 0x7fffffff;                    // mark as invalid
-        sendParam    = (uint64_t)(tmp.data & 0xffffffff) << 32;      // high word; phase diagnostic
-        if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0; // convert to float [ns]
-        else               tmp.data = 0x7fffffff;                    // mark as invalid
-        //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
-        
-        sendParam   |= (uint64_t)(tmp.data & 0xffffffff);            // low word; match diagnostic
-        sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
-
-        // send something to ECA (for monitoring purposes) chk do something useful here
-        sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
-        sendParam    = 0xdeadbeef;
-        sendDeadline = getSysTime();                                 // produces a late action but allows explicit monitoring of processing time
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);  // force late message
+      acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
+      //pp_printf("nInput %d \n", nInput);
+      // find closest timestamp
+      if (nInput > 2) {
+        insertionSort(tStamp, nInput);                                // need at least two timestamps
+        if (phaseFit(TH1_as, nInput, &tH1Phase_t) == COMMON_STATUS_OK) {
+          dtPhase_as   = (tH1Phase_t.ns - tH1_t.ns) * 1000000000;     // difference [as]
+          dtPhase_as  += (tH1Phase_t.ps - tH1_t.ps) * 1000000;
+          remainder   =  dtPhase_as % TH1_as;                         // remainder [as]
+          if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
+          else                           dtPhase_as = remainder;
+          flagPhaseDone = 1;          
+        } // if phasefit
+      } // if nInput
+      
+      // send command: transmit diagnostic information to the network
+      sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
+      if (flagPhaseDone) tmp.f = (float)dtPhase_as / 1000000000.0;    // convert to float [ns]
+      else               tmp.data = 0x7fffffff;                       // mark as invalid
+      sendParam    = (uint64_t)(tmp.data & 0xffffffff) << 32;         // high word; phase diagnostic
+      if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0;    // convert to float [ns]
+      else               tmp.data = 0x7fffffff;                       // mark as invalid
+      //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
+      
+      sendParam   |= (uint64_t)(tmp.data & 0xffffffff);               // low word; match diagnostic
+      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+      
+      // send something to ECA (for monitoring purposes) chk do something useful here
+      sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
+      sendParam    = 0xdeadbeef;
+      sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
-
+      
     default :                                                         // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
   } // switch ecaAction
