@@ -52,23 +52,26 @@ int main (void) {
             break;
             case PWR_UP0:
                 enableCoreVoltage (high);
+                if (readPGoodCore())
+                {
                 state = PWR_UP1;
+                }
             break;
             case PWR_UP1:
                 enable1_8V (high);
+                if (readPGood1_8V())
+                {
                 state = PWR_UP2;
+                }
             break;
             case PWR_UP2:
                 enable1_8VIO (high);
-                state = PWR_OK;
-            break;
-            case PWR_OK:
-                enable5V (high);
-                if (MP_ADC_read() <= MP_FAIL_ADC_THRES)           
+                if (readPGood1_8VIO())
                 {
-                state = PWR_DOWN1;
+                state = PWR_OK;
                 }
             break;
+            //Power Down
             case PWR_DOWN1:
                 enable5V (low);
                 enable1_8VIO (low);
@@ -78,6 +81,14 @@ int main (void) {
             case PWR_DOWN0:
                 enableCoreVoltage (low);
                 state = PWR_IDLE;
+            break;
+            // Power OK
+            case PWR_OK:
+                if (MP_ADC_read() <= MP_FAIL_ADC_THRES)           
+                {
+                state = PWR_DOWN1;
+                }
+                enable5V (high);
             break;
          }
         

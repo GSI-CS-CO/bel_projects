@@ -25,7 +25,13 @@ void enable5V (io_level_t level);
 
 //Input functions
 
-int16_t readPortKPin0 (void);
+int16_t readPGoodCore (void);
+
+int16_t readPGood1_8V (void);
+
+int16_t readPGood1_8VIO (void);
+
+int16_t readPGood5V (void);
 
 //ADC functions
 

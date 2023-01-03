@@ -71,9 +71,24 @@ void enable5V (io_level_t level)
 }
 
 
-int16_t readPortKPin0 (void)
+int16_t readPGoodCore (void)
 {
     return ( PORTK.IN & PIN0_bm );
+}
+
+int16_t readPGood1_8V (void)
+{
+    return ( PORTK.IN & PIN1_bm );
+}
+
+int16_t readPGood1_8VIO (void)
+{
+    return ( PORTK.IN & PIN2_bm );
+}
+
+int16_t readPGood5V (void)
+{
+    return ( PORTK.IN & PIN3_bm );
 }
 
 void ADC_init(void)
