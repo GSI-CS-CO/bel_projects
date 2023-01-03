@@ -41,8 +41,7 @@ endif
 
 include $(INCPATH)/build_lm32.mk
 
-#all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
-all: $(TARGET).sof $(TARGET).jic $(TARGET).rpd
+all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
 $(TARGET)_shared_mmap.h: $(INCPATH)/shared_mmap.h.S
 	sed $(APPLY_CONFIG) $^ > $@
@@ -69,17 +68,17 @@ prog:
 	$(QUARTUS_BIN)/quartus_pgm -c "$$BLASTER" -m jtag -o 'p;$(TARGET).sof'
 
 %_stub.elf:  ram.ld
-	#$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
 %.elf:	buildid.c $(TARGET)_shared_mmap.h
-	#$(MAKE) ram.ld
-	#$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
+	$(MAKE) ram.ld
+	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
 
 %.bin:	%.elf
-	#$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) -O binary $< $@
 
 %.mif:	%.bin
-	#$(GENRAMMIF) $< $(RAM_SIZE) > $@
+	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
 %.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd
 	mv $*.qsf $*.qsf-tmp; sort $*.qsf-tmp > $*.qsf; rm $*.qsf-tmp
