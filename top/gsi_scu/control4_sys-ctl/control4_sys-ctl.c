@@ -79,7 +79,7 @@ int main (void) {
                 enableCoreVoltage (low);
                 state = PWR_IDLE;
             break;
-        }
+         }
         
    }
 
