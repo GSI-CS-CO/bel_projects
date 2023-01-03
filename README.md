@@ -269,7 +269,7 @@ which cc # /usr/bin/cc
 
 ### Rocky Linux
 
-For Rocky Linux v9.x support please check this file: [README.md](#res/rocky-9/README.md)
+For Rocky Linux v9.x support please check this file: [README.md](res/rocky-9/README.md)
 
 ## Git
 ### CAfile
