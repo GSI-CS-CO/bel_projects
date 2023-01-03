@@ -30,6 +30,7 @@ GSI Timing Gateware and Tools
     - [Setuptools not found](#setuptools-not-found)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
+    - [Rocky Linux](#rocky-linux)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -265,6 +266,10 @@ which cc # cc: Command not found.
 update-alternatives --list cc
 which cc # /usr/bin/cc
 ```
+
+### Rocky Linux
+
+For Rocky Linux v9.x support please check this file: [README.md](#res/rocky-9/README.md)
 
 ## Git
 ### CAfile
