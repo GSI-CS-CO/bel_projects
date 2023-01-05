@@ -70,6 +70,34 @@ void enable5V (io_level_t level)
     }
 }
 
+void enableComXpowerOk (io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTF.OUTSET = PIN3_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTF.OUTTGL = PIN3_bm;  
+    }
+    else
+    {
+        PORTF.OUTCLR = PIN3_bm;  
+    }
+}
+
+void enableIO (void)
+{
+    PORTA.OUTSET = PIN6_bm;
+    PORTA.OUTCLR = PIN7_bm;     
+}
+
+void disableIO (void)
+{
+    PORTA.OUTSET = PIN7_bm;
+    PORTA.OUTCLR = PIN6_bm;     
+}
+
 
 int16_t readPGoodCore (void)
 {
