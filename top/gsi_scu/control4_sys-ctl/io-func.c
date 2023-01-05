@@ -81,7 +81,7 @@ int16_t readPGood1_8V (void)
     return ( PORTK.IN & PIN1_bm );
 }
 
-int16_t readPGood1_8VIO (void)
+int16_t readPGood3_3V (void)
 {
     return ( PORTK.IN & PIN2_bm );
 }

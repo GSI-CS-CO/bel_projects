@@ -19,9 +19,13 @@
 
 //IO 1.8V Rower rail ADC
 #define V1_8IO_OFF_THRESHOLD_V 0.1
+#define V1_8IO_GOOD_THRESHOLD_V 1.75
+#define V1_8IO_FAIL_THRESHOLD_V 1.7
 #define V1_8IO_R_SERIES 10
 #define V1_8IO_R_MEASURE 10
 #define V1_8IO_OFF_ADC_THRES ( ((float)V1_8IO_R_MEASURE / (float)(V1_8IO_R_SERIES + V1_8IO_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)V1_8IO_OFF_THRESHOLD_V )
+#define V1_8IO_GOOD_ADC_THRES ( ((float)V1_8IO_R_MEASURE / (float)(V1_8IO_R_SERIES + V1_8IO_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)V1_8IO_GOOD_THRESHOLD_V )
+#define V1_8IO_FAIL_ADC_THRES ( ((float)V1_8IO_R_MEASURE / (float)(V1_8IO_R_SERIES + V1_8IO_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)V1_8IO_FAIL_THRESHOLD_V )
 
 //FPGA Core Power Rail
 #define CORE_OFF_THRESHOLD_V 0.1
@@ -47,7 +51,7 @@ int16_t readPGoodCore (void);
 
 int16_t readPGood1_8V (void);
 
-int16_t readPGood1_8VIO (void);
+int16_t readPGood3_3V (void);
 
 int16_t readPGood5V (void);
 

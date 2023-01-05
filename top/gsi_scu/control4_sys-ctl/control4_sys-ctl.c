@@ -45,31 +45,43 @@ int main (void) {
         switch(state)
         {
             case PWR_IDLE:     
-                if (read_MP_ADC() >= MP_ON_ADC_THRES)
+                if (read_MP_ADC() >= MP_ON_ADC_THRES && readPGood3_3V())
                 {
                 state = PWR_UP0;
                 }
             break;
             case PWR_UP0:
-                enableCoreVoltage (high);
-                if (readPGoodCore())
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V())
+                {
+                state = PWR_DOWN0;
+                }
+                else if (readPGoodCore())
                 {
                 state = PWR_UP1;
                 }
+                enableCoreVoltage (high);
             break;
             case PWR_UP1:
-                enable1_8V (high);
-                if (readPGood1_8V())
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore())
+                {
+                state = PWR_DOWN1;
+                }
+                else if (readPGood1_8V())
                 {
                 state = PWR_UP2;
                 }
+                enable1_8V (high);
             break;
             case PWR_UP2:
-                enable1_8VIO (high);
-                if (readPGood1_8VIO())
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || read_V1_8IO_ADC() <= V1_8IO_FAIL_ADC_THRES)
+                {
+                state = PWR_DOWN1;
+                }
+                else if (read_V1_8IO_ADC() >= V1_8IO_GOOD_ADC_THRES)
                 {
                 state = PWR_OK;
                 }
+                enable1_8VIO (high);
             break;
             //Power Down
             case PWR_DOWN1:
