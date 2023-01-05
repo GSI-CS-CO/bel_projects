@@ -39,6 +39,8 @@ int main (void) {
     enable1_8V (low);
     enable1_8VIO (low);
     enable5V (low);
+    enableComXpowerOk (low);
+    disableIO();
 
    while(1) {
         // Power Sequence State Machine 
@@ -85,6 +87,8 @@ int main (void) {
             break;
             //Power Down
             case PWR_DOWN1:
+                enableComXpowerOk(low);
+                disableIO();
                 enable5V (low);
                 enable1_8VIO (low);
                 enable1_8V (low);
@@ -107,6 +111,8 @@ int main (void) {
                 state = PWR_DOWN1;
                 }
                 enable5V (high);
+                enableComXpowerOk(high);
+                enableIO();
             break;
          }
         
