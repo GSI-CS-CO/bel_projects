@@ -45,7 +45,7 @@ int main (void) {
         switch(state)
         {
             case PWR_IDLE:     
-                if (MP_ADC_read() >= MP_ON_ADC_THRES)
+                if (read_MP_ADC() >= MP_ON_ADC_THRES)
                 {
                 state = PWR_UP0;
                 }
@@ -84,7 +84,7 @@ int main (void) {
             break;
             // Power OK
             case PWR_OK:
-                if (MP_ADC_read() <= MP_FAIL_ADC_THRES)           
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES)           
                 {
                 state = PWR_DOWN1;
                 }
