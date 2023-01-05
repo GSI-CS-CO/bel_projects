@@ -59,6 +59,6 @@ uint16_t read_MP_ADC(void);     // Read Main Power Voltage ADC
 
 uint16_t read_V1_8IO_ADC(void); // Read 1.8V IO Voltage ADC
 
-uint16_t read_V1_8V_ADC(void);  // Read FGPA 1.8V Voltage ADC
+uint16_t read_V1_8_ADC(void);  // Read FGPA 1.8V Voltage ADC
 
 uint16_t read_CORE_ADC(void);   // Read FGPA Core Voltage ADC

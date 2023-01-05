@@ -41,7 +41,7 @@ int main (void) {
     enable5V (low);
 
    while(1) {
-
+        // Power Sequence State Machine 
         switch(state)
         {
             case PWR_IDLE:     
@@ -75,12 +75,18 @@ int main (void) {
             case PWR_DOWN1:
                 enable5V (low);
                 enable1_8VIO (low);
-                enable1_8V (low);   
+                enable1_8V (low);
+                if (read_V1_8_ADC() <= V1_8_OFF_ADC_THRES && read_V1_8IO_ADC() <= V1_8IO_OFF_ADC_THRES)   
+                {
                 state = PWR_DOWN0;
+                }
             break;
             case PWR_DOWN0:
                 enableCoreVoltage (low);
+                if (read_CORE_ADC() <= CORE_OFF_ADC_THRES)
+                {
                 state = PWR_IDLE;
+                }
             break;
             // Power OK
             case PWR_OK:
