@@ -98,13 +98,28 @@ void ADC_init(void)
     ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc;
     ADCA.REFCTRL = ADC_REFSEL_INT1V_gc;
     ADCA.PRESCALER = ADC_PRESCALER_DIV32_gc;
-    ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-    ADCA.CH1.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
-    ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-    ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;
+    ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;    //Main Power Rail (12V)
+    ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
+    ADCA.CH1.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;    //1.8V IO Rail
+    ADCA.CH1.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;
+    ADCA.CH2.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;    //1.8V Rail
+    ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN2_gc;
+    ADCA.CH3.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;    //FPGA Core Voltage Rail (0.95V)
+    ADCA.CH3.MUXCTRL = ADC_CH_MUXPOS_PIN3_gc;
 }
 
-uint16_t MP_ADC_read(void)
+uint16_t read_MP_ADC(void)
+{
+        
+        ADCA.CH0.CTRL |= ADC_CH_START_bm;
+
+        while( !(ADCA.CH0.INTFLAGS & ADC_CH_CHIF_bm) );
+        ADCA.CH0.INTFLAGS = ADC_CH_CHIF_bm;
+        
+    return ADCA.CH0RES;
+}
+
+uint16_t read_V1_8IO_ADC(void)
 {
         
         ADCA.CH1.CTRL |= ADC_CH_START_bm;
@@ -115,3 +130,24 @@ uint16_t MP_ADC_read(void)
     return ADCA.CH1RES;
 }
 
+uint16_t read_V1_8_ADC(void)
+{
+        
+        ADCA.CH2.CTRL |= ADC_CH_START_bm;
+
+        while( !(ADCA.CH2.INTFLAGS & ADC_CH_CHIF_bm) );
+        ADCA.CH2.INTFLAGS = ADC_CH_CHIF_bm;
+        
+    return ADCA.CH2RES;
+}
+
+uint16_t read_CORE_ADC(void)
+{
+        
+        ADCA.CH3.CTRL |= ADC_CH_START_bm;
+
+        while( !(ADCA.CH3.INTFLAGS & ADC_CH_CHIF_bm) );
+        ADCA.CH3.INTFLAGS = ADC_CH_CHIF_bm;
+        
+    return ADCA.CH3RES;
+}
