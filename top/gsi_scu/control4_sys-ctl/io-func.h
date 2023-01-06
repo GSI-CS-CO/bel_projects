@@ -75,6 +75,20 @@ int16_t readPGood3_3V (void);
 
 int16_t readPGood5V (void);
 
+//Reset read functions
+
+int16_t readResetButton (void);
+
+int16_t readExtensionReset (void);
+
+int16_t readBackplaneReset (void);
+
+int16_t readFPGAReset (void);
+
+int16_t readCOMXReset (void);
+
+int16_t readAllResets (void);
+
 //ADC functions
 
 void ADC_init(void); // Init ADCs
