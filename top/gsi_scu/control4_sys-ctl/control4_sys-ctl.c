@@ -20,7 +20,7 @@ int main (void) {
 
     pwr_state_t state = PWR_IDLE;
 
- 
+    uint16_t PORflag = 0; //Power on Reset Flag
 
    PORTJ.DIRSET = PIN2_bm| PIN3_bm|PIN4_bm|PIN5_bm;
 
@@ -47,7 +47,8 @@ int main (void) {
         // Power Sequence State Machine 
         switch(state)
         {
-            case PWR_IDLE:     
+            case PWR_IDLE:
+                PORflag = 0;     
                 if (read_MP_ADC() >= MP_ON_ADC_THRES && readPGood3_3V())
                 {
                 state = PWR_UP0;
@@ -116,14 +117,25 @@ int main (void) {
                 enableComXpowerOk(high);
                 enableIO();
                 //Reset Behavior 
-                if (readAllResets)
-                {
-                    releaseReset();
-                }
-                else
+                if (!readAllResets())
                 {
                     //Reset
                     performReset();
+                }
+                else
+                {   if (!PORflag)
+                    {
+                        PORflag = 1;
+                        releaseReset();
+                        _delay_ms(POR_DELAY);
+                        performReset();
+                        _delay_ms(POR_DELAY);
+                    }
+                    else
+                    {
+                        //System Running
+                        releaseReset();
+                    }
                 }
             break;
          }

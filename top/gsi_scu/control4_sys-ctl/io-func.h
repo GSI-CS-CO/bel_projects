@@ -3,6 +3,8 @@
 #define ADC_REF_VOLTAGE 1
 #define ADC_BIT_RES 4096
 
+#define POR_DELAY 50 //Power of Reset Delay in ms
+
 //Main Power rail ADC
 #define MP_ON_THRESHOLD_V 11.9
 #define MP_FAIL_THRESHOLD_V 11
