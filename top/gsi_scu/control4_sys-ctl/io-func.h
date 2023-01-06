@@ -47,6 +47,10 @@ void enable5V (io_level_t level);
 
 void enableComXpowerOk (io_level_t level);
 
+void enableIO (void);
+
+void disableIO (void);
+
 //Input functions
 
 int16_t readPGoodCore (void);
