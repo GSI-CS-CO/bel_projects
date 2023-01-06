@@ -3,7 +3,7 @@
 
 CC          := avr-gcc 
 CC_FLAGS    := -Os
-CC_TARGET	:= -mmcu=atxmega128a1
+CC_TARGET	:= -mmcu=atxmega64a1
 LIBS        :=
 SPEED		:= -DF_CPU=32000000UL
 DEBUG       := -g -Wall
@@ -43,4 +43,4 @@ clean:
 
 
 install:
-	avrdude -c atmelice_pdi -p x128a1 -U flash:w:$(FILE).hex
+	avrdude -c atmelice_pdi -p x64a1 -U flash:w:$(FILE).hex
