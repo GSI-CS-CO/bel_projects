@@ -51,6 +51,20 @@ void enableIO (void);
 
 void disableIO (void);
 
+//Reset Outputs
+
+int16_t nExtResetOut(io_level_t level);
+
+int16_t nPCIeResetOut(io_level_t level);
+
+int16_t nSysOut(io_level_t level);
+
+int16_t nFPGAOut(io_level_t level);
+
+void performReset(void);
+
+void releaseReset(void);
+
 //Input functions
 
 int16_t readPGoodCore (void);
@@ -69,6 +83,6 @@ uint16_t read_MP_ADC(void);     // Read Main Power Voltage ADC
 
 uint16_t read_V1_8IO_ADC(void); // Read 1.8V IO Voltage ADC
 
-uint16_t read_V1_8_ADC(void);  // Read FGPA 1.8V Voltage ADC
+uint16_t read_V1_8_ADC(void);  // Read FPGA 1.8V Voltage ADC
 
-uint16_t read_CORE_ADC(void);   // Read FGPA Core Voltage ADC
+uint16_t read_CORE_ADC(void);   // Read FPGA Core Voltage ADC
