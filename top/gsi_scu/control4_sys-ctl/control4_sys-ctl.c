@@ -41,6 +41,7 @@ int main (void) {
     enable5V (low);
     enableComXpowerOk (low);
     disableIO();
+    performReset();
 
    while(1) {
         // Power Sequence State Machine 
@@ -75,7 +76,7 @@ int main (void) {
                 enable1_8V (high);
             break;
             case PWR_UP2:
-                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || read_V1_8IO_ADC() <= V1_8IO_FAIL_ADC_THRES)
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V())
                 {
                 state = PWR_DOWN1;
                 }
@@ -106,13 +107,15 @@ int main (void) {
             break;
             // Power OK
             case PWR_OK:
-                if (read_MP_ADC() <= MP_FAIL_ADC_THRES)           
+                if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V() || read_V1_8IO_ADC() <= V1_8IO_FAIL_ADC_THRES)           
                 {
+                performReset();
                 state = PWR_DOWN1;
                 }
                 enable5V (high);
                 enableComXpowerOk(high);
                 enableIO();
+                releaseReset();
             break;
          }
         

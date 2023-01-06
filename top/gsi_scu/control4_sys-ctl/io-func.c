@@ -98,6 +98,91 @@ void disableIO (void)
     PORTA.OUTCLR = PIN6_bm;     
 }
 
+//Reset Functions
+
+void performReset(void)
+{
+    nExtResetOut(low);
+    nPCIeResetOut(low);
+    nSysOut(low);
+    nFPGAOut(low);
+}
+
+void releaseReset(void)
+{
+    nExtResetOut(high);
+    nPCIeResetOut(high);
+    nSysOut(high);
+    nFPGAOut(high);
+}
+
+int16_t nExtResetOut(io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTF.OUTSET = PIN4_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTF.OUTTGL = PIN4_bm;  
+    }
+    else
+    {
+        PORTF.OUTCLR = PIN4_bm;  
+    }
+}
+
+int16_t nPCIeResetOut(io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTF.OUTSET = PIN5_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTF.OUTTGL = PIN5_bm;  
+    }
+    else
+    {
+        PORTF.OUTCLR = PIN5_bm;  
+    }
+}
+
+int16_t nSysOut(io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTF.OUTSET = PIN6_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTF.OUTTGL = PIN6_bm;  
+    }
+    else
+    {
+        PORTF.OUTCLR = PIN6_bm;  
+    }
+}
+
+int16_t nFPGAOut(io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTF.OUTSET = PIN7_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTF.OUTTGL = PIN7_bm;  
+    }
+    else
+    {
+        PORTF.OUTCLR = PIN7_bm;  
+    }
+}
+
+
+//Read Functions
+
 
 int16_t readPGoodCore (void)
 {
