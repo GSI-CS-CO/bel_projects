@@ -115,7 +115,16 @@ int main (void) {
                 enable5V (high);
                 enableComXpowerOk(high);
                 enableIO();
-                releaseReset();
+                //Reset Behavior 
+                if (readAllResets)
+                {
+                    releaseReset();
+                }
+                else
+                {
+                    //Reset
+                    performReset();
+                }
             break;
          }
         

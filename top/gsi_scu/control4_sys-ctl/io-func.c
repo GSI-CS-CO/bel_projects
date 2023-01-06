@@ -204,6 +204,48 @@ int16_t readPGood5V (void)
     return ( PORTK.IN & PIN3_bm );
 }
 
+//Reset read functions
+
+int16_t readResetButton (void)
+{
+    return ( PORTR.IN & PIN1_bm );
+}
+
+int16_t readExtensionReset (void)
+{
+    return ( PORTQ.IN & PIN0_bm );
+}
+
+int16_t readBackplaneReset (void)
+{
+    return ( PORTQ.IN & PIN1_bm );
+}
+
+int16_t readFPGAReset (void)
+{
+    return ( PORTJ.IN & PIN3_bm );
+}
+
+int16_t readCOMXReset (void)
+{
+    return ( PORTB.IN & PIN7_bm );
+}
+
+int16_t readAllResets (void)
+{
+    if (readResetButton() && readFPGAReset() && readBackplaneReset() && readExtensionReset() && readCOMXReset())
+    {
+        return 1; // No Reset
+    }
+    else
+    {
+        return 0; //low active Reset
+    }
+
+}
+
+//ADC Functions
+
 void ADC_init(void)
 {
 
