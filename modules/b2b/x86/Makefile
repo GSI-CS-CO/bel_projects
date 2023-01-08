@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-mon b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver b2b-pname-info
+TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-mon b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver b2b-pname-info b2b-sim
 B2BLIB      := libb2blib.so
 
 #quick hack fix for buildingn on ASL
@@ -63,6 +63,10 @@ b2b-serv-raw: b2b-serv-raw.cpp
 
 b2b-pname-info: b2b-pname-info.cpp
 	g++ --std=c++11 $(CFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(LIBS) -ldim -lpthread
+
+b2b-sim: b2b-sim.c
+	$(CC) $(STRIPCFLAGS) -o b2b-sim b2b-sim.c -lm
+
 
 saft-b2b: saft-b2b-mon.cpp
 	g++ --std=c++0x $(CFLAGS) -o saft-b2b-mon saft-b2b-mon.cpp $(LIBS)
