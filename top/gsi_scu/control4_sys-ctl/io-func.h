@@ -35,7 +35,9 @@
 #define CORE_R_MEASURE 10
 #define CORE_OFF_ADC_THRES ( ((float)CORE_R_MEASURE / (float)(CORE_R_SERIES + CORE_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)CORE_OFF_THRESHOLD_V )
 
-typedef enum {low = 0, high = 1, toggle} io_level_t;
+typedef enum {low = 0, high = 1, toggle} io_level_t;    //Logic Levels
+
+typedef enum {red, green, blue, yellow, cyan, magenta, white, ledOff} led_color_t; //RGB LED Colors
 
 //Output function
 
@@ -66,6 +68,8 @@ int16_t nFPGAOut(io_level_t level);
 void performReset(void);
 
 void releaseReset(void);
+
+void indicatorLED(led_color_t color);
 
 //Input functions
 
