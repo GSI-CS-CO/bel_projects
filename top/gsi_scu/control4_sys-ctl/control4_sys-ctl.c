@@ -48,13 +48,16 @@ int main (void) {
         switch(state)
         {
             case PWR_IDLE:
-                PORflag = 0;     
+                PORflag = 0;
+                indicatorLED(red);     
                 if (read_MP_ADC() >= MP_ON_ADC_THRES && readPGood3_3V())
                 {
                 state = PWR_UP0;
                 }
             break;
             case PWR_UP0:
+                enableCoreVoltage (high);
+                indicatorLED(yellow);
                 if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V())
                 {
                 state = PWR_DOWN0;
@@ -63,9 +66,10 @@ int main (void) {
                 {
                 state = PWR_UP1;
                 }
-                enableCoreVoltage (high);
             break;
             case PWR_UP1:
+                enable1_8V (high);
+                indicatorLED(yellow);
                 if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore())
                 {
                 state = PWR_DOWN1;
@@ -74,9 +78,10 @@ int main (void) {
                 {
                 state = PWR_UP2;
                 }
-                enable1_8V (high);
             break;
             case PWR_UP2:
+                enable1_8VIO (high);
+                indicatorLED(yellow);
                 if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V())
                 {
                 state = PWR_DOWN1;
@@ -85,7 +90,6 @@ int main (void) {
                 {
                 state = PWR_OK;
                 }
-                enable1_8VIO (high);
             break;
             //Power Down
             case PWR_DOWN1:
@@ -94,6 +98,7 @@ int main (void) {
                 enable5V (low);
                 enable1_8VIO (low);
                 enable1_8V (low);
+                indicatorLED(magenta);
                 if (read_V1_8_ADC() <= V1_8_OFF_ADC_THRES && read_V1_8IO_ADC() <= V1_8IO_OFF_ADC_THRES)   
                 {
                 state = PWR_DOWN0;
@@ -101,6 +106,7 @@ int main (void) {
             break;
             case PWR_DOWN0:
                 enableCoreVoltage (low);
+                indicatorLED(magenta);
                 if (read_CORE_ADC() <= CORE_OFF_ADC_THRES)
                 {
                 state = PWR_IDLE;
@@ -121,20 +127,24 @@ int main (void) {
                 {
                     //Reset
                     performReset();
+                    indicatorLED(blue);
                 }
                 else
                 {   if (!PORflag)
                     {
                         PORflag = 1;
                         releaseReset();
+                        indicatorLED(green);
                         _delay_ms(POR_DELAY);
                         performReset();
+                        indicatorLED(blue);
                         _delay_ms(POR_DELAY);
                     }
                     else
                     {
                         //System Running
                         releaseReset();
+                        indicatorLED(green);
                     }
                 }
             break;

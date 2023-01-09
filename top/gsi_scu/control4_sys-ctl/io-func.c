@@ -180,6 +180,117 @@ int16_t nFPGAOut(io_level_t level)
     }
 }
 
+void indicatorLED(led_color_t color)
+{
+
+    int16_t redLED(io_level_t level)
+    {
+        if ( level == high )
+        {
+        PORTE.OUTSET = PIN0_bm;
+        }
+        else if ( level == toggle )
+        {
+        PORTE.OUTTGL = PIN0_bm;  
+        }
+        else
+        {
+        PORTE.OUTCLR = PIN0_bm;  
+        }
+    }
+
+    int16_t greenLED(io_level_t level)
+    {
+        if ( level == high )
+        {
+        PORTE.OUTSET = PIN4_bm;
+        }
+        else if ( level == toggle )
+        {
+        PORTE.OUTTGL = PIN4_bm;  
+        }
+        else
+        {
+        PORTE.OUTCLR = PIN4_bm;  
+        }
+    }
+
+    int16_t blueLED(io_level_t level)
+    {
+        if ( level == high )
+        {
+        PORTE.OUTSET = PIN3_bm;
+        }
+        else if ( level == toggle )
+        {
+        PORTE.OUTTGL = PIN3_bm;  
+        }
+        else
+        {
+        PORTE.OUTCLR = PIN3_bm;  
+        }
+    }
+
+    switch (color)
+    {
+        case red:
+        redLED(low);
+        greenLED(high);
+        blueLED(high);
+        break;
+
+        case green:
+        redLED(high);
+        greenLED(low);
+        blueLED(high);
+        break;
+
+        case blue:
+        redLED(high);
+        greenLED(high);
+        blueLED(low);
+        break;
+
+        case yellow:
+        redLED(low);
+        greenLED(low);
+        blueLED(high);
+        break;
+
+        case cyan:
+        redLED(high);
+        greenLED(low);
+        blueLED(low);
+        break;
+
+        case magenta:
+        redLED(low);
+        greenLED(high);
+        blueLED(low);
+        break;
+
+        case white:
+        redLED(low);
+        greenLED(low);
+        blueLED(low);
+        break;
+
+        case ledOff:
+        redLED(high);
+        greenLED(high);
+        blueLED(high);
+        break;
+
+        default:
+        redLED(high);
+        greenLED(high);
+        blueLED(high);
+        break;
+
+    }
+
+}
+
 
 //Read Functions
 
