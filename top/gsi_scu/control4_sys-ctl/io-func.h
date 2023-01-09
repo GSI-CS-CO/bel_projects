@@ -81,7 +81,7 @@ int16_t readPGood3_3V (void);
 
 int16_t readPGood5V (void);
 
-// ComX Watchdog 
+// ComX Watchdog
 int16_t readWDT (void);
 
 //User Push Button
