@@ -180,6 +180,22 @@ int16_t nFPGAOut(io_level_t level)
     }
 }
 
+int16_t nWakeOut(io_level_t level)
+{
+    if ( level == high )
+    {
+        PORTB.OUTSET = PIN6_bm;
+    }
+    else if ( level == toggle )
+    {
+        PORTB.OUTTGL = PIN6_bm;  
+    }
+    else
+    {
+        PORTB.OUTCLR = PIN6_bm;  
+    }
+}
+
 void indicatorLED(led_color_t color)
 {
 
@@ -314,6 +330,37 @@ int16_t readPGood5V (void)
 {
     return ( PORTK.IN & PIN3_bm );
 }
+
+// ComX Watchdog 
+int16_t readWDT (void)
+{
+    return ( PORTB.IN & PIN0_bm );
+}
+
+int16_t readUserPushButton (void)
+{
+    return ( PORTR.IN & PIN0_bm );
+}
+
+//FPGA Status
+
+int16_t readConfDone (void)
+{
+    return ( PORTD.IN & PIN3_bm );
+}
+
+int16_t readnStatus (void)
+{
+    return ( PORTD.IN & PIN4_bm );
+}
+
+int16_t readInitDone (void)
+{
+    return ( PORTD.IN & PIN6_bm );
+}
+
+
+
 
 //Reset read functions
 

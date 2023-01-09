@@ -81,6 +81,20 @@ int16_t readPGood3_3V (void);
 
 int16_t readPGood5V (void);
 
+// ComX Watchdog 
+int16_t readWDT (void);
+
+//User Push Button
+int16_t readUserPushButton (void);
+
+//FPGA Status
+
+int16_t readConfDone (void);
+
+int16_t readnStatus (void);
+
+int16_t readInitDone (void);
+
 //Reset read functions
 
 int16_t readResetButton (void);
