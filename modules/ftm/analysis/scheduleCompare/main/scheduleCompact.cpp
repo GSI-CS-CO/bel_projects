@@ -9,7 +9,7 @@ typedef std::set<VertexNum> VertexSet;
 
 void printSet(VertexSet set1, std::string title);
 
-void deleteEdges(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end);
+void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end);
 
 int compactGraph(ScheduleGraph& graph1, configuration& config) {
     if (!config.silent) {
@@ -73,7 +73,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
           break;
         }
       }
-      deleteEdges(graph1, candidateList, deleteList, deleteVertices, chainBegin, chainEnd);
+      deleteChain(graph1, candidateList, deleteList, deleteVertices, chainBegin, chainEnd);
       chainBegin = ULONG_MAX;
       chainEnd = ULONG_MAX;
     }
@@ -85,7 +85,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     return 0;
 }
 
-void deleteEdges(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end) {
+void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end) {
   std::cout << "Deleting chain in " << getGraphName(graph1) << " with " << deletes.size() << " vertices. Begin " << begin << ", end " << end << std::endl;
   configuration config1;
   if (deletes.size() > 1) {
@@ -94,8 +94,16 @@ void deleteEdges(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& delete
     for (auto v1 : deletes) {
       if (newVertex.name.size() == 0) {
         newVertex.name = graph1[v1].name;
+        std::cout << "0: " << v1 << ", " << graph1[v1].pos << std::endl;
+        newVertex.pos = graph1[v1].pos;
+        newVertex.height = graph1[v1].height;
+        newVertex.width = graph1[v1].width;
+        newVertex._draw_ = graph1[v1]._draw_;
+        newVertex._hdraw_ = graph1[v1]._hdraw_;
+        newVertex._ldraw_ = graph1[v1]._ldraw_;
       } else {
         newVertex.name = newVertex.name + "\n" + graph1[v1].name;
+        std::cout << "x: " << v1 << ", " << graph1[v1].pos << std::endl;
       }
     }
     for (auto reverseIterator = deletes.rbegin(); reverseIterator != deletes.rend(); reverseIterator++) {
