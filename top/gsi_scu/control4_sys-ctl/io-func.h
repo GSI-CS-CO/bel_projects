@@ -71,6 +71,8 @@ void releaseReset(void);
 
 void indicatorLED(led_color_t color);
 
+int16_t nWakeOut(io_level_t level);
+
 //Input functions
 
 int16_t readPGoodCore (void);
