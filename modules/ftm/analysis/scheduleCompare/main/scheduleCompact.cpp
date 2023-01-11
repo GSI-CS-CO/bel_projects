@@ -6,10 +6,12 @@
 
 typedef long unsigned int VertexNum;
 typedef std::set<VertexNum> VertexSet;
+typedef boost::graph_traits<ScheduleGraph>::edge_descriptor EdgeDescriptor;
+typedef boost::graph_traits<ScheduleGraph>::vertex_descriptor VertexDescriptor;
 
 void printSet(VertexSet set1, std::string title);
 
-void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end);
+void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end, EdgeDescriptor first, EdgeDescriptor last);
 
 int compactGraph(ScheduleGraph& graph1, configuration& config) {
     if (!config.silent) {
@@ -21,7 +23,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     VertexSet deleteVertices = {};
     VertexNum chainBegin = ULONG_MAX;
     VertexNum chainEnd = ULONG_MAX;
-    BOOST_FOREACH (boost::graph_traits<ScheduleGraph>::vertex_descriptor v, vertices(graph1)) {
+    BOOST_FOREACH (VertexDescriptor v, vertices(graph1)) {
       if (boost::in_degree(v, graph1) <= 1 && boost::out_degree(v, graph1) <= 1) {
         candidateList.insert(v);
       }
@@ -30,6 +32,8 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     while (!candidateList.empty()) {
       VertexNum chainIndex = *candidateList.begin();
       bool chainFirst = true;
+      EdgeDescriptor edgeFirst;
+      EdgeDescriptor edgeLast;
       while (boost::in_degree(chainIndex, graph1) <= 1 && boost::out_degree(chainIndex, graph1) <= 1) {
         // if the vertex is already in the delete list, we are in a cycle and have to stop the while loop here.
         std::cout << "chainIndex " << chainIndex;
@@ -51,7 +55,8 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
           if (boost::in_degree(chainIndex, graph1) == 1) {
             ScheduleGraph::in_edge_iterator in_begin, in_end;
             boost::tie(in_begin, in_end) = in_edges(chainIndex, graph1);
-            boost::graph_traits<ScheduleGraph>::vertex_descriptor source1 = source(*in_begin, graph1);
+            VertexDescriptor source1 = source(*in_begin, graph1);
+            edgeFirst = *in_begin;
             std::cout << "In:  " << chainIndex << " " << *in_begin << " " << graph1[get(vertex_id, source1)].name << std::endl;
             chainBegin = get(vertex_id, source1);
           }
@@ -62,7 +67,8 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
         if (boost::out_degree(chainIndex, graph1) == 1) {
           ScheduleGraph::out_edge_iterator out_begin, out_end;
           boost::tie(out_begin, out_end) = out_edges(chainIndex, graph1);
-          boost::graph_traits<ScheduleGraph>::vertex_descriptor target1 = target(*out_begin, graph1);
+          VertexDescriptor target1 = target(*out_begin, graph1);
+          edgeLast = *out_begin;
           std::cout << "Out: " << chainIndex << " " << *out_begin << " " << graph1[get(vertex_id, target1)].name << ", " << get(vertex_id, target1) << std::endl;
           chainIndex = get(vertex_id, target1);
           if (boost::in_degree(chainIndex, graph1) > 1 || boost::out_degree(chainIndex, graph1) > 1) {
@@ -73,7 +79,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
           break;
         }
       }
-      deleteChain(graph1, candidateList, deleteList, deleteVertices, chainBegin, chainEnd);
+      deleteChain(graph1, candidateList, deleteList, deleteVertices, chainBegin, chainEnd, edgeFirst, edgeLast);
       chainBegin = ULONG_MAX;
       chainEnd = ULONG_MAX;
     }
@@ -85,27 +91,65 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     return 0;
 }
 
-void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end) {
+void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& deletes, VertexSet& deleteVertices, VertexNum begin, VertexNum end, EdgeDescriptor first, EdgeDescriptor last) {
   std::cout << "Deleting chain in " << getGraphName(graph1) << " with " << deletes.size() << " vertices. Begin " << begin << ", end " << end << std::endl;
   configuration config1;
   if (deletes.size() > 1) {
     ScheduleVertex newVertex = ScheduleVertex();
-    // Delete vertices from chain.
+    // Concate names from vertices in chain and use this as name for new vertex.
+    std::cout << "0 newVertex: " << newVertex.name << "'" << std::endl;
+    auto lastVertex = *deletes.rbegin();
     for (auto v1 : deletes) {
       if (newVertex.name.size() == 0) {
         newVertex.name = graph1[v1].name;
-        std::cout << "0: " << v1 << ", " << graph1[v1].pos << std::endl;
+        std::cout << "0: " << v1 << ", " << graph1[v1].name << ", pos=" << graph1[v1].pos << std::endl;
         newVertex.pos = graph1[v1].pos;
         newVertex.height = graph1[v1].height;
         newVertex.width = graph1[v1].width;
         newVertex._draw_ = graph1[v1]._draw_;
         newVertex._hdraw_ = graph1[v1]._hdraw_;
         newVertex._ldraw_ = graph1[v1]._ldraw_;
+        newVertex.style = graph1[v1].style;
+        newVertex.penwidth = graph1[v1].penwidth;
+        newVertex.shape = graph1[v1].shape;
+        newVertex.fillcolor = graph1[v1].fillcolor;
+        newVertex.color = graph1[v1].color;
       } else {
-        newVertex.name = newVertex.name + "\n" + graph1[v1].name;
+        //~ newVertex.name = newVertex.name + "\n" + graph1[v1].name;
+        if (deletes.size() < 4) {
+          newVertex.name = newVertex.name + "\n" + graph1[v1].name;
+        } else {
+          if (v1 == lastVertex) {
+            newVertex.name = newVertex.name + "\n...\n" + graph1[v1].name;
+          }
+        }
         std::cout << "x: " << v1 << ", " << graph1[v1].pos << std::endl;
       }
     }
+    // Add a new vertex.
+    newVertex.label = newVertex.name;
+    VertexNum newVertexNum = add_vertex(newVertex, graph1);
+    // Add two new edges if begin is defined or end is defined.
+    if (begin != ULONG_MAX) {
+      std::pair<boost::graph_traits<ScheduleGraph>::edge_descriptor, bool> beginEdge = add_edge(begin, newVertexNum, graph1);
+      //~ std::cout << "Edge: " << beginEdge.first << ", " << beginEdge.second << ", pos '" << boost::get("pos", graph1, beginEdge.first) << "', begin: " << begin << ", new: " << newVertexNum << std::endl;
+      graph1[beginEdge.first].pos = graph1[first].pos;
+      graph1[beginEdge.first]._draw_ = graph1[first]._draw_;
+      graph1[beginEdge.first]._hdraw_ = graph1[first]._hdraw_;
+      graph1[beginEdge.first].type = graph1[first].type;
+      graph1[beginEdge.first].color = graph1[first].color;
+      std::cout << "Edge: " << beginEdge.first << ", " << beginEdge.second << ", pos '" << graph1[beginEdge.first].pos << "', begin: " << begin << ", new: " << newVertexNum << std::endl;
+    }
+    if (end != ULONG_MAX) {
+      std::pair<boost::graph_traits<ScheduleGraph>::edge_descriptor, bool> endEdge = add_edge(newVertexNum, end, graph1);
+      graph1[endEdge.first].pos = graph1[last].pos;
+      graph1[endEdge.first]._draw_ = graph1[last]._draw_;
+      graph1[endEdge.first]._hdraw_ = graph1[last]._hdraw_;
+      graph1[endEdge.first].type = graph1[last].type;
+      graph1[endEdge.first].color = graph1[last].color;
+    }
+    std::cout << "1 newVertexNum: " << newVertexNum << ", '" << graph1[newVertexNum].name << "', '" << newVertex.name << "'" << std::endl;
+    // Delete edges for vertices in chain.
     for (auto reverseIterator = deletes.rbegin(); reverseIterator != deletes.rend(); reverseIterator++) {
       VertexNum v1 = *reverseIterator;
       std::cout << "delete vertex " << v1 << std::endl;
@@ -114,16 +158,6 @@ void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& delete
       //~ remove_vertex(v1, graph1);
       //~ begin--;
       //~ end--;
-    }
-    // Add a new vertex.
-    VertexNum newVertexNum = add_vertex(newVertex, graph1);
-    std::cout << "newVertexNum: " << newVertexNum << ", '" << graph1[newVertexNum].name << "'" << std::endl;
-    // Add two new edges if begin is defined or end is defined.
-    if (begin != ULONG_MAX) {
-      add_edge(begin, newVertexNum, graph1);
-    }
-    if (end != ULONG_MAX) {
-      add_edge(newVertexNum, end, graph1);
     }
   }
   deletes.clear();
