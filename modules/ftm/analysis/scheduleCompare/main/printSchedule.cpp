@@ -65,6 +65,7 @@ void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config)
   std::string graphName = getGraphName(g);
   setGraphName(g, graphName + std::string("-compact"));
   std::ofstream fText(fileName);
+  //~ boost::write_graphviz_dp(fText, g, dp, "name");
   boost::write_graphviz(fText, g, boost::dynamic_vertex_properties_writer(dp, "name"), boost::dynamic_properties_writer(dp), ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
   fText.close();
 }

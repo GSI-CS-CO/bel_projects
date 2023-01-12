@@ -5,7 +5,7 @@ import pathlib
 
 """Class tests compact operation (-p) of scheduleCompare.
 """
-class TestPermutations(common_scheduleCompare.CommonScheduleCompare):
+class TestCompactGraph(common_scheduleCompare.CommonScheduleCompare):
 
   def callScheduleCompareCompact(self, arguments, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
     """
@@ -80,12 +80,12 @@ class TestPermutations(common_scheduleCompare.CommonScheduleCompare):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/parallel2.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=3)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactStar4(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/star4.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=4)
     self.compareExpectedResult('compact.dot', fileName)
