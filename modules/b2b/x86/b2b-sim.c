@@ -64,8 +64,8 @@ int        mode        = 1;                 // simulte 1: single phase 2: phase 
 int        nSamples    = 3;                 // number of samples to be used
 int        nData       = 1;                 // number of data
 uint64_t   noise_as    = 0;                 // amplitude of noise on timestamps[as]
-uint64_t   tOffset1_as = 1000 * 1000000000; // offset of first timestamp of 1st series
-uint64_t   tOffset2_as = 2000 * 1000000000; // offset of first timestamp of 2nd series
+uint64_t   tOffset1_as = 1000000000;        // offset of first timestamp of 1st series
+uint64_t   tOffset2_as = 2000000000;        // offset of first timestamp of 2nd series
 uint64_t   noiseO_as   = 0;                 // amplitude of noise on tOffset 
 char       filename[1024];                  // file name for output
 FILE       *dataFile;                       // file for data
@@ -273,10 +273,12 @@ int main(int argc, char** argv) {
   int     i;
   
   sprintf(filename, "");
+  nPeriods         = (floor)(((uint64_t)15900000 * one_ns_as) / TH1_as);
 
+ 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "f:m:o:p:s:r:d:eh")) != -1) {
+  while ((opt = getopt(argc, argv, "n:f:m:o:p:s:r:d:eh")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion = 1;
@@ -302,6 +304,9 @@ int main(int argc, char** argv) {
         break;
       case 'm' :
         mode        = strtol(optarg, &tail, 0);
+        break;
+      case 'n' :
+        nPeriods    = strtol(optarg, &tail, 0);
         break;
       case 'f' :
         tmp = strtok(optarg, " ");
@@ -352,10 +357,10 @@ int main(int argc, char** argv) {
   tPhase2_as       = 0;
   diff_as          = 0;
   //T_fs             = TH1_as / 1000;
-  nPeriods         = (floor)(((uint64_t)15900000 * one_ns_as) / TH1_as);
-
+  
   for (i=0; i<nData; i++) {
     tOffset1_as    += 100000;
+    //nPeriods++;
     tOffset2_as     = tOffset1_as + nPeriods * TH1_as;
 
     offsetNoise_as   = calcNoise_as(noiseO_as);
@@ -406,7 +411,7 @@ int main(int argc, char** argv) {
   printf("parameters [ns]:\n");
   printf("mode          (-m): %13d\n"    , mode);
   if (mode == 2)
-    printf("   nPeriods       :%13d\n"   , nPeriods);
+    printf("   nPeriods       :%13lu\n"  , nPeriods);
   printf("n samples     (-s): %13d\n"    , nSamples);
   printf("n data        (-d): %13d\n"    , nData);
   printf("offset1       (-o): %13.3f\n"  , (double)tOffset1_as / (double)one_ns_as);
