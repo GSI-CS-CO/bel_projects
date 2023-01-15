@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Jan-2023
+ *  version : 13-Jan-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -37,7 +37,7 @@
  *********************************************************************************************/
 #define B2BSIM_VERSION 0x000420
 #define MAXSAMPLES     1000
-#define MAXDATA        100000
+#define MAXDATA        10000000
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -60,7 +60,8 @@ typedef struct{
 
 uint64_t   TH1_as      = 1283767311562;     // h=1 period [as]
 uint64_t   one_ns_as   = 1000000000;         // 1 ns [as]
-int        mode        = 1;                 // simulte 1: single phase 2: phase difference
+int        mode        = 1;                 // simulate, 1: single phase 2: phase difference
+int        fit         = 1;                 // fit method, 1: sub-ns, 2: average
 int        nSamples    = 3;                 // number of samples to be used
 int        nData       = 1;                 // number of data
 uint64_t   noise_as    = 0;                 // amplitude of noise on timestamps[as]
@@ -87,7 +88,7 @@ static void help(void) {
 
 
 // perform fit of phase with sub-ns
-int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
+int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t, uint32_t *width_as) {
   int64_t  one_ns_as        = 1000000000;   // conversion ns to as
   int64_t  max_diff_as = TH1_as >> 2;       // maximum difference shall be a quarter of the rf-period
   
@@ -103,7 +104,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   int64_t  max_deviation_as;                // maximum of all deviations [as]
   int64_t  min_deviation_as;                // minimum of all deviations [as]
   int64_t  subnsfit_dev_as;                 // sub-ns-fit deviation [as]
-  uint32_t jitter_as;                       // jitter
+  uint32_t dev_width_as;                    // width of window of all 'deviation_as'
   b2bt_t   ts_t;                            // timestamp [ps]
   int      nGood;                           // number of good timestamps
 
@@ -167,13 +168,14 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   // calculate average and jitter (= a quarter of the max-min window)
   ave_deviation_as = sum_deviation_as / nGood;
   subnsfit_dev_as  = (max_deviation_as + min_deviation_as) >> 1; 
-  jitter_as        = ((uint32_t)(max_deviation_as - min_deviation_as)) >> 2;
+  dev_width_as     = (uint32_t)(max_deviation_as - min_deviation_as);
   // calculate a phase value and convert to ps
   ts_t.ns          = tFirst_ns;
-  //ts_t.ps          = ave_deviation_as / 1000000;     // average fit
-  ts_t.ps          = subnsfit_dev_as  / 1000000;     // sub-ns fit
-  ts_t.dps         = jitter_as        / 1000000;
+  if (fit ==1 ) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
+  else          ts_t.ps = ave_deviation_as / 1000000;  // average fit
+  ts_t.dps         = dev_width_as  / nGood / 1000000;  // chk 
   *phase_t         = ts_t;
+  *width_as        = dev_width_as;
 
   //printf("nSamples %d, nGood %d, ts_t [ns] %d, ts_t [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ns, ts_t.ps, ts_t.dps);
   return 0;
@@ -262,12 +264,16 @@ int main(int argc, char** argv) {
   double   tEdge1;
   double   tEdgeNoisy1;
   int64_t  diff_as;
-  //int64_t  T_fs;
+  uint32_t width_as;
+  int      scanType      = 0;                 // 0: don't scan, 1: tOffset1
+  uint64_t scanInc_as    = 1;                 // increment of scan
   int64_t  offsetNoise_as;
-  double   max   = -1000;
-  double   min   = 1000;
-  double   ave   = 0;
-  double   stdev = 0;
+  double   max           = -1000;
+  double   min           = 1000;
+  double   ave           = 0;
+  double   stdev         = 0;
+  double   ave_width     = 0;
+  uint32_t max_width_as  = 0;
   uint64_t nPeriods;
   
   int     i;
@@ -278,7 +284,7 @@ int main(int argc, char** argv) {
  
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "n:f:m:o:p:s:r:d:eh")) != -1) {
+  while ((opt = getopt(argc, argv, "c:i:t:n:f:m:o:p:s:r:d:eh")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion = 1;
@@ -305,6 +311,15 @@ int main(int argc, char** argv) {
       case 'm' :
         mode        = strtol(optarg, &tail, 0);
         break;
+      case 't' :
+        fit         = strtol(optarg, &tail, 0);
+        break;
+      case 'c' :
+        scanType    = strtol(optarg, &tail, 0);
+        break;
+      case 'i' :
+        scanInc_as  = strtol(optarg, &tail, 0) * 1000;                     // fs -> as
+        break;
       case 'n' :
         nPeriods    = strtol(optarg, &tail, 0);
         break;
@@ -316,7 +331,6 @@ int main(int argc, char** argv) {
         } // if strlen
         sprintf(filename, "%s", tmp);
         break;
-
       default:
         fprintf(stderr, "%s: bad getopt result\n", program);
         return 1;
@@ -356,21 +370,30 @@ int main(int argc, char** argv) {
   tPhase1_as       = 0;
   tPhase2_as       = 0;
   diff_as          = 0;
-  //T_fs             = TH1_as / 1000;
+  ave_width        = 0;
   
   for (i=0; i<nData; i++) {
-    tOffset1_as    += 100000;
-    //nPeriods++;
+    switch (scanType) {
+      case 1 : 
+        tOffset1_as    += scanInc_as;
+        break;
+      case 2 :
+        nPeriods       += scanInc_as / 1000;
+      default :
+        break;
+    } // switch scanType
     tOffset2_as     = tOffset1_as + nPeriods * TH1_as;
 
     offsetNoise_as   = calcNoise_as(noiseO_as);
     calcTEdge_as(tOffset1_as + offsetNoise_as);
     calcTEdgeNoisy_as();
     calcTStamp();
-    phaseFitAverage(TH1_as, nSamples, &phase_t);
+    phaseFitAverage(TH1_as, nSamples, &phase_t, &width_as);
     tPhase1_as     = phase_t.ns * one_ns_as + phase_t.ps * 1000000 + one_ns_as / 2;
-    tEdge1         = (double)(tEdge_as[1]) / one_ns_as;
+    tEdge1         = (double)(tEdge_as[1])      / one_ns_as;
     tEdgeNoisy1    = (double)(tEdgeNoisy_as[1]) / one_ns_as;;
+    ave_width     += (double)width_as           / one_ns_as;
+    if (width_as > max_width_as) max_width_as = width_as;
 
     switch (mode) {
       case 1 :
@@ -380,7 +403,7 @@ int main(int argc, char** argv) {
         calcTEdge_as(tOffset2_as + offsetNoise_as);
         calcTEdgeNoisy_as();
         calcTStamp();
-        phaseFitAverage(TH1_as, nSamples, &phase_t);
+        phaseFitAverage(TH1_as, nSamples, &phase_t, &width_as);
         tPhase2_as = phase_t.ns * one_ns_as + phase_t.ps * 1000000 + one_ns_as / 2;
         diff_as    = tPhase2_as - tPhase1_as;
         diff_as    = diff_as % TH1_as;
@@ -400,9 +423,10 @@ int main(int argc, char** argv) {
     if (dev[i] > max) max = dev[i];
     if (dev[i] < min) min = dev[i];
 
-    if (dataFile) fprintf(dataFile, "%13.6f,    %13.6f\n", (double)tOffset1_as/1000000000.0, dev[i]);
+    if (dataFile) fprintf(dataFile, "%13.6f    %13.6f    %13lu\n", (double)tOffset1_as/1000000000.0, dev[i], nPeriods);
   } // for i;
-  ave       = ave / nData;
+  ave       = ave       / nData;
+  ave_width = ave_width / nData;
 
   for (i=0; i<nData; i++) stdev += (dev[i] - ave)*(dev[i] - ave);
   stdev = stdev / nData;
@@ -410,12 +434,18 @@ int main(int argc, char** argv) {
 
   printf("parameters [ns]:\n");
   printf("mode          (-m): %13d\n"    , mode);
+  printf("fit           (-t): %13d\n"    , fit);
+  printf("scan type     (-c): %13d\n"    , scanType);
+  printf("scan incrmnt  (-i): %13.6f\n"  , (double)scanInc_as  / (double)one_ns_as);
+  if (strlen(filename) > 0)
+    printf("file          (-f): %13s\n"  , filename);
   if (mode == 2)
-    printf("   nPeriods       :%13lu\n"  , nPeriods);
+    printf("nPeriods      (-n): %13lu\n"  , nPeriods);
   printf("n samples     (-s): %13d\n"    , nSamples);
   printf("n data        (-d): %13d\n"    , nData);
   printf("offset1       (-o): %13.3f\n"  , (double)tOffset1_as / (double)one_ns_as);
-  printf("offset2       (-o): %13.3f\n"  , (double)tOffset2_as / (double)one_ns_as);
+  if (mode == 2)
+    printf("offset2       (-o): %13.3f\n", (double)tOffset2_as / (double)one_ns_as);
   printf("noise tstamps (-r): %13.3f\n"  , (double)noise_as    / (double)one_ns_as);
   printf("noise toffset (-p): %13.3f\n"  , (double)noiseO_as   / (double)one_ns_as);
   printf("1st h=1           : %13.3f\n"  , tEdge1);
@@ -424,11 +454,14 @@ int main(int argc, char** argv) {
   printf("1st deviation     : %13.3f\n"  , (double)tPhase1_as  / (double)one_ns_as - tEdgeNoisy1);
   printf("\n");
   printf("stats [ps]:\n");
-  printf("average   : %13.3f\n", ave   *          1000);
-  printf("min       : %13.3f\n", min   *          1000);
-  printf("max       : %13.3f\n", max   *          1000);
-  printf("stdev     : %13.3f\n", stdev *          1000);
-  printf("FWHM      : %13.3f\n", stdev * 2.3548 * 1000);
+  printf("comb              : %13.3f\n", 1000.0 / (double)nSamples);
+  printf("average           : %13.3f\n", ave   *          1000);
+  printf("ave_width1        : %13.3f\n", ave_width *      1000);
+  printf("max_width1        : %13.3f\n", (double)max_width_as / 1000000.0);  
+  printf("min               : %13.3f\n", min   *          1000);
+  printf("max               : %13.3f\n", max   *          1000);
+  printf("stdev             : %13.3f\n", stdev *          1000);
+  printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);
   //stdev = sqrt(2)*stdev;
   //printf("stdev *1.4: %13.3f\n", stdev);
   //printf("FWHM  *1.4: %13.3f\n", stdev * 2.3548);
