@@ -42,7 +42,8 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000420                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000421                                  // make this consistent with makefile
+#define B2BPM_FW_USESUBNSFIT  1
 
 // standard includes
 #include <stdio.h>
@@ -281,7 +282,8 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   min_deviation_as = 0;
 
   // calc sum deviation of all timestamps
-  for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
+  //for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
+  for (i=1; i<27; i++) {  // HACK      // include 1st timestamp too (important for little statistics)
     
     diff_stamp_as = (tStamp[i] - tFirst_ns) * one_ns_as;
 
@@ -316,13 +318,16 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   ave_deviation_as = sum_deviation_as / nGood;
   subnsfit_dev_as  = (max_deviation_as + min_deviation_as) >> 1; 
   jitter_as        = ((uint32_t)(max_deviation_as - min_deviation_as)) >> 2;
-  // calculate a phase value and convert to ps
+  // calculate a phasmax_deviation_as + me value and convert to ps
   ts_t.ns          = tFirst_ns;
-  ts_t.ps          = ave_deviation_as / 1000000;     // average fit
-  //ts_t.ps          = subnsfit_dev_as  / 1000000;     // sub-ns fit
-  ts_t.dps         = jitter_as        / 1000000;
+  if (B2BPM_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;           // sub-ns fit
+  else                      ts_t.ps          = ave_deviation_as / 1000000;  // average fit
+  //ts_t.dps         = jitter_as        / 1000000;
+  // hack
+  ts_t.dps         = (max_deviation_as - min_deviation_as) / 1000000;
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
+  //if (*pSharedGetSid == 2) pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, (*phase_t).ps, (*phase_t).dps);
   //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ps, ts_t.dps);
   return COMMON_STATUS_OK;
 } //phaseFitSubNs
@@ -710,6 +715,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           flagPhaseDone = 1;          
         } // if phasefit
       } // if nInput
+
+      // hack: uncertainty [as]
+      // dtMatch_as = 271000000000 + tH1Phase_t.dps * 1000000;
+      //int32_t hlpp;
+      //hlpp = (int32_t)dtMatch_as;
+      //pp_printf("dps %d\n", hlpp);
       
       // send command: transmit diagnostic information to the network
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
@@ -718,6 +729,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendParam    = (uint64_t)(tmp.data & 0xffffffff) << 32;         // high word; phase diagnostic
       if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0;    // convert to float [ns]
       else               tmp.data = 0x7fffffff;                       // mark as invalid
+
       //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
       
       sendParam   |= (uint64_t)(tmp.data & 0xffffffff);               // low word; match diagnostic
