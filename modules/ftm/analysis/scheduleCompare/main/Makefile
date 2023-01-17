@@ -44,6 +44,8 @@ ScheduleVertex.o: ScheduleVertex.h
 
 ScheduleEdge.o: ScheduleEdge.h
 
+scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
+
 install: scheduleCompare
 	cp scheduleCompare $(INSTALLPATH)
 

@@ -204,13 +204,15 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   // attributes of the graph
   //~ boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
   boost::ref_property_map<ScheduleGraph*, std::string> gName(boost::get_property(g, &GraphProperties::name));
-  boost::ref_property_map<ScheduleGraph*, std::string> gBb(boost::get_property(g, &GraphProperties::bb));
-  boost::ref_property_map<ScheduleGraph*, std::string> g_draw_(boost::get_property(g, &GraphProperties::_draw_));
-  boost::ref_property_map<ScheduleGraph*, std::string> gXdotversion(boost::get_property(g, &GraphProperties::xdotversion));
   dp.property("name", gName);
-  dp.property("bb", gBb);
-  dp.property("_draw_", g_draw_);
-  dp.property("xdotversion", gXdotversion);
+  if (config.extraProperties) {
+    boost::ref_property_map<ScheduleGraph*, std::string> gBb(boost::get_property(g, &GraphProperties::bb));
+    boost::ref_property_map<ScheduleGraph*, std::string> g_draw_(boost::get_property(g, &GraphProperties::_draw_));
+    boost::ref_property_map<ScheduleGraph*, std::string> gXdotversion(boost::get_property(g, &GraphProperties::xdotversion));
+    dp.property("bb", gBb);
+    dp.property("_draw_", g_draw_);
+    dp.property("xdotversion", gXdotversion);
+  }
   // attributes of vertices
   dp.property("type", boost::get(&ScheduleVertex::type, g));
   dp.property("name", boost::get(&ScheduleVertex::name, g));
@@ -275,6 +277,7 @@ int compactSingleGraph(std::string dotFile1, configuration& config) {
   bool parse1 = false;
   int result = -1;
   try {
+    config.extraProperties = true;
     boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
     parse1 = parseSchedule(dotFile1, graph1, dp1, config);
     printSchedule("Graph:", graph1, dp1, config);

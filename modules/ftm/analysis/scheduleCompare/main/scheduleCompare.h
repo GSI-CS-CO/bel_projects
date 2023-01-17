@@ -22,6 +22,8 @@ struct configuration {
   bool CompareNames = true;
   // option -p
   bool compact = false;
+  // internal option, used for compact graphs
+  bool extraProperties = false;
   // option -s
   bool silent = false;
   // option -vv
