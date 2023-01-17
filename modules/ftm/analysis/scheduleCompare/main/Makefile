@@ -1,10 +1,29 @@
+############################
+# ASL build paths          #
+############################
+
+ifeq ($(findstring asl75,$(shell hostname)),asl75)
+  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+else
+ifeq ($(findstring asl,$(shell hostname)),asl)
+  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+endif
+endif
+
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
 
-LDFLAGS = -Wl,-rpath,/usr/local/lib
-LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
+LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
+LDLIBS = -Wl,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex
 
-PREFIX         ?= /usr/local
+# check that make runs with  sudo rights
+RIGHTS := $(shell id -u)
+
+ifeq ($(RIGHTS),0)
+  PREFIX         ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
 INSTALLPATH     = $(PREFIX)/bin
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
