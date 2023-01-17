@@ -110,6 +110,7 @@ void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& delete
     for (auto v1 : deletes) {
       if (newVertex.name.size() == 0) {
         newVertex.name = graph1[v1].name;
+        newVertex.label = graph1[v1].label;
         //~ std::cout << "0: " << v1 << ", " << graph1[v1].name << ", pos=" << graph1[v1].pos << std::endl;
         newVertex.pos = graph1[v1].pos;
         newVertex.height = graph1[v1].height;
@@ -124,19 +125,26 @@ void deleteChain(ScheduleGraph& graph1, VertexSet& candidates, VertexSet& delete
         newVertex.color = graph1[v1].color;
         newVertex.pattern = graph1[v1].pattern;
       } else {
-        //~ newVertex.name = newVertex.name + "\n" + graph1[v1].name;
         if (deletes.size() < 4) {
           newVertex.name = newVertex.name + "\n" + graph1[v1].name;
+          if (graph1[v1].label.size() > 0) {
+            newVertex.label = newVertex.label + "\n" + graph1[v1].label;
+          }
         } else {
           if (v1 == lastVertex) {
             newVertex.name = newVertex.name + "\n...\n" + graph1[v1].name;
+            if (graph1[v1].label.size() > 0) {
+              newVertex.label = newVertex.label + "\n...\n" + graph1[v1].label;
+            }
           }
         }
         //~ std::cout << "x: " << v1 << ", " << graph1[v1].pos << std::endl;
       }
     }
     // Add a new vertex.
-    newVertex.label = newVertex.name;
+    if (newVertex.label.size() == 0) {
+      newVertex.label = newVertex.name;
+    }
     VertexNum newVertexNum = add_vertex(newVertex, graph1);
     // Add two new edges if begin is defined or end is defined.
     if (begin != ULONG_MAX) {
