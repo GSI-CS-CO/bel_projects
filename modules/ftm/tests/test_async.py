@@ -20,7 +20,7 @@ class UnitTestAsync(dm_testbench.DmTestbench):
     stdoutLines = self.startAndGetSubprocessStdout([self.binaryDmCmd, self.datamaster, 'rawqueue', 'BLOCK_B'])
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-async-expected-1-5.txt', excludeField='VTIME')
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, '-i', self.schedules_folder + 'dynamic-async-command-0d.dot'))
-    self.delay(1.2)
+    self.delay(1.4)
     stdoutLines = self.startAndGetSubprocessStdout([self.binaryDmSched, self.datamaster, 'rawvisited'])
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-async-expected-1-7.txt')
     stdoutLines = self.startAndGetSubprocessStdout([self.binaryDmCmd, self.datamaster, 'showlocks'])
