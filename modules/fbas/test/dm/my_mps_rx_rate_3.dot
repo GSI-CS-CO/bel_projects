@@ -1,0 +1,40 @@
+digraph G {
+
+// Commands to run this schedule
+// $ dm-sched dev/wbm1 add <path_to_this_file>            # load pattern
+// $ dm-cmd dev/wbm1 startpattern PatA                    # start pattern
+// $ dm-cmd dev/wbm1 status -v                            # show sent message counts
+// $ dm-cmd dev/wbm1 cleardiag                            # clear diagnostics
+
+// This schedule is used to test the maximum data rate for SCU receiver.
+// A bunch of timing messages are generated and sent by DM with different data rate and
+// allowed maximum data rate is determined by counting lost messages on SCU.
+
+// Each timing message with event ID 4043 (0xfcb) contains a pseudo MPS protocol in its parameter field:
+// - parameter (8-byte): sender ID (6) + index (1) + MPS_flag (1)
+// where:
+// - sender ID: MAC address
+// - index: MPS channel index
+// - MPS_flag: OK (=1), NOK (=2), TEST (=3)
+
+// 3 timing messages (M_A1-3), each with different dev_ID, will be sent in a period of 'tperiod' [ns] and it is repeated 'qty' + 1 times.
+// To send 6000 timing msgs, the valud of 1999 should be set to 'qty'
+// To send msgs at rates 300/600/1000/1200/1500 Hz (264/528/880/1056/1320 Kbps), the value of 'tperiod' should vary between 10/5/3/2,5/2 ms.
+
+name="pseudo_MPS"
+graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [cpu="0", pattern=PatA, patentry=0, patexit=0,  style     = "filled", fillcolor = "white", color = "black"];
+edge [type="defdst"];
+
+C_A0 [type="flow",  patentry=1, toffs=0, qty="1999", tvalid="0", vabs="true"];
+M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0001"];
+M_A2 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0101"];
+M_A3 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0201"];
+B_A3 [type="block", patexit=1,  tperiod=100000, qlo="true"];
+
+C_A0 -> M_A1 -> M_A2 -> M_A3 -> B_A3;
+B_A3 -> M_A1 [type="altdst"];
+C_A0 -> M_A1 [type="flowdst"];
+C_A0 -> B_A3 [type="target"];
+
+}

@@ -14,13 +14,8 @@ entity pexarria10 is
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_pllref_i     : in std_logic; -- 125 MHz PLL reference
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_sfpref_i     : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator
-
-    clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
     clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -102,9 +97,11 @@ entity pexarria10 is
     usb_uclkin_i : in    std_logic;
 
     -----------------------------------------------------------------------
-    -- CPLD (F2F)
+    -- ATXMega (F2F) previously CPLD
     -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(7 downto 0);
+    cpld_io     : inout std_logic_vector(5 downto 0);
+    f2f_i2c_scl : inout std_logic;
+    f2f_i2c_sda : inout std_logic;
 
     -----------------------------------------------------------------------
     -- SFP
@@ -163,19 +160,19 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(21 downto 0);
-  signal s_gpio_i   : std_logic_vector(17 downto 0);
+  signal s_gpio_o   : std_logic_vector(19 downto 0);
+  signal s_gpio_i   : std_logic_vector(15 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
   signal s_lvds_n_o : std_logic_vector(19 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
-  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
-  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
-  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -185,7 +182,7 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 41) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 39) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -195,42 +192,40 @@ architecture rtl of pexarria10 is
     ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX1P ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX1N ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX2P ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX2N ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX1P ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX1N ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX2P ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX2N ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_DATP ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_DATN ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_RED ",  IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_BLU ",  IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_GRE ",  IO_NONE,         false,   false, 20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RE_LED_WHI ",  IO_NONE,         false,   false, 21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO4  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+    ("USBC5_TX1P ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX1N ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX2P ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_TX2N ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX1P ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX1N ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX2P ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_RX2N ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_DATP ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_DATN ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_RED ",  IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_BLU ",  IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_GRE ",  IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_WHI ",  IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO4  ",  IO_I2C_USB_C,    false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO5  ",  IO_I2C_USB_C,    false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO1  ",  IO_I2C_USB_C,    false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO2  ",  IO_I2C_USB_C,    false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO3  ",  IO_I2C_USB_C,    false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO4  ",  IO_I2C_USB_C,    false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO5  ",  IO_I2C_USB_C,    false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO1  ",  IO_I2C_USB_C,    false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO2  ",  IO_I2C_USB_C,    false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO3  ",  IO_I2C_USB_C,    false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO4  ",  IO_I2C_USB_C,    false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO5  ",  IO_I2C_USB_C,    false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO1  ",  IO_I2C_USB_C,    false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO2  ",  IO_I2C_USB_C,    false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO3  ",  IO_I2C_USB_C,    false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO4  ",  IO_I2C_USB_C,    false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
   constant c_family        : string := "Arria 10 GX PEX10";
   constant c_project       : string := "pexarria10";
@@ -247,11 +242,11 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_inout         => 18,
+      g_gpio_inout         => 16,
       g_gpio_out           => 4,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
+      g_num_i2c_interfaces => 6,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
@@ -338,32 +333,32 @@ begin
   wr_leds_o(1)                  <= not s_led_link_up;                      -- blue  = link
   wr_leds_o(2)                  <= not s_led_track;                        -- green = timing valid
   wr_leds_o(3)                  <= not s_led_pps;                          -- white = PPS
-  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(18);                           -- red
-  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(19);                           -- blue
-  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(20);                           -- green
-  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(21);                           -- white
+  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(16);                           -- red
+  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(17);                           -- blue
+  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(18);                           -- green
+  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(19);                           -- white
 
   -- Additional GPIOs (USBC5)
-  sfp_aux_tx_disable_io_nc <= s_gpio_o(8)  when s_gpio_o(8)='0'  else 'Z';
-  sfp_aux_tx_fault_io_nc   <= s_gpio_o(9)  when s_gpio_o(9)='0'  else 'Z';
-  sfp_aux_los_io_nc        <= s_gpio_o(10) when s_gpio_o(10)='0' else 'Z';
-  sfp_aux_mod0_io_nc       <= s_gpio_o(11) when s_gpio_o(11)='0' else 'Z';
-  sfp_aux_mod1_io_nc       <= s_gpio_o(12) when s_gpio_o(12)='0' else 'Z';
-  sfp_aux_mod2_io_nc       <= s_gpio_o(13) when s_gpio_o(13)='0' else 'Z';
-  sfp_aux_gpio_io_extra(0) <= s_gpio_o(14) when s_gpio_o(14)='0' else 'Z';
-  sfp_aux_gpio_io_extra(1) <= s_gpio_o(15) when s_gpio_o(15)='0' else 'Z';
-  sfp_aux_gpio_io_extra(2) <= s_gpio_o(16) when s_gpio_o(16)='0' else 'Z';
-  sfp_aux_gpio_io_extra(3) <= s_gpio_o(17) when s_gpio_o(17)='0' else 'Z';
-  s_gpio_i(8)              <= sfp_aux_tx_disable_io_nc;
-  s_gpio_i(9)              <= sfp_aux_tx_fault_io_nc;
-  s_gpio_i(10)             <= sfp_aux_los_io_nc;
-  s_gpio_i(11)             <= sfp_aux_mod0_io_nc;
-  s_gpio_i(12)             <= sfp_aux_mod1_io_nc;
-  s_gpio_i(13)             <= sfp_aux_mod2_io_nc;
-  s_gpio_i(14)             <= sfp_aux_gpio_io_extra(0);
-  s_gpio_i(15)             <= sfp_aux_gpio_io_extra(1);
-  s_gpio_i(16)             <= sfp_aux_gpio_io_extra(2);
-  s_gpio_i(17)             <= sfp_aux_gpio_io_extra(3);
+  sfp_aux_tx_disable_io_nc <= s_gpio_o(6)  when s_gpio_o(6)='0'  else 'Z';
+  sfp_aux_tx_fault_io_nc   <= s_gpio_o(7)  when s_gpio_o(7)='0'  else 'Z';
+  sfp_aux_los_io_nc        <= s_gpio_o(8)  when s_gpio_o(8)='0'  else 'Z';
+  sfp_aux_mod0_io_nc       <= s_gpio_o(9)  when s_gpio_o(9)='0'  else 'Z';
+  sfp_aux_mod1_io_nc       <= s_gpio_o(10) when s_gpio_o(10)='0' else 'Z';
+  sfp_aux_mod2_io_nc       <= s_gpio_o(11) when s_gpio_o(11)='0' else 'Z';
+  sfp_aux_gpio_io_extra(0) <= s_gpio_o(12) when s_gpio_o(12)='0' else 'Z';
+  sfp_aux_gpio_io_extra(1) <= s_gpio_o(13) when s_gpio_o(13)='0' else 'Z';
+  sfp_aux_gpio_io_extra(2) <= s_gpio_o(14) when s_gpio_o(14)='0' else 'Z';
+  sfp_aux_gpio_io_extra(3) <= s_gpio_o(15) when s_gpio_o(15)='0' else 'Z';
+  s_gpio_i(6)              <= sfp_aux_tx_disable_io_nc;
+  s_gpio_i(7)              <= sfp_aux_tx_fault_io_nc;
+  s_gpio_i(8)              <= sfp_aux_los_io_nc;
+  s_gpio_i(9)              <= sfp_aux_mod0_io_nc;
+  s_gpio_i(10)             <= sfp_aux_mod1_io_nc;
+  s_gpio_i(11)             <= sfp_aux_mod2_io_nc;
+  s_gpio_i(12)             <= sfp_aux_gpio_io_extra(0);
+  s_gpio_i(13)             <= sfp_aux_gpio_io_extra(1);
+  s_gpio_i(14)             <= sfp_aux_gpio_io_extra(2);
+  s_gpio_i(15)             <= sfp_aux_gpio_io_extra(3);
 
   -------------------------------------------------
   -- LVDS USBC mapping
@@ -392,19 +387,25 @@ begin
     s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
   end generate;
 
-  -- I2C
-  interfaces : for i in 1 to 5 generate
-    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+  -- I2C USB-C
+  interfaces : for i in 2 to 6 generate
+    i2c_scl_pad_io(i-1) <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+    i2c_sda_pad_io(i-1) <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i-1);
+    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i-1);
   end generate;
 
-  -- CPLD
-  s_gpio_i(7 downto 0) <= cpld_io(7 downto 0);
-  cpld_con : for i in 0 to 7 generate
+  -- ATXMega (F2F) previously CPLD
+  s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
+  cpld_con : for i in 0 to 5 generate
     cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
   end generate;
+
+  -- I2C to ATXMega
+  f2f_i2c_scl         <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  f2f_i2c_sda         <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= f2f_i2c_scl ;
+  s_i2c_sda_pad_in(1) <= f2f_i2c_sda;
 
   -- OneWire
   OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled

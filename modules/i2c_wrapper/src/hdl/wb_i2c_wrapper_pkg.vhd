@@ -10,6 +10,7 @@ use work.wishbone_pkg.all;
 
 -- package declaration
 package wb_i2c_wrapper_pkg is
+
   --component xwb_i2c_master
   --  generic (
   --    g_interface_mode      : t_wishbone_interface_mode      := CLASSIC;
@@ -29,6 +30,32 @@ package wb_i2c_wrapper_pkg is
   --    sda_pad_o    : out std_logic_vector(g_num_interfaces-1 downto 0);
   --    sda_padoen_o : out std_logic_vector(g_num_interfaces-1 downto 0));
   --end component;
+
+  component i2c_master_top
+      generic (
+        ARST_LVL         : std_logic;
+        g_num_interfaces : integer
+      );
+      port (
+        wb_clk_i      : in  std_logic;
+        wb_rst_i      : in  std_logic;
+        arst_i        : in  std_logic;
+        wb_adr_i      : in  std_logic_vector(2 downto 0);
+        wb_dat_i      : in  std_logic_vector(7 downto 0);
+        wb_dat_o      : out std_logic_vector(7 downto 0);
+        wb_we_i       : in  std_logic;
+        wb_stb_i      : in  std_logic;
+        wb_cyc_i      : in  std_logic;
+        wb_ack_o      : out std_logic;
+        inta_o        : out std_logic;
+        scl_pad_i     : in  std_logic_vector(g_num_interfaces-1 downto 0);
+        scl_pad_o     : out std_logic_vector(g_num_interfaces-1 downto 0);
+        scl_padoen_o  : out std_logic_vector(g_num_interfaces-1 downto 0);
+        sda_pad_i     : in  std_logic_vector(g_num_interfaces-1 downto 0);
+        sda_pad_o     : out std_logic_vector(g_num_interfaces-1 downto 0);
+        sda_padoen_o  : out std_logic_vector(g_num_interfaces-1 downto 0)
+      );
+  end component;
 
   constant c_i2c_wrapper_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device

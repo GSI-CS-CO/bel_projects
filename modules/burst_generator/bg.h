@@ -15,6 +15,8 @@
 #include "fg.h" // included in cb.h
 #include "cb.h" // add_msg()
 
+typedef uint32_t status_t;
+
 #define toU64(hi32, lo32, r64) { r64 = ((uint64_t)(hi32)) << 32; r64 |= (lo32); }
 #define hiU32(u64)  ((uint32_t)(((u64) >> 32) & 0xFFFFFFFF))
 #define loU32(u64)  ((uint32_t)((u64) & 0xFFFFFFFF))
@@ -35,31 +37,85 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
-#define SHARED_MB_SLOT    0x04UL
-#define SHARED_MB_SLOT_H  0x0CUL
-#define SHARED_CMD        0x10UL
-#define SHARED_INPUT      0x20UL
+#define BG_SHARED_BEGIN         COMMON_SHARED_END
+#define BG_SHARED_MB_SLOT_LM32  BG_SHARED_BEGIN + 0x04UL  // Mailbox slot for LM32
+#define BG_SHARED_MB_SLOT_HOST  BG_SHARED_BEGIN + 0x0CUL  // Mailbox slot for the host
+#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Command buffer
+#define BG_SHARED_INPUT         BG_SHARED_BEGIN + 0x20UL  // Command argument buffer
+#define BG_SHARED_END           BG_SHARED_BEGIN + 0x40UL  // End of the shared memory
 #define MB_SLOT_CFG_FREE  0xFFFFFFFFUL
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
+#define BG_FW_VERSION     0x000100   // 0xMMmmRR, M-major, m-minor, R-revision
+#define BG_TAG            "bg"
 
 #define N_BURSTS          17    // maximum number of bursts can be generated, but bursts 1..N_BURSTS-1 are used
-#define N_TASKS           N_BURSTS + 1    // number of all periodic tasks (N_BURSTS + 1 host MSI handler)
-#define N_BURST_INFO      10    // the length of burst info (id, io_type, io_idx, start_h32/l32, stop_h32/l32, cycle_h32/l32, flag)
+
+enum BURST_INFO {                // burst info fields
+  INFO_ID,                        // burst ID
+  INFO_IO_TYPE,                   // IO type
+  INFO_IO_IDX,                    // IO index
+  INFO_START_EVT_H32,             // start event ID, high32
+  INFO_START_EVT_L32,             // start event ID, low32
+  INFO_STOP_EVT_H32,              // stop event ID, high32
+  INFO_STOP_EVT_L32,              // stop event ID, low32
+  INFO_LOOPS_H32,                 // loops/cycles, high32
+  INFO_LOOPS_L32,                 // loops/cycles, low32
+  INFO_ACTION_H32,                // action time, high32
+  INFO_ACTION_L32,                // action time, low32
+  INFO_FLAG,                      // burst flag
+  N_BURST_INFO
+};
 
 /* user commands for the burst generator */
-#define CMD_SHOW_ALL      0x1UL
-#define CMD_GET_PARAM     0x2UL
-#define CMD_GET_CYCLE     0x3UL
-#define CMD_LS_BURST      0x4UL  // list burst (ids or burst info)
-#define CMD_MK_BURST      0x5UL  // declare new burst
-#define CMD_RM_BURST      0x6UL  // remove burst
-#define CMD_DE_BURST      0x7UL  // dis/enable burst
-#define CMD_RD_MSI_ECPU   0x10UL
-#define CMD_RD_ECPU_CHAN  0x11UL
-#define CMD_RD_ECPU_QUEUE 0x12UL
-#define CMD_LS_FW_ID      0x13UL // list the firmware id
+#define CMD_SHOW_ALL      0x21UL
+#define CMD_GET_PARAM     0x22UL
+#define CMD_GET_CYCLE     0x23UL
+#define CMD_LS_BURST      0x24UL  // list burst (ids or burst info)
+#define CMD_MK_BURST      0x25UL  // declare new burst
+#define CMD_RM_BURST      0x26UL  // remove burst
+#define CMD_DE_BURST      0x27UL  // dis/enable burst
+#define CMD_RD_MSI_ECPU   0x30UL
+#define CMD_RD_ECPU_CHAN  0x31UL
+#define CMD_RD_ECPU_QUEUE 0x32UL
+#define CMD_LS_FW_ID      0x33UL   // list the firmware id
+#define CMD_MASK          0xFFFFUL // command mask
+
+#define CMD_DIAG_TOGGLE_MEASUREMENT        0x40 // toggle diagnostic measurements
+#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION 0x41 // print the elapsed time to handle MSIs
+#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG   0x42 // print IO event control and configuration table
+#define CMD_DIAG_PRINT_TASK_INTERVAL       0x43 // print the task interval
+
+/* offsets of arguments in the user commands */
+enum ARGS_CMD_GET_PARAM {
+  GET_PARAM_ID,           // burst ID
+  GET_PARAM_SETUP,        // timer period for burst burst head, ns
+  GET_PARAM_N_CONDITION,  // number of conditions in a block
+  GET_PARAM_PERIOD,       // block period, ns
+  GET_PARAM_FLAG,         // burst flag
+  GET_PARAM_VERBOSE,      // verbose
+  N_GET_PARAM
+};
+
+enum ARGS_CMD_GET_CYCLE {
+  GET_CYCLE_ID,           // burst ID
+  GET_CYCLE_N_CYCLE_H32,  // number of block cycles, high32
+  GET_CYCLE_N_CYCLE_L32,  // number of block cycles, low32
+  GET_CYCLE_VERBOSE,      // verbose
+  N_GET_CYCLE
+};
+
+enum ARGS_CMD_MK_BURST {
+  MK_BURST_ID,            // burst ID
+  MK_BURST_IO,            // target IO (io_type << 16 | io_index)
+  MK_BURST_START_EVT_H32, // start event ID, high32
+  MK_BURST_START_EVT_L32, // start event ID, low32
+  MK_BURST_STOP_EVT_H32,  // stop event ID, high32
+  MK_BURST_STOP_EVT_L32,  // stop event ID, low32
+  MK_BURST_VERBOSE,       // verbose
+  N_MK_BURST
+};
 
 /* definitions of timing messages & ECA actions */
 #define ECA_FG_MOSTFULL   0x00060000UL  // ECA mostfull flag
@@ -135,11 +191,13 @@ typedef struct {
   uint8_t  io_index;     /* IO port index, info_index of t_io_mapping_table in monster_pkg.vhd */
   uint64_t trigger;      /* trigger event ID */
   uint64_t toggle;       /* toggling event ID */
+  uint64_t setup;        /* time period needed for burst head, ns */
   int64_t  cycle;        /* handler-specific: number of cycles */
   uint64_t period;       /* handler-specific: period in ns */
   uint64_t deadline;     /* handler-specific: deadline */
   uint64_t interval;     /* interval of the task */
   uint64_t lasttick;     /* when was the task ran last */
+  uint64_t action;       /* when was the IO action trigged */
   uint64_t failed;       /* task failed timestamp */
   int (*func)(int);     /* pointer to the function of the task */
 } Task_t;

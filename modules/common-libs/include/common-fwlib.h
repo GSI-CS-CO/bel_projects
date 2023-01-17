@@ -21,7 +21,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
                              uint64_t *param,         // parameter field
-                             uint32_t *tef,           // TEF filed
+                             uint32_t *tef,           // TEF field
                              uint32_t *isLate,        // flag 'late'
                              uint32_t *isEarly,       // flag 'early'
                              uint32_t *isConflict,    // flag 'conflict'
@@ -69,6 +69,9 @@ volatile uint32_t * fwlib_getMilPiggy();
 
 // get address of OLED
 volatile uint32_t * fwlib_getOLED();
+
+// get WB address of SCU bus master
+volatile uint16_t * fwlib_getSbMaster();
 
 // acquire and publish NIC data
 void fwlib_publishNICData();

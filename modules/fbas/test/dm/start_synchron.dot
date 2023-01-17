@@ -1,0 +1,7 @@
+digraph g {
+name="123!CMD!";
+  CMD_START_A   [type="start", pattern="PatLoop"];
+  CMD_START_B   [type="start", pattern="PatLoop1"];
+  CMD_START_C   [type="start", pattern="PatLoop2"];
+  CMD_START_D   [type="start", pattern="PatLoop3"];
+}
