@@ -87,18 +87,7 @@ class DmTestbench(unittest.TestCase):
     The <argumentsList> contains the binary to execute and all arguments in one list.
     Start the binary for the test step with the arguments and check the output on stdout and stderr and the return code as well.
     """
-    # pass cmd and args to the function
-    process = subprocess.Popen([*argumentsList], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    # get command output and error
-    stdout, stderr = process.communicate()
-    self.assertTrue(process.returncode in expectedReturnCode, f'wrong return code {process.returncode}, expected: {expectedReturnCode}, '
-          + f'Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
-    if linesCerr > -1:
-      lines = stderr.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {argumentsList}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
-    if linesCout > -1:
-      lines = stdout.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {argumentsList}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
+    self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)
 
   def startAndGetSubprocessStdout(self, argumentsList, expectedReturnCode=[0], linesCout=-1, linesCerr=-1):
     return self.startAndGetSubprocessOutput(argumentsList, expectedReturnCode, linesCout, linesCerr)[0]
@@ -129,13 +118,19 @@ class DmTestbench(unittest.TestCase):
     """
     for index, line in enumerate(dotLines):
       dotLines[index] = line.replace('flags="0x00000107"', 'flags="0x00000007"') \
+      .replace('flags="0x00002102"', 'flags="0x00002002"') \
       .replace('flags="0x00002107"', 'flags="0x00002007"') \
+      .replace('flags="0x00008107"', 'flags="0x00008007"') \
       .replace('flags="0x00108107"', 'flags="0x00108007"') \
       .replace('flags="0x00708107"', 'flags="0x00708007"') \
       .replace('flags="0x00100107"', 'flags="0x00100007"') \
       .replace('fillcolor = "green"', 'fillcolor = "white"') \
       .replace('flags="0x00020007"', 'flags="0x00000007"') \
       .replace('flags="0x00020207"', 'flags="0x00000207"') \
+      .replace('flags="0x0002a207"', 'flags="0x0000a207"') \
+      .replace('flags="0x0002a208"', 'flags="0x0000a208"') \
+      .replace('flags="0x0003a207"', 'flags="0x0001a207"') \
+      .replace('flags="0x00022002"', 'flags="0x00002002"') \
       .replace('flags="0x00022007"', 'flags="0x00002007"') \
       .replace('flags="0x00120007"', 'flags="0x00100007"') \
       .replace('flags="0x00120207"', 'flags="0x00100207"') \
@@ -200,6 +195,13 @@ class DmTestbench(unittest.TestCase):
       snoop_command1 = self.snoop_command[:-1] + ' ' + str(duration) + "'"
     # ~ print(f'getSnoopCommand: {snoop_command1}')
     return snoop_command1
+
+  def getEbResetCommand(self):
+    ebResetCommand1 = '../../../tools/eb-reset'
+    if not os.path.isfile(ebResetCommand1):
+      ebResetCommand1 = 'eb-reset'
+    # ~ print(f'getEbResetCommand: {ebResetCommand1}')
+    return ebResetCommand1
 
   def snoopToCsv(self, csvFileName, duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
@@ -288,13 +290,13 @@ class DmTestbench(unittest.TestCase):
             self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
           elif item in listCounter.keys():
             if str(checkValues[item])[0] == '>':
-              self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater: is:{listCounter[item]} expected:{checkValues[item]}')
+              self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '<':
-              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller: is:{listCounter[item]} expected:{checkValues[item]}')
+              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
-              self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual: is:{listCounter[item]} expected:{checkValues[item]}')
+              self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
-              self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual: is:{listCounter[item]} expected:{checkValues[item]}')
+              self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
@@ -348,6 +350,120 @@ class DmTestbench(unittest.TestCase):
       thread = int(key[1])
       self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
       self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
+
+  match = 'Qty: '
+  lengthQ = len(match)
+
+  """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
+  Search for 'Qty: ' in the line and parse the number.
+  """
+  def getQuantity(self, line):
+    pos = line.find(self.match)
+    pos1 = line.find(' ', pos + self.lengthQ)
+    quantity = 0
+    if pos > -1 and pos1 > pos:
+      quantity = int(line[pos + self.lengthQ:pos1])
+    return quantity
+
+  """ Check that a flush command is executed and the defined queues are flushed.
+  queuesToFlush: binary value between 0 and 7 for the queues to flush.
+  blockName: name of the block with the queues to check.
+  flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+  Priority queues higher than the flushPrio are not affected by the flush command since these
+  queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+  flushprio = 0, 1.
+  The check for the executed flush command and the checks for the flushed queues are independant. All checks
+  are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
+  are used to signal the section inside the output.
+  checkFlush = False means: check that no flush is executed.
+  """
+  def check_queue_flushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
+    output = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-v', 'queue', blockName), [0], 38)
+    checkQueue0 = False
+    check0 = False
+    checkQueue1 = False
+    check1 = False
+    checkQueue2 = False
+    check2 = False
+    checkFlush0 = False
+    checkFlush1 = False
+    checkFlush2 = False
+    flushExecuted = False
+    for line in output:
+      # check that flush is executed (there is exactly 1 flush executed)
+      if checkFlush0:
+        # ~ print(f'0 {counterFlush0} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        flushExecuted = flushExecuted or (flushPrio == 0 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
+        counterFlush0 = counterFlush0 + 1
+        if counterFlush0 > 3:
+          checkFlush0 = False
+      if flushPrio == 0 and 'Priority 0 (' in line:
+        checkFlush0 = True
+        counterFlush0 = 0
+      if checkFlush1:
+        # ~ print(f'1 {counterFlush1} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        flushExecuted = flushExecuted or (flushPrio == 1 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
+        counterFlush1 = counterFlush1 + 1
+        if counterFlush1 > 3:
+          checkFlush1 = False
+      if flushPrio == 1 and 'Priority 1 (' in line:
+        checkFlush1 = True
+        counterFlush1 = 0
+      if checkFlush2:
+        # ~ print(f'2 {counterFlush2} {flushExecuted} flushPrio {flushPrio}, {"empty" in line}, {"CmdType: flush" in line}, qty: {self.getQuantity(line)}')
+        flushExecuted = flushExecuted or (flushPrio == 2 and 'empty' in line and 'CmdType: flush' in line and self.getQuantity(line) == 0)
+        counterFlush2 = counterFlush2 + 1
+        if counterFlush2 > 3:
+          checkFlush2 = False
+      if flushPrio == 2 and 'Priority 2 (' in line:
+        checkFlush2 = True
+        counterFlush2 = 0
+
+      # check that queues are flushed (0 to 3 queues can be flushed)
+      # ~ print(f"{checkQueue0}, {check0}, {'empty' in line}, {self.getQuantity(line)}, {line}")
+      if checkQueue0:
+        check0 = ('empty' in line and self.getQuantity(line) > 0)
+        counter0 = counter0 + 1
+        if counter0 > 3:
+          checkQueue0 = False
+      if not checkQueue0 and queuesToFlush & 0x1 and 'Priority 0 (' in line:
+        # start check of queue 0
+        checkQueue0 = True
+        counter0 = 0
+      if checkQueue1:
+        check1 = ('empty' in line and self.getQuantity(line) > 0)
+        counter1 = counter1 + 1
+        if counter1 > 3:
+          checkQueue1 = False
+      if not checkQueue1 and queuesToFlush & 0x2 and 'Priority 1 (' in line:
+        # start check of queue 1
+        checkQueue1 = True
+        counter1 = 0
+      if checkQueue2:
+        check2 = ('empty' in line and self.getQuantity(line) > 0)
+        counter2 = counter2 + 1
+        if counter2 > 3:
+          checkQueue2 = False
+      if not checkQueue2 and queuesToFlush & 0x4 and 'Priority 2 (' in line:
+        # start check of queue 2
+        checkQueue2 = True
+        counter2 = 0
+    if flushPrio == 0 and queuesToFlush > 1:
+      queuesToFlush = queuesToFlush & 0x1
+    if flushPrio == 1 and queuesToFlush > 1:
+      queuesToFlush = queuesToFlush & 0x3
+    queuesFlushed = 0
+    if queuesToFlush & 0x1 and check0:
+      queuesFlushed = queuesFlushed + 1
+    if queuesToFlush & 0x2 and check1:
+      queuesFlushed = queuesFlushed + 2
+    if queuesToFlush & 0x4 and check2:
+      queuesFlushed = queuesFlushed + 4
+    self.assertEqual(queuesFlushed, queuesToFlush, f'Queue 2 flushed {check2}, Queue 1 flushed {check1}, Queue 0 flushed {check0}, Queues to check: {queuesToFlush:03b}')
+    if checkFlush:
+      self.assertTrue(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
+    else:
+      self.assertFalse(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
 
   def delay(self, duration):
     """Delay for <duration> seconds. <duration> is a float.
