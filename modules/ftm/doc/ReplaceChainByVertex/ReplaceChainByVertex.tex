@@ -1,0 +1,151 @@
+\documentclass[12pt,a4paper]{report}
+% Language: English
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\newcommand{\ry}{\rotatebox{90}}
+\begin{document}
+
+\begin{titlepage}
+\vspace{2cm}
+\begin{center}
+\Huge{In a Schedule Replace a Chain by a Vertex}
+
+\Large{Martin Skorsky}
+
+\Large{Last change: 2023-01-19}
+\end{center}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\section*{Introduction}
+In a schedule graph we have often long chains which describe a series of timing events. 
+When looking at the drawing of the graph, there are a lot of vertices in chains and 
+these hide the structure of the schedule. This structure is determined by those
+vertices with more than one incoming edge or more than one outgoing edge.
+
+To get more readable drawings we want to replace each chain by a new vertex which is 
+connected to the rest of the graph in the same way a the chain. This should reduce 
+the number of vertices significantly. The number of edges is in the same range as 
+the number of vertices. For a current schedule from the integration environment 
+the number of vertices decreases from about 1,000 vertices to less than 200 vertices.
+The number of edges decreases from 1,200 edges to about 300 edges.
+
+This documentation describes an algorithm to replace in a schedule graph, which is a 
+directed graph, a chain by a new vertex.
+
+\chapter{Replace a Chain by a Vertex}
+The algorithm operates on schedule graphs and other directed graphs which are described 
+with the dot language.
+The algorithm is implemented in C++ with the Boost Graph Library (Version 1.69 or higher).
+
+For the description we need some definitions. Assume, we have a directed graph $G = (V,E)$ where 
+$V$ is the set of vertices an $E$ is the set of edges, a subset of $V \times V$. Each 
+edge is a pair $(v_1, v_2)$ of two vertices. $v_1$ is the predecessor $p(v_2)$ of $v_2$. $v_2$ is
+the successor $s(v_1)$ of $v_1$. $Out(v_1)$ is the set of outgoing edges of $v_1$ and $In(v_1)$ 
+is the set of incoming edges of $v_1$. $|Out(v_1)|$ is the out-degree of $v_1$ and $|In(v_1)|$
+is the in-degree of $v_1$.
+
+A subgraph $S = (U,F)$ of $G$ is a graph where $U \subset V$ and $F \subset E$ and $u_1, u_2 \in U$ 
+with $(u_1, u_2) \in E$ implies $(u_1, u_2) \in F$. In words: an edge of $G$ where both vertices 
+are in the subgraph $S$ is also an edge of the subgraph.
+
+In the following $In(v)$ and $Out(v)$ are with repect to $G$ and not the chain $C$.
+
+\begin{enumerate}
+\item Chain: A chain is a connected subgraph $C$ of $G$ and all vertices $v\in V(C)$ have 
+$|In(v)| \le 1$ and $|Out(v)| \le 1$. Remark 1: since the subgraph is connected, there is at most 
+one vertex with $|In(v)| = 0$ or $|Out(v) = 0$. Remark 2: with the algorithm described below we 
+search for maximal chains in $G$. Remark 3: Cycles are also chains.
+
+\item Begin of chain: a vertex $b$ of the chain, which has no predecessor in the chain.
+Remark: it is $|In(b)| \le 1$. In the case $|In(b)| = 1$ there is a unique vertex 
+$a \in V(G) \setminus V(C)$ which is the predecessor of $b$.
+
+\item End of chain: a vertex $c$ of the chain, which has no successor in the chain.
+Remark: it is $|Out(c)| \le 1$. In the case $|Out(c)| = 1$ there is a unique vertex 
+$d \in V(G) \setminus V(C)$ which is the successor of $c$.
+
+\end{enumerate}
+
+\chapter{Requirements}
+The algorithm is designed with the following requirements:
+
+\begin{enumerate}
+\item A maximal chain is replaced by a new vertex. This new vertex is connected to the 
+predecessor of the begin of the chain and the successor of the end of the chain if these exist.
+
+\item There is one condition that decides if a vertex is deleted as part of a chain.
+There is no list of candidates for deletion which is revised later. 
+
+\item The label of a new vertex is the concatenation of the labels in the chain with some
+modifications. If the chain is two or three vertices long, the new label is concatenated 
+from these vertices from begin of chain to end of chain. If the chain is longer than 3
+vertices, the new label is concatenated from the begin of chain, three dots, the end of chain.
+The same is done for the names of the vertices. If the labels are empty, use the names for 
+the labels.
+
+\item The properties of the new vertex are the properties of the begin of chain. This
+includes pattern, fillcolor, shape, and type.
+
+\item The properties of the new edges are the properties of the corresponding edges
+of $G$. This includes color and type.
+
+\item If the graph $G$ has properties for positioning (including pos, \_draw\_, \_hdraw\_, \_ldraw\_)
+these properties need a special handling. The position of a new vertex should be the average 
+position of the vertices in the chain. The positions of edges need more work. This has low priority.
+For readable drawings of the new graph it is better to rely on the wellknown positioning 
+algorithms of graphviz and use a new rendering of the new graph. Unfortunately, new vertices 
+may be placed differently than the underlying chain in the new graph drawing.
+
+\end{enumerate}
+
+\chapter{Algorithm}
+
+\chapter{Examples}
+The original schedule in the integration environment is shown in~\ref{fig:tsl020}.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=1.0\textheight,keepaspectratio]{tsl020.pdf}
+        \caption{Schedule from integration environment}
+        \label{fig:tsl020}
+    \end{figure}
+The compacted schedule is shown in~\ref{fig:tsl020-compact}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.9\textwidth,keepaspectratio]{tsl020-compact.pdf}
+        \caption{Schedule from integration environment, chains replaced}
+        \label{fig:tsl020-compact}
+    \end{figure}
+
+
+\chapter{Tests}
+
+\end{document}
