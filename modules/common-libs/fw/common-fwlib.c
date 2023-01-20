@@ -512,15 +512,15 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   paramLo    = (uint32_t)(param            & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline         & 0xffffffff);
-          
+
   // pack timing message
   atomic_on();                                  
   ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);             
   ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);             
   ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
-  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
   atomic_off();
