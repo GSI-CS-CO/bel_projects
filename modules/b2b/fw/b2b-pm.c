@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-dec-2022
+ *  version : 15-jan-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -43,7 +43,7 @@
  * Last update: 15-April-2019
  ********************************************************************************************/
 #define B2BPM_FW_VERSION      0x000421                                  // make this consistent with makefile
-#define B2BPM_FW_USESUBNSFIT  1
+#define B2BPM_FW_USESUBNSFIT  0
 
 // standard includes
 #include <stdio.h>
@@ -257,7 +257,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   int64_t  max_deviation_as;                // maximum of all deviations [as]
   int64_t  min_deviation_as;                // minimum of all deviations [as]
   int64_t  subnsfit_dev_as;                 // sub-ns-fit deviation [as]
-  uint32_t jitter_as;                       // jitter
+  uint32_t window_as;                       // window given by max and min deviation
   b2bt_t   ts_t;                            // timestamp [ps]
   int      nGood;                           // number of good timestamps
 
@@ -282,8 +282,8 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   min_deviation_as = 0;
 
   // calc sum deviation of all timestamps
-  //for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
-  for (i=1; i<27; i++) {  // HACK      // include 1st timestamp too (important for little statistics)
+  for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
+    // for (i=1; i<27; i++) {  // HACK     // include 1st timestamp too (important for little statistics)
     
     diff_stamp_as = (tStamp[i] - tFirst_ns) * one_ns_as;
 
@@ -314,20 +314,17 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
     return B2B_STATUS_PHASEFAILED;
   } // if nGood < 1
 
-  // calculate average and jitter (= a quarter of the max-min window)
+  // calculate average and max-min window
   ave_deviation_as = sum_deviation_as / nGood;
   subnsfit_dev_as  = (max_deviation_as + min_deviation_as) >> 1; 
-  jitter_as        = ((uint32_t)(max_deviation_as - min_deviation_as)) >> 2;
+  window_as        = (uint32_t)(max_deviation_as - min_deviation_as);
   // calculate a phasmax_deviation_as + me value and convert to ps
   ts_t.ns          = tFirst_ns;
-  if (B2BPM_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;           // sub-ns fit
-  else                      ts_t.ps          = ave_deviation_as / 1000000;  // average fit
-  //ts_t.dps         = jitter_as        / 1000000;
-  // hack
-  ts_t.dps         = (max_deviation_as - min_deviation_as) / 1000000;
+  if (B2BPM_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
+  else                      ts_t.ps = ave_deviation_as / 1000000;  // average fit
+  ts_t.dps         = window_as / 1000000;
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
-  //if (*pSharedGetSid == 2) pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, (*phase_t).ps, (*phase_t).dps);
   //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ps, ts_t.dps);
   return COMMON_STATUS_OK;
 } //phaseFitSubNs
@@ -628,8 +625,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // send command: transmit measured phase value to the network
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1_t.ns;
-      sendTEF      = (uint32_t)(tH1_t.ps  & 0xffff);                  // chk: consider reducing the number of bits to 10
-      sendTEF     |= (uint32_t)(tH1_t.dps & 0xffff) << 16; 
+      sendTEF      = (uint32_t)( (int16_t)(tH1_t.ps)  & 0xffff);
+      sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
       sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
 
@@ -716,12 +713,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // if phasefit
       } // if nInput
 
-      // hack: uncertainty [as]
-      // dtMatch_as = 271000000000 + tH1Phase_t.dps * 1000000;
-      //int32_t hlpp;
-      //hlpp = (int32_t)dtMatch_as;
-      //pp_printf("dps %d\n", hlpp);
-      
       // send command: transmit diagnostic information to the network
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
       if (flagPhaseDone) tmp.f = (float)dtPhase_as / 1000000000.0;    // convert to float [ns]

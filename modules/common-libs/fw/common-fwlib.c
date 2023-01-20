@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-dec-2022
+ *  version : 20-jan-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -650,7 +650,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
+  *pSharedVersion      = fwVersion; // of all the shared variables, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
