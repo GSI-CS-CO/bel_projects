@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Dec-2022
+ *  version : 23-Jan-2023
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000212                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000213                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -199,7 +199,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
   deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
-  fwlib_ebmWriteTM(deadline, id, param, 1);
+  fwlib_ebmWriteTM(deadline, id, param, 0x0, 1);
   
   // diag and status
   tDiff = deadline - getSysTime();
@@ -770,7 +770,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   evtId_dbg = evtId_dbg | ((uint64_t)evtCode << 36);
   evtId_dbg = evtId_dbg | ((uint64_t)virtAcc << 20);
   param_dbg = (uint64_t)evtData;
-  fwlib_ecaWriteTM(TS_dbg, evtId_dbg, param_dbg, 1);
+  fwlib_ecaWriteTM(TS_dbg, evtId_dbg, param_dbg, 0x0, 1);
   
   return status;
 } // doActionOperation
