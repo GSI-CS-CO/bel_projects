@@ -33,26 +33,28 @@
 --refer to the applicable agreement for further details.
 
 
---altasmi_parallel CBX_AUTO_BLACKBOX="ALL" DATA_WIDTH="STANDARD" DEVICE_FAMILY="Arria II GX" ENABLE_SIM="FALSE" EPCS_TYPE="EPCS128" FLASH_RSTPIN="FALSE" PAGE_SIZE=256 PORT_BULK_ERASE="PORT_UNUSED" PORT_DIE_ERASE="PORT_UNUSED" PORT_EN4B_ADDR="PORT_UNUSED" PORT_EX4B_ADDR="PORT_UNUSED" PORT_FAST_READ="PORT_USED" PORT_ILLEGAL_ERASE="PORT_USED" PORT_ILLEGAL_WRITE="PORT_USED" PORT_RDID_OUT="PORT_USED" PORT_READ_ADDRESS="PORT_USED" PORT_READ_DUMMYCLK="PORT_UNUSED" PORT_READ_RDID="PORT_USED" PORT_READ_SID="PORT_UNUSED" PORT_READ_STATUS="PORT_USED" PORT_SECTOR_ERASE="PORT_USED" PORT_SECTOR_PROTECT="PORT_UNUSED" PORT_SHIFT_BYTES="PORT_USED" PORT_WREN="PORT_UNUSED" PORT_WRITE="PORT_USED" USE_ASMIBLOCK="ON" USE_EAB="ON" WRITE_DUMMY_CLK=0 addr busy clkin data_valid datain dataout fast_read illegal_erase illegal_write rden rdid_out read_address read_rdid read_status reset sector_erase shift_bytes status_out write INTENDED_DEVICE_FAMILY="Arria II GX" ALTERA_INTERNAL_OPTIONS=SUPPRESS_DA_RULE_INTERNAL=C106
+--altasmi_parallel CBX_AUTO_BLACKBOX="ALL" DATA_WIDTH="STANDARD" DEVICE_FAMILY="Arria II GX" ENABLE_SIM="FALSE" EPCS_TYPE="EPCS128" FLASH_RSTPIN="FALSE" PAGE_SIZE=256 PORT_BULK_ERASE="PORT_UNUSED" PORT_DIE_ERASE="PORT_UNUSED" PORT_EN4B_ADDR="PORT_UNUSED" PORT_EX4B_ADDR="PORT_UNUSED" PORT_FAST_READ="PORT_USED" PORT_ILLEGAL_ERASE="PORT_USED" PORT_ILLEGAL_WRITE="PORT_USED" PORT_RDID_OUT="PORT_USED" PORT_READ_ADDRESS="PORT_USED" PORT_READ_DUMMYCLK="PORT_UNUSED" PORT_READ_RDID="PORT_USED" PORT_READ_SID="PORT_UNUSED" PORT_READ_STATUS="PORT_USED" PORT_SECTOR_ERASE="PORT_USED" PORT_SECTOR_PROTECT="PORT_UNUSED" PORT_SHIFT_BYTES="PORT_USED" PORT_WREN="PORT_UNUSED" PORT_WRITE="PORT_USED" USE_ASMIBLOCK="OFF" USE_EAB="ON" WRITE_DUMMY_CLK=0 addr asmi_dataoe asmi_dataout asmi_dclk asmi_scein asmi_sdoin busy clkin data_valid datain dataout fast_read illegal_erase illegal_write rden rdid_out read_address read_rdid read_status reset sector_erase shift_bytes status_out write INTENDED_DEVICE_FAMILY="Arria II GX" ALTERA_INTERNAL_OPTIONS=SUPPRESS_DA_RULE_INTERNAL=C106
 --VERSION_BEGIN 18.1 cbx_a_gray2bin 2018:09:12:13:04:09:SJ cbx_a_graycounter 2018:09:12:13:04:09:SJ cbx_altasmi_parallel 2018:09:12:13:04:09:SJ cbx_altdpram 2018:09:12:13:04:09:SJ cbx_altera_counter 2018:09:12:13:04:09:SJ cbx_altera_syncram 2018:09:12:13:04:09:SJ cbx_altera_syncram_nd_impl 2018:09:12:13:04:09:SJ cbx_altsyncram 2018:09:12:13:04:09:SJ cbx_arriav 2018:09:12:13:04:09:SJ cbx_cyclone 2018:09:12:13:04:09:SJ cbx_cycloneii 2018:09:12:13:04:09:SJ cbx_fifo_common 2018:09:12:13:04:09:SJ cbx_lpm_add_sub 2018:09:12:13:04:09:SJ cbx_lpm_compare 2018:09:12:13:04:09:SJ cbx_lpm_counter 2018:09:12:13:04:09:SJ cbx_lpm_decode 2018:09:12:13:04:09:SJ cbx_lpm_mux 2018:09:12:13:04:09:SJ cbx_mgl 2018:09:12:14:15:07:SJ cbx_nadder 2018:09:12:13:04:09:SJ cbx_nightfury 2018:09:12:13:04:09:SJ cbx_scfifo 2018:09:12:13:04:09:SJ cbx_stratix 2018:09:12:13:04:09:SJ cbx_stratixii 2018:09:12:13:04:09:SJ cbx_stratixiii 2018:09:12:13:04:09:SJ cbx_stratixv 2018:09:12:13:04:09:SJ cbx_util_mgl 2018:09:12:13:04:09:SJ cbx_zippleback 2018:09:12:13:04:09:SJ  VERSION_END
 
  LIBRARY altera_mf;
  USE altera_mf.all;
 
- LIBRARY arriaii;
- USE arriaii.all;
-
  LIBRARY lpm;
  USE lpm.all;
 
---synthesis_resources = a_graycounter 4 arriaii_asmiblock 1 lpm_compare 2 lpm_counter 3 lut 29 mux21 2 reg 152 
+--synthesis_resources = a_graycounter 4 lpm_compare 2 lpm_counter 3 lut 29 mux21 2 reg 152 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  altasmi_altasmi_parallel_lvu2 IS 
+ ENTITY  altasmi_altasmi_parallel_di43 IS 
 	 PORT 
 	 ( 
 		 addr	:	IN  STD_LOGIC_VECTOR (23 DOWNTO 0);
+		 asmi_dataoe	:	OUT  STD_LOGIC;
+		 asmi_dataout	:	IN  STD_LOGIC := '0';
+		 asmi_dclk	:	OUT  STD_LOGIC;
+		 asmi_scein	:	OUT  STD_LOGIC;
+		 asmi_sdoin	:	OUT  STD_LOGIC;
 		 busy	:	OUT  STD_LOGIC;
 		 clkin	:	IN  STD_LOGIC;
 		 data_valid	:	OUT  STD_LOGIC;
@@ -72,9 +74,9 @@
 		 status_out	:	OUT  STD_LOGIC_VECTOR (7 DOWNTO 0);
 		 write	:	IN  STD_LOGIC := '0'
 	 ); 
- END altasmi_altasmi_parallel_lvu2;
+ END altasmi_altasmi_parallel_di43;
 
- ARCHITECTURE RTL OF altasmi_altasmi_parallel_lvu2 IS
+ ARCHITECTURE RTL OF altasmi_altasmi_parallel_di43 IS
 
 	 ATTRIBUTE synthesis_clearbox : natural;
 	 ATTRIBUTE synthesis_clearbox OF RTL : ARCHITECTURE IS 2;
@@ -100,23 +102,23 @@
 	 SIGNAL  wire_w_lg_w_lg_end1_cyc_reg_in_wire57w58w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_gen_cntr_w_q_range124w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_gen_cntr_w_q_range126w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w369w370w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w369w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w374w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w366w367w368w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w371w372w373w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w380w381w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w456w457w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w366w367w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w391w392w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w371w372w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w380w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w121w456w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w366w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w391w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w371w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w170w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w367w368w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w367w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w372w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w364w365w366w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w369w370w371w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w378w379w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w454w455w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w364w365w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w389w390w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w369w370w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w378w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w121w454w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w364w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w389w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w369w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w170w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w119w362w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range115w120w138w139w140w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range115w120w138w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range116w117w118w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -131,14 +133,14 @@
 	 SIGNAL  wire_stage_cntr_sclr	:	STD_LOGIC;
 	 SIGNAL  wire_stage_cntr_w_q_range115w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_w_q_range116w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_wrstage_cntr_w_lg_w_q_range657w658w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_wrstage_cntr_w_lg_w_q_range655w656w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_wrstage_cntr_w_lg_w_q_range653w654w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_wrstage_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w650w651w652w653w654w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w648w649w650w651w652w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_wrstage_cntr_clock	:	STD_LOGIC;
 	 SIGNAL  wire_wrstage_cntr_q	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_wrstage_cntr_w_q_range653w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_wrstage_cntr_w_q_range655w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_wrstage_cntr_w_q_range657w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 add_msb_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
@@ -157,13 +159,13 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_addr_reg_ena	:	STD_LOGIC_VECTOR(23 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range713w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range720w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range725w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range730w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range430w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range735w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range460w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range711w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range718w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range723w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range728w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range428w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range733w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range458w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 wire_asmi_opcode_reg_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL	 asmi_opcode_reg	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
 	 -- synopsys translate_off
@@ -329,7 +331,7 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_ncs_reg_sclr	:	STD_LOGIC;
-	 SIGNAL  wire_ncs_reg_w_lg_q417w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_ncs_reg_w_lg_q415w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 wire_pgwrbuf_dataout_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL	 pgwrbuf_dataout	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
 	 -- synopsys translate_off
@@ -337,7 +339,7 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_pgwrbuf_dataout_ena	:	STD_LOGIC_VECTOR(7 DOWNTO 0);
-	 SIGNAL  wire_pgwrbuf_dataout_w_q_range598w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_pgwrbuf_dataout_w_q_range596w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL	 power_up_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
@@ -464,58 +466,55 @@
 	  := '0'
 	 -- synopsys translate_on
 	 ;
+	 SIGNAL  wire_cmpr4_aeb	:	STD_LOGIC;
+	 SIGNAL  wire_cmpr4_dataa	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
+	 SIGNAL  wire_cmpr4_datab	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
 	 SIGNAL  wire_cmpr5_aeb	:	STD_LOGIC;
 	 SIGNAL  wire_cmpr5_dataa	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
 	 SIGNAL  wire_cmpr5_datab	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
-	 SIGNAL  wire_cmpr6_aeb	:	STD_LOGIC;
-	 SIGNAL  wire_cmpr6_dataa	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
-	 SIGNAL  wire_cmpr6_datab	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
 	 SIGNAL  wire_pgwr_data_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w612w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w610w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_pgwr_data_cntr_q	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range616w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range619w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range622w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range625w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range628w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range631w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range634w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pgwr_data_cntr_w_q_range637w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range614w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range617w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range620w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range623w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range626w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range629w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range632w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pgwr_data_cntr_w_q_range635w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_pgwr_read_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_read_buf791w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_buf789w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_pgwr_read_cntr_q	:	STD_LOGIC_VECTOR (8 DOWNTO 0);
 	 SIGNAL  wire_read_add_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire518w519w520w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire516w517w518w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_read_add_cntr_data	:	STD_LOGIC_VECTOR (24 DOWNTO 0);
 	 SIGNAL  wire_read_add_cntr_q	:	STD_LOGIC_VECTOR (24 DOWNTO 0);
 	 SIGNAL  wire_read_add_cntr_sload	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_rden_wire518w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_rden_wire516w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	wire_mux211_dataout	:	STD_LOGIC;
 	 SIGNAL	wire_mux212_dataout	:	STD_LOGIC;
-	 SIGNAL  wire_scfifo4_data	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_scfifo4_q	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_scfifo4_rdreq	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_read_buf595w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_scfifo4_wrreq	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_shift_bytes_wire593w594w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_scfifo4_w_q_range601w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_scfifo4_w_q_range606w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stratixii_asmiblock3_data0out	:	STD_LOGIC;
-	 SIGNAL  wire_stratixii_asmiblock3_sdoin	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_sdoin_wire357w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w570w571w572w573w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w570w571w572w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w816w817w818w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w570w571w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w816w817w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w570w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_data	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_q	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_rdreq	:	STD_LOGIC;
+	 SIGNAL  wire_w_lg_read_buf593w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_wrreq	:	STD_LOGIC;
+	 SIGNAL  wire_w_lg_w_lg_shift_bytes_wire591w592w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_w_q_range599w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_scfifo3_w_q_range604w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w568w569w570w571w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w568w569w570w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w814w815w816w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w568w569w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w814w815w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w568w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w303w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w243w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w301w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w236w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w816w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w512w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_end_ophdly566w567w568w569w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w814w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w510w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_end_ophdly564w565w566w567w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode200w201w202w287w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode200w201w202w203w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode205w206w207w289w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -526,12 +525,12 @@
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode251w252w253w309w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode251w252w253w254w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read396w397w398w399w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write565w813w814w815w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w663w808w809w819w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read335w509w510w511w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w452w453w454w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_end_ophdly566w567w568w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read394w395w396w397w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write563w811w812w813w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w661w806w807w817w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read335w507w508w509w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w450w451w452w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_end_ophdly564w565w566w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode200w201w202w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode205w206w207w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode215w220w295w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -542,27 +541,27 @@
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode210w211w212w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode251w252w253w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode232w233w234w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire679w680w681w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire679w680w684w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire679w686w687w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire679w686w689w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read396w397w398w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read396w397w455w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write565w813w814w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w663w808w809w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read335w509w510w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase68w452w453w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire691w692w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire691w694w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire696w697w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire696w699w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire677w678w679w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire677w678w682w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire677w684w685w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_bp2_wire677w684w687w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read394w395w396w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read394w395w453w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write563w811w812w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w661w806w807w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read335w507w508w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase68w450w451w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire689w690w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire689w692w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire694w695w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire694w697w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_4baddr192w193w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_ex4baddr187w188w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_polling579w580w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_polling577w578w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_write223w224w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write77w375w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_end_ophdly566w567w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_end_read_byte516w528w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write77w373w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end_ophdly564w565w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end_read_byte514w526w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode194w283w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode194w195w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode189w281w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -589,38 +588,38 @@
 	 SIGNAL  wire_w_lg_w_lg_load_opcode197w285w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode197w198w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode232w233w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reach_max_cnt645w646w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reach_max_cnt643w644w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_stage3_wire59w60w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_start_poll382w383w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire679w680w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp2_wire679w686w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read396w397w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write565w813w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_read_bufdly599w600w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w650w651w652w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w663w808w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w649w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_start_poll380w381w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire677w678w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp2_wire677w684w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read394w395w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write563w811w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_read_bufdly597w598w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w648w649w650w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w661w806w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w647w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w135w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write86w87w444w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read335w509w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_sec_erase68w452w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_end_operation581w582w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_rden_wire448w449w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie439w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie429w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp2_wire691w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp2_wire696w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write86w87w442w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read335w507w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_sec_erase68w450w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end_operation579w580w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_rden_wire446w447w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie437w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie427w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp2_wire689w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp2_wire694w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_4baddr192w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_bulk_erase376w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_bulk_erase374w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_ex4baddr187w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_polling579w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_nonvolatile362w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_polling577w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_nonvolatile360w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_write223w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_write84w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_write77w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_operation547w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_ophdly566w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_read_byte516w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation545w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_ophdly564w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_read_byte514w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_in_operation52w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode194w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode189w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -638,94 +637,94 @@
 	 SIGNAL  wire_w_lg_load_opcode251w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode197w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode232w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_not_busy441w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_not_busy433w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_reach_max_cnt645w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_bufdly607w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_bufdly602w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_not_busy439w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_not_busy431w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reach_max_cnt643w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_bufdly605w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_bufdly600w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_shift_opcode185w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire446w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire444w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage3_wire345w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire476w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire474w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage3_wire334w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage3_wire69w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage3_wire59w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire431w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage4_wire478w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire429w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage4_wire476w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage4_wire336w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage4_wire447w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage4_wire445w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_stage4_wire350w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_start_poll382w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range701w714w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range704w721w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range706w726w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range708w731w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range710w736w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range712w740w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write77w394w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_start_poll380w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range699w712w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range702w719w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range704w724w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range706w729w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range708w734w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range710w738w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write77w392w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_stage4_wire350w351w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_stage4_wire336w337w338w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat346w347w348w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie541w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp0_wire677w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp1_wire678w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp2_wire679w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_buf_empty782w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie539w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp0_wire675w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp1_wire676w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp2_wire677w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_buf_empty780w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_busy_wire3w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_clkin_wire48w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_clr_rstat_wire50w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_clr_sid_wire49w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_4baddr560w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_bulk_erase562w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_die_erase563w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_ex4baddr559w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_fast_read395w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_memadd461w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_4baddr558w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_bulk_erase560w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_die_erase561w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_ex4baddr557w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_fast_read393w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_memadd459w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_polling219w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read396w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read394w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_nonvolatile10w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_rdid65w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_stat66w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_volatile231w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_sec_erase564w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_sec_prot561w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_erase562w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_prot559w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_wren67w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write565w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write563w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_write_volatile238w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_end_add_cycle97w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_end_fast_read91w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_operation527w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation525w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_end_ophdly51w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_end_pgwr_data76w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_end_read94w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_rden_wire543w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_reach_max_cnt609w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_bufdly599w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_rden_wire541w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reach_max_cnt607w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_bufdly597w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_read_rdid_wire14w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_read_sid_wire13w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_read_status_wire29w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_sec_protect_wire12w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_st_busy_wire130w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_write_prot_true648w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_write_prot_true646w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_write_wire23w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range82w83w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w663w808w809w819w820w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w661w806w807w817w818w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode259w313w314w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode259w260w261w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w650w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w444w445w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_end_operation581w582w583w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire448w449w450w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_not_busy441w442w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_not_busy433w434w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_read_bufdly602w603w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_stage4_wire478w479w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w648w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w442w443w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_end_operation579w580w581w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire446w447w448w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_not_busy439w440w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_not_busy431w432w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_read_bufdly600w601w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_stage4_wire476w477w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_stage4_wire336w337w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode259w313w314w315w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode259w260w261w262w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w650w651w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_rden_wire448w449w450w451w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_not_busy433w434w435w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w648w649w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_rden_wire446w447w448w449w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_not_busy431w432w433w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
 	 SIGNAL  wire_w316w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w263w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w316w317w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -758,37 +757,37 @@
 	 SIGNAL  wire_w_lg_w_lg_w167w168w169w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w167w168w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w167w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w663w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w709w711w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read335w464w465w466w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w661w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w707w709w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read335w462w463w464w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read_sid163w164w165w166w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w662w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w709w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_bp3_wire672w673w674w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read335w464w465w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w660w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w707w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_bp3_wire670w671w672w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read335w462w463w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_sid163w164w165w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat342w343w344w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat342w474w475w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase665w666w667w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat342w472w473w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase663w664w665w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write86w133w134w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_prot_wire_range685w703w705w707w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_bp3_wire672w673w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read335w477w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read335w464w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_prot_wire_range683w701w703w705w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_bp3_wire670w671w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read335w475w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read335w462w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_read_rdid332w333w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_read_sid163w164w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_read_stat346w347w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_read_stat342w343w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read_stat342w474w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_sec_erase665w666w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read_stat342w472w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_sec_erase663w664w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_write86w133w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_do_write86w87w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_read_bufdly596w597w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_prot_wire_range685w703w705w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_bp3_wire672w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_data0out_wire481w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_4baddr378w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_ex4baddr377w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_read_bufdly594w595w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_prot_wire_range683w701w703w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_bp3_wire670w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_data0out_wire479w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_4baddr376w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_ex4baddr375w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read335w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_rdid332w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_sid163w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -796,38 +795,38 @@
 	 SIGNAL  wire_w_lg_do_read_stat339w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_read_stat342w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_sec_erase68w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_sec_erase665w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_wren379w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_erase663w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_wren377w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_do_write86w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_operation581w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation579w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode331w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_rden_wire448w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_bufdly596w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_add_range722w750w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_add_range727w754w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_add_range732w758w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_add_range737w762w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_add_range741w766w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_check_range724w748w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_check_range729w752w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_check_range734w756w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_check_range739w760w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_check_range743w764w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range614w617w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range618w620w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range621w623w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range624w626w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range627w629w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range630w632w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range633w635w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range636w638w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_prot_wire_range685w703w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range701w717w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range704w723w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range706w728w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range708w733w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range710w738w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_mask_prot_range712w742w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_rden_wire446w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_bufdly594w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_add_range720w748w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_add_range725w752w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_add_range730w756w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_add_range735w760w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_add_range739w764w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_check_range722w746w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_check_range727w750w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_check_range732w754w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_check_range737w758w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_check_range741w762w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range612w615w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range616w618w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range619w621w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range622w624w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range625w627w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range628w630w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range631w633w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range634w636w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_prot_wire_range683w701w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range699w715w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range702w721w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range704w726w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range706w731w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range708w736w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_mask_prot_range710w740w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  add_rollover :	STD_LOGIC;
 	 SIGNAL  addr_overdie :	STD_LOGIC;
 	 SIGNAL  addr_overdie_pos :	STD_LOGIC;
@@ -854,7 +853,6 @@
 	 SIGNAL  cnt_bfend_wire_in :	STD_LOGIC;
 	 SIGNAL  data0out_wire :	STD_LOGIC;
 	 SIGNAL  data_valid_wire :	STD_LOGIC;
-	 SIGNAL  datain_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  dataout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  derase_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  do_4baddr :	STD_LOGIC;
@@ -970,63 +968,63 @@
 	 SIGNAL  write_sdoin :	STD_LOGIC;
 	 SIGNAL  write_wire :	STD_LOGIC;
 	 SIGNAL  wrvolatile_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_w_addr_range440w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_addr_range432w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_addr_reg_overdie_range438w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_addr_reg_overdie_range428w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_addr_range438w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_addr_range430w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_addr_reg_overdie_range436w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_addr_reg_overdie_range426w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
 	 SIGNAL  wire_w_b4addr_opcode_range282w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_b4addr_opcode_range191w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_berase_opcode_range286w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_berase_opcode_range199w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_dataout_wire_range480w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_dataout_wire_range478w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_derase_opcode_range288w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_derase_opcode_range204w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_exb4addr_opcode_range280w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_exb4addr_opcode_range186w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_fast_read_opcode_range304w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_fast_read_opcode_range244w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_range701w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_range699w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_range702w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_mask_prot_range704w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_mask_prot_range706w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_mask_prot_range708w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_mask_prot_range710w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_range712w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range715w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range722w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range727w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range732w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range737w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_add_range741w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_check_range724w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_check_range729w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_check_range734w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_check_range739w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_check_range743w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_ntb_range744w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_ntb_range749w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_ntb_range753w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_ntb_range757w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_ntb_range761w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_tb_range746w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_tb_range751w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_tb_range755w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_tb_range759w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_mask_prot_comp_tb_range763w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range614w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range618w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range621w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range624w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range627w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range630w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range633w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range636w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range713w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range720w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range725w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range730w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range735w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_add_range739w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_check_range722w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_check_range727w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_check_range732w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_check_range737w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_check_range741w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_ntb_range742w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_ntb_range747w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_ntb_range751w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_ntb_range755w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_ntb_range759w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_tb_range744w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_tb_range749w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_tb_range753w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_tb_range757w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_mask_prot_comp_tb_range761w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range612w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range616w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range619w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range622w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range625w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range628w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range631w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range634w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_pagewr_buf_not_empty_range82w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_prot_wire_range685w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_prot_wire_range683w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_prot_wire_range686w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_prot_wire_range688w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_prot_wire_range690w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_prot_wire_range691w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_prot_wire_range693w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_prot_wire_range695w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_prot_wire_range698w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_prot_wire_range696w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_rdid_opcode_range310w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_rdid_opcode_range255w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 SIGNAL  wire_w_rdummyclk_opcode_range302w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -1160,28 +1158,14 @@
 		wrreq	:	IN STD_LOGIC
 	 ); 
 	 END COMPONENT;
-	 COMPONENT  arriaii_asmiblock
-	 PORT
-	 ( 
-		data0in	:	IN STD_LOGIC := '0';
-		data0out	:	OUT STD_LOGIC;
-		dclkin	:	IN STD_LOGIC;
-		dclkout	:	OUT STD_LOGIC;
-		oe	:	IN STD_LOGIC := '0';
-		scein	:	IN STD_LOGIC;
-		sceout	:	OUT STD_LOGIC;
-		sdoin	:	IN STD_LOGIC;
-		sdoout	:	OUT STD_LOGIC
-	 ); 
-	 END COMPONENT;
  BEGIN
 
-	wire_w_lg_w_lg_w_lg_w570w571w572w573w(0) <= wire_w_lg_w_lg_w570w571w572w(0) AND wire_w_lg_do_ex4baddr559w(0);
-	wire_w_lg_w_lg_w570w571w572w(0) <= wire_w_lg_w570w571w(0) AND wire_w_lg_do_4baddr560w(0);
-	wire_w_lg_w_lg_w816w817w818w(0) <= wire_w_lg_w816w817w(0) AND end_operation;
-	wire_w_lg_w570w571w(0) <= wire_w570w(0) AND wire_w_lg_do_sec_prot561w(0);
-	wire_w_lg_w816w817w(0) <= wire_w816w(0) AND wire_w_lg_do_ex4baddr559w(0);
-	wire_w570w(0) <= wire_w_lg_w_lg_w_lg_w_lg_end_ophdly566w567w568w569w(0) AND wire_w_lg_do_bulk_erase562w(0);
+	wire_w_lg_w_lg_w_lg_w568w569w570w571w(0) <= wire_w_lg_w_lg_w568w569w570w(0) AND wire_w_lg_do_ex4baddr557w(0);
+	wire_w_lg_w_lg_w568w569w570w(0) <= wire_w_lg_w568w569w(0) AND wire_w_lg_do_4baddr558w(0);
+	wire_w_lg_w_lg_w814w815w816w(0) <= wire_w_lg_w814w815w(0) AND end_operation;
+	wire_w_lg_w568w569w(0) <= wire_w568w(0) AND wire_w_lg_do_sec_prot559w(0);
+	wire_w_lg_w814w815w(0) <= wire_w814w(0) AND wire_w_lg_do_ex4baddr557w(0);
+	wire_w568w(0) <= wire_w_lg_w_lg_w_lg_w_lg_end_ophdly564w565w566w567w(0) AND wire_w_lg_do_bulk_erase560w(0);
 	wire_w303w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode239w240w241w242w(0) AND wire_w_rdummyclk_opcode_range302w(0);
 	loop0 : FOR i IN 0 TO 6 GENERATE 
 		wire_w243w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode239w240w241w242w(0) AND wire_w_rdummyclk_opcode_range237w(i);
@@ -1190,9 +1174,9 @@
 	loop1 : FOR i IN 0 TO 6 GENERATE 
 		wire_w236w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w(0) AND wire_w_wrvolatile_opcode_range230w(i);
 	END GENERATE loop1;
-	wire_w816w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write565w813w814w815w(0) AND wire_w_lg_do_4baddr560w(0);
-	wire_w512w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read335w509w510w511w(0) AND end_read_byte;
-	wire_w_lg_w_lg_w_lg_w_lg_end_ophdly566w567w568w569w(0) <= wire_w_lg_w_lg_w_lg_end_ophdly566w567w568w(0) AND wire_w_lg_do_die_erase563w(0);
+	wire_w814w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write563w811w812w813w(0) AND wire_w_lg_do_4baddr558w(0);
+	wire_w510w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read335w507w508w509w(0) AND end_read_byte;
+	wire_w_lg_w_lg_w_lg_w_lg_end_ophdly564w565w566w567w(0) <= wire_w_lg_w_lg_w_lg_end_ophdly564w565w566w(0) AND wire_w_lg_do_die_erase561w(0);
 	wire_w_lg_w_lg_w_lg_w_lg_load_opcode200w201w202w287w(0) <= wire_w_lg_w_lg_w_lg_load_opcode200w201w202w(0) AND wire_w_berase_opcode_range286w(0);
 	loop2 : FOR i IN 0 TO 6 GENERATE 
 		wire_w_lg_w_lg_w_lg_w_lg_load_opcode200w201w202w203w(i) <= wire_w_lg_w_lg_w_lg_load_opcode200w201w202w(0) AND wire_w_berase_opcode_range199w(i);
@@ -1211,12 +1195,12 @@
 		wire_w_lg_w_lg_w_lg_w_lg_load_opcode251w252w253w254w(i) <= wire_w_lg_w_lg_w_lg_load_opcode251w252w253w(0) AND wire_w_secprot_opcode_range250w(i);
 	END GENERATE loop5;
 	wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w(0) <= wire_w_lg_w_lg_w_lg_load_opcode232w233w234w(0) AND wire_w_lg_do_read_stat66w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_do_read396w397w398w399w(0) <= wire_w_lg_w_lg_w_lg_do_read396w397w398w(0) AND end_one_cycle;
-	wire_w_lg_w_lg_w_lg_w_lg_do_write565w813w814w815w(0) <= wire_w_lg_w_lg_w_lg_do_write565w813w814w(0) AND wire_w_lg_do_die_erase563w(0);
-	wire_w_lg_w_lg_w_lg_w663w808w809w819w(0) <= wire_w_lg_w_lg_w663w808w809w(0) AND end_operation;
-	wire_w_lg_w_lg_w_lg_w_lg_do_read335w509w510w511w(0) <= wire_w_lg_w_lg_w_lg_do_read335w509w510w(0) AND end_one_cyc_pos;
-	wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w452w453w454w(0) <= wire_w_lg_w_lg_w_lg_do_sec_erase68w452w453w(0) AND end_operation;
-	wire_w_lg_w_lg_w_lg_end_ophdly566w567w568w(0) <= wire_w_lg_w_lg_end_ophdly566w567w(0) AND wire_w_lg_do_sec_erase564w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_read394w395w396w397w(0) <= wire_w_lg_w_lg_w_lg_do_read394w395w396w(0) AND end_one_cycle;
+	wire_w_lg_w_lg_w_lg_w_lg_do_write563w811w812w813w(0) <= wire_w_lg_w_lg_w_lg_do_write563w811w812w(0) AND wire_w_lg_do_die_erase561w(0);
+	wire_w_lg_w_lg_w_lg_w661w806w807w817w(0) <= wire_w_lg_w_lg_w661w806w807w(0) AND end_operation;
+	wire_w_lg_w_lg_w_lg_w_lg_do_read335w507w508w509w(0) <= wire_w_lg_w_lg_w_lg_do_read335w507w508w(0) AND end_one_cyc_pos;
+	wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w450w451w452w(0) <= wire_w_lg_w_lg_w_lg_do_sec_erase68w450w451w(0) AND end_operation;
+	wire_w_lg_w_lg_w_lg_end_ophdly564w565w566w(0) <= wire_w_lg_w_lg_end_ophdly564w565w(0) AND wire_w_lg_do_sec_erase562w(0);
 	wire_w_lg_w_lg_w_lg_load_opcode200w201w202w(0) <= wire_w_lg_w_lg_load_opcode200w201w(0) AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_w_lg_w_lg_load_opcode205w206w207w(0) <= wire_w_lg_w_lg_load_opcode205w206w(0) AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_w_lg_w_lg_load_opcode215w220w295w(0) <= wire_w_lg_w_lg_load_opcode215w220w(0) AND wire_w_rstat_opcode_range294w(0);
@@ -1231,27 +1215,27 @@
 	wire_w_lg_w_lg_w_lg_load_opcode210w211w212w(0) <= wire_w_lg_w_lg_load_opcode210w211w(0) AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_w_lg_w_lg_load_opcode251w252w253w(0) <= wire_w_lg_w_lg_load_opcode251w252w(0) AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_w_lg_w_lg_load_opcode232w233w234w(0) <= wire_w_lg_w_lg_load_opcode232w233w(0) AND wire_w_lg_do_wren67w(0);
-	wire_w_lg_w_lg_w_lg_bp2_wire679w680w681w(0) <= wire_w_lg_w_lg_bp2_wire679w680w(0) AND wire_w_lg_bp0_wire677w(0);
-	wire_w_lg_w_lg_w_lg_bp2_wire679w680w684w(0) <= wire_w_lg_w_lg_bp2_wire679w680w(0) AND bp0_wire;
-	wire_w_lg_w_lg_w_lg_bp2_wire679w686w687w(0) <= wire_w_lg_w_lg_bp2_wire679w686w(0) AND wire_w_lg_bp0_wire677w(0);
-	wire_w_lg_w_lg_w_lg_bp2_wire679w686w689w(0) <= wire_w_lg_w_lg_bp2_wire679w686w(0) AND bp0_wire;
-	wire_w_lg_w_lg_w_lg_do_read396w397w398w(0) <= wire_w_lg_w_lg_do_read396w397w(0) AND wire_w_lg_w_lg_do_write77w394w(0);
-	wire_w_lg_w_lg_w_lg_do_read396w397w455w(0) <= wire_w_lg_w_lg_do_read396w397w(0) AND clr_write_wire2;
-	wire_w_lg_w_lg_w_lg_do_write565w813w814w(0) <= wire_w_lg_w_lg_do_write565w813w(0) AND wire_w_lg_do_bulk_erase562w(0);
-	wire_w_lg_w_lg_w663w808w809w(0) <= wire_w_lg_w663w808w(0) AND wire_wrstage_cntr_w_lg_w_q_range655w656w(0);
-	wire_w_lg_w_lg_w_lg_do_read335w509w510w(0) <= wire_w_lg_w_lg_do_read335w509w(0) AND wire_stage_cntr_w_lg_w_q_range115w120w(0);
-	wire_w_lg_w_lg_w_lg_do_sec_erase68w452w453w(0) <= wire_w_lg_w_lg_do_sec_erase68w452w(0) AND wire_w_lg_do_read_stat66w(0);
-	wire_w_lg_w_lg_bp2_wire691w692w(0) <= wire_w_lg_bp2_wire691w(0) AND wire_w_lg_bp0_wire677w(0);
-	wire_w_lg_w_lg_bp2_wire691w694w(0) <= wire_w_lg_bp2_wire691w(0) AND bp0_wire;
-	wire_w_lg_w_lg_bp2_wire696w697w(0) <= wire_w_lg_bp2_wire696w(0) AND wire_w_lg_bp0_wire677w(0);
-	wire_w_lg_w_lg_bp2_wire696w699w(0) <= wire_w_lg_bp2_wire696w(0) AND bp0_wire;
+	wire_w_lg_w_lg_w_lg_bp2_wire677w678w679w(0) <= wire_w_lg_w_lg_bp2_wire677w678w(0) AND wire_w_lg_bp0_wire675w(0);
+	wire_w_lg_w_lg_w_lg_bp2_wire677w678w682w(0) <= wire_w_lg_w_lg_bp2_wire677w678w(0) AND bp0_wire;
+	wire_w_lg_w_lg_w_lg_bp2_wire677w684w685w(0) <= wire_w_lg_w_lg_bp2_wire677w684w(0) AND wire_w_lg_bp0_wire675w(0);
+	wire_w_lg_w_lg_w_lg_bp2_wire677w684w687w(0) <= wire_w_lg_w_lg_bp2_wire677w684w(0) AND bp0_wire;
+	wire_w_lg_w_lg_w_lg_do_read394w395w396w(0) <= wire_w_lg_w_lg_do_read394w395w(0) AND wire_w_lg_w_lg_do_write77w392w(0);
+	wire_w_lg_w_lg_w_lg_do_read394w395w453w(0) <= wire_w_lg_w_lg_do_read394w395w(0) AND clr_write_wire2;
+	wire_w_lg_w_lg_w_lg_do_write563w811w812w(0) <= wire_w_lg_w_lg_do_write563w811w(0) AND wire_w_lg_do_bulk_erase560w(0);
+	wire_w_lg_w_lg_w661w806w807w(0) <= wire_w_lg_w661w806w(0) AND wire_wrstage_cntr_w_lg_w_q_range653w654w(0);
+	wire_w_lg_w_lg_w_lg_do_read335w507w508w(0) <= wire_w_lg_w_lg_do_read335w507w(0) AND wire_stage_cntr_w_lg_w_q_range115w120w(0);
+	wire_w_lg_w_lg_w_lg_do_sec_erase68w450w451w(0) <= wire_w_lg_w_lg_do_sec_erase68w450w(0) AND wire_w_lg_do_read_stat66w(0);
+	wire_w_lg_w_lg_bp2_wire689w690w(0) <= wire_w_lg_bp2_wire689w(0) AND wire_w_lg_bp0_wire675w(0);
+	wire_w_lg_w_lg_bp2_wire689w692w(0) <= wire_w_lg_bp2_wire689w(0) AND bp0_wire;
+	wire_w_lg_w_lg_bp2_wire694w695w(0) <= wire_w_lg_bp2_wire694w(0) AND wire_w_lg_bp0_wire675w(0);
+	wire_w_lg_w_lg_bp2_wire694w697w(0) <= wire_w_lg_bp2_wire694w(0) AND bp0_wire;
 	wire_w_lg_w_lg_do_4baddr192w193w(0) <= wire_w_lg_do_4baddr192w(0) AND wire_w_lg_do_wren67w(0);
 	wire_w_lg_w_lg_do_ex4baddr187w188w(0) <= wire_w_lg_do_ex4baddr187w(0) AND wire_w_lg_do_wren67w(0);
-	wire_w_lg_w_lg_do_polling579w580w(0) <= wire_w_lg_do_polling579w(0) AND stage3_dly_reg;
+	wire_w_lg_w_lg_do_polling577w578w(0) <= wire_w_lg_do_polling577w(0) AND stage3_dly_reg;
 	wire_w_lg_w_lg_do_write223w224w(0) <= wire_w_lg_do_write223w(0) AND wire_w_lg_do_wren67w(0);
-	wire_w_lg_w_lg_do_write77w375w(0) <= wire_w_lg_do_write77w(0) AND end_pgwr_data;
-	wire_w_lg_w_lg_end_ophdly566w567w(0) <= wire_w_lg_end_ophdly566w(0) AND wire_w_lg_do_write565w(0);
-	wire_w_lg_w_lg_end_read_byte516w528w(0) <= wire_w_lg_end_read_byte516w(0) AND wire_w_lg_end_operation527w(0);
+	wire_w_lg_w_lg_do_write77w373w(0) <= wire_w_lg_do_write77w(0) AND end_pgwr_data;
+	wire_w_lg_w_lg_end_ophdly564w565w(0) <= wire_w_lg_end_ophdly564w(0) AND wire_w_lg_do_write563w(0);
+	wire_w_lg_w_lg_end_read_byte514w526w(0) <= wire_w_lg_end_read_byte514w(0) AND wire_w_lg_end_operation525w(0);
 	wire_w_lg_w_lg_load_opcode194w283w(0) <= wire_w_lg_load_opcode194w(0) AND wire_w_b4addr_opcode_range282w(0);
 	loop8 : FOR i IN 0 TO 6 GENERATE 
 		wire_w_lg_w_lg_load_opcode194w195w(i) <= wire_w_lg_load_opcode194w(0) AND wire_w_b4addr_opcode_range191w(i);
@@ -1296,42 +1280,42 @@
 		wire_w_lg_w_lg_load_opcode197w198w(i) <= wire_w_lg_load_opcode197w(0) AND wire_w_wren_opcode_range196w(i);
 	END GENERATE loop16;
 	wire_w_lg_w_lg_load_opcode232w233w(0) <= wire_w_lg_load_opcode232w(0) AND wire_w_lg_do_read_volatile231w(0);
-	wire_w_lg_w_lg_reach_max_cnt645w646w(0) <= wire_w_lg_reach_max_cnt645w(0) AND wren_wire;
+	wire_w_lg_w_lg_reach_max_cnt643w644w(0) <= wire_w_lg_reach_max_cnt643w(0) AND wren_wire;
 	wire_w_lg_w_lg_stage3_wire59w60w(0) <= wire_w_lg_stage3_wire59w(0) AND do_wait_dummyclk;
-	wire_w_lg_w_lg_start_poll382w383w(0) <= wire_w_lg_start_poll382w(0) AND do_polling;
-	wire_w_lg_w_lg_bp2_wire679w680w(0) <= wire_w_lg_bp2_wire679w(0) AND wire_w_lg_bp1_wire678w(0);
-	wire_w_lg_w_lg_bp2_wire679w686w(0) <= wire_w_lg_bp2_wire679w(0) AND bp1_wire;
-	wire_w_lg_w_lg_do_read396w397w(0) <= wire_w_lg_do_read396w(0) AND wire_w_lg_do_fast_read395w(0);
-	wire_w_lg_w_lg_do_write565w813w(0) <= wire_w_lg_do_write565w(0) AND wire_w_lg_do_sec_erase564w(0);
+	wire_w_lg_w_lg_start_poll380w381w(0) <= wire_w_lg_start_poll380w(0) AND do_polling;
+	wire_w_lg_w_lg_bp2_wire677w678w(0) <= wire_w_lg_bp2_wire677w(0) AND wire_w_lg_bp1_wire676w(0);
+	wire_w_lg_w_lg_bp2_wire677w684w(0) <= wire_w_lg_bp2_wire677w(0) AND bp1_wire;
+	wire_w_lg_w_lg_do_read394w395w(0) <= wire_w_lg_do_read394w(0) AND wire_w_lg_do_fast_read393w(0);
+	wire_w_lg_w_lg_do_write563w811w(0) <= wire_w_lg_do_write563w(0) AND wire_w_lg_do_sec_erase562w(0);
 	loop17 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_read_bufdly599w600w(i) <= wire_w_lg_read_bufdly599w(0) AND wire_pgwrbuf_dataout_w_q_range598w(i);
+		wire_w_lg_w_lg_read_bufdly597w598w(i) <= wire_w_lg_read_bufdly597w(0) AND wire_pgwrbuf_dataout_w_q_range596w(i);
 	END GENERATE loop17;
-	wire_w_lg_w_lg_w650w651w652w(0) <= wire_w_lg_w650w651w(0) AND end_wrstage;
-	wire_w_lg_w663w808w(0) <= wire_w663w(0) AND wire_wrstage_cntr_w_q_range657w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w649w(0) <= wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) AND wire_w_lg_write_prot_true648w(0);
+	wire_w_lg_w_lg_w648w649w650w(0) <= wire_w_lg_w648w649w(0) AND end_wrstage;
+	wire_w_lg_w661w806w(0) <= wire_w661w(0) AND wire_wrstage_cntr_w_q_range655w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w647w(0) <= wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) AND wire_w_lg_write_prot_true646w(0);
 	wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w135w(0) <= wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) AND write_prot_true;
-	wire_w_lg_w_lg_w_lg_do_write86w87w444w(0) <= wire_w_lg_w_lg_do_write86w87w(0) AND do_memadd;
-	wire_w_lg_w_lg_do_read335w509w(0) <= wire_w_lg_do_read335w(0) AND wire_stage_cntr_w_q_range116w(0);
-	wire_w_lg_w_lg_do_sec_erase68w452w(0) <= wire_w_lg_do_sec_erase68w(0) AND wire_w_lg_do_wren67w(0);
-	wire_w_lg_w_lg_end_operation581w582w(0) <= wire_w_lg_end_operation581w(0) AND do_read_stat;
-	wire_w_lg_w_lg_rden_wire448w449w(0) <= wire_w_lg_rden_wire448w(0) AND not_busy;
-	wire_w_lg_addr_overdie439w(0) <= addr_overdie AND wire_w_addr_reg_overdie_range438w(0);
+	wire_w_lg_w_lg_w_lg_do_write86w87w442w(0) <= wire_w_lg_w_lg_do_write86w87w(0) AND do_memadd;
+	wire_w_lg_w_lg_do_read335w507w(0) <= wire_w_lg_do_read335w(0) AND wire_stage_cntr_w_q_range116w(0);
+	wire_w_lg_w_lg_do_sec_erase68w450w(0) <= wire_w_lg_do_sec_erase68w(0) AND wire_w_lg_do_wren67w(0);
+	wire_w_lg_w_lg_end_operation579w580w(0) <= wire_w_lg_end_operation579w(0) AND do_read_stat;
+	wire_w_lg_w_lg_rden_wire446w447w(0) <= wire_w_lg_rden_wire446w(0) AND not_busy;
+	wire_w_lg_addr_overdie437w(0) <= addr_overdie AND wire_w_addr_reg_overdie_range436w(0);
 	loop18 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_addr_overdie429w(i) <= addr_overdie AND wire_w_addr_reg_overdie_range428w(i);
+		wire_w_lg_addr_overdie427w(i) <= addr_overdie AND wire_w_addr_reg_overdie_range426w(i);
 	END GENERATE loop18;
-	wire_w_lg_bp2_wire691w(0) <= bp2_wire AND wire_w_lg_bp1_wire678w(0);
-	wire_w_lg_bp2_wire696w(0) <= bp2_wire AND bp1_wire;
+	wire_w_lg_bp2_wire689w(0) <= bp2_wire AND wire_w_lg_bp1_wire676w(0);
+	wire_w_lg_bp2_wire694w(0) <= bp2_wire AND bp1_wire;
 	wire_w_lg_do_4baddr192w(0) <= do_4baddr AND wire_w_lg_do_read_stat66w(0);
-	wire_w_lg_do_bulk_erase376w(0) <= do_bulk_erase AND wire_w_lg_do_read_stat66w(0);
+	wire_w_lg_do_bulk_erase374w(0) <= do_bulk_erase AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_do_ex4baddr187w(0) <= do_ex4baddr AND wire_w_lg_do_read_stat66w(0);
-	wire_w_lg_do_polling579w(0) <= do_polling AND end_one_cyc_pos;
-	wire_w_lg_do_read_nonvolatile362w(0) <= do_read_nonvolatile AND wire_addbyte_cntr_w_q_range174w(0);
+	wire_w_lg_do_polling577w(0) <= do_polling AND end_one_cyc_pos;
+	wire_w_lg_do_read_nonvolatile360w(0) <= do_read_nonvolatile AND wire_addbyte_cntr_w_q_range174w(0);
 	wire_w_lg_do_write223w(0) <= do_write AND wire_w_lg_do_read_stat66w(0);
 	wire_w_lg_do_write84w(0) <= do_write AND wire_w_lg_w_pagewr_buf_not_empty_range82w83w(0);
 	wire_w_lg_do_write77w(0) <= do_write AND shift_pgwr_data;
-	wire_w_lg_end_operation547w(0) <= end_operation AND wire_w_lg_do_read335w(0);
-	wire_w_lg_end_ophdly566w(0) <= end_ophdly AND do_read_stat;
-	wire_w_lg_end_read_byte516w(0) <= end_read_byte AND end_one_cyc_pos;
+	wire_w_lg_end_operation545w(0) <= end_operation AND wire_w_lg_do_read335w(0);
+	wire_w_lg_end_ophdly564w(0) <= end_ophdly AND do_read_stat;
+	wire_w_lg_end_read_byte514w(0) <= end_read_byte AND end_one_cyc_pos;
 	wire_w_lg_in_operation52w(0) <= in_operation AND wire_w_lg_end_ophdly51w(0);
 	wire_w_lg_load_opcode194w(0) <= load_opcode AND wire_w_lg_w_lg_do_4baddr192w193w(0);
 	wire_w_lg_load_opcode189w(0) <= load_opcode AND wire_w_lg_w_lg_do_ex4baddr187w188w(0);
@@ -1349,111 +1333,111 @@
 	wire_w_lg_load_opcode251w(0) <= load_opcode AND do_sec_prot;
 	wire_w_lg_load_opcode197w(0) <= load_opcode AND do_wren;
 	wire_w_lg_load_opcode232w(0) <= load_opcode AND do_write_volatile;
-	wire_w_lg_not_busy441w(0) <= not_busy AND wire_w_addr_range440w(0);
+	wire_w_lg_not_busy439w(0) <= not_busy AND wire_w_addr_range438w(0);
 	loop19 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_not_busy433w(i) <= not_busy AND wire_w_addr_range432w(i);
+		wire_w_lg_not_busy431w(i) <= not_busy AND wire_w_addr_range430w(i);
 	END GENERATE loop19;
-	wire_w_lg_reach_max_cnt645w(0) <= reach_max_cnt AND shift_bytes_wire;
-	wire_w_lg_read_bufdly607w(0) <= read_bufdly AND wire_scfifo4_w_q_range606w(0);
+	wire_w_lg_reach_max_cnt643w(0) <= reach_max_cnt AND shift_bytes_wire;
+	wire_w_lg_read_bufdly605w(0) <= read_bufdly AND wire_scfifo3_w_q_range604w(0);
 	loop20 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_read_bufdly602w(i) <= read_bufdly AND wire_scfifo4_w_q_range601w(i);
+		wire_w_lg_read_bufdly600w(i) <= read_bufdly AND wire_scfifo3_w_q_range599w(i);
 	END GENERATE loop20;
 	loop21 : FOR i IN 0 TO 6 GENERATE 
 		wire_w_lg_shift_opcode185w(i) <= shift_opcode AND wire_asmi_opcode_reg_w_q_range184w(i);
 	END GENERATE loop21;
-	wire_w_lg_stage3_wire446w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w444w445w(0);
+	wire_w_lg_stage3_wire444w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w442w443w(0);
 	wire_w_lg_stage3_wire345w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_do_read_stat342w343w344w(0);
-	wire_w_lg_stage3_wire476w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_do_read_stat342w474w475w(0);
+	wire_w_lg_stage3_wire474w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_do_read_stat342w472w473w(0);
 	wire_w_lg_stage3_wire334w(0) <= stage3_wire AND wire_w_lg_w_lg_do_read_rdid332w333w(0);
 	wire_w_lg_stage3_wire69w(0) <= stage3_wire AND wire_w_lg_do_sec_erase68w(0);
 	wire_w_lg_stage3_wire59w(0) <= stage3_wire AND do_fast_read;
 	loop22 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_stage3_wire431w(i) <= stage3_wire AND wire_addr_reg_w_q_range430w(i);
+		wire_w_lg_stage3_wire429w(i) <= stage3_wire AND wire_addr_reg_w_q_range428w(i);
 	END GENERATE loop22;
-	wire_w_lg_stage4_wire478w(0) <= stage4_wire AND wire_w_lg_w_lg_do_read335w477w(0);
+	wire_w_lg_stage4_wire476w(0) <= stage4_wire AND wire_w_lg_w_lg_do_read335w475w(0);
 	wire_w_lg_stage4_wire336w(0) <= stage4_wire AND wire_w_lg_do_read335w(0);
-	wire_w_lg_stage4_wire447w(0) <= stage4_wire AND addr_overdie;
+	wire_w_lg_stage4_wire445w(0) <= stage4_wire AND addr_overdie;
 	wire_w_lg_stage4_wire350w(0) <= stage4_wire AND do_fast_read;
-	wire_w_lg_start_poll382w(0) <= start_poll AND do_read_stat;
-	wire_w_lg_w_mask_prot_range701w714w(0) <= wire_w_mask_prot_range701w(0) AND wire_addr_reg_w_q_range713w(0);
-	wire_w_lg_w_mask_prot_range704w721w(0) <= wire_w_mask_prot_range704w(0) AND wire_addr_reg_w_q_range720w(0);
-	wire_w_lg_w_mask_prot_range706w726w(0) <= wire_w_mask_prot_range706w(0) AND wire_addr_reg_w_q_range725w(0);
-	wire_w_lg_w_mask_prot_range708w731w(0) <= wire_w_mask_prot_range708w(0) AND wire_addr_reg_w_q_range730w(0);
-	wire_w_lg_w_mask_prot_range710w736w(0) <= wire_w_mask_prot_range710w(0) AND wire_addr_reg_w_q_range735w(0);
-	wire_w_lg_w_mask_prot_range712w740w(0) <= wire_w_mask_prot_range712w(0) AND wire_addr_reg_w_q_range460w(0);
-	wire_w_lg_w_lg_do_write77w394w(0) <= NOT wire_w_lg_do_write77w(0);
+	wire_w_lg_start_poll380w(0) <= start_poll AND do_read_stat;
+	wire_w_lg_w_mask_prot_range699w712w(0) <= wire_w_mask_prot_range699w(0) AND wire_addr_reg_w_q_range711w(0);
+	wire_w_lg_w_mask_prot_range702w719w(0) <= wire_w_mask_prot_range702w(0) AND wire_addr_reg_w_q_range718w(0);
+	wire_w_lg_w_mask_prot_range704w724w(0) <= wire_w_mask_prot_range704w(0) AND wire_addr_reg_w_q_range723w(0);
+	wire_w_lg_w_mask_prot_range706w729w(0) <= wire_w_mask_prot_range706w(0) AND wire_addr_reg_w_q_range728w(0);
+	wire_w_lg_w_mask_prot_range708w734w(0) <= wire_w_mask_prot_range708w(0) AND wire_addr_reg_w_q_range733w(0);
+	wire_w_lg_w_mask_prot_range710w738w(0) <= wire_w_mask_prot_range710w(0) AND wire_addr_reg_w_q_range458w(0);
+	wire_w_lg_w_lg_do_write77w392w(0) <= NOT wire_w_lg_do_write77w(0);
 	wire_w_lg_w_lg_stage4_wire350w351w(0) <= NOT wire_w_lg_stage4_wire350w(0);
 	wire_w_lg_w_lg_w_lg_stage4_wire336w337w338w(0) <= NOT wire_w_lg_w_lg_stage4_wire336w337w(0);
 	wire_w_lg_w_lg_w_lg_do_read_stat346w347w348w(0) <= NOT wire_w_lg_w_lg_do_read_stat346w347w(0);
-	wire_w_lg_addr_overdie541w(0) <= NOT addr_overdie;
-	wire_w_lg_bp0_wire677w(0) <= NOT bp0_wire;
-	wire_w_lg_bp1_wire678w(0) <= NOT bp1_wire;
-	wire_w_lg_bp2_wire679w(0) <= NOT bp2_wire;
-	wire_w_lg_buf_empty782w(0) <= NOT buf_empty;
+	wire_w_lg_addr_overdie539w(0) <= NOT addr_overdie;
+	wire_w_lg_bp0_wire675w(0) <= NOT bp0_wire;
+	wire_w_lg_bp1_wire676w(0) <= NOT bp1_wire;
+	wire_w_lg_bp2_wire677w(0) <= NOT bp2_wire;
+	wire_w_lg_buf_empty780w(0) <= NOT buf_empty;
 	wire_w_lg_busy_wire3w(0) <= NOT busy_wire;
 	wire_w_lg_clkin_wire48w(0) <= NOT clkin_wire;
 	wire_w_lg_clr_rstat_wire50w(0) <= NOT clr_rstat_wire;
 	wire_w_lg_clr_sid_wire49w(0) <= NOT clr_sid_wire;
-	wire_w_lg_do_4baddr560w(0) <= NOT do_4baddr;
-	wire_w_lg_do_bulk_erase562w(0) <= NOT do_bulk_erase;
-	wire_w_lg_do_die_erase563w(0) <= NOT do_die_erase;
-	wire_w_lg_do_ex4baddr559w(0) <= NOT do_ex4baddr;
-	wire_w_lg_do_fast_read395w(0) <= NOT do_fast_read;
-	wire_w_lg_do_memadd461w(0) <= NOT do_memadd;
+	wire_w_lg_do_4baddr558w(0) <= NOT do_4baddr;
+	wire_w_lg_do_bulk_erase560w(0) <= NOT do_bulk_erase;
+	wire_w_lg_do_die_erase561w(0) <= NOT do_die_erase;
+	wire_w_lg_do_ex4baddr557w(0) <= NOT do_ex4baddr;
+	wire_w_lg_do_fast_read393w(0) <= NOT do_fast_read;
+	wire_w_lg_do_memadd459w(0) <= NOT do_memadd;
 	wire_w_lg_do_polling219w(0) <= NOT do_polling;
-	wire_w_lg_do_read396w(0) <= NOT do_read;
+	wire_w_lg_do_read394w(0) <= NOT do_read;
 	wire_w_lg_do_read_nonvolatile10w(0) <= NOT do_read_nonvolatile;
 	wire_w_lg_do_read_rdid65w(0) <= NOT do_read_rdid;
 	wire_w_lg_do_read_stat66w(0) <= NOT do_read_stat;
 	wire_w_lg_do_read_volatile231w(0) <= NOT do_read_volatile;
-	wire_w_lg_do_sec_erase564w(0) <= NOT do_sec_erase;
-	wire_w_lg_do_sec_prot561w(0) <= NOT do_sec_prot;
+	wire_w_lg_do_sec_erase562w(0) <= NOT do_sec_erase;
+	wire_w_lg_do_sec_prot559w(0) <= NOT do_sec_prot;
 	wire_w_lg_do_wren67w(0) <= NOT do_wren;
-	wire_w_lg_do_write565w(0) <= NOT do_write;
+	wire_w_lg_do_write563w(0) <= NOT do_write;
 	wire_w_lg_do_write_volatile238w(0) <= NOT do_write_volatile;
 	wire_w_lg_end_add_cycle97w(0) <= NOT end_add_cycle;
 	wire_w_lg_end_fast_read91w(0) <= NOT end_fast_read;
-	wire_w_lg_end_operation527w(0) <= NOT end_operation;
+	wire_w_lg_end_operation525w(0) <= NOT end_operation;
 	wire_w_lg_end_ophdly51w(0) <= NOT end_ophdly;
 	wire_w_lg_end_pgwr_data76w(0) <= NOT end_pgwr_data;
 	wire_w_lg_end_read94w(0) <= NOT end_read;
-	wire_w_lg_rden_wire543w(0) <= NOT rden_wire;
-	wire_w_lg_reach_max_cnt609w(0) <= NOT reach_max_cnt;
-	wire_w_lg_read_bufdly599w(0) <= NOT read_bufdly;
+	wire_w_lg_rden_wire541w(0) <= NOT rden_wire;
+	wire_w_lg_reach_max_cnt607w(0) <= NOT reach_max_cnt;
+	wire_w_lg_read_bufdly597w(0) <= NOT read_bufdly;
 	wire_w_lg_read_rdid_wire14w(0) <= NOT read_rdid_wire;
 	wire_w_lg_read_sid_wire13w(0) <= NOT read_sid_wire;
 	wire_w_lg_read_status_wire29w(0) <= NOT read_status_wire;
 	wire_w_lg_sec_protect_wire12w(0) <= NOT sec_protect_wire;
 	wire_w_lg_st_busy_wire130w(0) <= NOT st_busy_wire;
-	wire_w_lg_write_prot_true648w(0) <= NOT write_prot_true;
+	wire_w_lg_write_prot_true646w(0) <= NOT write_prot_true;
 	wire_w_lg_write_wire23w(0) <= NOT write_wire;
 	wire_w_lg_w_pagewr_buf_not_empty_range82w83w(0) <= NOT wire_w_pagewr_buf_not_empty_range82w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_w663w808w809w819w820w(0) <= wire_w_lg_w_lg_w_lg_w663w808w809w819w(0) OR write_prot_true;
+	wire_w_lg_w_lg_w_lg_w_lg_w661w806w807w817w818w(0) <= wire_w_lg_w_lg_w_lg_w661w806w807w817w(0) OR write_prot_true;
 	wire_w_lg_w_lg_w_lg_load_opcode259w313w314w(0) <= wire_w_lg_w_lg_load_opcode259w313w(0) OR wire_w_lg_w_lg_load_opcode256w311w(0);
 	loop23 : FOR i IN 0 TO 6 GENERATE 
 		wire_w_lg_w_lg_w_lg_load_opcode259w260w261w(i) <= wire_w_lg_w_lg_load_opcode259w260w(i) OR wire_w_lg_w_lg_load_opcode256w257w(i);
 	END GENERATE loop23;
-	wire_w650w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w649w(0) OR do_4baddr;
-	wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w444w445w(0) <= wire_w_lg_w_lg_w_lg_do_write86w87w444w(0) OR wire_w_lg_do_read335w(0);
-	wire_w_lg_w_lg_w_lg_end_operation581w582w583w(0) <= wire_w_lg_w_lg_end_operation581w582w(0) OR clr_rstat_wire;
-	wire_w_lg_w_lg_w_lg_rden_wire448w449w450w(0) <= wire_w_lg_w_lg_rden_wire448w449w(0) OR wire_w_lg_stage4_wire447w(0);
-	wire_w_lg_w_lg_not_busy441w442w(0) <= wire_w_lg_not_busy441w(0) OR wire_w_lg_addr_overdie439w(0);
+	wire_w648w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w647w(0) OR do_4baddr;
+	wire_w_lg_w_lg_w_lg_w_lg_do_write86w87w442w443w(0) <= wire_w_lg_w_lg_w_lg_do_write86w87w442w(0) OR wire_w_lg_do_read335w(0);
+	wire_w_lg_w_lg_w_lg_end_operation579w580w581w(0) <= wire_w_lg_w_lg_end_operation579w580w(0) OR clr_rstat_wire;
+	wire_w_lg_w_lg_w_lg_rden_wire446w447w448w(0) <= wire_w_lg_w_lg_rden_wire446w447w(0) OR wire_w_lg_stage4_wire445w(0);
+	wire_w_lg_w_lg_not_busy439w440w(0) <= wire_w_lg_not_busy439w(0) OR wire_w_lg_addr_overdie437w(0);
 	loop24 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_w_lg_not_busy433w434w(i) <= wire_w_lg_not_busy433w(i) OR wire_w_lg_stage3_wire431w(i);
+		wire_w_lg_w_lg_not_busy431w432w(i) <= wire_w_lg_not_busy431w(i) OR wire_w_lg_stage3_wire429w(i);
 	END GENERATE loop24;
 	loop25 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_read_bufdly602w603w(i) <= wire_w_lg_read_bufdly602w(i) OR wire_w_lg_w_lg_read_bufdly599w600w(i);
+		wire_w_lg_w_lg_read_bufdly600w601w(i) <= wire_w_lg_read_bufdly600w(i) OR wire_w_lg_w_lg_read_bufdly597w598w(i);
 	END GENERATE loop25;
-	wire_w_lg_w_lg_stage4_wire478w479w(0) <= wire_w_lg_stage4_wire478w(0) OR wire_w_lg_stage3_wire476w(0);
+	wire_w_lg_w_lg_stage4_wire476w477w(0) <= wire_w_lg_stage4_wire476w(0) OR wire_w_lg_stage3_wire474w(0);
 	wire_w_lg_w_lg_stage4_wire336w337w(0) <= wire_w_lg_stage4_wire336w(0) OR wire_w_lg_stage3_wire334w(0);
 	wire_w_lg_w_lg_w_lg_w_lg_load_opcode259w313w314w315w(0) <= wire_w_lg_w_lg_w_lg_load_opcode259w313w314w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode251w252w253w309w(0);
 	loop26 : FOR i IN 0 TO 6 GENERATE 
 		wire_w_lg_w_lg_w_lg_w_lg_load_opcode259w260w261w262w(i) <= wire_w_lg_w_lg_w_lg_load_opcode259w260w261w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode251w252w253w254w(i);
 	END GENERATE loop26;
-	wire_w_lg_w650w651w(0) <= wire_w650w(0) OR do_ex4baddr;
-	wire_w_lg_w_lg_w_lg_w_lg_rden_wire448w449w450w451w(0) <= wire_w_lg_w_lg_w_lg_rden_wire448w449w450w(0) OR wire_w_lg_stage3_wire446w(0);
+	wire_w_lg_w648w649w(0) <= wire_w648w(0) OR do_ex4baddr;
+	wire_w_lg_w_lg_w_lg_w_lg_rden_wire446w447w448w449w(0) <= wire_w_lg_w_lg_w_lg_rden_wire446w447w448w(0) OR wire_w_lg_stage3_wire444w(0);
 	loop27 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_w_lg_w_lg_not_busy433w434w435w(i) <= wire_w_lg_w_lg_not_busy433w434w(i) OR wire_w_lg_addr_overdie429w(i);
+		wire_w_lg_w_lg_w_lg_not_busy431w432w433w(i) <= wire_w_lg_w_lg_not_busy431w432w(i) OR wire_w_lg_addr_overdie427w(i);
 	END GENERATE loop27;
 	wire_w316w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode259w313w314w315w(0) OR wire_w_lg_w_lg_load_opcode248w307w(0);
 	loop28 : FOR i IN 0 TO 6 GENERATE 
@@ -1517,37 +1501,37 @@
 	wire_w_lg_w_lg_w167w168w169w(0) <= wire_w_lg_w167w168w(0) OR do_read_nonvolatile;
 	wire_w_lg_w167w168w(0) <= wire_w167w(0) OR do_fast_read;
 	wire_w167w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read_sid163w164w165w166w(0) OR do_read;
-	wire_w663w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w662w(0) OR do_ex4baddr;
-	wire_w_lg_w709w711w(0) <= wire_w709w(0) OR wire_w_prot_wire_range698w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_do_read335w464w465w466w(0) <= wire_w_lg_w_lg_w_lg_do_read335w464w465w(0) OR do_die_erase;
+	wire_w661w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w660w(0) OR do_ex4baddr;
+	wire_w_lg_w707w709w(0) <= wire_w707w(0) OR wire_w_prot_wire_range696w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_read335w462w463w464w(0) <= wire_w_lg_w_lg_w_lg_do_read335w462w463w(0) OR do_die_erase;
 	wire_w_lg_w_lg_w_lg_w_lg_do_read_sid163w164w165w166w(0) <= wire_w_lg_w_lg_w_lg_do_read_sid163w164w165w(0) OR do_read_rdid;
-	wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w662w(0) <= wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) OR do_4baddr;
-	wire_w709w(0) <= wire_w_lg_w_lg_w_lg_w_prot_wire_range685w703w705w707w(0) OR wire_w_prot_wire_range695w(0);
-	wire_w_lg_w_lg_w_lg_bp3_wire672w673w674w(0) <= wire_w_lg_w_lg_bp3_wire672w673w(0) OR bp0_wire;
-	wire_w_lg_w_lg_w_lg_do_read335w464w465w(0) <= wire_w_lg_w_lg_do_read335w464w(0) OR do_sec_erase;
+	wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w660w(0) <= wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) OR do_4baddr;
+	wire_w707w(0) <= wire_w_lg_w_lg_w_lg_w_prot_wire_range683w701w703w705w(0) OR wire_w_prot_wire_range693w(0);
+	wire_w_lg_w_lg_w_lg_bp3_wire670w671w672w(0) <= wire_w_lg_w_lg_bp3_wire670w671w(0) OR bp0_wire;
+	wire_w_lg_w_lg_w_lg_do_read335w462w463w(0) <= wire_w_lg_w_lg_do_read335w462w(0) OR do_sec_erase;
 	wire_w_lg_w_lg_w_lg_do_read_sid163w164w165w(0) <= wire_w_lg_w_lg_do_read_sid163w164w(0) OR do_die_erase;
 	wire_w_lg_w_lg_w_lg_do_read_stat342w343w344w(0) <= wire_w_lg_w_lg_do_read_stat342w343w(0) OR do_read_volatile;
-	wire_w_lg_w_lg_w_lg_do_read_stat342w474w475w(0) <= wire_w_lg_w_lg_do_read_stat342w474w(0) OR do_read_nonvolatile;
-	wire_w_lg_w_lg_w_lg_do_sec_erase665w666w667w(0) <= wire_w_lg_w_lg_do_sec_erase665w666w(0) OR do_die_erase;
+	wire_w_lg_w_lg_w_lg_do_read_stat342w472w473w(0) <= wire_w_lg_w_lg_do_read_stat342w472w(0) OR do_read_nonvolatile;
+	wire_w_lg_w_lg_w_lg_do_sec_erase663w664w665w(0) <= wire_w_lg_w_lg_do_sec_erase663w664w(0) OR do_die_erase;
 	wire_w_lg_w_lg_w_lg_do_write86w133w134w(0) <= wire_w_lg_w_lg_do_write86w133w(0) OR do_die_erase;
-	wire_w_lg_w_lg_w_lg_w_prot_wire_range685w703w705w707w(0) <= wire_w_lg_w_lg_w_prot_wire_range685w703w705w(0) OR wire_w_prot_wire_range693w(0);
-	wire_w_lg_w_lg_bp3_wire672w673w(0) <= wire_w_lg_bp3_wire672w(0) OR bp1_wire;
-	wire_w_lg_w_lg_do_read335w477w(0) <= wire_w_lg_do_read335w(0) OR do_read_sid;
-	wire_w_lg_w_lg_do_read335w464w(0) <= wire_w_lg_do_read335w(0) OR do_write;
+	wire_w_lg_w_lg_w_lg_w_prot_wire_range683w701w703w705w(0) <= wire_w_lg_w_lg_w_prot_wire_range683w701w703w(0) OR wire_w_prot_wire_range691w(0);
+	wire_w_lg_w_lg_bp3_wire670w671w(0) <= wire_w_lg_bp3_wire670w(0) OR bp1_wire;
+	wire_w_lg_w_lg_do_read335w475w(0) <= wire_w_lg_do_read335w(0) OR do_read_sid;
+	wire_w_lg_w_lg_do_read335w462w(0) <= wire_w_lg_do_read335w(0) OR do_write;
 	wire_w_lg_w_lg_do_read_rdid332w333w(0) <= wire_w_lg_do_read_rdid332w(0) OR do_read_volatile;
 	wire_w_lg_w_lg_do_read_sid163w164w(0) <= wire_w_lg_do_read_sid163w(0) OR do_sec_erase;
 	wire_w_lg_w_lg_do_read_stat346w347w(0) <= wire_w_lg_do_read_stat346w(0) OR wire_w_lg_stage3_wire345w(0);
 	wire_w_lg_w_lg_do_read_stat342w343w(0) <= wire_w_lg_do_read_stat342w(0) OR do_read_nonvolatile;
-	wire_w_lg_w_lg_do_read_stat342w474w(0) <= wire_w_lg_do_read_stat342w(0) OR do_read_volatile;
-	wire_w_lg_w_lg_do_sec_erase665w666w(0) <= wire_w_lg_do_sec_erase665w(0) OR do_bulk_erase;
+	wire_w_lg_w_lg_do_read_stat342w472w(0) <= wire_w_lg_do_read_stat342w(0) OR do_read_volatile;
+	wire_w_lg_w_lg_do_sec_erase663w664w(0) <= wire_w_lg_do_sec_erase663w(0) OR do_bulk_erase;
 	wire_w_lg_w_lg_do_write86w133w(0) <= wire_w_lg_do_write86w(0) OR do_bulk_erase;
 	wire_w_lg_w_lg_do_write86w87w(0) <= wire_w_lg_do_write86w(0) OR do_die_erase;
-	wire_w_lg_w_lg_read_bufdly596w597w(0) <= wire_w_lg_read_bufdly596w(0) OR clr_write_wire;
-	wire_w_lg_w_lg_w_prot_wire_range685w703w705w(0) <= wire_w_lg_w_prot_wire_range685w703w(0) OR wire_w_prot_wire_range690w(0);
-	wire_w_lg_bp3_wire672w(0) <= bp3_wire OR bp2_wire;
-	wire_w_lg_data0out_wire481w(0) <= data0out_wire OR wire_w_dataout_wire_range480w(0);
-	wire_w_lg_do_4baddr378w(0) <= do_4baddr OR wire_w_lg_do_ex4baddr377w(0);
-	wire_w_lg_do_ex4baddr377w(0) <= do_ex4baddr OR wire_w_lg_do_bulk_erase376w(0);
+	wire_w_lg_w_lg_read_bufdly594w595w(0) <= wire_w_lg_read_bufdly594w(0) OR clr_write_wire;
+	wire_w_lg_w_lg_w_prot_wire_range683w701w703w(0) <= wire_w_lg_w_prot_wire_range683w701w(0) OR wire_w_prot_wire_range688w(0);
+	wire_w_lg_bp3_wire670w(0) <= bp3_wire OR bp2_wire;
+	wire_w_lg_data0out_wire479w(0) <= data0out_wire OR wire_w_dataout_wire_range478w(0);
+	wire_w_lg_do_4baddr376w(0) <= do_4baddr OR wire_w_lg_do_ex4baddr375w(0);
+	wire_w_lg_do_ex4baddr375w(0) <= do_ex4baddr OR wire_w_lg_do_bulk_erase374w(0);
 	wire_w_lg_do_read335w(0) <= do_read OR do_fast_read;
 	wire_w_lg_do_read_rdid332w(0) <= do_read_rdid OR do_read_nonvolatile;
 	wire_w_lg_do_read_sid163w(0) <= do_read_sid OR do_write;
@@ -1555,44 +1539,48 @@
 	wire_w_lg_do_read_stat339w(0) <= do_read_stat OR wire_w_lg_w_lg_w_lg_stage4_wire336w337w338w(0);
 	wire_w_lg_do_read_stat342w(0) <= do_read_stat OR do_read_rdid;
 	wire_w_lg_do_sec_erase68w(0) <= do_sec_erase OR do_die_erase;
-	wire_w_lg_do_sec_erase665w(0) <= do_sec_erase OR do_write;
-	wire_w_lg_do_wren379w(0) <= do_wren OR wire_w_lg_do_4baddr378w(0);
+	wire_w_lg_do_sec_erase663w(0) <= do_sec_erase OR do_write;
+	wire_w_lg_do_wren377w(0) <= do_wren OR wire_w_lg_do_4baddr376w(0);
 	wire_w_lg_do_write86w(0) <= do_write OR do_sec_erase;
-	wire_w_lg_end_operation581w(0) <= end_operation OR wire_w_lg_w_lg_do_polling579w580w(0);
+	wire_w_lg_end_operation579w(0) <= end_operation OR wire_w_lg_w_lg_do_polling577w578w(0);
 	wire_w_lg_load_opcode331w(0) <= load_opcode OR shift_opcode;
-	wire_w_lg_rden_wire448w(0) <= rden_wire OR wren_wire;
-	wire_w_lg_read_bufdly596w(0) <= read_bufdly OR shift_pgwr_data;
-	wire_w_lg_w_mask_prot_add_range722w750w(0) <= wire_w_mask_prot_add_range722w(0) OR wire_w_mask_prot_comp_tb_range746w(0);
-	wire_w_lg_w_mask_prot_add_range727w754w(0) <= wire_w_mask_prot_add_range727w(0) OR wire_w_mask_prot_comp_tb_range751w(0);
-	wire_w_lg_w_mask_prot_add_range732w758w(0) <= wire_w_mask_prot_add_range732w(0) OR wire_w_mask_prot_comp_tb_range755w(0);
-	wire_w_lg_w_mask_prot_add_range737w762w(0) <= wire_w_mask_prot_add_range737w(0) OR wire_w_mask_prot_comp_tb_range759w(0);
-	wire_w_lg_w_mask_prot_add_range741w766w(0) <= wire_w_mask_prot_add_range741w(0) OR wire_w_mask_prot_comp_tb_range763w(0);
-	wire_w_lg_w_mask_prot_check_range724w748w(0) <= wire_w_mask_prot_check_range724w(0) OR wire_w_mask_prot_comp_ntb_range744w(0);
-	wire_w_lg_w_mask_prot_check_range729w752w(0) <= wire_w_mask_prot_check_range729w(0) OR wire_w_mask_prot_comp_ntb_range749w(0);
-	wire_w_lg_w_mask_prot_check_range734w756w(0) <= wire_w_mask_prot_check_range734w(0) OR wire_w_mask_prot_comp_ntb_range753w(0);
-	wire_w_lg_w_mask_prot_check_range739w760w(0) <= wire_w_mask_prot_check_range739w(0) OR wire_w_mask_prot_comp_ntb_range757w(0);
-	wire_w_lg_w_mask_prot_check_range743w764w(0) <= wire_w_mask_prot_check_range743w(0) OR wire_w_mask_prot_comp_ntb_range761w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range614w617w(0) <= wire_w_pagewr_buf_not_empty_range614w(0) OR wire_pgwr_data_cntr_w_q_range616w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range618w620w(0) <= wire_w_pagewr_buf_not_empty_range618w(0) OR wire_pgwr_data_cntr_w_q_range619w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range621w623w(0) <= wire_w_pagewr_buf_not_empty_range621w(0) OR wire_pgwr_data_cntr_w_q_range622w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range624w626w(0) <= wire_w_pagewr_buf_not_empty_range624w(0) OR wire_pgwr_data_cntr_w_q_range625w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range627w629w(0) <= wire_w_pagewr_buf_not_empty_range627w(0) OR wire_pgwr_data_cntr_w_q_range628w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range630w632w(0) <= wire_w_pagewr_buf_not_empty_range630w(0) OR wire_pgwr_data_cntr_w_q_range631w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range633w635w(0) <= wire_w_pagewr_buf_not_empty_range633w(0) OR wire_pgwr_data_cntr_w_q_range634w(0);
-	wire_w_lg_w_pagewr_buf_not_empty_range636w638w(0) <= wire_w_pagewr_buf_not_empty_range636w(0) OR wire_pgwr_data_cntr_w_q_range637w(0);
-	wire_w_lg_w_prot_wire_range685w703w(0) <= wire_w_prot_wire_range685w(0) OR wire_w_prot_wire_range688w(0);
-	wire_w_lg_w_mask_prot_range701w717w(0) <= wire_w_mask_prot_range701w(0) XOR wire_w_mask_prot_add_range715w(0);
-	wire_w_lg_w_mask_prot_range704w723w(0) <= wire_w_mask_prot_range704w(0) XOR wire_w_mask_prot_add_range722w(0);
-	wire_w_lg_w_mask_prot_range706w728w(0) <= wire_w_mask_prot_range706w(0) XOR wire_w_mask_prot_add_range727w(0);
-	wire_w_lg_w_mask_prot_range708w733w(0) <= wire_w_mask_prot_range708w(0) XOR wire_w_mask_prot_add_range732w(0);
-	wire_w_lg_w_mask_prot_range710w738w(0) <= wire_w_mask_prot_range710w(0) XOR wire_w_mask_prot_add_range737w(0);
-	wire_w_lg_w_mask_prot_range712w742w(0) <= wire_w_mask_prot_range712w(0) XOR wire_w_mask_prot_add_range741w(0);
+	wire_w_lg_rden_wire446w(0) <= rden_wire OR wren_wire;
+	wire_w_lg_read_bufdly594w(0) <= read_bufdly OR shift_pgwr_data;
+	wire_w_lg_w_mask_prot_add_range720w748w(0) <= wire_w_mask_prot_add_range720w(0) OR wire_w_mask_prot_comp_tb_range744w(0);
+	wire_w_lg_w_mask_prot_add_range725w752w(0) <= wire_w_mask_prot_add_range725w(0) OR wire_w_mask_prot_comp_tb_range749w(0);
+	wire_w_lg_w_mask_prot_add_range730w756w(0) <= wire_w_mask_prot_add_range730w(0) OR wire_w_mask_prot_comp_tb_range753w(0);
+	wire_w_lg_w_mask_prot_add_range735w760w(0) <= wire_w_mask_prot_add_range735w(0) OR wire_w_mask_prot_comp_tb_range757w(0);
+	wire_w_lg_w_mask_prot_add_range739w764w(0) <= wire_w_mask_prot_add_range739w(0) OR wire_w_mask_prot_comp_tb_range761w(0);
+	wire_w_lg_w_mask_prot_check_range722w746w(0) <= wire_w_mask_prot_check_range722w(0) OR wire_w_mask_prot_comp_ntb_range742w(0);
+	wire_w_lg_w_mask_prot_check_range727w750w(0) <= wire_w_mask_prot_check_range727w(0) OR wire_w_mask_prot_comp_ntb_range747w(0);
+	wire_w_lg_w_mask_prot_check_range732w754w(0) <= wire_w_mask_prot_check_range732w(0) OR wire_w_mask_prot_comp_ntb_range751w(0);
+	wire_w_lg_w_mask_prot_check_range737w758w(0) <= wire_w_mask_prot_check_range737w(0) OR wire_w_mask_prot_comp_ntb_range755w(0);
+	wire_w_lg_w_mask_prot_check_range741w762w(0) <= wire_w_mask_prot_check_range741w(0) OR wire_w_mask_prot_comp_ntb_range759w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range612w615w(0) <= wire_w_pagewr_buf_not_empty_range612w(0) OR wire_pgwr_data_cntr_w_q_range614w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range616w618w(0) <= wire_w_pagewr_buf_not_empty_range616w(0) OR wire_pgwr_data_cntr_w_q_range617w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range619w621w(0) <= wire_w_pagewr_buf_not_empty_range619w(0) OR wire_pgwr_data_cntr_w_q_range620w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range622w624w(0) <= wire_w_pagewr_buf_not_empty_range622w(0) OR wire_pgwr_data_cntr_w_q_range623w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range625w627w(0) <= wire_w_pagewr_buf_not_empty_range625w(0) OR wire_pgwr_data_cntr_w_q_range626w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range628w630w(0) <= wire_w_pagewr_buf_not_empty_range628w(0) OR wire_pgwr_data_cntr_w_q_range629w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range631w633w(0) <= wire_w_pagewr_buf_not_empty_range631w(0) OR wire_pgwr_data_cntr_w_q_range632w(0);
+	wire_w_lg_w_pagewr_buf_not_empty_range634w636w(0) <= wire_w_pagewr_buf_not_empty_range634w(0) OR wire_pgwr_data_cntr_w_q_range635w(0);
+	wire_w_lg_w_prot_wire_range683w701w(0) <= wire_w_prot_wire_range683w(0) OR wire_w_prot_wire_range686w(0);
+	wire_w_lg_w_mask_prot_range699w715w(0) <= wire_w_mask_prot_range699w(0) XOR wire_w_mask_prot_add_range713w(0);
+	wire_w_lg_w_mask_prot_range702w721w(0) <= wire_w_mask_prot_range702w(0) XOR wire_w_mask_prot_add_range720w(0);
+	wire_w_lg_w_mask_prot_range704w726w(0) <= wire_w_mask_prot_range704w(0) XOR wire_w_mask_prot_add_range725w(0);
+	wire_w_lg_w_mask_prot_range706w731w(0) <= wire_w_mask_prot_range706w(0) XOR wire_w_mask_prot_add_range730w(0);
+	wire_w_lg_w_mask_prot_range708w736w(0) <= wire_w_mask_prot_range708w(0) XOR wire_w_mask_prot_add_range735w(0);
+	wire_w_lg_w_mask_prot_range710w740w(0) <= wire_w_mask_prot_range710w(0) XOR wire_w_mask_prot_add_range739w(0);
 	add_rollover <= add_rollover_reg;
 	addr_overdie <= '0';
 	addr_overdie_pos <= '0';
 	addr_reg_overdie <= (OTHERS => '0');
+	asmi_dataoe <= oe_wire;
+	asmi_dclk <= clkin_wire;
+	asmi_scein <= scein_wire;
+	asmi_sdoin <= sdoin_wire;
 	b4addr_opcode <= (OTHERS => '0');
-	be_write_prot <= ((do_bulk_erase OR do_die_erase) AND wire_w_lg_w_lg_w_lg_bp3_wire672w673w674w(0));
+	be_write_prot <= ((do_bulk_erase OR do_die_erase) AND wire_w_lg_w_lg_w_lg_bp3_wire670w671w672w(0));
 	berase_opcode <= (OTHERS => '0');
 	bp0_wire <= statreg_int(2);
 	bp1_wire <= statreg_int(3);
@@ -1602,7 +1590,7 @@
 	busy <= (busy_wire OR busy_delay_reg);
 	busy_wire <= ((((((((((((((do_read_rdid OR do_read_sid) OR do_read) OR do_fast_read) OR do_write) OR do_sec_prot) OR do_read_stat) OR do_sec_erase) OR do_bulk_erase) OR do_die_erase) OR do_4baddr) OR do_read_volatile) OR do_fread_epcq) OR do_read_nonvolatile) OR do_ex4baddr);
 	clkin_wire <= clkin;
-	clr_addmsb_wire <= ((wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w456w457w(0) OR wire_w_lg_w_lg_w_lg_do_read396w397w455w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w452w453w454w(0));
+	clr_addmsb_wire <= ((wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w454w455w(0) OR wire_w_lg_w_lg_w_lg_do_read394w395w453w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase68w450w451w452w(0));
 	clr_endrbyte_wire <= ((((wire_w_lg_do_read335w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND wire_gen_cntr_q(0)) OR clr_read_wire2);
 	clr_rdid_wire <= clr_rdid_reg;
 	clr_read_wire <= clr_read_reg;
@@ -1612,10 +1600,9 @@
 	clr_write_wire <= clr_write_reg;
 	clr_write_wire2 <= clr_write_reg2;
 	cnt_bfend_wire_in <= (wire_gen_cntr_w_lg_w_q_range126w127w(0) AND wire_gen_cntr_q(0));
-	data0out_wire <= wire_stratixii_asmiblock3_data0out;
+	data0out_wire <= asmi_dataout;
 	data_valid <= data_valid_wire;
 	data_valid_wire <= dvalid_reg2;
-	datain_wire <= ( "0000");
 	dataout <= ( read_data_reg(7 DOWNTO 0));
 	dataout_wire <= ( "0000");
 	derase_opcode <= (OTHERS => '0');
@@ -1642,7 +1629,7 @@
 	do_wait_dummyclk <= '0';
 	do_wren <= ((do_write_wren OR do_secprot_wren) OR do_write_volatile_wren);
 	do_write <= (((((wire_w_lg_do_read_nonvolatile10w(0) AND wire_w_lg_read_rdid_wire14w(0)) AND wire_w_lg_read_sid_wire13w(0)) AND wire_w_lg_sec_protect_wire12w(0)) AND (NOT (read_wire OR fast_read_wire))) AND write_wire);
-	do_write_polling <= wire_w_lg_w_lg_w663w808w809w(0);
+	do_write_polling <= wire_w_lg_w_lg_w661w806w807w(0);
 	do_write_rstat <= write_rstat_reg;
 	do_write_volatile <= '0';
 	do_write_volatile_rstat <= '0';
@@ -1658,12 +1645,12 @@
 	end_fast_read <= end_read_reg;
 	end_one_cyc_pos <= end1_cyc_reg2;
 	end_one_cycle <= end1_cyc_reg;
-	end_op_wire <= (((((((((((wire_stage_cntr_w_lg_w_q_range116w121w(0) AND ((wire_w_lg_w_lg_w_lg_w_lg_do_read396w397w398w399w(0) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read))) OR (wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w391w392w(0) AND wire_w_lg_do_polling219w(0))) OR ((((((do_read_rdid AND end_one_cyc_pos) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) AND wire_addbyte_cntr_q(2)) AND wire_addbyte_cntr_q(1)) AND wire_addbyte_cntr_w_lg_w_q_range177w178w(0))) OR (wire_w_lg_w_lg_start_poll382w383w(0) AND wire_w_lg_st_busy_wire130w(0))) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w380w381w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w135w(0)) OR wire_w_lg_w_lg_do_write77w375w(0)) OR wire_w_lg_do_write84w(0)) OR wire_stage_cntr_w374w(0)) OR wire_stage_cntr_w_lg_w369w370w(0)) OR (wire_stage_cntr_w_lg_w_lg_w_q_range116w119w364w(0) AND ((do_write_volatile OR do_read_volatile) OR wire_w_lg_do_read_nonvolatile362w(0))));
+	end_op_wire <= (((((((((((wire_stage_cntr_w_lg_w_q_range116w121w(0) AND ((wire_w_lg_w_lg_w_lg_w_lg_do_read394w395w396w397w(0) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read))) OR (wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w389w390w(0) AND wire_w_lg_do_polling219w(0))) OR ((((((do_read_rdid AND end_one_cyc_pos) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) AND wire_addbyte_cntr_q(2)) AND wire_addbyte_cntr_q(1)) AND wire_addbyte_cntr_w_lg_w_q_range177w178w(0))) OR (wire_w_lg_w_lg_start_poll380w381w(0) AND wire_w_lg_st_busy_wire130w(0))) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w378w379w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write86w133w134w135w(0)) OR wire_w_lg_w_lg_do_write77w373w(0)) OR wire_w_lg_do_write84w(0)) OR wire_stage_cntr_w372w(0)) OR wire_stage_cntr_w_lg_w367w368w(0)) OR (wire_stage_cntr_w_lg_w_lg_w_q_range116w119w362w(0) AND ((do_write_volatile OR do_read_volatile) OR wire_w_lg_do_read_nonvolatile360w(0))));
 	end_operation <= end_op_reg;
 	end_ophdly <= end_op_hdlyreg;
 	end_pgwr_data <= end_pgwrop_reg;
 	end_read <= end_read_reg;
-	end_read_byte <= (end_rbyte_reg AND wire_w_lg_addr_overdie541w(0));
+	end_read_byte <= (end_rbyte_reg AND wire_w_lg_addr_overdie539w(0));
 	end_wrstage <= end_operation;
 	exb4addr_opcode <= (OTHERS => '0');
 	fast_read_opcode <= "00001011";
@@ -1677,18 +1664,18 @@
 	illegal_write_b4out_wire <= ((do_write AND write_prot_true) OR wire_w_lg_do_write84w(0));
 	in_operation <= busy_wire;
 	load_opcode <= ((((wire_stage_cntr_w_lg_w_q_range116w117w(0) AND wire_stage_cntr_w_lg_w_q_range115w120w(0)) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_w_lg_w_q_range124w125w(0)) AND wire_gen_cntr_q(0));
-	mask_prot <= ( wire_w_lg_w709w711w & wire_w709w & wire_w_lg_w_lg_w_lg_w_prot_wire_range685w703w705w707w & wire_w_lg_w_lg_w_prot_wire_range685w703w705w & wire_w_lg_w_prot_wire_range685w703w & prot_wire(1));
-	mask_prot_add <= ( wire_w_lg_w_mask_prot_range712w740w & wire_w_lg_w_mask_prot_range710w736w & wire_w_lg_w_mask_prot_range708w731w & wire_w_lg_w_mask_prot_range706w726w & wire_w_lg_w_mask_prot_range704w721w & wire_w_lg_w_mask_prot_range701w714w);
-	mask_prot_check <= ( wire_w_lg_w_mask_prot_range712w742w & wire_w_lg_w_mask_prot_range710w738w & wire_w_lg_w_mask_prot_range708w733w & wire_w_lg_w_mask_prot_range706w728w & wire_w_lg_w_mask_prot_range704w723w & wire_w_lg_w_mask_prot_range701w717w);
-	mask_prot_comp_ntb <= ( wire_w_lg_w_mask_prot_check_range743w764w & wire_w_lg_w_mask_prot_check_range739w760w & wire_w_lg_w_mask_prot_check_range734w756w & wire_w_lg_w_mask_prot_check_range729w752w & wire_w_lg_w_mask_prot_check_range724w748w & mask_prot_check(0));
-	mask_prot_comp_tb <= ( wire_w_lg_w_mask_prot_add_range741w766w & wire_w_lg_w_mask_prot_add_range737w762w & wire_w_lg_w_mask_prot_add_range732w758w & wire_w_lg_w_mask_prot_add_range727w754w & wire_w_lg_w_mask_prot_add_range722w750w & mask_prot_add(0));
+	mask_prot <= ( wire_w_lg_w707w709w & wire_w707w & wire_w_lg_w_lg_w_lg_w_prot_wire_range683w701w703w705w & wire_w_lg_w_lg_w_prot_wire_range683w701w703w & wire_w_lg_w_prot_wire_range683w701w & prot_wire(1));
+	mask_prot_add <= ( wire_w_lg_w_mask_prot_range710w738w & wire_w_lg_w_mask_prot_range708w734w & wire_w_lg_w_mask_prot_range706w729w & wire_w_lg_w_mask_prot_range704w724w & wire_w_lg_w_mask_prot_range702w719w & wire_w_lg_w_mask_prot_range699w712w);
+	mask_prot_check <= ( wire_w_lg_w_mask_prot_range710w740w & wire_w_lg_w_mask_prot_range708w736w & wire_w_lg_w_mask_prot_range706w731w & wire_w_lg_w_mask_prot_range704w726w & wire_w_lg_w_mask_prot_range702w721w & wire_w_lg_w_mask_prot_range699w715w);
+	mask_prot_comp_ntb <= ( wire_w_lg_w_mask_prot_check_range741w762w & wire_w_lg_w_mask_prot_check_range737w758w & wire_w_lg_w_mask_prot_check_range732w754w & wire_w_lg_w_mask_prot_check_range727w750w & wire_w_lg_w_mask_prot_check_range722w746w & mask_prot_check(0));
+	mask_prot_comp_tb <= ( wire_w_lg_w_mask_prot_add_range739w764w & wire_w_lg_w_mask_prot_add_range735w760w & wire_w_lg_w_mask_prot_add_range730w756w & wire_w_lg_w_mask_prot_add_range725w752w & wire_w_lg_w_mask_prot_add_range720w748w & mask_prot_add(0));
 	memadd_sdoin <= add_msb_reg;
 	ncs_reg_ena_wire <= (((wire_stage_cntr_w_lg_w_lg_w_q_range116w117w118w(0) AND end_one_cyc_pos) OR addr_overdie_pos) OR end_operation);
 	not_busy <= busy_det_reg;
 	oe_wire <= '0';
 	page_size_wire <= "100000000";
-	pagewr_buf_not_empty <= ( wire_w_lg_w_pagewr_buf_not_empty_range636w638w & wire_w_lg_w_pagewr_buf_not_empty_range633w635w & wire_w_lg_w_pagewr_buf_not_empty_range630w632w & wire_w_lg_w_pagewr_buf_not_empty_range627w629w & wire_w_lg_w_pagewr_buf_not_empty_range624w626w & wire_w_lg_w_pagewr_buf_not_empty_range621w623w & wire_w_lg_w_pagewr_buf_not_empty_range618w620w & wire_w_lg_w_pagewr_buf_not_empty_range614w617w & wire_pgwr_data_cntr_q(0));
-	prot_wire <= ( wire_w_lg_w_lg_bp2_wire696w699w & wire_w_lg_w_lg_bp2_wire696w697w & wire_w_lg_w_lg_bp2_wire691w694w & wire_w_lg_w_lg_bp2_wire691w692w & wire_w_lg_w_lg_w_lg_bp2_wire679w686w689w & wire_w_lg_w_lg_w_lg_bp2_wire679w686w687w & wire_w_lg_w_lg_w_lg_bp2_wire679w680w684w & wire_w_lg_w_lg_w_lg_bp2_wire679w680w681w);
+	pagewr_buf_not_empty <= ( wire_w_lg_w_pagewr_buf_not_empty_range634w636w & wire_w_lg_w_pagewr_buf_not_empty_range631w633w & wire_w_lg_w_pagewr_buf_not_empty_range628w630w & wire_w_lg_w_pagewr_buf_not_empty_range625w627w & wire_w_lg_w_pagewr_buf_not_empty_range622w624w & wire_w_lg_w_pagewr_buf_not_empty_range619w621w & wire_w_lg_w_pagewr_buf_not_empty_range616w618w & wire_w_lg_w_pagewr_buf_not_empty_range612w615w & wire_pgwr_data_cntr_q(0));
+	prot_wire <= ( wire_w_lg_w_lg_bp2_wire694w697w & wire_w_lg_w_lg_bp2_wire694w695w & wire_w_lg_w_lg_bp2_wire689w692w & wire_w_lg_w_lg_bp2_wire689w690w & wire_w_lg_w_lg_w_lg_bp2_wire677w684w687w & wire_w_lg_w_lg_w_lg_bp2_wire677w684w685w & wire_w_lg_w_lg_w_lg_bp2_wire677w678w682w & wire_w_lg_w_lg_w_lg_bp2_wire677w678w679w);
 	rden_wire <= rden;
 	rdid_load <= (end_operation AND do_read_rdid);
 	rdid_opcode <= "10011111";
@@ -1696,7 +1683,7 @@
 	rdummyclk_opcode <= (OTHERS => '0');
 	reach_max_cnt <= max_cnt_reg;
 	read_address <= ( read_add_reg(23 DOWNTO 0));
-	read_buf <= (((((end_one_cycle AND do_write) AND wire_w_lg_do_read_stat66w(0)) AND wire_w_lg_do_wren67w(0)) AND (wire_stage_cntr_w_lg_w_q_range116w121w(0) OR wire_addbyte_cntr_w_lg_w_q_range174w179w(0))) AND wire_w_lg_buf_empty782w(0));
+	read_buf <= (((((end_one_cycle AND do_write) AND wire_w_lg_do_read_stat66w(0)) AND wire_w_lg_do_wren67w(0)) AND (wire_stage_cntr_w_lg_w_q_range116w121w(0) OR wire_addbyte_cntr_w_lg_w_q_range174w179w(0))) AND wire_w_lg_buf_empty780w(0));
 	read_bufdly <= read_bufdly_reg;
 	read_data_reg_in_wire <= ( read_dout_reg(7 DOWNTO 0));
 	read_opcode <= (OTHERS => '0');
@@ -1709,7 +1696,7 @@
 	rsid_opcode <= (OTHERS => '0');
 	rsid_sdoin <= '0';
 	rstat_opcode <= "00000101";
-	scein_wire <= wire_ncs_reg_w_lg_q417w(0);
+	scein_wire <= wire_ncs_reg_w_lg_q415w(0);
 	sdoin_wire <= to_sdoin_wire;
 	sec_erase_wire <= sec_erase_reg;
 	sec_protect_wire <= '0';
@@ -1737,63 +1724,63 @@
 	write_sdoin <= ((((do_write AND stage4_wire) AND wire_wrstage_cntr_q(1)) AND wire_wrstage_cntr_q(0)) AND pgwrbuf_dataout(7));
 	write_wire <= write_reg;
 	wrvolatile_opcode <= (OTHERS => '0');
-	wire_w_addr_range440w(0) <= addr(0);
-	wire_w_addr_range432w <= addr(23 DOWNTO 1);
-	wire_w_addr_reg_overdie_range438w(0) <= addr_reg_overdie(0);
-	wire_w_addr_reg_overdie_range428w <= addr_reg_overdie(23 DOWNTO 1);
+	wire_w_addr_range438w(0) <= addr(0);
+	wire_w_addr_range430w <= addr(23 DOWNTO 1);
+	wire_w_addr_reg_overdie_range436w(0) <= addr_reg_overdie(0);
+	wire_w_addr_reg_overdie_range426w <= addr_reg_overdie(23 DOWNTO 1);
 	wire_w_b4addr_opcode_range282w(0) <= b4addr_opcode(0);
 	wire_w_b4addr_opcode_range191w <= b4addr_opcode(7 DOWNTO 1);
 	wire_w_berase_opcode_range286w(0) <= berase_opcode(0);
 	wire_w_berase_opcode_range199w <= berase_opcode(7 DOWNTO 1);
-	wire_w_dataout_wire_range480w(0) <= dataout_wire(1);
+	wire_w_dataout_wire_range478w(0) <= dataout_wire(1);
 	wire_w_derase_opcode_range288w(0) <= derase_opcode(0);
 	wire_w_derase_opcode_range204w <= derase_opcode(7 DOWNTO 1);
 	wire_w_exb4addr_opcode_range280w(0) <= exb4addr_opcode(0);
 	wire_w_exb4addr_opcode_range186w <= exb4addr_opcode(7 DOWNTO 1);
 	wire_w_fast_read_opcode_range304w(0) <= fast_read_opcode(0);
 	wire_w_fast_read_opcode_range244w <= fast_read_opcode(7 DOWNTO 1);
-	wire_w_mask_prot_range701w(0) <= mask_prot(0);
-	wire_w_mask_prot_range704w(0) <= mask_prot(1);
-	wire_w_mask_prot_range706w(0) <= mask_prot(2);
-	wire_w_mask_prot_range708w(0) <= mask_prot(3);
-	wire_w_mask_prot_range710w(0) <= mask_prot(4);
-	wire_w_mask_prot_range712w(0) <= mask_prot(5);
-	wire_w_mask_prot_add_range715w(0) <= mask_prot_add(0);
-	wire_w_mask_prot_add_range722w(0) <= mask_prot_add(1);
-	wire_w_mask_prot_add_range727w(0) <= mask_prot_add(2);
-	wire_w_mask_prot_add_range732w(0) <= mask_prot_add(3);
-	wire_w_mask_prot_add_range737w(0) <= mask_prot_add(4);
-	wire_w_mask_prot_add_range741w(0) <= mask_prot_add(5);
-	wire_w_mask_prot_check_range724w(0) <= mask_prot_check(1);
-	wire_w_mask_prot_check_range729w(0) <= mask_prot_check(2);
-	wire_w_mask_prot_check_range734w(0) <= mask_prot_check(3);
-	wire_w_mask_prot_check_range739w(0) <= mask_prot_check(4);
-	wire_w_mask_prot_check_range743w(0) <= mask_prot_check(5);
-	wire_w_mask_prot_comp_ntb_range744w(0) <= mask_prot_comp_ntb(0);
-	wire_w_mask_prot_comp_ntb_range749w(0) <= mask_prot_comp_ntb(1);
-	wire_w_mask_prot_comp_ntb_range753w(0) <= mask_prot_comp_ntb(2);
-	wire_w_mask_prot_comp_ntb_range757w(0) <= mask_prot_comp_ntb(3);
-	wire_w_mask_prot_comp_ntb_range761w(0) <= mask_prot_comp_ntb(4);
-	wire_w_mask_prot_comp_tb_range746w(0) <= mask_prot_comp_tb(0);
-	wire_w_mask_prot_comp_tb_range751w(0) <= mask_prot_comp_tb(1);
-	wire_w_mask_prot_comp_tb_range755w(0) <= mask_prot_comp_tb(2);
-	wire_w_mask_prot_comp_tb_range759w(0) <= mask_prot_comp_tb(3);
-	wire_w_mask_prot_comp_tb_range763w(0) <= mask_prot_comp_tb(4);
-	wire_w_pagewr_buf_not_empty_range614w(0) <= pagewr_buf_not_empty(0);
-	wire_w_pagewr_buf_not_empty_range618w(0) <= pagewr_buf_not_empty(1);
-	wire_w_pagewr_buf_not_empty_range621w(0) <= pagewr_buf_not_empty(2);
-	wire_w_pagewr_buf_not_empty_range624w(0) <= pagewr_buf_not_empty(3);
-	wire_w_pagewr_buf_not_empty_range627w(0) <= pagewr_buf_not_empty(4);
-	wire_w_pagewr_buf_not_empty_range630w(0) <= pagewr_buf_not_empty(5);
-	wire_w_pagewr_buf_not_empty_range633w(0) <= pagewr_buf_not_empty(6);
-	wire_w_pagewr_buf_not_empty_range636w(0) <= pagewr_buf_not_empty(7);
+	wire_w_mask_prot_range699w(0) <= mask_prot(0);
+	wire_w_mask_prot_range702w(0) <= mask_prot(1);
+	wire_w_mask_prot_range704w(0) <= mask_prot(2);
+	wire_w_mask_prot_range706w(0) <= mask_prot(3);
+	wire_w_mask_prot_range708w(0) <= mask_prot(4);
+	wire_w_mask_prot_range710w(0) <= mask_prot(5);
+	wire_w_mask_prot_add_range713w(0) <= mask_prot_add(0);
+	wire_w_mask_prot_add_range720w(0) <= mask_prot_add(1);
+	wire_w_mask_prot_add_range725w(0) <= mask_prot_add(2);
+	wire_w_mask_prot_add_range730w(0) <= mask_prot_add(3);
+	wire_w_mask_prot_add_range735w(0) <= mask_prot_add(4);
+	wire_w_mask_prot_add_range739w(0) <= mask_prot_add(5);
+	wire_w_mask_prot_check_range722w(0) <= mask_prot_check(1);
+	wire_w_mask_prot_check_range727w(0) <= mask_prot_check(2);
+	wire_w_mask_prot_check_range732w(0) <= mask_prot_check(3);
+	wire_w_mask_prot_check_range737w(0) <= mask_prot_check(4);
+	wire_w_mask_prot_check_range741w(0) <= mask_prot_check(5);
+	wire_w_mask_prot_comp_ntb_range742w(0) <= mask_prot_comp_ntb(0);
+	wire_w_mask_prot_comp_ntb_range747w(0) <= mask_prot_comp_ntb(1);
+	wire_w_mask_prot_comp_ntb_range751w(0) <= mask_prot_comp_ntb(2);
+	wire_w_mask_prot_comp_ntb_range755w(0) <= mask_prot_comp_ntb(3);
+	wire_w_mask_prot_comp_ntb_range759w(0) <= mask_prot_comp_ntb(4);
+	wire_w_mask_prot_comp_tb_range744w(0) <= mask_prot_comp_tb(0);
+	wire_w_mask_prot_comp_tb_range749w(0) <= mask_prot_comp_tb(1);
+	wire_w_mask_prot_comp_tb_range753w(0) <= mask_prot_comp_tb(2);
+	wire_w_mask_prot_comp_tb_range757w(0) <= mask_prot_comp_tb(3);
+	wire_w_mask_prot_comp_tb_range761w(0) <= mask_prot_comp_tb(4);
+	wire_w_pagewr_buf_not_empty_range612w(0) <= pagewr_buf_not_empty(0);
+	wire_w_pagewr_buf_not_empty_range616w(0) <= pagewr_buf_not_empty(1);
+	wire_w_pagewr_buf_not_empty_range619w(0) <= pagewr_buf_not_empty(2);
+	wire_w_pagewr_buf_not_empty_range622w(0) <= pagewr_buf_not_empty(3);
+	wire_w_pagewr_buf_not_empty_range625w(0) <= pagewr_buf_not_empty(4);
+	wire_w_pagewr_buf_not_empty_range628w(0) <= pagewr_buf_not_empty(5);
+	wire_w_pagewr_buf_not_empty_range631w(0) <= pagewr_buf_not_empty(6);
+	wire_w_pagewr_buf_not_empty_range634w(0) <= pagewr_buf_not_empty(7);
 	wire_w_pagewr_buf_not_empty_range82w(0) <= pagewr_buf_not_empty(8);
-	wire_w_prot_wire_range685w(0) <= prot_wire(1);
-	wire_w_prot_wire_range688w(0) <= prot_wire(2);
-	wire_w_prot_wire_range690w(0) <= prot_wire(3);
-	wire_w_prot_wire_range693w(0) <= prot_wire(4);
-	wire_w_prot_wire_range695w(0) <= prot_wire(5);
-	wire_w_prot_wire_range698w(0) <= prot_wire(6);
+	wire_w_prot_wire_range683w(0) <= prot_wire(1);
+	wire_w_prot_wire_range686w(0) <= prot_wire(2);
+	wire_w_prot_wire_range688w(0) <= prot_wire(3);
+	wire_w_prot_wire_range691w(0) <= prot_wire(4);
+	wire_w_prot_wire_range693w(0) <= prot_wire(5);
+	wire_w_prot_wire_range696w(0) <= prot_wire(6);
 	wire_w_rdid_opcode_range310w(0) <= rdid_opcode(0);
 	wire_w_rdid_opcode_range255w <= rdid_opcode(7 DOWNTO 1);
 	wire_w_rdummyclk_opcode_range302w(0) <= rdummyclk_opcode(0);
@@ -1857,23 +1844,23 @@
 		q => wire_gen_cntr_q,
 		sclr => wire_gen_cntr_sclr
 	  );
-	wire_stage_cntr_w_lg_w369w370w(0) <= wire_stage_cntr_w369w(0) AND end_one_cycle;
-	wire_stage_cntr_w369w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w366w367w368w(0) AND end_add_cycle;
-	wire_stage_cntr_w374w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w371w372w373w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w366w367w368w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w366w367w(0) AND wire_w_lg_do_read_stat66w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w371w372w373w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w371w372w(0) AND wire_w_lg_do_read_stat66w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w380w381w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w380w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w456w457w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w121w456w(0) AND end_one_cyc_pos;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w366w367w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w366w(0) AND wire_w_lg_do_wren67w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w391w392w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w391w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w371w372w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w371w(0) AND wire_w_lg_do_wren67w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w380w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w117w118w(0) AND wire_w_lg_do_wren379w(0);
-	wire_stage_cntr_w_lg_w_lg_w_q_range116w121w456w(0) <= wire_stage_cntr_w_lg_w_q_range116w121w(0) AND end_add_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w366w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND wire_w_lg_do_sec_erase68w(0);
-	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w391w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND do_read_stat;
-	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w371w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND do_sec_prot;
+	wire_stage_cntr_w_lg_w367w368w(0) <= wire_stage_cntr_w367w(0) AND end_one_cycle;
+	wire_stage_cntr_w367w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w364w365w366w(0) AND end_add_cycle;
+	wire_stage_cntr_w372w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w369w370w371w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w364w365w366w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w364w365w(0) AND wire_w_lg_do_read_stat66w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w119w369w370w371w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w369w370w(0) AND wire_w_lg_do_read_stat66w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range116w117w118w378w379w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w378w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w121w454w455w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w121w454w(0) AND end_one_cyc_pos;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w364w365w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w364w(0) AND wire_w_lg_do_wren67w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w389w390w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w389w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w119w369w370w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w119w369w(0) AND wire_w_lg_do_wren67w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range116w117w118w378w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range116w117w118w(0) AND wire_w_lg_do_wren377w(0);
+	wire_stage_cntr_w_lg_w_lg_w_q_range116w121w454w(0) <= wire_stage_cntr_w_lg_w_q_range116w121w(0) AND end_add_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w364w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND wire_w_lg_do_sec_erase68w(0);
+	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w389w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND do_read_stat;
+	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w369w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND do_sec_prot;
 	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w170w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND end_one_cyc_pos;
-	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w364w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_q_range116w119w362w(0) <= wire_stage_cntr_w_lg_w_q_range116w119w(0) AND end_one_cycle;
 	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range115w120w138w139w140w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range115w120w138w139w(0) AND end1_cyc_gen_cntr_wire;
 	wire_stage_cntr_w_lg_w_lg_w_q_range115w120w138w(0) <= wire_stage_cntr_w_lg_w_q_range115w120w(0) AND wire_stage_cntr_w_lg_w_q_range116w117w(0);
 	wire_stage_cntr_w_lg_w_lg_w_q_range116w117w118w(0) <= wire_stage_cntr_w_lg_w_q_range116w117w(0) AND wire_stage_cntr_w_q_range115w(0);
@@ -1898,13 +1885,13 @@
 		q => wire_stage_cntr_q,
 		sclr => wire_stage_cntr_sclr
 	  );
-	wire_wrstage_cntr_w_lg_w_q_range657w658w(0) <= wire_wrstage_cntr_w_q_range657w(0) AND wire_wrstage_cntr_w_lg_w_q_range655w656w(0);
-	wire_wrstage_cntr_w_lg_w_q_range655w656w(0) <= NOT wire_wrstage_cntr_w_q_range655w(0);
-	wire_wrstage_cntr_clk_en <= wire_w_lg_w_lg_w_lg_w_lg_w650w651w652w653w654w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_w650w651w652w653w654w(0) <= (wire_w_lg_w_lg_w650w651w652w(0) AND wire_w_lg_st_busy_wire130w(0)) OR clr_write_wire2;
+	wire_wrstage_cntr_w_lg_w_q_range655w656w(0) <= wire_wrstage_cntr_w_q_range655w(0) AND wire_wrstage_cntr_w_lg_w_q_range653w654w(0);
+	wire_wrstage_cntr_w_lg_w_q_range653w654w(0) <= NOT wire_wrstage_cntr_w_q_range653w(0);
+	wire_wrstage_cntr_clk_en <= wire_w_lg_w_lg_w_lg_w_lg_w648w649w650w651w652w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_w648w649w650w651w652w(0) <= (wire_w_lg_w_lg_w648w649w650w(0) AND wire_w_lg_st_busy_wire130w(0)) OR clr_write_wire2;
 	wire_wrstage_cntr_clock <= wire_w_lg_clkin_wire48w(0);
-	wire_wrstage_cntr_w_q_range655w(0) <= wire_wrstage_cntr_q(0);
-	wire_wrstage_cntr_w_q_range657w(0) <= wire_wrstage_cntr_q(1);
+	wire_wrstage_cntr_w_q_range653w(0) <= wire_wrstage_cntr_q(0);
+	wire_wrstage_cntr_w_q_range655w(0) <= wire_wrstage_cntr_q(1);
 	wrstage_cntr :  a_graycounter
 	  GENERIC MAP (
 		WIDTH => 2
@@ -1922,12 +1909,12 @@
 		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
 			IF (wire_add_msb_reg_ena = '1') THEN 
 				IF (clr_addmsb_wire = '1') THEN add_msb_reg <= '0';
-				ELSE add_msb_reg <= wire_addr_reg_w_q_range460w(0);
+				ELSE add_msb_reg <= wire_addr_reg_w_q_range458w(0);
 				END IF;
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_add_msb_reg_ena <= ((((wire_w_lg_w_lg_w_lg_w_lg_do_read335w464w465w466w(0) AND (NOT (wire_w_lg_w_lg_do_write86w87w(0) AND wire_w_lg_do_memadd461w(0)))) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) OR clr_addmsb_wire);
+	wire_add_msb_reg_ena <= ((((wire_w_lg_w_lg_w_lg_w_lg_do_read335w462w463w464w(0) AND (NOT (wire_w_lg_w_lg_do_write86w87w(0) AND wire_w_lg_do_memadd459w(0)))) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) OR clr_addmsb_wire);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN add_rollover_reg <= '0';
@@ -2126,17 +2113,17 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_addr_reg_d <= ( wire_w_lg_w_lg_w_lg_not_busy433w434w435w & wire_w_lg_w_lg_not_busy441w442w);
+	wire_addr_reg_d <= ( wire_w_lg_w_lg_w_lg_not_busy431w432w433w & wire_w_lg_w_lg_not_busy439w440w);
 	loop43 : FOR i IN 0 TO 23 GENERATE
-		wire_addr_reg_ena(i) <= wire_w_lg_w_lg_w_lg_w_lg_rden_wire448w449w450w451w(0);
+		wire_addr_reg_ena(i) <= wire_w_lg_w_lg_w_lg_w_lg_rden_wire446w447w448w449w(0);
 	END GENERATE loop43;
-	wire_addr_reg_w_q_range713w(0) <= addr_reg(18);
-	wire_addr_reg_w_q_range720w(0) <= addr_reg(19);
-	wire_addr_reg_w_q_range725w(0) <= addr_reg(20);
-	wire_addr_reg_w_q_range730w(0) <= addr_reg(21);
-	wire_addr_reg_w_q_range430w <= addr_reg(22 DOWNTO 0);
-	wire_addr_reg_w_q_range735w(0) <= addr_reg(22);
-	wire_addr_reg_w_q_range460w(0) <= addr_reg(23);
+	wire_addr_reg_w_q_range711w(0) <= addr_reg(18);
+	wire_addr_reg_w_q_range718w(0) <= addr_reg(19);
+	wire_addr_reg_w_q_range723w(0) <= addr_reg(20);
+	wire_addr_reg_w_q_range728w(0) <= addr_reg(21);
+	wire_addr_reg_w_q_range428w <= addr_reg(22 DOWNTO 0);
+	wire_addr_reg_w_q_range733w(0) <= addr_reg(22);
+	wire_addr_reg_w_q_range458w(0) <= addr_reg(23);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN asmi_opcode_reg(0) <= '0';
@@ -2209,7 +2196,7 @@
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN buf_empty_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN buf_empty_reg <= wire_cmpr6_aeb;
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN buf_empty_reg <= wire_cmpr5_aeb;
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -2235,7 +2222,7 @@
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN clr_read_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN clr_read_reg <= ((do_read_sid OR do_sec_prot) OR wire_w_lg_end_operation547w(0));
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN clr_read_reg <= ((do_read_sid OR do_sec_prot) OR wire_w_lg_end_operation545w(0));
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -2253,7 +2240,7 @@
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN clr_write_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN clr_write_reg <= ((((((wire_w_lg_w_lg_w_lg_w_lg_w663w808w809w819w820w(0) OR wire_w_lg_do_write84w(0)) OR wire_w_lg_w_lg_w816w817w818w(0)) OR do_read_sid) OR do_sec_prot) OR do_read) OR do_fast_read);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN clr_write_reg <= ((((((wire_w_lg_w_lg_w_lg_w_lg_w661w806w807w817w818w(0) OR wire_w_lg_do_write84w(0)) OR wire_w_lg_w_lg_w814w815w816w(0)) OR do_read_sid) OR do_sec_prot) OR do_read) OR do_fast_read);
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -2280,7 +2267,7 @@
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
 			IF (wire_dvalid_reg_ena = '1') THEN 
 				IF (wire_dvalid_reg_sclr = '1') THEN dvalid_reg <= '0';
-				ELSE dvalid_reg <= wire_w_lg_end_read_byte516w(0);
+				ELSE dvalid_reg <= wire_w_lg_end_read_byte514w(0);
 				END IF;
 			END IF;
 		END IF;
@@ -2335,7 +2322,7 @@
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
 			IF (wire_end_rbyte_reg_ena = '1') THEN 
 				IF (wire_end_rbyte_reg_sclr = '1') THEN end_rbyte_reg <= '0';
-				ELSE end_rbyte_reg <= wire_w_lg_w_lg_w_lg_do_read335w509w510w(0);
+				ELSE end_rbyte_reg <= wire_w_lg_w_lg_w_lg_do_read335w507w508w(0);
 				END IF;
 			END IF;
 		END IF;
@@ -2345,7 +2332,7 @@
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN end_read_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN end_read_reg <= (((wire_w_lg_rden_wire543w(0) AND wire_w_lg_do_read335w(0)) AND data_valid_wire) AND end_read_byte);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN end_read_reg <= (((wire_w_lg_rden_wire541w(0) AND wire_w_lg_do_read335w(0)) AND data_valid_wire) AND end_read_byte);
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -2397,13 +2384,13 @@
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN max_cnt_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN max_cnt_reg <= wire_cmpr5_aeb;
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN max_cnt_reg <= wire_cmpr4_aeb;
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN maxcnt_shift_reg <= '0';
-		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN maxcnt_shift_reg <= (wire_w_lg_w_lg_reach_max_cnt645w646w(0) AND wire_w_lg_do_write565w(0));
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN maxcnt_shift_reg <= (wire_w_lg_w_lg_reach_max_cnt643w644w(0) AND wire_w_lg_do_write563w(0));
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -2424,7 +2411,7 @@
 		END IF;
 	END PROCESS;
 	wire_ncs_reg_sclr <= (end_operation OR addr_overdie_pos);
-	wire_ncs_reg_w_lg_q417w(0) <= NOT ncs_reg;
+	wire_ncs_reg_w_lg_q415w(0) <= NOT ncs_reg;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN pgwrbuf_dataout(0) <= '0';
@@ -2513,11 +2500,11 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_pgwrbuf_dataout_d <= ( wire_w_lg_w_lg_read_bufdly602w603w & wire_w_lg_read_bufdly607w);
+	wire_pgwrbuf_dataout_d <= ( wire_w_lg_w_lg_read_bufdly600w601w & wire_w_lg_read_bufdly605w);
 	loop45 : FOR i IN 0 TO 7 GENERATE
-		wire_pgwrbuf_dataout_ena(i) <= wire_w_lg_w_lg_read_bufdly596w597w(0);
+		wire_pgwrbuf_dataout_ena(i) <= wire_w_lg_w_lg_read_bufdly594w595w(0);
 	END GENERATE loop45;
-	wire_pgwrbuf_dataout_w_q_range598w <= pgwrbuf_dataout(6 DOWNTO 0);
+	wire_pgwrbuf_dataout_w_q_range596w <= pgwrbuf_dataout(6 DOWNTO 0);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN power_up_reg <= '0';
@@ -2726,7 +2713,7 @@
 	END PROCESS;
 	wire_read_add_reg_d <= ( wire_read_add_cntr_q(23 DOWNTO 0));
 	loop46 : FOR i IN 0 TO 23 GENERATE
-		wire_read_add_reg_ena(i) <= wire_w_lg_w_lg_end_read_byte516w528w(0);
+		wire_read_add_reg_ena(i) <= wire_w_lg_w_lg_end_read_byte514w526w(0);
 	END GENERATE loop46;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -2800,7 +2787,7 @@
 	END PROCESS;
 	wire_read_data_reg_d <= ( read_data_reg_in_wire(7 DOWNTO 0));
 	loop47 : FOR i IN 0 TO 7 GENERATE
-		wire_read_data_reg_ena(i) <= wire_w512w(0);
+		wire_read_data_reg_ena(i) <= wire_w510w(0);
 	END GENERATE loop47;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -2866,9 +2853,9 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_read_dout_reg_d <= ( read_dout_reg(6 DOWNTO 0) & wire_w_lg_data0out_wire481w);
+	wire_read_dout_reg_d <= ( read_dout_reg(6 DOWNTO 0) & wire_w_lg_data0out_wire479w);
 	loop48 : FOR i IN 0 TO 7 GENERATE
-		wire_read_dout_reg_ena(i) <= wire_w_lg_w_lg_stage4_wire478w479w(0);
+		wire_read_dout_reg_ena(i) <= wire_w_lg_w_lg_stage4_wire476w477w(0);
 	END GENERATE loop48;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -3056,7 +3043,7 @@
 	END PROCESS;
 	wire_statreg_int_d <= ( read_dout_reg(7 DOWNTO 0));
 	loop49 : FOR i IN 0 TO 7 GENERATE
-		wire_statreg_int_ena(i) <= wire_w_lg_w_lg_w_lg_end_operation581w582w583w(0);
+		wire_statreg_int_ena(i) <= wire_w_lg_w_lg_w_lg_end_operation579w580w581w(0);
 	END GENERATE loop49;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -3124,7 +3111,7 @@
 	END PROCESS;
 	wire_statreg_out_d <= ( read_dout_reg(7 DOWNTO 0));
 	loop50 : FOR i IN 0 TO 7 GENERATE
-		wire_statreg_out_ena(i) <= wire_w_lg_w_lg_w_lg_w570w571w572w573w(0);
+		wire_statreg_out_ena(i) <= wire_w_lg_w_lg_w_lg_w568w569w570w571w(0);
 	END GENERATE loop50;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -3137,7 +3124,7 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_write_prot_reg_ena <= ((((wire_w_lg_w_lg_w_lg_do_sec_erase665w666w667w(0) AND (NOT wire_wrstage_cntr_q(1))) AND wire_wrstage_cntr_q(0)) AND end_ophdly) OR clr_write_wire);
+	wire_write_prot_reg_ena <= ((((wire_w_lg_w_lg_w_lg_do_sec_erase663w664w665w(0) AND (NOT wire_wrstage_cntr_q(1))) AND wire_wrstage_cntr_q(0)) AND end_ophdly) OR clr_write_wire);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN write_reg <= '0';
@@ -3155,12 +3142,23 @@
 		IF (reset = '1') THEN write_rstat_reg <= '0';
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
 				IF (clr_write_wire = '1') THEN write_rstat_reg <= '0';
-				ELSE write_rstat_reg <= (wire_w663w(0) AND (((NOT wire_wrstage_cntr_q(1)) AND wire_wrstage_cntr_w_lg_w_q_range655w656w(0)) OR wire_wrstage_cntr_w_lg_w_q_range657w658w(0)));
+				ELSE write_rstat_reg <= (wire_w661w(0) AND (((NOT wire_wrstage_cntr_q(1)) AND wire_wrstage_cntr_w_lg_w_q_range653w654w(0)) OR wire_wrstage_cntr_w_lg_w_q_range655w656w(0)));
 				END IF;
 		END IF;
 	END PROCESS;
-	wire_cmpr5_dataa <= ( page_size_wire(8 DOWNTO 0));
-	wire_cmpr5_datab <= ( wire_pgwr_data_cntr_q(8 DOWNTO 0));
+	wire_cmpr4_dataa <= ( page_size_wire(8 DOWNTO 0));
+	wire_cmpr4_datab <= ( wire_pgwr_data_cntr_q(8 DOWNTO 0));
+	cmpr4 :  lpm_compare
+	  GENERIC MAP (
+		LPM_WIDTH => 9
+	  )
+	  PORT MAP ( 
+		aeb => wire_cmpr4_aeb,
+		dataa => wire_cmpr4_dataa,
+		datab => wire_cmpr4_datab
+	  );
+	wire_cmpr5_dataa <= ( wire_pgwr_data_cntr_q(8 DOWNTO 0));
+	wire_cmpr5_datab <= ( wire_pgwr_read_cntr_q(8 DOWNTO 0));
 	cmpr5 :  lpm_compare
 	  GENERIC MAP (
 		LPM_WIDTH => 9
@@ -3170,27 +3168,16 @@
 		dataa => wire_cmpr5_dataa,
 		datab => wire_cmpr5_datab
 	  );
-	wire_cmpr6_dataa <= ( wire_pgwr_data_cntr_q(8 DOWNTO 0));
-	wire_cmpr6_datab <= ( wire_pgwr_read_cntr_q(8 DOWNTO 0));
-	cmpr6 :  lpm_compare
-	  GENERIC MAP (
-		LPM_WIDTH => 9
-	  )
-	  PORT MAP ( 
-		aeb => wire_cmpr6_aeb,
-		dataa => wire_cmpr6_dataa,
-		datab => wire_cmpr6_datab
-	  );
-	wire_pgwr_data_cntr_clk_en <= wire_w612w(0);
-	wire_w612w(0) <= (((shift_bytes_wire AND wren_wire) AND wire_w_lg_reach_max_cnt609w(0)) AND wire_w_lg_do_write565w(0)) OR clr_write_wire2;
-	wire_pgwr_data_cntr_w_q_range616w(0) <= wire_pgwr_data_cntr_q(1);
-	wire_pgwr_data_cntr_w_q_range619w(0) <= wire_pgwr_data_cntr_q(2);
-	wire_pgwr_data_cntr_w_q_range622w(0) <= wire_pgwr_data_cntr_q(3);
-	wire_pgwr_data_cntr_w_q_range625w(0) <= wire_pgwr_data_cntr_q(4);
-	wire_pgwr_data_cntr_w_q_range628w(0) <= wire_pgwr_data_cntr_q(5);
-	wire_pgwr_data_cntr_w_q_range631w(0) <= wire_pgwr_data_cntr_q(6);
-	wire_pgwr_data_cntr_w_q_range634w(0) <= wire_pgwr_data_cntr_q(7);
-	wire_pgwr_data_cntr_w_q_range637w(0) <= wire_pgwr_data_cntr_q(8);
+	wire_pgwr_data_cntr_clk_en <= wire_w610w(0);
+	wire_w610w(0) <= (((shift_bytes_wire AND wren_wire) AND wire_w_lg_reach_max_cnt607w(0)) AND wire_w_lg_do_write563w(0)) OR clr_write_wire2;
+	wire_pgwr_data_cntr_w_q_range614w(0) <= wire_pgwr_data_cntr_q(1);
+	wire_pgwr_data_cntr_w_q_range617w(0) <= wire_pgwr_data_cntr_q(2);
+	wire_pgwr_data_cntr_w_q_range620w(0) <= wire_pgwr_data_cntr_q(3);
+	wire_pgwr_data_cntr_w_q_range623w(0) <= wire_pgwr_data_cntr_q(4);
+	wire_pgwr_data_cntr_w_q_range626w(0) <= wire_pgwr_data_cntr_q(5);
+	wire_pgwr_data_cntr_w_q_range629w(0) <= wire_pgwr_data_cntr_q(6);
+	wire_pgwr_data_cntr_w_q_range632w(0) <= wire_pgwr_data_cntr_q(7);
+	wire_pgwr_data_cntr_w_q_range635w(0) <= wire_pgwr_data_cntr_q(8);
 	pgwr_data_cntr :  lpm_counter
 	  GENERIC MAP (
 		lpm_direction => "UP",
@@ -3204,8 +3191,8 @@
 		q => wire_pgwr_data_cntr_q,
 		sclr => clr_write_wire2
 	  );
-	wire_pgwr_read_cntr_clk_en <= wire_w_lg_read_buf791w(0);
-	wire_w_lg_read_buf791w(0) <= read_buf OR clr_write_wire2;
+	wire_pgwr_read_cntr_clk_en <= wire_w_lg_read_buf789w(0);
+	wire_w_lg_read_buf789w(0) <= read_buf OR clr_write_wire2;
 	pgwr_read_cntr :  lpm_counter
 	  GENERIC MAP (
 		lpm_direction => "UP",
@@ -3219,11 +3206,11 @@
 		q => wire_pgwr_read_cntr_q,
 		sclr => clr_write_wire2
 	  );
-	wire_read_add_cntr_clk_en <= wire_w_lg_w_lg_w_lg_rden_wire518w519w520w(0);
-	wire_w_lg_w_lg_w_lg_rden_wire518w519w520w(0) <= ((rden_wire AND not_busy) OR data_valid_wire) OR add_rollover;
+	wire_read_add_cntr_clk_en <= wire_w_lg_w_lg_w_lg_rden_wire516w517w518w(0);
+	wire_w_lg_w_lg_w_lg_rden_wire516w517w518w(0) <= ((rden_wire AND not_busy) OR data_valid_wire) OR add_rollover;
 	wire_read_add_cntr_data <= ( "0" & addr(23 DOWNTO 0));
-	wire_read_add_cntr_sload <= wire_w_lg_rden_wire518w(0);
-	wire_w_lg_rden_wire518w(0) <= rden_wire AND not_busy;
+	wire_read_add_cntr_sload <= wire_w_lg_rden_wire516w(0);
+	wire_w_lg_rden_wire516w(0) <= rden_wire AND not_busy;
 	read_add_cntr :  lpm_counter
 	  GENERIC MAP (
 		lpm_direction => "UP",
@@ -3241,14 +3228,14 @@
 	  );
 	wire_mux211_dataout <= end1_cyc_dlyncs_in_wire WHEN ((((do_write OR do_sec_prot) OR do_sec_erase) OR do_bulk_erase) OR do_die_erase) = '1'  ELSE end1_cyc_normal_in_wire;
 	wire_mux212_dataout <= end_add_cycle_mux_datab_wire WHEN do_fast_read = '1'  ELSE wire_addbyte_cntr_w_lg_w_q_range174w179w(0);
-	wire_scfifo4_data <= ( datain(7 DOWNTO 0));
-	wire_scfifo4_rdreq <= wire_w_lg_read_buf595w(0);
-	wire_w_lg_read_buf595w(0) <= read_buf OR dummy_read_buf;
-	wire_scfifo4_wrreq <= wire_w_lg_w_lg_shift_bytes_wire593w594w(0);
-	wire_w_lg_w_lg_shift_bytes_wire593w594w(0) <= (shift_bytes_wire AND wren_wire) AND wire_w_lg_do_write565w(0);
-	wire_scfifo4_w_q_range601w <= wire_scfifo4_q(7 DOWNTO 1);
-	wire_scfifo4_w_q_range606w(0) <= wire_scfifo4_q(0);
-	scfifo4 :  scfifo
+	wire_scfifo3_data <= ( datain(7 DOWNTO 0));
+	wire_scfifo3_rdreq <= wire_w_lg_read_buf593w(0);
+	wire_w_lg_read_buf593w(0) <= read_buf OR dummy_read_buf;
+	wire_scfifo3_wrreq <= wire_w_lg_w_lg_shift_bytes_wire591w592w(0);
+	wire_w_lg_w_lg_shift_bytes_wire591w592w(0) <= (shift_bytes_wire AND wren_wire) AND wire_w_lg_do_write563w(0);
+	wire_scfifo3_w_q_range599w <= wire_scfifo3_q(7 DOWNTO 1);
+	wire_scfifo3_w_q_range604w(0) <= wire_scfifo3_q(0);
+	scfifo3 :  scfifo
 	  GENERIC MAP (
 		LPM_NUMWORDS => 258,
 		LPM_WIDTH => 8,
@@ -3258,24 +3245,14 @@
 	  PORT MAP ( 
 		aclr => reset,
 		clock => clkin_wire,
-		data => wire_scfifo4_data,
-		q => wire_scfifo4_q,
-		rdreq => wire_scfifo4_rdreq,
+		data => wire_scfifo3_data,
+		q => wire_scfifo3_q,
+		rdreq => wire_scfifo3_rdreq,
 		sclr => clr_write_wire2,
-		wrreq => wire_scfifo4_wrreq
-	  );
-	wire_stratixii_asmiblock3_sdoin <= wire_w_lg_sdoin_wire357w(0);
-	wire_w_lg_sdoin_wire357w(0) <= sdoin_wire OR datain_wire(0);
-	stratixii_asmiblock3 :  arriaii_asmiblock
-	  PORT MAP ( 
-		data0out => wire_stratixii_asmiblock3_data0out,
-		dclkin => clkin_wire,
-		oe => oe_wire,
-		scein => scein_wire,
-		sdoin => wire_stratixii_asmiblock3_sdoin
+		wrreq => wire_scfifo3_wrreq
 	  );
 
- END RTL; --altasmi_altasmi_parallel_lvu2
+ END RTL; --altasmi_altasmi_parallel_di43
 --VALID FILE
 
 
@@ -3286,6 +3263,7 @@ ENTITY altasmi IS
 	PORT
 	(
 		addr		: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
+		asmi_dataout		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
 		clkin		: IN STD_LOGIC ;
 		datain		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		fast_read		: IN STD_LOGIC ;
@@ -3296,6 +3274,10 @@ ENTITY altasmi IS
 		sector_erase		: IN STD_LOGIC ;
 		shift_bytes		: IN STD_LOGIC ;
 		write		: IN STD_LOGIC ;
+		asmi_dataoe		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
+		asmi_dclk		: OUT STD_LOGIC ;
+		asmi_scein		: OUT STD_LOGIC ;
+		asmi_sdoin		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
 		busy		: OUT STD_LOGIC ;
 		data_valid		: OUT STD_LOGIC ;
 		dataout		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -3315,21 +3297,26 @@ ARCHITECTURE RTL OF altasmi IS
 	ATTRIBUTE clearbox_macroname: string;
 	ATTRIBUTE clearbox_macroname OF RTL: ARCHITECTURE IS "ALTASMI_PARALLEL";
 	ATTRIBUTE clearbox_defparam: string;
-	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "data_width=STANDARD;enable_sim=FALSE;epcs_type=EPCS128;flash_rstpin=FALSE;intended_device_family=Arria II GX;lpm_hint=UNUSED;lpm_type=altasmi_parallel;page_size=256;port_bulk_erase=PORT_UNUSED;port_die_erase=PORT_UNUSED;port_en4b_addr=PORT_UNUSED;port_ex4b_addr=PORT_UNUSED;port_fast_read=PORT_USED;port_illegal_erase=PORT_USED;port_illegal_write=PORT_USED;port_rdid_out=PORT_USED;port_read_address=PORT_USED;port_read_dummyclk=PORT_UNUSED;port_read_rdid=PORT_USED;port_read_sid=PORT_UNUSED;port_read_status=PORT_USED;port_sector_erase=PORT_USED;port_sector_protect=PORT_UNUSED;port_shift_bytes=PORT_USED;port_wren=PORT_UNUSED;port_write=PORT_USED;use_asmiblock=ON;use_eab=ON;write_dummy_clk=0;";
-	SIGNAL sub_wire0	: STD_LOGIC ;
+	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "data_width=STANDARD;enable_sim=FALSE;epcs_type=EPCS128;flash_rstpin=FALSE;intended_device_family=Arria II GX;lpm_hint=UNUSED;lpm_type=altasmi_parallel;page_size=256;port_bulk_erase=PORT_UNUSED;port_die_erase=PORT_UNUSED;port_en4b_addr=PORT_UNUSED;port_ex4b_addr=PORT_UNUSED;port_fast_read=PORT_USED;port_illegal_erase=PORT_USED;port_illegal_write=PORT_USED;port_rdid_out=PORT_USED;port_read_address=PORT_USED;port_read_dummyclk=PORT_UNUSED;port_read_rdid=PORT_USED;port_read_sid=PORT_UNUSED;port_read_status=PORT_USED;port_sector_erase=PORT_USED;port_sector_protect=PORT_UNUSED;port_shift_bytes=PORT_USED;port_wren=PORT_UNUSED;port_write=PORT_USED;use_asmiblock=OFF;use_eab=ON;write_dummy_clk=0;";
+	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (0 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC ;
-	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (7 DOWNTO 0);
-	SIGNAL sub_wire3	: STD_LOGIC ;
+	SIGNAL sub_wire2	: STD_LOGIC ;
+	SIGNAL sub_wire3	: STD_LOGIC_VECTOR (0 DOWNTO 0);
 	SIGNAL sub_wire4	: STD_LOGIC ;
-	SIGNAL sub_wire5	: STD_LOGIC_VECTOR (7 DOWNTO 0);
-	SIGNAL sub_wire6	: STD_LOGIC_VECTOR (23 DOWNTO 0);
-	SIGNAL sub_wire7	: STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire5	: STD_LOGIC ;
+	SIGNAL sub_wire6	: STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire7	: STD_LOGIC ;
+	SIGNAL sub_wire8	: STD_LOGIC ;
+	SIGNAL sub_wire9	: STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire10	: STD_LOGIC_VECTOR (23 DOWNTO 0);
+	SIGNAL sub_wire11	: STD_LOGIC_VECTOR (7 DOWNTO 0);
 
 
 
-	COMPONENT altasmi_altasmi_parallel_lvu2
+	COMPONENT altasmi_altasmi_parallel_di43
 	PORT (
 			addr	: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
+			asmi_dataout	: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
 			clkin	: IN STD_LOGIC ;
 			datain	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			fast_read	: IN STD_LOGIC ;
@@ -3340,6 +3327,10 @@ ARCHITECTURE RTL OF altasmi IS
 			sector_erase	: IN STD_LOGIC ;
 			shift_bytes	: IN STD_LOGIC ;
 			write	: IN STD_LOGIC ;
+			asmi_dataoe	: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
+			asmi_dclk	: OUT STD_LOGIC ;
+			asmi_scein	: OUT STD_LOGIC ;
+			asmi_sdoin	: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
 			busy	: OUT STD_LOGIC ;
 			data_valid	: OUT STD_LOGIC ;
 			dataout	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -3352,18 +3343,23 @@ ARCHITECTURE RTL OF altasmi IS
 	END COMPONENT;
 
 BEGIN
-	busy    <= sub_wire0;
-	data_valid    <= sub_wire1;
-	dataout    <= sub_wire2(7 DOWNTO 0);
-	illegal_erase    <= sub_wire3;
-	illegal_write    <= sub_wire4;
-	rdid_out    <= sub_wire5(7 DOWNTO 0);
-	read_address    <= sub_wire6(23 DOWNTO 0);
-	status_out    <= sub_wire7(7 DOWNTO 0);
+	asmi_dataoe    <= sub_wire0(0 DOWNTO 0);
+	asmi_dclk    <= sub_wire1;
+	asmi_scein    <= sub_wire2;
+	asmi_sdoin    <= sub_wire3(0 DOWNTO 0);
+	busy    <= sub_wire4;
+	data_valid    <= sub_wire5;
+	dataout    <= sub_wire6(7 DOWNTO 0);
+	illegal_erase    <= sub_wire7;
+	illegal_write    <= sub_wire8;
+	rdid_out    <= sub_wire9(7 DOWNTO 0);
+	read_address    <= sub_wire10(23 DOWNTO 0);
+	status_out    <= sub_wire11(7 DOWNTO 0);
 
-	altasmi_altasmi_parallel_lvu2_component : altasmi_altasmi_parallel_lvu2
+	altasmi_altasmi_parallel_di43_component : altasmi_altasmi_parallel_di43
 	PORT MAP (
 		addr => addr,
+		asmi_dataout => asmi_dataout,
 		clkin => clkin,
 		datain => datain,
 		fast_read => fast_read,
@@ -3374,14 +3370,18 @@ BEGIN
 		sector_erase => sector_erase,
 		shift_bytes => shift_bytes,
 		write => write,
-		busy => sub_wire0,
-		data_valid => sub_wire1,
-		dataout => sub_wire2,
-		illegal_erase => sub_wire3,
-		illegal_write => sub_wire4,
-		rdid_out => sub_wire5,
-		read_address => sub_wire6,
-		status_out => sub_wire7
+		asmi_dataoe => sub_wire0,
+		asmi_dclk => sub_wire1,
+		asmi_scein => sub_wire2,
+		asmi_sdoin => sub_wire3,
+		busy => sub_wire4,
+		data_valid => sub_wire5,
+		dataout => sub_wire6,
+		illegal_erase => sub_wire7,
+		illegal_write => sub_wire8,
+		rdid_out => sub_wire9,
+		read_address => sub_wire10,
+		status_out => sub_wire11
 	);
 
 
@@ -3419,11 +3419,21 @@ END RTL;
 -- Retrieval info: CONSTANT: PORT_SHIFT_BYTES STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_WREN STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_WRITE STRING "PORT_USED"
--- Retrieval info: CONSTANT: USE_ASMIBLOCK STRING "ON"
+-- Retrieval info: CONSTANT: USE_ASMIBLOCK STRING "OFF"
 -- Retrieval info: CONSTANT: USE_EAB STRING "ON"
 -- Retrieval info: CONSTANT: WRITE_DUMMY_CLK NUMERIC "0"
 -- Retrieval info: USED_PORT: addr 0 0 24 0 INPUT NODEFVAL "addr[23..0]"
 -- Retrieval info: CONNECT: @addr 0 0 24 0 addr 0 0 24 0
+-- Retrieval info: USED_PORT: asmi_dataoe 0 0 1 0 OUTPUT NODEFVAL "asmi_dataoe[0..0]"
+-- Retrieval info: CONNECT: asmi_dataoe 0 0 1 0 @asmi_dataoe 0 0 1 0
+-- Retrieval info: USED_PORT: asmi_dataout 0 0 1 0 INPUT NODEFVAL "asmi_dataout[0..0]"
+-- Retrieval info: CONNECT: @asmi_dataout 0 0 1 0 asmi_dataout 0 0 1 0
+-- Retrieval info: USED_PORT: asmi_dclk 0 0 0 0 OUTPUT NODEFVAL "asmi_dclk"
+-- Retrieval info: CONNECT: asmi_dclk 0 0 0 0 @asmi_dclk 0 0 0 0
+-- Retrieval info: USED_PORT: asmi_scein 0 0 0 0 OUTPUT NODEFVAL "asmi_scein"
+-- Retrieval info: CONNECT: asmi_scein 0 0 0 0 @asmi_scein 0 0 0 0
+-- Retrieval info: USED_PORT: asmi_sdoin 0 0 1 0 OUTPUT NODEFVAL "asmi_sdoin[0..0]"
+-- Retrieval info: CONNECT: asmi_sdoin 0 0 1 0 @asmi_sdoin 0 0 1 0
 -- Retrieval info: USED_PORT: busy 0 0 0 0 OUTPUT NODEFVAL "busy"
 -- Retrieval info: CONNECT: busy 0 0 0 0 @busy 0 0 0 0
 -- Retrieval info: USED_PORT: clkin 0 0 0 0 INPUT NODEFVAL "clkin"
@@ -3465,4 +3475,4 @@ END RTL;
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.bsf FALSE TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi_inst.vhd FALSE TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.inc FALSE TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.cmp FALSE TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.cmp TRUE TRUE
