@@ -161,12 +161,12 @@ begin
      dataout      => s_dataout,
      rdid_out     => s_rdid_out,
      status_out   => s_status_out,
-     read_address => s_read_addr
-     --asmi_dataout => flash_data,
-     --asmi_sdoin   => flash_asdo,
-     --asmi_dataoe  => flash_oe,
-     --asmi_dclk    => flash_dclk,
-     --asmi_scein   => flash_ncs
+     read_address => s_read_addr,
+     asmi_dataout => flash_data,
+     asmi_sdoin   => flash_asdo,
+     asmi_dataoe  => flash_oe,
+     asmi_dclk    => flash_dclk,
+     asmi_scein   => flash_ncs
      
      
      );
