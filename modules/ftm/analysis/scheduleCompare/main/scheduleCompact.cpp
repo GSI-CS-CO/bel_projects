@@ -27,6 +27,9 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     VertexNum chainBegin = ULONG_MAX;
     VertexNum chainEnd = ULONG_MAX;
     BOOST_FOREACH (VertexDescriptor v, vertices(graph1)) {
+      if (graph1[v].label.size() == 0) {
+        graph1[v].label = graph1[v].name;
+      }
       if (boost::in_degree(v, graph1) <= 1 && boost::out_degree(v, graph1) <= 1) {
         candidateList.insert(v);
       }
