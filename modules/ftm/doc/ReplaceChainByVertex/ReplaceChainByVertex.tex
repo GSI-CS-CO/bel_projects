@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2023-01-19}
+\Large{Last change: 2023-01-24}
 \end{center}
 \vfill
 \end{titlepage}
@@ -128,6 +128,64 @@ may be placed differently than the underlying chain in the new graph drawing.
 \end{enumerate}
 
 \chapter{Algorithm}
+This algorithm replaces a maximal chain with a new vertex with two edges. To replaces all chains,
+run this algorithm until no more chains are detected.
+\section{Check that a vertex is replaced}
+\subsection{Find start of chain}
+For a vertex $v$ we use the conditions $|In(v)| = 0$, $|In(v)| = 1$, $|In(v)| > 1$,
+$|Out(v)| = 0$, $|Out(v)| = 1$, $|Out(v)| > 1$. Thus we have nine cases to check.
+
+'go to next vertex' means test next vertex in the numbering of the vertices.
+
+For all vertices $v \in V(G)$ do
+\begin{enumerate}
+\item If $|In(v)| = 0$ and $|Out(v)| = 0$ then $v$ is an isolated vertex. Go to next vertex.
+\item If $|In(v)| = 1$ and $|Out(v)| = 0$ then $v$ is the end of a chain. If $p(v)$ in chain, go to $p(v)$. Otherwise go to next vertex.
+\item If $|In(v)| > 1$ and $|Out(v)| = 0$ then $v$ is not in a chain. Go to next vertex.
+\item If $|In(v)| = 0$ and $|Out(v)| = 1$ then $v$ is the start of a chain. Break loop and go to next step.
+\item If $|In(v)| = 1$ and $|Out(v)| = 1$ then $v$ is in a chain. If $p(v)$ in chain, go to $p(v)$. Otherwise $v$ is start of chain. Break loop and go to next step.
+\item If $|In(v)| > 1$ and $|Out(v)| = 1$ then $v$ is not in a chain. Go to next vertex.
+\item If $|In(v)| = 0$ and $|Out(v)| > 1$ then $v$ is not in a chain. Go to next vertex.
+\item If $|In(v)| = 1$ and $|Out(v)| > 1$ then $v$ is not in a chain. Go to next vertex.
+\item If $|In(v)| > 1$ and $|Out(v)| > 1$ then $v$ is not in a chain. Go to next vertex.
+\end{enumerate}
+Simplyfing the cases yields:
+
+For all vertices $e \in V(G)$ do
+\begin{enumerate}
+\item If ($|In(v)| = 0$ and $|Out(v)| = 0$) or $|In(v)| > 1$ or $|Out(v)| > 1$ go to next vertex.
+\item If $|In(v)| = 1$ and $|Out(v)| = 0$ then $v$ is the end of a chain. If $p(v)$ in chain, go to $p(v)$. Otherwise go to next vertex.
+\item If $|In(v)| = 0$ and $|Out(v)| = 1$ then $v$ is the start of a chain. Break loop and go to next step.
+\item If $|In(v)| = 1$ and $|Out(v)| = 1$ then $v$ is in a chain. If $p(v)$ in chain, go to $p(v)$. Otherwise $v$ is start of chain. Break loop and go to next step.
+\end{enumerate}
+
+\subsection{Test that a vertex can be replaced}
+Vertex $v$ is start of chain ($|In(v)| \le 1$ and $|Out(v)| = 1$). Since the successor
+$s = s(v)$ is unique, test $s$. If $|In(s)| = 1$ and $|Out(s)| \le 1$ then $s$
+is in this chain and $v$ can be deleted. Do the actions for $v$ and apply
+this test to $s$.
+
+\subsection{Actions}
+Add vertex $v$ to the set of vertices to delete.
+
+If $v$ is start of chain, create a new vertex $n$ and copy the properties from $v$.
+If a predecessor $p = p(v)$ exists, create a new edge $(p,n)$ and copy
+the properties from $(p,v)$.
+
+If $v$ is the end of chain and a successor $s = s(v)$ exists, create a
+new edge $(n,s)$ and copy the properties from $(v,s)$.
+
+\section{Replace a Chain by a Vertex with two edges}
+The order of the operations is important since deletion of a vertex changes
+the numbering of the vertex set and this may destroy the structure of the graph.
+
+\begin{enumerate}
+\item Add the new vertex $n$ to $G$.
+\item Add the new edges $(p,n)$ and $(n,s)$.
+\item For all vertices in the chain delete the edges into and out of this vertex.
+\item For all vertices in the chain delete the vertex itself. This has to be done
+in reverse order of the numbering.
+\end{enumerate}
 
 \chapter{Examples}
 The original schedule in the integration environment is shown in three parts in~\ref{fig:tsl020-1},
@@ -157,8 +215,108 @@ The compacted schedule is shown in~\ref{fig:tsl020-compact}.
         \caption{Schedule from integration environment, chains replaced}
         \label{fig:tsl020-compact}
     \end{figure}
-
+These figures give a brief idea of the achievements of this method to
+replace chains by vertices. The analysis of the structure can be done
+with tools like \texttt{xdot}, where you can zoom into the graph. The original
+schedule has $1057$ vertices and $1173$ edges. The compacted schedule
+has $177$ vertices and $293$ edges.
 
 \chapter{Tests}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{chain1.pdf}
+        \caption{Schedule with one-element chain. Nothing to replace.}
+        \label{fig:chain1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{chain3.pdf}
+        \caption{Schedule with one three-element chain. The chain is replaced by one vertex.}
+        \label{fig:chain3}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{chain3-compact.pdf}
+        \caption{Schedule with one three-element chain compacted.}
+        \label{fig:chain3-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{chain2x3.pdf}
+        \caption{Schedule with two three-element chains. Both chains are replaced by one vertex.}
+        \label{fig:chain2x3}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{chain2x3-compact.pdf}
+        \caption{Schedule with two three-element chains compacted.}
+        \label{fig:chain2x3-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{cycle3.pdf}
+        \caption{Schedule with one three-element cycle. The cycle is replaced by a two-element cycle.}
+        \label{fig:cycle3}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{cycle3-compact.pdf}
+        \caption{Schedule with one three-element cycle compacted.}
+        \label{fig:cycle3-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{cycle2x3.pdf}
+        \caption{Schedule with two three-element cycles. Both cycles are replaced by one vertex.}
+        \label{fig:cycle2x3}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{cycle2x3-compact.pdf}
+        \caption{Schedule with two three-element cycles compacted.}
+        \label{fig:cycle2x3-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel1.pdf}
+        \caption{Schedule with a parallel chain with one element. Nothing to replace}
+        \label{fig:parallel1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel1x2.pdf}
+        \caption{Schedule with a parallel chain with two elements.}
+        \label{fig:parallel1x2}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel1x2-compact.pdf}
+        \caption{Schedule with a parallel chain with two elements compacted.}
+        \label{fig:parallel1x2-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel2.pdf}
+        \caption{Schedule with two one-element chains. Nothing to replace.}
+        \label{fig:parallel2}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel2x2.pdf}
+        \caption{Schedule with two parallel chains with two elements.}
+        \label{fig:parallel2x2}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{parallel2x2-compact.pdf}
+        \caption{Schedule with two parallel chains with two elements compacted.}
+        \label{fig:parallel2x2-compact}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.45\textwidth,keepaspectratio]{star4.pdf}
+        \caption{Schedule with a four-element star. Nothing to replace.}
+        \label{fig:star4}
+    \end{figure}
 
 \end{document}

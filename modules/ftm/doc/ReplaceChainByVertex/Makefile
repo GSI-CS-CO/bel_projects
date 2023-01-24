@@ -1,4 +1,8 @@
-PDFs = tsl020.pdf tsl020-compact.pdf
+PDFs = tsl020.pdf tsl020-compact.pdf chain1.pdf chain2x3.pdf chain3.pdf \
+	cycle2x3.pdf cycle3.pdf parallel1.pdf parallel2.pdf parallel1x2.pdf \
+	parallel2x2.pdf star4.pdf \
+	chain3-compact.pdf chain2x3-compact.pdf cycle3-compact.pdf \
+	cycle2x3-compact.pdf parallel1x2-compact.pdf parallel2x2-compact.pdf
 
 all: ReplaceChainByVertex
 
