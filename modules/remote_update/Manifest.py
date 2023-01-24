@@ -14,7 +14,8 @@ files = [
   "asmi5/asmi5/synthesis/asmi5.vhd",
   "asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v",
   "asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd",
-  "asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v"
+  "asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v",
+  "altasmi.vhd"
 ]
 
 modules = {"local": __helper() }
