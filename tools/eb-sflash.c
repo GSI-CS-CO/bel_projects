@@ -280,6 +280,7 @@ int main(int argc, char * const* argv) {
   int rflag = 0;
   char *vvalue = NULL; 
   char *svalue = NULL;
+  char *evalue = NULL;
   int bflag = 0;
   int tflag = 0;
   int index;
@@ -291,7 +292,7 @@ int main(int argc, char * const* argv) {
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "s:w:rv:bth")) != -1)
+  while ((c = getopt (argc, argv, "s:w:rv:bthe:")) != -1)
     switch (c)
       {
       case 'w':
@@ -315,6 +316,10 @@ int main(int argc, char * const* argv) {
       case 'h':
         show_help();
         exit(1);
+
+      case 'e':
+        evalue = optarg;
+        break;
       case '?':
         if (optopt == 'w' || optopt == 'v' || optopt == 's')
           fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -498,6 +503,40 @@ int main(int argc, char * const* argv) {
     }
     fclose(fp);
     printf("New image written to epcs.\n");
+  }
+
+  // erase needed sectors
+  if (evalue != NULL) {
+    if ((fp = fopen(evalue, "r")) == NULL) {
+      printf("open of programming file not successful.\n");
+      exit(1);
+    }
+    struct stat buf;
+    stat(evalue, &buf);
+    int size = buf.st_size;
+    int pages_in_file, needed_sectors;
+    if (size % PAGE_SIZE) {
+      printf("size of programming file is not a multiple of %d\n", PAGE_SIZE);
+      exit(1);
+    }
+    printf("filesize: %d bytes\n", size);
+
+    //how many sectors need to be erased?
+    pages_in_file = size / PAGE_SIZE;
+    printf("%d page(s)\n", pages_in_file);
+    needed_sectors = pages_in_file / PAGES_PER_SECTOR;
+    if (pages_in_file % PAGES_PER_SECTOR)
+      needed_sectors += 1;
+    printf("%d sector(s) will be erased.\n", needed_sectors);  
+   
+    //delete sector
+    for (i = 0; i < needed_sectors; i++) {
+      printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
+      fflush(stdout);
+      erase_asmi_sector(slave_id, i * PAGE_SIZE * PAGES_PER_SECTOR);
+    }
+    printf("%d sectors erased.                \n", needed_sectors);
+ 
   }
 
   //read page
