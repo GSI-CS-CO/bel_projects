@@ -95,3 +95,13 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a schedule from tsl020.
     """
     self.replaceChain('replaceChain/tsl020-sis100.dot', 4)
+
+  def test_compactGitLog(self):
+    """Compact a graph from git log.
+    """
+    self.replaceChain('replaceChain/git-dot.dot', 616)
+
+  def test_compactGitLog50(self):
+    """Compact a graph from git log.
+    """
+    self.replaceChain('replaceChain/git-dot-50.dot', 7)
