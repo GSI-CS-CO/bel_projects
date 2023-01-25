@@ -1,16 +1,14 @@
-#include "scheduleCompare.h"
+#include "replaceChain.h"
 
 #include <stdio.h>
 #include <unistd.h>
-
-#include "scheduleIsomorphism.h"
 
 int main(int argc, char* argv[]) {
   int error = 0;
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chnstv")) != -1) {
+  while ((opt = getopt(argc, argv, "c:hsv")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -33,14 +31,8 @@ int main(int argc, char* argv[]) {
         usage(program);
         error = USAGE_MESSAGE;
         break;
-      case 'n':
-        config.compareNames = false;
-        break;
       case 'c':
-        config.check = true;
-        break;
-      case 't':
-        config.test = true;
+        config.chainCount = atoi(optarg);
         break;
       default:
         std::cerr << program << ": bad option " << std::endl;
@@ -55,38 +47,50 @@ int main(int argc, char* argv[]) {
       usage(program);
       return USAGE_MESSAGE;
     } else {
-      if (config.test) {
-        return testSingleGraph(std::string(argv[argc - 1]), config);
-      } else {
-        // use the last two arguments for the dot files after getopt permuted the arguments.
-        return scheduleIsomorphic(std::string(argv[argc - 2]), std::string(argv[argc - 1]), config);
-      }
+      return compactSingleGraph(std::string(argv[argc - 1]), config);
     }
   }
 }
 
+int compactSingleGraph(std::string dotFile1, configuration& config) {
+  ScheduleGraph graph1;
+  bool parse1 = false;
+  int result = -1;
+  try {
+    config.extraProperties = true;
+    boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
+    parse1 = parseSchedule(dotFile1, graph1, dp1, config);
+    printSchedule("Graph:", graph1, dp1, config);
+  } catch (boost::property_not_found &excep) {
+    std::cerr << "Parsing graph: Property not found" << excep.what() << std::endl;
+    result = PARSE_ERROR;
+  } catch (boost::bad_graphviz_syntax &excep) {
+    std::cerr << "Parsing graph: Bad Graphviz syntax: " << excep.what() << std::endl;
+    result = PARSE_ERROR_GRAPHVIZ;
+  }
+  if (parse1) {
+    return compactGraph(graph1, config);
+  } else {
+    return (result == -1) ? FILE_NOT_FOUND : result;
+  }
+}
+
 void usage(char* program) {
-  std::cerr << "Usage: " << program << " <dot file 1> <dot file 2>" << std::endl;
-  std::cerr << "Checks that graphs in <dot file 1> and <dot file 2> are isomorphic, i.e. describe the same schedule." << std::endl;
+  std::cerr << "Usage: " << program << " <dot file>" << std::endl;
+  std::cerr << "Replace chains in the schedule graph with a single vertex." << std::endl;
   std::cerr << "Options: " << std::endl;
-  std::cerr << "        -c: check dot syntax (stops parsing on all unknown attributes)." << std::endl;
+  std::cerr << "        -c <n>: optional, replace n chains. Default is to replace all chains." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
-  std::cerr << "        -n: do not compare names of vertices. Not applicable with option -t." << std::endl;
   std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
-  std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "Return codes: " << std::endl;
-  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
-  std::cerr << NOT_ISOMORPHIC << " NOT_ISOMORPHIC, graphs are not isomorphic." << std::endl;
-  std::cerr << SUBGRAPH_ISOMORPHIC << " SUBGRAPH_ISOMORPHIC, graph is isomorphic to a subgraph of the larger graph." << std::endl;
+  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, chains are replaced." << std::endl;
   std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
   std::cerr << MISSING_ARGUMENT << " MISSING_ARGUMENT, at least one of the file names is missing." << std::endl;
   std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
   std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
   std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
-  std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
-  std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
 }

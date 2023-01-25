@@ -30,7 +30,11 @@ STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 .PHONY: clean format doc test
 
-scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o scheduleCompact.o
+all: scheduleCompare replaceChain
+
+replaceChain: replaceChain.o scheduleCompact.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
+
+scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
 
 scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h
 
@@ -44,13 +48,16 @@ ScheduleVertex.o: ScheduleVertex.h
 
 ScheduleEdge.o: ScheduleEdge.h
 
+ScheduleGraph.o: ScheduleGraph.h
+
 scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
 
-install: scheduleCompare
+install: scheduleCompare replaceChain
 	cp scheduleCompare $(INSTALLPATH)
+	cp replaceChain $(INSTALLPATH)
 
 clean:
-	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare
+	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare replaceChain
 
 format:
 	for i in *.h   ; do clang-format-10 $(STYLE) -i $$i; done
@@ -60,5 +67,5 @@ doc:
 	$(MAKE) -C ../doc/
 
 test:
-	$(MAKE) scheduleCompare
+	$(MAKE) scheduleCompare replaceChain
 	$(MAKE) -C ../test/

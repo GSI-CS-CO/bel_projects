@@ -2,15 +2,22 @@ import common_scheduleCompare
 import subprocess
 import difflib
 import pathlib
+import os
 
-"""Class tests compact operation (-p) of scheduleCompare.
+"""Class tests replace chain operation of replaceChain.
 """
-class TestCompactGraph(common_scheduleCompare.CommonScheduleCompare):
-
-  def callScheduleCompareCompact(self, arguments, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
+  @classmethod
+  def setUpClass(self):
     """
-    Common method for test cases: run scheduleCompare.
-    Start scheduleCompare with the arguments and check the output on stdout and stderr and the return code as well.
+    Set up for all test cases: store the environment variables in variables.
+    """
+    self.binary = os.environ.get('TEST_BINARY_SCHEDULECOMPARE', 'scheduleCompare').replace("scheduleCompare", "replaceChain")
+
+  def callReplaceChain(self, arguments, expectedReturnCode=-1, linesCout=-1, linesCerr=-1):
+    """
+    Common method for test cases: run replaceChain.
+    Start replaceChain with the arguments and check the output on stdout and stderr and the return code as well.
     """
     # pass cmd and args to the function
     process = subprocess.Popen([*arguments], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -52,40 +59,48 @@ class TestCompactGraph(common_scheduleCompare.CommonScheduleCompare):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/chain1.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactChain3(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/chain3.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactCycle3(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/cycle3.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactParallel1(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/parallel1.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=2)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactParallel2(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/parallel2.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=3)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=3)
     self.compareExpectedResult('compact.dot', fileName)
 
   def test_compactStar4(self):
     """Compact a three vertex chain to one vertex.
     """
     fileName = 'compact/star4.dot'
-    self.callScheduleCompareCompact([self.binary, fileName, '-p'], expectedReturnCode=0, linesCerr=0, linesCout=4)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=4)
     self.compareExpectedResult('compact.dot', fileName)
+
+  def test_compactTsl020Sis100(self):
+    """Compact a schedule from tsl020.
+    """
+    fileName = 'compact/tsl020-sis100.dot'
+    fileName1 = 'compact/tsl020-sis100-compact.dot'
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=4)
+    self.compareExpectedResult('compact.dot', fileName1)
