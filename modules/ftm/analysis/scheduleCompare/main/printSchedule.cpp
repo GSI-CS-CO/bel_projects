@@ -52,72 +52,52 @@ private:
 class DynamicPropertiesWriter
 {
 public:
-    DynamicPropertiesWriter(const boost::dynamic_properties& dp) : dp(&dp) {}
+  DynamicPropertiesWriter(const boost::dynamic_properties& dp) : dp(&dp) {}
 
-    template < typename Descriptor >
-    void operator()(std::ostream& out, Descriptor key) const
-    {
-        bool first = true;
-        for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end();
-             ++i)
-        {
-            if (typeid(key) == i->second->key() && i->second->get_string(key).size() > 0)
-            {
-                if (first)
-                    out << " [";
-                else
-                    out << ", ";
-                first = false;
-
-                out << i->first << "="
-                    << boost::escape_dot_string(i->second->get_string(key));
-            }
-        }
-
-        if (!first)
-            out << "]";
+  template < typename Descriptor >
+  void operator()(std::ostream& out, Descriptor key) const {
+    bool first = true;
+    for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end(); ++i) {
+      if (typeid(key) == i->second->key() && i->second->get_string(key).size() > 0) {
+        out << (first ? " [" : ", ");
+        first = false;
+        out << i->first << "=" << boost::escape_dot_string(i->second->get_string(key));
+      }
     }
+    if (!first) {
+      out << "]";
+    }
+  }
 
 private:
-    const boost::dynamic_properties* dp;
+  const boost::dynamic_properties* dp;
 };
 
 class DynamicVertexPropertiesWriter
 {
 public:
-    DynamicVertexPropertiesWriter(
-        const boost::dynamic_properties& dp, const std::string& node_id)
-    : dp(&dp), node_id(&node_id)
-    {
+  DynamicVertexPropertiesWriter(
+      const boost::dynamic_properties& dp, const std::string& node_id)
+  : dp(&dp), node_id(&node_id) {}
+
+  template < typename Descriptor >
+  void operator()(std::ostream& out, Descriptor key) const {
+    bool first = true;
+    for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end(); ++i) {
+      if (typeid(key) == i->second->key() && i->first != *node_id && i->second->get_string(key).size() > 0) {
+        out << (first ? " [" : ", ");
+        first = false;
+        out << i->first << "=" << boost::escape_dot_string(i->second->get_string(key));
+      }
     }
-
-    template < typename Descriptor >
-    void operator()(std::ostream& out, Descriptor key) const
-    {
-        bool first = true;
-        for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end();
-             ++i)
-        {
-            if (typeid(key) == i->second->key() && i->first != *node_id && i->second->get_string(key).size() > 0)
-            {
-                if (first)
-                    out << " [";
-                else
-                    out << ", ";
-                first = false;
-
-                out << i->first << "="
-                    << boost::escape_dot_string(i->second->get_string(key));
-            }
-        }
-
-        if (!first)
-            out << "]";
+    if (!first) {
+        out << "]";
     }
+  }
 
 private:
-    const boost::dynamic_properties* dp;
-    const std::string* node_id;
+  const boost::dynamic_properties* dp;
+  const std::string* node_id;
 };
 
 void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config) {
