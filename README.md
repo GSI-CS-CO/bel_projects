@@ -1,8 +1,53 @@
-bel_projects
-============
+# Project bel_projects
 GSI Timing Gateware and Tools
 
-# Checkout
+# Table of Contents
+- [Build Instructions](#build-instructions)
+  - [Checkout](#checkout)
+  - [First Steps](#first-steps)
+  - [Kernel Drivers](#kernel-drivers)
+  - [Etherbone](#etherbone)
+  - [Tools (Monitoring and EB-Tools)](#tools-monitoring-and-eb-tools)
+  - [Saftlib](#saftlib)
+  - [Build Gateware(s)](#build-gatewares)
+  - [Additional Targets](#additional-targets)
+    - [Check Timing Constraints](#check-timing-constraints)
+    - [Sort QSF Files](#sort-qsf-files)
+- [FAQ and Common Problems](#faq-and-common-problems)
+  - [Synthesis](#synthesis)
+    - [Quartus Version](#quartus-version)
+    - [Library libpng12](#library-libpng12)
+      - [Ubuntu](#ubuntu)
+      - [Mint](#mint)
+      - [Backup Plan](#backup-plan)
+    - [Tool qmegawiz](#tool-qmegawiz)
+    - [Tool qsys-generate](#tool-qsys-generate)
+  - [Build Flow](#build-flow)
+    - [Required Packages](#required-packages)
+    - [Library libmpfr](#library-libmpfr)
+    - [Tool hdlmake](#tool-hdlmake)
+      - [Tool hdlmake not found (Python 2.7)](#tool-hdlmake-not-found-python-27)
+    - [Python not found](#python-not-found)
+    - [Setuptools not found](#setuptools-not-found)
+    - [Compiling Saftlib](#compiling-saftlib)
+    - [CC not found](#cc-not-found)
+  - [Git](#git)
+    - [CAfile](#cafile)
+  - [JTAG and Programming](#jtag-and-programming)
+    - [USB-Blaster Issues](#usb-blaster-issues)
+    - [Altera/Intel USB Blaster](#alteraintel-usb-blaster)
+    - [Xilinx Platform Cable II](#xilinx-platform-cable-ii)
+    - [Arrow USB Programmer](#arrow-usb-programmer)
+    - [Altera/Intel Ethernet Blaster](#alteraintel-ethernet-blaster)
+  - [Timing Receiver](#timing-receiver)
+    - [Commissioning](#commissioning)
+    - [Flashing](#flashing)
+      - [Arria2 Devices](#arria2-devices)
+      - [ArriaV Devices](#arriav-devices)
+      - [Arria10 Devices](#arria10-devices)
+
+# Build Instructions
+## Checkout
 Just clone our project.
 ```
 git clone https://github.com/GSI-CS-CO/bel_projects.git
@@ -82,7 +127,7 @@ Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/d
 #### Mint
 <pre>
 sudo add-apt-repository ppa:linuxuprising/libpng12
-sudo apt update 
+sudo apt update
 sudo apt install libpng12-0
 </pre>
 
@@ -99,8 +144,32 @@ apt-get install python-setuptools
 ./install-hdlmake.sh
 ```
 
+<<<<<<< HEAD
 ### Error (23035): Tcl error: couldn't execute "qsys-generate": no such file or directory
 Adjust your PATH variable like this:
+=======
+#### Backup Plan
+
+You can use a copy from here:
+
+- Ubuntu: res/ubuntu
+- Rocky-9: res/rocky-9
+
+### Tool qmegawiz
+Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
+
+Solution: Change your LC_NUMERIC setting:
+
+```
+export LC_NUMERIC="en_US.UTF-8"
+```
+
+### Tool qsys-generate
+Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or directory
+
+Solution: Adjust your PATH variable like this:
+
+>>>>>>> 0d7702b98 (add libpng12.so for ubuntu-based systems)
 ```
 export QUARTUS=/opt/quartus/
 export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
@@ -123,7 +192,7 @@ sudo apt-get install python-setuptools
 Create a new symlink: sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 
 ### Error: /bin/sh: 1: hdlmake: not found (Python 2.7)
-You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable: 
+You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable:
 ```
 export PATH=$PATH:$HOME/.local/bin
 ```
