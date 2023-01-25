@@ -55,52 +55,43 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     if fileToRemove.exists():
       fileToRemove.unlink()
 
-  def test_compactChain1(self):
-    """Compact a three vertex chain to one vertex.
+  def replaceChain(self, fileName, lines=2):
+    """Replace all chains in the given schedule file.
     """
-    fileName = 'compact/chain1.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
+    self.compareExpectedResult('compact.dot', fileName.replace('.dot', '-chain-1.dot'))
+
+  def test_compactChain1(self):
+    """Compact a one vertex chain to one vertex.
+    """
+    self.replaceChain('replaceChain/chain1.dot')
 
   def test_compactChain3(self):
     """Compact a three vertex chain to one vertex.
     """
-    fileName = 'compact/chain3.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.replaceChain('replaceChain/chain3.dot')
 
   def test_compactCycle3(self):
     """Compact a three vertex chain to one vertex.
     """
-    fileName = 'compact/cycle3.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.replaceChain('replaceChain/cycle3.dot')
 
   def test_compactParallel1(self):
     """Compact a three vertex chain to one vertex.
     """
-    fileName = 'compact/parallel1.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=2)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.replaceChain('replaceChain/parallel1.dot')
 
   def test_compactParallel2(self):
     """Compact a three vertex chain to one vertex.
     """
-    fileName = 'compact/parallel2.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=3)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.replaceChain('replaceChain/parallel2.dot', 3)
 
   def test_compactStar4(self):
     """Compact a three vertex chain to one vertex.
     """
-    fileName = 'compact/star4.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=4)
-    self.compareExpectedResult('compact.dot', fileName)
+    self.replaceChain('replaceChain/star4.dot', 4)
 
   def test_compactTsl020Sis100(self):
     """Compact a schedule from tsl020.
     """
-    fileName = 'compact/tsl020-sis100.dot'
-    fileName1 = 'compact/tsl020-sis100-compact.dot'
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=4)
-    self.compareExpectedResult('compact.dot', fileName1)
+    self.replaceChain('replaceChain/tsl020-sis100.dot', 4)
