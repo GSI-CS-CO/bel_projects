@@ -65,4 +65,52 @@ component fg_quad_scu_bus is
     );
 end component fg_quad_scu_bus;
 
+component ring_buffer is
+  generic (
+    RAM_WIDTH : natural;
+    RAM_DEPTH : natural
+  );
+  port (
+    clk : in std_logic;
+    rst : in std_logic;
+ 
+    -- Write port
+    wr_en : in std_logic;
+    wr_data : in std_logic_vector(RAM_WIDTH - 1 downto 0);
+ 
+    -- Read port
+    rd_en : in std_logic;
+    rd_valid : out std_logic;
+    rd_data : out std_logic_vector(RAM_WIDTH - 1 downto 0);
+ 
+    -- Flags
+    empty : out std_logic;
+    empty_next : out std_logic;
+    full : out std_logic;
+    full_next : out std_logic;
+ 
+    -- The number of elements in the FIFO
+    fill_count : out integer range RAM_DEPTH - 1 downto 0
+  );
+end component ring_buffer;
+
+component fg_quad_statistics is
+  generic (
+    clk_in_hz : integer
+  );
+  port (
+    clk              : in std_logic;
+    reset            : in std_logic;
+    data_in          : in std_logic_vector(7 downto 0);
+    reset_statistics : in std_logic;
+    read_from_buffer : in std_logic;
+    min_value        : out std_logic_vector(15 downto 0);
+    max_value        : out std_logic_vector(15 downto 0);
+    avg_value        : out std_logic_vector(15 downto 0);
+    buffered_values  : out std_logic_vector(15 downto 0);
+    fill_level       : out std_logic_vector(15 downto 0)
+
+  );
+end component fg_quad_statistics;
+
 end package fg_quad_pkg;

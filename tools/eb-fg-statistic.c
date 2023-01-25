@@ -34,8 +34,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <sys/stat.h>
-//Etherbone
 #include <etherbone.h>
+#include <sys/time.h>
 
 
 #define GSI_ID      0x651
@@ -47,6 +47,10 @@
 #define CMD_REG     0x4
 #define IFK_ID      0xcc
 #define IFK_VERS    0xcd
+#define STAT_BUFFER 0xa8
+#define STAT_MAX    0xa9
+#define STAT_MIN    0xaa
+#define STAT_AVG    0xab
 
 #define SDB_DEVICES 1
 
@@ -66,7 +70,7 @@
 #define MIL_SIO3_TX_REQ   0xe20
 #define TASKMIN           1
 #define TASKMAX           254
-#define TASK              40
+#define TASK              241
 #define   OKAY                 1
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
@@ -106,9 +110,6 @@ static const char* devName;
 static const char* program;
 static eb_device_t device;
 static eb_socket_t socket;
-static unsigned char* wbuffer;
-static unsigned char* rbuffer;
-static unsigned int buffer_size;
 
 
 void itoa(unsigned int n,char s[], int base){
@@ -167,18 +168,14 @@ void die(const char* where,eb_status_t status) {
 
 
 void show_help() {
-  printf("Usage: eb-iflash [OPTION] <proto/host/port>\n");
-  printf("\n");
-  printf("rbf file should be generated with options: active, compressed, EPCS4\n");
+  printf("Usage: eb-fg-statistic [OPTION] <proto/host/port>\n");
   printf("\n");
   printf("-h             show the help for this program\n");
   printf("-i <ifa adr>   address of the ifa from 0x0 to 0x254\n");
   printf("-s <sio slot>  slot number of sio card with dev bus\n");
-  printf("-t <0/1>       trigger reconfiguration: 0 for user, 1 for failsave\n");
-  printf("-f             scan for ifas on dec bus\n");
-  printf("-w <file>      write rbf file into flash\n");
-  printf("-v <file>      verify flash against rbf file\n");
-  printf("-r <file>      read flash image into file\n");
+  printf("-f             scan for ifas on dev bus\n");
+  printf("-r             read from statistic buffer\n");
+  printf("-t             reset the mil interface\n");
 }
 
 /* blocking read usign a task slot */
@@ -356,61 +353,8 @@ int scub_reset_mil(eb_address_t base, int slot) {
   return OKAY;
 }
    
-// sets the addr registers in the firmware loader. flash_addr is written to
-// low word and high word register
-void set_flash_addr(eb_address_t devb_base, eb_address_t scub_base, int slot, int ifa_addr, unsigned int flash_addr) {
-  if (slot < 1) {
-    devb_write(devb_base, ifa_addr, FWL_STATUS_WR, WR_LW_ADDR); 
-    devb_write(devb_base, ifa_addr, FWL_DATA_WR, flash_addr & 0xffff);
-    usleep(10000);
-    devb_write(devb_base, ifa_addr, FWL_STATUS_WR, WR_HW_ADDR); 
-    devb_write(devb_base, ifa_addr, FWL_DATA_WR, flash_addr >> 16);
-  } else {
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_STATUS_WR, WR_LW_ADDR); 
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_DATA_WR, flash_addr & 0xffff);
-    usleep(10000);
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_STATUS_WR, WR_HW_ADDR); 
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_DATA_WR, flash_addr >> 16);
-  }
-}
 
-// clears the flash pages
-// needs to be done before writing a new user image
-void clearFlash(eb_address_t devb_base, eb_address_t scub_base, unsigned char slot,  int ifa_addr) {
-  eb_data_t status;
 
-  set_flash_addr(devb_base, scub_base, slot, ifa_addr, MAGIC_WORD);
-  
-  if (slot < 1)
-    devb_write(devb_base, ifa_addr, FWL_STATUS_WR, ERASE_USER_FLASH);
-  else
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_STATUS_WR, ERASE_USER_FLASH);
-
-  usleep(10000);
-
-  if (slot < 1)
-    devb_read(devb_base, TASK, ifa_addr, FWL_STATUS_RD, &status);
-  else
-    scub_devb_read(scub_base, TASK, slot, ifa_addr, FWL_STATUS_RD, &status);
-
-  // wait for operation to finish
-  while(status & ERASE_USER_FLASH) {
-    usleep(10000);
-    if (slot < 1)
-      devb_read(devb_base, TASK, ifa_addr, FWL_STATUS_RD, &status);
-    else
-      scub_devb_read(scub_base, TASK, slot, ifa_addr, FWL_STATUS_RD, &status);
-  }
-
-}
-
-// clear fifos 
-void clearFifo(eb_address_t devb_base, eb_address_t scub_base, unsigned char slot, int ifa_addr) {
-  if (slot < 1) 
-    devb_write(devb_base, ifa_addr, FWL_STATUS_WR, ERASE_FIFO);
-  else
-    scub_devb_write(scub_base, slot, ifa_addr, FWL_STATUS_WR, ERASE_FIFO);
-}
 
 // print information about the found ifa
 void check_ifa_addr(eb_address_t devb_base, eb_address_t scub_base, unsigned char slot, int ifa_addr) {
@@ -462,57 +406,16 @@ void scanDevBus(eb_address_t dev_base, eb_address_t scu_base, unsigned char slot
   }
 }
 
-// init read buffer
-void initReadBuffer(int size) {
-  buffer_size = size;
-  rbuffer = (unsigned char *)malloc(size);
-  if (rbuffer == NULL) {
-    fprintf(stderr, "malloc of rbuffer failed\n");
-    exit(1);
-  }
+double time_diff(struct timeval x, struct timeval y) {
+  double x_ms, y_ms, diff;
+
+  x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
+  y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
+
+  diff = (double)y_ms - (double)x_ms;
+  return diff;
 }
   
-// read file to wbuffer
-void readFiletoBuffer(char* filename) {
-  FILE *fp;
-  int bytes_written;
-  if (filename != NULL) {
-    if ((fp = fopen(filename, "r")) == NULL) {
-      printf("open of programming file not successful.\n");
-      exit(1);
-    }
-    struct stat buf;
-    stat(filename, &buf);
-    int size = buf.st_size;
-    // rbf file size is uneven
-    if (size % PAGE_SIZE) {
-      printf("size of programming file is not a multiple of %d\n", PAGE_SIZE);
-    }
-    printf("filesize: %d bytes\n", size);
-    // buffersize is now a multiple of PAGE_SIZE
-    buffer_size = size - (size % PAGE_SIZE) + PAGE_SIZE; 
-    printf("buffer size: %d bytes\n", buffer_size);
-    wbuffer = (unsigned char *)malloc(buffer_size);
-    if (wbuffer == NULL) {
-      fprintf(stderr, "malloc of buffer failed\n");
-      exit(1);
-    }
-    // copy file to wbuffer
-    bytes_written = fread(wbuffer, 1, size, fp);
-    if (bytes_written != size) {
-      fprintf(stderr, "read error, %s could not be copied to buffer!\n", filename);
-      exit(1);
-    }
-    if (bytes_written < buffer_size) {
-      // pad with 0xff to end of buffer
-      printf("padding...\n");
-      memset(&wbuffer[bytes_written], 0xff, buffer_size - bytes_written);
-    }    
-    printf("\n");
-    printf("bytes_written: %d\n", bytes_written);
-    printf("size: %d\n", size);
-  }
-}
 
 
 int main(int argc, char * const* argv) {
@@ -522,59 +425,51 @@ int main(int argc, char * const* argv) {
   int nDevices;  
   eb_address_t dev_bus;
   eb_address_t scu_bus;
-  eb_cycle_t cycle;
 
-  char *wvalue = NULL;
-  char *vvalue = NULL; 
   char *ivalue = NULL;
-  char *rvalue = NULL;
   char *svalue = NULL;
-  char *tvalue = NULL;
   int fflag = 0;
-  int eflag = 0;
+  int rflag = 0;
+  int tflag = 0;
   int index;
   int c;
  
   unsigned int ifa_addr = 0;
-  unsigned char config_value = 0;
   unsigned char slot = 0;
   char *p;
   errno = 0;
  
   /* Process the command-line arguments */
   opterr = 0;
-  while ((c = getopt (argc, argv, "i:w:v:hfuer:s:t:")) != -1)
+  while ((c = getopt (argc, argv, "i:w:v:hfuers:t")) != -1)
     switch (c)
       {
         case 'w':
-          wvalue = optarg;
           break;
         case 'v':
-          vvalue = optarg;
           break;
         case 'i':
           ivalue = optarg;
           break;
         case 'r':
-          rvalue = optarg;
+          rflag = 1;
           break;
         case 'f':
           fflag = 1;
           break;
         case 'e':
-          eflag = 1;
           break;
         case 's':
           svalue = optarg;
           break;
         case 't':
-          tvalue = optarg;
+          tflag = 1;
           break;
         case 'h':
           show_help();
           exit(1);
         case '?':
-          if (optopt == 'w' || optopt == 'v' || optopt == 'i' || optopt == 's' || optopt == 't')
+          if (optopt == 'w' || optopt == 'v' || optopt == 'i' || optopt == 's')
             fprintf (stderr, "Option -%c requires an argument.\n", optopt);
           else if (isprint (optopt))
             fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -600,16 +495,6 @@ int main(int argc, char * const* argv) {
     if (!fflag) {
       fprintf(stderr, "no ifa address set!\n");
       exit(1);
-    }
-  }
-  
-  if (tvalue != NULL) {
-    unsigned char conv = strtol(tvalue, &p, 10);
-    if (errno != 0 || *p != '\0' || conv < 1 || conv > 2) {
-      printf("parameter t is out of range 1 - 2\n");
-      exit(1);
-    } else {
-      config_value = conv;
     }
   }
 
@@ -677,38 +562,13 @@ int main(int argc, char * const* argv) {
 
   scu_bus = sdbDevice[0].sdb_component.addr_first;
 
-  if (eflag == 1) {
-    clearFlash(dev_bus, scu_bus, slot, ifa_addr);
-    printf("erased the user image from flash\n");
-  }
     
   // reset mil controller
-  reset_mil(dev_bus);
-  if(svalue != NULL)
-    scub_reset_mil(scu_bus, slot);
-  
-  // load config
-  if (tvalue != NULL) {
-    if (ivalue == NULL) {
-      printf("no ifa address set!\n");
-      exit(1);
-    }
-    if ((config_value == RELOAD_FAILSAVE) || (config_value == RELOAD_USER)) {
-      if (slot < 1)
-        devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, config_value);
-      else
-        scub_devb_write(scu_bus, slot, ifa_addr, FWL_STATUS_WR, config_value);
-
-      // wait for ifa to load image from flash
-      usleep(MIL_RST_WAIT);
-
-      if (slot < 1)
-        reset_mil(dev_bus);
-      else
-        scub_reset_mil(scu_bus, slot);
-
-      printf("reload fpga done.\n");
-    }
+  if (tflag == 1) {
+    if(svalue != NULL)
+      scub_reset_mil(scu_bus, slot);
+    else
+      reset_mil(dev_bus);
   }
 
   // scan dev bus
@@ -717,174 +577,37 @@ int main(int argc, char * const* argv) {
     exit(1);
   }
 
+  // read from statistics buffer
+  if (rflag == 1) {
+    struct timeval start_t, end_t;
+    double diff_t;
+    while (1) {
+      gettimeofday(&start_t, NULL);
 
-  //write file to flash 
-  if (wvalue != NULL) {
-    int cnt = 0;
-    int i = 0;
-    unsigned short lb, hb;
-    
-    // erase flash
-    clearFlash(dev_bus, scu_bus, slot, ifa_addr);
-
-    // copy flash data to memory
-    readFiletoBuffer(wvalue);
-    
-    while (cnt < buffer_size) {
-      clearFifo(dev_bus, scu_bus, slot, ifa_addr);
-      set_flash_addr(dev_bus, scu_bus, slot, ifa_addr, cnt);
-      printf("write to flash addr 0x%x\n", cnt);
-      // set mode to fifo write
-      if (slot < 1)
-        devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, WR_FIFO);
-      else 
-        scub_devb_write(scu_bus, slot, ifa_addr, FWL_STATUS_WR, WR_FIFO);
-      i = 0;
-      //open cycle
-      if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
-        die("EP eb_cycle_open", status);
-      while ((i < 128) && (cnt < buffer_size)) {
-        hb = wbuffer[cnt];
-        lb = wbuffer[cnt+1];
-        if (slot < 1) {
-          eb_cycle_write(cycle, dev_bus + MIL_SIO3_TX_DATA *4, EB_BIG_ENDIAN|EB_DATA32, hb << 8 | lb);
-          eb_cycle_write(cycle, dev_bus + MIL_SIO3_TX_CMD *4, EB_BIG_ENDIAN|EB_DATA32, FWL_DATA_WR << 8 | ifa_addr);
-        } else {
-          eb_cycle_write(cycle, scu_bus + CALC_OFFS(slot) + MIL_SIO3_TX_DATA * 2, EB_BIG_ENDIAN|EB_DATA16, hb << 8 | lb);
-          eb_cycle_write(cycle, scu_bus + CALC_OFFS(slot) + MIL_SIO3_TX_CMD * 2, EB_BIG_ENDIAN|EB_DATA16, FWL_DATA_WR << 8 | ifa_addr);
-        }
-          
-        cnt+=2;
-        // increment fifo counter
-        i++;
-      }
-      // close cycle
-      if ((status = eb_cycle_close(cycle)) != EB_OK)
-        die("EP eb_cycle_close", status);
-      // check if fifo is full
-      if (slot < 1)
-        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
+      if (slot < 1) 
+        devb_read(dev_bus, TASK, ifa_addr, STAT_BUFFER, &value);
       else
-        scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
+        scub_devb_read(scu_bus, TASK, slot, ifa_addr, STAT_BUFFER, &value);
+      gettimeofday(&end_t, NULL);
+      diff_t = time_diff(start_t, end_t);
+      if (diff_t > 3000.0)
+        usleep(20000);
 
-      if (value & WR_FIFO) {
-        fprintf(stderr, "error: write fifo is not full\n");
-        exit(1);
+      // primitive stream control
+      if (value == 0) {
+        usleep(20000);
+        continue;
       }
-      // write fifo to user flash
-      if (slot < 1)
-        devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, FIFO_TO_USER);
-      else 
-        scub_devb_write(scu_bus, slot, ifa_addr, FWL_STATUS_WR, FIFO_TO_USER);
-
+      printf("0x%"EB_DATA_FMT", Execution time = %.01f us\n", value, diff_t);
       usleep(10000);
-
-      // check if data is written 
-      if (slot < 1)
-        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-      else
-        scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
-
-      while (value & FIFO_TO_USER) {
-        if (slot < 1)
-          devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-        else
-          scub_devb_read(scu_bus, TASK, slot, ifa_addr, FWL_STATUS_RD, &value);
-      }
-    }
-      
-    printf("done.\n");
-  }
-
-
-  //verify flash against programming file
-  if (vvalue != NULL) {
-    int cnt = 0;
-    int i = 0;
-    int addr = 0;
-    unsigned char lb, hb;
-    // copy flash data to memory
-    readFiletoBuffer(vvalue);
-    initReadBuffer(buffer_size);
-
-    while (cnt < buffer_size) {
-      clearFifo(dev_bus, scu_bus, slot, ifa_addr);
-      set_flash_addr(dev_bus, scu_bus, slot, ifa_addr, cnt);
-      printf("read from flash addr 0x%x\n", cnt);
-      // copy page from flash to fifo
-      devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
-      // wait until done
-      devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-      while(value & RD_USER_FLASH) {
-        usleep(1000);
-        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-      }
-      // read out page fifo
-      i = 0;
-      while ((i < 128) && (cnt < buffer_size)) {
-        devb_read(dev_bus, TASK, ifa_addr, FWL_DATA_RD, &value);
-        lb = value & 0xff;          // low byte
-        hb = (value & 0xff00) >> 8; // high byte
-        rbuffer[cnt]   = hb;
-        rbuffer[cnt+1] = lb;
-
-        cnt+=2;
-        i++;
-      }
-      addr = cnt-PAGE_SIZE;
-      for (i=0; i<PAGE_SIZE; i++) {
-        if (rbuffer[addr+i] != wbuffer[addr+i]) {
-          printf("\naddr: 0x%x\n", addr*2+i);
-          printf("verify failed: 0x%x != 0x%x\n", rbuffer[addr+i], wbuffer[addr+i]);
-          exit(1);
-        }
-      }
     }
   }
-  // copy flash to file
-  if (rvalue != NULL) {
-    int cnt = 0;
-    int i = 0;
-    FILE *wfp;
 
-    buffer_size = EPCS_SIZE;
-    printf("buffer size: %d bytes\n", buffer_size);
-
-    if ((wfp = fopen(rvalue, "w+")) == NULL) {
-      printf("open of programming file not successful.\n");
-      exit(1);
-    }
-    while (cnt < buffer_size) {
-      clearFifo(dev_bus, scu_bus, slot, ifa_addr);
-      set_flash_addr(dev_bus, scu_bus, slot, ifa_addr, cnt);
-      printf("read from flash addr 0x%x\n", cnt);
-      // copy page from flash to fifo
-      devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
-      // wait until done
-      devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-      while(value & RD_USER_FLASH) {
-        usleep(1000);
-        devb_read(dev_bus, TASK, ifa_addr, FWL_STATUS_RD, &value);
-      }
-      // read out page fifo
-      i = 0;
-      while ((i < 128) && (cnt < buffer_size)) {
-        devb_read(dev_bus, TASK, ifa_addr, FWL_DATA_RD, &value);
-        putc((value & 0xff00) >> 8, wfp); // high byte
-        putc(value & 0xff, wfp);          // low byte
-        cnt+=2;
-        i++;
-      }
-    }
-
-  }
+    
 
   //print information about the found ifa
-  check_ifa_addr(dev_bus, scu_bus, slot, ifa_addr);
+  //check_ifa_addr(dev_bus, scu_bus, slot, ifa_addr);
 
-  // wbuffer with programming data is no longer needed
-  free(wbuffer);
-  free(rbuffer);
   /* close handler cleanly */
   if ((status = eb_device_close(device)) != EB_OK)
     die("eb_device_close",status);
