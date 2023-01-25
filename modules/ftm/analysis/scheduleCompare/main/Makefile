@@ -32,11 +32,11 @@ STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 all: scheduleCompare replaceChain
 
-replaceChain: replaceChain.o scheduleCompact.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
+replaceChain: replaceChain.o replaceChainImpl.o scheduleCompact.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
 
 scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
 
-scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h
+scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h configuration.h
 
 scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h scheduleCompact.h
 
@@ -51,6 +51,10 @@ ScheduleEdge.o: ScheduleEdge.h
 ScheduleGraph.o: ScheduleGraph.h
 
 scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
+
+replaceChain.o: replaceChain.h configuration.h
+
+replaceChainImpl.o: replaceChainImpl.h replaceChain.h configuration.h
 
 install: scheduleCompare replaceChain
 	cp scheduleCompare $(INSTALLPATH)

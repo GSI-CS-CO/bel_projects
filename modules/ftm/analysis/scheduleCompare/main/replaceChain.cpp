@@ -1,15 +1,23 @@
-#include "replaceChain.h"
-
 #include <stdio.h>
 #include <unistd.h>
+
+#include "replaceChain.h"
+#include "replaceChainImpl.h"
 
 int main(int argc, char* argv[]) {
   int error = 0;
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "c:hsv")) != -1) {
+  while ((opt = getopt(argc, argv, "1c:ho:sv")) != -1) {
     switch (opt) {
+      case '1':
+        config.firstVersion = true;
+        break;
+      case 'o':
+        config.outputFile = std::string(optarg);
+        std::cerr << "Output file: '" << config.outputFile << "'" << std::endl;
+        break;
       case 'v':
         if (config.silent) {
           std::cerr << program << ": silent is true, verbose ignored." << std::endl;
@@ -69,7 +77,11 @@ int compactSingleGraph(std::string dotFile1, configuration& config) {
     result = PARSE_ERROR_GRAPHVIZ;
   }
   if (parse1) {
-    return compactGraph(graph1, config);
+    if (config.firstVersion) {
+      return compactGraph(graph1, config);
+    } else {
+      return replaceChain(graph1, config);
+    }
   } else {
     return (result == -1) ? FILE_NOT_FOUND : result;
   }

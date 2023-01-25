@@ -58,7 +58,7 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
   def replaceChain(self, fileName, lines=2):
     """Replace all chains in the given schedule file.
     """
-    self.callReplaceChain([self.binary, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
+    self.callReplaceChain([self.binary, '-1', fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
     self.compareExpectedResult('compact.dot', fileName.replace('.dot', '-chain-1.dot'))
 
   def test_compactChain1(self):

@@ -1,6 +1,8 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#include <string>
+
 // constants for regular results of scheduleCompare
 const int NOT_ISOMORPHIC = 1;
 const int SUBGRAPH_ISOMORPHIC = 2;
@@ -16,12 +18,16 @@ const int TEST_SUCCESS = 17;
 const int TEST_FAIL = 18;
 
 struct configuration {
+  // option -1: use first version of replaceChain
+  bool firstVersion = false;
   // option -c
   bool check = false;
   // replaceChain: -c <n>
   int chainCount = 0;
   // option -n
   bool compareNames = true;
+  // option -o: output file name
+  std::string outputFile = std::string("");
   // internal option, used for replaceChain
   bool extraProperties = false;
   // internal option, used for replaceChain
