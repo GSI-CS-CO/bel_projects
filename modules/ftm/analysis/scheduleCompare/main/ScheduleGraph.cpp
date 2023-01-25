@@ -11,7 +11,6 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
     dp.property("flags", boost::get(&ScheduleVertex::flags, g));
   }
   // attributes of the graph
-  //~ boost::ref_property_map<ScheduleGraph*, std::string> gname(boost::get_property(g, boost::graph_name));
   boost::ref_property_map<ScheduleGraph*, std::string> gName(boost::get_property(g, &GraphProperties::name));
   dp.property("name", gName);
   if (config.extraProperties) {
@@ -81,12 +80,9 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
     dp.property("_hdraw_", boost::get(&ScheduleEdge::_hdraw_, g));
     dp.property("pos", boost::get(&ScheduleEdge::pos, g));
   }
-  //  dp.property("name", boost::get(&ScheduleEdge::name, g));
   return dp;
 }
 
-//~ std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, boost::graph_name); }
 std::string getGraphName(ScheduleGraph& g) { return boost::get_property(g, &GraphProperties::name); }
 
-//~ void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, boost::graph_name, newName); }
 void setGraphName(ScheduleGraph& g, std::string newName) { boost::set_property(g, &GraphProperties::name, newName); }

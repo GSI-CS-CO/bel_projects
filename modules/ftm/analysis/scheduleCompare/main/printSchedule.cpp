@@ -33,7 +33,7 @@ public:
   {
     out << "graph [\n";
     for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end(); ++i) {
-      if (typeid(Graph*) == i->second->key()) {
+      if (typeid(Graph*) == i->second->key() && i->second->get_string(const_cast< Graph* >(g)).size() > 0) {
         // const_cast here is to match interface used in read_graphviz
         out << i->first << "="
             << boost::escape_dot_string(
@@ -47,6 +47,77 @@ public:
 private:
     const Graph* g;
     const boost::dynamic_properties* dp;
+};
+
+class DynamicPropertiesWriter
+{
+public:
+    DynamicPropertiesWriter(const boost::dynamic_properties& dp) : dp(&dp) {}
+
+    template < typename Descriptor >
+    void operator()(std::ostream& out, Descriptor key) const
+    {
+        bool first = true;
+        for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end();
+             ++i)
+        {
+            if (typeid(key) == i->second->key() && i->second->get_string(key).size() > 0)
+            {
+                if (first)
+                    out << " [";
+                else
+                    out << ", ";
+                first = false;
+
+                out << i->first << "="
+                    << boost::escape_dot_string(i->second->get_string(key));
+            }
+        }
+
+        if (!first)
+            out << "]";
+    }
+
+private:
+    const boost::dynamic_properties* dp;
+};
+
+class DynamicVertexPropertiesWriter
+{
+public:
+    DynamicVertexPropertiesWriter(
+        const boost::dynamic_properties& dp, const std::string& node_id)
+    : dp(&dp), node_id(&node_id)
+    {
+    }
+
+    template < typename Descriptor >
+    void operator()(std::ostream& out, Descriptor key) const
+    {
+        bool first = true;
+        for (boost::dynamic_properties::const_iterator i = dp->begin(); i != dp->end();
+             ++i)
+        {
+            if (typeid(key) == i->second->key() && i->first != *node_id && i->second->get_string(key).size() > 0)
+            {
+                if (first)
+                    out << " [";
+                else
+                    out << ", ";
+                first = false;
+
+                out << i->first << "="
+                    << boost::escape_dot_string(i->second->get_string(key));
+            }
+        }
+
+        if (!first)
+            out << "]";
+    }
+
+private:
+    const boost::dynamic_properties* dp;
+    const std::string* node_id;
 };
 
 void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config) {
@@ -66,6 +137,8 @@ void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config)
   setGraphName(g, graphName + std::string("-compact"));
   std::ofstream fText(fileName);
   //~ boost::write_graphviz_dp(fText, g, dp, "name");
-  boost::write_graphviz(fText, g, boost::dynamic_vertex_properties_writer(dp, "name"), boost::dynamic_properties_writer(dp), ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+  typedef typename boost::graph_traits< ScheduleGraph >::vertex_descriptor Vertex;
+  boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+      ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
   fText.close();
 }
