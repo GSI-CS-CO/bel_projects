@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <regex>
 
 #include "replaceChain.h"
 #include "replaceChainImpl.h"
@@ -40,7 +41,14 @@ int main(int argc, char* argv[]) {
         error = USAGE_MESSAGE;
         break;
       case 'c':
-        config.chainCount = atoi(optarg);
+        {
+          int count = atoi(optarg);
+          if (count < 0) {
+            std::cerr << "Number of chains to replace is negative (" << count << "), ignored." << std::endl;
+          } else {
+            config.chainCount = count;
+          }
+        }
         break;
       default:
         std::cerr << program << ": bad option " << std::endl;
@@ -55,7 +63,11 @@ int main(int argc, char* argv[]) {
       usage(program);
       return USAGE_MESSAGE;
     } else {
-      return compactSingleGraph(std::string(argv[argc - 1]), config);
+      std::string inputFile = std::string(argv[argc - 1]);
+      if (config.outputFile.size() == 0) {
+        config.outputFile = std::regex_replace(inputFile, std::regex(".dot"), std::string("-chain-1.dot"));
+      }
+      return compactSingleGraph(inputFile, config);
     }
   }
 }

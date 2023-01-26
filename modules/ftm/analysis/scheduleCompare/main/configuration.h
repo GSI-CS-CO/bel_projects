@@ -23,7 +23,7 @@ struct configuration {
   // option -c
   bool check = false;
   // replaceChain: -c <n>
-  int chainCount = 0;
+  int chainCount = 100;
   // option -n
   bool compareNames = true;
   // option -o: output file name

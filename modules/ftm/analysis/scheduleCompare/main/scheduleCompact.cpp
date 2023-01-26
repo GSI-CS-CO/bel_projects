@@ -3,12 +3,7 @@
 #include "scheduleCompact.h"
 #include "printSchedule.h"
 #include "scheduleCompare.h"
-
-typedef long unsigned int VertexNum;
-typedef boost::property_map<ScheduleGraph, boost::vertex_index_t>::type VertexId;
-typedef std::set<VertexNum> VertexSet;
-typedef boost::graph_traits<ScheduleGraph>::edge_descriptor EdgeDescriptor;
-typedef boost::graph_traits<ScheduleGraph>::vertex_descriptor VertexDescriptor;
+#include "replaceChainImpl.h"
 
 void printSet(VertexSet set1, std::string title);
 
