@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-jan-2023
+ *  version : 26-jan-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,7 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000421                                  // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000422                                  // make this consistent with makefile
 #define B2BPM_FW_USESUBNSFIT  0
 
 // standard includes
@@ -90,8 +90,12 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 31                     // # of timestamps for sampling h=1
+#define NSAMPLES 51                     // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
+
+// debug 
+uint64_t t1, t2;
+int32_t  tmp1;
 
 void init() // typical init for lm32
 {
@@ -228,6 +232,7 @@ uint32_t extern_exitActionOperation()
 
 
 // sort timestamps as they might be unordered
+// for 11/31/51/61/101 timestamps, this is below 10,16,27,31,51 us
 void insertionSort(uint64_t *stamps, int n) {
   int      i, j;
   uint64_t tmp;
@@ -242,7 +247,7 @@ void insertionSort(uint64_t *stamps, int n) {
 
 // perform fit of phase with sub-ns
 int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
-  int64_t  one_ns_as        = 1000000000;   // conversion ns to as
+  int64_t  one_ns_as   = 1000000000;        // conversion ns to as
   int64_t  max_diff_as = TH1_as >> 2;       // maximum difference shall be a quarter of the rf-period
   
   int      i;
@@ -285,6 +290,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
     // for (i=1; i<27; i++) {  // HACK     // include 1st timestamp too (important for little statistics)
     
+    // this multiplication is very expensive, but there is no way around it
     diff_stamp_as = (tStamp[i] - tFirst_ns) * one_ns_as;
 
     // we use ther number of iterations as the number of rf-periods; thus, the algorithm will
@@ -436,6 +442,7 @@ int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, ui
 */
 
 // 'fit' phase value
+// takes about 38/54/72/115us per 11/31/51/101 samples
 uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 {
   int      i;
@@ -459,8 +466,8 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
   usedIdx  = nSamples >> 1;                                            // this is safe as we have at least three samples
 
   // check period
-  periodNs = (int32_t)(period_as/1000000000);                          // convert to ns
-  maxDelta = periodNs / 10;                                            // allow 10% deviation
+  periodNs = (int32_t)(period_as/1000000000);                          // convert to ns chk: consider right-shift by 30 bits instead
+  maxDelta = periodNs / 10;                                            // allow 10% deviation chk: consider right-shift by 3 bits instead
   diff     = (int32_t)(tStamp[usedIdx+1] - tStamp[usedIdx]);           // time difference of selected timestamps
   delta    = diff % periodNs;                                          // difference is multiple of period? (missing timestamp possible)!
   if (delta > (periodNs >> 1)) dt = periodNs - delta;
@@ -472,6 +479,7 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 
   // phase fit
   status = phaseFitAverage(period_as, nSamples, phase_t);
+  
   //status = phaseFitSubNs(period_as, nSamples, phase_ns, phase_125ps, &dummy, confidence_as);
   //dummy  = dummy/1000000;
 
@@ -479,7 +487,7 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
   if (status != COMMON_STATUS_OK) {
     (*phase_t).ns  = tStamp[usedIdx];                                  // just grab a timestamp in the middle
     (*phase_t).ps  = 0;
-    (*phase_t).dps = 2000;                                             // conservativeestimate of uncertainty
+    (*phase_t).dps = 2000;                                             // conservative estimate of uncertainty
     status         = COMMON_STATUS_OK;                                 // assume this is ok ...
   } // if status
 
@@ -488,6 +496,9 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 
 
 // aquires a series of timestamps from an IO; returns '0' on success
+// takes about 
+// - 4.8 us per timestamp
+// - + 'interval'
 int acquireTimestamps(uint64_t *ts,                           // array of timestamps [ns]
                       uint32_t nReq,                          // number of requsted timestamps
                       uint32_t *nRec,                         // number of received timestamps
@@ -507,17 +518,23 @@ int acquireTimestamps(uint64_t *ts,                           // array of timest
   uint32_t flagIsDelayed;                                     // flag 'delayed'
 
   *nRec = 0;
-
+  
   fwlib_ioCtrlSetGate(1, io);                                 // open input gate
   uwait(interval);
   fwlib_ioCtrlSetGate(0, io);                                 // disable input gate 
   
+  // reading an action from ECA
   while (*nRec < nReq) {
+    //t1 = getSysTime();
     ecaAction = fwlib_wait4ECAEvent(1, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+    //t2 = getSysTime();
+    //tmp1 = (int32_t)(t2 - t1);
+    //pp_printf("dtns %ld\n", tmp1);
     if (ecaAction == tag) {ts[*nRec] = recDeadline; (*nRec)++;}
     if (ecaAction == B2B_ECADO_TIMEOUT) break; 
   } // while nInput
-  //pp_printf("interval %u, nRec %u\n", interval, *nRec);
+
+  //pp_printf("intervalus %u, nRec %u \n", interval, *nRec);
 
   return COMMON_STATUS_OK;
 } // acquireTimestamps                  
@@ -572,9 +589,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   union  fdat_t   tmp;                                        // for copying of data
   
-  uint64_t t1,t2;                                             // for debugging
-  int32_t  tmp1;                                              // for debugging
-
   status    = actStatus;
   sendEvtNo = 0x0;
 
@@ -612,9 +626,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       nInput = 0;
       acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
-      //pp_printf("nInput %d\n", nInput);
 
-      if (nInput > 2) insertionSort(tStamp, nInput);                  // for 11 timestamps, this is below 10us
+      if (nInput > 2) insertionSort(tStamp, nInput);                  
       if (phaseFit(TH1_as, nInput, &tH1_t) != COMMON_STATUS_OK) {
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
@@ -638,6 +651,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       transStat    = tH1_t.dps;
       nTransfer++;
+      
+      //tmp1 = (int32_t)(t2-t1);
+      //pp_printf("pmns %ld\n", tmp1); 
+      
       //flagIsLate = 0; /* chk */      
       break; // case  B2B_ECADO_B2B_PMEXT
 
