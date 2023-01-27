@@ -255,31 +255,6 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2
 } //fwlib_advanceTime
 
 
-uint64_t fwlib_advanceTime125ps(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [125 ps]
-{
-  uint64_t dt125ps;             // approximate time interval to advance [125ps]
-  uint64_t dtas;                // approximate time interval to advance [as]
-  uint64_t nPeriods;            // # of periods
-  uint64_t intervalAs;          // interval [as]
-  uint64_t interval125ps;       // interval [125ps]
-  uint64_t tAdvanced;           // result
-  uint64_t nineO = 125000000 ;  // (almost) nine order of magnitude
-
-  if (Tas == 0)          return 0;
-  if (t2 < t1)           return 0;               // order ok ?
-  if ((t2 - t1) > nineO) return 0;               // not more than 1s! (~18 s max!)
-
-  dt125ps       = t2 - t1;
-  dtas          = dt125ps * nineO;
-  nPeriods      = (uint64_t)((double)dtas / (double)Tas) + 1;
-  intervalAs    = nPeriods * Tas;
-  interval125ps = (uint64_t)((double)intervalAs / (double)nineO);
-  tAdvanced     = t1 + interval125ps;
-
-  return tAdvanced; // [125 ps]
-} //fwlib_advanceTime
-
-
 b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 {
   uint64_t dt_ps;                    // approximate time interval to advance [ps]
@@ -290,7 +265,8 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
   uint64_t interval_ns;              // inverval [ns]
   b2bt_t   tAdvanced_t;              // result
   uint64_t half;                     // helper variable
-  uint64_t twelveO = 1000000000000;  // 12 orders of magnitude
+  int64_t  fraction_as;              // helper variable
+  uint64_t nineO = 1000000000;       // 9 orders of magnitude
 
   tAdvanced_t.ns  = 0;
   tAdvanced_t.ps  = 0;
@@ -298,39 +274,25 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 
   if (T_as == 0)                       return tAdvanced_t; // no valid RF period
   if (t2_t.ns < t1_t.ns)               return tAdvanced_t; // order ok ?
-  if ((t2_t.ns - t1_t.ns) > twelveO)   return tAdvanced_t; // not more than 1s! (~18 s max!)
+  if ((t2_t.ns - t1_t.ns) > nineO)     return tAdvanced_t; // not more than 1s! (~18 s max!)
 
   dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
   dt_as           = dt_ps * 1000000;
   nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
   interval_as     = nPeriods * T_as;
-  interval_ps     = (uint64_t)((double)interval_as / (double)1000000);
-  half            = 500;
-  interval_ns     = interval_ps / 1000;
-  if (interval_ps % 1000 > half) interval_ns++;
+  half            = nineO >> 1;
+  interval_ns     = interval_as / nineO;
+  fraction_as     = interval_as % nineO;
+  if (fraction_as > half) {                                // rounding 
+    interval_ns++;
+    fraction_as -= nineO;
+  } // if fraction
   tAdvanced_t.ns  = t1_t.ns + interval_ns;
-  tAdvanced_t.ps  = t1_t.ps + ((interval_ns * 1000) - interval_ps);
+  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;
   tAdvanced_t.dps = t1_t.dps;
 
   return tAdvanced_t; // [ps]
 } // fwlib_advanceTimePs
-
-
-uint64_t fwlib_tns2t125ps(uint64_t t)
-{
-  return (t << 3);
-} // tns2t125ps
-
-
-uint64_t fwlib_t125ps2tns(uint64_t t_125ps)
-{
-  uint64_t t;
-  
-  t = t_125ps >> 3;                              // to [ns]
-  if ((t_125ps & 0x7) >= 4) t = t + 1;           // fix rounding
-
-  return t;
-} // t125ps2tns
 
 
 b2bt_t fwlib_tns2tps(uint64_t t_ns)

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 27-Jan-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000421                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000422                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -979,8 +979,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMEXT) errorFlags |= B2B_ERRFLAG_PMEXT;
       
       tH1Ext_t.ns   = recParam;
-      tH1Ext_t.ps   = ( int32_t)(( int16_t)(recTEF & 0x0000ffff));
-      tH1Ext_t.dps  = (uint32_t)((uint16_t)(recTEF & 0xffff0000)) >> 16;
+      tH1Ext_t.ps   = ( int32_t)( int16_t)(recTEF & 0x0000ffff);
+      tH1Ext_t.dps  = (uint32_t)(uint16_t)((recTEF & 0xffff0000) >> 16);
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: %d %u\n", tH1Ext_t.ps, tH1Ext_t.dps);
@@ -1002,8 +1002,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
 
       tH1Inj_t.ns   = recParam;
-      tH1Inj_t.ps   = ( int32_t)(( int16_t)(recTEF & 0x0000ffff));
-      tH1Inj_t.dps  = (uint32_t)((uint16_t)(recTEF & 0xffff0000)) >> 16; 
+      tH1Inj_t.ps   = ( int32_t)( int16_t)(recTEF & 0x0000ffff);
+      tH1Inj_t.dps  = (uint32_t)(uint16_t)((recTEF & 0xffff0000) >> 16); 
 
       tH1Inj_t.ns  -= cPhase;         // chk, we should go to 1ps precision
       transStat    |= mState;

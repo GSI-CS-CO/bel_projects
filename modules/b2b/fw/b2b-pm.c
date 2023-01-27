@@ -290,7 +290,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   for (i=1; i<nSamples; i++) {        // include 1st timestamp too (important for little statistics)
     // for (i=1; i<27; i++) {  // HACK     // include 1st timestamp too (important for little statistics)
     
-    // this multiplication is very expensive, but there is no way around it
+    // this multiplication is expensive
     diff_stamp_as = (tStamp[i] - tFirst_ns) * one_ns_as;
 
     // we use ther number of iterations as the number of rf-periods; thus, the algorithm will
@@ -328,7 +328,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   ts_t.ns          = tFirst_ns;
   if (B2BPM_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
   else                      ts_t.ps = ave_deviation_as / 1000000;  // average fit
-  ts_t.dps         = window_as / 1000000;
+  ts_t.dps         = window_as >> 20;                // cheap division by 1000000
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
   //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ps, ts_t.dps);
