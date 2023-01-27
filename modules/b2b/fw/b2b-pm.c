@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-jan-2023
+ *  version : 27-jan-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -90,7 +90,7 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 51                     // # of timestamps for sampling h=1
+#define NSAMPLES 32                     // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
 
 // debug 
@@ -335,114 +335,9 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   return COMMON_STATUS_OK;
 } //phaseFitSubNs
 
-/*
-int32_t phaseFitSubNs(uint64_t TH1_as, uint32_t nSamples, uint64_t *phase_ns, uint64_t *phase_125ps, int64_t *fractional_phase_as, uint64_t *confidence_as) {  // , int32_t *phase_error_as) {
-  int32_t ONE_NS_as = 1000000000;
-  int32_t HALF_NS_as = 500000000;
-
-  if (TH1_as==0)    return B2B_STATUS_PHASEFAILED; // need at least three measurement
-  if (nSamples < 3) return B2B_STATUS_PHASEFAILED; // need at least three measurement
-
-  int     tStamp_good;                         // this is set to 1 if tStamp[n] was within +- 1ns of the expected value
-  int64_t tStamp_as;                           // tStamp relative to first_tStamp, converted to attoseconds
-  int64_t rel_phase_next_as, rel_phase_as = 0; // phase iterator, relative to first_tStamp
-  int64_t dt_as, abs_dt_as;                    // difference between predicted phase and measured phase
-  int64_t min_dt_as=0, max_dt_as=0;            // the midpoint between min_dt_as and max_dt_as defines the real phase
-  int     sample_number = nSamples/2;          // the one point tStamp[sample_number] that is used to calculate the final result
-  int64_t sample_dt_as;                        // the phase difference of the samples
-  int     sample_good = 0;                     // is set to 1 if a phase could be calculated, 0 otherwise.
-  int     n, i;
-  int64_t first_tStamp_ns = tStamp[1];         // always discard tStamp[0]
-  int64_t correction = 0;
-
-  // Special case if the sampling point has index=1: the sample_dt_as of this point is always 0.
-  // In all other cases the sample_dt_as is set in the for(n = 2;... loop below.
-  if (sample_number == 1) {
-    sample_dt_as = 0;
-    sample_good  = 1;
-  }
-  for (n = 2; n < nSamples; ++n) {
-    tStamp_as         = ((int64_t)tStamp[n]-first_tStamp_ns)*(ONE_NS_as); // convert measurement to as
-    rel_phase_next_as = rel_phase_as;
-    tStamp_good       = 0;
-    //for(i = 0; i < NSAMPLES; ++i) { // Advance rel_phase_as so long until it matches measurement_a within +- 1ns. 
-    //DB: I think NSAMPLES is a bug; instead, the real number of samples shall be used
-    for (i = 0; i < nSamples; ++i) { // Advance rel_phase_as so long until it matches measurement_a within +- 1ns.
-                                     // This is necessary because gaps in the measured data can occur.
-                                     // (Normally this loop should brake in the first iteration.)
-      rel_phase_next_as += TH1_as;
-      dt_as              = rel_phase_next_as - tStamp_as; 
-      // Make sure that dt_as never is outside of the +- 1ns interval. 
-      //   (In a perfect world this would never happen, but jitter in the 
-      //    measurements of the phase tStamp can cause it to happen)
-      if (dt_as <= -ONE_NS_as) { 
-        dt_as += ONE_NS_as; 
-        if (n==sample_number) {
-          correction=ONE_NS_as;
-        }
-      }
-      if (dt_as >   ONE_NS_as) { 
-        dt_as -= ONE_NS_as; 
-        if (n==sample_number) {
-          correction=-ONE_NS_as;
-        }
-      }
-      abs_dt_as = dt_as;
-      if (abs_dt_as < 0) abs_dt_as = -abs_dt_as;
-      if (abs_dt_as <= ONE_NS_as) {
-        tStamp_good = 1;
-        rel_phase_as = rel_phase_next_as;
-        break;
-      } else if (dt_as < TH1_as/2) {  // DB: chk I believe this handles the case of a 'missing' timestamp 
-        break;
-      }
-      if (n==sample_number) {
-        correction = 0;
-      }
-    } // for i
-    if (!tStamp_good) continue; // discard this tStamp[n]
-
-    // here we know that the tStamp was close to the expected value 
-    // keep track of the max and min value of the difference
-    if (dt_as < min_dt_as) min_dt_as = dt_as;
-    if (dt_as > max_dt_as) max_dt_as = dt_as;
-    if (n == sample_number) {
-      sample_dt_as = dt_as; // remember the difference at the sample point
-      sample_good = 1;      // flag that we have a good sampling point
-    }
-  } // for n
-
-  if (sample_good) {
-    *phase_ns = tStamp[sample_number];
-    *fractional_phase_as = sample_dt_as-(max_dt_as+min_dt_as)/2 - correction;
-    // make sure that *fractional phase is guaranteed to be in the [-HALF_NS_as, HALF_NS_as) interval
-    while (*fractional_phase_as < -HALF_NS_as) {
-      *fractional_phase_as += ONE_NS_as;
-      *phase_ns -= 1;
-    }
-    while (*fractional_phase_as >= HALF_NS_as) {
-      *fractional_phase_as -= ONE_NS_as;
-      *phase_ns += 1;
-    }
-
-    // calculate a phase value in units of 125 ps
-    int32_t fractional_phase_125ps = *fractional_phase_as / 125000000;
-    *phase_125ps = *phase_ns << 3;
-    *phase_125ps += fractional_phase_125ps;
-
-    *confidence_as = max_dt_as-min_dt_as;
-    // *phase_error_as = ((1000000000)-(max_dt_as-min_dt_as))/2;  // this is a hard upper limit for the error (if jitter of input signal is negligible)
-    //                                                            // the true value for phase is uniformly distributed in the 
-    //                                                            // interval [-phase_error_as, +phase_error_as] around fractional_phase_as
-    return COMMON_STATUS_OK;
-  } // if sample_good
-  //pp_printf("nsamples %d, sample_number %d, tstamp_good %d, sample_good %d\n", nSamples, sample_number, tStamp_good, sample_good);
-  return B2B_STATUS_PHASEFAILED;
-} // phaseFitSubNs
-*/
 
 // 'fit' phase value
-// takes about 38/54/72/115us per 11/31/51/101 samples
+// this takes about 38/54/72/115us per 11/31/51/101 samples
 uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 {
   int      i;
@@ -497,7 +392,7 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 
 // aquires a series of timestamps from an IO; returns '0' on success
 // takes about 
-// - 4.8 us per timestamp
+// - 4.0 us per timestamp
 // - + 'interval'
 int acquireTimestamps(uint64_t *ts,                           // array of timestamps [ns]
                       uint32_t nReq,                          // number of requsted timestamps
@@ -600,7 +495,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
-
+      //t1 = getSysTime();
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
@@ -617,12 +512,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagPMError      = 0x0;
       tH1_t.ns         = 0x6fffffffffffffff;                          // bogus number, might help for debugging chk
 
-      nSamples                              = NSAMPLES;               /* chk this, as NSAMPLES has been increased */
-      if (TH1_as >  2000000000000) nSamples = NSAMPLES >> 1;          // use only half the sample for nue < 500 kHz
-      if (TH1_as > 10000000000000) nSamples = NSAMPLES >> 2;          // use only a quarter of the sample for nue < 100 kHz
-      if (TH1_as > 25000000000000) nSamples = 3;                      // use minimum for nue 40 kHz
-      TMeas           = (uint64_t)(nSamples)*(TH1_as / 1000000000);   // window for acquiring timestamps [ns]
-      TMeas_us        = (int32_t)(TMeas / 1000) + 1;                  // add 1 us to avoid a too short window
+      
+      nSamples                              = NSAMPLES;               
+      if (TH1_as >  2500000000000) nSamples = NSAMPLES >> 1;          // use only 1/2 for nue < 400 kHz: 80us@400kHz and NSAMPLES-32
+      if (TH1_as >  5000000000000) nSamples = NSAMPLES >> 2;          // use only 1/4 for nue < 200 kHz: 80us@200kHz and NSAMPLES-32
+      if (TH1_as > 10000000000000) nSamples = NSAMPLES >> 3;          // use only 1/8 for nue < 100 kHz: 80us@100kHz and NSAMPLES-32
+      if (TH1_as > 20000000000000) nSamples = 3;                      // use minimum for  nue <  50 kHz: 80us@ 27kHz and NSAMPLES-32
+
+      TMeas           = (uint64_t)(nSamples)*(TH1_as >> 30);          // window for acquiring timestamps ~[ns]; use bitshift as division
+      TMeas_us        = (int32_t)(TMeas >> 10) + 16;                  // ~[ns] -> ~[us] add 16us to correct for too short window
       
       nInput = 0;
       acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
@@ -642,7 +540,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
       sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
-
+      //t2 = getSysTime();
       // send something to ECA (for monitoring purposes) chk do something useful here
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
       sendParam    = 0xdeadbeef;
@@ -651,12 +549,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       transStat    = tH1_t.dps;
       nTransfer++;
-      
+
       //tmp1 = (int32_t)(t2-t1);
       //pp_printf("pmns %ld\n", tmp1); 
       
       //flagIsLate = 0; /* chk */      
-      break; // case  B2B_ECADO_B2B_PMEXT
+      break; // case B2B_ECADO_B2B_PMEXT
 
     // the following two cases handle phase matching diagnostic and measure the skew between kicker trigger and h=1 group DDS signals
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
