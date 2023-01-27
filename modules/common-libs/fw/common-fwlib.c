@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-jan-2023
+ *  version : 27-jan-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -675,9 +675,10 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
+  uint32_t ecaFlag;             // ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
   uint32_t evtIdLow;            // low 32bit of eventID    
   uint32_t evtDeadlHigh;        // high 32bit of deadline  
@@ -687,14 +688,20 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
   uint32_t actTag;              // tag of action           
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
+  uint64_t timeout;             // timeout [ns]
 
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-
-  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000 + (uint64_t)1000; 
+  
+  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
+  // reduces time per read from ~6.5 us to ~4.8 us
+  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
+  timeout     = ((uint64_t)timeout_us + 1) << 10;
+  timeoutT    = getSysTime() + timeout; 
   
   while (getSysTime() < timeoutT) {
-    if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
+    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
       // read data
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
@@ -705,11 +712,11 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
-      *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
-      *isEarly     = *pECAFlag & (0x0001 << ECA_EARLY);
-      *isConflict  = *pECAFlag & (0x0001 << ECA_CONFLICT);
-      *isDelayed   = *pECAFlag & (0x0001 << ECA_DELAYED);
-      
+
+      *isLate      = ecaFlag & (0x0001 << ECA_LATE);
+      *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = ecaFlag & (0x0001 << ECA_DELAYED);
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
