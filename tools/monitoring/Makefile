@@ -7,15 +7,20 @@ STAGING     ?=
 EB          ?= ../../ip_cores/etherbone-core/api
 WRPC        ?= ../../ip_cores/wrpc-sw
 TARGETS     := eb-mon eb-massmon
+USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(WRPC)/include -I $(WRPC)/pp_printf 
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(WRPC)/include -I $(WRPC)/pp_printf
+ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+else
+LIBS        ?= -L $(EB)/.libs -letherbone -lm
+endif
 
 # special for eb-mon
 WBDIR    = ..
 WBFLAG   = -DNOWB_SIMULATE
-WBFLAG  += -I$(WBDIR) 
+WBFLAG  += -I$(WBDIR)
 
 all: $(TARGETS)
 
