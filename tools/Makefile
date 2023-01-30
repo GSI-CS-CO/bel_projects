@@ -10,7 +10,7 @@ EXTRA_I := eb-flash-secure
 USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
+CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
 ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 else
