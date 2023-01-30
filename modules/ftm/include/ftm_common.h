@@ -114,15 +114,7 @@
 
 
 
-/** @name Synchonisation node layout definitions. NOT YET IMPLEMENTED
- * Not yet implemented
- */
-//@{ 
-#define T_SYNC_SRC              (0)
-#define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)
-#define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)
-#define _T_SYNC_SIZE_           (T_SYNC_TIME  + _TS_SIZE_)
-//@}
+
 
 /** @name Command action layout definitions
  */
@@ -313,9 +305,9 @@
 #define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
 //@}
 
-/** @name Sync node layout definition NOT IMPLEMENTED*/
+/** @name Origin node layout definition.*/
 //@{
-#define SYNC_ARRAY              (NODE_BEGIN)
+#define ORIGIN_ARRAY              (NODE_BEGIN)
 //@}
 
 
@@ -345,6 +337,22 @@
 #define SWITCH_TARGET           (EVT_HDR_END)	///< target block
 #define SWITCH_DEST				(SWITCH_TARGET + _PTR_SIZE_ + _TS_SIZE_ + _32b_SIZE_) //switch destination. offset is equal to command destination layout
 //@}
+
+/** @name Origin node layout definitions*/
+//@{
+#define ORIGIN_DEST           (EVT_HDR_END) ///< origin dst 
+#define ORIGIN_RES            (ORIGIN_DEST + _32b_SIZE_) 
+#define ORIGIN_CPU            (ORIGIN_RES  + _32b_SIZE_) // destination CPU
+#define ORIGIN_THR            (ORIGIN_CPU  + _32b_SIZE_) // destination thread
+//@}
+
+/** @name StartThread node layout definitions*/
+//@{
+#define STARTTHREAD_STARTOFFS      (EVT_HDR_END) ///< Start time offset
+#define STARTTHREAD_CPU            (STARTTHREAD_STARTOFFS + _64b_SIZE_) // CPU(s)
+#define STARTTHREAD_THR            (STARTTHREAD_CPU      + _32b_SIZE_) // thread(s)
+//@}
+
 
 	
 /** @name Generic Command node layout definitions*/
@@ -485,6 +493,10 @@
 #define ADR_SWITCH_TARGET  		1 ///< Switch - Address of target block
 #define ADR_SWITCH_DEST  		2 ///< Switch - Address of destination node
 
+//
+#define ADR_ORIGIN_DEST     1 ///< Origin - Address of dst node
+#define ADR_ORIGIN_CPU      2 ///< Origin - CPU of dst node
+
 // Command
 #define ADR_CMD_TARGET     		1 ///< Command - Address of target block
 #define ADR_CMD_FLOW_DEST  		2 ///< Command - Address of destination node
@@ -590,8 +602,9 @@
 #define NODE_TYPE_SHARE         (NODE_TYPE_QBUF         +1)	///< share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
 #define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)	///< lists all alternative destinations of a decision block
-#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)	///< used to denote the time offset for pattern rows
-#define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)	///< contain the part of the groups and node name table in compressed form
+#define NODE_TYPE_ORIGIN        (NODE_TYPE_ALTDST       +1)	///< sets the origin of a thread to the connected node
+#define NODE_TYPE_STARTTHREAD   (NODE_TYPE_ORIGIN       +1) ///< starts specified thread(s) at given time
+#define NODE_TYPE_MGMT          (NODE_TYPE_STARTTHREAD  +1)	///< contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)	///< contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)	///< type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
 #define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)	///< instantaneously switch defdest of a block. Like permanent flow with no queue
@@ -621,9 +634,9 @@
 
 /** @name Node flag field bit defs - sync bit - this node should only be started synchronous to another - NOT IMPLEMENTED */
 //@{
-#define NFLG_SYNC_MSK           0x1
-#define NFLG_SYNC_POS           10
-#define NFLG_SYNC_SMSK          (NFLG_SYNC_MSK << NFLG_SYNC_POS)
+#define NFLG_ORIGIN_MSK           0x1
+#define NFLG_ORIGIN_POS           10
+#define NFLG_ORIGIN_SMSK          (NFLG_ORIGIN_MSK << NFLG_ORIGIN_POS)
 //@}
 
 /** @name Node flag field bit defs - Beam Process Entry Point - marks node as entry point (ie. alt destination)*/
