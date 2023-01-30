@@ -13,5 +13,7 @@ files = [
   "local_125_to_12p5.vhd",
   "prio_encoder/prio_encoder_16_4.vhd",
   "prio_encoder/prio_encoder_64_6.vhd",
-  "prio_encoder/prio_encoder_256_8.vhd"
+  "prio_encoder/prio_encoder_256_8.vhd",
+  "in_reg.vhd",
+  "io_reg.vhd"
 ]

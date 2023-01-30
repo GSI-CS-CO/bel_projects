@@ -137,6 +137,7 @@ constant c_adc_base:                    unsigned := x"0230";
 constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
+constant c_rrg_base:                    Integer := 16#0370#;  --Real Ramp Generator 
 constant c_daq_base:                    unsigned := x"2000";  --scu_sio3 event filter ends at x1fff
 constant daq_ch_num:                    integer  := 4;
 
@@ -165,6 +166,61 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );
   end component IO_4x8;
+
+  component zeitbasis
+    generic (
+        CLK_in_Hz:      integer;
+        diag_on:      integer
+        );
+    port  (
+        Res:        in  std_logic;
+        Clk:        in  std_logic;
+        Ena_every_100ns:  out std_logic;
+        Ena_every_166ns:  out std_logic;
+        Ena_every_250ns:  out std_logic;
+        Ena_every_500ns:  out std_logic;
+        Ena_every_1us:    out std_logic;
+        Ena_Every_20ms:   out std_logic
+        );
+    end component;
+
+COMPONENT io_reg
+  GENERIC ( Base_addr : INTEGER );
+  PORT
+  (
+    Adr_from_SCUB_LA:    IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Data_from_SCUB_LA:   IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Ext_Adr_Val:         IN  STD_LOGIC;
+    Ext_Rd_active:       IN  STD_LOGIC;
+    Ext_Rd_fin:          IN  STD_LOGIC;
+    Ext_Wr_active:       IN  STD_LOGIC;
+    Ext_Wr_fin:          IN  STD_LOGIC;
+    clk:                 IN  STD_LOGIC;
+    nReset:              IN  STD_LOGIC;
+    Reg_IO1:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO2:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO3:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO4:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO5:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO6:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO7:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_IO8:             OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Reg_rd_active:       OUT STD_LOGIC;
+    Data_to_SCUB:        OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Dtack_to_SCUB:       OUT STD_LOGIC
+  );
+END COMPONENT io_reg;
+
+COMPONENT rrg is
+  Port ( clk : in STD_LOGIC;
+         nReset : in STD_LOGIC;
+         time_pulse : in STD_LOGIC;
+         ControlReg : in STD_LOGIC_VECTOR (15 downto 0);
+         TargetReg  : in STD_LOGIC_VECTOR (15 downto 0);
+         TimeStepReg : in STD_LOGIC_VECTOR (15 downto 0);
+         DAC_Out : out STD_LOGIC_VECTOR (15 downto 0);
+         DAC_Strobe : out STD_LOGIC);
+END COMPONENT rrg;
 
   signal clk_sys, clk_cal, locked : std_logic;
 
@@ -298,6 +354,16 @@ component IO_4x8
   signal daq_irq                : std_logic;
   signal HiRes_irq              : std_logic;
 
+  signal Ena_Every_1us          : std_logic;
+  signal rrg_rd_active          : std_logic;
+  signal rrg_data_to_SCUB       : std_logic_vector(15 downto 0);
+  signal rrg_dtack              : std_logic;
+  signal rrg_out                : std_logic_vector(15 downto 0);
+  signal rrg_strobe             : std_logic;
+  signal rrgConfigReg           : std_logic_vector (15 downto 0);
+  signal rrgTargetReg           : std_logic_vector (15 downto 0);        
+  signal rrgTimeStepReg         : std_logic_vector (15 downto 0);
+
 
   begin
 
@@ -409,7 +475,7 @@ addac_clk_sw: slave_clk_switch
 
 
     Dtack_to_SCUB    <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or daq_dtack
-                        or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
+                        or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack or rrg_dtack;
 
     clk_switch_intr  <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
@@ -516,8 +582,10 @@ dac_1: dac714
     nReset            => rstn_sys,              -- in, '0' => resets the DAC_1
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
-    FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    --FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
+    --FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    FG_Data           => rrg_out (15 downto 0), -- parallel dac data during FG-Mode
+    FG_Strobe         => rrg_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
     nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
@@ -775,6 +843,67 @@ p_led_ena: div_n
   end process;
 
   -------------------------------------------------------------------------------
+  -- Realtime Ramp Generator
+  -------------------------------------------------------------------------------
+
+  zeit1 : zeitbasis
+    generic map (
+          CLK_in_Hz =>  clk_sys_in_Hz,
+          diag_on   =>  1
+          )
+    port map  (
+          Res               =>  not rstn_sys,
+          Clk               =>  clk_sys,
+          Ena_every_100ns   =>  open,
+          Ena_every_166ns   =>  open,
+          Ena_every_250ns   =>  open,
+          Ena_every_500ns   =>  open,
+          Ena_every_1us     =>  Ena_Every_1us,
+          Ena_Every_20ms    =>  open
+          );
+
+  RRG_Reg: io_reg
+    generic map(
+          Base_addr =>  c_rrg_base
+          )
+    port map  (
+          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+          Ext_Adr_Val        =>  Ext_Adr_Val,
+          Ext_Rd_active      =>  Ext_Rd_active,
+          Ext_Rd_fin         =>  '0',
+          Ext_Wr_active      =>  Ext_Wr_active,
+          Ext_Wr_fin         =>  '0',
+          clk                =>  clk_sys,
+          nReset             =>  rstn_sys,
+    --
+          Reg_IO1            =>  rrgConfigReg,
+          Reg_IO2            =>  rrgTargetReg,
+          Reg_IO3            =>  rrgTimeStepReg,
+          Reg_IO4            =>  open,
+          Reg_IO5            =>  open,
+          Reg_IO6            =>  open,
+          Reg_IO7            =>  open,
+          Reg_IO8            =>  open,
+        --
+          Reg_rd_active      =>  rrg_rd_active,
+          Dtack_to_SCUB      =>  rrg_Dtack,
+          Data_to_SCUB       =>  rrg_data_to_SCUB
+        );
+
+  rrg_inst: rrg
+   port map (
+          clk           => clk_sys,
+          nReset        => rstn_sys,
+          time_pulse    => Ena_Every_1us,
+          ControlReg    => rrgConfigReg,
+          TargetReg     => rrgTargetReg,
+          TimeStepReg   => rrgTimeStepReg,
+          DAC_Out       => rrg_out,
+          DAC_Strobe    => rrg_strobe
+        );
+
+  -------------------------------------------------------------------------------
   -- rotating bit as a test vector for led testing
   -------------------------------------------------------------------------------
   test_signal: process(clk_sys, rstn_sys, s_led_en)
@@ -838,9 +967,10 @@ p_read_mux: process (
     daq_rd_active,        daq_rd_data_to_SCUB,
     clk_switch_rd_active, clk_switch_rd_data
     )
-  variable sel: unsigned(9 downto 0);
+  variable sel: unsigned(10 downto 0);
   begin
-    sel := clk_switch_rd_active
+    sel := rrg_rd_active
+         & clk_switch_rd_active
          & daq_rd_active
          & wb_scu_rd_active
          & tmr_rd_active
@@ -851,16 +981,17 @@ p_read_mux: process (
          & dac1_rd_active
          & io_port_rd_active;
     case sel IS
-      when "0000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "0000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "0000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "0000001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "0000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "0000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "0001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "0010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "0100000000" => Data_to_SCUB <= daq_rd_data_to_SCUB;
-      when "1000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "00000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "00000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "00000001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "00000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "00000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "00100000000" => Data_to_SCUB <= daq_rd_data_to_SCUB;
+      when "01000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "10000000000" => Data_to_SCUB <= rrg_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;

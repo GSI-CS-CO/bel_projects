@@ -5,7 +5,6 @@ files = [
    "diob_debounce.vhd",
    "diob_sync.vhd",
    "aw_io_reg.vhd",
-   "io_reg.vhd",
    "tag_ctrl.vhd",
    "tag_n.vhd",
    "config_status.vhd",
@@ -18,8 +17,7 @@ files = [
    "atr_puls_ctrl.vhd",
    "atr_puls_n.vhd",
    "atr_timeout.vhd",
-   "fg901040.vhd",
-   "in_reg.vhd"
+   "fg901040.vhd"
 ]
 
 modules = {
