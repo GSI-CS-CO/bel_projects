@@ -14,7 +14,7 @@ CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
 ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 else
-LIBS        ?= -L $(EB)/.libs -letherbone -lm
+LIBS        ?= -letherbone -lm
 endif
 
 all:	$(TARGETS) monitoring

@@ -14,7 +14,7 @@ CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(WRPC)/include -I $(WRPC)/p
 ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 else
-LIBS        ?= -L $(EB)/.libs -letherbone -lm
+LIBS        ?= -letherbone -lm
 endif
 
 # special for eb-mon
