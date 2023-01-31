@@ -122,3 +122,29 @@ void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config)
       ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
   fText.close();
 }
+
+void saveScheduleIndex(std::string fileName, ScheduleGraph& g, configuration& config) {
+  boost::dynamic_properties dp = setDynamicProperties(g, config);
+  if (config.superverbose) {
+    auto vertex_pair = vertices(g);
+    for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
+      std::cout << "vertex " << *iter << ": " << g[*iter].name << std::endl;
+    }
+
+    auto edge_pair = edges(g);
+    for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
+      std::cout << "edge " << source(*iter, g) << ": " << g[source(*iter, g)].name << " - " << target(*iter, g) << ": " << g[target(*iter, g)].name << std::endl;
+    }
+  }
+  std::string graphName = getGraphName(g);
+  setGraphName(g, graphName + std::string("-compact"));
+  if (fileName == "cout") {
+    boost::write_graphviz(std::cout, g, DynamicVertexPropertiesWriter(dp, "name1"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+  } else {
+    std::ofstream fText(fileName);
+    boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+    fText.close();
+  }
+}

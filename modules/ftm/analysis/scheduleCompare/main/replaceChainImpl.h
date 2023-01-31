@@ -24,7 +24,7 @@ class ReplaceChain {
     bool findStartOfChain();
     bool checkToReplace(VertexNum v);
     void createVertexAndEdges(VertexNum v);
-    bool insertVertexAndEdges();
+    bool insertEdges();
     bool getStartOfChain(VertexNum v);
     EdgeDescriptor* createEdgeProperties(VertexNum v1, VertexNum v2, VertexNum v3, bool flag);
     VertexNum createVertexProperties(VertexNum v);
@@ -33,15 +33,20 @@ class ReplaceChain {
     int counterReplacedChains = 0;
     VertexNum startOfChain = ULONG_MAX;
     VertexNum newVertex = ULONG_MAX;
-    //~ VertexNum beforeChain = ULONG_MAX;
-    //~ VertexNum afterChain = ULONG_MAX;
+    // new edge 'before' the new vertex
     EdgeDescriptor* beforeEdge;
+    EdgeDescriptor beforeEdgeOld;
+    // new edge 'after' the new vertex
     EdgeDescriptor* afterEdge;
+    EdgeDescriptor afterEdgeOld;
     std::pair<EdgeDescriptor, bool> *newEdge;
-    //~ VertexNum nextTestVertex = ULONG_MAX;
     VertexNum predecessor(VertexNum v);
     VertexNum successor(VertexNum v);
+    void getBeforeEdge(VertexNum v);
+    void getAfterEdge(VertexNum v);
     VertexId id = boost::get(boost::vertex_index, *g);
     VertexSet chain = {};
+    void printChain(std::string title);
+    void chainStatus(std::ostream& out);
 };
 #endif
