@@ -25,21 +25,21 @@ class ReplaceChain {
     bool checkToReplace(VertexNum v);
     void createVertexAndEdges(VertexNum v);
     bool insertEdges();
-    bool getStartOfChain(VertexNum v);
+    bool getStartOfChain(VertexNum v, VertexNum first);
     EdgeDescriptor* createEdgeProperties(VertexNum v1, VertexNum v2, VertexNum v3, bool flag);
     VertexNum createVertexProperties(VertexNum v);
     ScheduleGraph* g;
     configuration* c;
     int counterReplacedChains = 0;
     VertexNum startOfChain = ULONG_MAX;
-    VertexNum newVertex = ULONG_MAX;
+    VertexNum newVertexNum = ULONG_MAX;
     // new edge 'before' the new vertex
     EdgeDescriptor* beforeEdge;
     EdgeDescriptor beforeEdgeOld;
     // new edge 'after' the new vertex
     EdgeDescriptor* afterEdge;
     EdgeDescriptor afterEdgeOld;
-    std::pair<EdgeDescriptor, bool> *newEdge;
+    std::pair<EdgeDescriptor, bool> newEdge;
     VertexNum predecessor(VertexNum v);
     VertexNum successor(VertexNum v);
     void getBeforeEdge(VertexNum v);
@@ -47,6 +47,8 @@ class ReplaceChain {
     VertexId id = boost::get(boost::vertex_index, *g);
     VertexSet chain = {};
     void printChain(std::string title);
-    void chainStatus(std::ostream& out);
+    void chainStatus(std::string title, std::ostream& out);
+    std::string newName;
+    std::string newLabel;
 };
 #endif

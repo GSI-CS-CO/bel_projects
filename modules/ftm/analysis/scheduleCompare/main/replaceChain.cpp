@@ -17,7 +17,6 @@ int main(int argc, char* argv[]) {
         break;
       case 'o':
         config.outputFile = std::string(optarg);
-        std::cerr << "Output file: '" << config.outputFile << "'" << std::endl;
         break;
       case 'v':
         if (config.silent) {

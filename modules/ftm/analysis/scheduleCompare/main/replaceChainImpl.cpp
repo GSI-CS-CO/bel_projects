@@ -13,8 +13,9 @@ bool ReplaceChain::findStartOfChain() {
   // is the VertexNum of the start.
   bool result = false;
   BOOST_FOREACH (VertexDescriptor descriptor, vertices(*g)) {
-    std::cout << "descriptor: " << descriptor << ", id: " << boost::get(id, descriptor) << std::endl;
-    result = getStartOfChain(boost::get(id, descriptor));
+    VertexNum v = boost::get(id, descriptor);
+    std::cout << "descriptor: " << descriptor << ", id: " << v << std::endl;
+    result = getStartOfChain(v, v);
     if (result) {
       break;
     }
@@ -22,7 +23,7 @@ bool ReplaceChain::findStartOfChain() {
   return result;
 }
 
-bool ReplaceChain::getStartOfChain(VertexNum v) {
+bool ReplaceChain::getStartOfChain(VertexNum v, VertexNum first) {
   // checks that v is start of a chain.
   // If yes, return true and set this->startOfChain.
   // If no but v is in a chain, call this method recursively with p(v).
@@ -37,7 +38,7 @@ bool ReplaceChain::getStartOfChain(VertexNum v) {
     std::cout << "2 v: " << v << std::endl;
     VertexNum p = predecessor(v);
     if (boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) <= 1) {
-      result = getStartOfChain(p);
+      result = getStartOfChain(p, first);
     } else {
       result = false;
     }
@@ -48,14 +49,21 @@ bool ReplaceChain::getStartOfChain(VertexNum v) {
     startOfChain = boost::get(id, v);
   } else if (boost::in_degree(v, *g) == 1 && boost::out_degree(v, *g) == 1) {
     // check p(v). If p(v) is in this chain, proceed this test with p(v).
+    // if p(v) == first, we are in a cycle. Use v as startOfChain.
     // Otherwise v is start of chain.
     std::cout << "4 v: " << v << std::endl;
     VertexNum p = predecessor(v);
-    if (boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) <= 1) {
-      result = getStartOfChain(p);
+    if (predecessor(p) == v) {
+      // we have a two-vertex cycle, not a start of a chain to replace.
+      result = false;
+    } else if (p != first) {
+      result = true;
+      startOfChain = first;
+    } else if (boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) <= 1) {
+      result = getStartOfChain(p, first);
     } else {
       result = true;
-      startOfChain = boost::get(id, v);
+      startOfChain = v;
     }
   }
   std::cout << "result: " << result << ", startOfChain:" << startOfChain << std::endl;
@@ -87,23 +95,28 @@ VertexNum ReplaceChain::successor(VertexNum v) {
 void ReplaceChain::getBeforeEdge(VertexNum v) {
   ScheduleGraph::in_edge_iterator inBegin, inEnd;
   boost::tie(inBegin, inEnd) = boost::in_edges(v, *g);
-  std::cout << "getBeforeEdge edge: " << *inBegin << ", " << std::endl;
+  //~ std::cout << "getBeforeEdge edge: " << *inBegin << ", " << *inEnd << std::endl;
   beforeEdgeOld = *inBegin;
 }
 
 void ReplaceChain::getAfterEdge(VertexNum v) {
   ScheduleGraph::out_edge_iterator outBegin, outEnd;
   boost::tie(outBegin, outEnd) = boost::out_edges(v, *g);
-  std::cout << "getAfterEdge edge: " << *outBegin << ", " << std::endl;
+  //~ std::cout << "getAfterEdge edge: " << *outBegin << ", " << *outEnd << std::endl;
   afterEdgeOld = *outBegin;
 }
 
 bool ReplaceChain::checkToReplace(VertexNum v) {
+  // this method walks through the chain starting with startOfChain.
   bool result = true;
   if (chain.size() == 0) {
+    // v may be the first vertex of a chain, check successor.
     VertexNum s = successor(v);
-    std::cout << "checkToReplace v:" << v << ", s:" << s << std::endl;
+    std::cout << "checkToReplace v:" << v << ", s:" << s << ", size: " << chain.size() << std::endl;
     if (boost::in_degree(s, *g) == 1 && boost::out_degree(s, *g) <= 1) {
+      // v is the first vertex of the chain.
+      newName = (*g)[v].name;
+      newLabel = (*g)[v].label;
       chain.insert(v);
       printChain("checkToReplace 0 chain " + std::to_string(chain.size()) + ":");
       result = checkToReplace(s);
@@ -111,36 +124,50 @@ bool ReplaceChain::checkToReplace(VertexNum v) {
       result = false;
     }
   } else {
-    if (boost::in_degree(v, *g) == 1 && boost::out_degree(v, *g) <= 1) {
-      chain.insert(v);
-      printChain("checkToReplace 1 chain " + std::to_string(chain.size()) + ":");
-      result = checkToReplace(successor(v));
+    // v may be the second or further vertex of the chain. Check this vertex.
+    // test that v is not already in the chain. This may happen with cycles.
+    if (chain.count(v) == 0 && boost::in_degree(v, *g) == 1 && boost::out_degree(v, *g) <= 1) {
+      //~ printChain("checkToReplace 1 chain " + std::to_string(chain.size()) + ":");
+      VertexNum s = successor(v);
+      std::cout << "checkToReplace v:" << v << ", s:" << s << ", size: " << chain.size() << std::endl;
+      // if the successor is startOfChain, return. Otherwise, insert vertex into chain.
+      if (s == startOfChain) {
+        result = false;
+      } else {
+        newName = newName + "\n" + (*g)[v].name;
+        if ((*g)[v].label.size() > 0) {
+          newLabel = newLabel + "\n" + (*g)[v].label;
+        }
+        chain.insert(v);
+        result = checkToReplace(s);
+      }
     } else {
       result = false;
     }
   }
-  //~ return !chain.empty();
   return result;
 }
 
 void ReplaceChain::createVertexAndEdges(VertexNum v) {
-  std::cout << "createVertexAndEdges v:" << v << std::endl;
-  chainStatus(std::cout);
+  //~ std::cout << "createVertexAndEdges v:" << v << std::endl;
+  //~ chainStatus("createVertexAndEdges", std::cout);
   if (v == startOfChain) {
     // create a new vertex n and copy properties from v.
-    newVertex = createVertexProperties(v);
+    newVertexNum = createVertexProperties(v);
     // if there is a predecessor, create an edge to it.
     VertexNum p = predecessor(v);
     std::cout << "0 createVertexAndEdges v:" << v << ", p " << p << std::endl;
     if (p != ULONG_MAX) {
-      beforeEdge = createEdgeProperties(p, v, newVertex, true);
+      beforeEdge = createEdgeProperties(p, v, newVertexNum, true);
     }
   }
-  // if there is a successor, create an edge to it.
+  // if there is a successor of v and v is the last vertex in the chain, create an edge to it.
   VertexNum s = successor(v);
   std::cout << "1 createVertexAndEdges v:" << v << ", s " << s << std::endl;
   if (s != ULONG_MAX && chain.count(s) == 0) {
-    afterEdge = createEdgeProperties(newVertex, v, s, false);
+    afterEdge = createEdgeProperties(newVertexNum, v, s, false);
+    (*g)[newVertexNum].name = (*g)[newVertexNum].name + "\n...\n" + (*g)[v].name;
+    (*g)[newVertexNum].label = (*g)[newVertexNum].label + "\n...\n" + ((*g)[v].label.size() > 0 ? (*g)[v].label : (*g)[v].name);
   }
 }
 
@@ -167,16 +194,15 @@ VertexNum ReplaceChain::createVertexProperties(VertexNum v) {
     newVertex.label = newVertex.name;
   }
   // Add the new vertex to the graph.
-  VertexNum newVertexNum = add_vertex(newVertex, *g);
-  saveScheduleIndex("cout", *g, *c);
-  return newVertexNum;
+  VertexNum newVertexNum1 = add_vertex(newVertex, *g);
+  //~ saveScheduleIndex("cout", *g, *c);
+  return newVertexNum1;
 }
 
 EdgeDescriptor* ReplaceChain::createEdgeProperties(VertexNum v1, VertexNum v2, VertexNum v3, bool flag) {
-  std::cout << "createEdgeProperties v1:" << v1 << ", v2:" << v2 << ", v3:" << v3 << ", flag: " << flag << std::endl;
-  saveScheduleIndex("cout", *g, *c);
-  *newEdge = add_edge(v1, v3, *g);
-  std::cout << "createEdgeProperties 0 newEdge: " << newEdge->first << std::endl;
+  //~ std::cout << "createEdgeProperties v1:" << v1 << ", v2:" << v2 << ", v3:" << v3 << ", flag: " << (flag == true) << ", " << flag << std::endl;
+  //~ saveScheduleIndex("cout", *g, *c);
+  //~ std::cout << "createEdgeProperties 0 newEdge: " << newEdge.first << std::endl;
   EdgeDescriptor* edge;
   if (flag) {
     // flag = true: v3 is new. Create (v1, v3), copy properties from (v1, v2).
@@ -187,42 +213,51 @@ EdgeDescriptor* ReplaceChain::createEdgeProperties(VertexNum v1, VertexNum v2, V
     getAfterEdge(v2);
     edge = &afterEdgeOld;
   }
-  std::cout << "createEdgeProperties 1 newEdge: " << newEdge->first << std::endl;
-  (*g)[newEdge->first].pos = (*g)[*edge].pos;
-  (*g)[newEdge->first]._draw_ = (*g)[*edge]._draw_;
-  (*g)[newEdge->first]._hdraw_ = (*g)[*edge]._hdraw_;
-  (*g)[newEdge->first].type = (*g)[*edge].type;
-  (*g)[newEdge->first].color = (*g)[*edge].color;
-  return &(newEdge->first);
+  chainStatus("createEdgeProperties", std::cout);
+  newEdge = boost::add_edge(v1, v3, *g);
+  //~ std::cout << "createEdgeProperties 1 newEdge: " << newEdge.first << std::endl;
+  (*g)[newEdge.first].pos = (*g)[*edge].pos;
+  (*g)[newEdge.first]._draw_ = (*g)[*edge]._draw_;
+  (*g)[newEdge.first]._hdraw_ = (*g)[*edge]._hdraw_;
+  (*g)[newEdge.first].type = (*g)[*edge].type;
+  (*g)[newEdge.first].color = (*g)[*edge].color;
+  return &(newEdge.first);
 }
 
 bool ReplaceChain::insertEdges() {
-  bool result = false;
+  //~ bool result = false;
   std::cout << "insertEdges" << std::endl;
   for (auto v: chain) {
     createVertexAndEdges(v);
   }
+  if (chain.size() < 4) {
+    //~ chainStatus("insertEdges", std::cout);
+    (*g)[newVertexNum].name = newName;
+    //~ chainStatus("insertEdges", std::cout);
+    (*g)[newVertexNum].label = newLabel;
+    //~ chainStatus("insertEdges", std::cout);
+  }
   for (auto reverseIterator = chain.rbegin(); reverseIterator != chain.rend(); reverseIterator++) {
-    //~ VertexNum v1 = *reverseIterator;
-    //~ std::cout << "delete vertex " << v1 << std::endl;
     std::cout << "delete vertex " << *reverseIterator << std::endl;
-    clear_vertex(*reverseIterator, *g);
+    boost::clear_vertex(*reverseIterator, *g);
     boost::remove_vertex(*reverseIterator, *g);
   }
   // prepare for the next chain.
   startOfChain = ULONG_MAX;
   chain.clear();
   counterReplacedChains++;
-  return result;
+  return true;
 }
 
 bool ReplaceChain::replaceSingleChain() {
   bool result = false;
   if (findStartOfChain()) {
-    std::cout << "replaceSingleChain startOfChain: " << startOfChain << std::endl;
+    std::cout << "replaceSingleChain startOfChain: " << startOfChain << ", " << (*g)[startOfChain].name << std::endl;
     checkToReplace(startOfChain);
     if (chain.size() > 0) {
       result = insertEdges();
+    } else {
+      result = false;
     }
   }
   std::cout << "replaceSingleChain returns: " << result << std::endl;
@@ -253,12 +288,15 @@ void ReplaceChain::printChain(std::string title) {
   std::cout << "." << std::endl;
 }
 
-void ReplaceChain::chainStatus(std::ostream& out) {
+void ReplaceChain::chainStatus(std::string title, std::ostream& out) {
+  out << title << std::endl;
   out << "startOfChain " << startOfChain
-      << ", newVertex " << newVertex
+      << ", newVertexNum " << newVertexNum
       << ", beforeEdge " << *beforeEdge
       << ", beforeEdgeOld " << beforeEdgeOld
       << ", afterEdge " << *afterEdge
       << ", afterEdgeOld " << afterEdgeOld
-      << ", newEdge " << newEdge->first << " " << newEdge->second << std::endl;
+      << ", newEdge " << newEdge.first << " " << newEdge.second << std::endl;
+  out << "newName: '" << newName << "'" << std::endl;
+  out << "newLabel: '" << newLabel << "'" << std::endl;
 }

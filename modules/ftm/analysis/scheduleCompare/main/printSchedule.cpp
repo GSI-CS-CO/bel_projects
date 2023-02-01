@@ -1,20 +1,12 @@
 #include "printSchedule.h"
 
+void superVerboseStdOut(ScheduleGraph& g, configuration& config);
+
 void printSchedule(std::string header, ScheduleGraph& g, boost::dynamic_properties& dp, configuration& config) {
   if (config.verbose) {
     std::cout << std::endl << header << std::endl;
   }
-  if (config.superverbose) {
-    auto vertex_pair = vertices(g);
-    for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
-      std::cout << "vertex " << *iter << ": " << g[*iter].name << std::endl;
-    }
-
-    auto edge_pair = edges(g);
-    for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
-      std::cout << "edge " << source(*iter, g) << ": " << g[source(*iter, g)].name << " - " << target(*iter, g) << ": " << g[target(*iter, g)].name << std::endl;
-    }
-  }
+  superVerboseStdOut(g, config);
   if (config.verbose) {
     boost::write_graphviz_dp(std::cout, g, dp, "name");
   }
@@ -102,17 +94,7 @@ private:
 
 void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config) {
   boost::dynamic_properties dp = setDynamicProperties(g, config);
-  if (config.superverbose) {
-    auto vertex_pair = vertices(g);
-    for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
-      std::cout << "vertex " << *iter << ": " << g[*iter].name << std::endl;
-    }
-
-    auto edge_pair = edges(g);
-    for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
-      std::cout << "edge " << source(*iter, g) << ": " << g[source(*iter, g)].name << " - " << target(*iter, g) << ": " << g[target(*iter, g)].name << std::endl;
-    }
-  }
+  superVerboseStdOut(g, config);
   std::string graphName = getGraphName(g);
   setGraphName(g, graphName + std::string("-compact"));
   std::ofstream fText(fileName);
@@ -125,6 +107,21 @@ void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config)
 
 void saveScheduleIndex(std::string fileName, ScheduleGraph& g, configuration& config) {
   boost::dynamic_properties dp = setDynamicProperties(g, config);
+  superVerboseStdOut(g, config);
+  if (fileName == "cout") {
+    boost::write_graphviz(std::cout, g, DynamicVertexPropertiesWriter(dp, "name1"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+  } else {
+    std::string graphName = getGraphName(g);
+    setGraphName(g, graphName + std::string("-compact"));
+    std::ofstream fText(fileName);
+    boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+    fText.close();
+  }
+}
+
+void superVerboseStdOut(ScheduleGraph& g, configuration& config) {
   if (config.superverbose) {
     auto vertex_pair = vertices(g);
     for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
@@ -135,16 +132,5 @@ void saveScheduleIndex(std::string fileName, ScheduleGraph& g, configuration& co
     for (auto iter = edge_pair.first; iter != edge_pair.second; iter++) {
       std::cout << "edge " << source(*iter, g) << ": " << g[source(*iter, g)].name << " - " << target(*iter, g) << ": " << g[target(*iter, g)].name << std::endl;
     }
-  }
-  std::string graphName = getGraphName(g);
-  setGraphName(g, graphName + std::string("-compact"));
-  if (fileName == "cout") {
-    boost::write_graphviz(std::cout, g, DynamicVertexPropertiesWriter(dp, "name1"), DynamicPropertiesWriter(dp),
-        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
-  } else {
-    std::ofstream fText(fileName);
-    boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
-        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
-    fText.close();
   }
 }
