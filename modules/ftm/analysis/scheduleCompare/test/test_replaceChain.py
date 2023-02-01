@@ -46,7 +46,7 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
       expected = f_expected.readlines()
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: current file: {fileCurrent}, expected file: {fileExpected}\n{diffLines}')
-    self.deleteFile('compact.dot')
+    self.deleteFile(fileCurrent)
 
   def deleteFile(self, fileName):
     """Delete file <fileName>.
@@ -60,6 +60,33 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.callReplaceChain([self.binary, '-1', fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
     self.compareExpectedResult('compact.dot', fileName.replace('.dot', '-chain-1.dot'))
+
+  def replaceChain2(self, fileName, lines=2):
+    """Replace all chains in the given schedule file. Use second version of replaceChain algorithm.
+    """
+    outputFileName = 'replace-chain.dot'
+    self.callReplaceChain([self.binary, '-o', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
+    self.compareExpectedResult(outputFileName, fileName.replace('.dot', '-chain-2.dot'))
+
+  def test_replaceChainChain1(self):
+    """Compact a one vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/chain1.dot', 6)
+
+  def test_replaceChainChain3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/chain3.dot', 25)
+
+  def test_replaceChainCycle3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/cycle3.dot', 36)
+
+  def test_replaceChainCycle2x3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/cycle2x3.dot', 72)
 
   def test_compactChain1(self):
     """Compact a one vertex chain to one vertex.
@@ -75,6 +102,11 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a three vertex chain to one vertex.
     """
     self.replaceChain('replaceChain/cycle3.dot')
+
+  def test_compactCycle2x3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain('replaceChain/cycle2x3.dot', 3)
 
   def test_compactParallel1(self):
     """Compact a three vertex chain to one vertex.
