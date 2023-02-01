@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 01-Feb-2023
  *
  * publishes raw data of the b2b system
  *
@@ -58,11 +58,13 @@
 #include "TimingReceiver.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
+#include "EmbeddedCPUActionSink.h"
 #include "iDevice.h"
 #include "iOwned.h"
 #include "CommonFunctions.h"
 
 // b2b includes
+//#include <wb_devices.h>                 // wb_api
 #include <common-lib.h>                 // COMMON
 #include <b2blib.h>                     // API
 #include <b2b.h>                        // FW
@@ -495,6 +497,16 @@ int main(int argc, char** argv)
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
     uint32_t tag[nCondition];
+
+    // search for embedded CPU channel
+     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+    if (e_cpus.size() != 1)
+    {
+      std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
+      return (-1);
+    }
+    // connect to embedded CPU
+    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
 
     // define conditions (ECA filter rules)
     switch (reqExtRing) {
