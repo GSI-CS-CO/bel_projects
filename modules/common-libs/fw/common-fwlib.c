@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-jan-2023
+ *  version : 01-Feb-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -278,17 +278,17 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 
   dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
   dt_as           = dt_ps * 1000000;
-  nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
+  nPeriods        = dt_as / T_as + 1;                      // division does an implicit 'floor': need to increment
   interval_as     = nPeriods * T_as;
   half            = nineO >> 1;
   interval_ns     = interval_as / nineO;
   fraction_as     = interval_as % nineO;
-  if (fraction_as > half) {                                // rounding 
+  if (fraction_as > half) {                                // rounding to ns
     interval_ns++;
     fraction_as -= nineO;
   } // if fraction
   tAdvanced_t.ns  = t1_t.ns + interval_ns;
-  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;
+  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;       // no rounding to ps
   tAdvanced_t.dps = t1_t.dps;
 
   return tAdvanced_t; // [ps]
@@ -312,10 +312,9 @@ uint64_t fwlib_tps2tns(b2bt_t t_ps)              // time [ps]
   uint64_t t_ns;
   b2bt_t   ts_t;
 
-  ts_t = fwlib_cleanB2bt(t_ps);                  // clean 
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean, includes rounding
 
   t_ns = ts_t.ns;
-  if (ts_t.ps >= 500) t_ns++;                    // rounding
 
   return t_ns;
 } // tps2tns

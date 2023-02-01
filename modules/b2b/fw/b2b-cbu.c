@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Jan-2023
+ *  version : 01-Feb-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -502,14 +502,16 @@ void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
 // calculates time for extraction
 uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 {
-  uint32_t period;
+  b2bt_t tExt;
   
   // check for unreasonable values
   if (TH1Ext_as == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for period
   if (nHExt     == 0)                   return COMMON_STATUS_OUTOFRANGE;          // no value for harmonic number
   if ((tH1Ext_t.ns + one_s_ns) < tWant) return COMMON_STATUS_OUTOFRANGE;          // value older than approximately 1s
+
+  tExt = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tWant), TH1Ext_as);
   
-  *tExtract = fwlib_advanceTime(tH1Ext_t.ns, tWant, TH1Ext_as);
+  *tExtract = fwlib_tps2tns(tExt);
   //pp_printf("calc ps %4d\n", tH1Ext_t.ps);
   if (*tExtract == 0)                   return COMMON_STATUS_OUTOFRANGE;
 
@@ -901,6 +903,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
   int32_t  offsetDone;                                        // offset from deadline EKS to time, when extraction trigger is sent
+  __fp16 test;
 
   union fdat_t tmp;
 
