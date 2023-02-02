@@ -88,6 +88,36 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/cycle2x3.dot', 72)
 
+  def test_replaceChainParallel1(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/parallel1.dot', 10)
+
+  def test_replaceChainParallel2(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/parallel2.dot', 10)
+
+  def test_replaceChainStar4(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/star4.dot', 8)
+
+  def test_replaceChainTsl020Sis100(self):
+    """Compact a schedule from tsl020.
+    """
+    self.replaceChain2('replaceChain/tsl020-sis100.dot', 171)
+
+  def test_replaceChainGitLog(self):
+    """Compact a graph from git log.
+    """
+    self.replaceChain2('replaceChain/git-dot.dot', 616)
+
+  def test_replaceChainGitLog50(self):
+    """Compact a graph from git log.
+    """
+    self.replaceChain2('replaceChain/git-dot-50.dot', 183)
+
   def test_compactChain1(self):
     """Compact a one vertex chain to one vertex.
     """
