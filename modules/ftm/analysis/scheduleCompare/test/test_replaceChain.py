@@ -65,68 +65,88 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Replace all chains in the given schedule file. Use second version of replaceChain algorithm.
     """
     outputFileName = 'replace-chain.dot'
-    self.callReplaceChain([self.binary, '-o', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
+    self.callReplaceChain([self.binary, '-so', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
     self.compareExpectedResult(outputFileName, fileName.replace('.dot', '-chain-2.dot'))
 
   def test_replaceChainChain1(self):
     """Compact a one vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/chain1.dot', 6)
+    self.replaceChain2('replaceChain/chain1.dot', 0)
+
+  def test_replaceChainChain2x1(self):
+    """Compact a one vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/chain2x1.dot', 0)
 
   def test_replaceChainChain3(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/chain3.dot', 25)
+    self.replaceChain2('replaceChain/chain3.dot', 0)
+
+  def test_replaceChainChain2x3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/chain2x3.dot', 0)
 
   def test_replaceChainCycle3(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/cycle3.dot', 36)
+    self.replaceChain2('replaceChain/cycle3.dot', 0)
 
   def test_replaceChainCycle2x3(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/cycle2x3.dot', 72)
+    self.replaceChain2('replaceChain/cycle2x3.dot', 0)
 
   def test_replaceChainParallel1(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/parallel1.dot', 10)
+    self.replaceChain2('replaceChain/parallel1.dot', 0)
 
   def test_replaceChainParallel2(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/parallel2.dot', 10)
+    self.replaceChain2('replaceChain/parallel2.dot', 0)
 
   def test_replaceChainStar4(self):
     """Compact a three vertex chain to one vertex.
     """
-    self.replaceChain2('replaceChain/star4.dot', 8)
+    self.replaceChain2('replaceChain/star4.dot', 0)
 
   def test_replaceChainTsl020Sis100(self):
     """Compact a schedule from tsl020.
     """
-    self.replaceChain2('replaceChain/tsl020-sis100.dot', 171)
+    self.replaceChain2('replaceChain/tsl020-sis100.dot', 0)
 
   def test_replaceChainGitLog(self):
     """Compact a graph from git log.
     """
-    self.replaceChain2('replaceChain/git-dot.dot', 616)
+    self.replaceChain2('replaceChain/git-dot.dot', 0)
 
   def test_replaceChainGitLog50(self):
     """Compact a graph from git log.
     """
-    self.replaceChain2('replaceChain/git-dot-50.dot', 183)
+    self.replaceChain2('replaceChain/git-dot-50.dot', 0)
 
   def test_compactChain1(self):
     """Compact a one vertex chain to one vertex.
     """
     self.replaceChain('replaceChain/chain1.dot')
 
+  def test_compactChain2x1(self):
+    """Compact a one vertex chain to one vertex.
+    """
+    self.replaceChain('replaceChain/chain2x1.dot', 3)
+
   def test_compactChain3(self):
     """Compact a three vertex chain to one vertex.
     """
     self.replaceChain('replaceChain/chain3.dot')
+
+  def test_compactChain2x3(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain('replaceChain/chain2x3.dot', 3)
 
   def test_compactCycle3(self):
     """Compact a three vertex chain to one vertex.
