@@ -256,11 +256,8 @@ bool ReplaceChain::insertEdges() {
     createVertexAndEdges(v);
   }
   if (chain.size() < 4) {
-    //~ chainStatus("insertEdges", std::cout);
     (*g)[newVertexNum].name = newName;
-    //~ chainStatus("insertEdges", std::cout);
     (*g)[newVertexNum].label = newLabel;
-    //~ chainStatus("insertEdges", std::cout);
   }
   for (auto reverseIterator = chain.rbegin(); reverseIterator != chain.rend(); reverseIterator++) {
     boost::clear_vertex(*reverseIterator, *g);
@@ -277,7 +274,7 @@ bool ReplaceChain::replaceSingleChain() {
   bool result = false;
   if (findStartOfChain()) {
     if (c->verbose) {
-      std::cout << "replaceSingleChain startOfChain: " << startOfChain << ", " << (*g)[startOfChain].name << std::endl;
+      std::cout << "replaceSingleChain startOfChain: " << startOfChain << ", name:" << (*g)[startOfChain].name << std::endl;
     }
     checkToReplace(startOfChain);
     if (chain.size() > 0) {
@@ -293,7 +290,7 @@ int ReplaceChain::replaceChainLoop() {
   bool result = true;
   for (int i = 0; i < c->chainCount && result; i++) {
     if (c->verbose) {
-      std::cout << "replaceChainLoop counterReplacedChains: " << counterReplacedChains << ", startOfChain: " << startOfChain << ", result:" << result << std::endl;
+      std::cout << "replaceChainLoop counterReplacedChains: " << counterReplacedChains << ", startOfChain: " << startOfChain << ", result:" << result << ", vertices:" << num_vertices(*g) << std::endl;
     }
     result = replaceSingleChain();
   }
