@@ -478,6 +478,12 @@ bg: toolchain
 bg-clean::
 	$(MAKE) -C modules/burst_generator clean
 
+lm32-example:
+	$(MAKE) -C modules/lm32-example
+
+lm32-example-clean:
+	$(MAKE) -C modules/lm32-example clean
+
 # #################################################################################################
 # Legacy and unmaintained devices
 # #################################################################################################
