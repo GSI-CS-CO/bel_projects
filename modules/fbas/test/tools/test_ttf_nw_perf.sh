@@ -5,6 +5,8 @@ dir_name=${abs_path%/*}
 source $dir_name/test_ttf_basic.sh -s  # source the specified script
 
 domain=$(hostname -d)
+rxscu_name="scuxl0497"
+txscu_name="scuxl0396"
 rxscu="scuxl0497.$domain"
 txscu="scuxl0396.$domain"
 fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
@@ -12,14 +14,16 @@ fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
 
 usage() {
 
-    echo "Usage: $0 [OPTION]"
     echo "Run a MPS signalling test between TX and RX SCUs."
     echo "User might be logged in to both SCUs to perform optional pre-check."
-    echo "Used SCUs: ${rxscu%%.*} (RX), ${txscu%%.*} (TX)"
     echo
-    echo "OPTION:"
+    echo "Usage: $0 [options]"
+    echo
+    echo " options:"
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpassd>         user password"
+    echo "  -t <TX SCU>            transmitter SCU, by default $txscu_name"
+    echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
@@ -57,16 +61,28 @@ setup_nodes() {
         report_check $result $filename $rxscu
     done
 
-    echo -e "\n--- setup RX node ---\n"
-    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_def SENDER_TX"
+    echo -e "\nset up RX=$rxscu_name ...\n"
+    unset sender_opts
+    mac_txscu=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "eb-mon -m dev/wbm0")
     if [ $? -ne 0 ]; then
-        echo "Error: cannot set up ${rxscu%%.*} -> timed out"
+        echo "Sender ID of $txscu_name: SENDER_ANY (device is not unaccessable)"
+        sender_opts="SENDER_ANY"
+    else
+        echo "Sender ID of $txscu_name: $mac_txscu"
+        sender_opts="SENDER_TX $mac_txscu"
+    fi
+
+    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_def $sender_opts")
+    ret_code=$?
+    if [ $ret_code -ne 0 ]; then
+        echo "Error ($ret_code): cannot set up $rxscu_name"
         exit 1
     fi
-    echo -e "\n--- setup TX node ---\n"
-    timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && setup_mpstx"
-    if [ $? -ne 0 ]; then
-        echo "Error: cannot set up ${txscu%%.*} -> timed out"
+    echo -e "\nset up TX=$txscu_name ...\n"
+    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && setup_mpstx")
+    ret_code=$?
+    if [ $ret_code -ne 0 ]; then
+        echo "Error ($ret_code): cannot set up $txscu_name"
         exit 1
     fi
 }
@@ -123,19 +139,22 @@ measure_ttl() {
 unset username userpasswd option verbose
 unset OPTIND
 
-while getopts 'hyu:p:v' c; do
+while getopts 'hyu:p:vt:r:' c; do
     case $c in
-        h) usage; exit 1 ;;
+        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         y) option="auto" ;;
         v) verbose="yes" ;;
+        t) txscu_name=$OPTARG; txscu=$txscu_name.$domain ;;
+        r) rxscu_name=$OPTARG; rxscu=$rxscu_name.$domain ;;
+        *) usage; exit 1 ;;
     esac
 done
 
 # get username and password to access SCUs
 if [ -z "$username" ]; then
-    read -rp "username to access '${rxscu%%.*}, ${txscu%%.*}': " username
+    read -rp "username to access '$rxscu_name, $txscu_name': " username
 fi
 
 if [ -z "$userpasswd" ]; then
