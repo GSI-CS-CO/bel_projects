@@ -6,6 +6,7 @@
 #   'make clean'                                                 
 #   'make PREFIX= all' ;                                                               (hack: leave PREFIX empty for SCU path)
 # Example deploy:
+#   'make PREFIX= ARCH=/x86_64 STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
@@ -16,7 +17,8 @@ FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
 INC         ?= include
-DIM         ?= /common/usr/timing/b2b/dim_v20r29
+#DIM         ?= /common/usr/timing/b2b/dim_v20r29
+DIM         ?= /home/bel/dbeck/lnx/dim_v20r33_yocto
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
