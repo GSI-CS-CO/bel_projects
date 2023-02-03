@@ -89,15 +89,15 @@ setup_nodes() {
 
 measure_nw_perf() {
     echo -e "\n--- enable MPS operation (RX, TX) ---\n"
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX"
-    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX"
+    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX")
 
     # start test
     sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && start_nw_perf"
 
     echo -e "\n--- disable MPS operation (TX, RX) ---\n"
-    sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX"
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
+    output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX")
+    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
 
     # report test result
     echo -e "\n--- report test result (TX, RX) ---\n"
@@ -117,20 +117,21 @@ measure_nw_perf() {
 
 measure_ttl() {
     echo -e "enable MPS operation of RX"
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX"
+    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
 
-    echo -e "toggle MPS operation of TX:\n"
-    for i in $(seq 1 10); do
-        echo -en "   $i : enable  "
-        sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX"
+    n_toggle=10
+    echo -e "toggle MPS operation (n=$n_toggle): TX=$txscu_name"
+    for i in $(seq 1 $n_toggle); do
+        echo -en " $i: enable \r"
+        output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX")
         sleep 1
-        echo -en "   $i : disable "
-        sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX"
+        echo -en " $i: disable\r"
+        output=(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX")
         sleep 2
     done
 
     echo -e "disable MPS operation of RX"
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX"
+    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
 
     echo -e "\n--- report TTL measurement ---\n"
     sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
