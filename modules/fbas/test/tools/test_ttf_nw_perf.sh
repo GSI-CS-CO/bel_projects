@@ -51,7 +51,7 @@ pre_check() {
 }
 
 setup_nodes() {
-    echo -e "\n--- check deployment ---\n"
+    echo -e "\ncheck deployment\n"
 
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
 
@@ -88,35 +88,39 @@ setup_nodes() {
 }
 
 measure_nw_perf() {
-    echo -e "\n--- enable MPS operation (RX, TX) ---\n"
+    echo -e "start the measurements\n"
     output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
     output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX")
 
     # start test
     sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && start_nw_perf"
 
-    echo -e "\n--- disable MPS operation (TX, RX) ---\n"
+    echo -e "stop the measurements\n"
     output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX")
     output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
 
     # report test result
-    echo -e "\n--- report test result (TX, RX) ---\n"
-    echo -n "TX: "
+    echo -e "measurement stats: MPS signaling\n"
+    cnt=$(sshpass -p "$userpasswd" ssh "$username@$txscu" \
+        "source setup_local.sh && \
+        read_counters \$DEV_TX $verbose")
+    echo "TX: $cnt"
+    cnt=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && \
+        read_counters \$DEV_RX $verbose")
+    echo "RX: $cnt"
     sshpass -p "$userpasswd" ssh "$username@$txscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_TX $verbose && \
-        result_tx_delay \$DEV_TX $verbose && \
-        result_sg_latency \$DEV_TX $verbose"
-    echo -n "RX: "
+        result_sg_latency \$DEV_TX $verbose && \
+        result_tx_delay \$DEV_TX $verbose"
     sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_RX $verbose && \
         result_ow_delay \$DEV_RX $verbose && \
         result_ttl_ival \$DEV_RX $verbose"
 }
 
 measure_ttl() {
-    echo -e "enable MPS operation of RX"
+    echo -e "start the measurement\n"
     output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
 
     n_toggle=10
@@ -130,10 +134,10 @@ measure_ttl() {
         sleep 2
     done
 
-    echo -e "disable MPS operation of RX"
+    echo -e "\nstop the measurement\n"
     output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
 
-    echo -e "\n--- report TTL measurement ---\n"
+    echo -e "measurement stats: TTL\n"
     sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
 }
 
@@ -162,20 +166,20 @@ if [ -z "$userpasswd" ]; then
     read -rsp "password for '$username' : " userpasswd
 fi
 
-echo -e "\n--- Step 1 - set up nodes (RX, TX)---"
+echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=$txscu_name) ---"
 setup_nodes
 
 # optional pre-check before real test
-echo -e "\n--- Step 2 - pre-check (RX, TX) ---\n"
+echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=$txscu_name) ---\n"
 pre_check
 
 if [ "$option" != "auto" ]; then
     user_approval
 fi
 
-echo -e "\n--- Step 3 - measure network performance ---\n"
+echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=$txscu_name) ---\n"
 measure_nw_perf
 
 # TTL measurement
-echo -e "\n--- Step 4 - measure TTL ---\n"
+echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=$txscu_name) ---\n"
 measure_ttl

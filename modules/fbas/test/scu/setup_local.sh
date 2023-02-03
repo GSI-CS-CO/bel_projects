@@ -451,21 +451,21 @@ start_nw_perf() {
     echo "TX: MPS events will be generated locally ..."
     echo "TX: $n MPS events -> flag=NOK(2), grpID=1, evtID=0 ($(( $n * 3)) transmissions)"
     echo "TX: $n MPS events -> flag=OK(1), grpID=1, evtID=0 ($n transmissions)"
+    echo -e "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
 
     for i in $(seq $n); do
-        echo -n "$i "
+
         saft-ctl tr0 -p inject $evt_mps_flag_nok 0x0 0
-        wait_seconds 1
+        echo -en " $i: NOK\r"
+        sleep 1
 
         saft-ctl tr0 -p inject $evt_mps_flag_ok 0x0 0
-        wait_seconds 1
+        echo -en " $i:  OK\r"
+        sleep 1
     done
 
-    echo
-    echo "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'"
-
     wait_seconds 1
-    echo "TX: send 'new cycle'"
+    echo -e "\nTX: send 'new cycle'"
     saft-ctl tr0 -p inject $evt_new_cycle $evt_id_mask 1000000
 }
 
