@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2022
+ *  version : 23-Jan-2023
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000808                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000811                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -289,7 +289,7 @@ void dmStartThread(uint32_t blk)
     evtId = evtId | ((uint64_t)0xfa0 << 36);
     evtId = evtId | dmThrs[blk].TSAddr;
     param = 0x0;
-    fwlib_ecaWriteTM(TS, evtId, param, 1);
+    fwlib_ecaWriteTM(TS, evtId, param, 0x0, 1);
 
     // write start bit to global control register
     TS    = TS + 8;
@@ -297,7 +297,7 @@ void dmStartThread(uint32_t blk)
     evtId = evtId | ((uint64_t)0xfa1 << 36);
     evtId = evtId | dmThrs[blk].StartAddr;
     param = dmThrs[blk].StartData;
-    fwlib_ecaWriteTM(TS, evtId, param, 1);
+    fwlib_ecaWriteTM(TS, evtId, param, 0x0, 1);
   } // if flagDebug
 } // dmStartThread
 
@@ -586,7 +586,7 @@ void dmChangeBlock(uint32_t blk)
     evtId = evtId | ((uint64_t)0xfa2 << 36);
     evtId = evtId | dmCmds[blk].cmdAddr;
     param = dmCmds[blk].cmdData[0];
-    fwlib_ecaWriteTM(TS, evtId, param, 1);
+    fwlib_ecaWriteTM(TS, evtId, param, 0x0, 1);
 
     // blockWrIdxs address and idxs
     TS    = TS + 8;
@@ -594,7 +594,7 @@ void dmChangeBlock(uint32_t blk)
     evtId = evtId | ((uint64_t)0xfa3 << 36);
     evtId = evtId | dmCmds[blk].blockWrIdxsAddr;
     param = dmCmds[blk].blockWrIdxs;
-    fwlib_ecaWriteTM(TS, evtId, param, 1);
+    fwlib_ecaWriteTM(TS, evtId, param, 0x0, 1);
   } // if flagDebug
 } // dmChangeBlock
 

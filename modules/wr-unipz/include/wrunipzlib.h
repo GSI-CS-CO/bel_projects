@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Apr-2022
+ *  version : 26-Sep-2022
  *
  * library for wrunipz
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION 0x000211
+#define WRUNIPZLIB_VERSION 0x000214
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRUNIPZLIB_STATUS_OK                 0    // OK
