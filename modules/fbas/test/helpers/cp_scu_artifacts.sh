@@ -4,9 +4,10 @@
 
 # MPS SCU - WR switch
 # 396/497 - nwt0297
-# 411/329 - nwt0471
-# 321/264 - nwt0472
-scu_arr=(scuxl0396 scuxl0497 scuxl0321 scuxl0264 scuxl0329 scuxl0411)
+# 264/321 - nwt0470
+# 329/411 - nwt0471
+# 339/305 - nwt0472
+scu_arr=(scuxl0396 scuxl0497 scuxl0264 scuxl0321 scuxl0411 scuxl0329 scuxl0339 scuxl0305)
 
 scp_opts="-pv -o StrictHostKeyChecking=no"  # -p: preserve modification time, -v: verbose, -o: SSH options
 
