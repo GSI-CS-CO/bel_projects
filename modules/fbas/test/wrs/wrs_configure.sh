@@ -2,18 +2,23 @@
 
 # Configure the target WRS with the specified dot-config
 
-# usage: ./wrs_configure.sh username target config
-# where:
-#      username - username for login
-#        target - target WRS name (eg, nwt0123m66)
-#        config - dot-config file
-
 usage() {
-    if [ $# < 3 ]; then
-        echo "Missing arguments: $0 username target config. Exit!"
-        exit 1
-    fi
+    echo "Usage: $0 username target config"
+    echo
+    echo "where:"
+    echo "    username - username for login"
+    echo "      target - target WRS name (eg, nwt0123m66)"
+    echo "      config - dot-config file"
 }
+
+error() {
+    echo "Missing arguments: $0 username target config. Exit!"
+}
+
+if [ $# -lt 3 ]; then
+    usage
+    exit 1
+fi
 
 domain="timing"
 username=$1
