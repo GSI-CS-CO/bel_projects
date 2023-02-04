@@ -1,7 +1,7 @@
 #!/bin/sh
 # b2b deployment script: copy libraries and software to FEC
 
-logger "copy stuff from NFS script $0: start"
+logger "get my latest shit $0: start"
 
 ARCH=$(/bin/uname -m)
 HOSTNAME=$(/bin/hostname -s)
@@ -25,4 +25,4 @@ cp -a /opt/$NAME/$ARCH/tmp/b2bivt/* /tmp/b2bivt
 # firmware
 cp -a /opt/$NAME/firmware/* /
 
-logger "copy stuff from NFS script $0: done"
+logger "get my latest shit $0: done"

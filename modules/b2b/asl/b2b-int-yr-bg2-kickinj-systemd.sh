@@ -1,7 +1,7 @@
 #!/bin/sh
 # b2b deployment script: configure systemd  
 
-logger "systemd config script $0: start"
+logger "fire-up my latest shit $0: start"
 
 SERVICEA=b2b-servsys-intyrkickinj.service
 SERVICEB=b2b-servraw-intyr.service
@@ -18,4 +18,4 @@ systemctl start $SERVICEA
 systemctl start $SERVICEB
 systemctl start $SERVICEC
 
-logger "systemd config script $0: done"
+logger "fire-up my latest shit $0: done"

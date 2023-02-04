@@ -1,7 +1,7 @@
 #!/bin/sh
 # b2b deployment script: firmware and ECA config 
 
-logger "firmware and ECA configuration script $0: start"
+logger "configure my latest shit $0: start"
 
 ARCH=$(/bin/uname -m)
 
@@ -14,4 +14,4 @@ cp -a /opt/$NAME/$ARCH/usr/bin/b2b-int-yr-bg2-kickinj_start.sh /usr/bin/
 # execute config script
 b2b-int-yr-bg2-kickinj_start.sh
 
-logger "firmware and ECA configuration script $0: done"
+logger "configure my latest shit $0: done"
