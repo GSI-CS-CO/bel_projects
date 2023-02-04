@@ -1,0 +1,23 @@
+#!/bin/sh
+#. /etc/functions  
+
+# specific stuff
+NFSPATH=timing-rte/b2b-dev-yocto
+
+# generic startup
+NFSHOST=fsl00c
+NFSBASE=/common/export
+export NAME=$(echo "$0" | cut -f2- -d_)
+
+logger "specific init for my latest shit (called by $0): start"
+logger "my latest shit resides in path $NFSBASE/$NFSPATH"
+
+[ ! -d /opt/$NAME ] && mkdir -p /opt/$NAME
+mount -t nfs -o ro,nolock $NFSHOST:$NFSBASE/$NFSPATH /opt/$NAME
+/opt/$NAME/$NAME.sh
+
+umount /opt/$NAME
+
+logger "specific init for my latest shit (called by $0): done"
+
+
