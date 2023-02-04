@@ -16,6 +16,7 @@ ARCH        ?= /x86_64
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
+SYSTEMD     ?= systemd
 INC         ?= include
 #DIM         ?= /common/usr/timing/b2b/dim_v20r29
 DIM         ?= /home/bel/dbeck/lnx/dim_v20r33_yocto
@@ -46,10 +47,13 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include                     # '/usr' is a hack
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt                      # needed for ivtpar
 	mkdir -p $(STAGING)/firmware
+	mkdir -p $(STAGING)/$(SYSTEMD)
 #	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
 
 # NFS init scripts, the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
 	cp $(ASL)/b2b-*.sh $(STAGING)                                       # nfs init scripts
+# FEC systemd scripts, the format is 'b2b-<binary>-<environment><machine><function>.service'
+	cp $(SYSTEMD)/b2b-*.service $(STAGING)/$(SYSTEMD)                   # nfs init scripts
 # FEC configuration scripts; the format is 'b2b-<environment>-<machine>-<room>-<function>_start.sh'
 	cp $(SW)/b2b-*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # configuration scripts
 # FEC x86 binaries 

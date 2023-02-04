@@ -1,18 +1,16 @@
 #!/bin/sh
-# script for deployment on ASL
-#. /etc/functions
+# b2b deployment script: copy libraries and software to FEC
 
-logger "$0: initializing"
+logger "hacky unsupported software deployment script $0: start"
 
 ARCH=$(/bin/uname -m)
 HOSTNAME=$(/bin/hostname -s)
 
-#logger 'apply HACK to fix suspicous dynamic library hazard'
-#ln -s /usr/lib/libetherbone.so.5 /lib/libetherbone.so.5
-
-logger "$0: copying software to ramdisk"
+logger "$0: copying firmware, software and liraries to ramdisk"
+# libraries
 cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
 ldconfig
+# software
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ui /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-ctl /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-serv-sys /usr/bin/
@@ -22,9 +20,9 @@ cp -a /opt/$NAME/$ARCH/usr/bin/b2b-analyzer /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-viewer /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/b2b-archiver /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/bin/eb-fwload /usr/bin/
-
 mkdir /tmp/b2bivt
 cp -a /opt/$NAME/$ARCH/tmp/b2bivt/* /tmp/b2bivt
+# firmware
+cp -a /opt/$NAME/firmware/* /
 
-logger "$0: done"
-
+logger "hacky unsupported software deployment script $0: done"
