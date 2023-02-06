@@ -1,6 +1,7 @@
 #!/bin/bash
 # Known problem(s):
-# ../ip_cores/etherbone is empty => run ./fix-git.sh at base directory (bel_projects/)
+# Error: ../ip_cores/etherbone is empty => run ./fix-git.sh at base directory (bel_projects/)
+# Error: eb-xyz-tool not found => copy the tool(s) into this folder: /usr/bin
 
 # Yocto stuff
 unset LD_LIBRARY_PATH
