@@ -1,4 +1,6 @@
 #!/bin/bash
+# Known problem(s):
+# ../ip_cores/etherbone is empty => run ./fix-git.sh at base directory (bel_projects/)
 
 # Yocto stuff
 unset LD_LIBRARY_PATH
