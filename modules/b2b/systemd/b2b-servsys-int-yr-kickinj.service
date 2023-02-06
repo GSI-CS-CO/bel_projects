@@ -1,5 +1,5 @@
 [Unit]
-Description = b2b serv-sys service for INT YR injection kicker 
+Description = b2b system monitor daemon for INT CRYRING injection kicker 
 Requires = dev-wbm0.device
 After = dev-wbm0.device
 

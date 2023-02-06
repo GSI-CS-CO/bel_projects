@@ -1,5 +1,5 @@
 [Unit]
-Description = b2b serv-raw service for INT YR 
+Description = b2b data acquisition daemon for INT CRYRING
 Requires = saftd.service
 After = saftd.service
 

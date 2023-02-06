@@ -1,5 +1,5 @@
 [Unit]
-Description = b2b analyzer service for INT YR 
+Description = b2b data analysis daemon for INT CRYRING
 
 [Service]
 Type = simple
