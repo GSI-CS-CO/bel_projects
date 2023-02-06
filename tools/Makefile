@@ -8,6 +8,7 @@ WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-fg-statistic
 EXTRA_I := eb-flash-secure
 USE_RPATH ?= yes
+YOCTO_BUILD ?= no
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
@@ -28,10 +29,18 @@ install: monitoring-install
 	cp $(EXTRA_I) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
+ifeq ($(YOCTO_BUILD),yes)
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+else
 	gcc $(CFLAGS) -o $@ $< $(LIBS)
+endif
 
 %:	%.cpp
+ifeq ($(YOCTO_BUILD),yes)
+	$(CXX) $(CFLAGS) -o $@ $< $(LIBS)
+else
 	g++ $(CFLAGS) -o $@ $< $(LIBS)
+endif
 
 monitoring: monitoringg
 
