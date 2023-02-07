@@ -121,6 +121,18 @@ void saveScheduleIndex(std::string fileName, ScheduleGraph& g, configuration& co
   }
 }
 
+void printScheduleIndex(std::string title, ScheduleGraph& g, configuration& config) {
+  if (config.verbose) {
+    std::cout << std::endl << title << std::endl;
+  }
+  superVerboseStdOut(g, config);
+  if (config.verbose) {
+    boost::dynamic_properties dp = setDynamicProperties(g, config);
+    boost::write_graphviz(std::cout, g, DynamicVertexPropertiesWriter(dp, "name1"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g));
+  }
+}
+
 void superVerboseStdOut(ScheduleGraph& g, configuration& config) {
   if (config.superverbose) {
     auto vertex_pair = vertices(g);

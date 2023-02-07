@@ -79,7 +79,7 @@ int compactSingleGraph(std::string dotFile1, configuration& config) {
     config.extraProperties = true;
     boost::dynamic_properties dp1 = setDynamicProperties(graph1, config);
     parse1 = parseSchedule(dotFile1, graph1, dp1, config);
-    printSchedule("Graph:", graph1, dp1, config);
+    printScheduleIndex("Graph:", graph1, config);
   } catch (boost::property_not_found &excep) {
     std::cerr << "Parsing graph: Property not found" << excep.what() << std::endl;
     result = PARSE_ERROR;
