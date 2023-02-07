@@ -3,9 +3,9 @@
 
 logger "fire-up my latest shit $0: start"
 
-SERVICEA=b2b-servsys-intyrkickinj.service
-SERVICEB=b2b-servraw-intyr.service
-SERVICEC=b2b-analyzer-intyr.service
+SERVICEA=b2b-servsys-int-yr-kickinj.service
+SERVICEB=b2b-servraw-int-yr.service
+SERVICEC=b2b-analyzer-int-yr.service
 
 logger "$0: copying systemd service configurations"
 cp -a /opt/$NAME/systemd/$SERVICEA /lib/systemd/system

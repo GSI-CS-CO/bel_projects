@@ -6,21 +6,23 @@
 #   'make clean'                                                 
 #   'make PREFIX= all' ;                                                               (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= ARCH=/x86_64 STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'              (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
-ARCH        ?= /x86_64
+ARCH        := /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
 SYSTEMD     ?= systemd
 INC         ?= include
-#DIM         ?= /common/usr/timing/b2b/dim_v20r29
-DIM         ?= /home/bel/dbeck/lnx/dim_v20r33_yocto
-#TARGETS     := firmware software
+
+# hack for building on local linux box
+#DIMPATH     := /opt/dim/dim_v20r29
+# hack for building on ASL with yocto SDK
+DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
 
 #EXTRA_FLAGS ?=
 #CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW)
@@ -48,7 +50,9 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt                      # needed for ivtpar
 	mkdir -p $(STAGING)/firmware
 	mkdir -p $(STAGING)/$(SYSTEMD)
-#	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
+
+# hm...
+	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
 
 # NFS init scripts, the format is 'b2b-<environment>-<machine>-<room>-<function>.sh'
 	cp $(ASL)/b2b-*.sh $(STAGING)                                       # nfs init scripts
@@ -66,7 +70,7 @@ deploy:
 # FEC lm32 firmware
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 # DAQ
-	cp $(DIM)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib        # '/usr' is a hack
+	cp $(DIMPATH)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib    # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-client-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack 
 	cp $(SW)/b2b-serv-raw $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 

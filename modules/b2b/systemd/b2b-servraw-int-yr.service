@@ -1,5 +1,5 @@
 [Unit]
-Description = b2b data acquisition daemon for INT CRYRING
+Description = b2b data acquisition for INT CRYRING
 Requires = saftd.service
 After = saftd.service
 
