@@ -5,15 +5,16 @@
 #   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
 #   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
 #   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/dmunipz deploy'    (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
-ARCH        ?= /x86_64
+ARCH        := /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
 FW          ?= fw
 SW          ?= x86
 ASL         ?= asl
+SYSTEMD     ?= systemd
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
@@ -33,12 +34,22 @@ clean:
 	$(MAKE) -C $(FW) clean
 
 deploy: 
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                     # '/usr' is a hack
+	mkdir -p $(STAGING)/$(SYSTEMD)
 	mkdir -p $(STAGING)/firmware
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/dmunipz.sh $(STAGING)
-	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+
+	cp $(SYSTEMD)/dmunipz-*.service $(STAGING)/$(SYSTEMD)           # nfs init scripts
+
+	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # '/usr' is a hack
+
+	cp $(ASL)/dmunipz-tools.sh $(STAGING)
+	cp $(ASL)/dmunipz-config.sh $(STAGING)
+	cp $(ASL)/dmunipz-systemd.sh $(STAGING)
+
+	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin   # '/usr' is a hack
+	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
+	cp $(SW)/logshipper.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
+
 	cp $(FW)/dmunipz.bin $(STAGING)/firmware
 #	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
 
