@@ -14,15 +14,28 @@ source $dir_name/test_ttf_basic.sh -s  # source the specified script
 domain=$(hostname -d)             # domain name of local host
 rxscu="scuxl0497.$domain"         # RX SCU
 datamaster="tsl014"               # Data Master
-mngmaster="tsl001"                # Management Master
+login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
+mngmasters=( tsl001 tsl101 )      # Management Masters
 localhost=$(hostname -s)          # local host
 
 fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
 
 sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
-if [ "$localhost" != "$mngmaster" ]; then
+
+# determine if a local host is a management master (alias tslhost)
+unset tslhost
+for mm in "${mngmasters[@]}"; do
+    if [ "$localhost" == "$mm" ]; then
+        tslhost="$mm"
+        break
+    fi
+done
+
+# for non-tslhosts, locate a proper DM schedule path
+if [ -z "$tslhost" ]; then
     sched_dir="${PWD/fbas*/fbas}/test/dm"
 fi
+
 dst_test_dir="fbas_test"          # destination directory for DM scripts
 src_test_dir="${dir_name%/*}"     # source test directory
 
@@ -97,9 +110,9 @@ fi
 echo "check deployment"
 echo "----------------"
 
-timeout 10 ssh "$username@$datamaster" "if [ ! -d "./$dst_test_dir" ]; then mkdir -p ./$dst_test_dir; fi"
+timeout 10 ssh "$login_dm" "if [ ! -d "./$dst_test_dir" ]; then mkdir -p ./$dst_test_dir; fi"
 if [ $? -eq 0 ]; then
-    scp $scp_opts "$src_test_dir/tools" "$src_test_dir/dm" $username@$datamaster:./$dst_test_dir/
+    scp $scp_opts "$src_test_dir/tools" "$src_test_dir/dm" $login_dm:./$dst_test_dir/
 else
     echo "cannot deploy '$dst_test_dir' on $datamaster"
     exit 2
@@ -151,7 +164,7 @@ timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.s
 
 # deploy the specified schedule file
 echo -e "\ndeploy '$sched_filename' to $datamaster in './${dst_test_dir}/dm'\n------------"
-scp $scp_opts $sched_dir/$sched_filename $username@$datamaster:./${dst_test_dir}/dm/
+scp $scp_opts $sched_dir/$sched_filename $login_dm:./${dst_test_dir}/dm/
 
 unset results
 for rate in ${all_msg_rates[*]}; do
@@ -171,7 +184,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # start a schedule on DM
     echo -e "\nstart a schedule on '${datamaster}'\n---------"
-    ssh "$username@$datamaster" "source ./${dst_test_dir}/tools/dm.sh && set_value $sched_filename tperiod $t_period && run_pattern $sched_filename"
+    ssh "$login_dm" "source ./${dst_test_dir}/tools/dm.sh && set_value $sched_filename tperiod $t_period && run_pattern $sched_filename"
 
     # disable MPX task of rxscu"
     timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX"
