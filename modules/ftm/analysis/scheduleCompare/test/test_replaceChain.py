@@ -74,7 +74,7 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     self.replaceChain2('replaceChain/chain1.dot', 0)
 
   def test_replaceChainChain2x1(self):
-    """Compact a one vertex chain to one vertex.
+    """Compact two one vertex chains to two single vertices.
     """
     self.replaceChain2('replaceChain/chain2x1.dot', 0)
 
@@ -83,33 +83,76 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/chain3.dot', 0)
 
+  def test_replaceChainChains123(self):
+    """Compact a graph with three chains (1 vertex, 2 vertices, 3 vertices)
+    to three chains with one vertex.
+    """
+    self.replaceChain2('replaceChain/chains123.dot', 0)
+
+  def test_replaceChainChains123123(self):
+    """Compact a graph with six chains (2x1 vertex, 2x2 vertices, 2x3 vertices)
+    to six chains with one vertex.
+    """
+    self.replaceChain2('replaceChain/chains123123.dot', 0)
+
+  def test_replaceChainChains123123123(self):
+    """Compact a graph with nine chains (3x1 vertex, 3x2 vertices, 3x3 vertices)
+    to nine chains with one vertex.
+    """
+    self.replaceChain2('replaceChain/chains123123123.dot', 0)
+
   def test_replaceChainChain2x3(self):
     """Compact a three vertex chain to one vertex.
     """
     self.replaceChain2('replaceChain/chain2x3.dot', 0)
 
   def test_replaceChainCycle3(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact a three vertex cycle into a two vertex cycle.
     """
     self.replaceChain2('replaceChain/cycle3.dot', 0)
 
   def test_replaceChainCycle2x3(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact two three vertex cycles into two two vertex cycles.
     """
     self.replaceChain2('replaceChain/cycle2x3.dot', 0)
 
   def test_replaceChainParallel1(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact a three vertex chain and a parallel edge into the same (nothing to do).
     """
     self.replaceChain2('replaceChain/parallel1.dot', 0)
 
   def test_replaceChainParallel2(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact two parallel three vertex chains. Nothing to do.
     """
     self.replaceChain2('replaceChain/parallel2.dot', 0)
 
-  def test_replaceChainStar4(self):
+  def test_replaceChainParallel1x3(self):
+    """Compact a five vertex chain and a parallel edge.
+    """
+    self.replaceChain2('replaceChain/parallel1x3.dot', 0)
+
+  def test_replaceChainParallel1x3r(self):
+    """Compact a five vertex chain and a parallel edge (reverse numbering of the vertices).
+    """
+    self.replaceChain2('replaceChain/parallel1x3r.dot', 0)
+
+  def test_replaceChainParallel2x2(self):
     """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/parallel2x2.dot', 0)
+
+  def test_replaceChainParallel1x4(self):
+    """Compact a six vertex chain and a parallel edge.
+    """
+    self.replaceChain2('replaceChain/parallel1x4.dot', 0)
+
+  def test_replaceChainParallel1x4r(self):
+    """Compact a six vertex chain and a parallel edge (reverse numbering of the vertices).
+    """
+    self.replaceChain2('replaceChain/parallel1x4r.dot', 0)
+
+  def test_replaceChainStar4(self):
+    """Compact a four element star. Nothing to do.
     """
     self.replaceChain2('replaceChain/star4.dot', 0)
 
@@ -134,7 +177,8 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     self.replaceChain('replaceChain/chain1.dot')
 
   def test_compactChain2x1(self):
-    """Compact a one vertex chain to one vertex.
+    """Compact two one vertex chains to two single vertices.
+    Test that the algorithm finds more than one chain.
     """
     self.replaceChain('replaceChain/chain2x1.dot', 3)
 
@@ -143,33 +187,76 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain('replaceChain/chain3.dot')
 
+  def test_compactChains123(self):
+    """Compact a graph with three chains (1 vertex, 2 vertices, 3 vertices)
+    to three chains with one vertex.
+    """
+    self.replaceChain('replaceChain/chains123.dot', 4)
+
+  def test_compactChains123123(self):
+    """Compact a graph with six chains (2x1 vertex, 2x2 vertices, 2x3 vertices)
+    to six chains with one vertex.
+    """
+    self.replaceChain('replaceChain/chains123123.dot', 7)
+
+  def test_compactChains123123123(self):
+    """Compact a graph with nine chains (3x1 vertex, 3x2 vertices, 3x3 vertices)
+    to nine chains with one vertex.
+    """
+    self.replaceChain('replaceChain/chains123123123.dot', 10)
+
   def test_compactChain2x3(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact two three vertex chain to two single vertices.
     """
     self.replaceChain('replaceChain/chain2x3.dot', 3)
 
   def test_compactCycle3(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact a three vertex cycle into a two vertex cycle.
     """
     self.replaceChain('replaceChain/cycle3.dot')
 
   def test_compactCycle2x3(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact two three vertex cycles into two two vertex cycles.
     """
     self.replaceChain('replaceChain/cycle2x3.dot', 3)
 
   def test_compactParallel1(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact a three vertex chain and a parallel edge into the same (nothing to do).
     """
     self.replaceChain('replaceChain/parallel1.dot')
 
   def test_compactParallel2(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact two parallel three vertex chains. Nothing to do.
     """
     self.replaceChain('replaceChain/parallel2.dot', 3)
 
+  def test_compactParallel2x2(self):
+    """Compact two four vertex chains to two three vertex chains.
+    """
+    self.replaceChain('replaceChain/parallel2x2.dot', 3)
+
+  def test_compactParallel1x3(self):
+    """Compact a five vertex chain and a parallel edge.
+    """
+    self.replaceChain('replaceChain/parallel1x3.dot', 2)
+
+  def test_compactParallel1x3r(self):
+    """Compact a five vertex chain and a parallel edge (reverse numbering of the vertices).
+    """
+    self.replaceChain('replaceChain/parallel1x3r.dot', 2)
+
+  def test_compactParallel1x4(self):
+    """Compact a six vertex chain and a parallel edge.
+    """
+    self.replaceChain('replaceChain/parallel1x4.dot', 2)
+
+  def test_compactParallel1x4r(self):
+    """Compact a six vertex chain and a parallel edge (reverse numbering of the vertices).
+    """
+    self.replaceChain('replaceChain/parallel1x4r.dot', 2)
+
   def test_compactStar4(self):
-    """Compact a three vertex chain to one vertex.
+    """Compact a four element star. Nothing to do.
     """
     self.replaceChain('replaceChain/star4.dot', 4)
 

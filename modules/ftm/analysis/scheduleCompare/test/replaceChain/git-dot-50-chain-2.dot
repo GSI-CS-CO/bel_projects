@@ -1,4 +1,4 @@
-digraph G {
+digraph Gx {
 graph [
 name="git-dot-50-compact"
 ]

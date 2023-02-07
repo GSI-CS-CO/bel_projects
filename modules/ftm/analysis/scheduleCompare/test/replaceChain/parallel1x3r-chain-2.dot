@@ -1,0 +1,17 @@
+digraph G {
+graph [
+name="parallel1x3r-compact"
+]
+node1;
+node5;
+"node4
+node3
+node2";
+node5->node1 ;
+node5->"node4
+node3
+node2" ;
+"node4
+node3
+node2"->node1 ;
+}
