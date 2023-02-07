@@ -10,6 +10,10 @@
 scu_arr=(scuxl0396 scuxl0497 scuxl0264 scuxl0321 scuxl0411 scuxl0329 scuxl0339 scuxl0305)
 
 scp_opts="-pv -o StrictHostKeyChecking=no"  # -p: preserve modification time, -v: verbose, -o: SSH options
+# Check if scp supports the '-O' option (use the legacy SCP protocol)
+if scp -O $0 /dev/null &>/dev/null; then
+    scp_opts+=" -O"
+fi
 
 unset username userpasswd scu option answer
 
@@ -108,11 +112,6 @@ fi
 
 if [ "$tr_gw" == "v6.0.1" ]; then
     echo "-" $ebfwload
-fi
-
-# Check if scp supports the '-O' option (use the legacy SCP protocol)
-if scp -O ${scu_files[0]} /dev/null 2>/dev/null; then
-    scp_opts+=" -O"
 fi
 
 # Start deployment

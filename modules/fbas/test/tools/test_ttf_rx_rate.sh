@@ -27,7 +27,12 @@ dst_test_dir="fbas_test"          # destination directory for DM scripts
 src_test_dir="${dir_name%/*}"     # source test directory
 
 ssh_opts="-o StrictHostKeyChecking=no"
-scp_opts="-r"                     # -r recursive copy
+scp_opts="-r"                     # -r: recursive copy
+
+# Check if scp supports the '-O' option (use the legacy SCP protocol), required to access hosts, SCUs with older SSH
+if scp -O $0 /dev/null &>/dev/null; then
+    scp_opts+=" -O"
+fi
 
 res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
 res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
