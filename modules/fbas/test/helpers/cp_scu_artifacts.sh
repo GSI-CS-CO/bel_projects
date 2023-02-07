@@ -45,7 +45,7 @@ if [ -n "$scu" ]; then
 fi
 
 # project directory path
-prj_dir="$HOME"/fbas_test
+prj_dir=$(pwd) # "$HOME"/fbas_test
 
 # actual gateware
 #tr_gw="v6.0.1"
