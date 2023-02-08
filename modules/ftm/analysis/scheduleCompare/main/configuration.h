@@ -2,6 +2,7 @@
 #define CONFIGURATION_H
 
 #include <string>
+#include <climits>
 
 // constants for regular results of scheduleCompare
 const int NOT_ISOMORPHIC = 1;
@@ -23,7 +24,7 @@ struct configuration {
   // option -c
   bool check = false;
   // replaceChain: -c <n>
-  int chainCount = 100;
+  int chainCount = INT_MAX;
   // option -n
   bool compareNames = true;
   // option -o: output file name
