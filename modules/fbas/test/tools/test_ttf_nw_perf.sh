@@ -130,7 +130,7 @@ measure_ttl() {
         output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && enable_mps \$DEV_TX")
         sleep 1
         echo -en " $i: disable\r"
-        output=(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX")
+        output=$(sshpass -p "$userpasswd" ssh "$username@$txscu" "source setup_local.sh && disable_mps \$DEV_TX")
         sleep 2
     done
 
