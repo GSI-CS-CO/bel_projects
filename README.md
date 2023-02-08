@@ -32,6 +32,7 @@ GSI Timing Gateware and Tools
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
     - [Rocky-9](#rocky-9)
+    - [Yocto](#yocto)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -278,6 +279,21 @@ which cc # /usr/bin/cc
 ### Rocky-9
 [Click here for additional information.](res/rocky-9)
 
+### Yocto
+
+#### Etherbone & Saftlib
+<pre>
+unset LD_LIBRARY_PATH
+source /common/usr/embedded/yocto/sdk/environment-setup-core2-64-ffos-linux
+make etherbone YOCTO_BUILD=yes
+make saftlib YOCTO_BUILD=yes
+</pre>
+
+Check the Rocky-9 subsection, if you get lsb_release related errors.
+
+#### Etherbone Tools
+See [tools/yocto-build.sh](tools/yocto-build.sh)
+
 ## Git
 ### CAfile
 Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project/generic_project.git/': server certificate verification failed. CAfile: none CRLfile: none
@@ -301,13 +317,13 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-See bel_projects/doc/usbblaster/readme.md
+See [bel_projects/doc/usbblaster/readme.md](bel_projects/doc/usbblaster/readme.md)
 
 ### Xilinx Platform Cable II
-See bel_projects/doc/platform_cable/readme.md
+See [bel_projects/doc/platform_cable/readme.md](bel_projects/doc/platform_cable/readme.md)
 
 ### Arrow USB Programmer
-See bel_projects/doc/arrow_usb_programmer/readme.md
+See [bel_projects/doc/arrow_usb_programmer/readme.md](bel_projects/doc/arrow_usb_programmer/readme.md)
 
 ### Altera/Intel Ethernet Blaster
 
