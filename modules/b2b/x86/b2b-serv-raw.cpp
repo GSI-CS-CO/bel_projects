@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2022
+ *  version : 22-dec-2022
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000318
+#define B2B_SERV_RAW_VERSION 0x000421
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -147,7 +147,9 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  recSid      = ((id    & 0x00000000fff00000) >> 20);
+  union  fdat_t       tmp;
+
+  recSid      = ((id  & 0x00000000fff00000) >> 20);
   flagLate    = flags & 0x1;
 
   // check ranges
@@ -161,38 +163,38 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   
   switch (tag) {
     case tagStart   :
-      sid                  = recSid;
-      tStart               = deadline.getUTC();
-      flagActive           = 1;
-      setval.flag_nok      = 0xfffffffe;                    // mode is 'ok'
-      setval.mode          = 0;
-      setval.ext_T         = 0;
-      setval.ext_h         = 0;
-      setval.ext_cTrig     = 0;
-      setval.inj_T         = 0;
-      setval.inj_h         = 0;
-      setval.inj_cTrig     = 0;
-      setval.cPhase        = 0;
-      getval.flag_nok      = 0xffffffff;
-      getval.ext_phase     = 0;
-      getval.ext_dKickMon  = 0;
-      getval.ext_dKickProb = 0;
-      getval.ext_diagPhase = 0;
-      getval.ext_diagMatch = 0;
-      getval.inj_phase     = 0;
-      getval.inj_dKickMon  = 0;
-      getval.inj_dKickProb = 0;
-      getval.inj_diagPhase = 0;
-      getval.inj_diagMatch = 0;
-      getval.flagEvtRec    = 0x1 << tag;
-      getval.flagEvtErr    = 0;
-      getval.flagEvtLate   = flagLate << tag;;
-      getval.tCBS          = deadline.getTAI();
-      getval.doneOff       = 0;
-      getval.preOff        = 0;
-      getval.priOff        = 0;
-      getval.kteOff        = 0;
-      getval.ktiOff        = 0;
+      sid                    = recSid;
+      tStart                 = deadline.getUTC();
+      flagActive             = 1;
+      setval.flag_nok        = 0xfffffffe;                    // mode is 'ok'
+      setval.mode            = 0;
+      setval.ext_T           = 0;
+      setval.ext_h           = 0;
+      setval.ext_cTrig       = 0;
+      setval.inj_T           = 0;
+      setval.inj_h           = 0;
+      setval.inj_cTrig       = 0;
+      setval.cPhase          = 0;
+      getval.flag_nok        = 0xffffffff;
+      getval.ext_phase       = 0;
+      getval.ext_dKickMon    = 0;
+      getval.ext_dKickProb   = 0;
+      getval.ext_diagPhase   = 0;
+      getval.ext_diagMatch   = 0;
+      getval.inj_phase       = 0;
+      getval.inj_dKickMon    = 0;
+      getval.inj_dKickProb   = 0;
+      getval.inj_diagPhase   = 0;
+      getval.inj_diagMatch   = 0;
+      getval.flagEvtRec      = 0x1 << tag;
+      getval.flagEvtErr      = 0;
+      getval.flagEvtLate     = flagLate << tag;;
+      getval.tCBS            = deadline.getTAI();
+      getval.doneOff         = 0;
+      getval.preOff          = 0;
+      getval.priOff          = 0;
+      getval.kteOff          = 0;
+      getval.ktiOff          = 0;
       break;
     case tagStop    :
       flagActive       = 0;
@@ -202,52 +204,55 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
     case tagPme     :
       setval.mode      = 2;
       setval.ext_h     = ((param & 0xff00000000000000) >> 56);
-      setval.ext_T     = ((param & 0x00ffffffffffffff));
+      setval.ext_T     = ((param & 0x00ffffffffffffff));    // [as]
       if (setval.ext_h) setval.flag_nok &= 0xfffffffb;      // if ok, reset bit
       if (setval.ext_T) setval.flag_nok &= 0xfffffffd;      // if ok, reset bit
       break;
     case tagPmi     :
       setval.mode      = 4;
       setval.inj_h     = ((param & 0xff00000000000000) >> 56);
-      setval.inj_T     = ((param & 0x00ffffffffffffff));
+      setval.inj_T     = ((param & 0x00ffffffffffffff));    // [as]
       if (setval.inj_h) setval.flag_nok &= 0xffffffef;
       if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
       break;
     case tagPre     :
-      getval.preOff      = (int32_t)(param - getval.tCBS);
-      getval.ext_phase   = param;
+      getval.preOff          = param - getval.tCBS;
+      getval.ext_phase       = param;
       if (param) getval.flag_nok &= 0xfffffffe;
-      flagErr            = ((id & B2B_ERRFLAG_PMEXT) != 0);
-      getval.flagEvtErr |= flagErr << tag;
+      flagErr                = ((id & B2B_ERRFLAG_PMEXT) != 0);
+      getval.flagEvtErr     |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff      = (int32_t)(param - getval.tCBS);
-      getval.inj_phase   = param;
+      getval.priOff          = getval.tCBS;
+      getval.inj_phase       = param;
       if (param) getval.flag_nok &= 0xffffffdf;
-      flagErr            = ((id & B2B_ERRFLAG_PMINJ) != 0);
-      getval.flagEvtErr |= flagErr << tag;
+      flagErr                = ((id & B2B_ERRFLAG_PMINJ) != 0);
+      getval.flagEvtErr     |= flagErr << tag;
       break;     
     case tagKte     :
-      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS /* chk */
-      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tCBS);
-      setval.ext_cTrig    = ((param & 0x00000000ffffffff));
-      getval.doneOff      = ((param & 0xffffffff00000000) >> 32);
-      setval.flag_nok    &= 0xfffffff7;
-      flagErr             = ((id & B2B_ERRFLAG_CBU) != 0);
-      getval.flagEvtErr  |= flagErr << tag;
+      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon CBS
+      getval.kteOff          = deadline.getTAI() - getval.tCBS;
+      tmp.data               = ((param & 0x00000000ffffffff));
+      setval.ext_cTrig       = (double)tmp.f;
+      getval.doneOff         = ((param & 0xffffffff00000000) >> 32);
+      setval.flag_nok       &= 0xfffffff7;
+      flagErr                = ((id & B2B_ERRFLAG_CBU) != 0);
+      getval.flagEvtErr     |= flagErr << tag;
       break;
     case tagKti     :
       if (setval.mode < 3) setval.mode = 3;
-      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tCBS);
-      setval.inj_cTrig   = ((param & 0x00000000ffffffff));
-      setval.cPhase      = ((param & 0xffffffff00000000) >> 32);
-      setval.flag_nok   &= 0xffffffbf;
-      setval.flag_nok   &= 0xffffff7f;
-      flagErr            = ((id    & 0x0000000000000010) >> 4);
-      getval.flagEvtErr |= flagErr << tag;
+      getval.ktiOff          = (double)(deadline.getTAI() - getval.tCBS);
+      tmp.data               = ((param & 0x00000000ffffffff));
+      setval.inj_cTrig       = (double)tmp.f;
+      tmp.data               = ((param & 0xffffffff00000000) >> 32);
+      setval.cPhase          = (double)tmp.f;
+      setval.flag_nok       &= 0xffffffbf;
+      setval.flag_nok       &= 0xffffff7f;
+      flagErr                = ((id    & 0x0000000000000010) >> 4);
+      getval.flagEvtErr     |= flagErr << tag;
       break;
     case tagKde     :
-      getval.ext_dKickProb = ((param & 0x00000000ffffffff));
+      getval.ext_dKickProb = param & 0x00000000ffffffff;
       getval.ext_dKickMon  = ((param & 0xffffffff00000000) >> 32);
       if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
       if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
@@ -255,7 +260,7 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.flagEvtErr   |= flagErr << tag;
       break;
     case tagKdi     :
-      getval.inj_dKickProb = ((param & 0x00000000ffffffff));
+      getval.inj_dKickProb = param & 0x00000000ffffffff;
       getval.inj_dKickMon  = ((param & 0xffffffff00000000) >> 32);
       if (getval.inj_dKickProb != 0x7fffffff) getval.flag_nok &= 0xffffff7f;
       if (getval.inj_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xffffffbf;          
@@ -263,16 +268,28 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       getval.flagEvtErr   |= flagErr << tag;
       break;
     case tagPde     :
-      getval.ext_diagMatch = ((param & 0x00000000ffffffff));
-      getval.ext_diagPhase = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_diagMatch != 0x7fffffff) getval.flag_nok &= 0xffffffef;
-      if (getval.ext_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffff7;          
+      tmp.data             = ((param & 0x00000000ffffffff));
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xffffffef;
+        getval.ext_diagMatch = (double)tmp.f;
+      } // if ok
+      tmp.data             = ((param & 0xffffffff00000000) >> 32);
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffff7;
+        getval.ext_diagPhase = (double)tmp.f;
+      } // if ok
       break;
     case tagPdi     :
-      getval.inj_diagMatch = ((param & 0x00000000ffffffff));
-      getval.inj_diagPhase = ((param & 0xffffffff00000000) >> 32);
-      if (getval.inj_diagMatch != 0x7fffffff) getval.flag_nok &= 0xfffffdff;
-      if (getval.inj_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffeff;          
+      tmp.data             = ((param & 0x00000000ffffffff));
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffdff;
+        getval.inj_diagMatch = (double)tmp.f;
+      } // if ok
+      tmp.data             = ((param & 0xffffffff00000000) >> 32);
+      if (tmp.data != 0x7fffffff) {
+        getval.flag_nok &= 0xfffffeff;
+        getval.inj_diagPhase = (double)tmp.f;
+      } // if ok
       break;
     default         :
       ;
@@ -320,14 +337,14 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
-    disSetvalId[i]  = dis_add_service(name, "I:1;I:1;X:1;I:2;X:1;I:2;I:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    disSetvalId[i]  = dis_add_service(name, "I:1;I:1;X:1;I:1;F:1;X:1;I:1;F:2", &(disSetval[i]), sizeof(setval_t), 0, 0);
     dis_set_timestamp(disSetvalId[i], 1, 0);
   } // for i
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:4;X:1;I:4;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:2;F:2;X:1;I:2;F:2;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices

@@ -19,6 +19,7 @@ GSI Timing Gateware and Tools
     - [Library libpng12](#library-libpng12)
       - [Ubuntu](#ubuntu)
       - [Mint](#mint)
+      - [Backup Plan](#backup-plan)
     - [Tool qmegawiz](#tool-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
   - [Build Flow](#build-flow)
@@ -30,6 +31,7 @@ GSI Timing Gateware and Tools
     - [Setuptools not found](#setuptools-not-found)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
+    - [Rocky-9](#rocky-9)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -145,6 +147,13 @@ sudo add-apt-repository ppa:linuxuprising/libpng12
 sudo apt update
 sudo apt install libpng12-0
 ```
+
+#### Backup Plan
+
+You can use a copy from here:
+
+- Ubuntu: res/ubuntu
+- Rocky-9: res/rocky-9
 
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
@@ -265,6 +274,9 @@ which cc # cc: Command not found.
 update-alternatives --list cc
 which cc # /usr/bin/cc
 ```
+
+### Rocky-9
+[Click here for additional information.](res/rocky-9)
 
 ## Git
 ### CAfile

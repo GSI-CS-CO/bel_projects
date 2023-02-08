@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2022
+ *  version : 25-nov-2022
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000318
+#define B2B_ARCHIVER_VERSION 0x000421
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -103,41 +103,10 @@ static void help(void) {
 } //help
 
 
-// find nearest rising edge of h=1 signal
-int32_t fixTS(int32_t  ts,                                  // timestamp [ns]
-              int32_t  corr,                                // (trigger)correction [ns]
-              uint64_t TH1                                  // h=1 period [as]
-                )
-{
-  int64_t ts0;                                              // timestamp with correction removed [ns]
-  int32_t dtMatch;
-  int64_t ts0as;                                            // t0 [as]
-  int64_t remainder;                     
-  int64_t half;
-  int     flagNeg; 
-
-  if (TH1 == 0) return ts;                                  // can't fix
-  ts0       = ts - corr;
-  if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}                   // make this work for negative numbers too
-  else         flagNeg = 0;
-
-  ts0as     = ts0 * (int64_t)1000000000;
-  half      = TH1 >> 1;
-  remainder = ts0as % TH1;                                 
-  if (remainder > half) ts0as = remainder - TH1;
-  else                  ts0as = remainder;
-  dtMatch   = (int32_t)(ts0as / 1000000000);
-  
-  if (flagNeg) dtMatch = -dtMatch;
-
-  return dtMatch + corr;                 // we have to add back the correction (!)
-} //fixTS
-
-
 // header String for file
 char * headerString()
 {
-  return "patternName; time_EKS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-EKS; EKS-pre; EKS-pri; kte-EKS; kti-EKS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_EKS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase_125ps; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase_125ps; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-EKS; EKS-pre; EKS-pri; kte-EKS; kti-EKS; ext_nueMeas; ext_dNueMeas";
 } // headerString
 
 // receive get values
@@ -146,8 +115,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 #define STRMAXLEN 2048
   uint32_t  sid;
   uint32_t  mode;
-  int32_t   cor;
-  int32_t   act;
+  double    cor;
+  double    act;
   char      tEKS[256];;
 
   char strSetval[STRMAXLEN];
@@ -171,11 +140,11 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "%s.%03d; %d; %d", tEKS, utc_msecs[sid], sid, mode);
   new += sprintf(new, "; %d; %lu", !((dicSetval[sid].flag_nok >> 1) & 0x1), dicSetval[sid].ext_T);
   new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 2) & 0x1), dicSetval[sid].ext_h);
-  new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 3) & 0x1), dicSetval[sid].ext_cTrig);
+  new += sprintf(new, "; %d; %8.3f", !((dicSetval[sid].flag_nok >> 3) & 0x1), dicSetval[sid].ext_cTrig);
   new += sprintf(new, "; %d; %lu", !((dicSetval[sid].flag_nok >> 4) & 0x1), dicSetval[sid].inj_T);
   new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 5) & 0x1), dicSetval[sid].inj_h);
-  new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 6) & 0x1), dicSetval[sid].inj_cTrig);
-  new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 7) & 0x1), dicSetval[sid].cPhase);
+  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 6) & 0x1), dicSetval[sid].inj_cTrig);
+  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 7) & 0x1), dicSetval[sid].cPhase);
 
   // get values
   new  = strGetval;
@@ -184,24 +153,24 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 2) & 0x1), dicGetval[sid].ext_dKickProb);
 
   cor  = 0;
-  act  = fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 3) & 0x1), act);
+  act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
+  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 3) & 0x1), act);
 
   cor  = dicSetval[sid].ext_cTrig;
-  act  = fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
+  act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
   
   new += sprintf(new, "; %d; %lu", !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 6) & 0x1), dicGetval[sid].inj_dKickMon);
   new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 7) & 0x1), dicGetval[sid].inj_dKickProb);
 
   cor  = 0;
-  act  = fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 8) & 0x1), act);
+  act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
+  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 8) & 0x1), act);
 
   cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
-  act = fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %d",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
+  act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
 
   new += sprintf(new, "; %x; %x; %x", dicGetval[sid].flagEvtRec, dicGetval[sid].flagEvtErr, dicGetval[sid].flagEvtLate);
   new += sprintf(new, "; %d; %d; %d; %d; %d", dicGetval[sid].doneOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
