@@ -13,6 +13,7 @@ PWD             := $(shell pwd)
 UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
+YOCTO_BUILD     ?= no
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -99,7 +100,11 @@ distclean::	clean
 
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
+ifeq ($(YOCTO_BUILD),yes)
+	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --host=x86_64
+else
 	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX)
+endif
 	$(MAKE) -C ip_cores/etherbone-core/api all
 
 etherbone-clean::
@@ -111,7 +116,11 @@ etherbone-install::
 
 saftlib::
 	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
+ifeq ($(YOCTO_BUILD),yes)
+	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR) --host=x86_64
+else
 	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+endif
 	$(MAKE) -C ip_cores/saftlib all
 
 saftlib-clean::
