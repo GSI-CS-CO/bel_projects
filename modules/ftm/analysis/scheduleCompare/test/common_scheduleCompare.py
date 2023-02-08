@@ -2,6 +2,7 @@ import unittest
 import subprocess
 import sys
 import os
+from multiprocessing.pool import ThreadPool
 
 global test_binary
 """Class collects unit tests for scheduleCompare.
@@ -32,7 +33,7 @@ class CommonScheduleCompare(unittest.TestCase):
     # get command output and error
     stdout, stderr = process.communicate()
     if expectedReturnCode > -1:
-      self.assertEqual(process.returncode, expectedReturnCode, 
+      self.assertEqual(process.returncode, expectedReturnCode,
         f'wrong return code {process.returncode}, Command line: {self.binary} {file1} {file2} {options}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
     if linesCerr > -1:
       lines = stderr.decode('utf-8').splitlines()
@@ -41,36 +42,45 @@ class CommonScheduleCompare(unittest.TestCase):
       lines = stdout.decode('utf-8').splitlines()
       self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {self.binary} {file1} {file2} {options}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
 
+  def filePairTask(self, dotFile1, dotFile2, folder):
+    if dotFile1 == dotFile2:
+      returncode = 0
+    else:
+      returncode = 1
+    self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
+    return 1
+
   def allPairsFilesInFolderTest(self, folder):
     files = os.listdir(folder)
     # ~ print (files)
     files = [ x for x in files if '.dot' in x ]
     # ~ print (files)
     counter = 0
-    for dotFile1 in files:
-      for dotFile2 in files:
-        counter += 1
+    filePairs = [(dotFile1, dotFile2, folder) for dotFile1 in files for dotFile2 in files]
+    with ThreadPool() as pool:
+      for result in pool.starmap(self.filePairTask, filePairs):
+        counter += result
         if counter % 100 == 0:
           print(f'{counter},', end='', flush=True)
         if counter % 1000 == 0:
           print(f'', flush=True)
-        if dotFile1 == dotFile2:
-          returncode = 0
-        else:
-          returncode = 1
-        self.callScheduleCompare(folder + dotFile1, folder + dotFile2, '-s', expectedReturnCode=returncode, linesCout=0)
     print(f'Pairs tested: {counter}. ', end='', flush=True)
+
+  def fileTask(self, dotFile1, folder):
+    self.callScheduleCompare(folder + dotFile1, '-t', expectedReturnCode=17, linesCout=1)
+    return 1
 
   def allFilesInFolderTest(self, folder):
     files = os.listdir(folder)
     files = [ x for x in files if '.dot' in x ]
     # print (files)
     counter = 0
-    for dotFile1 in files:
-      counter += 1
-      if counter % 100 == 0:
-        print(f'{counter},', end='', flush=True)
-      if counter % 1000 == 0:
-        print(f'', flush=True)
-      self.callScheduleCompare(folder + dotFile1, '-t', expectedReturnCode=17, linesCout=1)
+    fileArgs = [(dotFile1, folder) for dotFile1 in files]
+    with ThreadPool() as pool:
+      for result in pool.starmap(self.fileTask, fileArgs):
+        counter += result
+        if counter % 100 == 0:
+          print(f'{counter},', end='', flush=True)
+        if counter % 1000 == 0:
+          print(f'', flush=True)
     print(f'Files tested: {counter}. ', end='', flush=True)
