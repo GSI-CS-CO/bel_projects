@@ -89,6 +89,19 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/chains123.dot', 0)
 
+  def test_replaceChainChains1234(self):
+    """Compact a graph with four chains (1 vertex, 2 vertices, 3 vertices, 4 vertices)
+    to four chains with one vertex. Test the labeling.
+    """
+    self.replaceChain2('replaceChain/chains1234.dot', 0)
+
+  def test_replaceChainChains1234r(self):
+    """Compact a graph with four chains (1 vertex, 2 vertices, 3 vertices, 4 vertices)
+    to four chains with one vertex. Test the labeling.
+    Chains with reversed numbering (first number at end of chain).
+    """
+    self.replaceChain2('replaceChain/chains1234r.dot', 0)
+
   def test_replaceChainChains123123(self):
     """Compact a graph with six chains (2x1 vertex, 2x2 vertices, 2x3 vertices)
     to six chains with one vertex.
