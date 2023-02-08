@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "1c:ho:sv")) != -1) {
+  while ((opt = getopt(argc, argv, "1c:ho:svV")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
@@ -38,6 +38,10 @@ int main(int argc, char* argv[]) {
       case 'h':
         usage(program);
         error = USAGE_MESSAGE;
+        break;
+      case 'V':
+        version(program);
+        error = VERSION_MESSAGE;
         break;
       case 'c':
         {
@@ -107,6 +111,7 @@ void usage(char* program) {
   std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
+  std::cerr << "        -V: print version and exit." << std::endl;
   std::cerr << "Return codes: " << std::endl;
   std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, chains are replaced." << std::endl;
   std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
@@ -116,4 +121,8 @@ void usage(char* program) {
   std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
   std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
+}
+
+void version(char* program) {
+  std::cerr << program << ", version 1.0.0" << std::endl;
 }

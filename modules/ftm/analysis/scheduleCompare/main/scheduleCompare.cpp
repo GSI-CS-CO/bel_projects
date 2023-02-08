@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chnstv")) != -1) {
+  while ((opt = getopt(argc, argv, "chnstvV")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -32,6 +32,10 @@ int main(int argc, char* argv[]) {
       case 'h':
         usage(program);
         error = USAGE_MESSAGE;
+        break;
+      case 'V':
+        version(program);
+        error = VERSION_MESSAGE;
         break;
       case 'n':
         config.compareNames = false;
@@ -89,4 +93,8 @@ void usage(char* program) {
   std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
   std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
+}
+
+void version(char* program) {
+  std::cerr << program << ", version 1.0.0" << std::endl;
 }

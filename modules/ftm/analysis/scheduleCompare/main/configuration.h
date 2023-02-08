@@ -17,6 +17,7 @@ const int PARSE_ERROR = 15;
 const int PARSE_ERROR_GRAPHVIZ = 16;
 const int TEST_SUCCESS = 17;
 const int TEST_FAIL = 18;
+const int VERSION_MESSAGE = 19;
 
 struct configuration {
   // option -1: use first version of replaceChain
