@@ -17,7 +17,18 @@ bool ReplaceChain::findStartOfChain() {
     //~ std::cout << "descriptor: " << descriptor << ", id: " << v << std::endl;
     result = getStartOfChain(v, v);
     if (result) {
-      break;
+      // check successor of startOfChain:
+      // if this is in a chain, break and replace the chain.
+      // otherwise proceed with next vertex in loop.
+      VertexNum s = successor(startOfChain);
+      if (c->superverbose) {
+        std::cout << "findStartOfChain v: " << v << ", successor: " << s << ", startOfChain: " <<
+          startOfChain << ", in: " << boost::in_degree(s, *g) <<
+          ", out: " << boost::out_degree(s, *g) << std::endl;
+      }
+      if (boost::in_degree(s, *g) <= 1 && boost::out_degree(s, *g) <= 1) {
+        break;
+      }
     }
   }
   return result;
