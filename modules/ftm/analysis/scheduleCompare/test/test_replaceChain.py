@@ -79,6 +79,25 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     self.callReplaceChain([self.binary, '-swo', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
     self.compareExpectedResult(outputFileName, fileName.replace('.dot', '-chain-2.dot'))
 
+  def test_replaceChainLoop(self):
+    """Replace all chains in the chains1234r.dot schedule file.
+    Replace chains one by one and compare the result with expected after
+    each step.
+    """
+    fileName0 = 'replaceChain/chains1234r.dot'
+    fileName1 = 'chains1234r-c1.dot'
+    fileName2 = 'chains1234r-c2.dot'
+    fileName3 = 'chains1234r-c3.dot'
+    fileName4 = 'chains1234r-c4.dot'
+    self.callReplaceChain([self.binary, '-c', '1', '-swo', fileName1, fileName0], expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callReplaceChain([self.binary, '-c', '1', '-swo', fileName2, fileName1], expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callReplaceChain([self.binary, '-c', '1', '-swo', fileName3, fileName2], expectedReturnCode=1, linesCerr=0, linesCout=0)
+    self.callReplaceChain([self.binary, '-c', '1', '-swo', fileName4, fileName3], expectedReturnCode=0, linesCerr=0, linesCout=0)
+    self.compareExpectedResult(fileName1, 'replaceChain/' + fileName1)
+    self.compareExpectedResult(fileName2, 'replaceChain/' + fileName2)
+    self.compareExpectedResult(fileName3, 'replaceChain/' + fileName3)
+    self.compareExpectedResult(fileName4, 'replaceChain/' + fileName4)
+
   def test_replaceChainChain1(self):
     """Compact a one vertex chain to one vertex.
     """
