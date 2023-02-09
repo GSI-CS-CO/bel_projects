@@ -118,7 +118,8 @@ void usage(char* program) {
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "        -V: print version and exit." << std::endl;
   std::cerr << "Return codes: " << std::endl;
-  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, chains are replaced." << std::endl;
+  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, all chains are replaced." << std::endl;
+  std::cerr << 1 << " 1, some chains are replaced. There may be more chains in the graph." << std::endl;
   std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
   std::cerr << MISSING_ARGUMENT << " MISSING_ARGUMENT, at least one of the file names is missing." << std::endl;
   std::cerr << FILE_NOT_FOUND << " FILE_NOT_FOUND, one of the dot files not found." << std::endl;

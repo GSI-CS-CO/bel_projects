@@ -61,9 +61,9 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     self.callReplaceChain([self.binary, '-V'], expectedReturnCode=19, linesCerr=1, linesCout=0)
 
   def test_usage_message(self):
-    """Test the version message.
+    """Test the usage message.
     """
-    self.callReplaceChain([self.binary, '-h'], expectedReturnCode=14, linesCerr=21, linesCout=0)
+    self.callReplaceChain([self.binary, '-h'], expectedReturnCode=14, linesCerr=22, linesCout=0)
 
   def replaceChain(self, fileName, lines=1):
     """Replace all chains in the given schedule file.
