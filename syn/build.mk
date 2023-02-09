@@ -18,6 +18,7 @@ WR_DEV	:= $(WR_INC)/dev
 WR_BOARD	:= $(W1)/boards/generic/board.h
 WR_LIB	:= $(W1)/lib
 WR_INC  := $(W1)/include
+WR_IMPORT := $(INCPATH)/wrpc-import
 USRCPUCLK	?= 62500
 
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
@@ -41,7 +42,9 @@ CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  +=
+INCLUDES  += $(WR_IMPORT)/uart.c $(WR_IMPORT)/vsprintf-full.c $(WR_IMPORT)/div64.c $(WR_IMPORT)/printf.c \
+						$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c  $(INCPATH)/sdb_add.c $(INCPATH)/assert.c \
+						$(INCPATH)/stack-check.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
