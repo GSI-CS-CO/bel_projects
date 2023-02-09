@@ -18,6 +18,7 @@
 #define DEV_BASE	0x100000
 #elif defined CONFIG_ARCH_LM32
 #define DEV_BASE	0x80040000
+//#warning Test
 #else
 #error (Wrong Arch!)
 #endif
