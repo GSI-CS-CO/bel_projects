@@ -50,6 +50,13 @@
 #  make saftd
 #  make restart_test_rx_rate
 
+# 6. TTF traffic test - uses the remote datamaster and receiver
+#
+# senders: datamaster (remote, tsl014)
+# receivers: SCU3 (remote, scuxl0497 - specified in test_ttf_rx_rate.sh)
+#
+# This test setup can be used for testing new WRS software.
+
 .PHONY: mytest \
 	saftd setup_nodes \
 	do_test3 repeat_test3 \
@@ -64,7 +71,10 @@
 	restart_fbasdm_single_msg continue_fbasdm_single_msg \
 	restart_two_senders_loop restart_two_senders_multi_finite restart_two_senders_multi_loop \
 	show_two_senders_result show_rx_tx_stats \
-	restart_test_rx_rate restart_test_rx_rate_bad restart_fbasdm_run_pattern
+	restart_test_rx_rate restart_test_rx_rate_bad restart_fbasdm_run_pattern \
+	test_ttf_traffic
+
+.SILENT: test_ttf_traffic
 
 # tell make not to print the message about entering and leaving the working directory
 MAKEFLAGS += --no-print-directory
@@ -313,3 +323,6 @@ restart_fbasdm_run_pattern:
 	@source dm.sh && clear_dm_patt
 	@echo "start schedule from '${sched_filename}'"
 	@source dm.sh && run_pattern ${sched_filename}
+
+test_ttf_traffic:
+	./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f fbas16.scucontrol.bin -m
