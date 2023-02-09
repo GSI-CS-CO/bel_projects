@@ -57,7 +57,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,/usr/local/lib -L$(EBPATH1)/.libs -letherbone $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
+T_LIBS          = -Wl,-rpath,/usr/local/lib,-rpath,$(EBPATH1)/.libs -L$(EBPATH1)/.libs -letherbone $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
 EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
