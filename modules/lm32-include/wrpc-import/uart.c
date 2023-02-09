@@ -46,14 +46,15 @@ volatile struct UART_WB *uart;
 void uart_init_hw()
 {
 	uart = (volatile struct UART_WB *)BASE_UART;
+	//uart = (volatile struct UART_WB *)0x80040500;
 
 #ifndef SIMULATION
 	//uart->BCR = CALC_BAUD(00020000);
   //uart->BCR = 0x00060000;
-#warning "No Simulation"
+//#warning "No Simulation"
 #else
 	uart->BCR = CALC_BAUD((CPU_CLOCK/10));
-#warning "Simulation"
+//#warning "Simulation"
 #endif
 
 }
