@@ -10,13 +10,16 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "1c:ho:svV")) != -1) {
+  while ((opt = getopt(argc, argv, "1c:ho:svVw")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
         break;
       case 'o':
         config.outputFile = std::string(optarg);
+        break;
+      case 'w':
+        config.overwrite = true;
         break;
       case 'v':
         if (config.silent) {
@@ -108,6 +111,8 @@ void usage(char* program) {
   std::cerr << "Options: " << std::endl;
   std::cerr << "        -c <n>: optional, replace n chains. Default is to replace all chains." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
+  std::cerr << "        -o <file name>: name of output file." << std::endl;
+  std::cerr << "        -w: overwrite output file if it exists." << std::endl;
   std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;

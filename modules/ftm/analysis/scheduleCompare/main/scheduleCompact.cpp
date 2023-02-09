@@ -94,7 +94,7 @@ int compactGraph(ScheduleGraph& graph1, configuration& config) {
     for (auto reverseIterator = deleteVertices.rbegin(); reverseIterator != deleteVertices.rend(); reverseIterator++) {
       remove_vertex(*reverseIterator, graph1);
     }
-    saveSchedule("compact.dot", graph1, config);
+    saveSchedule(graph1, config);
     return 0;
 }
 

@@ -1,4 +1,5 @@
 #include "printSchedule.h"
+#include <sys/stat.h>
 
 void superVerboseStdOut(ScheduleGraph& g, configuration& config);
 
@@ -10,6 +11,11 @@ void printSchedule(std::string header, ScheduleGraph& g, boost::dynamic_properti
   if (config.verbose) {
     boost::write_graphviz_dp(std::cout, g, dp, "name");
   }
+}
+
+bool fileExists(const std::string& filename) {
+  struct stat buf;
+  return (stat(filename.c_str(), &buf) != -1);
 }
 
 template < typename Graph >
@@ -92,17 +98,22 @@ private:
   const std::string* node_id;
 };
 
-void saveSchedule(std::string fileName, ScheduleGraph& g, configuration& config) {
+void saveSchedule(ScheduleGraph& g, configuration& config) {
+  std::string fileName = config.outputFile;
   boost::dynamic_properties dp = setDynamicProperties(g, config);
   superVerboseStdOut(g, config);
   std::string graphName = getGraphName(g);
   setGraphName(g, graphName + std::string("-compact"));
-  std::ofstream fText(fileName);
-  //~ boost::write_graphviz_dp(fText, g, dp, "name");
-  typedef typename boost::graph_traits< ScheduleGraph >::vertex_descriptor Vertex;
-  boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
-      ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
-  fText.close();
+  if (fileExists(fileName) && !config.overwrite) {
+    std::cerr << "Warning: file " << fileName << " exists, no output." << std::endl;
+  } else {
+    std::ofstream fText(fileName);
+    //~ boost::write_graphviz_dp(fText, g, dp, "name");
+    typedef typename boost::graph_traits< ScheduleGraph >::vertex_descriptor Vertex;
+    boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
+    fText.close();
+  }
 }
 
 void saveScheduleIndex(std::string fileName, ScheduleGraph& g, configuration& config) {

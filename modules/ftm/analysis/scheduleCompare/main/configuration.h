@@ -30,6 +30,8 @@ struct configuration {
   bool compareNames = true;
   // option -o: output file name
   std::string outputFile = std::string("");
+  // option -w: overwrite output file
+  bool overwrite = false;
   // internal option, used for replaceChain
   bool extraProperties = false;
   // internal option, used for replaceChain

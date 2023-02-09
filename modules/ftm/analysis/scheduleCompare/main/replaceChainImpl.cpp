@@ -325,9 +325,9 @@ int ReplaceChain::replaceChainLoop() {
 
 void ReplaceChain::outputGraph() {
   if (!c->silent) {
-    std::cout << "Output to file: '" << c->outputFile << "', counter: " << counterReplacedChains << std::endl;
+    std::cout << "Output to file: '" << c->outputFile << "', " << counterReplacedChains << " chains replaced." << std::endl;
   }
-  saveSchedule(c->outputFile, *g, *c);
+  saveSchedule(*g, *c);
 }
 
 void ReplaceChain::printChain(std::string title) {
