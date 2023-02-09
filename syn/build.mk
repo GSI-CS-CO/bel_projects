@@ -38,7 +38,7 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 	-DCONFIG_PRINTF_64BIT \
 	-DSDBFS_BIG_ENDIAN
 
-CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -pedantic
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
