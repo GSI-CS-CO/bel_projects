@@ -63,7 +63,7 @@
 
 #define ECA_EVENT             0x8752bf45
 #define ECA_CTRL              0x8752bf44
-#define TLU                   0x10051981 
+#define TLU                   0x10051981
 #define WR_UART               0xe2d13d04
 #define WR_PPS_GEN            0xde0d8ced
 #define SCU_BUS_MASTER        0x9602eb6f
@@ -79,19 +79,19 @@
 #define WR_CFIPFlash          0x12122121
 #define WB_DDR3_if1           0x20150828
 #define WB_DDR3_if2           0x20160525
-#define WR_SYS_CON            0xff07fc47  
+#define WR_SYS_CON            0xff07fc47
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
 #define WB_SCU_REG            0xe2d13d04
 
 
 //periphery device pointers
-volatile uint32_t* pTlu; 
+volatile uint32_t* pTlu;
 volatile uint32_t* pEbm;
 volatile uint32_t* pEbCfg;
 
 volatile uint32_t* pEbmLast;
-volatile uint32_t* pOledDisplay;     
+volatile uint32_t* pOledDisplay;
 volatile uint32_t* pFpqCtrl;
 volatile uint32_t* pFpqData;
 volatile uint32_t* pEca;
