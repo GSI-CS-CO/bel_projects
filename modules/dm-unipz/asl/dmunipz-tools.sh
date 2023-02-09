@@ -1,18 +1,30 @@
 #!/bin/sh
-# dmunipz deployment script: copy libraries and software to FEC
+# deployment script: copy libraries and software to FEC
+# file structure:
+# $MOUNTPOINT/<scripts>.sh     , one or many scripts available to nfsinit
+# $MOUNTPOINT/firmware/*.bin   , ecpu firmware
+# $MOUNTPOINT/systemd/*.service, systemd units
+# $MOUNTPOINT/$ARCH/usr/bin    , binaries and scripts for FEC userspace
+# $MOUNTPOINT/$ARCH/usr/bin    , shared libraries for FEC userspace
 
-logger "get my latest shit $0: start"
-
+# generic setup
+MOUNTPOINT=$1
+INFO="$2 $0"
 ARCH=$(/bin/uname -m)
 HOSTNAME=$(/bin/hostname -s)
 
-logger "$0: copying firmware, software and liraries to ramdisk"
+# info
+logger "$INFO: start"
+logger "$INFO: copying firmware, software and liraries to ramdisk"
+
+# specific setup
 # libraries
 #
 #ldconfig
 # software
-cp -a /opt/$NAME/$ARCH/usr/bin/* /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/* /usr/bin/
 # firmware
-cp -a /opt/$NAME/firmware/* /
+cp -a $MOUNTPOINT/firmware/* /
 
-logger "get my latest shit $0: done"
+# info
+logger "$INFO: done"

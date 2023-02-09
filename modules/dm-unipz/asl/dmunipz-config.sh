@@ -1,11 +1,17 @@
 #!/bin/sh
-# dmunipzdeployment script: firmware and ECA config 
+# deployment script: firmware and ECA config
 
-logger "configure my latest shit $0: start"
-
+# generic setup
+MOUNTPOINT=$1
+INFO="$2 $0"
 ARCH=$(/bin/uname -m)
+HOSTNAME=$(/bin/hostname -s)
 
-logger "$0: firmware and ECA config"
+# info
+logger "$INFO: start"
+logger "$INFO: firmware and ECA configuration"
+
+# specific setup
 
 # execute config script
 dm-unipz_start.sh
