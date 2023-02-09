@@ -24,7 +24,7 @@
 #include "uart.h"
 #include "board.h"
 
-#include <hw/wb_uart.h>
+//#include <hw/wb_uart.h>
 
 PACKED struct UART_WB {
 	/* [0x0]: REG Status Register */

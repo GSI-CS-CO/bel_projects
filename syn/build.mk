@@ -24,7 +24,7 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 		-std=gnu99 -DUSRCPUCLK=$(USRCPUCLK)-DCONFIG_TARGET_GSI_DEVICE -DCONFIG_ARCH_LM32 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 \
 		-DSDBFS_BIG_ENDIAN
 
-CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -pedantic
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
