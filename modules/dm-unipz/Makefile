@@ -49,9 +49,7 @@ deploy:
 	mkdir -p $(STAGING)/firmware
 
 # nfsinit scripts
-	cp $(ASL)/dmunipz-tools.sh $(STAGING)
-	cp $(ASL)/dmunipz-config.sh $(STAGING)
-	cp $(ASL)/dmunipz-systemd.sh $(STAGING)
+	cp $(ASL)/*.sh $(STAGING)
 
 # tools
 	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
@@ -61,11 +59,7 @@ deploy:
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 
 # systemd
-	cp $(SYSTEMD)/dmunipz-*.service $(STAGING)/$(SYSTEMD)               # nfs init scripts
-
-# hacky stuff (missing support for eb-tools and logshipping)
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
-	cp $(SW)/logshipper.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin           # '/usr' is a hack
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 .PHONY: all clean
 
