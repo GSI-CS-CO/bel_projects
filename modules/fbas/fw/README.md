@@ -104,7 +104,22 @@ All procedures of the test are listed in fbas/x86/setup.sh. To perform the test 
 
 4.1. Compiler/linker errors/warnings
 
-4.1.1. Linker returns a bunch of error messages with 'ebm_' prefix.
+4.1.1. Shared libraries (libmpfr.so.4) not found
+
+If cross-compiler cannot be run:
+
+```
+bel_projects/toolchain/bin/../libexec/gcc/lm32-elf/4.5.3/cc1: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory
+```
+
+Follow the instructions given in 'bel_projects':
+
+```
+In Rocky 9: [link](https://github.com/GSI-CS-CO/bel_projects/tree/master/res/rocky-9)
+In Ubuntu/Mint: [link](https://github.com/GSI-CS-CO/bel_projects#common-errors-and-warnings)
+```
+
+4.1.2. Linker returns a bunch of error messages with 'ebm_' prefix.
 
 ```
 /tmp/cchA6kkO.o: In function `fwlib_ebmInit':
@@ -121,7 +136,7 @@ So append **$(INCPATH)/ebm.c** to the existing target rule in **Makefile**.
 $(TARGET).elf: $(PATHFW)/fbastx.c **$(INCPATH)/ebm.c** $(PATHFW)/../../common-libs/fw/common-fwlib.c
 ```
 
-4.1.2. Compiler claims an undeclared identifier
+4.1.3. Compiler claims an undeclared identifier
 
 ```
 fbastx.c: In function ‘initSharedMem’:

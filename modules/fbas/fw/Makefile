@@ -3,6 +3,7 @@
 export TARGET        ?= fbas
 
 export .DEFAULT_GOAL := fwbin
+export PATH          := $(PWD)/../../../toolchain/bin:$(PATH)
 
 # common settings
 export SHARED_SIZE   ?= 8K
