@@ -13,6 +13,7 @@ PWD             := $(shell pwd)
 UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
+YOCTO_BUILD     ?= no
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -90,13 +91,13 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs toolchain riscv-toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean riscv-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -104,7 +105,11 @@ distclean::	clean
 
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
+ifeq ($(YOCTO_BUILD),yes)
+	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --host=x86_64
+else
 	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX)
+endif
 	$(MAKE) -C ip_cores/etherbone-core/api all
 
 etherbone-clean::
@@ -116,7 +121,11 @@ etherbone-install::
 
 saftlib::
 	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
+ifeq ($(YOCTO_BUILD),yes)
+	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR) --host=x86_64
+else
 	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+endif
 	$(MAKE) -C ip_cores/saftlib all
 
 saftlib-clean::
@@ -222,13 +231,19 @@ firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
-	@echo "Info: Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
+	@echo "Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
 
 firmware-clean:
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
 endif
+
+# Debug print
+debug:
+	echo $$PATH
+	echo $$EXTRA_FLAGS
+	echo $$CROSS_COMPILE_RISCV
 
 # #################################################################################################
 # Arria 2 devices
@@ -536,9 +551,3 @@ hdlmake_install:
 # Just install hdlmake (even if it's already installed)
 hdlmake_install_locally:
 	@cd ip_cores/hdlmake/ && python setup.py install --user
-
-# Debug print
-debug:
-	echo $$PATH
-	echo $$EXTRA_FLAGS
-	echo $$CROSS_COMPILE_RISCV

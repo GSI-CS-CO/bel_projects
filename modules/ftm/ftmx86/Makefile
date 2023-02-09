@@ -28,6 +28,7 @@ BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
 
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
+EBPATH1 ?=/usr/local/include
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
 FTMPATH        ?= $(TOP)/modules/ftm
@@ -41,7 +42,7 @@ PREFIX         ?= /usr/local
 INSTALLPATH     = $(PREFIX)/bin
 
 T_CXX           = g++
-T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(DIAGPATH) -I$(LZMAPATH) -Wall -O 
+T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(EBPATH1) -I$(DIAGPATH) -I$(LZMAPATH) -Wall -O
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
@@ -56,8 +57,8 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
-EXECS           = dm-sched dm-cmd 
+T_LIBS          = -Wl,-rpath,/usr/local/lib,-rpath,$(EBPATH1)/.libs -L$(EBPATH1)/.libs -letherbone $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
+EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
@@ -88,7 +89,7 @@ libcarpedm.so: $(T_OBJECTS)
 libdmtest.so: $(TEST_OBJECTS)
 	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ $^ $(T_LIBS)
 	mkdir -p $(LIBPATH)
-	cp $@ $(LIBPATH)	
+	cp $@ $(LIBPATH)
 
 install: $(BINS)
 	cp $(BINS) $(INSTALLPATH)
