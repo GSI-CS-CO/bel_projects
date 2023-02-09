@@ -27,7 +27,6 @@ BOOSTPATH      ?=/usr
 EBPATH         ?=/usr/local
 EBPATH1 ?=/usr/local/include
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
-EBPATH1 ?=/usr/local/include
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
 FTMPATH        ?= $(TOP)/modules/ftm
@@ -67,11 +66,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-<<<<<<< HEAD
 T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(EBPATH1)/.libs,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -L$(EBPATH1)/.libs -letherbone -lboost_serialization -lboost_graph -lboost_regex
-=======
-T_LIBS          = -Wl,-rpath,/usr/local/lib -L$(EBPATH1)/.libs -letherbone $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
->>>>>>> 02b01a378 (Add EBPATH1 for Jenkins build on builder.acc.gsi.de.)
 EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
@@ -117,3 +112,5 @@ $(TOOLS): $$@.cpp libcarpedm.so
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm $(T_LIBS)
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
+
+
