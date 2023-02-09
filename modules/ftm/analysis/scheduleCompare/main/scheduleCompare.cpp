@@ -80,6 +80,7 @@ void usage(char* program) {
   std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
+  std::cerr << "        -V: print version and exit." << std::endl;
   std::cerr << "Return codes: " << std::endl;
   std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
   std::cerr << NOT_ISOMORPHIC << " NOT_ISOMORPHIC, graphs are not isomorphic." << std::endl;
@@ -92,6 +93,7 @@ void usage(char* program) {
   std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
   std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
   std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
+  std::cerr << VERSION_MESSAGE << " VERSION_MESSAGE, version displayed." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
 }
 

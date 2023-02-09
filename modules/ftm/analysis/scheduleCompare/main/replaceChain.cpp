@@ -120,6 +120,7 @@ void usage(char* program) {
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
   std::cerr << PARSE_ERROR << " PARSE_ERROR, error while parsing, unknown tag or attribute." << std::endl;
   std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
+  std::cerr << VERSION_MESSAGE << " VERSION_MESSAGE, version displayed." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
 }
 
