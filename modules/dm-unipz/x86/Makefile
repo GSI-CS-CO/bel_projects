@@ -6,7 +6,7 @@
 # Example deploy:
 #   'make PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev-yocto deploy'           (hack: leave PREFIX empty for SCU path)
 
-#install 
+# install 
 PREFIX      ?= /usr/local
 STAGING     ?=
 
