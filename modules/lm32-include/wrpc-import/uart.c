@@ -24,7 +24,7 @@
 #include "uart.h"
 #include "board.h"
 
-//#include <hw/wb_uart.h>
+#include <hw/wb_uart.h>
 
 PACKED struct UART_WB {
 	/* [0x0]: REG Status Register */
@@ -45,8 +45,8 @@ volatile struct UART_WB *uart;
 
 void uart_init_hw()
 {
-	uart = (volatile struct UART_WB *)BASE_UART;
-	//uart = (volatile struct UART_WB *)0x80040500;
+	//uart = (volatile struct UART_WB *)BASE_UART;
+	uart = (volatile struct UART_WB *)0x80040500;
 
 #ifndef SIMULATION
 	//uart->BCR = CALC_BAUD(00020000);
