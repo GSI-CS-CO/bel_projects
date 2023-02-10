@@ -499,6 +499,12 @@ lm32-example:
 lm32-example-clean:
 	$(MAKE) -C modules/lm32-example clean
 
+lm32-simple-access:
+	$(MAKE) -C modules/lm32-example TARGET=simpleAccess
+
+lm32-simple-access-clean:
+	$(MAKE) -C modules/lm32-example clean TARGET=simpleAccess
+
 # #################################################################################################
 # Legacy and unmaintained devices
 # #################################################################################################
