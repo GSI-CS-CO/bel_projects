@@ -18,13 +18,15 @@ WR_BOARD	:= $(W1)/boards/generic/board.h
 WR_LIB	:= $(W1)/lib
 WR_INC  := $(W1)/include
 WR_IMPORT := $(INCPATH)/wrpc-import
+WR_HW_IMPORT := $(INCPATH)/wrpc-import/hw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
-		-I$(INCPATH) -I$(EBPATH) -I$(WR_INC) -I$(WR_IMPORT) \
-		-std=gnu99 -DUSRCPUCLK=$(USRCPUCLK)-DCONFIG_TARGET_GSI_DEVICE -DCONFIG_ARCH_LM32 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 \
-		-DSDBFS_BIG_ENDIAN
+		-I$(INCPATH) -I$(EBPATH) -I$(WR_IMPORT) -I$(WR_HW_IMPORT) \
+		-DUSRCPUCLK=$(USRCPUCLK) -DCONFIG_TARGET_GSI_DEVICE -DCONFIG_ARCH_LM32 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 \
+		-DTICS_PER_SECOND=1000 -DUART_BAUDRATE=115200 -DBASE_CLOCK=100000000 -DSDB_BASED_ADDRESSES -DUSRCPUCLK=125000 \
+		-DCONFIG_TARGET_GSI_DEVICE -DSDBFS_BIG_ENDIAN
 
-CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -pedantic
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -std=gnu99 -pedantic
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
