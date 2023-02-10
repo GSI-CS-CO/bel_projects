@@ -31,7 +31,7 @@ endif
 
 EXTRA_FLAGS ?=
 LIBS        ?= -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I../include -I../common-libs/include  -I$(DIMPATH)/dim
+CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
 SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
 
 $(info    CCFLAGS is $(CCFLAGS))

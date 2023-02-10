@@ -18,6 +18,7 @@ FW          ?= fw
 SW          ?= x86
 SYSTEMD     ?= systemd
 NFSINIT     ?= nfs-init
+GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
 INC         ?= include
 
 # support Yocto SDK
