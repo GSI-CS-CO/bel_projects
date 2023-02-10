@@ -244,9 +244,9 @@ void discoverPeriphery(void)
   pCpuMsiBox      = NULL;
   pMyMsi          = NULL;
 
-  pUart           = find_device_adr(CERN, WR_UART);
-  //pUart          = (uint32_t*)0x84060500;
-  BASE_UART       = (char *)pUart; //make WR happy ...
+  //pUart           = find_device_adr(CERN, WR_UART);
+  pUart          = (uint32_t*)0x80040500;
+  //BASE_UART       = (char *)pUart; //make WR happy ...
 
 
   pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
@@ -283,11 +283,13 @@ void discoverPeriphery(void)
   pDDR3_if1       = find_device_adr(GSI, WB_DDR3_if1);
   pDDR3_if2       = find_device_adr(GSI, WB_DDR3_if2);
 
+  pIOC            = find_device_adr(GSI, IO_CONTROL);
+
   // Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
-  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
+  //BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
   pPps            = (uint32_t *)find_device_adr(CERN, WR_PPS_GEN);
 
 }
