@@ -19,6 +19,7 @@ WR_BOARD	:= $(W1)/boards/generic/board.h
 WR_LIB	:= $(W1)/lib
 WR_INC  := $(W1)/include
 WR_IMPORT := $(INCPATH)/wrpc-import
+WR_HW_IMPORT := $(INCPATH)/wrpc-import/hw
 USRCPUCLK	?= 62500
 
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
@@ -38,7 +39,7 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 	-DCONFIG_PRINTF_64BIT \
 	-DSDBFS_BIG_ENDIAN
 
-CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -pedantic
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -std=gnu99 -pedantic
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
