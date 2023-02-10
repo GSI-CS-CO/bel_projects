@@ -83,7 +83,7 @@
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
 #define WB_SCU_REG            0xe2d13d04
-
+#define IO_CONTROL            0x10c05791
 
 //periphery device pointers
 volatile uint32_t* pTlu;
@@ -113,6 +113,8 @@ volatile uint32_t* pCfiPFlash;
 
 volatile uint32_t* pDDR3_if1;
 volatile uint32_t* pDDR3_if2;
+
+volatile uint32_t* pIOC;
 
 
 typedef struct pair64 {
