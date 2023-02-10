@@ -83,7 +83,7 @@
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
 #define WB_SCU_REG            0xe2d13d04
-
+#define IO_CONTROL            0x10c05791
 
 //periphery device pointers
 #ifndef NEORV32
@@ -142,6 +142,8 @@ extern volatile uint32_t* pDDR3_if2;
 extern volatile unsigned char *BASE_UART;
 extern volatile unsigned char *BASE_SYSCON;
 #endif
+
+volatile uint32_t* pIOC;
 
 
 typedef struct pair64 {
