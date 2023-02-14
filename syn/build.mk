@@ -45,7 +45,7 @@ STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 INCLUDES  += $(WR_IMPORT)/uart.c $(WR_IMPORT)/vsprintf-full.c $(WR_IMPORT)/div64.c $(WR_IMPORT)/printf.c \
 						$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c  $(INCPATH)/sdb_add.c $(INCPATH)/assert.c \
-						$(INCPATH)/stack-check.c
+						$(INCPATH)/stack-check.c $(WR_IMPORT)/timer.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
