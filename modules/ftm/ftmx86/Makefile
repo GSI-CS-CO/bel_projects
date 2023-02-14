@@ -38,7 +38,14 @@ BINPATH         = $(FTMPATH)/bin
 LIBPATH         = $(FTMPATH)/lib
 FWPATH         ?= $(FTMPATH)/ftmfw
 TOOLPATH       ?= $(FTMPATH)/ftmx86
-PREFIX         ?= /usr/local
+# check that make runs with  sudo rights
+RIGHTS := $(shell id -u)
+
+ifeq ($(RIGHTS),0)
+  PREFIX ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
 INSTALLPATH     = $(PREFIX)/bin
 
 T_CXX           = g++
