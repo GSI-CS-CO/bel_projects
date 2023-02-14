@@ -104,15 +104,20 @@ void saveSchedule(ScheduleGraph& g, configuration& config) {
   superVerboseStdOut(g, config);
   std::string graphName = getGraphName(g);
   setGraphName(g, graphName + std::string("-compact"));
-  if (fileExists(fileName) && !config.overwrite) {
-    std::cerr << "Warning: file " << fileName << " exists, no output." << std::endl;
+  typedef typename boost::graph_traits< ScheduleGraph >::vertex_descriptor Vertex;
+  if (fileName.size() == 0) {
+      boost::write_graphviz(std::cout, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+          ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
   } else {
-    std::ofstream fText(fileName);
-    //~ boost::write_graphviz_dp(fText, g, dp, "name");
-    typedef typename boost::graph_traits< ScheduleGraph >::vertex_descriptor Vertex;
-    boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
-        ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
-    fText.close();
+    if (fileExists(fileName) && !config.overwrite) {
+      std::cerr << "Warning: file " << fileName << " exists, no output." << std::endl;
+    } else {
+      std::ofstream fText(fileName);
+      //~ boost::write_graphviz_dp(fText, g, dp, "name");
+      boost::write_graphviz(fText, g, DynamicVertexPropertiesWriter(dp, "name"), DynamicPropertiesWriter(dp),
+          ScheduleGraphPropertiesWriter<ScheduleGraph>(dp, g), boost::graph::detail::node_id_property_map< Vertex >(dp, "name"));
+      fText.close();
+    }
   }
 }
 

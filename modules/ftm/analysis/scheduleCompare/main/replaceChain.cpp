@@ -70,9 +70,6 @@ int main(int argc, char* argv[]) {
       return USAGE_MESSAGE;
     } else {
       std::string inputFile = std::string(argv[argc - 1]);
-      if (config.outputFile.size() == 0) {
-        config.outputFile = std::regex_replace(inputFile, std::regex(".dot"), std::string("-chain-1.dot"));
-      }
       return compactSingleGraph(inputFile, config);
     }
   }
