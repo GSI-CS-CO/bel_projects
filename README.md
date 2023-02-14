@@ -318,13 +318,13 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-See [bel_projects/doc/usbblaster/readme.md](bel_projects/doc/usbblaster/readme.md)
+See [doc/usbblaster/readme.md](doc/usbblaster/readme.md)
 
 ### Xilinx Platform Cable II
-See [bel_projects/doc/platform_cable/readme.md](bel_projects/doc/platform_cable/readme.md)
+See [doc/platform_cable/readme.md](doc/platform_cable/readme.md)
 
 ### Arrow USB Programmer
-See [bel_projects/doc/arrow_usb_programmer/readme.md](bel_projects/doc/arrow_usb_programmer/readme.md)
+See [doc/arrow_usb_programmer/readme.md](doc/arrow_usb_programmer/readme.md)
 
 ### Altera/Intel Ethernet Blaster
 
