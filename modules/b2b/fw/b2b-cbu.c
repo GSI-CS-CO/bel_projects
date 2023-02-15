@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Feb-2023
+ *  version : 15-Feb-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -132,7 +132,7 @@ uint32_t  nHExt;                        // harmonic number of extraction machine
 uint64_t  TH1Inj_as;                    // h=1 period [as] of injection machine
 uint32_t  nHInj;                        // harmonic number of injection machine 0..255
 uint64_t  TBeat_as;                     // beating period [as]
-int32_t   cPhase;                       // correction for phase matching [ns]
+int32_t   cPhase;                       // correction for phase matching
 int32_t   cTrigExt;                     // correction for extraction trigger
 int32_t   cTrigInj;                     // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
@@ -283,8 +283,8 @@ void clearAllSid()
     setTH1Inj_as[i]  = 0;
     setNHInj[i]      = 0;
     setCPhase[i]     = 0;
-    setCTrigExt[i] = 0;
-    setCTrigInj[i] = 0;
+    setCTrigExt[i]   = 0;
+    setCTrigInj[i]   = 0;
     setNBuckExt[i]   = 0;
     setNBuckInj[i]   = 0;
     setFFinTune[i]   = 0;
@@ -298,7 +298,6 @@ uint32_t setSubmit()
 {
   int          sid;
   int          flagInject;
-  union fdat_t tmp;
 
   // SID is used as array index. Strict checking required to avoid segfaults etc
   if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
@@ -888,11 +887,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
   uint64_t sendParam;                                         // param to send
+  uint32_t sendTef;                                           // TEF to send
   uint32_t sendGid;                                           // GID to send
   uint64_t recDeadline;                                       // deadline received
   uint64_t recId;                                             // evt ID received
   uint64_t recParam;                                          // param received
-  uint32_t recTEF;                                            // TEF received
+  uint32_t recTef;                                            // TEF received
   uint32_t recGid;                                            // GID received
   uint32_t recSid;                                            // SID received
   uint32_t recBpid;                                           // BPID received
@@ -902,14 +902,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
-  int32_t  offsetDone;                                        // offset from deadline EKS to time, when extraction trigger is sent
-  __fp16 test;
-
-  union fdat_t tmp;
+  uint16_t offsetDone_100ns;                                  // offset from deadline EKS to time, when extraction trigger is sent [100 ns]
+  int16_t  cTrigExt_01deg;                                    // correction for extraction trigger [0.1 deg]
+  int16_t  cTrigInj_01deg;                                    // correction for injection trigger [0.1 deg]
+  int16_t  cPhase_01deg;                                      // correction for phase [0.1 deg]
+  
+  uint32_t tmp32;
 
   status = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
     
   switch (ecaAction) {
 
@@ -960,6 +962,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune  = setFFinTune[sid];
       fMBTune    = setFMBTune[sid];
 
+      if (TH1Ext_as > 0) {
+        cTrigExt_01deg = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
+        cTrigInj_01deg = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
+        cPhase_01deg   = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
+      } // if TH1Ext_as
+
       tCBS       = recDeadline;
       getGeometricHarmonics(gid, &nGExt, &nGInj);
       
@@ -982,8 +990,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMEXT) errorFlags |= B2B_ERRFLAG_PMEXT;
       
       tH1Ext_t.ns   = recParam;
-      tH1Ext_t.ps   = ( int32_t)( int16_t)(recTEF & 0x0000ffff);
-      tH1Ext_t.dps  = (uint32_t)(uint16_t)((recTEF & 0xffff0000) >> 16);
+      tH1Ext_t.ps   = ( int32_t)( int16_t)(recTef & 0x0000ffff);
+      tH1Ext_t.dps  = (uint32_t)(uint16_t)((recTef & 0xffff0000) >> 16);
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: %d %u\n", tH1Ext_t.ps, tH1Ext_t.dps);
@@ -1005,8 +1013,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
 
       tH1Inj_t.ns   = recParam;
-      tH1Inj_t.ps   = ( int32_t)( int16_t)(recTEF & 0x0000ffff);
-      tH1Inj_t.dps  = (uint32_t)(uint16_t)((recTEF & 0xffff0000) >> 16); 
+      tH1Inj_t.ps   = ( int32_t)( int16_t)(recTef & 0x0000ffff);
+      tH1Inj_t.dps  = (uint32_t)(uint16_t)((recTef & 0xffff0000) >> 16); 
 
       tH1Inj_t.ns  -= cPhase;         // chk, we should go to 1ps precision
       transStat    |= mState;
@@ -1034,9 +1042,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // send command: phase measurement at extraction machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
     sendParam      = TH1Ext_as & 0x00ffffffffffffff;                            // use low 56 bit as period
-    sendParam      = sendParam | ((uint64_t)(nGExt & 0xff) << 56);              // use upper 8 bit as geometric harmonic number 
+    sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
+    sendTef        = (uint32_t)(cTrigExt_01deg & 0xffff) << 16;                 // high 16 bit: ext kicker correction
+    sendTef       |= (uint32_t)(cTrigInj_01deg & 0xffff);                       // low 16 bit : inj kicker correction
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to CBS
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_EXTPS
@@ -1050,9 +1060,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // send command: phase measurement at injection machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
     sendParam      = TH1Inj_as & 0x00ffffffffffffff;                            // use low 56 bit as period
-    sendParam      = sendParam | ((uint64_t)(nGInj & 0xff) << 56);              // use upper 8 bit as geometric harmonic number 
+    sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
+    sendTef        = (uint32_t)(cPhase_01deg & 0xffff) << 16;                   // high 16 bit: phase correction, low 16 bit: reserved
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_INJPS
@@ -1090,14 +1101,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     /* pp_printf("cTrigExt2 [125 ps] %d\n", cTrigExt); */
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    offsetDone   = (int32_t)(getSysTime() - tCBS);
+    tmp32        = (uint32_t)(getSysTime() - tCBS) / 100;                     // time from CBS to now [100 ns]
+    if (tmp32 < 0xffff) offsetDone_100ns = (uint16_t)tmp32;
+    else                offsetDone_100ns = 0xffff;
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-    sendParam    = ((uint64_t)(offsetDone & 0xffffffff) << 32);               // param field, offset to CBS as high word
-    tmp.f        = (float)cTrigExt;                                           // [ns] 
-    sendParam   |=  (uint64_t)(tmp.data & 0xffffffff);                        // param field, cTrigExt as low word
+    sendParam    = 0x0;                                                       // chk , resend BPCID et al
+    sendTef      = (uint32_t)(offsetDone_100ns & 0xffff) << 16;               // high 16 bit: offset 'ready' to CBS, low 16 bit reserved
     sendDeadline = tTrigExt;
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXTTRIG
@@ -1110,10 +1122,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-    tmp.f        = cPhase;
-    sendParam    = ((uint64_t)tmp.data & 0xffffffff) << 32;                   // param field, cPhase as high word
-    tmp.f        = (float)cTrigInj;
-    sendParam    = sendParam | (uint64_t)(tmp.data & 0xffffffff);             // param field, cTrigInj as low word
+    sendParam    = 0x0;                                                       // chk , resend BPCID et al
     sendDeadline = tTrigInj;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
     transStat   |= mState;
