@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Jan-2021
+ *  version : 15-Feb-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -26,6 +26,10 @@
 #include <common-defs.h>
 #include <common-lib.h>
 
+// eca queue
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
+#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // definitions for ECA queue
+
 // public variables
 eb_address_t common_statusLo;     // common status, read (low word)
 eb_address_t common_statusHi;     // common status, read (high word)
@@ -45,6 +49,9 @@ eb_address_t common_tDiagLo;      // time when diagnostics was cleared, low bits
 eb_address_t common_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
 eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
 eb_address_t common_usedSize;     // used size of DP RAM
+
+// public variables
+eb_socket_t  eb_socket;           // EB socket
 
 /*
 static void die(const char* where, eb_status_t status)
@@ -255,44 +262,98 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
 } // comlib_readDiag
 
 
-uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms, uint32_t *pECAQ, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
+uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *device, eb_address_t *ecaq_base)
 {
-  uint32_t *pECAFlag;           // address of ECA flag
-  uint32_t ecaFlag;             // ECA flag
-  uint32_t evtIdHigh;           // high 32bit of eventID   
-  uint32_t evtIdLow;            // low 32bit of eventID    
-  uint32_t evtDeadlHigh;        // high 32bit of deadline  
-  uint32_t evtDeadlLow;         // low 32bit of deadline   
-  uint32_t evtParamHigh;        // high 32 bit of parameter field
-  uint32_t evtParamLow ;        // low 32 bit of parameter field
-  uint32_t actTag;              // tag of action           
-  uint32_t nextAction;          // describes what to do next
-  uint64_t timeoutT;            // when to time out
-  uint64_t timeout;             // timeout [ns]
+  eb_status_t         status;
+  int                 maxDev = 4;                          // four ECA queues exist on a standard TR
+  struct sdb_device   sdbDevice[maxDev];                   // instantiated ECA queues
+  int                 nDevices;                            // number of instantiated queues
+
+  *device     = 0x0;
+  *ecaq_base  = 0x0;
+  nDevices    = 1;
+
+  // open Etherbone device and socket 
+  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &device)) != EB_OK) return COMMON_STATUS_EB;
+
+  //  get Wishbone address of ecaq
+  if ((status = eb_sdb_find_by_identity(device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+  if (nDevices == 0)     return COMMON_STATUS_EB;
+  if (nDevices > maxDev) return COMMON_STATUS_EB;
+  if (nDevices < qIdx)   return COMMON_STATUS_EB;
+  *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
+
+  return COMMON_STATUS_OK;
+} // comlib_ecaq_open
 
 
-  pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-  
-  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
-  // reduces time per read from ~6.5 us to ~4.8 us
-  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
-  timeout     = ((uint64_t)timeout_us + 1) << 10;
-  timeoutT    = getSysTime() + timeout; 
-  
-  while (getSysTime() < timeoutT) {
-    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
+uint32_t comlib_ecaq_close(eb_device_t device)
+{
+  eb_status_t status;
+
+  if (!device) return COMMON_STATUS_EB;
+
+  // close Etherbone device and socket
+  if ((status = eb_device_close(device))    != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_socket_close(eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+
+  return COMMON_STATUS_OK;
+} // comlib_ecaq_close
+
+
+uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)
+{
+  eb_cycle_t  cycle;
+  eb_status_t eb_status;
+  eb_data_t   data[30];
+  uint32_t    ecaFlag;             // ECA flag
+  uint32_t    evtIdHigh;           // high 32bit of eventID   
+  uint32_t    evtIdLow;            // low 32bit of eventID    
+  uint32_t    evtDeadlHigh;        // high 32bit of deadline  
+  uint32_t    evtDeadlLow;         // low 32bit of deadline   
+  uint32_t    evtParamHigh;        // high 32 bit of parameter field
+  uint32_t    evtParamLow ;        // low 32 bit of parameter field
+  uint32_t    actTag;              // tag of action           
+  uint32_t    nextAction;          // describes what to do next
+  uint64_t    timeoutT_us;         // when to time out [us]
+  uint64_t    timeout_us;          // timeout [us]
+
+  timeout_us  = ((uint64_t)timeout_ms + 1) * 1000;
+  timeoutT_us = comlib_getSysTime() + timeout_us;
+
+  while (comlib_getSysTime() < timeoutT_us) {
+    // read flag from ECA queue
+    if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
+    eb_cycle_read(cycle, ecaq_base + ECA_QUEUE_FLAGS_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+    if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
+    ecaFlag = data[0];
+   
     if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
       // read data
-      evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-      evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
-      actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-      evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
-      evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
-      *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
+      if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_EVENT_ID_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_EVENT_ID_LO_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_DEADLINE_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_DEADLINE_LO_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_TAG_GET        , EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_PARAM_HI_GET   , EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_PARAM_LO_GET   , EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+      eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_TEF_GET        , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+      eb_cycle_write(cycle, ecaq_base + ECA_QUEUE_POP_OWR        , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
+      if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
+      // copy data
+      evtIdHigh    = data[0];
+      evtIdLow     = data[1];
+      evtDeadlHigh = data[2];
+      evtDeadlLow  = data[3];
+      actTag       = data[4];
+      evtParamHigh = data[5];
+      evtParamLow  = data[6];
+      *tef         = data[7];
+      
       *isLate      = ecaFlag & (0x0001 << ECA_LATE);
       *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
       *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
@@ -301,14 +362,12 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms, uint32_t *pECAQ, uint64_t *de
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
       
-      // pop action from channel
-      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
-
       // here: do s.th. according to tag
       nextAction = actTag;
     
       return nextAction;
     } // if data is valid
+    usleep(100);
   } // while not timed out
 
   *deadline = 0x0;

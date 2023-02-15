@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2021
+ *  version : 15-Feb-2023
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.02.02"
+#define COMMON_LIB_VERSION "0.03.00"
 
 #include <etherbone.h>
 
@@ -82,6 +82,7 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     int         printFlag              // '1' print information to stdout
                     );
 
+// prints diagnostic data
 void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  state,                 // state
                       uint32_t  version,               // firmware version
@@ -96,5 +97,19 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  statTrans,             // status bits of transfer (application specific)
                       uint32_t  usedSize               // used size of shared memory
                       );
+
+// directly reads messages from an ECA queue via Etherbone(not via saftlib)
+uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
+                              eb_device_t  device,     // EB device 
+                              eb_address_t ecaq_base,  // EB address 
+                              uint64_t     *deadline,  // messages deadline
+                              uint64_t     *evtId,     // EvtId
+                              uint64_t     *param,     // parameter field
+                              uint32_t     *tef,       // TEF field
+                              uint32_t     *isLate,    // flags ...
+                              uint32_t     *isEarly,
+                              uint32_t     *isConflict,
+                              uint32_t     *isDelayed
+                              );
 
 #endif

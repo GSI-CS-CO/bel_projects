@@ -13,20 +13,18 @@ STAGING     ?=
 # relative paths
 FW          ?=../fw
 B2BLIB      := libb2blib.so
-DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
-#  hack for building on local linux box
-#DIMPATH     := /opt/dim/dim_v20r29
-
 
 # support Yocto SDK
 ifeq ($(YOCTO), YES)
 EB          ?= .
 ARCH        := /x86_64
 CFLAGS      ?=
+DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
 else
 EB          ?= ../../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
-CFLAGS      ?= -Wall -O2 -g 
+CFLAGS      ?= -Wall -O2 -g
+DIMPATH     := /opt/dim/dim_v20r29
 endif
 
 EXTRA_FLAGS ?=
