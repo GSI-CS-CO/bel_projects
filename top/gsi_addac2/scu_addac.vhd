@@ -218,6 +218,7 @@ COMPONENT rrg is
          ControlReg : in STD_LOGIC_VECTOR (15 downto 0);
          TargetReg  : in STD_LOGIC_VECTOR (15 downto 0);
          TimeStepReg : in STD_LOGIC_VECTOR (15 downto 0);
+CountStepReg : in STD_LOGIC_VECTOR (15 downto 0);
          DAC_Out : out STD_LOGIC_VECTOR (15 downto 0);
          DAC_Strobe : out STD_LOGIC);
 END COMPONENT rrg;
@@ -363,6 +364,7 @@ END COMPONENT rrg;
   signal rrgConfigReg           : std_logic_vector (15 downto 0);
   signal rrgTargetReg           : std_logic_vector (15 downto 0);        
   signal rrgTimeStepReg         : std_logic_vector (15 downto 0);
+  signal rrgCountStepReg   : std_logic_vector (15 downto 0);
 
 
   begin
@@ -827,7 +829,7 @@ p_led_ena: div_n
   -------------------------------------------------------------------------------
   -- precsaler for the led test vector
   -------------------------------------------------------------------------------
-  sec_prescale:	process(clk_sys, rstn_sys)
+  sec_prescale: process(clk_sys, rstn_sys)
   begin
     if rstn_sys = '0' then
       s_led_en <= '0';
@@ -880,7 +882,7 @@ p_led_ena: div_n
           Reg_IO1            =>  rrgConfigReg,
           Reg_IO2            =>  rrgTargetReg,
           Reg_IO3            =>  rrgTimeStepReg,
-          Reg_IO4            =>  open,
+          Reg_IO4            =>  rrgCountStepReg,
           Reg_IO5            =>  open,
           Reg_IO6            =>  open,
           Reg_IO7            =>  open,
@@ -900,7 +902,8 @@ p_led_ena: div_n
           TargetReg     => rrgTargetReg,
           TimeStepReg   => rrgTimeStepReg,
           DAC_Out       => rrg_out,
-          DAC_Strobe    => rrg_strobe
+          DAC_Strobe    => rrg_strobe,
+CountStepReg  => rrgCountStepReg
         );
 
   -------------------------------------------------------------------------------
