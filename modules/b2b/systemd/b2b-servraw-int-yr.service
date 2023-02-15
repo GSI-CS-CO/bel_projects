@@ -1,0 +1,11 @@
+[Unit]
+Description = b2b data acquisition for INT CRYRING
+Requires = saftd.service
+After = saftd.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-raw tr1 -e2 int
+[Install]
+WantedBy = multi-user.target
