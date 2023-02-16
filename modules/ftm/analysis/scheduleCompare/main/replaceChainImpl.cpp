@@ -203,13 +203,16 @@ void ReplaceChain::createVertexAndEdges(VertexNum v) {
       beforeEdge = createEdgeProperties(p, v, newVertexNum, true);
     }
   }
-  // if there is a successor of v and v is the last vertex in the chain, create an edge to it.
   VertexNum s = successor(v);
   if (c->superverbose) {
     std::cout << "1 createVertexAndEdges v:" << v << ", s " << s << std::endl;
   }
+  // if there is a successor of v and v is the last vertex in the chain, create an edge to it.
   if (s != ULONG_MAX && chain.count(s) == 0) {
     afterEdge = createEdgeProperties(newVertexNum, v, s, false);
+  }
+  // if v is the last vertex in chain, handle name and label.
+  if ((s != ULONG_MAX && chain.count(s) == 0) || s == ULONG_MAX) {
     (*g)[newVertexNum].name = (*g)[newVertexNum].name + "\n...\n" + (*g)[v].name;
     (*g)[newVertexNum].label = (*g)[newVertexNum].label + "\n...\n" + ((*g)[v].label.size() > 0 ? (*g)[v].label : (*g)[v].name);
   }
@@ -353,5 +356,8 @@ void ReplaceChain::chainStatus(std::string title, std::ostream& out) {
         << ", newEdge " << newEdge.first << " " << newEdge.second << std::endl;
     out << "newName: '" << newName << "'" << std::endl;
     out << "newLabel: '" << newLabel << "'" << std::endl;
+    if (newVertexNum != ULONG_MAX) {
+      out << "(*g)[newVertexNum].name: '" << (*g)[newVertexNum].name << "'" << std::endl;
+    }
   }
 }
