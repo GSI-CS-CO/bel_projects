@@ -98,10 +98,22 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  usedSize               // used size of shared memory
                       );
 
+// open Etherbone connection to ECA queue
+uint32_t comlib_ecaq_open(const char* devName,         // EB device name such as dev/wbm0
+                          uint32_t qIdx,               // index of action queue we'd like to connect to
+                          eb_device_t *device,         // EB device
+                          eb_address_t *ecaq_base      // EB address
+                          );
+
+// closes Etherbone connection to ECA queue
+uint32_t comlib_ecaq_close(eb_device_t device          // EB device
+                           );
+
 // directly reads messages from an ECA queue via Etherbone(not via saftlib)
 uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               eb_device_t  device,     // EB device 
-                              eb_address_t ecaq_base,  // EB address 
+                              eb_address_t ecaq_base,  // EB address
+                              uint32_t     *tag,       // tag
                               uint64_t     *deadline,  // messages deadline
                               uint64_t     *evtId,     // EvtId
                               uint64_t     *param,     // parameter field

@@ -275,10 +275,10 @@ uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *devic
 
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return COMMON_STATUS_EB;
 
   //  get Wishbone address of ecaq
-  if ((status = eb_sdb_find_by_identity(device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
   if (nDevices == 0)     return COMMON_STATUS_EB;
   if (nDevices > maxDev) return COMMON_STATUS_EB;
   if (nDevices < qIdx)   return COMMON_STATUS_EB;
@@ -302,7 +302,7 @@ uint32_t comlib_ecaq_close(eb_device_t device)
 } // comlib_ecaq_close
 
 
-uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)
+uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint32_t *tag, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -349,7 +349,7 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       evtIdLow     = data[1];
       evtDeadlHigh = data[2];
       evtDeadlLow  = data[3];
-      actTag       = data[4];
+      *tag         = data[4];
       evtParamHigh = data[5];
       evtParamLow  = data[6];
       *tef         = data[7];
@@ -362,10 +362,7 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
       
-      // here: do s.th. according to tag
-      nextAction = actTag;
-    
-      return nextAction;
+      return COMMON_STATUS_OK;
     } // if data is valid
     usleep(100);
   } // while not timed out
