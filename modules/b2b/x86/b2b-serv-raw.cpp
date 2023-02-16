@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Feb-2023
+ *  version : 16-Feb-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000421
+#define B2B_SERV_RAW_VERSION 0x000422
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -243,7 +243,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.kteOff          = deadline.getTAI() - getval.tCBS;
       //tmp.data               = ((param & 0x00000000ffffffff));
       //setval.ext_cTrig       = (double)tmp.f;
-      getval.doneOff         = 100 * (uint16_t)((tef & 0xffff0000) >> 16); // [100 ns] -> [ns]
+      getval.doneOff         = 100 * (int32_t)(uint16_t)((tef & 0xffff0000) >> 16); // [100 ns] -> [ns]
       setval.flag_nok       &= 0xfffffff7;
       flagErr                = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr     |= flagErr << tag;
@@ -791,13 +791,20 @@ int main(int argc, char** argv)
     uint32_t      isConflict;
     uint32_t      isDelayed;
     saftlib::Time deadline_t;
+    uint32_t      ecaStatus;
+    eb_status_t   ebStatus;
+    uint32_t      qIdx = 0;       
     
-    comlib_ecaq_open("dev/wbm1", 2, &device, &ecaq_base);
+    ebStatus = comlib_ecaq_open("dev/wbm1", qIdx, &device, &ecaq_base);
     while(true) {
       //      saftlib::wait_for_signal();
-      comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
-      deadline_t = saftlib::makeTimeTAI(deadline);
-      timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
+      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_OK) {
+        deadline_t = saftlib::makeTimeTAI(deadline);
+        //printf("msg: tag %x, id %lx, tef %x\n", recTag, evtId, tef);
+        timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
+      }
     } // while true
     comlib_ecaq_close(device);
     

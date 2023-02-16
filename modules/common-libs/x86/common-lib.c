@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Feb-2023
+ *  version : 16-Feb-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -51,7 +51,7 @@ eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW),
 eb_address_t common_usedSize;     // used size of DP RAM
 
 // public variables
-eb_socket_t  eb_socket;           // EB socket
+eb_socket_t  common_socket;       // EB socket
 
 /*
 static void die(const char* where, eb_status_t status)
@@ -265,24 +265,26 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
 uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *device, eb_address_t *ecaq_base)
 {
   eb_status_t         status;
-  int                 maxDev = 4;                          // four ECA queues exist on a standard TR
-  struct sdb_device   sdbDevice[maxDev];                   // instantiated ECA queues
   int                 nDevices;                            // number of instantiated queues
+  int                 maxDev = 3;                          // three ECA queues exist on a standard TR
+  struct sdb_device   sdbDevice[maxDev];                   // instantiated ECA queues
 
   *device     = 0x0;
   *ecaq_base  = 0x0;
-  nDevices    = 1;
+  nDevices    = maxDev;
 
-  // open Etherbone device and socket 
-  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return COMMON_STATUS_EB;
+  // open Etherbone device and socket
+  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &common_socket)) != EB_OK)    return COMMON_STATUS_EB;
+  if ((status = eb_device_open(common_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return COMMON_STATUS_EB;
 
   //  get Wishbone address of ecaq
   if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
-  if (nDevices == 0)     return COMMON_STATUS_EB;
-  if (nDevices > maxDev) return COMMON_STATUS_EB;
-  if (nDevices < qIdx)   return COMMON_STATUS_EB;
+  if (nDevices == 0)       return COMMON_STATUS_EB;
+  //if (nDevices > maxDev)   return COMMON_STATUS_EB;
+  if (nDevices < qIdx + 1) return COMMON_STATUS_EB;
   *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
+
+  //printf("open eca q, nDevices %d, idx %d, ecaq_base %lx\n", nDevices, qIdx, (uint32_t)(*ecaq_base));
 
   return COMMON_STATUS_OK;
 } // comlib_ecaq_open
@@ -295,8 +297,8 @@ uint32_t comlib_ecaq_close(eb_device_t device)
   if (!device) return COMMON_STATUS_EB;
 
   // close Etherbone device and socket
-  if ((status = eb_device_close(device))    != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_socket_close(eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_close(device))        != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_socket_close(common_socket)) != EB_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // comlib_ecaq_close
@@ -324,15 +326,15 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
 
   while (comlib_getSysTime() < timeoutT_us) {
     // read flag from ECA queue
-    if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
+    if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return COMMON_STATUS_EB;
     eb_cycle_read(cycle, ecaq_base + ECA_QUEUE_FLAGS_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-    if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
+    if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return COMMON_STATUS_EB;
     ecaFlag = data[0];
    
     if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
       // read data
-      if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
+      if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return COMMON_STATUS_EB;
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_EVENT_ID_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_EVENT_ID_LO_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_DEADLINE_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
@@ -342,7 +344,7 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_PARAM_LO_GET   , EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_TEF_GET        , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
       eb_cycle_write(cycle, ecaq_base + ECA_QUEUE_POP_OWR        , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
-      if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
+      if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return COMMON_STATUS_EB;
 
       // copy data
       evtIdHigh    = data[0];
@@ -367,11 +369,15 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
     usleep(100);
   } // while not timed out
 
-  *deadline = 0x0;
-  *evtId    = 0x0;
-  *param    = 0x0;
-  *tef      = 0x0;
-  *isLate   = 0x0;
+  *tag        = 0x0;
+  *deadline   = 0x0;
+  *evtId      = 0x0;
+  *param      = 0x0;
+  *tef        = 0x0;
+  *isLate     = 0x0;
+  *isEarly    = 0x0;
+  *isConflict = 0x0;
+  *isDelayed  = 0x0;
   
-  return COMMON_ECADO_TIMEOUT;
+  return COMMON_STATUS_TIMEDOUT;
 } // comlib_wait4ECAEvent
