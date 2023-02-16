@@ -149,10 +149,26 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/chain2x3.dot', 0)
 
+  def test_replaceChainChainX(self):
+    """Compact a three vertex chain to one vertex.
+    """
+    self.replaceChain2('replaceChain/chainX.dot', 0)
+
+  def test_replaceChainChainY(self):
+    """Compact a five vertex chain to one vertex.
+    Tests the labelling for a chain with more than three vertices.
+    """
+    self.replaceChain2('replaceChain/chainY.dot', 0)
+
   def test_replaceChainCycle3(self):
     """Compact a three vertex cycle into a two vertex cycle.
     """
     self.replaceChain2('replaceChain/cycle3.dot', 0)
+
+  def test_replaceChainCycle10(self):
+    """Compact a ten vertex cycle into a two vertex cycle.
+    """
+    self.replaceChain2('replaceChain/cycle10.dot', 0)
 
   def test_replaceChainCycle2x3(self):
     """Compact two three vertex cycles into two two vertex cycles.
