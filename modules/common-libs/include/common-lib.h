@@ -124,4 +124,11 @@ uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               uint32_t     *isDelayed
                               );
 
+// converts half precision float to single precision float
+float comlib_half2float(uint16_t h                     // half precision float
+                        );
+// converts single precision float to half precision float
+uint16_t comlib_float2half(float f                     // single precision float
+                           );
+
 #endif

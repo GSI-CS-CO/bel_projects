@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2023
+ *  version : 17-Feb-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -25,6 +25,9 @@
 // common stuff
 #include <common-defs.h>
 #include <common-lib.h>
+
+// common core code
+#include <common-core.c>
 
 // eca queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
@@ -381,3 +384,14 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   
   return COMMON_STATUS_TIMEDOUT;
 } // comlib_wait4ECAEvent
+
+
+uint16_t comlib_float2half(float f)
+{
+  return comcore_float2half(f);
+} //comlib_float2half
+
+
+float comlib_half2float(uint16_t h){
+  return comcore_half2float(h);
+} // comlib_half2float

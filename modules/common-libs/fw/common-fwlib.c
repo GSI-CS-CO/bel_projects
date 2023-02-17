@@ -61,6 +61,8 @@
 #include <common-defs.h>                                                // common definitions
 #include <common-fwlib.h>                                               // fwlib
 
+#include <common-core.c>
+
 // these routines are typically application specific
 extern void     extern_clearDiag();
 extern uint32_t extern_entryActionConfigured();
@@ -1018,3 +1020,15 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
       break;
     } // switch actState
 } // fwlib_doAutoRecovery
+
+
+uint16_t fwlib_float2half(float f)
+{
+  return comcore_float2half(f);
+} // fwlib_float2half
+
+
+float fwlib_half2float(uint16_t h)
+{
+  return comcore_half2float(h);
+} // fwlib_half2float

@@ -11,6 +11,11 @@ typedef struct{
 } b2bt_t;
 
 
+// typedef for 16 bit float
+// this data type is just intended for transfer of data, not for math operation
+typedef uint16_t hfloat_t;
+
+
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
@@ -207,5 +212,13 @@ void fwlib_printOLED(char *chars                       // text to print
 
 // clear OLED
 void fwlib_clearOLED();
+
+// non-optimed routine for converting single precision to half precision float, IEEE 754
+uint16_t fwlib_float2half(float f                      // single precision number
+                          );
+
+// non-optimed routine for converting half precision to single precision float, IEEE 754
+float fwlib_half2float(uint16_t h                      // half precision number
+                       );
 
 #endif 
