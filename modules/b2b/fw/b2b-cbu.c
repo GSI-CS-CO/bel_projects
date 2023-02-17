@@ -903,11 +903,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
   uint16_t offsetDone_100ns;                                  // offset from deadline EKS to time, when extraction trigger is sent [100 ns]
-  int16_t  cTrigExt_01deg;                                    // correction for extraction trigger [0.1 deg]
-  int16_t  cTrigInj_01deg;                                    // correction for injection trigger [0.1 deg]
-  int16_t  cPhase_01deg;                                      // correction for phase [0.1 deg]
+  uint16_t cTrigExt_us;                                       // correction for extraction trigger [half precision, us]
+  uint16_t cTrigInj_us;                                       // correction for injection trigger [half precision, us]
+  uint16_t cPhase_us;                                         // correction for phase [half precision, us]
   
   uint32_t tmp32;
+  float    tmpf;
 
   status = actStatus;
 
@@ -948,25 +949,23 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
       if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return B2B_STATUS_BADSETTING;}
 
-      gid        = setGid[sid]; 
-      mode       = setMode[sid];
-      TH1Ext_as  = setTH1Ext_as[sid];
-      nHExt      = setNHExt[sid];
-      TH1Inj_as  = setTH1Inj_as[sid];
-      nHInj      = setNHInj[sid];
-      cPhase     = setCPhase[sid];
-      cTrigExt   = setCTrigExt[sid];
-      cTrigInj   = setCTrigInj[sid];
-      nBucketExt = setNBuckExt[sid];
-      nBucketInj = setNBuckInj[sid];
-      fFineTune  = setFFinTune[sid];
-      fMBTune    = setFMBTune[sid];
+      gid         = setGid[sid]; 
+      mode        = setMode[sid];
+      TH1Ext_as   = setTH1Ext_as[sid];
+      nHExt       = setNHExt[sid];
+      TH1Inj_as   = setTH1Inj_as[sid];
+      nHInj       = setNHInj[sid];
+      cPhase      = setCPhase[sid];
+      cTrigExt    = setCTrigExt[sid];
+      cTrigInj    = setCTrigInj[sid];
+      nBucketExt  = setNBuckExt[sid];
+      nBucketInj  = setNBuckInj[sid];
+      fFineTune   = setFFinTune[sid];
+      fMBTune     = setFMBTune[sid];
 
-      if (TH1Ext_as > 0) {
-        cTrigExt_01deg = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
-        cTrigInj_01deg = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
-        cPhase_01deg   = cTrigExt * 3600 * one_ns_as / TH1Ext_as;
-      } // if TH1Ext_as
+      cTrigExt_us = fwlib_float2half((float)cTrigExt/1000.0); // 16 bit float [us]
+      cTrigInj_us = fwlib_float2half((float)cTrigInj/1000.0); // 16 bit float [us]
+      cPhase_us   = fwlib_float2half((float)cPhase/1000.0);   // 16 bit float [us]
 
       tCBS       = recDeadline;
       getGeometricHarmonics(gid, &nGExt, &nGInj);
@@ -1043,8 +1042,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
     sendParam      = TH1Ext_as & 0x00ffffffffffffff;                            // use low 56 bit as period
     sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
-    sendTef        = (uint32_t)(cTrigExt_01deg & 0xffff) << 16;                 // high 16 bit: ext kicker correction
-    sendTef       |= (uint32_t)(cTrigInj_01deg & 0xffff);                       // low 16 bit : inj kicker correction
+    sendTef        = (uint32_t)(cTrigExt_us) << 16;                             // high 16 bit: ext kicker correction
+    sendTef       |= (uint32_t)(cTrigInj_us);                                   // low 16 bit : inj kicker correction
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to CBS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
@@ -1061,7 +1060,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
     sendParam      = TH1Inj_as & 0x00ffffffffffffff;                            // use low 56 bit as period
     sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
-    sendTef        = (uint32_t)(cPhase_01deg & 0xffff) << 16;                   // high 16 bit: phase correction, low 16 bit: reserved
+    sendTef        = (uint32_t)(cPhase_us) << 16;                               // high 16 bit: phase correction, low 16 bit: reserved
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;

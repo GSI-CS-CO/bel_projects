@@ -3,11 +3,6 @@
 
 #include <common-defs.h>
 
-union fdat_t {                              // easier copying of bytes float from/to int data types
-  uint32_t data;
-  float    f;
-};
-
 // this file is structured in two parts
 // 1st: definitions of general things like error messages
 // 2nd: definitions for data exchange via DP RAM
