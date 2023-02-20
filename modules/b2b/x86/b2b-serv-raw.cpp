@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2023
+ *  version : 20-Feb-2023
  *
  * publishes raw data of the b2b system
  *
@@ -52,6 +52,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <math.h>
 
 // saftlib includes
 #include "SAFTd.h"
@@ -152,6 +153,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
 
   uint64_t one_ns_as = 1000000000;
   union  fdat_t       tmp;
+  float               tmpf;
 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
 
@@ -191,7 +193,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.inj_diagMatch   = 0;
       getval.flagEvtRec      = 0x1 << tag;
       getval.flagEvtErr      = 0;
-      getval.flagEvtLate     = isLate << tag;;
+      getval.flagEvtLate     = isLate << tag;
       getval.tCBS            = deadline.getTAI();
       getval.doneOff         = 0;
       getval.preOff          = 0;
@@ -210,10 +212,10 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.ext_T     = ((param & 0x00ffffffffffffff));    // [as]
       if (setval.ext_h) setval.flag_nok &= 0xfffffffb;      // if ok, reset bit
       if (setval.ext_T) setval.flag_nok &= 0xfffffffd;      // if ok, reset bit
-      setval.ext_cTrig = (double)((int32_t)((tef & 0xffff0000)  >> 16));                       // [0.1 deg]
-      setval.ext_cTrig = setval.ext_cTrig * (double)setval.ext_T / 3600.0 / (double)one_ns_as; // [ns]
-      setval.inj_cTrig = (double)((int32_t)(tef & 0x0000ffff));                                // [0.1 deg]
-      setval.inj_cTrig = setval.inj_cTrig * (double)setval.ext_T / 3600.0 / (double)one_ns_as; // [ns]
+      tmpf             = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16));             // [us, hfloat]
+      setval.ext_cTrig = round(tmpf * 1000.0);              // [ns]
+      tmpf             = comlib_half2float((uint16_t)(tef & 0x0000ffff));                      // [us, hfloat]   
+      setval.inj_cTrig = round(tmpf * 1000.0);             // [ns]
       break;
     case tagPmi     :
       setval.mode      = 4;
@@ -221,8 +223,8 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.inj_T     = ((param & 0x00ffffffffffffff));    // [as]
       if (setval.inj_h) setval.flag_nok &= 0xffffffef;
       if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
-      setval.cPhase    = (double)((int32_t)((tef & 0xffff0000) >> 16));                        // [0.1 deg]
-      setval.cPhase    = setval.cPhase * (double)setval.ext_T / 3600.0 / (double)one_ns_as;    // [ns]
+      tmpf             = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
+      setval.cPhase    = round(tmpf  * 1000);               // [ns]
       break;
     case tagPre     :
       getval.preOff          = param - getval.tCBS;
@@ -243,7 +245,8 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.kteOff          = deadline.getTAI() - getval.tCBS;
       //tmp.data               = ((param & 0x00000000ffffffff));
       //setval.ext_cTrig       = (double)tmp.f;
-      getval.doneOff         = 100 * (int32_t)(uint16_t)((tef & 0xffff0000) >> 16); // [100 ns] -> [ns]
+      tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
+      getval.doneOff         = round(tmpf * 1000);
       setval.flag_nok       &= 0xfffffff7;
       flagErr                = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr     |= flagErr << tag;

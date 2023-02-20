@@ -24,7 +24,7 @@ else
 EB          ?= ../../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
 CFLAGS      ?= -Wall -O2 -g
-DIMPATH     := /opt/dim/dim_v20r29
+DIMPATH     := /opt/dim/dim_v20r33
 endif
 
 EXTRA_FLAGS ?=

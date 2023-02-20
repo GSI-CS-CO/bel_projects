@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Feb-2023
+ *  version : 20-Feb-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -902,7 +902,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
-  uint16_t offsetDone_100ns;                                  // offset from deadline EKS to time, when extraction trigger is sent [100 ns]
+  uint16_t offsetDone_us;                                     // offset from deadline EKS to time, when extraction trigger is sent [us, hfloat]
   uint16_t cTrigExt_us;                                       // correction for extraction trigger [half precision, us]
   uint16_t cTrigInj_us;                                       // correction for injection trigger [half precision, us]
   uint16_t cPhase_us;                                         // correction for phase [half precision, us]
@@ -1100,13 +1100,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     /* pp_printf("cTrigExt2 [125 ps] %d\n", cTrigExt); */
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-    tmp32        = (uint32_t)(getSysTime() - tCBS) / 100;                     // time from CBS to now [100 ns]
-    if (tmp32 < 0xffff) offsetDone_100ns = (uint16_t)tmp32;
-    else                offsetDone_100ns = 0xffff;
+    tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
+    offsetDone_us = fwlib_float2half(tmpf);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = 0x0;                                                       // chk , resend BPCID et al
-    sendTef      = (uint32_t)(offsetDone_100ns & 0xffff) << 16;               // high 16 bit: offset 'ready' to CBS, low 16 bit reserved
+    sendTef      = (uint32_t)(offsetDone_us & 0xffff) << 16;               // high 16 bit: offset 'ready' to CBS, low 16 bit reserved
     sendDeadline = tTrigExt;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat   |= mState;
