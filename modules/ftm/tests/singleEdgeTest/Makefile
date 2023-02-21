@@ -1,9 +1,34 @@
+############################
+# ASL build paths          #
+############################
+
+ifeq ($(findstring asl75,$(shell hostname)),asl75)
+  EBPATH =/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
+  BOOSTPATH =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+else
+ifeq ($(findstring asl,$(shell hostname)),asl)
+  EBPATH =/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
+  BOOSTPATH =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+endif
+endif
+
+# check that make runs with  sudo rights
+RIGHTS := $(shell id -u)
+
+ifeq ($(RIGHTS),0)
+  PREFIX ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
+INSTALLPATH = $(PREFIX)/bin
+
+EBPATH1 ?=/usr/local/include
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -fprofile-arcs -ftest-coverage
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include -fprofile-arcs -ftest-coverage
 
-LDFLAGS = -Wl,-rpath,/usr/local/lib
-LDLIBS = -L../../lib -lstdc++ -lboost_serialization -lboost_graph -ldmtest -lgcov
+LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib,-rpath,../$(EBPATH1)/.libs
+LDLIBS = -L../../lib -L../$(EBPATH1)/.libs -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
@@ -13,6 +38,9 @@ SingleEdgeTest: SingleEdgeGraph.o SingleEdgeTables.o SingleEdgeTest.o SingleEdge
 
 clean:
 	rm -f *.o *.gcda *.gcno *.gcov SingleEdgeTest SingleEdgeTest.info
+
+install: SingleEdgeTest
+	cp SingleEdgeTest $(INSTALLPATH)
 
 format:
 	clang-format-10 $(STYLE) -i SingleEdgeTest.h
