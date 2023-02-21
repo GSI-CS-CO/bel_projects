@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Feb-2023
+ *  version : 21-Feb-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000422                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000423                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -137,9 +137,10 @@ int32_t   cTrigExt;                     // correction for extraction trigger
 int32_t   cTrigInj;                     // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
 int32_t   nBucketInj;                   // number of bucket for injection
-int       fFineTune;                    // flag: use fine tuning
+int       fFineTune;                    // flag: uoffse fine tuning
 int       fMBTune;                      // flag: use multi-beat tuning
 uint64_t  tCBS;                         // deadline of CMD_B2B_START
+uint16_t  offsetPrr_us;                 // offset from CBS to to deadline of PRE [us, hfloat]
 uint32_t  nGExt;                        // geometric harmonic number of extraction machine due to its circumference
 uint32_t  nGInj;                        // geometric harmonic number of injections machine due to its circumference
 
@@ -902,7 +903,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
-  uint16_t offsetDone_us;                                     // offset from deadline EKS to time, when extraction trigger is sent [us, hfloat]
+  uint16_t offsetFin_us;                                      // offset from deadline CBS to time, when extraction trigger is sent [us, hfloat]
   uint16_t cTrigExt_us;                                       // correction for extraction trigger [half precision, us]
   uint16_t cTrigInj_us;                                       // correction for injection trigger [half precision, us]
   uint16_t cPhase_us;                                         // correction for phase [half precision, us]
@@ -920,29 +921,30 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       comLatency  = (int32_t)(getSysTime() - recDeadline);
 
       // clear 'local' variables
-      sid        = (uint32_t)((recId >> 20) & 0x0fff);        // required for proper indexing
-      gid        = (uint32_t)((recId >> 48) & 0x0fff);        // temporary assignment useful for debugging if routine setSubmit() fails
-      bpid       = (uint32_t)((recId >>  6) & 0x3fff);        // not part of setting data; 'inherit' from received timing message
-      mode       = 0x0;
-      nHExt      = 0x0;
-      nHInj      = 0x0;
-      TH1Ext_as  = 0x0;
-      TH1Inj_as  = 0x0;
-      TBeat_as   = 0x0;
-      cPhase     = 0x0;
-      cTrigExt   = 0x0;
-      cTrigInj   = 0x0;
-      nBucketExt = 0x0;
-      nBucketInj = 0x0;
-      fFineTune  = 0x0;
-      fMBTune    = 0x0;
-      tCBS       = 0x0;
-      nGExt      = 0x0;
-      nGInj      = 0x0;
+      sid          = (uint32_t)((recId >> 20) & 0x0fff);      // required for proper indexing
+      gid          = (uint32_t)((recId >> 48) & 0x0fff);      // temporary assignment useful for debugging if routine setSubmit() fails
+      bpid         = (uint32_t)((recId >>  6) & 0x3fff);      // not part of setting data; 'inherit' from received timing message
+      mode         = 0x0;
+      nHExt        = 0x0;
+      nHInj        = 0x0;
+      TH1Ext_as    = 0x0;
+      TH1Inj_as    = 0x0;
+      TBeat_as     = 0x0;
+      cPhase       = 0x0;
+      cTrigExt     = 0x0;
+      cTrigInj     = 0x0;
+      nBucketExt   = 0x0;
+      nBucketInj   = 0x0;
+      fFineTune    = 0x0;
+      fMBTune      = 0x0;
+      tCBS         = 0x0;
+      nGExt        = 0x0;
+      nGInj        = 0x0;
+      offsetPrr_us = 0x0;
 
-      transStat  = 0x0;                                       // reset transfer status
+      transStat    = 0x0;                                     // reset transfer status
       nTransfer++;                                            // increment transfer counter
-      status     = COMMON_STATUS_OK;                          // set to 'ok' if a a new transfer starts
+      status       = COMMON_STATUS_OK;                        // set to 'ok' if a a new transfer starts
 
       // submit data and primitive error checks
       if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
@@ -975,7 +977,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
-      comLatency  = (int32_t)(getSysTime() - recDeadline);
+      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
+      offsetPrr_us = fwlib_float2half(tmpf);                  // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
@@ -989,7 +992,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (recRes & B2B_ERRFLAG_PMEXT) errorFlags |= B2B_ERRFLAG_PMEXT;
       
       tH1Ext_t.ns   = recParam;
-      tH1Ext_t.ps   = ( int32_t)( int16_t)(recTef & 0x0000ffff);
+      tH1Ext_t.ps   = ( int32_t)( int16_t)( recTef & 0x0000ffff);
       tH1Ext_t.dps  = (uint32_t)(uint16_t)((recTef & 0xffff0000) >> 16);
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
@@ -998,7 +1001,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PRINJ :                                // received: measured phase from injection machine
-      comLatency  = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
@@ -1101,11 +1103,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     /* pp_printf("cTrigExt2 [125 ps] %d\n", cTrigExt); */
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
-    offsetDone_us = fwlib_float2half(tmpf);
+    offsetFin_us = fwlib_float2half(tmpf);
 
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = 0x0;                                                       // chk , resend BPCID et al
-    sendTef      = (uint32_t)(offsetDone_us & 0xffff) << 16;               // high 16 bit: offset 'ready' to CBS, low 16 bit reserved
+    sendTef      = (uint32_t)(offsetFin_us & 0xffff) << 16;                   // high 16 bit: offset 'fin (ready)' to CBS
+    sendTef     |= (uint32_t)(offsetPrr_us & 0xffff);                         // low 16 bit: offset 'received PRE' to CBS
     sendDeadline = tTrigExt;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat   |= mState;
