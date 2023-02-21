@@ -11,11 +11,6 @@ typedef struct{
 } b2bt_t;
 
 
-// typedef for 16 bit float
-// this data type is just intended for transfer of data, not for math operation
-typedef uint16_t hfloat_t;
-
-
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
@@ -50,7 +45,7 @@ uint32_t fwlib_wrCheckSyncState();
 //find WB address of WR Endpoint
 //uint32_t findWREp();
 
-// 1. query ECA for actions, 2. trigger activity, returns (error) status
+// 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
 uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
