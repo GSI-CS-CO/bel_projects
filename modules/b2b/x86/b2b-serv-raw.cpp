@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Feb-2023
+ *  version : 21-Feb-2023
  *
  * publishes raw data of the b2b system
  *
@@ -246,7 +246,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       //tmp.data               = ((param & 0x00000000ffffffff));
       //setval.ext_cTrig       = (double)tmp.f;
       tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
-      getval.doneOff         = round(tmpf * 1000);
+      getval.doneOff         = round(tmpf * 1000.0);
       setval.flag_nok       &= 0xfffffff7;
       flagErr                = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr     |= flagErr << tag;
