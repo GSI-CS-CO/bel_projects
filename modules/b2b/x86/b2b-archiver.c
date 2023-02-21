@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000421
+#define B2B_ARCHIVER_VERSION 0x000422
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -67,7 +67,7 @@ uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
 char       no_link_str[] = "NO_LINK";
 
-setval_t   dicSetval[B2B_NSID];
+setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
 nueMeas_t  dicNueMeasExt[B2B_NSID];
 char       dicPName[B2B_NSID][DIMMAXSIZE];
@@ -81,8 +81,8 @@ uint32_t   dicPNameId[B2B_NSID];
 int        flagSetValid[B2B_NSID];          // flag: received set value
 int        flagGetValid[B2B_NSID];          // flag: received get value
 
-time_t     utc_secs[B2B_NSID];              // time of EKS in UTC
-uint32_t   utc_msecs[B2B_NSID];             // time of EKS in UTC
+time_t     utc_secs[B2B_NSID];              // time of CBS in UTC
+uint32_t   utc_msecs[B2B_NSID];             // time of CBS in UTC
 
 char       filename[B2B_NSID][DIMMAXSIZE];  // file names
 
@@ -106,7 +106,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_EKS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase_125ps; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase_125ps; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-EKS; EKS-pre; EKS-pri; kte-EKS; kti-EKS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase_125ps; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase_125ps; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-CBS; prr-CBS; CBS-pre; CBS-pri; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
 } // headerString
 
 // receive get values
@@ -117,7 +117,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   uint32_t  mode;
   double    cor;
   double    act;
-  char      tEKS[256];;
+  char      tCBS[256];;
 
   char strSetval[STRMAXLEN];
   char strGetval[STRMAXLEN];
@@ -133,11 +133,11 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   mode = dicSetval[sid].mode;
   //if (mode <  1) return;                                    // b2b 'off', no need to write data; but maybe it is interesting to see when facility was executed withouot b2b
 
-  strftime(tEKS, 52, "%d-%b-%Y_%H:%M:%S", gmtime(&(utc_secs[sid])));
+  strftime(tCBS, 52, "%d-%b-%Y_%H:%M:%S", gmtime(&(utc_secs[sid])));
 
   // set values
   new  = strSetval;
-  new += sprintf(new, "%s.%03d; %d; %d", tEKS, utc_msecs[sid], sid, mode);
+  new += sprintf(new, "%s.%03d; %d; %d", tCBS, utc_msecs[sid], sid, mode);
   new += sprintf(new, "; %d; %lu", !((dicSetval[sid].flag_nok >> 1) & 0x1), dicSetval[sid].ext_T);
   new += sprintf(new, "; %d; %d" , !((dicSetval[sid].flag_nok >> 2) & 0x1), dicSetval[sid].ext_h);
   new += sprintf(new, "; %d; %8.3f", !((dicSetval[sid].flag_nok >> 3) & 0x1), dicSetval[sid].ext_cTrig);
@@ -173,7 +173,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
 
   new += sprintf(new, "; %x; %x; %x", dicGetval[sid].flagEvtRec, dicGetval[sid].flagEvtErr, dicGetval[sid].flagEvtLate);
-  new += sprintf(new, "; %d; %d; %d; %d; %d", dicGetval[sid].doneOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
+  new += sprintf(new, "; %d; %d; %d; %d; %d", dicGetval[sid].doneOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
   new = strNueval;

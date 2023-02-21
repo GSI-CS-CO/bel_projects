@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000422
+#define B2B_SERV_RAW_VERSION 0x000423
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -196,6 +196,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtLate     = isLate << tag;
       getval.tCBS            = deadline.getTAI();
       getval.doneOff         = 0;
+      getval.prrOff          = 0;
       getval.preOff          = 0;
       getval.priOff          = 0;
       getval.kteOff          = 0;
@@ -247,6 +248,8 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       //setval.ext_cTrig       = (double)tmp.f;
       tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
       getval.doneOff         = round(tmpf * 1000.0);
+      tmpf                   = comlib_half2float((uint16_t)(tef & 0x0000ffff));                // [us, hfloat]
+      getval.prrOff          = round(tmpf * 1000.0);
       setval.flag_nok       &= 0xfffffff7;
       flagErr                = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr     |= flagErr << tag;
@@ -367,7 +370,7 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:2;F:2;X:1;I:2;F:2;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:2;F:2;X:1;I:2;F:2;I:3;X:1;I:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices

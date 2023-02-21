@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 21-Feb-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000421
+#define B2BLIB_VERSION 0x000423
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -106,10 +106,11 @@ extern "C" {
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
     int32_t  doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
     int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
     int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
     int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
-    int32_t  ktiOff;                                   // offset from CBS to KTI deadline
+    int32_t  ktiOff;                                   // offset from CBS to KTI deadline [ns]
   } getval_t;
 
   // data type for diagnostic values
