@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 21-Feb-2023
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000421
+#define B2B_ANALYZER_VERSION 0x000422
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -131,21 +131,28 @@ double    phaseOffAveOld[B2B_NSID];
 double    phaseOffStreamOld[B2B_NSID];
 
 // extraction rf frequency
-uint32_t ext_rfNueN[B2B_NSID];                             
-double   ext_rfNueAveOld[B2B_NSID];
-double   ext_rfNueStreamOld[B2B_NSID];
+uint32_t  ext_rfNueN[B2B_NSID];                             
+double    ext_rfNueAveOld[B2B_NSID];
+double    ext_rfNueStreamOld[B2B_NSID];
 
 // injection, rf frequency
-uint32_t inj_rfNueN[B2B_NSID];                             
-double   inj_rfNueAveOld[B2B_NSID];
-double   inj_rfNueStreamOld[B2B_NSID];
+uint32_t  inj_rfNueN[B2B_NSID];                             
+double    inj_rfNueAveOld[B2B_NSID];
+double    inj_rfNueStreamOld[B2B_NSID];
 
 // offset from deadline CBS to time when we are done
-uint32_t  cbs_doneOffN[B2B_NSID];
-double    cbs_doneOffMin[B2B_NSID];
-double    cbs_doneOffMax[B2B_NSID];
-double    cbs_doneOffAveOld[B2B_NSID];
-double    cbs_doneOffStreamOld[B2B_NSID];
+uint32_t  cbs_finOffN[B2B_NSID];
+double    cbs_finOffMin[B2B_NSID];
+double    cbs_finOffMax[B2B_NSID];
+double    cbs_finOffAveOld[B2B_NSID];
+double    cbs_finOffStreamOld[B2B_NSID];
+
+// offset from deadline CBS to time when we received the PRE message
+uint32_t  cbs_preOffN[B2B_NSID];
+double    cbs_preOffMin[B2B_NSID];
+double    cbs_preOffMax[B2B_NSID];
+double    cbs_preOffAveOld[B2B_NSID];
+double    cbs_preOffStreamOld[B2B_NSID];
 
 // offset from deadline CBS to measured extraction phase
 uint32_t  cbs_preOffN[B2B_NSID];
@@ -247,11 +254,17 @@ void clearStats(uint32_t sid)
   inj_rfNueAveOld[sid]     = 0;
   inj_rfNueStreamOld[sid]  = 0;
 
-  cbs_doneOffN[sid]        = 0;
-  cbs_doneOffMax[sid]      = FLTMIN;
-  cbs_doneOffMin[sid]      = FLTMAX;
-  cbs_doneOffAveOld[sid]   = 0;   
-  cbs_doneOffStreamOld[sid]= 0;
+  cbs_finOffN[sid]         = 0;
+  cbs_finOffMax[sid]       = FLTMIN;
+  cbs_finOffMin[sid]       = FLTMAX;
+  cbs_finOffAveOld[sid]    = 0;   
+  cbs_finOffStreamOld[sid] = 0;
+
+  cbs_preOffN[sid]         = 0;
+  cbs_preOffMax[sid]       = FLTMIN;
+  cbs_preOffMin[sid]       = FLTMAX;
+  cbs_preOffAveOld[sid]    = 0;   
+  cbs_preOffStreamOld[sid] = 0;
 
   cbs_preOffN[sid]         = 0;
   cbs_preOffMax[sid]       = FLTMIN;
@@ -403,23 +416,26 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       
     // offset from deadline CBS to time when we are done
     act = (double)dicGetval[sid].doneOff;
-    n   = ++(cbs_doneOffN[sid]);
+    n   = ++(cbs_finOffN[sid]);
 
     // statistics
-    calcStats(&aveNew, cbs_doneOffAveOld[sid], &streamNew, cbs_doneOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_doneOffAveOld[sid]          = aveNew;
-    cbs_doneOffStreamOld[sid]       = streamNew;
-    if (act < cbs_doneOffMin[sid]) cbs_doneOffMin[sid] = act;
-    if (act > cbs_doneOffMax[sid]) cbs_doneOffMax[sid] = act;
+    calcStats(&aveNew, cbs_finOffAveOld[sid], &streamNew, cbs_finOffStreamOld[sid], act, n , &dummy, &sdev);
+    cbs_finOffAveOld[sid]          = aveNew;
+    cbs_finOffStreamOld[sid]       = streamNew;
+    if (act < cbs_finOffMin[sid]) cbs_finOffMin[sid] = act;
+    if (act > cbs_finOffMax[sid]) cbs_finOffMax[sid] = act;
 
     // copy
-    disDiagstat[sid].cbs_doneOffAct  = act;
-    disDiagstat[sid].cbs_doneOffN    = n;
-    disDiagstat[sid].cbs_doneOffAve  = aveNew;
-    disDiagstat[sid].cbs_doneOffSdev = sdev;
-    disDiagstat[sid].cbs_doneOffMin  = cbs_doneOffMin[sid];
-    disDiagstat[sid].cbs_doneOffMax  = cbs_doneOffMax[sid];    
+    disDiagstat[sid].cbs_finOffAct  = act;
+    disDiagstat[sid].cbs_finOffN    = n;
+    disDiagstat[sid].cbs_finOffAve  = aveNew;
+    disDiagstat[sid].cbs_finOffSdev = sdev;
+    disDiagstat[sid].cbs_finOffMin  = cbs_finOffMin[sid];
+    disDiagstat[sid].cbs_finOffMax  = cbs_finOffMax[sid];    
 
+    // offset from deadline CBS to time when the PRE messages is received
+    chk!!!!
+    
     // offset from deadline CBS to KTE
     act = (double)dicGetval[sid].kteOff;
     n   = ++(cbs_kteOffN[sid]);
@@ -754,7 +770,7 @@ void disAddServices(char *prefix)
     disDiagvalId[i]  = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
 
     sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
-    disDiagstatId[i] = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
+    disDiagstatId[i] = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
 
     sprintf(name, "%s-cal_cmd_cleardiag", prefix);
     disClearDiagId   = dis_add_cmnd(name, "I:1", cmdClearDiag, 0);

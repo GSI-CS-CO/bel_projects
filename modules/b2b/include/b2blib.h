@@ -105,7 +105,7 @@ extern "C" {
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    int32_t  doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  finOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
     int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
     int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
     int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
@@ -159,12 +159,18 @@ extern "C" {
 
   // data type for status information
   typedef struct {                                     
-    double   cbs_doneOffAct;                           // offset from CBS deadline to time when we are done
-    uint32_t cbs_doneOffN;
-    double   cbs_doneOffAve;
-    double   cbs_doneOffSdev;
-    double   cbs_doneOffMin;
-    double   cbs_doneOffMax;
+    double   cbs_finOffAct;                            // offset from CBS deadline to time when we are done
+    uint32_t cbs_finOffN;
+    double   cbs_finOffAve;
+    double   cbs_finOffSdev;
+    double   cbs_finOffMin;
+    double   cbs_finOffMax;
+    double   cbs_preOffAct;                            // offset from CBS deadline to time when we received the PRE message
+    uint32_t cbs_preOffN;
+    double   cbs_preOffAve;
+    double   cbs_preOffSdev;
+    double   cbs_preOffMin;
+    double   cbs_preOffMax;
     double   cbs_preOffAct;                            // offset from CBS to measured extraction phase
     uint32_t cbs_preOffN;
     double   cbs_preOffAve;
