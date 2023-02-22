@@ -9,8 +9,9 @@ int main(int argc, char* argv[]) {
   int error = 0;
   int opt;
   char* program = argv[0];
+  const char* Toption = "xdot";
   configuration config;
-  while ((opt = getopt(argc, argv, "1c:ho:svVw")) != -1) {
+  while ((opt = getopt(argc, argv, "1c:ho:svVwT:")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
@@ -46,6 +47,9 @@ int main(int argc, char* argv[]) {
         version(program);
         error = VERSION_MESSAGE;
         break;
+      case 'T':
+        Toption = optarg;
+        break;
       case 'c':
         {
           int count = atoi(optarg);
@@ -69,7 +73,7 @@ int main(int argc, char* argv[]) {
       usage(program);
       return USAGE_MESSAGE;
     } else {
-      std::string inputFile = std::string(argv[argc - 1]);
+      std::string inputFile = (argv[argc - 1][0] == '-' ? std::string("stdin") : std::string(argv[argc - 1]));
       return compactSingleGraph(inputFile, config);
     }
   }
