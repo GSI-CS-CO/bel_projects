@@ -114,21 +114,45 @@ etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api DESTDIR=$(STAGING) install
 	$(call ldconfig_note)
 
-saftlib::
-	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
+saftbus:: 
+	cd ip_cores/saftlib/saftbus; test -f Makefile.in || ./autogen.sh
+	test -d ip_cores/saftlib/saftbus-build || mkdir ip_cores/saftlib/saftbus-build
+	cd ip_cores/saftlib/saftbus-build; test -f Makefile || ../saftbus/configure --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	$(MAKE) -C ip_cores/saftlib/saftbus-build
+
+saftbus-install:: saftbus
+	$(MAKE) -C ip_cores/saftlib/saftbus-build DESTDIR=$(STAGING) install
+
+saftbus-clean::
+	! test -d ip_cores/saftlib/saftbus-build || rm -r ip_cores/saftlib/saftbus-build
+
+saftbus-gen::
+	cd ip_cores/saftlib/saftbus-gen; test -f Makefile.in || ./autogen.sh
+	test -d ip_cores/saftlib/saftbus-gen-build || mkdir ip_cores/saftlib/saftbus-gen-build
+	cd ip_cores/saftlib/saftbus-gen-build; test -f Makefile || ../saftbus-gen/configure --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	$(MAKE) -C ip_cores/saftlib/saftbus-gen-build
+
+saftbus-gen-install:: saftbus-gen
+	$(MAKE) -C ip_cores/saftlib/saftbus-gen-build DESTDIR=$(STAGING) install
+
+saftbus-gen-clean::
+	! test -d ip_cores/saftlib/saftbus-gen-build || rm -r ip_cores/saftlib/saftbus-gen-build
+
+
+saftlib:: saftbus-install saftbus-gen-install
+	cd ip_cores/saftlib/saftlib; test -f Makefile.in || ./autogen.sh
+	test -d ip_cores/saftlib/saftlib-build || mkdir ip_cores/saftlib/saftlib-build
 ifeq ($(YOCTO_BUILD),yes)
-	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR) --host=x86_64
 else
-	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	cd ip_cores/saftlib/saftlib-build; test -f Makefile || PKG_CONFIG_SYSROOT_DIR=$(STAGING) PKG_CONFIG_PATH=$(STAGING)/$(PREFIX)/lib/pkgconfig:$PKG_CONFIG_PATH ../saftlib/configure --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 endif
-	$(MAKE) -C ip_cores/saftlib all
+	$(MAKE) -C ip_cores/saftlib/saftlib-build
 
-saftlib-clean::
-	! test -f ip_cores/saftlib/Makefile || $(MAKE) -C ip_cores/saftlib distclean
+saftlib-install:: saftlib
+	$(MAKE) -C ip_cores/saftlib/saftlib-build DESTDIR=$(STAGING) install
 
-saftlib-install::
-	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
-	$(call ldconfig_note)
+saftlib-clean:: saftbus-gen-clean saftbus-clean
+	! test -d ip_cores/saftlib/saftlib-build || rm -r ip_cores/saftlib/saftlib-build
 
 tools::		etherbone
 	$(MAKE) -C tools all
