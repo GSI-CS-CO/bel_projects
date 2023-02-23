@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2023
+ *  version : 23-Feb-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -910,6 +910,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   
   uint32_t tmp32;
   float    tmpf;
+  uint64_t t1, t2;
 
   status = actStatus;
 
@@ -969,19 +970,19 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cTrigInj_us = fwlib_float2half((float)cTrigInj/1000.0); // 16 bit float [us]
       cPhase_us   = fwlib_float2half((float)cPhase/1000.0);   // 16 bit float [us]
 
-      tCBS       = recDeadline;
+      tCBS        = recDeadline;
       getGeometricHarmonics(gid, &nGExt, &nGInj);
       
-      mState     = getNextMState(mode, B2B_MFSM_S0);
-      errorFlags = 0x0;
+      mState      = getNextMState(mode, B2B_MFSM_S0);
+      errorFlags  = 0x0;
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                  // -> half precision
-      recGid        = (uint32_t)((recId >> 48) & 0xfff     );
-      recSid        = (uint32_t)((recId >> 20) & 0xfff     );
-      recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
+      recGid       = (uint32_t)((recId >> 48) & 0xfff     );
+      recSid       = (uint32_t)((recId >> 20) & 0xfff     );
+      recRes       = (uint32_t)(recId & 0x3f);                // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
       if (recGid != gid)                                             return COMMON_STATUS_OUTOFRANGE;   
@@ -1100,11 +1101,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
-    /* pp_printf("cTrigExt2 [125 ps] %d\n", cTrigExt); */
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
     offsetFin_us = fwlib_float2half(tmpf);
-
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = 0x0;                                                       // chk , resend BPCID et al
     sendTef      = (uint32_t)(offsetFin_us & 0xffff) << 16;                   // high 16 bit: offset 'fin (ready)' to CBS

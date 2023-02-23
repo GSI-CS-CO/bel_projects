@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 23-Feb-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000421
+#define B2B_VIEWER_VERSION 0x000423
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -472,13 +472,16 @@ int printStatus(uint32_t sid)
     printf("KTE-fin [us]: %s\n", TXTNA);
   }
   else {
-    sdevKteFin = sqrt(pow(dicDiagstat.cbs_doneOffSdev, 2)+pow(dicDiagstat.cbs_kteOffSdev, 2));
+    sdevKteFin = sqrt(pow(dicDiagstat.cbs_finOffSdev, 2)+pow(dicDiagstat.cbs_kteOffSdev, 2));
     printf("fin-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.cbs_doneOffAct/1000.0, dicDiagstat.cbs_doneOffAve/1000.0, dicDiagstat.cbs_doneOffSdev/1000.0,
-           (double)dicDiagstat.cbs_doneOffMin/1000.0, (double)dicDiagstat.cbs_doneOffMax/1000.0);
+           (double)dicDiagstat.cbs_finOffAct/1000.0, dicDiagstat.cbs_finOffAve/1000.0, dicDiagstat.cbs_finOffSdev/1000.0,
+           (double)dicDiagstat.cbs_finOffMin/1000.0, (double)dicDiagstat.cbs_finOffMax/1000.0);
+    printf("PRR-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+           (double)dicDiagstat.cbs_prrOffAct/1000.0, dicDiagstat.cbs_prrOffAve/1000.0, dicDiagstat.cbs_prrOffSdev/1000.0,
+           (double)dicDiagstat.cbs_prrOffMin/1000.0, (double)dicDiagstat.cbs_prrOffMax/1000.0);
     printf("KTE-fin [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)(dicDiagstat.cbs_kteOffAct-dicDiagstat.cbs_doneOffAct)/1000.0, (dicDiagstat.cbs_kteOffAve-dicDiagstat.cbs_doneOffAve)/1000.0, sdevKteFin/1000.0,
-           (double)(dicDiagstat.cbs_kteOffMin-dicDiagstat.cbs_doneOffMax)/1000.0, (double)(dicDiagstat.cbs_kteOffMax-dicDiagstat.cbs_doneOffMin)/1000.0);
+           (double)(dicDiagstat.cbs_kteOffAct-dicDiagstat.cbs_finOffAct)/1000.0, (dicDiagstat.cbs_kteOffAve-dicDiagstat.cbs_finOffAve)/1000.0, sdevKteFin/1000.0,
+           (double)(dicDiagstat.cbs_kteOffMin-dicDiagstat.cbs_finOffMax)/1000.0, (double)(dicDiagstat.cbs_kteOffMax-dicDiagstat.cbs_finOffMin)/1000.0);
     printf("KTE-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.cbs_kteOffAct/1000.0, dicDiagstat.cbs_kteOffAve/1000.0, dicDiagstat.cbs_kteOffSdev/1000.0,
            (double)dicDiagstat.cbs_kteOffMin/1000.0, (double)dicDiagstat.cbs_kteOffMax/1000.0);
@@ -501,7 +504,7 @@ int printStatus(uint32_t sid)
     printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.cbs_priOffAct/1000.0, dicDiagstat.cbs_priOffAve/1000.0, dicDiagstat.cbs_priOffSdev/1000.0,
            (double)dicDiagstat.cbs_priOffMin/1000.0, (double)dicDiagstat.cbs_priOffMax/1000.0);
-  return 12;                                                // 12 lines
+  return 13;                                                // 12 lines
 } // printStatus
 
 

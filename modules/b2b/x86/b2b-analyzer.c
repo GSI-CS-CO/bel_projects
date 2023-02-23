@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2023
+ *  version : 23-Feb-2023
  *
  * analyzes and publishes get values
  * 
@@ -148,11 +148,11 @@ double    cbs_finOffAveOld[B2B_NSID];
 double    cbs_finOffStreamOld[B2B_NSID];
 
 // offset from deadline CBS to time when we received the PRE message
-uint32_t  cbs_preOffN[B2B_NSID];
-double    cbs_preOffMin[B2B_NSID];
-double    cbs_preOffMax[B2B_NSID];
-double    cbs_preOffAveOld[B2B_NSID];
-double    cbs_preOffStreamOld[B2B_NSID];
+uint32_t  cbs_prrOffN[B2B_NSID];
+double    cbs_prrOffMin[B2B_NSID];
+double    cbs_prrOffMax[B2B_NSID];
+double    cbs_prrOffAveOld[B2B_NSID];
+double    cbs_prrOffStreamOld[B2B_NSID];
 
 // offset from deadline CBS to measured extraction phase
 uint32_t  cbs_preOffN[B2B_NSID];
@@ -260,11 +260,11 @@ void clearStats(uint32_t sid)
   cbs_finOffAveOld[sid]    = 0;   
   cbs_finOffStreamOld[sid] = 0;
 
-  cbs_preOffN[sid]         = 0;
-  cbs_preOffMax[sid]       = FLTMIN;
-  cbs_preOffMin[sid]       = FLTMAX;
-  cbs_preOffAveOld[sid]    = 0;   
-  cbs_preOffStreamOld[sid] = 0;
+  cbs_prrOffN[sid]         = 0;
+  cbs_prrOffMax[sid]       = FLTMIN;
+  cbs_prrOffMin[sid]       = FLTMAX;
+  cbs_prrOffAveOld[sid]    = 0;   
+  cbs_prrOffStreamOld[sid] = 0;
 
   cbs_preOffN[sid]         = 0;
   cbs_preOffMax[sid]       = FLTMIN;
@@ -415,7 +415,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disNTransfer++;
       
     // offset from deadline CBS to time when we are done
-    act = (double)dicGetval[sid].doneOff;
+    act = (double)dicGetval[sid].finOff;
     n   = ++(cbs_finOffN[sid]);
 
     // statistics
@@ -434,7 +434,23 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagstat[sid].cbs_finOffMax  = cbs_finOffMax[sid];    
 
     // offset from deadline CBS to time when the PRE messages is received
-    chk!!!!
+    act = (double)dicGetval[sid].prrOff;
+    n   = ++(cbs_prrOffN[sid]);
+
+    // statistics
+    calcStats(&aveNew, cbs_prrOffAveOld[sid], &streamNew, cbs_prrOffStreamOld[sid], act, n , &dummy, &sdev);
+    cbs_prrOffAveOld[sid]          = aveNew;
+    cbs_prrOffStreamOld[sid]       = streamNew;
+    if (act < cbs_prrOffMin[sid]) cbs_prrOffMin[sid] = act;
+    if (act > cbs_prrOffMax[sid]) cbs_prrOffMax[sid] = act;
+
+    // copy
+    disDiagstat[sid].cbs_prrOffAct  = act;
+    disDiagstat[sid].cbs_prrOffN    = n;
+    disDiagstat[sid].cbs_prrOffAve  = aveNew;
+    disDiagstat[sid].cbs_prrOffSdev = sdev;
+    disDiagstat[sid].cbs_prrOffMin  = cbs_prrOffMin[sid];
+    disDiagstat[sid].cbs_prrOffMax  = cbs_prrOffMax[sid];    
     
     // offset from deadline CBS to KTE
     act = (double)dicGetval[sid].kteOff;

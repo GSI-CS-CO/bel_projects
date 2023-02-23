@@ -165,12 +165,12 @@ extern "C" {
     double   cbs_finOffSdev;
     double   cbs_finOffMin;
     double   cbs_finOffMax;
-    double   cbs_preOffAct;                            // offset from CBS deadline to time when we received the PRE message
-    uint32_t cbs_preOffN;
-    double   cbs_preOffAve;
-    double   cbs_preOffSdev;
-    double   cbs_preOffMin;
-    double   cbs_preOffMax;
+    double   cbs_prrOffAct;                            // offset from CBS deadline to time when we received the PRE message
+    uint32_t cbs_prrOffN;
+    double   cbs_prrOffAve;
+    double   cbs_prrOffSdev;
+    double   cbs_prrOffMin;
+    double   cbs_prrOffMax;
     double   cbs_preOffAct;                            // offset from CBS to measured extraction phase
     uint32_t cbs_preOffN;
     double   cbs_preOffAve;

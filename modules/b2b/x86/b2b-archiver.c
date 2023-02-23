@@ -173,7 +173,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
 
   new += sprintf(new, "; %x; %x; %x", dicGetval[sid].flagEvtRec, dicGetval[sid].flagEvtErr, dicGetval[sid].flagEvtLate);
-  new += sprintf(new, "; %d; %d; %d; %d; %d", dicGetval[sid].doneOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
+  new += sprintf(new, "; %d; %d; %d; %d; %d; %d", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
   new = strNueval;
