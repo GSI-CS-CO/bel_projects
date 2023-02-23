@@ -20,7 +20,8 @@ class DmTestbench(unittest.TestCase):
     """
     Set up for all test cases: store the environment variables in variables.
     """
-    self.binary = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
+    self.binaryDmCmd = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
+    self.binaryDmSched = os.environ.get('TEST_BINARY_DM_SCHED', 'dm-sched')
     self.datamaster = os.environ['DATAMASTER']
     self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
@@ -46,21 +47,21 @@ class DmTestbench(unittest.TestCase):
     """
     schedule_file = self.schedules_folder + schedule_file
     print (f"Connect to device '{data_master}', schedule file '{schedule_file}'.   ", end='', flush=True)
-    process = subprocess.Popen(['dm-cmd', data_master, 'halt'])
+    process = subprocess.Popen([self.binaryDmCmd, self.datamaster, 'reset', 'all'])
     process.wait()
     self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} halt')
-    process = subprocess.Popen(['dm-sched', data_master, 'clear'])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} clear')
-    process = subprocess.Popen(['dm-cmd', data_master, 'cleardiag'])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} cleardiag')
-    process = subprocess.Popen(['dm-sched', data_master, 'add', schedule_file])
-    process.wait()
-    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {schedule_file}')
+#    process = subprocess.Popen(['dm-sched', data_master, 'clear'])
+#    process.wait()
+#    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} clear')
+#    process = subprocess.Popen(['dm-cmd', data_master, 'cleardiag'])
+#    process.wait()
+#    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} cleardiag')
+#    process = subprocess.Popen(['dm-sched', data_master, 'add', schedule_file])
+#    process.wait()
+#    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {schedule_file}')
     if start:
       # run 'dm-sched data_master' as a sub process.
-      process = subprocess.Popen(['dm-sched', data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+      process = subprocess.Popen([self.binaryDmSched, data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
       # get command output and error
       stdout, stderr = process.communicate()
       lines = stdout.decode('utf-8').splitlines()
@@ -69,7 +70,7 @@ class DmTestbench(unittest.TestCase):
       for i in range(len(lines)):
         if patterns and len(lines[i]) > 0:
           # print (f"Pattern: \n{lines[i]} {lines} {lines[i].split()[0]}")
-          process = subprocess.Popen(['dm-cmd', data_master, 'startpattern', lines[i].split()[0]])
+          process = subprocess.Popen([self.binaryDmCmd, data_master, 'startpattern', lines[i].split()[0]])
           process.wait()
           self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} startpattern {lines[i]}')
           if onePattern:

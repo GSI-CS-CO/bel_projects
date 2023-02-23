@@ -29,7 +29,7 @@ class BpcStart(dm_testbench.DmTestbench):
     self.deleteFile(file_name)
     self.assertTrue(test_result, f'Snoop: processed {line_count} lines, test result is {test_result}.   ')
     file_name = 'd1.dot'
-    self.startAndCheckSubprocess(['dm-sched', self.datamaster, '-o', file_name])
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, '-o', file_name])
     with open(file_name, 'r') as reader:
         lines = reader.readlines()
     self.deleteFile(file_name)
