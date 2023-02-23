@@ -319,8 +319,6 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   uint32_t    evtDeadlLow;         // low 32bit of deadline   
   uint32_t    evtParamHigh;        // high 32 bit of parameter field
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
-  uint32_t    actTag;              // tag of action           
-  uint32_t    nextAction;          // describes what to do next
   uint64_t    timeoutT_us;         // when to time out [us]
   uint64_t    timeout_us;          // timeout [us]
 
