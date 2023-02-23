@@ -25,7 +25,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     Common method for test cases with missing target name.
     Start dm-cmd with the command and check the output on stderr.
     """
-    lines = self.startAndGetSubprocessOutput([self.binary, self.datamaster, command],
+    lines = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, command],
          expectedReturnCode=[255], linesCout=0, linesCerr=1)[1]
     test_result = False
     for line in lines:
@@ -75,7 +75,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     Start dm-cmd with the command and check the output on stdout and stderr.
     The checks check only the number of lines of the output, not the content.
     """
-    lines, lineErr = self.startAndGetSubprocessOutput([self.binary, self.datamaster, command, 'B_PPS', options],
+    lines, lineErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, command, 'B_PPS', options],
          expectedReturnCode, linesCout=count_out, linesCerr=count_err)
 
   def test_abswait(self):
