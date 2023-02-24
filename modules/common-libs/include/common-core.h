@@ -39,11 +39,13 @@
 
 #define COMMON_CORE_VERSION "0.03.00"
 
-// non-optimed routine for converting single precision to half precision float, IEEE 754
+// non-optimed routine for converting single precision to half precision float
+// IEEE 754 but no support for subnormal numbers
 uint16_t comcore_float2half(float f             // single precision number
                             );
 
-// non-optimed routine for converting half precision to single precision float, IEEE 754
+// non-optimed routine for converting half precision to single precision float
+// IEEE 754 but no support for subnormal numbers
 float comcore_half2float(uint16_t h             // half precision number
                          );
 

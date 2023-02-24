@@ -12,14 +12,10 @@
 // ****************************************************************************************
 // general things
 // ****************************************************************************************
-union fdat_t {                                // easier copying of bytes float from/to int data types
+typedef union {                                // easier copying of bytes float from/to int data types
   uint32_t data;
   float    f;
-};
-
-
-
-
+} fdat_t;
 
 #define  COMMON_US_ASMNOP        31           // # of asm("nop") operations per microsecond
 #define  COMMON_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond

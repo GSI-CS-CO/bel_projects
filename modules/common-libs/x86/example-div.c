@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2023
+ *  version : 24-Feb-2023
  *
  *  command-line interface for a few examples
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define DIV_X86_VERSION  "00.00.01"
+#define DIV_X86_VERSION  "00.00.02"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -112,11 +112,12 @@ int main(int argc, char** argv) {
   diff     = single - number;
   relative = diff / single;
 
-  printf("number  : %13.6f\n", number);
   printf("converting to half precision and back\n");
-  printf("back    : %13.6f, half precision: 0x%x\n", single, half);
-  printf("diff    : %13.6f\n", diff);
-  printf("relative: %14.3e\n", relative);
+  printf("original     : %13.6f\n", number);
+  printf("half float   :      0x%04x\n", half); 
+  printf("back to float: %13.6f\n", single);
+  printf("absolute diff: %13.6f\n", diff);
+  printf("relative diff: %14.3e\n", relative);
   
   return 0;
 } // main

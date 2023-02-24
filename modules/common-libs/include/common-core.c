@@ -5,11 +5,35 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 23-Feb-2023
  *
- *  common routines for x86 and ecpu firmware
+ *  common routines for x86 and ecpu firmware; common-lib and common-fwlib provide
+ *  wrappers to this code 
  * 
- *  see common-core.h for version, license and documentation 
+ *  see common-core.h for version, license and documentation
  *
  ********************************************************************************************/
+#include <common-defs.h>
+
+// helper routine converting single precision float as 32bit to native float
+float comcore_u2f(uint32_t u)
+{
+  fdat_t fdat;
+
+  fdat.data = u;
+
+  return fdat.f;
+} // comcore_u2f
+
+
+// helper routine converting single precision float to 32bit
+float comcore_f2u(float f)
+{
+  fdat_t fdat;
+
+  fdat.f = f;
+
+  return fdat.data;
+} // comcore_f2u
+
 
 uint16_t comcore_float2half(float f)
 {
@@ -18,14 +42,8 @@ uint16_t comcore_float2half(float f)
   uint16_t m;                                      // mantissa
   uint16_t s;                                      // sign bit
   uint16_t h;                                      // result
-  
-   union {
-    float    f;
-    uint32_t u;
-  } tmp; 
 
-  tmp.f = f;
-  x     = tmp.u;                                   // cast to uint32_t
+  x = comcore_f2u(f);                              // float to uint32
 
   switch (x) {
     case 0x00000000 : return  0x0000; break;       //  0
@@ -58,20 +76,6 @@ uint16_t comcore_float2half(float f)
 
   return h;
 } //comcore_float2half
-
-
-// helper routine converting float from 32bit to native float
-float comcore_u2f(uint32_t u)
-{
-  union {
-    float    f;
-    uint32_t u;
-  } tmp;
-
-  tmp.u = u;
-
-  return tmp.f;
-} // comcore_u2f
 
 
 float comcore_half2float(uint16_t h){
