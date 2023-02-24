@@ -1101,9 +1101,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
-    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
     tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
     offsetFin_us = fwlib_float2half(tmpf);
+    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
+      errorFlags |= B2B_ERRFLAG_CBU;                                          // just set error flag
+    } // if tTrigExt
     sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
     sendParam    = 0x0;                                                       // chk , resend BPCID et al
     sendTef      = (uint32_t)(offsetFin_us & 0xffff) << 16;                   // high 16 bit: offset 'fin (ready)' to CBS
@@ -1119,12 +1121,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendGid      =  getTrigGid(0);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
-    if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) errorFlags |= B2B_ERRFLAG_CBU;  // set error flag in case we are too late
-
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-    sendParam    = 0x0;                                                       // chk , resend BPCID et al
-    sendDeadline = tTrigInj;
-    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    if (tTrigInj < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
+      errorFlags |= B2B_ERRFLAG_CBU;                                          // set error flag
+    } // if tTrigInj
+    else { // only trigger kicker if we are not late; in case of stacking a kick at the wrong time might kick out already stored beam
+      sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
+      sendParam    = 0x0;                                                     // chk , resend BPCID et al
+      sendDeadline = tTrigInj;
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    } // else tTrigInj
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_TRIGINJ

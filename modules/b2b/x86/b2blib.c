@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Apr-2022
+ *  version : 24-Feb-2023
  *
  * library for b2b
  *
@@ -375,7 +375,7 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   eb_device_t  eb_device;
   eb_data_t    data[30];
 
-  union fdat_t tmp;
+  fdat_t tmp;
   float fCPhase;
   float fCTrigExt;
   float fCTrigInj;
@@ -456,7 +456,7 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
 
-  union fdat_t tmp;
+  fdat_t tmp;
 
   sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
   // b2b_log("ext upload start");
@@ -517,7 +517,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
 
-  union fdat_t tmp;
+  fdat_t tmp;
 
   //b2b_log("inj_upload start");
   

@@ -152,8 +152,8 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   static uint64_t     tStart;          // time of transfer
 
   uint64_t one_ns_as = 1000000000;
-  union  fdat_t       tmp;
-  float               tmpf;
+  fdat_t   tmp;
+  float    tmpf;
 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
 
