@@ -6,7 +6,7 @@
 #include <stack.h>
 
 #include "syscon.h"
-#include "hw/memlayout.h"
+#include "memlayout.h"
 #include "mprintf.h"
 #include "display.h"
 #include "irq.h"
