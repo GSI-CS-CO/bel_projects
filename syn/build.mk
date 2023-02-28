@@ -22,6 +22,7 @@ WR_INC  := $(W1)/include
 WR_IMPORT := $(INCPATH)/wrpc-import
 WR_HW_IMPORT := $(INCPATH)/wrpc-import/hw
 WR_LIB_IMPORT := $(INCPATH)/wrpc-import/lib
+WR_DEV_IMPORT := $(INCPATH)/wrpc-import/dev
 
 USRCPUCLK	?= 62500
 
