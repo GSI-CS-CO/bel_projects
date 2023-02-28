@@ -115,14 +115,10 @@ etherbone-install::
 	$(call ldconfig_note)
 
 saftbus-gen::
-ifeq ($(YOCTO_BUILD),yes)
-	echo "saftbus-gen should not be built in the yocto environment"
-else
 	cd ip_cores/saftlib/saftbus-gen; test -f Makefile.in || ./autogen.sh
 	test -d ip_cores/saftlib/saftbus-gen-build || mkdir ip_cores/saftlib/saftbus-gen-build
 	cd ip_cores/saftlib/saftbus-gen-build; test -f Makefile || ../saftbus-gen/configure ${CONFIGURE_FLAGS} --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	$(MAKE) -C ip_cores/saftlib/saftbus-gen-build
-endif
 
 saftbus-gen-clean::
 	! test -d ip_cores/saftlib/saftbus-gen-build || rm -r ip_cores/saftlib/saftbus-gen-build
@@ -150,11 +146,13 @@ saftlib::
 	cd ip_cores/saftlib/saftlib-build; PATH="${PATH}:../saftbus-gen-build" ../saftlib/configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	PATH="${PATH}:../saftbus-gen-build" $(MAKE) -C ip_cores/saftlib/saftlib-build
 
-saftlib-install:: saftlib
-	$(MAKE) -C ip_cores/saftlib/saftlib-build DESTDIR=$(STAGING) install
+saftlib-install:: 
+	PATH="${PATH}:../saftbus-gen-build" $(MAKE) -C ip_cores/saftlib/saftlib-build DESTDIR=$(STAGING) install
 
 saftlib-clean:: saftbus-gen-clean saftbus-clean
 	! test -d ip_cores/saftlib/saftlib-build || rm -r ip_cores/saftlib/saftlib-build
+
+
 
 tools::		etherbone
 	$(MAKE) -C tools all

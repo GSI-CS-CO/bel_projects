@@ -87,10 +87,16 @@ make tools
 ## Saftlib
 Builds basic Saftlib tools and library.
 ```
+make saftbus-gen
+# enable cross compile environment here
+make saftbus
+make saftbus-install
 make saftlib
-(optional) make saftlib-install
+make saftlib-install
 ```
-For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
+`saftbus-gen` is a code generator that is executed in the build process of saftlib. For cross compile builds, make sure that the cross compilation environment is enabled after `make saftbus-gen`.
+
+For detailed information check [ip_cores/saftlib/README.md](ip_cores/saftlib/README.md).
 
 ## Build Gateware(s)
 Currently we support a few different form factors.
@@ -283,10 +289,14 @@ which cc # /usr/bin/cc
 
 #### Etherbone & Saftlib
 <pre>
+make saftbus-gen
 unset LD_LIBRARY_PATH
 source /common/usr/embedded/yocto/sdk/environment-setup-core2-64-ffos-linux
 make etherbone YOCTO_BUILD=yes
-make saftlib YOCTO_BUILD=yes
+make saftbus
+make saftbus-install 
+make saftlib
+make saftlib-install
 </pre>
 
 Check the Rocky-9 subsection, if you get lsb_release related errors.
