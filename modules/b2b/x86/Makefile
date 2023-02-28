@@ -20,17 +20,24 @@ EB          ?= .
 ARCH        := /x86_64
 CFLAGS      ?=
 DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
+ASLLIB      := .
+ASLINC      := .
 else
 EB          ?= ../../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
 CFLAGS      ?= -Wall -O2 -g
-DIMPATH     := /opt/dim/dim_v20r33
+#DIMPATH     := /opt/dim/dim_v20r33
+# the following four lines are a hack required for building software for sl7 (deprecated)
+DIMPATH     := /common/usr/timing/b2b/dim_v20r29
+ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
+ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
+CXX         := g++ --std=c++0x
 endif
 
 EXTRA_FLAGS ?=
 LIBS        ?= -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
-SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
+CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
+SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
 
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))

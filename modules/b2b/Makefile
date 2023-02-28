@@ -25,9 +25,11 @@ INC         ?= include
 ifeq ($(YOCTO), YES)
 EB          ?= .
 ARCH        := /x86_64
+DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
 else
 EB          ?= ../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
+DIMPATH      := /common/usr/timing/b2b/dim_v20r29
 endif
 
 # set enviorinment, default is int
@@ -40,8 +42,6 @@ endif
 
 # hack for building on local linux box
 #DIMPATH     := /opt/dim/dim_v20r29
-# hack for building on ASL with yocto SDK
-DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
 
 TARGETS := firmware software nfsinit
 
