@@ -88,13 +88,13 @@ make tools
 Builds basic Saftlib tools and library.
 ```
 make saftbus-gen
-# enable cross compile environment here
+# (enable cross compile environment here if needed)
 make saftbus
 make saftbus-install
 make saftlib
 make saftlib-install
 ```
-`saftbus-gen` is a code generator that is executed in the build process of saftlib. For cross compile builds, make sure that the cross compilation environment is enabled after `make saftbus-gen`.
+For cross compile builds, make sure that the cross compilation environment is enabled **after** `make saftbus-gen`, because saftbus-gen needs to be execued during the build process.
 
 For detailed information check [ip_cores/saftlib/README.md](ip_cores/saftlib/README.md).
 
