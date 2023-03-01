@@ -13,7 +13,7 @@ TIMING_RTE = timing-rte
 ARCH       = x86_64
 TARGET_RTE ?= fbas
 
-.SILENT .PHONY: deploy firmware
+.SILENT .PHONY: check deploy firmware
 
 # deploy FBAS artifacts to the RTE directory
 deploy:
@@ -33,6 +33,10 @@ deploy:
 	# NFSinit script
 	echo deploy '$(ASL)/timing-rte.sh' to '$(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)'
 	cp $(ASL)/timing-rte.sh $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)
+
+# check if target RTE is built
+check:
+	./check-rte.sh
 
 # build LM32 firmware
 firmware:
