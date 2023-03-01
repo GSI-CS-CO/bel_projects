@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-nov-2022
+ *  version : 01-Mar-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000422
+#define B2B_ARCHIVER_VERSION 0x000423
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -106,7 +106,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase_125ps; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase_125ps; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-CBS; prr-CBS; CBS-pre; CBS-pri; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase [as]; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase [as]; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
 } // headerString
 
 // receive get values
