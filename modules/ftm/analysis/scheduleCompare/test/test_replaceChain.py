@@ -175,6 +175,11 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/cycle2x3.dot', 0)
 
+  def test_replaceChainEight(self):
+    """Compact two four vertex cycles with a common vertex into two two vertex cycles.
+    """
+    self.replaceChain2('replaceChain/eight.dot', 0)
+
   def test_replaceChainParallel1(self):
     """Compact a three vertex chain and a parallel edge into the same (nothing to do).
     """
