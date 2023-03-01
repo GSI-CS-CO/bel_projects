@@ -92,11 +92,15 @@ extern "C" {
   typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
+    int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
+    int32_t  ext_phaseErr_ps;                          // extraction: uncertainty of phase [ps]
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
+    int32_t  inj_phaseFract_ps;
+    int32_t  inj_phaseErr_ps;  
     int32_t  inj_dKickMon;                             
     int32_t  inj_dKickProb;
     float    inj_diagPhase;
