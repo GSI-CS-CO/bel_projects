@@ -603,6 +603,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat_as
   uint64_t tMatch0_as, tMatchTmp_as;                // temporary variables
   uint64_t TBeat;                                   // beat period (see 'trick' below)          [ns]
   uint64_t iMatch;                                  // trick: iteration of good match allows continuation of fine tuning
+  uint32_t tmp32;
 
   // define temporary epoch
   tNow    = getSysTime();
@@ -718,7 +719,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat_as
     TBeat     = *TBeat_as / one_ns_as;
     iMatch    = 0;
   } // if nH1BeatExt
-  
+  //pp_printf("cbu, nProbes %d\n", nProbes);
   for (i=0; i < nProbes; i++) {
     // advance to next possible beat time (unless in first iteration)
     tMatchTmp_as = tMatch0_as + (uint64_t)i * *TBeat_as;
@@ -740,9 +741,14 @@ uint32_t calcPhaseMatch(uint64_t tMin, uint64_t *tPhaseMatch, uint64_t *TBeat_as
   half         = one_ns_as >> 1;
   if ((tMatch_as % one_ns_as) > half) tMatch++;
   *tPhaseMatch =  tMatch + epoch;
+  //tmp32        = (uint32_t)(*TBeat_as / 1000000000); pp_printf("cbu, tbeat %u\n", tmp32);
+  tmp32        = *tPhaseMatch - tMin;
 
   // check if we are still within allowed time window
-  if ((*tPhaseMatch - tMin) > (B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN)) return COMMON_STATUS_OUTOFRANGE;
+  if (tmp32 > (B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN)) {
+    //pp_printf("cbu, tPhaseMatch_0 %u, nProbes %d\n", tmp32, nProbes);
+    return COMMON_STATUS_OUTOFRANGE;
+  } // if tmp32
 
   return COMMON_STATUS_OK;    
 } // calcPhaseMatch
@@ -1086,14 +1092,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
   if (mState == B2B_MFSM_EXTMATCHT) {
     tWantExt = tCBS + B2B_KICKOFFSETMIN;
+    //tmp32 = (getSysTime() - tCBS); pp_printf("pre phase match %u\n", tmp32);
     if (errorFlags) {tTrig =  tWantExt;/*pp_printf("b2b: error flags\n");*/}  // plan B
     else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat_as)) != COMMON_STATUS_OK) {
       tTrig       = tWantExt;                                                 // plan B
       errorFlags |= B2B_ERRFLAG_CBU;
-      /* pp_prin tf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat_as / 1000000000)); */
+      //pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat_as / 1000000000));
     } // if NOT STATUS_OK
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
+    //tmp32 = (getSysTime() - tCBS); pp_printf("post phase match %u\n", tmp32);
   } // B2B_MFSM_EXTMATCHT
 
   // trigger extraction kicker
@@ -1102,6 +1110,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
     tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
+    //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);
     offsetFin_us = fwlib_float2half(tmpf);
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
       errorFlags |= B2B_ERRFLAG_CBU;                                          // just set error flag
