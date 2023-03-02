@@ -6,7 +6,7 @@
 #ifndef __REGS_H
 #define __REGS_H
 
-#define SDB_ADDRESS 0x30000
+//#define SDB_ADDRESS 0x30000
 
 unsigned char *BASE_MINIC;
 unsigned char *BASE_EP;

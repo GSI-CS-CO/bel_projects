@@ -6,7 +6,6 @@
 #include <stack.h>
 
 #include "syscon.h"
-#include "memlayout.h"
 #include "mprintf.h"
 #include "display.h"
 #include "irq.h"
@@ -24,6 +23,7 @@
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "history.h"
 #include "scu_control_shared_mmap.h"
+//#include "memlayout.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -645,14 +645,14 @@ void disable_channel(unsigned int channel) {
 /** @brief updates the temperatur information in the shared section
  */
 void updateTemp() {
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
+  pOneWire = (uint32_t*)wr_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &board_id, &board_temp);
-  BASE_ONEWIRE = (unsigned char *)user_1wire_base;
+  pOneWire = (uint32_t*)user_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon
+  pOneWire = (uint32_t*)wr_1wire_base; // important for PTP deamon
   wrpc_w1_init();
 }
 
