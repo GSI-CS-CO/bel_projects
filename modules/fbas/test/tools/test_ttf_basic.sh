@@ -10,8 +10,9 @@ rxscu="scuxl0497.$domain" # 00:26:7b:00:06:c5
 txscu="scuxl0396.$domain" # 00:26:7b:00:06:d7
 sleep_sec=10
 
-fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
-script_rxscu="setup_local.sh"       # shell script on remote host
+prefix="/usr/bin"
+fw_rxscu="fbas16.scucontrol.bin"      # default LM32 FW for RX SCU
+script_rxscu="$prefix/setup_local.sh" # shell script on remote host
 
 usage() {
     echo "Usage: $0 [OPTION]"
