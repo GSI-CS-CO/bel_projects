@@ -41,4 +41,4 @@ check:
 
 # build LM32 firmware
 firmware:
-	$(MAKE) -C $(SW)
+	$(MAKE) -C $(FW)
