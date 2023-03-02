@@ -212,24 +212,27 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       disUpdateGetval(sid, tStart, getval);      
       break;
     case tagPme     :
-      setval.mode      = 2;
-      setval.ext_h     = ((param & 0xff00000000000000) >> 56);
-      setval.ext_T     = ((param & 0x00ffffffffffffff));    // [as]
-      if (setval.ext_h) setval.flag_nok &= 0xfffffffb;      // if ok, reset bit
-      if (setval.ext_T) setval.flag_nok &= 0xfffffffd;      // if ok, reset bit
-      tmpf             = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16));             // [us, hfloat]
-      setval.ext_cTrig = round(tmpf * 1000.0);              // [ns]
-      tmpf             = comlib_half2float((uint16_t)(tef & 0x0000ffff));                      // [us, hfloat]   
-      setval.inj_cTrig = round(tmpf * 1000.0);             // [ns]
+      setval.mode              = 2;
+      setval.ext_h             = ((param & 0xff00000000000000) >> 56);
+      setval.ext_T             = ((param & 0x00ffffffffffffff));    // [as]
+      if (setval.ext_h) setval.flag_nok &= 0xfffffffb;              // if ok, reset bit ext_h invalid
+      if (setval.ext_T) setval.flag_nok &= 0xfffffffd;              // if ok, reset bit ext_T invalid
+      tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
+      setval.ext_cTrig         = round(tmpf * 1000.0);              // [ns]
+      setval.flag_nok         &= 0xfffffff7;                        // if ok, reset bit ext_cTrig invalid
+      tmpf                     = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
+      setval.inj_cTrig         = round(tmpf * 1000.0);              // [ns]
+      setval.flag_nok         &= 0xffffffbf;                        // / if ok, reset bit inj_cTrig invalid
       break;
     case tagPmi     :
-      setval.mode      = 4;
-      setval.inj_h     = ((param & 0xff00000000000000) >> 56);
-      setval.inj_T     = ((param & 0x00ffffffffffffff));    // [as]
-      if (setval.inj_h) setval.flag_nok &= 0xffffffef;
-      if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
-      tmpf             = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-      setval.cPhase    = round(tmpf  * 1000);               // [ns]
+      setval.mode              = 4;
+      setval.inj_h             = ((param & 0xff00000000000000) >> 56);
+      setval.inj_T             = ((param & 0x00ffffffffffffff));    // [as]
+      if (setval.inj_h) setval.flag_nok &= 0xffffffdf;              // if ok, reset bit inj_h invalid
+      if (setval.inj_T) setval.flag_nok &= 0xffffffef;              // if ok, reset bit inj_T invalid
+      tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
+      setval.cPhase            = round(tmpf  * 1000);               // [ns]
+      setval.flag_nok         &= 0xffffff7f;                        // if ok, reset cPhase invalid
       break;
     case tagPre     :
       getval.preOff            = param - getval.tCBS;
@@ -256,44 +259,41 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.finOff            = round(tmpf * 1000.0);
       tmpf                     = comlib_half2float((uint16_t)(tef & 0x0000ffff));                // [us, hfloat]
       getval.prrOff            = round(tmpf * 1000.0);
-      setval.flag_nok         &= 0xfffffff7;
       flagErr                  = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKti     :
       if (setval.mode < 3) setval.mode = 3;
-      getval.ktiOff          = deadline.getTAI() - getval.tCBS;
-      setval.flag_nok       &= 0xffffffbf;
-      setval.flag_nok       &= 0xffffff7f;
-      flagErr                = ((evtId    & 0x0000000000000010) >> 4);
-      getval.flagEvtErr     |= flagErr << tag;
+      getval.ktiOff            = deadline.getTAI() - getval.tCBS;
+      flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKde     :
-      getval.ext_dKickProb = param & 0x00000000ffffffff;
-      getval.ext_dKickMon  = ((param & 0xffffffff00000000) >> 32);
+      getval.ext_dKickProb     = param & 0x00000000ffffffff;
+      getval.ext_dKickMon      = ((param & 0xffffffff00000000) >> 32);
       if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
       if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
-      flagErr              = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
-      getval.flagEvtErr   |= flagErr << tag;
+      flagErr                  = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKdi     :
-      getval.inj_dKickProb = param & 0x00000000ffffffff;
-      getval.inj_dKickMon  = ((param & 0xffffffff00000000) >> 32);
+      getval.inj_dKickProb     = param & 0x00000000ffffffff;
+      getval.inj_dKickMon      = ((param & 0xffffffff00000000) >> 32);
       if (getval.inj_dKickProb != 0x7fffffff) getval.flag_nok &= 0xffffff7f;
       if (getval.inj_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xffffffbf;          
-      flagErr              = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
-      getval.flagEvtErr   |= flagErr << tag;
+      flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagPde     :
-      tmp.data             = ((param & 0x00000000ffffffff));
+      tmp.data                 = ((param & 0x00000000ffffffff));
       if (tmp.data != 0x7fffffff) {
         getval.flag_nok &= 0xffffffef;
-        getval.ext_diagMatch = (double)tmp.f;
+        getval.ext_diagMatch   = (double)tmp.f;
       } // if ok
-      tmp.data             = ((param & 0xffffffff00000000) >> 32);
+      tmp.data                 = ((param & 0xffffffff00000000) >> 32);
       if (tmp.data != 0x7fffffff) {
         getval.flag_nok &= 0xfffffff7;
-        getval.ext_diagPhase = (double)tmp.f;
+        getval.ext_diagPhase   = (double)tmp.f;
       } // if ok
       break;
     case tagPdi     :
@@ -801,16 +801,22 @@ int main(int argc, char** argv)
     saftlib::Time deadline_t;
     uint32_t      ecaStatus;
     eb_status_t   ebStatus;
-    uint32_t      qIdx = 0;       
+    uint32_t      qIdx = 0;
+    uint64_t      t1, t2;
+    uint32_t      tmp32;
     
     ebStatus = comlib_ecaq_open("dev/wbm1", qIdx, &device, &ecaq_base);
     while(true) {
       //      saftlib::wait_for_signal();
+      t1 = comlib_getSysTime();
       ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      t2 = comlib_getSysTime();
+      tmp32 = t2 - t1; 
+      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
       if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, ecaq_base);}
       if (ecaStatus == COMMON_STATUS_OK) {
         deadline_t = saftlib::makeTimeTAI(deadline);
-        //printf("msg: tag %x, id %lx, tef %x\n", recTag, evtId, tef);
+        //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
       }
     } // while true

@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <termios.h>
+#include <math.h>
 
 // etherbone
 #include <etherbone.h>
@@ -67,10 +68,37 @@ static void die(const char* where, eb_status_t status)
 // get host system time
 uint64_t comlib_getSysTime()
 {
-  struct timeval tv;
-  gettimeofday(&tv,NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-} // small helper function
+  uint64_t t;
+  
+  //struct timeval tv;
+  //gettimeofday(&tv,NULL);
+  //t = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+
+  struct timespec ts;
+
+  timespec_get(&ts, TIME_UTC);
+
+  t = 1000000000 * (uint64_t)(ts.tv_sec) + (uint64_t)(ts.tv_nsec);
+
+  return t;
+} // comlib_getSysTime()
+
+
+void comlib_nsleep(uint64_t t)
+{
+  struct timespec time;       // time to sleep
+  struct timespec remaining;
+  uint64_t        secs;
+  uint64_t        nsecs;
+
+  secs  = floor(t / 1000000000);
+  nsecs = t - secs * 1000000000;
+
+  time.tv_sec  = secs;
+  time.tv_nsec = nsecs;
+
+  nanosleep(&time, &remaining);
+} // comlib_nsleep
 
 
 // get character from stdin, 0: no character
@@ -319,13 +347,14 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   uint32_t    evtDeadlLow;         // low 32bit of deadline   
   uint32_t    evtParamHigh;        // high 32 bit of parameter field
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
-  uint64_t    timeoutT_us;         // when to time out [us]
-  uint64_t    timeout_us;          // timeout [us]
+  uint64_t    timeoutT;            // when to time out
+  uint64_t    timeout;             // timeout
+  int32_t     t1, t2;
 
-  timeout_us  = ((uint64_t)timeout_ms + 1) * 1000;
-  timeoutT_us = comlib_getSysTime() + timeout_us;
+  timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
+  timeoutT = comlib_getSysTime() + timeout;
 
-  while (comlib_getSysTime() < timeoutT_us) {
+  while (comlib_getSysTime() < timeoutT) {
     // read flag from ECA queue
     if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return COMMON_STATUS_EB;
     eb_cycle_read(cycle, ecaq_base + ECA_QUEUE_FLAGS_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
@@ -344,6 +373,10 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_PARAM_HI_GET   , EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_PARAM_LO_GET   , EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_TEF_GET        , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+      if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return COMMON_STATUS_EB;
+
+      // pop element from q
+      if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return COMMON_STATUS_EB;
       eb_cycle_write(cycle, ecaq_base + ECA_QUEUE_POP_OWR        , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
       if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return COMMON_STATUS_EB;
 
@@ -367,7 +400,8 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       
       return COMMON_STATUS_OK;
     } // if data is valid
-    usleep(100);
+    
+    comlib_nsleep(100*1000);  // sleep 100 us
   } // while not timed out
 
   *tag        = 0x0;
@@ -379,6 +413,8 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   *isEarly    = 0x0;
   *isConflict = 0x0;
   *isDelayed  = 0x0;
+
+  //t2 = comlib_getSysTime(); printf("eca wait, timeout [ns] %ld\n", (int32_t)(t2 - timeoutT_ns));
   
   return COMMON_STATUS_TIMEDOUT;
 } // comlib_wait4ECAEvent

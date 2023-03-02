@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-nov-2022
+ *  version : 02-Mar-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000421
+#define B2B_MON_VERSION 0x000424
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -217,11 +217,11 @@ void buildPrintLine(uint32_t idx)
   uint32_t sid;
   ring_t   ring;
 
-  uint64_t actUsecs;
+  uint64_t actNsecs;
   time_t   actT;
 
-  actUsecs = comlib_getSysTime();
-  actT     = (time_t)(actUsecs / 1000000);
+  actNsecs = comlib_getSysTime();
+  actT     = (time_t)(actNsecs / 1000000000);
 
   if (idx > NALLSID) return;
 
@@ -368,7 +368,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   uint32_t nok;
   uint32_t idx;
 
-  uint64_t actUsecs;
+  uint64_t actNsecs;
   time_t   actT;
 
   /* printf("tag %lx\n", *tag); */
@@ -410,8 +410,8 @@ void recSetvalue(long *tag, setval_t *address, int *size)
     set_secs[idx]      = (time_t)(secs);
 
     // calibrate offset between THIS system time and time of set_values
-    actUsecs           = comlib_getSysTime();
-    actT               = (time_t)(actUsecs / 1000000);
+    actNsecs           = comlib_getSysTime();
+    actT               = (time_t)(actNsecs / 1000000000);
     secsOffset         = actT - set_secs[idx];
   } // if flagSetValid
   else set_mode[idx] = 0;
@@ -479,12 +479,12 @@ uint32_t calcFlagPrint()
   uint32_t sid;
   uint32_t nLines;
 
-  uint64_t actUsecs;
+  uint64_t actNsecs;
   time_t   actT;
 
   nLines   = 0;
-  actUsecs = comlib_getSysTime();
-  actT     = (time_t)(actUsecs / 1000000);
+  actNsecs = comlib_getSysTime();
+  actT     = (time_t)(actNsecs / 1000000000);
 
   for (i=0; i<NALLSID; i++) {
     flagPrintIdx[i] = 1;

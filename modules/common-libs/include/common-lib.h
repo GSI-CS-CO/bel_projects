@@ -37,12 +37,16 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.03.00"
+#define COMMON_LIB_VERSION "0.03.01"
 
 #include <etherbone.h>
 
-// small helper functions; actual time [us]
+// small helper function; actual time [ns]
 uint64_t comlib_getSysTime();
+
+// small helper function; very expensive sleep function!!
+void comlib_nsleep(uint64_t t                         // time to sleep [ns]
+                   );
 
 // get character from stdin, 0: no character
 char comlib_term_getChar();

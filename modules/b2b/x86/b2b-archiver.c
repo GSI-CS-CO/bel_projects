@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Mar-2023
+ *  version : 02-Mar-2023
  *
  * archives set and get values to data files
  *
@@ -106,7 +106,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; flagEvtRec; flagEvtErr; flagEvtLate; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
 } // headerString
 
 // receive get values
@@ -119,12 +119,14 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   double    act;
   char      tCBS[256];;
 
-  char strSetval[STRMAXLEN];
-  char strGetval[STRMAXLEN];
-  char strNueval[STRMAXLEN];
-  char *new;
+  char      strSetval[STRMAXLEN];
+  char      strGetval[STRMAXLEN];
+  char      strNueval[STRMAXLEN];
+  char      *new;
 
-  FILE     *dataFile;                       // file for data
+  int       i;
+
+  FILE      *dataFile;                       // file for data
 
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
@@ -176,7 +178,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
   new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
 
-  new += sprintf(new, "; %x; %x; %x", dicGetval[sid].flagEvtRec, dicGetval[sid].flagEvtErr, dicGetval[sid].flagEvtLate);
+  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
+  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
+  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
   new += sprintf(new, "; %d; %d; %d; %d; %d; %d", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
