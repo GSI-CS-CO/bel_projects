@@ -4,7 +4,6 @@ directory contents
 
 - helpers: helper scripts invoked from x86 host (acopc017, tsl101)
     deploy_mngmt_host.sh  - deploy test artifacts to 'tsl101'
-    cp_scu_artifacts.sh   - copy LM32 firmware and other tools/scripts to a specified SCU
     system_info.sh        - show WR timing status, LM32 firmware and artifacts of a specified SCU
 
 - lm32: LM32 firmwares
@@ -52,6 +51,3 @@ Deployment of test artifacts
 
 - set up management host (ie., tsl101)
   - ./helpers/deploy_mngmt_host.sh $USER
-
-- set up target SCUs for the FBAS test (ie., scuxl0396)
-  - ./helpers/cp_scu_artifacts.sh -s scuxl0396
