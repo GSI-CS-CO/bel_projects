@@ -61,9 +61,10 @@ process (clk, nReset)
 end process;
 
 
-process_rrg : process (ramp_status,time_step_tc,prev_TargetReg,step_counter) --the process is senstive to clock and reset signals
+process_rrg : process (clk,ramp_status,time_step_tc,prev_TargetReg,step_counter) --the process is senstive to clock and reset signals
 
 begin
+	if rising_edge(clk) then
            next_ramp_status <= ramp_status;    
  
            --when case to switch between the status
@@ -81,27 +82,28 @@ begin
                --or to decrement or increment
                
                when CHECK =>
+               TargetSaver <= signed(TargetReg);
+               step_counter <= unsigned(CountStepReg);        
+               DAC_Strobe <= '0';
 
-                   TargetSaver <= signed(TargetReg);
-                   step_counter <= unsigned(CountStepReg);
-                   DAC_Strobe <= '0';
+                   if (time_step_tc = '1' ) then
 
-                   if (time_step_tc = '0' ) then
-
-                       next_ramp_status<= CHECK;
+                      
                        
-                   elsif (prev_TargetReg < TargetSaver) then
- 
-                       prev_TargetSaver <= TargetSaver;                                          
-                       next_ramp_status<= INCREMENT;
-                       
-                   elsif (prev_TargetReg > TargetSaver) then
- 
-                       prev_TargetSaver <= TargetSaver;
-                       next_ramp_status<= DECREMENT;
-                   --elsif (prev_TargetReg = TargetSaver)then
-                   --    next_ramp_status<= DAC_OUTPUT;
+                        if (prev_TargetReg < TargetSaver) then
+                        
+                            prev_TargetSaver <= TargetSaver;                                          
+                            next_ramp_status<= INCREMENT;
 
+                        elsif (prev_TargetReg > TargetSaver) then
+                        
+                            prev_TargetSaver <= TargetSaver;
+                            next_ramp_status<= DECREMENT;
+                        elsif (prev_TargetReg = TargetSaver)then
+                            next_ramp_status<= DAC_OUTPUT;
+                         end if;
+                    else
+                        next_ramp_status<= CHECK;
                        
                    end if;
 
@@ -135,6 +137,7 @@ begin
                    
                        
                end case;
+			end if;
 end process;
 
 --Step Counter
@@ -154,6 +157,17 @@ begin
 end process; 
 
 time_step_tc <= '1' when (time_step = 0) else '0';
+
+--process (clk,nReset) 
+--begin
+--     if rising_edge (clk) then
+--			if ramp_status = DAC_OUTPUT then
+--				DAC_Out <= STD_LOGIC_VECTOR(prev_TargetReg);
+--			end if;
+--			
+--      end if;
+--end process; 
+
 
 
 end Arch_rrg;
