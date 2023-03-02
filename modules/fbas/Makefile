@@ -4,8 +4,9 @@
 
 # sources to be deployed
 FW     := fw
-ASL    := asl
 TEST   := test
+RTE    := rte
+ASL    := rte/asl
 
 # timing RTE directory for NFSinit
 NFSBASE    = /common/export
@@ -36,7 +37,7 @@ deploy:
 
 # check if target RTE is built
 check:
-	./check-rte.sh
+	./$(RTE)/check-rte.sh
 
 # build LM32 firmware
 firmware:
