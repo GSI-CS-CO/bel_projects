@@ -10,7 +10,7 @@
 #include <string.h>
 #include <etherbone.h>
 #include <w1.h>
-#include <hw/sockit_owm_regs.h>
+#include <sockit_owm_regs.h>
 
 extern eb_address_t BASE_ONEWIRE;
 extern eb_device_t  device;
@@ -18,7 +18,7 @@ extern eb_device_t  device;
 static inline uint32_t __wait_cycle(eb_device_t device)
 {
 	eb_data_t data;
-	
+
 	do {
 	    eb_device_read(device, BASE_ONEWIRE, EB_DATA32|EB_BIG_ENDIAN, &data, 0, 0);
         } while (data & SOCKIT_OWM_CTL_CYC_MSK);
@@ -30,13 +30,13 @@ static int w1_reset(struct w1_bus *bus)
 {
 	int portnum = bus->detail;
 	uint32_t reg;
-	
+
 	eb_data_t data =  (portnum << SOCKIT_OWM_CTL_SEL_OFST)
 			    | (SOCKIT_OWM_CTL_CYC_MSK)
 			    | (SOCKIT_OWM_CTL_RST_MSK);
 	eb_device_write(device, BASE_ONEWIRE, EB_DATA32|EB_BIG_ENDIAN, data, 0, 0);
 	reg = __wait_cycle(device);
-	
+
 	/* return presence-detect pulse (1 if true) */
 	return (reg & SOCKIT_OWM_CTL_DAT_MSK) ? 0 : 1;
 }
@@ -51,14 +51,14 @@ static int w1_read_bit(struct w1_bus *bus)
 			    | (SOCKIT_OWM_CTL_DAT_MSK);
         eb_device_write(device, BASE_ONEWIRE, EB_DATA32|EB_BIG_ENDIAN, data, 0, 0);
 	reg = __wait_cycle(device);
-	
+
 	return (reg & SOCKIT_OWM_CTL_DAT_MSK) ? 1 : 0;
 }
 
 static void w1_write_bit(struct w1_bus *bus, int bit)
 {
 	int portnum = bus->detail;
-	
+
 	eb_data_t data = (portnum << SOCKIT_OWM_CTL_SEL_OFST)
 			    | (SOCKIT_OWM_CTL_CYC_MSK)
 			    | (bit ? SOCKIT_OWM_CTL_DAT_MSK : 0);
