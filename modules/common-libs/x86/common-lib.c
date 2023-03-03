@@ -70,15 +70,16 @@ uint64_t comlib_getSysTime()
 {
   uint64_t t;
   
-  //struct timeval tv;
-  //gettimeofday(&tv,NULL);
-  //t = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  t = tv.tv_sec*(uint64_t)1000000000+tv.tv_usec*1000;
 
-  struct timespec ts;
+  // argh: timespec not supported with old gcc on sl7
+  //struct timespec ts;
 
-  timespec_get(&ts, TIME_UTC);
+  //timespec_get(&ts, TIME_UTC);
 
-  t = 1000000000 * (uint64_t)(ts.tv_sec) + (uint64_t)(ts.tv_nsec);
+  //t = 1000000000 * (uint64_t)(ts.tv_sec) + (uint64_t)(ts.tv_nsec);
 
   return t;
 } // comlib_getSysTime()
