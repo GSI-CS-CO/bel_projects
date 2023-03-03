@@ -174,6 +174,7 @@ status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
  **/
 status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
 {
+  uint32_t tef = 0;
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
   if (!itr->last)
@@ -186,7 +187,7 @@ status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
     memcpy(&param, prot, sizeof(mpsProtocol_t));
 
     // send MPS message with current timestamp, which varies around deadline
-    fwlib_ebmWriteTM(now, evtid, param, 1);
+    fwlib_ebmWriteTM(now, evtid, param, tef, 1);
 
     // update iterator with deadline
     resetItr(itr, now);
@@ -212,6 +213,7 @@ status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
  **/
 status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra)
 {
+  uint32_t tef = 0;
   uint64_t now = getSysTime();
 
   if (itr->last >= now) // delayed by a new cycle
@@ -221,12 +223,12 @@ status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
   memcpy(&param, &buf->prot, sizeof(buf->prot));
 
   // send specified MPS event
-  fwlib_ebmWriteTM(now, evtid, param, 1);
+  fwlib_ebmWriteTM(now, evtid, param, tef, 1);
 
   // NOK flag shall be sent as extra events
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
-      fwlib_ebmWriteTM(now, evtid, param, 1);
+      fwlib_ebmWriteTM(now, evtid, param, tef, 1);
     }
   }
 
