@@ -4,8 +4,11 @@ Requires = saftd.service
 After = saftd.service
 
 [Service]
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=1
 Type = simple
 Environment="DIM_DNS_NODE=asl105"
 ExecStart = b2b-serv-raw tr1 -e2 int
+
 [Install]
 WantedBy = multi-user.target
