@@ -19,11 +19,13 @@ PLATFPATHPEX5       := ../../../syn/gsi_pexarria5/control
 
 .PHONY: fwbin
 fwbin:
-	@echo --- build $(TARGET) for platform $(PLATFPATHSCU3)
+	@echo --- build $(TARGET) specific to $(PLATFPATHSCU3)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) $@
+	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) MPS_CH=MULTI_MPS_CH $@
 ifeq ($(TARGET),fbas)
-	@echo --- build $(TARGET) for platform $(PLATFPATHPEX5)
+	@echo --- build $(TARGET) specific to $(PLATFPATHPEX5)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) $@
+	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) MPS_CH=MULTI_MPS_CH $@
 endif
 
 # ram.ld is built recursively from platform.mk

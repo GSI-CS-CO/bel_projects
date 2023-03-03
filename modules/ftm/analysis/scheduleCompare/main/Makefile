@@ -4,7 +4,12 @@ CXXFLAGS = -g -std=c++11 -fPIC -Wall
 LDFLAGS = -Wl,-rpath,/usr/local/lib
 LDLIBS = -lstdc++ -lboost_serialization -lboost_graph
 
-PREFIX         ?= /usr/local
+# if make runs without sudo, install into user private folder.
+ifeq ($(RIGHTS),0)
+  PREFIX ?= /usr/local
+else
+  PREFIX ?= $$HOME/.local
+endif
 INSTALLPATH     = $(PREFIX)/bin
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
