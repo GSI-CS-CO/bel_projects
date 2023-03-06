@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Mar-2023
+ *  version : 06-Mar-2023
  *
  * publishes raw data of the b2b system
  *
@@ -802,17 +802,63 @@ int main(int argc, char** argv)
     uint32_t      ecaStatus;
     eb_status_t   ebStatus;
     uint32_t      qIdx = 0;
-    uint64_t      t1, t2;
-    uint32_t      tmp32;
-    
+
+    //uint64_t      t1, t2;
+    //uint32_t      tmp32;
+    //int           nEvt, nTo;          // number of received Events and timeout occurences
+    //uint32_t      tEvtSum, tToSum;    // sum of time passed;
+    //uint32_t      tEvtMin, tToMin;    // min time passed;
+    //uint32_t      tEvtMax, tToMax;    // max time passed;
+    //uint32_t      tEvtAve, tToAve;    // average time passed;
+
+    //recTag = tagStop;
+    //nEvt   = 0;
+    //nTo    = 0;
+        
     ebStatus = comlib_ecaq_open("dev/wbm1", qIdx, &device, &ecaq_base);
     while(true) {
       //      saftlib::wait_for_signal();
+
+      //if (recTag == tagStop) {
+        // received events
+        //if (nEvt > 0) {
+        //  tEvtAve = tEvtSum / nEvt;
+        //  printf("rec evt processing stats [us]: min %4u, max %8u, ave %8u, n %d\n", tEvtMin, tEvtMax, tEvtAve, nEvt);
+        //} // if nEvt
+        //nEvt    = 0;
+        //tEvtSum = 0;
+        //tEvtMin = 0xffffffff;
+        //tEvtMax = 0;
+
+        // timeouts
+        //if (nTo  > 0) {
+        //  tToAve = tToSum / nTo;
+        //  printf("timeout processing stats [us]: min %4u, max %8u, ave %8u, n %d\n", tToMin, tToMax, tToAve, nTo);          
+        //} // if nTo
+        //nTo    = 0;
+        //tToSum = 0;
+        //tToMin = 0xffffffff;;
+        //tToMax = 0;
+      // } // if recTag
+      
       t1 = comlib_getSysTime();
       ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
       t2 = comlib_getSysTime();
-      tmp32 = t2 - t1; 
-      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
+      tmp32 = (t2 - t1) / 1000; // elapsed time [us]
+      //if (ecaStatus != COMMON_STATUS_TIMEDOUT) {
+      //  tEvtSum += tmp32;
+      //  nEvt++;
+      //  if (tmp32 < tEvtMin) tEvtMin = tmp32;
+      //  if (tmp32 > tEvtMax) tEvtMax = tmp32;
+      //} // if ecaStatus
+      //else {
+      //  tToSum += tmp32;
+      //  nTo++;
+      //  if (tmp32 < tToMin) tToMin = tmp32;
+      //  if (tmp32 > tToMax) tToMax = tmp32;
+      //} // else ecaStatus
+      
+      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32);
       if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, ecaq_base);}
       if (ecaStatus == COMMON_STATUS_OK) {
         deadline_t = saftlib::makeTimeTAI(deadline);
