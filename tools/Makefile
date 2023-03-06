@@ -9,7 +9,6 @@ WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
 USE_RPATH ?= yes
-YOCTO_BUILD ?= no
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
@@ -19,14 +18,12 @@ else
 LIBS        ?= -letherbone -lm
 endif
 
-#all:	$(TARGETS) monitoring
-all:	$(TARGETS)
+all:	$(TARGETS) monitoring
 
 clean:  monitoring-clean
 	rm -f $(TARGETS)
 
-#install: monitoring-install
-install:
+install: monitoring-install
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
 
@@ -63,7 +60,6 @@ io-test: io-test.cpp
 	g++ $(CFLAGS) -I $(ECA) -I $(TLU) -o io-test io-test.cpp -L $(ECA) -L $(TLU) $(LIBS) -leca -ltlu
 
 eb-reset: eb-reset.c
-#	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
 	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC_IMPORT) -I$(WRPC_IMPORT)/dev -I$(WBDIR)/1w $(WRPC_IMPORT)/dev/w1.c $(WRPC_IMPORT)/dev/w1-temp.c $(WBDIR)/wb_api.c $(WBDIR)/1w/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
 
 eb-asmi: eb-asmi.c
