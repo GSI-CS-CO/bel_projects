@@ -87,10 +87,6 @@ make tools
 ## Saftlib
 Builds basic Saftlib tools and library.
 ```
-make saftbus-gen
-# (enable cross compile environment here if needed)
-make saftbus
-make saftbus-install
 make saftlib
 make saftlib-install
 ```

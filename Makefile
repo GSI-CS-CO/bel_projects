@@ -109,43 +109,17 @@ etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api DESTDIR=$(STAGING) install
 	$(call ldconfig_note)
 
-saftbus-gen::
-	cd ip_cores/saftlib/saftbus-gen; test -f Makefile.in || ./autogen.sh
-	test -d ip_cores/saftlib/saftbus-gen-build || mkdir ip_cores/saftlib/saftbus-gen-build
-	cd ip_cores/saftlib/saftbus-gen-build; test -f Makefile || ../saftbus-gen/configure ${CONFIGURE_FLAGS} --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
-	$(MAKE) -C ip_cores/saftlib/saftbus-gen-build
 
-saftbus-gen-clean::
-	! test -d ip_cores/saftlib/saftbus-gen-build || rm -r ip_cores/saftlib/saftbus-gen-build
-
-
-saftbus:: 
-	cd ip_cores/saftlib/saftbus; test -f Makefile.in || ./autogen.sh
-	test -d ip_cores/saftlib/saftbus-build || mkdir ip_cores/saftlib/saftbus-build
-	cd ip_cores/saftlib/saftbus-build; test -f Makefile || ../saftbus/configure ${CONFIGURE_FLAGS} --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
-	$(MAKE) -C ip_cores/saftlib/saftbus-build
-
-saftbus-install:: saftbus
-	$(MAKE) -C ip_cores/saftlib/saftbus-build DESTDIR=$(STAGING) install
-
-saftbus-clean::
-	! test -d ip_cores/saftlib/saftbus-build || rm -r ip_cores/saftlib/saftbus-build
-
-saftlib: export SAFTBUS_CFLAGS = `PKG_CONFIG_SYSROOT_DIR="$(STAGING)" PKG_CONFIG_PATH=$(STAGING)$(PREFIX)/lib/pkgconfig pkg-config saftbus    --cflags`
-saftlib: export SAFTBUS_LIBS   = `PKG_CONFIG_SYSROOT_DIR="$(STAGING)" PKG_CONFIG_PATH=$(STAGING)$(PREFIX)/lib/pkgconfig pkg-config saftbus    --libs`
-saftlib: export EB_CFLAGS      = `PKG_CONFIG_SYSROOT_DIR="$(STAGING)" PKG_CONFIG_PATH=$(STAGING)$(PREFIX)/lib/pkgconfig pkg-config etherbone  --cflags`
-saftlib: export EB_LIBS        = `PKG_CONFIG_SYSROOT_DIR="$(STAGING)" PKG_CONFIG_PATH=$(STAGING)$(PREFIX)/lib/pkgconfig pkg-config etherbone  --libs`
 saftlib::
-	cd ip_cores/saftlib/saftlib; test -f Makefile.in || ./autogen.sh
-	test -d ip_cores/saftlib/saftlib-build || mkdir ip_cores/saftlib/saftlib-build
-	cd ip_cores/saftlib/saftlib-build; PATH="${PATH}:../saftbus-gen-build" ../saftlib/configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
-	PATH="${PATH}:../saftbus-gen-build" $(MAKE) -C ip_cores/saftlib/saftlib-build
+	cd ip_cores/saftlib; test -f Makefile.in || ./autogen.sh
+	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	$(MAKE) -C ip_cores/saftlib
 
 saftlib-install:: 
-	PATH="${PATH}:../saftbus-gen-build" $(MAKE) -C ip_cores/saftlib/saftlib-build DESTDIR=$(STAGING) install
+	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
 
-saftlib-clean:: saftbus-gen-clean saftbus-clean
-	! test -d ip_cores/saftlib/saftlib-build || rm -r ip_cores/saftlib/saftlib-build
+saftlib-clean:: 
+	$(MAKE) -C ip_cores/saftlib clean
 
 
 
