@@ -4,11 +4,11 @@
 
 # Usage: ./check-rte.sh CI_CD_REPO="path/to/ci_cd"
 
-# target RTE
-TARGET_RTE="fbas"
+# target RTE (bash override construct)
+TARGET_RTE=${TARGET_RTE:-"fbas"}  # override value from Makefile or CLI
 
 # RTE location
-NFSBASE_PATH="/common/export"
+NFSBASE_PATH=${NFSBASE_PATH:-"/common/export"}
 NFSINIT_PATH="$NFSBASE_PATH/nfsinit"
 TIMING_RTE_PATH="$NFSBASE_PATH/timing-rte"
 TARGET_RTE_PATH="$TIMING_RTE_PATH/$TARGET_RTE"
