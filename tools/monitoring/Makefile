@@ -11,7 +11,7 @@ TARGETS     := eb-mon eb-massmon
 USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I$(WRPC_IMPORT)/dev -I$(WRPC_IMPORT)  # -I $(WRPC)/include -I $(WRPC)/pp_printf
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I$(WRPC_IMPORT)/dev -I$(WRPC_IMPORT)
 ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 else
