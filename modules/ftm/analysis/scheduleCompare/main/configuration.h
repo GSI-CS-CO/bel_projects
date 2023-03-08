@@ -22,6 +22,8 @@ const int VERSION_MESSAGE = 19;
 struct configuration {
   // option -1: use first version of replaceChain
   bool firstVersion = false;
+  // blocksSeparated, option -b
+  bool blocksSeparated = false;
   // option -c
   bool check = false;
   // replaceChain: -c <n>

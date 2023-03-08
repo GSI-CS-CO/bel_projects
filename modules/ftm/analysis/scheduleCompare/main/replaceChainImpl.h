@@ -40,8 +40,12 @@ class ReplaceChain {
     EdgeDescriptor* afterEdge;
     EdgeDescriptor afterEdgeOld;
     std::pair<EdgeDescriptor, bool> newEdge;
-    VertexNum predecessor(VertexNum v);
-    VertexNum successor(VertexNum v);
+    VertexNum anyPredecessor(VertexNum v);
+    VertexNum predecessorInChain(VertexNum v);
+    VertexNum predecessor(VertexNum v, bool inChain);
+    VertexNum anySuccessor(VertexNum v);
+    VertexNum successorInChain(VertexNum v);
+    VertexNum successor(VertexNum v, bool inChain);
     void getBeforeEdge(VertexNum v);
     void getAfterEdge(VertexNum v);
     VertexId id = boost::get(boost::vertex_index, *g);

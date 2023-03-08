@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
   char* program = argv[0];
   const char* Toption = "xdot";
   configuration config;
-  while ((opt = getopt(argc, argv, "1c:ho:svVwT:")) != -1) {
+  while ((opt = getopt(argc, argv, "1bc:ho:svVwT:")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
@@ -59,6 +59,9 @@ int main(int argc, char* argv[]) {
             config.chainCount = count;
           }
         }
+        break;
+      case 'b':
+        config.blocksSeparated = true;
         break;
       default:
         std::cerr << program << ": bad option " << std::endl;
@@ -110,6 +113,7 @@ void usage(char* program) {
   std::cerr << "Usage: " << program << " <dot file>" << std::endl;
   std::cerr << "Replace chains in the schedule graph with a single vertex." << std::endl;
   std::cerr << "Options: " << std::endl;
+  std::cerr << "        -b: 'blocks separated', vertices in a chain have the same type." << std::endl;
   std::cerr << "        -c <n>: optional, replace n chains. Default is to replace all chains." << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
   std::cerr << "        -o <file name>: name of output file." << std::endl;
