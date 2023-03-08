@@ -20,7 +20,7 @@
 #define DEV_BASE	0x80040000
 //#warning Test
 #else
-#error (Wrong Arch!)
+//#error (Wrong Arch!)
 #endif
 
 /* Fixed base addresses */
