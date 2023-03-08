@@ -63,7 +63,7 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
   def test_usage_message(self):
     """Test the usage message.
     """
-    self.callReplaceChain([self.binary, '-h'], expectedReturnCode=14, linesCerr=22, linesCout=0)
+    self.callReplaceChain([self.binary, '-h'], expectedReturnCode=14, linesCerr=23, linesCout=0)
 
   def replaceChain(self, fileName, lines=1):
     """Replace all chains in the given schedule file.
@@ -78,6 +78,14 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     outputFileName = 'replace-chain.dot'
     self.callReplaceChain([self.binary, '-swo', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
     self.compareExpectedResult(outputFileName, fileName.replace('.dot', '-chain-2.dot'))
+
+  def replaceChainBlocksSeparated(self, fileName, lines=2):
+    """Replace all chains in the given schedule file. Use second version of replaceChain algorithm
+    and put blocks in separate chains.
+    """
+    outputFileName = 'replace-chain-blocks.dot'
+    self.callReplaceChain([self.binary, '-bswo', outputFileName, fileName], expectedReturnCode=0, linesCerr=0, linesCout=lines)
+    self.compareExpectedResult(outputFileName, fileName.replace('.dot', '-chain-3.dot'))
 
   def test_replaceChainLoop(self):
     """Replace all chains in the chains1234r.dot schedule file.
@@ -170,6 +178,21 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/cycle10.dot', 0)
 
+  def test_replaceChainCycle10BlockSeparated(self):
+    """Compact a ten vertex cycle into a two vertex cycle.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/cycle10.dot', 0)
+
+  def test_replaceChainCycle10ExtraBlockSeparated(self):
+    """Compact a ten vertex cycle into a two vertex cycle.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/cycle10ExtraBlock.dot', 0)
+
+  def test_replaceChainCycle10ExtraBlock2Separated(self):
+    """Compact a ten vertex cycle into a two vertex cycle.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/cycle10ExtraBlock2.dot', 0)
+
   def test_replaceChainCycle2x3(self):
     """Compact two three vertex cycles into two two vertex cycles.
     """
@@ -224,6 +247,11 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a schedule from tsl020.
     """
     self.replaceChain2('replaceChain/tsl020-sis100.dot', 0)
+
+  def test_replaceChainTsl020Sis100BlocksSeparated(self):
+    """Compact a schedule from tsl020.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/tsl020-sis100.dot', 0)
 
   def test_replaceChainTsl020(self):
     """Compact a schedule from tsl020.
