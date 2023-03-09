@@ -1,0 +1,14 @@
+digraph G {
+graph [
+name="chain5Block1-compact"
+]
+a [shape=rectangle, type=block];
+"b
+...
+e" [label="b
+...
+e"];
+a->"b
+...
+e" ;
+}
