@@ -152,6 +152,12 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/chains123123123.dot', 0)
 
+  def test_replaceChainChains123123123Blocks(self):
+    """Compact a graph with nine chains (3x1 vertex, 3x2 vertices, 3x3 vertices)
+    to nine chains with one vertex.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/chains123123123.dot', 0)
+
   def test_replaceChainChain2x3(self):
     """Compact a three vertex chain to one vertex.
     """
@@ -167,6 +173,30 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     Tests the labelling for a chain with more than three vertices.
     """
     self.replaceChain2('replaceChain/chainY.dot', 0)
+
+  def test_replaceChainChain5(self):
+    """Compact a five vertex chain to one vertex.
+    Tests option -b on all vertices of the same type.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/chain5.dot', 0)
+
+  def test_replaceChainChain5Block1(self):
+    """Compact a five vertex chain to two vertices. Top vertex is a block.
+    Tests separating vertices with different types.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/chain5Block1.dot', 0)
+
+  def test_replaceChainChain5Block3(self):
+    """Compact a five vertex chain to three vertices. Third vertex is a block.
+    Tests separating vertices with different types.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/chain5Block3.dot', 0)
+
+  def test_replaceChainChain5Block5(self):
+    """Compact a five vertex chain to two vertices. Bottom vertex is a block.
+    Tests separating vertices with different types.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/chain5Block5.dot', 0)
 
   def test_replaceChainCycle3(self):
     """Compact a three vertex cycle into a two vertex cycle.
@@ -237,6 +267,11 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a six vertex chain and a parallel edge (reverse numbering of the vertices).
     """
     self.replaceChain2('replaceChain/parallel1x4r.dot', 0)
+
+  def test_replaceChainParallel1x4rBlocks(self):
+    """Compact a six vertex chain and a parallel edge (reverse numbering of the vertices).
+    """
+    self.replaceChainBlocksSeparated('replaceChain/parallel1x4r.dot', 0)
 
   def test_replaceChainStar4(self):
     """Compact a four element star. Nothing to do.
