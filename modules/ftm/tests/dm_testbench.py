@@ -56,9 +56,9 @@ class DmTestbench(unittest.TestCase):
 #    process = subprocess.Popen(['dm-cmd', data_master, 'cleardiag'])
 #    process.wait()
 #    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-cmd {data_master} cleardiag')
-#    process = subprocess.Popen(['dm-sched', data_master, 'add', schedule_file])
-#    process.wait()
-#    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {schedule_file}')
+    process = subprocess.Popen(['dm-sched', data_master, 'add', schedule_file])
+    process.wait()
+    self.assertEqual(process.returncode, 0, f'wrong return code {process.returncode}, Command line: dm-sched {data_master} add {schedule_file}')
     if start:
       # run 'dm-sched data_master' as a sub process.
       process = subprocess.Popen([self.binaryDmSched, data_master], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
