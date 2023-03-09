@@ -7,7 +7,7 @@
 #include <boost/container/vector.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/optional.hpp>
 #include "ftm_common.h"
