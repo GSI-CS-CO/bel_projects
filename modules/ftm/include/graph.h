@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/graph/graphviz.hpp>
 #include "ftm_common.h"
 #include "common.h"
