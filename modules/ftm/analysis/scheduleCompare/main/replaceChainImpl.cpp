@@ -14,7 +14,9 @@ bool ReplaceChain::findStartOfChain() {
   bool result = false;
   BOOST_FOREACH (VertexDescriptor descriptor, vertices(*g)) {
     VertexNum v = boost::get(id, descriptor);
-    //~ std::cout << "descriptor: " << descriptor << ", id: " << v << std::endl;
+    if (c->superverbose) {
+      std::cout << "0 findStartOfChain v: " << v << ", startOfChain: " << startOfChain << std::endl;
+    }
     result = getStartOfChain(v, v);
     if (result) {
       // check successor of startOfChain:
@@ -22,11 +24,11 @@ bool ReplaceChain::findStartOfChain() {
       // otherwise proceed with next vertex in loop.
       VertexNum s = successorInChain(startOfChain);
       if (c->superverbose) {
-        std::cout << "findStartOfChain v: " << v << ", successor: " << s << ", startOfChain: " <<
+        std::cout << "1 findStartOfChain v: " << v << ", successor: " << s << ", startOfChain: " <<
           startOfChain << ", in: " << boost::in_degree(s, *g) <<
           ", out: " << boost::out_degree(s, *g) << std::endl;
       }
-      if (boost::in_degree(s, *g) <= 1 && boost::out_degree(s, *g) <= 1) {
+      if (s != ULONG_MAX && boost::in_degree(s, *g) <= 1 && boost::out_degree(s, *g) <= 1) {
         break;
       }
     }
