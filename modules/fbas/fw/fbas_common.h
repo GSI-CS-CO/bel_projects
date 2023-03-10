@@ -51,9 +51,9 @@ struct mpsProtocol {
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
   mpsProtocol_t prot;       // MPS protocol
-  uint64_t ts;              // timestamp
+  uint64_t tsRx;            // reception timestamp (RX)
   uint8_t  ttl;             // time-to-live (RX)
-  uint8_t  pending;         // flag change indicator
+  uint8_t  pending;         // flag change indicator (RX)
 };
 
 // iterator used to access available MPS flags
