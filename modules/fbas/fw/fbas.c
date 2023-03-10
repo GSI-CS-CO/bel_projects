@@ -211,7 +211,7 @@ void initMpsData()
     bufMpsMsg[i].prot.idx = 0;
     setMpsMsgSenderId(&bufMpsMsg[i], mac, 1);
     bufMpsMsg[i].ttl = 0;
-    bufMpsMsg[i].ts = 0;
+    bufMpsMsg[i].tsRx = 0;
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x\n",
         i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
         bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],

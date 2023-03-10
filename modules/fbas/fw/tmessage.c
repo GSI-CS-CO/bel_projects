@@ -315,7 +315,7 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
         buf->pending = buf->prot.flag ^ flag;
         buf->prot.flag = flag;
         buf->ttl = itr->ttl;
-        buf->ts = ts;
+        buf->tsRx = ts;
         return buf;
       }
     }
@@ -342,7 +342,7 @@ void resetMpsMsg(size_t len, mpsMsg_t* buf)
     (buf + i)->pending = (buf + i)->prot.flag ^ flag;
     (buf + i)->prot.flag  = flag;
     (buf + i)->ttl = 0;
-    (buf + i)->ts = 0;
+    (buf + i)->tsRx = 0;
   }
 }
 
