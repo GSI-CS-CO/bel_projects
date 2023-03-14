@@ -297,6 +297,31 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 } // fwlib_advanceTimePs
 
 
+b2bt_t fwlib_tfns2tps(float t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns = t_ns;
+  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps    = fwlib_cleanB2bt(t_ps);
+
+  return t_ps;
+} // tfns2ps
+
+
+float fwlib_tps2tfns(b2bt_t t_ps)
+{  
+  float  t_ns;
+  b2bt_t ts_t;
+  
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean, includes rounding
+  
+  t_ns = (float)(ts_t.ns) + (float)(ts_t.ps)/1000.0;
+
+  return t_ns;
+} // fwlib_tps2tfns
+
+
 b2bt_t fwlib_tns2tps(uint64_t t_ns)
 {
   b2bt_t t_ps;

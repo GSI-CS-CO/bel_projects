@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2023
+ *  version : 14-Mar-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000424                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000425                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -132,7 +132,7 @@ uint32_t  nHExt;                        // harmonic number of extraction machine
 uint64_t  TH1Inj_as;                    // h=1 period [as] of injection machine
 uint32_t  nHInj;                        // harmonic number of injection machine 0..255
 uint64_t  TBeat_as;                     // beating period [as]
-int32_t   cPhase;                       // correction for phase matching
+b2bt_t    cPhase_t;                       // correction for phase matching
 int32_t   cTrigExt;                     // correction for extraction trigger
 int32_t   cTrigInj;                     // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
@@ -937,7 +937,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       TH1Ext_as    = 0x0;
       TH1Inj_as    = 0x0;
       TBeat_as     = 0x0;
-      cPhase       = 0x0;
+      cPhase_t.ns  = 0x0;
+      cPhase_t.ps  = 0x0;
       cTrigExt     = 0x0;
       cTrigInj     = 0x0;
       nBucketExt   = 0x0;
@@ -964,7 +965,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       nHExt       = setNHExt[sid];
       TH1Inj_as   = setTH1Inj_as[sid];
       nHInj       = setNHInj[sid];
-      cPhase      = setCPhase[sid];
+      cPhase_t    = fwlib_tfns2tps(setCPhase[sid]);
       cTrigExt    = setCTrigExt[sid];
       cTrigInj    = setCTrigInj[sid];
       nBucketExt  = setNBuckExt[sid];
@@ -972,9 +973,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune   = setFFinTune[sid];
       fMBTune     = setFMBTune[sid];
 
-      cTrigExt_us = fwlib_float2half((float)cTrigExt/1000.0); // 16 bit float [us]
-      cTrigInj_us = fwlib_float2half((float)cTrigInj/1000.0); // 16 bit float [us]
-      cPhase_us   = fwlib_float2half((float)cPhase/1000.0);   // 16 bit float [us]
+      cTrigExt_us = fwlib_float2half((float)cTrigExt/1000.0);            // 16 bit float [us]
+      cTrigInj_us = fwlib_float2half((float)cTrigInj/1000.0);            // 16 bit float [us]
+      cPhase_us   = fwlib_float2half(fwlib_tps2tfns(cPhase_t)/1000.0);   // 16 bit float [us]
 
       tCBS        = recDeadline;
       getGeometricHarmonics(gid, &nGExt, &nGInj);
@@ -1024,7 +1025,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       tH1Inj_t.ps   = ( int32_t)( int16_t)(recTef & 0x0000ffff);
       tH1Inj_t.dps  = (uint32_t)(uint16_t)((recTef & 0xffff0000) >> 16); 
 
-      tH1Inj_t.ns  -= cPhase;         // chk, we should go to 1ps precision
+      tH1Inj_t.ns  -= cPhase_t.ns;
+      tH1Inj_t.ps  -= cPhase_t.ps;
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);
@@ -1225,9 +1227,9 @@ int main(void) {
     *pSharedGetTH1InjHi   = (uint32_t)((TH1Inj_as >> 32) & 0xffffffff); 
     *pSharedGetTH1InjLo   = (uint32_t)( TH1Inj_as        & 0xffffffff);
     *pSharedGetNHInj      = nHInj;
-    *pSharedGetCPhase     = cPhase;
-    *pSharedGetCTrigExt   = cTrigExt;
-    *pSharedGetCTrigInj   = cTrigInj;
+    *pSharedGetCPhase     = fwlib_tps2tfns(cPhase_t);
+    *pSharedGetCTrigExt   = (float)cTrigExt;
+    *pSharedGetCTrigInj   = (float)cTrigInj;
     *pSharedGetTBeatHi    = (uint32_t)((TBeat_as >> 32)  & 0xffffffff); 
     *pSharedGetTBeatLo    = (uint32_t)( TBeat_as         & 0xffffffff);
     *pSharedGetComLatency = comLatency;
