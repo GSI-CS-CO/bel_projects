@@ -184,15 +184,33 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a five vertex chain to two vertices. Top vertex is a block.
     Tests separating vertices with different types.
     """
+    self.replaceChain2('replaceChain/chain5Block1.dot', 0)
+
+  def test_replaceChainChain5Block1BlocksSeparated(self):
+    """Compact a five vertex chain to two vertices. Top vertex is a block.
+    Tests separating vertices with different types.
+    """
     self.replaceChainBlocksSeparated('replaceChain/chain5Block1.dot', 0)
 
   def test_replaceChainChain5Block3(self):
     """Compact a five vertex chain to three vertices. Third vertex is a block.
     Tests separating vertices with different types.
     """
+    self.replaceChain2('replaceChain/chain5Block3.dot', 0)
+
+  def test_replaceChainChain5Block3BlocksSeparated(self):
+    """Compact a five vertex chain to three vertices. Third vertex is a block.
+    Tests separating vertices with different types.
+    """
     self.replaceChainBlocksSeparated('replaceChain/chain5Block3.dot', 0)
 
   def test_replaceChainChain5Block5(self):
+    """Compact a five vertex chain to two vertices. Bottom vertex is a block.
+    Tests separating vertices with different types.
+    """
+    self.replaceChain2('replaceChain/chain5Block5.dot', 0)
+
+  def test_replaceChainChain5Block5BlocksSeparated(self):
     """Compact a five vertex chain to two vertices. Bottom vertex is a block.
     Tests separating vertices with different types.
     """
