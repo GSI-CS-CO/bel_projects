@@ -25,8 +25,8 @@ bool ReplaceChain::findStartOfChain() {
       VertexNum s = successorInChain(startOfChain);
       if (c->superverbose) {
         std::cout << "1 findStartOfChain v: " << v << ", successor: " << s << ", startOfChain: " <<
-          startOfChain << ", in: " << boost::in_degree(s, *g) <<
-          ", out: " << boost::out_degree(s, *g) << std::endl;
+          startOfChain << ", in: " << (s != ULONG_MAX ? std::to_string(boost::in_degree(s, *g)) : "unknown") <<
+          ", out: " << (s != ULONG_MAX ? std::to_string(boost::out_degree(s, *g)) : "unknown") << std::endl;
       }
       if (s != ULONG_MAX && boost::in_degree(s, *g) <= 1 && boost::out_degree(s, *g) <= 1) {
         break;
@@ -54,7 +54,7 @@ bool ReplaceChain::getStartOfChain(VertexNum v, VertexNum first) {
       std::cout << "2 v: " << v << std::endl;
     }
     VertexNum p = predecessorInChain(v);
-    if (boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) <= 1) {
+    if (p != ULONG_MAX && boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) <= 1) {
       result = getStartOfChain(p, first);
     } else {
       result = false;
@@ -75,21 +75,25 @@ bool ReplaceChain::getStartOfChain(VertexNum v, VertexNum first) {
     if (c->superverbose) {
       std::cout << "4 v: " << v << " p: " << p << std::endl;
     }
-    if (predecessorInChain(p) == v) {
+    if (p != ULONG_MAX && predecessorInChain(p) == v) {
       // we have a two-vertex cycle, not a start of a chain to replace.
+      //~ std::cout << "4a v: " << v << " p: " << p << std::endl;
       result = false;
-    } else if (boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) == 1) {
+    } else if (p != ULONG_MAX && boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) == 1) {
       // p is in the chain
       // out_degree(p, *g) >= 1 since p is predecessor of v.
       // we may have a cycle (p== first), then first is start of chain.
       if (p == first) {
+        //~ std::cout << "4b v: " << v << " p: " << p << std::endl;
         result = true;
         startOfChain = first;
       } else {
+        //~ std::cout << "4c v: " << v << " p: " << p << std::endl;
         result = getStartOfChain(p, first);
       }
     } else {
       // p is not in the chain, v is start of chain.
+      //~ std::cout << "4d v: " << v << " p: " << p << std::endl;
       result = true;
       startOfChain = v;
     }
@@ -108,6 +112,7 @@ VertexNum ReplaceChain::predecessor(VertexNum v, bool inChain) {
     VertexDescriptor source1 = source(*in_begin, *g);
     if (c->blocksSeparated && inChain) {
       VertexNum candidate = boost::get(id, source1);
+      //~ std::cout << "predecessor v: " << v << " candidate: " << candidate << std::endl;
       std::string vType = (*g)[v].type;
       std::string pType = (*g)[candidate].type;
       if (vType.compare(pType) == 0) {
@@ -116,6 +121,7 @@ VertexNum ReplaceChain::predecessor(VertexNum v, bool inChain) {
     } else {
       predecessor = boost::get(id, source1);
     }
+    //~ std::cout << "predecessor v: " << v << " predecessor: " << predecessor << std::endl;
   }
   return predecessor;
 }
@@ -136,6 +142,7 @@ VertexNum ReplaceChain::successor(VertexNum v, bool inChain) {
     VertexDescriptor target1 = target(*out_begin, *g);
     if (c->blocksSeparated && inChain) {
       VertexNum candidate = boost::get(id, target1);
+      //~ std::cout << "successor v: " << v << " candidate: " << candidate << std::endl;
       std::string vType = (*g)[v].type;
       std::string sType = (*g)[candidate].type;
       if (vType.compare(sType) == 0) {
