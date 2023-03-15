@@ -311,6 +311,21 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/tsl020.dot', 0)
 
+  def test_replaceChainTsl017(self):
+    """Compact a schedule from tsl017.
+    """
+    self.replaceChain2('replaceChain/tsl017.dot', 0)
+
+  def test_replaceChainTsl020BlocksSeparated(self):
+    """Compact a schedule from tsl020.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/tsl020.dot', 0)
+
+  def test_replaceChainTsl017BlocksSeparated(self):
+    """Compact a schedule from tsl017.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/tsl017.dot', 0)
+
   def test_replaceChainGitLog(self):
     """Compact a graph from git log.
     """
