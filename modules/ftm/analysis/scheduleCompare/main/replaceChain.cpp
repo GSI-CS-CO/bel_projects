@@ -9,9 +9,8 @@ int main(int argc, char* argv[]) {
   int error = 0;
   int opt;
   char* program = argv[0];
-  const char* Toption = "xdot";
   configuration config;
-  while ((opt = getopt(argc, argv, "1bc:ho:svVwT:")) != -1) {
+  while ((opt = getopt(argc, argv, "1bc:ho:svVw")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
@@ -46,9 +45,6 @@ int main(int argc, char* argv[]) {
       case 'V':
         version(program);
         error = VERSION_MESSAGE;
-        break;
-      case 'T':
-        Toption = optarg;
         break;
       case 'c':
         {
@@ -136,5 +132,5 @@ void usage(char* program) {
 }
 
 void version(char* program) {
-  std::cerr << program << ", version 1.0.0" << std::endl;
+  std::cerr << program << ", version 1.0.1" << std::endl;
 }
