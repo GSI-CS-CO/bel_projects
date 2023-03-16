@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Feb-2023
+ *  version : 14-Mar-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -311,14 +311,12 @@ b2bt_t fwlib_tfns2tps(float t_ns)
 
 float fwlib_tps2tfns(b2bt_t t_ps)
 {  
-  float  t_ns;
-  b2bt_t ts_t;
+  float  tmp1, tmp2;
   
-  ts_t = fwlib_cleanB2bt(t_ps);                  // clean, includes rounding
-  
-  t_ns = (float)(ts_t.ns) + (float)(ts_t.ps)/1000.0;
+  tmp1 = (float)(t_ps.ns);
+  tmp2 = (float)(t_ps.ps) / 1000.0;
 
-  return t_ns;
+  return tmp1 + tmp2;;
 } // fwlib_tps2tfns
 
 

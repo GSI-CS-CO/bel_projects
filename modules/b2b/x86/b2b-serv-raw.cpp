@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Mar-2023
+ *  version : 16-Mar-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000424
+#define B2B_SERV_RAW_VERSION 0x000425
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -391,6 +391,10 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
+  std::cerr << std::endl;
+  std::cerr << "Important notice: This program uses the ECA action queue of an lm32(!). Only one instance of this" << std::endl;
+  std::cerr << "programm shall be used. Other programs (from host or lm32) must not access that action  queue. " << std::endl;
+  std::cerr << std::endl;
   std::cerr << "Example1: '" << program << " tr0 -e0 pro'" << std::endl;
   std::cerr << std::endl;
 
@@ -789,6 +793,7 @@ int main(int argc, char** argv)
 
     eb_device_t   device;
     eb_address_t  ecaq_base;
+    char          ebPath[1024];
     uint32_t      recTag;
     uint64_t      deadline;
     uint64_t      evtId; 
@@ -804,8 +809,10 @@ int main(int argc, char** argv)
     uint32_t      qIdx = 0;
     uint64_t      t1, t2;
     uint32_t      tmp32;
+
+    sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
+    ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base);
     
-    ebStatus = comlib_ecaq_open("dev/wbm1", qIdx, &device, &ecaq_base);
     while(true) {
       //      saftlib::wait_for_signal();
       t1 = comlib_getSysTime();
