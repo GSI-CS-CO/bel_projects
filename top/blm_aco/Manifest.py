@@ -20,21 +20,23 @@ files = [
    "atr_timeout.vhd",
    "fg901040.vhd",
    "in_reg.vhd",
-   "BLM_watchdog.vhd",
+   "BLM_watchdog_v1.0.vhd",
    "BLM_gate_timing_seq.vhd",
    "up_down_counter_1bit.vhd",
-   "Beam_Loss_check.vhd",
+   "Beam_Loss_check_v1.0.vhd",
    "front_board_id_v0.vhd",
-   "BLM_counter_pool.vhd",
-   "BLM_Interlock_out.vhd",
+   "BLM_counter_pool_el.vhd",
+   "BLM_out_el.vhd",
    "IOBP_LED_ID_Module.vhd",
    "p_connector.vhd",
-   "BLM_in_Multiplexer.vhd",
+   "BLM_in_mux.vhd",
    "BLM_gate_timing_seq_elem.vhd",
    "test_sig_pll.vhd",
    "test_sig1_pll.vhd",
-   "overflow_ram.vhd",
-   "BLM_value_in_ram.vhd"
+   "BLM_gate_err_mux.vhd",
+   "BLM_ena_in_mux.vhd",
+   "BLM_wd_err_mux.vhd",
+   "BLM_or_mux.vhd"
 ]
 
 modules = {
