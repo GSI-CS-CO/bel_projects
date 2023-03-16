@@ -16,4 +16,15 @@ package scu_diob_pkg is
   TYPE    t_in_array                is array (0 to 8) of std_logic_vector(5 downto 0);
   TYPE    t_gate_counter_in_Array   is array (0 to 5) of std_logic_vector(11 downto 0);
   TYPE    t_IO_Reg_1_to_8_Array     is array (1 to 8)  of std_logic_vector(15 downto 0);
+  TYPE    t_BLM_reg_Array           is array (0 to 255) of std_logic_vector(15 downto 0);
+  TYPE    t_BLM_data_Array           is array (0 to 127) of std_logic_vector(15 downto 0);
+  TYPE    t_BLM_th_Array           is array (0 to 255) of std_logic_vector(31 downto 0);
+  TYPE    t_IO_Reg_0_to_2_Array     is array (0 to 2)  of std_logic_vector(15 downto 0);
+  TYPE    t_BLM_out_Array           is array (0 to 255) of std_logic_vector(5 downto 0);
+  TYPE    t_BLM_12_to_6_mux_sel_array   is array (0 to 5) of std_logic_vector(3 downto 0);
+  TYPE    t_BLM_or_mux_sel_array is array (0 to 5) of  std_logic_vector(4 downto 0);
+  TYPE    t_BLM_wd_mux_sel_array  is array (0 to 5) of  std_logic_vector(5 downto 0);
+  TYPE    t_BLM_mux_reg_Array     is array (0 to 5) of std_logic_vector(15 downto 0);
+    TYPE  t_BLM_out_reg_Array    is array (0 to 191) of std_logic_vector(15 downto 0);
+ -- TYPE t_BLM_reg_Array is array (natural range <>) of std_logic_vector(15 downto 0);
 end scu_diob_pkg;

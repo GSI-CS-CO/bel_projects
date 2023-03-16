@@ -9,7 +9,7 @@ port(
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic;        -- input signal
   gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
-  hold: in std_logic_vector(7 downto 0);
+  hold: in std_logic_vector(15 downto 0);
   timeout_error : out std_logic;  -- gate doesn't start within the given timeout
   gate_out: out std_logic        -- out gate signal
 );
@@ -20,10 +20,10 @@ architecture rtl of BLM_gate_timing_seq_elem is
 type   gate_state_t is   (idle, ready, timeout_state, gate_out_state);
 signal gate_state:   gate_state_t:= idle;
 
-signal timeout_reset : unsigned(7 downto 0); 
+signal timeout_reset : unsigned(15 downto 0); 
 
 signal new_val_wait: std_logic :='0';
-signal timeout : unsigned(7 downto 0) := timeout_reset;
+signal timeout : unsigned(15 downto 0) := timeout_reset;
 signal curr_val   :std_logic:='0';
 
 
