@@ -641,6 +641,40 @@ port (
 	);
 END component test_sig1_pll;
 
+component aw_io_reg
+  generic ( AW_Base_addr:   integer;
+            CLK_sys_in_Hz:  integer);
+  port (
+        Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
+        Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus
+        Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
+        Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
+        Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
+        Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
+        Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
+        clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
+        Ena_every_1us:        in   std_logic;                        -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
+        nReset:               in   std_logic;
+
+        SCU_AW_Input_Reg:     in   t_IO_Reg_1_to_7_Array;            -- Input-Port's  zum SCU-Bus
+        SCU_AW_Output_Reg:    out  t_IO_Reg_1_to_7_Array;            -- Output-Port's vom SCU-Bus
+
+        AWOut_Reg1_wr:        out  std_logic;                        -- Daten-Reg. AWOut1
+        AWOut_Reg2_wr:        out  std_logic;                        -- Daten-Reg. AWOut2
+        AWOut_Reg3_wr:        out  std_logic;                        -- Daten-Reg. AWOut3
+        AWOut_Reg4_wr:        out  std_logic;                        -- Daten-Reg. AWOut4
+        AWOut_Reg5_wr:        out  std_logic;                        -- Daten-Reg. AWOut5
+        AWOut_Reg6_wr:        out  std_logic;                        -- Daten-Reg. AWOut6
+        AWOut_Reg7_wr:        out  std_logic;                        -- Daten-Reg. AWOut7
+
+        Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
+        Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
+        Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
+        LA:                   out  std_logic_vector(15 downto 0)
+      );
+end component aw_io_reg;
+
+
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
 --  +============================================================================================================================+
@@ -1268,6 +1302,41 @@ port map  (
 
 
 
+      AW_Port1: aw_io_reg
+      generic map(
+            CLK_sys_in_Hz =>  125000000,
+            AW_Base_addr =>   c_AW_Port1_Base_Addr
+                 )
+      port map  (
+      
+            Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,    -- latched address from SCU_Bus
+            Data_from_SCUB_LA   =>  Data_from_SCUB_LA,   -- latched data from SCU_Bus
+            Ext_Adr_Val         =>  Ext_Adr_Val,         -- '1' => "ADR_from_SCUB_LA" is valid
+            Ext_Rd_active       =>  Ext_Rd_active,       -- '1' => Rd-Cycle is active
+            Ext_Rd_fin          =>  Ext_Rd_fin,          -- marks end of read cycle, active one for one clock period of sys_clk
+            Ext_Wr_active       =>  Ext_Wr_active,       -- '1' => Wr-Cycle is active
+            Ext_Wr_fin          =>  SCU_Ext_Wr_fin,      -- marks end of write cycle, active one for one clock period of sys_clk
+            clk                 =>  clk_sys,             -- should be the same clk, used by SCU_Bus_Slave
+            Ena_every_1us       =>  Ena_every_1us,       -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
+            nReset              =>  rstn_sys,
+      
+            SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,    -- Input-Port's  zum SCU-Bus
+            SCU_AW_Output_Reg   =>  SCU_AW_Output_Reg,   -- Output-Port's vom SCU-Bus
+      
+            AWOut_Reg1_wr       =>  AWOut_Reg1_wr,       -- Daten-Reg. AWOut1
+            AWOut_Reg2_wr       =>  AWOut_Reg2_wr,       -- Daten-Reg. AWOut2
+            AWOut_Reg3_wr       =>  AWOut_Reg3_wr,       -- Daten-Reg. AWOut3
+            AWOut_Reg4_wr       =>  AWOut_Reg4_wr,       -- Daten-Reg. AWOut4
+            AWOut_Reg5_wr       =>  AWOut_Reg5_wr,       -- Daten-Reg. AWOut5
+            AWOut_Reg6_wr       =>  AWOut_Reg6_wr,       -- Daten-Reg. AWOut6
+            AWOut_Reg7_wr       =>  AWOut_Reg7_wr,       -- Daten-Reg. AWOut7
+      
+            Rd_active           =>  AW_Port1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
+            Dtack_to_SCUB       =>  AW_Port1_Dtack,           -- connect read sources to SCUB-Macro
+            Data_to_SCUB        =>  AW_Port1_data_to_SCUB,    -- connect Dtack to SCUB-Macro
+            LA                  =>  LA_AW_Port1
+            );
+      
 --------- AW-Output Mux zu den "Piggys" --------------------
 
 p_AW_Out_Mux:  PROCESS (Tag_Maske_Reg, Tag_Outp_Reg, SCU_AW_Output_Reg)
@@ -1497,7 +1566,8 @@ BLM_ctrl_Reg_block: io_reg
   Reg_IO4            =>  BLM_gate_seq_ck_sel_Reg(1), -- '0' & clk_gate_seq8 & '0' & clk_gate_seq7 & '0' & clk_gate_seq6 & '0' & clk_gate_seq5
   Reg_IO5            =>  BLM_gate_seq_ck_sel_Reg(2), -- '0' & clk_gate_seq12 & '0' & clk_gate_seq11 & '0' & clk_gate_seq10 & '0' & clk_gate_seq9
   Reg_IO6            =>  BLM_gate_seq_in_ena_Reg,        --"00"& ena for gate board1 &"00" & ena for gate board2
-  Reg_IO7            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET -- bit 15..1 free
+  Reg_IO7            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, bit 1, when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
+                                                    --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..2 free
   Reg_IO8            =>  open,
   Reg_rd_active      =>  BLM_ctrl_rd_active,
   Dtack_to_SCUB      =>  BLM_ctrl_Dtack,
@@ -1824,6 +1894,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         Tag_Ctrl1_rd_active,      Tag_Ctrl1_data_to_SCUB,
                         Conf_Sts1_rd_active,      Conf_Sts1_data_to_SCUB,
                         tmr_rd_active,            tmr_data_to_SCUB,
+                        AW_Port1_rd_active,       AW_Port1_data_to_SCUB,
                         IOBP_msk_rd_active,       IOBP_msk_data_to_SCUB,
                         IOBP_id_rd_active,        IOBP_id_data_to_SCUB,
                         IOBP_in_rd_active,        IOBP_in_data_to_SCUB,
@@ -1836,7 +1907,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(10 downto 0);
+  variable sel: unsigned(11 downto 0);
   variable sel_th: unsigned(127 downto 0);
   variable sel_in_ena: unsigned(31 downto 0);
   variable sel_out_ena: unsigned(23 downto 0);
@@ -1849,22 +1920,23 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     sel_th:= unsigned (BLM_th_active);
 
     sel:= BLM_out_mux_rd_active & BLM_ctrl_rd_active  &  daq_user_rd_active & 
-            IOBP_in_rd_active  & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
+            IOBP_in_rd_active  & AW_Port1_rd_active & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
             Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
   
-if to_integer(sel(10 downto 0))>0 then
-  case sel(10 downto 0) IS
-      when "10000000000" => Data_to_SCUB <= BLM_out_mux_data_to_SCUB;
-      when "01000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB;
-      when "00100000000" => Data_to_SCUB <= daq_data_to_SCUB;
-      when "00010000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
-      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "00000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "00000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "00000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "00000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "00000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "00000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+if to_integer(sel(11 downto 0))>0 then
+  case sel(11 downto 0) IS
+      when "100000000000" => Data_to_SCUB <= BLM_out_mux_data_to_SCUB;
+      when "010000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB;
+      when "001000000000" => Data_to_SCUB <= daq_data_to_SCUB;
+      when "000100000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
+      when "000010000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;  
+      when "000001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "000000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000000010000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "000000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "000000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "000000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "000000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
 
       when others      => Data_to_SCUB <= (others => '0');
     end case;
@@ -1978,27 +2050,6 @@ BLM_tst_ck_sig <= clk_100MHz & clk_75MHz & clk_50MHz & clk_25MHz & clk_20MHz & c
                   clk_8MHz & clk_6_25MHz & clk_4MHz & clk_3MHz & clk_2MHz & clk_1_25MHz;
 
 
-
---BLM_Module: Beam_Loss_check 
---  generic map (
- --     n => 64,
- --     WIDTH => 20     -- Counter width
- --
- -- )
- -- port map(
- --     clk_sys      => clk_sys,    -- Clock
- --     rstn_sys     => rstn_sys,     -- Reset
- --     pos_threshold => pos_thres_Reg2 & pos_thres_Reg1,
- --     neg_threshold => neg_thres_Reg2 & neg_thres_Reg1,
- --     BLM_cnt_Reg => BLM_cnt_Reg,
- --     BLM_out_Reg => BLM_out_Reg,
- --     BLM_in_Reg => BLM_in_Reg2(15 downto 0) & BLM_in_Reg1(15 downto 0),
- --     Test_In_Mtx  => Test_In_Mtx,
- --     AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
- --     INTL_Output  => INTL_Output,
- --   BLM_status_Reg => BLM_status_Reg
-
- -- );
 BLM_Module : Beam_Loss_check 
   generic map (
   n => 64,
@@ -2048,7 +2099,7 @@ port map ( clk               => clk_sys,
            IOBP_ID           => IOBP_ID,
            INTL_Output       =>  BLM_out, --INTL_Output,
            AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-           nBLM_out_ena        => '1', -- to be updated 
+           nBLM_out_ena        => BLM_ctrl_Reg(1), -- 
            AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
            IOBP_Output       => IOBP_Output,
            IOBP_Input        => IOBP_Input,
