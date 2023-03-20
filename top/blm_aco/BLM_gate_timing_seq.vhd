@@ -12,11 +12,11 @@ generic (
 
 port(
 
-  clk_i : in std_logic;          -- chip-internal pulsed clk signal
+  clk_i : in std_logic_vector(n-1 downto 0);          -- chip-internal pulsed clk signal
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
   gate_seq_ena : in std_logic_vector(n-1 downto 0);     -- enable '1' for input connected to the counter
-  hold_time : in std_logic_vector(7 downto 0);
+  hold_time : in std_logic_vector(15 downto 0);
   timeout_error : out std_logic_vector(n-1 downto 0);  -- gate doesn't start within the given timeout
   gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
 
@@ -37,7 +37,7 @@ component BLM_gate_timing_seq_elem is
     rstn_i : in std_logic;        -- reset signal
     gate_in : in std_logic;        -- input signal
     gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
-    hold: in std_logic_vector(7 downto 0);
+    hold: in std_logic_vector(15 downto 0);
     timeout_error : out std_logic;  -- gate doesn't start within the given timeout
     gate_out: out std_logic      -- out gate signal
   );
@@ -56,7 +56,7 @@ begin
 
        
             port map(
-              clk_i=> clk_i,
+              clk_i=> clk_i(i),
               rstn_i => rstn_i,
               gate_in => gate_in(i),
               gate_in_ena => gate_seq_ena(i),    -- enable '1' for input connected to the counter
