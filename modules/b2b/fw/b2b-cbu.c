@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Mar-2023
+ *  version : 20-Mar-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -123,16 +123,16 @@ volatile uint32_t *pSharedGetTBeatHi;   // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedGetTBeatLo;   // pointer to a "user defined" u32 register; here: period of beating, low bits
 volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA [ns]
 
+// important for b2b system
 uint32_t  gid;                          // GID used for transfer
 uint32_t  sid;                          // SID user for transfer
-uint32_t  bpid;                         // BPID used for transfer
 uint32_t  mode;                         // mode for transfer
 uint64_t  TH1Ext_as;                    // h=1 period [as] of extraction machine
 uint32_t  nHExt;                        // harmonic number of extraction machine 0..255
 uint64_t  TH1Inj_as;                    // h=1 period [as] of injection machine
 uint32_t  nHInj;                        // harmonic number of injection machine 0..255
 uint64_t  TBeat_as;                     // beating period [as]
-b2bt_t    cPhase_t;                       // correction for phase matching
+b2bt_t    cPhase_t;                     // correction for phase matching
 int32_t   cTrigExt;                     // correction for extraction trigger
 int32_t   cTrigInj;                     // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
@@ -143,6 +143,17 @@ uint64_t  tCBS;                         // deadline of CMD_B2B_START
 uint16_t  offsetPrr_us;                 // offset from CBS to to deadline of PRE [us, hfloat]
 uint32_t  nGExt;                        // geometric harmonic number of extraction machine due to its circumference
 uint32_t  nGInj;                        // geometric harmonic number of injections machine due to its circumference
+
+// copies for nice trigger messages
+uint32_t  flagsExt;                     // LSA flags extraction
+uint32_t  sidExt;                       // LSA SID extraction
+uint32_t  bpidExt;                      // LSA BPID extraction
+uint64_t  paramExt;                     // LSA param extraction
+uint32_t  flagsInj;                     // LSA flags injection
+uint32_t  sidInj;                       // LSA SID injection
+uint32_t  bpidInj;                      // LSA BPID injection
+uint64_t  paramInj;                     // LSA param injection
+
 
 b2bt_t    tH1Ext_t;                     // h=1 phase of extraction machine
 b2bt_t    tH1Inj_t;                     // h=1 phase of injection machine
@@ -930,7 +941,19 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // clear 'local' variables
       sid          = (uint32_t)((recId >> 20) & 0x0fff);      // required for proper indexing
       gid          = (uint32_t)((recId >> 48) & 0x0fff);      // temporary assignment useful for debugging if routine setSubmit() fails
-      bpid         = (uint32_t)((recId >>  6) & 0x3fff);      // not part of setting data; 'inherit' from received timing message
+
+      // copy LSA IDs extraction
+      flagsExt     = (uint32_t)((recId >> 32) & 0x0f);
+      sidExt       = sid;
+      bpidExt      = (uint32_t)((recId >>  6) & 0x3fff);      // not part of setting data; 'inherit' from received timing message
+      paramExt     = recParam;
+
+      // copy LSA IDs injection
+      flagsInj     = B2B_FLAG_BEAMIN;   // hack, todo
+      sidInj       = 0x0;               // todo
+      bpidInj      = 0x0;               // todo
+      paramInj     = 0x0;               // todo
+        
       mode         = 0x0;
       nHExt        = 0x0;
       nHInj        = 0x0;
@@ -1050,7 +1073,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Ext_t.dps   = 0x0;
     
     // send command: phase measurement at extraction machine
-    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, 0x0, sid, bpid, 0); 
+    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, flagsExt, sidExt, bpidExt, 0); 
     sendParam      = TH1Ext_as & 0x00ffffffffffffff;                            // use low 56 bit as period
     sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
     sendTef        = (uint32_t)(cTrigExt_us) << 16;                             // high 16 bit: ext kicker correction
@@ -1068,7 +1091,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     tH1Inj_t.dps   = 0x0;
     
     // send command: phase measurement at injection machine
-    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, 0x0, sid, bpid, 0); 
+    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, flagsInj, sidExt, bpidExt, 0); 
     sendParam      = TH1Inj_as & 0x00ffffffffffffff;                            // use low 56 bit as period
     sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
     sendTef        = (uint32_t)(cPhase_us) << 16;                               // high 16 bit: phase correction, low 16 bit: reserved
@@ -1117,8 +1140,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
       errorFlags |= B2B_ERRFLAG_CBU;                                          // just set error flag
     } // if tTrigExt
-    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-    sendParam    = 0x0;                                                       // chk , resend BPCID et al
+    sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGEREXT, flagsExt, sidExt, bpidExt, errorFlags);
+    sendParam    = paramExt;                                                  
     sendTef      = (uint32_t)(offsetFin_us & 0xffff) << 16;                   // high 16 bit: offset 'fin (ready)' to CBS
     sendTef     |= (uint32_t)(offsetPrr_us & 0xffff);                         // low 16 bit: offset 'received PRE' to CBS
     sendDeadline = tTrigExt;
@@ -1136,8 +1159,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       errorFlags |= B2B_ERRFLAG_CBU;                                          // set error flag
     } // if tTrigInj
     else { // only trigger kicker if we are not late; in case of stacking a kick at the wrong time might kick out already stored beam
-      sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, B2B_FLAG_BEAMIN, sid, bpid, errorFlags);
-      sendParam    = 0x0;                                                     // chk , resend BPCID et al
+      sendEvtId    = fwlib_buildEvtidV1(sendGid, B2B_ECADO_B2B_TRIGGERINJ, flagsInj, sidInj, bpidInj, errorFlags);
+      sendParam    = paramInj;
       sendDeadline = tTrigInj;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
     } // else tTrigInj
