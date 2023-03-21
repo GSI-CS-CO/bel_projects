@@ -23,10 +23,18 @@ uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
                            );
 
 // project time t1 [ps] to approximately t2 [ps] in multiples of period T [as]; returns projected time [ps]
-b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,            // time 1 [ps]
-                           b2bt_t    t2_ps,            // time 2 [ps], where t2 > t1
-                           uint64_t T_as               // period T [as]
+b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,           // time 1 [ps]
+                           b2bt_t    t2_ps,           // time 2 [ps], where t2 > t1
+                           uint64_t T_as              // period T [as]
                            );
+
+// convert [ns, float] to [ps], returns t [ps]
+b2bt_t fwlib_tfns2tps(float t_ns                      // time [ns]
+                      );
+
+// convert [ps] to [ns, float], returns t [ns, float]f
+float fwlib_tps2tfns(b2bt_t t_ps                      // time [ps]
+                     );
 
 // convert [ns] to [ps], returns t [ps]
 b2bt_t fwlib_tns2tps(uint64_t t_ns                    // time [ns]

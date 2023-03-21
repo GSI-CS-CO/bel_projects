@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Feb-2023
+ *  version : 14-Mar-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -295,6 +295,29 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 
   return tAdvanced_t; // [ps]
 } // fwlib_advanceTimePs
+
+
+b2bt_t fwlib_tfns2tps(float t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns = t_ns;
+  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps    = fwlib_cleanB2bt(t_ps);
+
+  return t_ps;
+} // tfns2ps
+
+
+float fwlib_tps2tfns(b2bt_t t_ps)
+{  
+  float  tmp1, tmp2;
+  
+  tmp1 = (float)(t_ps.ns);
+  tmp2 = (float)(t_ps.ps) / 1000.0;
+
+  return tmp1 + tmp2;;
+} // fwlib_tps2tfns
 
 
 b2bt_t fwlib_tns2tps(uint64_t t_ns)
