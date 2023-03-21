@@ -23,7 +23,8 @@ port (
     neg_threshold           : in t_BLM_th_Array ;
     BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
     BLM_gate_hold_time_Reg  : in std_logic_vector(15 downto 0);
-    BLM_ctrl_Reg            : in std_logic_vector(15 downto 0);
+    BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
+    --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     BLM_gate_seq_ck_sel_Reg : in t_IO_Reg_0_to_2_Array;
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2
     BLM_in_ena_Reg          : in t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)

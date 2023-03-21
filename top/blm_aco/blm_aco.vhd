@@ -1037,7 +1037,7 @@ signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_seq_ck_sel_Reg : t_IO_Reg_0_to_2_Array;
 signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
-signal BLM_ctrl_Reg:  std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 6-1 = up_in_counter select, bit 12-7 = down_in_counter select, 15..13 free
+signal BLM_ctrl_Reg:  std_logic_vector(15 downto 0); 
 signal BLM_ctrl_rd_active:    std_logic;
 signal BLM_ctrl_data_to_SCUB: std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
 signal BLM_ctrl_Dtack:        std_logic;                    -- Dtack to SCU Bus Macro
@@ -1566,8 +1566,8 @@ BLM_ctrl_Reg_block: io_reg
   Reg_IO4            =>  BLM_gate_seq_ck_sel_Reg(1), -- '0' & clk_gate_seq8 & '0' & clk_gate_seq7 & '0' & clk_gate_seq6 & '0' & clk_gate_seq5
   Reg_IO5            =>  BLM_gate_seq_ck_sel_Reg(2), -- '0' & clk_gate_seq12 & '0' & clk_gate_seq11 & '0' & clk_gate_seq10 & '0' & clk_gate_seq9
   Reg_IO6            =>  BLM_gate_seq_in_ena_Reg,        --"00"& ena for gate board1 &"00" & ena for gate board2
-  Reg_IO7            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, bit 1, when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
-                                                    --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..2 free
+  Reg_IO7            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
+                                                    --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
   Reg_IO8            =>  open,
   Reg_rd_active      =>  BLM_ctrl_rd_active,
   Dtack_to_SCUB      =>  BLM_ctrl_Dtack,
@@ -2040,11 +2040,13 @@ IOBP_In_LEDn:  for J in 1 to 12 generate
 ---Beam Loss Monitor new version
 
 
-BLM_data_in <= AW_IOBP_Input_Reg(1)(5 downto 0) & AW_IOBP_Input_Reg(1)(11 downto 6) & AW_IOBP_Input_Reg(2)(5 downto 0) & 
-               AW_IOBP_Input_Reg(2)(11 downto 6) & AW_IOBP_Input_Reg(3)(5 downto 0) & AW_IOBP_Input_Reg(3)(11 downto 6) & 
-               AW_IOBP_Input_Reg(4)(5 downto 0) & AW_IOBP_Input_Reg(4)(11 downto 6) & AW_IOBP_Input_Reg(5)(5 downto 0);
-            
-BLM_gate_in <= AW_IOBP_Input_Reg(6)(5 downto 0) & AW_IOBP_Input_Reg(5)(11 downto 6);
+
+
+BLM_data_in <= AW_IOBP_Input_Reg(5)(5 downto 0) & AW_IOBP_Input_Reg(4)(11 downto 6) & AW_IOBP_Input_Reg(4)(5 downto 0) &
+               AW_IOBP_Input_Reg(3)(11 downto 6) & AW_IOBP_Input_Reg(3)(5 downto 0) & AW_IOBP_Input_Reg(2)(11 downto 6) & 
+               AW_IOBP_Input_Reg(2)(5 downto 0) &  AW_IOBP_Input_Reg(1)(11 downto 6) & AW_IOBP_Input_Reg(1)(5 downto 0); 
+
+BLM_gate_in <= AW_IOBP_Input_Reg(5)(11 downto 6) & AW_IOBP_Input_Reg(6)(5 downto 0);
 ---
 BLM_tst_ck_sig <= clk_100MHz & clk_75MHz & clk_50MHz & clk_25MHz & clk_20MHz & clk_16MHz & clk_12_5MHz & clk_10MHz & 
                   clk_8MHz & clk_6_25MHz & clk_4MHz & clk_3MHz & clk_2MHz & clk_1_25MHz;

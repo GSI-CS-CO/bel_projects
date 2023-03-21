@@ -173,12 +173,13 @@ output_selection: BLM_or_mux
 
 
             BLM_status_reg(0)<=  "00" & BLM_out_signal & "00" &  BLM_Output; --BLM_out_signal and BLM output
-            BLM_status_reg(1)<= "00"& gate_out(11 downto 6) & "00" & gate_out(5 downto 0);         -- gate error
-            BLM_status_reg(2)<= "00"& wd_out(11 downto 6) & "00" & wd_out(5 downto 0);    -- interlock board 1 and board 2
-            BLM_status_reg(3)<= "00"& wd_out(23 downto 18) & "00" & wd_out(17 downto 12); -- interlock board 3 and board 4
-            BLM_status_reg(4)<= "00" & wd_out(35 downto 30)&"00"& wd_out(29 downto 24);   -- interlock board 5 and board 6
-            BLM_status_reg(5)<= "00"& wd_out(47 downto 42)&"00"& wd_out(41 downto 36);    -- interlock board 7 and board 8
+            BLM_status_reg(1)<= "00"& gate_out(11 downto 6) & "00" & gate_out(5 downto 0);         -- gate error from signals of gate board 2 and gate board 1
+            BLM_status_reg(2)<= "00"& wd_out(11 downto 6) & "00" & wd_out(5 downto 0);    -- interlock board 2 and board 1
+            BLM_status_reg(3)<= "00"& wd_out(23 downto 18) & "00" & wd_out(17 downto 12); -- interlock board 4 and board 3
+            BLM_status_reg(4)<= "00" & wd_out(35 downto 30)&"00"& wd_out(29 downto 24);   -- interlock board 6 and board 5
+            BLM_status_reg(5)<= "00"& wd_out(47 downto 42)&"00"& wd_out(41 downto 36);    -- interlock board 8 and board 7
             BLM_status_reg(6)<= "0000000000"& wd_out(53 downto 48);                             -- interlock board 9
+            
             BLM_status_reg(7) <= "00"& gate_in(11 downto 6) & "00" & gate_in(5 downto 0);
           
 
