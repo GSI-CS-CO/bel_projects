@@ -1,5 +1,8 @@
-# this is a hack for sl7
-export DIM_DNS_NODE=asl105
+SERVICEA=b2b-servsys-int-sis18-pm.service
+SERVICEB=b2b-servsys-int-sis18-cbu.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+systemctl daemon-reload
 
-b2b-serv-sys dev/wbm0 -s int_sis18-pm &
-b2b-serv-sys dev/wbm1 -s int_sis18-cbu &
+systemctl start $SERVICEA
+systemctl start $SERVICEB

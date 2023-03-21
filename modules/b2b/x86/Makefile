@@ -42,7 +42,7 @@ SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-r
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))
 
-TARGETS     := b2b-serv-raw b2b-ctl b2b-ui lib b2b-serv-sys b2b-client-sys b2b-serv-raw b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname
+TARGETS     := b2b-serv-raw b2b-ctl b2b-ui lib b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname
 
 all: $(TARGETS)
 
