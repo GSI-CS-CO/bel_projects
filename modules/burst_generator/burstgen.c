@@ -1166,6 +1166,13 @@ void execHostCmd(int32_t cmd)
 	  pTask[id].io_index = 0;
 	  pTask[id].trigger = 0;
 	  pTask[id].toggle = 0;
+	  pTask[id].period = 0;
+	  pTask[id].cycle = 0;
+	  pTask[id].setup = 0;
+	  pTask[id].deadline = 0;
+	  pTask[id].lasttick = 0;
+	  pTask[id].action = 0;
+	  pTask[id].failed = 0;
 
 	  if (verbose)
 	    printTaskContext(id);
