@@ -959,6 +959,10 @@ void execHostCmd(int32_t cmd)
 	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
 	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
 	    (uint32_t)(pTask[id].action >> 32),   (uint32_t)pTask[id].action);
+          mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
+	    (uint32_t)(pTask[id].setup >> 32),    (uint32_t)pTask[id].setup,
+	    (uint32_t)(pTask[id].lasttick >> 32), (uint32_t)pTask[id].lasttick,
+	    (uint32_t)(pTask[id].failed >> 32),   (uint32_t)pTask[id].failed);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i < N_BURSTS; ++i) {
@@ -972,6 +976,10 @@ void execHostCmd(int32_t cmd)
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
 		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
                 (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action);
+              mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
+		(uint32_t)(pTask[i].setup >> 32),    (uint32_t)pTask[i].setup,
+		(uint32_t)(pTask[i].lasttick >> 32), (uint32_t)pTask[i].lasttick,
+		(uint32_t)(pTask[i].failed >> 32),   (uint32_t)pTask[i].failed);
 	    }
 	  }
 	}
