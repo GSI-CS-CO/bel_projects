@@ -41,26 +41,38 @@ endif
 # hack for building on local linux box
 #DIMPATH     := /opt/dim/dim_v20r29
 
-TARGETS := software
+TARGETS := software nfsinit
 
 all: $(TARGETS)
 
 software:: 
 	$(MAKE) -C $(SW) all
 
+nfsinit:
+	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
+
 
 clean:
 	$(MAKE) -C $(SW) clean
 
-deploy: 
+deploy:
+# create folders
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                         # '/usr' is a hack
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib                         # '/usr' is a hack
+	mkdir -p $(STAGING)/$(SYSTEMD)
 
 # NFS init scripts, the format is 'fm-<environment>-<machine>-<room>.sh'
-	cp $(ASL)/fm-*.sh $(STAGING)                                        # nfs init scripts
+	cp $(NFSINIT)/*.sh $(STAGING)                                       # nfs init scripts
 
-# FEC x86 binaries 
+# tools
 	cp $(SW)/freq-measure $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
+	cp $(SW)/freq-mon-simple $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
+
+# configuration; the format is 'fm-<environment>-<machine>-<room>-<function>_start.sh'
+#	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+
+# systemd
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+
 
 .PHONY: all clean
 
