@@ -256,8 +256,8 @@ void ReplaceChain::createVertexAndEdges(VertexNum v) {
   }
   // if v is the last vertex in chain, handle name and label.
   if ((s != ULONG_MAX && chain.count(s) == 0) || s == ULONG_MAX) {
-    (*g)[newVertexNum].name = (*g)[newVertexNum].name + "\n...\n" + (*g)[v].name;
-    (*g)[newVertexNum].label = (*g)[newVertexNum].label + "\n...\n" + ((*g)[v].label.size() > 0 ? (*g)[v].label : (*g)[v].name);
+    (*g)[newVertexNum].name = (*g)[newVertexNum].name + "\n...(" + std::to_string(chain.size()-2) + ")\n" + (*g)[v].name;
+    (*g)[newVertexNum].label = (*g)[newVertexNum].label + "\n...(" + std::to_string(chain.size()-2) + ")\n" + ((*g)[v].label.size() > 0 ? (*g)[v].label : (*g)[v].name);
   }
 }
 
