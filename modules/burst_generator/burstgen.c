@@ -288,6 +288,14 @@ static int printTaskContext(int id) {
   return cnt;
 }
 
+static void printEcaActionCnt(void) {
+  mprintf("\n\tvalid:0x%x\n", *pSharedActCnt);
+  mprintf("\tinval:0x%x\n", *(pSharedActCnt + 3));
+  mprintf("\tfull:0x%x\n",  *(pSharedActCnt + 1));
+  mprintf("\tfail:0x%x\n",  *(pSharedActCnt + 2));
+  mprintf("\tlate:0x%x\n",  *(pSharedActCnt + 4));
+}
+
 /*******************************************************************************
  * \brief Update the control event configuration table
  *
@@ -1245,6 +1253,7 @@ void execHostCmd(int32_t cmd)
       case CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG: // print the trigger/toggle control and trigger/toggle configuration tables
 	mprintf("trg/tgg\n");
 	printTrgTggCtlCfg();
+	printEcaActionCnt();
 	break;
 
       case CMD_DIAG_PRINT_TASK_INTERVAL: // print elapsed time between tasks (requires the burst id)
