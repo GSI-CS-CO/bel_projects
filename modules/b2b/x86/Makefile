@@ -26,12 +26,20 @@ else
 EB          ?= ../../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
 CFLAGS      ?= -Wall -O2 -g
-#DIMPATH     := /opt/dim/dim_v20r33
-# the following four lines are a hack required for building software for sl7 (deprecated)
+CXX         := g++ --std=c++0x
+
+#DIMPATH     := /common/usr/timing/b2b/rocky9/dim_v20r33
+#ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/lib
+#ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/include/saftlib/
+
+# hack for sl7 (deprecated)
 DIMPATH     := /common/usr/timing/b2b/dim_v20r29
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
-CXX         := g++ --std=c++0x
+
+# hack for local boxes
+#DIMPATH     := /opt/dim/dim_v20r33
+
 endif
 
 EXTRA_FLAGS ?=

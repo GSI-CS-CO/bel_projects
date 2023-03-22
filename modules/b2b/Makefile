@@ -29,7 +29,7 @@ DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
 else
 EB          ?= ../../ip_cores/etherbone-core/api
 ARCH        ?= /x86_64
-DIMPATH      := /common/usr/timing/b2b/dim_v20r29
+DIMPATH      := /common/usr/timing/b2b/rocky9/dim_v20r33
 endif
 
 # set enviorinment, default is int
