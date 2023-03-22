@@ -4,11 +4,11 @@ name="chain5Block5-compact"
 ]
 e [shape=rectangle, type=block];
 "a
-...
+...(2)
 d" [label="a
-...
+...(2)
 d"];
 "a
-...
+...(2)
 d"->e ;
 }

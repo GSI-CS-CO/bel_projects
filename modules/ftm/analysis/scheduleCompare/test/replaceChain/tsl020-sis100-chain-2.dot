@@ -13,9 +13,9 @@ SIS100_PROTON_REPCOUNT_FLOW [beamproc=undefined, bpentry=false, bpexit=false, co
 "SA_20220620094802208_DEFAULT_ALIGN
 SA_20220620094802208_DEFAULT_BLOCK" [color=black, fillcolor=green, pattern=SA_20220620094802208_DEFAULT, shape=rectangle, style="dotted, filled"];
 "SIS100_PROTON_001
-...
+...(19)
 SIS100_PROTON_BLOCK" [color=black, fillcolor=green, label="SIS100_PROTON_001
-...
+...(19)
 SIS100_PROTON_BLOCK", pattern=SIS100_PROTON, shape=oval, style=filled];
 SA_20220620094802208_DEFAULT_ENTRY->SA_20220620094802208_DEFAULT_EXIT  [color=black, type=altdst];
 SA_20220620094802208_DEFAULT_EXIT->SA_20220620094802208_DEFAULT_ENTRY  [color=black, type=altdst];
@@ -35,9 +35,9 @@ SA_20220620094802208_DEFAULT_BLOCK"  [color=red, type=defdst];
 "SA_20220620094802208_DEFAULT_ALIGN
 SA_20220620094802208_DEFAULT_BLOCK"->SA_20220620094802208_DEFAULT_EXIT  [color=red, type=defdst];
 SIS100_PROTON_000->"SIS100_PROTON_001
-...
+...(19)
 SIS100_PROTON_BLOCK"  [color=red, type=defdst];
 "SIS100_PROTON_001
-...
+...(19)
 SIS100_PROTON_BLOCK"->SIS100_PROTON_REPCOUNT_BLOCK  [color=red, type=defdst];
 }
