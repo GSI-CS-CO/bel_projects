@@ -22,7 +22,7 @@ status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
 status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
 mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
 mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr);
-mpsMsg_t* expireMpsMsg(timedItr_t* itr);
+mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
 void resetMpsMsg(size_t len, mpsMsg_t* buf);
 void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
 

@@ -59,10 +59,12 @@ void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
   itr->total = total;
   itr->last = now;
   itr->period = TIM_1000_MS;
+
+  // set the iteration period
   if (freq && itr->total) {
     itr->period /=(freq * itr->total); // for 30Hz it's 33312 us (30.0192 Hz)
 
-    itr->ttl = itr->total * freq / 15; // TTL value of the MPS protocol data (2x lost msgs)
+    itr->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
 
     //itr->period /= 1000ULL; // granularity in 1 us
     //itr->period *= 1000ULL;
@@ -236,42 +238,6 @@ status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
 }
 
 /**
- * \brief alter lifetime of received MPS messages [MPS_FS_600]
- *
- * \param itr iterator used to access MPS messages in pre-defined period
- *
- * \ret ptr pointer to expired MPS message
- **/
-mpsMsg_t* expireMpsMsg(timedItr_t* itr)
-{
-  uint64_t now = getSysTime();
-  uint64_t deadline = itr->last + itr->period;
-  mpsMsg_t* buf = 0;
-
-  if (!itr->last)
-    deadline = now;       // initial check
-
-  // check lifetime of next MPS flag
-  if (deadline <= now) {
-
-    if (bufMpsMsg[itr->idx].ttl) {
-
-      if (now - bufMpsMsg[itr->idx].ts > TIM_100_MS) {
-        //DBPRINT2("%llu %llu\n", now, bufMpsMsg[itr->idx].ts);
-        bufMpsMsg[itr->idx].prot.flag = MPS_FLAG_NOK;
-        bufMpsMsg[itr->idx].ttl = 0;
-        buf = &bufMpsMsg[itr->idx];  // expired MPS message
-      }
-    }
-
-    // update iterator with deadline
-    resetItr(itr, now);
-  }
-
-  return buf;
-}
-
-/**
  * \brief update MPS message with a given MPS event
  *
  * \param buf Pointer to MPS message buffer
@@ -323,6 +289,28 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
   }
 
   return 0;
+}
+
+/**
+ * \brief Evaluate the lifetime of received MPS protocols [MPS_FS_600]
+ *
+ * \param idx Index of the MPS protocol
+ *
+ * \ret   ptr Pointer to expired MPS protocol
+ **/
+mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
+  mpsMsg_t* buf = 0;
+
+  if (bufMpsMsg[idx].ttl) {
+    --bufMpsMsg[idx].ttl;
+
+    if (!bufMpsMsg[idx].ttl) {
+      bufMpsMsg[idx].prot.flag = MPS_FLAG_NOK;
+      buf = &bufMpsMsg[idx];
+    }
+  }
+
+  return buf;
 }
 
 /**

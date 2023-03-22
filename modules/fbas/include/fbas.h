@@ -92,7 +92,8 @@ typedef enum {
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
-#define TSK_TTL_MPS_FLAGS       0x40000000 // monitor lifetime of MPS flags
+#define TSK_MONIT_MPS_TTL       0x40000000 // monitor lifetime of MPS flags
+#define TSK_EVAL_MPS_TTL        0x80000000 // evaluate the lifetime of MPS flags
 
 // FBAS timing messages
 #define FBAS_FLG_FID       0x1       // format ID, 2-bit

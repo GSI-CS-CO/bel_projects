@@ -432,7 +432,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
     &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  if (nextAction) {
+  if (nextAction != COMMON_ECADO_TIMEOUT) {
     now = getSysTime();
     storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS5, now);
 
@@ -673,13 +673,13 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_EN_MPS_FWD:
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
-        mpsTask |= TSK_TTL_MPS_FLAGS; // enable lifetime monitoring of the MPS flags
+        mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
         DBPRINT2("fbas%d: enabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_DIS_MPS_FWD:
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
-        mpsTask &= ~TSK_TTL_MPS_FLAGS; // disable lifetime monitoring of the MPS flags
+        mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
@@ -717,6 +717,10 @@ void timerHandler()
 
   uint64_t cputime = getCpuTime();
   prdTimer = getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS6, cputime);
+
+  // ready to evaluate the lifetime of the MPS protocols
+  if (mpsTask & TSK_MONIT_MPS_TTL)
+    mpsTask |= TSK_EVAL_MPS_TTL;
 
   ++prescaler;
   if (prescaler == PSCR_1S_TIM_1MS) {
@@ -757,12 +761,16 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       break;
 
     case FBAS_NODE_RX:
-      if (*pMpsTask & TSK_TTL_MPS_FLAGS) {
-        // monitor lifetime of MPS flags periodically and handle expired MPS flag
-        buf = expireMpsMsg(pRdItr);
-        if (buf) {
-          driveEffLogOut(io_chnl, buf);
-          measureTtlInterval(buf);
+      if (*pMpsTask & TSK_EVAL_MPS_TTL) {
+        // evaluate lifetime of the MPS protocols and handle expired MPS protocols
+        *pMpsTask &= ~TSK_EVAL_MPS_TTL;
+        uint64_t now = getSysTime();
+        for (int i = 0; i < N_MPS_CHANNELS; i++) {
+          buf = evalMpsMsgTtl(now, i);
+          if (buf) {
+            driveEffLogOut(io_chnl, buf);
+            measureTtlInterval(buf);
+          }
         }
       }
       break;
