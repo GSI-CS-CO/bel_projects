@@ -38,6 +38,12 @@
 #include "tmessage.h"
 
 // application-specific variables
+union mpsProtocolExt {
+  mpsProtocol_t prot;  // variable as MPS protocol
+  timMsgExt_t   msg;   // variable as timing message extension
+  uint64_t      u64;   // variable as uint64
+} bufMpsExt[N_MPS_CHANNELS] = {0};
+
 mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS] = {0};       // buffer for MPS timing messages
 timedItr_t rdItr = {0};                           // read-access iterator for MPS flags
 
@@ -357,7 +363,7 @@ void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
     DBPRINT1("tmessage: sender ID: ");
     for (int i = 0; i < ETH_ALEN; i++)
       DBPRINT1("%02x", msg->prot.addr[i]);
-    DBPRINT1("\n");
+    DBPRINT1(" (raw: %016llx)\n", raw);
   }
 }
 
@@ -385,4 +391,41 @@ int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
 uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 {
   return memcpy(dst, src, ETH_ALEN);
+}
+
+/**
+ * \brief Build the registration request
+ *
+ * Build the registration request for broadcast.
+ *
+ * \param buf  MPS message buffer
+ * \param len  The length of the buffer
+ * \param req  Registration request mode [basic, extended]
+ *
+ * \ret status  Zero on success, otherwise non-zero
+ **/
+status_t buildRegReq(mpsMsg_t* buf, int len, int req)
+{
+  if (!buf)
+    return COMMON_STATUS_ERROR;
+
+  // Assume that all sender IDs are available in the MPS message buffer.
+
+  switch (req) {
+    case IDX_REG_REQ:
+      break;
+    case IDX_REG_EREQ:
+      DBPRINT3("TX list:\n");
+      for (int i = 0; i < len; ++i) {
+        // copy sender IDs to MPS protocol extension buffer
+        memcpy(bufMpsExt[i].prot.addr, buf->prot.addr, ETH_ALEN);
+        buf++;
+        DBPRINT3("\t%d: %016llx\n", i, bufMpsExt[i].u64);
+      }
+      break;
+    default:
+      break;
+  }
+
+  return COMMON_STATUS_OK;
 }

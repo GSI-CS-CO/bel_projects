@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x000002        // make this consistent with makefile
+#define FBAS_FW_VERSION 0x010100        // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -604,17 +604,23 @@ uint32_t extern_entryActionConfigured()
   initMpsData();                    // initialize application specific data structure
 
   return status;
-} // entryActionConfigured
+}
 
 // entry action state 'op ready'
 uint32_t extern_entryActionOperation()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  // initiate node registry
+  if (nodeType == FBAS_NODE_RX) {
+    if (!(mpsTask & TSK_REGISTRY_DONE)) {
+      mpsTask |= TSK_REGISTRY_DONE;
+      buildRegReq(bufMpsMsg, N_MPS_CHANNELS, IDX_REG_EREQ);
+    }
+  }
 
   return status;
-} // entryActionOperation
+}
 
 // exit action state 'op ready'
 uint32_t extern_exitActionOperation(){
@@ -654,6 +660,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_GET_SENDERID:
         // read valid sender ID (MAC, idx) from the shared memory
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
+        mpsTask &= ~TSK_REGISTRY_DONE;
         break;
       case FBAS_CMD_SET_IO_OE:
         setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port

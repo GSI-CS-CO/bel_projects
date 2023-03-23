@@ -94,6 +94,7 @@ typedef enum {
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
 #define TSK_MONIT_MPS_TTL       0x40000000 // monitor lifetime of MPS flags
 #define TSK_EVAL_MPS_TTL        0x80000000 // evaluate the lifetime of MPS flags
+#define TSK_REGISTRY_DONE       0x01000000 // node registration is done
 
 // FBAS timing messages
 #define FBAS_FLG_FID       0x1       // format ID, 2-bit
