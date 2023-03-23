@@ -55,10 +55,17 @@ setup_nodes() {
 
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
 
-    for filename in $filenames; do
-        timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-        result=$?
-        report_check $result $filename $rxscu
+    for scu in $rxscu $txscu; do
+        for filename in $filenames; do
+            timeout 10 sshpass -p "$userpasswd" ssh $username@$scu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
+            result=$?
+            report_check $result $filename $scu
+        done
+    done
+
+    for scu in $rxscu $txscu; do
+        echo -e "\n$scu:\n"
+        timeout 10 sshpass -p "$userpasswd" ssh $username@$scu "ls -l $filenames && md5sum $filenames"
     done
 
     echo -e "\nset up RX=$rxscu_name ...\n"
