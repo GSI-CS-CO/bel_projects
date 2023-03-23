@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000425
+#define B2BLIB_VERSION 0x000426
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK

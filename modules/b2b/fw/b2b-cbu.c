@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Mar-2023
+ *  version : 23-Mar-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000425                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000426                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -69,26 +69,30 @@ volatile uint32_t *pShared;             // pointer to begin of shared memory reg
 
 // public variables; set-values are split into two parts due to a LSA requirement
 // set values for a single commit, extraction
-volatile uint32_t *pSharedSetSidEExt;   // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
-volatile uint32_t *pSharedSetGidExt;    // pointer to a "user defined" u32 register; here: b2b group ID of extraction ring
-volatile uint32_t *pSharedSetMode;      // pointer to a "user defined" u32 register; here: mode of b2b transfer
-volatile uint32_t *pSharedSetTH1ExtHi;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits [as]
-volatile uint32_t *pSharedSetTH1ExtLo;  // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
-volatile uint32_t *pSharedSetNHExt;     // pointer to a "user defined" u32 register; here: harmonic number extraction
-volatile float    *pSharedSetCTrigExt;  // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
-volatile int32_t  *pSharedSetNBuckExt;  // pointer to a "user defined" u32 register; here: bucket numer of extraction
-volatile float    *pSharedSetCPhase;    // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
-volatile uint32_t *pSharedSetFFinTune;  // pointer to a "user defined" u32 register; here: flag: use fine tune
-volatile uint32_t *pSharedSetFMBTune;   // pointer to a "user defined" u32 register; here: use multi-beat tune
+volatile uint32_t *pSharedSetSidEExt;     // pointer to a "user defined" u32 register; here: sequence ID of extraction machine
+volatile uint32_t *pSharedSetGidExt;      // pointer to a "user defined" u32 register; here: b2b group ID of extraction ring
+volatile uint32_t *pSharedSetMode;        // pointer to a "user defined" u32 register; here: mode of b2b transfer
+volatile uint32_t *pSharedSetTH1ExtHi;    // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits [as]
+volatile uint32_t *pSharedSetTH1ExtLo;    // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedSetNHExt;       // pointer to a "user defined" u32 register; here: harmonic number extraction
+volatile float    *pSharedSetCTrigExt;    // pointer to a "user defined" u32 register; here: correction for trigger extraction ('extraction kicker knob') [ns]
+volatile int32_t  *pSharedSetNBuckExt;    // pointer to a "user defined" u32 register; here: bucket numer of extraction
+volatile float    *pSharedSetCPhase;      // pointer to a "user defined" u32 register; here: correction for phase matching ('phase knob') [ns]
+volatile uint32_t *pSharedSetFFinTune;    // pointer to a "user defined" u32 register; here: flag: use fine tune
+volatile uint32_t *pSharedSetFMBTune;     // pointer to a "user defined" u32 register; here: use multi-beat tune
 
 // set values for a single commit, injection
-volatile uint32_t *pSharedSetSidEInj;   // pointer to a "user defined" u32 register; here: sequence ID of injection machine
-volatile uint32_t *pSharedSetGidInj;    // pointer to a "user defined" u32 register; here: b2b GID offset of injection ring
-volatile uint32_t *pSharedSetTH1InjHi;  // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits [as]
-volatile uint32_t *pSharedSetTH1InjLo;  // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
-volatile uint32_t *pSharedSetNHInj;     // pointer to a "user defined" u32 register; here: harmonic number injection
-volatile float    *pSharedSetCTrigInj;  // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
-volatile int32_t  *pSharedSetNBuckInj;  // pointer to a "user defined" u32 register; here: bucket numer of injection
+volatile uint32_t *pSharedSetSidEInj;     // pointer to a "user defined" u32 register; here: sequence ID of injection machine
+volatile uint32_t *pSharedSetGidInj;      // pointer to a "user defined" u32 register; here: b2b GID offset of injection ring
+volatile uint32_t *pSharedSetLSidInj;     // pointer to a "user defined" u32 register; here: LSA SID of injection ring
+volatile uint32_t *pSharedSetLBpidInj;    // pointer to a "user defined" u32 register; here: LSA BPID of injection ring
+volatile uint32_t *pSharedSetLParamInjHi; // pointer to a "user defined" u32 register; here: LSA param of injection ring, high bits
+volatile uint32_t *pSharedSetLParamInjLo; // pointer to a "user defined" u32 register; here: LSA param of injection ring, low bits
+volatile uint32_t *pSharedSetTH1InjHi;    // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits [as]
+volatile uint32_t *pSharedSetTH1InjLo;    // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
+volatile uint32_t *pSharedSetNHInj;       // pointer to a "user defined" u32 register; here: harmonic number injection
+volatile float    *pSharedSetCTrigInj;    // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
+volatile int32_t  *pSharedSetNBuckInj;    // pointer to a "user defined" u32 register; here: bucket numer of injection
 
 // set values for all SIDs; the index equals the SID
 uint32_t setFlagValid[B2B_NSID];            
@@ -98,6 +102,9 @@ uint64_t setTH1Ext_as[B2B_NSID];        // [as]
 uint32_t setNHExt[B2B_NSID];
 uint64_t setTH1Inj_as[B2B_NSID];        // [as]
 uint32_t setNHInj[B2B_NSID];
+uint32_t setLSidInj[B2B_NSID];
+uint32_t setLBpidInj[B2B_NSID];
+uint32_t setLParamInj[B2B_NSID];
 float    setCPhase[B2B_NSID];           // [ns]
 float    setCTrigExt[B2B_NSID];         // [ns]
 float    setCTrigInj[B2B_NSID];         // [ns]
@@ -197,41 +204,45 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
-  pSharedSetSidEExt       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEEXT    >> 2));
-  pSharedSetGidExt        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDEXT     >> 2));
-  pSharedSetMode          = (uint32_t *)(pShared + (B2B_SHARED_SET_MODE       >> 2));
-  pSharedSetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTHI   >> 2));
-  pSharedSetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTLO   >> 2));
-  pSharedSetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHEXT      >> 2));
-  pSharedSetCTrigExt      =    (float *)(pShared + (B2B_SHARED_SET_CTRIGEXT   >> 2));
-  pSharedSetNBuckExt      = (uint32_t *)(pShared + (B2B_SHARED_SET_NBUCKEXT   >> 2));
-  pSharedSetCPhase          =  (float *)(pShared + (B2B_SHARED_SET_CPHASE     >> 2));
-  pSharedSetFFinTune      = (uint32_t *)(pShared + (B2B_SHARED_SET_FFINTUNE   >> 2));
-  pSharedSetFMBTune       = (uint32_t *)(pShared + (B2B_SHARED_SET_FMBTUNE    >> 2));
+  pSharedSetSidEExt       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEEXT     >> 2));
+  pSharedSetGidExt        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDEXT      >> 2));
+  pSharedSetMode          = (uint32_t *)(pShared + (B2B_SHARED_SET_MODE        >> 2));
+  pSharedSetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTHI    >> 2));
+  pSharedSetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1EXTLO    >> 2));
+  pSharedSetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHEXT       >> 2));
+  pSharedSetCTrigExt      =    (float *)(pShared + (B2B_SHARED_SET_CTRIGEXT    >> 2));
+  pSharedSetNBuckExt      = (uint32_t *)(pShared + (B2B_SHARED_SET_NBUCKEXT    >> 2));
+  pSharedSetCPhase          =  (float *)(pShared + (B2B_SHARED_SET_CPHASE      >> 2));
+  pSharedSetFFinTune      = (uint32_t *)(pShared + (B2B_SHARED_SET_FFINTUNE    >> 2));
+  pSharedSetFMBTune       = (uint32_t *)(pShared + (B2B_SHARED_SET_FMBTUNE     >> 2));
   
-  pSharedSetSidEInj       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEINJ    >> 2));
-  pSharedSetGidInj        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDINJ     >> 2));
-  pSharedSetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJHI   >> 2));
-  pSharedSetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJLO   >> 2));
-  pSharedSetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHINJ      >> 2));
-  pSharedSetCTrigInj      =    (float *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
-  pSharedSetNBuckInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ   >> 2));
+  pSharedSetSidEInj       = (uint32_t *)(pShared + (B2B_SHARED_SET_SIDEINJ     >> 2));
+  pSharedSetGidInj        = (uint32_t *)(pShared + (B2B_SHARED_SET_GIDINJ      >> 2));
+  pSharedSetLSidInj       = (uint32_t *)(pShared + (B2B_SHARED_SET_LSIDINJ     >> 2));
+  pSharedSetLBpidInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_LBPIDINJ    >> 2));
+  pSharedSetLParamInjHi   = (uint32_t *)(pShared + (B2B_SHARED_SET_LPARAMINJHI >> 2));
+  pSharedSetLParamInjLo   = (uint32_t *)(pShared + (B2B_SHARED_SET_LPARAMINJLO >> 2));
+  pSharedSetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJHI    >> 2));
+  pSharedSetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJLO    >> 2));
+  pSharedSetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHINJ       >> 2));
+  pSharedSetCTrigInj      =    (float *)(pShared + (B2B_SHARED_SET_CTRIGINJ    >> 2));
+  pSharedSetNBuckInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ    >> 2));
   
-  pSharedGetGid           = (uint32_t *)(pShared + (B2B_SHARED_GET_GID        >> 2));
-  pSharedGetSid           = (uint32_t *)(pShared + (B2B_SHARED_GET_SID        >> 2));
-  pSharedGetMode          = (uint32_t *)(pShared + (B2B_SHARED_GET_MODE       >> 2));
-  pSharedGetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));
-  pSharedGetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
-  pSharedGetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
-  pSharedGetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJHI   >> 2));
-  pSharedGetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJLO   >> 2));
-  pSharedGetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHINJ      >> 2));
-  pSharedGetCPhase        =    (float *)(pShared + (B2B_SHARED_GET_CPHASE     >> 2));
-  pSharedGetCTrigExt      =    (float *)(pShared + (B2B_SHARED_GET_CTRIGEXT   >> 2));
-  pSharedGetCTrigInj      =    (float *)(pShared + (B2B_SHARED_GET_CTRIGINJ   >> 2));
-  pSharedGetTBeatHi       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATHI    >> 2));
-  pSharedGetTBeatLo       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATLO    >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
+  pSharedGetGid           = (uint32_t *)(pShared + (B2B_SHARED_GET_GID         >> 2));
+  pSharedGetSid           = (uint32_t *)(pShared + (B2B_SHARED_GET_SID         >> 2));
+  pSharedGetMode          = (uint32_t *)(pShared + (B2B_SHARED_GET_MODE        >> 2));
+  pSharedGetTH1ExtHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI    >> 2));
+  pSharedGetTH1ExtLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO    >> 2));
+  pSharedGetNHExt         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT       >> 2));
+  pSharedGetTH1InjHi      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJHI    >> 2));
+  pSharedGetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1INJLO    >> 2));
+  pSharedGetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_GET_NHINJ       >> 2));
+  pSharedGetCPhase        =    (float *)(pShared + (B2B_SHARED_GET_CPHASE      >> 2));
+  pSharedGetCTrigExt      =    (float *)(pShared + (B2B_SHARED_GET_CTRIGEXT    >> 2));
+  pSharedGetCTrigInj      =    (float *)(pShared + (B2B_SHARED_GET_CTRIGINJ    >> 2));
+  pSharedGetTBeatHi       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATHI     >> 2));
+  pSharedGetTBeatLo       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATLO     >> 2));
+  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -294,6 +305,9 @@ void clearAllSid()
     setNHExt[i]      = 0;
     setTH1Inj_as[i]  = 0;
     setNHInj[i]      = 0;
+    setLSidInj[i]    = 0;
+    setLBpidInj[i]   = 0;
+    setLParamInj[i]  = 0;
     setCPhase[i]     = 0;
     setCTrigExt[i]   = 0;
     setCTrigInj[i]   = 0;
@@ -338,19 +352,26 @@ uint32_t setSubmit()
   // additional values required in case of injection into another ring
   if (flagInject) {
     setGid[sid]       += *pSharedSetGidInj;
+    setLSidInj[sid]    = *pSharedSetLSidInj;
+    setLBpidInj[sid]   = *pSharedSetLBpidInj;
+    setLParamInj[sid]  = (uint64_t)(*pSharedSetLParamInjHi) << 32;
+    setLParamInj[sid] |= (uint64_t)(*pSharedSetLParamInjLo);
     setTH1Inj_as[sid]  = (uint64_t)(*pSharedSetTH1InjHi) << 32;
     setTH1Inj_as[sid] |= (uint64_t)(*pSharedSetTH1InjLo);
     setNHInj[sid]      = *pSharedSetNHInj;
     setCPhase[sid]     = *pSharedSetCPhase;
-    setCTrigInj[sid] = *pSharedSetCTrigInj;
+    setCTrigInj[sid]   = *pSharedSetCTrigInj;
     setNBuckInj[sid]   = (int32_t)(*pSharedSetNBuckInj);
     setFMBTune[sid]    = *pSharedSetFMBTune;
   } // if flagInject
   else {
     setTH1Inj_as[sid]  = 0;
-    setNHInj[sid]      = 0;   
+    setNHInj[sid]      = 0;
+    setLBpidInj[sid]   = 0;
+    setLParamInj[sid]  = 0;
+    setLParamInj[sid]  = 0;
     setCPhase[sid]     = 0;
-    setCTrigInj[sid] = 0;
+    setCTrigInj[sid]   = 0;
     setNBuckInj[sid]   = 0;
     setFMBTune[sid]    = 0;
   } // else flagInject   
@@ -418,8 +439,12 @@ uint32_t extern_entryActionOperation()
   *pSharedSetFMBTune     = 0x0;
 
   // init set values injection
-  *pSharedSetGidInj      = 0x0;     
-  *pSharedSetSidEInj     = 0x0;     
+  *pSharedSetGidInj      = 0x0;
+  *pSharedSetSidEInj     = 0x0;
+  *pSharedSetLSidInj     = 0x0;
+  *pSharedSetLBpidInj    = 0x0;
+  *pSharedSetLParamInjHi = 0x0;
+  *pSharedSetLParamInjLo = 0x0;
   *pSharedSetTH1InjHi    = 0x0;
   *pSharedSetTH1InjLo    = 0x0;
   *pSharedSetNHInj       = 0x0;
@@ -936,24 +961,23 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
-      comLatency  = (int32_t)(getSysTime() - recDeadline);
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recId >> 48) & 0x0fff);
+      recSid       = (uint32_t)((recId >> 20) & 0x0fff);
+      recBpid      = (uint32_t)((recId >>  6) & 0x3fff);
 
-      // clear 'local' variables
       sid          = (uint32_t)((recId >> 20) & 0x0fff);      // required for proper indexing
       gid          = (uint32_t)((recId >> 48) & 0x0fff);      // temporary assignment useful for debugging if routine setSubmit() fails
 
-      // copy LSA IDs extraction
-      flagsExt     = (uint32_t)((recId >> 32) & 0x0f);
-      sidExt       = sid;
-      bpidExt      = (uint32_t)((recId >>  6) & 0x3fff);      // not part of setting data; 'inherit' from received timing message
-      paramExt     = recParam;
-
-      // copy LSA IDs injection
-      flagsInj     = B2B_FLAG_BEAMIN;   // hack, todo
-      sidInj       = 0x0;               // todo
-      bpidInj      = 0x0;               // todo
-      paramInj     = 0x0;               // todo
-        
+      // clear 'local' variables
+      flagsExt     = 0x0;
+      sidExt       = 0x0;
+      bpidExt      = 0x0;
+      paramExt     = 0x0;
+      flagsInj     = 0x0;
+      sidInj       = 0x0;
+      bpidInj      = 0x0;
+      paramInj     = 0x0;
       mode         = 0x0;
       nHExt        = 0x0;
       nHInj        = 0x0;
@@ -982,6 +1006,17 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
       if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return B2B_STATUS_BADSETTING;}
 
+      // copy LSA data needed for proper trigger messages
+      flagsExt     = B2B_FLAG_BEAMIN;
+      sidExt       = recSid;
+      bpidExt      = recBpid;
+      paramExt     = recParam;
+      flagsInj     = B2B_FLAG_BEAMIN;
+      sidInj       = setLSidInj[sid];
+      bpidInj      = setLBpidInj[sid];
+      paramInj     = setLParamInj[sid];
+
+      // primary data
       gid         = setGid[sid]; 
       mode        = setMode[sid];
       TH1Ext_as   = setTH1Ext_as[sid];
@@ -991,6 +1026,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cPhase_t    = fwlib_tfns2tps(setCPhase[sid]);
       cTrigExt    = setCTrigExt[sid];
       cTrigInj    = setCTrigInj[sid];
+      
       nBucketExt  = setNBuckExt[sid];
       nBucketInj  = setNBuckInj[sid];
       fFineTune   = setFFinTune[sid];
