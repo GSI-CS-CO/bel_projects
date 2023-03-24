@@ -94,24 +94,8 @@ typedef enum {
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
 #define TSK_MONIT_MPS_TTL       0x40000000 // monitor lifetime of MPS flags
 #define TSK_EVAL_MPS_TTL        0x80000000 // evaluate the lifetime of MPS flags
-#define TSK_REGISTRY_DONE       0x01000000 // node registration is done
-
-// FBAS timing messages
-#define FBAS_FLG_FID       0x1       // format ID, 2-bit
-#define FBAS_FLG_GID       0xfcbUL   // group ID = 4043, 12-bit
-#define FBAS_FLG_EVTNO     0xfcbUL   // event number = 4043, 12-bit
-#define FBAS_FLG_FLAGS     0x0       // flags, 4-bit
-#define FBAS_FLG_SID       0x0       // sequence ID, 12-bit
-#define FBAS_FLG_BPID      0x0       // beam process ID, 14-bit
-#define FBAS_FLG_RES       0x0       // reserved, 6-bit
-
-#define FBAS_EVT_FID       0x1       // format ID, 2-bit
-#define FBAS_EVT_GID       0xfccUL   // group ID = 4044, 12-bit
-#define FBAS_EVT_EVTNO     0xfccUL   // event number = 4044, 12-bit
-#define FBAS_EVT_FLAGS     0x0       // flags, 4-bit
-#define FBAS_EVT_SID       0x0       // sequence ID, 12-bit
-#define FBAS_EVT_BPID      0x0       // beam process ID, 14-bit
-#define FBAS_EVT_RES       0x0       // reserved, 6-bit
+#define TSK_REG_COMPLETE        0x01000000 // node registration is complete
+#define TSK_REG_REQ_SENT        0x02000000 // registration request is broadcast
 
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)

@@ -90,8 +90,6 @@ nodeType_t nodeType = FBAS_NODE_TX;     // default node type
 opMode_t opMode = FBAS_OPMODE_DEF;      // default operation mode
 uint32_t cntCmd = 0;                    // counter for user commands
 uint32_t mpsTask = 0;                   // MPS-relevant tasks
-uint64_t mpsTimMsgFlagId = 0;           // timing message ID for MPS flags
-uint64_t mpsTimMsgEvntId = 0;           // timing message ID for MPS events
 volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
 uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
@@ -195,21 +193,15 @@ void initMpsData()
 {
   mpsTask = 0;
 
-  mpsTimMsgFlagId = fwlib_buildEvtidV1(FBAS_FLG_GID, FBAS_FLG_EVTNO,
-      FBAS_FLG_FLAGS, FBAS_FLG_SID, FBAS_FLG_BPID, FBAS_FLG_RES);
-  mpsTimMsgEvntId = fwlib_buildEvtidV1(FBAS_EVT_GID, FBAS_EVT_EVTNO,
-      FBAS_EVT_FLAGS, FBAS_EVT_SID, FBAS_EVT_BPID, FBAS_EVT_RES);
-
   // initialize MPS message buffer
   // - RX node: use own MAC address as valid sender IDs -> other nodes do not have the same MAC
   // - TX node: sender ID is its MAC address
-  uint64_t mac;
-  convertMacToU64(&mac, pSharedMacHi, pSharedMacLo);
+  convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
     bufMpsMsg[i].prot.flag  = MPS_FLAG_TEST;
     bufMpsMsg[i].prot.idx = 0;
-    setMpsMsgSenderId(&bufMpsMsg[i], mac, 1);
+    setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].tsRx = 0;
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x\n",
@@ -480,7 +472,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
             // send MPS event
-            if (sendMpsMsgSpecific(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
+            if (sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
               // count sent timing messages with MPS event
               *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, 1);
               if ((*head)->prot.flag == MPS_FLAG_NOK) {
@@ -613,9 +605,10 @@ uint32_t extern_entryActionOperation()
 
   // initiate node registry
   if (nodeType == FBAS_NODE_RX) {
-    if (!(mpsTask & TSK_REGISTRY_DONE)) {
-      mpsTask |= TSK_REGISTRY_DONE;
+    if (!(mpsTask & TSK_REG_COMPLETE)) {
+      mpsTask |= (TSK_REG_COMPLETE | TSK_REG_REQ_SENT);
       buildRegReq(bufMpsMsg, N_MPS_CHANNELS, IDX_REG_EREQ);
+      bcastRegReq(IDX_REG_EREQ);
     }
   }
 
@@ -660,7 +653,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_GET_SENDERID:
         // read valid sender ID (MAC, idx) from the shared memory
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
-        mpsTask &= ~TSK_REGISTRY_DONE;
+        mpsTask &= ~TSK_REG_COMPLETE;
         break;
       case FBAS_CMD_SET_IO_OE:
         setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
@@ -759,7 +752,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
+        if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
           // count sent timing messages with MPS flag
           *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
       }
