@@ -429,3 +429,72 @@ status_t buildRegReq(mpsMsg_t* buf, int len, int req)
 
   return COMMON_STATUS_OK;
 }
+
+/**
+ * \brief Broadcast the node registration request
+ *
+ * A special timing message with all TX IDs (MAC) will be broadcast.
+ *
+ * \param buf   Timing message extension buffer with the sender IDs (MAC)
+ * \param req   Registration request type
+ *
+ * \ret status  Zero on success, otherwise non-zero
+ **/
+status_t bcastRegReq(int req)
+{
+  uint64_t now = getSysTime();
+  uint64_t evtId, param, ext;
+  uint32_t res, tef;
+  uint32_t evtIdHi, evtIdLo;
+  uint32_t paramHi, paramLo;
+  uint32_t deadlineHi, deadlineLo;
+
+  evtIdHi    = (uint32_t)(((FBAS_REG_REQ_EID) >> 32) & 0xffffffff);
+  evtIdLo    = (uint32_t)((FBAS_REG_REQ_EID)         & 0xffffffff);
+  // MAC (lower 6 bytes in myMac) is written to higher 6 bytes in 'param'
+  paramHi    = (uint32_t)((myMac >> 16) & 0xffffffff);
+  paramLo    = (uint32_t)((myMac << 16) & 0xffffffff);
+  deadlineHi = (uint32_t)((now >> 32)   & 0xffffffff);
+  deadlineLo = (uint32_t)(now           & 0xffffffff);
+
+  switch (req) {
+    case IDX_REG_REQ:
+      break;
+    case IDX_REG_EREQ:
+
+      // set request type
+      paramLo |= req << 8;
+
+      // start EB operation
+      ebm_hi(COMMON_ECA_ADDRESS);
+
+      // send a block with the sender IDs
+      atomic_on();
+      for (size_t i = 0; i < N_MPS_CHANNELS; ++i) {
+        // get MPS extension
+        memcpy(&res, &bufMpsExt[i].msg.res, sizeof(uint32_t));
+        memcpy(&tef, &bufMpsExt[i].msg.tef, sizeof(uint32_t));
+
+        // build a timing message
+        ebm_op(COMMON_ECA_ADDRESS, evtIdHi,    EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, evtIdLo,    EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, ext,        EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+        ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+
+      }
+      atomic_off();
+
+      // send timing messages
+      ebm_flush();
+      break;
+
+    default:
+      break;
+  }
+
+  return COMMON_STATUS_OK;
+}
