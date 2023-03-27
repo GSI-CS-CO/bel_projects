@@ -209,7 +209,7 @@ BLM_test_signal <=  BLM_tst_ck_sig(10) & -- clk_25MHz
       n        => 12
     )
     port map(
-      clk_i => g_clock,         -- chip-internal pulsed clk signal
+      clk_i => g_clock,         --
       rstn_i => rstn_sys,         -- reset signal
       gate_in => BLM_gate_in,       -- gate input signals
       gate_seq_ena => BLM_gate_seq_in_ena_Reg(13 downto 8) & BLM_gate_seq_in_ena_Reg(5 downto 0), --"00"& ena for gate board1 &"00" & ena for gate board2
