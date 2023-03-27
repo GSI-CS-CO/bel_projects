@@ -33,7 +33,7 @@ component BLM_gate_timing_seq_elem is
 
   
   port(
-    clk_i : in std_logic;          -- chip-internal pulsed clk signal
+    clk_i : in std_logic;          --
     rstn_i : in std_logic;        -- reset signal
     gate_in : in std_logic;        -- input signal
     gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
