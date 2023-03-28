@@ -38,12 +38,6 @@
 #include "tmessage.h"
 
 // application-specific variables
-union mpsProtocolExt {
-  mpsProtocol_t prot;  // variable as MPS protocol
-  timMsgExt_t   msg;   // variable as timing message extension
-  uint64_t      u64;   // variable as uint64
-} bufMpsExt[N_MPS_CHANNELS] = {0};
-
 mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS] = {0};       // buffer for MPS timing messages
 timedItr_t rdItr = {0};                           // read-access iterator for MPS flags
 
@@ -394,107 +388,45 @@ uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 }
 
 /**
- * \brief Build the registration request
+ * \brief Send the node registration request
  *
- * Build the registration request for broadcast.
+ * TX nodes send the registration request (in form of the MPS protocol) to
+ * register them to the designated RX node.
+ * The transmission type should be broadcast.
  *
- * \param buf  MPS message buffer
- * \param len  The length of the buffer
- * \param req  Registration request mode [basic, extended]
- *
- * \ret status  Zero on success, otherwise non-zero
- **/
-status_t buildRegReq(mpsMsg_t* buf, int len, int req)
-{
-  if (!buf)
-    return COMMON_STATUS_ERROR;
-
-  // Assume that all sender IDs are available in the MPS message buffer.
-
-  switch (req) {
-    case IDX_REG_REQ:
-      break;
-    case IDX_REG_EREQ:
-      DBPRINT3("TX list:\n");
-      for (int i = 0; i < len; ++i) {
-        // copy sender IDs to MPS protocol extension buffer
-        memcpy(bufMpsExt[i].prot.addr, buf->prot.addr, ETH_ALEN);
-        buf++;
-        DBPRINT3("\t%d: %016llx\n", i, bufMpsExt[i].u64);
-      }
-      break;
-    default:
-      break;
-  }
-
-  return COMMON_STATUS_OK;
-}
-
-/**
- * \brief Broadcast the node registration request
- *
- * A special timing message with all TX IDs (MAC) will be broadcast.
- *
- * \param buf   Timing message extension buffer with the sender IDs (MAC)
  * \param req   Registration request type
  *
  * \ret status  Zero on success, otherwise non-zero
  **/
-status_t bcastRegReq(int req)
+status_t sendRegReq(int req)
 {
   uint64_t now = getSysTime();
   uint64_t evtId, param, ext;
-  uint32_t res, tef;
+  uint32_t res, tef = 0;
   uint32_t evtIdHi, evtIdLo;
   uint32_t paramHi, paramLo;
   uint32_t deadlineHi, deadlineLo;
+  uint32_t flagForceLate = 1;
 
-  evtIdHi    = (uint32_t)(((FBAS_REG_REQ_EID) >> 32) & 0xffffffff);
-  evtIdLo    = (uint32_t)((FBAS_REG_REQ_EID)         & 0xffffffff);
   // MAC (lower 6 bytes in myMac) is written to higher 6 bytes in 'param'
   paramHi    = (uint32_t)((myMac >> 16) & 0xffffffff);
   paramLo    = (uint32_t)((myMac << 16) & 0xffffffff);
+  paramLo   |= req << 8;                // set request type as 'index'
   deadlineHi = (uint32_t)((now >> 32)   & 0xffffffff);
   deadlineLo = (uint32_t)(now           & 0xffffffff);
 
   switch (req) {
     case IDX_REG_REQ:
-      break;
+
+      param = ((uint64_t)(paramHi) << 32) | paramLo;
+      // send MPS message
+      return fwlib_ebmWriteTM(now, FBAS_REG_REQ_EID, param, tef, flagForceLate);
+
     case IDX_REG_EREQ:
-
-      // set request type
-      paramLo |= req << 8;
-
-      // start EB operation
-      ebm_hi(COMMON_ECA_ADDRESS);
-
-      // send a block with the sender IDs
-      atomic_on();
-      for (size_t i = 0; i < N_MPS_CHANNELS; ++i) {
-        // get MPS extension
-        memcpy(&res, &bufMpsExt[i].msg.res, sizeof(uint32_t));
-        memcpy(&tef, &bufMpsExt[i].msg.tef, sizeof(uint32_t));
-
-        // build a timing message
-        ebm_op(COMMON_ECA_ADDRESS, evtIdHi,    EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, evtIdLo,    EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, ext,        EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
-        ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
-
-      }
-      atomic_off();
-
-      // send timing messages
-      ebm_flush();
-      break;
 
     default:
       break;
   }
 
-  return COMMON_STATUS_OK;
+  return COMMON_STATUS_ERROR;
 }

@@ -93,6 +93,7 @@ uint32_t mpsTask = 0;                   // MPS-relevant tasks
 volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
 uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
+uint64_t myMac;                         // own MAC address
 
 // application-specific function prototypes
 static void init();
@@ -604,11 +605,10 @@ uint32_t extern_entryActionOperation()
   uint32_t status = COMMON_STATUS_OK;
 
   // initiate node registry
-  if (nodeType == FBAS_NODE_RX) {
+  if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
-      mpsTask |= (TSK_REG_COMPLETE | TSK_REG_REQ_SENT);
-      buildRegReq(bufMpsMsg, N_MPS_CHANNELS, IDX_REG_EREQ);
-      bcastRegReq(IDX_REG_EREQ);
+      sendRegReq(IDX_REG_REQ);
+      // TODO: set timer to 1s period
     }
   }
 
@@ -653,7 +653,6 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_GET_SENDERID:
         // read valid sender ID (MAC, idx) from the shared memory
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
-        mpsTask &= ~TSK_REG_COMPLETE;
         break;
       case FBAS_CMD_SET_IO_OE:
         setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
@@ -726,6 +725,7 @@ void timerHandler()
   if (prescaler == PSCR_1S_TIM_1MS) {
     prescaler = 0;
     tsCpu = cputime;
+    mpsTask |= TSK_REG_PER_OVER;
   }
 }
 
@@ -752,6 +752,18 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
+
+        // registration session
+        if (!(*pMpsTask & TSK_REG_COMPLETE)) {
+          // registration period is over?
+          if (*pMpsTask & TSK_REG_PER_OVER) {
+            sendRegReq(IDX_REG_REQ);
+            *pMpsTask &= ~TSK_REG_PER_OVER;
+          }
+          break;
+        }
+
+        // periodic MPS flag transmission
         if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
           // count sent timing messages with MPS flag
           *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
