@@ -303,10 +303,10 @@ configure_tr() {
 
         echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
         saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
-    else
+
         echo "configure ECA: listen to the registration request, tag 0x45"
         saft-ecpu-ctl tr0 -c $evt_mps_reg_req $evt_id_mask 0 0x45 -d
-
+    else
         echo "configure ECA: set FBAS_GEN_EVT for LM32 channel, tag 0x42"
         saft-ecpu-ctl tr0 -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
 

@@ -94,8 +94,8 @@ typedef enum {
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
 #define TSK_MONIT_MPS_TTL       0x40000000 // monitor lifetime of MPS flags
 #define TSK_EVAL_MPS_TTL        0x80000000 // evaluate the lifetime of MPS flags
-#define TSK_REG_COMPLETE        0x01000000 // node registration is complete
-#define TSK_REG_REQ_SENT        0x02000000 // registration request is broadcast
+#define TSK_REG_COMPLETE        0x01000000 // registration is complete
+#define TSK_REG_PER_OVER        0x02000000 // registration period is over
 
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
