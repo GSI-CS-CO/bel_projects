@@ -5,7 +5,7 @@ use work.scu_diob_pkg.all;
 
 entity Beam_Loss_check is
     generic (
-    n            : integer range 0 to 110 :=64;        -- counter pool inputs:  hardware inputs plus test signals      
+   -- n            : integer range 0 to 110 :=64;        -- counter pool inputs:  hardware inputs plus test signals      
     WIDTH        : integer := 20     -- Counter width
        
 );
