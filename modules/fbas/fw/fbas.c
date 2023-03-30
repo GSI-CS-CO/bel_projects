@@ -94,6 +94,7 @@ volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
 uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
 uint64_t myMac;                         // own MAC address
+nw_addr_t dstNwAddr[N_DST_ADDR];        // valid destination addresses for the Endpoint WB device
 
 // application-specific function prototypes
 static void init();
@@ -103,7 +104,7 @@ static void initIrqTable();
 static void printSrcAddr();
 static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
 static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo);
-static status_t setDstAddr(uint64_t dstMac, uint32_t dstIp);
+static status_t setEndpDstAddr(int idx);
 static status_t loadSenderId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
@@ -314,21 +315,34 @@ status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
 }
 
 /**
- * \brief set the destination MAC and IP addresses
+ * \brief Set the destination MAC and IP addresses of Endpoint
  *
  * Set the destination MAC and IP addresses of the Endpoint WB device.
+ *
+ * \param idx Address index (0=actual, 1=RX node, 2=broadcast etc)
  *
  * \ret status
  *
  **/
-status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
+status_t setEndpDstAddr(int idx)
 {
   uint32_t status = COMMON_STATUS_OK;
+  uint64_t mac;
+  uint32_t ip;
 
-  // configure Etherbone master (src MAC and IP are set by host, i.e. by eb-console or BOOTP)
-  if ((status = fwlib_ebmInit(TIM_2000_MS, dstMac, dstIp, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("fbas%d: Error - source IP is not set!\n", nodeType); // IP unset
-  }
+  // check index
+  if ((idx < 0) || idx >= N_DST_ADDR)  // invalid or out of range
+    return COMMON_STATUS_ERROR;
+
+  // check the desired address is already set (do not consider IP address)
+  if ((dstNwAddr[DST_ADDR_EBM].mac == dstNwAddr[idx].mac))
+    return status;
+
+  // update the Endpoint destination address
+  dstNwAddr[DST_ADDR_EBM].mac = dstNwAddr[idx].mac;
+
+  if ((status = fwlib_ebmInit(TIM_1000_MS, dstNwAddr[DST_ADDR_EBM].mac, dstNwAddr[DST_ADDR_EBM].ip, EBM_NOREPLY)) != COMMON_STATUS_OK)
+    DBPRINT1("fbas%d: Err - failed to set destination address!\n", nodeType);
 
   return status;
 }
@@ -429,6 +443,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
     now = getSysTime();
     storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS5, now);
 
+    uint64_t senderId; // sender ID (MAC) is in the 'param' field (high 6 bytes)
+    uint8_t  idx;      // registration index (128=request, 129=response)
+
     switch (nextAction) {
       case FBAS_AUX_NEWCYCLE:
         if (nodeType == FBAS_NODE_TX) { // it takes 1848/6328 ns for 2/32 MPS channels
@@ -472,6 +489,18 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           *head = updateMpsMsg(*head, ecaEvtId);
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
+            // select the transmission type (broadcast: not registered or NOK flag, unicast: otherwise)
+            uint32_t status;
+            if (!(*mpsTask & TSK_REG_COMPLETE) || ((*head)->prot.flag == MPS_FLAG_NOK))
+              status = setEndpDstAddr(DST_ADDR_BROADCAST);
+            else
+              status = setEndpDstAddr(DST_ADDR_RXNODE);
+
+            if (status != COMMON_STATUS_OK) {
+              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+              break;
+            }
+
             // send MPS event
             if (sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
               // count sent timing messages with MPS event
@@ -514,6 +543,31 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           }
         }
         break;
+
+      case FBAS_NODE_REG:
+        senderId = ecaParam >> 16; // sender ID (MAC) is in the 'param' field (high 6 bytes)
+        idx      = ecaParam >> 8;  // registration index (128=request, 129=response)
+
+        if (nodeType == FBAS_NODE_RX) {  // registration request from TX
+          if (idx == IDX_REG_REQ) {
+            if (isSenderKnown(senderId)) {
+              // unicast the reg. response
+              if (fwlib_ebmInit(TIM_1000_MS, senderId, BROADCAST_IP, EBM_NOREPLY) == COMMON_STATUS_OK)
+                sendRegRsp();
+              else
+                DBPRINT1("fbas%d: Err - reg. rsp not sent. Failure with Endpoint!\n", nodeType);
+            }
+          }
+        }
+        else if (nodeType == FBAS_NODE_TX) { // registration response from RX
+          if (idx == IDX_REG_RSP) {
+            dstNwAddr[DST_ADDR_RXNODE].mac = senderId;
+            DBPRINT3("reg.rsp: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            *mpsTask |= TSK_REG_COMPLETE;
+          }
+        }
+        break;
+
       default:
         break;
     }
@@ -585,7 +639,9 @@ uint32_t extern_entryActionConfigured()
   fwlib_publishNICData();           // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
   printSrcAddr();                   // output the source MAC/IP address of the Endpoint WB device to the WR console
 
-  status = setDstAddr(BROADCAST_MAC, BROADCAST_IP); // set the destination broadcast MAC/IP address of the Endpoint WB device
+  dstNwAddr[DST_ADDR_BROADCAST].mac = BROADCAST_MAC;
+  dstNwAddr[DST_ADDR_BROADCAST].ip  = BROADCAST_IP;
+  status = setEndpDstAddr(DST_ADDR_BROADCAST); // set the destination broadcast MAC/IP address of the Endpoint WB device
   if (status != COMMON_STATUS_OK) return status;
 
   if ((uint32_t)pCpuWbTimer != ERROR_NOT_FOUND) {
@@ -607,8 +663,10 @@ uint32_t extern_entryActionOperation()
   // initiate node registry
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
-      sendRegReq(IDX_REG_REQ);
-      // TODO: set timer to 1s period
+      if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
+        sendRegReq(IDX_REG_REQ);
+      else
+        DBPRINT1("Err - nothing sent! TODO: set failed status\n");
     }
   }
 
@@ -679,6 +737,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
         mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
+        mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
@@ -753,20 +812,28 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
 
-        // registration session
+        // registration incomplete
         if (!(*pMpsTask & TSK_REG_COMPLETE)) {
           // registration period is over?
           if (*pMpsTask & TSK_REG_PER_OVER) {
-            sendRegReq(IDX_REG_REQ);
             *pMpsTask &= ~TSK_REG_PER_OVER;
+            if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
+              sendRegReq(IDX_REG_REQ);
+            else
+              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
           }
           break;
         }
 
-        // periodic MPS flag transmission
-        if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
-          // count sent timing messages with MPS flag
-          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
+        // periodic, unicast transmission of the MPS flag
+        if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
+          if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
+            // count sent timing messages with MPS flag
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
+        }
+        else {
+          DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+        }
       }
       else
         wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console

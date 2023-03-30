@@ -100,6 +100,7 @@ typedef enum {
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
 #define FBAS_TLU_EVT       0x43      // ECA condition tag for TLU event (handled by TX)
+#define FBAS_NODE_REG      0x45      // ECA condition tag for the node registration
 #define FBAS_WR_EVT        0x24      // ECA condition tag for MPS event via WR (handled by RX)
 #define FBAS_WR_FLG        0x25      // ECA condition tag for MPS flag via WR (handled by RX)
 #define FBAS_AUX_NEWCYCLE  0x26      // ECA condition tag for MPS auxiliary signal (clear internal errors in TX & RX)
