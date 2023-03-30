@@ -45,7 +45,7 @@ export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular
 export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
-export  evt_mps_reg_req="0x1fcdfcd000000000"  # event ID for the registration request
+export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
 export      evt_id_mask="0xffffffff00000000"  # event mask
 
 user_approval() {
@@ -295,26 +295,25 @@ configure_tr() {
     echo "disable all events from IO inputs to ECA"
     saft-io-ctl tr0 -w
 
+    # configure ECA: general rules for both nodes
+    echo "configure ECA: listen to the node registration messages, tag 0x45"
+    saft-ecpu-ctl tr0 -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
+
+    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+    saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+
     if [ "$1" == "DEV_RX" ]; then
 
         echo "configure ECA: set FBAS_WR_EVT, FBAS_WR_FLG for LM32 channel, tag 0x24 and 0x25"
         saft-ecpu-ctl tr0 -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
         saft-ecpu-ctl tr0 -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
 
-        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-        saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
-
-        echo "configure ECA: listen to the registration request, tag 0x45"
-        saft-ecpu-ctl tr0 -c $evt_mps_reg_req $evt_id_mask 0 0x45 -d
     else
         echo "configure ECA: set FBAS_GEN_EVT for LM32 channel, tag 0x42"
         saft-ecpu-ctl tr0 -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
 
         echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
         saft-ecpu-ctl tr0 -c $evt_tlu $evt_id_mask 0 0x43 -d
-
-        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-        saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
 
         echo "configure TLU: on signal transition at B2 input, it will generate a timing event with the given ID"
         saft-io-ctl tr0 -n B2 -b $evt_tlu

@@ -400,13 +400,14 @@ uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  **/
 status_t sendRegReq(int req)
 {
-  uint64_t now = getSysTime();
   uint64_t evtId, param, ext;
   uint32_t res, tef = 0;
   uint32_t evtIdHi, evtIdLo;
   uint32_t paramHi, paramLo;
   uint32_t deadlineHi, deadlineLo;
-  uint32_t flagForceLate = 1;
+  uint32_t forceLate = 1;
+  status_t status;
+  uint64_t now = getSysTime();
 
   // MAC (lower 6 bytes in myMac) is written to higher 6 bytes in 'param'
   paramHi    = (uint32_t)((myMac >> 16) & 0xffffffff);
@@ -419,8 +420,10 @@ status_t sendRegReq(int req)
     case IDX_REG_REQ:
 
       param = ((uint64_t)(paramHi) << 32) | paramLo;
-      // send MPS message
-      return fwlib_ebmWriteTM(now, FBAS_REG_REQ_EID, param, tef, flagForceLate);
+      status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
+      if (status != COMMON_STATUS_OK)
+        DBPRINT1("Err - failed to send reg.req!\n");
+      return status;
 
     case IDX_REG_EREQ:
 
@@ -429,4 +432,66 @@ status_t sendRegReq(int req)
   }
 
   return COMMON_STATUS_ERROR;
+}
+
+/**
+ * \brief Send the registration response
+ *
+ * RX nodes respond a special MPS message on reception of the registration
+ * request from the RX nodes.
+ * Parameter includes the MAC address of RX and index of registration response.
+ *
+ * \ret status   Returns zero on success, otherwise non-zero
+ **/
+status_t sendRegRsp(void)
+{
+  uint32_t tef = 0;
+  uint32_t forceLate = 1;
+  uint64_t param = (myMac << 16) | (IDX_REG_RSP << 8);
+  uint64_t now = getSysTime();
+
+  status_t status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
+  if (status != COMMON_STATUS_OK)
+    DBPRINT1("Err - failed to send reg.rsp!\n");
+
+  return status;
+}
+
+/**
+ * \brief Check if the given sender ID is known to the RX node
+ *
+ * \param raw     raw sender ID (MAC address in high-order 6 bytes)
+ *
+ * \ret status    Returns true on success, otherwise false
+ **/
+bool isSenderKnown(uint64_t raw)
+{
+  uint8_t  senderId[ETH_ALEN];
+  uint8_t bits = 0;
+  int i;
+
+  for (i = ETH_ALEN - 1; i >= 0; i--) {
+    senderId[i] = raw >> bits;
+    bits += 8;
+  }
+
+  int compare = 1;
+  i = 0;
+  while (compare && i < N_MPS_CHANNELS) {
+    compare = memcmp(bufMpsMsg[i].prot.addr, senderId, ETH_ALEN);
+    DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
+        compare,
+        bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
+        bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
+        bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        senderId[0], senderId[1], senderId[2],
+        senderId[3], senderId[4], senderId[5]);
+    ++i;
+  }
+
+  if (compare) {  // differs
+    return false;
+  }
+
+  return true;
 }
