@@ -189,7 +189,7 @@ load_fw() {
 configure_node() {
     # $1 - node type (DEV_RX or DEV_TX)
     # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
-    # $3 - sender ID of SENDER_TX
+    # $[3:] - sender ID(s) of SENDER_TX
 
     check_node "$1"
 
@@ -211,33 +211,38 @@ configure_node() {
         eb-read $device $addr_get_node_type/4
         wait_seconds 1
 
-        if [ -n "$2" ]; then
-            if [ -n "$3" ]; then
-                set_senderid "$2" "$3"
-            else
-                set_senderid "$2"
-            fi
+        if [ $# -gt 1 ]; then
+            shift
+            set_senderid "$@"
         fi
     fi
 }
 
 set_senderid() {
     # $1 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
-    # $2 - sender ID of SENDER_TX (without leading 0x)
+    # $[2:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
     # SENDER_ANY - only any nodes
     # SENDER_ALL - TX and any nodes
 
+    sender_grp="$1"
+    shift                   # re-set positional parameters
+    #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
+    senderid=""
+    for mac in "$@"; do
+        senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
+    done
+
     first_idx=1
     last_idx=15
     unset idx_mac_list  # list with idx_mac
-    senderid="0x$2"     # format to hexadecimal number (for arithmetic calc.)
+    device=$DEV_RX
 
-    if [ "$1" == "SENDER_TX" ]; then
-        idx_mac_list="$senderid"
-    elif [ "$1" == "SENDER_ALL" ] || [ "$1" == "SENDER_ANY" ]; then
-        if [ "$1" == "SENDER_ALL" ]; then
+    if [ "$sender_grp" == "SENDER_TX" ]; then
+        idx_mac_list=$senderid
+    elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
+        if [ "$sender_grp" == "SENDER_ALL" ]; then
             idx_mac_list="$senderid"
             first_idx=$(( $first_idx - 1 ))
             last_idx=$(( $last_idx - 1 ))
@@ -256,9 +261,8 @@ set_senderid() {
         return
     fi
 
-    echo "set the sender IDs: $1 $idx_mac_list"
+    echo "set the sender IDs: $sender_grp $idx_mac_list"
 
-    device=$DEV_RX
     i=0
     for idx_mac in $idx_mac_list; do
         pos=$(( $i << 56 ))                               # position in RX buffer
@@ -354,16 +358,15 @@ setup_mpstx() {
 setup_mpsrx() {
     # $1 - LM32 firmware
     # $2 - sender node groups (SENDER_TX/ALL/ANY)
-    # $3 - sender ID of SENDER_TX
+    # $[3:] - sender ID(s) of SENDER_TX
 
     echo "load firmware"
     load_fw "DEV_RX" "$1"
 
     echo "CONFIGURE state "
-    if [ -n "$3" ]; then
-        configure_node "DEV_RX" "$2" "$3"
-    else
-        configure_node "DEV_RX" "$2"
+    if [ $# -gt 2 ]; then
+        shift
+        configure_node "DEV_RX" "$@"
     fi
 
     echo "OPREADY state "
