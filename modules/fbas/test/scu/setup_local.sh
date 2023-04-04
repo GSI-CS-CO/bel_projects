@@ -229,7 +229,7 @@ set_senderid() {
     sender_grp="$1"
     shift                   # re-set positional parameters
     #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
-    senderid=""
+    unset senderid          # init variable
     for mac in "$@"; do
         senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
     done
@@ -240,7 +240,18 @@ set_senderid() {
     device=$DEV_RX
 
     if [ "$sender_grp" == "SENDER_TX" ]; then
-        idx_mac_list=$senderid
+        # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
+        # The buffer can keep the MPS flag of up to 16 TX nodes.
+        # In this case a MPS channel 'index' should reflect the offset/position
+        # in the buffer reserved for a respective TX node (idx = pos).
+        i=0
+        for sender in $senderid; do
+            idx=$(( $i << 48 ))
+            idx_mac=$(( $idx + $sender ))
+            idx_mac=$(printf "0x%x" $idx_mac)
+            idx_mac_list="$idx_mac_list $idx_mac"
+            i=$(( $i + 1 ))
+        done
     elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
         if [ "$sender_grp" == "SENDER_ALL" ]; then
             idx_mac_list="$senderid"
