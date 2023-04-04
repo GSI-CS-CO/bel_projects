@@ -92,7 +92,9 @@ uint32_t cntCmd = 0;                    // counter for user commands
 uint32_t mpsTask = 0;                   // MPS-relevant tasks
 volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
-uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
+uint8_t n_out_port = N_LEMO_OUT_SCU;    // number of output ports (by default SCU3)
+io_port_t out_port =                    // IO channel (LVDS for Pexaria, GPIO for SCU3)
+  {IO_CFG_CHANNEL_GPIO, 0};             // GPIO port 1 (OUT1 for Pexaria, B1 for SCU3)
 uint64_t myMac;                         // own MAC address
 nw_addr_t dstNwAddr[N_DST_ADDR];        // valid destination addresses for the Endpoint WB device
 
@@ -389,7 +391,7 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
 void clearError(size_t len, mpsMsg_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
-    driveEffLogOut(io_chnl, buf + i);
+    driveEffLogOut(buf + i);
   }
 }
 
@@ -536,7 +538,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           // store and handle received MPS flag
           *head = storeMpsMsg(ecaParam, ecaDeadline, itr);
           if (*head) {
-            driveEffLogOut(io_chnl, *head);
+            driveEffLogOut(*head);
 
             // measure one-way delay
             measureOwDelay(now, ecaDeadline, 0);
@@ -630,11 +632,19 @@ uint32_t extern_entryActionConfigured()
   DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
 
   DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
-  if (MYPLATFORM == "pcicontrol")   // GPIO for SCU, LVDS for Pexiara
-    io_chnl=IO_CFG_CHANNEL_LVDS;
+  if (MYPLATFORM == "pcicontrol") { // GPIO for SCU, LVDS for Pexiara
+    out_port.type = IO_CFG_CHANNEL_LVDS;
+    n_out_port    = N_LEMO_OUT_PEXARIA;
+  }
 
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
-  setIoOe(io_chnl, 0);              // enable output for the IO1 (or B1) port
+
+  // set up the direct mapping between output ports and MPS message buffer
+  // can be used to measure the MPS signaling latency (check the proper cabling!)
+  for (uint8_t idx = 0; idx < n_out_port; ++idx) {
+    setIoOe(out_port.type, idx);              // enable all output ports
+    setupEffLogOut(idx, out_port.type, idx);  // direct mapping of all output ports (MSP buffer[i] -> out_port[i])
+  }
 
   fwlib_publishNICData();           // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
   printSrcAddr();                   // output the source MAC/IP address of the Endpoint WB device to the WR console
@@ -713,18 +723,17 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
-        setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
+        setIoOe(out_port.type, out_port.idx); // enable output for the default output port
         break;
       case FBAS_CMD_GET_IO_OE:
-        u32val = getIoOe(io_chnl);
+        u32val = getIoOe(out_port.type);
         if (1) {
           DBPRINT2("fbas%d: GPIO OE %x\n", nodeType, u32val);
         }
         break;
       case FBAS_CMD_TOGGLE_IO:
         u8val = cntCmd & 0x01;
-        u32val = 0;
-        driveIo(io_chnl, u32val, u8val);
+        driveOutPort(out_port.type, out_port.idx, u8val);
         DBPRINT2("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
         break;
       case FBAS_CMD_EN_MPS_FWD:
@@ -847,7 +856,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         for (int i = 0; i < N_MPS_CHANNELS; i++) {
           buf = evalMpsMsgTtl(now, i);
           if (buf) {
-            driveEffLogOut(io_chnl, buf);
+            driveEffLogOut(buf);
             measureTtlInterval(buf);
           }
         }

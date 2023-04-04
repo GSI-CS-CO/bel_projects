@@ -38,6 +38,7 @@
 #include "ioctl.h"
 
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
+io_port_t EffLogOut[N_MPS_CHANNELS];    // mapping between MPS message buffer and IO output port
 
 // set IO output enable
 uint32_t setIoOe(uint32_t channel, uint32_t idx)
@@ -69,8 +70,16 @@ uint32_t getIoOe(uint32_t channel)
     return *(pIOCtrl + (reg >> 2));
 }
 
-// toggle IO output
-void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
+/**
+ * \brief Drive the chosen output port
+ *
+ * \param channel  Output channel type
+ * \param idx      Output channel index
+ * \param value    Logic value for high/low signal
+ *
+ * \ret   none
+ **/
+void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value)
 {
   uint32_t reg = 0;
   uint32_t outVal = 0;
@@ -107,7 +116,7 @@ void driveIo(uint32_t channel, uint32_t idx, uint8_t value)
  *
  * \ret none
  **/
-void driveEffLogOut(uint32_t channel, mpsMsg_t* buf)
+void driveEffLogOut(mpsMsg_t* buf)
 {
   uint8_t ioVal = MPS_SIGNAL_INVALID;
 
@@ -124,7 +133,72 @@ void driveEffLogOut(uint32_t channel, mpsMsg_t* buf)
     DBPRINT3("ttl: %x %x %x\n", buf->prot.addr[0], buf->prot.idx, buf->prot.flag);
   }
 
-  driveIo(channel, 0, ioVal); // drive the IO1 (B1) port
+  io_port_t out_port;
+  if (getEffLogOut(buf->prot.idx, &out_port) == COMMON_STATUS_OK)
+    driveOutPort(out_port.type, out_port.idx, ioVal);     // drive the assigned output port
+}
+
+/**
+ * \brief Set up the output port to the MPS message buffer
+ *
+ * For testing purpose, the direct mapping of the MPS buffer index and
+ * output port is set up.
+ * For example, this mapping can be used to measure the MPS signaling latency
+ * for multiple TX nodes.
+ *
+ * \param buf_idx  MPS message buffer index
+ * \param ch_type  Channel type (of output port)
+ * \param ch_idx   Channel index (of output port)
+ *
+ * \ret none
+ *
+ **/
+void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx)
+{
+  if (buf_idx > N_MPS_CHANNELS)
+    return;
+
+  if ((ch_type != IO_CFG_CHANNEL_GPIO) ||
+      (ch_type != IO_CFG_CHANNEL_LVDS))
+    return;
+
+  if ((ch_type == IO_CFG_CHANNEL_GPIO) &&
+      (ch_idx > N_LEMO_OUT_SCU))
+    return;
+
+  if ((ch_type == IO_CFG_CHANNEL_LVDS) &&
+      (ch_idx > N_LEMO_OUT_PEXARIA))
+    return;
+
+  EffLogOut[buf_idx].type = ch_type;
+  EffLogOut[buf_idx].idx  = ch_idx;
+}
+
+/**
+ * \brief Get the output port of the MPS message buffer
+ *
+ * \param buf_idx  MPS message buffer index
+ * \param port     Pointer to structure with port channel type and index (assigned to the given MPS message buffer)
+ *
+ * \ret   status   OK for success, otherwise ERROR
+ *
+ **/
+status_t getEffLogOut(uint8_t buf_idx, io_port_t* port)
+{
+  if (buf_idx > N_MPS_CHANNELS)
+    return COMMON_STATUS_ERROR;
+
+  switch (EffLogOut[buf_idx].type) {
+    case IO_CFG_CHANNEL_GPIO:
+    case IO_CFG_CHANNEL_LVDS:
+      port->type = EffLogOut[buf_idx].type;
+      port->idx = EffLogOut[buf_idx].idx;
+      return COMMON_STATUS_OK;
+    default:
+      break;
+  }
+
+  return COMMON_STATUS_ERROR;
 }
 
 void qualifyInput(size_t len, mpsMsg_t* buf) {
