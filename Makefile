@@ -455,7 +455,7 @@ ifa8-clean::
 # LM32 firmware
 # #################################################################################################
 
-bg: lm-32toolchain
+bg: lm32-toolchain
 	$(MAKE) -C modules/burst_generator
 
 bg-clean::
