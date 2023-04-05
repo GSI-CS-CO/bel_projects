@@ -20,7 +20,7 @@
 #include "scu_mil.h"
 #include "dow_crc.h"
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "history.h"
 #include "scu_control_shared_mmap.h"
 //#include "memlayout.h"
