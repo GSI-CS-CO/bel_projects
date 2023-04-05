@@ -23,7 +23,7 @@ TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
 export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
-PATH:=$(PWD)/toolchain/bin:$(PATH)
+PATH:=$(PWD)/lm32-toolchain/bin:$(PATH)
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -86,13 +86,13 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -196,22 +196,21 @@ sdbfs::
 sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
-lm32-elf-gcc.tar.xz:
-	wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.0-2019-05-27/lm32-elf-gcc.tar.xz
+lm32-toolchain-download :
+	test -f lm32-gcc.tar.xz || wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
 
-toolchain:	lm32-elf-gcc.tar.xz
-	tar xvJf lm32-elf-gcc.tar.xz
-	mv lm32-elf-gcc toolchain
-	touch toolchain
+lm32-toolchain:	lm32-toolchain-download
+	test -d lm32-gcc || tar -xf lm32-gcc.tar.xz
+	test -d lm32-gcc-4.5.3 && mv lm32-gcc-4.5.3 lm32-toolchain || true
 
-toolchain-clean::
-	rm -rf toolchain
+lm32-toolchain-clean::
+	rm -rf lm32-toolchain
 
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone toolchain wrpc-sw-config
+firmware:	sdbfs etherbone lm32-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
@@ -465,7 +464,7 @@ ifa8-clean::
 # LM32 firmware
 # #################################################################################################
 
-bg: toolchain
+bg: lm-32toolchain
 	$(MAKE) -C modules/burst_generator
 
 bg-clean::
@@ -482,7 +481,7 @@ avsoc-clean::
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board clean
 
 vetar::		firmware
-	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/lm32-toolchain/bin:$(PATH) all
 
 vetar-clean::
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo clean
@@ -494,10 +493,10 @@ exploder-clean::
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
 
 pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) all
 
 pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
