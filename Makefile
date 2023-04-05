@@ -91,7 +91,7 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs lm32-toolchain riscv-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
@@ -226,7 +226,7 @@ wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
+firmware:	sdbfs etherbone lm32-toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
@@ -527,10 +527,10 @@ exploder-clean::
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
 
 pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) all
 
 pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) clean
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
