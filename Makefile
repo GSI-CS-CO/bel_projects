@@ -26,7 +26,7 @@ TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
 export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
-PATH:=$(PWD)/toolchain/bin:$(PATH)
+PATH:=$(PWD)/lm32-toolchain/bin:$(PATH)
 export PATH
 CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
 export CROSS_COMPILE_RISCV
@@ -113,13 +113,13 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
