@@ -113,7 +113,7 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs lm32-toolchain riscv-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
@@ -259,7 +259,7 @@ wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
+firmware:	sdbfs etherbone lm32-toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
