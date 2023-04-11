@@ -69,13 +69,16 @@ use work.monster_pkg.all;
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
 --                                                                                                                                --
 --                                                                                                                                --
---      Base_addr +3 : DIOB-Status-Register1 (die Status-Bit's werden nach dem Lesen glöscht)                                     --
+--      Base_addr +3 : DIOB-Status-Register2 (die Status-Bit's werden nach dem Lesen glöscht)                                     --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
 --   15-0 |  frei                                                                                                                 --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
 --                                                                                                                                --
 --                                                                                                                                --
---     Base_addr + 4: Die Bits im Anwender(Piggy)Config-Register1 haben für jedes Piggy eine andere Bedeutung                     --
+--     Base_addr + 4 – Base_addr +6  reserviert für Erweiterung                                                                   --
+-----+------------------------------------------------------------------------------------------------------------------
+--     Base_addr + 7 Konfigurationregister1 für Interface-Teil: Die Bits im Anwender(Piggy)Config-Register1 haben für jedes Piggy --
+--                                                              eine andere Bedeutung                                             --
 --                                                                                                                                --
 --     ##########################################################################################################                 --
 --     ####                                 Anwender-IO: P25IO  -- FG900_710                                  ###                 --
@@ -104,14 +107,12 @@ use work.monster_pkg.all;
 --     5 | Enable Output-Bit [23..20],    1 = Enable,   0 = Disable(Default)                                                      --
 --     4 | Enable Output-Bit [19..16],    1 = Enable,   0 = Disable(Default)                                                      --
 --     3 | Enable Output-Bit [15..12],    1 = Enable,   0 = Disable(Default)                                                      --
---     2 | Enable Output-Bit [11..8],     1 = Enable,   0 = Disable(Default)                                                      --
+---    2 | Enable Output-Bit [11..8],     1 = Enable,   0 = Disable(Default)                                                      --
 --     1 | Enable Output-Bit [7..4],      1 = Enable,   0 = Disable(Default)                                                      --
 --     0 | Enable Output-Bit [3..0],      1 = Enable,   0 = Disable(Default)                                                      --
 --   ----+-----------------------------------------------------------------------                                                 --
 --                                                                                                                                --
 ------------------------------------------------------------------------------------------------------------------------------------
-
-
 entity scu_diob is
 generic (
     CLK_sys_in_Hz:      integer := 125000000;
@@ -201,7 +202,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 25;     -- Firmware_release Stand 28.08.2017 ( + '760 (ATR1) + FG_901.040 AD1) + FG_901.050 8In8Out1) + Tri-State-Steuerung (PIO+UIO) )
 --  CONSTANT c_Firmware_Release:    Integer := 26;     -- Firmware_release Stand 10.10.2017 ( + 'FG_901.010 16Out, OutpReg1 'MF-Funktion' auf die Outputs umschaltbar)
 --  CONSTANT c_Firmware_Release:    Integer := 27;     -- Firmware_release Stand 21.11.2017 ( Error, '760 (ATR1): LED-Mux für FG902070_OptoDig_Out1
-    CONSTANT c_Firmware_Release:    Integer := 28;     -- Firmware_release Stand 20.06.2018 ( KK: Umbau ATR Trigger auf kanalweises Triggern und Largepulse Option, KL: SPill-Abort,QD-Test Matrix)
+--  CONSTANT c_Firmware_Release:    Integer := 28;     -- Firmware_release Stand 20.06.2018 ( KK: Umbau ATR Trigger auf kanalweises Triggern und Largepulse Option, KL: SPill-Abort,QD-Test Matrix)
+    CONSTANT c_Firmware_Release:    Integer := 29;     -- Firmware_release Stand 19.05.2021 ( + neuer Zwischen-Backplane )
 --  CONSTANT c_Firmware_Release:    Integer := 16#FF#; -- Test-Firmware_release
 
 
@@ -227,7 +229,7 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
     CONSTANT c_HW_Interlock_Base_Addr:           Integer := 16#0640#;  -- IO-Backplane Spill Abort HW Interlock
     CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0650#;  -- IO-Backplane Quench Detection
-
+    CONSTANT c_IOBP_READBACK_Base_Addr:          Integer := 16#0670#;  -- IO-Backplane Output Readback Register
 
 
 
@@ -257,14 +259,26 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_AW_HFIO:       ID_CID:= (x"09", 34);   ---- Piggy-ID(Codierung), B"0000_1001", FG900_780
     CONSTANT c_AW_SPSIOI1:    ID_CID:= (x"0A", 68);   ---- Piggy-ID(Codierung), B"0000_1010", FG901_770 -- Ausgänge schalten nach GND
     CONSTANT c_AW_INLB12S:    ID_CID:= (x"0B", 67);   ---- Piggy-ID(Codierung), B"0000_1011", FG902_050 -- IO-Modul-Backplane mit 12 Steckplätzen
-    CONSTANT c_AW_16Out2:     ID_CID:= (x"0C", 70);   ---- Piggy-ID(Codierung), B"0000_1100", FG901_010 -- Output 16 Bit
+    CONSTANT c_AW_16Out2:     ID_CID:= (x"0C", 70);   ---- Piggy-ID(Codierung), B"0000_1100", FG901_010 and FG901.011-- Output 16 Bit
     CONSTANT c_AW_16In2:      ID_CID:= (x"0D", 71);   ---- Piggy-ID(Codierung), B"0000_1101", FG901_020 -- Input 16 Bit
     CONSTANT c_AW_OCIO2:      ID_CID:= (x"0E", 61);   ---- Piggy-ID(Codierung), B"0000_1110", FG900_731
     CONSTANT c_AW_DA2:        ID_CID:= (x"0F", 72);   ---- Piggy-ID(Codierung), B"0000_1111", FG900_751
     CONSTANT c_AW_AD1:        ID_CID:= (x"10", 80);   ---- Piggy-ID(Codierung), B"0001_0000", FG901_040 -- analog Input: 2x16Bit ADC
     CONSTANT c_AW_ATR2:       ID_CID:= (x"11", 81);   ---- Piggy-ID(Codierung), B"0001_0001", FG900_761
-    CONSTANT c_AW_8In8Out1:   ID_CID:= (x"12", 88);   ---- Piggy-ID(Codierung), B"0001_0010", FG901_050 -- Input 8-Bit + Output 8-Bit
---  CONSTANT c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111",
+    CONSTANT c_AW_8In8Out1:   ID_CID:= (x"12", 88);   ---- Piggy-ID(Codierung), B"0001_0010", FG901_050 -- Input 8-Bit + Output 8-
+    CONSTANT c_AW_INLB12S1:   ID_CID:= (x"13", 67);   ---- Piggy-ID(Codierung), B"0001_0011", FG902_050-- neue IO-Modul-Backplane mit 12 Steckplätzen (zu überprüfen und zu berichtigen)
+---
+---
+--- Konstantenwerte für die Interface-Module für der aktuellen und neuen Zwischenbackplane:
+---
+    CONSTANT c_BP_5LWLIO2 :    ID_CID:= (x"01", 65);   ----SUB- Piggy-ID(Codierung), B"0000_0001", FG902.011 -- 5x opt In, 1x opt Out       -> aktuelle und newe Zwischenbackplane
+    CONSTANT c_BP_5LEMOIO2 :   ID_CID:= (x"02", 66);   ---- SUB-Piggy-ID(Codierung), B"0000_0010", FG902.011 -- 5xlemo In, 1xlemo Out       -> aktuelle und newe Zwischenbackplane
+    CONSTANT c_BP_6LemoI1 :    ID_CID:= (x"03", 74);   ---- SUB-Piggy-ID(Codierung), B"0000_0011", FG902.130 -- 6xlemo In,   -> neue Zwischenbackplane
+    CONSTANT c_BP_6LWLI1 :     ID_CID:= (x"04", 75);   ---- SUB-Piggy-ID(Codierung), B"0000_0100", FG902.110 -- 6x opt In,   -> neue Zwischenbackplane
+    CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.120 -- 6x opt Out,  -> neue Zwischenbackplane
+    CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.140 -- 6x opt Out,  -> neue Zwischenbackplane
+
+    --  CONSTANT c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111",
 
 
     constant  stretch_cnt:    integer := 5;                               -- für LED's
@@ -644,6 +658,8 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );
   end component IO_4x8;
+  
+  
 
 
  component diob_debounce
@@ -1085,8 +1101,6 @@ END COMPONENT hw_interlock;
 --  signal single_puls_state:       single_puls_state_t:= single_puls_idle;
 
 
-
-
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: P37IO  -- FG900_700                                    |
 --  +============================================================================================================================+
@@ -1338,92 +1352,93 @@ END COMPONENT hw_interlock;
 --  |      §760                         Übergabe-Signale für Anwender-IO: ATR1  -- FG900.760                                     |
 --  +============================================================================================================================+
 
-  signal  ATR_SPI_DO: 			      std_logic;
-  signal  ATR_SPI_CLK: 			      std_logic;
-  signal  ATR_nCS_DAC1: 		      std_logic;
-  signal  ATR_nCS_DAC2: 		      std_logic;
-  signal  ATR_nLD_DAC:            std_logic;
-  signal  ATR_CLR_Sel_DAC:	      std_logic;
-  signal  ATR_nCLR_DAC:			      std_logic;
+signal  ATR_SPI_DO: 			      std_logic;
+signal  ATR_SPI_CLK: 			      std_logic;
+signal  ATR_nCS_DAC1: 		      std_logic;
+signal  ATR_nCS_DAC2: 		      std_logic;
+signal  ATR_nLD_DAC:            std_logic;
+signal  ATR_CLR_Sel_DAC:	      std_logic;
+signal  ATR_nCLR_DAC:			      std_logic;
 --
-  signal  ATR_DAC_Status:         std_logic_vector(7 downto 0);
+signal  ATR_DAC_Status:         std_logic_vector(7 downto 0);
 --
-  signal  ATR_DAC_rd_active:      std_logic;
-  signal  ATR_DAC_Dtack:          std_logic;
-  signal  ATR_DAC_data_to_SCUB:   std_logic_vector(15 downto 0);
-  --
-  signal  ATR_Comp_LED_i:         std_logic_vector(8 downto 1);
-  signal  ATR_Comp_nLED_o:        std_logic_vector(8 downto 1);
-
-
-
-  TYPE   t_word_array     is array (0 to 15) of std_logic_vector(15 downto 0);
-
-  signal  ATR_comp_puls:                STD_LOGIC_VECTOR(7 DOWNTO 0);
-  signal  ATR_comp_cnt_error:           std_logic_vector(7 downto 0);  -- Flag's für den Counter-Überlauf
-  signal  ATR_comp_cnt_err_res:         std_logic;                     -- Reset Counter und Error-Flags
-  signal  atr_comp_ctrl_rd_active:      std_logic;
-  signal  atr_comp_ctrl_Dtack:          std_logic;
-  signal  atr_comp_ctrl_data_to_SCUB:   std_logic_vector(15 downto 0);
+signal  ATR_DAC_rd_active:      std_logic;
+signal  ATR_DAC_Dtack:          std_logic;
+signal  ATR_DAC_data_to_SCUB:   std_logic_vector(15 downto 0);
 --
-  signal  atr_puls_start:               std_logic;                     -- Starte Ausgangspuls
+signal  ATR_Comp_LED_i:         std_logic_vector(8 downto 1);
+signal  ATR_Comp_nLED_o:        std_logic_vector(8 downto 1);
 
-  signal  ATR_largepulse_en_7_0:        STD_LOGIC_VECTOR(7 DOWNTO 0);  -- ermöglicht kanalweise 1000 fach längere Pulse an atr_puls_out
-  signal  ATR_Tag_X_En_8_1:             STD_LOGIC_VECTOR(8 DOWNTO 1);  -- ermöglicht Tag 8..1 als Triggerquelle anstelle ATR Input 8..1
-  signal  ATR_TRIG_IN_Dis:              std_logic;                     -- bei High ATR Lemos IN1..8 oder Tags 1..8, bei Low ATR TrigIn Lemo
-  signal  ATR_TimingTags_8_1:           STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Matching Timing Tags als Trigger für ATR Pulse
-  signal  Tag1_stretched:               STD_LOGIC;                     -- For Stretching matched ATR Timing Tag1
-  signal  Tag1_del1:                    STD_LOGIC;
-  signal  Tag1_del2:                    STD_LOGIC;
-  signal  Tag1_del3:                    STD_LOGIC;
-  signal  Tag1_del4:                    STD_LOGIC;
 
-  signal  Tag_matched_7_0:              STD_LOGIC_VECTOR(7 DOWNTO 0);
-  signal  Syn_ATR_Comp_in_puls_8_1:     STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Pulse aus ATR In Lemos (fallende Flanke)
-  signal  Tags_Only:                    STD_LOGIC;                     -- Steuerbit für Triggerkontrolle ausschließlich über Timing Tags
 
-  signal  atr_puls_out:                 STD_LOGIC_VECTOR(7 DOWNTO 0);  -- Ausgangspuls Kanal 1..8
-  signal  atr_puls_config_err:          std_logic_vector(7 downto 0);  -- Config-Error: Pulsbreite/Pulsverzögerung
+TYPE   t_word_array     is array (0 to 15) of std_logic_vector(15 downto 0);
 
-  signal  ATR_puls_LED_i:               std_logic_vector(7 downto 0);
-  signal  ATR_puls_nLED_o:              std_logic_vector(7 downto 0);
+signal  ATR_comp_puls:                STD_LOGIC_VECTOR(7 DOWNTO 0);
+signal  ATR_comp_cnt_error:           std_logic_vector(7 downto 0);  -- Flag's für den Counter-Überlauf
+signal  ATR_comp_cnt_err_res:         std_logic;                     -- Reset Counter und Error-Flags
+signal  atr_comp_ctrl_rd_active:      std_logic;
+signal  atr_comp_ctrl_Dtack:          std_logic;
+signal  atr_comp_ctrl_data_to_SCUB:   std_logic_vector(15 downto 0);
+--
+signal  atr_puls_start:               std_logic;                     -- Starte Ausgangspuls
 
-  --
-	signal	ATR_to_conf_err_7_0:  		    std_logic_vector(7 downto 0);  -- Time-Out: Configurations-Error
-	signal	ATR_Timeout_7_0:              std_logic_vector(7 downto 0);  -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
-  signal  ATR_Timeout_err_res:          std_logic;                     -- Reset Error-Flags
+signal  ATR_largepulse_en_7_0:        STD_LOGIC_VECTOR(7 DOWNTO 0);  -- ermöglicht kanalweise 1000 fach längere Pulse an atr_puls_out
+signal  ATR_Tag_X_En_8_1:             STD_LOGIC_VECTOR(8 DOWNTO 1);  -- ermöglicht Tag 8..1 als Triggerquelle anstelle ATR Input 8..1
+signal  ATR_TRIG_IN_Dis:              std_logic;                     -- bei High ATR Lemos IN1..8 oder Tags 1..8, bei Low ATR TrigIn Lemo
+signal  ATR_TimingTags_8_1:           STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Matching Timing Tags als Trigger für ATR Pulse
+signal  Tag1_stretched:               STD_LOGIC;                     -- For Stretching matched ATR Timing Tag1
+signal  Tag1_del1:                    STD_LOGIC;
+signal  Tag1_del2:                    STD_LOGIC;
+signal  Tag1_del3:                    STD_LOGIC;
+signal  Tag1_del4:                    STD_LOGIC;
+
+signal  Tag_matched_7_0:              STD_LOGIC_VECTOR(7 DOWNTO 0);
+signal  Syn_ATR_Comp_in_puls_8_1:     STD_LOGIC_VECTOR(8 DOWNTO 1);  -- Pulse aus ATR In Lemos (fallende Flanke)
+signal  Tags_Only:                    STD_LOGIC;                     -- Steuerbit für Triggerkontrolle ausschließlich über Timing Tags
+
+signal  atr_puls_out:                 STD_LOGIC_VECTOR(7 DOWNTO 0);  -- Ausgangspuls Kanal 1..8
+signal  atr_puls_config_err:          std_logic_vector(7 downto 0);  -- Config-Error: Pulsbreite/Pulsverzögerung
+
+signal  ATR_puls_LED_i:               std_logic_vector(7 downto 0);
+signal  ATR_puls_nLED_o:              std_logic_vector(7 downto 0);
 
 --
-  signal  atr_puls_ctrl_rd_active:      std_logic;
-  signal  atr_puls_ctrl_Dtack:          std_logic;
-  signal  atr_puls_ctrl_data_to_SCUB:   std_logic_vector(15 downto 0);
+signal	ATR_to_conf_err_7_0:  		    std_logic_vector(7 downto 0);  -- Time-Out: Configurations-Error
+signal	ATR_Timeout_7_0:              std_logic_vector(7 downto 0);  -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+signal  ATR_Timeout_err_res:          std_logic;                     -- Reset Error-Flags
+
 --
-  signal  Syn_ATR_Comp_in:              std_logic_vector(7 downto 0);
-  signal  Syn_ATR_Comp_out:             std_logic_vector(7 downto 0);
+signal  atr_puls_ctrl_rd_active:      std_logic;
+signal  atr_puls_ctrl_Dtack:          std_logic;
+signal  atr_puls_ctrl_data_to_SCUB:   std_logic_vector(15 downto 0);
+--
+signal  Syn_ATR_Comp_in:              std_logic_vector(7 downto 0);
+signal  Syn_ATR_Comp_out:             std_logic_vector(7 downto 0);
 -------
-  signal   LED_ATR_Trig_In_i:           std_logic;
-  signal  nLED_ATR_Trig_In_o:           std_logic;
-  signal   LED_ATR_Trig_Out_i:          std_logic;
-  signal  nLED_ATR_Trig_Out_o:          std_logic;
+signal   LED_ATR_Trig_In_i:           std_logic;
+signal  nLED_ATR_Trig_In_o:           std_logic;
+signal   LED_ATR_Trig_Out_i:          std_logic;
+signal  nLED_ATR_Trig_Out_o:          std_logic;
 
-  signal  ATR_Trig_In_Puls_i:           std_logic;
-  signal  ATR_Trig_In_Puls_o:           std_logic;
-
-
-  --signal ATR_Puls_Start_Strobe_i:        std_logic;                       -- input  "Strobe-Signal"
-  signal ATR_Puls_Start_Strobe_o:        std_logic;                       -- Output "Strobe-Signal, 1 CLK breit"
-  signal ATR_Puls_Start_shift:           std_logic_vector(2  downto 0);   -- Shift-Reg.
+signal  ATR_Trig_In_Puls_i:           std_logic;
+signal  ATR_Trig_In_Puls_o:           std_logic;
 
 
-  signal ATR_Puls_nLED_Out:              std_logic_vector(7 downto 0);    -- Output-LED's zur Output-Erweiterung
-  signal ATR_Puls_nLED_Bus_o:            std_logic_vector(3 downto 0);    -- LED-Bus zur Output-Erweiterung
-  signal ATR_Puls_LED_Strobe:            std_logic_vector(1 downto 0);    -- LED-Strobe zur Output-Erweiterung
+--signal ATR_Puls_Start_Strobe_i:        std_logic;                       -- input  "Strobe-Signal"
+signal ATR_Puls_Start_Strobe_o:        std_logic;                       -- Output "Strobe-Signal, 1 CLK breit"
+signal ATR_Puls_Start_shift:           std_logic_vector(2  downto 0);   -- Shift-Reg.
 
-  signal ATR_LED_Loop_cnt:               integer range 1 to 2;            -- 1-2   -- Loop-Counter
 
-  --
-  type   ATR_LED_state_t is   (ATR_LED_idle, led_1_to_4, led_str_1_to_4_h, led_str_1_to_4_l, led_5_to_8, led_str_5_to_8_h, led_str_5_to_8_l, led_end);
-  signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
+signal ATR_Puls_nLED_Out:              std_logic_vector(7 downto 0);    -- Output-LED's zur Output-Erweiterung
+signal ATR_Puls_nLED_Bus_o:            std_logic_vector(3 downto 0);    -- LED-Bus zur Output-Erweiterung
+signal ATR_Puls_LED_Strobe:            std_logic_vector(1 downto 0);    -- LED-Strobe zur Output-Erweiterung
+
+signal ATR_LED_Loop_cnt:               integer range 1 to 2;            -- 1-2   -- Loop-Counter
+
+--
+type   ATR_LED_state_t is   (ATR_LED_idle, led_1_to_4, led_str_1_to_4_h, led_str_1_to_4_l, led_5_to_8, led_str_5_to_8_h, led_str_5_to_8_l, led_end);
+signal ATR_LED_state:   ATR_LED_state_t:= ATR_LED_idle;
+
 
 
 
@@ -1460,14 +1475,13 @@ END COMPONENT hw_interlock;
 --  +============================================================================================================================+
 
 
-  signal IOBP_Output: std_logic_vector(12 downto 1); -- Data_Output "Slave-Karten 1-12"
+  signal IOBP_Output: std_logic_vector(18 downto 1); -- Data_Output "Slave-Karten 1-12"
 
   TYPE   t_input_array      is array (1 to 12) of std_logic_vector(5 downto 1);
   signal IOBP_Input:        t_input_array;    -- Inputs der "Slave-Karten"
 
   TYPE   t_id_array         is array (1 to 12) of std_logic_vector(7 downto 0);
   signal IOBP_ID:           t_id_array;     -- ID's der "Slave-Karten"
-
   TYPE   t_led_array        is array (1 to 12) of std_logic_vector(6 downto 1);
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
 
@@ -1529,7 +1543,7 @@ END COMPONENT hw_interlock;
   signal IOBP_id_rd_active:       std_logic;
   signal IOBP_id_Dtack:           std_logic;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
-
+  signal IOBP_in_data_to_SCUB:    std_logic_vector(15 downto 0);
   signal IOBP_hw_il_rd_active:       std_logic;
   signal IOBP_hw_il_Dtack:           std_logic;
   signal IOBP_hw_il_data_to_SCUB:    std_logic_vector(15 downto 0);
@@ -1538,20 +1552,70 @@ END COMPONENT hw_interlock;
   signal quench_enable_signal: t_quench_array := (others=>(others=>'0'));
   TYPE   t_quench_reg_array     is array (0 to 7) of std_logic_vector(15 downto 0);
   signal quench_reg: t_quench_reg_array := (others=>(others=>'0'));
-
   signal IOBP_qd_rd_active:       std_logic;
   signal IOBP_qd_Dtack:           std_logic;
   signal IOBP_qd_data_to_SCUB:    std_logic_vector(15 downto 0);
+  signal IOBP_in_rd_active:       std_logic;
+  signal IOBP_in_Dtack:           std_logic;
 
 
---  +============================================================================================================================+
+
 
   signal    Deb60_in:     std_logic_vector(59 downto 0);
   signal    Deb60_out:    std_logic_vector(59 downto 0);
 
   signal    Syn60:        std_logic_vector(59 downto 0);
   signal    Deb_Sync60:   std_logic_vector(59 downto 0);
+----------------------------------------------------------------------------------------------------------------------------------
+--  +============================================================================================================================+
+--  |    §§§              Übergabe-Signale für Anwender-IO: FG902_xxx -- Newe Interlock-Backplane mit 12 Steckplätzen                 |
+--  +============================================================================================================================+
 
+
+TYPE   t_IOBP_array      is array (1 to 12) of std_logic_vector(5 downto 0);
+signal IOBP_SK_Output: t_IOBP_array;     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
+signal IOBP_SK_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
+signal IOBP_Masken_Reg6:        std_logic_vector(15 downto 0);
+signal IOBP_Masken_Reg7:        std_logic_vector(15 downto 0);
+signal IOBP_SK_Sel_LED:      t_led_array;
+signal IOBP_Output_Readback: t_IO_Reg_0_to_7_Array;
+
+signal    Deb72_in:     std_logic_vector(71 downto 0);
+signal    Deb72_out:    std_logic_vector(71 downto 0);
+
+signal    Syn72:        std_logic_vector(71 downto 0);
+signal    Deb_Sync72:   std_logic_vector(71 downto 0);
+type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
+signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
+type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
+signal conf_reg:           t_reg_array;
+signal AW_SK_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register von den Piggy's
+signal IOBP_SK_Aktiv_LED_i:  t_led_array;
+signal PIO_ENA_SLOT_1: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_2: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_3: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_4: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_5: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_6: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_7: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_8: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_9: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_10: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_11: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_ENA_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
+
+signal PIO_OUT_SLOT_1: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_2: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_3: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_4: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_5: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_6: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_7: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_8: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_9: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_10: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_11: std_logic_vector(5 downto 0):= (OTHERS => '0');
+signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 
 
 --  +============================================================================================================================+
@@ -1867,11 +1931,6 @@ END COMPONENT hw_interlock;
       master_clk_o            => clk_sys,               -- core clocking
       pll_locked              => pll_locked,
       sys_clk_is_bad          => sys_clk_is_bad,
-      sys_clk_is_bad_la       => sys_clk_is_bad_la,
-      local_clk_is_bad        => local_clk_is_bad,
-      local_clk_is_running    => local_clk_is_running,
-      sys_clk_deviation       => sys_clk_deviation,
-      sys_clk_deviation_la    => sys_clk_deviation_la,
       Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
       Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
       Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
@@ -2098,10 +2157,15 @@ io_port: IO_4x8
 
 p_AW_Out_Mux:  PROCESS (Tag_Maske_Reg, Tag_Outp_Reg, SCU_AW_Output_Reg)
     BEGin
+    --AW_Output_Reg(1)(0)  <= '1';
+   -- for i in 1 to 15 loop
+     -- IF Tag_Maske_Reg(1)(i)  = '0'then AW_Output_Reg(1)(i)  <= SCU_AW_Output_Reg(1)(i);  else  AW_Output_Reg(1)(i)  <= Tag_Outp_Reg(1)(i);  end if;    -- Daten-Reg. AWOut1
+     -- end loop;
+
     for i in 0 to 15 loop
 
 ------ Masken-Reg. aus Tag-Ctrl         Daten => Piggy             User-Output-Reg.                Daten => Piggy        Tag aus Tag-Ctrl
-------           |                              |                         |                              |                       |
+------        |                              |                         |                              |                       |
       IF Tag_Maske_Reg(1)(i)  = '0' then AW_Output_Reg(1)(i)  <= SCU_AW_Output_Reg(1)(i);  else  AW_Output_Reg(1)(i)  <= Tag_Outp_Reg(1)(i);  end if;    -- Daten-Reg. AWOut1
       IF Tag_Maske_Reg(2)(i)  = '0' then AW_Output_Reg(2)(i)  <= SCU_AW_Output_Reg(2)(i);  else  AW_Output_Reg(2)(i)  <= Tag_Outp_Reg(2)(i);  end if;    -- Daten-Reg. AWOut2
       IF Tag_Maske_Reg(3)(i)  = '0' then AW_Output_Reg(3)(i)  <= SCU_AW_Output_Reg(3)(i);  else  AW_Output_Reg(3)(i)  <= Tag_Outp_Reg(3)(i);  end if;    -- Daten-Reg. AWOut3
@@ -2195,10 +2259,9 @@ port map  (
       Reg_IO3            =>  IOBP_Masken_Reg3,
       Reg_IO4            =>  IOBP_Masken_Reg4,
       Reg_IO5            =>  IOBP_Masken_Reg5,
-      Reg_IO6            =>  open,
-      Reg_IO7            =>  open,
+      Reg_IO6            =>  IOBP_Masken_Reg6,
+      Reg_IO7            =>  IOBP_Masken_Reg7,
       Reg_IO8            =>  open,
---
       Reg_rd_active      =>  IOBP_msk_rd_active,
       Dtack_to_SCUB      =>  IOBP_msk_Dtack,
       Data_to_SCUB       =>  IOBP_msk_data_to_SCUB
@@ -2233,6 +2296,34 @@ port map  (
       Data_to_SCUB       =>  IOBP_id_data_to_SCUB
     );
 
+    IOBP_Readout_Reg: in_reg
+    generic map(
+          Base_addr =>  c_IOBP_READBACK_Base_Addr
+          )
+    port map  (
+          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+          Ext_Adr_Val        =>  Ext_Adr_Val,
+          Ext_Rd_active      =>  Ext_Rd_active,
+          Ext_Rd_fin         =>  Ext_Rd_fin,
+          Ext_Wr_active      =>  Ext_Wr_active,
+          Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+          clk                =>  clk_sys,
+          nReset             =>  rstn_sys,
+    --
+          Reg_In1            =>  IOBP_Output_Readback(0),
+          Reg_In2            =>  IOBP_Output_Readback(1),
+          Reg_In3            =>  IOBP_Output_Readback(2),
+          Reg_In4            =>  IOBP_Output_Readback(3),
+          Reg_In5            =>  IOBP_Output_Readback(4),
+          Reg_In6            =>  IOBP_Output_Readback(5),
+          Reg_In7            =>  IOBP_Output_Readback(6),
+          Reg_In8            =>  IOBP_Output_Readback(7),
+    --
+          Reg_rd_active      =>  IOBP_in_rd_active,
+          Dtack_to_SCUB      =>  IOBP_in_Dtack,
+          Data_to_SCUB       =>  IOBP_in_data_to_SCUB
+        );
     IOBP_Hardware_Interlock: hw_interlock
     generic map(
           Base_addr =>  c_HW_Interlock_Base_Addr
@@ -2441,6 +2532,8 @@ port map  (
 
 
 
+
+
 testport_mux: process (A_SEL, AW_Config1, AW_Input_Reg, AW_Output_Reg, LA_Tag_Ctrl1,
                        LA_AW_Port1, LA_Conf_Sts1, Timing_Pattern_RCV,
                        Timing_Pattern_LA, test_port_in_0, test_clocks, uart_txd_out,
@@ -2620,8 +2713,8 @@ port map (
     nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
     Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
     Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
-    intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
-                              & x"0"                                  -- bit 11..8
+   intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
+                             & '0'& '0' & '0' &'0'            -- bit 11..8
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
     User_Ready              => '1',
@@ -2784,39 +2877,45 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                         io_port_rd_active,        io_port_data_to_SCUB,
                         IOBP_msk_rd_active,       IOBP_msk_data_to_SCUB,
                         IOBP_id_rd_active,        IOBP_id_data_to_SCUB,
+                        IOBP_in_rd_active,        IOBP_in_data_to_SCUB,
                         ATR_DAC_rd_active,        ATR_DAC_data_to_SCUB,
                         atr_comp_ctrl_rd_active,  atr_comp_ctrl_data_to_SCUB,
                         atr_puls_ctrl_rd_active,  atr_puls_ctrl_data_to_SCUB
                       )
 
 
-  variable sel: unsigned(18 downto 0);
+  --variable sel: unsigned(20 downto 0);
+  variable sel: unsigned(19 downto 0);
+-- variable sel: unsigned(18 downto 0);
   begin
-    sel :=  IOBP_hw_il_rd_active      & IOBP_qd_rd_active       & tmr_rd_active           & INL_xor1_rd_active        & INL_msk1_rd_active      &
+    sel :=  IOBP_in_rd_active  &
+            IOBP_hw_il_rd_active      & IOBP_qd_rd_active       & tmr_rd_active           & INL_xor1_rd_active        & INL_msk1_rd_active      &
             AW_Port1_rd_active        & FG_1_rd_active          & FG_2_rd_active          & wb_scu_rd_active          & clk_switch_rd_active      &
             Conf_Sts1_rd_active       & Tag_Ctrl1_rd_active     & addac_rd_active         & io_port_rd_active         &
-            IOBP_msk_rd_active        & IOBP_id_rd_active       & ATR_DAC_rd_active       & atr_comp_ctrl_rd_active   & atr_puls_ctrl_rd_active     ;
+            IOBP_msk_rd_active        & IOBP_id_rd_active       & ATR_DAC_rd_active       & atr_comp_ctrl_rd_active   & atr_puls_ctrl_rd_active;
 
   case sel IS
-      when "1000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
-      when "0100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
-      when "0010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "0001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "0000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "0000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "0000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "0000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "0000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "0000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "0000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "0000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "0000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
-      when "0000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "0000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "0000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
-      when "0000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
-      when "0000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
-      when "0000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
+
+      when "10000000000000000000" => Data_to_SCUB <= IOBP_in_data_to_SCUB;
+      when "01000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
+      when "00100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
+      when "00010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "00000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "00000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "00000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "00000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "00000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "00000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "00000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "00000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "00000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
+      when "00000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "00000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "00000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
+      when "00000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
+      when "00000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
 
 
       when others      => Data_to_SCUB <= (others => '0');
@@ -2830,7 +2929,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     Dtack_to_SCUB <= ( tmr_dtack      or INL_xor1_Dtack       or INL_msk1_Dtack       or AW_Port1_Dtack   or FG_1_dtack       or
                        FG_2_dtack     or wb_scu_dtack         or clk_switch_dtack     or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                        addac_Dtack    or io_port_Dtack        or IOBP_msk_Dtack       or IOBP_id_Dtack    or  IOBP_qd_Dtack   or
-                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack);
+                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack or IOBP_in_Dtack);
 
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -3096,6 +3195,8 @@ P25IO_DAC_DAC_Strobe: outpuls port map( nReset   => rstn_sys,
                                         Base_cnt => C_Strobe_100ns,
                                         Mult_cnt => Wert_Strobe_2_Hoch_n(P25IO_DAC_DAC_Strobe_Expo),
                                         Sign_Out => P25IO_DAC_DAC_Strobe_o);
+
+
 
 
 
@@ -3802,7 +3903,16 @@ HFIO_in_PHASE_FEHLER_Deb:  diob_debounce
 --  +============================================================================================================================+
 --  |            §§§                        Anwender-IO: IOBP (INLB12S1)  -- FG902_050                                           |
 --  +============================================================================================================================+
---
+Deb72:  for I in 0 to 71 generate
+DB_I:  diob_debounce
+GENERIC MAP (DB_Tst_Cnt   => 3,
+             Test         => 0)             --
+          port map(DB_Cnt => Debounce_cnt,     -- Debounce-Zeit in Clock's
+                   DB_in  => Deb72_in(I),   -- Signal-Input
+                   Reset  => not rstn_sys,  -- Powerup-Reset
+                   clk    => clk_sys,       -- Sys-Clock
+                   DB_Out => Deb72_out(I)); -- Debounce-Signal-Out
+end generate Deb72;
 --
 --         =========== Component's für die 72 "aktiv" Led's ===========
 --
@@ -3841,7 +3951,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
       case IOBP_state is
         when IOBP_idle   =>  Slave_Loop_cnt       <=  1;                 -- Loop-Counter
 
-                            if  (AW_ID(7 downto 0) = c_AW_INLB12S.ID)  THEN  IOBP_state  <= led_id_wait;
+                            if  ((AW_ID(7 downto 0) = c_AW_INLB12S.ID) or (AW_ID(7 downto 0) = c_AW_INLB12S1.ID)) THEN  IOBP_state  <= led_id_wait;
                                                                        else  IOBP_state  <= IOBP_idle;
                             end if;
 
@@ -3900,6 +4010,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end if;
   end process P_IOBP_LED_ID_Loop;
 
+
   Spill_Abort_Station_Gen:  for J in 0 to 3 generate
   spill_userstations : spill_abort
     Port map( clk => clk_sys,
@@ -3919,7 +4030,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
                            spill_armed <= "0001";
                            spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then
-                            KO_abort <= '0';
+                           KO_abort <= '0';
                             RF_abort <= '1';
                            else
                             KO_abort <= '1';
@@ -3987,6 +4098,427 @@ Quench_Matrix_Gen:  for J in 1 to 3 generate
                   QuDOut => quench_out(J));
 end generate Quench_Matrix_Gen;
 
+
+
+  ID_Front_Board_proc: process (clk_sys, rstn_sys)
+
+  begin
+
+      if (not  rstn_sys= '1')    then
+          for i in 1 to 12 loop
+              conf_reg(i)<= (others => '0' );
+          end loop;
+
+          IOBP_slot_state <= IOBP_slot_idle;
+
+      elsif (clk_sys'EVENT AND clk_sys = '1') then
+
+          case IOBP_slot_state is
+
+              when IOBP_slot_idle	=>
+                                              IOBP_slot_state <= IOBP_slot1;
+
+              when IOBP_slot1=>			    conf_reg(1)<= IOBP_ID(1);
+                                              case conf_reg(1) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 1
+                                                      AW_SK_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync72( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
+                                                      IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(1)  <= ( PIO_SYNC(56),  PIO_SYNC(60),  PIO_SYNC(62),  PIO_SYNC(52),  PIO_SYNC(54),  PIO_SYNC(58));
+                                                      IOBP_SK_Output(1) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 1
+                                                      AW_SK_Input_Reg(1)( 5 downto  0) <=  (OTHERS => '0');
+                                                      IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg5( 5 downto 0));
+                                                      PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
+                                                      PIO_ENA_SLOT_1 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(1)  <=  IOBP_SK_Output(1);
+                                                      IOBP_SK_Input(1)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 1
+                                                      AW_SK_Input_Reg(1)( 4 downto  0) <=   (Deb_Sync72( 4 downto  0) AND not IOBP_Masken_Reg1( 4 downto  0));
+                                                      AW_SK_Input_Reg(1)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(1)  <=  (IOBP_SK_Output(1)(5)    &  Deb72_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(1) (4 downto 0) <= ( PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
+                                                      IOBP_SK_Output(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
+                                                      PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
+                                                      PIO_ENA_SLOT_1 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(1) <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot2;
+
+              when IOBP_slot2=>			    conf_reg(2)<= IOBP_ID(2);
+                                        case conf_reg(2) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 2
+                                                      AW_SK_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync72( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(2)  <=( PIO_SYNC(96),  PIO_SYNC(100), PIO_SYNC(102), PIO_SYNC(92),  PIO_SYNC(94),  PIO_SYNC(98));
+                                                      IOBP_SK_Output(2) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 2
+                                                      AW_SK_Input_Reg(1)( 11 downto  6) <=  (OTHERS => '0');
+                                                      IOBP_SK_Output(2) <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg1(11 downto 6));
+                                                      PIO_OUT_SLOT_2 <= IOBP_SK_Output(2);
+                                                      PIO_ENA_SLOT_2 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=  IOBP_SK_Output(2);
+                                                      IOBP_SK_Input(2)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+
+                                                    when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 2
+                                                      AW_SK_Input_Reg(1)( 10 downto  6) <=   (Deb_Sync72( 10 downto  6) AND not IOBP_Masken_Reg1( 10 downto  6));  -- Input, IO-Modul Nr. 2
+                                                      AW_SK_Input_Reg(1)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=  (IOBP_SK_Output(2)(5)    &  Deb72_out( 10 DOWNTO  6));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(2) (4 downto 0) <= ( PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
+                                                      IOBP_SK_Output(2)(5)  <= (AW_Output_Reg(1)( 11) AND not IOBP_Masken_Reg7(1));
+                                                      PIO_OUT_SLOT_2 <= IOBP_SK_Output(2);
+                                                      PIO_ENA_SLOT_2 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(2)<=    not ( IOBP_Masken_Reg7( 1) & IOBP_Masken_Reg1( 10 downto  6) );  -- Register für Sel-LED's vom Slave 2
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot3;
+
+              when IOBP_slot3=>			    conf_reg(3)<= IOBP_ID(3);
+                                            case conf_reg(3) is
+                                               when "00000011" | "00000100" => -- Input Modul in slot 3
+                                                      AW_SK_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync72( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(3)  <=( PIO_SYNC(73),  PIO_SYNC(77),  PIO_SYNC(79),  PIO_SYNC(69),  PIO_SYNC(71),  PIO_SYNC(75));
+                                                      IOBP_SK_Output(3) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+
+                                                when "00000101"  | "00000110" => -- Output Modul in slot 3
+                                                      AW_SK_Input_Reg(2)( 5 downto  0) <=  (OTHERS => '0');
+                                                      IOBP_SK_Output(3) <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg2(5 downto 0));
+                                                      PIO_OUT_SLOT_3 <= IOBP_SK_Output(3);
+                                                      PIO_ENA_SLOT_3 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=  IOBP_SK_Output(3);
+                                                      IOBP_SK_Input(3)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+
+                                                when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 3
+                                                      AW_SK_Input_Reg(2)( 4 downto  0) <=   (Deb_Sync72( 16 downto  12) AND not IOBP_Masken_Reg2( 4 downto  0));  -- Input, IO-Modul Nr. 3
+                                                      AW_SK_Input_Reg(2)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=  (IOBP_SK_Output(3)(5)    &  Deb72_out( 16 DOWNTO  12));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(3) (4 downto 0) <= ( PIO_SYNC(79),  PIO_SYNC(71),  PIO_SYNC(77),  PIO_SYNC(69),  PIO_SYNC(75));
+                                                      IOBP_SK_Output(3)(5)  <= (AW_Output_Reg(2)( 5) AND not IOBP_Masken_Reg7( 2));
+                                                      PIO_OUT_SLOT_3 <= IOBP_SK_Output(3);
+                                                      PIO_ENA_SLOT_3 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(3) <=  not ( IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 3
+
+                                                when others     =>  NULL;
+                                            end case;
+
+                                              IOBP_slot_state <= IOBP_slot4;
+
+               when IOBP_slot4=>			    conf_reg(4)<= IOBP_ID(4);
+                                            case conf_reg(4) is
+                                              when "00000011" | "00000100" => -- Input Modul in slot 4
+                                                      AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(91), PIO_SYNC(93), PIO_SYNC(105), PIO_SYNC(103), PIO_SYNC(89));
+                                                      IOBP_SK_Output(4) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 4
+                                                      AW_SK_Input_Reg(2)( 11 downto  6) <=  (OTHERS => '0');
+                                                      IOBP_SK_Output(4) <= AW_Output_Reg(2)( 11 downto  6) AND not IOBP_Masken_Reg2(11 downto 6);
+                                                      PIO_OUT_SLOT_4 <= IOBP_SK_Output(4);
+                                                      PIO_ENA_SLOT_4 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=  IOBP_SK_Output(4);
+                                                      IOBP_SK_Input(4)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 4
+                                                      AW_SK_Input_Reg(2)( 10 downto  6) <=   (Deb_Sync72( 22 downto  18) AND not IOBP_Masken_Reg2( 10 downto  6));  -- Input, IO-Modul Nr. 4
+                                                      AW_SK_Input_Reg(2)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=  (IOBP_SK_Output(4)(5)    &  Deb72_out( 22 DOWNTO  18));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(4) (4 downto 0) <= ( PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
+                                                      IOBP_SK_Output(4)(5)  <= (AW_Output_Reg(2)( 11) AND not IOBP_Masken_Reg7(3));
+                                                      PIO_OUT_SLOT_4 <= IOBP_SK_Output(4);
+                                                      PIO_ENA_SLOT_4 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(4) <=  not ( IOBP_Masken_Reg7( 3) & IOBP_Masken_Reg2( 10 downto  6) );  -- Register für Sel-LED's vom Slave 4
+
+                                                  when others     =>  NULL;
+                                            end case;
+
+                                              IOBP_slot_state <= IOBP_slot5;
+
+              when IOBP_slot5=>			    conf_reg(5)<= IOBP_ID(5);
+                                              case conf_reg(5) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 5
+                                                      AW_SK_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync72( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(5)  <= ( PIO_SYNC(53),  PIO_SYNC(61),  PIO_SYNC(63),  PIO_SYNC(57),  PIO_SYNC(55),  PIO_SYNC(59));
+                                                      IOBP_SK_Output(5) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 5
+                                                      AW_SK_Input_Reg(3)( 5 downto  0) <=  (OTHERS => '0');
+                                                      IOBP_SK_Output(5) <= AW_Output_Reg(3)(5 downto  0) AND not IOBP_Masken_Reg3(5 downto 0);
+                                                      PIO_OUT_SLOT_5 <= IOBP_SK_Output(5);
+                                                      PIO_ENA_SLOT_5 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=  IOBP_SK_Output(5);
+                                                      IOBP_SK_Input(5)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 5
+                                                      AW_SK_Input_Reg(3)( 4 downto  0) <=   (Deb_Sync72( 28 downto  24) AND not IOBP_Masken_Reg3( 4 downto  0));  -- Input, IO-Modul Nr. 5
+                                                      AW_SK_Input_Reg(3)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=  (IOBP_SK_Output(5)(5)    &  Deb72_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(5) (4 downto 0) <= ( PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
+                                                      IOBP_SK_Output(5)(5)  <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
+                                                      PIO_OUT_SLOT_5 <= IOBP_SK_Output(5);
+                                                      PIO_ENA_SLOT_5 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(5) <=  not ( IOBP_Masken_Reg7( 4) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 5
+
+
+                                              when others     =>  NULL;
+                                          end case;
+
+                                              IOBP_slot_state <= IOBP_slot6;
+
+              when IOBP_slot6=>			    conf_reg(6)<= IOBP_ID(6);
+                                              case conf_reg(6) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 6
+                                                      AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      IOBP_SK_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(109), PIO_SYNC(111), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(107));
+                                                      IOBP_SK_Output(6) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+
+                                              when "00000101"  | "00000110" => -- Output Modul in slot 6
+                                                      AW_SK_Input_Reg(3)( 11 downto  6)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(6) <= AW_Output_Reg(3)(11 downto  6) AND not IOBP_Masken_Reg3(11 downto 6);
+                                                      PIO_OUT_SLOT_6 <= IOBP_SK_Output(6);
+                                                      PIO_ENA_SLOT_6 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=  IOBP_SK_Output(6);
+                                                      IOBP_SK_Input(6)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+
+                                              when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 6
+                                                      AW_SK_Input_Reg(3)( 10 downto  6) <=   (Deb_Sync72( 34 downto  30) AND not IOBP_Masken_Reg3( 10 downto  6));  -- Input, IO-Modul Nr. 6
+                                                      AW_SK_Input_Reg(3)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=  (IOBP_SK_Output(6)(5)    &  Deb72_out( 34 DOWNTO  30));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(6) (4 downto 0) <= ( PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
+                                                      IOBP_SK_Output(6)(5)  <= (AW_Output_Reg(3)( 11) AND not IOBP_Masken_Reg7(5));
+                                                      PIO_OUT_SLOT_6 <= IOBP_SK_Output(6);
+                                                      PIO_ENA_SLOT_6 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(6)<=  not ( IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3( 10 downto  6) );  -- Register für Sel-LED's vom Slave 6
+
+                                          when others     =>  NULL;
+                                      end case;
+
+                                              IOBP_slot_state <= IOBP_slot7;
+
+              when IOBP_slot7=>			    conf_reg(7)<= IOBP_ID(7);
+                                              case conf_reg(7) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 7
+                                                      AW_SK_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync72( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      IOBP_SK_Input(7)  <= ( PIO_SYNC(35),  PIO_SYNC(43),  PIO_SYNC(45),  PIO_SYNC(39),  PIO_SYNC(37),  PIO_SYNC(41));
+                                                      IOBP_SK_Output(7) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+
+                                              when "00000101"  | "00000110" => -- Output Modul in slot 7
+                                                      AW_SK_Input_Reg(4)( 5 downto  0)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(7) <= AW_Output_Reg(4)(5 downto  0) AND not IOBP_Masken_Reg4(5 downto 0);
+                                                      PIO_OUT_SLOT_7 <= IOBP_SK_Output(7);
+                                                      PIO_ENA_SLOT_7 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=  IOBP_SK_Output(7);
+                                                      IOBP_SK_Input(7)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+
+                                                when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 7
+                                                      AW_SK_Input_Reg(4)( 4 downto  0) <=   (Deb_Sync72( 40 downto  36) AND not IOBP_Masken_Reg4( 4 downto  0));  -- Input, IO-Modul Nr. 7
+                                                      AW_SK_Input_Reg(4)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=  (IOBP_SK_Output(7)(5)    &  Deb72_out( 40 DOWNTO  36));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(7) (4 downto 0) <= ( PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
+                                                      IOBP_SK_Output(7)(5)  <= (AW_Output_Reg(4)( 5) AND not IOBP_Masken_Reg7(6));
+                                                      PIO_OUT_SLOT_7 <= IOBP_SK_Output(7);
+                                                      PIO_ENA_SLOT_7 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(7) <=  not ( IOBP_Masken_Reg7( 6) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
+
+                                          when others     =>  NULL;
+                                      end case;
+
+                                              IOBP_slot_state <= IOBP_slot8;
+
+              when IOBP_slot8=>			    conf_reg(8)<= IOBP_ID(8);
+                                              case conf_reg(8) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 8
+                                                      AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                      IOBP_SK_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(141), PIO_SYNC(139), PIO_SYNC(125));
+                                                      IOBP_SK_Output(8) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 8
+                                                      AW_SK_Input_Reg(4)(11 downto  6)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(8) <= AW_Output_Reg(4)(11 downto  6) AND not IOBP_Masken_Reg4(11 downto 6);
+                                                      PIO_OUT_SLOT_8 <= IOBP_SK_Output(8);
+                                                      PIO_ENA_SLOT_8 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=  IOBP_SK_Output(8);
+                                                      IOBP_SK_Input(8)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 8
+                                                      AW_SK_Input_Reg(4)( 10 downto  6) <=   (Deb_Sync72( 46 downto  42) AND not IOBP_Masken_Reg4( 10 downto  6));  -- Input, IO-Modul Nr. 8
+                                                      AW_SK_Input_Reg(4)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=  (IOBP_SK_Output(8)(5)    &  Deb72_out( 46 DOWNTO  42));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(8) (4 downto 0) <= ( PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
+                                                      IOBP_SK_Output(8)(5)  <= (AW_Output_Reg(4)( 11) AND not IOBP_Masken_Reg7(7));
+                                                      PIO_OUT_SLOT_8 <= IOBP_SK_Output(8);
+                                                      PIO_ENA_SLOT_8 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(8) <=  not ( IOBP_Masken_Reg7( 7) & IOBP_Masken_Reg4( 10 downto  6) );  -- Register für Sel-LED's vom Slave 8
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot9;
+
+              when IOBP_slot9=>			    conf_reg(9)<= IOBP_ID(9);
+                                              case conf_reg(9) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 9
+                                                      AW_SK_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync72(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      IOBP_SK_Input(9)  <= ( PIO_SYNC(30),  PIO_SYNC(22),  PIO_SYNC(20),  PIO_SYNC(26),  PIO_SYNC(28),  PIO_SYNC(24));
+                                                      IOBP_SK_Output(9) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 9
+                                                      AW_SK_Input_Reg(5)(5 downto  0)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(9) <= AW_Output_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0);
+                                                      PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
+                                                      PIO_ENA_SLOT_9 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=  IOBP_SK_Output(9);
+                                                      IOBP_SK_Input(9)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 9
+                                                      AW_SK_Input_Reg(5)( 4 downto  0) <=   (Deb_Sync72( 52 downto  48) AND not IOBP_Masken_Reg5( 4 downto  0));  -- Input, IO-Modul Nr. 9
+                                                      AW_SK_Input_Reg(5)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=  (IOBP_SK_Output(9)(5)    &  Deb72_out( 52 DOWNTO 48));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(9) (4 downto 0) <= ( PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
+                                                      IOBP_SK_Output(9)(5)  <= (AW_Output_Reg(5)(5) AND not IOBP_Masken_Reg7(8));
+                                                      PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
+                                                      PIO_ENA_SLOT_9 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
+                                                  when others     =>  NULL;
+                                              end case;
+  ---
+                                              IOBP_slot_state <= IOBP_slot10;
+
+              when IOBP_slot10=>			    conf_reg(10)<= IOBP_ID(10);
+                                              case conf_reg(10) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 10
+                                                      AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                      IOBP_SK_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(140), PIO_SYNC(138), PIO_SYNC(126), PIO_SYNC(128), PIO_SYNC(142));
+                                                      IOBP_SK_Output(10) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 10
+                                                      AW_SK_Input_Reg(5)(11 downto  6)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(10) <= AW_Output_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6);
+                                                      PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
+                                                      PIO_ENA_SLOT_10 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=  IOBP_SK_Output(10);
+                                                      IOBP_SK_Input(10)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 10
+                                                      AW_SK_Input_Reg(5)( 10 downto  6) <=   (Deb_Sync72( 58 downto  54) AND not IOBP_Masken_Reg5( 10 downto  6));  -- Input, IO-Modul Nr. 10
+                                                      AW_SK_Input_Reg(5)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=  (IOBP_SK_Output(10)(5)    &  Deb72_out( 58 DOWNTO  54));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(10) (4 downto 0) <= (PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
+                                                      IOBP_SK_Output(10)(5)  <= (AW_Output_Reg(5)( 11) AND not IOBP_Masken_Reg7(9));
+                                                      PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
+                                                      PIO_ENA_SLOT_10 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(10) <=  not ( IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6) );  -- Register für Sel-LED's vom Slave 10
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot11;
+
+              when IOBP_slot11=>			    conf_reg(11)<= IOBP_ID(11);
+                                              case conf_reg(11) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 11
+                                                      AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      IOBP_SK_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(40), PIO_SYNC(38), PIO_SYNC(44), PIO_SYNC(46), PIO_SYNC(42));
+                                                      IOBP_SK_Output(11) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 11
+                                                      AW_SK_Input_Reg(6)(5 downto  0)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(11) <= AW_Output_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0);
+                                                      PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
+                                                      PIO_ENA_SLOT_11 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=  IOBP_SK_Output(11);
+                                                      IOBP_SK_Input(11)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+
+                                                  when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 11
+                                                      AW_SK_Input_Reg(6)( 4 downto  0) <=   (Deb_Sync72( 64 downto  60) AND not IOBP_Masken_Reg6( 4 downto  0));  -- Input, IO-Modul Nr. 11
+                                                      AW_SK_Input_Reg(6)(5) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=  (IOBP_SK_Output(11)(5)    &  Deb72_out( 64 DOWNTO 60));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(11) (4 downto 0) <= ( PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
+                                                      IOBP_SK_Output(11)(5)  <= (AW_Output_Reg(6)( 5) AND not IOBP_Masken_Reg7(10));
+                                                      PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
+                                                      PIO_ENA_SLOT_11 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(11) <=  not ( IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) );  -- Register für Sel-LED's vom Slave 11
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot12;
+
+              when IOBP_slot12=>			    conf_reg(12)<= IOBP_ID(12);
+                                              case conf_reg(12) is
+                                                  when "00000011" | "00000100" => -- Input Modul in slot 12
+                                                      AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6));
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      IOBP_SK_Input(12)  <= (PIO_SYNC(112),PIO_SYNC(122), PIO_SYNC(120), PIO_SYNC(108), PIO_SYNC(110), PIO_SYNC(124));
+                                                      IOBP_SK_Output(12) <=  (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+
+                                                  when "00000101"  | "00000110" => -- Output Modul in slot 12
+                                                      AW_SK_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
+                                                      IOBP_SK_Output(12) <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
+                                                      PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
+                                                      PIO_ENA_SLOT_12 <= std_logic_vector'("111111");
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=  IOBP_SK_Output(12);
+                                                      IOBP_SK_Input(12)  <= (OTHERS => '0');
+                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+
+                                                      when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 12
+                                                      AW_SK_Input_Reg(6)( 10 downto  6) <=   (Deb_Sync72( 70 downto  66) AND not IOBP_Masken_Reg6( 10 downto  6));  -- Input, IO-Modul Nr. 12
+                                                      AW_SK_Input_Reg(6)(11) <='0';
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=  (IOBP_SK_Output(12)(5)    &  Deb72_out( 70 DOWNTO  66));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Input(12) (4 downto 0) <= ( PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
+                                                      IOBP_SK_Output(12)(5)  <= (AW_Output_Reg(6)( 11) AND not IOBP_Masken_Reg7(11));
+                                                      PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
+                                                      PIO_ENA_SLOT_12 <= std_logic_vector'("100000");
+                                                      IOBP_SK_Sel_LED(12) <=  not ( IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6( 10 downto  6) );  -- Register für Sel-LED's vom Slave 12
+
+                                                  when others     =>  NULL;
+                                              end case;
+
+                                              IOBP_slot_state <= IOBP_slot_idle;
+
+                   when others =>           IOBP_slot_state <= IOBP_slot_idle;
+          end case;
+
+    end if;
+   end process ID_Front_Board_proc;
 
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
@@ -4291,7 +4823,7 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             DAC2_Config, DAC2_Config_wr, DAC2_Out, DAC2_Out_wr,
             ADC_Config, ADC_In1, ADC_In2, ADC_In3, ADC_In4, ADC_In5, ADC_In6, ADC_In7, ADC_In8,
             AWOut_Reg1_wr, AWOut_Reg2_wr,
-            IOBP_Masken_Reg1, IOBP_Masken_Reg2, IOBP_Masken_Reg3, IOBP_Masken_Reg4, IOBP_Masken_Reg5, IOBP_Output,
+            IOBP_Masken_Reg1, IOBP_Masken_Reg2, IOBP_Masken_Reg3, IOBP_Masken_Reg4, IOBP_Masken_Reg5, IOBP_Masken_Reg6, IOBP_Masken_Reg7, IOBP_Output,
             IOBP_Input, IOBP_LED_ID_Bus_i, IOBP_LED_ID_Bus_o, IOBP_ID, IOBP_LED_En, IOBP_STR_rot_o, IOBP_STR_gruen_o, IOBP_STR_ID_o,
             IOBP_Id_Reg1, IOBP_Id_Reg2, IOBP_Id_Reg3, IOBP_Id_Reg4, IOBP_Id_Reg5, IOBP_Id_Reg6,
             Out16_Strobe, Out16_Mode, Out16_DAC_Strobe_o, Out16_Out, Out16_Data_FG_Out,
@@ -4305,7 +4837,8 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             nLED_ATR_Trig_Out_o, atr_puls_out, atr_puls_config_err, ATR_to_conf_err_7_0, ATR_Timeout_7_0, ATR_Timeout_err_res,Tag_matched_7_0, Tag1_stretched,
             AD1_Trigger_Mode, AD1_sw_Trigger, AD1_ext_Trigger, AD1_nCS, AD1_Reset, AD1_ByteSwap, AD1_nCNVST, AD1_Busy, AD1_Out, AD1_ext_Trigger_nLED,
             AD2_Trigger_Mode, AD2_sw_Trigger, AD2_ext_Trigger, AD2_nCS, AD2_Reset, AD2_ByteSwap, AD2_nCNVST, AD2_Busy, AD2_Out, AD2_ext_Trigger_nLED,
-            In8Out8_In, In8Out8_Input, In8Out8_Deb_out, In8Out8_nLED_Lemo_In_o, In8Out8_Out, In8Out8_nLED_Lemo_Out_o
+            In8Out8_In, In8Out8_Input, In8Out8_Deb_out, In8Out8_nLED_Lemo_In_o, In8Out8_Out, In8Out8_nLED_Lemo_Out_o,
+            IOBP_SK_Output, IOBP_SK_Input, Deb72_out, Deb72_in, Syn72, AW_SK_Input_Reg, IOBP_SK_Aktiv_LED_i
             )
 
 
@@ -4465,12 +4998,12 @@ BEGIN
     IOBP_Sel_LED                <=  (OTHERS => (OTHERS => '0'));    -- Inputs für die Aktiv-LED-Monoflops der "Slave-Karte 1-12"
     IOBP_LED_ID_Bus_i           <=             (OTHERS => '1');     -- Data_Output "Slave-Karte 1-12"
 
-    IOBP_ID_Reg1                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
-    IOBP_ID_Reg2                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
-    IOBP_ID_Reg3                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
-    IOBP_ID_Reg4                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
-    IOBP_ID_Reg5                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
-    IOBP_ID_Reg6                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg1                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg2                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg3                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg4                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg5                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
+    IOBP_Id_Reg6                <=  (OTHERS => '0');    -- IO-Backplane_ID_Register
 
 
 
@@ -4534,12 +5067,19 @@ BEGIN
     In8Out8_Out                 <=  (OTHERS => '0');    -- Data_Output
     In8Out8_LED_Lemo_Out_i      <=  (OTHERS => '0');    -- Input  "nLED_Lemo_In"
 
+    --IOBP_SK_Input               <=  (OTHERS => (OTHERS => '0'));    -- Data_Input  "Slave-Karte 1-12"
+    --IOBP_SK_Output              <=  (OTHERS => (OTHERS => '0'));    -- Data_Output  "Slave-Karte 1-12"
 
+    IOBP_Output_Readback        <=  (OTHERS => (OTHERS => '0'));  -- IO-Backplane_ID_Register Readback
+    Deb72_in                    <= (OTHERS => '0');
+    Syn72                       <= (OTHERS => '0');
+    Deb_Sync72                  <= (OTHERS => '0');
     --#################################################################################
     --###                                                                           ###
     --###                    IO-Stecker-Test mit "BrückenStecker                    ###
     --###                                                                           ###
     --#################################################################################
+
 
 
     IF  DIOB_Config1(15) = '1'  THEN   -- Config-Reg Bit15 = 1  --> Testmode
@@ -4911,7 +5451,6 @@ BEGIN
       PIO_ENA(89)         <=  '1';                  -- Output Enable
       P25IO_Reset_deb_i   <=  not PIO_Sync(67);     -- input "Rest-Taster" L-Aktiv
 
-
    --###################### Input's ==> FF ########################
 
       IF  (Diob_Config1(11) = '0')  THEN            -- 0 = Entprellung "Eingeschaltet"
@@ -5038,7 +5577,6 @@ BEGIN
         when "10"  =>  -- FG-Mode: bipolar
 
               P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(31 downto 16); -- ipolar
-
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
 
@@ -5057,7 +5595,6 @@ BEGIN
         when "11"  =>  -- FG-Mode: unipolar
 
               P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(30 downto 15); -- Unipolar
-
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
 
@@ -5082,7 +5619,7 @@ BEGIN
                                Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Out(15 downto 0); -- Output positiv
     END IF;
 
-
+    --################################
     --    Output DAC-Daten
 
       PIO_OUT(77) <=  '0';  -----+------------------------- Output_Enable (nach init vom ALTERA)
@@ -5194,6 +5731,7 @@ BEGIN
         AW_Input_Reg(1)(0)              <=  P25IO_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
         AW_Input_Reg(2)(15 DOWNTO 0)    <=  P25IO_ADC_Data_FF_o(15 DOWNTO 0);  -- Input-Register-Daten
     END IF;
+
 
 
    --################################  LED-Ext_Timing  ##################################
@@ -5320,6 +5858,7 @@ BEGIN
       END IF;
 
 
+
   WHEN   c_AW_OCIO1.ID | c_AW_OCIO2.ID  =>    --- OCIO1 oder OCIO2=>
 
     --#################################################################################
@@ -5434,6 +5973,7 @@ BEGIN
       PIO_ENA(103), PIO_ENA(59),  PIO_ENA(57),  PIO_ENA(55))  <=    std_logic_vector'("11111111");      -- Output Enable
 
       END IF;
+
 
 
   WHEN   c_AW_UIO.ID =>
@@ -5707,6 +6247,7 @@ BEGIN
             AW_Input_Reg(1)(0)            <=  UIO_Lemo_in;              -------- Input "Lemo-Buchse" ===== nicht entprellt =====
         END IF;
     END IF;
+
 
 
 
@@ -5994,6 +6535,7 @@ BEGIN
       PIO_OUT(47)               <=  AW_Output_Reg(1)(1);  -- Output-Register1(1) auf "Lemo: Trigger_Out2"
       PIO_ENA(47)               <=  '1';                  -- Output Enable
     end if;
+
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -6303,7 +6845,6 @@ BEGIN
     PIO_ENA(133)        <=  '1';                        -- Output Enable
 
 
-
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -6407,6 +6948,7 @@ BEGIN
       (PIO_ENA(111), PIO_ENA(113), PIO_ENA(115), PIO_ENA(117),
        PIO_ENA(103), PIO_ENA(105), PIO_ENA(107), PIO_ENA(109))  <=      std_logic_vector'("11111111");   -- Output Enable
    END IF;
+
 
 
   WHEN   c_AW_HFIO.ID =>
@@ -6626,9 +7168,8 @@ BEGIN
       END IF;
 
 
+  WHEN   c_AW_INLB12S.ID  =>
 
-
-  WHEN   c_AW_INLB12S.ID =>
 
     --###################################################################################
     --###################################################################################
@@ -6648,7 +7189,6 @@ BEGIN
     Max_AWOut_Reg_Nr     <= 3;  -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
     Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
-
 
     --############################# Set Debounce- oder Syn-Time ######################################
 
@@ -6675,7 +7215,7 @@ BEGIN
 
 
     (PIO_OUT(112), PIO_OUT(48), PIO_OUT(130), PIO_OUT(30), PIO_OUT(137), PIO_OUT(35),
-     PIO_OUT(119), PIO_OUT(53), PIO_OUT(101), PIO_OUT(73), PIO_OUT(96),  PIO_OUT(56))   <= IOBP_Output; ----------- Data_Output-Pin's der "Slave-Karten 12-1"
+     PIO_OUT(119), PIO_OUT(53), PIO_OUT(101), PIO_OUT(73), PIO_OUT(96),  PIO_OUT(56))   <= IOBP_Output(12 downto 1); ----------- Data_Output-Pin's der "Slave-Karten 12-1"
 
     (PIO_ENA(112), PIO_ENA(48), PIO_ENA(130), PIO_ENA(30), PIO_ENA(137), PIO_ENA(35),
      PIO_ENA(119), PIO_ENA(53), PIO_ENA(101), PIO_ENA(73), PIO_ENA(96),  PIO_ENA(56))   <= std_logic_vector'("111111111111");   -- Output Enable
@@ -6769,6 +7309,7 @@ BEGIN
 
 
 
+
 --################################ Debounce oder Sync Input's  ##################################
 
 --  Deb60_in = H-Aktiv             IOBP_Input = L-Aktiv
@@ -6808,7 +7349,7 @@ BEGIN
     END IF;
 
 
---  ################################ Input's AND Maske zu Input-Register ##################################
+--  ################################ Input's AND Maske zu Input-Register ###################
 
 --                  Input-Test, Stecker 1, 2, 3
 
@@ -6876,26 +7417,25 @@ BEGIN
 
       spill_req <=  Deb60_out(7) & Deb60_out(2) & Deb60_out(5) & Deb60_out(0);
       spill_pause <= "00" & Deb60_out(6) & Deb60_out(1);
-      IOBP_Output <= "0000" & TS_Abort & "000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+      IOBP_Output <= "0000000000" & TS_Abort & "000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
 
       UIO_Out(0)    <= spill_abort_HWI_out(0);
       UIO_Out(1)    <= spill_abort_HWI_out(1);
       UIO_ENA(1 downto 0)    <=  (others => '1');                  -- Output-Enable
 
     when x"DEDE" => --Quench Detection Development
-      IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
+      IOBP_Output <= "0000000000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
       quench_enable_signal(1) <= quench_reg (1) (9 downto 0) &  quench_reg (0) (14 downto 0);
       quench_enable_signal(2) <= quench_reg (3) (9 downto 0) &  quench_reg (2) (14 downto 0);
       quench_enable_signal(3) <= quench_reg (5) (9 downto 0) &  quench_reg (4) (14 downto 0);
       quench_enable_signal(4) <= quench_reg (7) (9 downto 0) &  quench_reg (6) (14 downto 0);
-
 
     when OTHERS =>
     --  STANDARD OUTPUT OUTREG
 --                                                    MaskenBit=0 --> Enable
       IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1
       IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
-    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
+      IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
       IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
       IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
       IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
@@ -6930,20 +7470,203 @@ BEGIN
 
       -----------------------------------------------------------------------------------------------------------------------------------------
 
+WHEN  c_AW_INLB12S1.ID  =>
 
-  WHEN   c_AW_16Out2.ID  =>
+
+--########################################################################################
+--########################################################################################
+--####                                                                                 ###
+--####      Anwender-IO: FG902_0xx -- Newe Interlock-Backplane mit 12 Steckplätzen     ###
+--####                                                                                 ###
+--########################################################################################
+--########################################################################################
+
+extension_cid_group  <= c_AW_INLB12S1.CID; -- extension card: cid_group, new Zwischenplane "FG902_xxx"
+
+extension_cid_system <= c_cid_system;       -- extension card: CSCOHW
+
+AW_Status1(15 downto 0)  <=  (OTHERS => '0');					    -- Unbenutzte Status-Bits
+AW_Status2(15 downto 0)  <=  (OTHERS => '0');					    -- Unbenutzte Status-Bits
+
+Max_AWOut_Reg_Nr     <= 3;  -- Maximale AWOut-Reg-Nummer der Anwendung
+Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
+Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+
+--############################# Set Debounce- oder Syn-Time ######################################
+
+  AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1
+
+  IF (AWIn_Deb_Time < Min_AWIn_Deb_Time) THEN Debounce_cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+                                         ELSE Debounce_cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+  END IF;
+
+--################################### Set LED's ########################################
+
+s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei --
+s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei --
+s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei --
 
 
+--========================== Output Register 1 ======================================
+
+PIO_OUT(86)   <=  '0';  ---------------- Output_Enable OEn1 (nach init vom ALTERA)
+PIO_ENA(86)   <=  '1';                -- Output Enable
+---------------------------------------------------------------------------------------------------------------------------------------
+
+--========================== Output Register 2 ======================================
+
+PIO_OUT(88)   <=  '0';  ---------------- Output_Enable OEn2 (nach init vom ALTERA)
+PIO_ENA(88)   <=  '1';                -- Output Enable
+---------------------------------------------------------------------------------------------------------------------------------------
+
+--                    ID-Input-Register für die IO-Module Nr. 1+12
+
+IOBP_Id_Reg6(15 downto 8) <=  IOBP_ID(12);  -- ID-Input vom  IO-Modul Nr. 12
+IOBP_Id_Reg6( 7 downto 0) <=  IOBP_ID(11);  -- ID-Input vom  IO-Modul Nr. 11
+IOBP_Id_Reg5(15 downto 8) <=  IOBP_ID(10);  -- ID-Input vom  IO-Modul Nr. 10
+IOBP_Id_Reg5( 7 downto 0) <=  IOBP_ID(9);   -- ID-Input vom  IO-Modul Nr. 9
+IOBP_Id_Reg4(15 downto 8) <=  IOBP_ID(8);   -- ID-Input vom  IO-Modul Nr. 8
+IOBP_Id_Reg4( 7 downto 0) <=  IOBP_ID(7);   -- ID-Input vom  IO-Modul Nr. 7
+IOBP_Id_Reg3(15 downto 8) <=  IOBP_ID(6);   -- ID-Input vom  IO-Modul Nr. 6
+IOBP_Id_Reg3( 7 downto 0) <=  IOBP_ID(5);   -- ID-Input vom  IO-Modul Nr. 5
+IOBP_Id_Reg2(15 downto 8) <=  IOBP_ID(4);   -- ID-Input vom  IO-Modul Nr. 4
+IOBP_Id_Reg2( 7 downto 0) <=  IOBP_ID(3);   -- ID-Input vom  IO-Modul Nr. 3
+IOBP_Id_Reg1(15 downto 8) <=  IOBP_ID(2);   -- ID-Input vom  IO-Modul Nr. 2
+IOBP_Id_Reg1( 7 downto 0) <=  IOBP_ID(1);   -- ID-Input vom  IO-Modul Nr. 1
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+------------------------- general LED Assigments - intermediate backplane ---------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+(PIO_OUT(114), PIO_OUT(50), PIO_OUT(132), PIO_OUT(32), PIO_OUT(135), PIO_OUT(33),
+PIO_OUT(117), PIO_OUT(51), PIO_OUT(99),  PIO_OUT(83), PIO_OUT(106), PIO_OUT(66))  <=  IOBP_STR_rot_o;   -- LED-Strobe Rot  für Slave 12-1
+(PIO_ENA(114), PIO_ENA(50), PIO_ENA(132), PIO_ENA(32), PIO_ENA(135), PIO_ENA(33),
+PIO_ENA(117), PIO_ENA(51), PIO_ENA(99),  PIO_ENA(83), PIO_ENA(106), PIO_ENA(66))  <=  std_logic_vector'("111111111111");   -- Output Enable
+
+(PIO_OUT(116), PIO_OUT(34), PIO_OUT(134), PIO_OUT(16), PIO_OUT(133), PIO_OUT(49),
+PIO_OUT(115), PIO_OUT(67), PIO_OUT(97),  PIO_OUT(81), PIO_OUT(104), PIO_OUT(64))  <=  IOBP_STR_gruen_o; -- LED-Strobe Grün für Slave 12-1
+(PIO_ENA(116), PIO_ENA(34), PIO_ENA(134), PIO_ENA(16), PIO_ENA(133), PIO_ENA(49),
+PIO_ENA(115), PIO_ENA(67), PIO_ENA(97),  PIO_ENA(81), PIO_ENA(104), PIO_ENA(64))  <=  std_logic_vector'("111111111111");   -- Output Enable
+
+(PIO_OUT(118), PIO_OUT(36), PIO_OUT(136), PIO_OUT(18), PIO_OUT(131), PIO_OUT(47),
+PIO_OUT(113), PIO_OUT(65), PIO_OUT(95),  PIO_OUT(85), PIO_OUT(90),  PIO_OUT(68))  <=  not IOBP_STR_ID_o;    -- ID-Strobe für Slave 12-1 (Enable ist L-Aktiv)
+(PIO_ENA(118), PIO_ENA(36), PIO_ENA(136), PIO_ENA(18), PIO_ENA(131), PIO_ENA(47),
+PIO_ENA(113), PIO_ENA(65), PIO_ENA(95),  PIO_ENA(85), PIO_ENA(90),  PIO_ENA(68))  <=  std_logic_vector'("111111111111");   -- Output Enable
+
+
+-------------------- Input/Output vom LED_ID_Bus der Zwischenbackplane  ------------
+IOBP_LED_ID_Bus_i <= (PIO_Sync(70), PIO_Sync(72), PIO_Sync(74), PIO_Sync(76), PIO_Sync(78), PIO_Sync(80), PIO_Sync(82), PIO_Sync(84));   ------------------------- Input  LED_ID_Bus
+                 (PIO_OUT(70),  PIO_OUT(72),  PIO_OUT(74),  PIO_OUT(76),  PIO_OUT(78),  PIO_OUT(80),  PIO_OUT(82),  PIO_OUT(84))   <=  IOBP_LED_ID_Bus_o;   -- Output LED_ID_Bus
+
+
+-------------------- Tri-State Steuerung vom LED_ID_Bus der Zwischenbackplane  ------------
+IF IOBP_LED_En = '1' THEN ---------------- LED write Loop
+(PIO_ENA(70), PIO_ENA(72), PIO_ENA(74), PIO_ENA(76), PIO_ENA(78), PIO_ENA(80), PIO_ENA(82), PIO_ENA(84))  <=  std_logic_vector'("11111111");  -- Output Enable
+ELSE --------------------------------------ID read Loop
+(PIO_ENA(70), PIO_ENA(72), PIO_ENA(74), PIO_ENA(76), PIO_ENA(78), PIO_ENA(80), PIO_ENA(82), PIO_ENA(84))  <=  std_logic_vector'("00000000");  -- Output Disable
+END IF;
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+( PIO_ENA(56),  PIO_ENA(62),  PIO_ENA(54),  PIO_ENA(60),  PIO_ENA(52),  PIO_ENA(58)) <= PIO_ENA_SLOT_1;
+( PIO_ENA(96),  PIO_ENA(102), PIO_ENA(94),  PIO_ENA(100), PIO_ENA(92),  PIO_ENA(98)) <= PIO_ENA_SLOT_2;
+( PIO_ENA(73),  PIO_ENA(79),  PIO_ENA(71),  PIO_ENA(77),  PIO_ENA(69),  PIO_ENA(75)) <= PIO_ENA_SLOT_3;
+( PIO_ENA(101), PIO_ENA(93),  PIO_ENA(103), PIO_ENA(91),  PIO_ENA(105), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
+( PIO_ENA(53),  PIO_ENA(63),  PIO_ENA(55),  PIO_ENA(61),  PIO_ENA(57),  PIO_ENA(59)) <= PIO_ENA_SLOT_5;
+( PIO_ENA(119), PIO_ENA(111), PIO_ENA(121), PIO_ENA(109), PIO_ENA(123), PIO_ENA(107))<= PIO_ENA_SLOT_6;
+( PIO_ENA(35),  PIO_ENA(45),  PIO_ENA(37),  PIO_ENA(43),  PIO_ENA(39),  PIO_ENA(41)) <= PIO_ENA_SLOT_7;
+( PIO_ENA(137), PIO_ENA(129), PIO_ENA(139), PIO_ENA(127), PIO_ENA(141), PIO_ENA(125))<= PIO_ENA_SLOT_8;
+( PIO_ENA(30),  PIO_ENA(20),  PIO_ENA(28),  PIO_ENA(22),  PIO_ENA(26),  PIO_ENA(24)) <= PIO_ENA_SLOT_9;
+( PIO_ENA(130), PIO_ENA(138), PIO_ENA(128), PIO_ENA(140), PIO_ENA(126), PIO_ENA(142))<= PIO_ENA_SLOT_10;
+( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= PIO_ENA_SLOT_11;
+( PIO_ENA(112), PIO_ENA(120), PIO_ENA(110), PIO_ENA(122), PIO_ENA(108), PIO_ENA(124))<= PIO_ENA_SLOT_12;
+
+
+( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
+( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
+( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
+( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
+( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
+( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
+( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
+( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
+( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
+( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
+( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
+
+
+AW_Input_Reg<= AW_SK_Input_Reg;
+IOBP_Aktiv_LED_i <= IOBP_SK_Aktiv_LED_i;
+---output readback
+IOBP_Output_Readback(0) <= "0000" & IOBP_SK_Output(2) & IOBP_SK_Output(1);
+IOBP_Output_Readback(1) <= "0000" & IOBP_SK_Output(4) & IOBP_SK_Output(3);
+IOBP_Output_Readback(2) <= "0000" & IOBP_SK_Output(6) & IOBP_SK_Output(5);
+IOBP_Output_Readback(3) <= "0000" & IOBP_SK_Output(8) & IOBP_SK_Output(7);
+IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
+IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
+IOBP_Output_Readback(6) <= (OTHERS => '0');
+IOBP_Output_Readback(7) <= (OTHERS => '0');
+
+
+
+---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
+IOBP_Sel_Led <= IOBP_SK_Sel_Led;
+
+
+--################################ Debounce oder Sync Input's  ##################################
+
+--  Deb72_in = H-Aktiv             IOBP_Input = L-Aktiv
+--        |                                |
+Deb72_in( 5 DOWNTO  0)   <=  not IOBP_SK_Input( 1);  -- Input-Daten
+Deb72_in(11 DOWNTO  6)   <=  not IOBP_SK_Input( 2);
+Deb72_in(17 DOWNTO 12)   <=  not IOBP_SK_Input( 3);
+Deb72_in(23 DOWNTO 18)   <=  not IOBP_SK_Input( 4);
+Deb72_in(29 DOWNTO 24)   <=  not IOBP_SK_Input( 5);
+Deb72_in(35 DOWNTO 30)   <=  not IOBP_SK_Input( 6);
+Deb72_in(41 DOWNTO 36)   <=  not IOBP_SK_Input( 7);
+Deb72_in(47 DOWNTO 42)   <=  not IOBP_SK_Input( 8);
+Deb72_in(53 DOWNTO 48)   <=  not IOBP_SK_Input( 9);
+Deb72_in(59 DOWNTO 54)   <=   not IOBP_SK_Input( 10);
+Deb72_in(65 DOWNTO 60)   <=   not IOBP_SK_Input( 11);
+
+Deb72_in(71 DOWNTO 66)   <=   not IOBP_SK_Input( 12);
+--  Syn72 = H-Aktiv             IOBP_Input = L-Aktiv
+--                                      |
+Syn72 ( 5 DOWNTO  0)   <=  not IOBP_SK_Input( 1);  -- Input-Daten
+Syn72(11 DOWNTO  6)   <=  not IOBP_SK_Input( 2);
+Syn72(17 DOWNTO 12)   <=  not IOBP_SK_Input( 3);
+Syn72(23 DOWNTO 18)   <=  not IOBP_SK_Input( 4);
+Syn72(29 DOWNTO 24)   <=  not IOBP_SK_Input( 5);
+Syn72(35 DOWNTO 30)   <=  not IOBP_SK_Input( 6);
+Syn72(41 DOWNTO 36)   <=  not IOBP_SK_Input( 7);
+Syn72(47 DOWNTO 42)   <=  not IOBP_SK_Input( 8);
+Syn72(53 DOWNTO 48)   <=  not IOBP_SK_Input( 9);
+Syn72(59 DOWNTO 54)   <=  not IOBP_SK_Input( 10);
+Syn72(65 DOWNTO 60)   <=  not IOBP_SK_Input( 11);
+Syn72(71 DOWNTO 66)   <=  not IOBP_SK_Input( 12);
+
+IF  (Diob_Config1(11) = '1')  THEN Deb_Sync72 <=  Syn72;         -- Dobounce = Abgeschaltet ==> nur Synchronisation
+                         ELSE Deb_Sync72 <=  Deb72_out;     -- Debounce und Synchronisation
+END IF;
+
+
+
+
+        ---------------------------------------------------
+
+
+WHEN   c_AW_16Out2.ID  =>
     --###################################################################################
-    --####                         Anwender-IO: 16Out-FG901_010                       ###
+    --####                         Anwender-IO: 16Out-FG901_010 - 16Out-FG901_011     ###
     --###################################################################################
 
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15- 8 | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
---      8    | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)         --
+--           |                                                                           --
 --      7    | Output-Polarität Bit [15..0],  1 = Negativ,  0 = Positiv(Default)         --
 --     ------+-----------------------------------------------------------------------    --
 --      6-0  | frei                                                                      --
@@ -6970,7 +7693,8 @@ BEGIN
 
 
     extension_cid_system <= c_cid_system;     -- extension card: CSCOHW
-    extension_cid_group  <= c_AW_16Out2.CID;  -- extension card: cid_group, "FG901010_16Out"
+
+    extension_cid_group  <= c_AW_16Out2.CID;    -- extension card: cid_group, "FG901010_16Out" or FG901011_16Out
 
     AW_Status1(15 downto 0)  <=  (OTHERS => '0');					    -- Unbenutzte Status-Bits
 		AW_Status2(15 downto 0)  <=  (OTHERS => '0');					    -- Unbenutzte Status-Bits
@@ -7551,7 +8275,6 @@ BEGIN
 
 
 
-
   WHEN OTHERS =>
 
     extension_cid_system <=  0;  -- extension card: cid_system
@@ -7580,18 +8303,10 @@ BEGIN
    (PIO_ENA(17), PIO_ENA(19), PIO_ENA(21), PIO_ENA(23),
     PIO_ENA(25), PIO_ENA(27), PIO_ENA(29), PIO_ENA(31) )  <=  std_logic_vector'("11111111"); -- Output Enable
 
-
-
-
-
-
   END CASE;
-
 
   END IF;
 
-
 END PROCESS p_AW_MUX;
-
 
 end architecture;

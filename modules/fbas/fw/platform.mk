@@ -8,8 +8,15 @@ export SPI_LANES := $(shell grep -m1 SPI_LANES $(PLATFMAKEFILE) | cut -d'=' -f2 
 export RAM_SIZE  := $(shell grep -m1 RAM_SIZE  $(PLATFMAKEFILE) | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
 # obtain the number of MPS channels
-FBAS_CMN_HDR_FILE:= fbas_common.h
-N_MPS_CH         := $(shell grep -m1 N_MPS_CHANNELS $(FBAS_CMN_HDR_FILE) | tr -s ' ' | cut -d' ' -f3)
+ifneq ($(MPS_CH),)
+  N_MPS_CH       := $(shell $(CC) -dM -E -D$(MPS_CH) fbas_common.h | sed -n 's|.*N_MPS_CHANNELS[[:space:]]*||p')
+else
+  N_MPS_CH       := $(shell $(CC) -dM -E fbas_common.h | sed -n 's|.*N_MPS_CHANNELS[[:space:]]*||p')
+endif
+
+$(info    N_MPS_CH    is $(N_MPS_CH))
+
+# use N_MPS_CH to rename a target to fbas<ch>.<platform>.bin (where, ch='' if N_MPS_CH=1)
 ifneq ($(N_MPS_CH),1)
   ifeq ($(TARGET),fbas)
     export N_MPS_CH
@@ -20,10 +27,13 @@ else
   undefine N_MPS_CH
 endif
 
-$(info    N_MPS       is $(N_MPS_CH))
-
 CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+
+ifneq ($(MPS_CH),)
+  CFLAGS += -D$(MPS_CH)
+endif
+
 SRC_FILES     = $(PATHFW)/$(TARGET).c  \
 		$(PATHFW)/fwlib.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 

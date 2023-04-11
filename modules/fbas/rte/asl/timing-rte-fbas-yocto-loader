@@ -1,0 +1,25 @@
+#!/bin/sh
+# Based on 'timing-rte-yocto-loader'
+
+# generic startup
+NFSHOST=fsl00c
+NFSBASE=/common/export
+NFSPATH=timing-rte
+
+#LOG_TAG="fbas"
+
+# get the RTE directory name
+export NAME=$(echo "$0" | cut -f2 -d_ | cut -f2 -d.)
+
+# mount the RTE directory
+[ ! -d /opt/$NAME ] && mkdir -p /opt/$NAME
+
+#echo "$LOG_TAG $NFSHOST:$NFSBASE/$NFSPATH/$NAME /opt/$NAME" >> /tmp/debug.log
+mount -t nfs -o ro,nolock $NFSHOST:$NFSBASE/$NFSPATH/$NAME /opt/$NAME
+
+# run the RTE loader script
+#echo "$(ls -la /opt/$NAME)" >> /tmp/debug.log
+/opt/$NAME/loader.sh /opt/$NAME
+
+# finally unmount
+umount /opt/$NAME

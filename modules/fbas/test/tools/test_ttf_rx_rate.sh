@@ -5,24 +5,48 @@
 # RX SCU - scuxl0497
 
 # [1] https://stackoverflow.com/questions/5799303/print-a-character-repeatedly-in-bash
+# [2] Math arithmetic: how to do calculation in bash?, https://www.shell-tips.com/bash/math-arithmetic-calculation/#gsc.tab=0
 
 abs_path=$(readlink -f "$0")
 dir_name=${abs_path%/*}
 source $dir_name/test_ttf_basic.sh -s  # source the specified script
 
 domain=$(hostname -d)             # domain name of local host
-rxscu="scuxl0497.$domain"         # RX SCU
+rxscu_name="scuxl0497"            # name of RX SCU
+rxscu="scuxl0497.$domain"         # full name of RX SCU, name=${rxscu%%.*}
 datamaster="tsl014"               # Data Master
-mngmaster="tsl001"                # Management Master
+login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
+mngmasters=( tsl001 tsl101 )      # Management Masters
 localhost=$(hostname -s)          # local host
 
 fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
 
-sched_dir="${PWD/fbas*/fbas}/dm"  # directory with DM schedules
-if [ "$localhost" != "$mngmaster" ]; then
+sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
+
+# determine if a local host is a management master (alias tslhost)
+unset tslhost
+for mm in "${mngmasters[@]}"; do
+    if [ "$localhost" == "$mm" ]; then
+        tslhost="$mm"
+        break
+    fi
+done
+
+# for non-tslhosts, locate a proper DM schedule path
+if [ -z "$tslhost" ]; then
     sched_dir="${PWD/fbas*/fbas}/test/dm"
 fi
-dst_sched_dir="fbas/test/dm"      # destination directory for DM schedules
+
+dst_test_dir="fbas_test"          # destination directory for DM scripts
+src_test_dir="${dir_name%/*}"     # source test directory
+
+ssh_opts="-o StrictHostKeyChecking=no"
+scp_opts="-r"                     # -r: recursive copy
+
+# Check if scp supports the '-O' option (use the legacy SCP protocol), required to access hosts, SCUs with older SSH
+if scp -O $0 /dev/null &>/dev/null; then
+    scp_opts+=" -O"
+fi
 
 res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
 res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
@@ -34,10 +58,133 @@ all_msg_rates=() # all msg rates
 
 tmg_msg_len=880  # timing message length [bits]
 
+report_code() {
+    # $1 - return code ($?)
+    ret_code=$1
+    if [ $ret_code -eq 0 ]; then
+        echo "OK"
+    else
+        echo "FAIL ($ret_code)"
+    fi
+}
+
+exit_on_fail() {
+    # $1 - return code ($?)
+    ret_code=$1
+    if [ $ret_code -ne 0 ]; then
+        echo "Exit!"
+        exit 2
+    fi
+}
+
+check_tr() {
+    filenames="$fw_rxscu $script_rxscu"
+
+    for filename in $filenames; do
+        timeout 10 sshpass -p "$userpasswd" \
+            ssh $username@$rxscu \
+            "if [ ! -f $filename ]; then \
+            echo $filename not found on ${rxscu}. Exit!; \
+            exit 2; fi"
+        ret_code=$?
+        report_check $ret_code $filename $rxscu
+    done
+}
+
+setup_tr() {
+    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+}
+
+reset_tr_ecpu() {
+    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && reset_node DEV_RX SENDER_ANY")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+}
+
+enable_tr_mps() {
+    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && start_test4 \$DEV_RX")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+}
+
+disable_tr_mps() {
+    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && stop_test4 \$DEV_RX")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+}
+
+setup_dm() {
+    output=$(timeout 10 ssh "$login_dm" \
+        "if [ ! -d "./$dst_test_dir" ]; then mkdir -p ./$dst_test_dir; fi")
+    ret_code=$?
+    if [ $ret_code -eq 0 ]; then
+        output=$(scp $scp_opts "$src_test_dir/tools" "$src_test_dir/dm" \
+            $login_dm:./$dst_test_dir/)
+    else
+        echo "FAIL ($ret_code): could not deploy '$dst_test_dir' on $datamaster. Exit!"
+        exit 2
+    fi
+    echo -e "Test artifacts are deployed in '$datamaster:./$dst_test_dir'"
+}
+
+check_dm_schedule() {
+    # complete an array with all timing message rates
+    index=0
+    for rate in ${primary_msg_rates[*]} ; do
+        all_msg_rates[index]=$rate
+        index=$(( $index + 1 ))
+    done
+
+    if [ "$is_msg_rate_limited" != "y" ]; then
+        for first in ${adv_msg_rates[*]}; do
+            step=$first               # iteration step
+            last=$(( 10 * $first ))   # last value
+            for rate in $(seq $first $step $last); do
+                all_msg_rates[index]=$rate
+                index=$(( $index + 1 ))
+            done
+        done
+    fi
+
+    # determine the depth of timing message block [messages]
+    # the depth of block is obtained from a given schedule filename
+    # ie., depth of block is 1 for 'my_mps_rx_rate_1.dot'
+    d_block=${sched_filename%%\.dot} # remove file suffix '.dot'
+    d_block=${d_block##*_}           # remove all leading characters until last '_'
+    d_block=$(( 10#$d_block ))       # convert string to decimal
+
+    echo -e "Timing message block depth: $d_block [messages]"
+
+    echo "Measurements will be done with following message rates [Hz]:"
+    for rate in ${all_msg_rates[*]}; do
+        echo $rate
+    done
+}
+
+start_dm_schedule() {
+    output=$(ssh "$login_dm" \
+        "source ./${dst_test_dir}/tools/dm.sh && \
+        set_value $sched_filename tperiod $t_period && \
+        run_pattern $sched_filename")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+}
+
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Test to determine the maximum data rate for receiver"
-    echo "Used SCUs: ${rxscu%%.*} (RX)"
+    echo "Used SCUs: $rxscu_name (RX)"
     echo
     echo "OPTION:"
     echo "  -u <username>          user name to log in to SCUs"
@@ -66,7 +213,7 @@ done
 
 # get username and password to access SCUs
 if [ -z "$username" ]; then
-    read -rp "username to access '${rxscu%%.*}: " username
+    read -rp "username to access '$rxscu_name: " username
 fi
 
 if [ -z "$userpasswd" ]; then
@@ -84,56 +231,21 @@ if [ ! -f $sched_dir/$sched_filename ]; then
     exit 1
 fi
 
-echo "check deployment"
-echo "----------------"
+# setup everything
+echo -e "\n--- 1. Set up DM=$datamaster ---\n"
+setup_dm
 
-filenames="$fw_rxscu $script_rxscu"
+echo -e "\n--- 2. Check deployment in TR=$rxscu_name ---\n"
+check_tr
 
-for filename in $filenames; do
-    timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-    result=$?
-    report_check $result $filename $rxscu
-done
-echo
+echo -e "\n--- 3. Check DM schedule in '$sched_filename' ---\n"
+check_dm_schedule
 
-# complete an array with all timing message rates
-index=0
-for rate in ${primary_msg_rates[*]} ; do
-    all_msg_rates[index]=$rate
-    index=$(( $index + 1 ))
-done
+echo -e "\n--- 4. Set up TR=$rxscu_name ---\n"
+setup_tr
 
-if [ "$is_msg_rate_limited" != "y" ]; then
-    for first in ${adv_msg_rates[*]}; do
-        step=$first               # iteration step
-        last=$(( 10 * $first ))   # last value
-        for rate in $(seq $first $step $last); do
-            all_msg_rates[index]=$rate
-            index=$(( $index + 1 ))
-        done
-    done
-fi
-
-# determine the depth of timing message block [messages]
-# the depth of block is obtained from a given schedule filename
-# ie., depth of block is 1 for 'my_mps_rx_rate_1.dot'
-d_block=${sched_filename%%\.dot} # remove file suffix '.dot'
-d_block=${d_block##*_}           # remove all leading characters until last '_'
-d_block=$(( 10#$d_block ))       # convert string to decimal
-
-echo "Timing message block depth: $d_block [messages]"
-
-echo "Measurements will be done with following message rates [Hz]:"
-for rate in ${all_msg_rates[*]}; do
-    echo $rate
-done
-
-echo -e "\nset up '${rxscu%%.*}'\n------------"
-timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY"
-
-# deploy the specified schedule file
-echo -e "\ndeploy '$sched_filename'\n------------"
-scp $sched_dir/$sched_filename $username@$datamaster:~/$dst_sched_dir/
+# start measurements
+echo -e "\n--- 5. Start the measurements ---\n"
 
 unset results
 for rate in ${all_msg_rates[*]}; do
@@ -142,39 +254,47 @@ for rate in ${all_msg_rates[*]}; do
     t_period=$(( $d_block * 1000000000 / $rate )) # period of tmg msgs block [ns]
 
     echo "Measurement: msg rate=$rate tperiod=$t_period"
-    echo "--------------------------------------------"
 
-    # reset the FW in receiver node and enable MPS task
-    echo -e "\nreset '${rxscu%%.*}'\n------------"
-    timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && reset_node DEV_RX SENDER_ANY"
+    # reset the FW in receiver node
+    echo -en " reset eCPU (LM32) of '$rxscu_name': "
+    reset_tr_ecpu
 
     # enable MPS task of rxscu
-    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && start_test4 \$DEV_RX"
+    echo -en " enable MPS operation of '$rxscu_name': "
+    enable_tr_mps
 
     # start a schedule on DM
-    echo -e "\nstart a schedule on '${datamaster}'\n---------"
-    ssh "$username@$datamaster" "source dm.sh && set_value $sched_filename tperiod $t_period && run_pattern $sched_filename"
+    echo -en " start a schedule on '$datamaster': "
+    start_dm_schedule
 
     # disable MPX task of rxscu"
-    timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && stop_test4 \$DEV_RX"
-    echo
+    echo -en " disable MPS operation of '$rxscu_name': "
+    disable_tr_mps
 
-    # print measurement results
-    counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" "source setup_local.sh && read_counters \$DEV_RX && result_ow_delay \$DEV_RX")
+    # obtain stats from TR
+    echo -en " obtain stats from '$rxscu_name': "
+    counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+        "source setup_local.sh && \
+        read_counters \$DEV_RX && \
+        result_ow_delay \$DEV_RX")
+    ret_code=$?
+    report_code $ret_code
+    exit_on_fail $ret_code
+
     counts=${counts//$'\n'/}           # remove all 'newline'
     counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
 
     # format values
-    t_period_float=$(echo "$t_period/1000" | bc -l)           # message period [us]
-    rate_float=$(echo "$rate/1000" | bc -l)                   # message rate [KHz]
-    d_rate_float=$(echo "$rate*$tmg_msg_len/1000000" | bc -l) # data rate [Mbps]
-    sel_counts=$(echo $counts | cut -d' ' -f2-8)              # ignore 1st element (number of TX msgs)
+    t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
+    rate_float=$(printf "|%10.3f " "$((10**3 * $rate/1000))e-3")                   # message rate [KHz]
+    d_rate_float=$(printf "|%10.3f" "$((10**3 * $rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
+    sel_counts=$(echo $counts | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
 
     unset new_line
-    new_line+=$(printf "|%10.3f " $t_period_float)
-    new_line+=$(printf "|%10.3f " $rate_float)
-    new_line+=$(printf "|%10.3f" $d_rate_float)
-    new_line=${new_line//./,}    # replace all 'dot' with 'comma' (for floating point numbers)
+    new_line+=$t_period_float
+    new_line+=$rate_float
+    new_line+=$d_rate_float
+    new_line=${new_line//./,}                # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
     new_line+=$(printf " | %s" $sel_counts)
 
     eca_valid=$(echo "$counts" | cut -d' ' -f2)
@@ -205,7 +325,7 @@ for rate in ${all_msg_rates[*]}; do
 
 done
 
-echo "$sched_filename $fw_rxscu $localhost ($(date))"
+echo -e "\n$sched_filename@$datamaster $fw_rxscu@$rxscu $localhost ($(date))\n"
 echo "$res_header_console"
 #echo "$res_header_wiki"
 chars=${#res_header_console}

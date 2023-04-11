@@ -312,14 +312,14 @@ int main (int argc, char** argv)
 
   if ((status = eb_sdb_find_by_identity(device, I2C_WRAP_GSI_ID, I2C_WRAP_ID, &sdb, &devices)) != EB_OK)
   {
-    printf("Error: Failed find I2C master!\n");
+    printf("Error: Failed to find an I2C master!\n");
     return 1;
   }
 
   /* Display operation */
   if (devices == 0)
   {
-    printf("Error: There is not I2C master on this device!\n");
+    printf("Error: There is no I2C master on this device!\n");
     return 1;
   }
 
@@ -356,4 +356,3 @@ int main (int argc, char** argv)
   /* Done */
   return 0;
 }
-
