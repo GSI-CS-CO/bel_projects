@@ -19,7 +19,7 @@ CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDE
 
 include ../../build.mk
 
-all: $(TARGET).elf tools
+all: $(TARGET).elf
 
 tools: 
 	$(MAKE) -C $(PATHTOOL) tools
