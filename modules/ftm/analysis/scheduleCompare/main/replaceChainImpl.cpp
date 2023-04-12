@@ -77,23 +77,31 @@ bool ReplaceChain::getStartOfChain(VertexNum v, VertexNum first) {
     }
     if (p != ULONG_MAX && predecessorInChain(p) == v) {
       // we have a two-vertex cycle, not a start of a chain to replace.
-      //~ std::cout << "4a v: " << v << " p: " << p << std::endl;
+      if (c->superverbose) {
+        std::cout << "4a v: " << v << " p: " << p << std::endl;
+      }
       result = false;
     } else if (p != ULONG_MAX && boost::in_degree(p, *g) <= 1 && boost::out_degree(p, *g) == 1) {
       // p is in the chain
       // out_degree(p, *g) >= 1 since p is predecessor of v.
       // we may have a cycle (p== first), then first is start of chain.
       if (p == first) {
-        //~ std::cout << "4b v: " << v << " p: " << p << std::endl;
+        if (c->superverbose) {
+          std::cout << "4b v: " << v << " p: " << p << std::endl;
+        }
         result = true;
         startOfChain = first;
       } else {
-        //~ std::cout << "4c v: " << v << " p: " << p << std::endl;
+        if (c->superverbose) {
+          std::cout << "4c v: " << v << " p: " << p << std::endl;
+        }
         result = getStartOfChain(p, first);
       }
     } else {
       // p is not in the chain, v is start of chain.
-      //~ std::cout << "4d v: " << v << " p: " << p << std::endl;
+      if (c->superverbose) {
+        std::cout << "4d v: " << v << " p: " << p << std::endl;
+      }
       result = true;
       startOfChain = v;
     }
@@ -112,16 +120,20 @@ VertexNum ReplaceChain::predecessor(VertexNum v, bool inChain) {
     VertexDescriptor source1 = source(*in_begin, *g);
     if (c->blocksSeparated && inChain) {
       VertexNum candidate = boost::get(id, source1);
-      //~ std::cout << "predecessor v: " << v << " candidate: " << candidate << std::endl;
       std::string vType = (*g)[v].type;
       std::string pType = (*g)[candidate].type;
+      if (c->superverbose) {
+        std::cout << "0 predecessor v: " << v << ", v type: " << vType << " candidate: " << candidate << ", p type: " << pType << std::endl;
+      }
       if (vType.compare(pType) == 0) {
         predecessor = candidate;
       }
     } else {
       predecessor = boost::get(id, source1);
     }
-    //~ std::cout << "predecessor v: " << v << " predecessor: " << predecessor << std::endl;
+    if (c->superverbose) {
+      std::cout << "1 predecessor v: " << v << " predecessor: " << predecessor << ", c->blocksSeparated: " << c->blocksSeparated << ", inChain: " << inChain << std::endl;
+    }
   }
   return predecessor;
 }
@@ -142,9 +154,11 @@ VertexNum ReplaceChain::successor(VertexNum v, bool inChain) {
     VertexDescriptor target1 = target(*out_begin, *g);
     if (c->blocksSeparated && inChain) {
       VertexNum candidate = boost::get(id, target1);
-      //~ std::cout << "successor v: " << v << " candidate: " << candidate << std::endl;
       std::string vType = (*g)[v].type;
       std::string sType = (*g)[candidate].type;
+      if (c->superverbose) {
+        std::cout << "0 successor v: " << v << ", v type: " << vType << " candidate: " << candidate << ", s type: " << sType << std::endl;
+      }
       if (vType.compare(sType) == 0) {
         successor = candidate;
       }
@@ -152,7 +166,9 @@ VertexNum ReplaceChain::successor(VertexNum v, bool inChain) {
       successor = boost::get(id, target1);
     }
   }
-  //~ std::cout << "successor v:" << v << ", s:" << successor << ", out degree: " << boost::out_degree(v, *g) << ", size: " << chain.size() << std::endl;
+  if (c->superverbose) {
+    std::cout << "1 successor v:" << v << ", s:" << successor << ", c->blocksSeparated: " << c->blocksSeparated << ", inChain: " << inChain << std::endl;
+  }
   return successor;
 }
 
@@ -269,6 +285,7 @@ VertexNum ReplaceChain::createVertexProperties(VertexNum v) {
   // Concate names from vertices in chain and use this as name for new vertex.
   newVertex.name = (*g)[v].name;
   newVertex.label = (*g)[v].label;
+  newVertex.type = (*g)[v].type;
   newVertex.pos = (*g)[v].pos;
   newVertex.height = (*g)[v].height;
   newVertex.width = (*g)[v].width;

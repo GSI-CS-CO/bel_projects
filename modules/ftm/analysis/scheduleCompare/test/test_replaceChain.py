@@ -296,6 +296,39 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """
     self.replaceChain2('replaceChain/star4.dot', 0)
 
+  def test_replaceChainBlockChain22(self):
+    """Compact a four element chain with two block and two events.
+    """
+    self.replaceChain2('replaceChain/blockChain22.dot', 0)
+
+  def test_replaceChainBlockChain22BlocksSeparated(self):
+    """Compact a four element chain with two block and two events.
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/blockChain22.dot', 0)
+
+  def test_replaceChainEsrStacking(self):
+    """Compact a schedule for ESR stacking (part of larger schedule).
+    """
+    self.replaceChain2('replaceChain/EsrStacking.dot', 0)
+
+  def test_replaceChainEsrStackingBlocksSeparated(self):
+    """Compact a schedule for ESR stacking (part of larger schedule).
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/EsrStacking.dot', 0)
+
+  def test_replaceChainEsrSnoopy(self):
+    """Compact a schedule for ESR stacking (the larger schedule).
+    """
+    self.replaceChain2('replaceChain/snoopy.dot', 0)
+
+  def test_replaceChainEsrSnoopyBlocksSeparated(self):
+    """Compact a schedule for ESR stacking (the larger schedule).
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/snoopy.dot', 0)
+
   def test_replaceChainTsl020Sis100(self):
     """Compact a schedule from tsl020.
     """
