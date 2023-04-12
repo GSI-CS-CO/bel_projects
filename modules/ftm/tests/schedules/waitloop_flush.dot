@@ -1,0 +1,25 @@
+digraph WaitloopFlush {
+name=WaitloopFlush
+
+edge [type=defdst]
+node [cpu=3 pattern=A fid=1 toffs=0 type=block]
+
+CMD_LOOP_INIT [type=flow patentry=true qty=10000 vabs=true]
+CMD_FLUSH [type=flush toffs=10 prio=1 qlo=true tvalid=500000000]
+MSG_B4 [type=tmsg toffs=20 par=1]
+BLOCK_B4 [tperiod=100]
+MSG_LOOP [type=tmsg par=2]
+BLOCK_LOOP [qlo=1 qhi=1 qil=1 tperiod=100000]
+MSG_AF [type=tmsg par=3]
+BLOCK_END [patexit=true qlo=1 tperiod=100000]
+
+CMD_LOOP_INIT -> CMD_FLUSH -> MSG_B4  -> BLOCK_B4  -> MSG_LOOP -> BLOCK_LOOP -> MSG_AF -> BLOCK_END
+
+BLOCK_LOOP    -> BLOCK_LOOP [type=altdst]
+
+CMD_LOOP_INIT -> BLOCK_LOOP [type=target]
+CMD_LOOP_INIT -> BLOCK_LOOP [type=flowdst]
+
+CMD_FLUSH     -> BLOCK_LOOP [type=target]
+
+}

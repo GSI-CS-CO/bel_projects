@@ -11,42 +11,58 @@ parent={sched:type}
 
 \newglossaryentry{sched:type:block}{
 name={block},
-description={Fixed length block. Terminates a sequence of nodes and defines the sequence's length in time. See \gls{sched:tperiod}},
+description={Fixed length block. Terminates a sequence of nodes and defines the sequence's length in time. See \gls{sched:tperiod}.},
 type=sched,
 parent={sched:type}
 }
 
 \newglossaryentry{sched:type:blockalign}{
 name={blockalign},
-description={Alignment block. Extends its own length so the time sum will become a multiple of the time grid (currently \SI{10}{\micro\second}). See \gls{sched:tperiod}, \gls{sched:type:block}},
+description={Alignment block. Extends its own length so the time sum will become a multiple of the time grid (currently \SI{10}{\micro\second}).
+See \gls{sched:tperiod}, \gls{sched:type:block}.},
 type=sched,
 parent={sched:type}
 }
 
 \newglossaryentry{sched:type:flow}{
 name={flow},
-description={Causes one or more repetitions of a flow command to be written to the target block's queue, changing it's default successor (e.g. branch, loop, etc) },
+description={Causes one or more repetitions of a flow command to be written to the target block's queue, changing it's default successor (e.g. branch, loop, etc).},
 type=sched,
 parent={sched:type}
 }
 
 \newglossaryentry{sched:type:flush}{
 name={flush},
-description={Causes a flush command to be written to the target block's queue, emptying any selected queues. Can optionally also override the default successor},
+description={Causes a flush command to be written to the target block's queue, emptying any selected queues. Can optionally also override the default successor.},
 type=sched,
 parent={sched:type}
 }
 
 \newglossaryentry{sched:type:wait}{
 name={wait},
-description={Causes a wait command to be written to the target block's queue, temporarily stretching it's length in time},
+description={Causes a wait command to be written to the target block's queue, temporarily stretching it's length in time.},
 type=sched,
 parent={sched:type}
 }
 
 \newglossaryentry{sched:type:noop}{
 name={nop},
-description={Causes one or more No Operation command(s) to be written to the target block's queue. No direct effect, but can together with flow create a sequence of default and alternative successors},
+description={Causes one or more No Operation command(s) to be written to the target block's queue.
+No direct effect, but can together with flow create a sequence of default and alternative successors.},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:origin}{
+name={origin},
+description={Assigns a sequence of nodes to a thread. The node pointed to by an edge of type \gls{edge:origindst} is the first which is assigned to the thread.},
+type=sched,
+parent={sched:type}
+}
+
+\newglossaryentry{sched:type:startthread}{
+name={startthread},
+description={Starts the thread which is given by the thread attribute. The attribute \gls{sched:startoffs} is the offset between block start and thread start.},
 type=sched,
 parent={sched:type}
 }
@@ -65,7 +81,8 @@ type=sched}
 
 \newglossaryentry{sched:thread}{
 name={thread},
-description={Index of the thread core this Node will be handled by. To be replaced by auto-balancer algorithm},
+description={Index of the thread core which handles this node.
+To be replaced by auto-balancer algorithm. The thread number from 0 to 7 to which an origin node assigns a sequence of nodes. A startthread node starts this thread.},
 type=sched}
 
 \newglossaryentry{sched:flags}{
@@ -115,17 +132,17 @@ type=sched}
 
 \newglossaryentry{sched:qil}{
 name={qil},
-description={If true, adds a command queue of top priority (Interlock) to this Block},
+description={If true, adds a command queue of top priority (Interlock) to this block},
 type=sched}
 
 \newglossaryentry{sched:qhi}{
 name={qhi},
-description={If true, adds a command queue of medium priority (High) to this Block},
+description={If true, adds a command queue of medium priority (High) to this block},
 type=sched}
 
 \newglossaryentry{sched:qlo}{
 name={qlo},
-description={If true, adds a command queue of low priority (Low) to this Block},
+description={If true, adds a command queue of low priority (Low) to this block},
 type=sched}
 
 \newglossaryentry{sched:toffs}{
@@ -173,6 +190,11 @@ name={tef},
 description={Fractional (sub-nanosecond) time extension field, part of a timing message. Currently not interpreted by ECA)},
 type=sched}
 
+\newglossaryentry{sched:startoffs}{
+name={startoffs},
+description={The start offset in \SI{}{\nano\second} for a startthread node.},
+type=sched}
+
 \newglossaryentry{edge:defdst}{
 name={defdst},
 description={Points to default successor node},
@@ -193,7 +215,17 @@ name={flowdst},
 description={Points to destination node of a flow command},
 type=sched}
 
+\newglossaryentry{edge:flushovr}{
+name={flushovr},
+description={Points to destination override node of a flush command},
+type=sched}
+
 \newglossaryentry{edge:switchdst}{
 name={switchdst},
 description={Points to destination node of a switch statement},
+type=sched}
+
+\newglossaryentry{edge:origindst}{
+name={origindst},
+description={Points to destination node of an origin node},
 type=sched}

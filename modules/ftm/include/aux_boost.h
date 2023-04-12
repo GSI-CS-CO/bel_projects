@@ -92,7 +92,7 @@ typedef std::vector<node_ptr> npBuf;
 /** @name Auxiliary templated type converters
  * Templated helper functions for easy conversion of types and endianess
  */
-//@{ 
+//@{
 template<typename T>
 inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
   T x = endian_reverse(val);
@@ -139,7 +139,7 @@ inline T writeLeBytesToBeNumber(uint8_t* pB) {
 //@}
 
 /// Inserts a fixed archive version into a serialised boost data container
-/** Boost archive versions are forward compatible, and, by implementation, also backward compatible. 
+/** Boost archive versions are forward compatible, and, by implementation, also backward compatible.
   * However, using a newer lib version to create (fully data compatible) archives and opening them with older lib versions fails.
   * The workaround is to change the version tag inside the data container string to a known older version, so the old library accepts it.
   */

@@ -1,0 +1,20 @@
+#!/bin/sh
+#. /etc/functions
+
+LOG_TAG=timing
+LOG_FACILITY=user
+log() {
+	logger -s -t $LOG_TAG -p $LOG_FACILITY.notice "$@"
+}
+
+# generic startup
+NAME=timing-rte
+NFSHOST=fsl00c
+NFSBASE=/common/export
+
+log "generic init for $NAME (called by $0)"
+
+[ ! -d /opt/$NAME ] && mkdir -p /opt/$NAME
+mount -t nfs -o ro,nolock $NFSHOST:$NFSBASE/$NAME/fbas /opt/$NAME
+/opt/$NAME/$NAME.sh
+umount /opt/$NAME

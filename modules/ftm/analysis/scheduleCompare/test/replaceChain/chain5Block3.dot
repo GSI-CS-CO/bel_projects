@@ -1,0 +1,5 @@
+digraph chain5Block3 {
+name = chainBlock3
+c [type=block shape=rectangle]
+a -> b -> c -> d -> e
+}

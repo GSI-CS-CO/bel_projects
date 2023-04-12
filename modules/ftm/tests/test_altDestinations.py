@@ -31,3 +31,24 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=3)
 
+  def test_altdst_missing_node(self):
+    """DEV="dev/ttyUSB0"
+      C="dm-cmd $DEV"
+      S="dm-sched $DEV"
+
+      $C halt
+      $S clear
+      $S add test4missing_alt.dot
+      $S dump
+      sleep 1.0
+      $C -i cmd_test4missing_alt.dot
+      $S dump
+    """
+    fileName = self.schedules_folder + 'altdst-missing-node.dot'
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
+        fileName), [0], linesCout=0, linesCerr=0)
+    self.delay(1.0)
+    cmdFileName = self.schedules_folder + 'altdst-missing-node-cmd.dot'
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, '-i',
+        cmdFileName), [0], linesCout=1, linesCerr=0)
+

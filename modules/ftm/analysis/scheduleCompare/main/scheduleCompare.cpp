@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chnstv")) != -1) {
+  while ((opt = getopt(argc, argv, "chnstvV")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -33,8 +33,12 @@ int main(int argc, char* argv[]) {
         usage(program);
         error = USAGE_MESSAGE;
         break;
+      case 'V':
+        version(program);
+        error = VERSION_MESSAGE;
+        break;
       case 'n':
-        config.CompareNames = false;
+        config.compareNames = false;
         break;
       case 'c':
         config.check = true;
@@ -76,6 +80,7 @@ void usage(char* program) {
   std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
+  std::cerr << "        -V: print version and exit." << std::endl;
   std::cerr << "Return codes: " << std::endl;
   std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
   std::cerr << NOT_ISOMORPHIC << " NOT_ISOMORPHIC, graphs are not isomorphic." << std::endl;
@@ -88,5 +93,10 @@ void usage(char* program) {
   std::cerr << PARSE_ERROR_GRAPHVIZ << " PARSE_ERROR_GRAPHVIZ, error while parsing Graphviz syntax." << std::endl;
   std::cerr << TEST_SUCCESS << " TEST_SUCCESS, test a single graph with success." << std::endl;
   std::cerr << TEST_FAIL << " TEST_FAIL, test a single graph with failure." << std::endl;
+  std::cerr << VERSION_MESSAGE << " VERSION_MESSAGE, version displayed." << std::endl;
   std::cerr << "negative values are UNIX signals" << std::endl;
+}
+
+void version(char* program) {
+  std::cerr << program << ", version 1.0.0" << std::endl;
 }

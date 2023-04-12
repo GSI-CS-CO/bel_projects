@@ -30,11 +30,15 @@ STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 .PHONY: clean format doc test
 
-scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o
+all: scheduleCompare replaceChain
 
-scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h
+replaceChain: replaceChain.o replaceChainImpl.o scheduleCompact.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
 
-scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h
+scheduleCompare: scheduleCompare.o scheduleIsomorphism.o printSchedule.o parseSchedule.o ScheduleVertex.o ScheduleEdge.o ScheduleGraph.o
+
+scheduleCompare.o: scheduleIsomorphism.h scheduleCompare.h configuration.h
+
+scheduleIsomorphism.o: scheduleIsomorphism.h scheduleCompare.h printSchedule.h parseSchedule.h ScheduleVertex.h ScheduleEdge.h scheduleCompact.h
 
 printSchedule.o: printSchedule.h scheduleCompare.h scheduleIsomorphism.h
 
@@ -44,11 +48,20 @@ ScheduleVertex.o: ScheduleVertex.h
 
 ScheduleEdge.o: ScheduleEdge.h
 
-install: scheduleCompare
+ScheduleGraph.o: ScheduleGraph.h
+
+scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
+
+replaceChain.o: replaceChain.h configuration.h
+
+replaceChainImpl.o: replaceChainImpl.h replaceChain.h configuration.h
+
+install: scheduleCompare replaceChain
 	cp scheduleCompare $(INSTALLPATH)
+	cp replaceChain $(INSTALLPATH)
 
 clean:
-	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare
+	rm -f *.o *.gcda *.gcno *.gcov scheduleCompare replaceChain
 
 format:
 	for i in *.h   ; do clang-format-10 $(STYLE) -i $$i; done
@@ -58,5 +71,5 @@ doc:
 	$(MAKE) -C ../doc/
 
 test:
-	$(MAKE) scheduleCompare
+	$(MAKE) scheduleCompare replaceChain
 	$(MAKE) -C ../test/

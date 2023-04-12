@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-05-19}
+\Large{Last change: 2022-07-20}
 \end{center}
 \vfill
 \end{titlepage}
@@ -117,24 +117,28 @@ modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
 make install in the same folder.
 
 \section{test\_altDestinations.py}
-\texttt{test\_altDestinations} tests the limit of 10 edges of type
+\texttt{test\_altDestinations} tests the limit of 9 edges of type
 \texttt{altdst} for a block node.
-The schedule \texttt{altdst-flow-10.dot} has one block, ten flow commands
-and ten messages. each flow command changes flow to another message.
+The schedule \texttt{altdst-flow-9.dot} has one block, nine flow commands
+and nine messages. each flow command changes flow to another message.
 The test adds this schedule and starts the pattern in this schedule.
 The test checks that messages are produced.
 
-The schedule \texttt{altdst-flow-11.dot} is similar to the one obove,
-but with 11 flow nodes and 11 messages. Adding this schedule fails.
+The schedule \texttt{altdst-flow-10.dot} is similar to the one obove,
+but with 10 flow nodes and 10 messages. Adding this schedule fails.
 The test checks for the correct error response.
 
-The schedule \texttt{altdst-flow-10.dot} has one block and ten messages.
+The schedule \texttt{altdst-9.dot} has one block and nine messages.
 The test switches through all messages and checks with snoop that the
 correct messages are send.
 
-The schedule \texttt{altdst-flow-11.dot} has one block and 11 messages.
+The schedule \texttt{altdst-10.dot} has one block and 10 messages.
 This schedule cannot be added to the datamaster. The test checks for
 the correct error response.
+
+The schedule \texttt{test-altdst-missing-node.dot} has one block with 9
+altdst edges and one defdst edge. The test checks that a switch command
+via CMD-schedule works.
 
 \section{test\_async.py}
 This test was \texttt{full\_test/dynamic/async}.
@@ -275,13 +279,32 @@ crash.
         \label{fig:Schedule_booster_thread_0_loop}
     \end{figure}
 \item \texttt{test\_booster\_thread\_0}
-Use schedule \texttt{booster-thread-0.dot} \\
+The schedule consists of three nodes: a startthread for thread 0 (CPU 0), a timing message
+with EVTNO 1, and a block with length 0.1 seconds. The thread 0 starts every 0.001 seconds again,
+thus producing timing messages with 1kHz. The test asserts that there are more than
+2990 tmsg in 3 seconds with EVTNO 0x0001. Use schedule \texttt{booster-thread-0.dot}
 (see~\ref{fig:Schedule_booster_thread_0}), which has one pattern MAIN.
     \begin{figure}
         \centering
         \includegraphics*[width=0.55\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
-        \caption{Schedule for starting thread 0 once}
+        \caption{Schedule for starting thread 0 once every 0.001 seconds}
         \label{fig:Schedule_booster_thread_0}
+    \end{figure}
+\item \texttt{test\_booster\_8\_loops}
+The schedule consists mainly in a loop with origin nodes and startthread nodes for threads 1 to 7.
+This loop runs in thread 0 with a block of length 0.1 seconds and a timing message with EVTNO 0, which
+helps to control that the test is working. Each of the origin nodes is the origin of a sequence of a block,
+a timing message, and a block (no loop). The startthread nodes start threads 1 to 7, repectively.
+Since the EVTNO of the timing messages correspond to the thread numbers, the test can check that
+the thread is started. Since there is no loop for thread 1 to 7 each of these threads runs to idle.
+The threads are started once every 0.1 second from the main loop in thread 0. Thus we have a frequency of 10Hz
+for the messages of each thread. This is checked with a snoop for 2 seconds.
+Use schedule \\ \texttt{booster-8-loops.dot} (see~\ref{fig:Schedule_booster_8_loops}).
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.1\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
+        \caption{Schedule for starting threads 0 to 7 in a main loop}
+        \label{fig:Schedule_booster_8_loops}
     \end{figure}
 \end{enumerate}
 
@@ -316,18 +339,48 @@ This test was \texttt{full\_test/dynamic/coupling}.
 \end{enumerate}
 
 \section{test\_dm\_cmd.py}
-\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
-line. These tests are successful when the response is the correct error message and not a core dump.
+\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd.
+Each unit test calls dm-cmd with commands and options and checks the result
+with the output on stdout and stderr. There are also negative tests with
+an invalid command line. These tests are successful when the response is
+the correct error message and not a core dump.
+
+There are five tests for the stop command. The test cases are
+\begin{enumerate}
+\item Test with existing block with low prio queue: result ok.
+\item Test with existing block without low prio queue: result fail.
+\item Test with existing timing event: result fail.
+\item Test with non-existing block: result fail.
+\item Test with no target name: result fail.
+\end{enumerate}
+
+There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. These two tests check for
+return code 0, but not the status of the datamaster.
+
+\section{test\_dm\_sched.py}
+\texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
+with commands and options and checks the result with the output on stdout and stderr.
+
+\begin{enumerate}
+\item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
+\item \texttt{dm-sched $<$datamaster$>$}: check for defualt operation (same as status).
+\item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
+\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
+\item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
+\item \texttt{dm-sched $<$datamaster$>$ clear}: check the clear command.
+\item \texttt{dm-sched $<$datamaster$>$ rawvisited}: check the rawvisited command.
+\item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
+\end{enumerate}
 
 \section{test\_dmThreads.py}
 \texttt{test\_dmThreads.py} tests the firmware with up to 8 threads and up to 4 CPUs.
-For each thread a pattern with one block and one timing message per second is loaded and started. To check that the thread is running,
-\texttt{dm-cmd} is used two times with a delay of one second. The number of messages is extracted from stdout and this number must
-increase for test success.
+For each thread a pattern with one block and one timing message per second is
+loaded and started. To check that the thread is running,
+\texttt{dm-cmd} is used two times with a delay of one second. The number
+of messages is extracted from stdout and this number must increase for test success.
 
-There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs the schedules one 4 CPUs, each with 8 threads. This
-produces 32 messages per second.
+There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs
+the schedules one 4 CPUs, each with 8 threads. This produces 32 messages per second.
 
 \section{test\_environment.py}
 \texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
@@ -433,7 +486,21 @@ This test was \texttt{full\_test/dynamic/loop}.
 
   In the end all blocks are visited.
 \end{enumerate}
+\section{test\_lzma.py}
+There is a bug in the lzma decompression methods. The memory is not correctly allocated.
+This occurs with large schedules and long pattern names. The large schedule contains
+a loop of timing messages connected to one block.
+
+OK test (\texttt{test\_large\_patternname\_ok}): use a schedule with 862 messages and a pattern name of 30 chars.
+This works without an exception, including start of pattern.
+
+Fail test: use a schedule with 1000 messages and a pattern name of 30 chars.
+This does not work. Ends with SEGV (return code -11).
+
 \section{test\_memory.py}
+There are 15 tests to tet the correct memory consumption of the schedules.
+Oversized schedules schuld be rejected to prevent the datamaster being corrupted.
+
 Four tests add two large schedule into the datamaster. This works fine.
 Then a third schedule is loaded, in each test for a different CPU. This
 should fail with return code 250.
@@ -448,6 +515,44 @@ failure. These four tests use CPU 0.
 Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869
 blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses
 one additional block on CPU 3.
+
+A group of five tests (\texttt{test\_memory\_full\_msg\_*}) test the memory
+with schedules with timing messages in a loop. Due to validation checks there
+are 1000 messages in one loop allowed. The generator for the schedules
+splits the timing messages into two loops when there are more than 1000 nodes.
+\\ \texttt{test\_memory\_full\_msg\_small} uses 10 timing messages to test the generator.
+\\ \texttt{test\_memory\_full\_msg\_half} uses 900 timing messages for the test.
+\\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
+
+\section{test\_origin\_startthread.py}
+\begin{enumerate}
+\item Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these.
+The test then starts pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
+The test stops pattern A1 which stops thread 1.
+The test stops pattern A which stops thread 3.
+The test stops node Block2 which stops thread 2 (there is no pattern on this thread).
+See Figure~\ref{fig:schedule_origin_startthreads} for the schedule.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
+        \caption{Schedule to start threads with origins}
+        \label{fig:schedule_origin_startthreads}
+    \end{figure}
+\item This test demonstrates that a node can exist in two threads.
+Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
+Thus we have a timing message from Tmsg3 for each timing message from Tmsg1 and Tmsg2.
+The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
+thread 1 and 2 every 10ms. Thread 1 and 2 end with Block3.
+See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/nodeInTwoThreads.pdf}
+        \caption{Schedule with a node in two threads}
+        \label{fig:schedule_nodeInTwoThreads}
+    \end{figure}
+\end{enumerate}
 
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
@@ -602,6 +707,20 @@ This test was \texttt{full\_test/dynamic/switch}. The schedule \\
 
   The correct nodes are visited after each step.
 \end{enumerate}
+
+\section{test\_waitloop\_flush.py}
+\texttt{test\_waitloop\_flush.py} uses a schedule with a wait loop to check
+the correctness of the flush command. The schedule contains BLOCK\_LOOP with a low
+prio queue and a high prio queue. On pattern start, a flow command is queue in
+the low prio queue with quantity 10,000. This redirects the pattern to
+BLOCK\_LOOP such that this block is executed 10,000 times in a loop. Also
+on start of pattern, a flush command is queued in the high prio queue with a
+relative valid time of 0.5 seconds. Since BLOCK\_LOOP has a period of 100 µs,
+the flush command breaks the loop after 5011 executions.
+
+The test checks after 0.1 seconds that the flush is not executed, but after 1 second
+it is executed. The timeline of the checks is not precise enough to check
+exactly after 0.5 seconds the execution.
 
 \section{test\_zzz\_finish.py}
 \texttt{test\_pps.py} (pps: pulse per second) is a basic test with a

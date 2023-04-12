@@ -288,6 +288,14 @@ static int printTaskContext(int id) {
   return cnt;
 }
 
+static void printEcaActionCnt(void) {
+  mprintf("\n\tvalid:0x%x\n", *pSharedActCnt);
+  mprintf("\tinval:0x%x\n", *(pSharedActCnt + 3));
+  mprintf("\tfull:0x%x\n",  *(pSharedActCnt + 1));
+  mprintf("\tfail:0x%x\n",  *(pSharedActCnt + 2));
+  mprintf("\tlate:0x%x\n",  *(pSharedActCnt + 4));
+}
+
 /*******************************************************************************
  * \brief Update the control event configuration table
  *
@@ -959,6 +967,10 @@ void execHostCmd(int32_t cmd)
 	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
 	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
 	    (uint32_t)(pTask[id].action >> 32),   (uint32_t)pTask[id].action);
+          mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
+	    (uint32_t)(pTask[id].setup >> 32),    (uint32_t)pTask[id].setup,
+	    (uint32_t)(pTask[id].lasttick >> 32), (uint32_t)pTask[id].lasttick,
+	    (uint32_t)(pTask[id].failed >> 32),   (uint32_t)pTask[id].failed);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i < N_BURSTS; ++i) {
@@ -972,6 +984,10 @@ void execHostCmd(int32_t cmd)
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
 		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
                 (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action);
+              mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
+		(uint32_t)(pTask[i].setup >> 32),    (uint32_t)pTask[i].setup,
+		(uint32_t)(pTask[i].lasttick >> 32), (uint32_t)pTask[i].lasttick,
+		(uint32_t)(pTask[i].failed >> 32),   (uint32_t)pTask[i].failed);
 	    }
 	  }
 	}
@@ -1166,6 +1182,13 @@ void execHostCmd(int32_t cmd)
 	  pTask[id].io_index = 0;
 	  pTask[id].trigger = 0;
 	  pTask[id].toggle = 0;
+	  pTask[id].period = 0;
+	  pTask[id].cycle = 0;
+	  pTask[id].setup = 0;
+	  pTask[id].deadline = 0;
+	  pTask[id].lasttick = 0;
+	  pTask[id].action = 0;
+	  pTask[id].failed = 0;
 
 	  if (verbose)
 	    printTaskContext(id);
@@ -1230,6 +1253,7 @@ void execHostCmd(int32_t cmd)
       case CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG: // print the trigger/toggle control and trigger/toggle configuration tables
 	mprintf("trg/tgg\n");
 	printTrgTggCtlCfg();
+	printEcaActionCnt();
 	break;
 
       case CMD_DIAG_PRINT_TASK_INTERVAL: // print elapsed time between tasks (requires the burst id)

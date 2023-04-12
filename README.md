@@ -19,6 +19,7 @@ GSI Timing Gateware and Tools
     - [Library libpng12](#library-libpng12)
       - [Ubuntu](#ubuntu)
       - [Mint](#mint)
+      - [Backup Plan](#backup-plan)
     - [Tool qmegawiz](#tool-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
   - [Build Flow](#build-flow)
@@ -30,6 +31,8 @@ GSI Timing Gateware and Tools
     - [Setuptools not found](#setuptools-not-found)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
+    - [Rocky-9](#rocky-9)
+    - [Yocto](#yocto)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -146,6 +149,13 @@ sudo apt update
 sudo apt install libpng12-0
 ```
 
+#### Backup Plan
+
+You can use a copy from here:
+
+- Ubuntu: res/ubuntu
+- Rocky-9: res/rocky-9
+
 ### Tool qmegawiz
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
@@ -184,6 +194,7 @@ Answer: You need to have installed the following packages before you can configu
 - libboost-dev (saftlib)
 - pkgconfig (saftlib)
 - xsltproc (saftlib)
+- libz-dev (saftlib)
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
@@ -261,10 +272,28 @@ Error: make[1]: cc: No such file or directory
 Solution:
 
 ```
-which cc # cc: Command not found. 
+which cc # cc: Command not found.
 update-alternatives --list cc
 which cc # /usr/bin/cc
 ```
+
+### Rocky-9
+[Click here for additional information.](res/rocky-9)
+
+### Yocto
+
+#### Etherbone & Saftlib
+<pre>
+unset LD_LIBRARY_PATH
+source /common/usr/embedded/yocto/sdk/environment-setup-core2-64-ffos-linux
+make etherbone YOCTO_BUILD=yes
+make saftlib YOCTO_BUILD=yes
+</pre>
+
+Check the Rocky-9 subsection, if you get lsb_release related errors.
+
+#### Etherbone Tools
+See [tools/yocto-build.sh](tools/yocto-build.sh)
 
 ## Git
 ### CAfile
@@ -289,13 +318,13 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-See bel_projects/doc/usbblaster/readme.md
+See [doc/usbblaster/readme.md](doc/usbblaster/readme.md)
 
 ### Xilinx Platform Cable II
-See bel_projects/doc/platform_cable/readme.md
+See [doc/platform_cable/readme.md](doc/platform_cable/readme.md)
 
 ### Arrow USB Programmer
-See bel_projects/doc/arrow_usb_programmer/readme.md
+See [doc/arrow_usb_programmer/readme.md](doc/arrow_usb_programmer/readme.md)
 
 ### Altera/Intel Ethernet Blaster
 

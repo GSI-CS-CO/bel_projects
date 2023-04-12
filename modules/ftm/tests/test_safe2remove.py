@@ -21,9 +21,11 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.deleteFile('debug.dot')
     self.deleteFile('status.dot')
 
-  def safe2removeTestcase(self, dot_file1, pattern_to_remove):
+  def safe2removeTestcase(self, dot_file1, pattern_to_remove, second_pattern=''):
     start = dt.now()
     self.startPattern(dot_file1 + '.dot', pattern_to_remove)
+    if len(second_pattern) > 0:
+      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', second_pattern))
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'chkrem', pattern_to_remove))
     duration = dt.now() - start
     self.compareExpectedResult('debug.dot', self.schedules_folder + dot_file1 + '-forbidden.dot', 'Created')
@@ -41,7 +43,13 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     return duration
 
   def test_safe2remove_blockalign1(self):
-    self.safe2removeTestcase('blockalign1', 'PPS1_TEST')
+    self.safe2removeTestcase('blockalign1', 'PPS1_TEST', 'PPS0_TEST')
+
+  def test_safe2remove_blockalign2(self):
+    self.safe2removeTestcase('blockalign2', 'A')
+
+  def test_safe2remove_blockalign3(self):
+    self.safe2removeTestcase('blockalign3', 'A')
 
   def safe2removeTestcasePerformance(self, dot_file1, limit):
     start = dt.now()

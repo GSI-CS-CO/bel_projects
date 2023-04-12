@@ -3,7 +3,8 @@ PDFs = static_basic.pdf static_coupling1.pdf static_coupling2.pdf static_prio_an
 	dynamic_basic_run_all_single.pdf dynamic_basic_start_stop_abort.pdf dynamic_branch_single.pdf \
 	dynamic_loop.pdf \
 	booster_all_threads-s.pdf booster_startthread-0-s.pdf booster_startthread-1-s.pdf booster_startthread-2-s.pdf \
-	booster_startthread-3-s.pdf booster_thread_0_loop-s.pdf booster_thread_0-s.pdf
+	booster_startthread-3-s.pdf booster_thread_0_loop-s.pdf booster_thread_0-s.pdf booster_8_loops.pdf \
+	threadsStartStop.pdf nodeInTwoThreads.pdf
 
 
 all: $(PDFs)
@@ -36,6 +37,9 @@ booster_thread_0_loop-s.pdf: booster_thread_0_loop-s.dot
 	./create-pdf.sh $< neato
 
 booster_thread_0-s.pdf: booster_thread_0-s.dot
+
+booster_8_loops.pdf: booster_8_loops.dot
+	./create-pdf.sh $< neato
 
 %.pdf: %.dot
 	./create-pdf.sh $<

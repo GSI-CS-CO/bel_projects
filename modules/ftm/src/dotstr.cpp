@@ -115,7 +115,7 @@ namespace DotStr {
       }
 
       namespace StartThread {
-        const std::string sStartOffs      = "startoffs"; // a newly spawned threads offset to current time sum in ns  
+        const std::string sStartOffs      = "startoffs"; // a newly spawned threads offset to current time sum in ns
       }
 
       // Command Parameters

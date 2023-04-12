@@ -7,10 +7,15 @@ WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
+USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
+ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+else
+LIBS        ?= -letherbone -lm
+endif
 
 all:	$(TARGETS) monitoring
 
@@ -23,10 +28,10 @@ install: monitoring-install
 	cp $(EXTRA_I) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
-	gcc $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 %:	%.cpp
-	g++ $(CFLAGS) -o $@ $< $(LIBS)
+	$(CXX) $(CFLAGS) -o $@ $< $(LIBS)
 
 monitoring: monitoringg
 

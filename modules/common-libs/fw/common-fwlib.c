@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Oct-2021
+ *  version : 27-jan-2023
  *
  *  common functions used by various firmware projects
  *  
@@ -218,7 +218,16 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
-uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps)
+{
+  while (t_ps.ps < -500) {t_ps.ns -= 1; t_ps.ps += 1000;}
+  while (t_ps.ps >= 500) {t_ps.ns += 1; t_ps.ps -= 1000;}
+
+  return t_ps;
+} // alignB2bt
+
+
+uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [ns]
 {
   uint64_t dtns;                // approximate time interval to advance [ns]
   uint64_t dtas;                // approximate time interval to advance [as]
@@ -227,6 +236,7 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
   uint64_t intervalNs;          // interval [ns]
   uint64_t tAdvanced;           // result
   uint64_t nineO = 1000000000;  // nine order of magnitude
+  uint64_t half;                // helper variable
 
   if (Tas == 0)          return 0;
   if (t2 < t1)           return 0;               // order ok ?
@@ -236,11 +246,79 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
   dtas       = dtns * nineO;
   nPeriods   = (uint64_t)((double)dtas / (double)Tas) + 1;
   intervalAs = nPeriods * Tas;
-  intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
+  half       = nineO >> 1;
+  intervalNs = intervalAs / nineO;
+  if (intervalAs % nineO > half) intervalNs++;
   tAdvanced  = t1 + intervalNs;
 
-  return tAdvanced;
+  return tAdvanced; // [ns]
 } //fwlib_advanceTime
+
+
+b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
+{
+  uint64_t dt_ps;                    // approximate time interval to advance [ps]
+  uint64_t dt_as;                    // approximate time interval to advance [as]
+  uint64_t nPeriods;                 // # of periods
+  uint64_t interval_as;              // interval [as]
+  uint64_t interval_ps;              // interval [ps]
+  uint64_t interval_ns;              // inverval [ns]
+  b2bt_t   tAdvanced_t;              // result
+  uint64_t half;                     // helper variable
+  int64_t  fraction_as;              // helper variable
+  uint64_t nineO = 1000000000;       // 9 orders of magnitude
+
+  tAdvanced_t.ns  = 0;
+  tAdvanced_t.ps  = 0;
+  tAdvanced_t.dps = 0;
+
+  if (T_as == 0)                       return tAdvanced_t; // no valid RF period
+  if (t2_t.ns < t1_t.ns)               return tAdvanced_t; // order ok ?
+  if ((t2_t.ns - t1_t.ns) > nineO)     return tAdvanced_t; // not more than 1s! (~18 s max!)
+
+  dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
+  dt_as           = dt_ps * 1000000;
+  nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
+  interval_as     = nPeriods * T_as;
+  half            = nineO >> 1;
+  interval_ns     = interval_as / nineO;
+  fraction_as     = interval_as % nineO;
+  if (fraction_as > half) {                                // rounding 
+    interval_ns++;
+    fraction_as -= nineO;
+  } // if fraction
+  tAdvanced_t.ns  = t1_t.ns + interval_ns;
+  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;
+  tAdvanced_t.dps = t1_t.dps;
+
+  return tAdvanced_t; // [ps]
+} // fwlib_advanceTimePs
+
+
+b2bt_t fwlib_tns2tps(uint64_t t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns  = t_ns;
+  t_ps.ps  = 0;
+  t_ps.dps = 0;
+
+  return t_ps;
+} // tns2tps
+
+
+uint64_t fwlib_tps2tns(b2bt_t t_ps)              // time [ps]
+{
+  uint64_t t_ns;
+  b2bt_t   ts_t;
+
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean 
+
+  t_ns = ts_t.ns;
+  if (ts_t.ps >= 500) t_ns++;                    // rounding
+
+  return t_ns;
+} // tps2tns
 
 
 uint64_t fwlib_wrGetMac()  // get my own MAC
@@ -368,9 +446,9 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid, uint32_t evtno, uint32_t flags, uint32
 // fwlib_buildEvtidV1
 
 
-uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)  
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
@@ -390,21 +468,21 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack Ethernet frame with message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline         & 0xffffffff);
-          
+
   // pack timing message
   atomic_on();                                  
   ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);             
   ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);             
   ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
-  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
   atomic_off();
@@ -416,9 +494,9 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
 } //fwlib_ebmWriteTM
 
 
-uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)  
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
@@ -435,7 +513,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack 32bit words of message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
@@ -448,8 +526,8 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   *pEca = idLo;
   *pEca = paramHi;
   *pEca = paramLo;
-  *pEca = tef;
   *pEca = res;
+  *pEca = tef;
   *pEca = deadlineHi;
   *pEca = deadlineLo;
   atomic_off();
@@ -534,7 +612,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
+  *pSharedVersion      = fwVersion; // of all the shared variables, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
@@ -559,9 +637,10 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
+  uint32_t ecaFlag;             // ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
   uint32_t evtIdLow;            // low 32bit of eventID    
   uint32_t evtDeadlHigh;        // high 32bit of deadline  
@@ -571,14 +650,20 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
   uint32_t actTag;              // tag of action           
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
+  uint64_t timeout;             // timeout [ns]
 
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-
-  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000 + (uint64_t)1000; 
+  
+  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
+  // reduces time per read from ~6.5 us to ~4.8 us
+  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
+  timeout     = ((uint64_t)timeout_us + 1) << 10;
+  timeoutT    = getSysTime() + timeout; 
   
   while (getSysTime() < timeoutT) {
-    if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
+    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
       // read data
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
@@ -589,11 +674,11 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
-      *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
-      *isEarly     = *pECAFlag & (0x0001 << ECA_EARLY);
-      *isConflict  = *pECAFlag & (0x0001 << ECA_CONFLICT);
-      *isDelayed   = *pECAFlag & (0x0001 << ECA_DELAYED);
-      
+
+      *isLate      = ecaFlag & (0x0001 << ECA_LATE);
+      *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = ecaFlag & (0x0001 << ECA_DELAYED);
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;

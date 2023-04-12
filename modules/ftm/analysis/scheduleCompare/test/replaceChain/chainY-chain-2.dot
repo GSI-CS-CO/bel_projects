@@ -1,0 +1,10 @@
+digraph G {
+graph [
+name="chainY-compact"
+]
+"a
+...(3)
+e" [label="a
+...(3)
+e"];
+}

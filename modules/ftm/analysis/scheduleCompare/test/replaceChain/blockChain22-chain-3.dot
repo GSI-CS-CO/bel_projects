@@ -1,0 +1,12 @@
+digraph G {
+graph [
+name="blockChain22-compact"
+]
+"B1
+B2" [shape=rectangle type=block]
+"C1
+C2"
+"B1
+B2" -> "C1
+C2"
+}

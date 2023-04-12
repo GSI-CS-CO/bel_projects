@@ -1,0 +1,36 @@
+digraph nodeInTwoThreads {
+// schedule demonstrates that a node can exist in two threads.
+// Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
+// Thus we have a Tmsg3 for each Tmsg1 and Tmsg2.
+node [cpu=0 fid=1 toffs=0]
+edge [type=defdst]
+
+Tmsg0 [type=tmsg par=0 pattern=A patentry=1]
+// offset 1ms
+Tmsg1 [type=tmsg par=1 toffs=1000000 pattern=A1 patentry=1 patexit=1]
+// offset 2ms
+Tmsg2 [type=tmsg par=2 toffs=2000000]
+// offset 3ms
+Tmsg3 [type=tmsg par=3 toffs=3000000 pattern=B patentry=1]
+
+Origin1 [type=origin thread=1]
+Origin2 [type=origin thread=2]
+
+// the blocks are 10ms long.
+Block0 [type=block tperiod=10000000 pattern=A patexit=1]
+// the block is 5ms long.
+Block3 [type=block tperiod=5000000 pattern=B patexit=1]
+
+Startthread1 [type=startthread thread=1 startoffs=0]
+Startthread2 [type=startthread thread=2 startoffs=0]
+
+// loop to start tread 1,2 every 10ms
+Tmsg0 -> Origin1 -> Startthread1 -> Origin2 -> Startthread2 -> Block0 -> Tmsg0
+// two sequences to Block3
+Tmsg1 -> Tmsg3
+Tmsg2 -> Tmsg3
+Tmsg3 -> Block3
+
+Origin1 -> Tmsg1 [type=origindst]
+Origin2 -> Tmsg2 [type=origindst]
+}
