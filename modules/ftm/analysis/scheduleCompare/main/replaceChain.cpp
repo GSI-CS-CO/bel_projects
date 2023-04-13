@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "1bc:ho:svVw")) != -1) {
+  while ((opt = getopt(argc, argv, "1c:ho:svVwb")) != -1) {
     switch (opt) {
       case '1':
         config.firstVersion = true;
@@ -64,6 +64,10 @@ int main(int argc, char* argv[]) {
         error = BAD_ARGUMENTS;
         break;
     }
+  }
+  if (config.superverbose) {
+    printCommandline(argc, argv);
+    printConfig(config);
   }
   if (error) {
     return error;
@@ -132,5 +136,27 @@ void usage(char* program) {
 }
 
 void version(char* program) {
-  std::cerr << program << ", version 1.0.1" << std::endl;
+  std::cerr << program << ", version 1.0.2" << std::endl;
+}
+
+void printConfig(configuration& c) {
+  std::cout << "   firstVersion: " << c.firstVersion << std::endl;
+  std::cout << "blocksSeparated: " << c.blocksSeparated << std::endl;
+  std::cout << "          check: " << c.check << std::endl;
+  std::cout << "     chainCount: " << c.chainCount << std::endl;
+  std::cout << "   compareNames: " << c.compareNames << std::endl;
+  std::cout << "     outputFile: " << c.outputFile << std::endl;
+  std::cout << "      overwrite: " << c.overwrite << std::endl;
+  std::cout << "extraProperties: " << c.extraProperties << std::endl;
+  std::cout << "   replaceChain: " << c.replaceChain << std::endl;
+  std::cout << "         silent: " << c.silent << std::endl;
+  std::cout << "   superverbose: " << c.superverbose << std::endl;
+  std::cout << "           test: " << c.test << std::endl;
+  std::cout << "        verbose: " << c.verbose << std::endl;
+}
+
+void printCommandline(int argc, char* argv[]) {
+  for (int i = 0; i < argc; i++) {
+    printf("%i %s\n", i, argv[i]);
+  }
 }
