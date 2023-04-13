@@ -13,5 +13,7 @@ void usage(char* program);
 int main(int argc, char* argv[]);
 int compactSingleGraph(std::string dotFile1, configuration& config);
 void version(char* program);
+void printConfig(configuration& config);
+void printCommandline(int argc, char* argv[]);
 
 #endif
