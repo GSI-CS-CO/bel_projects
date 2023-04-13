@@ -31,6 +31,14 @@ void VisitorUploadCrawler::visit(const Switch& el) const {
   el.serialise( getDefDst() + getSwitchTarget() + getSwitchDst(), b);
 }
 
+void VisitorUploadCrawler::visit(const Origin& el) const {
+  el.serialise( getDefDst() + getOriginDst(), b);
+}
+
+void VisitorUploadCrawler::visit(const StartThread& el) const {
+  el.serialise( getDefDst(), b);
+}
+
 void VisitorUploadCrawler::visit(const Flush& el) const {
   el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlushOvr(), b);
 }
@@ -260,6 +268,22 @@ vAdr VisitorUploadCrawler::getSwitchDst() const {
 
   return ret;
 }
+
+vAdr VisitorUploadCrawler::getOriginDst() const {
+  vAdr ret;
+
+  vertex_set_t vsDst = getChildrenByEdgeType(v, det::sOriginDst);
+  if(vsDst.size() == 0) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as Origindst
+
+  auto x = at.lookupVertex(*vsDst.begin());
+
+  ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT , x->cpu, x->adr));
+  ret.push_back(uint32_t(x->cpu));
+
+  return ret;
+}
+
+
 
 vAdr VisitorUploadCrawler::getFlushOvr() const {
   vAdr ret;

@@ -15,7 +15,7 @@ namespace Validation {
 
 
 
-  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
 ConstellationRule_set cRules;
 
 
@@ -32,19 +32,22 @@ void init() {
         cRules.insert(ConstellationRule(n::sSwitch,      e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst, cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sOrigin,      e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sOrigin,      e::sOriginDst, cNonMeta, 1, 1  ));
+        cRules.insert(ConstellationRule(n::sStartThread, e::sDefDst,     cNonMeta, 0, 1  ));        
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdFlushOvr, cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,     cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,     cNonMeta, 0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,     cNonMeta, 0, 9 ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,     cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,     cNonMeta,  0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,     cNonMeta,  0, 9 ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
@@ -79,6 +82,22 @@ void init() {
       unsigned cnt = 0;
       for (out_chk = out_begin; out_chk != out_end; ++out_chk) {
         if ( (vChk == target(*out_chk,g)) && (et == g[*out_chk].type) ) { cnt++;}
+
+        //Check if a command's assigned priority matches a queue on the target block.
+        if ((g[v].np->isCmd()) && (g[vChk].np->isBlock()) && (et == e::sCmdTarget)) {
+          //check if the target block has an outedge of corresponding type. we cannot allow commands to non existent queues
+          Graph::out_edge_iterator priochk_begin, priochk_end, priochk_cur;
+          uint16_t priolvl2chk = boost::dynamic_pointer_cast<Command>(g[v].np)->getPrio();
+          edgeType_t priochk_et = e::sQPrio[boost::dynamic_pointer_cast<Command>(g[v].np)->getPrio()];
+          bool foundMatchingPrio = false;
+
+          boost::tie(priochk_begin, priochk_end) = out_edges(vChk,g);
+          for (priochk_cur = priochk_begin; priochk_cur != priochk_end; ++priochk_cur) {
+            if (g[*priochk_cur].type == e::sQPrio[priolvl2chk]) {foundMatchingPrio = true; break;}
+          }
+          if(!foundMatchingPrio) throw std::runtime_error(exIntro + "' must not target non existing queue priority '" + std::to_string(priolvl2chk) + "' on block '" + g[vChk].name + "'\n");
+
+        }
       }
       if (cnt > 1) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");
     }
@@ -174,6 +193,8 @@ void init() {
     //useless, but eases my mind.
     return;
   }
+
+
 
   namespace Aux {
     void metaSequenceCheckAux(vertex_t v, vertex_t vcurrent, Graph& g, unsigned int recursionLvl /*= 0*/) {

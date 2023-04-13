@@ -39,7 +39,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-07-02}
+\Large{Last change: 2022-01-27}
 \end{center}
 \vfill
 \end{titlepage}
@@ -93,15 +93,8 @@ Connections: network cable to acc network. For management: network cable to acc 
 
 After \texttt{reboot} of fel0069:
 \begin{enumerate}
-\item ssh mskorsky@asl742.acc
-on asl742.acc copy modified variant of saft-ctl to fel0069. This will be obsolete when modified saft-ctl ist released.\linebreak
-scp staging/usr/bin/saft-ctl root@fel0069.acc.gsi.de:/usr/bin
-
-\item on fel0069.acc remove the old authorized ssh keys and start saftd on second pexarria5.
-\linebreak mv .ssh/authorized\_keys .ssh/authorized\_keys\_old \raggedright
-\linebreak saftd tr1:dev/wbm1 \raggedright
-
-\item on acopc042 copy the public ssh key to fel0069. This has to be done for every user / host which needs access to fel0069 with ssh.\raggedright
+\item on acopc042 (or some other host/user which needs access to fel0069) copy the public ssh key to fel0069.
+This has to be done for every user / host which needs access to fel0069 with ssh.\raggedright
 \linebreak ssh-copy-id -i .ssh/id\_rsa.pub root@fel0069.acc
 
 \item test (check before automated testing starts)\raggedright
@@ -189,18 +182,6 @@ saftd on fel0069.acc monitors dev/wbm1 as tr1.
 \end{itemize}
 The tests add an additional parameter for the number of seconds to snoop.
 
-\section{Modified variant of saft-ctl}
-The tests use a modified variant of saft-ctl. This snoops for a given number of seconds. This variant is avaliable in branch origin/fallout, folder ip\_cores/saftlib.
-
-Until the modified variant is part of a release, copy it each time to fel0069.acc after reboot. The binary is build on ASL cluster with settings:
-\begin{itemize}
-\item export PKG\_CONFIG\_PATH=\$PWD/staging/usr/lib/pkgconfig
-\item export PREFIX=\$PWD/staging/usr
-\end{itemize}
-
-Permanent way: use a modified RTE, build as described in
-\url{https://github.com/GSI-CS-CO/ci\_cd/blob/master/scripts/deployment/RTE\_Timing/build-rte.sh}.
-
 \section{Required versions}
 \begin{enumerate}
 \item Python 3.6.9
@@ -208,6 +189,7 @@ Permanent way: use a modified RTE, build as described in
 \end{enumerate}
 
 \section{Jenkins on tsl025.acc.gsi.de}
+Update tsl025 with sudo apt update / upgrade.
 Preparation of jenkins user on tsl025 for remote snoop.
 \linebreak Switch to user jenkins on tsl025:
 \linebreak sudo su -s /bin/bash jenkins
@@ -215,7 +197,8 @@ Preparation of jenkins user on tsl025 for remote snoop.
 \linebreak ssh-copy-id -i /var/lib/jenkins/.ssh/id\_rsa.pub root@fel0069
 \linebreak ssh -t root@fel0069 'saft-ctl tr1 -xv snoop 0 0 0 3' (this is the test that the previous commands were successful)
 
-Jenkins Jobs on tsl025: \url{http://tsl025:8080/}
+\subsection{Jenkins Jobs on tsl025}
+This Jenkins server is \url{http://tsl025:8080/}.
 \begin{enumerate}
 \item Build and install the tools (dm-cmd, dm-sched, libcarpedm)
 \item Build and install scheduleCompare
@@ -224,11 +207,175 @@ Jenkins Jobs on tsl025: \url{http://tsl025:8080/}
 \item Run all 49 tests. Takes up to 6 min. Normal test execution.
 \end{enumerate}
 
-Open tasks:
+\section{Install Image to Test on Datamaster}
+This section describes the installation of \texttt{fallout-v6.1.2-rc1} on data master in test environment.
+For the build, \texttt{acopc042} is used. Adopt both for a different release and build environment.
+
+\subsection{Preparation: Build FTM Image}
+\begin{verbatim}
+# Preparation: quit saftd
+saft-ctl tr0 quit
+# switch to build folder:
+cd ~/bel_projects/release
+# update git repo
+git pull
+# switch to tagged version
+git checkout fallout-v6.1.2-rc1
+# build
+## 1. clean up
+git clean -x -f
+cd ~/bel_projects/release/ip_cores/etherbone/
+git clean -x -f
+cd ~/bel_projects/release/ip_cores/saftlib/
+git clean -x -f
+cd -
+git status
+## 2. make and install
+make
+### sign kernel modules
+~/scripts/sign-wishbone-modules.sh
+sudo make install
+### make and install etherbone
+make etherbone
+sudo make etherbone-install
+### make and install saftlib
+make saftlib
+sudo make saftlib-install
+sudo ldconfig
+### make FTM image including FTM firmware
+make ftm
+# this produces:
+# Project     : ftm
+# Platform    : pexaria5 +db[12] +wrex1
+# FPGA model  : Arria V (5agxma3d4f27i3)
+## 3. Build DM Tools
+cd ~/bel_projects/release/modules/ftm/ftmx86/
+make
+sudo make install
+\end{verbatim}
+
+\subsection{Flash on dal029 (data master develoment environment)}
+
+Remark: datamaster for development environment is now on acopc042, dev/wbm1 ! Commands have to be changed accordingly.
+
+On \texttt{dal029.acc.gsi.de} do (use \texttt{ssh root@dal029.acc.gsi.de}):
+\begin{verbatim}
+# 1. Preparation:
+scp martin@acopc042:bel_projects/release/syn/gsi_pexarria5/ftm/ftm.rpd
+                   ftm_v6.1.2-rc1.rpd
+## stop saftd - error message if saftd is not running
+saft-ctl tr0 quit
+## stop datamaster
+dm-cmd dev/wbm0 halt
+## halt all lm32 CPUs
+eb-reset dev/wbm0 cpuhalt 0xff
+# 2. Flash - don't use eb-flash-secure.
+# Included preparation not ok.
+# Parameters -s and -w not supported
+eb-flash -s 0x10000 -w 3 dev/wbm0 ftm_v6.1.2-rc1.rpd
+# 3. Reboot
+eb-reset dev/wbm0 fpgareset; reboot
+\end{verbatim}
+Now, if result of flash looks OK, update PXE boot (on ASL cluster).
+\begin{verbatim}
+ssh mskorsky@asl742.acc
+cd /common/export/nfsinit/dal029/
+rm 20_timing-rte
+ln -s ../global/timing-rte-tg-fallout-v6.1.2-rc1 20_timing-rte
+str-D # end ssh session
+\end{verbatim}
+Second reboot of dal069.
+\begin{verbatim}
+ssh root@dal069.acc
+reboot
+\end{verbatim}
+Configure dal069 after reboot.
+\begin{verbatim}
+ssh root@dal029.acc
+eb-console dev/wbm0
+ip set 192.168.128.204
+strg-D # end ssh session
+\end{verbatim}
+Finally: check that datamaster is up and run tests (do this on acopc042).
+\begin{verbatim}
+dm-cmd tcp/dal029.acc
+# Run tests
+# on acopc042: export DM=tcp/dal029.acc
+cd ~/be_projects/test/module/ftm/tests
+# Run quick tests (40 seconds)
+make
+# Run all tests (6 minutes)
+OPTIONS=--runslow make
+\end{verbatim}
+
+\subsection{Flash on fel0069 (data master test environment)}
+On \texttt{fel0069.acc.gsi.de} do (use \texttt{ssh root@fel0069.acc.gsi.de}):
+\begin{verbatim}
+# 1. Preparation:
+Version 6.1.2 / FTM 7.0.1:
+scp martin@acopc042.gsi.de:bel_projects/release/syn/gsi_pexarria5/ftm/ftm.rpd
+           ftm_v6.1.2-rc1.rpd
+wget https://github.com/GSI-CS-CO/bel_projects/releases/download
+            /fallout-v6.1.2-rc1/falloutv6_1_2-rc1-pexarria5.rpd
+Version 6.2.0 / FTM 8.0.0:
+scp martin@acopc042.gsi.de:Documents/fel0069/ftm_722413ec_2021_11_02.rpd
+           ftm_722413ec_2021_11_02.rpd
+pexarria5: same as version 6.1.2.
+## stop fesa: how to?
+## stop saftd - error message if saftd is not running
+saft-ctl tr1 quit
+## stop datamaster
+dm-cmd dev/wbm0 halt
+## halt all lm32 CPUs on both pexarrias
+eb-reset dev/wbm0 cpuhalt 0xff
+eb-reset dev/wbm1 cpuhalt 0xff
+# 2. Flash - don't use eb-flash-secure.
+# Included preparation not ok.
+# Parameters -s and -w not supported
+eb-flash -s 0x10000 -w 3 dev/wbm0 'ftm rpd file'
+eb-flash -s 0x10000 -w 3 dev/wbm1 'pexarria5 rpd file'
+# 3. Reboot
+eb-reset dev/wbm0 fpgareset; eb-reset dev/wbm1 fpgareset; reboot
+\end{verbatim}
+Now, if result of flash looks OK, update PXE boot (on ASL cluster).
+\begin{verbatim}
+ssh mskorsky@asl742.acc
+cd /common/export/nfsinit/fel0069/
+# adopt gateware timing rte
+rm 20_timing-rte
+ln -s ../global/timing-rte-tg-fallout-v6.1.2-rc1 20_timing-rte
+# adopt DM tools, includes dm-cmd, dm-sched, libcarpedm
+rm 40_generator_dev
+ln -s ../global/dm-.... 40_generator_dev
+str-D # end ssh session
+\end{verbatim}
+Second reboot of fel0029.
+\begin{verbatim}
+ssh root@fel0069.acc
+reboot
+\end{verbatim}
+Configure fel0029 after reboot.
+\begin{verbatim}
+ssh-copy-id -i .ssh/id_rsa.pub root@fel0069.acc
+ssh root@fel0069.acc
+eb-console dev/wbm0
+ip set 192.168.131.184
+eb-console dev/wbm1
+ip set 192.168.131.241
+# Start saftd
+saftd tr1:dev/wbm1
+strg-D # end ssh session
+\end{verbatim}
+Finally: check that datamaster is up and run tests (do this on acopc042).
+\begin{verbatim}
+dm-cmd tcp/fel0069.acc
+\end{verbatim}
+Run tests on tsl025.acc: start Jenkins Jobs \url{http://tsl025:8080/}
+
+\section{Open tasks}
 \begin{enumerate}
 \item Configure tsl025 as Jenkins-Slave of builder.acc.gsi.de
 \item Add scripts / jobs to install a defined firmware / datamaster firmware on fel0069/dev/wbm0
-\item Merge dm-fallout-tests into fallout, merge dm-analytics into fallout. This simplifies the Jenkins jobs above and the configuration.
 \end{enumerate}
 
 \end{document}

@@ -1,0 +1,18 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_MAIN[cpu="0", flags="0x00108107", type="block", tperiod="100000000", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Evt_MAIN[cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="MAIN", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="1", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000001000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+StThrT0[cpu="0", flags="0x0000000e", type="startthread", toffs="0", pattern="MAIN", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", startoffs="0", thread="0", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+B_MAIN_QBl_Lo[cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_Qb_Lo0[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_Qb_Lo1[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN_ListDst[cpu="0", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_MAIN->B_MAIN_ListDst [type="listdst", color = "gray"];
+B_MAIN->B_MAIN_QBl_Lo [type="priolo", color = "gray"];
+Evt_MAIN->B_MAIN [type="defdst", color = "red"];
+StThrT0->Evt_MAIN [type="defdst", color = "red"];
+B_MAIN_QBl_Lo->B_MAIN_Qb_Lo0 [type="meta", color = "gray"];
+B_MAIN_QBl_Lo->B_MAIN_Qb_Lo1 [type="meta", color = "gray"];
+B_MAIN->StThrT0 [type="defdst", color = "red"];
+}

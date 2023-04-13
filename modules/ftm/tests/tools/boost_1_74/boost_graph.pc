@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: boost_graph
+Description: Boost Graph Library
+Version: 1.74
+Libs: -L${libdir} -lboost_graph
+Cflags: -I${includedir}

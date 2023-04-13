@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: boost_serialization
+Description: Boost Serialization Library
+Version: 1.74
+Libs: -L${libdir} -lboost_serialization
+Cflags: -I${includedir}

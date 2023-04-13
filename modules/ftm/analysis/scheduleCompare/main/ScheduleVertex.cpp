@@ -4,10 +4,22 @@
 #include <iostream>
 #include <sstream>
 
+std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex) {
+  os << vertex.name;
+  return os;
+}
+
+ScheduleVertex::operator std::string() {
+  return this->name;
+}
+
+void ScheduleVertex::switchCompareNames(const bool flag){
+  this->compareNames = flag;
+}
+
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
-  // std::cout << "--V " << v1.name << ", " << v2.name << std::endl;
-  //      return v1.type.compare(v2.type);
-  if (v1.name == v2.name) {
+  //~ std::cout << "--V " << v1.name << ", " << v2.name << " | " << v1.protocol << std::endl;
+  if (!v1.compareNames || v1.name == v2.name) {
     if (v1.type == "") {
       return 0;
     } else if (v1.type == v2.type) {
@@ -27,7 +39,12 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
         return compareQinfo(v1, v2);
       } else if ("switch" == v1.type) {
         return compareSwitch(v1, v2);
+      } else if ("origin" == v1.type) {
+        return compareOrigin(v1, v2);
+      } else if ("startthread" == v1.type) {
+        return compareStartthread(v1, v2);
       } else if ("tmsg" == v1.type) {
+        //~ std::cout << "--V tmsg " << compareTmsg(v1, v2) << std::endl;
         return compareTmsg(v1, v2);
       } else if ("wait" == v1.type) {
         return compareWait(v1, v2);
@@ -38,7 +55,11 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
       return v1.type.compare(v2.type);
     }
   } else {
-    return v1.name.compare(v2.name);
+    bool result = !v1.compareNames || v1.name.compare(v2.name);
+    if (result != 0) {
+      protocol += " != '" + v2.name + "';";
+    }
+    return result;
   }
 }
 
@@ -223,8 +244,8 @@ int ScheduleVertex::compareNoop(const ScheduleVertex& v1, const ScheduleVertex& 
   return result;
 }
 
-int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) { 
-	  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+int ScheduleVertex::compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+    int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
   if (result != 0) {
     return result;
   }
@@ -263,6 +284,30 @@ int ScheduleVertex::compareSwitch(const ScheduleVertex& v1, const ScheduleVertex
     return result;
   }
   result = compareValues(v1.dst, v2.dst, "dst", valueType::STRING);
+  return result;
+}
+
+int ScheduleVertex::compareOrigin(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = -1;
+  result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.thread, v2.thread, "thread", valueType::STRING);
+  return result;
+}
+
+int ScheduleVertex::compareStartthread(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = -1;
+  result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.startoffs, v2.startoffs, "startoffs", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.thread, v2.thread, "thread", valueType::STRING);
   return result;
 }
 
@@ -378,11 +423,43 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
   if (startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
     unsigned long x1;
     unsigned long x2;
-    std::stringstream hexStream2;
     std::stringstream hexStream1;
+    std::stringstream hexStream2;
     hexStream1 << std::hex << hex1;
     hexStream2 << std::hex << hex2;
     hexStream1 >> x1;
+    hexStream2 >> x2;
+    if (x1 < x2) {
+      return -1;
+    } else if (x1 > x2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (startsWith(hex1, "0x", false) && !startsWith(hex2, "0X", false)) {
+    unsigned long x1;
+    unsigned long x2;
+    std::stringstream hexStream1;
+    std::stringstream stream2;
+    hexStream1 << std::hex << hex1;
+    stream2 << hex2;
+    hexStream1 >> x1;
+    stream2 >> x2;
+    if (x1 < x2) {
+      return -1;
+    } else if (x1 > x2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if (!startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    unsigned long x1;
+    unsigned long x2;
+    std::stringstream stream1;
+    std::stringstream hexStream2;
+    stream1 << hex1;
+    hexStream2 << std::hex << hex2;
+    stream1 >> x1;
     hexStream2 >> x2;
     if (x1 < x2) {
       return -1;
@@ -406,7 +483,7 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = value1.compare(value2);
   }
   if (result != 0) {
-    protocol += "Result: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.\n";
+    protocol += " compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
   }
   return result;
 }
@@ -422,9 +499,13 @@ bool ScheduleVertex::startsWith(std::string value, std::string start, bool caseS
     // Convert start to lower case
     std::transform(start.begin(), start.end(), start.begin(), ::tolower);
   }
-  if (value.find(start) == 0) {
-    return true;
-  } else {
-    return false;
+  return (value.find(start) == 0);
+}
+
+std::string ScheduleVertex::printProtocol() {
+  std::string result = std::string("");
+  if (!this->protocol.empty()) {
+    result = std::string("Vertex: ") + std::string(*this) + this->protocol;
   }
+  return result;
 }

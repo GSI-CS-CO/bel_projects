@@ -1,0 +1,12 @@
+digraph G {
+graph [
+name="cycle3-compact"
+]
+node3;
+"node1
+node2";
+node3->"node1
+node2" ;
+"node1
+node2"->node3 ;
+}
