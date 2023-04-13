@@ -1,0 +1,17 @@
+digraph chains1234 {
+name=chains1234
+a11
+a21
+a22
+a31
+a32
+a33
+a41
+a42
+a43
+a44
+x -> a11 -> y
+x -> a21 -> a22 -> y
+x -> a31 -> a32 -> a33 -> y
+x -> a41 -> a42 -> a43 -> a44 -> y
+}

@@ -1,0 +1,27 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BlockA1[cpu="0", flags="0x0001a207", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", fillcolor = "crimson", fontname="Times-Bold", fontcolor = "cyan", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA2[cpu="0", flags="0x0000a207", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA3[cpu="0", flags="0x0000a207", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB1[cpu="0", flags="0x0000a208", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB2[cpu="0", flags="0x0000a208", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB3[cpu="0", flags="0x0000a208", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "rosybrown1", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA1->BlockAlignB1 [type="defdst", color = "red"];
+BlockA2->BlockAlignB2 [type="defdst", color = "red"];
+BlockA3->BlockAlignB3 [type="defdst", color = "red"];
+BlockAlignB1->BlockA2 [type="defdst", color = "red"];
+BlockAlignB2->BlockA3 [type="defdst", color = "red"];
+BlockAlignB3->BlockA1 [type="defdst", color = "red"];
+}
+//BlockA1#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockA2#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockA3#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockAlignB1#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockAlignB2#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//BlockAlignB3#P2->xX->xX->xX->xX#P1->xX->xX->xX->xX#P0->xX->xX->xX->xX
+//Covenants to honour:
+
+//Patterns to judge:
+//  A
+//Verdict: SAFE

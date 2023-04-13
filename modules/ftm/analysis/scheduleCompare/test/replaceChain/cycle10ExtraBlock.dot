@@ -1,0 +1,5 @@
+digraph cycle10 {
+name = cycle10
+h [type=block shape=rectangle]
+a -> j -> i -> h -> g -> f -> e -> d -> c -> b -> a
+}

@@ -1,0 +1,18 @@
+digraph G {
+graph [
+_draw_=""
+bb=""
+name="parallel2x2-compact"
+xdotversion=""
+]
+0 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label=node1, ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+1 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label=node6, ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+2 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label="node2
+node3", ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+3 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label="node4
+node5", ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+0->2  [_draw_="", _hdraw_="", color="", pos="", type=""];
+2->1  [_draw_="", _hdraw_="", color="", pos="", type=""];
+0->3  [_draw_="", _hdraw_="", color="", pos="", type=""];
+3->1  [_draw_="", _hdraw_="", color="", pos="", type=""];
+}

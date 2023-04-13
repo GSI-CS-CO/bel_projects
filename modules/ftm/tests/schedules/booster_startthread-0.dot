@@ -1,0 +1,45 @@
+# Notes for origin.dot
+
+//~ Mit saft-ctl snoop sehe ich jede Sekunde 4 timing messages nachdem das Pattern MAIN gestartet wurde.
+//~ Zuerst kommt eine msg mit evtno=3, dann zwei msgs mit evtno=2, 1µs später, davon eine delayed. 20µs später eine msg mit evtno=1.
+//~ tperiod=1s in Block B_MAIN bestimmt den Takt von einer Sekunde. tperiod von B_A und B_B spielen keine Rolle.
+//~ Die Verzögerung für evtno=2 von 1µs wird durch toffs=1000 bestimmt, entsprechend für evtno=1 durch toffs=20000.
+//~ Was bewirken toffs und startoffs bei den 3 startthread Nodes?
+
+//~ Start of pattern A or pattern B generates one tmsg with evtno=2 or evtno=3, repectively.
+
+digraph "booster_startthread-0" {
+name="Test_Origin_and_Start_Thread";
+
+edge  [type="defdst"]
+
+subgraph cpu1 {
+  node  [cpu=1 pattern=MAIN toffs=0 patentry=0 fillcolor=white style=filled]
+
+  Ori_T1_A [type=origin patentry=1 thread=1]
+  Ori_T2_A [type=origin thread=2]
+  Ori_T3_B [type=origin thread=3]
+
+  StThrT1 [type=startthread toffs=235 startoffs=0 thread=1]
+  StThrT2 [type=startthread toffs=235 startoffs=10000000 thread=2]
+  StThrT3 [type=startthread toffs=10000 startoffs=0 thread=3]
+
+  Evt_MAIN [type=tmsg toffs=20000 fid=1 evtno=0 par=0]
+  B_MAIN [type=block patexit=1 tperiod=100000000]
+
+  Evt_A [type=tmsg pattern=A patentry=1 toffs=1000 fid=1 evtno=2 par=2]
+  B_A [type=block pattern=A patexit=1 tperiod=10000000]
+
+  Evt_B [type=tmsg pattern=B patentry=1 toffs=0 fid=1 evtno=3 par=3]
+  B_B [type=block pattern=B patexit=1 tperiod=10000000]
+
+  Ori_T1_A -> Ori_T2_A -> Ori_T3_B -> StThrT1 -> StThrT2 -> StThrT3 -> Evt_MAIN -> B_MAIN -> Ori_T1_A
+
+  Evt_A -> B_A
+  Evt_B -> B_B
+
+  Ori_T1_A -> Evt_A [type="origindst"]
+  Ori_T2_A -> Evt_A [type="origindst"]
+  Ori_T3_B -> Evt_B [type="origindst"]
+}
+}

@@ -88,7 +88,7 @@ public:
     std::stringstream os;
     boost::archive::text_oarchive oa(os);
     oa << BOOST_SERIALIZATION_NVP(*this);
-    return os.str();
+    return fixArchiveVersion(os.str());
   }
 
   void load(const std::string& s){

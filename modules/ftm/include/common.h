@@ -13,7 +13,7 @@
 /** @name Enums for communication with DM
  * Provides enums for the handling of firmware meta information, WB bus adress type conversion and upload/download buffers
  */
-//@{ 
+//@{
 enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN}; ///< WB Address types for perspectives of different WB bus masters
 enum class TransferDir {UPLOAD, DOWNLOAD}; ///< DM communication transfer direction. Upload (DM to host) or download (host to DM)
 
@@ -35,7 +35,7 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
 /** @name Definitions for accessing Cluster Time Hardware Module
  * Provides necessary SDB and register definitions for Cluster Time Hardware Module
  */
-//@{ 
+//@{
 namespace CluTime {
   const uint32_t timeHiW = 0x0; ///< Time high word. Reading high word freezes low word until it's read
   const uint32_t timeLoW = 0x4; ///< Time low word
@@ -52,7 +52,7 @@ const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when 
 /** @name Operator overload collcetion for std::vector
  * Templated helper functions for easy concatenation std::vector
  */
-//@{ 
+//@{
 
 /// Template to Overload + operator for std::vectors
 /** This allows concatenation of two std::vectors A and B of type T into one new vector AB
@@ -134,13 +134,13 @@ inline std::vector<T> &operator+=(std::vector<T> &A, const T &B)
 /** @name Diagnostic data structures
  * Report structures for diagnostics and queue report
  */
-//@{ 
+//@{
 
 /// Global report on DM health
-/** Contains all the usual suspects of diagnostic values from DM gateware, such as global msg count, the CPU boot timestamp, 
- *  last schedule/command updates with user and timestamp, remainingd lead delta T on msg dispatch (min, max, avg), 
+/** Contains all the usual suspects of diagnostic values from DM gateware, such as global msg count, the CPU boot timestamp,
+ *  last schedule/command updates with user and timestamp, remainingd lead delta T on msg dispatch (min, max, avg),
  *  warning count for late dispatch and maximum observer message backlog count
- * 
+ *
  */
 typedef struct {
   uint8_t   cpu;
@@ -170,7 +170,7 @@ typedef struct {
 
 /// Report on DM's WB bus stall behaviour
 /** Report contains DM's diagnostic values for the maximum wait time (stall) CPUs have experienced when trying to access the WB system bus.
- * 
+ *
  */
 typedef struct {
   uint32_t  stallStreakMax;
@@ -181,7 +181,7 @@ typedef struct {
 /// Report on DM's WR time behaviour
 /** Report contains DM's diagnostic values for the linearity of WR timestamps vs system clock and when the last jump of WR time was detected
  *  Also contains the StallDelayReport as a subfield
- * 
+ *
  */
 typedef struct {
   bool      enabled;
@@ -196,7 +196,7 @@ typedef struct {
 
 /// Report on a queued command
 /** Report contains the command content (type, timestamp, parameters, etc) in a format easily convertible to human readable
- * 
+ *
  */
 typedef struct {
   uint32_t     extAdr = LM32_NULL_PTR;
@@ -223,8 +223,8 @@ typedef struct {
 
 /// Report on a command queue
 /** Report contains the queue state and meta infos as well as its content. Uses QueueElement structs to map the command content.
- * 
- * 
+ *
+ *
  */
 typedef struct {
   uint8_t wrIdx, rdIdx, pendingCnt;
@@ -235,8 +235,8 @@ typedef struct {
 /** Report contains the content and meta information of all of a block node's command queues. This lists the content of each queue
  * (pending & processed commands) as well as the meta information. uses QueueBuffer struct to map the queue state and meta infos
  * and QueueElement structs to map the content of each queue
- * 
- * 
+ *
+ *
  */
 typedef struct {
   std::string name;
@@ -259,7 +259,7 @@ typedef std::vector<bool> vBl; ///< buffer for cycle line control. 1 - close the
 typedef std::vector<std::string> vStrC; ///< vector of strings
 /// Struct for staging EB write operations
 /** Staging EB write ops requires a buffer of WB addresses, a buffer of WB payload data and a buffer of cycle line control bits
- * 
+ *
  */
 typedef struct {
   vAdr va;
@@ -269,7 +269,7 @@ typedef struct {
 
 /// Struct for staging EB read operations
 /** Staging EB write ops requires a buffer of WB addresses, and a buffer of cycle line control bits
- * 
+ *
  */
 typedef struct {
   vAdr va;
@@ -337,7 +337,7 @@ inline vEbrds& operator+=(vEbrds& A, const vEbrds &B)
 
 /// Helper function to create a cycle line control sqequence
 /** The function accepts a cycle length and outputs a matching bit sequence of a leading 1 (start new cycle) followed by 0s (continue current cycle)
- * 
+ *
  */
 vBl leadingOne(size_t length);
 //@}
@@ -345,7 +345,7 @@ vBl leadingOne(size_t length);
 
 
 /// Helper function to convert a string to a number or bool
-/** Convert a string to a number or bool. Helper to convert values found in dot files 
+/** Convert a string to a number or bool. Helper to convert values found in dot files
   */
 template<typename T>
 inline T s2u(const std::string& s) {

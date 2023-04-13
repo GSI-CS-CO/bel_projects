@@ -1,0 +1,6 @@
+digraph "3-cycle-a1b1c1" {
+name="3-cycle-a1b1c1"
+node [type=tmsg]
+edge [type=xy]
+a1 -> b1 -> c1 -> a1
+}
