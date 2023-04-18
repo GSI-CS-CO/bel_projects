@@ -118,8 +118,12 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, i
   uint8_t   cmdByte;               // command byte
   uint16_t  dacRaw;                // raw DAC value
 
+  // range checking
+  if ((dacLevel > 100.0) || (dacLevel < 0.0)) return FT_INVALID_PARAMETER;
+
   // conversion [%] -> raw value
   dacRaw   = round(dacLevel * (double)dacMax / 100.0);
+
   transOpt = 0x03;
 
   //printf("dac raw 0x%x\n", dacRaw);
