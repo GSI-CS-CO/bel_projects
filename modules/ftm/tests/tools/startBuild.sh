@@ -12,7 +12,7 @@ if [ "$#" -ne 2 ]; then
   echo "   Datamaster_Tests_dm-summer-update-2022"
   echo "   test_module_ftm_datamaster"
   echo "   test_module_ftm_datamaster_long_run"
-  echo "   test_module_ftm_datamaster_long_run%20dm-fallout-tests-2"
+  echo "   test_module_ftm_datamaster_long_run%20dm-fallout-tests"
 
   exit 1
 fi
