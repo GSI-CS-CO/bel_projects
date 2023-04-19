@@ -3,6 +3,7 @@
 
 #include <stddef.h>     // size_t
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "dbg.h"        // DBPRINT
 #include "common-defs.h"
@@ -53,7 +54,7 @@ struct io_port_struct {
 
 extern volatile uint32_t *pIOCtrl;             // WB address of IO Control
 
-uint32_t setIoOe(uint32_t channel, uint32_t idx);
+status_t setIoOe(uint32_t channel, uint32_t idx, bool val);
 uint32_t getIoOe(uint32_t channel);
 void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx);
 status_t getEffLogOut(uint8_t buf_idx, io_port_t* port);

@@ -40,19 +40,32 @@
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 io_port_t EffLogOut[N_MPS_CHANNELS];    // mapping between MPS message buffer and IO output port
 
-// set IO output enable
-uint32_t setIoOe(uint32_t channel, uint32_t idx)
+/**
+ * \brief Set IO output enable
+ *
+ * \param channel Output channel type (GPIO, LVDS)
+ * \param idx     Output channel index (0..31)
+ * \param val     Value to enable/disable (true/false) output
+ *
+ * \ret   status  COMMON_STATUS_OK on success, otherwise ERROR
+ **/
+status_t setIoOe(uint32_t channel, uint32_t idx, bool val)
 {
   uint32_t reg = 0;
-  if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
-    reg = IO_GPIO_OE_SETLOW;
+  if (channel == IO_CFG_CHANNEL_GPIO)      // GPIO channel
+    reg = val ? IO_GPIO_OE_SETLOW : IO_GPIO_OE_RESETLOW;
   else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
-    reg = IO_LVDS_OE_SETLOW;
+    reg = val ? IO_LVDS_OE_SETLOW : IO_LVDS_OE_RESETLOW;
   else
-    return 0xFFFF;
+    return COMMON_STATUS_ERROR;
+
+  if (idx > 31)
+    return COMMON_STATUS_ERROR;
 
   if (reg)
     *(pIOCtrl + (reg >> 2)) = (1 << idx);
+
+  return COMMON_STATUS_OK;
 }
 
 // get IO output enable
@@ -158,7 +171,7 @@ void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx)
   if (buf_idx > N_MPS_CHANNELS)
     return;
 
-  if ((ch_type != IO_CFG_CHANNEL_GPIO) ||
+  if ((ch_type != IO_CFG_CHANNEL_GPIO) &&
       (ch_type != IO_CFG_CHANNEL_LVDS))
     return;
 
