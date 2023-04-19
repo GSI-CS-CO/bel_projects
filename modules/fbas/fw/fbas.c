@@ -637,14 +637,11 @@ uint32_t extern_entryActionConfigured()
     n_out_port    = N_LEMO_OUT_PEXARIA;
   }
 
+  // app specific IO setup (TX: B2 as input, all output disabled)
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
 
-  // set up the direct mapping between output ports and MPS message buffer
-  // can be used to measure the MPS signaling latency (check the proper cabling!)
-  for (uint8_t idx = 0; idx < n_out_port; ++idx) {
-    setIoOe(out_port.type, idx);              // enable all output ports
-    setupEffLogOut(idx, out_port.type, idx);  // direct mapping of all output ports (MSP buffer[i] -> out_port[i])
-  }
+  for (uint8_t idx = 0; idx < n_out_port; ++idx)
+    setIoOe(out_port.type, idx, false);  // disable all output ports
 
   fwlib_publishNICData();           // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
   printSrcAddr();                   // output the source MAC/IP address of the Endpoint WB device to the WR console
@@ -717,13 +714,28 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         } else {
           DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
+
+        // app-specific IO setup (RX: enable all outputs)
+        switch (nodeType) {
+          case FBAS_NODE_RX:
+            // set up the direct mapping between output ports and MPS message buffer
+            // can be used to measure the MPS signaling latency (check the proper cabling!)
+            for (uint8_t idx = 0; idx < n_out_port; ++idx) {
+              setIoOe(out_port.type, idx, true);        // enable all output ports
+              setupEffLogOut(idx, out_port.type, idx);  // direct mapping of all output ports (MSP buffer[i] -> out_port[i])
+            }
+            break;
+          default:
+            break;
+        }
+
         break;
       case FBAS_CMD_GET_SENDERID:
         // read valid sender ID (MAC, idx) from the shared memory
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
-        setIoOe(out_port.type, out_port.idx); // enable output for the default output port
+        setIoOe(out_port.type, out_port.idx, true); // enable output for the default output port
         break;
       case FBAS_CMD_GET_IO_OE:
         u32val = getIoOe(out_port.type);
