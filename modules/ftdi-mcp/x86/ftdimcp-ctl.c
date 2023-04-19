@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Apr-2023
+ *  version : 19-Apr-2023
  *
  * command line program for MCP4725 connected via FT232H
  *
@@ -55,13 +55,13 @@ char      disName[DIMMAXSIZE];           // name of DIM server
 
 char      disVersion[DIMCHARSIZE];       // version 
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
-uint32_t  disOutStretch;                 // value of 'stretched' comparator output
-double    disActLevel;                   // actual comparator level
+uint32_t  disTriggered;                 // value of 'stretched' comparator output
+double    disSetLevel;                   // actual comparator level
 
 uint32_t  disVersionId      = 0;
 uint32_t  disNTriggerId     = 0;
-uint32_t  disOutStretchId   = 0;
-uint32_t  disActLevelId     = 0;
+uint32_t  disTriggeredId    = 0;
+uint32_t  disSetLevelId     = 0;
 uint32_t  disCmdLevelId     = 0;
 
 #endif //USEDIM
@@ -108,8 +108,8 @@ void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
 
   // set value
   if ((ftStatus = ftdimcp_setLevel(cHandle, level, 0, 1)) == FT_OK) {
-    disActLevel = level;
-    dis_update_service(disActLevelId);
+    disSetLevel = level;
+    dis_update_service(disSetLevelId);
   } // if ftStatus
 
   flagBlink = 1;
@@ -129,11 +129,11 @@ void disAddServices(char *prefix)
   sprintf(name, "%s_ntrigger", prefix);
   disNTriggerId   = dis_add_service(name, "I:1", &disNTrigger, sizeof(disNTrigger), 0 , 0);
 
-  sprintf(name, "%s_outstretched", prefix);
-  disOutStretchId = dis_add_service(name, "I:1", &disOutStretch, sizeof(disOutStretch), 0 , 0);
+  sprintf(name, "%s_triggered", prefix);
+  disTriggeredId = dis_add_service(name, "I:1", &disTriggered, sizeof(disTriggered), 0 , 0);
   
-  sprintf(name, "%s_actlevel", prefix);
-  disActLevelId   = dis_add_service(name, "D:1", &disActLevel, sizeof(disActLevel), 0 , 0);
+  sprintf(name, "%s_setlevel", prefix);
+  disSetLevelId   = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel), 0 , 0);
 
   sprintf(name, "%s_cmd_setlevel", prefix);
   disCmdLevelId   =  dis_add_cmnd(name, "D:1", cmdSetLevel, 0);
@@ -275,10 +275,10 @@ int main(int argc, char** argv) {
     
   if (daemon) {
 #ifdef USEDIM
-    sprintf(disName, "");
-    sprintf(disVersion, "");
+    sprintf(disName, "N/A");
+    sprintf(disVersion, "N/A");
     disNTrigger = 0;
-    disActLevel = NAN;
+    disSetLevel = NAN;
     outAct      = 0;
     outOld      = 0;
     flagBlink   = 0;
@@ -299,8 +299,8 @@ int main(int argc, char** argv) {
       ftdimpc_getCompOutStretched(cHandle, &outAct);
 
       // update service
-      disOutStretch = outAct;
-      dis_update_service(disOutStretchId);
+      disTriggered = outAct;
+      dis_update_service(disTriggeredId);
 
       // remember old value
       if (outAct > outOld) {

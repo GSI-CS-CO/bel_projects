@@ -16,28 +16,25 @@ STAGING     ?=
 ifeq ($(YOCTO), YES)
 ARCH        := /x86_64
 CFLAGS      ?=
-ASLLIB      := .
-ASLINC      := .
+USRPATH     := /common/usr/timing/b2b/yocto/usr
 FTDI        := .
 else
-ASLINC      ?= .
+INCPATH      ?= .
 ARCH        ?= /x86_64
-FTDI        ?= /opt/usr
+USRPATH     ?= /opt/usr
 CFLAGS      ?= -Wall -O2 -g
 endif
 
 ifeq ($(DIM), YES)
+# DIM headers should be installed in USRPATH/include
+# DIM library should be installed in USSPATH/lib
 USEDIM      = -D USEDIM
-DIMPATH     := /opt/dim/dim_v20r33
-#DIMPATH     := /common/usr/timing/b2b/dim_v20r29
 DIMLIB      := -ldim
-DIMINC      := -I$(DIMPATH)/dim
-DIMLIBB     := -L$(DIMPATH)/linux
 endif
 
 EXTRA_FLAGS ?= $(USEDIM)
-LIBS        ?= -L. -L$(FTDI)/lib $(DIMLIBB) -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread
-CCFLAGS     ?= $(EXTRA_FLAGS) -I../include -I$(ASLINC) -I$(FTDI)/include $(DIMINC)
+LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread
+CCFLAGS     ?= $(EXTRA_FLAGS) -I../include -I$(USRPATH)/include 
 
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))
