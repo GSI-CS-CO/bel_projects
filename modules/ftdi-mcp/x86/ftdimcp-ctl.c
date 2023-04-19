@@ -101,6 +101,7 @@ static void help(void) {
 // set comparator level
 void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
 {
+#ifdef USEDIM
   FT_STATUS ftStatus;
   double    level;
   
@@ -113,6 +114,7 @@ void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
   } // if ftStatus
 
   flagBlink = 1;
+#endif
 } // cmdSetLevel
 
 
@@ -298,13 +300,16 @@ int main(int argc, char** argv) {
       // get value
       ftdimpc_getCompOutStretched(cHandle, &outAct);
 
-      // update service
-      disTriggered = outAct;
-      dis_update_service(disTriggeredId);
+      // value change
+      if (outAct != outOld) {
+        disTriggered = outAct;
+        dis_update_service(disTriggeredId);
+      } // if outAct
 
-      // remember old value
+      // triggered?
       if (outAct > outOld) {
         disNTrigger++;
+        dis_update_service(disNTriggerId);
         flagBlink = 1;
       } // if outAct
       outOld = outAct;
