@@ -125,12 +125,16 @@ void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value)
  *
  * Generate error (internal signal), if lifetime of MPS flag is expired.
  *
- * \param buf Pointer to MPS message buffer
+ * \param buf    Pointer to MPS message buffer
+ * \param offset Port map offset
  *
  * \ret none
  **/
-void driveEffLogOut(mpsMsg_t* buf)
+void driveEffLogOut(mpsMsg_t* buf, uint8_t offset)
 {
+  if (buf == 0)
+    return;
+
   uint8_t ioVal = MPS_SIGNAL_INVALID;
 
   // handle MPS flag if it's changed or expired
@@ -147,7 +151,7 @@ void driveEffLogOut(mpsMsg_t* buf)
   }
 
   io_port_t out_port;
-  if (getEffLogOut(buf->prot.idx, &out_port) == COMMON_STATUS_OK)
+  if (getEffLogOut(offset, &out_port) == COMMON_STATUS_OK)
     driveOutPort(out_port.type, out_port.idx, ioVal);     // drive the assigned output port
 }
 

@@ -58,7 +58,7 @@ status_t setIoOe(uint32_t channel, uint32_t idx, bool val);
 uint32_t getIoOe(uint32_t channel);
 void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx);
 status_t getEffLogOut(uint8_t buf_idx, io_port_t* port);
-void driveEffLogOut(mpsMsg_t* buf);
+void driveEffLogOut(mpsMsg_t* buf, uint8_t offset);
 void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value);
 void qualifyInput(size_t len, mpsMsg_t* buf);
 void testOutput(size_t len, mpsMsg_t* buf);

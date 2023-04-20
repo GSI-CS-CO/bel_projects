@@ -263,15 +263,17 @@ mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt)
  * \param raw Raw MPS protocol (bits 63-16 = addr, 15-8 = index, 7-0 = flag)
  * \param ts  Timestamp
  * \param itr Read-access iterator
+ * \param[out] offset Offset to the selected MPS msg buffer
  *
- * \ret ptr pointer to the stored MPS flag
+ * \ret status Returns OK if received message is saved, otherwise ERROR
  **/
-mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
+status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset)
 {
   uint8_t flag = raw;
   uint8_t idx = raw >> 8;
   uint8_t addr[ETH_ALEN];
   mpsMsg_t* buf = &bufMpsMsg[0];
+  *offset = -1;
 
   memcpy(addr, &raw, ETH_ALEN);
 
@@ -282,13 +284,14 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
         buf->prot.flag = flag;
         buf->ttl = itr->ttl;
         buf->tsRx = ts;
-        return buf;
+        *offset = i;
+        return COMMON_STATUS_OK;
       }
     }
     ++buf;
   }
 
-  return 0;
+  return COMMON_STATUS_ERROR;
 }
 
 /**
