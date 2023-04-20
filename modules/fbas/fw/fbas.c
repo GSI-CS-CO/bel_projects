@@ -376,6 +376,11 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
 
   setMpsMsgSenderId(msg, *pSenderId, 1);
 
+  // app-specific IO setup (RX: enable IO output for signaling latency)
+  // set up the direct mapping between the MPS message buffer and output ports
+  setIoOe(out_port.type, pos, true);        // enable output
+  setupEffLogOut(pos, out_port.type, pos);  // mapping (MSP buffer[pos] -> out_port[pos])
+
   return COMMON_STATUS_OK;
 }
 
@@ -714,24 +719,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         } else {
           DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
         }
-
-        // app-specific IO setup (RX: enable all outputs)
-        switch (nodeType) {
-          case FBAS_NODE_RX:
-            // set up the direct mapping between output ports and MPS message buffer
-            // can be used to measure the MPS signaling latency (check the proper cabling!)
-            for (uint8_t idx = 0; idx < n_out_port; ++idx) {
-              setIoOe(out_port.type, idx, true);        // enable all output ports
-              setupEffLogOut(idx, out_port.type, idx);  // direct mapping of all output ports (MSP buffer[i] -> out_port[i])
-            }
-            break;
-          default:
-            break;
-        }
-
         break;
       case FBAS_CMD_GET_SENDERID:
-        // read valid sender ID (MAC, idx) from the shared memory
+        // read valid sender ID (MAC, idx) from the shared memory and
+        // assign output port for signaling latency measurement
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
