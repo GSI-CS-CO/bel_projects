@@ -479,10 +479,6 @@ start_nw_perf() {
         echo -en " $i:  OK\r"
         sleep 1
     done
-
-    wait_seconds 1
-    echo -e "\nTX: send 'new cycle'"
-    saft-ctl tr0 -p inject $evt_new_cycle $evt_id_mask 1000000
 }
 
 result_event_count() {
