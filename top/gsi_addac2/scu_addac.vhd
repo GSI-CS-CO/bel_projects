@@ -218,10 +218,23 @@ COMPONENT rrg is
          ControlReg : in STD_LOGIC_VECTOR (15 downto 0);
          TargetReg  : in STD_LOGIC_VECTOR (15 downto 0);
          TimeStepReg : in STD_LOGIC_VECTOR (15 downto 0);
-CountStepReg : in STD_LOGIC_VECTOR (15 downto 0);
+			CountStepReg : in STD_LOGIC_VECTOR (15 downto 0);
          DAC_Out : out STD_LOGIC_VECTOR (15 downto 0);
          DAC_Strobe : out STD_LOGIC);
 END COMPONENT rrg;
+
+COMPONENT rrg_round is
+  Port ( clk : in STD_LOGIC;
+         nReset : in STD_LOGIC;
+			timepulse : in STD_LOGIC;
+         Yset : in STD_LOGIC_VECTOR (15 downto 0);
+         Rset  : in STD_LOGIC_VECTOR (15 downto 0);
+         RIset : in STD_LOGIC_VECTOR (15 downto 0);
+			ROset : in STD_LOGIC_VECTOR (15 downto 0);
+			DACStrobe : out STD_LOGIC;
+         Yis : out STD_LOGIC_VECTOR (31 downto 0);
+         Ris : out STD_LOGIC_VECTOR (31 downto 0));
+END COMPONENT rrg_round;
 
   signal clk_sys, clk_cal, locked : std_logic;
 
@@ -364,7 +377,14 @@ END COMPONENT rrg;
   signal rrgConfigReg           : std_logic_vector (15 downto 0);
   signal rrgTargetReg           : std_logic_vector (15 downto 0);        
   signal rrgTimeStepReg         : std_logic_vector (15 downto 0);
-  signal rrgCountStepReg   : std_logic_vector (15 downto 0);
+  signal rrgCountStepReg   	  : std_logic_vector (15 downto 0);
+  signal rrgYset		  			  : std_logic_vector (15 downto 0); 
+  signal rrgRset 		  : std_logic_vector (15 downto 0); 
+	signal rrgRIset 		  : std_logic_vector (15 downto 0);  
+	signal rrgROset 		  : std_logic_vector (15 downto 0);
+	signal rrgYis		 	  : std_logic_vector (31 downto 0);
+	signal rrgRis		 	  : std_logic_vector (31 downto 0);
+	signal rrgDACStrobe             : std_logic;
 
 
   begin
@@ -586,8 +606,8 @@ dac_1: dac714
                                                 -- led on -> nExt_Trig_DAC is low
     --FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
     --FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
-    FG_Data           => rrg_out (15 downto 0), -- parallel dac data during FG-Mode
-    FG_Strobe         => rrg_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    FG_Data           => rrgYis ( 15 downto 0), -- parallel dac data during FG-Mode
+    FG_Strobe         => rrgDACStrobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
     nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
@@ -883,10 +903,10 @@ p_led_ena: div_n
           Reg_IO2            =>  rrgTargetReg,
           Reg_IO3            =>  rrgTimeStepReg,
           Reg_IO4            =>  rrgCountStepReg,
-          Reg_IO5            =>  open,
-          Reg_IO6            =>  open,
-          Reg_IO7            =>  open,
-          Reg_IO8            =>  open,
+          Reg_IO5            =>  rrgYset,
+          Reg_IO6            =>  rrgRset,
+          Reg_IO7            =>  rrgRIset,
+          Reg_IO8            =>  rrgROset,
         --
           Reg_rd_active      =>  rrg_rd_active,
           Dtack_to_SCUB      =>  rrg_Dtack,
@@ -904,6 +924,20 @@ p_led_ena: div_n
           DAC_Out       => rrg_out,
           DAC_Strobe    => rrg_strobe,
 CountStepReg  => rrgCountStepReg
+        );
+		  
+  rrg_round_inst: rrg_round
+   port map (
+          clk           => clk_sys,
+          nReset        => rstn_sys,
+			 timepulse    => Ena_Every_1us,
+          Yset    => rrgYset,
+          Rset     => rrgRset,
+          RIset   => rrgRIset,
+          ROset       => rrgROset,
+			 DACStrobe => rrgDACStrobe,
+          Yis    => rrgYis,
+			 Ris=> rrgRis
         );
 
   -------------------------------------------------------------------------------

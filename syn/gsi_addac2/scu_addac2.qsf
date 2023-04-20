@@ -39,6 +39,30 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -160,6 +184,7 @@ set_global_assignment -name VERILOG_FILE "../../ip_cores/pci-core/src/hdl/verilo
 set_global_assignment -name VERILOG_FILE "../../ip_cores/pci-core/src/hdl/verilog/timescale.v" -library work
 set_global_assignment -name VERILOG_FILE ../../modules/cfi_flash/cfi_ctrl_engine.v -library work
 set_global_assignment -name VERILOG_FILE ../../modules/cfi_flash/cfi_ctrl.v -library work
+set_global_assignment -name VERILOG_FILE ../../modules/dac714/rrg_round.v -library work
 set_global_assignment -name VERILOG_FILE ../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../modules/lpc_uart/serirq_slave.v -library work
 set_global_assignment -name VERILOG_FILE ../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_gdoqleq.v -library work
