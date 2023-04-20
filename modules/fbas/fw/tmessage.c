@@ -495,3 +495,27 @@ bool isSenderKnown(uint64_t raw)
 
   return true;
 }
+
+/**
+ * \brief Print the MPS message buffer
+ *
+ * MPS message buffer contains MPS protocols
+ *
+ **/
+void diagPrintMpsMsgBuf(void)
+{
+  DBPRINT2("bufMpsMsg\n");
+  DBPRINT2("buf_idx: protocol (MAC - idx - flag), msg (tsRx - ttl - pending)\n");
+
+  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+     DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
+        i,
+        bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
+        bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
+        bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        bufMpsMsg[i].prot.idx,
+        bufMpsMsg[i].prot.flag,
+        bufMpsMsg[i].tsRx,
+        bufMpsMsg[i].ttl,
+        bufMpsMsg[i].pending);
+}

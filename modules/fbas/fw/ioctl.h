@@ -63,4 +63,5 @@ void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value);
 void qualifyInput(size_t len, mpsMsg_t* buf);
 void testOutput(size_t len, mpsMsg_t* buf);
 
+void diagPrintMapIoMsgIdx(void);
 #endif
