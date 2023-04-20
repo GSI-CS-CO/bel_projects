@@ -208,10 +208,10 @@ void initMpsData()
     setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].tsRx = 0;
-    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x\n",
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%08x\n",
         i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
         bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag);
+        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
   }
 
   // initialize the read iterator for MPS flags
@@ -396,7 +396,7 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
 void clearError(size_t len, mpsMsg_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
-    driveEffLogOut(buf + i);
+    driveEffLogOut(buf + i, i);
   }
 }
 
@@ -414,17 +414,17 @@ void setOpMode(uint64_t mode) {
 }
 
 /**
- * \brief handle pending ECA event
+ * \brief Handle pending ECA event
  *
  * On FBAS_GEN_EVT event the buffer for MPS flag is updated and \head returns
  * pointer to it. Otherwise, \head is returned with null value.
  *
  * On FBAS_WR_EVT or FBAS_WR_FLG event the effective logic output is driven.
  *
- * \param usTimeout maximum interval in microseconds to poll ECA
- * \param mpsTask   pointer to MPS-relevant task flag
- * \param itr       pointer to the read iterator for MPS flags
- * \param head      pointer to pointer of the MPS message buffer
+ * \param usTimeout Maximum interval in microseconds to poll ECA
+ * \param mpsTask   Pointer to MPS-relevant task flag
+ * \param itr       Pointer to the read iterator for MPS flags
+ * \param head      Pointer to pointer to the head of the MPS message buffer
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
@@ -442,6 +442,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
   uint64_t now;           // actual timestamp of the system time
   int64_t  poll;          // elapsed time to poll a pending ECA event
   uint32_t actions;
+  int      offset;        // offset to the MPS message buffer location, where received MPS message will be stored
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
     &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
@@ -541,9 +542,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
 
           // store and handle received MPS flag
-          *head = storeMpsMsg(ecaParam, ecaDeadline, itr);
-          if (*head) {
-            driveEffLogOut(*head);
+          if (storeMpsMsg(ecaParam, ecaDeadline, itr, &offset) == COMMON_STATUS_OK) {
+            // drive the assigned output port
+            driveEffLogOut((mpsMsg_t*)(*head + offset), offset);
 
             // measure one-way delay
             measureOwDelay(now, ecaDeadline, 0);
@@ -863,7 +864,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         for (int i = 0; i < N_MPS_CHANNELS; i++) {
           buf = evalMpsMsgTtl(now, i);
           if (buf) {
-            driveEffLogOut(buf);
+            driveEffLogOut(buf, i);
             measureTtlInterval(buf);
           }
         }
