@@ -383,6 +383,11 @@ static status_t loadSenderId(uint32_t* base, uint32_t offset)
   if (ioSetOutEnable(pos, true) == COMMON_STATUS_OK)  // enable output
     ioMapOutput(pos, pos);  // direct mapping (MPS buffer[pos] -> out_port[pos])
 
+  // app-specific IO setup (RX: enable IO output for signaling latency)
+  // set up the direct mapping between the MPS message buffer and output ports
+  setIoOe(out_port.type, pos, true);        // enable output
+  setupEffLogOut(pos, out_port.type, pos);  // mapping (MSP buffer[pos] -> out_port[pos])
+
   return COMMON_STATUS_OK;
 }
 
