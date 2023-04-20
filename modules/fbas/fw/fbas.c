@@ -774,6 +774,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         printMeasureTtl(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
 
+      case FBAS_CMD_PRINT_MPS_BUF:
+        diagPrintMpsMsgBuf();
+        diagPrintMapIoMsgIdx();
+        break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
         break;

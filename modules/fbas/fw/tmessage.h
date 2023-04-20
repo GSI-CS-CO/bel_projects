@@ -85,4 +85,6 @@ bool isSenderKnown(uint64_t raw);
 int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
 
+void diagPrintMpsMsgBuf(void);
+
 #endif

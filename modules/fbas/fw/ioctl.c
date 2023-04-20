@@ -214,6 +214,22 @@ status_t getEffLogOut(uint8_t buf_idx, io_port_t* port)
   return COMMON_STATUS_ERROR;
 }
 
+/**
+ * \brief Print the mapping between output and MPS message buffer
+ *
+ **/
+void diagPrintMapIoMsgIdx(void)
+{
+  DBPRINT2("EffLogOut\n");
+  DBPRINT2("buf_idx: IO port (type - idx)\n");
+
+  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+    DBPRINT2("%x: %x - %x\n",
+        i,
+        EffLogOut[i].type,
+        EffLogOut[i].idx);
+}
+
 void qualifyInput(size_t len, mpsMsg_t* buf) {
 }
 
