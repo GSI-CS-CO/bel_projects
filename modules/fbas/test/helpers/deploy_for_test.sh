@@ -21,6 +21,6 @@ rsync $rsync_opts $x86_tools_dir/*.sh tsl101:./fbas_test/tools/
 
 # test targets
 for scu in $tgt_scus; do
-  sshpass $ssh_pass_opts scp $scp_opts $build_dir/fbas??.scucontrol.bin root@$scu.acc.gsi.de:.
+  sshpass $ssh_pass_opts scp $scp_opts $build_dir/fbas*.scucontrol.bin root@$scu.acc.gsi.de:.
   sshpass $ssh_pass_opts scp $scp_opts $scu_tools_dir/setup_local.sh root@$scu.acc.gsi.de:/usr/bin/
 done
