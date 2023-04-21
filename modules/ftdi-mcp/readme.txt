@@ -76,7 +76,9 @@ It should be possible to use the device
 - './ftdimcp-ctl 0 -l 20' sets comparator level to 20%
 
 
-
+Some Downloads
+==============
+see here: https://git.gsi.de/aco-tos/downloads/-/tree/main/ftdi
 
 
 
