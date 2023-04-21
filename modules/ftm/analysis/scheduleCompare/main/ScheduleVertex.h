@@ -6,6 +6,13 @@
 class ScheduleVertex {
  public:
   std::string name = std::string("");
+  std::string label = std::string("");
+  std::string pos = std::string("");
+  std::string _draw_ = std::string("");
+  std::string _ldraw_ = std::string("");
+  std::string _hdraw_ = std::string("");
+  std::string height = std::string("");
+  std::string width = std::string("");
   std::string type = std::string("");
   std::string tperiod = std::string("");
   std::string qlo = std::string("");
@@ -42,6 +49,8 @@ class ScheduleVertex {
   std::string bpentry = std::string("");
   std::string bpexit = std::string("");
   std::string permanent = std::string("");
+  std::string thread = std::string("");
+  std::string startoffs = std::string("");
   // for syntax check of dot files:
   std::string cpu = std::string("");
   std::string qty = std::string("");
@@ -57,7 +66,9 @@ class ScheduleVertex {
   std::string protocol = std::string("");
 
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
-
+  std::string printProtocol();
+  void switchCompareNames(const bool flag);
+  operator std::string();
   inline bool operator==(const ScheduleVertex& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleVertex& rhs) { return compare(*this, rhs) != 0; }
   inline bool operator<(const ScheduleVertex& rhs) { return compare(*this, rhs) < 0; }
@@ -67,6 +78,7 @@ class ScheduleVertex {
 
  private:
   enum class valueType { STRING, BOOLEAN, HEX };
+  bool compareNames = true;
   int compareBlock(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlow(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2);
@@ -75,6 +87,8 @@ class ScheduleVertex {
   int compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareQinfo(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareSwitch(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareOrigin(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareStartthread(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareWait(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareBoolean(const std::string& bool1, const std::string& bool2);
@@ -82,4 +96,7 @@ class ScheduleVertex {
   bool startsWith(std::string value, std::string start, bool caseSensitive);
   int compareValues(const std::string& value1, const std::string& value2, const std::string& key, valueType type);
 };
+
+std::ostream& operator<<(std::ostream& os, const ScheduleVertex& vertex);
+
 #endif

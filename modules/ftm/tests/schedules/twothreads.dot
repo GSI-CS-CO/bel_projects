@@ -1,0 +1,16 @@
+digraph twoThreads {
+
+node [cpu=0 fid=1 toffs=0 pattern=A type=tmsg]
+  Block1 [type=block, tperiod=10000000 qlo=1 thread=3]
+  Block2 [type=block, tperiod=10000000 patexit=1 qlo=1 thread=3]
+  Tmsg1 [par=1 thread=1 patentry=1]
+  Tmsg2 [par=2 thread=2]
+  Tmsg1 -> Block1 -> Tmsg2 -> Block2 [type=defdst]
+  Block1 -> Tmsg1 [type=altdst]
+
+  Start [type=startthread thread=1 pattern=B patentry=0 patexit=1 startoffs=50000000]
+  Start -> Tmsg1 [type=defdst]
+  Origin [type=origin thread=1 pattern=B patentry=1]
+  Origin -> Start [type=defdst]
+  Origin -> Start [type=origindst]
+}

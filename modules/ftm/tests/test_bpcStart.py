@@ -8,7 +8,7 @@ Start a pattern and check with saft-ctl snoop that BPC start flag works.
 class BpcStart(dm_testbench.DmTestbench):
 
   def test_bpcstart(self):
-    self.startPattern(self.datamaster, 'bpcStart.dot')
+    self.startPattern('bpcStart.dot')
     file_name = 'snoop_protocol.csv'
     self.snoopToCsv(file_name, 2)
     # Read this file snoop_protocol.csv as csv

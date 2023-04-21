@@ -1,28 +1,27 @@
 import dm_testbench
-import os
 
-"""
-Class collects unit tests for the command line of dm-cmd.
+"""Class collects unit tests for the command line of dm-cmd.
 First section: all commands which need a target name. Test case names: test_<command>_missing, test_<command>.
 
-Prerequisite: datamaster must have a node with name B_PPS. Therefore, pps.dot is started.
+Prerequisite: datamaster must have a node with name B_PPS. Therefore, dm_cmd.dot is started.
 """
 class TestDmCmd(dm_testbench.DmTestbench):
   @classmethod
   def setUpClass(cls):
     super().setUpClass()
-    TestDmCmd.ppsPatternStarted = False
+    TestDmCmd.dmCmdPatternStarted = False
+
 
   def setUp(self):
-    """Set up for all test cases in this class: start pps pattern.
+    """Set up for all test cases in this class: start dm_cmd pattern.
     """
-    if not TestDmCmd.ppsPatternStarted:
-      self.startPattern(self.datamaster, 'pps.dot')
-      TestDmCmd.ppsPatternStarted = True
+    if not TestDmCmd.dmCmdPatternStarted:
+      self.initDatamaster()
+      self.startPattern('dm_cmd.dot')
+      TestDmCmd.dmCmdPatternStarted = True
 
   def targetName_missing(self, command):
-    """
-    Common method for test cases with missing target name.
+    """Common method for test cases with missing target name.
     Start dm-cmd with the command and check the output on stderr.
     """
     lines = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, command],
@@ -70,8 +69,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName_missing('unlock')
 
   def targetName(self, command, expectedReturnCode=[0], count_out=0, count_err=0, options=''):
-    """
-    Common method for commands with target name.
+    """Common method for commands with target name.
     Start dm-cmd with the command and check the output on stdout and stderr.
     The checks check only the number of lines of the output, not the content.
     """
@@ -97,7 +95,7 @@ class TestDmCmd(dm_testbench.DmTestbench):
     self.targetName('noop')
 
   def test_queue(self):
-    self.targetName('queue', count_out=9)
+    self.targetName('queue', count_out=10)
 
   def test_rawqueue(self):
     self.targetName('rawqueue', count_out=30)
@@ -113,3 +111,80 @@ class TestDmCmd(dm_testbench.DmTestbench):
 
   def test_unlock(self):
     self.targetName('unlock')
+
+"""Class collects unit tests for the command line of dm-cmd.
+Tested commands are:
+dm-cmd reset
+dm-cmd reset all
+"""
+class TestDmCmdOther(dm_testbench.DmTestbench):
+  def test_reset(self):
+    """Test 'reset' command
+    """
+    self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'reset'],
+         [0], linesCout=1, linesCerr=0)
+
+  def test_reset_all(self):
+    """Test 'reset all' command
+    """
+    self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'reset', 'all'],
+         [0], linesCout=1, linesCerr=0)
+
+"""Class collects unit tests for the dm-cmd stop command.
+
+Prerequisite: datamaster must have a node with name B_PPS. Therefore, dm_cmd.dot is started.
+"""
+class TestDmCmdStop(dm_testbench.DmTestbench):
+  @classmethod
+  def setUpClass(cls):
+    super().setUpClass()
+    TestDmCmdStop.dmCmdPatternStarted = False
+
+
+  def setUp(self):
+    """Set up for all test cases in this class: start dm_cmd pattern.
+    """
+    if not TestDmCmdStop.dmCmdPatternStarted:
+      self.initDatamaster()
+      self.startPattern('dm_cmd_stop.dot')
+      TestDmCmdStop.dmCmdPatternStarted = True
+
+  def test_dm_cmd_stop_node(self):
+    """Start dm-cmd with the stop command and a block which has no queue.
+    Test for the correct error message.
+    """
+    linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'B_PPS1'],
+         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
+    self.assertTrue("Target node 'B_PPS1' was not found on DM" in linesErr[0])
+
+  def test_dm_cmd_stop_block(self):
+    """Start dm-cmd with the stop command and a block with a low prio queue.
+    Test is ok (stops the pattern).
+    """
+    self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'B_PPS'],
+         expectedReturnCode=[0], linesCout=0, linesCerr=0)
+
+  def test_dm_cmd_stop_block_fail(self):
+    """Start dm-cmd with the stop command and a block which has no queue.
+    Test for the correct error message.
+    """
+    linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'B_PPSx'],
+         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
+    self.assertTrue("Block node 'B_PPSx' does not have a low prio queue" in linesErr[0])
+
+  def test_dm_cmd_stop(self):
+    """Start dm-cmd with the stop command, but no target name.
+    Test for the correct error message.
+    """
+    linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop'],
+         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
+    self.assertTrue("Target name is missing" in linesErr[0])
+
+  def test_dm_cmd_stop_event(self):
+    """Start dm-cmd with the stop command and an event.
+    Test for the correct error message.
+    """
+    linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'EVT_PPS1'],
+         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
+    self.assertTrue("Node 'EVT_PPS1' is not a block" in linesErr[0])
+

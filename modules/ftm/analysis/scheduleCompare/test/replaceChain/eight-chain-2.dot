@@ -1,0 +1,24 @@
+digraph G {
+graph [
+name="eight-compact"
+]
+a;
+"b
+c
+d";
+"b1
+c1
+d1";
+a->"b
+c
+d" ;
+"b
+c
+d"->a ;
+a->"b1
+c1
+d1" ;
+"b1
+c1
+d1"->a ;
+}

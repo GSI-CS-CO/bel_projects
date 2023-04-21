@@ -1,0 +1,8 @@
+digraph G {
+graph [
+name="chain3-compact"
+]
+"node1
+node2
+node3";
+}

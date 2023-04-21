@@ -139,6 +139,10 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,     g));
     dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,         g));
     dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,         g));
+
+    //StartThread
+    dp.property(dnp::StartThread::sStartOffs,   boost::get(&myVertex::startOffs,   g));
+
     //Command
     dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,      g));
     dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,        g));
@@ -152,6 +156,8 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,     g));
     dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat,  g));
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,   g));
+    dp.property(dnp::Cmd::sDstThr,              boost::get(&myVertex::cmdDestThr,   g));
+    
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,      g));
 
     return (const boost::dynamic_properties)dp;
@@ -185,12 +191,25 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
 
   void CarpeDM::CarpeDMimpl::showMemSpace() {
-    sLog << "Space" << std::setw(11) << "Free" << std::endl;
+    sLog << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free";
+    if (verbose) {
+      sLog << std::setw(11) << "cTotal" << std::setw(11) << "cFree"  << std::setw(11) << "cUsed";
+      sLog << std::setw(11) << "bmpTotal" << std::setw(11) << "bmpFree"  << std::setw(11) << "bmpUsed";
+      sLog << std::setw(11) << "bmpBytes";
+    }
+    sLog << std::endl;
     for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
-      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
+      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x)    << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
+      if (verbose) {
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
+        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
+      }  
       sLog << std::endl;
     }
   }
+
+
 
 
 
@@ -428,7 +447,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   int CarpeDM::CarpeDMimpl::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; startThr(ew, cpuIdx, thrIdx );           return send(ew);}
   int CarpeDM::CarpeDMimpl::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; startPattern(ew, sPattern, thrIdx);      return send(ew);}
   int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; startNodeOrigin(ew, sNode, thrIdx );     return send(ew);}
-  int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
+  //int CarpeDM::CarpeDMimpl::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
   int CarpeDM::CarpeDMimpl::stopPattern(const std::string& sPattern)                              { vEbwrs ew; stopPattern(ew, sPattern  );             return send(ew);}
   int CarpeDM::CarpeDMimpl::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; stopNodeOrigin(ew, sNode);               return send(ew);}
   int CarpeDM::CarpeDMimpl::abortPattern(const std::string& sPattern)                             { vEbwrs ew; abortPattern(ew, sPattern);              return send(ew);}

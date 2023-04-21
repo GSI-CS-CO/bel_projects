@@ -1,0 +1,16 @@
+digraph G {
+graph [
+_draw_=""
+bb=""
+name="parallel1x2-compact"
+xdotversion=""
+]
+0 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label=node1, ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+1 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label=node5, ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+2 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label="node2
+node3
+node4", ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+0->1  [_draw_="", _hdraw_="", color="", pos="", type=""];
+0->2  [_draw_="", _hdraw_="", color="", pos="", type=""];
+2->1  [_draw_="", _hdraw_="", color="", pos="", type=""];
+}

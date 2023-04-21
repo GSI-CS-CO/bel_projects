@@ -29,7 +29,7 @@ def extractScript(commands_history_file, dtBegin, dtEnd, verbose):
     print(f'First timestamp: {dtBegin}, last timestamp: {dtEnd}')
     pattern = re.compile('# log entry ([0-9]+) ------------')
     # Match something like '# Fri_Feb__5_13.36.22_2021'
-    timestampPattern = re.compile('# ([FMSTW][a-z]{2}_[A-Z][a-z]{2}_+[0-9]{1,2}_[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}_[0-9]{4})')
+    timestampPattern = re.compile('# ([FMSTW][a-z]{2}_[A-Z][a-z]{2}_+[0-9]{1,2}_[0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2}_[0-9]{4})')
     entry_no = -1
     dot_file_name = ''
     collect_lines = False

@@ -25,7 +25,7 @@ std::list<std::string> edgeTypes = {
     det::sSwitchTarget,  // Links to Switch's Target
     det::sCmdTarget,    det::sCmdFlowDst,
     det::sSwitchDst,  // Links to Switch's Target Block
-    det::sCmdFlushOvr,  det::sMeta,           det::sAltDst,         det::sDefDst,         det::sBadDefDst,
+    det::sCmdFlushOvr,  det::sMeta,           det::sAltDst,         det::sDefDst,         det::sBadDefDst, det::sOriginDst,
 };
 
 int main(int, char *[]) {
@@ -49,7 +49,7 @@ int main(int, char *[]) {
         try {
           BOOST_FOREACH (vertex_t v, vertices(g)) { Validation::neighbourhoodCheck(v, g); }
           status.increment("Test ok");
-        } catch (std::runtime_error e) {
+        } catch (std::runtime_error &e) {
           if (getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) != SingleEdgeTest::TEST_EXCEPTION) {
             std::cout << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
                       << status.get("Known exceptions") << ": " << std::setw(10) << nodeT1 << ", " << std::setw(10) << nodeT2 << ", " << std::setw(10) << edgeT << ", ("
@@ -100,7 +100,7 @@ int main(int, char *[]) {
         status.increment("All cases");
         try {
           singleEdgeGraph.writeDotFile(nodeT1 + "-" + nodeT2 + "-" + edgeT);
-        } catch (std::runtime_error e) {
+        } catch (std::runtime_error &e) {
           std::cout << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
                     << status.get("Known exceptions") << ": " << std::setw(10) << nodeT1 << ", " << std::setw(10) << nodeT2 << ", " << std::setw(10) << edgeT << ", ("
                     << std::setw(2) << counterV1 << "," << std::setw(2) << counterV2 << "," << std::setw(2) << counterE << ") "

@@ -102,25 +102,26 @@ namespace dnt = DotStr::Node::TypeVal;
     vBuf tmpMgmtRecovery = decompress(aux);
 
     if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+    if (tmpMgmtRecovery.size()) {
+      // Rebuild Grouptable
 
-    // Rebuild Grouptable
-
-
-    GroupTable gtTmp;
-    std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
-    if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
-    gt = gtTmp;
-    // Rebuild HashMap from Grouptable
-    hm.clear();
-    for(auto& it : gt.getTable()) {
-      hm.add(it.node);
+      GroupTable gtTmp;
+      std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
+      if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
+      gt = gtTmp;
+      // Rebuild HashMap from Grouptable
+      hm.clear();
+      for(auto& it : gt.getTable()) {
+        hm.add(it.node);
+      }
+      // Rebuild Covenanttable
+      CovenantTable ctTmp;
+      std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
+      if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
+      ct = ctTmp;
+    } else {
+      if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
-    // Rebuild Covenanttable
-    CovenantTable ctTmp;
-    std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
-    if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
-    ct = ctTmp;
-
     // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
     atDown.deallocateAllMgmt();
     // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
@@ -139,6 +140,7 @@ namespace dnt = DotStr::Node::TypeVal;
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
     if(verbose) sLog << "Analysing downloaded graph binary " << std::dec << downloadData.size() << " bytes" << std::endl;
     uint32_t nodeCnt = 0;
+    
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through Bmp
@@ -154,9 +156,10 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
 
 
-          //FIXME Can't management and data be handled in parallel?... unsure
+          //TODO Can't management and data be handled in parallel?... unsure
           // IMPORTANT: skip all mgmt nodes
           if (type == NODE_TYPE_MGMT) {continue; }
+
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
@@ -172,9 +175,13 @@ namespace dnt = DotStr::Node::TypeVal;
           std::string tmp(stream.str());
 
           //Add Vertex
+          
+          
 
-          vertex_t v        = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
+          vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
           //FIXME workaround for groupstable updates from download. not  nice ...
+          //sErr << std::endl << "DEBUG_After_Suspicious_Code" << std::endl;  
+          //BOOST_FOREACH( vertex_t v, vertices(g) ) { if(g[v].np != nullptr) g[v].np->show(); }
 
           g[v].bpEntry  = std::to_string((bool)(flags & NFLG_BP_ENTRY_LM32_SMSK));
           g[v].bpExit   = std::to_string((bool)(flags & NFLG_BP_EXIT_LM32_SMSK));
@@ -185,6 +192,7 @@ namespace dnt = DotStr::Node::TypeVal;
           //Add allocTable Entry
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
           //vHexDump("TEST ****", test);
+
 
           if (!(at.insert(cpu, adr, hash, v, false))) {
             sLog << "Offending Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
@@ -199,11 +207,15 @@ namespace dnt = DotStr::Node::TypeVal;
 
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
 
+      
+
           switch(type) {
             case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_ORIGIN       : g[v].np = (node_ptr) new     Origin(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sOrigin;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_STARTTHREAD  : g[v].np = (node_ptr) new StartThread(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sStartThread; g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;
@@ -214,17 +226,20 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
+          
 
+          
         }
-      }
+        }
     }
+    
+    
 
 
     if(verbose) sLog << "Node creation done. Creating Edges" << std::endl;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
-
     //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
@@ -232,7 +247,11 @@ namespace dnt = DotStr::Node::TypeVal;
 
       } else {
 
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
+        if  (!(g[it.v].np->isMeta())) {
+          //g[it.v].np->show();
+          //hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
+          g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
+        }  
       }
     }
     //second, iterate all meta-types
@@ -245,6 +264,8 @@ namespace dnt = DotStr::Node::TypeVal;
     }
 
     if(verbose) sLog << "Done. Graph generation complete" << std::endl;
+
+
   }
 
     //TODO assign to CPUs/threads

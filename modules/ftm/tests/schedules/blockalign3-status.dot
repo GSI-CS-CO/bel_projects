@@ -1,0 +1,13 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BlockA1[cpu="0", flags="0x0000a107", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA2[cpu="0", flags="0x0000a107", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockA3[cpu="0", flags="0x0000a107", type="block", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB2[cpu="0", flags="0x0000a108", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB3[cpu="0", flags="0x0000a108", type="blockalign", tperiod="1000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BlockAlignB3->BlockA1 [type="defdst", color = "red"];
+BlockA2->BlockAlignB2 [type="defdst", color = "red"];
+BlockA3->BlockAlignB3 [type="defdst", color = "red"];
+BlockAlignB2->BlockA3 [type="defdst", color = "red"];
+}

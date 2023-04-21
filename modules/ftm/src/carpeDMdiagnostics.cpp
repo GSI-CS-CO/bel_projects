@@ -178,7 +178,7 @@ namespace coverage {
         if (!(verbose | qe.pending)) { report += "-\n"; continue;}
 
         std::stringstream auxstream;
-        auxstream << std::setfill('0') << std::setw(16) << std::hex << qe.validTime;
+        auxstream << std::setfill('0') << std::setw(16) << std::hex << qe.validTime << " " << std::setfill('0') << std::setw(19) << std::dec << qe.validTime;
 
         report += "Valid Time: 0x" + auxstream.str() + "    CmdType: ";
         //type specific

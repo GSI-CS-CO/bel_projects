@@ -41,9 +41,9 @@ if { [catch {close $revl}] } {
 set source_info "$branch-$count"
 
 if {$tcl_platform(os) == "Linux"} {
-  set lsb [open "| lsb_release -d" "r"]
+  set lsb [open "| uname -o -r -m" "r"]
   gets $lsb desc
-  set build_os "[lindex [split $desc "\t"] 1], kernel $tcl_platform(osVersion)"
+  set build_os "$desc"
   close $lsb
 } else {
   set build_os "$tcl_platform(os) $tcl_platform(osVersion)"
@@ -97,7 +97,7 @@ foreach row $output { puts $outputFile "-- $row" }
 puts $outputFile ""
 puts $outputFile "DEPTH = 256;"
 puts $outputFile "WIDTH = 32;"
-puts $outputFile "ADDRESS_RADIX = HEX;"  
+puts $outputFile "ADDRESS_RADIX = HEX;"
 puts $outputFile "DATA_RADIX = HEX;"
 puts $outputFile ""
 puts $outputFile "CONTENT"
