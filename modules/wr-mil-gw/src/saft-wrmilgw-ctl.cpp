@@ -1,3 +1,23 @@
+/** Copyright (C) 2018,2023 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *  @author Michael Reese <m.reese@gsi.de>
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 // Synopsis 
 // ==================================================================================================== 
 // WhiteRabbit to MIL gateway control application 
@@ -18,17 +38,18 @@
 #include <algorithm>
 
 #include "SAFTd.h"
-#include "EmbeddedCPUActionSink.h"
-#include "EmbeddedCPUCondition.h"
-#include "SoftwareActionSink.h"
-#include "SoftwareCondition.h"
-#include "WbmActionSink.h"
-#include "WbmCondition.h"
-#include "TimingReceiver.h"
-#include "WrMilGateway.h"
-#include "wr_mil_gw_regs.h"
-#include "Output.h"
-#include "OutputCondition.h"
+#include "EmbeddedCPUActionSink_Proxy.hpp"
+#include "EmbeddedCPUCondition_Proxy.hpp"
+#include "SoftwareActionSink_Proxy.hpp"
+#include "SoftwareCondition_Proxy.hpp"
+#include "WbmActionSink_Proxy.hpp"
+#include "WbmCondition_Proxy.hpp"
+#include "TimingReceiver_Proxy.hpp"
+#include "WrMilGateway_Proxy.hpp"
+#include "../wr_mil_gw.h"
+#include "Output_Proxy.hpp"
+#include "OutputCondition_Proxy.hpp"
+
 
 #ifdef USEMASP
   #include "MASP/Emitter/StatusEmitter.h"
@@ -1035,7 +1056,7 @@ int main (int argc, char** argv)
 #endif  // USEMASP
 
       // connect some callbacks
-      receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
+      receiver->Locked.connect(sigc::ptr_fun(&on_locked));
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
       wrmilgw->SigFirmwareState.connect(sigc::ptr_fun(&on_firmware_state));
       wrmilgw->SigEventSource.connect(sigc::ptr_fun(&on_event_source));
