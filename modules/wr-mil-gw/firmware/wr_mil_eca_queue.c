@@ -1,8 +1,8 @@
 #include "wr_mil_eca_queue.h"
 
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
-#include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
+#include "../../../ip_cores/saftlib/src/eca_flags.h"
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
 #include "mini_sdb.h"
 
 #include "../wr_mil_gw.h"
