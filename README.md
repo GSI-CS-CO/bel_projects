@@ -192,9 +192,11 @@ Answer: You need to have installed the following packages before you can configu
 - libreadline-dev
 - libsigc++ (saftlib)
 - libboost-dev (saftlib)
-- pkgconfig (saftlib)
+- pkgconfig (saftlib) †
 - xsltproc (saftlib)
 - libz-dev (saftlib)
+
+† Ubuntu 22.04 and later: pkg-config
 
 ### Library libmpfr
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
