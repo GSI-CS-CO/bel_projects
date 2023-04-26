@@ -114,14 +114,11 @@ saftlib::
 	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	$(MAKE) -C ip_cores/saftlib
 
-saftlib-clean:: 
+saftlib-clean::
 	$(MAKE) -C ip_cores/saftlib clean
 
 saftlib-install::
 	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
-
-saftlib-clean::
-	$(MAKE) -C ip_cores/saftlib clean
 	$(call ldconfig_note)
 
 tools::		etherbone
