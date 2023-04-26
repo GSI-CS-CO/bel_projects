@@ -33,6 +33,7 @@ GSI Timing Gateware and Tools
     - [CC not found](#cc-not-found)
     - [Rocky-9](#rocky-9)
     - [Yocto](#yocto)
+    - [Package Requirements Etherbone](package-requirements-etherbone)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -296,6 +297,16 @@ Check the Rocky-9 subsection, if you get lsb_release related errors.
 
 #### Etherbone Tools
 See [tools/yocto-build.sh](tools/yocto-build.sh)
+
+### Package Requirements Etherbone
+
+Error: configure: error: Package requirements (etherbone >= 2.1.0) were not met:
+
+Solution:
+
+```
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
 
 ## Git
 ### CAfile
