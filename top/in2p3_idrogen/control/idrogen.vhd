@@ -78,7 +78,7 @@ architecture rtl of idrogen is
     ("LED_USR_2  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL)
   );
 
-  constant c_family       : string := "Arria 10 GX SCU4";
+  constant c_family       : string := "Arria 10 GX IDROGEN";
   constant c_project      : string := "idrogen";
   constant c_cores        : natural:= 1;
   constant c_initf_name   : string := c_project & "_stub.mif";
