@@ -45,6 +45,7 @@ CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
 CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
+CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/control
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -63,6 +64,7 @@ PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_FTM               = syn/gsi_pexarria5/ftm
 PATH_PEXARRIA10        = syn/gsi_pexarria10/control
 PATH_FTM10             = syn/gsi_pexarria10/ftm10
+PATH_IDROGEN           = syn/in2p3_idrogen/control
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -119,7 +121,7 @@ saftlib::
 	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	$(MAKE) -C ip_cores/saftlib
 
-saftlib-clean:: 
+saftlib-clean::
 	$(MAKE) -C ip_cores/saftlib clean
 
 saftlib-install::
@@ -386,18 +388,6 @@ ftm4dp-check:
 ftm4dp-clean::
 	$(MAKE) -C $(PATH_FTM4DP) clean
 
-a10gx_pcie::	firmware
-	$(MAKE) -C $(PATH_A10GX) all
-
-a10gx_pcie-clean::
-	$(MAKE) -C $(PATH_A10GX) clean
-
-a10gx_pcie-sort:
-	$(call sort_file, $(CHECK_A10GX))
-
-a10gx_pcie-check:
-	$(call check_timing, $(CHECK_A10GX))
-
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
 
@@ -421,6 +411,30 @@ ftm10-sort:
 
 ftm10-check:
 	$(call check_timing, $(CHECK_FTM10))
+
+a10gx_pcie::	firmware
+	$(MAKE) -C $(PATH_A10GX) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C $(PATH_A10GX) clean
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
+
+idrogen::	firmware
+	$(MAKE) -C $(PATH_IDROGEN) all
+
+idrogen-clean::
+	$(MAKE) -C $(PATH_IDROGEN) clean
+
+idrogen-sort:
+	$(call sort_file, $(CHECK_IDROGEN))
+
+idrogen-check:
+	$(call check_timing, $(CHECK_IDROGEN))
 
 # #################################################################################################
 # SCU slaves
