@@ -1,7 +1,7 @@
 #!/bin/sh
 # startup script for B2B
 #
-set -x
+#set -x
 
 ###########################################
 # setting for production

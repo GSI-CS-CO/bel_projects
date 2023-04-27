@@ -1,0 +1,11 @@
+[Unit]
+Description = White Rabbit network info diagnostic logging
+Requires = dev-wbm0.device
+After = dev-wbm0.device
+
+[Service]
+Type = simple
+ExecStart = /bin/sh -c 'eb-mon dev/wbm0 -s 10 0 | logshipper.sh eb-mon'
+
+[Install]
+WantedBy = multi-user.target

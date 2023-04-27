@@ -1,0 +1,14 @@
+[Unit]
+Description = frequency measurement for INT SIS18
+Requires = saftd.service
+After = saftd.service
+
+[Service]
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=1
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = freq-measure esr int
+
+[Install]
+WantedBy = multi-user.target

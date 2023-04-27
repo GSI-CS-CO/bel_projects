@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2022
+ *  version : 21-Feb-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000421
+#define B2BLIB_VERSION 0x000426
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -92,24 +92,29 @@ extern "C" {
   typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
+    int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
+    int32_t  ext_phaseErr_ps;                          // extraction: uncertainty of phase [ps]
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
+    int32_t  inj_phaseFract_ps;
+    int32_t  inj_phaseErr_ps;  
     int32_t  inj_dKickMon;                             
     int32_t  inj_dKickProb;
     float    inj_diagPhase;
     float    inj_diagMatch;
-    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
+    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    int32_t  doneOff;                                  // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
     int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
     int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
     int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
-    int32_t  ktiOff;                                   // offset from CBS to KTI deadline
+    int32_t  ktiOff;                                   // offset from CBS to KTI deadline [ns]
   } getval_t;
 
   // data type for diagnostic values
@@ -158,12 +163,18 @@ extern "C" {
 
   // data type for status information
   typedef struct {                                     
-    double   cbs_doneOffAct;                           // offset from CBS deadline to time when we are done
-    uint32_t cbs_doneOffN;
-    double   cbs_doneOffAve;
-    double   cbs_doneOffSdev;
-    double   cbs_doneOffMin;
-    double   cbs_doneOffMax;
+    double   cbs_finOffAct;                            // offset from CBS deadline to time when we are done
+    uint32_t cbs_finOffN;
+    double   cbs_finOffAve;
+    double   cbs_finOffSdev;
+    double   cbs_finOffMin;
+    double   cbs_finOffMax;
+    double   cbs_prrOffAct;                            // offset from CBS deadline to time when we received the PRE message
+    uint32_t cbs_prrOffN;
+    double   cbs_prrOffAve;
+    double   cbs_prrOffSdev;
+    double   cbs_prrOffMin;
+    double   cbs_prrOffMax;
     double   cbs_preOffAct;                            // offset from CBS to measured extraction phase
     uint32_t cbs_preOffN;
     double   cbs_preOffAve;

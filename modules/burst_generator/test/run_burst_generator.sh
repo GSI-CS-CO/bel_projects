@@ -79,7 +79,8 @@ bg_usage() {
 bg_select_clock_master() {
     # non-interactive way to run a given TR as a clock master
 
-    if [ ! -f $bg_clock_master ]; then
+    result=$(ls /$bg_clock_master)
+    if [ "$result" != "/$bg_clock_master" ]; then
         echo "$bg_clock_master is not found. Exit!"
         exit 1
     fi
@@ -276,7 +277,7 @@ bg_generate_infinite_burst() {
 
     # Words of the form $'string' are treated specially, backslash-escaped characters replaced as specified by the ANSI C standard.
     # Double-quoted string preceded by a dollar sign ($) will cause the string to be translated according to the current locale.
-    read -rep $'\npress any key to stop the burst > '
+    read -rep "press 'Enter' to stop the burst > "
 
     echo "stop infinite burst at pin $bg_out_io"
     bg_inject_event $bg_evt_stop_infinite
@@ -333,7 +334,7 @@ bg_generate_all_bursts() {
     for tc in $test_cases; do
         ## prompt user to start next test
         echo -en "\nTest: $tc"
-        read -rep " (press any key to start) > "
+        read -rep " (press 'Enter' to start) > "
 
         ## run next test
         echo "starting '$tc'"
@@ -346,7 +347,7 @@ bg_generate_all_bursts() {
 while getopts 'd:csvhq' opt; do
     case $opt in
         d) bg_generator=$OPTARG ;;               # generate bursts with a given TR
-        c) bg_select_clock_master ;;             # select clock master
+        c) bg_select_clock_master; exit 0 ;;     # select clock master
         s) source "sourced ${BASH_SOURCE[0]}" ;; # just source this script
         q) cmd_output="/dev/null" ;;             # set the quiet mode
         h) bg_usage; exit 0 ;;

@@ -962,15 +962,15 @@ void execHostCmd(int32_t cmd)
 	  mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 	    (uint32_t)(pTask[id].trigger >> 32),  (uint32_t)pTask[id].trigger,
 	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle);
-	  mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
-	    (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
-	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
-	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
-	    (uint32_t)(pTask[id].action >> 32),   (uint32_t)pTask[id].action);
-          mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
-	    (uint32_t)(pTask[id].setup >> 32),    (uint32_t)pTask[id].setup,
-	    (uint32_t)(pTask[id].lasttick >> 32), (uint32_t)pTask[id].lasttick,
-	    (uint32_t)(pTask[id].failed >> 32),   (uint32_t)pTask[id].failed);
+          mprintf("cycle=0x%x:%x, period=0x%x:%x, setup=0x%x:%x\n",
+            (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
+            (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
+            (uint32_t)(pTask[id].setup >> 32),    (uint32_t)pTask[id].setup);
+          mprintf("lastik=0x%x:%x\naction=0x%x:%x\ndeadln=0x%x:%x\nfailed=0x%x:%x\n",
+            (uint32_t)(pTask[id].lasttick >> 32), (uint32_t)pTask[id].lasttick,
+            (uint32_t)(pTask[id].action>> 32),    (uint32_t)pTask[id].action,
+            (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
+            (uint32_t)(pTask[id].failed >> 32),   (uint32_t)pTask[id].failed);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i < N_BURSTS; ++i) {
@@ -979,14 +979,14 @@ void execHostCmd(int32_t cmd)
 	      mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 		(uint32_t)(pTask[i].trigger >> 32),  (uint32_t)pTask[i].trigger,
 		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle);
-	      mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
+	      mprintf("cycle=0x%x:%x, period=0x%x:%x, setup=0x%x:%x\n",
 		(uint32_t)(pTask[i].cycle >> 32),    (uint32_t)pTask[i].cycle,
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
-		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
-                (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action);
-              mprintf("setup=0x%x:%x, lasttick=0x%x:%x, failed=0x%x:%x\n",
-		(uint32_t)(pTask[i].setup >> 32),    (uint32_t)pTask[i].setup,
+		(uint32_t)(pTask[i].setup >> 32),    (uint32_t)pTask[i].setup);
+              mprintf("lastik=0x%x:%x\naction=0x%x:%x\ndeadln=0x%x:%x\nfailed=0x%x:%x\n",
 		(uint32_t)(pTask[i].lasttick >> 32), (uint32_t)pTask[i].lasttick,
+                (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action,
+		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
 		(uint32_t)(pTask[i].failed >> 32),   (uint32_t)pTask[i].failed);
 	    }
 	  }

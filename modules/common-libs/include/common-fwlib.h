@@ -23,10 +23,18 @@ uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
                            );
 
 // project time t1 [ps] to approximately t2 [ps] in multiples of period T [as]; returns projected time [ps]
-b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,            // time 1 [ps]
-                           b2bt_t    t2_ps,            // time 2 [ps], where t2 > t1
-                           uint64_t T_as               // period T [as]
+b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,           // time 1 [ps]
+                           b2bt_t    t2_ps,           // time 2 [ps], where t2 > t1
+                           uint64_t T_as              // period T [as]
                            );
+
+// convert [ns, float] to [ps], returns t [ps]
+b2bt_t fwlib_tfns2tps(float t_ns                      // time [ns]
+                      );
+
+// convert [ps] to [ns, float], returns t [ns, float]f
+float fwlib_tps2tfns(b2bt_t t_ps                      // time [ps]
+                     );
 
 // convert [ns] to [ps], returns t [ps]
 b2bt_t fwlib_tns2tps(uint64_t t_ns                    // time [ns]
@@ -45,7 +53,7 @@ uint32_t fwlib_wrCheckSyncState();
 //find WB address of WR Endpoint
 //uint32_t findWREp();
 
-// 1. query ECA for actions, 2. trigger activity, returns (error) status
+// 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
 uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
@@ -207,5 +215,13 @@ void fwlib_printOLED(char *chars                       // text to print
 
 // clear OLED
 void fwlib_clearOLED();
+
+// non-optimed routine for converting single precision to half precision float, IEEE 754
+uint16_t fwlib_float2half(float f                      // single precision number
+                          );
+
+// non-optimed routine for converting half precision to single precision float, IEEE 754
+float fwlib_half2float(uint16_t h                      // half precision number
+                       );
 
 #endif 
