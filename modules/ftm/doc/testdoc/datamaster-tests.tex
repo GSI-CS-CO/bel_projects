@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2021-07-22}
+\Large{Last change: 2022-07-20}
 \end{center}
 \vfill
 \end{titlepage}
@@ -46,86 +46,910 @@
 \tableofcontents
 
 \chapter{Overview - What is tested}
-All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
+The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be strated
+by name and also with a name pattern to select a group of tests. The tests use the datamaster tools \texttt{dm-cmd}
+and \texttt{dm-sched}.
+
+The tests use the instance of the current build folder of the datamaster tools and \texttt{libcarpedm}.
+
+All tests are on branch \texttt{dm-fallout-tests-2}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
-Each test has a seperate target in the \texttt{Makefile}.
 \begin{table}
-\caption{Which test tests what}
-%\begin{center}
+\caption{Which test tests what \\ x means: this test uses the component, T means: this test tests this component.
+For some tests the result is not checked.
+These are considered as OK if no exception occurs.}
 \centering
-\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|}
+\begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test               & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{common} & \ry{make} & \ry{checks result} \\ \hline
-addDownloadCompare &   T        &   T             &   T           &   x              &   x         &   -       &   -                \\ \hline
-bpcStart           &   -        &   T             &   x           &   x              &   x         &   -       &   x                \\ \hline
-dmCmd              &   T        &   x             &   x           &   x              &   -         &   -       &   x                \\ \hline
-dmPerformance      &   x        &   T             &   x           &   -              &   -         &   x       &   -                \\ \hline
-dmThreads          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
-fid7               &   -        &   x             &   T           &   x              &   x         &   -       &   x                \\ \hline
-full\_test         &   -        &   T             &   x           &   x              &   -         &   -       &   x                \\ \hline
-pps                &   -        &   T             &   x           &   x              &   -         &   -       &   -                \\ \hline
-safe2remove        &   x        &   T             &   T           &   -              &   -         &   x       &   x                \\ \hline
-singleEdgeTest     &   -        &   T             &   -           &   -              &   -         &   -       &   x                \\ \hline
-schedules          &   x        &   x             &   T           &   -              &   -         &   x       &   -                \\ \hline
+Test                          & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance                 &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
+test\_addDownloadCompare.py   &  5                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_altDestinations.py      &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_basic.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_booster\_startthread.py &  7                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py            &  9                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd.py              &  24                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_environment.py          &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_fid7.py                 &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_flow.py                 &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flowpattern.py          &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flush.py                &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_loop.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_memory.py               &  10                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_safe2remove.py          &  17                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_schedules.py            &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
+test\_start\_stop\_abort.py   &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 \end{tabular}
-%\end{center}
+
 \end{table}
 \chapter{The Tests}
-\section{addDownloadCompare}
-\texttt{addDownloadCompare} test that a schedule is equivalent to the schedule which is downloaded form the datamaster firmware.
-The test steps are: clear the datamaster, add a schedule, start all pattern, download the schedule, compare both schedules with \texttt{scheduleCompare}.
-There should be no difference with \texttt{scheduleCompare}. Each test case uses a different schedule.
-
-This test requires \texttt{scheduleCompare} to be installed. This tool checks that two dot-files represent the same schedule. For installation use branch
-origin/dm-analysis. The tool is build with make in folder modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo make install in the same folder.
-\section{bpcStart}
-\texttt{bpcStart} tests the implementation of the beam process chain start flag in libcarpedm.
-The test schedule sends two timing messages with \texttt{bpcstart=True} and \texttt{bpcstart=1}.
-With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
-In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
-\section{dmCmd}
-\texttt{dmCmd} contains Python test scripts which contain Python unit tests for the tool dm-cmd. Each unit test calls dm-cmd
-with commands and options and checks the result with the output on stdout and stderr. There are also negative tests with an invalid command
-line. These tests are successful when the response is the correct error message and not a core dump.
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
-The test starts a schedule on a clean data master, checks if some part of the schedule is removable, removes it and
-then adds another schedule. This is done for a small schedule and a larger schedule. The test is ok if all commands
-work. There is no check for this.
-\section{dmThreads}
-\texttt{dmThreads} tests the firmware with 4 threads. The same test for 6 threads fails due to a bug in the
-firmware. For each thread a pattern with one block and one timing message is loaded.
-\section{fid7}
-\texttt{fid7} tests the fix for the format id 7 bug.
-\include{full_test}
-\section{messageCounter} This test is obsolete.
-\texttt{messageCounter} is a basic test for the Python-Wrapper of libcarpedm.
-\section{pps}
-\texttt{pps} (pulse per second) is a basic test with a schedule which sends two timing messages every second.
-\section{safe2remove}
-\texttt{safe2remove} tests to remove a pattern from a running schedule. Test steps:
+The test starts a schedule on a clean datamaster, checks if some part of
+the schedule is removable, removes it and then adds another schedule.
+This is done for a small schedule and a larger schedule. The test is ok
+if all commands work. There is no check for this.
+
+\section{test\_addDownloadCompare.py}
+\texttt{test\_addDownloadCompare.py} test that a schedule is equivalent
+to the schedule which is downloaded form the datamaster firmware.
+The test steps are: clear the datamaster, add a schedule, start all
+pattern, download the schedule, compare both schedules with
+\texttt{scheduleCompare}. There should be no difference with
+\texttt{scheduleCompare}. Each test case uses a different schedule.
+
+This test requires \texttt{scheduleCompare} to be installed. This tool
+checks that two dot-files represent the same schedule. For installation
+use branch origin/dm-analysis. The tool is build with make in folder
+modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
+make install in the same folder.
+
+\section{test\_altDestinations.py}
+\texttt{test\_altDestinations} tests the limit of 9 edges of type
+\texttt{altdst} for a block node.
+The schedule \texttt{altdst-flow-9.dot} has one block, nine flow commands
+and nine messages. each flow command changes flow to another message.
+The test adds this schedule and starts the pattern in this schedule.
+The test checks that messages are produced.
+
+The schedule \texttt{altdst-flow-10.dot} is similar to the one obove,
+but with 10 flow nodes and 10 messages. Adding this schedule fails.
+The test checks for the correct error response.
+
+The schedule \texttt{altdst-9.dot} has one block and nine messages.
+The test switches through all messages and checks with snoop that the
+correct messages are send.
+
+The schedule \texttt{altdst-10.dot} has one block and 10 messages.
+This schedule cannot be added to the datamaster. The test checks for
+the correct error response.
+
+The schedule \texttt{test-altdst-missing-node.dot} has one block with 9
+altdst edges and one defdst edge. The test checks that a switch command
+via CMD-schedule works.
+
+\section{test\_async.py}
+This test was \texttt{full\_test/dynamic/async}.
 \begin{enumerate}
-\item Clear data master
+  \item Purpose of Test
+
+  For a schedule asynchronous clear a block, change the destination to
+  a timing message and check that all nodes are visited.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_async_test} for the test pattern.
+  \item Test Actions
+
+  Upload test schedule and start pattern $LOOP$. Check with \texttt{dm-cmd rawvisited}. The
+  nodes 'BLOCK\_B', 'BLOCK\_LOOP', 'CMD\_LOOP' are visited. Lock pattern 'B' (this locks 'BLOCK\_B'), check this with
+  \texttt{showlocks}. Clear pattern 'B' which clears the queues of 'BLOCK\_B', check this with \texttt{rawqueue}.
+  Change schedule with flow command. Destination of 'BLOCK\_B' is now 'MSG\_A' for one message. Check this
+  with \texttt{rawqueue}. Unlock pattern 'B', wait for $1.2$ seconds and then check with \texttt{rawvisited} that all
+  nodes are visited and no blocks are locked (with \texttt{showlocks}).
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_async.pdf}
+        \caption{Pattern for the dynamic async test}
+        \label{fig:Pattern_for_the_dynamic_async_test}
+    \end{figure}
+  \item Success Criteria
+
+  Check that node 'MSG\_A' is visited after changing the destination of the flow.
+\end{enumerate}
+\section{test\_basic.py}
+This test was \texttt{full\_test/static/basic}.
+\begin{enumerate}
+  \item Purpose of Test
+
+  This test uses \texttt{dm-sched add} and \texttt{dm-sched remove}. The pattern Figure~\ref{fig:Pattern_for_the_static_basic_test}
+  is loaded into datamaster and removed afterwards.
+
+  \item Test Actions
+
+  On a cleared datamaster the test pattern is added with \texttt{dm-sched add}. With \texttt{dm-sched status} it is checked
+  that 24 nodes with the expected names are available. The test pattern is removed with \texttt{dm-sched remove}. At the
+  end \texttt{dem-sched status} is used to check that no pattern is present on the datamaster.
+
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_basic.pdf}
+        \caption{Pattern for the static basic test}
+        \label{fig:Pattern_for_the_static_basic_test}
+    \end{figure}
+  \item Success Criteria
+
+  The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
+\end{enumerate}
+
+\section{test\_booster\_startthread.py}
+\texttt{test\_booster\_startthread.py} tests schedules with nodes of
+type \texttt{origin} and type \texttt{startthread}.
+\begin{enumerate}
+\item \texttt{test\_threeThreads0}
+Use schedule \texttt{booster\_startthread.dot} \\
+ (see~\ref{fig:Schedule_booster_startthread-0}),
+which has three pattern (MAIN, A, B). The schedule runs on CPU 1, thread 0.
+It starts threads 1, 2, and 3. Thread 1 and 2 trigger a message with parameter 2,
+while thread 3 triggers a message with paramter 3. The test result is
+checked with a snoop for 1 second. The correct timeline of the messages
+is not checked.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.9\textwidth,keepaspectratio]{TestPattern/booster_startthread-0-s.pdf}
+        \caption{Schedule for test of origin and startthread with three
+        threads, originated by three origin nodes}
+        \label{fig:Schedule_booster_startthread-0}
+    \end{figure}
+\item \texttt{test\_threeThreads1}
+Use schedule \texttt{booster\_startthread-1.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-1}) to test
+origin nodes. The test starts pattern BOOST\_REQ and snoops timing messages
+for two seconds. The result is checked for the event numbers
+0x0100 (more than 7), 0x0200 (at least one), 0x0102 (exactly one),
+0x0103 (exactly one), 0x0160 (at least one).
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
+        \caption{Schedule for test of origin with thread 1}
+        \label{fig:Schedule_booster_startthread-1}
+    \end{figure}
+\item \texttt{test\_threeThreads2}
+Use schedule \texttt{booster\_startthread-2.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-2}) to test
+origin nodes. The test starts pattern BOOST\_REQ and snoops timing messages
+for three seconds. The result is checked for the event numbers
+0x0100 (more than 7), 0x0200 (at least one), 0x0102 (exactly one),
+0x0103 (exactly one), 0x0160 (at least one).
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
+        \caption{Schedule for test of origin with thread 1}
+        \label{fig:Schedule_booster_startthread-2}
+    \end{figure}
+\item \texttt{test\_threeThreads3}
+Use schedule \texttt{booster\_startthread-3.dot} \\
+(see~\ref{fig:Schedule_booster_startthread-3}),
+to test origin and startthread nodes. The test starts pattern MAIN and snoops timing messages
+for three seconds. The result is checked for the event numbers
+0x0001 (at least one), 0x0002 (at least one), and 0x0003 (at least one).
+Event number 0x0001 indicates thread 1, event number 0x0002 indicates thread 2, Event number 0x0003 indicates thread 3.
+With saft-ctl snoop there are 4 timing messages each second after starting pattern MAIN.
+First a message with evtno=0x0003, then two messages with evtno=0x0002 1µs later, one of these is delayed.
+20µs later we get a message with evtno=0x0001.
+tperiod=1s in block B\_MAIN defines the tact of one second. tperiod of the blocks B\_A and B\_B are not relevant.
+The delay of evtno=0x0002 with 1µs is defined by toffs=1000. The delay of evtno=0x0001 is defined by toffs=20000.
+What is the effect of toffs and startoffs defined in the three startthread nodes?
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
+        \caption{Schedule for test of origin and startthread}
+        \label{fig:Schedule_booster_startthread-3}
+    \end{figure}
+\item \texttt{test\_booster\_all\_threads}
+Use schedule \texttt{booster-all-threads.dot} (see~\ref{fig:Schedule_booster_all_threads}),
+which has one pattern MAIN.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.98\textwidth,keepaspectratio]{TestPattern/booster_all_threads-s.pdf}
+        \caption{Schedule for test of origin and startthread with all 8 threads of CPU 0}
+        \label{fig:Schedule_booster_all_threads}
+    \end{figure}
+The pattern runs on CPU 0, thread 0 and starts threads 1 to 7 on CPU 0.
+MAIN has a timing message and a block in a loop. One timing message every 0.1 sec.
+\item \texttt{test\_booster\_thread\_0\_loop}
+Use schedule \\ \texttt{booster-thread-0-loop.dot} (see~\ref{fig:Schedule_booster_thread_0_loop}),
+which has one pattern MAIN and starts thread 0 in a loop. This is a
+theoretical setup to test that starting a running thread again does not
+crash.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.7\textwidth,keepaspectratio]{TestPattern/booster_thread_0_loop-s.pdf}
+        \caption{Schedule for startthread in a loop}
+        \label{fig:Schedule_booster_thread_0_loop}
+    \end{figure}
+\item \texttt{test\_booster\_thread\_0}
+The schedule consists of three nodes: a startthread for thread 0 (CPU 0), a timing message
+with EVTNO 1, and a block with length 0.1 seconds. The thread 0 starts every 0.001 seconds again,
+thus producing timing messages with 1kHz. The test asserts that there are more than
+2990 tmsg in 3 seconds with EVTNO 0x0001. Use schedule \texttt{booster-thread-0.dot}
+(see~\ref{fig:Schedule_booster_thread_0}), which has one pattern MAIN.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.55\textwidth,keepaspectratio]{TestPattern/booster_thread_0-s.pdf}
+        \caption{Schedule for starting thread 0 once every 0.001 seconds}
+        \label{fig:Schedule_booster_thread_0}
+    \end{figure}
+\item \texttt{test\_booster\_8\_loops}
+The schedule consists mainly in a loop with origin nodes and startthread nodes for threads 1 to 7.
+This loop runs in thread 0 with a block of length 0.1 seconds and a timing message with EVTNO 0, which
+helps to control that the test is working. Each of the origin nodes is the origin of a sequence of a block,
+a timing message, and a block (no loop). The startthread nodes start threads 1 to 7, repectively.
+Since the EVTNO of the timing messages correspond to the thread numbers, the test can check that
+the thread is started. Since there is no loop for thread 1 to 7 each of these threads runs to idle.
+The threads are started once every 0.1 second from the main loop in thread 0. Thus we have a frequency of 10Hz
+for the messages of each thread. This is checked with a snoop for 2 seconds.
+Use schedule \\ \texttt{booster-8-loops.dot} (see~\ref{fig:Schedule_booster_8_loops}).
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.1\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
+        \caption{Schedule for starting threads 0 to 7 in a main loop}
+        \label{fig:Schedule_booster_8_loops}
+    \end{figure}
+\end{enumerate}
+
+\section{test\_bpcStart.py}
+\texttt{test\_bpcStart.py} tests the implementation of the beam process chain start flag in libcarpedm.
+The test schedule sends two timing messages with \\
+\texttt{bpcstart=True} and \texttt{bpcstart=1}.
+With \texttt{saft-ctl snoop} it is checked that the timing messages contain the correct setting.
+In addition with \texttt{dm-sched} the dumped schedule is checked for the bpcstart flag.
+\section{test\_coupling.py}
+This test was \texttt{full\_test/dynamic/coupling}.
+\begin{enumerate}
+  \item Purpose of Test
+
+  This test enlarges an existing pattern with a second pattern with edges into the first
+  pattern. See Figure~\ref{fig:Pattern_for_the_static_coupling_test} for the test patterns.
+  \item Test Actions
+
+  First, a pattern with three nodes is added. In a second step a pattern with additional three nodes is added.
+  This pattern contains edges into the first pattern.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_coupling1.pdf}
+        \includegraphics{TestPattern/static_coupling2.pdf}
+        \caption{Pattern for the static coupling test before and after coupling}
+        \label{fig:Pattern_for_the_static_coupling_test}
+    \end{figure}
+  \item Success Criteria
+
+  After adding the two patterns the status is checked with \texttt{dm-sched status}. The resulting \texttt{download.dot} is
+  compared to an expected dot-file.
+\end{enumerate}
+
+\section{test\_dm\_cmd.py}
+\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd.
+Each unit test calls dm-cmd with commands and options and checks the result
+with the output on stdout and stderr. There are also negative tests with
+an invalid command line. These tests are successful when the response is
+the correct error message and not a core dump.
+
+There are five tests for the stop command. The test cases are
+\begin{enumerate}
+\item Test with existing block with low prio queue: result ok.
+\item Test with existing block without low prio queue: result fail.
+\item Test with existing timing event: result fail.
+\item Test with non-existing block: result fail.
+\item Test with no target name: result fail.
+\end{enumerate}
+
+There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. These two tests check for
+return code 0, but not the status of the datamaster.
+
+\section{test\_dm\_sched.py}
+\texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
+with commands and options and checks the result with the output on stdout and stderr.
+
+\begin{enumerate}
+\item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
+\item \texttt{dm-sched $<$datamaster$>$}: check for defualt operation (same as status).
+\item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
+\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
+\item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
+\item \texttt{dm-sched $<$datamaster$>$ clear}: check the clear command.
+\item \texttt{dm-sched $<$datamaster$>$ rawvisited}: check the rawvisited command.
+\item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
+\end{enumerate}
+
+\section{test\_dmThreads.py}
+\texttt{test\_dmThreads.py} tests the firmware with up to 8 threads and up to 4 CPUs.
+For each thread a pattern with one block and one timing message per second is
+loaded and started. To check that the thread is running,
+\texttt{dm-cmd} is used two times with a delay of one second. The number
+of messages is extracted from stdout and this number must increase for test success.
+
+There are 8 tests with 1 to 8 threads on CPU 0. In addition, one test runs
+the schedules one 4 CPUs, each with 8 threads. This produces 32 messages per second.
+
+\section{test\_environment.py}
+\texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
+from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
+
+\section{test\_fid7.py}
+\texttt{test\_fid7.py} tests the fix for the format id 7 bug. This bug
+was: under some conditions an illegal format id 7 was in the message.
+The test checks that ony format id 1 is in the snooped messages.
+
+\section{test\_flow.py}
+This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
+\begin{enumerate}
+  \item Purpose of Test
+
+  Test that the flow command switches from one block to another.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+  \item Test Actions
+
+  Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+        change the flow with the flow command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flow
+        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flow
+        command is processed in the low priority queue and node 'BLOCK\_B' is visited.
+
+  Test the four combinations of relative VTIME, absolute VTIME and immediate vs. delayed (one second) execution.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_branch_single.pdf}
+        \caption{Pattern for the dynamic branch single test}
+        \label{fig:Pattern_for_the_dynamic_branch_single_test}
+    \end{figure}
+  \item Success Criteria
+
+  Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+\end{enumerate}
+\section{test\_flowpattern.py}
+This test is based on \texttt{full\_test/dynamic/branch/single}.
+\begin{enumerate}
+  \item Purpose of Test
+
+  Test that the flow command switches from one block to another.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_branch_single_test} for the test pattern.
+  \item Test Actions
+
+  Add a schedule, start the pattern 'IN\_C0'. After checking that nodes 'BLOCK\_IN0' and 'BLOCK\_A' are visited,
+        change the flow with the flowpattern command at pattern 'IN\_C0' from 'A' to 'B'. Check that the flowpattern
+        command is in the low priority queue and then start the pattern 'IN\_C0'. Check that the flowpattern
+        command is processed in the low priority queue and node 'BLOCK\_B' is visited.
+
+  Test the four combinations of relative VTIME, absolute VTIME and immediate vs. delayed (one second) execution.
+  \item Success Criteria
+
+  Changing flow from 'BLOCK\_A' to 'BLOCK\_B' works.
+\end{enumerate}
+
+\section{test\_flush.py}
+Tests various variants of the flush command. The schedules use timing messages, flow and flush commands, and blocks.
+The flow commands are used to fill the command queues of the block. They switch to different timing messages, which
+differ in the parameter value.
+
+Naming of the tests:
+test\_flow\_flushX\_prioY, where
+X are the queues to flush. Allowed values: None, 0, 1, 2, 01, 02, 12, 123.
+Y is the priority of the flush. Allowed values: 0, 1, 2.
+Naming of patterns:
+P-queueX-prioY, where X and Y as described above.
+
+Schedules used:\\
+schedules/flush-queue01-prio0.dot\\
+schedules/flush-queue01-prio1.dot\\
+schedules/flush-queue01-prio2.dot\\
+schedules/flush-queue23-prio0.dot\\
+schedules/flush-queue23-prio1.dot\\
+schedules/flush-queue23-prio2.dot
+
+Structure of each test:
+add the schedule, start the pattern twice. The second startpattern executes the commands which are written
+to the queues on first startpattern.
+Check for flushed queues and the executed flush command after a delay of 0.1 seconds.
+Four tests use the same schedule to minimize the numer of schedules. Each schedule uses 4 CPUs.
+
+\section{test\_loop.py}
+This test was \texttt{full\_test/dynamic/loop}.
+\begin{enumerate}
+  \item Purpose of Test
+
+        Test loop with flow initializer.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_loop_test} for the test pattern.
+  \item Test Actions
+
+        Add a schedule and start pattern 'IN\_A'. Check the visited nodes. Nodes 'INIT\_A0', 'BLOCK\_LOOP', and 'BLOCK\_EXIT'
+        should be visited. Start pattern 'IN\_B' and check the visited nodes. All nodes should be visited.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/dynamic_loop.pdf}
+        \caption{Pattern for the dynamic loop test}
+        \label{fig:Pattern_for_the_dynamic_loop_test}
+    \end{figure}
+  \item Success Criteria
+
+  In the end all blocks are visited.
+\end{enumerate}
+\section{test\_lzma.py}
+There is a bug in the lzma decompression methods. The memory is not correctly allocated.
+This occurs with large schedules and long pattern names. The large schedule contains
+a loop of timing messages connected to one block.
+
+OK test (\texttt{test\_large\_patternname\_ok}): use a schedule with 862 messages and a pattern name of 30 chars.
+This works without an exception, including start of pattern.
+
+Fail test: use a schedule with 1000 messages and a pattern name of 30 chars.
+This does not work. Ends with SEGV (return code -11).
+
+\section{test\_memory.py}
+There are 15 tests to tet the correct memory consumption of the schedules.
+Oversized schedules schuld be rejected to prevent the datamaster being corrupted.
+
+Four tests add two large schedule into the datamaster. This works fine.
+Then a third schedule is loaded, in each test for a different CPU. This
+should fail with return code 250.
+
+Four additional tests check the memory limit more precisely. These tests
+use generated schedules just with a given nuber of blocks. Each block
+has its own pattern. A test with the theoretical limit of 1874 blocks
+fails. A similar test with 1869 blocks is Ok, while a test with one
+further block detects a failure. Also, a test with 1875 blocks detects a
+failure. These four tests use CPU 0.
+
+Two tests check the memory limit for all 4 CPUs. The OK-test loads 1869
+blocks into CPU 0, 1, 2 and 1675 blocks into CPU 3. The Fail-test uses
+one additional block on CPU 3.
+
+A group of five tests (\texttt{test\_memory\_full\_msg\_*}) test the memory
+with schedules with timing messages in a loop. Due to validation checks there
+are 1000 messages in one loop allowed. The generator for the schedules
+splits the timing messages into two loops when there are more than 1000 nodes.
+\\ \texttt{test\_memory\_full\_msg\_small} uses 10 timing messages to test the generator.
+\\ \texttt{test\_memory\_full\_msg\_half} uses 900 timing messages for the test.
+\\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
+
+\section{test\_origin\_startthread.py}
+\begin{enumerate}
+\item Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these.
+The test then starts pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
+The test stops pattern A1 which stops thread 1.
+The test stops pattern A which stops thread 3.
+The test stops node Block2 which stops thread 2 (there is no pattern on this thread).
+See Figure~\ref{fig:schedule_origin_startthreads} for the schedule.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
+        \caption{Schedule to start threads with origins}
+        \label{fig:schedule_origin_startthreads}
+    \end{figure}
+\item This test demonstrates that a node can exist in two threads.
+Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
+Thus we have a timing message from Tmsg3 for each timing message from Tmsg1 and Tmsg2.
+The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
+thread 1 and 2 every 10ms. Thread 1 and 2 end with Block3.
+See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/nodeInTwoThreads.pdf}
+        \caption{Schedule with a node in two threads}
+        \label{fig:schedule_nodeInTwoThreads}
+    \end{figure}
+\end{enumerate}
+
+\section{test\_parallelBranch.py}
+Use schedule \texttt{branch1.dot} to test branching with flow commands
+with absolute time offset. The checks use snoop for specific event numbers.
+The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
+
+\section{test\_pps.py}
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
+schedule which sends two timing messages every second. The test checks
+with 'saft-ctl snoop' the timing messages.
+\section{test\_prio\_and\_type.py}
+This test was \texttt{full\_test/static/prio\_and\_type}.
+\begin{enumerate}
+  \item Purpose of Test
+
+The test checks the relative and the absolute time values for two nodes
+in a four node pattern.
+See Figure~\ref{fig:Pattern_for_the_static_priority_and_type_test} for
+the test pattern and
+\ref{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
+for the test pattern with meta nodes,
+displaying the priority queues.
+  \item Test Actions
+
+  Add the pattern, check the relative time values. Clear the datamaster.
+  Add the pattern again and check the absolute time values.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/static_prio_and_type.pdf}
+        \caption{Pattern for the static priority and type test}
+        \label{fig:Pattern_for_the_static_priority_and_type_test}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/static_prio_and_type_meta.pdf}
+        \caption{Pattern for the static priority and type test with meta nodes}
+        \label{fig:Pattern_for_the_static_priority_and_type_test_with_meta_nodes}
+    \end{figure}
+  \item Success Criteria
+
+  Two checks of the time values with \texttt{dm-cmd rawqueue}.
+\end{enumerate}
+\section{test\_run\_all\_single.py}
+This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
+\begin{enumerate}
+  \item Purpose of Test
+
+    Run a very basic schedule on all four CPUs.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_run_all_test} for the test pattern.
+  \item Test Actions
+
+  Add a schedule with four blocks to the datamaster. For each CPU,
+  check that no block is visited. Then start a pattern for one CPU and
+  check that the block specific for this pattern is visited.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_basic_run_all_single.pdf}
+        \caption{Pattern for the dynamic run all test}
+        \label{fig:Pattern_for_the_dynamic_run_all_test}
+    \end{figure}
+  \item Success Criteria
+
+  For each pattern the correct CPU is used.
+\end{enumerate}
+\section{test\_run\_cpu0\_single.py}
+This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
+\begin{enumerate}
+  \item Purpose of Test
+
+    Add the test schedule to the datamaster, start patterns and check
+    which nodes were visited.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
+  for the test pattern.
+  \item Test Actions
+
+    First check that no block is visited. Start pattern 'IN0'. Check
+    that 'BLOCK\_A' and 'BLOCK\_IN0' are visited.
+    Start pattern 'IN1'. Check that in addition 'BLOCK\_B' and
+    'BLOCK\_IN1' are visited.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/dynamic_basic_run_cpu0_single.pdf}
+        \caption{Pattern for the dynamic run CPU 0 single test}
+        \label{fig:Pattern_for_the_dynamic_run_CPU_0_single_test}
+    \end{figure}
+  \item Success Criteria
+
+  In the end all blocks are visited.
+\end{enumerate}
+
+\section{test\_safe2remove.py}
+\texttt{test\_safe2remove.py} tests to remove a pattern from a running schedule. Test steps:
+\begin{enumerate}
+\item Clear datamaster
 \item Add schedule
-\item Start all patterns
+\item Start pattern 'G1\_P1'
 \item Check removal of one pattern, should fail while pattern is running.
-\item Abort pattern
+\item Abort pattern 'G1\_P1'
 \item Check removal of this pattern, should be valid, since pattern is not running.
 \item Remove this pattern.
 \item Check status of remaining schedule.
 \end{enumerate}
 These test steps are applied to a bunch of schedules.
+The schedules use 1 to 4 CPUs whith 1, 2, 4, and 9 pattern beside the default pattern. There are 1, 10, or 150 blocks per pattern.
+\section{test\_schedules.py}
+\texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
+
 \include{singleEdgeTest}
-\section{schedules}
-\texttt{schedules} collects schedules which are started. Tests that the schedules are compiled and loaded.
+
+\section{test\_start\_stop\_abort.py}
+This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
+\begin{enumerate}
+  \item Purpose of Test
+
+    First part: Start and abort a pattern. Second part: Start and stop a pattern.
+
+  See Figure~\ref{fig:Pattern_for_the_dynamic_start_stop_abort_test} for the test pattern.
+  \item Test Actions
+
+    Add a schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
+    Abort the pattern 'IN\_C0'. Check the visited nodes for the pattern. The second part is similar.
+    Add the same schedule, check that CPU 0 is idle and then start pattern 'IN\_C0'. Check that the pattern is running.
+    Stop the pattern 'IN\_C0'. Check the visited nodes for the pattern.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/dynamic_basic_start_stop_abort.pdf}
+        \caption{Pattern for the dynamic start stop abort test}
+        \label{fig:Pattern_for_the_dynamic_start_stop_abort_test}
+    \end{figure}
+  \item Success Criteria
+
+  Check that pattern is correctly aborted (rawstatus RUN is 0 immediately) or
+  stopped (rawstatus RUN is 1 immediately, but 0 after 1.5 seconds).
+\end{enumerate}
+
+\section{test\_switch.py}
+This test was \texttt{full\_test/dynamic/switch}. The schedule \\
+\texttt{dynamic-switch-schedule.dot} is used.
+\begin{enumerate}
+  \item Purpose of Test
+
+  Test the switch command.
+  \item Test Actions
+
+  After loading the schedule check with 'dm-sched rawvisited' that no node
+  is visited. Then start pattern IN0. Check the visited nodes. Then start
+  pattern IN1 and check the visited nodes. Use a command schedule to
+  switch to destination pattern B and check again the visited nodes.
+  \item Success Criteria
+
+  The correct nodes are visited after each step.
+\end{enumerate}
+
+\section{test\_waitloop\_flush.py}
+\texttt{test\_waitloop\_flush.py} uses a schedule with a wait loop to check
+the correctness of the flush command. The schedule contains BLOCK\_LOOP with a low
+prio queue and a high prio queue. On pattern start, a flow command is queue in
+the low prio queue with quantity 10,000. This redirects the pattern to
+BLOCK\_LOOP such that this block is executed 10,000 times in a loop. Also
+on start of pattern, a flush command is queued in the high prio queue with a
+relative valid time of 0.5 seconds. Since BLOCK\_LOOP has a period of 100 µs,
+the flush command breaks the loop after 5011 executions.
+
+The test checks after 0.1 seconds that the flush is not executed, but after 1 second
+it is executed. The timeline of the checks is not precise enough to check
+exactly after 0.5 seconds the execution.
+
+\section{test\_zzz\_finish.py}
+\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
+schedule which sends two timing messages every second. The test checks
+with 'saft-ctl snoop' the timing messages. This test should be the last
+in the whole test suite to leave the datamaster with a defined schedule.
+
 \chapter{Common Components}
 \section{dm\_testbench.py}
-\texttt{dm\_testbench.py} is a collection of Python functions for use in other test scripts.
+\texttt{dm\_testbench.py} is a collection of Python functions for use
+in other test scripts.
 \begin{enumerate}
-\item startpattern(data\_master, pattern\_file)
-    Connect to the given data master and load the pattern file (dot format).
-    The data master is halted, cleared, and statistics is reset.
-    Search for the first pattern in the data master with 'dm-sched' and start it.
+\item setUpClass(self)
+
+Read environment variables for the datamaster and the test binaries.
+\begin{itemize}
+\item TEST\_BINARY\_DM\_CMD sets the binary for dm-cmd. Default is just
+\texttt{dm-cmd}, the installed tool.
+\item TEST\_BINARY\_DM\_SCHED sets the binary for dm-sched. Default is just
+\texttt{dm-sched}, the installed tool.
+\item DATAMASTER set the datamaster device. Example: \texttt{dev/wbm0} or
+\texttt{tcp/fel0069.acc}. There is no default. This method stops with a
+KeyError if the environment variable DATAMASTER is not set.
+\item TEST\_SCHEDULES set the folder for schedules. Default is \\
+ \texttt{schedules/}.
+\item SNOOP\_COMMAND set the snoop command. Default is \\
+\texttt{saft-ctl tr0 -xv snoop 0 0 0}.
+\end{itemize}
+Usually the binaries for dm-cmd and dm-sched together with the libcarpedm
+are used from the build of the test repository in folders \\
+\texttt{modules/ftm/bin} and \texttt{modules/ftm/lib}. This is
+configured in the Makefile.
+\item setUp(self)
+
+Call \texttt{self.initDatamaster()}.
+\item initDatamaster(self)
+
+The datamaster is halted, cleared, and statistics is reset with
+\texttt{dm-cmd reset all}.
+\item addSchedule(self, scheduleFile)
+
+Add the \texttt{scheduleFile} to the datamaster with the command
+\texttt{dm-sched DATAMASTER add scheduleFile}. Does not start a pattern.
+\item startPattern(self, scheduleFile)
+
+Connect to the given datamaster and load the schedule file (dot format).
+Search for the first pattern in the datamaster with 'dm-sched' and start it.
+\item startPattern(self, scheduleFile, pattern='')
+
+Add the \texttt{scheduleFile} to the datamaster with the command
+\texttt{dm-sched DATAMASTER add scheduleFile}. Start the given pattern.
+The default for the pattern name is empty.
+\item startAllPattern(self, scheduleFile, pattern='', onePattern=False,\\ start=True)
+
+Connect to the given datamaster and load the schedule file (dot format).
+If a pattern is given, start this pattern.
+Otherwise, scan the output of dm-sched for pattern names and start the
+first pattern (onePattern = True) or all pattern (onePattern = False).
+All calls to dm-cmd and dm-sched are checked for the return code. The method
+stops of the return code is not 0.
+
+\item startAndCheckSubprocess(self, argumentsList, expectedReturnCode =
+[0], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. The output on stdout or stderr is lost.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
+Examples for calls of this method are in \texttt{dm\_testbench.py}.
+\item startAndGetSubprocessStdout(self, argumentsList, \\
+expectedReturnCode = [0], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. Return stdout as a list of lines.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
+\item startAndGetSubprocessOutput(self, argumentsList, \\
+expectedReturnCode = [-1], linesCout=-1, linesCerr=-1)
+
+Start a subprocess and check the return code and the lines of stdout
+and stderr. The output on stdout or stderr is return as a list of two
+lists of lines.
+\begin{enumerate}
+\item argumentsList
+
+The command itself with arguments as a list.
+\item expectedReturnCode = [0]
+
+The list of expected return codes. The default is 0 which is successful return.
+\item linesCout=-1
+
+The expected lines of stdout. If linesCout = -1 (default), this is not checked.
+\item linesCerr=-1
+
+The expected lines of stderr. If linesCerr = -1 (default), this is not checked.
+\end{enumerate}
+\item removePaintedFlags(self, dotLines)
+
+From the dotLines remove all which indicates that a node is visited.
+This ist needed for the comparison with expected output. In the flags
+attribute, flags="0xnnnnn1nn" is replaced by flags="0xnnnnn0nn". In addition,
+fillcolor green ist replaced by white and other layout attributes are
+deleted. dotLines is created from 'dm-sched -o output-file'. Method
+is used by compareExpectedResult and compareExpectedOutput.
+\item compareExpectedResult(self, fileCurrent, fileExpected, exclude='')
+
+Compare two dot files. fileCurrent is the file from the current test run.
+fileExpected is the file with the expected result. exclude may contain
+a word. If this word occures in a line of the current file, this line is
+removed before the comparison. Next step is to remove the 'painted flag'
+from the current file. Assert that a unified diff has no lines.
+\item compareExpectedOutput(self, output, fileExpected, exclude='', \\
+excludeField='', delete=[])
+
+Compare the output from the current test run with the
+fileExpected which is the file with the expected result. exclude may contain
+a word. If this word occures in a line of the current file, this line is
+removed before the comparison. Next step is to remove the lines numbered
+in the list 'delete' from the current output and the expected file.
+Next step is to remove the rest of the line when 'excludeField' is found
+in a line. This is used to remove timestamps from the current output and
+the expected file. Last step is to remove the 'painted flag'
+from the current output. Assert that a unified diff has no lines.
+\item getSnoopCommand(self, duration)
+
+Get the snoop command with the duration given in seconds.
+\item snoopToCsv(self, csvFileName, duration=1)
+
+Run the snoop command for duration seconds and store the output in
+csvFileName. Since the duration of saft-ctl snoop is measured in seconds,
+but not fractions of a second, the duration is an integer.
+\item snoopToCsvWithAction(self, csvFileName, action, duration=1)
+
+Run the snoop command for duration seconds and store the output in
+csvFileName. Since the duration of saft-ctl snoop is measured in seconds,
+but not fractions of a second, the duration is an integer.
+
+While snoop runs in a separate thread, the method 'action' is called.
+This method should return before snoop ends.
+\item analyseFrequencyFromCsv(self, csvFileName, column = 20, printTable
+ = True, checkValues = dict())
+
+Analyse a file output of 'saft-ctl snoop' as a csv file.
+\begin{enumerate}
+\item csvFileName
+
+The file name of the csv file.
+\item column
+
+The number of the column to analyse. Default column is 20 (parameter of
+the timing message). Column for EVTNO is 8.
+\item printTable
+
+If True, the occurrences of all values in 'column' are printed.
+\item checkValues
+
+checkValues is a dictionary of key-value pairs to check. Key is a value
+in the column and value is the required frequency.
+The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'.
+The syntax '<n' fails if there are no occurrences.
+Checks for intevalls are not possible since checkValues is a dictionary
+and keys occur at most once.
+Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001
+occurs in 62 lines of the file to analyse.
+Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002
+occurs at least once in the file to analyse.
+Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does
+NOT occur in the file to analyse.
+\end{enumerate}
+\item analyseDmCmdOutput(self, threadsToCheck=0)
+
+Run 'dm-cmd' with default action which shows the running threads and
+the message counts. threadsToCheck is an integer, where 32 bits are used
+as a bit mask. Each bit indicates a thread of 8 threads for 4 CPUs.
+A thread is considered running if the output line for that thread contains 'yes'.
+A list of (key, message counts) is returned. Keys of this list are numbers xy,
+where x is the CPU number, y is the thread number, both single digits.
+If a thread hangs, dm-cmd may show 'yes' for this thread running, but the
+thread is in undefined status. To avoid this, use the method 'checkRunningThreadsCmd'.
+\item checkRunningThreadsCmd(self, messageInterval=1.0)
+
+Use analyseDmCmdOutput twice with a delay of messageInterval in between.
+Assert that the message counts increase with the second call and are greater
+than 0 on the first call.
+\item delay(self, duration)
+
+Sleep for 'duration' seconds. 'duration' is a float.
+\item deleteFile(self, fileName)
+
+Delete the file with name 'fileName'.
+\end{enumerate}
+
+\section{Structure of Description}
+\begin{enumerate}
+  \item Purpose of Test
+
+  What is the objective of this test?
+  \item Prerequisites of Test
+
+  What is the setting of the test?
+  \item Test Actions
+
+  List the actions of the test. This includes the graphs of the test pattern.
+  \item Success Criteria
+
+  What is checked to state a successful test?
 \end{enumerate}
 \end{document}

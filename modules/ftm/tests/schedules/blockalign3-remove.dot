@@ -1,0 +1,4 @@
+digraph blockAlign2remove {
+name=blockAlign2remove
+BlockAlignB1 [cpu=0 patentry=1 patexit=1 pattern=A tperiod=1000 type=blockalign]
+}

@@ -1,0 +1,9 @@
+digraph g {
+name="!CMD!";
+
+graph[]
+
+  "switch0" [type="switch", target="A", dest="L"];
+  
+
+}

@@ -1,0 +1,6 @@
+digraph blockChain22 {
+name = blockChain22
+C1 -> C2
+node [shape=rectangle type=block]
+B1 -> B2 -> C1
+}

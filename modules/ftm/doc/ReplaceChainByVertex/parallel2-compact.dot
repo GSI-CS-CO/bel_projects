@@ -1,0 +1,16 @@
+digraph G {
+graph [
+_draw_=""
+bb=""
+name="parallel2-compact"
+xdotversion=""
+]
+0 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+1 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+2 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+3 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+0->1  [_draw_="", _hdraw_="", pos="", type=""];
+1->3  [_draw_="", _hdraw_="", pos="", type=""];
+0->2  [_draw_="", _hdraw_="", pos="", type=""];
+2->3  [_draw_="", _hdraw_="", pos="", type=""];
+}

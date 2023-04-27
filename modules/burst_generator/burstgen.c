@@ -288,6 +288,14 @@ static int printTaskContext(int id) {
   return cnt;
 }
 
+static void printEcaActionCnt(void) {
+  mprintf("\n\tvalid:0x%x\n", *pSharedActCnt);
+  mprintf("\tinval:0x%x\n", *(pSharedActCnt + 3));
+  mprintf("\tfull:0x%x\n",  *(pSharedActCnt + 1));
+  mprintf("\tfail:0x%x\n",  *(pSharedActCnt + 2));
+  mprintf("\tlate:0x%x\n",  *(pSharedActCnt + 4));
+}
+
 /*******************************************************************************
  * \brief Update the control event configuration table
  *
@@ -954,11 +962,15 @@ void execHostCmd(int32_t cmd)
 	  mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 	    (uint32_t)(pTask[id].trigger >> 32),  (uint32_t)pTask[id].trigger,
 	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle);
-	  mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
-	    (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
-	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
-	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
-	    (uint32_t)(pTask[id].action >> 32),   (uint32_t)pTask[id].action);
+          mprintf("cycle=0x%x:%x, period=0x%x:%x, setup=0x%x:%x\n",
+            (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
+            (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
+            (uint32_t)(pTask[id].setup >> 32),    (uint32_t)pTask[id].setup);
+          mprintf("lastik=0x%x:%x\naction=0x%x:%x\ndeadln=0x%x:%x\nfailed=0x%x:%x\n",
+            (uint32_t)(pTask[id].lasttick >> 32), (uint32_t)pTask[id].lasttick,
+            (uint32_t)(pTask[id].action>> 32),    (uint32_t)pTask[id].action,
+            (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
+            (uint32_t)(pTask[id].failed >> 32),   (uint32_t)pTask[id].failed);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i < N_BURSTS; ++i) {
@@ -967,11 +979,15 @@ void execHostCmd(int32_t cmd)
 	      mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 		(uint32_t)(pTask[i].trigger >> 32),  (uint32_t)pTask[i].trigger,
 		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle);
-	      mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, action=0x%x:%x\n",
+	      mprintf("cycle=0x%x:%x, period=0x%x:%x, setup=0x%x:%x\n",
 		(uint32_t)(pTask[i].cycle >> 32),    (uint32_t)pTask[i].cycle,
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
+		(uint32_t)(pTask[i].setup >> 32),    (uint32_t)pTask[i].setup);
+              mprintf("lastik=0x%x:%x\naction=0x%x:%x\ndeadln=0x%x:%x\nfailed=0x%x:%x\n",
+		(uint32_t)(pTask[i].lasttick >> 32), (uint32_t)pTask[i].lasttick,
+                (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action,
 		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
-                (uint32_t)(pTask[id].action>> 32),   (uint32_t)pTask[id].action);
+		(uint32_t)(pTask[i].failed >> 32),   (uint32_t)pTask[i].failed);
 	    }
 	  }
 	}
@@ -1166,6 +1182,13 @@ void execHostCmd(int32_t cmd)
 	  pTask[id].io_index = 0;
 	  pTask[id].trigger = 0;
 	  pTask[id].toggle = 0;
+	  pTask[id].period = 0;
+	  pTask[id].cycle = 0;
+	  pTask[id].setup = 0;
+	  pTask[id].deadline = 0;
+	  pTask[id].lasttick = 0;
+	  pTask[id].action = 0;
+	  pTask[id].failed = 0;
 
 	  if (verbose)
 	    printTaskContext(id);
@@ -1230,6 +1253,7 @@ void execHostCmd(int32_t cmd)
       case CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG: // print the trigger/toggle control and trigger/toggle configuration tables
 	mprintf("trg/tgg\n");
 	printTrgTggCtlCfg();
+	printEcaActionCnt();
 	break;
 
       case CMD_DIAG_PRINT_TASK_INTERVAL: // print elapsed time between tasks (requires the burst id)

@@ -72,6 +72,7 @@ public:
   virtual bool isMeta(void) const {return false;}
   virtual bool isBlock(void) const {return false;}
   virtual bool isEvent(void) const {return false;}
+  virtual bool isCmd(void) const {return false;}
   virtual void deserialise(uint8_t* b) = 0;
   virtual void serialise(const vAdr &va, uint8_t* b) const {
     std::memset(b, 0, _MEM_BLOCK_SIZE);

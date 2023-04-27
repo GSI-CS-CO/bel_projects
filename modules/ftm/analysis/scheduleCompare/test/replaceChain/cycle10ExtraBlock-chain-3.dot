@@ -1,0 +1,17 @@
+digraph G {
+graph [
+name="cycle10-compact"
+]
+h [shape=rectangle, type=block];
+"g
+...(7)
+i" [label="g
+...(7)
+i"];
+h->"g
+...(7)
+i" ;
+"g
+...(7)
+i"->h ;
+}

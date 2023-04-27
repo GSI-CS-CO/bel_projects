@@ -26,12 +26,15 @@ GSI Timing Gateware and Tools
     - [Required Packages](#required-packages)
     - [Library libmpfr](#library-libmpfr)
     - [Tool hdlmake](#tool-hdlmake)
-      - [Tool hdlmake not found (Python 2.7)](#tool-hdlmake-not-found-python-27)
+      - [Tool hdlmake not Found (Python 2.7)](#tool-hdlmake-not-found-python-27)
     - [Python not found](#python-not-found)
+    - [No module named pkg_resources](#no-module-named-pkg_resources)
     - [Setuptools not found](#setuptools-not-found)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
     - [Rocky-9](#rocky-9)
+    - [Yocto](#yocto)
+    - [Package Requirements Etherbone](#package-requirements-etherbone)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -48,21 +51,29 @@ GSI Timing Gateware and Tools
       - [Arria10 Devices](#arria10-devices)
 
 # Build Instructions
+
 ## Checkout
+
 Just clone our project.
+
 ```
 git clone https://github.com/GSI-CS-CO/bel_projects.git
 ```
 
 ## First Steps
+
 Make will take care of all submodules and additional toolchains.
+
 ```
 make
 ```
+
 Important: Please don't mess around using the "git submodule --fancy option" command!
 
 ## Kernel Drivers
+
 This will build VME and PCI(e) drivers.
+
 ```
 make driver
 (optional) make driver-install
@@ -70,29 +81,38 @@ make driver
 ```
 
 ## Etherbone
+
 Builds basic Etherbone tools and library.
+
 ```
 make etherbone
 (optional) make etherbone-install
 ```
 
 ## Tools (Monitoring and EB-Tools)
+
 Additional tools like eb-console and eb-flash.
+
 ```
 make tools
 (optional) make tools-install
 ```
 
 ## Saftlib
+
 Builds basic Saftlib tools and library.
+
 ```
 make saftlib
 (optional) make saftlib-install
 ```
+
 For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 
 ## Build Gateware(s)
+
 Currently we support a few different form factors.
+
 ```
 make scu2               # Arria II
 make scu3               # Arria II
@@ -113,20 +133,25 @@ make a10gx_pcie         # Arria 10 - Intel evaluation board
 ```
 
 ## Additional Targets
+
 ### Check Timing Constraints
+
 ```
 make $device-check
 make exploder5-check # example
 ```
 
 ### Sort QSF Files
+
 ```
 make $device-sort
 make exploder5-sort # example
 ```
 
 # FAQ and Common Problems
+
 ## Synthesis
+
 ### Quartus Version
 
 Question: Which Version of Quartus Do I Need?
@@ -134,14 +159,17 @@ Question: Which Version of Quartus Do I Need?
 Answer: We recommend to use Quartus 18.1.0 (Build 625 09/12/2018 SJ)
 
 ### Library libpng12
+
 Error: Quartus error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]
 
 Solution: Install the missing package
 
 #### Ubuntu
+
 Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download
 
 #### Mint
+
 ```
 sudo add-apt-repository ppa:linuxuprising/libpng12
 sudo apt update
@@ -156,6 +184,7 @@ You can use a copy from here:
 - Rocky-9: res/rocky-9
 
 ### Tool qmegawiz
+
 Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 
 Solution: Change your LC_NUMERIC setting:
@@ -165,6 +194,7 @@ export LC_NUMERIC="en_US.UTF-8"
 ```
 
 ### Tool qsys-generate
+
 Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or directory
 
 Solution: Adjust your PATH variable like this:
@@ -176,7 +206,9 @@ export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
 ## Build Flow
+
 ### Required Packages
+
 Question: Which packages are required?
 
 Answer: You need to have installed the following packages before you can configure and build Etherbone and Saftlib:
@@ -191,26 +223,34 @@ Answer: You need to have installed the following packages before you can configu
 - libreadline-dev
 - libsigc++ (saftlib)
 - libboost-dev (saftlib)
-- pkgconfig (saftlib)
+- pkgconfig (saftlib) †
 - xsltproc (saftlib)
+- libz-dev (saftlib)
+
+† Ubuntu 22.04 and later: pkg-config
 
 ### Library libmpfr
+
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
 
 Solution: Create a new symlink:
+
 ```
 sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 ```
 
 ### Tool hdlmake
+
 Error: hdlmake AttributeError: module object has no attribute vendor or hdlmake not found
 
 Solution: In case a simple "make" does not fix this:
+
 ```
 make hdlmake_install
 ```
 
 #### Tool hdlmake not found (Python 2.7)
+
 Error: /bin/sh: 1: hdlmake: not found
 
 Solution: You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable:
@@ -244,7 +284,19 @@ export PATH=$PATH:$(pwd)
 
 We recommend to use at least Python3.7.
 
+### No module named pkg_resources
+
+Error: ImportError: No module named pkg_resources
+
+Solution:
+
+```
+sudo apt-get install python-pkg-resources
+sudo apt-get install --reinstall python-pkg-resources # if already installed
+```
+
 ### Setuptools not found
+
 Error: ModuleNotFoundError: No module named 'setuptools'
 
 Solution: Just install the right setuptools:
@@ -255,6 +307,7 @@ sudo apt-get install python-setuptools # Python 2.X
 ```
 
 ### Compiling Saftlib
+
 Error: Compilation: "Error message: ./configure: line 16708: syntax error near unexpected token 0.23' ./configure: line 16708: PKG_PROG_PKG_CONFIG(0.23)'"
 
 Solution:
@@ -265,21 +318,52 @@ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
 ### CC not found
+
 Error: make[1]: cc: No such file or directory
 
 Solution:
 
 ```
-which cc # cc: Command not found. 
+which cc # cc: Command not found.
 update-alternatives --list cc
 which cc # /usr/bin/cc
 ```
 
 ### Rocky-9
+
 [Click here for additional information.](res/rocky-9)
 
+### Yocto
+
+#### Etherbone & Saftlib
+
+```
+unset LD_LIBRARY_PATH
+source /common/usr/embedded/yocto/sdk/environment-setup-core2-64-ffos-linux
+make etherbone YOCTO_BUILD=yes
+make saftlib YOCTO_BUILD=yes
+```
+
+Check the Rocky-9 subsection, if you get lsb_release related errors.
+
+#### Etherbone Tools
+
+See [tools/yocto-build.sh](tools/yocto-build.sh)
+
+### Package Requirements Etherbone
+
+Error: configure: error: Package requirements (etherbone >= x.y.z) were not met:
+
+Solution:
+
+```
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
+
 ## Git
+
 ### CAfile
+
 Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project/generic_project.git/': server certificate verification failed. CAfile: none CRLfile: none
 
 Solution: Systems with outdated trust databases (root CA certificate Let's Encrypt) will be unable to validate the certificate of the site. Update ca-certificates to fix this:
@@ -290,6 +374,7 @@ sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming
+
 ### USB-Blaster Issues
 
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
@@ -301,24 +386,29 @@ sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.
 ```
 
 ### Altera/Intel USB Blaster
-See bel_projects/doc/usbblaster/readme.md
+
+See [doc/usbblaster/readme.md](doc/usbblaster/readme.md)
 
 ### Xilinx Platform Cable II
-See bel_projects/doc/platform_cable/readme.md
+
+See [doc/platform_cable/readme.md](doc/platform_cable/readme.md)
 
 ### Arrow USB Programmer
-See bel_projects/doc/arrow_usb_programmer/readme.md
+
+See [doc/arrow_usb_programmer/readme.md](doc/arrow_usb_programmer/readme.md)
 
 ### Altera/Intel Ethernet Blaster
 
-<pre>
+```
 Default user: admin
 Default password: password
 Default server port (programmer GUI): 1309
-</pre>
+```
 
 ## Timing Receiver
+
 ### Commissioning
+
 Configure the SPI flash chip:
 
 ```
@@ -339,6 +429,7 @@ quartus_pgm -c 1 -m jtag -o 'p;device.sof'
 ```
 
 ### Flashing
+
 Problem: Flashing might fail sometimes on certain devices and host combinations.
 
 Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
@@ -355,18 +446,21 @@ eb-reset $device fpgareset # reset FPGA
 ```
 
 #### Arria2 Devices
+
 ```
 (problematic devices) eb-flash -s 0x40000 -w 3 $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
 (unproblematic devices) eb-flash $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
 ```
 
 #### ArriaV Devices
+
 ```
 (problematic devices) eb-flash -s 0x10000 -w 3 $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
 (unproblematic devices) eb-flash $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
 ```
 
 #### Arria10 Devices
+
 ```
 eb-asmi $device -w $gateware.rpd (write)
 eb-asmi $device -v $gateware.rpd (verify)

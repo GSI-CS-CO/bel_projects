@@ -7,7 +7,7 @@
 ttf_host="tsl014"
 
 if [ "$HOSTNAME" = "$ttf_host" ]; then
-    export patt_loc="fbas/test/dm"                         # pattern file location
+    export patt_loc="fbas_test/dm"                         # pattern file location
     export fbasdm="dev/wbm0"                               # DM device
 else
     export patt_loc="${PWD/fbas*/fbas/test/dm}"

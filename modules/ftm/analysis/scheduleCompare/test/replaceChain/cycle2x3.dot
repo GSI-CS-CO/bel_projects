@@ -1,0 +1,5 @@
+digraph cycle2x3 {
+name=cycle2x3
+node1 -> node2 -> node3 -> node1
+node4 -> node5 -> node6 -> node4
+}

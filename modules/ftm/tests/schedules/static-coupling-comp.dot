@@ -1,0 +1,20 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A_Block[cpu="0", flags="0x00008007", type="block", tperiod="5000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+A_Flush[cpu="0", flags="0x00002005", type="flush", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", tvalid="0", vabs="true", prio="1", shape     = "hexagon", qlo="true", qhi="false", qil="false", fillcolor = "white", penwidth=2, color = "darkorange3"];
+A_Msg[cpu="0", flags="0x00000002", type="tmsg", toffs="500", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="300", evtno="255", beamin="0", bpcstart="0", sid="5", bpid="32", reqnobeam="0", vacc="0", id="0x112c0ff000500800", par="0x0000140000000000", tef="0", shape     = "oval", fillcolor = "white"];
+B_Block[cpu="1", flags="0x00208007", type="block", tperiod="5000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="true", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+B_Msg[cpu="1", flags="0x00000002", type="tmsg", toffs="500", pattern="B", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="300", evtno="255", beamin="0", bpcstart="0", sid="5", bpid="32", reqnobeam="0", vacc="1", id="0x112c0ff000500801", par="0x0000140000000055", tef="0", shape     = "oval", fillcolor = "white"];
+B_Switch[cpu="1", flags="0x00002012", type="switch", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", shape     = "pentagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B_Switch->B_Msg [type="defdst", color = "red"];
+B_Switch->A_Block [type="target", color = "blue"];
+B_Switch->A_Flush [type="switchdst", color = "pink"];
+A_Block->A_Flush [type="defdst", color = "red"];
+A_Flush->A_Msg [type="defdst", color = "red"];
+A_Flush->B_Block [type="target", color = "blue"];
+A_Flush->B_Switch [type="flushovr", color = "pink"];
+A_Msg->A_Block [type="defdst", color = "red"];
+B_Msg->B_Block [type="defdst", color = "red"];
+B_Block->B_Switch [type="defdst", color = "red"];
+}

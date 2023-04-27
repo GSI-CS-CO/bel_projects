@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x000002        // make this consistent with makefile
+#define FBAS_FW_VERSION 0x010100        // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -90,11 +90,13 @@ nodeType_t nodeType = FBAS_NODE_TX;     // default node type
 opMode_t opMode = FBAS_OPMODE_DEF;      // default operation mode
 uint32_t cntCmd = 0;                    // counter for user commands
 uint32_t mpsTask = 0;                   // MPS-relevant tasks
-uint64_t mpsTimMsgFlagId = 0;           // timing message ID for MPS flags
-uint64_t mpsTimMsgEvntId = 0;           // timing message ID for MPS events
 volatile uint64_t tsCpu = 0;            // lm32 uptime
 volatile int64_t  prdTimer;             // timer period
-uint32_t io_chnl = IO_CFG_CHANNEL_GPIO; // IO channel type (LVDS for Pexaria, GPIO for SCU)
+uint8_t n_out_port = N_LEMO_OUT_SCU;    // number of output ports (by default SCU3)
+io_port_t out_port =                    // IO channel (LVDS for Pexaria, GPIO for SCU3)
+  {IO_CFG_CHANNEL_GPIO, 0};             // GPIO port 1 (OUT1 for Pexaria, B1 for SCU3)
+uint64_t myMac;                         // own MAC address
+nw_addr_t dstNwAddr[N_DST_ADDR];        // valid destination addresses for the Endpoint WB device
 
 // application-specific function prototypes
 static void init();
@@ -104,7 +106,7 @@ static void initIrqTable();
 static void printSrcAddr();
 static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
 static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo);
-static status_t setDstAddr(uint64_t dstMac, uint32_t dstIp);
+static status_t setEndpDstAddr(int idx);
 static status_t loadSenderId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
@@ -195,27 +197,21 @@ void initMpsData()
 {
   mpsTask = 0;
 
-  mpsTimMsgFlagId = fwlib_buildEvtidV1(FBAS_FLG_GID, FBAS_FLG_EVTNO,
-      FBAS_FLG_FLAGS, FBAS_FLG_SID, FBAS_FLG_BPID, FBAS_FLG_RES);
-  mpsTimMsgEvntId = fwlib_buildEvtidV1(FBAS_EVT_GID, FBAS_EVT_EVTNO,
-      FBAS_EVT_FLAGS, FBAS_EVT_SID, FBAS_EVT_BPID, FBAS_EVT_RES);
-
   // initialize MPS message buffer
   // - RX node: use own MAC address as valid sender IDs -> other nodes do not have the same MAC
   // - TX node: sender ID is its MAC address
-  uint64_t mac;
-  convertMacToU64(&mac, pSharedMacHi, pSharedMacLo);
+  convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
     bufMpsMsg[i].prot.flag  = MPS_FLAG_TEST;
     bufMpsMsg[i].prot.idx = 0;
-    setMpsMsgSenderId(&bufMpsMsg[i], mac, 1);
+    setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
     bufMpsMsg[i].ttl = 0;
-    bufMpsMsg[i].ts = 0;
-    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x\n",
+    bufMpsMsg[i].tsRx = 0;
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%08x\n",
         i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
         bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag);
+        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
   }
 
   // initialize the read iterator for MPS flags
@@ -321,21 +317,34 @@ status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
 }
 
 /**
- * \brief set the destination MAC and IP addresses
+ * \brief Set the destination MAC and IP addresses of Endpoint
  *
  * Set the destination MAC and IP addresses of the Endpoint WB device.
+ *
+ * \param idx Address index (0=actual, 1=RX node, 2=broadcast etc)
  *
  * \ret status
  *
  **/
-status_t setDstAddr(uint64_t dstMac, uint32_t dstIp)
+status_t setEndpDstAddr(int idx)
 {
   uint32_t status = COMMON_STATUS_OK;
+  uint64_t mac;
+  uint32_t ip;
 
-  // configure Etherbone master (src MAC and IP are set by host, i.e. by eb-console or BOOTP)
-  if ((status = fwlib_ebmInit(TIM_2000_MS, dstMac, dstIp, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("fbas%d: Error - source IP is not set!\n", nodeType); // IP unset
-  }
+  // check index
+  if ((idx < 0) || idx >= N_DST_ADDR)  // invalid or out of range
+    return COMMON_STATUS_ERROR;
+
+  // check the desired address is already set (do not consider IP address)
+  if ((dstNwAddr[DST_ADDR_EBM].mac == dstNwAddr[idx].mac))
+    return status;
+
+  // update the Endpoint destination address
+  dstNwAddr[DST_ADDR_EBM].mac = dstNwAddr[idx].mac;
+
+  if ((status = fwlib_ebmInit(TIM_1000_MS, dstNwAddr[DST_ADDR_EBM].mac, dstNwAddr[DST_ADDR_EBM].ip, EBM_NOREPLY)) != COMMON_STATUS_OK)
+    DBPRINT1("fbas%d: Err - failed to set destination address!\n", nodeType);
 
   return status;
 }
@@ -367,6 +376,11 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
 
   setMpsMsgSenderId(msg, *pSenderId, 1);
 
+  // app-specific IO setup (RX: enable IO output for signaling latency)
+  // set up the direct mapping between the MPS message buffer and output ports
+  setIoOe(out_port.type, pos, true);        // enable output
+  setupEffLogOut(pos, out_port.type, pos);  // mapping (MSP buffer[pos] -> out_port[pos])
+
   return COMMON_STATUS_OK;
 }
 
@@ -382,7 +396,7 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
 void clearError(size_t len, mpsMsg_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
-    driveEffLogOut(io_chnl, buf + i);
+    driveEffLogOut(buf + i, i);
   }
 }
 
@@ -400,17 +414,17 @@ void setOpMode(uint64_t mode) {
 }
 
 /**
- * \brief handle pending ECA event
+ * \brief Handle pending ECA event
  *
  * On FBAS_GEN_EVT event the buffer for MPS flag is updated and \head returns
  * pointer to it. Otherwise, \head is returned with null value.
  *
  * On FBAS_WR_EVT or FBAS_WR_FLG event the effective logic output is driven.
  *
- * \param usTimeout maximum interval in microseconds to poll ECA
- * \param mpsTask   pointer to MPS-relevant task flag
- * \param itr       pointer to the read iterator for MPS flags
- * \param head      pointer to pointer of the MPS message buffer
+ * \param usTimeout Maximum interval in microseconds to poll ECA
+ * \param mpsTask   Pointer to MPS-relevant task flag
+ * \param itr       Pointer to the read iterator for MPS flags
+ * \param head      Pointer to pointer to the head of the MPS message buffer
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
@@ -428,13 +442,17 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
   uint64_t now;           // actual timestamp of the system time
   int64_t  poll;          // elapsed time to poll a pending ECA event
   uint32_t actions;
+  int      offset;        // offset to the MPS message buffer location, where received MPS message will be stored
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
     &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  if (nextAction) {
+  if (nextAction != COMMON_ECADO_TIMEOUT) {
     now = getSysTime();
     storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS5, now);
+
+    uint64_t senderId; // sender ID (MAC) is in the 'param' field (high 6 bytes)
+    uint8_t  idx;      // registration index (128=request, 129=response)
 
     switch (nextAction) {
       case FBAS_AUX_NEWCYCLE:
@@ -479,8 +497,20 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           *head = updateMpsMsg(*head, ecaEvtId);
 
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
+            // select the transmission type (broadcast: not registered or NOK flag, unicast: otherwise)
+            uint32_t status;
+            if (!(*mpsTask & TSK_REG_COMPLETE) || ((*head)->prot.flag == MPS_FLAG_NOK))
+              status = setEndpDstAddr(DST_ADDR_BROADCAST);
+            else
+              status = setEndpDstAddr(DST_ADDR_RXNODE);
+
+            if (status != COMMON_STATUS_OK) {
+              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+              break;
+            }
+
             // send MPS event
-            if (sendMpsMsgSpecific(itr, *head, mpsTimMsgFlagId, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
+            if (sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
               // count sent timing messages with MPS event
               *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, 1);
               if ((*head)->prot.flag == MPS_FLAG_NOK) {
@@ -512,15 +542,40 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
 
           // store and handle received MPS flag
-          *head = storeMpsMsg(ecaParam, ecaDeadline, itr);
-          if (*head) {
-            driveEffLogOut(io_chnl, *head);
+          if (storeMpsMsg(ecaParam, ecaDeadline, itr, &offset) == COMMON_STATUS_OK) {
+            // drive the assigned output port
+            driveEffLogOut((mpsMsg_t*)(*head + offset), offset);
 
             // measure one-way delay
             measureOwDelay(now, ecaDeadline, 0);
           }
         }
         break;
+
+      case FBAS_NODE_REG:
+        senderId = ecaParam >> 16; // sender ID (MAC) is in the 'param' field (high 6 bytes)
+        idx      = ecaParam >> 8;  // registration index (128=request, 129=response)
+
+        if (nodeType == FBAS_NODE_RX) {  // registration request from TX
+          if (idx == IDX_REG_REQ) {
+            if (isSenderKnown(senderId)) {
+              // unicast the reg. response
+              if (fwlib_ebmInit(TIM_1000_MS, senderId, BROADCAST_IP, EBM_NOREPLY) == COMMON_STATUS_OK)
+                sendRegRsp();
+              else
+                DBPRINT1("fbas%d: Err - reg. rsp not sent. Failure with Endpoint!\n", nodeType);
+            }
+          }
+        }
+        else if (nodeType == FBAS_NODE_TX) { // registration response from RX
+          if (idx == IDX_REG_RSP) {
+            dstNwAddr[DST_ADDR_RXNODE].mac = senderId;
+            DBPRINT3("reg.rsp: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            *mpsTask |= TSK_REG_COMPLETE;
+          }
+        }
+        break;
+
       default:
         break;
     }
@@ -583,16 +638,23 @@ uint32_t extern_entryActionConfigured()
   DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
 
   DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
-  if (MYPLATFORM == "pcicontrol")   // GPIO for SCU, LVDS for Pexiara
-    io_chnl=IO_CFG_CHANNEL_LVDS;
+  if (MYPLATFORM == "pcicontrol") { // GPIO for SCU, LVDS for Pexiara
+    out_port.type = IO_CFG_CHANNEL_LVDS;
+    n_out_port    = N_LEMO_OUT_PEXARIA;
+  }
 
+  // app specific IO setup (TX: B2 as input, all output disabled)
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
-  setIoOe(io_chnl, 0);              // enable output for the IO1 (or B1) port
+
+  for (uint8_t idx = 0; idx < n_out_port; ++idx)
+    setIoOe(out_port.type, idx, false);  // disable all output ports
 
   fwlib_publishNICData();           // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
   printSrcAddr();                   // output the source MAC/IP address of the Endpoint WB device to the WR console
 
-  status = setDstAddr(BROADCAST_MAC, BROADCAST_IP); // set the destination broadcast MAC/IP address of the Endpoint WB device
+  dstNwAddr[DST_ADDR_BROADCAST].mac = BROADCAST_MAC;
+  dstNwAddr[DST_ADDR_BROADCAST].ip  = BROADCAST_IP;
+  status = setEndpDstAddr(DST_ADDR_BROADCAST); // set the destination broadcast MAC/IP address of the Endpoint WB device
   if (status != COMMON_STATUS_OK) return status;
 
   if ((uint32_t)pCpuWbTimer != ERROR_NOT_FOUND) {
@@ -604,17 +666,25 @@ uint32_t extern_entryActionConfigured()
   initMpsData();                    // initialize application specific data structure
 
   return status;
-} // entryActionConfigured
+}
 
 // entry action state 'op ready'
 uint32_t extern_entryActionOperation()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  // initiate node registry
+  if (nodeType == FBAS_NODE_TX) {
+    if (!(mpsTask & TSK_REG_COMPLETE)) {
+      if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
+        sendRegReq(IDX_REG_REQ);
+      else
+        DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+    }
+  }
 
   return status;
-} // entryActionOperation
+}
 
 // exit action state 'op ready'
 uint32_t extern_exitActionOperation(){
@@ -652,34 +722,35 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         }
         break;
       case FBAS_CMD_GET_SENDERID:
-        // read valid sender ID (MAC, idx) from the shared memory
+        // read valid sender ID (MAC, idx) from the shared memory and
+        // assign output port for signaling latency measurement
         loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
-        setIoOe(io_chnl, 0);  // enable output for the IO1 (B1) port
+        setIoOe(out_port.type, out_port.idx, true); // enable output for the default output port
         break;
       case FBAS_CMD_GET_IO_OE:
-        u32val = getIoOe(io_chnl);
+        u32val = getIoOe(out_port.type);
         if (1) {
           DBPRINT2("fbas%d: GPIO OE %x\n", nodeType, u32val);
         }
         break;
       case FBAS_CMD_TOGGLE_IO:
         u8val = cntCmd & 0x01;
-        u32val = 0;
-        driveIo(io_chnl, u32val, u8val);
+        driveOutPort(out_port.type, out_port.idx, u8val);
         DBPRINT2("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
         break;
       case FBAS_CMD_EN_MPS_FWD:
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
-        mpsTask |= TSK_TTL_MPS_FLAGS; // enable lifetime monitoring of the MPS flags
+        mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
         DBPRINT2("fbas%d: enabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_DIS_MPS_FWD:
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
-        mpsTask &= ~TSK_TTL_MPS_FLAGS; // disable lifetime monitoring of the MPS flags
+        mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
+        mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
@@ -695,6 +766,10 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         printMeasureTtl(pSharedApp, FBAS_SHARED_GET_AVG);
         break;
 
+      case FBAS_CMD_PRINT_MPS_BUF:
+        diagPrintMpsMsgBuf();
+        diagPrintMapIoMsgIdx();
+        break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
         break;
@@ -718,10 +793,15 @@ void timerHandler()
   uint64_t cputime = getCpuTime();
   prdTimer = getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS6, cputime);
 
+  // ready to evaluate the lifetime of the MPS protocols
+  if (mpsTask & TSK_MONIT_MPS_TTL)
+    mpsTask |= TSK_EVAL_MPS_TTL;
+
   ++prescaler;
   if (prescaler == PSCR_1S_TIM_1MS) {
     prescaler = 0;
     tsCpu = cputime;
+    mpsTask |= TSK_REG_PER_OVER;
   }
 }
 
@@ -748,21 +828,45 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       // transmit MPS flags (flags are sent in specified period, but events immediately)
       // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, mpsTimMsgFlagId) == COMMON_STATUS_OK)
-          // count sent timing messages with MPS flag
-          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
+
+        // registration incomplete
+        if (!(*pMpsTask & TSK_REG_COMPLETE)) {
+          // registration period is over?
+          if (*pMpsTask & TSK_REG_PER_OVER) {
+            *pMpsTask &= ~TSK_REG_PER_OVER;
+            if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
+              sendRegReq(IDX_REG_REQ);
+            else
+              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+          }
+          break;
+        }
+
+        // periodic, unicast transmission of the MPS flag
+        if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
+          if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
+            // count sent timing messages with MPS flag
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
+        }
+        else {
+          DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+        }
       }
       else
         wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console
       break;
 
     case FBAS_NODE_RX:
-      if (*pMpsTask & TSK_TTL_MPS_FLAGS) {
-        // monitor lifetime of MPS flags periodically and handle expired MPS flag
-        buf = expireMpsMsg(pRdItr);
-        if (buf) {
-          driveEffLogOut(io_chnl, buf);
-          measureTtlInterval(buf);
+      if (*pMpsTask & TSK_EVAL_MPS_TTL) {
+        // evaluate lifetime of the MPS protocols and handle expired MPS protocols
+        *pMpsTask &= ~TSK_EVAL_MPS_TTL;
+        uint64_t now = getSysTime();
+        for (int i = 0; i < N_MPS_CHANNELS; i++) {
+          buf = evalMpsMsgTtl(now, i);
+          if (buf) {
+            driveEffLogOut(buf, i);
+            measureTtlInterval(buf);
+          }
         }
       }
       break;

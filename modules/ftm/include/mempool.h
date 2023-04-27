@@ -56,7 +56,7 @@ public:
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
           bmpOffs(sharedOffs + _SHCTL_END_),
           startOffs(bmpOffs + bmpSize),
-          endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
+          endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE - bmpSize)),
           bmp(bmpSize)
           { init();  }
 
@@ -77,7 +77,16 @@ public:
   void setBmp(const vBuf& aBmp) { bmp = aBmp;}
   const vBuf& getBmp()           const { return bmp; }
 
+  uint32_t getFreeBmpBits() const;
+  uint32_t getTotalBmpBits() const {return bmpBits;}
+  uint32_t getTotalBmpSize() const {return bmpSize;}
+  uint32_t getUsedBmpBits() const;
+  void debugBmpShow() const;
+
   uint32_t getFreeChunkQty()  const { return pool.size(); }
+  uint32_t getTotalChunkQty() const { return nodeQty; }
+  uint32_t getUsedChunkQty() const { return nodeQty-pool.size(); }
+
   uint32_t getTotalSpace()    const { return nodeQty * _MEM_BLOCK_SIZE; }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }
   uint32_t getUsedSpace()     const { return nodeQty - (pool.size() * _MEM_BLOCK_SIZE); }

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: carpedm
+Description: Data Master carpedm library (host runtime)
+Version: 0.36.3
+Requires: etherbone >= 2.1.2 boost_graph >= 1.69 boost_graph < 1.74 boost_serialization >= 1.69 boost_serialization < 1.74 boost_regex >= 1.69 boost_regex < 1.74
+Libs: -L${libdir} -lcarpedm
+Cflags: -I${includedir}

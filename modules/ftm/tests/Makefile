@@ -9,7 +9,7 @@ CARPEDM_PATH ?= ../lib/
 TEST_DM_CMD ?= ../bin/dm-cmd
 TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
-IGNORE = --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/
+IGNORE = --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/
 # pass the command line arguments to pytest
 # Example: OPTIONS=--runslow   this runs also the slow tests.
 # Example: OPTIONS="-rP"       show stdout for all tests.
@@ -18,12 +18,12 @@ IGNORE = --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --
 OPTIONS ?=
 
 test:
-	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CARPEDM_PATH)" \
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
-	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CARPEDM_PATH)" \
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
 		SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)
 
@@ -31,7 +31,7 @@ test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
 
 test-all:
-	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CARPEDM_PATH)" \
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest $(IGNORE) --runslow $(OPTIONS)
 

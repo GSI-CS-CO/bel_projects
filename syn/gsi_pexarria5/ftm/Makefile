@@ -5,7 +5,7 @@ SPI_LANES		= ASx4
 RAM_SIZE		= 131072 
 SHARED_SIZE     = 98304 
 USRCPUCLK       = 125000
-VERSION         = 7.0.1
+VERSION         = 8.0.4
 RELEASE         = Fallout 
 DEBUGLVL  		= 0 
 
@@ -19,7 +19,7 @@ CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDE
 
 include ../../build.mk
 
-all: $(TARGET).elf tools
+all: $(TARGET).elf
 
 tools: 
 	$(MAKE) -C $(PATHTOOL) tools

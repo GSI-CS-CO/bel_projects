@@ -1,0 +1,17 @@
+digraph G {
+graph [
+name="cycle10-compact"
+]
+b;
+"a
+...
+c" [label="a
+...
+c"];
+b->"a
+...
+c" ;
+"a
+...
+c"->b ;
+}

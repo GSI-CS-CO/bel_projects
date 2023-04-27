@@ -28,10 +28,10 @@ install: monitoring-install
 	cp $(EXTRA_I) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
-	gcc $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 %:	%.cpp
-	g++ $(CFLAGS) -o $@ $< $(LIBS)
+	$(CXX) $(CFLAGS) -o $@ $< $(LIBS)
 
 monitoring: monitoringg
 

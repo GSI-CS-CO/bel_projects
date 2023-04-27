@@ -1,0 +1,13 @@
+digraph G {
+graph [
+_draw_=""
+bb=""
+name="cycle3-compact"
+xdotversion=""
+]
+0 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label=node3, ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+1 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", color="", dst="", evtno="", fid="", fillcolor="", gid="", height="", id="", label="node1
+node2", ovr="", par="", patentry="", patexit="", pattern="", penwidth="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", shape="", sid="", style="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+0->1  [_draw_="", _hdraw_="", color="", pos="", type=""];
+1->0  [_draw_="", _hdraw_="", color="", pos="", type=""];
+}

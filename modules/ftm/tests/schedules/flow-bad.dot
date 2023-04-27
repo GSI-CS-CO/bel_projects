@@ -1,0 +1,8 @@
+digraph "flow-bad" {
+  node[cpu=0 fid=1 pattern=P1 toffs=0]
+  Block0 [type=block tperiod=100000000 patexit=1 qhi=1]
+  Flow1 [type=flow prio=0 tvalid=0 patentry=1 qty=1]
+  Flow1 -> Block0 [type=defdst]
+  Flow1 -> Block0 [type=flowdst]
+  Flow1 -> Block0 [type=target]
+}

@@ -67,7 +67,7 @@ std::string HashMap::store() {
   boost::archive::text_oarchive oa(os);
   //boost::archive::xml_oarchive oa(ofs);
   oa << BOOST_SERIALIZATION_NVP(*this);
-  return os.str();
+  return fixArchiveVersion(os.str());
 }
 
 void HashMap::load(const std::string& s) {

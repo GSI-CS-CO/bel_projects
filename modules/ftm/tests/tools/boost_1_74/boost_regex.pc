@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+boostdir=${exec_prefix}/lib
+
+Name: boost_regex
+Description: Boost Regex Library
+Version: 1.74
+Libs: -L${boostdir} -lboost_regex
+Cflags: -I${includedir}
