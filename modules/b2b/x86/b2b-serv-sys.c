@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Dec-2021
+ *  version : 15-Mar-2023
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000421
+#define B2B_SERVSYS_VERSION 0x000425
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -91,8 +91,8 @@ static void help(void) {
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -s                  start server publishing system info\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KD...)\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s'\n", program);
+  fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KDE ...)\n");
+  fprintf(stderr, "Example1: '%s dev/wbm0 pro_sis18-pm -s'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_SERVSYS_VERSION));

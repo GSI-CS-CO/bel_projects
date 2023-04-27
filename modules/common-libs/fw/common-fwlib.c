@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-jan-2023
+ *  version : 14-Mar-2023
  *
  *  common functions used by various firmware projects
  *
@@ -60,6 +60,8 @@
 /* includes for this project */
 #include <common-defs.h>                                                // common definitions
 #include <common-fwlib.h>                                               // fwlib
+
+#include <common-core.c>
 
 // these routines are typically application specific
 extern void     extern_clearDiag();
@@ -278,21 +280,45 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 
   dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
   dt_as           = dt_ps * 1000000;
-  nPeriods        = (uint64_t)((double)dt_as / (double)T_as) + 1;
+  nPeriods        = dt_as / T_as + 1;                      // division does an implicit 'floor': need to increment
   interval_as     = nPeriods * T_as;
   half            = nineO >> 1;
   interval_ns     = interval_as / nineO;
   fraction_as     = interval_as % nineO;
-  if (fraction_as > half) {                                // rounding
+
+  if (fraction_as > half) {                                // rounding to ns
     interval_ns++;
     fraction_as -= nineO;
   } // if fraction
   tAdvanced_t.ns  = t1_t.ns + interval_ns;
-  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;
+  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;       // no rounding to ps
   tAdvanced_t.dps = t1_t.dps;
 
   return tAdvanced_t; // [ps]
 } // fwlib_advanceTimePs
+
+
+b2bt_t fwlib_tfns2tps(float t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns = t_ns;
+  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps    = fwlib_cleanB2bt(t_ps);
+
+  return t_ps;
+} // tfns2ps
+
+
+float fwlib_tps2tfns(b2bt_t t_ps)
+{  
+  float  tmp1, tmp2;
+  
+  tmp1 = (float)(t_ps.ns);
+  tmp2 = (float)(t_ps.ps) / 1000.0;
+
+  return tmp1 + tmp2;;
+} // fwlib_tps2tfns
 
 
 b2bt_t fwlib_tns2tps(uint64_t t_ns)
@@ -312,10 +338,9 @@ uint64_t fwlib_tps2tns(b2bt_t t_ps)              // time [ps]
   uint64_t t_ns;
   b2bt_t   ts_t;
 
-  ts_t = fwlib_cleanB2bt(t_ps);                  // clean
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean, includes rounding
 
   t_ns = ts_t.ns;
-  if (ts_t.ps >= 500) t_ns++;                    // rounding
 
   return t_ns;
 } // tps2tns
@@ -1019,3 +1044,15 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
       break;
     } // switch actState
 } // fwlib_doAutoRecovery
+
+
+uint16_t fwlib_float2half(float f)
+{
+  return comcore_float2half(f);
+} // fwlib_float2half
+
+
+float fwlib_half2float(uint16_t h)
+{
+  return comcore_half2float(h);
+} // fwlib_half2float

@@ -1,41 +1,51 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Note: setting the PKG_CONFIG_PATH might help too, example:
-# 'export PKG_CONFIG_PATH=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib/pkgconfig/'
 # Example usage:
 #   'make clean'                                                 
-#   'make PREFIX= all' ;                                                               (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
+#   'make YOCTO=YES PREFIX= all'                                                       (hack: leave PREFIX empty for SCU path)
+
+# install
 PREFIX      ?= /usr/local
 STAGING     ?=
-TARGETS     := freq-measure freq-mon-simple
 
-#DIMPATH     := /opt/dim/dim_v20r29
+# support Yocto SDK
+ifeq ($(YOCTO), YES)
+EB          ?= .
+ARCH        := /x86_64
+CFLAGS      ?=
+DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
+ASLLIB      := .
+ASLINC      := .
+else
+EB          ?= ../../../ip_cores/etherbone-core/api
+ARCH        ?= /x86_64
+CFLAGS      ?= -Wall -O2 -g
+#DIMPATH     := /opt/dim/dim_v20r33
+# the following four lines are a hack required for building software for sl7 (deprecated)
 DIMPATH     := /common/usr/timing/b2b/dim_v20r29
-
-#RPATH       ?= $(shell pkg-config saftlib --libs | sed 's/-l.*/ /g' | sed 's/-L//g')
-
-#CXXFLAGS = `pkg-config saftlib --cflags` -I $(DIMPATH)/dim
-#LDFLAGS  = `pkg-config saftlib --libs`   -L $(DIMPATH)/linux -ldim -lpthread -Wl,-rpath=$(RPATH)
-#CXX = g++ --std=c++11
-
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
+CXX         := g++ --std=c++0x
+endif
 
-CFLAGS      ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g  -I $(ASLINC) -I $(DIMPATH)/dim
-LIBS        ?= `pkg-config  saftlib --libs` -L $(ASLLIB) -L $(DIMPATH)/linux -Wl,-rpath,$(PREFIX)/lib -lm 
+EXTRA_FLAGS ?=
+LIBS        ?= -L. -Wl,-rpath,$(PREFIX)/lib -L$(DIMPATH)/linux
+CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
+SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -Wl,-rpath,$(PREFIX)/lib -lm -L$(DIMPATH)/linux
 
+$(info    CCFLAGS is $(CCFLAGS))
+$(info     CFLAGS is $(CFLAGS))
+
+TARGETS     := freq-measure freq-mon-simple
 
 all: $(TARGETS)
 
 freq-measure: freq-measure.cpp
-	g++ --std=c++11 $(CFLAGS) -o freq-measure freq-measure.cpp $(LIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CCFLAGS) -o freq-measure freq-measure.cpp $(SAFTLIBS) -ldim -lpthread
 
 freq-mon-simple: freq-mon-simple.c
-	$(CC) $(CFLAGS) -o freq-mon-simple freq-mon-simple.c $(LIBS) -ldim -lpthread
-
+	$(CC) $(CFLAGS) $(CCFLAGS) -o freq-mon-simple freq-mon-simple.c $(LIBS) -ldim -lpthread
 
 clean: 
 	rm -f freq-measure freq-mon-simple

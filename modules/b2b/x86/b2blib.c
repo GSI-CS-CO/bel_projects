@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Apr-2022
+ *  version : 23-Mar-2023
  *
  * library for b2b
  *
@@ -82,6 +82,10 @@ eb_address_t b2b_set_fFinTune;          // flag: use fine tune
 eb_address_t b2b_set_fMBTune;           // flag: use multi-beat tune
 eb_address_t b2b_set_sidEInj;           // SID for transfer; value must equal sidExt    
 eb_address_t b2b_set_gidInj;            // b2b GID offset of injection ring
+eb_address_t b2b_set_lsidInj;           // LSA SID of injection ring
+eb_address_t b2b_set_lbpidInj;          // LSA BPID of injection ring
+eb_address_t b2b_set_lparamInjHi;       // LSA param of injection ring, high bits
+eb_address_t b2b_set_lparamInjLo;       // LSA param of injection ring, low bits
 eb_address_t b2b_set_TH1InjHi;          // period of h=1 injection, high bits
 eb_address_t b2b_set_TH1InjLo;          // period of h=1 injection, low bits
 eb_address_t b2b_set_nHInj;             // harmonic number of injection RF
@@ -276,7 +280,11 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   b2b_set_fFinTune     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FFINTUNE;
   b2b_set_fMBTune      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FMBTUNE;
   b2b_set_sidEInj      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SIDEINJ;     
-  b2b_set_gidInj       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDINJ;     
+  b2b_set_gidInj       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDINJ;
+  b2b_set_lsidInj      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LSIDINJ;
+  b2b_set_lbpidInj     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LBPIDINJ;
+  b2b_set_lparamInjHi  = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LPARAMINJHI;
+  b2b_set_lparamInjLo  = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LPARAMINJLO;
   b2b_set_TH1InjHi     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJHI;
   b2b_set_TH1InjLo     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJLO;
   b2b_set_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHINJ;
@@ -375,7 +383,7 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   eb_device_t  eb_device;
   eb_data_t    data[30];
 
-  union fdat_t tmp;
+  fdat_t tmp;
   float fCPhase;
   float fCTrigExt;
   float fCTrigInj;
@@ -456,7 +464,7 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
 
-  union fdat_t tmp;
+  fdat_t tmp;
 
   sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
   // b2b_log("ext upload start");
@@ -517,7 +525,12 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
 
-  union fdat_t tmp;
+  // tmporary variables, should become parameters of this routine
+  uint32_t     sid=1;        // LSA SID
+  uint32_t     bpid=2;       // LSA bpid
+  uint64_t     param=3;      // LSA parameter
+
+  fdat_t tmp;
 
   //b2b_log("inj_upload start");
   
@@ -547,6 +560,10 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
   eb_cycle_write(eb_cycle, b2b_set_sidEInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sidExt);               // this looks funny but writing sidExt to the sidEInj register is not a bug
   eb_cycle_write(eb_cycle, b2b_set_gidInj,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gidInj);
+  eb_cycle_write(eb_cycle, b2b_set_lsidInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sid);
+  eb_cycle_write(eb_cycle, b2b_set_lbpidInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)bpid);
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjHi,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param >> 32));
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjLo,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);

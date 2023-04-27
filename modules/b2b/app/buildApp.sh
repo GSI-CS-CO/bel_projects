@@ -10,7 +10,7 @@
 
 EB=../../../ip_cores/etherbone-core/api
 SW=../x86
-DIM=/common/usr/timing/b2b/dim_v20r29
+DIM=/common/usr/timing/b2b/yocto/dim_v20r33/
 APPBUILD=$1/$2/current
 NAME=$2
 BIN=$3
