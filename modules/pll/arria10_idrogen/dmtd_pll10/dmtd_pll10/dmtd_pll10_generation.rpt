@@ -1,5 +1,5 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10 --family="Arria 10" --part=10AX027E3F29E2SG
+Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_idrogen/dmtd_pll10/dmtd_pll10.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_idrogen/dmtd_pll10/dmtd_pll10 --family="Arria 10" --part=10AX027H4F34I3SG
 Progress: Loading dmtd_pll10/dmtd_pll10.qsys
 Progress: Reading input file
 Progress: Adding iopll_0 [altera_iopll 18.1]
@@ -11,15 +11,15 @@ Progress: Done reading input file
 Info: dmtd_pll10.iopll_0: Able to implement PLL with user settings
 Info: dmtd_pll10: "Transforming system: dmtd_pll10"
 Info: dmtd_pll10: Running transform generation_view_transform
-Info: dmtd_pll10: Running transform generation_view_transform took 0.000s
+Info: dmtd_pll10: Running transform generation_view_transform took 0.001s
 Info: iopll_0: Running transform generation_view_transform
 Info: iopll_0: Running transform generation_view_transform took 0.000s
 Info: dmtd_pll10: Running transform merlin_avalon_transform
-Info: dmtd_pll10: Running transform merlin_avalon_transform took 0.028s
+Info: dmtd_pll10: Running transform merlin_avalon_transform took 0.027s
 Info: dmtd_pll10: "Naming system components in system: dmtd_pll10"
 Info: dmtd_pll10: "Processing generation queue"
 Info: dmtd_pll10: "Generating: dmtd_pll10"
-Info: dmtd_pll10: "Generating: dmtd_pll10_altera_iopll_181_l6e2jjy"
+Info: dmtd_pll10: "Generating: dmtd_pll10_altera_iopll_181_xd5hqja"
 Info: dmtd_pll10: Done "dmtd_pll10" with 2 modules, 3 files
 Info: qsys-generate succeeded.
 Info: Finished: Create HDL design files for synthesis

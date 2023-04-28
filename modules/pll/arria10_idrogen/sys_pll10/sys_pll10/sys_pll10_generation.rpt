@@ -1,5 +1,5 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_pll10/sys_pll10.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_pll10/sys_pll10 --family="Arria 10" --part=10AX027E3F29E2SG
+Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_idrogen/sys_pll10/sys_pll10.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_idrogen/sys_pll10/sys_pll10 --family="Arria 10" --part=10AX027H4F34I3SG
 Progress: Loading sys_pll10/sys_pll10.qsys
 Progress: Reading input file
 Progress: Adding iopll_0 [altera_iopll 18.1]
@@ -15,11 +15,11 @@ Info: sys_pll10: Running transform generation_view_transform took 0.000s
 Info: iopll_0: Running transform generation_view_transform
 Info: iopll_0: Running transform generation_view_transform took 0.000s
 Info: sys_pll10: Running transform merlin_avalon_transform
-Info: sys_pll10: Running transform merlin_avalon_transform took 0.030s
+Info: sys_pll10: Running transform merlin_avalon_transform took 0.026s
 Info: sys_pll10: "Naming system components in system: sys_pll10"
 Info: sys_pll10: "Processing generation queue"
 Info: sys_pll10: "Generating: sys_pll10"
-Info: sys_pll10: "Generating: sys_pll10_altera_iopll_181_j3py53y"
+Info: sys_pll10: "Generating: sys_pll10_altera_iopll_181_dvlj4by"
 Info: sys_pll10: Done "sys_pll10" with 2 modules, 3 files
 Info: qsys-generate succeeded.
 Info: Finished: Create HDL design files for synthesis

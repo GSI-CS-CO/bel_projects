@@ -14,7 +14,7 @@ module sys_pll10 (
 		input  wire  rst       //   reset.reset
 	);
 
-	sys_pll10_altera_iopll_181_j3py53y iopll_0 (
+	sys_pll10_altera_iopll_181_dvlj4by iopll_0 (
 		.rst      (rst),      //   reset.reset
 		.refclk   (refclk),   //  refclk.clk
 		.locked   (locked),   //  locked.export

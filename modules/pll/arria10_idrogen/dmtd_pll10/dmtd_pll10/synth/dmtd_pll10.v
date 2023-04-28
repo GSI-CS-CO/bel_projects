@@ -10,7 +10,7 @@ module dmtd_pll10 (
 		input  wire  rst       //   reset.reset
 	);
 
-	dmtd_pll10_altera_iopll_181_l6e2jjy iopll_0 (
+	dmtd_pll10_altera_iopll_181_xd5hqja iopll_0 (
 		.rst      (rst),      //   reset.reset
 		.refclk   (refclk),   //  refclk.clk
 		.locked   (locked),   //  locked.export

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport
- name="sys_fpll10_scu4"
- kind="sys_fpll10_scu4"
+ name="sys_fpll10_idrogen"
+ kind="sys_fpll10_idrogen"
  version="1.0"
  fabric="QSYS">
  <!-- Format version 18.1 625 (Future versions may contain additional information.) -->
- <!-- 2023.04.28.11:10:54 -->
+ <!-- 2023.04.28.13:47:32 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1682673054</value>
+  <value>1682682451</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -36,7 +36,7 @@
  </parameter>
  <parameter name="AUTO_DEVICE">
   <type>java.lang.String</type>
-  <value>10AX027E3F29E2SG</value>
+  <value>10AX027H4F34I3SG</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -45,7 +45,7 @@
  </parameter>
  <parameter name="AUTO_DEVICE_SPEEDGRADE">
   <type>java.lang.String</type>
-  <value>2</value>
+  <value>3</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -2520,7 +2520,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="device">
    <type>java.lang.String</type>
-   <value>10AX027E3F29E2SG</value>
+   <value>10AX027H4F34I3SG</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -2547,7 +2547,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="device_speed_grade">
    <type>java.lang.String</type>
-   <value>e3</value>
+   <value>i4</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
