@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file
+   path="altera_iopll_181/sim/dmtd_pll10_altera_iopll_181_l6e2jjy.vo"
+   type="VERILOG"
+   library="dmtd_pll10_altera_iopll_181" />
+ <file path="sim/dmtd_pll10.v" type="VERILOG" hasInlineConfiguration="true" />
+ <topLevel name="dmtd_pll10" />
+ <deviceFamily name="arria10" />
+</simPackage>

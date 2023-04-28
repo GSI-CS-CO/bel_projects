@@ -1,0 +1,920 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy
+ date="2023.04.28.11:10:55"
+ outputDirectory="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/">
+ <perimeter>
+  <parameter
+     name="AUTO_GENERATION_ID"
+     type="Integer"
+     defaultValue="0"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_UNIQUE_ID"
+     type="String"
+     defaultValue=""
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_FAMILY"
+     type="String"
+     defaultValue="Arria 10"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE"
+     type="String"
+     defaultValue="10AX027E3F29E2SG"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_SPEEDGRADE"
+     type="String"
+     defaultValue="2"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_PLL_REFCLK0_CLOCK_RATE"
+     type="Long"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_PLL_REFCLK0_CLOCK_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_PLL_REFCLK0_RESET_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <interface name="outclk0" kind="clock" start="1">
+   <property name="associatedDirectClock" value="" />
+   <property name="clockRate" value="100000000" />
+   <property name="clockRateKnown" value="true" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="outclk0" direction="output" role="clk" width="1" />
+  </interface>
+  <interface name="outclk1" kind="clock" start="1">
+   <property name="associatedDirectClock" value="" />
+   <property name="clockRate" value="100000000" />
+   <property name="clockRateKnown" value="true" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="outclk1" direction="output" role="clk" width="1" />
+  </interface>
+  <interface name="outclk2" kind="clock" start="1">
+   <property name="associatedDirectClock" value="" />
+   <property name="clockRate" value="100000000" />
+   <property name="clockRateKnown" value="true" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="outclk2" direction="output" role="clk" width="1" />
+  </interface>
+  <interface name="outclk3" kind="clock" start="1">
+   <property name="associatedDirectClock" value="" />
+   <property name="clockRate" value="100000000" />
+   <property name="clockRateKnown" value="true" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="outclk3" direction="output" role="clk" width="1" />
+  </interface>
+  <interface name="pll_cal_busy" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="pll_cal_busy" direction="output" role="pll_cal_busy" width="1" />
+  </interface>
+  <interface name="pll_locked" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="pll_locked" direction="output" role="pll_locked" width="1" />
+  </interface>
+  <interface name="pll_powerdown" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="pll_powerdown" direction="input" role="pll_powerdown" width="1" />
+  </interface>
+  <interface name="pll_refclk0" kind="clock" start="0">
+   <property name="clockRate" value="125000000" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="pll_refclk0" direction="input" role="clk" width="1" />
+  </interface>
+ </perimeter>
+ <entity kind="sys_fpll10_scu4" version="1.0" name="sys_fpll10_scu4">
+  <parameter name="AUTO_PLL_REFCLK0_RESET_DOMAIN" value="-1" />
+  <parameter name="AUTO_PLL_REFCLK0_CLOCK_DOMAIN" value="-1" />
+  <parameter name="AUTO_GENERATION_ID" value="1682673054" />
+  <parameter name="AUTO_DEVICE" value="10AX027E3F29E2SG" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
+  <parameter name="AUTO_UNIQUE_ID" value="" />
+  <parameter name="AUTO_PLL_REFCLK0_CLOCK_RATE" value="-1" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
+  <generatedFiles>
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4.qsys" />
+  </sourceFiles>
+  <childSourceFiles>
+   <file
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+  </childSourceFiles>
+  <messages>
+   <message level="Info" culprit="sys_fpll10_scu4">"Generating: sys_fpll10_scu4"</message>
+   <message level="Info" culprit="sys_fpll10_scu4">"Generating: altera_xcvr_fpll_a10"</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./twentynm_xcvr_avmm.sv SYSTEM_VERILOG PATH ../../../alt_xcvr_core/nf/twentynm_xcvr_avmm.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_resync.sv SYSTEM_VERILOG PATH ../../../../altera_xcvr_generic/ctrl/alt_xcvr_resync.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./altera_xcvr_fpll_a10.sv SYSTEM_VERILOG PATH ../source/altera_xcvr_fpll_a10.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./a10_avmm_h.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/a10_avmm_h.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_native_avmm_nf.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/alt_xcvr_native_avmm_nf.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_pll_embedded_debug.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_embedded_debug.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_pll_avmm_csr.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_avmm_csr.sv</message>
+  </messages>
+ </entity>
+ <entity
+   kind="altera_xcvr_fpll_a10"
+   version="18.1"
+   name="altera_xcvr_fpll_a10">
+  <parameter name="cmu_fpll_pll_n_counter_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_c_counter_0_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_enable" value="true" />
+  <parameter name="core_c_counter_1_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_output_clock_frequency_3" value="10.0 MHz" />
+  <parameter name="cmu_fpll_output_clock_frequency_2" value="20.0 MHz" />
+  <parameter name="numeric_speed_grade" value="1" />
+  <parameter name="cmu_fpll_bw_sel" value="high" />
+  <parameter name="cmu_fpll_output_clock_frequency_1" value="100.0 MHz" />
+  <parameter name="gui_outclk2_phase_shift_unit" value="0" />
+  <parameter
+     name="cmu_fpll_fpll_iqtxrxclk_out_enable"
+     value="fpll_iqtxrxclk_out_disable" />
+  <parameter name="cmu_fpll_pll_tclk_mux_en" value="false" />
+  <parameter name="prot_mode" value="basic_tx" />
+  <parameter name="cmu_fpll_pll_sup_mode" value="user_mode" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_0_dyn_low_bits" value="0" />
+  <parameter name="f_out_c0_bitvec" value="000000000011101110011010110010100000" />
+  <parameter name="cmu_fpll_prot_mode" value="basic_tx" />
+  <parameter name="cmu_fpll_n_counter" value="1" />
+  <parameter name="cmu_fpll_pll_c_counter_3_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_lock_fltr_cfg" value="25" />
+  <parameter
+     name="cmu_fpll_pll_dprio_clk_vreg_boost"
+     value="clk_fpll_vreg_no_voltage_boost" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_iqclk_sel"
+     value="power_down" />
+  <parameter name="cmu_fpll_max_fractional_percentage" value="99" />
+  <parameter name="cmu_fpll_pll_device_variant" value="device1" />
+  <parameter name="vco_freq_bitvec" value="000101100101101000001011110000000000" />
+  <parameter name="cmu_fpll_pll_dprio_power_iso_en" value="false" />
+  <parameter name="hssi_pma_cgb_master_datarate" value="0 bps" />
+  <parameter name="cmu_fpll_min_fractional_percentage" value="1" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch2_src"
+     value="pll_clkin_1_scratch2_src_vss" />
+  <parameter name="gui_enable_iqtxrxclk_mode" value="false" />
+  <parameter name="device_speed_grade" value="e3" />
+  <parameter name="gui_enable_phase_alignment" value="false" />
+  <parameter name="base_device" value="NIGHTFURY2" />
+  <parameter name="pll_c_counter_3_prst" value="1" />
+  <parameter name="gui_fractional_f" value="0.0" />
+  <parameter name="cmu_fpll_f_min_pfd" value="25000000" />
+  <parameter
+     name="cmu_fpll_pll_vco_freq_band_1_fix_high"
+     value="pll_vco_freq_band_1_fix_high_0" />
+  <parameter name="generate_add_hdl_instance_example" value="0" />
+  <parameter name="cmu_fpll_pll_dsm_ecn_test_en" value="false" />
+  <parameter name="hssi_l_counter" value="1" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux0_inclk3_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="gui_actual_outclk0_frequency" value="100.0" />
+  <parameter name="cmu_fpll_refclk_select_mux_silicon_rev" value="20nm5es" />
+  <parameter name="gui_outclk1_actual_phase_shift" value="0.0" />
+  <parameter name="cmu_fpll_pll_iqclk_mux_sel" value="power_down" />
+  <parameter name="cmu_fpll_pll_c_counter_0_prst" value="1" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch3_src"
+     value="pll_clkin_0_scratch3_src_vss" />
+  <parameter name="full_outclk2_actual_phase_shift" value="0.0" />
+  <parameter name="pll_c_counter_0_prst" value="1" />
+  <parameter name="cmu_fpll_pll_lpf_rstn_value" value="lpf_normal" />
+  <parameter name="hssi_cascade_c_counter_ph_mux_prst" value="0" />
+  <parameter name="gui_pll_set_hssi_m_counter" value="8" />
+  <parameter name="set_altera_xcvr_fpll_a10_calibration_en" value="1" />
+  <parameter name="gui_fractional_x" value="32" />
+  <parameter name="gui_outclk3_actual_phase_shift_deg" value="0.0" />
+  <parameter name="is_c10" value="0" />
+  <parameter name="cmu_fpll_pll_vco_ph3_value" value="pll_vco_ph3_vss" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch2_src"
+     value="pll_clkin_0_scratch2_src_vss" />
+  <parameter name="pll_n_counter" value="1" />
+  <parameter name="gui_actual_outclk2_frequency" value="100.0" />
+  <parameter name="cmu_fpll_pll_cp_testmode" value="cp_normal" />
+  <parameter name="cmu_fpll_f_max_pfd_bonded" value="600000000" />
+  <parameter name="cmu_fpll_pll_powerdown_mode" value="false" />
+  <parameter name="cmu_fpll_pll_c_counter_2_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_vco_ph3_en" value="true" />
+  <parameter name="core_c_counter_3_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_m_counter_prst" value="1" />
+  <parameter name="pll_manu_clk_sw_en" value="false" />
+  <parameter name="cmu_fpll_bandwidth_range_low" value="1" />
+  <parameter name="cmu_fpll_power_mode" value="low_power" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_manu_clk_sw_en" value="false" />
+  <parameter name="cmu_fpll_pll_bw_mode" value="hi_bw" />
+  <parameter name="dbg_embedded_debug_enable" value="0" />
+  <parameter name="cmu_fpll_datarate" value="0 Mbps" />
+  <parameter name="is_protocol_PCIe" value="0" />
+  <parameter name="c_counter1_bitvec" value="1" />
+  <parameter name="cmu_fpll_pll_lf_resistance" value="lf_res_setting0" />
+  <parameter name="enable_hfreq_clk" value="0" />
+  <parameter name="pll_c_counter_2_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="core_c_counter_1_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="hssi_pcie_c_counter_0_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_vco_ph2_en" value="true" />
+  <parameter name="gui_pll_n_counter" value="1" />
+  <parameter name="cmu_fpll_out_freq" value="000000000000000000000000000000000000" />
+  <parameter name="hssi_l_counter_bypass" value="1" />
+  <parameter name="cmu_fpll_out_freq_hz" value="0 hz" />
+  <parameter name="cmu_fpll_pll_c_counter_1_prst" value="1" />
+  <parameter name="gui_outclk3_desired_phase_shift" value="0" />
+  <parameter name="cmu_fpll_fpll_cal_test_sel" value="sel_cal_out_7_to_0" />
+  <parameter
+     name="cmu_fpll_pll_c_counter_1_in_src"
+     value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="full_actual_outclk1_frequency" value="100.0" />
+  <parameter name="gui_outclk2_desired_phase_shift" value="0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch1_src"
+     value="pll_clkin_1_scratch1_src_vss" />
+  <parameter name="gui_operation_mode" value="0" />
+  <parameter name="gui_desired_hssi_cascade_frequency" value="100.0" />
+  <parameter name="hssi_pma_cgb_master_op_mode" value="enabled" />
+  <parameter name="cmu_fpll_top_or_bottom" value="tb_unknown" />
+  <parameter name="hssi_l_counter_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="gui_hssi_output_clock_frequency" value="1250.0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clk_sel_override_value"
+     value="select_clk0" />
+  <parameter name="hssi_cascade_n_counter" value="1" />
+  <parameter name="cmu_fpll_reference_clock_frequency" value="125.0 MHz" />
+  <parameter name="cmu_fpll_pll_dsm_mode" value="dsm_mode_integer" />
+  <parameter name="cmu_fpll_pll_n_counter_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_reconfig_en" value="0" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_1_dyn_low_bits" value="0" />
+  <parameter name="vco_frequency" value="6000.0 MHz" />
+  <parameter name="cmu_fpll_pll_m_counter_ph_mux_prst" value="0" />
+  <parameter name="pll_clk_sw_dly" value="0" />
+  <parameter name="cmu_fpll_input_tolerance" value="0" />
+  <parameter name="gui_refclk1_frequency" value="100.0" />
+  <parameter name="cmu_fpll_pll_c_counter_2_ph_mux_prst" value="0" />
+  <parameter name="hssi_cascade_pfd_frequency" value="300.0 MHz" />
+  <parameter name="pll_c_counter_2_ph_mux_prst" value="0" />
+  <parameter name="cmu_fpll_output_clock_frequency_0" value="62.5 MHz" />
+  <parameter name="core_c_counter_2_ph_mux_prst" value="0" />
+  <parameter name="cmu_fpll_pll_m_counter" value="24" />
+  <parameter name="rcfg_h_file_enable" value="0" />
+  <parameter name="cmu_fpll_pll_dprio_status_select" value="dprio_normal_status" />
+  <parameter name="core_c_counter_0_ph_mux_prst" value="0" />
+  <parameter name="pll_iqclk_mux_sel" value="power_down" />
+  <parameter name="gui_desired_refclk_frequency" value="100.0" />
+  <parameter name="pll_c_counter_0_ph_mux_prst" value="0" />
+  <parameter name="rcfg_txt_file_enable" value="0" />
+  <parameter name="cmu_fpll_pll_c_counter_0_ph_mux_prst" value="0" />
+  <parameter name="enable_mcgb" value="0" />
+  <parameter name="cmu_fpll_pll_c_counter_3" value="150" />
+  <parameter name="cmu_fpll_side" value="side_unknown" />
+  <parameter name="cmu_fpll_pll_c_counter_0" value="24" />
+  <parameter name="cmu_fpll_pll_dsm_fractional_division" value="1" />
+  <parameter name="full_outclk0_actual_phase_shift" value="0.0" />
+  <parameter name="cmu_fpll_pll_optimal" value="true" />
+  <parameter name="cmu_fpll_pll_c_counter_2" value="75" />
+  <parameter name="cmu_fpll_pll_c_counter_1" value="15" />
+  <parameter name="cmu_fpll_pll_ctrl_override_setting" value="true" />
+  <parameter name="cmu_fpll_pll_c_counter_3_prst" value="1" />
+  <parameter name="pfd_frequency" value="125.0 MHz" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch0_src"
+     value="scratch0_power_down" />
+  <parameter name="f_out_c3_bitvec" value="000000000000100110001001011010000000" />
+  <parameter name="cmu_fpll_vco_freq_hz" value="6000000000" />
+  <parameter name="cmu_fpll_pll_nreset_invert" value="false" />
+  <parameter name="hssi_actual_using_fractional" value="false" />
+  <parameter name="hssi_vco_frequency" value="300.0 MHz" />
+  <parameter name="cmu_fpll_is_cascaded_pll" value="false" />
+  <parameter name="cmu_fpll_pll_vco_ph2_value" value="pll_vco_ph2_vss" />
+  <parameter name="pfd_freq_bitvec" value="000000000111011100110101100101000000" />
+  <parameter name="generate_docs" value="0" />
+  <parameter name="cmu_fpll_pll_lock_fltr_test" value="pll_lock_fltr_nrm" />
+  <parameter name="cmu_fpll_pll_l_counter" value="1" />
+  <parameter name="gui_hssi_prot_mode" value="0" />
+  <parameter name="gui_desired_outclk2_frequency" value="20.0" />
+  <parameter name="pll_clk_loss_sw_en" value="false" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_sw_refclk_src"
+     value="pll_sw_refclk_src_clk_0" />
+  <parameter name="mapped_primary_pll_buffer" value="N/A" />
+  <parameter name="hip_cal_en" value="disable" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_src"
+     value="pll_clkin_1_src_vss" />
+  <parameter name="mapped_output_clock_frequency" value="0 ps" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch1_src"
+     value="scratch1_power_down" />
+  <parameter name="cmu_fpll_pll_core_vreg1_atbsel" value="atb_disabled1" />
+  <parameter name="cmu_fpll_pll_dsm_fractional_value_ready" value="pll_k_ready" />
+  <parameter name="cmu_fpll_enable_idle_fpll_support" value="idle_none" />
+  <parameter name="hssi_pma_cgb_master_silicon_rev" value="20nm2" />
+  <parameter name="gui_pfd_frequency" value="125.0" />
+  <parameter name="core_c_counter_1_fine_dly" value="0 ps" />
+  <parameter name="hssi_cascade_actual_using_fractional" value="false" />
+  <parameter name="hssi_l_counter_ph_mux_prst" value="0" />
+  <parameter name="cmu_fpll_pll_vco_ph1_en" value="true" />
+  <parameter name="core_c_counter_1_prst" value="1" />
+  <parameter name="cmu_fpll_f_max_pfd" value="800000000" />
+  <parameter name="enable_mcgb_pcie_clksw" value="0" />
+  <parameter name="check_output_ports_mcgb" value="0" />
+  <parameter name="cmu_fpll_pll_lf_ripplecap" value="lf_no_ripple" />
+  <parameter name="enable_advanced_options" value="0" />
+  <parameter name="cmu_fpll_pll_calibration" value="true" />
+  <parameter name="cmu_fpll_pll_dsm_ecn_bypass" value="false" />
+  <parameter name="gui_desired_outclk1_frequency" value="100.0" />
+  <parameter name="gui_outclk0_phase_shift_unit" value="0" />
+  <parameter name="gui_outclk2_actual_phase_shift_deg" value="0 deg" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_fpll_vco_div_by_2_sel"
+     value="bypass_divide_by_2" />
+  <parameter name="core_c_counter_0_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="hssi_pma_cgb_master_x1_div_m_sel" value="divbypass" />
+  <parameter name="hssi_pcie_c_counter_0" value="1" />
+  <parameter name="gui_enable_extswitch" value="false" />
+  <parameter name="cmu_fpll_pm_speed_grade" value="e2" />
+  <parameter name="cmu_fpll_pll_l_counter_bypass" value="false" />
+  <parameter name="cmu_fpll_pll_c_counter_0_fine_dly" value="0 ps" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch4_src"
+     value="pll_clkin_1_scratch4_src_vss" />
+  <parameter name="enable_bonding_clks" value="0" />
+  <parameter name="mcgb_div" value="1" />
+  <parameter name="cmu_fpll_f_out_c2_hz" value="0 hz" />
+  <parameter name="cmu_fpll_pll_vco_ph0_en" value="true" />
+  <parameter name="mcgb_div_fnl" value="1" />
+  <parameter name="primary_use" value="core" />
+  <parameter name="dbg_ctrl_soft_logic_enable" value="0" />
+  <parameter name="hssi_dsm_fractional_division" value="1" />
+  <parameter name="cmu_fpll_pll_atb" value="atb_selectdisable" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_xpm_cpvco_fpll_xpm_chgpmplf_fpll_cp_current_boost"
+     value="normal_setting" />
+  <parameter name="set_user_identifier" value="0" />
+  <parameter name="hssi_pma_cgb_master_ser_mode" value="sixty_four_bit" />
+  <parameter name="pll_dsm_mode" value="dsm_mode_integer" />
+  <parameter name="hssi_m_counter" value="11" />
+  <parameter name="gui_enable_dps" value="false" />
+  <parameter name="gui_enable_manual_config" value="false" />
+  <parameter name="core_vco_frequency_basic" value="6000.0" />
+  <parameter name="mcgb_out_datarate" value="0.0" />
+  <parameter name="cmu_fpll_pll_c_counter_3_min_tco_enable" value="true" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux1_inclk1_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="rcfg_mif_file_enable" value="0" />
+  <parameter name="cmu_fpll_pll_ppm_clk0_src" value="ppm_clk0_vss" />
+  <parameter name="cmu_fpll_pll_c_counter_1_coarse_dly" value="0 ps" />
+  <parameter name="phase_alignment_check_var" value="false" />
+  <parameter name="cmu_fpll_pll_self_reset" value="false" />
+  <parameter name="full_actual_refclk_frequency" value="0.0" />
+  <parameter name="pll_datarate" value="0 Mbps" />
+  <parameter name="cmu_fpll_f_out_c0_hz" value="0 hz" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux0_inclk1_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="cmu_fpll_phase_shift_3" value="0.0 ps" />
+  <parameter name="cmu_fpll_phase_shift_2" value="0.0 ps" />
+  <parameter name="gui_hip_cal_en" value="0" />
+  <parameter name="dbg_stat_soft_logic_enable" value="0" />
+  <parameter name="cmu_fpll_vco_freq" value="000101100101101000001011110000000000" />
+  <parameter name="cmu_fpll_pll_vco_ph1_value" value="pll_vco_ph1_vss" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch3_src"
+     value="pll_clkin_1_scratch3_src_vss" />
+  <parameter
+     name="cmu_fpll_pll_c_counter_2_in_src"
+     value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="cmu_fpll_f_out_c1_hz" value="0 hz" />
+  <parameter name="cmu_fpll_l_counter" value="1" />
+  <parameter name="cmu_fpll_pll_ppm_clk1_src" value="ppm_clk1_vss" />
+  <parameter name="cmu_fpll_f_max_vco_fractional" value="14025000000" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch0_src"
+     value="scratch0_power_down" />
+  <parameter name="pll_m_counter_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="core_c_counter_2_coarse_dly" value="0 ps" />
+  <parameter name="gui_desired_outclk3_frequency" value="10.0" />
+  <parameter name="rcfg_debug" value="0" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_clk_sw_dly" value="0" />
+  <parameter name="cmu_fpll_pll_dprio_cvp_inter_sel" value="false" />
+  <parameter name="cmu_fpll_phase_shift_1" value="0.0 ps" />
+  <parameter name="cmu_fpll_pll_cmp_buf_dly" value="0 ps" />
+  <parameter name="cmu_fpll_phase_shift_0" value="0.0 ps" />
+  <parameter name="cmu_fpll_is_otn" value="false" />
+  <parameter name="hssi_cascade_c_counter_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="hssi_l_counter_enable" value="false" />
+  <parameter name="hssi_pma_cgb_master_input_select_gen3" value="unused" />
+  <parameter name="gui_cascade_outclk_index" value="0" />
+  <parameter name="fpll_refclk_select" value="0" />
+  <parameter name="cmu_fpll_pll_vco_ph0_value" value="pll_vco_ph0_vss" />
+  <parameter name="cmu_fpll_pll_c3_pllcout_enable" value="true" />
+  <parameter name="cmu_fpll_analog_mode" value="user_custom" />
+  <parameter name="pll_c_counter_1_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_cp_lf_3rd_pole_freq" value="lf_3rd_pole_setting0" />
+  <parameter name="cmu_fpll_pll_c_counter_1_ph_mux_prst" value="0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_src"
+     value="pll_clkin_0_src_vss" />
+  <parameter name="core_c_counter_3_ph_mux_prst" value="0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch4_src"
+     value="pll_clkin_0_scratch4_src_vss" />
+  <parameter name="pll_c_counter_1_ph_mux_prst" value="0" />
+  <parameter name="pll_c_counter_3_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux1_inclk3_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="pll_dsm_fractional_division" value="1" />
+  <parameter name="core_c_counter_2_prst" value="1" />
+  <parameter name="core_c_counter_0" value="24" />
+  <parameter name="cmu_fpll_dps_en" value="false" />
+  <parameter name="hssi_pma_cgb_master_input_select" value="fpll_top" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_auto_clk_sw_en" value="false" />
+  <parameter name="core_c_counter_2" value="75" />
+  <parameter name="pll_c_counter_2" value="75" />
+  <parameter name="core_c_counter_1" value="15" />
+  <parameter name="pll_c_counter_3" value="150" />
+  <parameter name="l_counter_bitvec" value="1" />
+  <parameter name="pll_c_counter_0" value="24" />
+  <parameter name="core_c_counter_3" value="150" />
+  <parameter name="pll_c_counter_1" value="15" />
+  <parameter name="gui_enable_50G_support" value="false" />
+  <parameter name="enable_analog_resets" value="0" />
+  <parameter name="gui_pll_c_counter_3" value="1" />
+  <parameter name="gui_pll_c_counter_2" value="1" />
+  <parameter name="core_actual_using_fractional" value="false" />
+  <parameter name="device_revision" value="20nm2" />
+  <parameter name="f_out_c2_bitvec" value="000000000001001100010010110100000000" />
+  <parameter name="gui_outclk0_desired_phase_shift" value="0.0" />
+  <parameter name="cmu_fpll_pll_c_counter_2_prst" value="1" />
+  <parameter name="gui_enable_clk_bad" value="false" />
+  <parameter name="cmu_fpll_pll_test_enable" value="false" />
+  <parameter name="cmu_fpll_f_max_pfd_integer" value="800000000" />
+  <parameter name="cmu_fpll_cgb_div" value="1" />
+  <parameter name="cmu_fpll_pll_c0_pllcout_enable" value="true" />
+  <parameter name="cmu_fpll_f_min_vco" value="6000000000" />
+  <parameter name="cmu_fpll_initial_settings" value="true" />
+  <parameter name="cmu_fpll_compensation_mode" value="direct" />
+  <parameter name="core_c_counter_2_fine_dly" value="0 ps" />
+  <parameter name="gui_actual_refclk_frequency" value="100.0" />
+  <parameter name="enable_ext_lockdetect_ports" value="0" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_clk_loss_sw_en" value="false" />
+  <parameter name="device" value="10AX027E3F29E2SG" />
+  <parameter name="cmu_fpll_f_max_div_two_bypass" value="1" />
+  <parameter name="hssi_pcie_c_counter_0_fine_dly" value="0 ps" />
+  <parameter name="mcgb_aux_clkin_cnt" value="0" />
+  <parameter name="cmu_fpll_vco_frequency" value="6000.0 MHz" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_iqclk_sel"
+     value="power_down" />
+  <parameter name="device_family" value="Arria 10" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux1_inclk0_logical_to_physical_mapping"
+     value="lvpecl" />
+  <parameter name="gui_outclk1_actual_phase_shift_deg" value="0.0" />
+  <parameter name="gui_number_of_output_clocks" value="4" />
+  <parameter name="cmu_fpll_silicon_rev" value="20nm2" />
+  <parameter name="cmu_fpll_primary_use" value="core" />
+  <parameter
+     name="cmu_fpll_pll_c_counter_3_in_src"
+     value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="cmu_fpll_fpll_hclk_out_enable" value="fpll_hclk_out_disable" />
+  <parameter name="pll_m_counter" value="24" />
+  <parameter name="cmu_fpll_pll_dsm_out_sel" value="pll_dsm_disable" />
+  <parameter name="cmu_fpll_f_max_pfd_fractional" value="800000000" />
+  <parameter name="cmu_fpll_fpll_cas_out_enable" value="fpll_cas_out_disable" />
+  <parameter name="cmu_fpll_pll_lf_cbig" value="lf_cbig_setting4" />
+  <parameter name="enable_pll_reconfig" value="0" />
+  <parameter name="gui_outclk3_actual_phase_shift" value="0.0" />
+  <parameter name="hssi_cascade_dsm_fractional_division" value="1" />
+  <parameter name="set_capability_reg_enable" value="0" />
+  <parameter name="cmu_fpll_pll_m_counter_min_tco_enable" value="false" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch3_src"
+     value="scratch3_power_down" />
+  <parameter name="hssi_pcie_c_counter_0_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="mapped_hip_cal_done_port" value="0" />
+  <parameter name="gui_fpll_mode" value="0" />
+  <parameter name="gui_refclk_switch" value="false" />
+  <parameter name="set_csr_soft_logic_enable" value="0" />
+  <parameter name="cmu_fpll_pll_ctrl_plniotri_override" value="false" />
+  <parameter name="full_actual_outclk0_frequency" value="62.5" />
+  <parameter name="gui_outclk3_phase_shift_unit" value="0" />
+  <parameter name="c_counter0_bitvec" value="1" />
+  <parameter name="full_outclk1_actual_phase_shift" value="0.0" />
+  <parameter name="pll_c_counter_1_fine_dly" value="0 ps" />
+  <parameter name="gui_outclk0_actual_phase_shift" value="0.0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch2_src"
+     value="scratch2_power_down" />
+  <parameter name="cmu_fpll_pll_c_counter_1_min_tco_enable" value="true" />
+  <parameter name="enable_cascade_in" value="0" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch1_src"
+     value="scratch1_power_down" />
+  <parameter name="core_pfd_frequency" value="125.0" />
+  <parameter name="cmu_fpll_pll_c2_pllcout_enable" value="true" />
+  <parameter name="pll_c_counter_0_coarse_dly" value="0 ps" />
+  <parameter
+     name="cmu_fpll_refclk_freq"
+     value="000000000111011100110101100101000000" />
+  <parameter name="cmu_fpll_duty_cycle_1" value="50" />
+  <parameter name="cmu_fpll_duty_cycle_2" value="50" />
+  <parameter name="cmu_fpll_duty_cycle_3" value="50" />
+  <parameter name="hssi_cascade_c_counter" value="1" />
+  <parameter name="gui_pll_set_hssi_k_counter" value="1" />
+  <parameter name="hssi_pfd_frequency" value="300.0 MHz" />
+  <parameter name="reference_clock_frequency" value="125.0 MHz" />
+  <parameter name="cmu_fpll_is_sdi" value="false" />
+  <parameter name="cmu_fpll_power_rail_et" value="0" />
+  <parameter name="cmu_fpll_m_counter" value="24" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clk_loss_edge"
+     value="pll_clk_loss_both_edges" />
+  <parameter name="cmu_fpll_duty_cycle_0" value="50" />
+  <parameter name="cmu_fpll_f_out_c3_hz" value="0 hz" />
+  <parameter name="n_counter_bitvec" value="1" />
+  <parameter name="cmu_fpll_feedback" value="normal" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch0_src"
+     value="pll_clkin_1_scratch0_src_vss" />
+  <parameter name="cgb_div_bitvec" value="1" />
+  <parameter name="full_actual_outclk2_frequency" value="20.0" />
+  <parameter name="core_dsm_fractional_division" value="0" />
+  <parameter name="pll_clk_loss_edge" value="pll_clk_loss_both_edges" />
+  <parameter name="cmu_fpll_m_counter_c0" value="1" />
+  <parameter name="pll_c_counter_1_prst" value="1" />
+  <parameter name="cmu_fpll_m_counter_c3" value="1" />
+  <parameter name="c_counter3_bitvec" value="1" />
+  <parameter name="cmu_fpll_m_counter_c2" value="1" />
+  <parameter name="gui_pll_set_hssi_n_counter" value="1" />
+  <parameter name="cmu_fpll_m_counter_c1" value="1" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_powerdown_mode" value="false" />
+  <parameter name="core_c_counter_3_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_sup_mode" value="user_mode" />
+  <parameter name="cmu_fpll_pll_core_vreg0_atbsel" value="atb_disabled" />
+  <parameter name="gui_desired_outclk0_frequency" value="62.5" />
+  <parameter
+     name="hssi_pma_cgb_master_tx_ucontrol_reset_pcie"
+     value="pcscorehip_controls_mcgb" />
+  <parameter name="cmu_fpll_pll_tclk_sel" value="pll_tclk_m_src" />
+  <parameter name="gui_self_reset_enabled" value="false" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_pfd_pulse_width"
+     value="pulse_width_setting0" />
+  <parameter name="rcfg_separate_avmm_busy" value="0" />
+  <parameter name="cmu_fpll_pll_c_counter_1_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_c1_pllcout_enable" value="true" />
+  <parameter name="pll_c_counter_2_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_bandwidth_range_high" value="1" />
+  <parameter name="gui_hssi_calc_output_clock_frequency" value="1250.0" />
+  <parameter name="pll_c_counter_2_coarse_dly" value="0 ps" />
+  <parameter
+     name="cmu_fpll_pll_dprio_fpll_vreg_boost"
+     value="fpll_vreg_boost_1_step" />
+  <parameter name="pll_c_counter_2_prst" value="1" />
+  <parameter name="cmu_fpll_pll_op_mode" value="false" />
+  <parameter name="cmu_fpll_pll_fbclk_mux_1" value="pll_fbclk_mux_1_glb" />
+  <parameter name="cmu_fpll_pll_fbclk_mux_2" value="pll_fbclk_mux_2_m_cnt" />
+  <parameter name="cmu_fpll_pll_m_counter_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_bonding" value="pll_bonding" />
+  <parameter name="cmu_fpll_pll_cp_compensation" value="true" />
+  <parameter name="hssi_n_counter" value="1" />
+  <parameter name="cmu_fpll_pll_dprio_force_inter_sel" value="false" />
+  <parameter name="enable_pld_mcgb_cal_busy_port" value="0" />
+  <parameter name="cmu_fpll_pll_c_counter_2_min_tco_enable" value="true" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch2_src"
+     value="scratch2_power_down" />
+  <parameter name="gui_enable_manual_hssi_counters" value="false" />
+  <parameter name="gui_outclk1_desired_phase_shift" value="0" />
+  <parameter name="rcfg_sv_file_enable" value="0" />
+  <parameter name="cmu_fpll_f_out_c3" value="000000000000100110001001011010000000" />
+  <parameter name="cmu_fpll_f_out_c2" value="000000000001001100010010110100000000" />
+  <parameter name="cmu_fpll_f_out_c1" value="000000000101111101011110000100000000" />
+  <parameter name="gui_actual_outclk1_frequency" value="100.0" />
+  <parameter name="cmu_fpll_f_out_c0" value="000000000011101110011010110010100000" />
+  <parameter name="system_info_device_family" value="Arria 10" />
+  <parameter name="calibration_en" value="enable" />
+  <parameter name="gui_switchover_mode" value="Automatic Switchover" />
+  <parameter name="pll_c_counter_0_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_rstn_override" value="false" />
+  <parameter name="core_c_counter_3_fine_dly" value="0 ps" />
+  <parameter name="gui_parameter_values" value="24,15,75,150,1,24,1,6000.0 MHz,1" />
+  <parameter name="pll_auto_clk_sw_en" value="false" />
+  <parameter name="cmu_fpll_reference_clock_frequency_scratch" value="0 hz" />
+  <parameter name="cmu_fpll_pll_c_counter_2_fine_dly" value="0 ps" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux1_inclk4_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="gui_enable_cascade_out" value="false" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch1_src"
+     value="pll_clkin_0_scratch1_src_vss" />
+  <parameter name="feedback" value="normal" />
+  <parameter name="cmu_fpll_pma_width" value="64" />
+  <parameter name="core_c_counter_3_prst" value="1" />
+  <parameter name="cmu_fpll_pll_c_counter_3_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_refclk_select_mux_refclk_select0" value="lvpecl" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux0_scratch4_src"
+     value="scratch4_power_down" />
+  <parameter name="cmu_fpll_refclk_select_mux_refclk_select1" value="ref_iqclk0" />
+  <parameter name="f_out_c1_bitvec" value="000000000101111101011110000100000000" />
+  <parameter name="gui_is_downstream_cascaded_pll" value="false" />
+  <parameter name="pll_l_counter" value="1" />
+  <parameter name="hssi_cascade_m_counter" value="11" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux0_inclk4_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_cal_vco_count_length"
+     value="sel_8b_count" />
+  <parameter name="compensation_mode" value="direct" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_1_dyn_high_bits" value="0" />
+  <parameter name="cmu_fpll_f_max_band_9" value="1" />
+  <parameter
+     name="hssi_pma_cgb_master_cgb_enable_iqtxrxclk"
+     value="disable_iqtxrxclk" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_fpll_refclk_source"
+     value="normal_refclk" />
+  <parameter name="cmu_fpll_f_max_band_6" value="6075045000" />
+  <parameter name="pma_width" value="64" />
+  <parameter name="cmu_fpll_f_max_band_5" value="5762211000" />
+  <parameter name="cmu_fpll_f_max_band_8" value="14025000000" />
+  <parameter name="cmu_fpll_f_max_band_7" value="6374148000" />
+  <parameter name="gui_outclk0_actual_phase_shift_deg" value="0.0" />
+  <parameter name="cmu_fpll_f_max_vco" value="14150000000" />
+  <parameter name="gui_refclk_index" value="0" />
+  <parameter name="gui_pll_set_hssi_l_counter" value="1" />
+  <parameter name="enable_mcgb_debug_ports_parameters" value="0" />
+  <parameter name="enable_hip_options" value="0" />
+  <parameter name="gui_pll_dsm_fractional_division" value="1" />
+  <parameter name="mcgb_in_clk_freq" value="0.0" />
+  <parameter
+     name="cmu_fpll_pll_c_counter_0_in_src"
+     value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="cmu_fpll_pll_unlock_fltr_cfg" value="2" />
+  <parameter name="gui_enable_low_f_support" value="false" />
+  <parameter name="pma_width_bitvec" value="64" />
+  <parameter name="cmu_fpll_f_min_band_0" value="7000000000" />
+  <parameter name="cmu_fpll_pll_cal_status" value="false" />
+  <parameter name="cmu_fpll_f_min_band_2" value="4287223000" />
+  <parameter name="pll_dsm_out_sel" value="pll_dsm_disable" />
+  <parameter name="cmu_fpll_f_min_band_1" value="3861860000" />
+  <parameter name="cmu_fpll_pll_extra_csr" value="0" />
+  <parameter name="gui_actual_outclk3_frequency" value="100.0" />
+  <parameter name="cmu_fpll_f_max_band_2" value="4688476000" />
+  <parameter name="cmu_fpll_f_min_band_8" value="6374148000" />
+  <parameter name="hssi_cascade_c_counter_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_f_max_band_1" value="4287223000" />
+  <parameter name="cmu_fpll_f_min_band_7" value="6075045000" />
+  <parameter name="cmu_fpll_f_max_band_4" value="5423191000" />
+  <parameter name="cmu_fpll_f_max_band_3" value="5072700000" />
+  <parameter name="cmu_fpll_f_min_band_9" value="1" />
+  <parameter name="cmu_fpll_f_min_band_4" value="5072700000" />
+  <parameter
+     name="output_freq_bitvec"
+     value="000000000000000000000000000000000000" />
+  <parameter name="cmu_fpll_f_min_band_3" value="4688476000" />
+  <parameter name="cmu_fpll_f_max_band_0" value="3861860000" />
+  <parameter name="cmu_fpll_f_min_band_6" value="5762211000" />
+  <parameter name="hssi_pma_cgb_master_prot_mode" value="basic_tx" />
+  <parameter name="cmu_fpll_f_min_band_5" value="5423191000" />
+  <parameter name="cmu_fpll_pll_ref_buf_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_core_cali_ref_off" value="true" />
+  <parameter name="cmu_fpll_pll_l_counter_enable" value="false" />
+  <parameter name="enable_advanced_avmm_options" value="0" />
+  <parameter name="cmu_fpll_pll_core_cali_vco_off" value="true" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch4_src"
+     value="scratch4_power_down" />
+  <parameter name="cmu_fpll_set_fpll_input_freq_range" value="0" />
+  <parameter name="phase_shift_0" value="0.0 ps" />
+  <parameter name="gui_outclk2_actual_phase_shift" value="0 ps" />
+  <parameter name="rcfg_file_prefix" value="altera_xcvr_fpll_a10" />
+  <parameter name="mcgb_enable_iqtxrxclk" value="disable_iqtxrxclk" />
+  <parameter name="gui_enable_fractional" value="false" />
+  <parameter name="gui_bw_sel" value="high" />
+  <parameter
+     name="refclk_freq_bitvec"
+     value="000000000111011100110101100101000000" />
+  <parameter name="cmu_fpll_pll_vccr_pd_en" value="true" />
+  <parameter name="pll_actual_using_fractional" value="false" />
+  <parameter name="silicon_rev" value="false" />
+  <parameter name="cmu_fpll_calibration_en" value="enable" />
+  <parameter name="full_outclk3_actual_phase_shift" value="0.0" />
+  <parameter name="core_m_counter" value="24" />
+  <parameter name="phase_shift_3" value="0.0 ps" />
+  <parameter name="phase_shift_2" value="0.0 ps" />
+  <parameter name="pll_c_counter_1_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="phase_shift_1" value="0.0 ps" />
+  <parameter name="gui_enable_pld_cal_busy_port" value="1" />
+  <parameter name="cmu_fpll_pll_dprio_base_addr" value="256" />
+  <parameter name="hssi_pma_cgb_master_cgb_power_down" value="normal_cgb" />
+  <parameter name="pll_c_counter_3_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_0_dyn_high_bits" value="0" />
+  <parameter name="pll_c_counter_3_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_0_fix" value="1" />
+  <parameter name="cmu_fpll_pll_c_counter_0_min_tco_enable" value="true" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux0_inclk2_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="gui_pll_m_counter" value="1" />
+  <parameter name="full_actual_outclk3_frequency" value="10.0" />
+  <parameter name="core_c_counter_0_fine_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_m_counter_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="output_clock_frequency_0" value="62.5 MHz" />
+  <parameter name="output_clock_frequency_1" value="100.0 MHz" />
+  <parameter name="temp_bw_sel" value="high" />
+  <parameter name="refclk_select1" value="ref_iqclk0" />
+  <parameter name="gui_outclk1_phase_shift_unit" value="0" />
+  <parameter name="refclk_select0" value="lvpecl" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch0_src"
+     value="pll_clkin_0_scratch0_src_vss" />
+  <parameter name="output_clock_frequency_2" value="20.0 MHz" />
+  <parameter name="output_clock_frequency_3" value="10.0 MHz" />
+  <parameter name="cmu_fpll_pll_n_counter" value="1" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux1_inclk2_logical_to_physical_mapping"
+     value="power_down" />
+  <parameter name="gui_pll_datarate" value="0.0" />
+  <parameter name="pll_c_counter_0_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="core_n_counter" value="1" />
+  <parameter name="cmu_fpll_refclk_select_mux_pll_clk_sel_override" value="normal" />
+  <parameter name="cmu_fpll_pfd_freq" value="000000000111011100110101100101000000" />
+  <parameter name="hssi_pcie_c_counter_0_prst" value="1" />
+  <parameter name="cmu_fpll_pll_cp_current_setting" value="cp_current_setting26" />
+  <parameter name="gui_silicon_rev" value="20nm5es" />
+  <parameter name="cmu_fpll_pll_dprio_broadcast_en" value="false" />
+  <parameter name="dbg_capability_reg_enable" value="0" />
+  <parameter
+     name="cmu_fpll_pll_vco_freq_band_0_fix_high"
+     value="pll_vco_freq_band_0_fix_high_0" />
+  <parameter name="pll_cp_lf_3rd_pole_freq" value="lf_3rd_pole_setting0" />
+  <parameter name="hssi_pma_cgb_master_vccdreg_output" value="vccdreg_nominal" />
+  <parameter
+     name="cmu_fpll_pll_dprio_fpll_vreg1_boost"
+     value="fpll_vreg1_boost_1_step" />
+  <parameter
+     name="cmu_fpll_xpm_cmu_fpll_core_pfd_delay_compensation"
+     value="normal_delay" />
+  <parameter name="gui_iqtxrxclk_outclk_index" value="0" />
+  <parameter name="cmu_fpll_pll_core_vccdreg_fw" value="vreg_fw5" />
+  <parameter name="gui_switchover_delay" value="0" />
+  <parameter name="core_c_counter_0_prst" value="1" />
+  <parameter name="cmu_fpll_pll_cp_lf_order" value="lf_2nd_order" />
+  <parameter name="hssi_cascade_c_counter_prst" value="1" />
+  <parameter name="hssi_pma_cgb_master_observe_cgb_clocks" value="observe_nothing" />
+  <parameter name="m_counter_bitvec" value="24" />
+  <parameter name="pll_sw_refclk_src" value="pll_sw_refclk_src_clk_0" />
+  <parameter name="cmu_fpll_pll_core_vccdreg_fb" value="vreg_fb5" />
+  <parameter name="cmu_fpll_is_pa_core" value="false" />
+  <parameter name="hssi_pcie_c_counter_0_ph_mux_prst" value="0" />
+  <parameter name="enable_fb_comp_bonding" value="0" />
+  <parameter name="cmu_fpll_pll_cmu_rstn_value" value="true" />
+  <parameter
+     name="gui_parameter_list"
+     value="C-counter-0,C-counter-1,C-counter-2,C-counter-3,L-counter,M-counter,N-counter,VCO Frequency,pll_dsm_fractional_division" />
+  <parameter name="cmu_fpll_output_tolerance" value="0" />
+  <parameter name="gui_enable_hip_cal_done_port" value="0" />
+  <parameter name="gui_pll_c_counter_1" value="1" />
+  <parameter name="gui_pll_c_counter_0" value="1" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_xpm_iqref_mux1_scratch3_src"
+     value="scratch3_power_down" />
+  <parameter
+     name="cmu_fpll_refclk_select_mux_mux0_inclk0_logical_to_physical_mapping"
+     value="lvpecl" />
+  <parameter name="pll_c_counter_3_ph_mux_prst" value="0" />
+  <parameter name="cmu_fpll_pll_c_counter_3_ph_mux_prst" value="0" />
+  <parameter name="core_vco_frequency_adv" value="300.0 MHz" />
+  <parameter name="c_counter2_bitvec" value="1" />
+  <parameter name="rcfg_jtag_enable" value="0" />
+  <parameter name="cmu_fpll_pll_m_counter_fine_dly" value="0 ps" />
+  <parameter name="gui_enable_active_clk" value="false" />
+  <parameter name="rcfg_enable_avmm_busy_port" value="0" />
+  <parameter name="gui_refclk_cnt" value="1" />
+  <parameter name="hssi_cascade_vco_frequency" value="300.0 MHz" />
+  <parameter name="core_c_counter_1_ph_mux_prst" value="0" />
+  <parameter name="dbg_user_identifier" value="0" />
+  <parameter name="cmu_fpll_hssi_output_clock_frequency" value="0 ps" />
+  <parameter name="hssi_output_clock_frequency" value="0 ps" />
+  <parameter name="core_c_counter_0_coarse_dly" value="0 ps" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_1_fix" value="1" />
+  <parameter name="core_c_counter_2_in_src" value="m_cnt_in_src_ph_mux_clk" />
+  <parameter name="gui_reference_clock_frequency" value="125.0" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_1" value="pll_freq_band0_1" />
+  <parameter name="support_mode" value="user_mode" />
+  <parameter name="cmu_fpll_pll_vco_freq_band_0" value="pll_freq_band0" />
+  <parameter name="hssi_cascade_c_counter_coarse_dly" value="0 ps" />
+  <generatedFiles>
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
+       attributes="" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
+       attributes="" />
+   <file
+       path="/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
+       attributes="" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+  </sourceFiles>
+  <childSourceFiles/>
+  <instantiator instantiator="sys_fpll10_scu4" as="xcvr_fpll_a10_0" />
+  <messages>
+   <message level="Info" culprit="sys_fpll10_scu4">"Generating: altera_xcvr_fpll_a10"</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./twentynm_xcvr_avmm.sv SYSTEM_VERILOG PATH ../../../alt_xcvr_core/nf/twentynm_xcvr_avmm.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_resync.sv SYSTEM_VERILOG PATH ../../../../altera_xcvr_generic/ctrl/alt_xcvr_resync.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./altera_xcvr_fpll_a10.sv SYSTEM_VERILOG PATH ../source/altera_xcvr_fpll_a10.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./a10_avmm_h.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/a10_avmm_h.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_native_avmm_nf.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/alt_xcvr_native_avmm_nf.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_pll_embedded_debug.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_embedded_debug.sv</message>
+   <message level="Info" culprit="xcvr_fpll_a10_0">add_fileset_file ./alt_xcvr_pll_avmm_csr.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_avmm_csr.sv</message>
+  </messages>
+ </entity>
+</deploy>

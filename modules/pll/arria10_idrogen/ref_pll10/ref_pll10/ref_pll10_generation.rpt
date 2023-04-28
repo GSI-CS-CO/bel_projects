@@ -1,0 +1,26 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/ref_pll10/ref_pll10.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/ref_pll10/ref_pll10 --family="Arria 10" --part=10AX027E3F29E2SG
+Progress: Loading ref_pll10/ref_pll10.qsys
+Progress: Reading input file
+Progress: Adding iopll_0 [altera_iopll 18.1]
+Progress: Parameterizing module iopll_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: ref_pll10.iopll_0: Able to implement PLL with user settings
+Info: ref_pll10.iopll_0: For this IOPLL's current configuration, performing  one dynamic phase shift will result in a phase shift of 125.0 picoseconds.
+Info: ref_pll10: "Transforming system: ref_pll10"
+Info: ref_pll10: Running transform generation_view_transform
+Info: ref_pll10: Running transform generation_view_transform took 0.000s
+Info: iopll_0: Running transform generation_view_transform
+Info: iopll_0: Running transform generation_view_transform took 0.000s
+Info: ref_pll10: Running transform merlin_avalon_transform
+Info: ref_pll10: Running transform merlin_avalon_transform took 0.028s
+Info: ref_pll10: "Naming system components in system: ref_pll10"
+Info: ref_pll10: "Processing generation queue"
+Info: ref_pll10: "Generating: ref_pll10"
+Info: ref_pll10: "Generating: ref_pll10_altera_iopll_181_hheovqq"
+Info: ref_pll10: Done "ref_pll10" with 2 modules, 3 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

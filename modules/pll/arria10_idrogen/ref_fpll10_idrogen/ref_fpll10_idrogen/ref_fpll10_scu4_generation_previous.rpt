@@ -1,0 +1,34 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/ref_fpll10_scu4/ref_fpll10_scu4.qsys --synthesis=VERILOG --output-directory=/local/alex/2023/bel_projects/fallout-idrogen/modules/pll/arria10_scu4/ref_fpll10_scu4/ref_fpll10_scu4 --family="Arria 10" --part=10AX027E3F29E2SG
+Progress: Loading ref_fpll10_scu4/ref_fpll10_scu4.qsys
+Progress: Reading input file
+Progress: Adding xcvr_fpll_a10_0 [altera_xcvr_fpll_a10 18.1]
+Progress: Parameterizing module xcvr_fpll_a10_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Warning: ref_fpll10_scu4.xcvr_fpll_a10_0: Phase alignment between the reference clock and the outclks is not available by default in Core mode. Please select the 'Enable phase alignment' checkbox if you require this functionality.
+Info: ref_fpll10_scu4.xcvr_fpll_a10_0: The output frequencies are not exact when the PLL is in fractional mode. You must be cautious with applications that require frequencies to be exact to within less than 0.5 Hz.
+Info: ref_fpll10_scu4.xcvr_fpll_a10_0: For the selected device(10AX027E3F29E2SG), PLL speed grade is 3.
+Info: ref_fpll10_scu4: "Transforming system: ref_fpll10_scu4"
+Info: ref_fpll10_scu4: Running transform generation_view_transform
+Info: ref_fpll10_scu4: Running transform generation_view_transform took 0.000s
+Info: xcvr_fpll_a10_0: Running transform generation_view_transform
+Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
+Info: ref_fpll10_scu4: Running transform merlin_avalon_transform
+Info: ref_fpll10_scu4: Running transform merlin_avalon_transform took 0.026s
+Info: ref_fpll10_scu4: "Naming system components in system: ref_fpll10_scu4"
+Info: ref_fpll10_scu4: "Processing generation queue"
+Info: ref_fpll10_scu4: "Generating: ref_fpll10_scu4"
+Info: ref_fpll10_scu4: "Generating: altera_xcvr_fpll_a10"
+Info: xcvr_fpll_a10_0: add_fileset_file ./twentynm_xcvr_avmm.sv SYSTEM_VERILOG PATH ../../../alt_xcvr_core/nf/twentynm_xcvr_avmm.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./alt_xcvr_resync.sv SYSTEM_VERILOG PATH ../../../../altera_xcvr_generic/ctrl/alt_xcvr_resync.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./altera_xcvr_fpll_a10.sv SYSTEM_VERILOG PATH ../source/altera_xcvr_fpll_a10.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./a10_avmm_h.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/a10_avmm_h.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./alt_xcvr_native_avmm_nf.sv SYSTEM_VERILOG PATH ../../../altera_xcvr_native_phy/altera_xcvr_native_vi/alt_xcvr_native_avmm_nf.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./alt_xcvr_pll_embedded_debug.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_embedded_debug.sv
+Info: xcvr_fpll_a10_0: add_fileset_file ./alt_xcvr_pll_avmm_csr.sv SYSTEM_VERILOG PATH ../../altera_xcvr_atx_pll_vi/source/alt_xcvr_pll_avmm_csr.sv
+Info: ref_fpll10_scu4: Done "ref_fpll10_scu4" with 2 modules, 10 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis
