@@ -2,6 +2,7 @@ def __helper():
   dirs = []
   if syn_device[:4] == "10as":      dirs.extend(["arria10"])
   if syn_device[:9] == "10ax027e3": dirs.extend(["arria10_scu4"])
+  if syn_device[:9] == "10ax027h4": dirs.extend(["arria10_idrogen"])
   if syn_device[:9] == "10ax048e3": dirs.extend(["arria10_ftm4"])
   if syn_device[:9] == "10ax027h2": dirs.extend(["arria10_pex10"])
   if syn_device[:9] == "10ax066h2": dirs.extend(["arria10_ftm10"])
