@@ -1,29 +1,23 @@
 #!/bin/bash
 
-# Terminate the current process from a sub-shell using 'SIGUSR1'.
+# Terminate the current process with the 'SIGUSR1' signal.
 # Type 'trap -l' to list all signals.
-PROC=$$            # store the process ID
-trap "exit -1" 10  # listen a SIGUSR1 by using trap
+PROC=$$                # store the process ID
+trap "exit 1" SIGUSR1  # listen to SIGUSR1
 
 terminate_process() {
     echo "$@" >&2
-    kill -10 $PROC
+    kill -s SIGUSR1 $PROC
 }
 
 export PROC
 
-# how to install the latest SAFT library and its tools (as of 1.7.2022):
-# - change to bel_projects/ip_cores/saftlib
-# - check out the latest version (git checkout v2.5.0)
-# - compile and install (sudo make uninstall, make clean, make -j8, sudo make install)
-
 # SAFT library specific variables
-bg_proj_dir="$HOME/gsi_prj/bel_projects/modules/burst_generator" # project directory
-bg_fw_file="$bg_proj_dir/burstgen.bin"                           # LM32 firmware binary
-bg_saftbus_socket_path="/tmp/saftbus"                            # saftbus socket path
+bg_saftlib_release="2"                      # saftlib major release number
+bg_proj_dir="${PWD%%/test*}"                # project directory
+bg_fw_file="$bg_proj_dir/burstgen.bin"      # LM32 firmware binary
+bg_saftbus_socket_path="/tmp/saftbus"       # saftbus socket path
 bg_tr="tr0"                                 # TR name for saftd
-bg_out_io="IO1"                             # IO pin assigned for burst output
-bg_msr_io="IO2"                             # IO pin used to measure the duration of burst
 bg_evt_start_infinite="0xaaaa000000000000"
 bg_evt_stop_infinite="0xbbbb000000000000"
 bg_evt_start_run_once="0xfffe000000000001"
@@ -32,13 +26,15 @@ bg_evt_flag=0                               # 0=new/overwrite burst, 1=append to
 
 # device specific variables
 bg_clock_master="dev/wbm2" # TR2 as PTP master
-bg_generator="dev/wbm0"    # TR as burst generator
+bg_generator="dev/wbm0"    # TR device (tr0:dev/wbm0 or tr0:tcp/scuxl0304.acc.gsi.de for socat)
 bg_buf_cmd="0x04060508"    # command buffer in shared memory of the bg_generator
 bg_buf_state="0x0406050c"  # FSM state buffer
+bg_out_io="IO1"            # IO pin assigned for burst output
+bg_msr_io="IO2"            # IO pin used to measure the duration of burst
 
-bg_cmd_config=1            # commands to set the FSM state
-bg_cmd_startop=2
-bg_cmd_stopop=3
+bg_cmd_config=1            # expected FSM state = 3
+bg_cmd_startop=2           # expected FSM state = 4
+bg_cmd_stopop=3            # expected FSM state = 3
 
 # Burst parameters
 
@@ -47,9 +43,9 @@ bg_b1_t_hi=10000000
 bg_b1_t_p=15000000
 
 # finite burst, in nanoseconds
-bg_b2_t_hi=10000
-bg_b2_t_p=20000
-bg_b2_b_p=1440000           # burst period, (tested: 1240000 240000) 0=endless
+bg_b2_t_hi=10000          # pulse high phase
+bg_b2_t_p=20000           # pulse period
+bg_b2_b_p=1440000         # burst period (0=endless)
 
 # Other
 cmd_output="/dev/stdout"    # default output
@@ -92,6 +88,30 @@ bg_select_clock_master() {
     echo -e -n "time\r\r" | eb-console $bg_clock_master                              # show the WR time
 }
 
+bg_detect_daemon() {
+    pid_saftd=$(pidof saftd)
+    pid_saftbusd=$(pidof saftbusd)
+    if [ -z "$pid_saftd" ] && [ -z "$pid_saftbusd" ]; then
+        echo "Neither 'saftd' nor 'saftbusd' is active. Exit!"
+        exit 1
+    fi
+}
+
+bg_get_saftlib_release() {
+
+    bg_check_saftbus_socket_path
+
+    version=$(saft-ctl -fi bla | grep -Eo "saftlib[[:space:]]+[0-9]+.[0-9]+.[0-9]+") # get version info
+    version_n=${version/saftlib /}   # get the version number (release.revision.patch) by trimming 'version '
+    release=${version_n%%.*}         # get the major release number
+
+    if [ "$release" != "" ]; then
+        bg_saftlib_release="$release"
+    fi
+
+    echo "saftlib release: $bg_saftlib_release ($version)"
+}
+
 bg_check_saftbus_socket_path () {
     # check saftlib socket path
     # $USER has no write permission for default /var/run/saftbus
@@ -111,7 +131,7 @@ bg_check_saftd() {
     # if saftd runs already, then check its command arguments
     pid=$(pidof saftd)
     if [ $? -eq 0 ]; then
-        p_cmd=$(ps -p $pid -o args --no-headers)  # get process command
+        p_cmd=$(cat /proc/$pid/cmdline)           # get process command
         p_cmd_args=${p_cmd##* }                   # get command arguments
 
         if [[ "$p_cmd_args" == *"$tr_bg"* ]]; then
@@ -164,7 +184,7 @@ bg_load_saftd() {
     # constructor of BurstGenerator checks the availability of FW by
     # resetting the LM32 eCPU, which takes also some time
     if [ -n "$pid" ]; then
-        p_cmd=$(ps -p $pid -o args --no-headers)
+        p_cmd=$(cat /proc/$pid/cmdline)
         echo "saftd is loaded: $p_cmd ($pid)"
         pause=10
         echo "wait for $pause seconds until BurstGenerator gets ready"
@@ -175,12 +195,43 @@ bg_load_saftd() {
     fi
 }
 
+bg_kill_saftd() {
+
+    pid=$(pidof saftd)
+    if [ $? -eq 0 ]; then
+
+        # The watchdog locks TR for around 10 seconds to avoid connection of multiple saftd daemons.
+        # Hence, after termination of saftd wait around 10 seconds letting watchdog to unlock TR.
+        echo "Warning: terminating running saftd ..."
+        killall saftd
+        pause=10
+        echo "wait for $pause seconds until watchdog unlocks TR"
+        sleep $pause
+    fi
+}
+
 bg_load_fw() {
 
-    cd $bg_proj_dir                       # switch to the project directory
-    eb-reset $bg_generator cpuhalt 0xff && \
-    eb-fwload $bg_generator u 0 $bg_fw_file 1>$cmd_output  # halt target TR CPU and load a firmware
-    eb-info -w $bg_generator 1>$cmd_output                 # show the firmware information
+    case $bg_saftlib_release in
+        "2")
+            cd $bg_proj_dir                                        # switch to the project directory
+            eb-reset $bg_generator cpuhalt 0xff && \
+            eb-fwload $bg_generator u 0 $bg_fw_file 1>$cmd_output  # halt target TR CPU and load a firmware
+            eb-info -w $bg_generator 1>$cmd_output                 # show the firmware information
+            ;;
+        "3")
+            output=$(saftbus-ctl -s | grep bg_firmware)
+            if [ -n "$output" ]; then
+                saftbus-ctl -r /de/gsi/saftlib/tr0/bg_firmware 1>$cmd_output
+                saftbus-ctl -u libbg-firmware-service.so 1>$cmd_output
+                eb-fwload $bg_dev u 0 /usr/share/saftlib/firmware/$bg_fw_file 1>$cmd_output
+                saftbus-ctl -l libbg-firmware-service.so tr0 1>$cmd_output
+            else
+                saftbus-ctl -l libbg-firmware-service.so tr0 0 1>$cmd_output
+            fi
+            ;;
+        *)
+    esac
 }
 
 bg_show_bursts() {
@@ -196,24 +247,33 @@ bg_delete_bursts() {
 bg_setup_infinite_burst() {
     # $1 - output pin name
 
-    saft-burst-ctl tr0 -n $1 -b 2 -s $bg_evt_start_infinite -t $bg_evt_stop_infinite -v 1>$cmd_output
-    saft-burst-ctl tr0 -b 2 -p $bg_b1_t_hi $bg_b1_t_p 0 0 $bg_evt_flag -v 1>$cmd_output
-    saft-burst-ctl tr0 -e 2 1 -v 1>$cmd_output || terminate_process "Failed to set up the burst generator. Exit!"
+    saft-burst-ctl tr0 -n $1 -b 2 -s $bg_evt_start_infinite -t $bg_evt_stop_infinite -v 1>$cmd_output || \
+        terminate_process "Failed to define a burst. Exit!"
+    saft-burst-ctl tr0 -b 2 -p $bg_b1_t_hi $bg_b1_t_p 0 0 $bg_evt_flag -v 1>$cmd_output || \
+        terminate_process "Failed to set the burst parameters. Exit!"
+    saft-burst-ctl tr0 -e 2 1 -v 1>$cmd_output || terminate_process "Failed to enable the burst. Exit!"
 }
 
 bg_setup_run_once_burst() {
     # $1 - output pin name
     # exit if the launched tool returns failure
 
-    saft-burst-ctl tr0 -n $1 -b 1 -s $bg_evt_start_run_once 1>$cmd_output
-    saft-burst-ctl tr0 -b 1 -p $bg_b2_t_hi $bg_b2_t_p $bg_b2_b_p 0 $bg_evt_flag -v 1>$cmd_output
-    saft-burst-ctl tr0 -e 1 1 1>$cmd_output || terminate_process "Failed to set up the burst generator. Exit!"
+    saft-burst-ctl tr0 -n $1 -b 1 -s $bg_evt_start_run_once 1>$cmd_output || \
+        terminate_process "Failed to define a burst. Exit!"
+    saft-burst-ctl tr0 -b 1 -p $bg_b2_t_hi $bg_b2_t_p $bg_b2_b_p 0 $bg_evt_flag -v 1>$cmd_output || \
+        terminate_process "Failed to set the burst parameters. Exit!"
+    saft-burst-ctl tr0 -e 1 1 1>$cmd_output || terminate_process "Failed to enable the burst. Exit!"
 }
 
 bg_set_bg_state() {
     # $1 - instruction code for the burst generator (LM32)
 
-    saft-burst-ctl tr0 -i $1  1>$cmd_output # send an instruction code
+    # send an user instruction code to the saftlib driver
+    # returns error (255), if no firmware is found
+    saft-burst-ctl tr0 -i $1  1>$cmd_output
+    if [ $? -ne 0 ]; then
+        terminate_process "$0: failed to set up the burst generator. Exit!"
+    fi
 
     # wait until the desired state is set
     if [ $1 -ge $bg_cmd_config ] && [ $1 -le $bg_cmd_stopop ]; then
@@ -245,7 +305,7 @@ bg_set_bg_state() {
 
 bg_inject_event() {
     # $1 - event
-    saft-ctl tr0 inject $1 0 0
+    saft-ctl tr0 inject $1 0 0 -p
 }
 
 bg_setup_msr_io() {
@@ -253,7 +313,8 @@ bg_setup_msr_io() {
     local io_name="$1"
 
     # form a pulse during infinite burst, set flag to 0xf to accept failed events (early, late, conflict, delayed)
-    saft-io-ctl tr0 -n $io_name -u -c $bg_evt_start_infinite $bg_evt_mask 0 0xf 1 1>$cmd_output
+    saft-io-ctl tr0 -n $io_name -u -c $bg_evt_start_infinite $bg_evt_mask 0 0xf 1 1>$cmd_output || \
+        terminate_process "Failed to setup output port $1 (measurement). Exit!"
     saft-io-ctl tr0 -n $io_name -u -c $bg_evt_stop_infinite $bg_evt_mask 0 0xf 0  1>$cmd_output
 
     # for a short pulse on finite burst
@@ -273,11 +334,12 @@ bg_generate_infinite_burst() {
     bg_setup_msr_io "$bg_msr_io"
 
     echo "starting infinite burst at pin $bg_out_io"
+    echo "pulse high phase=$bg_b1_t_hi, pulse period=$bg_b1_t_p"
     bg_inject_event $bg_evt_start_infinite
 
     # Words of the form $'string' are treated specially, backslash-escaped characters replaced as specified by the ANSI C standard.
     # Double-quoted string preceded by a dollar sign ($) will cause the string to be translated according to the current locale.
-    read -rep "press 'Enter' to stop the burst > "
+    read -rep "press Enter to stop the burst > "
 
     echo "stop infinite burst at pin $bg_out_io"
     bg_inject_event $bg_evt_stop_infinite
@@ -298,6 +360,7 @@ bg_generate_run_once_burst() {
 
     run_ival=$((bg_b2_b_p / 1000000000 + 1))
     echo "starting run_once burst at pin $bg_out_io, it will be stopped in $run_ival second(s)"
+    echo "pulse high phase=$bg_b2_t_hi, pulse period=$bg_b2_t_p, burst period=$bg_b2_b_p"
 
     bg_inject_event $bg_evt_start_run_once
     sleep $run_ival
@@ -306,35 +369,32 @@ bg_generate_run_once_burst() {
 
 bg_generate_all_bursts() {
 
+    ## detect any active daemon (saftd or saftbusd)
+    bg_detect_daemon
+
+    ## update the saftlib variables
+    bg_get_saftlib_release
+
     ## ask user to load firmware
     read -rp "load firmware [y/N]?: " answer
 
     if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
         bg_load_fw
 
-        # caveat: if FW is re-loaded, then saftd must be also re-loaded
-        pid=$(pidof saftd)
-        if [ $? -eq 0 ]; then
-
-            # The watchdog locks TR for around 10 seconds to avoid connection of multiple saftd daemons.
-            # Hence, after termination of saftd wait around 10 seconds letting watchdog to unlock TR.
-            echo "Warning: terminating running saftd ..."
-            killall saftd
-            pause=10
-            echo "wait for $pause seconds until watchdog unlocks TR"
-            sleep $pause
-        fi
+        # caveat for saftlib release 2.x: if FW is re-loaded, then saftd must be also re-loaded
+        # terminate saftd here, will be re-loaded with 'bg_check_saftd' if it's missing
+        [ "$bg_saftlib_release" == "2" ] && bg_kill_saftd
     fi
 
     ## check saftd
-    bg_check_saftd
+    [ "$bg_saftlib_release" == "2" ] && bg_check_saftd
 
     test_cases="bg_generate_infinite_burst bg_generate_run_once_burst"
 
     for tc in $test_cases; do
         ## prompt user to start next test
         echo -en "\nTest: $tc"
-        read -rep " (press 'Enter' to start) > "
+        read -rep " (press Enter to start, or CTRL+C to break) > "
 
         ## run next test
         echo "starting '$tc'"
@@ -348,7 +408,7 @@ while getopts 'd:csvhq' opt; do
     case $opt in
         d) bg_generator=$OPTARG ;;               # generate bursts with a given TR
         c) bg_select_clock_master; exit 0 ;;     # select clock master
-        s) source "sourced ${BASH_SOURCE[0]}" ;; # just source this script
+        s) source "sourced $0" ;;                # just source this script
         q) cmd_output="/dev/null" ;;             # set the quiet mode
         h) bg_usage; exit 0 ;;
         *) bg_usage; exit 1 ;;
