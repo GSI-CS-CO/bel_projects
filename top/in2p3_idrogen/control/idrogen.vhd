@@ -22,14 +22,6 @@ entity idrogen is
     clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
 
     ------------------------------------------------------------------------
-    -- PCI express pins
-    ------------------------------------------------------------------------
-    pcie_refclk_i : in    std_logic;
-    pcie_rx_i     : in    std_logic_vector(3 downto 0);
-    pcie_tx_o     : out   std_logic_vector(3 downto 0);
-    nPCI_RESET_i  : in    std_logic;
-
-    ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
     wr_dac_sclk_o : out std_logic;
@@ -94,7 +86,6 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_out           => 2,
-      g_en_pcie            => true,
       g_en_tlu             => false,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
@@ -135,56 +126,8 @@ begin
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
       led_pps_o               => s_led_pps,
-      scubus_a_a              => A_A,
-      scubus_a_d              => A_D,
-      scubus_nsel_data_drv    => nSel_Ext_Data_DRV,
-      scubus_a_nds            => A_nDS,
-      scubus_a_rnw            => A_RnW,
-      scubus_a_ndtack         => A_nDtack,
-      scubus_a_nsrq           => A_nSRQ,
-      scubus_a_nsel           => A_nSEL,
-      scubus_a_ntiming_cycle  => A_nTiming_Cycle,
-      scubus_a_sysclock       => A_SysClock,
       ow_io(0)                => onewire_ext,
-      ow_io(1)                => A_OneWire,
-      pcie_refclk_i           => pcie_refclk_i,
-      pcie_rstn_i             => nPCI_RESET_i,
-      pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o,
-      -- I2C
-      i2c_scl_pad_i            => s_i2c_scl_pad_in,
-      i2c_scl_pad_o            => s_i2c_scl_pad_out,
-      i2c_scl_padoen_o         => s_i2c_scl_padoen,
-      i2c_sda_pad_i            => s_i2c_sda_pad_in,
-      i2c_sda_pad_o            => s_i2c_sda_pad_out,
-      i2c_sda_padoen_o         => s_i2c_sda_padoen,
-      -- FX2 USB
-      usb_rstn_o              => ures,
-      usb_ebcyc_i             => pa(3),
-      usb_speed_i             => pa(0),
-      usb_shift_i             => pa(1),
-      usb_readyn_io           => pa(7),
-      usb_fifoadr_o           => pa(5 downto 4),
-      usb_sloen_o             => pa(2),
-      usb_fulln_i             => ctl(1),
-      usb_emptyn_i            => ctl(2),
-      usb_slrdn_o             => slrd,
-      usb_slwrn_o             => slwr,
-      usb_pktendn_o           => pa(6),
-      usb_fd_io               => fd,
-      -- PSRAM TODO: Multi Chip
-      ps_clk                 => psram_clk,
-      ps_addr                => psram_a,
-      ps_data                => psram_dq,
-      ps_seln(0)             => psram_ubn,
-      ps_seln(1)             => psram_lbn,
-      ps_cen                 => psram_cen (0),
-      ps_oen                 => psram_oen,
-      ps_wen                 => psram_wen,
-      ps_cre                 => psram_cre,
-      ps_advn                => psram_advn,
-      ps_wait                => psram_wait,
-      hw_version             => x"0000000" & not scu_cb_version);
+      ow_io(1)                => A_OneWire);
 
   -- LEDs
   wr_led_pps    <= not s_led_pps;                            -- white = PPS
