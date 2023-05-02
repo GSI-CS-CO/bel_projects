@@ -11,15 +11,9 @@ entity idrogen is
     ------------------------------------------------------------------------
     -- Input clocks
     ------------------------------------------------------------------------
-    clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
-    clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
-
-    clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-
-    clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
-    clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
-    clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock, aka DMTD
+    clk_62m5_local_i  : in std_logic; -- Local clk from 62.5Mhz oszillator
+    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
 
     ------------------------------------------------------------------------
     -- WR DAC signals
@@ -41,6 +35,13 @@ entity idrogen is
     sfp_mod2_io      : inout std_logic;
 
     -----------------------------------------------------------------------
+    -- Idrogen special
+    -----------------------------------------------------------------------
+    DEV_CLRn      : in std_logic; -- FPGA Reset input, active low.
+    LMK_CLKREF_2  : in std_logic ; -- reference clocks from LMK
+    LMK_CLKREF_12 : in std_logic ; -- reference clocks from LMK
+
+    -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     gpio_o       : out std_logic_vector(2 downto 1);
@@ -51,18 +52,15 @@ end idrogen;
 
 architecture rtl of idrogen is
 
-  signal s_led_link_up  : std_logic;
-  signal s_led_link_act : std_logic;
-  signal s_led_track    : std_logic;
-  signal s_led_pps      : std_logic;
-
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 3) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 5) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("USR_IN_1   ",  IO_NONE,         false,   false,  0,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
-    ("USR_IN_2   ",  IO_NONE,         false,   false,  1,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
+    ("PPS_IN     ",  IO_NONE,         false,   false,  0,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
+    ("TRIG_IN    ",  IO_NONE,         false,   false,  1,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR_1  ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("LED_USR_2  ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL)
+    ("LED_USR_2  ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR_3  ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR_4  ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL)
   );
 
   constant c_family       : string := "Arria 10 GX IDROGEN";
@@ -96,9 +94,9 @@ begin
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
-      core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
-      core_clk_125m_local_i   => clk_125m_tcb_local_i,
-      core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_clk_125m_pllref_i  => clk_125m_pllref_i,
+      core_clk_125m_local_i   => clk_125m_pllref_i, -- TBD: Feed 62m5 in to a PLL and generate 125 MHz
+      core_clk_125m_sfpref_i  => clk_125m_pllref_i,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
