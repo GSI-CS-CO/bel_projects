@@ -247,6 +247,10 @@ bg_delete_bursts() {
 bg_setup_infinite_burst() {
     # $1 - output pin name
 
+    # remove existing IO conditions
+    saft-io-ctl tr0 -x
+
+    # set up the given burst
     saft-burst-ctl tr0 -n $1 -b 2 -s $bg_evt_start_infinite -t $bg_evt_stop_infinite -v 1>$cmd_output || \
         terminate_process "Failed to define a burst. Exit!"
     saft-burst-ctl tr0 -b 2 -p $bg_b1_t_hi $bg_b1_t_p 0 0 $bg_evt_flag -v 1>$cmd_output || \
@@ -256,8 +260,11 @@ bg_setup_infinite_burst() {
 
 bg_setup_run_once_burst() {
     # $1 - output pin name
-    # exit if the launched tool returns failure
 
+    # remove existing IO conditions
+    saft-io-ctl tr0 -x
+
+    # set up the given burst
     saft-burst-ctl tr0 -n $1 -b 1 -s $bg_evt_start_run_once 1>$cmd_output || \
         terminate_process "Failed to define a burst. Exit!"
     saft-burst-ctl tr0 -b 1 -p $bg_b2_t_hi $bg_b2_t_p $bg_b2_b_p 0 $bg_evt_flag -v 1>$cmd_output || \
