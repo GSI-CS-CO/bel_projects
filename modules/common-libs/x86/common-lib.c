@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Feb-2023
+ *  version : 03-may-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -32,7 +32,7 @@
 
 // eca queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // definitions for ECA queue
+#include "../../../ip_cores/saftlib/src/eca_flags.h"                    // definitions for ECA queue
 
 // public variables
 eb_address_t common_statusLo;     // common status, read (low word)

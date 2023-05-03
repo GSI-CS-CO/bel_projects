@@ -1,6 +1,6 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
 #   'make MASP=NO YOCTO=YES PREFIX= all'                                               (hack: leave PREFIX empty for SCU path)
 # Example deploy:
@@ -14,38 +14,43 @@ STAGING     ?=
 FW          ?=../fw
 B2BLIB      := libb2blib.so
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-CFLAGS      ?=
-DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
-ASLLIB      := .
-ASLINC      := .
-else
-EB          ?= ../../../ip_cores/etherbone-core/api
+# target system environment, OPT is default
+SYSENV      ?= OPT
+
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
 ARCH        ?= /x86_64
+EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
 CXX         := g++ --std=c++0x
+ASLLIB      := .
+ASLINC      := .
+endif
 
-#DIMPATH     := /common/usr/timing/b2b/rocky9/dim_v20r33
-#ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/lib
-#ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/include/saftlib/
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/b2b/yocto/usr
+ARCH        := /x86_64
+EB          ?= .
+CFLAGS      ?=
+ASLLIB      := .
+ASLINC      := .
+endif
 
-# hack for sl7 (deprecated)
-DIMPATH     := /common/usr/timing/b2b/dim_v20r29
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7
+ARCH        := /x86_64
+EB          ?= ../../../ip_cores/etherbone-core/api
+CFLAGS      ?= -Wall -O2 -g
+CXX         := g++ --std=c++0x
 ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
 ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
-
-# hack for local boxes
-#DIMPATH     := /opt/dim/dim_v20r33
-
 endif
 
 EXTRA_FLAGS ?=
-LIBS        ?= -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
-SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
+LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib 
+CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include -I../include -I../../common-libs/include
+#CCFLAGS     ?=  $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include  -I../include -I../../common-libs/include
+SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -L$(USRPATH)/lib -letherbone -lm -lb2blib
 
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))
