@@ -12,7 +12,7 @@ entity BLM_counter_pool_el is
         CLK               : in std_logic;      -- Clock
         nRST              : in std_logic;      -- Reset
         RESET             : in std_logic;      -- global reset
-        LOAD              : in std_logic;      -- load counter registers
+      --  LOAD              : in std_logic;      -- load counter registers
         ENABLE            : in std_logic;      -- Enable count operation (gate signals)
         pos_threshold     : in std_logic_vector(31 downto 0);
         neg_threshold     : in std_logic_vector(31 downto 0);
@@ -50,7 +50,7 @@ signal cnt_enable: std_logic;
         CLK              : in std_logic;      -- Clock
         nRST             : in std_logic;      -- Reset
         CLEAR            : in std_logic;      -- Clear counter registers
-        LOAD             : in std_logic;      -- Load counter registers
+      --  LOAD             : in std_logic;      -- Load counter registers
         ENABLE           : in std_logic;      -- Enable count operation
         pos_threshold    : in integer;
         neg_threshold    : in integer;
@@ -112,7 +112,7 @@ end process;
             nRST          => nRST,      -- Reset
             CLEAR         => CLEAR,     -- Clear counter register
             ENABLE        => cnt_enable,   -- Enable count operation
-            LOAD          => LOAD,
+            --LOAD          => LOAD,
             pos_threshold => to_integer(signed(pos_threshold)),
             neg_threshold => to_integer(signed(neg_threshold)),
             UP_IN         => cnt_up,   -- Load counter register up input
