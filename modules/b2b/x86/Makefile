@@ -48,8 +48,8 @@ endif
 
 EXTRA_FLAGS ?=
 LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib 
-CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include -I../include -I../../common-libs/include -I$(USRPATH)/include/saftlib
-CXFLAGS     ?= `pkg-config  saftlib --cflags` $(CCFLAGS) -I/usr/include/sigc++-2.0
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include -I../include -I../../common-libs/include
+CXFLAGS     ?= `pkg-config  saftlib --cflags` $(CCFLAGS)
 #CCFLAGS     ?=  $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include  -I../include -I../../common-libs/include
 SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -L$(USRPATH)/lib -letherbone -lm -lb2blib
 
