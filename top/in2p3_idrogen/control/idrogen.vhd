@@ -38,19 +38,23 @@ entity idrogen is
     -----------------------------------------------------------------------
     -- Idrogen special
     -----------------------------------------------------------------------
-    DEV_CLRn      : in std_logic; -- FPGA Reset input, active low.
-    LMK_CLKREF_2  : in std_logic ; -- reference clocks from LMK
-    LMK_CLKREF_12 : in std_logic ; -- reference clocks from LMK
+    DEV_CLRn       : in    std_logic; -- FPGA Reset input, active low.
+    LMK_CLKREF_2   : in    std_logic; -- reference clocks from LMK
+    LMK_CLKREF_12  : in    std_logic; -- reference clocks from LMK
+    pps_in         : in    std_logic;
+    pps_out        : out   std_logic;
+    trigger_in     : in    std_logic;
+    trigger_out    : out   std_logic;
+    wr_scl_flash_b : inout std_logic;
+    wr_sda_flash_b : inout std_logic;
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    wr_scl_flash_b : inout std_logic;
-    wr_sda_flash_b : inout std_logic;
     wr_one_wire_io : inout std_logic;
-    gpio_o         : out std_logic_vector(3 downto 0);
-    uart_o         : out std_logic;
-    uart_i         : in  std_logic);
+    gpio_o         : out   std_logic_vector(3 downto 0);
+    uart_o         : out   std_logic;
+    uart_i         : in    std_logic);
 
 end idrogen;
 
@@ -118,6 +122,7 @@ begin
       gpio_o                  => gpio_o);
 
   sfp_rate_o <= '0';
+
   wr_scl_flash_b <= 'Z';
   wr_sda_flash_b <= 'Z';
 
