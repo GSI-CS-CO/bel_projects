@@ -2,6 +2,7 @@
 
 
 
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -62,6 +63,11 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_det_phy/wr_arria10_scu4_det_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_rst_ctl/wr_arria10_scu4_rst_ctl.qsys"
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_ibuf/arria10_scu4_lvds_ibuf.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_obuf/arria10_scu4_lvds_obuf.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_pll/arria10_scu4_lvds_pll.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_rx/arria10_scu4_lvds_rx.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/arria10_scu4_lvds_tx.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/dmtd_pll10/dmtd_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/ref_fpll10_idrogen/ref_fpll10_idrogen.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/ref_pll10/ref_pll10.qsys
