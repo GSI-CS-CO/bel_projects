@@ -2,7 +2,7 @@
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make MASP=NO YOCTO=YES PREFIX= all'                                               (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO SYSENV=OPT PREFIX= all'                                              (hack: leave PREFIX empty for SCU path)
 # Example deploy:
 #   'make MASP=YES PREFIX= STAGING=/common/export/timing-rte/XYZ deploy'               (hack: leave PREFIX empty for SCU path)
 
@@ -37,7 +37,7 @@ ASLINC      := .
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7
+USRPATH     := /common/usr/timing/b2b/centos7/usr
 ARCH        := /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
@@ -48,14 +48,15 @@ endif
 
 EXTRA_FLAGS ?=
 LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib 
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include -I../include -I../../common-libs/include
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include -I../include -I../../common-libs/include -I$(USRPATH)/include/saftlib
+CXFLAGS     ?= `pkg-config  saftlib --cflags` $(CCFLAGS) -I/usr/include/sigc++-2.0
 #CCFLAGS     ?=  $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include  -I../include -I../../common-libs/include
 SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -L$(USRPATH)/lib -letherbone -lm -lb2blib
 
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))
 
-TARGETS     := lib b2b-serv-raw b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname
+TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname b2b-serv-raw
 
 all: $(TARGETS)
 
@@ -84,7 +85,7 @@ b2b-archiver: b2b-archiver.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-archiver b2b-archiver.c $(LIBS) -ldim -lpthread 
 
 b2b-serv-raw: b2b-serv-raw.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) $(SAFTLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) $(SAFTLIBS) -ldim -lpthread
 
 b2b-pname: b2b-pname-info.cpp
 	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(SAFTLIBS) -ldim -lpthread

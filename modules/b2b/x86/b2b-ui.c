@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Nov-2021
+ *  version : 04-May-2023
  *
  *  user interface for B2B
  *
@@ -235,7 +235,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   status    = COMMON_STATUS_OK;
   if (!errorFlag)   if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
   if (mode > B2B_MODE_B2E) 
-    if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+    if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, 3, 4, 0x42, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
 
   if (errorFlag) {
     printf("%s\n", b2b_status_text(status));

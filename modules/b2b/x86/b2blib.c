@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Mar-2023
+ *  version : 04-May-2023
  *
  * library for b2b
  *
@@ -456,7 +456,7 @@ uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *sta
   
 
 uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, uint32_t mode, double nueH1, uint32_t fNueConv, uint32_t nH, 
-                                int32_t  cTrig, int32_t nBucket, int32_t  cPhase, uint32_t  fFineTune, uint32_t fMBTune)
+                                double  cTrig, int32_t nBucket, double  cPhase, uint32_t  fFineTune, uint32_t fMBTune)
 {
   eb_cycle_t   eb_cycle;     // eb cycle
   eb_status_t  eb_status;    // eb status
@@ -517,7 +517,7 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
 } // b2b_context_ext_upload
 
 
-uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid, double nueH1, uint32_t fNueConv, uint32_t nH, int32_t  cTrig, int32_t nBucket)
+uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid, uint32_t sid, uint32_t bpid, uint64_t param, double nueH1, uint32_t fNueConv, uint32_t nH, double cTrig, int32_t nBucket)
 {
   eb_cycle_t   eb_cycle;     // eb cycle
   eb_status_t  eb_status;    // eb status
@@ -525,12 +525,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   uint64_t     TH1;          // revolution period [as]
   char         buff[100];
 
-  // tmporary variables, should become parameters of this routine
-  uint32_t     sid=1;        // LSA SID
-  uint32_t     bpid=2;       // LSA bpid
-  uint64_t     param=3;      // LSA parameter
-
-  fdat_t tmp;
+  fdat_t       tmp;
 
   //b2b_log("inj_upload start");
   

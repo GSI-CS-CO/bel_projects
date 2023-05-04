@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2023
+ *  version : 04-May-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000426
+#define B2BLIB_VERSION 0x000500
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -323,9 +323,9 @@ extern "C" {
                                   double   nueH1,              // h=1 frequency [Hz] of machine
                                   uint32_t fNueConv,           // flag: convert frequency to DDS (default '1')
                                   uint32_t nH,                 // harmonic number of machine
-                                  int32_t  cTrig,              // trigger correction
+                                  double   cTrig,              // trigger correction
                                   int32_t  nBucket,            // bucket number
-                                  int32_t  cPhase,             // phase correction [ns]
+                                  double   cPhase,             // phase correction [ns]
                                   uint32_t fFineTune,          // flag: use fine tune (default '1')
                                   uint32_t fMBTune             // flag: use multi-beat tune (default '1')
                                   );
@@ -334,11 +334,14 @@ extern "C" {
   // after the 2022 beamtime, data type of cTrig should change to double
   uint32_t b2b_context_inj_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sidExt,             // SID; NB: this is the SID of the extraction machine!!!
-                                  uint32_t gid,                // GID of ring machine
+                                  uint32_t gid,                // GID of ring machine (injection machine)
+                                  uint32_t sid,                // SID
+                                  uint32_t bpid,               // bpid
+                                  uint64_t param,              // parameter field
                                   double   nueH1,              // h=1 frequency [Hz] of machine
                                   uint32_t fNueConv,           // flag: convert frequency to DDS (default '1')
                                   uint32_t nH,                 // harmonic number injection machine
-                                  int32_t  cTrig,              // trigger correction injection
+                                  double   cTrig,              // trigger correction injection
                                   int32_t  nBucket             // bucket number
                                   );
 
