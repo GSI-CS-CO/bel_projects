@@ -33,6 +33,7 @@ entity idrogen is
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic;
+    sfp_rate_o       : out   std_logic;
 
     -----------------------------------------------------------------------
     -- Idrogen special
@@ -44,9 +45,12 @@ entity idrogen is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    gpio_o       : out std_logic_vector(2 downto 1);
-    uart_o       : out std_logic;
-    uart_i       : in  std_logic);
+    wr_scl_flash_b : inout std_logic;
+    wr_sda_flash_b : inout std_logic;
+    wr_one_wire_io : inout std_logic;
+    gpio_o         : out std_logic_vector(3 downto 0);
+    uart_o         : out std_logic;
+    uart_i         : in  std_logic);
 
 end idrogen;
 
@@ -78,7 +82,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25,
       g_psram_bits         => c_psram_bits,
-      g_gpio_out           => 2,
+      g_gpio_out           => 4,
       g_gpio_in            => 2,
       g_en_tlu             => false,
       g_en_pcie            => true,
@@ -105,11 +109,16 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
+      wr_onewire_io           => wr_one_wire_io,
       wr_uart_o               => uart_o,
       wr_uart_i               => uart_i,
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_o                  => gpio_o);
+
+  sfp_rate_o <= '0';
+  wr_scl_flash_b <= 'Z';
+  wr_sda_flash_b <= 'Z';
 
 end rtl;

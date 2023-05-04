@@ -724,3 +724,32 @@ set_global_assignment -name VHDL_FILE ../../../top/in2p3_idrogen/control/idrogen
 set_global_assignment -name VHDL_FILE ../../../top/in2p3_idrogen/control/ramsize_pkg.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+
+set_location_assignment PIN_AC17 -to DEV_CLRn
+set_location_assignment PIN_AN13 -to gpio_o[0]
+set_location_assignment PIN_AP14 -to gpio_o[1]
+set_location_assignment PIN_AN14 -to gpio_o[2]
+set_location_assignment PIN_AP9 -to gpio_o[3]
+set_location_assignment PIN_E23 -to LMK_CLKREF_2
+set_instance_assignment -name IO_STANDARD LVDS -to LMK_CLKREF_2
+set_location_assignment PIN_E24 -to "LMK_CLKREF_2(n)"
+set_location_assignment PIN_T28 -to LMK_CLKREF_12
+set_instance_assignment -name IO_STANDARD LVDS -to LMK_CLKREF_12
+set_location_assignment PIN_T27 -to "LMK_CLKREF_12(n)"
+set_location_assignment PIN_M28 -to clk_125m_pllref_i
+set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
+set_location_assignment PIN_M27 -to "clk_125m_pllref_i(n)"
+set_location_assignment PIN_AH19 -to clk_20m_vcxo_i
+set_location_assignment PIN_C30 -to sfp_rxp_i
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_rxp_i
+set_location_assignment PIN_C29 -to "sfp_rxp_i(n)"
+set_location_assignment PIN_B32 -to sfp_txp_o
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_txp_o
+set_location_assignment PIN_B31 -to "sfp_txp_o(n)"
+set_location_assignment PIN_C20 -to sfp_mod0_i
+set_location_assignment PIN_C19 -to sfp_mod1_io
+set_location_assignment PIN_B18 -to sfp_mod2_io
+set_location_assignment PIN_B22 -to sfp_los_i
+set_location_assignment PIN_C18 -to sfp_tx_disable_o
+set_location_assignment PIN_D17 -to sfp_tx_fault_i
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
