@@ -12,7 +12,7 @@ generic (
 
 port(
 
-  clk_i : in std_logic_vector(n-1 downto 0);          -- chip-internal pulsed clk signal
+  clk_i : in std_logic_vector(n-1 downto 0);         
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
   gate_seq_ena : in std_logic_vector(n-1 downto 0);     -- enable '1' for input connected to the counter
