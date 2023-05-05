@@ -3,9 +3,9 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=OPT PREFIX= all'                                              (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7  STAGING=/common/export/timing-rte/b2b-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
 
@@ -23,7 +23,7 @@ SYSENV      ?= OPT
 
 ifeq ($(SYSENV), OPT)
 USRPATH     ?= /opt/usr
-ARCH        ?= /x86_64
+ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
