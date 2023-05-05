@@ -57,9 +57,9 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname b2b-serv-raw
+TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw
 
-all: $(TARGETS)
+all: lib $(TARGETS)
 
 b2b-ctl: b2b-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-ctl b2b-ctl.c $(LIBS)
@@ -88,7 +88,7 @@ b2b-archiver: b2b-archiver.c
 b2b-serv-raw: b2b-serv-raw.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(XLIBS) -ldim -lpthread
 
-b2b-pname: b2b-pname-info.cpp
+b2b-pname-info: b2b-pname-info.cpp
 	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(XLIBS) -ldim -lpthread
 
 lib: b2blib.c
@@ -101,8 +101,8 @@ clean:
 	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver libb2blib.so*
 
 install:
-	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin	
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin	
 	cp $(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib
 	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1
 	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB)

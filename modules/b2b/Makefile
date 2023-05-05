@@ -1,13 +1,12 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
-# Example usage:
+# Example build:
 #   'make clean'                                                 
 #   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make PREFIX= SYSENV=ACC7  STAGING=/common/export/timing-rte/b2b-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
+# Example deploy (for ASL only):
+#   'make PREFIX= SYSENV=ACC7  STAGING=/common/export/timing-rte/b2b-dev deploy'       (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b deploy'            (hack: leave PREFIX empty for SCU path)
 
 
 # relative paths
