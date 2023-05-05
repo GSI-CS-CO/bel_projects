@@ -11,51 +11,49 @@ entity idrogen is
     ------------------------------------------------------------------------
     -- Input clocks
     ------------------------------------------------------------------------
-    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock, aka DMTD
-    clk_62m5_local_i  : in std_logic; -- Local clk from 62.5Mhz oszillator
-    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
+    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock, aka DMTD, aka WR_CLK_DMTD
+    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank, WR_REFCLK_125
 
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    wr_dac_sclk_o : out std_logic;
-    wr_dac_din_o  : out std_logic;
-    wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
+    wr_dac_sclk_o : out std_logic; -- aka WR_DAC_SCLK
+    wr_dac_din_o  : out std_logic; -- aka WR_DAC_DIN
+    wr_ndac_cs_o  : out std_logic_vector(2 downto 1); -- aka WR_DAC2_SYNCn and WR_DAC1_SYNCn
 
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
-    sfp_tx_disable_o : out   std_logic;
-    sfp_tx_fault_i   : in    std_logic;
-    sfp_los_i        : in    std_logic;
-    sfp_txp_o        : out   std_logic;
-    sfp_rxp_i        : in    std_logic;
-    sfp_mod0_i       : in    std_logic;
-    sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic;
-    sfp_rate_o       : out   std_logic;
+    sfp_tx_disable_o : out   std_logic; -- aka WR_SFP_TxDisable
+    sfp_tx_fault_i   : in    std_logic; -- aka WR_SFP_TXFAULT
+    sfp_los_i        : in    std_logic; -- aka WR_SFP_LOS
+    sfp_txp_o        : out   std_logic; -- aka WR_SFP_TX
+    sfp_rxp_i        : in    std_logic; -- aka WR_SFP_RX
+    sfp_mod0_i       : in    std_logic; -- aka WR_SFP_DET_i
+    sfp_mod1_io      : inout std_logic; -- aka WR_SFP_scl_b
+    sfp_mod2_io      : inout std_logic; -- aka WR_SFP_sda_b
+    sfp_rate_o       : out   std_logic; -- aka WR_SFP_RATE_SELECT
 
     -----------------------------------------------------------------------
     -- Idrogen special
     -----------------------------------------------------------------------
-    dev_clr_n      : in    std_logic; -- FPGA Reset input, active low.
-    lmk_clkref_2   : in    std_logic; -- reference clocks from LMK
-    lmk_clkref_12  : in    std_logic; -- reference clocks from LMK
-    pps_in         : in    std_logic;
-    pps_out        : out   std_logic;
-    trigger_in     : in    std_logic;
-    trigger_out    : out   std_logic;
-    wr_scl_flash_b : inout std_logic;
-    wr_sda_flash_b : inout std_logic;
+    dev_clr_n      : in    std_logic; -- FPGA Reset input, active low, aka DEV_CLRn
+    lmk_clkref_2   : in    std_logic; -- reference clocks from LMK, aka LMK_CLKREF_2
+    lmk_clkref_12  : in    std_logic; -- reference clocks from LMK, aka LMK_CLKREF_12
+    pps_in         : in    std_logic; -- aka PPS_IN
+    pps_out        : out   std_logic; -- aka PPS_OUT
+    trigger_in     : in    std_logic; -- aka TRIGGER_IN
+    trigger_out    : out   std_logic; -- aka TRIGGER_OUT
+    wr_scl_flash_b : inout std_logic; -- aka WR_SCL_FLASH_b
+    wr_sda_flash_b : inout std_logic; -- aka WR_SDA_FLASH_b
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    wr_one_wire_io : inout std_logic;
-    gpio_o         : out   std_logic_vector(1 downto 0);
-    led_n          : out   std_logic_vector(3 downto 0);
-    uart_o         : out   std_logic;
-    uart_i         : in    std_logic);
+    wr_one_wire_io : inout std_logic; -- aka WR_SERNUM_b
+    led_n          : out   std_logic_vector(3 downto 0); -- aka LEDn
+    uart_o         : out   std_logic; -- aka WR_RX_to_UART
+    uart_i         : in    std_logic); -- aka WR_TX_from_UART
 
 end idrogen;
 
@@ -124,7 +122,7 @@ begin
       led_track_o             => led_n(2),
       gpio_i(0)               => pps_in,
       gpio_i(1)               => trigger_in,
-      gpio_o(0)               => gpio_o(0),
+      gpio_o(0)               => trigger_out,
       gpio_o(1)               => led_n(3)
     );
 
