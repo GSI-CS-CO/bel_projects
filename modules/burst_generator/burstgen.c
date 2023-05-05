@@ -68,6 +68,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* includes specific for bel_projects */
 #include "mprintf.h"
@@ -150,92 +151,139 @@ uint64_t tElapsed[N_ELAPSED] = {0};
 #define N_ACT_CNT  5                // counters for ECA MSIs
 volatile uint32_t *pSharedActCnt;   // pointer to ECA action counters (located at shared memory)
 
-enum MSR_TASK_PERFORMACE {          // offset for measurements
-  MSR_TICK_FIRST_TASK = 0,          // time point to execute the first IO action task
-  MSR_TASK_INTERVAL = N_BURSTS,     // current interval of all IO action tasks
-  MSR_TASK_INTERVAL_MAX,            // maximum interval of all IO action tasks
-  N_MSR_TASK_PERFORMANCE
+enum MSR_PERIOD {                   // scheduler periods to measure
+  MSR_AVG_PER_IO = 0,               // average period of all IO actions
+  MSR_MAX_PER_IO,                   // maximum period of all IO actions
+  MSR_AVG_PER_MAIN,                 // average period of the main loop
+  MSR_MAX_PER_MAIN,                 // maximum period of the main loop
+  N_MSR_PERIOD
 };
 
-int enableSchedulerMeasure = 1;     // control flag to dis/enable the scheduler period measurement (cmd 0x77 toggles it)
-uint64_t msrCnt = 0;                // measurement count, reset with the user command CMD_DIAG_PRINT_TASK_INTERVAL
+int msrTaskSchedPeriod = 1;         // control flag to dis/enable the task scheduler period measurement (cmd 0x77 toggles it)
+uint64_t msrCnt = 0;                // measurement count, reset with the user command CMD_DIAG_PRINT_SCHED_PERIOD
 uint64_t msrTickActEntr = 0;        // entry time point of IO action task
 uint64_t msrTickActExit = 0;        // exit time point of IO action task
 int taskIdx = 1;                    // current task index, iterate all tasks except a dummy task with index 0
-volatile uint64_t msrTaskTiming[N_MSR_TASK_PERFORMANCE];  // timing performance measurements for all IO action tasks
+uint64_t msrPeriod[N_MSR_PERIOD];   // buffer for measured periods (io actions, main loop)
 uint32_t ecaActCounters[N_ACT_CNT];
 
-static void msrInitActionTiming(void)
+/**
+ * \brief Initialize the scheduler period measurement
+ *
+ **/
+static void initMsrTaskSchedPeriod(void)
 {
   if (pShared) {
     pSharedActCnt = ecaActCounters;
     msrCnt = 0;
+    msrTickActExit = 0;
 
     // clear ECA action counters and buffer for measurements
     memset(pSharedActCnt, 0, sizeof(uint32_t) * N_ACT_CNT);
-    memset(msrTaskTiming, 0, sizeof(uint64_t) * N_MSR_TASK_PERFORMANCE);
+    memset(msrPeriod, 0, sizeof(uint64_t) * N_MSR_PERIOD);
 
-    uint32_t offset = (uint32_t)(&msrTaskTiming[1]) - (uint32_t)pShared;
-    mprintf("IO task stats (1..%d) available @ 0x%08x (ext)\n",
-        N_BURSTS-1,
-        (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)));
+    uint32_t offset = (uint32_t)(&msrPeriod[0]) - (uint32_t)pShared;
+    mprintf("Scheduler period measurement results: location=0x%08x (ext), entities=0x%x\n",
+        (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)), N_MSR_PERIOD);
 
-    offset = (uint32_t)(&msrTaskTiming[N_BURSTS]) - (uint32_t)pShared;
-    mprintf("IO task intervals (current, maximum) available @ 0x%08x (ext)\n",
-	(uint32_t)(pCpuRamExternal + ((SHARED_OFFS + offset) >> 2)));
-
-    mprintf("Built-in measurements are %s.\n", enableSchedulerMeasure ? "enabled" : "disabled");
+    mprintf("Scheduler period measurement: %s.\n", msrTaskSchedPeriod ? "enabled" : "disabled");
   }
   else {
     pSharedActCnt = 0;
-    mprintf("No built-in measurements!\n");
+    mprintf("No scheduler period measurements!\n");
   }
 }
 
 /**
- * \brief Measure performance of the main loop
+ * \brief Control the measurement of the scheduler period measurement
+ *
+ * Enable or disable the measurement.
+ * Do not clear statistics (total measurements, avg/max periods).
+ *
+ **/
+static void enableMsrTaskSchedPeriod(bool enable)
+{
+  if (enable) {
+    msrTaskSchedPeriod = 1;
+    msrTickActExit = 0;
+  }
+  else {
+    msrTaskSchedPeriod = 0;
+  };
+}
+
+/**
+ * \brief Toggle the measurement of the scheduler period measurement
+ *
+ **/
+static void toggleMsrTaskSchedPeriod(void)
+{
+  msrTaskSchedPeriod ^= 1;
+  msrTickActExit = 0;                // clear the intermediate measurement value
+}
+
+/**
+ * \brief Measure the period of the main loop and IO action tasks
  *
  * The IO action functions are called to inject internal events
  * for generating bursts. Because of a strict timing constraint each burst
  * must be re-triggered within 200 us period. The violation of this period
  * causes an unexpected termination of bursts.
  *
- * This function measures the period of action, where all IO action tasks are run to completion.
- * The initial duration measurement is ignored.
+ * This function measures the period (average, maximum) of
+ * - main loop and
+ * - all active IO actions.
  *
  * \param[in] msrTickActEntr  Action entry time point (updated before this function call)
  * \param[in] msrTickActExit  Action complete time point (updated after this function call)
  **/
-static void msrMeasureActionPeriod(uint64_t msrTickActEntr, uint64_t msrTickActExit)
+static void doMsrTaskSchedPeriod(uint64_t msrTickActEntr, uint64_t msrTickActExit)
 {
-  if (enableSchedulerMeasure == 0)
+  if (msrTaskSchedPeriod == 0)
     return;
 
-  uint64_t value = msrTaskTiming[0];        // get value of the last measurement
-  uint64_t duration = value & 0xffffffff;   // average duration of all tasks
-  uint64_t distance = value >> 32;          // average distance from a previous action
   uint64_t now = getSysTime();
 
-  // calculate the average duration of all tasks
-  value = now - msrTickActEntr;
-  duration = (value + (duration * msrCnt))/(msrCnt + 1);
+  // calculate the average period of all active IO actions
+  uint64_t value = now - msrTickActEntr;
+  msrPeriod[MSR_AVG_PER_IO] = (value + (msrPeriod[MSR_AVG_PER_IO] * msrCnt))/(msrCnt + 1);
 
-  // calculate the average distance from a previous action
+  // update the maximum period
+  if (value > msrPeriod[MSR_MAX_PER_IO])
+      msrPeriod[MSR_MAX_PER_IO] = value;
+
+  // calculate the average period of the main loop
   if (msrTickActExit) {
     value = now - msrTickActExit;
-    distance = (value + (distance * msrCnt))/(msrCnt + 1);
+    msrPeriod[MSR_AVG_PER_MAIN] = (value + (msrPeriod[MSR_AVG_PER_MAIN] * msrCnt))/(msrCnt + 1);
 
-    // determine the extremes
-    msrTaskTiming[MSR_TASK_INTERVAL] = value;   // update time interval to execute all IO action tasks
-
-    if (msrTaskTiming[MSR_TASK_INTERVAL] > msrTaskTiming[MSR_TASK_INTERVAL_MAX])  // update the maximum interval
-      msrTaskTiming[MSR_TASK_INTERVAL_MAX] = msrTaskTiming[MSR_TASK_INTERVAL];
+    // update the maximum period
+    if (value > msrPeriod[MSR_MAX_PER_MAIN])
+      msrPeriod[MSR_MAX_PER_MAIN] = value;
 
     msrCnt++;
   }
+}
 
-  // store the measurements (hi32:distance, lo32:duration)
-  msrTaskTiming[0] = (distance << 32) | duration;
+/**
+ * \brief Print the detailed results of the scheduler period measurement
+ *
+ * Print the average and maximum periods of the main loop and IO action tasks.
+ *
+ **/
+static void printMsrTaskSchedPeriod(void)
+{
+  // print the measurement results
+  mprintf("  io action:\n");
+  mprintf("\tavg=0x%x (%d)\n",    msrPeriod[MSR_AVG_PER_IO],   msrPeriod[MSR_AVG_PER_IO]);
+  mprintf("\tmax=0x%x (%d)\n",    msrPeriod[MSR_MAX_PER_IO],   msrPeriod[MSR_MAX_PER_IO]);
+  mprintf("  main loop:\n");
+  mprintf("\tavg=0x%Lx (%llu)\n", msrPeriod[MSR_AVG_PER_MAIN], msrPeriod[MSR_AVG_PER_MAIN]);
+  mprintf("\tmax=0x%Lx (%llu)\n", msrPeriod[MSR_MAX_PER_MAIN], msrPeriod[MSR_MAX_PER_MAIN]);
+  mprintf("  cnt=%Lu\n",          msrCnt);
+
+  msrTickActExit = 0; // clear intermediate measurement value
+
 }
 
 void printMsiHandleMeasurement(void)
@@ -1256,7 +1304,7 @@ void execHostCmd(int32_t cmd)
 	printEcaActionCnt();
 	break;
 
-      case CMD_DIAG_PRINT_TASK_INTERVAL: // print elapsed time between tasks (requires the burst id)
+      case CMD_DIAG_PRINT_MSR_TASK_SCHED_PERIOD: // print the measured period of the task scheduler (requires the burst id)
 	mprintf("task ticks\n");
         mprintf("\tid, lasttick, failed\n");
 	id = *pSharedInput;
@@ -1267,28 +1315,14 @@ void execHostCmd(int32_t cmd)
 	    mprintf("\t%d, 0x%016Lx, 0x%016Lx\n", i, pTask[i].lasttick, pTask[i].failed);
 	}
 
-        // print all statistics
-        uint64_t sum = 0;
-
-        mprintf("\ttask distance:duration (cnt=%Lu)\n", msrCnt);
-        for (int i = 0; i < N_BURSTS; i++) {
-          mprintf("\t %2d %8x:%8x\n", i, (uint32_t)(msrTaskTiming[i] >> 32), (uint32_t)(msrTaskTiming[i]));
-          sum += msrTaskTiming[i];
-        }
-        mprintf("\t sum %8x:%8x\n", (uint32_t)(sum >> 32), (uint32_t)sum);
-	mprintf("Task intervals: cur=0x%Lx, max=0x%Lx\n", msrTaskTiming[MSR_TASK_INTERVAL], msrTaskTiming[MSR_TASK_INTERVAL_MAX]);
-
-	msrInitActionTiming(); // reset measurements
+        printMsrTaskSchedPeriod(); // print the detailed measurement results
 
 	break;
 
-      case CMD_DIAG_TOGGLE_MEASUREMENT: // dis/enable to measure the task scheduler period
+      case CMD_DIAG_TOGGLE_MSR_TASK_SCHED_PERIOD: // toggle the measurement of the task scheduler period
         mprintf("toggle measurement\n");
 
-	enableSchedulerMeasure ^= 1;
-
-        msrInitActionTiming(); // reset measurements
-
+        toggleMsrTaskSchedPeriod();
 	break;
 
       default:
@@ -1631,7 +1665,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     ecaMsiHandler(0);                  // handle pending ECA MSI
   }
 
-  msrMeasureActionPeriod(msrTickActEntr, msrTickActExit); // measure a time interval to execute all io action tasks
+  doMsrTaskSchedPeriod(msrTickActEntr, msrTickActExit); // measure a time interval to execute all io action tasks
 
   msrTickActExit = getSysTime();             // action completed
 
@@ -1650,9 +1684,7 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  msrInitActionTiming();           // initialize the main loop performance measurement
-
-  DBPRINT1(BG_TAG, "configured");
+  DBPRINT1("configured: enter\n");
 
   return status;
 }
@@ -1674,7 +1706,9 @@ uint32_t extern_entryActionOperation()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  DBPRINT1("op_ready: enter\n");
+
+  enableMsrTaskSchedPeriod(true);  // enable the measurement of the task scheduler period
 
   return status;
 }
@@ -1687,7 +1721,9 @@ uint32_t extern_exitActionOperation()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  enableMsrTaskSchedPeriod(false);  // disable the measurement of the task scheduler period
+
+  DBPRINT1("op_ready: exit\n");
 
   return status;
 }
