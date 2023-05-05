@@ -31,6 +31,11 @@ USRPATH     := /common/usr/timing/b2b/yocto/usr
 ARCH        := /x86_64
 endif
 
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7/usr/
+ARCH        := /x86_64
+endif
+
 # set enviorinment, default is int
 ENV         ?= int
 ifeq ($(ENV), pro)
