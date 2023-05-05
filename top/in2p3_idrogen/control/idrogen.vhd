@@ -48,6 +48,15 @@ entity idrogen is
     wr_sda_flash_b : inout std_logic; -- aka WR_SDA_FLASH_b
 
     -----------------------------------------------------------------------
+    -- I/O Bank voltage
+    -----------------------------------------------------------------------
+    bank_1c_pin : out std_logic;
+    bank_1d_pin : out std_logic;
+    bank_3b_pin : out std_logic;
+    bank_3c_pin : out std_logic;
+    bank_3d_pin : out std_logic;
+
+    -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     wr_one_wire_io : inout std_logic; -- aka WR_SERNUM_b
