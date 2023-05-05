@@ -38,9 +38,9 @@ entity idrogen is
     -----------------------------------------------------------------------
     -- Idrogen special
     -----------------------------------------------------------------------
-    DEV_CLRn       : in    std_logic; -- FPGA Reset input, active low.
-    LMK_CLKREF_2   : in    std_logic; -- reference clocks from LMK
-    LMK_CLKREF_12  : in    std_logic; -- reference clocks from LMK
+    dev_clr_n      : in    std_logic; -- FPGA Reset input, active low.
+    lmk_clkref_2   : in    std_logic; -- reference clocks from LMK
+    lmk_clkref_12  : in    std_logic; -- reference clocks from LMK
     pps_in         : in    std_logic;
     pps_out        : out   std_logic;
     trigger_in     : in    std_logic;
@@ -52,7 +52,8 @@ entity idrogen is
     -- Misc.
     -----------------------------------------------------------------------
     wr_one_wire_io : inout std_logic;
-    gpio_o         : out   std_logic_vector(3 downto 0);
+    gpio_o         : out   std_logic_vector(1 downto 0);
+    led_n          : out   std_logic_vector(3 downto 0);
     uart_o         : out   std_logic;
     uart_i         : in    std_logic);
 
@@ -60,15 +61,13 @@ end idrogen;
 
 architecture rtl of idrogen is
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 5) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 3) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("PPS_IN     ",  IO_NONE,         false,   false,  0,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
-    ("TRIG_IN    ",  IO_NONE,         false,   false,  1,     IO_INPUT,     IO_GPIO,  false,        false,       IO_TTL),
-    ("LED_USR_1  ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("LED_USR_2  ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("LED_USR_3  ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("LED_USR_4  ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,    IO_GPIO,  false,        false,       IO_TTL)
+    ("PPS_IN     ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("TRIG_IN    ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("TRIG_OUT   ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USR_LED    ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL)
   );
 
   constant c_family       : string := "Arria 10 GX SCU4"; -- string := "Arria 10 GX IDROGEN";
@@ -86,7 +85,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25,
       g_psram_bits         => c_psram_bits,
-      g_gpio_out           => 4,
+      g_gpio_out           => 2,
       g_gpio_in            => 2,
       g_en_tlu             => false,
       g_en_pcie            => true,
@@ -119,7 +118,15 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_o                  => gpio_o);
+      led_pps_o               => pps_out,
+      led_link_up_o           => led_n(0),
+      led_link_act_o          => led_n(1),
+      led_track_o             => led_n(2),
+      gpio_i(0)               => pps_in,
+      gpio_i(1)               => trigger_in,
+      gpio_o(0)               => gpio_o(0),
+      gpio_o(1)               => led_n(3)
+    );
 
   sfp_rate_o <= '0';
 
