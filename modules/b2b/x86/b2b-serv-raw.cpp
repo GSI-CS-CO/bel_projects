@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000425
+#define B2B_SERV_RAW_VERSION 0x000500
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -66,7 +66,6 @@
 #include "CommonFunctions.h"
 
 // b2b includes
-//#include <wb_devices.h>                 // wb_api
 #include <common-lib.h>                 // COMMON
 #include <b2blib.h>                     // API
 #include <b2b.h>                        // FW

@@ -53,8 +53,10 @@ CXFLAGS     ?= `pkg-config  saftlib --cflags` $(CCFLAGS)
 #CCFLAGS     ?=  $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I$(USRPATH)/include  -I../include -I../../common-libs/include
 SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -L$(USRPATH)/lib -letherbone -lm -lb2blib
 
-$(info    CCFLAGS is $(CCFLAGS))
-$(info     CFLAGS is $(CFLAGS))
+$(info theirs CFLAGS is $(CFLAGS))
+$(info   compiling x86 binaries for $(SYSENV))
+$(info   ours CCFLAGS for c code is   $(CCFLAGS))
+$(info   ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS     := lib b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname b2b-serv-raw
 
