@@ -82,10 +82,10 @@ enum BURST_INFO {                // burst info fields
 #define CMD_LS_FW_ID      0x33UL   // list the firmware id
 #define CMD_MASK          0xFFFFUL // command mask
 
-#define CMD_DIAG_TOGGLE_MEASUREMENT        0x40 // toggle diagnostic measurements
-#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION 0x41 // print the elapsed time to handle MSIs
-#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG   0x42 // print IO event control and configuration table
-#define CMD_DIAG_PRINT_TASK_INTERVAL       0x43 // print the task interval
+#define CMD_DIAG_TOGGLE_MSR_TASK_SCHED_PERIOD 0x40 // toggle diagnostic measurements
+#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION    0x41 // print the elapsed time to handle MSIs
+#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG      0x42 // print IO event control and configuration table
+#define CMD_DIAG_PRINT_MSR_TASK_SCHED_PERIOD  0x43 // print the results of the scheduler period measurement
 
 /* offsets of arguments in the user commands */
 enum ARGS_CMD_GET_PARAM {
