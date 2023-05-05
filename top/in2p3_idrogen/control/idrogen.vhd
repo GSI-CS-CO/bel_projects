@@ -95,7 +95,7 @@ begin
       g_gpio_out           => 2,
       g_gpio_in            => 2,
       g_en_tlu             => false,
-      g_en_pcie            => true,
+      g_en_pcie            => false,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
       g_a10_use_sys_fpll   => false,
