@@ -1,3 +1,4 @@
+# yocto; temporarily disabled
 #SERVICEA=b2b-servsys-int-sis18-kickext.service
 #SERVICEB=b2b-servraw-int-sis18.service
 #SERVICEC=b2b-analyzer-int-sis18.service
