@@ -1,51 +1,77 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# Note: setting the PKG_CONFIG_PATH might help too, example:
-# Example usage:
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
+# Example build:
 #   'make clean'                                                 
-#   'make YOCTO=YES PREFIX= all'                                                       (hack: leave PREFIX empty for SCU path)
+#   'make SYSENV=OPT PREFIX=/opt/usr all'                                             (hack: leave PREFIX empty for SCU path)
+# Example install:
+#   'make PREFIX=/opt/usr install'                                                    (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
 STAGING     ?=
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-CFLAGS      ?=
-DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
-ASLLIB      := .
-ASLINC      := .
-else
+# relative paths
+
+# target system environment, OPT is default
+SYSENV      ?= OPT
+ASLINC      ?= .
+ASLLIB      ?= .
+
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
+ARCH        ?=
 EB          ?= ../../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
 CFLAGS      ?= -Wall -O2 -g
-#DIMPATH     := /opt/dim/dim_v20r33
-# the following four lines are a hack required for building software for sl7 (deprecated)
-DIMPATH     := /common/usr/timing/b2b/dim_v20r29
-ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
-ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
 CXX         := g++ --std=c++0x
 endif
 
-EXTRA_FLAGS ?=
-LIBS        ?= -L. -Wl,-rpath,$(PREFIX)/lib -L$(DIMPATH)/linux
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
-SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -Wl,-rpath,$(PREFIX)/lib -lm -L$(DIMPATH)/linux
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/b2b/yocto/usr
+ARCH        := /x86_64
+EB          ?= .
+CFLAGS      ?=
+endif
 
-$(info    CCFLAGS is $(CCFLAGS))
-$(info     CFLAGS is $(CFLAGS))
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7/usr
+ARCH        := /x86_64
+EB          ?= ../../../ip_cores/etherbone-core/api
+CFLAGS      ?= -Wall -O2 -g
+CXX         := g++ --std=c++0x
+ASLINC      := $(PKG_CONFIG_PATH)../../include/saftlib
+ASLLIB      := $(PKG_CONFIG_PATH)../../lib
+endif
+
+EXTRA_FLAGS ?=
+
+# the following is for c code
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I../include -I../../common-libs/include
+LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib
+# the following is for c++ code
+CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS)
+XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS)
+
+$(info ours/theirs CFLAGS is $(CFLAGS))
+$(info compiling x86 binaries for $(SYSENV))
+$(info ours CCFLAGS for c code is $(CCFLAGS))
+$(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS     := freq-measure freq-mon-simple
 
 all: $(TARGETS)
 
 freq-measure: freq-measure.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS) -o freq-measure freq-measure.cpp $(SAFTLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CXFLAGS) -o freq-measure freq-measure.cpp $(XLIBS) -ldim -lpthread
 
 freq-mon-simple: freq-mon-simple.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o freq-mon-simple freq-mon-simple.c $(LIBS) -ldim -lpthread
 
 clean: 
 	rm -f freq-measure freq-mon-simple
+
+install:
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin	
+
+.PHONY: all clean

@@ -1,6 +1,12 @@
-SERVICEA=fm-int-esr.service
-cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-systemctl daemon-reload
+# yocto; temporarily disabled
+#SERVICEA=fm-int-esr.service
+#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+#systemctl daemon-reload
+#
+#systemctl start $SERVICEA
 
-systemctl start $SERVICEA
+# hack for acc7
+export DIM_DNS_NODE=asl105
 
+
+freq-measure esr int &

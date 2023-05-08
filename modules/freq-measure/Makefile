@@ -1,12 +1,12 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# Note: setting the PKG_CONFIG_PATH might help too, example:
-# Example usage:
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
+# Example build:
 #   'make clean'                                                 
-#   'make ENV=int YOCTO=YES PREFIX= all'                                               (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/fm-dev-yocto deploy'               (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/fm deploy'                         (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/fm-dev deploy'         (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/fm deploy'             (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -19,18 +19,26 @@ NFSINIT     ?= nfs-init
 GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
 INC         ?= include
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
-else
-EB          ?= ../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
-DIMPATH      := /common/usr/timing/b2b/dim_v20r29
+# target system environment, OPT is default
+SYSENV      ?= OPT
+
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
+ARCH        ?=
 endif
 
-# set enviorinment, default is int
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/b2b/yocto/usr
+ARCH        := /x86_64
+endif
+
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7/usr/
+ARCH        := /x86_64
+endif
+
+
+# set envirornment, default is int
 ENV         ?= int
 ifeq ($(ENV), pro)
 PRO         ?= YES
