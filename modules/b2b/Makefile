@@ -5,9 +5,12 @@
 #   'make clean'                                                 
 #   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7  STAGING=/common/export/timing-rte/b2b-dev deploy'       (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b-dev deploy'        (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b deploy'            (hack: leave PREFIX empty for SCU path)
 
+# install
+PREFIX      ?= /usr/local
+STAGING     ?=
 
 # relative paths
 FW          ?= fw
@@ -35,7 +38,7 @@ USRPATH     := /common/usr/timing/b2b/centos7/usr/
 ARCH        := /x86_64
 endif
 
-# set enviorinment, default is int
+# set environment, default is int
 ENV         ?= int
 ifeq ($(ENV), pro)
 PRO         ?= YES

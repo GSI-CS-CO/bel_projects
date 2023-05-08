@@ -2,9 +2,9 @@
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make MASP=NO SYSENV=OPT PREFIX=/opt/usr all'                                     (hack: leave PREFIX empty for SCU path)
+#   'make SYSENV=OPT PREFIX=/opt/usr all'                                             (hack: leave PREFIX empty for SCU path)
 # Example install:
-#   'make MASP=NO PREFIX=/opt/usr install'                                            (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX=/opt/usr install'                                                    (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
