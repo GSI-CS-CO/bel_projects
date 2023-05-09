@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-may-2023
+ *  version : 09-may-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -350,7 +350,7 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  int32_t     t1, t2;
+  //int32_t     t1, t2;
 
   timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
   timeoutT = comlib_getSysTime() + timeout;
