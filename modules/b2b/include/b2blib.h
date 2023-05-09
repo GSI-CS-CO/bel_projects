@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-May-2023
+ *  version : 09-May-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000500
+#define B2BLIB_VERSION 0x000501
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -296,9 +296,9 @@ extern "C" {
                          uint64_t *TH1Inj,                     // period of h=1 injection [as]
                          uint32_t *nHInj,                      // harmonic number injection
                          uint64_t *TBeat,                      // period of beating signal [as]
-                         int32_t *cPhase,                      // correction of phase [ns]
-                         int32_t *cTrigExt,                    // correction of extraction kicker trigger [ns]
-                         int32_t *cTrigInj,                    // correction of injection kicker trigger [ns]
+                         double  *cPhase,                      // correction of phase [ns]
+                         double  *cTrigExt,                    // correction of extraction kicker trigger [ns]
+                         double  *cTrigInj,                    // correction of injection kicker trigger [ns]
                          int32_t *comLatency,                  // communication latency [ns]
                          int     printFlag                     // prints info on b2b firmware properties to stdout
                          );

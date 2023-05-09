@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-May-2023
+ *  version : 09-May-2023
  *
  * library for b2b
  *
@@ -376,7 +376,7 @@ void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, u
 } // b2b_printDiags
 
 
-uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency, int printFlag)
+uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, double *cPhase, double*cTrigExt, double *cTrigInj, int32_t *comLatency, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -421,13 +421,13 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   *TBeat         = (uint64_t)(data[9]) << 32;
   *TBeat        += data[10];
   tmp.data       = data[11];            // copy four bytes
-  *cPhase        = (int32_t)(tmp.f);    // intermediate solution: convert to i32; later convert to double
+  *cPhase        = (double)(tmp.f);    
   fCPhase        = tmp.f;
   tmp.data       = data[12];            // see above ...
-  *cTrigExt      = (int32_t)(tmp.f);
+  *cTrigExt      = (double)(tmp.f);
   fCTrigExt      = tmp.f;
   tmp.data       = data[13];            // see above ...
-  *cTrigInj      = (int32_t)(tmp.f);
+  *cTrigInj      = (double)(tmp.f);
   fCTrigInj      = tmp.f;
   *comLatency    = data[14];
 
