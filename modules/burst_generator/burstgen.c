@@ -804,6 +804,19 @@ status_t initSharedMem(uint32_t *sharedSize)
   initSharedBuffers();       // initialize the command and its argument buffers (in the shared memory)
 
   *sharedSize = BG_SHARED_END;
+
+  DBPRINT1("FIRMWARE ID         (%x) @ 0x%08x\n", BG_FW_ID, (uint32_t)(pShared + (BG_SHARED_BEGIN >> 2)));
+  *(pShared + (BG_SHARED_BEGIN >> 2)) = BG_FW_ID; // label the starting point of the shared memory with the firmware id
+
+  // store the start and end addresses (external) of the common-lib section (for host communication)
+  i = (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + COMMON_SHARED_BEGIN) >> 2));
+  DBPRINT1("COMMON_SHARED_BEGIN (%x) @ 0x%08x\n", i, (uint32_t)(pShared + (BG_SHARED_COMMON_BEGIN >> 2)));
+  *(pShared + (BG_SHARED_COMMON_BEGIN >> 2)) = i;
+
+  i = (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + COMMON_SHARED_END) >> 2));
+  DBPRINT1("COMMON_SHARED_END   (%x) @ 0x%08x\n", i, (uint32_t)(pShared + (BG_SHARED_COMMON_END >> 2)));
+  *(pShared + (BG_SHARED_COMMON_END >> 2)) = i;
+
   return COMMON_STATUS_OK;
 }
 
@@ -815,9 +828,6 @@ void setup(void)
   setupTimingMsg(bufTimMsg);        // build default timing msg for IO action, estimate the duration of message injection to the ECA event input
   setupMsiHandlers();               // set up MSI handlers
   setupTasks();                     // set up tasks for the IO actions and host communication, initialize the trg/tgg config table
-  // TODO: remove it after updating saft-burst-ctl
-  DBPRINT1("wrote FW ID %x at loc 0x%08x\n", BG_FW_ID, (uint32_t)(pShared + (BG_SHARED_BEGIN >> 2)));
-  *(pShared + (BG_SHARED_BEGIN >> 2)) = BG_FW_ID; // label the starting point of the shared memory with the firmware id
 }
 
 /*******************************************************************************
@@ -1390,13 +1400,23 @@ void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
 *******************************************************************************/
 void initSharedBuffers(void)
 {
-  pSharedInput = (uint32_t *)(pShared + (BG_SHARED_INPUT >> 2));   // get pointer to shared input buffer
+  pSharedInput = (uint32_t *)(pShared + (BG_SHARED_CMD_ARGS >> 2));   // get pointer to command argument buffer
 
   // location of the command buffer is defined by common-libs
-  DBPRINT("Command buffer (ext)      @ 0x%08x (0x%08x)\n",
-      (uint32_t)pSharedCmd, (uint32_t)(pCpuRamExternal + ((BG_SHARED_CMD + SHARED_OFFS) >> 2)));
-  mprintf("Argument buffer (ext)     @ 0x%08x (0x%08x)\n",
-      (uint32_t)pSharedInput, (uint32_t)(pCpuRamExternal + ((BG_SHARED_INPUT + SHARED_OFFS) >> 2)));
+  uint32_t extern_addr = (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + BG_SHARED_CMD) >> 2));
+
+  DBPRINT1("Command buffer  (ext)     @ 0x%08x (0x%08x)\n", (uint32_t)pSharedCmd, extern_addr);
+
+  DBPRINT1("Argument buffer (ext)     @ 0x%08x (0x%08x)\n",
+      (uint32_t)pSharedInput, (uint32_t)(pCpuRamExternal + ((BG_SHARED_CMD_ARGS + SHARED_OFFS) >> 2)));
+
+  // store the addresses of the command and state buffer (for host communication)
+  DBPRINT1("COMMON_SHARED_CMD   (%x) @ 0x%08x\n", extern_addr, (uint32_t)(pShared + (BG_SHARED_COMMON_CMD >> 2)));
+  *(pShared + (BG_SHARED_COMMON_CMD >> 2)) = extern_addr;
+
+  extern_addr = (uint32_t)(pCpuRamExternal + ((SHARED_OFFS + COMMON_SHARED_STATE) >> 2));
+  DBPRINT1("COMMON_SHARED_STATE (%x) @ 0x%08x\n", extern_addr, (uint32_t)(pShared + (BG_SHARED_COMMON_STATE >> 2)));
+  *(pShared + (BG_SHARED_COMMON_STATE >> 2)) = extern_addr;
 }
 
 /*******************************************************************************
