@@ -1,10 +1,12 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make YOCTO=YES DIM=YES PREFIX= all'                                      (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/XYZ deploy'               (hack: leave PREFIX empty for SCU path)
+#   'make clean'
+#   'make SYSENV=OPT DIM=YES PREFIX=/opt/usr all'                             (hack: leave PREFIX empty for SCU path)
+# Example install:
+#   'make PREFIX=/opt/usr install'
+
 
 # install
 PREFIX      ?= /usr/local
@@ -12,22 +14,12 @@ STAGING     ?=
 
 # relative paths
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-ARCH        := /x86_64
-CFLAGS      ?=
-USRPATH     := /common/usr/timing/b2b/yocto/usr
-FTDI        := .
-else
-INCPATH      ?= .
-ARCH        ?= /x86_64
-USRPATH     ?= /opt/usr
-CFLAGS      ?= -Wall -O2 -g
-endif
+# include common Makefile stuff
+include ../../b2b/x86/targetsysbuild.db
 
 ifeq ($(DIM), YES)
 # DIM headers should be installed in USRPATH/include
-# DIM library should be installed in USSPATH/lib
+# DIM library should be installed in USRPATH/lib
 USEDIM      = -D USEDIM
 DIMLIB      := -ldim
 endif
@@ -49,6 +41,8 @@ ftdimcp-ctl: ftdimcp-ctl.c
 clean:
 	rm -f *.o $(TARGETS)
 
-deploy:
+install:
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin	
 
 .PHONY: all clean

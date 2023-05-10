@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Apr-2023
+ *  version : 10-May-2023
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -214,12 +214,12 @@ FT_STATUS ftdimpc_getCompOutAct(FT_HANDLE cHandle, uint32_t *on)
   FT_STATUS ftStatus;
 
   uint8_t   value;                   // value of channel GPIO
-  uint8_t   pinact;                  // pin to which the actual comparator output is connected
+  uint8_t   pin ;                    // pin to read
 
-  pinact    = FTDIMCP_PINACT;
+  pin       = FTDIMCP_PINACT;
   
   ftStatus  = FT_ReadGPIO(cHandle, &value);
-  *on       = (value >> pinact) & 0x1;
+  *on       = (value >> pin) & 0x1;
 
   return ftStatus; 
 } // ftdimpc_getCompOutAct
@@ -229,9 +229,15 @@ FT_STATUS ftdimpc_getCompOutAct(FT_HANDLE cHandle, uint32_t *on)
 FT_STATUS ftdimpc_getCompOutStretched(FT_HANDLE cHandle, uint32_t *on)
 {
   FT_STATUS ftStatus;
-  // not yet implemented, just return actual value
 
-  ftStatus = ftdimpc_getCompOutAct(cHandle, on);
+
+  uint8_t   value;                   // value of channel GPIO
+  uint8_t   pin ;                    // pin to read
+
+  pin       = FTDIMCP_PINSTRETCH;
+  
+  ftStatus  = FT_ReadGPIO(cHandle, &value);
+  *on       = (value >> pin) & 0x1;
   
   return ftStatus;
 } // ftdimpc_getCompOutStretched
