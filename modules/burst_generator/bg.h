@@ -37,13 +37,20 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
-#define BG_SHARED_BEGIN         COMMON_SHARED_END
+#define BG_SHARED_COMMON_SIZE   2048                      // reserved size of the common-lib section in shared memory
+#define BG_SHARED_BEGIN         BG_SHARED_COMMON_SIZE     // App-spec section: firmware ID
 #define BG_SHARED_MB_SLOT_LM32  BG_SHARED_BEGIN + 0x04UL  // Mailbox slot for LM32
 #define BG_SHARED_MB_SLOT_HOST  BG_SHARED_BEGIN + 0x0CUL  // Mailbox slot for the host
-#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Command buffer
-#define BG_SHARED_INPUT         BG_SHARED_BEGIN + 0x20UL  // Command argument buffer
+#define BG_SHARED_COMMON_BEGIN  BG_SHARED_BEGIN + 0x10UL  // Start address of the common-lib section
+#define BG_SHARED_COMMON_END    BG_SHARED_BEGIN + 0x14UL  // End address of the common-lib section
+#define BG_SHARED_COMMON_CMD    BG_SHARED_BEGIN + 0x18UL  // Address of the command buffer (common-lib)
+#define BG_SHARED_COMMON_STATE  BG_SHARED_BEGIN + 0x1CUL  // Address of the state buffer (common-lib)
+                                                          // app specific section in shared memory (for host communication)
+#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Offset to the command buffer
+#define BG_SHARED_CMD_ARGS      BG_SHARED_BEGIN + 0x20UL  // Offset to the command argument buffer
 #define BG_SHARED_END           BG_SHARED_BEGIN + 0x40UL  // End of the shared memory
 #define MB_SLOT_CFG_FREE  0xFFFFFFFFUL
+
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
