@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2023
+ *  version : 10-May-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000500
+#define B2B_VIEWER_VERSION 0x000501
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -638,6 +638,7 @@ int main(int argc, char** argv) {
   flagPrintRf   = 0;
   flagPrintKick = 0;
   flagPrintStat = 0;
+  sid           = 0;
 
   while ((opt = getopt(argc, argv, "s:o:eh")) != -1) {
     switch (opt) {

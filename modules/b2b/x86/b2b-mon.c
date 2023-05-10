@@ -222,6 +222,7 @@ void buildPrintLine(uint32_t idx)
 
   actNsecs = comlib_getSysTime();
   actT     = (time_t)(actNsecs / 1000000000);
+  dtmp1    = NAN;
 
   if (idx > NALLSID) return;
 

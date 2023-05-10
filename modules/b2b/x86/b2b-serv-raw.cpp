@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Mar-2023
+ *  version : 10-May-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000500
+#define B2B_SERV_RAW_VERSION 0x000501
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -150,7 +150,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  uint64_t one_ns_as = 1000000000;
+  //uint64_t one_ns_as = 1000000000;
   fdat_t   tmp;
   float    tmpf;
 
@@ -316,14 +316,15 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
 
 
 // this will be called when receiving ECA actions from software action queue
-static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
+// informative: this routine is presently not used, as the softare action queue does not support the TEF field
+/*static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
 {
   int                 flagLate;
 
   flagLate    = flags & 0x1;
 
   timingMessage(tag, deadline, id, param, 0x0, flagLate, 0, 0, 0);
-} // recTimingMessag
+} // recTimingMessag*/
 
 
 // call back for command
@@ -810,7 +811,10 @@ int main(int argc, char** argv)
     uint32_t      tmp32;
 
     sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
-    ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base);
+    if ((ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base)) != EB_OK) {
+      std::cerr << program << ": can't open lm32 ECA queue" << std::endl;
+      exit(1);
+    } // if ebStatus
     
     while(true) {
       //      saftlib::wait_for_signal();
@@ -819,7 +823,7 @@ int main(int argc, char** argv)
       t2 = comlib_getSysTime();
       tmp32 = t2 - t1; 
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
       if (ecaStatus == COMMON_STATUS_OK) {
         deadline_t = saftlib::makeTimeTAI(deadline);
         //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));

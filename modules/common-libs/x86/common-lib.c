@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-may-2023
+ *  version : 19-May-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -313,7 +313,7 @@ uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *devic
   if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
   if (nDevices == 0)       return COMMON_STATUS_EB;
   //if (nDevices > maxDev)   return COMMON_STATUS_EB;
-  if (nDevices < qIdx + 1) return COMMON_STATUS_EB;
+  if ((uint32_t)nDevices < qIdx + 1) return COMMON_STATUS_EB;
   *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
 
   //printf("open eca q, nDevices %d, idx %d, ecaq_base %lx\n", nDevices, qIdx, (uint32_t)(*ecaq_base));

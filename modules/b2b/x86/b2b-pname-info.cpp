@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Michael Reese, GSI-Darmstadt
- *  version : 13-Dec-2021
+ *  version : 10-May-2023
  *
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
@@ -56,9 +56,9 @@ struct PatternNameService {
 		, buffers(16, std::vector<char>(128,0))
 		, service_ids(16)
 		, service_names(16)
-	{
+        {
 		// build service name and add the service
-		for (int sid = 0 ; sid < buffers.size(); ++sid) {
+                for (int sid = 0 ; sid < (int)(buffers.size()); ++sid) {
 			std::ostringstream service_name;
 			service_name << service_prefix << "-pname" << "_sid" << std::setw(2) << std::setfill('0') << sid;
 			service_ids[sid] = dis_add_service(service_name.str().c_str(), "C", &buffers[sid][0], buffers[sid].size(), 0, 0);
@@ -87,7 +87,7 @@ struct PatternNameService {
 	}
 
 	void process_script_output(const std::string& script_output) {
-		for (int sid = 0; sid < buffers.size(); ++sid) {
+               for (int sid = 0; sid < (int)(buffers.size()); ++sid) {
 			// clear the buffer content
 			std::fill(buffers[sid].begin(), buffers[sid].end(), '\0');
 			// build a SID search string, e.g. "S=10"
