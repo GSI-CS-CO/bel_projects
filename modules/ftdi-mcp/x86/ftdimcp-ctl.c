@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Apr-2023
+ *  version : 11-May-2023
  *
  * command line program for MCP4725 connected via FT232H
  *
@@ -53,14 +53,16 @@
 
 char      disName[DIMMAXSIZE];           // name of DIM server
 
-char      disVersion[DIMCHARSIZE];       // version 
+char      disVersion[DIMCHARSIZE];       // version
+uint32_t  disActOutput;                  // actual (non-stretched) comparator output
+uint32_t  disTriggered;                  // value of 'stretched' comparator output
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
-uint32_t  disTriggered;                 // value of 'stretched' comparator output
 double    disSetLevel;                   // actual comparator level
 
 uint32_t  disVersionId      = 0;
-uint32_t  disNTriggerId     = 0;
+uint32_t  disActOutputId    = 0;                  
 uint32_t  disTriggeredId    = 0;
+uint32_t  disNTriggerId     = 0;
 uint32_t  disSetLevelId     = 0;
 uint32_t  disCmdLevelId     = 0;
 
@@ -128,14 +130,17 @@ void disAddServices(char *prefix)
   sprintf(name, "%s_version", prefix);
   disVersionId    = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
-  sprintf(name, "%s_ntrigger", prefix);
-  disNTriggerId   = dis_add_service(name, "I:1", &disNTrigger, sizeof(disNTrigger), 0 , 0);
+  sprintf(name, "%s_actoutput", prefix);
+  disActOutputId = dis_add_service(name, "I:1", &disActOutput, sizeof(disActOutput), 0, 0);
 
   sprintf(name, "%s_triggered", prefix);
-  disTriggeredId = dis_add_service(name, "I:1", &disTriggered, sizeof(disTriggered), 0 , 0);
+  disTriggeredId = dis_add_service(name, "I:1", &disTriggered, sizeof(disTriggered), 0, 0);
+
+  sprintf(name, "%s_ntrigger", prefix);
+  disNTriggerId   = dis_add_service(name, "I:1", &disNTrigger, sizeof(disNTrigger),  0, 0);
   
   sprintf(name, "%s_setlevel", prefix);
-  disSetLevelId   = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel), 0 , 0);
+  disSetLevelId   = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel),  0, 0);
 
   sprintf(name, "%s_cmd_setlevel", prefix);
   disCmdLevelId   =  dis_add_cmnd(name, "D:1", cmdSetLevel, 0);
@@ -165,8 +170,10 @@ int main(int argc, char** argv) {
   uint32_t   verLibFtdi;                  // version of ftdi library (required by mpsse library)
   uint32_t   verLibMpsse;                 // version of mpsse library
   uint32_t   verLibFtdiMcp;               // version of ftdimcp library
-  uint32_t   outAct;                      // actual value of comparator output
-  uint32_t   outOld;                      // previous value of comparator output
+  uint32_t   outAct;                      // value of actual comparator output
+  uint32_t   outActOld;                   // previous value of actual comparator output
+  uint32_t   outStretched;                // value of stretched comparator output
+  uint32_t   outStretchedOld;             // previous value of stretched comparator output
   uint32_t   blinkTime_us;                // duration of blink [us]
 
   char       prefix[1024];                // prefix for DIM services
@@ -280,11 +287,13 @@ int main(int argc, char** argv) {
 #ifdef USEDIM
     sprintf(disName, "N/A");
     sprintf(disVersion, "N/A");
-    disNTrigger = 0;
-    disSetLevel = NAN;
-    outAct      = 0;
-    outOld      = 0;
-    flagBlink   = 0;
+    disNTrigger     = 0;
+    disSetLevel     = NAN;
+    outAct          = 0;
+    outActOld       = 0;
+    outStretched    = 0;
+    outStretchedOld = 0;
+    flagBlink       = 0;
     
     printf("%s: starting server using prefix %s\n", program, prefix);
 
@@ -298,22 +307,31 @@ int main(int argc, char** argv) {
     printf("dis version id %d\n", disVersionId);
        
     while (1) {
-      // get value
-      ftdimpc_getCompOutStretched(cHandle, &outAct);
+      // get values
+      ftdimpc_getCompOutStretched(cHandle, &outStretched);
+      ftdimpc_getCompOutAct(cHandle, &outAct);      
 
-      // value change
-      if (outAct != outOld) {
-        disTriggered = outAct;
+      // stretched value change
+      if (outStretched != outStretchedOld) {
+        disTriggered = outStretched;
         dis_update_service(disTriggeredId);
-      } // if outAct
+      } // if outStretched
 
+      // act value change
+      if (outAct != outActOld) {
+        disActOutput = outAct;
+        dis_update_service(disActOutputId);
+      } // if outAct
+      
       // triggered?
-      if (outAct > outOld) {
+      if (outStretched > outStretchedOld) {
         disNTrigger++;
         dis_update_service(disNTriggerId);
         flagBlink = 1;
-      } // if outAct
-      outOld = outAct;
+      } // if outStretched
+      
+      outStretchedOld = outStretched;
+      outActOld       = outAct;
 
       // blink on changes 
       if (flagBlink) {
