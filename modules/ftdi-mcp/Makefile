@@ -70,6 +70,7 @@ deploy:
 
 # tools
 	cp $(SW)/ftdimcp-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+	cp $(SW)/ftdimcp-ui $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib             # '/usr' is a hack
 	cp $(USRPATH)/lib/libftd2xx.so.1.4.27 $(STAGING)$(ARCH)$(PREFIX)/usr/lib   # '/usr' is a hack
 	cp -a $(USRPATH)/lib/libftd2xx.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib       # '/usr' is a hack

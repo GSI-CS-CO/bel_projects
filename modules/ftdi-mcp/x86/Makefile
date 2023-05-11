@@ -25,7 +25,7 @@ DIMLIB      := -ldim
 endif
 
 EXTRA_FLAGS ?= $(USEDIM)
-CCFLAGS     ?= $(EXTRA_FLAGS) -I../include -I$(USRPATH)/include -I../../common-libs/include
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I../include -I$(USRPATH)/include -I../../common-libs/include
 LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread -lb2blib
 
 $(info    CCFLAGS is $(CCFLAGS))
