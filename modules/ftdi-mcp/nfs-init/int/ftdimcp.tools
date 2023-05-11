@@ -1,0 +1,7 @@
+# libraries
+cp -a $MOUNTPOINT/$ARCH/usr/lib/* /usr/lib/
+ldconfig
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/ftdimcp-ctl /usr/bin/
+# firmware
+
