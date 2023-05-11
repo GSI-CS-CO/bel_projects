@@ -25,18 +25,21 @@ DIMLIB      := -ldim
 endif
 
 EXTRA_FLAGS ?= $(USEDIM)
-LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread
-CCFLAGS     ?= $(EXTRA_FLAGS) -I../include -I$(USRPATH)/include 
+CCFLAGS     ?= $(EXTRA_FLAGS) -I../include -I$(USRPATH)/include -I../../common-libs/include
+LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread -lb2blib
 
 $(info    CCFLAGS is $(CCFLAGS))
 $(info     CFLAGS is $(CFLAGS))
 
-TARGETS     := ftdimcp-ctl
+TARGETS     := ftdimcp-ctl ftdimcp-ui
 
 all: $(TARGETS)
 
 ftdimcp-ctl: ftdimcp-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o ftdimcp-ctl ftdimcp-ctl.c ftdimcp-lib.c $(LIBS)
+
+ftdimcp-ui: ftdimcp-ui.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -o ftdimcp-ui ftdimcp-ui.c ftdimcp-lib.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)

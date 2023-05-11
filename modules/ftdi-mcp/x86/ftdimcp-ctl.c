@@ -80,7 +80,7 @@ static void die(const char* what) {
 } //die
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] <port number> [COMMAND]\n", program);
+  fprintf(stderr, "Usage: %s <port number> [OPTION]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
