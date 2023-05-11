@@ -167,11 +167,12 @@ int main(int argc, char** argv) {
   uint32_t   verLibFtdiMcp;               // version of ftdimcp library
   uint32_t   outAct;                      // actual value of comparator output
   uint32_t   outOld;                      // previous value of comparator output
-  uint32_t   blinkTime     = 200000;      // duration of blink [us]
+  uint32_t   blinkTime_us;                // duration of blink [us]
 
   char       prefix[1024];                // prefix for DIM services
 
-  program = argv[0];
+  program      = argv[0];
+  blinkTime_us = FTDIMCP_POLLINTERVAL_US;
 
   while ((opt = getopt(argc, argv, "l:d:oseih")) != -1) {
     switch (opt) {
@@ -317,11 +318,11 @@ int main(int argc, char** argv) {
       // blink on changes 
       if (flagBlink) {
         ftdimpc_setLed(cHandle, 1);
-        usleep(blinkTime);
+        usleep(blinkTime_us);
         ftdimpc_setLed(cHandle, 0);
         flagBlink = 0;
       } // flagBlink
-      else usleep(blinkTime);
+      else usleep(blinkTime_us);
       
     } // while
 #endif // USEDIM

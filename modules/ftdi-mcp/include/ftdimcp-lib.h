@@ -38,18 +38,19 @@
 #ifndef _FTDIMCP_LIB_H_
 #define _FTDIMCP_LIB_H_
 
-#define FTDIMCP_LIB_VERSION 0x000003
+#define FTDIMCP_LIB_VERSION 0x000004
 
 // ftdi, i2c
 #include <ftd2xx.h>
 #include <libmpsse_i2c.h>
 
 // input: pin 0..3; output pin 4..7
-#define FTDIMCP_PINLED         5                         // c<N> pin to which the activiy LED is connected
-#define FTDIMCP_PINSTRETCH     1                         // c<N> pin to which the stretched comparator output is connected
-#define FTDIMCP_PINACT         2                         // c<N> pin to which the current comparator output is connected
-#define FTDIMCP_GPIODIR     0xf0                         // bitwise direction, c0..c3: input, c4..c7: output
-#define FTDIMCP_I2CADDR     0x64                         // i2c address of MCP4725
+#define FTDIMCP_PINLED               5                   // c<N> pin to which the activiy LED is connected
+#define FTDIMCP_PINSTRETCH           1                   // c<N> pin to which the stretched comparator output is connected
+#define FTDIMCP_PINACT               2                   // c<N> pin to which the current comparator output is connected
+#define FTDIMCP_GPIODIR           0xf0                   // bitwise direction, c0..c3: input, c4..c7: output
+#define FTDIMCP_I2CADDR           0x64                   // i2c address of MCP4725
+#define FTDIMCP_POLLINTERVAL_US 100000                   // interval used for polling [us]
 
 
 // get library versions
