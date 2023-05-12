@@ -8,6 +8,8 @@ the comparator. See documentation in folder 'doc'.
 
 Requirements
 ============
+FTDI Libraries
+--------------
 Tested on  linux. Althouth  a kernel driver  for ftdi  exist, ftdi-mcp
 uses other libraries from ftdi instead.
 
@@ -18,11 +20,20 @@ uses other libraries from ftdi instead.
 -- higher level library required for I2C functionality
 --  requires downloading 'LibMPSSE_1.0.3.zip' from the internet
 
-Prior use, the EEPROM of the device must be initialized/formatted. This
-can be done either with the program FT_PROG (windows) or the linux variant as follows:
-- tool contained in 'ft232r_prog-1.25.tar.gz' (download from the internet)
-- format EEPROM via command line
-  'sudo ./ftx_prog --old-pid 0x6014 --dump --ignore-crc-error'
+EEPROM Config
+-------------
+On linux, the FTDI chip does not work with the stock EEPROM content
+
+Option A1: Use the FT_PROG tool from FTDI on >>Windows<< and just re-init
+           the EEPROM
+
+Option A2: Use the FT_PROG tool from FTDI on >>Windows<< and just init
+           the EEPROM using the 'template' FTDI-MCP.xml, available in
+           the same folder as this readme
+           (FT_PROG tool -> open template...)
+Option B1: Use the ftx-prog on >>Linux<< and just re-init the EEPROM by
+           'sudo ./ftx_prog --old-pid 0x6014 --dump --ignore-crc-error'
+           However, this will make the LEDs unusable.
 
 Install
 =======
