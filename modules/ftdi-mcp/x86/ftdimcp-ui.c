@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-May-2023
+ *  version : 15-May-2023
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define FTDIMCP_UI_VERSION 0x000001
+#define FTDIMCP_UI_VERSION 0x000002
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -62,6 +62,7 @@ uint32_t  disActOutput;                  // actual (non-stretched) comparator ou
 uint32_t  disTriggered;                  // value of 'stretched' comparator output
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
 double    disSetLevel;                   // actual comparator level
+double    dicSetLevel;                   // level to set from here
 
 uint32_t  disVersionId      = 0;
 uint32_t  disActOutputId    = 0;                  
@@ -71,6 +72,7 @@ uint32_t  disSetLevelId     = 0;
 
 uint32_t  no_link_32        = 0xdeadbeef;
 uint64_t  no_link_64        = 0xdeadbeefce420651;
+double    no_link_dbl       = 0xdeadbeefce420651;
 char      no_link_str[]     = "NO_LINK";
 
 
@@ -116,16 +118,16 @@ void dicSubscribeServices(char *prefix)
   disVersionId   = dic_info_service(name, MONITORED, 0, disVersion, 8, 0, 0, &no_link_32, sizeof(no_link_32));
 
   sprintf(name, "%s_actoutput", prefix);
-  disActOutputId = dic_info_service(name, MONITORED, 0, &disActOutput, sizeof(disActOutput), 0, 0, &no_link_32, sizeof(no_link_32));
+  disActOutputId = dic_info_service(name, MONITORED, 0, &disActOutput, sizeof(disActOutput) , 0, 0, &no_link_32, sizeof(no_link_32));
 
   sprintf(name, "%s_triggered", prefix);
   disTriggeredId =  dic_info_service(name, MONITORED, 0, &disTriggered, sizeof(disTriggered), 0, 0, &no_link_32, sizeof(no_link_32));
 
   sprintf(name, "%s_ntrigger", prefix);
-  disNTriggerId  = dic_info_service(name, MONITORED, 0, &disNTrigger, sizeof(disNTrigger), 0, 0, &no_link_32, sizeof(no_link_32));
+  disNTriggerId  = dic_info_service(name, MONITORED, 0, &disNTrigger, sizeof(disNTrigger)   , 0, 0, &no_link_32, sizeof(no_link_32));
   
   sprintf(name, "%s_setlevel", prefix);
-  disSetLevelId  = dic_info_service(name, MONITORED, 0, &disSetLevel, sizeof(disSetLevel),  0, 0, &no_link_64, sizeof(no_link_64));
+  disSetLevelId = dic_info_service("blabla", MONITORED, 0, &disSetLevel, sizeof(disSetLevel), 0, 0, &no_link_dbl, sizeof(no_link_dbl));
 } // dimSubscribeServices
 
 
@@ -154,11 +156,11 @@ void cmdSetLevel(char *prefix)
      sleep(2);
    } // if result
    else {
-     disSetLevel = tmp;
+     dicSetLevel = tmp;
      sprintf(name, "%s_cmd_setlevel", prefix);
-     //printf("name : %s, level %f\n", name, disSetLevel);
+     //printf("name : %s, level %f\n", name, dicSetLevel);
      //sleep(2);
-     dic_cmnd_service(name, &disSetLevel, sizeof(disSetLevel));
+     dic_cmnd_service(name, &dicSetLevel, sizeof(dicSetLevel));
    } // else !result
 
    comlib_term_clear();
@@ -184,14 +186,14 @@ void printServices(char *prefix, int flagOnce)
   
   if (!flagOnce) printf("%s\n", title);
 
-  if (disActOutput == no_link_32) printf("output actual                 : %8s\n"    , no_link_str);
-  else                            printf("output actual                 : % 8d\n"   , disActOutput);
-  if (disTriggered == no_link_32) printf("just triggered                : %8s\n"    , no_link_str);
-  else                            printf("just triggered                : % 8d\n"   , disTriggered);
-  if (disNTrigger  == no_link_32) printf("# of detected triggers        : %8s\n"    , no_link_str);
-  else                            printf("# of detected triggers        : % 8d\n"   , disNTrigger);
-  if (disSetLevel  == no_link_64) printf("set value comparator level    : %8s\n"    , no_link_str);
-  else                            printf("set value comparator level [%%]: %8.1f\n" , disSetLevel);
+  if (disActOutput == no_link_32)  printf("output actual                 : %8s\n"    , no_link_str);
+  else                             printf("output actual                 : % 8d\n"   , disActOutput);
+  if (disTriggered == no_link_32)  printf("just triggered                : %8s\n"    , no_link_str);
+  else                             printf("just triggered                : % 8d\n"   , disTriggered);
+  if (disNTrigger  == no_link_32)  printf("# of detected triggers        : %8s\n"    , no_link_str);
+  else                             printf("# of detected triggers        : % 8d\n"   , disNTrigger);
+  if (disSetLevel  == no_link_dbl) printf("set value comparator level    : %8s\n"   , no_link_str);
+  else                             printf("set value comparator level [%%]: %8.1f\n" , disSetLevel);
   printf("\n");
   printf(                                "server name  '%s'\n"     , prefix);
   tmp = (uint32_t *)disVersion;
@@ -278,13 +280,15 @@ int main(int argc, char** argv) {
     printf("ftdi-mcp library version: %06x\n", FTDIMCP_LIB_VERSION);
   } // if getVersion
 
-  comlib_term_clear();
-  buildHeader();
-    
   if (subscribe) {
+    comlib_term_clear();
+    buildHeader();
+    
     printf("%s: starting client using prefix %s\n", program, prefix);
 
     dicSubscribeServices(prefix);
+
+    sleep(1);
     
     while (!quit) {
       if (once) {sleep(1); quit=1;}                 // wait a bit to get the values
