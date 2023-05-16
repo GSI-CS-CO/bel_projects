@@ -16,15 +16,19 @@ port (
    -- IN BLM 
     BLM_data_in       : in std_logic_vector(53 downto 0);
     BLM_gate_in       : in std_logic_vector(11 downto 0);
-    BLM_tst_ck_sig    : in std_logic_vector (11 downto 0); 
-   
+    BLM_tst_ck_sig    : in std_logic_vector (9 downto 0);
     --IN registers
     pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
     BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
-    BLM_gate_hold_time_Reg  : in std_logic_vector(15 downto 0);
-    BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
-    --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
+    BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
+    BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); -- bit 0 = counter RESET, 
+                                                                -- bit 1: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
+                                                                --         when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),   
+                                                                -- bit 13..2 Direct Gate-usage, one bit for each gate signal input (BLM_gate_in), 
+                                                                -- bit 14 reset from gate
+                                                                -- bit 15 free
+
     BLM_gate_seq_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
@@ -39,9 +43,7 @@ port (
 end Beam_Loss_check;
 
 architecture rtl of Beam_Loss_check is
-  --
-  --TYPE    t_BLM_out_Array           is array (0 to 255) of std_logic_vector(5 downto 0);
-  --
+  
   signal BLM_test_signal   : std_logic_vector(9 downto 0);  --Test signals + ground  --to reference  Test_In_Mtx
  
   signal gate_clock : std_logic_vector (11 downto 0);  
@@ -58,7 +60,9 @@ architecture rtl of Beam_Loss_check is
   signal gate_sel: integer range 0 to 255;
   signal cnt_enable: std_logic_vector(255 downto 0);
   signal BLM_Output_mtx: t_BLM_out_Array;
-  
+  signal gate_output: std_logic_vector (11 downto 0);
+
+
   component BLM_watchdog is
   
     port(
@@ -84,7 +88,7 @@ component BLM_gate_timing_seq is
       rstn_i : in std_logic;        -- reset signal
       gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
       gate_seq_ena : in std_logic_vector(11 downto 0);     -- enable '1' for input connected to the counter
-      hold_time : in std_logic_vector(15 downto 0);
+      hold_time : in  t_BLM_gate_hold_Time_Array;
       timeout_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
     );
@@ -110,8 +114,8 @@ component BLM_gate_timing_seq is
     port (
         CLK               : in std_logic;      -- Clock
         nRST              : in std_logic;      -- Reset
-        RESET             : in std_logic;      -- global counter reset
-     --   LOAD              : in std_logic;
+        gate_reset_ena    : in std_logic;
+        RESET      : in std_logic;      -- global counter reset
         ENABLE            : in std_logic;      -- Enable count operation (gate signals)
         pos_threshold     : in std_logic_vector(31 downto 0);
         neg_threshold     : in std_logic_vector(31 downto 0);
@@ -142,13 +146,6 @@ component BLM_gate_timing_seq is
         BLM_status_Reg : out t_IO_Reg_0_to_36_Array
         );
      
-   
-     -->>>>>> BLM_out_ena_Reg :  in t_BLM_out_reg_Array;           -- 192 16 bits register for the output selection of the 256 counters and comparators results 
-      
-      -->>>>>BLM_out_mux_Reg  : in t_BLM_mux_reg_Array;  -- 6 16 bits registers for the selection of gate errors, watchdog errors and inputs to the last OR computation
-      
-      -->>>> CHANGED!    BLM_status_Reg : out t_IO_Reg_0_to_7_Array
-
     end component BLM_out_el;
 
    
@@ -169,18 +166,17 @@ VALUE_IN <= BLM_test_signal & BLM_data_in;
         case BLM_gate_seq_ck_sel_Reg(2 downto 0)is
 
           when "000" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(11);  --100 MHz
+           =>  gate_clock(i) <= BLM_tst_ck_sig(9);  --100 MHz
           when "001" 
-           =>  gate_clock(i)<= BLM_tst_ck_sig(10);   --10 MHz
+           =>  gate_clock(i)<= BLM_tst_ck_sig(8);   --10 MHz
           when "010" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(9);   --1 MHz
+          =>  gate_clock(i) <= BLM_tst_ck_sig(7);   --1 MHz
           when "011" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(8);   --100 kHz   
+           =>  gate_clock (i)<= BLM_tst_ck_sig(6);   --100 kHz  
           when "100" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(7);   --10 kHz
+           =>  gate_clock(i) <= BLM_tst_ck_sig(5);   --10 kHz
           when "101" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(6);  --1 kHz
-         
+           =>  gate_clock (i)<= BLM_tst_ck_sig(4);  --1 kHz
           when others 
            =>  gate_clock (i) <= NULL;
         end case;
@@ -191,18 +187,34 @@ VALUE_IN <= BLM_test_signal & BLM_data_in;
 
 g_clock <= gate_clock;
 
-BLM_test_signal <=  BLM_tst_ck_sig(11) & -- 100 MHz
-                    BLM_tst_ck_sig(5)  & -- 99 MHz
-                    BLM_tst_ck_sig(10)  & -- 10 MHz
-                    BLM_tst_ck_sig(4)  & -- 9.9 MHz
-                    BLM_tst_ck_sig(9)  & -- 1 MHz
-                    BLM_tst_ck_sig(3)  & -- 0.99 MHz
-                    BLM_tst_ck_sig(8)  & -- 100 kHz
-                    BLM_tst_ck_sig(2)  & -- 99 kHz
-                    BLM_tst_ck_sig(7)  & -- 10 kHz
+BLM_test_signal <=  BLM_tst_ck_sig(9) & -- 100 MHz
+                    BLM_tst_ck_sig(3)  & -- 99 MHz
+                    BLM_tst_ck_sig(8)  & -- 10 MHz
+                    BLM_tst_ck_sig(2)  & -- 9.9 MHz
+                    BLM_tst_ck_sig(7)  & -- 1 MHz
+                    BLM_tst_ck_sig(1)  & -- 0.99 MHz
+                    BLM_tst_ck_sig(6)  & -- 100 kHz
+                    BLM_tst_ck_sig(0)  & -- 99 kHz
+                    BLM_tst_ck_sig(5)  & -- 10 kHz
                     '0';                 -- GND
-                    
-                    
+
+-- for direct Gate operations: if the corresponding BLM_ctrl_Reg (bit +2)='0' then BLM_gate_in signals 
+-- are used as input signal to the multiplexer  (BLM_ena_in_mux) which gives the counter enables.
+
+direct_gate_operation: process(BLM_ctrl_Reg, BLM_gate_in, gate_output)
+
+begin
+  for i in 0 to 11 loop
+    
+    if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 256 multiplexer for the counter enables assignments
+      gate_In_Mtx(i)<= BLM_gate_in(i);
+    else 
+      gate_IN_Mtx(i) <= gate_output(i);
+    end if;
+  end loop;
+
+end process direct_gate_operation;
+
   gate_board: BLM_gate_timing_seq
 
     generic map (
@@ -215,7 +227,7 @@ BLM_test_signal <=  BLM_tst_ck_sig(11) & -- 100 MHz
       gate_seq_ena => BLM_gate_seq_in_ena_Reg(13 downto 8) & BLM_gate_seq_in_ena_Reg(5 downto 0), --"00"& ena for gate board1 &"00" & ena for gate board2
       hold_time => BLM_gate_hold_time_Reg,
       timeout_error => gate_error, -- gate error
-      gate_out => gate_In_Mtx       -- out gate signal
+      gate_out => gate_output --gate_In_Mtx       -- out gate signal
     );
    
 
@@ -254,15 +266,15 @@ BLM_counter_pool_elem: BLM_counter_pool_el
 generic map (      
       WIDTH  => 20)
 port map (
-  CLK         => clk_sys,  
-  nRST         => rstn_sys,
+  CLK            => clk_sys,  
+  nRST           => rstn_sys,
+  gate_reset_ena => BLM_ctrl_reg(14) and cnt_enable(i),
   RESET          => BLM_ctrl_Reg(0),
-  --LOAD           => BLM_ctrl_Reg(1),
   ENABLE         => cnt_enable(i),
   pos_threshold  => pos_threshold(i),
   neg_threshold  => neg_threshold(i),
   in_counter     => VALUE_IN,
-  BLM_cnt_Reg  => BLM_in_sel_Reg(i),
+  BLM_cnt_Reg    => BLM_in_sel_Reg(i),
   UP_OVERFLOW    => UP_OVERFLOW(i),
   DOWN_OVERFLOW  => DOWN_OVERFLOW(i)
   );
@@ -281,17 +293,14 @@ BLM_out_section: BLM_out_el
     -- +++
     BLM_out_sel_reg => BLM_out_sel_reg, 
     --
-    --DELETED BLM_out_ena_Reg => BLM_out_ena_Reg,          -- 256 16 bits register for the output selection of the 256 counters and comparators results 
     UP_OVERFLOW     => UP_OVERFLOW,
     DOWN_OVERFLOW   => DOWN_OVERFLOW,
-    --DELETED BLM_out_mux_Reg => BLM_out_mux_Reg,  -- 6 16 bits registers for the selection of gate errors, watchdog errors and inputs to the last OR computation
-    --  For each register: bit 15 free, bit 14-10: 5 bit for the last or, bit 9-4: 6 bits for the watchdog errors, bit 3-0: 4 bits for gate errors
     wd_out           => out_wd,
     gate_in         => BLM_gate_in,
     gate_out        => gate_error,
     BLM_Output      => BLM_out,
   
-    BLM_status_Reg  => BLM_status_Reg -- changed: now 37 registers
+    BLM_status_Reg  => BLM_status_Reg 
     );
 
   end architecture;
