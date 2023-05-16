@@ -32,9 +32,7 @@ files = [
    "BLM_in_mux.vhd",
    "BLM_gate_timing_seq_elem.vhd",
    "BLM_ena_in_mux.vhd",
-   "blm_pll_0.vhd",
-   "blm_pll_2.vhd",
-   "clk_divider.vhd"
+   "BLM_pll99.vhd"
 ]
 
 modules = {

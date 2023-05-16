@@ -161,7 +161,7 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
     CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#1100#;   --BLM input mux enable registers :      256 16 bit registers -->100h
     CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#1200#;   --BLM input mux enable registers :      217 16 bit registers -->D9     
     CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1300#;   --BLM control registers
-   
+    
 
 --  +============================================================================================================================+
 --  |                                                 CONSTANT                                                                   |
@@ -421,13 +421,12 @@ port (
    -- IN BLM 
     BLM_data_in       : in std_logic_vector(53 downto 0);
     BLM_gate_in       : in std_logic_vector(11 downto 0);
-    BLM_tst_ck_sig    : in std_logic_vector (11 downto 0); 
-   
+   BLM_tst_ck_sig    : in std_logic_vector (9 downto 0);
     --IN registers
     pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
     BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
-    BLM_gate_hold_time_Reg  : in std_logic_vector(15 downto 0);
+    BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     BLM_gate_seq_ck_sel_Reg : in std_logic_vector(15 downto 0);
@@ -582,8 +581,6 @@ port (
     s_nLED_User1_i         : out std_logic;  -- LED3 = User 1
     s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
     s_nLED_User3_i         : out std_logic;
-    --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
-   -- IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
     Deb_Sync66             : out std_logic_vector(65 downto 0);
     daq_dat                : out t_daq_dat;
     daq_diob_ID            : out std_logic_vector(15 downto 0)
@@ -591,42 +588,14 @@ port (
     );
     end component p_connector;
 
-    component  blm_pll_0 
-      PORT
-      (
-        areset		: IN STD_LOGIC  := '0';
-        inclk0		: IN STD_LOGIC  := '0';
-        c0		: OUT STD_LOGIC ;
-        c1		: OUT STD_LOGIC ;
-        c2		: OUT STD_LOGIC ;
-        c3		: OUT STD_LOGIC ;
-        c4		: OUT STD_LOGIC 
-      );
-   
-    end component blm_pll_0; 
-
-  component  blm_pll_2 
-	PORT
-	(
-		areset		: IN STD_LOGIC  := '0';
-		inclk0		: IN STD_LOGIC  := '0';
-		c0		: OUT STD_LOGIC ;
-		c1		: OUT STD_LOGIC ;
-		c2		: OUT STD_LOGIC ;
-		c3		: OUT STD_LOGIC ;
-		c4		: OUT STD_LOGIC 
-	);
-END component blm_pll_2;
-
-component clk_div_n 
-
-  generic ( n: integer range 0 to 125000);
-  Port (
-      clk_in : in  STD_LOGIC;
-      nrst  : in  STD_LOGIC;
-      clk_out: out STD_LOGIC
-  );
-end component clk_div_n;
+    component BLM_pll99 
+    PORT
+    (
+      areset		: IN STD_LOGIC  := '0';
+      inclk0		: IN STD_LOGIC  := '0';
+      c0		: OUT STD_LOGIC 
+    );
+    end component BLM_pll99;
 
 
 component aw_io_reg
@@ -850,7 +819,7 @@ end component aw_io_reg;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
  signal BLM_Status_Reg:    t_IO_Reg_0_to_36_Array;
- --signal IOBP_Output_Readback: std_logic_vector(15 downto 0);
+
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
 signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
@@ -970,12 +939,12 @@ signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
---signal Test_In_Mtx:  std_logic_vector(8 downto 0);
+
 ------
 -- signal for test_signals and for gate_seq_clk signals:
 signal blm_clk_100MHz,blm_clk_10MHz,blm_clk_1MHz,blm_clk_100kHz,blm_clk_10kHz,blm_clk_1kHz, blm_clk_99MHz,blm_clk_9_9MHz,blm_clk_0_99MHz,blm_clk_99kHz,blm_clk_9_9kHz ,blm_clk_0_99kHz : std_logic;
 ---
-signal BLM_tst_ck_sig: std_logic_vector (11 downto 0);
+signal BLM_tst_ck_sig: std_logic_vector (9 downto 0);
 
 signal BLM_data_in: std_logic_vector(53 downto 0);
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
@@ -1017,13 +986,13 @@ signal BLM_in_sel_res_Dtack     : std_logic;
 ----------------------------------------------------------------
 -----for hold times, gate enable and clock for gate sequence selection
 signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
-signal BLM_gate_hold_time_Reg :  std_logic_vector(15 downto 0);
+signal BLM_gate_hold_time_Reg :  t_BLM_gate_hold_Time_Array;
 signal BLM_gate_seq_ck_sel_Reg : std_logic_vector(15 downto 0); 
 signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
 signal BLM_ctrl_Reg:  std_logic_vector(15 downto 0); 
-signal BLM_ctrl_rd_active:    std_logic;
-signal BLM_ctrl_data_to_SCUB: std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
-signal BLM_ctrl_Dtack:        std_logic;                    -- Dtack to SCU Bus Macro
+signal BLM_ctrl_rd_active:    std_logic_vector(1 downto 0);
+signal BLM_ctrl_data_to_SCUB: t_BLM_gate_reg_Array;-- Data to SCU Bus Macro
+signal BLM_ctrl_Dtack:        std_logic_vector(1 downto 0);                  -- Dtack to SCU Bus Macro
 ---------------------------------------
             -- Dtack to SCU Bus Macro
 -----for BLM out_sel 
@@ -1530,7 +1499,7 @@ port map  (
     end generate BLM_in_sel_registers;
 
 
-BLM_ctrl_Reg_block: io_reg
+BLM_ctrl_Reg_1st_block: io_reg
   generic map(
         Base_addr =>  c_BLM_ctrl_Base_Addr
         )
@@ -1546,19 +1515,50 @@ BLM_ctrl_Reg_block: io_reg
         nReset             =>  rstn_sys,
  
   Reg_IO1            =>  BLM_wdog_hold_time_Reg,     -- the same for all
-  Reg_IO2            =>  BLM_gate_hold_time_Reg,     -- the same for all
-  Reg_IO3            =>  BLM_gate_seq_ck_sel_Reg, -- "0000000000000"& 3 bit for the clock gate sel, the same for all
-  Reg_IO4            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET,(TO BE DELETED bit 1 = counter LOAD), bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
-                                                     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
-  Reg_IO5            =>  open,
-  Reg_IO6            =>  open,
-  Reg_IO7            =>  open,
-  Reg_IO8            =>  open,
-  Reg_rd_active      =>  BLM_ctrl_rd_active,
-  Dtack_to_SCUB      =>  BLM_ctrl_Dtack,
-  Data_to_SCUB       =>  BLM_ctrl_data_to_SCUB
+  Reg_IO2            =>  BLM_gate_seq_ck_sel_Reg,    -- "0000000000000"& 3 bit for the clock gate sel, the same for all
+  Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, bit 1: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
+                                                     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 13..2 Direct Gate-usage, one bit for
+                                                     --   each gate signal input, bit 15..14 free.
+  Reg_IO4            =>  open,
+  Reg_IO5            =>   BLM_gate_hold_time_Reg(0), 
+  Reg_IO6            =>   BLM_gate_hold_time_Reg(1),
+  Reg_IO7            =>   BLM_gate_hold_time_Reg(2),
+  Reg_IO8            =>   BLM_gate_hold_time_Reg(3),
+
+  Reg_rd_active      =>   BLM_ctrl_rd_active(0),
+  Dtack_to_SCUB      =>   BLM_ctrl_Dtack(0),
+  Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(0)
       );
 
+  BLM_ctrl_Reg_2nd_block: io_reg
+      generic map(
+            Base_addr =>  c_BLM_ctrl_Base_Addr + 8
+            )
+      port map  (
+            Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+            Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+            Ext_Adr_Val        =>  Ext_Adr_Val,
+            Ext_Rd_active      =>  Ext_Rd_active,
+            Ext_Rd_fin         =>  Ext_Rd_fin,
+            Ext_Wr_active      =>  Ext_Wr_active,
+            Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+            clk                =>  clk_sys,
+            nReset             =>  rstn_sys,
+     
+      Reg_IO1            =>   BLM_gate_hold_time_Reg(4),
+      Reg_IO2            =>   BLM_gate_hold_time_Reg(5),
+      Reg_IO3            =>   BLM_gate_hold_time_Reg(6),
+      Reg_IO4            =>   BLM_gate_hold_time_Reg(7),
+      Reg_IO5            =>   BLM_gate_hold_time_Reg(8),
+      Reg_IO6            =>   BLM_gate_hold_time_Reg(9),
+      Reg_IO7            =>   BLM_gate_hold_time_Reg(10),
+      Reg_IO8            =>   BLM_gate_hold_time_Reg(11),
+
+      Reg_rd_active      =>   BLM_ctrl_rd_active(1),
+      Dtack_to_SCUB      =>   BLM_ctrl_Dtack(1),
+      Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(1)
+          );
+    
   BLM_out_sel_registers: for i in 0 to 26 generate 
 
       BLM_o_sel_Reg: io_reg
@@ -1620,6 +1620,7 @@ BLM_ctrl_Reg_block: io_reg
             Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(27)
           );
 
+          
         DAQ_modul: daq
         GENERIC MAP(
           Base_addr           =>  to_unsigned(c_DIOB_DAQ_Base_Addr, 16),
@@ -1921,11 +1922,11 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(9 downto 0);
+  variable sel: unsigned(10 downto 0);
   variable sel_th: unsigned(127 downto 0);
   variable sel_in_sel: unsigned(31 downto 0);
   variable sel_st: unsigned(4 downto 0);
-  variable sel_out_sel: unsigned(27 downto 0);
+  variable sel_out_sel: unsigned(27 downto 0); 
 
   begin
 
@@ -1935,23 +1936,24 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     sel_st:= unsigned(IOBP_in_rd_active);
     sel_out_sel := unsigned(BLM_out_sel_rd_active);
     
-    sel:= BLM_ctrl_rd_active  &  daq_user_rd_active & 
+    sel:= BLM_ctrl_rd_active(1)&BLM_ctrl_rd_active(0)  &  daq_user_rd_active & 
             AW_Port1_rd_active & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
             Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
   
-if to_integer(sel(9 downto 0))>0 then
-  case sel(9 downto 0) IS
+if to_integer(sel(10 downto 0))>0 then
+  case sel(10 downto 0) IS
 
-      when "1000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB;
-      when "0100000000" => Data_to_SCUB <= daq_data_to_SCUB;
-      when "0010000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;  
-      when "0001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "0000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "0000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "0000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "0000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "0000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "0000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "10000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(1);
+      when "01000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(0);
+      when "00100000000" => Data_to_SCUB <= daq_data_to_SCUB;
+      when "00010000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;  
+      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "00000010000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "00000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "00000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "00000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "00000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
 
       when others      => Data_to_SCUB <= (others => '0');
     end case;
@@ -2032,7 +2034,7 @@ end if;
 
     Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                          IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_res_Dtack or daq_Dtack or 
-                         BLM_ctrl_Dtack or  BLM_th_res_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack);
+                         BLM_ctrl_Dtack(1) or  BLM_ctrl_Dtack(0) or BLM_th_res_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack);
 
     A_nDtack <= NOT(SCUB_Dtack);
     A_nSRQ   <= NOT(SCUB_SRQ);
@@ -2078,7 +2080,8 @@ BLM_data_in <= AW_IOBP_Input_Reg(5)(5 downto 0) & AW_IOBP_Input_Reg(4)(11 downto
 
 BLM_gate_in <= AW_IOBP_Input_Reg(5)(11 downto 6) & AW_IOBP_Input_Reg(6)(5 downto 0);
 ---
-BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_99MHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz & blm_clk_9_9kHz& blm_clk_0_99kHz;
+BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_99MHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz;-- & blm_clk_9_9kHz& blm_clk_0_99kHz;
+
 BLM_Module : Beam_Loss_check 
 
   generic map (
@@ -2321,52 +2324,74 @@ AW_B12s1_connection: p_connector
     daq_diob_ID            => daq_diob_ID
     );
 
-blm_clk_sig1: blm_pll_0 
 
-      port map (
-        areset		=> rstn_sys,
-        inclk0		=> clk_sys,     
+    blm_clk_sig99MHz: BLM_pll99 
+    PORT map
+    (
+      areset		=> rstn_sys,
+      inclk0	  => clk_sys,
+      c0	=>  blm_clk_99MHz
+    );
 
-        c0        => blm_clk_100MHz,
-        c1	      => blm_clk_10MHz,  
-        c2		    => blm_clk_1MHz, 
-        c3	      => blm_clk_100kHz,     
-        c4	    	=> blm_clk_10kHz    
-   
-       
-      );
-      
+  blm_clk_100MHz <= ENA_every_10ms;
+  blm_clk_10MHz  <= Ena_every_100ns;
+  blm_clk_1MHz   <= Ena_every_1us;
+
+
+  comp_9_9_Mhz_gen: div_n
+  generic map (n => 10, diag_on => 0)  
+  port map(
+                clk => clk_sys,
+                ena => blm_clk_99MHz,
+                div_o => blm_clk_9_9MHz
+   );             
+
+
+  comp_0_99_Mhz_gen: div_n
+  generic map (n => 100, diag_on => 0)
+    port map(
+                clk => clk_sys,
+                ena => blm_clk_99MHz,
+                div_o => blm_clk_0_99MHz
+     
+  );
+
+
+  comp_100_kHz_gen:  div_n
+  generic map (n => 1000, diag_on => 0) 
+  port map(  
+                clk => clk_sys,
+                ena => blm_clk_100MHz,
+                div_o => blm_clk_100kHz
+  );
+
+
+  comp_99kHz_gen:  div_n
+  generic map (n => 1000, diag_on => 0)  
+  port map(
+                clk => clk_sys,
+                ena => blm_clk_99MHz,
+                div_o => blm_clk_99kHz
+     
+  );
+
+
+
+  comp_10_kHz_gen:  div_n
+  generic map (n => 1000, diag_on => 0)  
+  port map (
+                clk => clk_sys,
+                ena => blm_clk_100MHz,
+                div_o => blm_clk_10kHz
+  );
+
+
+  comp_1_kHz_gen: div_n
+  generic map (n => 10000, diag_on => 0)  
+  port map(
+                clk => clk_sys,
+                ena => blm_clk_100MHz,
+                div_o =>  blm_clk_1kHz
+  );
   
-blm_clk_sig2: blm_pll_2 
-
-      port map (
-        areset		=> rstn_sys,
-        inclk0		=> clk_sys,     
-
-        c0        => blm_clk_99MHz,
-        c1	      => blm_clk_9_9MHz,  
-        c2		    => blm_clk_0_99MHz, 
-        c3	      => blm_clk_99kHz,     
-        c4	    	=> blm_clk_9_9kHz    
-       
-      );
-      
-comp_01_khz_gen: clk_div_n
-
-  generic map ( n => 9)
-  Port map(
-      clk_in=> blm_clk_10kHz,
-      nrst => rstn_sys,
-      clk_out => blm_clk_1kHz
-  );
-
-  comp_0_99_khz_gen: clk_div_n
-
-  generic map( n => 9)
-
-  Port map(
-      clk_in=> blm_clk_9_9kHz,
-      nrst => rstn_sys,
-      clk_out => blm_clk_0_99kHz
-  );
 end architecture;

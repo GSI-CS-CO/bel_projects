@@ -7,7 +7,7 @@ entity BLM_ena_in_mux is
     port (
         CLK               : in std_logic;      -- Clock
         nRST              : in std_logic;      -- Reset
-        mux_sel           : in t_BLM_reg_Array;  -- I need only bit 15..12 of each BLM_ena_Reg register
+        mux_sel           : in t_BLM_reg_Array;  -- I need only bit 15..12 of each BLM_in_sel_Reg register
         in_mux            : in std_logic_vector(11 downto 0);
         cnt_enable        : out std_logic_vector(255 downto 0)
     );
