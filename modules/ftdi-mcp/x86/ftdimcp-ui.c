@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 // ftdi mcp
 #include <common-lib.h>
@@ -53,7 +54,7 @@
 #define DIMCHARSIZE      32              // standard size for char services
 #define DIMMAXSIZE       1024            // max size for service names
 #define SCREENWIDTH      1024            // width of screen
-#define FTDIMCP_UI_LINES 18              // number of lines at screen
+#define FTDIMCP_UI_LINES 15              // number of lines at screen
 
 char      disName[DIMMAXSIZE];           // name of DIM server
 
@@ -63,12 +64,16 @@ uint32_t  disTriggered;                  // value of 'stretched' comparator outp
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
 double    disSetLevel;                   // actual comparator level
 double    dicSetLevel;                   // level to set from here
+char      disHostname[DIMCHARSIZE];      // hostname of server
+char      disStatus[DIMCHARSIZE];        // status of server
 
 uint32_t  disVersionId      = 0;
 uint32_t  disActOutputId    = 0;                  
 uint32_t  disTriggeredId    = 0;
 uint32_t  disNTriggerId     = 0;
 uint32_t  disSetLevelId     = 0;
+uint32_t  disHostnameId     = 0;
+uint32_t  disStatusId       = 0;
 
 uint32_t  no_link_32        = 0xdeadbeef;
 uint64_t  no_link_64        = 0xdeadbeefce420651;
@@ -124,10 +129,18 @@ void dicSubscribeServices(char *prefix)
   disTriggeredId =  dic_info_service(name, MONITORED, 0, &disTriggered, sizeof(disTriggered), 0, 0, &no_link_32, sizeof(no_link_32));
 
   sprintf(name, "%s_ntrigger", prefix);
-  disNTriggerId  = dic_info_service(name, MONITORED, 0, &disNTrigger, sizeof(disNTrigger)   , 0, 0, &no_link_32, sizeof(no_link_32));
+  disNTriggerId  = dic_info_service(name, MONITORED, 0, &disNTrigger, sizeof(disNTrigger), 0, 0, &no_link_32, sizeof(no_link_32));
   
   sprintf(name, "%s_setlevel", prefix);
-  disSetLevelId = dic_info_service("blabla", MONITORED, 0, &disSetLevel, sizeof(disSetLevel), 0, 0, &no_link_dbl, sizeof(no_link_dbl));
+  disSetLevelId = dic_info_service(name, MONITORED, 0, &disSetLevel, sizeof(disSetLevel), 0, 0, &no_link_dbl, sizeof(no_link_dbl));
+
+  sprintf(name, "%s_hostname", prefix);
+  disSetLevelId = dic_info_service(name, MONITORED, 0, disHostname, DIMCHARSIZE, 0, 0, &no_link_32,  sizeof(no_link_32));
+
+  sprintf(name, "%s_status", prefix);
+  disStatusId = dic_info_service(name, MONITORED, 0, &disStatus, DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_dbl));
+
+  
 } // dimSubscribeServices
 
 
@@ -192,13 +205,21 @@ void printServices(char *prefix, int flagOnce)
   else                             printf("just triggered                : % 8d\n"   , disTriggered);
   if (disNTrigger  == no_link_32)  printf("# of detected triggers        : %8s\n"    , no_link_str);
   else                             printf("# of detected triggers        : % 8d\n"   , disNTrigger);
-  if (disSetLevel  == no_link_dbl) printf("set value comparator level    : %8s\n"   , no_link_str);
+  if (disSetLevel  == no_link_dbl) printf("set value comparator level    : %8s\n"    , no_link_str);
   else                             printf("set value comparator level [%%]: %8.1f\n" , disSetLevel);
   printf("\n");
-  printf(                                "server name  '%s'\n"     , prefix);
+  printf(                                 "server info\n");
+  printf(                                 "name                          : %s\n"     , prefix);
+  tmp = (uint32_t *)disHostname;
+  if (*tmp == no_link_32)          printf("host                          : %-32s\n"  , no_link_str);
+  else                             printf("host                          : %-32s\n"  , disHostname);
   tmp = (uint32_t *)disVersion;
-  if (*tmp         == no_link_32) printf("server version                : %8s\n"    , no_link_str);
-  else                            printf("server version                : %8s\n"    , disVersion);
+  if (*tmp         == no_link_32)  printf("version                       : %-32s\n"  , no_link_str);
+  else                             printf("version                       : %-32s\n"  , disVersion);
+  tmp = (uint32_t *)disStatus;
+  if (*tmp         == no_link_32)  printf("status                        : %-32s\n"  , no_link_str);
+  else                             printf("status                        : %-32s\n"  , disStatus);
+
   
   for (i=0; i<FTDIMCP_UI_LINES - 4; i++) printf("%s\n", empty);
   if (!flagOnce) printf("%s\n", footer);

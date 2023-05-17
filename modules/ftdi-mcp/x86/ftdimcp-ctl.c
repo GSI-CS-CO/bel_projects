@@ -3,9 +3,9 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-May-2023
+ *  version : 17-May-2023
  *
- * command line program for MCP4725 connected via FT232H
+ *  command line program for MCP4725 connected via FT232H
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -58,12 +58,17 @@ uint32_t  disActOutput;                  // actual (non-stretched) comparator ou
 uint32_t  disTriggered;                  // value of 'stretched' comparator output
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
 double    disSetLevel;                   // actual comparator level
+char      disHostname[DIMCHARSIZE];
+char      disStatus[DIMCHARSIZE];
+
 
 uint32_t  disVersionId      = 0;
 uint32_t  disActOutputId    = 0;                  
 uint32_t  disTriggeredId    = 0;
 uint32_t  disNTriggerId     = 0;
 uint32_t  disSetLevelId     = 0;
+uint32_t  disHostnameId     = 0;
+uint32_t  disStatusId       = 0;
 uint32_t  disCmdLevelId     = 0;
 
 #endif //USEDIM
@@ -106,6 +111,11 @@ void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
 #ifdef USEDIM
   FT_STATUS ftStatus;
   double    level;
+
+  if (cHandle == NULL) {
+    printf("%s: invalid FTDI channel\n", program);
+    return;
+  } // if cHandle
   
   level    = *((double *)cmnd_buffer);
 
@@ -142,6 +152,12 @@ void disAddServices(char *prefix)
   sprintf(name, "%s_setlevel", prefix);
   disSetLevelId   = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel),  0, 0);
 
+  sprintf(name, "%s_hostname", prefix);
+  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0, 0);
+
+  sprintf(name,  "%s_status", prefix);
+  disStatusId     = dis_add_service(name, "C", disStatus, DIMCHARSIZE, 0, 0);  
+
   sprintf(name, "%s_cmd_setlevel", prefix);
   disCmdLevelId   =  dis_add_cmnd(name, "D:1", cmdSetLevel, 0);
   
@@ -163,9 +179,11 @@ int main(int argc, char** argv) {
   int        getOutStretch = 0;
   int        setDac        = 0;
   int        daemon        = 0;
-  double     dacLevel      = 0;           // level of DAC [%]
+  int        flagOk        = 1;
+
 
   FT_STATUS  ftStatus;                    // status returned by FTDI library calls
+  FT_STATUS  ftStatusOld;                 // previous status returned by FTDI library calls
   int        cIdx;                        // index of channel; there can be more than one FTDI channel connected
   uint32_t   verLibFtdi;                  // version of ftdi library (required by mpsse library)
   uint32_t   verLibMpsse;                 // version of mpsse library
@@ -175,11 +193,13 @@ int main(int argc, char** argv) {
   uint32_t   outStretched;                // value of stretched comparator output
   uint32_t   outStretchedOld;             // previous value of stretched comparator output
   uint32_t   blinkTime_us;                // duration of blink [us]
+  double     dacLevel      = 0;           // level of DAC [%]
 
   char       prefix[1024];                // prefix for DIM services
 
   program      = argv[0];
   blinkTime_us = FTDIMCP_POLLINTERVAL_US;
+  cHandle      = NULL;
 
   while ((opt = getopt(argc, argv, "l:d:oseih")) != -1) {
     switch (opt) {
@@ -237,6 +257,9 @@ int main(int argc, char** argv) {
   } // if optint
 
   cIdx = strtol(argv[optind], &p, 10);
+  sprintf(disStatus, "%31s", "OK");
+  gethostname(disHostname, 32);
+
 
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
@@ -250,9 +273,20 @@ int main(int argc, char** argv) {
   } // if getVersion
 
   // open, init
-  if ((ftStatus   = ftdimcp_open(cIdx, &cHandle, 1)) != FT_OK) die("can't open connection to FTDI channel");
-  if ((ftStatus   = ftdimcp_init(cHandle)) != FT_OK) die("can't init channel");
 
+  if ((ftStatus   = ftdimcp_open(cIdx, &cHandle, 1)) != FT_OK) {
+    if (daemon)  sprintf(disStatus, "%s", "device not found");
+    else         die("can't open connection to FTDI channel");
+    flagOk = 0;
+  } // if ftStatus
+
+  if (flagOk) {
+    if ((ftStatus   = ftdimcp_init(cHandle)) != FT_OK) {
+      if (daemon)  sprintf(disStatus, "%s", "can't init channel");
+      else         die("can't init channel");
+      flagOk = 0;
+    } // if ftStatus
+  } // if flagOk
   
   // info    
   if (getInfo) {
@@ -293,6 +327,8 @@ int main(int argc, char** argv) {
     outActOld       = 0;
     outStretched    = 0;
     outStretchedOld = 0;
+    ftStatus        = FT_OK;
+    ftStatusOld     = FT_OK;
     flagBlink       = 0;
     
     printf("%s: starting server using prefix %s\n", program, prefix);
@@ -302,46 +338,56 @@ int main(int argc, char** argv) {
 
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
+
     sprintf(disVersion, "%06x", FTDIMCP_LIB_VERSION);
     dis_update_service(disVersionId);
-    printf("dis version id %d\n", disVersionId);
+    dis_update_service(disStatusId);
+    dis_update_service(disHostnameId);
        
     while (1) {
-      // get values
-      ftdimpc_getCompOutStretched(cHandle, &outStretched);
-      ftdimpc_getCompOutAct(cHandle, &outAct);      
+      if (flagOk) {
+        // get values
+        ftStatus = ftdimpc_getCompOutStretched(cHandle, &outStretched);
+        if (ftStatus != ftStatusOld) {
+          if (ftStatus != FT_OK) sprintf(disStatus, "%s", "can't read from device");
+          else                   sprintf(disStatus, "%s", "OK");
+          dis_update_service(disStatusId);
+        } // if ftStatus
+        
+        ftdimpc_getCompOutAct(cHandle, &outAct);
+        
+        // stretched value change
+        if (outStretched != outStretchedOld) {
+          disTriggered = outStretched;
+          dis_update_service(disTriggeredId);
+        } // if outStretched
+        
+        // act value change
+        if (outAct != outActOld) {
+          disActOutput = outAct;
+          dis_update_service(disActOutputId);
+        } // if outAct
+        
+        // triggered?
+        if (outStretched > outStretchedOld) {
+          disNTrigger++;
+          dis_update_service(disNTriggerId);
+          flagBlink = 1;
+        } // if outStretched
+        
+        outStretchedOld = outStretched;
+        outActOld       = outAct;
 
-      // stretched value change
-      if (outStretched != outStretchedOld) {
-        disTriggered = outStretched;
-        dis_update_service(disTriggeredId);
-      } // if outStretched
-
-      // act value change
-      if (outAct != outActOld) {
-        disActOutput = outAct;
-        dis_update_service(disActOutputId);
-      } // if outAct
-      
-      // triggered?
-      if (outStretched > outStretchedOld) {
-        disNTrigger++;
-        dis_update_service(disNTriggerId);
-        flagBlink = 1;
-      } // if outStretched
-      
-      outStretchedOld = outStretched;
-      outActOld       = outAct;
-
-      // blink on changes 
-      if (flagBlink) {
-        ftdimpc_setLed(cHandle, 1);
-        usleep(blinkTime_us);
-        ftdimpc_setLed(cHandle, 0);
-        flagBlink = 0;
-      } // flagBlink
-      else usleep(blinkTime_us);
-      
+        // blink on changes 
+        if (flagBlink) {
+          ftdimpc_setLed(cHandle, 1);
+          usleep(blinkTime_us);
+          ftdimpc_setLed(cHandle, 0);
+          flagBlink = 0;
+        } // flagBlink
+        else usleep(blinkTime_us);
+      } // if flagOkd
+      else sleep(1);   // keep server publishing its 'bad status' alive
     } // while
 #endif // USEDIM
   } // if daemon
