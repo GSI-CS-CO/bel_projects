@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
   } // if optint
 
   cIdx = strtol(argv[optind], &p, 10);
-  sprintf(disStatus, "%31s", "OK");
+  sprintf(disStatus, "%s", "OK");
   gethostname(disHostname, 32);
 
 
