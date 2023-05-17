@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Mar-2023
+ *  version : 17-May-2023
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000500
+#define B2B_SERVSYS_VERSION 0x000501
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -118,7 +118,7 @@ void disAddServices(char *prefix)
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
   sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
+  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
   sprintf(name, "%s_status", prefix);
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);

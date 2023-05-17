@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-May-2022
+ *  version : 17-May-2022
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000500
+#define B2B_CLIENT_SYS_VERSION 0x000501
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -184,7 +184,7 @@ void dicSubscribeServices(char *prefix)
     sprintf(name, "%s_%s_state", prefix, sysShortNames[i]);
     dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), 10, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_hostname", prefix, sysShortNames[i]);
-    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), 32, 0, 0, &no_link_32, sizeof(no_link_32));
+    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_status", prefix, sysShortNames[i]);
     dicSystem[i].statusId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].status), sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
     sprintf(name, "%s_%s_ntransfer", prefix, sysShortNames[i]);
