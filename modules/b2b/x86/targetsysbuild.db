@@ -28,3 +28,13 @@ CXX         := g++ --std=c++0x
 ASLINC      := $(PKG_CONFIG_PATH)../../include/saftlib
 ASLLIB      := $(PKG_CONFIG_PATH)../../lib
 endif
+
+ifeq ($(SYSENV), ACC9)
+USRPATH     := /common/usr/timing/b2b/rocky9/usr
+ARCH        := /x86_64
+EB          ?= ../../../ip_cores/etherbone-core/api
+CFLAGS      ?= -Wall -O2 -g
+CXX         := g++ --std=c++0x
+ASLINC      := $(PKG_CONFIG_PATH)../../include/saftlib
+ASLLIB      := $(PKG_CONFIG_PATH)../../lib
+endif
