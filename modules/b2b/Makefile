@@ -65,6 +65,9 @@ nfsinit:
 clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
+	rm -f nfs-init/b2b-int*.sh
+	rm -f nfs-init/b2b-pro*.sh
+	rm -f nfs-init/b2b-tools.sh
 
 deploy:
 # create folders
