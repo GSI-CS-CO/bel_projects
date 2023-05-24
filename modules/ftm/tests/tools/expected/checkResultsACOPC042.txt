@@ -1,0 +1,169 @@
+Running with datamaster ACOPC042
+
+ PCI on host ACOPC042
+0000:04:00.0 Class 6800: CERN/ECP/EDU Device 019a (rev 01)
+0000:17:00.0 Class 6800: CERN/ECP/EDU Device 019a (rev 01)
+Check kernel modules and CERN pci devices.
+0000:04:00.0 Class [6800]: CERN/ECP/EDU Device [10dc:019a] (rev 01)
+	Subsystem: CERN/ECP/EDU Device [10dc:019a]
+	Flags: bus master, fast devsel, latency 0, IRQ 92, NUMA node 0
+	Memory at 92000000 (32-bit, non-prefetchable) [size=128]
+	Memory at 91000000 (32-bit, non-prefetchable) [size=16M]
+	Capabilities: [50] MSI: Enable+ Count=1/1 Maskable- 64bit+
+	Capabilities: [78] Power Management version 3
+	Capabilities: [80] Express Endpoint, MSI 00
+	Capabilities: [100] Virtual Channel
+	Capabilities: [200] Vendor Specific Information: ID=1172 Rev=0 Len=044 <?>
+	Kernel driver in use: pcie_wb
+	Kernel modules: pcie_wb
+
+0000:17:00.0 Class [6800]: CERN/ECP/EDU Device [10dc:019a] (rev 01)
+	Subsystem: CERN/ECP/EDU Device [10dc:019a]
+	Flags: bus master, fast devsel, latency 0, IRQ 94, NUMA node 0
+	Memory at b5000000 (32-bit, non-prefetchable) [size=128]
+	Memory at b4000000 (32-bit, non-prefetchable) [size=16M]
+	Capabilities: [50] MSI: Enable+ Count=1/1 Maskable- 64bit+
+	Capabilities: [78] Power Management version 3
+	Capabilities: [80] Express Endpoint, MSI 00
+	Capabilities: [100] Virtual Channel
+	Capabilities: [200] Vendor Specific Information: ID=1172 Rev=0 Len=044 <?>
+	Kernel driver in use: pcie_wb
+	Kernel modules: pcie_wb
+
+crw-rw---- 1 root wishbone 511, 0 May 24 08:35 /dev/wbm0
+crw-rw---- 1 root wishbone 511, 1 May 24 08:35 /dev/wbm1
+
+
+Timing-Receiver:
+EB version / EB source: etherbone 2.1.3 (v2.1.3-1-gb53067e): Mar 21 2023 09:15:46 / built by martin on May 24 2023 08:34:19 with ACOPC042 running 
+WR_time - host_time [ms]:  -183.560
+Current TAI: 2023-05-24 13:48:15 GMT (754114 us), 1684936095754114 us
+Sync Status: PPS
+MAC: 00267b0004a8
+Link Status: LINK_UP
+IP: 192.168.129.082
+FPGA uptime [h]: 0000000007.43
+FPGA build type: fallout-v6.1.2
+Project     : pci_control
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : fallout-3847
+Build type  : fallout-v6.1.2
+Build date  : Mon Aug 09 08:48:31 CEST 2021
+Prepared by : Timing Group Jenkins <csco-tg@gsi.de>
+Prepared on : tsl021.acc.gsi.de
+OS version  : CentOS Linux release 7.9.2009 (Core), kernel 3.10.0-1160.36.2.el7.x86_64
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+
+  33b311a Merge pull request #287 from GSI-CS-CO/dm-fallout-tests
+  79bfcd2 datamaster-tests.tex: add hint to install scheduleCompare as a prerequisite.
+  5a22eb0 Makefile: use python3 explicitly. Tests do not run with python2.
+  0113dcd Merge branch 'fallout' into dm-fallout-tests
+  f6369d7 test_safe2remove.py: use longer duration for some long running performance tests, 3. try
+
+
+Datamaster:
+Project     : ftm
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : DM_debug_origin_memory-3976
+Build type  : developer preview
+Build date  : Tue Nov 02 12:26:46 CET 2021
+Prepared by : Mathias <m.kreider@gsi.de>
+Prepared on : quasar
+OS version  : Ubuntu 18.04.6 LTS, kernel 4.15.0-158-generic
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+
+  722413ec reset core: User CPUs now start in reset state for safe FW load from host. standalones can simply come out of reset to run from flash
+  4bc0c708 DM: removed ftmfw debug prints. AGAIN. Why is this stuff active again - bad merge?
+  1f69169c DM: WTF ... dm-cmd were forgotten, fixed
+  d823b266 DM: merge with fallout HEAD
+  6bc1f4f7 DM: lib, fw: alle necessary changes for external thread spawn implemented
+dev/wbm1 datamaster host time: 
+2023-05-24T15:48:15+02:00
+dev/wbm1 datamaster IP: 
+192.168.128.204
+dev/wbm1 datamaster WR sync status: 
+TRACKING
+dev/wbm1 datamaster link status: 
+LINK_UP
+
+ Datamaster status:
+Connecting to dev/wbm1...  Done.
+Found  Cores, 4 of them run a valid DM firmware.
+Downloading ...Done.
+Calling parser for Mgmt Meta
+returned.
+Calling parser for Mgmt Data
+Mgmt found 3 data chunks. Total 6 nodes scanned. Trying to recover GroupTable ...
+Bytes expected: 124, recovered: 124
+
+returned.
+Calling parser for Download Meta
+Analysing downloaded graph binary 312 bytes
+Node creation done. Creating Edges
+Done. Graph generation complete
+returned.
+Generating status command
+      Space       Free     cTotal      cFree      cUsed   bmpTotal    bmpFree    bmpUsed   bmpBytes
+      97448        99%       1874      1869         5       1874      1868         6        260
+      97448        99%       1874      1866         8       1874      1866         8        260
+      97448        99%       1874      1869         5       1874      1868         6        260
+      97448        99%       1874      1869         5       1874      1868         6        260
+Active Safe2remove-Covenants:
+
+╔═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║ DataMaster: dev/wbm1                                                                      │ ECA-Time: 0x17621873b78998c0 ns │ 2023-05-24 13:48:15   ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ Cpu │ Thr │ Running │  MsgCount │                                                 Pattern │                                                    Node ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║  0  │  0  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  0  │  1  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  0  │  2  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  0  │  3  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  0  │  4  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  0  │  5  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  0  │  6  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  0  │  7  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  1  │  0  │   [32myes[0m   │        94 │                                                PPS_TEST │                                                EVT_PPS1 [49m║
+║[40m  1  │  1  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  1  │  2  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  1  │  3  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  1  │  4  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  1  │  5  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  1  │  6  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  1  │  7  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  2  │  0  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  2  │  1  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  2  │  2  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  2  │  3  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  2  │  4  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  2  │  5  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  2  │  6  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  2  │  7  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  3  │  0  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  3  │  1  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  3  │  2  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  3  │  3  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  3  │  4  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  3  │  5  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+║  3  │  6  │   [31m no[0m   │         0 │                                               undefined │                                                    idle [49m║
+║[40m  3  │  7  │   [31m no[0m[40m   │         0 │                                               undefined │                                                    idle [49m║
+╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+make: Entering directory '/home/martin/bel_projects/dev/modules/ftm/tests'
+TEST_BINARY_DM_CMD="../bin/dm-cmd" TEST_BINARY_DM_SCHED="../bin/dm-sched" LD_LIBRARY_PATH="../lib/:" \
+	SNOOP_COMMAND="saft-ctl tr0 -xv snoop 0 0 0" DATAMASTER="dev/wbm1" TEST_SCHEDULES=schedules/ \
+	python3 -m pytest --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/ --ignore=tools/ -k zzz
+============================= test session starts ==============================
+platform linux -- Python 3.10.6, pytest-7.2.2, pluggy-0.13.0
+rootdir: /home/martin/bel_projects/dev/modules/ftm/tests, configfile: pytest.ini
+collected 177 items / 176 deselected / 1 selected
+
+test_zzz_finish.py .                                                     [100%]
+
+====================== 1 passed, 176 deselected in 2.77s =======================
+make: Leaving directory '/home/martin/bel_projects/dev/modules/ftm/tests'
+
+ Datamaster log space
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       234G  128G   94G  58% /
