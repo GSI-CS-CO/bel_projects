@@ -1,0 +1,147 @@
+Running with datamaster fel0069.acc
+
+ PCI on host fel0069.acc
+01:00.0 Class 6800: 10dc:019a pcie_wb
+02:00.0 Class 6800: 10dc:019a pcie_wb
+crw-rw----    1 root     root      248,   0 May 10 15:14 /dev/wbm0
+crw-rw----    1 root     root      248,   1 May 10 15:14 /dev/wbm1
+
+
+Timing-Receiver:
+EB version / EB source: etherbone 2.1.2 (v2.1.2): Jun  1 2021 16:58:15 / built by ahahn on Nov  1 2021 09:31:23 with asl743.acc.gsi.de running CentOS Linux release 7.9.2009 (Core)
+WR_time - host_time [ms]: 36226.102
+Current TAI: 2023-05-24 14:31:39 GMT (967901 us), 1684938699967901 us
+Sync Status: TRACKING
+MAC: 00267b000844
+Link Status: LINK_UP
+IP: 192.168.131.241
+FPGA uptime [h]: 0000006889.94
+FPGA build type: fallout-v6.1.2
+Project     : pci_control
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : fallout-3847
+Build type  : fallout-v6.1.2
+Build date  : Mon Aug 09 08:48:31 CEST 2021
+Prepared by : Timing Group Jenkins <csco-tg@gsi.de>
+Prepared on : tsl021.acc.gsi.de
+OS version  : CentOS Linux release 7.9.2009 (Core), kernel 3.10.0-1160.36.2.el7.x86_64
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+
+  33b311a Merge pull request #287 from GSI-CS-CO/dm-fallout-tests
+  79bfcd2 datamaster-tests.tex: add hint to install scheduleCompare as a prerequisite.
+  5a22eb0 Makefile: use python3 explicitly. Tests do not run with python2.
+  0113dcd Merge branch 'fallout' into dm-fallout-tests
+  f6369d7 test_safe2remove.py: use longer duration for some long running performance tests, 3. try
+dev/wbm1 WR time: 
+2023-05-24 14:31:40 GMT (207878 us), 1684938700207878 us
+
+
+Datamaster:
+TRACKING
+192.168.131.184
+Project     : ftm
+Platform    : pexaria5 +db[12] +wrex1
+FPGA model  : Arria V (5agxma3d4f27i3)
+Source info : DM_debug_origin_memory-3976
+Build type  : developer preview
+Build date  : Tue Nov 02 12:26:46 CET 2021
+Prepared by : Mathias <m.kreider@gsi.de>
+Prepared on : quasar
+OS version  : Ubuntu 18.04.6 LTS, kernel 4.15.0-158-generic
+Quartus     : Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
+
+  722413ec reset core: User CPUs now start in reset state for safe FW load from host. standalones can simply come out of reset to run from flash
+  4bc0c708 DM: removed ftmfw debug prints. AGAIN. Why is this stuff active again - bad merge?
+  1f69169c DM: WTF ... dm-cmd were forgotten, fixed
+  d823b266 DM: merge with fallout HEAD
+  6bc1f4f7 DM: lib, fw: alle necessary changes for external thread spawn implemented
+dev/wbm0 datamaster host time: 
+2023-05-24T14:31:04+0000
+dev/wbm0 datamaster IP: 
+192.168.131.184
+dev/wbm0 datamaster WR sync status: 
+TRACKING
+dev/wbm0 datamaster link status: 
+LINK_UP
+
+ Datamaster status:
+Connecting to dev/wbm0...  Done.
+Found  Cores, 4 of them run a valid DM firmware.
+Downloading ...Done.
+Calling parser for Mgmt Meta
+returned.
+Calling parser for Mgmt Data
+Mgmt found 3 data chunks. Total 6 nodes scanned. Trying to recover GroupTable ...
+Bytes expected: 124, recovered: 124
+
+returned.
+Calling parser for Download Meta
+Analysing downloaded graph binary 312 bytes
+Node creation done. Creating Edges
+Done. Graph generation complete
+returned.
+Generating status command
+      Space       Free     cTotal      cFree      cUsed   bmpTotal    bmpFree    bmpUsed   bmpBytes
+      97448        99%       1874      1869         5       1874      1868         6        260
+      97448        99%       1874      1866         8       1874      1866         8        260
+      97448        99%       1874      1869         5       1874      1868         6        260
+      97448        99%       1874      1869         5       1874      1868         6        260
+Active Safe2remove-Covenants:
+
+╔═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║ DataMaster: dev/wbm0                                                                      │ ECA-Time: 0x17621ad2435735a0 ns │ 2023-05-24 14:31:40   ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ Cpu │ Thr │ Running │  MsgCount │                                                 Pattern │                                                    Node ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║  0  │  0  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  1  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  2  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  3  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  4  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  5  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  6  │    no   │         0 │                                               undefined │                                                    idle ║
+║  0  │  7  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  0  │   yes   │     41325 │                                                PPS_TEST │                                                EVT_PPS2 ║
+║  1  │  1  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  2  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  3  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  4  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  5  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  6  │    no   │         0 │                                               undefined │                                                    idle ║
+║  1  │  7  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  0  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  1  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  2  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  3  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  4  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  5  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  6  │    no   │         0 │                                               undefined │                                                    idle ║
+║  2  │  7  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  0  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  1  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  2  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  3  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  4  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  5  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  6  │    no   │         0 │                                               undefined │                                                    idle ║
+║  3  │  7  │    no   │         0 │                                               undefined │                                                    idle ║
+╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+      Space       Free
+      97448        99%
+      97448        99%
+      97448        99%
+      97448        99%
+Active Safe2remove-Covenants:
+
+╔═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║ DataMaster: tcp/fel0069.acc                                                               │ ECA-Time: 0x17621ad24739d8a8 ns │ 2023-05-24 14:31:41   ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ Cpu │ Thr │ Running │  MsgCount │                                                 Pattern │                                                    Node ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║  1  │  0  │   yes   │     41325 │                                                PPS_TEST │                                                EVT_PPS2 ║
+╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+ Datamaster log space
+Filesystem                Size      Used Available Use% Mounted on
+df: /var/log/: can't find mount point
