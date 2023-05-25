@@ -7,13 +7,13 @@ const int EbWrapper::expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_M
                      + 99 * (int)FwId::VERSION_REVISION_MUL;
 
 void EbWrapper::checkReadCycle (const vAdr& va, const vBl& vcs) const {
-     if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" 
+     if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths ("
       + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
   }
 
-void EbWrapper::checkWriteCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const {   
+void EbWrapper::checkWriteCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const {
     if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) )
-    throw std::runtime_error(" EB/sim write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" 
+    throw std::runtime_error(" EB/sim write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/"
       + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
 }
 
@@ -138,24 +138,24 @@ int EbWrapper::write64b(uint32_t startAdr, uint64_t d) const {
 
 
 bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown) {
-  
+
     bool  ret = false;
     ebdevname = en;
-    
+
     uint8_t mappedIdx = 0;
     int foundVersionMax = -1;
-    
+
     cpuIdxMap.clear();
     cpuDevs.clear();
     vFoundVersion.clear();
     vFwIdROM.clear();
 
     if(verbose) sLog << "Connecting to " << ebdevname << "... ";
-   
+
     try {
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      
+
 
       ebd.sdb_find_by_identity(CluTime::vendID, CluTime::devID, cluTimeDevs);
       if (cluTimeDevs.size() < 1) throw std::runtime_error("Could not find Cluster Time Module on DM (needed for WR time). Something is wrong\n");
@@ -169,14 +169,14 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
 
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
-          
+
           vFwIdROM.push_back(getFwIdROM(cpuIdx));
-          
+
           int foundVersion = getFwVersion(vFwIdROM[cpuIdx]);
-          
+
           foundVersionMax = foundVersionMax < foundVersion ? foundVersion : foundVersionMax;
           vFoundVersion.push_back(foundVersion);
-          
+
 
           if ( (foundVersion >= expVersionMin) && (foundVersion <= expVersionMax) ) {
             //FIXME check for consequent use of cpu index map!!! I'm sure there'll be absolute chaos throughout the lib if CPUs indices were not continuous
@@ -193,12 +193,12 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             mappedIdx++;
           }
-          
-       
+
+
         }
         ret = true;
       }
-      
+
     } catch (etherbone::exception_t const& ex) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {
@@ -206,7 +206,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     }
 
     if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << cpuQty << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
+      sLog << " Done."  << std::endl << "Found " << unsigned(cpuQty) << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
     }
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
@@ -229,9 +229,9 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
       //TODO report why we could not disconnect
     }
-    
+
     if(verbose) sLog << " Done" << std::endl;
-    
+
     return ret;
   }
 
@@ -270,23 +270,23 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     const std::string tagExpName    = "ftm";
     std::string version;
     size_t pos;
-    
+
     const struct sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
     //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit
     for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + BUILDID_OFFS + BUILDID_SIZE; adr += 4) fwIdAdr.push_back(adr);
-    
+
     vBuf fwIdData = readCycle(fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
-    
+
     //check for magic word
     pos = 0;
     if(s.find(tagMagic, 0) == std::string::npos) {throw std::runtime_error( "Bad Firmware Info ROM: Magic word not found\n");}
     //check for project name
-    
+
     pos = s.find(tagProject, 0);
     if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {throw std::runtime_error( "Bad Firmware Info ROM: Not a DM project\n");}
-    
+
     return s;
   }
 
@@ -378,7 +378,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found"
          << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11)  << std::endl;
     for (int x = 0; x < cpuQty; x++) {
-  
+
       sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << getFwVersionString(x)
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMin())
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMax());
