@@ -55,8 +55,13 @@ EXTRA_FLAGS   ?= $(USEMASP) $(PRODUCTIVE)
 CXFLAGS       ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include $(BOOST_INCL) $(MASP_INCL) 
 LIBS          ?= $(BOOST_LIBPATH) $(MASP_LIBPATH) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
-# setting CC might be required if NOT building against yocto SDK
-#CC            = g++
+$(info PRO is $(PRO))
+$(info PRODUCTIVE is $(PRODUCTIVE))
+$(info MASP is $(MASP))
+$(info ours/theirs CFLAGS is $(CFLAGS))
+$(info compiling x86 binaries for $(SYSENV))
+$(info ours CCFLAGS for c code is $(CCFLAGS))
+$(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS := dmunipz-ctl 
 

@@ -7,6 +7,8 @@
 #   'make PREFIX=/opt/usr install'                                                    (hack: leave PREFIX empty for SCU path)
 
 # install
+include .env
+
 PREFIX      ?= /usr/local
 STAGING     ?=
 

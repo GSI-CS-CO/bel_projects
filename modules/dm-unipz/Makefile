@@ -47,6 +47,7 @@ else
 PRO         ?= NO
 endif
 
+export PRO
 
 TARGETS := firmware software nfsinit
 
