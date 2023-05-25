@@ -14,7 +14,7 @@ class DatamasterCheck(unittest.TestCase):
     fileName = 'checkResultsACOPC042.txt'
     with open(fileName, 'wb') as file1:
       process = subprocess.run('./datamasterCheck.sh', shell=True, check=True, stdout=file1)
-    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[38,38,42,59,77,77,109,120,155])
+    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[38,38,42,79,111,122,157])
     self.deleteFile(fileName)
 
   def test_datamasterRemoteFel0069(self):
@@ -22,8 +22,26 @@ class DatamasterCheck(unittest.TestCase):
     """
     fileName = 'checkResultsFel0069.txt'
     with open(fileName, 'wb') as file1:
-      process = subprocess.run(('./datamasterCheck.sh', 'remote', 'fel0069.acc'), shell=False, check=False, stdout=file1)
-    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[11,11,11,14,31,31,50,50])
+      process = subprocess.run(('./datamasterCheck.sh', 'remote', 'fel0069.acc'), shell=False, check=True, stdout=file1)
+    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[11,11,15,33,55,87,98])
+    self.deleteFile(fileName)
+
+  def test_datamasterRemoteTsl018(self):
+    """Check tsl018.acc
+    """
+    fileName = 'checkResultsTsl018.txt'
+    with open(fileName, 'wb') as file1:
+      process = subprocess.run(('./datamasterCheck.sh', 'remote', 'tsl018.acc'), shell=False, check=True, stdout=file1)
+    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[27,59])
+    self.deleteFile(fileName)
+
+  def test_datamasterRemoteTsl020(self):
+    """Check tsl020.acc
+    """
+    fileName = 'checkResultsTsl020.txt'
+    with open(fileName, 'wb') as file1:
+      process = subprocess.run(('./datamasterCheck.sh', 'remote', 'tsl020.acc'), shell=False, check=True, stdout=file1)
+    self.compareExpectedResult(fileName, 'expected/' + fileName, delete=[27,59,62,62,68,75])
     self.deleteFile(fileName)
 
   def compareExpectedResult(self, fileCurrent, fileExpected, delete=[]):
@@ -35,12 +53,16 @@ class DatamasterCheck(unittest.TestCase):
       current = f_current.readlines()
     for index in delete:
       if index < len(current):
+        print(f'{index}: {current[index]}')
         del current[index]
     with open(fileExpected, 'r') as f_expected:
       expected = f_expected.readlines()
     for index in delete:
       if index < len(expected):
+        print(f'{index}: {expected[index]}')
         del expected[index]
+    for index, line in enumerate(current):
+      current[index] = line.replace('make[1]:', 'make:')
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {fileExpected}\n{diffLines}')
 
