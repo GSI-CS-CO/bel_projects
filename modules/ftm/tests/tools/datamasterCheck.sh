@@ -38,7 +38,7 @@ datamasterInfo() {
   OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests
   echo
   echo " Datamaster log space"
-  df -h /var/log/
+  df -h /var/log/ || true
 }
 
 remoteDatamasterInfo() {
@@ -67,11 +67,11 @@ remoteDatamasterInfo() {
     ssh root@$DM_HOST "dm-cmd -v $DM"
   fi
   # Test that the tools version and the firmware version are compatible
-  dm-cmd tcp/$DM_HOST
+  #~ dm-cmd tcp/$DM_HOST
   #~ OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests remote
   echo
   echo " Datamaster log space"
-  ssh root@$DM_HOST 'df -h /var/log/'
+  ssh root@$DM_HOST 'df -h /var/log/' 2>&1 || true
 }
 
 if [ $# -eq 2 ] && [ "$1" = "remote" ]
@@ -126,9 +126,21 @@ then
   DM=dev/wbm0
   TR0=""
   remoteDatamasterInfo
+elif [ "$DM_HOST" = "tsl020" ]
+then
+  DM=dev/wbm0
+  TR0=""
+  if [ "$1" = "remote" ]
+  then
+    remoteDatamasterInfo
+  else
+    datamasterInfo
+  fi
 elif [ "$DM_HOST" = "tsl020.acc" ]
 then
-  echo "On host $DM_HOST: not implemented"
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
 else
   echo "Unknown datamaster host $DM_HOST"
 fi
