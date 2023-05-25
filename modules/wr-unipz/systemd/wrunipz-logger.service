@@ -1,0 +1,11 @@
+[Unit]
+Description = wr unilac pulszentrale, diagnostic logging
+Requires = dev-wbm0.device
+After = dev-wbm0.device
+
+[Service]
+Type = simple
+ExecStart = /bin/sh -c 'wrunipz-ctl -s1 dev/wbm0 | logshipper.sh wrunipz-ctl'
+
+[Install]
+WantedBy = multi-user.target
