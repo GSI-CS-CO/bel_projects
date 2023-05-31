@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-May-2023
+ *  version : 31-May-2023
  *
  * library for b2b
  *
@@ -466,6 +466,9 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
 
   fdat_t tmp;
 
+  /* hack: if fine tuen is enabled, always enable multi-beat tune, chk */
+  if (fFineTune) fMBTune = 1;   
+  
   sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
   // b2b_log("ext upload start");
   
