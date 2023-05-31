@@ -23,7 +23,7 @@ signal gate_state:   gate_state_t:= idle;
 signal timeout_reset : unsigned(15 downto 0); 
 
 signal new_val_wait: std_logic :='0';
-signal timeout : unsigned(15 downto 0) := timeout_reset;
+signal timeout : unsigned(15 downto 0);-- := timeout_reset;
 signal curr_val   :std_logic:='0';
 
 
@@ -50,6 +50,8 @@ gate_proc: process (clk_i, rstn_i, gate_in_ena)
           case gate_state is
 
               when idle =>
+                        new_val_wait <= gate_in;
+
               	        if curr_val='0' then
                           
                           new_val_wait   <= '0';
@@ -62,7 +64,7 @@ gate_proc: process (clk_i, rstn_i, gate_in_ena)
                         
                         end if;
                         if (to_integer (timeout) = 0) then
-                          timeout_error<= '0';
+                         -- timeout_error<= '0';
                           gate_state <= ready;
                         end if;  
                       end if;

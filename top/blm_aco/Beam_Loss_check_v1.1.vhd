@@ -32,8 +32,8 @@ port (
     BLM_gate_seq_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )     
-
+    --BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )     
+    BLM_out_sel_reg: in t_IO_Reg_0_to_3_Array;
     -- OUT register
     BLM_status_Reg    : out t_IO_Reg_0_to_36_Array;
       -- OUT BLM
@@ -133,8 +133,8 @@ component BLM_gate_timing_seq is
       port (
         CLK              : in std_logic;      -- Clock
         nRST             : in std_logic;      -- Reset
-        BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (512 counter outputs + 12 gate errors + 54 watchdog errors)                                                
-      
+        --BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (512 counter outputs + 12 gate errors + 54 watchdog errors)                                                
+        BLM_out_sel_reg: t_IO_Reg_0_to_3_Array;
         UP_OVERFLOW      : in std_logic_vector(255 downto 0);
         DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
       
