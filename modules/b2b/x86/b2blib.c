@@ -466,10 +466,10 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
 
   fdat_t tmp;
 
-  /* hack: if fine tuen is enabled, always enable multi-beat tune, chk */
+  /* hack: if fine tune is enabled, always enable multi-beat tune, chk */
   if (fFineTune) fMBTune = 1;   
   
-  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
+  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u, fineTune %u, mbTune %u", sid, gid, mode, fFineTune, fMBTune);
   // b2b_log("ext upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
