@@ -26,7 +26,7 @@ files = [
    "Beam_Loss_check_v1.1.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
-   "BLM_out_el_v1.0.vhd",
+   "BLM_out_el_v1.1.vhd",
    "IOBP_LED_ID_Module.vhd",
    "p_connector.vhd",
    "BLM_in_mux.vhd",
