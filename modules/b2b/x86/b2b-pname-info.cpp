@@ -119,7 +119,7 @@ int main()
 			throw std::runtime_error("cannot start DIM server");
 		}
 
-                std::string magic_command = "/common/usr/lsa/bin/lsa_residump -t";
+                std::string magic_command = "/common/usr/cscoap/bin/lsa_residump -t";
                 // std::string magic_command = "cat test.txt";
 		for(;;) { 
                   	std::string script_output = execute_and_capture_output(magic_command);
