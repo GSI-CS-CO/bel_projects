@@ -685,3 +685,26 @@ inject_mps_events() {
 
     saft-dm bla -fp -n $1 $2
 }
+
+###################
+# Print the MD5 checksum and date of a given file
+#
+###################
+print_file_info() {
+    # $1 - filename (in current directory)
+
+    if [ -f $1 ]; then
+        checksum=$(md5sum $1)
+        info=$(ls -l $1)
+
+        checksum=${checksum%% *} # get the checksum only
+        date=${info##*root}      # get the sub-string right to 'root'
+
+        printf "%s " $checksum $date
+        printf "\n"
+
+    else
+        exit 2                   # return error code
+    fi
+
+}

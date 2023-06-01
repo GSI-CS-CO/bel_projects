@@ -62,16 +62,20 @@ setup_nodes() {
     done
 
     for scu in "${all_scu[@]}"; do
+        echo "$scu:"
         for filename in $filenames; do
-            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "if [ ! -f $filename ]; then echo $filename not found on $scu; exit 2; fi"
+            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "source setup_local.sh && print_file_info $filename"
             result=$?
-            report_check $result $filename $scu
-        done
-    done
 
-    for scu in "${all_scu[@]}"; do
-        echo -e "\n$scu:\n"
-        timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "ls -l $filenames && md5sum $filenames"
+            if [ $result -eq 124 ]; then
+                echo "access to $scu timed out. Exit!"
+                exit 1
+            elif [ $result -ne 0 ]; then
+                echo "$filename not found on ${scu}. Exit!"
+                exit 2
+            fi
+        done
+        echo
     done
 
     unset sender_opts
