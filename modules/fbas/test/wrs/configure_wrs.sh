@@ -8,7 +8,7 @@ usage() {
     echo "where:"
     echo "    username - username for login"
     echo "      target - target WRS name (eg, nwt0123m66)"
-    echo "      config - dot-config file"
+    echo "      config - path to dot-config file"
 }
 
 error() {
