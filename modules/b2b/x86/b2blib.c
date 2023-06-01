@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 31-May-2023
+ *  version : 01-Jun-2023
  *
  * library for b2b
  *
@@ -526,6 +526,8 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_status_t  eb_status;    // eb status
   uint32_t     gidInj;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  uint32_t     paramHi;
+  uint32_t     paramLo;
   char         buff[100];
 
   fdat_t       tmp;
@@ -554,14 +556,18 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   if (fNueConv) TH1 = (double)1000000000000000000.0 / b2b_flsa2fdds(nueH1);
   else          TH1 = (double)1000000000000000000.0 / nueH1;
 
+  // parameter field
+  paramHi = (uint32_t)((param >> 32) & 0xffffffff);
+  paramLo = (uint32_t)( param & 0xfffffff);
+
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
   eb_cycle_write(eb_cycle, b2b_set_sidEInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sidExt);               // this looks funny but writing sidExt to the sidEInj register is not a bug
   eb_cycle_write(eb_cycle, b2b_set_gidInj,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gidInj);
   eb_cycle_write(eb_cycle, b2b_set_lsidInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sid);
   eb_cycle_write(eb_cycle, b2b_set_lbpidInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)bpid);
-  eb_cycle_write(eb_cycle, b2b_set_lparamInjHi,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param >> 32));
-  eb_cycle_write(eb_cycle, b2b_set_lparamInjLo,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param & 0xffffffff));
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjHi,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)paramHi);
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjLo,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)paramLo);
   eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
@@ -570,7 +576,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  sprintf(buff, "inj_upload: sidExt %u, gid %u", sidExt, gid);
+  sprintf(buff, "inj_upload: sidExt %u, gid %u, sid %u, bpid %u, paramHi %u, paramLo %u", sidExt, gid, sid, bpid, paramHi, paramLo);
   b2b_log(buff);
   
   return COMMON_STATUS_OK;
