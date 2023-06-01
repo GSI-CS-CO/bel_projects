@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2023
+ *  version : 01-Jun-2023
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000500
+#define B2B_ANALYZER_VERSION 0x000501
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -499,6 +499,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].ext_cTrig;
     act = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
     // printf("EXT match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].ext_diagMatch, cor, act);
     n   = ++(ext_ddsOffN[sid]);
 
@@ -625,6 +626,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // match diagnostics; theoretical value is '0'
     cor = (double)dicSetval[sid].inj_cTrig - (double)dicSetval[sid].cPhase;
     act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
     // printf("INJ match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].inj_diagMatch, cor, act);
 
     n   = ++(inj_ddsOffN[sid]);
