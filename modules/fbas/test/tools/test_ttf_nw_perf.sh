@@ -85,9 +85,9 @@ setup_nodes() {
         mac_txscu+=($(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0"))
     done
 
-    echo -e "Sender ID(s) of ${txscu[@]}:\n ${mac_txscu[@]}"
+    echo -e "Sender ID(s) of ${txscu[@]}:\n ${mac_txscu[@]}\n"
 
-    echo -e "\nset up RX=$rxscu_name ...\n"
+    echo "set up RX=$rxscu_name ..."
     if [ ${#mac_txscu[@]} -eq 0 ]; then
         sender_opts="SENDER_ANY"
     else
@@ -102,7 +102,7 @@ setup_nodes() {
     fi
 
     for scu in ${txscu[@]}; do
-        echo -e "\nset up TX=$scu ...\n"
+        echo "set up TX=$scu ..."
         output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
         ret_code=$?
         if [ $ret_code -ne 0 ]; then
