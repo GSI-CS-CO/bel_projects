@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Jun-2023
+ *  version : 02-Jun-2023
  *
  * library for b2b
  *
@@ -528,7 +528,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   uint64_t     TH1;          // revolution period [as]
   uint32_t     paramHi;
   uint32_t     paramLo;
-  char         buff[100];
+  char         buff[1024];
 
   fdat_t       tmp;
 
@@ -557,8 +557,11 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   else          TH1 = (double)1000000000000000000.0 / nueH1;
 
   // parameter field
-  paramHi = (uint32_t)((param >> 32) & 0xffffffff);
-  paramLo = (uint32_t)( param & 0xfffffff);
+  /* paramHi = (uint32_t)((param >> 32) & 0xffffffff);
+     paramLo = (uint32_t)( param & 0xfffffff);*/
+  // hack: swap high/loword
+  paramHi = (uint32_t)( param & 0xfffffff);
+  paramLo = (uint32_t)((param >> 32) & 0xffffffff);
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
@@ -576,7 +579,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  sprintf(buff, "inj_upload: sidExt %u, gid %u, sid %u, bpid %u, paramHi %u, paramLo %u", sidExt, gid, sid, bpid, paramHi, paramLo);
+  sprintf(buff, "inj_upload: sidExt %u, gid %u, sid %u, bpid %u, paramHi %u, paramLo %u, param 0x%lx", sidExt, gid, sid, bpid, paramHi, paramLo, param);
   b2b_log(buff);
   
   return COMMON_STATUS_OK;
