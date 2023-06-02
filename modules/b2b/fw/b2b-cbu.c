@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Mar-2023
+ *  version : 02-Jun-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000500                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000501                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -104,7 +104,7 @@ uint64_t setTH1Inj_as[B2B_NSID];        // [as]
 uint32_t setNHInj[B2B_NSID];
 uint32_t setLSidInj[B2B_NSID];
 uint32_t setLBpidInj[B2B_NSID];
-uint32_t setLParamInj[B2B_NSID];
+uint64_t setLParamInj[B2B_NSID];
 float    setCPhase[B2B_NSID];           // [ns]
 float    setCTrigExt[B2B_NSID];         // [ns]
 float    setCTrigInj[B2B_NSID];         // [ns]

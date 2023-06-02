@@ -557,11 +557,11 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   else          TH1 = (double)1000000000000000000.0 / nueH1;
 
   // parameter field
-  /* paramHi = (uint32_t)((param >> 32) & 0xffffffff);
-     paramLo = (uint32_t)( param & 0xfffffff);*/
+   paramHi = (uint32_t)((param >> 32) & 0xffffffff);
+   paramLo = (uint32_t)( param & 0xfffffff);
   // hack: swap high/loword
-  paramHi = (uint32_t)( param & 0xfffffff);
-  paramLo = (uint32_t)((param >> 32) & 0xffffffff);
+  /*paramHi = (uint32_t)( param & 0xfffffff);
+    paramLo = (uint32_t)((param >> 32) & 0xffffffff);*/
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
