@@ -464,9 +464,9 @@ start_nw_perf() {
         n=$1
     fi
 
-    echo "TX: MPS events will be generated locally ..."
-    echo "TX: $n MPS events -> flag=NOK(2), grpID=1, evtID=0 ($(( $n * 3)) transmissions)"
-    echo "TX: $n MPS events -> flag=OK(1), grpID=1, evtID=0 ($n transmissions)"
+    echo "TX: generating the MPS events locally ..."
+    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $(( $n * 3)) transmissions)"
+    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
     echo -e "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
 
     for i in $(seq $n); do

@@ -47,47 +47,58 @@ pre_check() {
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
 
-    echo "(RX): drive B1 output:"
+    echo "RX: drive B1 output:"
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 1"
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
 setup_nodes() {
-    echo -e "\ncheck deployment\n"
 
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
-    all_scu+="$rxscu"
-    for scu in ${txscu[@]}; do
-        all_scu+=($scu)
-    done
+    mac_txscu=()
+    all_scu=(${txscu[@]} "$rxscu")
 
     for scu in "${all_scu[@]}"; do
-        echo "$scu:"
+        # get MAC address
+        mac_scu=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0")
+        ret_code=$?
+        if [ $ret_code -eq 0 ]; then
+            if [ "$scu" != "$rxscu" ]; then
+                mac_txscu+=($mac_scu)
+                echo "TX=$scu: $mac_scu"
+            else
+                echo "RX=$scu: $mac_scu"
+            fi
+        fi
+
+        # check deployment
         for filename in $filenames; do
             timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "source setup_local.sh && print_file_info $filename"
-            result=$?
+            ret_code=$?
 
-            if [ $result -eq 124 ]; then
+            if [ $ret_code -eq 124 ]; then
                 echo "access to $scu timed out. Exit!"
                 exit 1
-            elif [ $result -ne 0 ]; then
+            elif [ $ret_code -ne 0 ]; then
                 echo "$filename not found on ${scu}. Exit!"
                 exit 2
             fi
         done
+
+        # set up TX nodes
+        if [ "$scu" != "$rxscu" ]; then
+            output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
+            ret_code=$?
+            if [ $ret_code -ne 0 ]; then
+                echo "Error ($ret_code): cannot set up $scu"
+                exit 1
+            fi
+        fi
         echo
     done
 
-    unset sender_opts
-    mac_txscu=()
-
-    for scu in ${txscu[@]}; do
-        mac_txscu+=($(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0"))
-    done
-
-    echo -e "Sender ID(s) of ${txscu[@]}:\n ${mac_txscu[@]}\n"
-
-    echo "set up RX=$rxscu_name ..."
+    # set up RX node
+    sender_opts="SENDER_ANY"
     if [ ${#mac_txscu[@]} -eq 0 ]; then
         sender_opts="SENDER_ANY"
     else
@@ -101,15 +112,7 @@ setup_nodes() {
         exit 1
     fi
 
-    for scu in ${txscu[@]}; do
-        echo "set up TX=$scu ..."
-        output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
-        ret_code=$?
-        if [ $ret_code -ne 0 ]; then
-            echo "Error ($ret_code): cannot set up $scu"
-            exit 1
-        fi
-    done
+    echo "Sender ID(s): ${mac_txscu[@]}"
 }
 
 measure_nw_perf() {
@@ -119,6 +122,9 @@ measure_nw_perf() {
     # enable simultaneous operation of TX nodes
     pids=()
     for i in ${!txscu[@]}; do
+        echo ${txscu[$i]}:
+
+        # enable MPS operation, start test => keep process ID
         output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$DEV_TX")
 
         # start test sub-process and keep its process ID
@@ -229,7 +235,7 @@ if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu+=("$def_txscu_name.$domain")
 fi
 
-echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---"
+echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 setup_nodes
 
 # optional pre-check before real test
