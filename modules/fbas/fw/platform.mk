@@ -27,7 +27,7 @@ else
   undefine N_MPS_CH
 endif
 
-CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/drivers -I$(PATHFW) \
+CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/src -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
 ifneq ($(MPS_CH),)
