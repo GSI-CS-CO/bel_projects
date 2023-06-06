@@ -9,7 +9,7 @@ port (
   CLK              : in std_logic;      -- Clock
   nRST             : in std_logic;      -- Reset
  -- BLM_ctrl_reg     : in std_logic_vector(11 downto 0); -- bit 5-0 = up_in_counter select, bit 11-6 = down_in_counter select
-     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (512 counter outputs + 12 gate errors + 54 watchdog errors)                                                
+     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors  + 12 gate errors + 512 counter outputs)                                                
 
   UP_OVERFLOW      : in std_logic_vector(255 downto 0);
   DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
