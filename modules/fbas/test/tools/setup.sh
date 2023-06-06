@@ -4,12 +4,12 @@
 ## Setup of the WR network
 ##########################
 # TTF:
-# WRS configured with dot-config_timing_mps_access
+# WRS configured with dot-config_timing_access_fbas
 # SCU as TX node, scuxl0396
 # SCU as RX node, scuxl0497
 
 # HO:
-# WRS configured with dot-config_production_mps_access_ho
+# WRS configured with dot-config_home_access_fbas
 # RPi with DHCP/FTP server
 # Pexaria as DM, /dev/wbm1
 # Pexaria as FBASTX, /dev/wbm0
@@ -189,6 +189,28 @@ start_saftd() {
 
     #echo "attach 'wbm2' to 'fbasrx'"
     #saft-ctl fbasrx attach dev/wbm2
+}
+
+start_saftbusd() {
+
+    check_fbastx
+    check_fbasrx
+
+    echo "terminate saftbus daemon, if it's running"
+    sudo killall saftbusd
+
+    if [ $? -eq 0 ]; then
+        echo "wait until watchdog is released"
+        for i in $(seq 1 10); do
+            echo -ne "time left (seconds): $[ 10 - $i ]\r"
+            wait_seconds 1
+        done
+    fi
+
+    export SAFTBUS_SOCKET_PATH=/tmp/saftbus
+
+    echo "start saftbus with fbastx:$FBASTX and fbasrx:$FBASRX'"
+    saftbusd libsaft-service.so fbastx:$FBASTX fbasrx:$FBASRX &
 }
 
 check_node() {

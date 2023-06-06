@@ -15,8 +15,8 @@
 #  make repeat_test3
 #
 # 2. Measure message transmission with the DM node:
-#  make saftd                 # load saft daemon
-#  make restart_fbasdm_finite # or 'make restart_fbasdm_loop'
+#  make saftd  (or 'make saftbusd' for saftlib v3.x)  # load saft daemon
+#  make restart_fbasdm_finite                         # or 'make restart_fbasdm_loop'
 #
 # 2.1 Measure message transmission (set of timing messages with the same deadline, 1 msg in 1 frame)
 #  make saftd                     # load saftd
@@ -39,7 +39,7 @@
 #  senders: datamaster and FBASTX node
 #  note: LEMO cable connection between FBASTX and FBASRX nodes is not required
 #
-#  make saftd
+#  make saftd (or 'make saftbusd' for saftlib v3.x)
 #  make restart_two_senders_multi_loop or
 #  make restart_two_senders_multi_finite
 
@@ -58,7 +58,7 @@
 # This test setup can be used for testing new WRS software.
 
 .PHONY: mytest \
-	saftd setup_nodes \
+	saftd saftbusd setup_nodes \
 	do_test3 repeat_test3 \
 	disable_mps_tx disable_mps_rx disable_mps_all enable_mps_all \
 	set_single_msg_per_frame set_multi_msgs_per_frame \
@@ -171,7 +171,10 @@ show_fbasdm_result:
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
 
 saftd:
-	source setup.sh && start_saftd
+	source setup.sh && start_saftd      # saftlib v2.x
+
+saftbusd:
+	source setup.sh && start_saftbusd   # saftlib v3.x
 
 do_test3:
 	@$(MAKE) setup_nodes
