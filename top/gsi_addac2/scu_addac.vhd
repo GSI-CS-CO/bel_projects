@@ -225,15 +225,17 @@ END COMPONENT rrg;
 
 COMPONENT rrg_round is
   Port ( clk : in STD_LOGIC;
+			clk_slow : in STD_LOGIC;
          nReset : in STD_LOGIC;
 			timepulse : in STD_LOGIC;
-         Yset : in STD_LOGIC_VECTOR (15 downto 0);
-         Rset  : in STD_LOGIC_VECTOR (15 downto 0);
-         RIset : in STD_LOGIC_VECTOR (15 downto 0);
-			ROset : in STD_LOGIC_VECTOR (15 downto 0);
+			reg_control : in STD_LOGIC_VECTOR (15 downto 0);
+         reg_0 : in STD_LOGIC_VECTOR (15 downto 0);
+         reg_1  : in STD_LOGIC_VECTOR (15 downto 0);
+         reg_2 : in STD_LOGIC_VECTOR (15 downto 0);
+			reg_3 : in STD_LOGIC_VECTOR (15 downto 0);
 			DACStrobe : out STD_LOGIC;
-         Yis : out STD_LOGIC_VECTOR (31 downto 0);
-         Ris : out STD_LOGIC_VECTOR (31 downto 0));
+         Yis : out STD_LOGIC_VECTOR (63 downto 0);
+         Ris : out STD_LOGIC_VECTOR (63 downto 0));
 END COMPONENT rrg_round;
 
   signal clk_sys, clk_cal, locked : std_logic;
@@ -378,12 +380,13 @@ END COMPONENT rrg_round;
   signal rrgTargetReg           : std_logic_vector (15 downto 0);        
   signal rrgTimeStepReg         : std_logic_vector (15 downto 0);
   signal rrgCountStepReg   	  : std_logic_vector (15 downto 0);
-  signal rrgYset		  			  : std_logic_vector (15 downto 0); 
-  signal rrgRset 		  : std_logic_vector (15 downto 0); 
-	signal rrgRIset 		  : std_logic_vector (15 downto 0);  
-	signal rrgROset 		  : std_logic_vector (15 downto 0);
-	signal rrgYis		 	  : std_logic_vector (31 downto 0);
-	signal rrgRis		 	  : std_logic_vector (31 downto 0);
+  signal rrgreg_control 			: std_logic_vector (15 downto 0);
+  signal rrgreg_0		  			  : std_logic_vector (15 downto 0); 
+  signal rrgreg_1 		  : std_logic_vector (15 downto 0); 
+	signal rrgreg_2 		  : std_logic_vector (15 downto 0);  
+	signal rrgreg_3 		  : std_logic_vector (15 downto 0);
+	signal rrgYis		 	  : std_logic_vector (63 downto 0);
+	signal rrgRis		 	  : std_logic_vector (63 downto 0);
 	signal rrgDACStrobe             : std_logic;
 
 
@@ -606,7 +609,7 @@ dac_1: dac714
                                                 -- led on -> nExt_Trig_DAC is low
     --FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
     --FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
-    FG_Data           => rrgYis ( 15 downto 0), -- parallel dac data during FG-Mode
+    FG_Data           => rrgYis ( 63 downto 48),--63 to 48 -- parallel dac data during FG-Mode
     FG_Strobe         => rrgDACStrobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
@@ -902,11 +905,11 @@ p_led_ena: div_n
           Reg_IO1            =>  rrgConfigReg,
           Reg_IO2            =>  rrgTargetReg,
           Reg_IO3            =>  rrgTimeStepReg,
-          Reg_IO4            =>  rrgCountStepReg,
-          Reg_IO5            =>  rrgYset,
-          Reg_IO6            =>  rrgRset,
-          Reg_IO7            =>  rrgRIset,
-          Reg_IO8            =>  rrgROset,
+          Reg_IO4            =>  rrgreg_control,
+          Reg_IO5            =>  rrgreg_0,
+          Reg_IO6            =>  rrgreg_1,
+          Reg_IO7            =>  rrgreg_2,
+          Reg_IO8            =>  rrgreg_3,
         --
           Reg_rd_active      =>  rrg_rd_active,
           Dtack_to_SCUB      =>  rrg_Dtack,
@@ -930,11 +933,13 @@ CountStepReg  => rrgCountStepReg
    port map (
           clk           => clk_sys,
           nReset        => rstn_sys,
+			 clk_slow		=> clk_update,
 			 timepulse    => Ena_Every_1us,
-          Yset    => rrgYset,
-          Rset     => rrgRset,
-          RIset   => rrgRIset,
-          ROset       => rrgROset,
+			 reg_control => rrgreg_control ,
+          reg_0    => rrgreg_0,
+          reg_1     => rrgreg_1,
+          reg_2   => rrgreg_2,
+          reg_3       => rrgreg_3,
 			 DACStrobe => rrgDACStrobe,
           Yis    => rrgYis,
 			 Ris=> rrgRis
