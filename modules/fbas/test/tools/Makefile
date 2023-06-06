@@ -187,7 +187,7 @@ repeat_test3:
 	source setup.sh && start_test3
 
 restart_fbasdm_finite:
-	source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_ALL
+	source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	source setup.sh && enable_mps $$FBASRX
 	@$(MAKE) clear_fbasdm
 	source dm.sh && load_dm_patt my_mps_finite.dot && start_dm_patt PatA
@@ -197,7 +197,7 @@ restart_fbasdm_finite:
 	@$(MAKE) show_fbasdm_result
 
 restart_fbasdm_loop:
-	source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_ALL
+	source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	source setup.sh && enable_mps $$FBASRX
 	@$(MAKE) clear_fbasdm
 	source dm.sh && load_dm_patt my_mps_loop.dot && start_dm_patt PatLoop
@@ -289,7 +289,7 @@ restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
 # datamaster sends EB frame with multiple timing messages
 # FBASRX is getting started to loose timing messages at transmission period of 180us
 restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
-	source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_ALL
+	source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 	source setup.sh && enable_mps_all
 	@$(MAKE) load_fbasdm_loop_patterns
 	source dm.sh && start_dm_synchron $$cmd_file_start_loop
@@ -302,7 +302,7 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
 	@$(MAKE) show_two_senders_result
 
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
-	source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_ALL
+	source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 	source setup.sh && enable_mps_all
 	@$(MAKE) load_fbasdm_finite_patterns
 	source dm.sh && start_dm_synchron $$cmd_file_start_finite
