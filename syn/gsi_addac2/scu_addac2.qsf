@@ -69,6 +69,7 @@
 
 
 
+
 set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -949,7 +950,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to TP[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to TP[2]
 set_instance_assignment -name IO_STANDARD LVDS -to CLK_FPGA
 set_instance_assignment -name IO_STANDARD LVDS -to "CLK_FPGA(n)"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment PIN_A10 -to A_D[7]
 set_location_assignment PIN_A11 -to a_io[0]
 set_location_assignment PIN_A12 -to a_io[1]
@@ -1165,3 +1165,5 @@ set_location_assignment PIN_Y21 -to A_TX0P
 set_location_assignment PIN_Y22 -to A_TX0N
 set_location_assignment PIN_Y3 -to A_TB[8]
 set_location_assignment PIN_Y4 -to A_TB[5]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

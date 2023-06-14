@@ -22,17 +22,18 @@ module rrg_round(
 	reg signed[63:0] temp_RIset=0;  
 	reg signed[63:0] temp_ROset=0;
 	
-	reg signed [63:0] Yis_copy1;
-	reg signed [63:0]	Yis_copy2;
+	reg signed [63:0] Yis_buffer1=0;
+	reg signed [63:0]	Yis_buffer2=0;
+	reg signed [63:0]	Yis_stable=0;
 	
-	reg signed [63:0] Yset;
-	reg signed[63:0] Rset;  
-	reg signed[63:0] RIset;  
-	reg signed[63:0] ROset;
-	reg signed [63:0] Ydiff;
-	reg [63:0] abs_Ydiff;
-	reg [63:0] abs_Ris;
-	reg signed [127:0] Yt_dash;
+	reg signed [63:0] Yset =0;
+	reg signed[63:0] Rset=0;  
+	reg signed[63:0] RIset=0;  
+	reg signed[63:0] ROset=0;
+	reg signed [63:0] Ydiff=0;
+	reg [63:0] abs_Ydiff=0;
+	reg [63:0] abs_Ris=0;
+	reg signed [127:0] Yt_dash=0;
 
 	reg signed [63:0] Sign =1;
 	reg signed [63:0] Sign_Ris =1;
@@ -42,7 +43,9 @@ module rrg_round(
 	
 		if(nReset == 1'b0)
 		begin
-			Yis_copy1= 64'd0;
+			Yis_buffer1= 64'd0;
+			Yis_buffer2= 64'd0;
+		//	Yis= 64'd0;
 			Ris = 64'd0;
 			Sign =1;
 			Sign_Ris=1;
@@ -79,7 +82,7 @@ module rrg_round(
 						
 				if( abs_Ydiff <= ROset && abs_Ris <= ROset)
 				begin
-					Yis_copy1= Yset;
+					Yis_buffer1= Yset;
 					Ris = 64'd0;
 				end
 				
@@ -87,14 +90,15 @@ module rrg_round(
 				begin
 
 						Yt_dash = (Yset*ROset) -( Sign *((Ris * Ris)/ (2)) );
-						if ((Sign *((Yis*ROset) -Yt_dash)) >0)
+						if ((Sign *((Yis_stable*ROset) -Yt_dash)) >0)
 						begin
 						
-						if (Ris !=0)
+						if(Ris !=0)
 						begin
+						
 							Ris = Ris - (Sign_Ris * (ROset));
-							Yis_copy1= Yis_copy1+Ris;
-						end
+							Yis_buffer1= Yis_stable+Ris;
+	end
 						end
 						
 							
@@ -106,20 +110,20 @@ module rrg_round(
 							if ((Sign *Ris) -Rset <-1*RIset)
 							begin
 								Ris = Ris + Sign *RIset;
-								Yis_copy1= Yis_copy1+Ris;
+								Yis_buffer1= Yis_stable+Ris;
 							end
 							
 							else if ((Sign *Ris) -Rset > ROset)
 							begin
 								Ris = Ris - (Sign *RIset);
-								Yis_copy1= Yis+Ris;
+								Yis_buffer1= Yis_stable+Ris;
 							end
 							
 							
 							else
 							begin
 							Ris = Sign *Rset;
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_stable+Ris;
 							end
 						end
 				end		////////////////////////////////
@@ -146,23 +150,23 @@ begin
 
 	temp_reg = {reg_3, reg_2, reg_1, reg_0};
 
-	if (reg_control == 1) //1
+	if (reg_control == 1) 
 	begin
 		temp_Yset = temp_reg;
 	end
-	else if (reg_control == 2)//2
+	else if (reg_control == 2)
 	begin
 		temp_Rset = temp_reg;
 	end
-	else if (reg_control == 3)//4
+	else if (reg_control == 3)
 	begin
 		temp_RIset = temp_reg;
 	end
-	else if (reg_control == 4)//3
+	else if (reg_control == 4)
 	begin
 		temp_ROset = temp_reg;
 	end
-	else if (reg_control == 5)//7
+	else if (reg_control == 5)
 	begin
 		Yset = temp_Yset;
 		Rset = temp_Rset;
@@ -176,14 +180,19 @@ begin
 	always @(posedge clk_slow) 
 	begin
 
-	Yis_copy2 = Yis_copy1;
+	Yis_buffer2 = Yis_buffer1;
 	end
 	
+	
+	always @(posedge clk_slow) 
+	begin
+	Yis_stable = Yis_buffer2;
+	end
 	
 	always @(posedge clk) 
 	begin
 	DACStrobe =timepulse;
-	Yis = Yis_copy2;
+	Yis = Yis_buffer2;
 	end
 	
 endmodule
@@ -233,7 +242,7 @@ endmodule
 	
 		if(nReset == 1'b0)
 begin
-			Yis_copy1= 64'd0;
+			Yis_buffer1= 64'd0;
 			Ris = 64'd0;
 end
 		else
@@ -255,7 +264,7 @@ end
 						
 				if( abs_Ydiff <= ROset && abs_Ris <= ROset)
 				begin
-					Yis_copy1= Yset;
+					Yis_buffer1= Yset;
 					Ris = 64'd0;
 				end
 				
@@ -265,31 +274,31 @@ end
 					begin
 						Yt = Yset +( ((Ris *Ris)/ (2* ROset)) );
 						
-						if (-1*(Yis_copy1-Yt) >0)
+						if (-1*(Yis_buffer1-Yt) >0)
 						begin
 
 						if (Ris <0)
 						begin
 							Ris = Ris + (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 						else if (Ris >0)
 						begin
 							Ris = Ris - (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 						end
 							else if (Ris ==0)
 							begin
 								if (Ydiff < 0)
 								begin
 									Ris = Ris - (ROset);
-									Yis_copy1= Yis_copy1+Ris;
+									Yis_buffer1= Yis_buffer1+Ris;
 								end
 
 								else if (Ydiff >= 0)
 								begin
 									Ris = Ris + (ROset);
-									Yis_copy1= Yis_copy1+Ris;
+									Yis_buffer1= Yis_buffer1+Ris;
 								end
 							end
 						end
@@ -300,50 +309,50 @@ end
 							if (-Ris -Rset <-RIset)
 							begin
 								Ris = Ris - RIset;
-								Yis_copy1= Yis_copy1+Ris;
+								Yis_buffer1= Yis_buffer1+Ris;
 							end
 							
 							else if (-Ris -Rset > ROset)
 							begin
 								Ris = Ris +RIset;
-								Yis_copy1= Yis+Ris;
+								Yis_buffer1= Yis+Ris;
 							end
 							
 							else
 							begin
 							Ris = -1*Rset;
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 						end
 					end
 					else if (Ydiff[63] == 1'b0)
 					begin
 						Yt = Yset -( ((Ris * Ris)/ (2* ROset)) );
-						if ((Yis_copy1-Yt) >0)
+						if ((Yis_buffer1-Yt) >0)
 						begin
 
 						if (Ris <0)
 						begin
 							Ris = Ris + (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 						else if (Ris >0)
 						begin
 							Ris = Ris - (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 						end
 						else if (Ris ==0)
 						begin
 							if (Ydiff < 0)
 							begin
 							Ris = Ris - (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 
 							else if (Ydiff >= 0)
 							begin
 							Ris = Ris + (ROset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 						end
 						end
@@ -354,20 +363,20 @@ end
 							if (Ris -Rset <-1*RIset)
 							begin
 								Ris = Ris + RIset;
-								Yis_copy1= Yis_copy1+Ris;
+								Yis_buffer1= Yis_buffer1+Ris;
 							end
 							
 							else if (Ris -Rset > ROset)
 							begin
 								Ris = Ris - RIset;
-								Yis_copy1= Yis+Ris;
+								Yis_buffer1= Yis+Ris;
 							end
 							
 							
 							else
 							begin
 							Ris = Rset;
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_buffer1= Yis_buffer1+Ris;
 							end
 						end
 					end
