@@ -462,14 +462,14 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_status_t  eb_status;    // eb status
   uint32_t     gidExt;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
-  char         buff[100];
+  char         buff[1024];
 
   fdat_t tmp;
 
   /* hack: if fine tune is enabled, always enable multi-beat tune, chk */
   if (fFineTune) fMBTune = 1;   
   
-  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u, fineTune %u, mbTune %u", sid, gid, mode, fFineTune, fMBTune);
+  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u, fineTune %u, mbTune %u, cTrig %f", sid, gid, mode, fFineTune, fMBTune, cTrig);
   // b2b_log("ext upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
