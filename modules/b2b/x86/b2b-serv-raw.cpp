@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-May-2023
+ *  version : 14-Jun-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000502
+#define B2B_SERV_RAW_VERSION 0x000503
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -217,10 +217,10 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       if (setval.ext_h) setval.flag_nok &= 0xfffffffb;              // if ok, reset bit ext_h invalid
       if (setval.ext_T) setval.flag_nok &= 0xfffffffd;              // if ok, reset bit ext_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
-      setval.ext_cTrig         = round(tmpf * 1000.0);              // [ns]
+      setval.ext_cTrig         = tmpf * 1000.0;                     // [ns]
       setval.flag_nok         &= 0xfffffff7;                        // if ok, reset bit ext_cTrig invalid
       tmpf                     = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
-      setval.inj_cTrig         = round(tmpf * 1000.0);              // [ns]
+      setval.inj_cTrig         = tmpf * 1000.0;                     // [ns]
       setval.flag_nok         &= 0xffffffbf;                        // / if ok, reset bit inj_cTrig invalid
       break;
     case tagPmi     :
@@ -230,7 +230,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       if (setval.inj_h) setval.flag_nok &= 0xffffffdf;              // if ok, reset bit inj_h invalid
       if (setval.inj_T) setval.flag_nok &= 0xffffffef;              // if ok, reset bit inj_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-      setval.cPhase            = round(tmpf  * 1000);               // [ns]
+      setval.cPhase            = tmpf  * 1000;                      // [ns]
       setval.flag_nok         &= 0xffffff7f;                        // if ok, reset cPhase invalid
       break;
     case tagPre     :
