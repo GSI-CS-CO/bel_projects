@@ -128,6 +128,19 @@ The FBAS event is simulated by injecting a timing event TX SCU locally with **sa
 The required event configuration for RX/TX SCUs is done also with **saft-ecpu-ctl** and **saft-io-ctl** tools.
 
 All procedures of the test are scripted in 'test_ttf_nw_perf.sh'.
+To start a test with basic setup, invoke below command (in $HOME/fbas_test/tools):
+
+```
+./test_ttf_nw_perf.sh -v
+```
+
+Assume, another setup is built with two TX SCUs (TX1=scuxl0339 and TX2=scuxl0305) and a RX SCU (scuxl0411).
+The IO connection between RX and TX nodes via LEMO cable: RX:IO1 <===> TX1:IO2, RX:IO2 <===> TX2:IO2.
+For 'test_ttf_nw_perf.sh' the **order of TX nodes** should reflect the IO connection, otherwise the test run will return dubious measurement results:
+
+```
+./test_ttf_nw_perf.sh -v -y -t scuxl0329 -t scuxl0305 -r scuxl0411
+```
 
 ## 5. Q&A
 
