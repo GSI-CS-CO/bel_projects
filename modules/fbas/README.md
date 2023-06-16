@@ -88,8 +88,8 @@ There are several test cases available in 'bel_projects/modules/fbas/test/tools'
    - test timing message transmission (test_ttf_basic.sh)
    - other
 
-Minimal test setup is built in TTF:
-   - nwt0297m66: WR switch (*WRS*) configured with 'dot-config_timing_mps_access'
+Basic test setup is built in TTF:
+   - nwt0297m66: WR switch (*WRS*) configured with 'dot-config_timing_access_fbas'
    - scuxl0396: TX SCU
    - scuxl0497: RX SCU
 
