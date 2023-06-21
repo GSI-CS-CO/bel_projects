@@ -184,7 +184,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/remote_update/asmi10/asmi
 set_global_assignment -name QSYS_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
-set_global_assignment -name SEED 118
+set_global_assignment -name SEED 108
 set_global_assignment -name SMART_RECOMPILE OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
