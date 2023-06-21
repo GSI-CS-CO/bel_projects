@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 18-sep-2020
+//  version : 21-Jun-2021
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.7"
+#define EBMON_VERSION "2.1.0"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -86,6 +86,7 @@ static void help(void)
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
+  fprintf(stderr, "  -p               display state if IP\n");
   fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
@@ -193,6 +194,7 @@ int main(int argc, char** argv) {
   int         getWRMac=0;
   int         getWRLink=0;
   int         getWRIP=0;
+  int         getWRIPState=0;
   int         getWRStats=0;
   int         getBoardID=0;
   int         getBoardTemp=0;
@@ -246,12 +248,15 @@ int main(int argc, char** argv) {
   uint32_t    uptime;
   int         syncState;
   int         ip;
+  int         ipState;
   uint64_t    id;
   double      temp;
   char linkStr[64];
+  char ipStateStr[64];
   char syncStr[64];
   char timestr[60];
   char dummy[64];
+  uint32_t dummy32;
   char buildType[BUILDTYPELEN];
   time_t secs;
   const struct tm* tm;
@@ -262,7 +267,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgoymlievhzk")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgopymlievhzk")) != -1) {
     switch (opt) {
       case 'a':
         getBuildType=1;
@@ -319,6 +324,9 @@ int main(int argc, char** argv) {
       case 'i':
         getWRIP=1;
         break;
+      case 'p':
+        getWRIPState=1;
+        break;
       case 'y':
         getWRSync=1;
         break;
@@ -366,6 +374,7 @@ int main(int argc, char** argv) {
         getWRMac=1;
         getWRLink=1;
         getWRIP=1;
+        getWRIPState=1;
         getWRUptime=1;
         getEBVersion=1;
         getBuildType=1;
@@ -596,6 +605,30 @@ int main(int argc, char** argv) {
     if (verbose) fprintf(stdout, "IP: ");
     fprintf(stdout, "%03d.%03d.%03d.%03d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
+
+  if(getWRIPState) {
+     if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType, &dummy32)) != EB_OK) die("WB get build type (for IP state)", status);
+     if ((status = wb_wr_get_ip_state(device, devIndex, dummy32, &ipState)) != EB_OK) die("WB get IP state", status);
+     switch (ipState) {
+       case -1 :
+         sprintf(ipStateStr, "unknown");
+         break;
+       case 0 :
+         sprintf(ipStateStr, "invalid");
+         break;
+       case 1 :
+         sprintf(ipStateStr, "valid (BOOTP)");
+         break;;
+       case 2:
+         sprintf(ipStateStr, "valid (static)");
+         break;
+       default :
+         sprintf(ipStateStr, "error");
+         break;
+     } // switch ipState
+     if (verbose)  fprintf(stdout, "IP state: ");
+     fprintf(stdout, "%s\n", ipStateStr);
+  }
   
   if (getWRUptime) {
     if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) die("WR get uptime", status);
@@ -604,7 +637,7 @@ int main(int argc, char** argv) {
   } 
 
   if (getBuildType) {
-    if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType)) != EB_OK) die("WB get build type", status);
+    if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType, &dummy32)) != EB_OK) die("WB get build type", status);
     if (verbose) fprintf(stdout, "FPGA build type: ");
     fprintf(stdout, "%s\n", buildType);
   }
