@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 02-Jun-2021
+//  version : 21-Jun-2023
 //
-#define WB_API_VERSION "0.15.0"
+#define WB_API_VERSION "0.16.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -105,6 +105,13 @@ eb_status_t wb_wr_get_ip(eb_device_t device,                   // EB device
                          int devIndex,                         // 0,1,2... - there may be more than 1 device on the WB bus
                          int *ip                               // ip address
                          );
+
+// gets ip state of White Rabbit port
+eb_status_t wb_wr_get_ip_state(eb_device_t device,             // EB device
+                               int devIndex,                   // 0,1,2... - there may be more than 1 device on the WB bus
+                               uint32_t buildNumber,           // FPGA build number as obtained from routine wb_get_build_type
+                               int *ipState                    // state of IP; -1: unknown, 0: in training, 1: set via bootp, 2: set statically
+                               );
 
 // gets sync state of WR port
 eb_status_t wb_wr_get_sync_state(eb_device_t device,           // EB device
@@ -255,7 +262,8 @@ eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
 // get gateware build type
 eb_status_t wb_get_build_type(eb_device_t device,              // EB device
                               int size,                        // array size of builtType
-                              char *buildType                  // build Type
+                              char *buildType,                 // build Type
+                              uint32_t *buildNumber            // build number is of format 0x00xxyyzz; where xx is major, yy is minor and zz is micro; 0xffffffff if invalid
                               );
 
 #endif // wb_api.h

@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 02-Jun-2021
+//  version : 21-Jun-2023
 //
-#define WB_SLAVES_VERSION "0.08.0"
+#define WB_SLAVES_VERSION "0.09.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -97,13 +97,15 @@
 //-- WB4-BlockRAM --
 // see ip_cores/wrpc-sw/arch/lm32/crt0.h
 // device ID
-#define WB4_BLOCKRAM_VENDOR      WB_CERN             // vendor ID
-#define WB4_BLOCKRAM_PRODUCT     0x66cfeb52          // product ID
-#define WB4_BLOCKRAM_VMAJOR      1                   // major revision
-#define WB4_BLOCKRAM_VMINOR      0                   // minor revision
+#define WB4_BLOCKRAM_VENDOR         WB_CERN             // vendor ID
+#define WB4_BLOCKRAM_PRODUCT        0x66cfeb52          // product ID
+#define WB4_BLOCKRAM_VMAJOR         1                   // major revision
+#define WB4_BLOCKRAM_VMINOR         0                   // minor revision
 
 // register offsets
-#define WB4_BLOCKRAM_WR_UPTIME   0xa0                // uptime of WR
+#define WB4_BLOCKRAM_WR_UPTIME      0xa0                // uptime of WR
+#define WB4_BLOCKRAM_IPSTATE_060102 0x1b544             // ip state for gw v6.1.2
+#define WB4_BLOCKRAM_IPSTATE_060201 0x1b544             // ip state for gw v6.2.1
 
 // masks
 

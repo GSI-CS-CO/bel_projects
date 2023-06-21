@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 02-Jun-2021
+//  version : 21-Jun-2023
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -356,6 +356,39 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 
   return status;
 } // wb_wr_get_ip
+
+
+eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildNumber,  int *ipState)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_address_t offset;
+  eb_status_t  status;
+  
+#ifdef WB_SIMULATE
+  *ipState = 1;
+    
+  return EB_OK;
+#endif
+
+  *ipState = -1;
+
+  // unfortunately, the offset depends on the buildnumber
+  switch (buildNumber) {
+    case 0x060102 :
+      offset = WB4_BLOCKRAM_IPSTATE_060102;
+      break;
+    default : return EB_OK;
+  } // switch
+
+  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status; 
+
+  address = wb4_ram + offset;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+  *ipState = data;
+
+  return EB_OK;
+} // wb_wr_get_ip_state
 
 
 eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncState )
@@ -1018,7 +1051,7 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
 } // wb_cpu_status
 
 
-eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
+eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uint32_t *buildNumber)
 {
   eb_data_t    *data = NULL;
   char         *text = NULL;
@@ -1030,6 +1063,9 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
   int datalen  = 0;
   int textlen  = 0;
   int devIndex = 1;
+
+  int major, minor, micro;
+  int tmp;
 
 #ifdef WB_SIMULATE
   if (size > 3) sprintf(builtType, "N/A");
@@ -1067,6 +1103,26 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
 
   if (data != NULL) free(data);
   free(text);
+
+  *buildNumber = 0x0;
+  tmp          = 0;
+
+  ptr = strstr(buildType, "-v");
+  if (ptr != NULL) tmp = sscanf(ptr, "-v%d.%d.%d", &major, &minor, &micro);
+  if (tmp != 3) {
+    *buildNumber = 0xffffffff;
+  } // if sscanf
+  else {
+    // limit sub-numbers to 255 
+    major = major & 0xff;
+    minor = minor & 0xff;
+    micro = micro & 0xff;
+
+    // build number is of format 0x00xxyyzz; where xx is major, yy is minor and zz is micro
+    *buildNumber  = (uint32_t)major << 16;
+    *buildNumber |= (uint32_t)minor << 8;
+    *buildNumber |= micro;
+  } // else sscanf
 
   return EB_OK;
 
