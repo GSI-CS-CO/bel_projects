@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 21-Jun-2023
+//  version : 22-Jun-2023
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -375,9 +375,18 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
 
   // unfortunately, the offset depends on the buildnumber
   switch (buildNumber) {
+    case 0x050004 :
+      offset = WB4_BLOCKRAM_IPSTATE_050004;
+      break;
+    case 0x060001 :
+      offset = WB4_BLOCKRAM_IPSTATE_060001;
+      break;
     case 0x060102 :
       offset = WB4_BLOCKRAM_IPSTATE_060102;
       break;
+    case 0x060201 :
+      offset = WB4_BLOCKRAM_IPSTATE_060201;
+      break;    
     default : return EB_OK;
   } // switch
 
