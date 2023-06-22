@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 21-Jun-2021
+//  version : 22-Jun-2021
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.1.0"
+#define EBMON_VERSION "2.1.1"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -86,7 +86,7 @@ static void help(void)
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
-  fprintf(stderr, "  -p               display state if IP\n");
+  fprintf(stderr, "  -p               display state of IP\n");
   fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
