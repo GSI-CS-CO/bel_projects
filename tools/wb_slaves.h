@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 21-Jun-2023
+//  version : 22-Jun-2023
 //
-#define WB_SLAVES_VERSION "0.09.0"
+#define WB_SLAVES_VERSION "0.09.1"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -104,6 +104,8 @@
 
 // register offsets
 #define WB4_BLOCKRAM_WR_UPTIME      0xa0                // uptime of WR
+#define WB4_BLOCKRAM_IPSTATE_050004 0x1a5b4             // ip state for gw v5.0.4
+#define WB4_BLOCKRAM_IPSTATE_060001 0x1b544             // ip state for gw v6.0.1
 #define WB4_BLOCKRAM_IPSTATE_060102 0x1b544             // ip state for gw v6.1.2
 #define WB4_BLOCKRAM_IPSTATE_060201 0x1b544             // ip state for gw v6.2.1
 
