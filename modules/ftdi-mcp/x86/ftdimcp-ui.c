@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jun-2023
+ *  version : 28-Jun-2023
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define FTDIMCP_UI_VERSION 0x000003
+#define FTDIMCP_UI_VERSION 0x000004
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -54,7 +54,7 @@
 #define DIMCHARSIZE      32              // standard size for char services
 #define DIMMAXSIZE       1024            // max size for service names
 #define SCREENWIDTH      1024            // width of screen
-#define FTDIMCP_UI_LINES 15              // number of lines at screen
+#define FTDIMCP_UI_LINES 14              // number of lines at screen
 
 char      disName[DIMMAXSIZE];           // name of DIM server
 
@@ -88,12 +88,15 @@ char     empty[SCREENWIDTH+1];                              // an empty line
 char     title[SCREENWIDTH+1];                              // title string
 char     footer[SCREENWIDTH+1];                             // footer line to be printed
 
+int      flagSchornstein;                                   // 1: use intermediate maximum level when settng a new value
+
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -o                  print info only once and exit (useful with '-s')\n");
+  fprintf(stderr, "  -y                  when setting a new value, avoid hysteris via an intermediate maximum leveln");
   fprintf(stderr, "  -s <name prefix>    connect to server with given prefix\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to disply information and change settings of a ftdi-mcp device.\n");
@@ -169,10 +172,16 @@ void cmdSetLevel(char *prefix)
      sleep(2);
    } // if result
    else {
-     dicSetLevel = tmp;
      sprintf(name, "%s_cmd_setlevel", prefix);
+     if (flagSchornstein) {  // set level to maximum, to avoid hysteresis
+       dicSetLevel = 100.0;
+       dic_cmnd_service(name, &dicSetLevel, sizeof(dicSetLevel));
+       usleep(100000);
+     } // if flagSchornstein
+     dicSetLevel = tmp;
      //printf("name : %s, level %f\n", name, dicSetLevel);
      //sleep(2);
+     
      dic_cmnd_service(name, &dicSetLevel, sizeof(dicSetLevel));
    } // else !result
 
@@ -207,6 +216,7 @@ void printServices(char *prefix, int flagOnce)
   else                             printf("# of detected triggers        : % 8d\n"   , disNTrigger);
   if (disSetLevel  == no_link_dbl) printf("set value comparator level    : %8s\n"    , no_link_str);
   else                             printf("set value comparator level [%%]: %8.3f\n" , disSetLevel);
+                                   printf("use 'Schornstein'             : % 8d\n"   , flagSchornstein);
   printf("\n");
   printf(                                 "server info\n");
   printf(                                 "name                          : %s\n"     , prefix);
@@ -257,13 +267,14 @@ int main(int argc, char** argv) {
 
   char       prefix[1024];                // prefix for DIM services
 
-  program    = argv[0];
-  getVersion = 0;
-  subscribe  = 0;
-  once       = 0;
-  quit       = 0;
+  program         = argv[0];
+  getVersion      = 0;
+  subscribe       = 0;
+  once            = 0;
+  quit            = 0;
+  flagSchornstein = 0;
   
-  while ((opt = getopt(argc, argv, "s:eoh")) != -1) {
+  while ((opt = getopt(argc, argv, "s:eoyh")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
@@ -274,6 +285,9 @@ int main(int argc, char** argv) {
         break;
       case 'o':
         once = 1;
+        break;
+      case 'y' :
+        flagSchornstein = 1;
         break;
       case 'h':
         help();
