@@ -19,7 +19,7 @@ port (
   gate_out        : in std_logic_vector (11 downto 0); 
      
   BLM_Output      : out std_logic_vector(5 downto 0);
-  BLM_status_Reg : out t_IO_Reg_0_to_36_Array
+  BLM_status_Reg : out t_IO_Reg_0_to_37_Array
   );
 
 end BLM_out_el;
@@ -98,7 +98,8 @@ begin
     end process;
     
     BLM_status_reg(36) <= "00" & gate_input & OVERFLOW(577 downto 576); -- bits 577-576 = wd_out (53 downto 52)
-            
+    BLM_status_reg(37)(5 downto 0) <= BLM_out_signal; -- phyfical outputs
+    BLM_status_reg(37)(15 downto 6) <= (others =>'0');        
           
 
 end architecture;

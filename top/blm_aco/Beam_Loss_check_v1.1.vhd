@@ -16,7 +16,7 @@ port (
    -- IN BLM 
     BLM_data_in       : in std_logic_vector(53 downto 0);
     BLM_gate_in       : in std_logic_vector(11 downto 0);
-    BLM_tst_ck_sig    : in std_logic_vector (9 downto 0);
+    BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
     --IN registers
     pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
@@ -35,7 +35,7 @@ port (
     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )     
     
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_36_Array;
+    BLM_status_Reg    : out t_IO_Reg_0_to_37_Array;
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
 );
@@ -143,7 +143,7 @@ component BLM_gate_timing_seq is
         gate_out        : in std_logic_vector (11 downto 0); 
            
         BLM_Output      : out std_logic_vector(5 downto 0);
-        BLM_status_Reg : out t_IO_Reg_0_to_36_Array
+        BLM_status_Reg : out t_IO_Reg_0_to_37_Array
         );
      
     end component BLM_out_el;
@@ -166,17 +166,17 @@ VALUE_IN <= BLM_test_signal & BLM_data_in;
         case BLM_gate_seq_ck_sel_Reg(2 downto 0)is
 
           when "000" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(9);  --100 MHz
+           =>  gate_clock(i) <= BLM_tst_ck_sig(10);  --100 MHz
           when "001" 
-           =>  gate_clock(i)<= BLM_tst_ck_sig(8);   --10 MHz
+           =>  gate_clock(i)<= BLM_tst_ck_sig(7);   --10 MHz
           when "010" 
-          =>  gate_clock(i) <= BLM_tst_ck_sig(7);   --1 MHz
+          =>  gate_clock(i) <= BLM_tst_ck_sig(6);   --1 MHz
           when "011" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(6);   --100 kHz  
+           =>  gate_clock (i)<= BLM_tst_ck_sig(5);   --100 kHz  
           when "100" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(5);   --10 kHz
+           =>  gate_clock(i) <= BLM_tst_ck_sig(4);   --10 kHz
           when "101" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(4);  --1 kHz
+           =>  gate_clock (i)<= BLM_tst_ck_sig(3);  --1 kHz
           when others 
            =>  gate_clock (i) <= NULL;
         end case;
@@ -187,15 +187,15 @@ VALUE_IN <= BLM_test_signal & BLM_data_in;
 
 g_clock <= gate_clock;
 
-BLM_test_signal <=  BLM_tst_ck_sig(9) & -- 100 MHz
-                    BLM_tst_ck_sig(3)  & -- 99 MHz
-                    BLM_tst_ck_sig(8)  & -- 10 MHz
+BLM_test_signal <=  BLM_tst_ck_sig(9) & -- 25 MHz
+                    BLM_tst_ck_sig(8)  & -- 24.9 MHz
+                    BLM_tst_ck_sig(7)  & -- 10 MHz
                     BLM_tst_ck_sig(2)  & -- 9.9 MHz
-                    BLM_tst_ck_sig(7)  & -- 1 MHz
+                    BLM_tst_ck_sig(6)  & -- 1 MHz
                     BLM_tst_ck_sig(1)  & -- 0.99 MHz
-                    BLM_tst_ck_sig(6)  & -- 100 kHz
+                    BLM_tst_ck_sig(5)  & -- 100 kHz
                     BLM_tst_ck_sig(0)  & -- 99 kHz
-                    BLM_tst_ck_sig(5)  & -- 10 kHz
+                    BLM_tst_ck_sig(4)  & -- 10 kHz
                     '0';                 -- GND
 
 -- for direct Gate operations: if the corresponding BLM_ctrl_Reg (bit +2)='0' then BLM_gate_in signals 
