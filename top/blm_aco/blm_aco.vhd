@@ -155,7 +155,7 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
-    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 37 x 16 bit registers --> +25h 
+    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 38 x 16 bit registers --> +26h 
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
     CONSTANT c_BLM_thres_Base_Addr:              Integer := 16#0700#;  -- BLM threshold for the counter pool: 1024 16 bit registers--> + 400h
     CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#1100#;   --BLM input mux select registers :      256 16 bit registers -->100h
@@ -176,9 +176,13 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
 --                                        +--------------- Piggy-ID(Hardware-coding)
 --                                        |     +--------- CID(extension card: cid_system)
     CONSTANT c_AW_INLB12S1:   ID_CID:= (x"13", 67);   ---- Piggy-ID(coding), B"0001_0011", FG902_050        -- IO-Modul-Backplane with 12 slots
-    CONSTANT c_BP_6LWLI1 :     ID_CID:= (x"04", 75);   ---- SUB-Piggy-ID(coding), B"0000_0100", FG902.110   -- 6x opt In, 
-    CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(coding), B"0000_0101", FG902.120   -- 6x opt Out,  
-    CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(coding), B"0000_0110", FG902.140   -- 6x lemo Out,  
+  
+    CONSTANT c_BP_6LemoI1 :    ID_CID:= (x"03", 74);   ---- SUB-Piggy-ID(Codierung), B"0000_0011", FG902.130 -- 6xlemo In,  
+    CONSTANT c_BP_6LWLI1 :     ID_CID:= (x"04", 75);   ---- SUB-Piggy-ID(Codierung), B"0000_0100", FG902.110 -- 6x opt In,   
+    CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.120 -- 6x opt Out,  
+    CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(Codierung), B"0000_0110", FG902.140 -- 6x opt Out,  
+    CONSTANT c_BP_6DigIn1:     ID_CID:= (x"07", 78);   ---- SUB-Piggy-ID(Codierung), B"0000_0111", FG902.150 -- 6xDIgIn1 IN,  
+
     constant  stretch_cnt:    integer := 5;                               -- für LED's
     constant  Clk_in_ns:      integer  :=  1000000000 /  clk_sys_in_Hz;          -- (=8ns,    @ 125MHz)
     CONSTANT  CLK_sys_in_ps:  INTEGER  := (1000000000 / (CLK_sys_in_Hz / 1000));  --must actually be half-clk
@@ -421,7 +425,7 @@ port (
    -- IN BLM 
     BLM_data_in       : in std_logic_vector(53 downto 0);
     BLM_gate_in       : in std_logic_vector(11 downto 0);
-   BLM_tst_ck_sig    : in std_logic_vector (9 downto 0);
+   BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
     --IN registers
     pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
@@ -435,7 +439,7 @@ port (
    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )  
   
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_36_Array;
+    BLM_status_Reg    : out t_IO_Reg_0_to_37_Array;
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
 );
@@ -588,14 +592,16 @@ port (
     );
     end component p_connector;
 
-    component BLM_pll99 
+    component blm_24_9_9_9pll
     PORT
     (
       areset		: IN STD_LOGIC  := '0';
       inclk0		: IN STD_LOGIC  := '0';
-      c0		: OUT STD_LOGIC 
+      c0		: OUT STD_LOGIC ;
+      c1		: OUT STD_LOGIC 
     );
-    end component BLM_pll99;
+    end component blm_24_9_9_9pll;
+    
 
 
 component aw_io_reg
@@ -818,7 +824,7 @@ end component aw_io_reg;
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
- signal BLM_Status_Reg:    t_IO_Reg_0_to_36_Array;
+ signal BLM_Status_Reg:    t_IO_Reg_0_to_37_Array;
 
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
@@ -856,14 +862,7 @@ signal IOBP_LED_ID_Bus_i: std_logic_vector(7 downto 0) :=    (OTHERS => '1');   
 signal IOBP_LED_En:       std_logic;                      -- Output-Enable für LED- ID-Bus
 signal Slave_Loop_cnt:      integer range 0 to 12;         -- 1-12   -- Loop-Counter
 
-type   IOBP_LED_state_t is   (IOBP_idle, led_id_wait, led_id_loop, led_str_rot_h, led_str_rot_l, led_gruen,
-                              led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
-signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
-type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
-signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
-type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
-signal conf_reg:           t_reg_array;
-signal AW_IOBP_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggy's
+signal AW_IOBP_Input_Reg:  t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggy's
 signal PIO_ENA_SLOT_1: std_logic_vector(5 downto 0):= (OTHERS => '0');
 signal PIO_ENA_SLOT_2: std_logic_vector(5 downto 0):= (OTHERS => '0');
 signal PIO_ENA_SLOT_3: std_logic_vector(5 downto 0):= (OTHERS => '0');
@@ -942,9 +941,9 @@ signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 
 ------
 -- signal for test_signals and for gate_seq_clk signals:
-signal blm_clk_100MHz,blm_clk_10MHz,blm_clk_1MHz,blm_clk_100kHz,blm_clk_10kHz,blm_clk_1kHz, blm_clk_99MHz,blm_clk_9_9MHz,blm_clk_0_99MHz,blm_clk_99kHz,blm_clk_9_9kHz ,blm_clk_0_99kHz : std_logic;
+signal blm_clk_25MHz, blm_clk_24_9MHz, blm_clk_100MHz,blm_clk_10MHz,blm_clk_1MHz,blm_clk_100kHz,blm_clk_10kHz,blm_clk_1kHz,blm_clk_9_9MHz,blm_clk_0_99MHz,blm_clk_99kHz,blm_clk_9_9kHz ,blm_clk_0_99kHz : std_logic;
 ---
-signal BLM_tst_ck_sig: std_logic_vector (9 downto 0);
+signal BLM_tst_ck_sig: std_logic_vector (10 downto 0);
 
 signal BLM_data_in: std_logic_vector(53 downto 0);
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
@@ -1425,7 +1424,7 @@ BLM_status_registers_0_31: for i in 0 to 3 generate
           Reg_In3            =>  BLM_Status_Reg(34),
           Reg_In4            =>  BLM_Status_Reg(35),
           Reg_In5            =>  BLM_Status_Reg(36),
-          Reg_In6            =>  (others =>'0'),
+          Reg_In6            =>  BLM_Status_Reg(37),
           Reg_In7            => (others =>'0'),
           Reg_In8            =>  (others =>'0'),
 
@@ -2085,7 +2084,7 @@ BLM_data_in <= AW_IOBP_Input_Reg(5)(5 downto 0) & AW_IOBP_Input_Reg(4)(11 downto
 
 BLM_gate_in <= AW_IOBP_Input_Reg(5)(11 downto 6) & AW_IOBP_Input_Reg(6)(5 downto 0);
 ---
-BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_99MHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz;-- & blm_clk_9_9kHz& blm_clk_0_99kHz;
+BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_25MHz & blm_clk_24_9MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz;-- & blm_clk_9_9kHz& blm_clk_0_99kHz;
 
 BLM_Module : Beam_Loss_check 
 
@@ -2330,33 +2329,36 @@ AW_B12s1_connection: p_connector
     );
 
 
-    blm_clk_sig99MHz: BLM_pll99 
+    blm_clk_sig24_9_9_9MHz: blm_24_9_9_9pll 
     PORT map
     (
-      areset		=> rstn_sys,
-      inclk0	  => clk_sys,
-      c0	=>  blm_clk_99MHz
+      areset	=> rstn_sys,
+      inclk0	=> clk_sys,
+
+      c0	=>  blm_clk_24_9MHz,
+      c1		=>  blm_clk_9_9MHz
     );
+ 
 
   blm_clk_100MHz <= ENA_every_10ms;
   blm_clk_10MHz  <= Ena_every_100ns;
   blm_clk_1MHz   <= Ena_every_1us;
 
 
-  comp_9_9_Mhz_gen: div_n
-  generic map (n => 10, diag_on => 0)  
+  comp_25_Mhz_gen: div_n
+  generic map (n => 4, diag_on => 0)  
   port map(
                 clk => clk_sys,
-                ena => blm_clk_99MHz,
-                div_o => blm_clk_9_9MHz
+                ena => blm_clk_100MHz,
+                div_o => blm_clk_25MHz
    );             
 
 
   comp_0_99_Mhz_gen: div_n
-  generic map (n => 100, diag_on => 0)
+  generic map (n => 10, diag_on => 0)
     port map(
                 clk => clk_sys,
-                ena => blm_clk_99MHz,
+                ena => blm_clk_9_9MHz,
                 div_o => blm_clk_0_99MHz
      
   );
@@ -2372,10 +2374,10 @@ AW_B12s1_connection: p_connector
 
 
   comp_99kHz_gen:  div_n
-  generic map (n => 1000, diag_on => 0)  
+  generic map (n => 100, diag_on => 0)  
   port map(
                 clk => clk_sys,
-                ena => blm_clk_99MHz,
+                ena => blm_clk_9_9MHz,
                 div_o => blm_clk_99kHz
      
   );
