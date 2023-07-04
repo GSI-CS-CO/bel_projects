@@ -101,7 +101,7 @@ setup_tr() {
 
 reset_tr_ecpu() {
     output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "source setup_local.sh && reset_node DEV_RX SENDER_ANY")
+        "source setup_local.sh && reset_node rx_node_dev SENDER_ANY")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -109,7 +109,7 @@ reset_tr_ecpu() {
 
 enable_tr_mps() {
     output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "source setup_local.sh && start_test4 \$DEV_RX")
+        "source setup_local.sh && start_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -117,7 +117,7 @@ enable_tr_mps() {
 
 disable_tr_mps() {
     output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "source setup_local.sh && stop_test4 \$DEV_RX")
+        "source setup_local.sh && stop_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -275,8 +275,8 @@ for rate in ${all_msg_rates[*]}; do
     echo -en " obtain stats from '$rxscu_name': "
     counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_RX && \
-        result_ow_delay \$DEV_RX")
+        read_counters \$rx_node_dev && \
+        result_ow_delay \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code

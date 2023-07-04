@@ -117,7 +117,7 @@ setup_nodes() {
 
 measure_nw_perf() {
     echo -e "start the measurements\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # enable simultaneous operation of TX nodes
     pids=()
@@ -125,7 +125,7 @@ measure_nw_perf() {
         echo ${txscu[$i]}:
 
         # enable MPS operation, start test => keep process ID
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$DEV_TX")
+        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf" &
@@ -139,10 +139,10 @@ measure_nw_perf() {
 
     echo -e "stop the measurements\n"
     for scu in ${txscu[@]}; do
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$DEV_TX")
+        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
     done
 
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     # report test result
     echo -e "measurement stats: MPS signaling\n"
@@ -150,33 +150,33 @@ measure_nw_perf() {
     for scu in ${txscu[@]}; do
         cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
-            read_counters \$DEV_TX $verbose")
+            read_counters \$tx_node_dev $verbose")
         echo "TX (${scu%%.*}): $cnt"
     done
 
     cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_RX $verbose")
+        read_counters \$rx_node_dev $verbose")
     echo "RX (${rxscu%%.*}): $cnt"
 
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
-            result_sg_latency \$DEV_TX $verbose && \
-            result_tx_delay \$DEV_TX $verbose"
+            result_sg_latency \$tx_node_dev $verbose && \
+            result_tx_delay \$tx_node_dev $verbose"
     done
 
     echo "RX (${rxscu%%.*}):"
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        result_ow_delay \$DEV_RX $verbose && \
-        result_ttl_ival \$DEV_RX $verbose"
+        result_ow_delay \$rx_node_dev $verbose && \
+        result_ttl_ival \$rx_node_dev $verbose"
 }
 
 measure_ttl() {
     echo -e "start the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
     echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[@]}"
@@ -184,24 +184,24 @@ measure_ttl() {
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$DEV_TX")
+            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$DEV_TX")
+            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
+    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
 unset username userpasswd option verbose

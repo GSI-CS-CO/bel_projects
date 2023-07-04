@@ -75,7 +75,7 @@ inject_events() {
 
     echo -e "\n enable MPS operation (RX=$rxscu_name)"
     output=$(sshpass -p "$userpasswd" ssh $username@$rxscu \
-        "source setup_local.sh && enable_mps \$DEV_RX")
+        "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # start local injection of MPS events
     echo -e " inject MPS events\n"
@@ -84,7 +84,7 @@ inject_events() {
 
     echo -e "\n disable MPS operation (RX=$rxscu_name)"
     output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "source setup_local.sh && disable_mps \$DEV_RX")
+        "source setup_local.sh && disable_mps \$rx_node_dev")
 }
 
 show_rx_stats() {
@@ -92,9 +92,9 @@ show_rx_stats() {
     echo -en "\nRX: "
     sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_RX $verbose && \
-        result_ow_delay \$DEV_RX $verbose && \
-        result_ttl_ival \$DEV_RX $verbose"
+        read_counters \$rx_node_dev $verbose && \
+        result_ow_delay \$rx_node_dev $verbose && \
+        result_ttl_ival \$rx_node_dev $verbose"
 }
 
 unset username userpasswd verbose
