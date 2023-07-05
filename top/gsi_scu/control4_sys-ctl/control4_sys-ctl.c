@@ -1,10 +1,7 @@
 /*
- * File: mock-lite.c
- * Description: Toggels pin PB0 every 500ms
- * From: C-Programmierung mit AVR-GCC
+ * SCU4 low level system control
  */
 
-//#define F_CPU 32000000UL
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -23,7 +20,7 @@ int main (void)
 
     uint16_t PORflag = 0; //Power on Reset Flag
 
-    PORTJ.DIRSET = PIN2_bm| PIN3_bm|PIN4_bm|PIN5_bm;
+    initIO();
 
     //Switch to 32MHz internal oscillator
     OSC.CTRL |= OSC_RC32MEN_bm;                 // Enable the internal 32MHz

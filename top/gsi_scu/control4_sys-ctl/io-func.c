@@ -6,6 +6,14 @@
 
 uint16_t irq_count = 0;
 
+void initIO (void)
+{
+    PORTE.DIRSET = PIN0_bm| PIN3_bm|PIN4_bm; //RGB-LED
+    PORTF.DIRSET = PIN3_bm| PIN4_bm|PIN5_bm| PIN6_bm|PIN7_bm; //Reset Outs + Power Ok
+    PORTH.DIRSET = PIN0_bm| PIN1_bm|PIN2_bm| PIN4_bm; //Power Enable
+    PORTA.DIRSET = PIN6_bm| PIN7_bm; //IO Enable
+}
+
 void enableCoreVoltage (io_level_t level)
 {
     if ( level == high )

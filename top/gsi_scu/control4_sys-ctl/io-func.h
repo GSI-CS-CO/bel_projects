@@ -39,6 +39,10 @@ typedef enum {low = 0, high = 1, toggle} io_level_t;    //Logic Levels
 
 typedef enum {red, green, blue, yellow, cyan, magenta, white, ledOff} led_color_t; //RGB LED Colors
 
+//IO functions
+
+void initIO(void);
+
 //Output function
 
 void enableCoreVoltage (io_level_t level);
