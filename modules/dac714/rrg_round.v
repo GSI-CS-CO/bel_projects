@@ -1,32 +1,48 @@
-//// a simpler code than the below one
+/* This code for realtime ramp generator, in which it is executed to obtain come curvy edges while ramping on and out,
+	and in between the normal slop ramping.
+	In addition the values could be changed anytime, as it is not a condition to be in 
+	steady state.
+	
+	The inputs has one control register that control to which variable this input value will be assigned
+	and has another 4 registers to write the required values to the variables.
+*/
 
-module rrg_round(
+
+ module rrg_round(
 	input clk,
 	input clk_slow,
 	input nReset,
-	input timepulse,
+	input timepulse,								//a pulse every 1us
 	input [15:0] reg_control ,
 	input signed [15:0] reg_0, 
 	input signed[15:0] reg_1,  
 	input signed[15:0] reg_2,  
 	input signed[15:0] reg_3,
+	input [15:0] num_cycle ,
 
 	output reg DACStrobe,
 	output reg signed [63:0] Yis,
 	output reg signed [63:0] Ris
 	);
 
+	reg signed [63:0] switch_mode =64'h0001000000000000;
 	reg signed [63:0] temp_reg =0;
 	reg signed [63:0] temp_Yset=0;
 	reg signed[63:0] temp_Rset=0;  
 	reg signed[63:0] temp_RIset=0;  
 	reg signed[63:0] temp_ROset=0;
+	reg unsigned [63:0] temp_large_cycle = 1000;
+	reg signed[63:0] switch_mode_reg=64'h0001000000000000;
+	reg unsigned [63:0] large_cycle = 1000;
 	
-	reg signed [63:0] Yis_buffer1=0;
-	reg signed [63:0]	Yis_buffer2=0;
-	reg signed [63:0]	Yis_stable=0;
+	reg signed [63:0] Yis_copy1=0;
+	reg signed [63:0]	Yis_copy2=0;
+	reg signed [63:0]	Yis_state=0;
 	
-	reg signed [63:0] Yset =0;
+	reg unsigned [3:0]time_step_tc=0;
+	reg unsigned [63:0]time_step=1000;
+	
+	reg signed [63:0] Yset=0;
 	reg signed[63:0] Rset=0;  
 	reg signed[63:0] RIset=0;  
 	reg signed[63:0] ROset=0;
@@ -38,24 +54,28 @@ module rrg_round(
 	reg signed [63:0] Sign =1;
 	reg signed [63:0] Sign_Ris =1;
 
+	
+	//Process for the calculations syn. with the slow clk (10MHz)
 	always @(posedge clk_slow) 
 	begin
 	
 		if(nReset == 1'b0)
 		begin
-			Yis_buffer1= 64'd0;
-			Yis_buffer2= 64'd0;
-		//	Yis= 64'd0;
+			Yis_copy1= 64'd0;
 			Ris = 64'd0;
-			Sign =1;
-			Sign_Ris=1;
+			Sign =0;
+			Sign_Ris=0;
 		end
 		else
 		begin
 			
-			
-				//DACStrobe =timepulse;
-				Ydiff = Yset -Yis;
+			//once the time_step_tc is high we begin calculations
+			//this is done to slow down the calculation speed as the DAC could recognize it.
+				if(time_step_tc ==1)
+				
+				// Algorithm begins
+				begin
+				Ydiff = Yset -Yis_copy1;
 				if (Ydiff <0)
 				begin
 					Sign = -1;
@@ -82,58 +102,71 @@ module rrg_round(
 						
 				if( abs_Ydiff <= ROset && abs_Ris <= ROset)
 				begin
-					Yis_buffer1= Yset;
+				
+					Yis_copy1= Yset;
+			
+					Yis_state = 64'h1000000000000000;
+							
 					Ris = 64'd0;
 				end
 				
 				else
 				begin
+				
+						Yt_dash = (Yset*ROset) -( Sign *((Ris **2)/ (2)) );
+						if ((Sign *(Yis_copy1*ROset -Yt_dash))>0)
+						begin
+						
 
-						Yt_dash = (Yset*ROset) -( Sign *((Ris * Ris)/ (2)) );
-						if ((Sign *((Yis_stable*ROset) -Yt_dash)) >0)
-						begin
-						
-						if(Ris !=0)
-						begin
-						
 							Ris = Ris - (Sign_Ris * (ROset));
-							Yis_buffer1= Yis_stable+Ris;
-	end
-						end
-						
 							
-						
-						
+							Yis_copy1= Yis_copy1+Ris;
+							
+							Yis_state = 64'h0000000000000000;
+						end
+											
 						else
 						begin
 						
 							if ((Sign *Ris) -Rset <-1*RIset)
 							begin
 								Ris = Ris + Sign *RIset;
-								Yis_buffer1= Yis_stable+Ris;
+								
+								Yis_copy1= Yis_copy1+Ris;
+
+								Yis_state = 64'h3000000000000000;
+							
 							end
 							
 							else if ((Sign *Ris) -Rset > ROset)
 							begin
 								Ris = Ris - (Sign *RIset);
-								Yis_buffer1= Yis_stable+Ris;
+								
+								Yis_copy1= Yis_copy1+Ris;
+								
+								Yis_state = 64'h4000000000000000;
 							end
 							
 							
 							else
 							begin
 							Ris = Sign *Rset;
-							Yis_buffer1= Yis_stable+Ris;
+							
+							Yis_copy1= Yis_copy1+Ris;
+							
+							Yis_state = 64'h5000000000000000;
+							
 							end
 						end
-				end		////////////////////////////////
-			
+				end		
+			end
 		end
 		
 	end
 
 
-
+	//Process to assign the variables depending on the control register
+	//syn. with the slow clk
 	always @(posedge clk_slow) 
 	begin
 
@@ -144,280 +177,101 @@ module rrg_round(
 		Rset = 0;
 		RIset = 0;
 		ROset = 0;
+		switch_mode =64'h0001000000000000;
 	end
+	
 	else
 begin
 
 	temp_reg = {reg_3, reg_2, reg_1, reg_0};
 
 	if (reg_control == 1) 
-	begin
 		temp_Yset = temp_reg;
-	end
+		
 	else if (reg_control == 2)
-	begin
 		temp_Rset = temp_reg;
-	end
+		
 	else if (reg_control == 3)
-	begin
 		temp_RIset = temp_reg;
-	end
+		
 	else if (reg_control == 4)
-	begin
 		temp_ROset = temp_reg;
-	end
+		//added switch for debugging on the FPGAs	
+	else if (reg_control ==6)
+		switch_mode_reg = temp_reg;
+	else if (reg_control ==7)
+		temp_large_cycle = temp_reg;
 	else if (reg_control == 5)
 	begin
 		Yset = temp_Yset;
 		Rset = temp_Rset;
 		RIset = temp_RIset;
 		ROset = temp_ROset;
+		large_cycle =temp_large_cycle;
+		//switch_mode = switch_mode_reg;
 	end
+	
+
+	
 	end
 	end
 	
 	
+	//Process to buffer the output
 	always @(posedge clk_slow) 
 	begin
+	
+		if(nReset == 1'b0)
+			Yis_copy2= 64'd0;
 
-	Yis_buffer2 = Yis_buffer1;
+		
+		else
+		Yis_copy2 = Yis_copy1;
+		
 	end
 	
 	
-	always @(posedge clk_slow) 
+	//process to control the calculations timing
+		always @(posedge clk_slow) 
 	begin
-	Yis_stable = Yis_buffer2;
+	
+		if(nReset == 1'b0)
+			time_step_tc= 64'd0;
+
+		
+		else if (time_step_tc == 1)
+                time_step = large_cycle;    
+         else if (clk_slow == 1) 
+                time_step = time_step-1;
+		if (time_step ==0)
+			time_step_tc =1;
+			else
+			time_step_tc =0;
+		
 	end
 	
-	always @(posedge clk) 
-	begin
-	DACStrobe =timepulse;
-	Yis = Yis_buffer2;
-	end
 	
-endmodule
-
-
-// in this code the if condition is divided to two main parts
-// the first when the Ydiff is positive and the other when it
-// is negative
-/*module rrg_round(
-	input clk,
-	input nReset,
-	input timepulse,
-	input [15:0] reg_control ,
-	input signed [15:0] reg_0, 
-	input signed[15:0] reg_1,  
-	input signed[15:0] reg_2,  
-	input signed[15:0] reg_3,
-
-	output reg signed [63:0] Yset,
-	output reg signed[63:0] Rset,
-	output reg signed[63:0] RIset,
-	output reg signed[63:0] ROset,
-	output reg signed[63:0] Yt,
-
-
-	output reg DACStrobe,
-	output reg signed [63:0] Yis,
-	output reg signed [63:0] Ris
-	);
-
-	reg signed [63:0] temp_reg;
-	reg signed [63:0] temp_Yset;
-	reg signed[63:0] temp_Rset;  
-	reg signed[63:0] temp_RIset;  
-	reg signed[63:0] temp_ROset;
-	/reg signed [63:0] Yset; -- needed for testbench
-	//reg signed[63:0] Rset; -- needed for testbench 
-	//reg signed[63:0] RIset; -- needed for testbench 
-	//reg signed[63:0] ROset;-- needed for testbench
-	reg signed [63:0] Ydiff;
-	reg [63:0] abs_Ydiff;
-	reg [63:0] abs_Ris;
-	//reg signed [63:0] Yt;-- needed for testbench
-
+	//Process to push the outputs
+	
 	always @(posedge clk) 
 	begin
 	
 		if(nReset == 1'b0)
-begin
-			Yis_buffer1= 64'd0;
-			Ris = 64'd0;
-end
+			Yis= 64'd0;
+
 		else
-			begin
+		begin
+			DACStrobe = time_step_tc;
 			
+			//if(switch_mode ==64'h0001000000000000)
+			Yis = Yis_copy2;
 			
-				DACStrobe =timepulse;
-				if (timepulse ==1)
-				begin
-				Ydiff = Yset -Yis;
-				if (Ydiff[63] == 1'b1)
-						abs_Ydiff = -1*Ydiff;
-				else
-						abs_Ydiff = Ydiff;
-				if (Ris[63] == 1'b1)
-						abs_Ris = -1*Ris;//-Ris;
-				else
-						abs_Ris = Ris;
-						
-				if( abs_Ydiff <= ROset && abs_Ris <= ROset)
-				begin
-					Yis_buffer1= Yset;
-					Ris = 64'd0;
-				end
-				
-				else
-				begin
-					if (Ydiff[63] == 1'b1)
-					begin
-						Yt = Yset +( ((Ris *Ris)/ (2* ROset)) );
-						
-						if (-1*(Yis_buffer1-Yt) >0)
-						begin
-
-						if (Ris <0)
-						begin
-							Ris = Ris + (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-						else if (Ris >0)
-						begin
-							Ris = Ris - (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-						end
-							else if (Ris ==0)
-							begin
-								if (Ydiff < 0)
-								begin
-									Ris = Ris - (ROset);
-									Yis_buffer1= Yis_buffer1+Ris;
-								end
-
-								else if (Ydiff >= 0)
-								begin
-									Ris = Ris + (ROset);
-									Yis_buffer1= Yis_buffer1+Ris;
-								end
-							end
-						end
-						
-						else
-						begin
-						
-							if (-Ris -Rset <-RIset)
-							begin
-								Ris = Ris - RIset;
-								Yis_buffer1= Yis_buffer1+Ris;
-							end
-							
-							else if (-Ris -Rset > ROset)
-							begin
-								Ris = Ris +RIset;
-								Yis_buffer1= Yis+Ris;
-							end
-							
-							else
-							begin
-							Ris = -1*Rset;
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-						end
-					end
-					else if (Ydiff[63] == 1'b0)
-					begin
-						Yt = Yset -( ((Ris * Ris)/ (2* ROset)) );
-						if ((Yis_buffer1-Yt) >0)
-						begin
-
-						if (Ris <0)
-						begin
-							Ris = Ris + (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-						else if (Ris >0)
-						begin
-							Ris = Ris - (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-						end
-						else if (Ris ==0)
-						begin
-							if (Ydiff < 0)
-							begin
-							Ris = Ris - (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-
-							else if (Ydiff >= 0)
-							begin
-							Ris = Ris + (ROset);
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-						end
-						end
-						
-						else
-						begin
-						
-							if (Ris -Rset <-1*RIset)
-							begin
-								Ris = Ris + RIset;
-								Yis_buffer1= Yis_buffer1+Ris;
-							end
-							
-							else if (Ris -Rset > ROset)
-							begin
-								Ris = Ris - RIset;
-								Yis_buffer1= Yis+Ris;
-							end
-							
-							
-							else
-							begin
-							Ris = Rset;
-							Yis_buffer1= Yis_buffer1+Ris;
-							end
-						end
-					end
-						
-				
-				end
-			end
+			//this is added for testing
+			/*else if (switch_mode ==64'h0002000000000000)
+			Yis = Yis_state;*/
+			
 		end
-	
-	end
-
-
-// loop for passing the input to the code
-	always @(posedge clk) 
-	begin
-
-	temp_reg = {reg_3, reg_2, reg_1, reg_0};
-
-	if (reg_control == 1)
-	begin
-		temp_Yset = temp_reg;
-	end
-	else if (reg_control == 2)
-	begin
-		temp_Rset = temp_reg;
-	end
-	else if (reg_control == 3)
-	begin
-		temp_RIset = temp_reg;
-	end
-	else if (reg_control == 4)
-	begin
-		temp_ROset = temp_reg;
-	end
-	else if (reg_control == 5)
-	begin
-		Yset = temp_Yset;
-		Rset = temp_Rset;
-		RIset = temp_RIset;
-		ROset = temp_ROset;
-	end
 	end
 	
-endmodule*/
+	
+endmodule

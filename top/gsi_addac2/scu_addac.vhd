@@ -233,6 +233,7 @@ COMPONENT rrg_round is
          reg_1  : in STD_LOGIC_VECTOR (15 downto 0);
          reg_2 : in STD_LOGIC_VECTOR (15 downto 0);
 			reg_3 : in STD_LOGIC_VECTOR (15 downto 0);
+			num_cycle : in STD_LOGIC_VECTOR (15 downto 0);
 			DACStrobe : out STD_LOGIC;
          Yis : out STD_LOGIC_VECTOR (63 downto 0);
          Ris : out STD_LOGIC_VECTOR (63 downto 0));
@@ -385,6 +386,7 @@ END COMPONENT rrg_round;
   signal rrgreg_1 		  : std_logic_vector (15 downto 0); 
 	signal rrgreg_2 		  : std_logic_vector (15 downto 0);  
 	signal rrgreg_3 		  : std_logic_vector (15 downto 0);
+	signal rrgnum_cycle         : std_logic_vector (15 downto 0);
 	signal rrgYis		 	  : std_logic_vector (63 downto 0);
 	signal rrgRis		 	  : std_logic_vector (63 downto 0);
 	signal rrgDACStrobe             : std_logic;
@@ -904,7 +906,7 @@ p_led_ena: div_n
     --
           Reg_IO1            =>  rrgConfigReg,
           Reg_IO2            =>  rrgTargetReg,
-          Reg_IO3            =>  rrgTimeStepReg,
+          Reg_IO3            =>  rrgnum_cycle,
           Reg_IO4            =>  rrgreg_control,
           Reg_IO5            =>  rrgreg_0,
           Reg_IO6            =>  rrgreg_1,
@@ -934,15 +936,16 @@ CountStepReg  => rrgCountStepReg
           clk           => clk_sys,
           nReset        => rstn_sys,
 			 clk_slow		=> clk_update,
-			 timepulse    => Ena_Every_1us,
-			 reg_control => rrgreg_control ,
-          reg_0    => rrgreg_0,
-          reg_1     => rrgreg_1,
-          reg_2   => rrgreg_2,
-          reg_3       => rrgreg_3,
-			 DACStrobe => rrgDACStrobe,
-          Yis    => rrgYis,
-			 Ris=> rrgRis
+			 timepulse     => Ena_Every_1us,
+			 reg_control   => rrgreg_control ,
+          reg_0    		=> rrgreg_0,
+          reg_1     		=> rrgreg_1,
+          reg_2   		=> rrgreg_2,
+          reg_3       	=> rrgreg_3,
+			 num_cycle 		=> rrgnum_cycle,
+			 DACStrobe 		=> rrgDACStrobe,
+          Yis    			=> rrgYis,
+			 Ris				=> rrgRis
         );
 
   -------------------------------------------------------------------------------
