@@ -6649,11 +6649,12 @@ BEGIN
     PIO_ENA(69), PIO_ENA(99), PIO_ENA(113)  )             <=    std_logic_vector'("1111111");   -- Output Enable
 
     --################################### Enable I-Coppler ########################################
+    --Enable galvanically isolated DC/DC Converter
 
-    PIO_OUT(51)    <=  AW_Config1(1);            -- A_nAnal-In_1_2_EN
-    PIO_OUT(73)    <=  AW_Config1(2);            -- A_nAnal-In_3_4_EN
-    PIO_OUT(89)    <=  AW_Config1(3);            -- A_nAnal-In_5_6_EN
-    PIO_OUT(109)   <=  AW_Config1(4);            -- A_nAnal-In_7_8_EN
+    PIO_OUT(51)    <=  '0';            -- A_nAnal-In_1_2_EN
+    PIO_OUT(73)    <=  '0';            -- A_nAnal-In_3_4_EN
+    PIO_OUT(89)    <=  '0';            -- A_nAnal-In_5_6_EN
+    PIO_OUT(109)   <=  '0';            -- A_nAnal-In_7_8_EN
 
    (PIO_ENA(51), PIO_ENA(73), PIO_ENA(89), PIO_ENA(109) )   <=    std_logic_vector'("1111");   -- Output Enable
 
@@ -6687,14 +6688,14 @@ BEGIN
 
     --################################### Comperator-Ausgänge ########################################
 
-    Syn_ATR_Comp_in(0)          <=  not PIO_SYNC(55);      -- A_Comp1_Out -+
-    Syn_ATR_Comp_in(1)          <=  not PIO_SYNC(53);      -- A_Comp2_Out  |
-    Syn_ATR_Comp_in(2)          <=  not PIO_SYNC(77);      -- A_Comp3_Out  |
-    Syn_ATR_Comp_in(3)          <=  not PIO_SYNC(75);      -- A_Comp4_Out  +--> Ausgänge der Comperatoren
-    Syn_ATR_Comp_in(4)          <=  not PIO_SYNC(97);      -- A_Comp5_Out  |
-    Syn_ATR_Comp_in(5)          <=  not PIO_SYNC(95);      -- A_Comp6_Out  |
-    Syn_ATR_Comp_in(6)          <=  not PIO_SYNC(115);     -- A_Comp7_Out  |
-    Syn_ATR_Comp_in(7)          <=  not PIO_SYNC(111);     -- A_Comp8_Out -+
+    Syn_ATR_Comp_in(0)          <=  not PIO_SYNC(55) and not AW_Config1(1);      -- A_Comp1_Out -+
+    Syn_ATR_Comp_in(1)          <=  not PIO_SYNC(53) and not AW_Config1(1);      -- A_Comp2_Out  |
+    Syn_ATR_Comp_in(2)          <=  not PIO_SYNC(77) and not AW_Config1(2);      -- A_Comp3_Out  |
+    Syn_ATR_Comp_in(3)          <=  not PIO_SYNC(75) and not AW_Config1(2);      -- A_Comp4_Out  +--> Ausgänge der Comperatoren with Disable Bits
+    Syn_ATR_Comp_in(4)          <=  not PIO_SYNC(97) and not AW_Config1(3);      -- A_Comp5_Out  |
+    Syn_ATR_Comp_in(5)          <=  not PIO_SYNC(95) and not AW_Config1(3);      -- A_Comp6_Out  |
+    Syn_ATR_Comp_in(6)          <=  not PIO_SYNC(115) and not AW_Config1(4);     -- A_Comp7_Out  |
+    Syn_ATR_Comp_in(7)          <=  not PIO_SYNC(111) and not AW_Config1(4);     -- A_Comp8_Out -+
 
     ATR_comp_puls               <=  Syn_ATR_Comp_in;  -- Ausgänge der Comperatoren = Input zur Pulsbreitenmessung
     AW_Input_Reg(2)(7 downto 0) <=  Syn_ATR_Comp_out; -- Ausgänge zum Input-Register;
@@ -6702,14 +6703,14 @@ BEGIN
    -- KK  Die ATR LEMO IN 1..8 erzeugen ein Takt lange Pulse (fallende Komparatorflanke) zum optionellen Triggern des ATR_PULS_CTRL.
    -- KK  Die Sync Stufen sind nach dem Reset low. Das Ruhesignal der Komparatoren ist high.
    -- KK  Beim Powerup gibt es also eine steigende Flanke. Der Power-up erzeugt also keinen Puls.
-    Syn_ATR_Comp_in_puls_8_1(1) <=  not PIO_SYNC1(55)  and PIO_SYNC(55);      -- A_Comp1_Out -+
-    Syn_ATR_Comp_in_puls_8_1(2) <=  not PIO_SYNC1(53)  and PIO_SYNC(53);      -- A_Comp2_Out  |
-    Syn_ATR_Comp_in_puls_8_1(3) <=  not PIO_SYNC1(77)  and PIO_SYNC(77);      -- A_Comp3_Out  |
-    Syn_ATR_Comp_in_puls_8_1(4) <=  not PIO_SYNC1(75)  and PIO_SYNC(75);      -- A_Comp4_Out  +--> Ausgänge der Komparatoren
-    Syn_ATR_Comp_in_puls_8_1(5) <=  not PIO_SYNC1(97)  and PIO_SYNC(97);      -- A_Comp5_Out  |
-    Syn_ATR_Comp_in_puls_8_1(6) <=  not PIO_SYNC1(95)  and PIO_SYNC(95);      -- A_Comp6_Out  |
-    Syn_ATR_Comp_in_puls_8_1(7) <=  not PIO_SYNC1(115) and PIO_SYNC(115);     -- A_Comp7_Out  |
-    Syn_ATR_Comp_in_puls_8_1(8) <=  not PIO_SYNC1(111) and PIO_SYNC(111);     -- A_Comp8_Out -+
+    Syn_ATR_Comp_in_puls_8_1(1) <=  (not PIO_SYNC1(55)  and PIO_SYNC(55)) and not AW_Config1(1);      -- A_Comp1_Out -+
+    Syn_ATR_Comp_in_puls_8_1(2) <=  (not PIO_SYNC1(53)  and PIO_SYNC(53)) and not AW_Config1(1);      -- A_Comp2_Out  |
+    Syn_ATR_Comp_in_puls_8_1(3) <=  (not PIO_SYNC1(77)  and PIO_SYNC(77)) and not AW_Config1(2);      -- A_Comp3_Out  |
+    Syn_ATR_Comp_in_puls_8_1(4) <=  (not PIO_SYNC1(75)  and PIO_SYNC(75)) and not AW_Config1(2);      -- A_Comp4_Out  +--> Ausgänge der Komparatoren with Disable Bits
+    Syn_ATR_Comp_in_puls_8_1(5) <=  (not PIO_SYNC1(97)  and PIO_SYNC(97)) and not AW_Config1(3);      -- A_Comp5_Out  |
+    Syn_ATR_Comp_in_puls_8_1(6) <=  (not PIO_SYNC1(95)  and PIO_SYNC(95)) and not AW_Config1(3);      -- A_Comp6_Out  |
+    Syn_ATR_Comp_in_puls_8_1(7) <=  (not PIO_SYNC1(115) and PIO_SYNC(115)) and not AW_Config1(4);     -- A_Comp7_Out  |
+    Syn_ATR_Comp_in_puls_8_1(8) <=  (not PIO_SYNC1(111) and PIO_SYNC(111)) and not AW_Config1(4);     -- A_Comp8_Out -+
 
     ATR_Puls_Start_Strobe_o     <=  not PIO_SYNC1(131) and PIO_SYNC(131);     -- Puls von clk Breite
 
