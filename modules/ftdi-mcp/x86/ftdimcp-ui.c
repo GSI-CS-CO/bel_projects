@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Jun-2023
+ *  version : 06-Jul-2023
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -96,12 +96,12 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -o                  print info only once and exit (useful with '-s')\n");
-  fprintf(stderr, "  -y                  when setting a new value, avoid hysteris via an intermediate maximum leveln");
+  fprintf(stderr, "  -y                  when setting a new value, avoid hysteris via an intermediate maximum level\n");
   fprintf(stderr, "  -s <name prefix>    connect to server with given prefix\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to disply information and change settings of a ftdi-mcp device.\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example1: '%s -s b2b_int_sis18-kse\n", program);
+  fprintf(stderr, "Example1: '%s -s b2b_int_sis18-kse'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %06x. Licensed under the LGPL v3.\n", FTDIMCP_UI_VERSION);
