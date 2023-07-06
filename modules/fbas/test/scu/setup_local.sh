@@ -44,8 +44,8 @@ case $platform in
 
         export module_dir="${PWD/fbas*/fbas}"
         export fw_dir="$module_dir/fw"
-        export fw_tx="$fw_dir/fbas.pcicontrol.bin"
-        export fw_rx="$fw_dir/fbas.pcicontrol.bin"
+        export fw_tx="fbas.pcicontrol.bin"
+        export fw_rx="fbas.pcicontrol.bin"
         ;;
     "SCU")
         export node_tlu_input="B2"
@@ -258,7 +258,7 @@ load_node_fw() {
 
     device=$(eval echo "\$$1") # reference node device label (string) as variable
 
-    echo "$1: load the LM32 firmware '$fw_filename'"
+    echo "$1 ($device): load the LM32 firmware '$fw_filename'"
     eb-fwload $device u 0x0 $fw_filename
     if [ $? -ne 0 ]; then
         echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
