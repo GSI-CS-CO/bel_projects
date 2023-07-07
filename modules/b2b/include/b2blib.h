@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-May-2023
+ *  version : 07-July-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000504
+#define B2BLIB_VERSION 0x000505
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -224,7 +224,16 @@ extern "C" {
     int32_t  nSeries;                                  // # of data series, a series contains multiple timestamps
     int32_t  nTS;                                      // # total number of time stamps used for calculus
     int32_t  nBadTS;                                   // # total number of bad (= dropped) time stamps
-  } nueMeas_t; 
+  } nueMeas_t;
+
+  typedef struct {
+    double   ppsAct;                                   // actual PPS value, fractional part of a second [ns]
+    uint32_t ppsN;                                     // number of values
+    double   ppsMean;                                  // mean value
+    double   ppsSdev;                                  // standard deviation
+    double   ppsMin;                                   // min value
+    double   ppsMax;                                   // max value
+  } jitterChk_t;
     
   // ---------------------------------
   // helper routines

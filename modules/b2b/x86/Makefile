@@ -30,7 +30,7 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw
+TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check
 
 all: lib $(TARGETS)
 
@@ -63,6 +63,9 @@ b2b-serv-raw: b2b-serv-raw.cpp
 
 b2b-pname-info: b2b-pname-info.cpp
 	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(XLIBS) -ldim -lpthread
+
+b2b-jitter-check: b2b-jitter-check.cpp
+	$(CXX) $(CFLAGS) $(CXFLAGS) -o b2b-jitter-check b2b-jitter-check.cpp $(XLIBS) -ldim -lpthread
 
 lib: b2blib.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
