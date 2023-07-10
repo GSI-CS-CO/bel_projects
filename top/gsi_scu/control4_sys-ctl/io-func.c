@@ -399,7 +399,8 @@ int16_t readCOMXReset (void)
 
 int16_t readAllResets (void)
 {
-    if (readResetButton() && readFPGAReset() && readBackplaneReset() && readExtensionReset() && readCOMXReset())
+    //if (readResetButton() && readFPGAReset() && readBackplaneReset() && readExtensionReset() && readCOMXReset())
+    if (readResetButton() && readFPGAReset() && readBackplaneReset() && readExtensionReset())
         {
             return 1; // No Reset
         }
@@ -407,6 +408,7 @@ int16_t readAllResets (void)
         {
             return 0; //low active Reset
         }
+
 
 }
 
