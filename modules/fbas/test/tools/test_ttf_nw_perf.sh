@@ -147,17 +147,30 @@ measure_nw_perf() {
     # report test result
     echo -e "measurement stats: MPS signaling\n"
 
+    sum_tx_cnt=0
     for scu in ${txscu[@]}; do
         cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
             read_counters \$tx_node_dev $verbose")
         echo "TX (${scu%%.*}): $cnt"
+	tx_cnt=${cnt%% *} # remove the right part including all spaces
+	sum_tx_cnt=$(( $sum_tx_cnt + $tx_cnt ))
     done
 
     cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose")
     echo "RX (${rxscu%%.*}): $cnt"
+
+    rx_cnt=${cnt#* }     # remove the left part including first occurence of space
+    rx_cnt=${rx_cnt%% *} # remove the right part including all spaces
+
+    result="received $rx_cnt of $sum_tx_cnt"
+    if [ $rx_cnt -eq $sum_tx_cnt ]; then
+	echo PASS: $result
+    else
+	echo FAIL: $result
+    fi
 
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
