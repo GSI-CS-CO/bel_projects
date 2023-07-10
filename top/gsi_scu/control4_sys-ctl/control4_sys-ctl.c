@@ -73,7 +73,8 @@ int main (void)
                         {
                             state = PWR_DOWN1;
                         }
-                    else if (readPGood1_8V())
+                    //else if (readPGood1_8V())
+                    else if (read_V1_8_ADC() >= V1_8_GOOD_ADC_THRES)
                         {
                             state = PWR_UP2;
                         }
@@ -121,7 +122,7 @@ int main (void)
                     enable5V (high);
                     enableComXpowerOk(high);
                     enableIO();
-                    //Reset Behavior
+                    //Reset BehaviorA
                     if (!readAllResets())
                         {
                             //Reset

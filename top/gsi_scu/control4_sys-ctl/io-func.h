@@ -15,9 +15,11 @@
 
 //FPGA 1.8V Power rail ADC
 #define V1_8_OFF_THRESHOLD_V 0.18
+#define V1_8_GOOD_THRESHOLD_V 1.75
 #define V1_8_R_SERIES 10
 #define V1_8_R_MEASURE 10
 #define V1_8_OFF_ADC_THRES ( ((float)V1_8_R_MEASURE / (float)(V1_8_R_SERIES + V1_8_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)V1_8_OFF_THRESHOLD_V )
+#define V1_8_GOOD_ADC_THRES ( ((float)V1_8_R_MEASURE / (float)(V1_8_R_SERIES + V1_8_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)V1_8_GOOD_THRESHOLD_V )
 
 //IO 1.8V Rower rail ADC
 #define V1_8IO_OFF_THRESHOLD_V 0.18
