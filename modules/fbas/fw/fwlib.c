@@ -51,7 +51,7 @@ status_t fwlib_getEcaCnt(uint8_t offset, uint32_t *buffer)
 }
 
 /**
- * \brief return number of the overflow actions
+ * \brief return number of the valid actions
  *
  * All ECA actions (valid, failed, overflow, full) are counted and kept in a set of
  * clear-on-read registers.
@@ -81,7 +81,7 @@ status_t fwlib_getEcaOverflowCnt(uint32_t *buffer)
 }
 
 /**
- * \brief return number of a specified ECA actions
+ * \brief return number of a failed ECA actions
  *
  * All ECA actions (valid, failed, overflow, full) are counted and kept in a set of
  * clear-on-read registers.

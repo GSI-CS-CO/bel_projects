@@ -531,8 +531,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
 
           // count received timing messages with MPS flag or MPS event
-          if (COMMON_STATUS_OK == fwlib_getEcaValidCnt(&actions))    // number of the valid actions
-            *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrCnt(ECA_VLD_ACT, actions);
+          actions=1; // do not use fwlib_getEcaValidCnt() to get the ECA channel valid count => it returns zero value
+          *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrCnt(ECA_VLD_ACT, actions);
 
           if (COMMON_STATUS_OK == fwlib_getEcaOverflowCnt(&actions)) // number of the overflow actions
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
